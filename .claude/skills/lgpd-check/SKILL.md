@@ -1,3 +1,11 @@
+---
+name: lgpd-check
+description: Revisão de conformidade LGPD do Eleva Pro. Use ao criar ou alterar tabela e campo do Supabase, ao tratar dado de saúde (physical_assessments, student_anamnesis, workout_sessions, diet_logs, health_daily_metrics), e ao implementar onboarding, consentimento, exportação ou exclusão de dados. Produz parecer por bloco com base legal, finalidade e minimização.
+metadata:
+  author: Daniel Levi
+  version: "1.0.0"
+---
+
 # Skill: /lgpd-check
 
 ## Quando usar
