@@ -139,8 +139,13 @@ supabase db reset            # aplica migrations + seed no Docker
 O merge em `development` aplica no Preview; em `main`, no Production. Nunca use
 `drizzle-kit push` — ele altera o banco ignorando o versionamento.
 
-**Secrets por environment** (Settings → Environments → `preview` / `production`):
-`SUPABASE_ACCESS_TOKEN` · `SUPABASE_PROJECT_REF` · `SUPABASE_DB_PASSWORD` · `SUPABASE_DB_URL`
+**Secret por environment** (Settings → Environments → `Preview` / `Production`):
+`SUPABASE_DB_URL` — connection string do **Session pooler** (a *Direct connection*
+é IPv6-only e os runners do GitHub são IPv4).
+
+```bash
+gh secret set SUPABASE_DB_URL --env Preview --repo DanielLevi22/ElevaPro
+```
 
 ---
 

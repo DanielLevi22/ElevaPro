@@ -80,16 +80,31 @@ Regras que acompanham a decisão:
 
 ## Secrets necessários
 
-Escopados por **environment** (`preview` e `production`), não por repositório.
-Mesmos nomes, valores distintos — impede um run de preview enxergar credencial de
+**Um único secret por environment:** `SUPABASE_DB_URL`.
+
+Usamos `supabase db push --db-url` em vez de `supabase link` + `db push`. A
+connection string já carrega host, projeto e senha, o que dispensa
+`SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF` e `SUPABASE_DB_PASSWORD`
+separados. Menos secrets é menos superfície de erro de configuração — e o mesmo
+valor serve para o step de seed via `psql`.
+
+Escopado por **environment** (`Preview` e `Production`), não por repositório:
+mesmo nome, valores distintos. Impede um run de preview enxergar credencial de
 produção, o que os sufixos `_PREVIEW`/`_PROD` no escopo do repo não garantem.
 
 | Secret | Onde obter |
 |---|---|
-| `SUPABASE_ACCESS_TOKEN` | Account → Access Tokens |
-| `SUPABASE_PROJECT_REF` | Project Settings → General → Reference ID |
-| `SUPABASE_DB_PASSWORD` | senha do banco definida na criação do projeto |
-| `SUPABASE_DB_URL` | Settings → Database → Connection string (URI), para o seed |
+| `SUPABASE_DB_URL` | Settings → Database → Connection string → URI, **Session pooler** |
+
+Duas ressalvas sobre esse valor:
+
+- Use a string do **Session pooler**, não a *Direct connection*. Conexão direta do
+  Supabase é IPv6-only e os runners do GitHub são IPv4 — falharia com timeout de
+  rede, erro chato de diagnosticar.
+- A senha do banco **não é recuperável**. O Supabase a exibe uma única vez, na
+  criação do projeto; a connection string do dashboard mostra `[YOUR-PASSWORD]`
+  como placeholder. Se foi perdida, o caminho é Settings → Database → *Reset
+  database password*, lembrando que isso invalida qualquer string em uso.
 
 ## Consequências
 
