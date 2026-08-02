@@ -24,7 +24,7 @@ typecheck pega, porque nome de tabela é string.
 
 ### Como saberemos que está pronto?
 - [x] Zero referências a tabelas fora do schema real, em `app/` e `web/`
-- [ ] Verificação em CI falha o build se uma referência órfã for introduzida
+- [x] Verificação em CI falha o build se uma referência órfã for introduzida
 - [x] Deletar exercício de um treino remove a linha de fato
 - [x] Criar treino com exercícios persiste os exercícios
 - [ ] Teste de regressão para cada tela corrigida

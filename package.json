@@ -10,6 +10,7 @@
     "format": "biome format --write .",
     "db:generate": "drizzle-kit generate",
     "db:check": "drizzle-kit check",
+    "db:check-refs": "node scripts/check-schema-refs.js",
     "env:sync": "node scripts/sync-env.js",
     "env:sync:preview": "node scripts/sync-env.js preview",
     "env:sync:production": "node scripts/sync-env.js production"
