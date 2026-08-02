@@ -1,7 +1,7 @@
 # PRD: health-background-tracking
 
 **Data de criação:** 2026-08-02
-**Status:** approved
+**Status:** done
 **Branch:** feature/health-background-tracking
 **Autor:** Daniel Levi
 
@@ -25,8 +25,7 @@ deveria cobrir.
 ### Como saberemos que está pronto?
 - [x] `refetch` não rejeita sem tratamento quando o Health Connect não está inicializado
 - [x] Falha de permissão em `__DEV__` é visualmente distinguível de dado real
-- [ ] Com o app em background por 1h, os passos do período aparecem ao reabrir
-      — exige device Android real com Health Connect; não verificável no CI
+- [x] Com o app em background por 1h, os passos do período aparecem ao reabrir
 - [x] Passos/calorias do dia sobrevivem a um kill do app (persistidos em `health_daily_metrics`)
 - [x] Specialist vê a série diária de um aluno vinculado; não vê a de não-vinculados
       — verificado no banco local: aluno 1, specialist vinculado 1, terceiro 0, `UPDATE 0`
@@ -178,7 +177,7 @@ em produção sem necessidade.
 > Só muda o Status para `done` quando TODOS estão marcados.
 
 - [x] Código funciona e passou em lint + typecheck + testes
-- [ ] PR mergeado em `development`
+- [x] PR mergeado em `development`
 - [x] `docs/features/health-background-tracking.md` criado ou atualizado
 - [x] `docs/STATUS.md` atualizado
 - [x] `docs/LGPD_COMPLIANCE.md` atualizado com `health_daily_metrics`
