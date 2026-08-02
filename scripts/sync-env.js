@@ -40,6 +40,7 @@ const appEnvMap = {
   SUPABASE_URL: "EXPO_PUBLIC_SUPABASE_URL",
   SUPABASE_ANON_KEY: "EXPO_PUBLIC_SUPABASE_ANON_KEY",
   GEMINI_API_KEY: "EXPO_PUBLIC_GEMINI_API_KEY",
+  API_URL: "EXPO_PUBLIC_API_URL", // base do BFF no web — sem ela as features de IA quebram
   // DATABASE_URL não vai pro app — é só para migrations
 };
 
@@ -48,6 +49,7 @@ const webEnvMap = {
   SUPABASE_ANON_KEY: "NEXT_PUBLIC_SUPABASE_ANON_KEY",
   SUPABASE_SERVICE_ROLE_KEY: "SUPABASE_SERVICE_ROLE_KEY", // server-side only, sem prefixo NEXT_PUBLIC_
   DATABASE_URL: "DATABASE_URL",
+  ANTHROPIC_API_KEY: "ANTHROPIC_API_KEY", // server-side only — usada por todas as rotas /api/ai/*
   // GEMINI_API_KEY não vai pro web — é só para o mobile
 };
 
@@ -76,8 +78,9 @@ const appContent = buildEnvFile(appEnvMap, { EXPO_PUBLIC_APP_ENV: env });
 fs.writeFileSync(appFile, appContent);
 console.log(`✓ ${path.relative(ROOT, appFile)}`);
 
-// web/.env  (Next.js só lê .env e .env.local por padrão)
-const webFile = path.join(ROOT, "web", ".env");
+// web/.env.local — precedência maior que .env no Next. Escrever em .env deixaria
+// um .env.local existente vencer, e o sync rodaria "com sucesso" sem efeito.
+const webFile = path.join(ROOT, "web", ".env.local");
 const webContent = buildEnvFile(webEnvMap);
 fs.writeFileSync(webFile, webContent);
 console.log(`✓ ${path.relative(ROOT, webFile)}`);
