@@ -11,9 +11,9 @@ export interface AnalyticsData {
     activeUsersLast30Days: number;
     usersByType: {
       admin: number;
-      professional: number;
-      managed_student: number;
-      autonomous_student: number;
+      specialist: number;
+      student: number;
+      member: number;
     };
   };
   growthMetrics: {
@@ -23,8 +23,8 @@ export interface AnalyticsData {
   engagementMetrics: {
     totalWorkouts: number;
     totalDietPlans: number;
-    avgWorkoutsPerProfessional: number;
-    avgStudentsPerProfessional: number;
+    avgWorkoutsPerSpecialist: number;
+    avgStudentsPerSpecialist: number;
   };
 }
 
@@ -74,7 +74,7 @@ export function useAnalytics() {
         return count || 0;
       };
 
-      const [adminCount, professionalCount, managedCount, autonomousCount] = await Promise.all([
+      const [adminCount, specialistCount, studentCount, memberCount] = await Promise.all([
         fetchCountByType("admin"),
         fetchCountByType("specialist"),
         fetchCountByType("student"),
@@ -101,9 +101,9 @@ export function useAnalytics() {
           activeUsersLast30Days: activeUsersLast30Days || 0,
           usersByType: {
             admin: adminCount,
-            professional: professionalCount,
-            managed_student: managedCount,
-            autonomous_student: autonomousCount,
+            specialist: specialistCount,
+            student: studentCount,
+            member: memberCount,
           },
         },
         growthMetrics: {
@@ -113,11 +113,11 @@ export function useAnalytics() {
         engagementMetrics: {
           totalWorkouts,
           totalDietPlans,
-          avgWorkoutsPerProfessional: professionalCount
-            ? Math.round(totalWorkouts / professionalCount)
+          avgWorkoutsPerSpecialist: specialistCount
+            ? Math.round(totalWorkouts / specialistCount)
             : 0,
-          avgStudentsPerProfessional: professionalCount
-            ? Math.round(managedCount / professionalCount)
+          avgStudentsPerSpecialist: specialistCount
+            ? Math.round(studentCount / specialistCount)
             : 0,
         },
       };

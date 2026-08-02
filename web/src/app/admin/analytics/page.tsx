@@ -159,14 +159,14 @@ export default function AnalyticsPage() {
               <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center">
                 <span className="text-xl">💼</span>
               </div>
-              <span className="text-sm font-medium text-muted-foreground">Profissionais</span>
+              <span className="text-sm font-medium text-muted-foreground">Personal Trainers</span>
             </div>
             <p className="text-3xl font-bold text-orange-400">
-              {data?.userMetrics.usersByType.professional || 0}
+              {data?.userMetrics.usersByType.specialist || 0}
             </p>
             <p className="text-xs text-muted-foreground mt-2">
               {calculateGrowthPercentage(
-                data?.userMetrics.usersByType.professional || 0,
+                data?.userMetrics.usersByType.specialist || 0,
                 data?.userMetrics.totalUsers || 0,
               )}
               % do total
@@ -178,14 +178,14 @@ export default function AnalyticsPage() {
               <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
                 <span className="text-xl">🎓</span>
               </div>
-              <span className="text-sm font-medium text-muted-foreground">Alunos Gerenciados</span>
+              <span className="text-sm font-medium text-muted-foreground">Alunos</span>
             </div>
             <p className="text-3xl font-bold text-blue-400">
-              {data?.userMetrics.usersByType.managed_student || 0}
+              {data?.userMetrics.usersByType.student || 0}
             </p>
             <p className="text-xs text-muted-foreground mt-2">
               {calculateGrowthPercentage(
-                data?.userMetrics.usersByType.managed_student || 0,
+                data?.userMetrics.usersByType.student || 0,
                 data?.userMetrics.totalUsers || 0,
               )}
               % do total
@@ -197,14 +197,14 @@ export default function AnalyticsPage() {
               <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
                 <span className="text-xl">🚀</span>
               </div>
-              <span className="text-sm font-medium text-muted-foreground">Alunos Autônomos</span>
+              <span className="text-sm font-medium text-muted-foreground">Membros</span>
             </div>
             <p className="text-3xl font-bold text-green-400">
-              {data?.userMetrics.usersByType.autonomous_student || 0}
+              {data?.userMetrics.usersByType.member || 0}
             </p>
             <p className="text-xs text-muted-foreground mt-2">
               {calculateGrowthPercentage(
-                data?.userMetrics.usersByType.autonomous_student || 0,
+                data?.userMetrics.usersByType.member || 0,
                 data?.userMetrics.totalUsers || 0,
               )}
               % do total
@@ -248,7 +248,7 @@ export default function AnalyticsPage() {
               </div>
             </div>
             <p className="text-3xl font-bold text-foreground mb-1">
-              {data?.engagementMetrics.avgWorkoutsPerProfessional || 0}
+              {data?.engagementMetrics.avgWorkoutsPerSpecialist || 0}
             </p>
             <p className="text-sm text-muted-foreground">Média Treinos/Prof</p>
           </div>
@@ -260,9 +260,9 @@ export default function AnalyticsPage() {
               </div>
             </div>
             <p className="text-3xl font-bold text-foreground mb-1">
-              {data?.engagementMetrics.avgStudentsPerProfessional || 0}
+              {data?.engagementMetrics.avgStudentsPerSpecialist || 0}
             </p>
-            <p className="text-sm text-muted-foreground">Média Alunos/Prof</p>
+            <p className="text-sm text-muted-foreground">Média Alunos/Personal</p>
           </div>
         </div>
       </div>
@@ -297,17 +297,17 @@ export default function AnalyticsPage() {
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-muted-foreground">
-                Atividade dos Profissionais
+                Atividade dos Personal Trainers
               </span>
               <span className="text-sm font-bold text-foreground">
-                {data?.engagementMetrics.avgWorkoutsPerProfessional || 0} treinos/prof
+                {data?.engagementMetrics.avgWorkoutsPerSpecialist || 0} treinos/personal
               </span>
             </div>
             <div className="w-full bg-muted rounded-full h-2">
               <div
                 className="bg-gradient-to-r from-orange-500 to-yellow-500 h-2 rounded-full transition-all"
                 style={{
-                  width: `${Math.min((data?.engagementMetrics.avgWorkoutsPerProfessional || 0) * 10, 100)}%`,
+                  width: `${Math.min((data?.engagementMetrics.avgWorkoutsPerSpecialist || 0) * 10, 100)}%`,
                 }}
               ></div>
             </div>

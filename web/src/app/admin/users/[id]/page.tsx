@@ -4,6 +4,7 @@ import { supabase } from "@elevapro/supabase";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
+import { AccountTypeBadge } from "@/shared";
 
 interface UserDetails {
   id: string;
@@ -147,38 +148,6 @@ export default function UserDetailsPage() {
     );
   }
 
-  const getAccountTypeBadge = (accountType: string, isSuperAdmin: boolean) => {
-    const badges = {
-      admin: {
-        label: isSuperAdmin ? "Super Admin" : "Admin",
-        color: "bg-purple-500/20 text-purple-400 border-purple-500/50",
-      },
-      professional: {
-        label: "Profissional",
-        color: "bg-orange-500/20 text-orange-400 border-orange-500/50",
-      },
-      managed_student: {
-        label: "Aluno (Gerenciado)",
-        color: "bg-blue-500/20 text-blue-400 border-blue-500/50",
-      },
-      autonomous_student: {
-        label: "Aluno (Autônomo)",
-        color: "bg-green-500/20 text-green-400 border-green-500/50",
-      },
-    };
-
-    const badge = badges[accountType as keyof typeof badges] || {
-      label: accountType,
-      color: "bg-gray-500/20 text-gray-400 border-gray-500/50",
-    };
-
-    return (
-      <span className={`px-3 py-1 rounded-lg text-sm font-medium border ${badge.color}`}>
-        {badge.label}
-      </span>
-    );
-  };
-
   const getStatusBadge = (status: string | null) => {
     // Treat null status as 'pending' for professionals, 'active' for others (legacy)
     let s = status;
@@ -262,7 +231,11 @@ export default function UserDetailsPage() {
             <p className="text-muted-foreground">{user.email}</p>
           </div>
           <div className="flex gap-2">
-            {getAccountTypeBadge(user.account_type, user.is_super_admin)}
+            <AccountTypeBadge
+              accountType={user.account_type}
+              isSuperAdmin={user.is_super_admin}
+              size="md"
+            />
             {getStatusBadge(user.account_status)}
           </div>
         </div>
@@ -319,7 +292,11 @@ export default function UserDetailsPage() {
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Tipo de Conta</label>
                 <div className="mt-2">
-                  {getAccountTypeBadge(user.account_type, user.is_super_admin)}
+                  <AccountTypeBadge
+                    accountType={user.account_type}
+                    isSuperAdmin={user.is_super_admin}
+                    size="md"
+                  />
                 </div>
               </div>
               <div>
