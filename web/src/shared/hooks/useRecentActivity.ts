@@ -18,16 +18,16 @@ async function fetchRecentActivity(): Promise<Activity[]> {
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
   const { data: workoutSessions } = await supabase
-    .from("workout_executions")
+    .from("workout_sessions")
     .select(`
       id,
       completed_at,
       student_id,
       workout_id,
-      workouts!inner(professional_id, title),
+      workouts!inner(specialist_id, title),
       profiles!student_id(full_name)
     `)
-    .eq("workouts.professional_id", user.id)
+    .eq("workouts.specialist_id", user.id)
     .not("completed_at", "is", null)
     .gte("completed_at", oneWeekAgo.toISOString())
     .order("completed_at", { ascending: false })

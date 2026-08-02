@@ -20,7 +20,7 @@ export const AnalysisService = {
     sevenDaysAgo.setDate(today.getDate() - 7);
 
     const { data: logs, error } = await supabase
-      .from('diet_logs')
+      .from('meal_logs')
       .select('*')
       .eq('student_id', studentId)
       .gte('logged_date', sevenDaysAgo.toISOString().split('T')[0])

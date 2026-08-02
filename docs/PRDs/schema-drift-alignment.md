@@ -23,12 +23,12 @@ São bugs que nenhum teste pega, porque os testes mockam o Supabase, e que nenhu
 typecheck pega, porque nome de tabela é string.
 
 ### Como saberemos que está pronto?
-- [ ] Zero referências a tabelas fora do schema real, em `app/` e `web/`
+- [x] Zero referências a tabelas fora do schema real, em `app/` e `web/`
 - [ ] Verificação em CI falha o build se uma referência órfã for introduzida
-- [ ] Deletar exercício de um treino remove a linha de fato (hoje não remove)
-- [ ] Criar treino com exercícios persiste os exercícios
+- [x] Deletar exercício de um treino remove a linha de fato
+- [x] Criar treino com exercícios persiste os exercícios
 - [ ] Teste de regressão para cada tela corrigida
-- [ ] `npm run lint` e `tsc --noEmit` limpos nos dois projetos
+- [x] `npm run lint` e `tsc --noEmit` limpos nos dois projetos
 
 ---
 

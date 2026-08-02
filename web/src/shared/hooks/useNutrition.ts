@@ -325,7 +325,7 @@ export function useImportDiet() {
 
 export function useDietLogs(studentId: string, startDate?: string, endDate?: string) {
   return useQuery({
-    queryKey: ["diet_logs", studentId, startDate, endDate],
+    queryKey: ["meal_logs", studentId, startDate, endDate],
     queryFn: (): Promise<MealLog[]> => {
       if (startDate && endDate) {
         return nutritionService.fetchMealLogsByRange(studentId, startDate, endDate);
@@ -339,20 +339,38 @@ export function useDietLogs(studentId: string, startDate?: string, endDate?: str
   });
 }
 
+export interface WeightPoint {
+  recorded_date: string;
+  weight: number | null;
+}
+
+/**
+ * Série de peso do aluno ao longo do tempo.
+ *
+ * A fonte é `physical_assessments` — a tabela `nutrition_progress` que este
+ * hook consultava nunca existiu no banco, então o gráfico de peso sempre veio
+ * vazio. O contrato de retorno foi mantido para os consumidores não mudarem.
+ */
 export function useNutritionProgress(studentId: string, startDate?: string, endDate?: string) {
   return useQuery({
-    queryKey: ["nutrition_progress", studentId, startDate, endDate],
-    queryFn: async () => {
+    queryKey: ["weight_progress", studentId, startDate, endDate],
+    queryFn: async (): Promise<WeightPoint[]> => {
       let query = supabase
-        .from("nutrition_progress")
-        .select("*")
+        .from("physical_assessments")
+        .select("assessed_at, weight_kg")
         .eq("student_id", studentId)
-        .order("recorded_date", { ascending: true });
-      if (startDate) query = query.gte("recorded_date", startDate);
-      if (endDate) query = query.lte("recorded_date", endDate);
+        .not("weight_kg", "is", null)
+        .order("assessed_at", { ascending: true });
+      if (startDate) query = query.gte("assessed_at", startDate);
+      if (endDate) query = query.lte("assessed_at", endDate);
+
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+
+      return (data ?? []).map((row) => ({
+        recorded_date: row.assessed_at,
+        weight: row.weight_kg === null ? null : Number(row.weight_kg),
+      }));
     },
     enabled: !!studentId,
     staleTime: 1000 * 60 * 5,
@@ -373,11 +391,13 @@ export function useStudentNutritionStats(studentId: string) {
         .gte("logged_date", thirtyDaysAgo.toISOString().split("T")[0]);
       if (logsError) throw logsError;
 
+      // Peso vem de physical_assessments; nutrition_progress nunca existiu.
       const { data: latestProgress } = await supabase
-        .from("nutrition_progress")
-        .select("weight, recorded_date")
+        .from("physical_assessments")
+        .select("weight_kg, assessed_at")
         .eq("student_id", studentId)
-        .order("recorded_date", { ascending: false })
+        .not("weight_kg", "is", null)
+        .order("assessed_at", { ascending: false })
         .limit(1)
         .maybeSingle();
 
@@ -389,8 +409,8 @@ export function useStudentNutritionStats(studentId: string) {
         adherenceRate,
         totalLogs: totalDays,
         completedMeals,
-        latestWeight: latestProgress?.weight || null,
-        lastWeightDate: latestProgress?.recorded_date || null,
+        latestWeight: latestProgress?.weight_kg ? Number(latestProgress.weight_kg) : null,
+        lastWeightDate: latestProgress?.assessed_at ?? null,
       };
     },
     enabled: !!studentId,

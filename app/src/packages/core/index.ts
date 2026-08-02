@@ -24,7 +24,7 @@ export interface Macros {
 export interface DietPlan {
   id: string;
   student_id: string;
-  personal_id: string;
+  specialist_id: string;
   name: string;
   description?: string;
   start_date: string;
