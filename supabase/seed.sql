@@ -1,9 +1,14 @@
+-- Seed idempotente: re-executavel em qualquer ambiente.
+-- O guard 'where not exists' existe porque este arquivo roda no pipeline
+-- (preview e producao) e um insert simples duplicaria a cada deploy.
+
 -- Seed: alimentos básicos
 -- Macros por 100g. serving_size em gramas.
 -- Fonte de referência: TACO (Tabela Brasileira de Composição de Alimentos)
 
-insert into foods (name, calories, protein, carbs, fat, fiber, serving_size) values
-
+insert into foods (name, calories, protein, carbs, fat, fiber, serving_size)
+select v.name, v.calories, v.protein, v.carbs, v.fat, v.fiber, v.serving_size
+from (values
 -- Proteínas animais
 ('Frango (peito grelhado)',    159, 32.0, 0.0,  2.7,  0.0,  100),
 ('Carne bovina (patinho)',     219, 28.0, 0.0,  11.6, 0.0,  100),
@@ -60,12 +65,15 @@ insert into foods (name, calories, protein, carbs, fat, fiber, serving_size) val
 ('Feijão preto cozido',       77,  5.1,  14.0, 0.5,  8.7,  100),
 ('Lentilha cozida',           116, 9.0,  20.1, 0.4,  7.9,  100),
 ('Grão de bico cozido',       164, 8.9,  27.4, 2.6,  7.6,  100),
-('Edamame',                   122, 11.9, 8.9,  5.2,  5.2,  100);
+('Edamame',                   122, 11.9, 8.9,  5.2,  5.2,  100)
+) as v(name, calories, protein, carbs, fat, fiber, serving_size)
+where not exists (select 1 from foods t where t.name = v.name);
 
 -- Seed: exercícios básicos por grupo muscular
 
-insert into exercises (name, muscle_group, is_verified) values
-
+insert into exercises (name, muscle_group, is_verified)
+select v.name, v.muscle_group, v.is_verified
+from (values
 -- Peito
 ('Supino reto com barra',          'peito',   true),
 ('Supino inclinado com halteres',  'peito',   true),
@@ -139,4 +147,6 @@ insert into exercises (name, muscle_group, is_verified) values
 ('Elíptico',                       'cardio',  true),
 ('Corda naval',                    'cardio',  true),
 ('Burpee',                         'cardio',  true),
-('Polichinelo',                    'cardio',  true);
+('Polichinelo',                    'cardio',  true)
+) as v(name, muscle_group, is_verified)
+where not exists (select 1 from exercises t where t.name = v.name);

@@ -26,7 +26,7 @@ export const healthDailyMetrics = pgTable(
     // garantido e reenvia o acumulado do mesmo dia várias vezes.
     studentDateUnique: unique("health_daily_metrics_student_id_date_unique").on(
       table.student_id,
-      table.date
+      table.date,
     ),
-  })
+  }),
 );
