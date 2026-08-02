@@ -1,3 +1,4 @@
+import { type AccountType, createAuthService, type Profile } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -8,23 +9,34 @@ import { useAuthStore } from '@/auth';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { colors as brandColors } from '@/constants/colors';
 
+const authService = createAuthService(supabase);
+
+/** Rótulos canônicos por account_type — ver docs/GLOSSARY.md. */
+const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
+  admin: 'ADMIN',
+  specialist: 'PERSONAL TRAINER',
+  student: 'ALUNO',
+  member: 'MEMBRO',
+};
+
+// Não existe sistema de XP/nível no schema — nem em `profiles`, nem em
+// gamification (que só tem `points` em achievements). A tela lia profile.level
+// e profile.xp, campos inexistentes, então sempre renderizou LVL 1 e 0 XP.
+// Mantidos como constantes para preservar o visual até a feature existir de
+// fato; a barra não representa progresso real.
+const PLACEHOLDER_LEVEL = 1;
+const PLACEHOLDER_XP = 0;
+
 export default function ProfileScreen() {
   const { signOut, user } = useAuthStore();
-  const [profile, setProfile] = useState<{
-    full_name?: string;
-    level?: number;
-    role?: string;
-    xp?: number;
-  } | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const router = useRouter();
 
   const fetchProfile = useCallback(async () => {
     if (!user?.id) return;
 
     try {
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-
-      setProfile(data);
+      setProfile(await authService.getProfile(user.id));
     } catch (error) {
       console.error('Error fetching profile:', error);
     }
@@ -104,7 +116,7 @@ export default function ProfileScreen() {
                     className="absolute -bottom-3 px-3 py-1 rounded-full border-2 border-[#1A1A1A]"
                   >
                     <Text className="text-white font-black text-xs italic tracking-widest">
-                      LVL {profile?.level || 1}
+                      LVL {PLACEHOLDER_LEVEL}
                     </Text>
                   </LinearGradient>
                 </View>
@@ -116,22 +128,22 @@ export default function ProfileScreen() {
                   className="text-xs font-black uppercase tracking-[2px] mt-1"
                   style={{
                     color:
-                      profile?.role === 'personal'
+                      profile?.account_type === 'specialist'
                         ? brandColors.primary.start
                         : brandColors.secondary.main,
                   }}
                 >
-                  {profile?.role === 'personal' ? 'PERSONAL TRAINER' : 'ALUNO'}
+                  {profile ? ACCOUNT_TYPE_LABEL[profile.account_type] : ''}
                 </Text>
               </View>
 
               {/* XP Progress Bar */}
-              {profile?.role !== 'personal' && (
+              {profile?.account_type !== 'specialist' && (
                 <View className="w-full">
                   <View className="flex-row justify-between mb-2">
                     <Text className="text-zinc-500 text-[10px] font-black uppercase">XP ATUAL</Text>
                     <Text className="text-white text-[10px] font-black uppercase">
-                      {profile?.xp || 0} / {((profile?.level || 1) * 20) ** 2}
+                      {PLACEHOLDER_XP} / {(PLACEHOLDER_LEVEL * 20) ** 2}
                     </Text>
                   </View>
                   <View className="h-3 bg-zinc-950 rounded-full overflow-hidden border border-zinc-800">
@@ -141,7 +153,7 @@ export default function ProfileScreen() {
                       end={{ x: 1, y: 0 }}
                       style={{
                         height: '100%',
-                        width: `${Math.min(100, Math.max(5, ((profile?.xp || 0) * 100) / ((profile?.level || 1) * 20) ** 2))}%`,
+                        width: '5%',
                       }}
                     />
                   </View>
@@ -213,7 +225,9 @@ export default function ProfileScreen() {
               </View>
               <View>
                 <Text className="text-zinc-500 text-[10px] font-black uppercase">Permissão</Text>
-                <Text className="text-white font-bold capitalize">{profile?.role}</Text>
+                <Text className="text-white font-bold capitalize">
+                  {profile ? ACCOUNT_TYPE_LABEL[profile.account_type] : '—'}
+                </Text>
               </View>
             </View>
           </View>

@@ -1,3 +1,4 @@
+import { createAuthService } from '@elevapro/shared';
 import type { AccountType } from '@elevapro/supabase';
 import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +9,8 @@ import { useAuthStore } from '@/auth';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
+
+const authService = createAuthService(supabase);
 
 export default function RoleSelectionScreen() {
   const [loading, setLoading] = useState(false);
@@ -26,14 +29,12 @@ export default function RoleSelectionScreen() {
 
     setLoading(true);
     try {
-      const { error } = await supabase.from('profiles').upsert({
-        id: session.user.id,
-        email: session.user.email,
-        account_type: selectedRole,
-        full_name: session.user.user_metadata?.full_name || '',
+      await authService.setAccountType({
+        userId: session.user.id,
+        email: session.user.email ?? '',
+        accountType: selectedRole,
+        fullName: session.user.user_metadata?.full_name,
       });
-
-      if (error) throw error;
 
       // Reinitialize session to load new account type and abilities
       await initializeSession(session);
