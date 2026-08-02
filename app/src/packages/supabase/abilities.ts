@@ -17,6 +17,7 @@ export type Subject =
   | 'Profile'
   | 'Analytics'
   | 'Periodization'
+  | 'HealthMetric'
   | 'all';
 
 export type AppAbility = MongoAbility<[Action, Subject]>;
@@ -41,6 +42,9 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
     can('read', 'Analytics');
     can('read', 'Profile');
     can('update', 'Profile');
+    // Somente leitura: o specialist acompanha a atividade, nunca a edita. O
+    // vínculo ativo é conferido pela RLS de health_daily_metrics.
+    can('read', 'HealthMetric');
 
     if (context.services?.includes('personal_training')) {
       can('manage', 'Workout');
@@ -63,6 +67,7 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
     can('read', 'Exercise');
     can('read', 'Profile');
     can('update', 'Profile');
+    can('manage', 'HealthMetric');
   }
 
   if (context.accountType === 'member') {
@@ -73,6 +78,7 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
     can('manage', 'Periodization');
     can('manage', 'Diet');
     can('manage', 'Food');
+    can('manage', 'HealthMetric');
   }
 
   return build();
