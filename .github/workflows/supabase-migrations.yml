@@ -1,0 +1,73 @@
+name: Supabase Migrations
+
+# ──────────────────────────────────────────────────────
+# Aplica migrations no projeto Supabase do ambiente correspondente.
+#
+#   development → projeto Preview     (automático)
+#   main        → projeto Production  (exige aprovação, ver README abaixo)
+#
+# Dois gatilhos de propósito:
+#   push          → mudança que só toca supabase/ (release-web não dispara nisso)
+#   workflow_call → invocado pelo release-web, para o deploy esperar a migration
+#
+# A ordem importa: código novo contra schema velho quebra em runtime, e não há
+# conserto rápido. Por isso o deploy declara `needs` neste job.
+# ──────────────────────────────────────────────────────
+on:
+  push:
+    branches:
+      - development
+      - main
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/seed.sql"
+  workflow_call:
+
+# Serializa: um push que toca web/** e supabase/** dispara este workflow pelas
+# duas vias. `db push` é idempotente, mas execuções concorrentes disputariam o
+# advisory lock do Postgres.
+concurrency:
+  group: supabase-migrations-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: 🗄️ Apply migrations
+    runs-on: ubuntu-latest
+    # Secrets são escopados por environment: mesmos nomes, valores distintos.
+    # Impede um run de preview enxergar credencial de produção.
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link ao projeto
+        run: supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+      # Forward-only: aplica só o que está pendente, comparando com
+      # supabase_migrations.schema_migrations no remoto. Não há rollback —
+      # migration ruim se corrige com migration nova.
+      - name: Aplicar migrations
+        run: supabase db push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+      # `db push` não roda seed. O arquivo é idempotente (guard `where not
+      # exists`), então re-executar a cada deploy não duplica.
+      - name: Aplicar seed
+        run: psql "${{ secrets.SUPABASE_DB_URL }}" -v ON_ERROR_STOP=1 -q -f supabase/seed.sql
+
+      - name: Resumo
+        run: |
+          echo "### 🗄️ Migrations aplicadas" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Ambiente: \`${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Projeto: \`${{ secrets.SUPABASE_PROJECT_REF }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Commit: \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"

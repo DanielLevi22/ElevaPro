@@ -109,9 +109,12 @@ em [`supabase/config.toml`](supabase/config.toml) — não as default `543xx`.
 # sempre criar branch + PRD juntos
 node scripts/new-feature.js <nome-da-feature>
 
-# lint + typecheck (roda no pre-commit)
-cd app && npx biome check .
-cd web && npm run lint && npm run typecheck
+# lint de todo o monorepo — app, web, shared e scripts (roda no pre-commit)
+npm run lint
+
+# typecheck por projeto (roda no pre-commit)
+cd app && npx tsc --noEmit
+cd web && npm run typecheck
 
 # testes (roda no pre-push)
 cd app && npm test
@@ -119,6 +122,25 @@ cd web && npm run test
 ```
 
 Veja o protocolo completo em [`docs/HOW_WE_WORK.md`](docs/HOW_WE_WORK.md).
+
+### Migrations
+
+Schema é definido em Drizzle e aplicado pelo pipeline — nunca à mão. Detalhes e
+motivo em [`ADR-009`](docs/decisions/009-migration-strategy.md).
+
+```bash
+# 1. editar shared/src/database/schema/*.ts
+npm run db:generate          # gera o SQL em supabase/migrations/
+# 2. adicionar RLS e policies à migration gerada (drizzle não gera isso)
+# 3. validar do zero localmente
+supabase db reset            # aplica migrations + seed no Docker
+```
+
+O merge em `development` aplica no Preview; em `main`, no Production. Nunca use
+`drizzle-kit push` — ele altera o banco ignorando o versionamento.
+
+**Secrets por environment** (Settings → Environments → `preview` / `production`):
+`SUPABASE_ACCESS_TOKEN` · `SUPABASE_PROJECT_REF` · `SUPABASE_DB_PASSWORD` · `SUPABASE_DB_URL`
 
 ---
 
