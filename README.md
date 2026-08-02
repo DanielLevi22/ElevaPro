@@ -69,15 +69,23 @@ cd web && npm run dev
 
 ### Variáveis de ambiente
 
-```bash
-# mobile — copiar e preencher
-cp app/.env.example app/.env.development
+Preencha um arquivo único na raiz e deixe o script distribuir com os prefixos
+de cada plataforma — evita divergência entre `app/` e `web/`:
 
-# web — criar arquivo local
-cp web/.env.example web/.env.local
+```bash
+cp .env.example .env.development
+# preencha .env.development
+
+npm run env:sync              # gera app/.env.development e web/.env.local
+npm run env:sync:preview      # a partir de .env.preview
+npm run env:sync:production   # a partir de .env.production
 ```
 
-Veja as variáveis necessárias em [`CLAUDE.md`](CLAUDE.md#variáveis-de-ambiente).
+Os arquivos gerados são sobrescritos a cada sync — edite sempre a fonte na raiz.
+
+Para apontar ao Supabase local (Docker), rode `supabase start` e pegue os
+valores com `supabase status -o env`. As portas são `57321`/`57322`, definidas
+em [`supabase/config.toml`](supabase/config.toml) — não as default `543xx`.
 
 ---
 

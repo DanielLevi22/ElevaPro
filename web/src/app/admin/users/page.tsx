@@ -3,6 +3,7 @@
 import { supabase } from "@elevapro/supabase";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { AccountTypeBadge } from "@/shared";
 
 interface User {
   id: string;
@@ -83,38 +84,6 @@ export default function UsersPage() {
 
     return matchesSearch && matchesType && matchesStatus;
   });
-
-  const getAccountTypeBadge = (accountType: string, isSuperAdmin: boolean) => {
-    const badges = {
-      admin: {
-        label: isSuperAdmin ? "Super Admin" : "Admin",
-        color: "bg-purple-500/20 text-purple-400 border-purple-500/50",
-      },
-      professional: {
-        label: "Profissional",
-        color: "bg-orange-500/20 text-orange-400 border-orange-500/50",
-      },
-      managed_student: {
-        label: "Aluno (Gerenciado)",
-        color: "bg-blue-500/20 text-blue-400 border-blue-500/50",
-      },
-      autonomous_student: {
-        label: "Aluno (Autônomo)",
-        color: "bg-green-500/20 text-green-400 border-green-500/50",
-      },
-    };
-
-    const badge = badges[accountType as keyof typeof badges] || {
-      label: accountType,
-      color: "bg-gray-500/20 text-gray-400 border-gray-500/50",
-    };
-
-    return (
-      <span className={`px-2 py-1 rounded-md text-xs font-medium border ${badge.color}`}>
-        {badge.label}
-      </span>
-    );
-  };
 
   const getStatusBadge = (status: string | null) => {
     const s = status || "active";
@@ -208,9 +177,9 @@ export default function UsersPage() {
             >
               <option value="all">Todos os Tipos</option>
               <option value="admin">Admin</option>
-              <option value="specialist">Profissional</option>
-              <option value="student">Aluno (Gerenciado)</option>
-              <option value="member">Aluno (Autônomo)</option>
+              <option value="specialist">Personal Trainer</option>
+              <option value="student">Aluno</option>
+              <option value="member">Membro</option>
             </select>
           </div>
         </div>
@@ -285,7 +254,10 @@ export default function UsersPage() {
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    {getAccountTypeBadge(user.account_type, user.is_super_admin)}
+                    <AccountTypeBadge
+                      accountType={user.account_type}
+                      isSuperAdmin={user.is_super_admin}
+                    />
                   </td>
                   <td className="px-6 py-4">{getStatusBadge(user.account_status)}</td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">

@@ -2,6 +2,7 @@
 // Generic, reusable UI components
 
 // UI Components
+export { AccountTypeBadge } from "./components/ui/AccountTypeBadge";
 export { BackgroundGrid } from "./components/ui/BackgroundGrid";
 export { Marquee } from "./components/ui/Marquee";
 export { ThemeToggle } from "./components/ui/ThemeToggle";

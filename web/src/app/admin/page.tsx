@@ -8,7 +8,7 @@ import { PendingApprovalsList } from "./components/PendingApprovalsList";
 interface DashboardStats {
   totalUsers: number;
   activeUsers: number;
-  totalProfessionals: number;
+  totalSpecialists: number;
   totalStudents: number;
   recentUsers: Array<{
     id: string;
@@ -42,8 +42,8 @@ export default function AdminDashboard() {
         .select("*", { count: "exact", head: true })
         .gte("last_login_at", sevenDaysAgo.toISOString());
 
-      // Get professionals count
-      const { count: totalProfessionals } = await supabase
+      // Get specialists count
+      const { count: totalSpecialists } = await supabase
         .from("profiles")
         .select("*", { count: "exact", head: true })
         .eq("account_type", "specialist");
@@ -64,7 +64,7 @@ export default function AdminDashboard() {
       setStats({
         totalUsers: totalUsers || 0,
         activeUsers: activeUsers || 0,
-        totalProfessionals: totalProfessionals || 0,
+        totalSpecialists: totalSpecialists || 0,
         totalStudents: totalStudents || 0,
         recentUsers: (recentUsers as DashboardStats["recentUsers"]) || [],
       });
@@ -78,35 +78,6 @@ export default function AdminDashboard() {
   useEffect(() => {
     loadStats();
   }, [loadStats]);
-
-  const _getAccountTypeBadge = (accountType: string) => {
-    const badges = {
-      admin: { label: "Admin", color: "bg-purple-500/20 text-purple-400 border-purple-500/50" },
-      professional: {
-        label: "Profissional",
-        color: "bg-orange-500/20 text-orange-400 border-orange-500/50",
-      },
-      managed_student: {
-        label: "Aluno (Gerenciado)",
-        color: "bg-blue-500/20 text-blue-400 border-blue-500/50",
-      },
-      autonomous_student: {
-        label: "Aluno (Autônomo)",
-        color: "bg-green-500/20 text-green-400 border-green-500/50",
-      },
-    };
-
-    const badge = badges[accountType as keyof typeof badges] || {
-      label: accountType,
-      color: "bg-gray-500/20 text-gray-400 border-gray-500/50",
-    };
-
-    return (
-      <span className={`px-2 py-1 rounded-md text-xs font-medium border ${badge.color}`}>
-        {badge.label}
-      </span>
-    );
-  };
 
   if (isLoading) {
     return (
@@ -139,8 +110,8 @@ export default function AdminDashboard() {
           <p className="text-3xl font-bold text-green-400">{stats?.activeUsers || 0}</p>
         </div>
         <div className="bg-surface border border-border p-6 rounded-xl">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">Profissionais</h3>
-          <p className="text-3xl font-bold text-orange-400">{stats?.totalProfessionals || 0}</p>
+          <h3 className="text-sm font-medium text-muted-foreground mb-2">Personal Trainers</h3>
+          <p className="text-3xl font-bold text-orange-400">{stats?.totalSpecialists || 0}</p>
         </div>
         <div className="bg-surface border border-border p-6 rounded-xl">
           <h3 className="text-sm font-medium text-muted-foreground mb-2">Alunos</h3>
