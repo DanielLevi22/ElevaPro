@@ -18,8 +18,15 @@
 
 | Nome canônico | Nome na UI | Tipo no banco | Nunca usar |
 |---|---|---|---|
-| `professional` | Personal Trainer | `profiles.account_type = 'professional'` | "personal", "trainer", "coach" |
-| `student` | Aluno | `profiles.account_type = 'managed_student'` | "cliente", "paciente", "user" |
+| `admin` | Administrador | `profiles.account_type = 'admin'` | "root", "superuser" |
+| `specialist` | Personal Trainer | `profiles.account_type = 'specialist'` | "personal", "trainer", "coach", "professional" |
+| `student` | Aluno | `profiles.account_type = 'student'` | "cliente", "paciente", "user", "managed_student" |
+| `member` | Membro | `profiles.account_type = 'member'` | "autonomous_student", "aluno autônomo" |
+
+> `student` treina sob um `specialist`; `member` é independente e gerencia os
+> próprios planos. A fonte da verdade é o enum `account_type` em
+> [`shared/src/types/auth.types.ts`](../shared/src/types/auth.types.ts) —
+> qualquer divergência aqui é bug de documentação.
 
 ---
 
