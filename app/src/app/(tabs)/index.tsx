@@ -65,7 +65,13 @@ export default function DashboardScreen() {
     fetchDailyData,
     isLoading: gamificationLoading,
   } = useGamificationStore();
-  const { steps, calories, refetch: refetchHealth, loading: _healthLoading } = useHealthData();
+  const {
+    steps,
+    calories,
+    source: healthSource,
+    refetch: refetchHealth,
+    loading: _healthLoading,
+  } = useHealthData();
 
   // Professional Data Stores
   const { students, fetchStudents, isLoading: studentsLoading } = useStudentStore();
@@ -577,10 +583,17 @@ export default function DashboardScreen() {
             <Text className="text-zinc-500 text-[13px] font-bold font-sans uppercase tracking-widest">
               Atividade & Saúde
             </Text>
-            {steps > 0 && (
+            {healthSource === 'device' && (
               <View className="bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/10">
                 <Text className="text-emerald-500 text-[10px] font-black uppercase tracking-widest">
                   Live
+                </Text>
+              </View>
+            )}
+            {healthSource === 'mock' && (
+              <View className="bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/10">
+                <Text className="text-amber-500 text-[10px] font-black uppercase tracking-widest">
+                  Simulado
                 </Text>
               </View>
             )}

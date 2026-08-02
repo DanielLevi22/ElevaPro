@@ -71,6 +71,8 @@ Dados referentes à saúde exigem **base legal específica** e proteção refor�
 | Refeições e alimentos do plano | `diet_meals`, `diet_meal_items` | Tutela da saúde + Consentimento | Composição do plano alimentar |
 | Registro de refeições realizadas e substituições | `meal_logs` | Tutela da saúde + Consentimento | Acompanhamento de aderência nutricional |
 | Registro alimentar (campo legado) | `diet_logs` | Tutela da saúde + Consentimento | Acompanhamento nutricional |
+| Passos por dia (agregado) | `health_daily_metrics.steps` | Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I) | Acompanhamento de atividade entre sessões de treino |
+| Calorias ativas por dia (agregado) | `health_daily_metrics.active_calories` | Tutela da saúde + Consentimento | Estimativa de gasto energético para ajuste do plano |
 
 | Registro de consentimento | `student_consents` | Consentimento explícito (Art. 11, I) | Provar que o aluno autorizou coleta de dados de saúde |
 
@@ -282,8 +284,17 @@ A LGPD exige que dados sejam eliminados quando deixam de ser necessários (Art. 
 | Anamnese | Enquanto a conta estiver ativa | Auto-relato do aluno |
 | Histórico de treinos | Enquanto a conta estiver ativa | Histórico de evolução |
 | Histórico de dietas | Enquanto a conta estiver ativa | Histórico de evolução |
+| Passos e calorias diários | Enquanto a conta estiver ativa | Comparação de longo prazo é a finalidade; `ON DELETE CASCADE` elimina junto com a conta |
 | Logs de autenticação | 90 dias | Segurança — detecção de acessos suspeitos |
 | Dados após exclusão de conta | 0 dias (eliminar ou anonimizar) | Princípio da necessidade |
+
+### Revogação de consentimento — `health_daily_metrics`
+
+Revogar o consentimento de coleta de saúde é **prospectivo**: a coleta cessa
+imediatamente e o especialista perde o acesso pela RLS, mas o histórico já
+gravado permanece visível ao próprio aluno. Mesmo comportamento de `meal_logs`
+e `physical_assessments` — revogar não é o mesmo que exercer o direito de
+eliminação (Art. 18, VI), que continua disponível separadamente.
 
 > Política de retenção detalhada deve ser definida e publicada na Política de Privacidade antes do lançamento.
 

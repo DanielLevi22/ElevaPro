@@ -1,9 +1,31 @@
+import { createHealthService } from '@elevapro/shared';
+import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
+
+/**
+ * Registra o consentimento logo após a permissão do SO ser concedida.
+ *
+ * Sem este registro `hasCollectionConsent` sempre retorna false e nada é
+ * persistido — a permissão nativa autoriza a leitura, o consentimento LGPD
+ * autoriza o armazenamento. São coisas distintas.
+ */
+async function recordCollectionConsent(): Promise<void> {
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session?.user) return;
+
+    await createHealthService(supabase).grantCollectionConsent(session.user.id);
+  } catch (error: unknown) {
+    console.log('[HealthConnectScreen] Falha ao registrar consentimento:', String(error));
+  }
+}
 
 export default function HealthConnectScreen() {
   const router = useRouter();
@@ -29,9 +51,11 @@ export default function HealthConnectScreen() {
 
         const AppleHealthKit = require('react-native-health').default;
 
-        AppleHealthKit.initHealthKit(permissions, (error: string) => {
+        AppleHealthKit.initHealthKit(permissions, async (error: string) => {
           if (error) {
             console.log('[HealthConnectScreen] Error initializing HealthKit:', error);
+          } else {
+            await recordCollectionConsent();
           }
           router.replace('/(tabs)');
         });
@@ -51,6 +75,7 @@ export default function HealthConnectScreen() {
         ];
 
         await requestPermission(permissions);
+        await recordCollectionConsent();
         router.replace('/(tabs)');
       }
     } catch (error) {

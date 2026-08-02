@@ -77,7 +77,7 @@ components/  hooks/  services/  store/  screens/  types.ts  index.ts
 - TanStack Query (client) só para mutations, polling ou estado otimista.
 - Fetches independentes: `Promise.all()`.
 
-**Acesso:** toda ação protegida precisa de CASL (UI) + RLS (banco). Roles: `admin`, `professional`, `managed_student`, `autonomous_student`.
+**Acesso:** toda ação protegida precisa de CASL (UI) + RLS (banco). Roles: `admin`, `specialist`, `student`, `member` — enum `account_type`, fonte da verdade em `shared/src/types/auth.types.ts`.
 
 ---
 

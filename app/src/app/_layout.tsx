@@ -13,6 +13,7 @@ import { supabase } from '@elevapro/supabase';
 import { useAuthStore } from '@/auth';
 import { useColorScheme } from '@/components/useColorScheme';
 import { queryClient } from '@/lib/query-client';
+import { registerHealthSyncAsync } from '@/services/backgroundHealthTask';
 import { registerBackgroundFetchAsync } from '@/services/backgroundTask';
 import { requestNotificationPermissions } from '@/services/notificationService';
 
@@ -74,6 +75,9 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
 
     // Register background fetch for diet sync
     registerBackgroundFetchAsync();
+
+    // Register background fetch for step/calorie sync
+    registerHealthSyncAsync();
 
     // Cleanup subscription
     return () => {

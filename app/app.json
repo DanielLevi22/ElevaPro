@@ -38,6 +38,7 @@
         "FOREGROUND_SERVICE_LOCATION",
         "android.permission.health.READ_STEPS",
         "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
+        "android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND",
         "android.permission.health.WRITE_STEPS",
         "android.permission.health.WRITE_ACTIVE_CALORIES_BURNED",
         "RECORD_AUDIO",
