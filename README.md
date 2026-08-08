@@ -147,6 +147,20 @@ O merge em `development` aplica no Preview; em `main`, no Production. Nunca use
 gh secret set SUPABASE_DB_URL --env Preview --repo DanielLevi22/ElevaPro
 ```
 
+### URLs por ambiente
+
+Cada ambiente tem um domínio próprio e permanente. O de preview é criado por um
+passo de alias no deploy — sem ele, o CLI do Vercel gera um domínio novo a cada
+execução, e nada externo (como o build do mobile) consegue apontar para lá.
+
+| Ambiente | Domínio |
+|---|---|
+| Produção | `https://elevapro.vercel.app` |
+| Preview | `https://elevapro-preview.vercel.app` |
+
+Para trocar o domínio de preview, defina a variável de repositório
+`VERCEL_PREVIEW_DOMAIN` — o workflow usa o valor padrão acima quando ela não existe.
+
 ---
 
 ## Status atual
