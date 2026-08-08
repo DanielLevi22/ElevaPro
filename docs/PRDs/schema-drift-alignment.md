@@ -172,7 +172,7 @@ caso precisa da pergunta: essa feature deve existir? Se sim, PRD próprio.
 
 > Só muda o Status para `done` quando TODOS estão marcados.
 
-- [ ] Código funciona e passou em lint + typecheck + testes
+- [x] Código funciona e passou em lint + typecheck + testes
 - [ ] PR mergeado em `development`
-- [ ] `docs/features/schema-drift-alignment.md` criado ou atualizado
-- [ ] `docs/STATUS.md` atualizado
+- [x] `docs/features/schema-drift-alignment.md` criado ou atualizado
+- [x] `docs/STATUS.md` atualizado
