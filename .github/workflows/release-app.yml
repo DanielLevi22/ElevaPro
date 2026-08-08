@@ -96,6 +96,10 @@ jobs:
         env:
           EXPO_PUBLIC_SUPABASE_URL_PREVIEW: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL_PREVIEW }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY_PREVIEW: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY_PREVIEW }}
+          # Base do BFF. Sem ela o binário sai sem IA: AssistantService,
+          # FoodRecognitionService, NutriBotService e aiBodyScan chamam
+          # `${EXPO_PUBLIC_API_URL}/api/...` e resolveriam para caminho relativo.
+          EXPO_PUBLIC_API_URL_PREVIEW: ${{ secrets.EXPO_PUBLIC_API_URL_PREVIEW }}
 
   # ─────────────────────────────────────────
   # 3. BUILD PRODUCTION (push em main OU tag)
@@ -134,6 +138,7 @@ jobs:
         env:
           EXPO_PUBLIC_SUPABASE_URL_PROD: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL_PROD }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY_PROD: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY_PROD }}
+          EXPO_PUBLIC_API_URL_PROD: ${{ secrets.EXPO_PUBLIC_API_URL_PROD }}
 
   # ─────────────────────────────────────────
   # 4. SUBMIT TO GOOGLE PLAY (apenas tags)
