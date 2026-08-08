@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Profile, ProfileWithServices, ServiceType } from "../types/auth.types";
+import type { AccountType, Profile, ProfileWithServices, ServiceType } from "../types/auth.types";
 
 export interface SignUpSpecialistParams {
   email: string;
@@ -111,6 +111,30 @@ export const createAuthService = (supabase: SupabaseClient) => ({
       p_specialist_id: params.specialist_id,
       p_service_type: params.service_type,
     });
+  },
+
+  /**
+   * Define o tipo de conta no onboarding, criando o profile se ainda não existir.
+   *
+   * `admin` é recusado de propósito: contas administrativas nascem por convite,
+   * nunca por escolha do usuário numa tela de onboarding.
+   *
+   * @example
+   * await authService.setAccountType({ userId, email, accountType: "student", fullName });
+   */
+  setAccountType: async (params: {
+    userId: string;
+    email: string;
+    accountType: Exclude<AccountType, "admin">;
+    fullName?: string;
+  }): Promise<void> => {
+    const { error } = await supabase.from("profiles").upsert({
+      id: params.userId,
+      email: params.email,
+      account_type: params.accountType,
+      full_name: params.fullName ?? "",
+    });
+    if (error) throw error;
   },
 
   getProfile: async (userId: string): Promise<Profile | null> => {
