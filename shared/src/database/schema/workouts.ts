@@ -3,6 +3,7 @@ import {
   date,
   integer,
   jsonb,
+  numeric,
   pgEnum,
   pgTable,
   text,
@@ -138,5 +139,30 @@ export const workoutSessionExercises = pgTable("workout_session_exercises", {
     onDelete: "set null",
   }),
   sets_data: jsonb("sets_data").notNull().default([]),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * Série normalizada de cada set executado — criada pela migration 0007 e nunca
+ * declarada aqui.
+ *
+ * Convive com `workout_session_exercises.sets_data`, que guarda o mesmo dado em
+ * JSONB. São duas representações concorrentes; consolidar é dívida registrada
+ * no STATUS.md, não decisão deste arquivo.
+ */
+export const workoutSessionSets = pgTable("workout_session_sets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  session_exercise_id: uuid("session_exercise_id")
+    .notNull()
+    .references(() => workoutSessionExercises.id, { onDelete: "cascade" }),
+  set_index: integer("set_index").notNull(),
+  reps_prescribed: text("reps_prescribed"),
+  reps_actual: integer("reps_actual"),
+  weight_prescribed: numeric("weight_prescribed"),
+  weight_actual: numeric("weight_actual"),
+  rest_prescribed: integer("rest_prescribed"),
+  rest_actual: integer("rest_actual"),
+  completed: boolean("completed").notNull().default(false),
+  skipped: boolean("skipped").notNull().default(false),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

@@ -61,6 +61,14 @@ if echo "$branch" | grep -q "^feature/"; then
   fi
 fi
 
+# ── Referências de schema ─────────────────────────────────────────────────────
+# Nome de tabela é string: nem tsc nem os testes acusam quando ela não existe.
+npm run db:check-refs
+
 # ── Lint e TypeCheck ──────────────────────────────────────────────────────────
-cd app && npm run lint && npx tsc --noEmit
-cd ../web && npm run lint && npm run typecheck
+# O lint da raiz cobre app/, web/, shared/ e scripts/ com o mesmo biome.json.
+# Antes só app/ e web/ eram verificados, então shared/ passava direto.
+npm run lint
+
+cd app && npx tsc --noEmit
+cd ../web && npm run typecheck

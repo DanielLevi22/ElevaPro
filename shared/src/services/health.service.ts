@@ -44,7 +44,7 @@ export const createHealthService = (supabase: SupabaseClient) => ({
         revoked_at: null,
         policy_version: POLICY_VERSION,
       },
-      { onConflict: "student_id,consent_type" }
+      { onConflict: "student_id,consent_type" },
     );
     if (error) throw error;
   },
@@ -72,7 +72,7 @@ export const createHealthService = (supabase: SupabaseClient) => ({
         active_calories: metric.active_calories,
         synced_at: new Date().toISOString(),
       },
-      { onConflict: "student_id,date" }
+      { onConflict: "student_id,date" },
     );
     if (error) throw error;
   },
@@ -80,7 +80,7 @@ export const createHealthService = (supabase: SupabaseClient) => ({
   getRange: async (
     studentId: string,
     startDate: string,
-    endDate: string
+    endDate: string,
   ): Promise<HealthDailyMetric[]> => {
     const { data, error } = await supabase
       .from("health_daily_metrics")

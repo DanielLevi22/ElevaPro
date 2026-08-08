@@ -1,111 +1,52 @@
-# Módulo AI - Arquitetura Centralizada
+# Módulo AI — cliente do BFF
 
 ## Visão Geral
 
-O módulo `src/modules/ai` centraliza toda a lógica de Inteligência Artificial do app, servindo como o "cérebro" do Co-Piloto.
+O mobile **não chama provedor de IA diretamente**. Toda inteligência vive no BFF
+do web (`web/src/app/api/ai/*`), e este módulo é apenas o cliente HTTP dessas
+rotas. A decisão está registrada em
+[ADR-004](../../../../docs/decisions/004-ai-bff-pattern.md).
+
+O motivo é simples: chave de provedor embarcada no bundle do app é chave
+vazada. `EXPO_PUBLIC_*` vai para o binário e qualquer um extrai.
 
 ## Estrutura
 
 ```
 src/modules/ai/
 ├── services/
-│   ├── GeminiService.ts      # Core: comunicação com API Gemini
-│   └── CoPilotService.ts     # High-level: lógica do Co-Piloto
-├── types/                    # (futuro) Tipos compartilhados
-├── components/               # (futuro) Componentes de chat
-├── tools/                    # (futuro) Tool Calling (navegação, etc)
-└── index.ts                  # Exports centralizados
+│   └── AssistantService.ts   # cliente HTTP do BFF
+├── components/
+│   └── PlanProposalCard.tsx
+└── index.ts                  # exports centralizados
 ```
 
-## GeminiService
+## AssistantService
 
-**Responsabilidade**: Comunicação direta com a API do Google Gemini.
+**Responsabilidade**: falar com o BFF. Nada mais.
 
-**Features**:
-- Gerenciamento centralizado da API Key
-- Suporte a Tool Calling (function declarations)
-- Parsing robusto de JSON
-- Error handling
+A base vem de `EXPO_PUBLIC_API_URL` — sem ela nenhuma feature de IA funciona,
+porque não há fallback local por design.
 
-**Exemplo**:
 ```typescript
-import { GeminiService } from '@/modules/ai';
+import { AssistantService } from '@/modules/ai';
 
-const result = await GeminiService.generateContent<MyType>(
-  "Prompt aqui",
-  { responseMimeType: 'application/json', temperature: 0.7 }
-);
-
-if (result.data) {
-  // Usar result.data
-}
-
-if (result.functionCall) {
-  // AI chamou uma função (Tool Calling)
-}
+const plan = await AssistantService.generateWorkoutPlan(studentId, prompt);
 ```
 
-## CoPilotService
+## Consumidores
 
-**Responsabilidade**: Lógica de alto nível do Co-Piloto (persona, contexto, prompts).
+| Módulo | Uso |
+|---|---|
+| `modules/nutrition/services/AnalysisService.ts` | análise nutricional |
+| `modules/workout/services/WorkoutAIService.ts` | geração de treino |
 
-**Métodos**:
-- `negotiateWorkout()`: Gera treinos personalizados com explicação
-- `answerQuestion()`: (futuro) Responde dúvidas sobre o app
+## O que NÃO fazer aqui
 
-**Exemplo**:
-```typescript
-import { CoPilotService } from '@/modules/ai';
+- Chamar Anthropic, Gemini ou qualquer provedor direto. Se precisar de uma
+  capacidade nova de IA, ela nasce como rota no BFF.
+- Guardar chave de provedor em `EXPO_PUBLIC_*`.
 
-const response = await CoPilotService.negotiateWorkout(
-  'ABC',
-  'Hipertrofia',
-  'Intermediário',
-  availableExercises,
-  'Aluno tem dor no joelho'
-);
-
-if (response) {
-  console.log(response.explanation); // Explicação da I.A.
-  console.log(response.plan);        // Array de treinos
-}
-```
-
-## Migração de Código Legado
-
-### Antes (WorkoutAIService direto)
-```typescript
-import { WorkoutAIService } from '../services/WorkoutAIService';
-const result = await WorkoutAIService.generateWorkoutStructure(...);
-```
-
-### Agora (via CoPilotService)
-```typescript
-// WorkoutAIService ainda funciona (wrapper)
-import { WorkoutAIService } from '../services/WorkoutAIService';
-const result = await WorkoutAIService.generateWorkoutStructure(...);
-
-// OU use diretamente o CoPilotService
-import { CoPilotService } from '@/modules/ai';
-const result = await CoPilotService.negotiateWorkout(...);
-```
-
-## Próximos Passos (Tool Calling)
-
-1. **Navegação**: AI pode navegar o usuário (`router.push()`)
-2. **Ações**: AI pode executar ações (criar treino, marcar refeição)
-3. **Contexto Global**: AI acessa dados de todos os módulos
-
-**Exemplo futuro**:
-```typescript
-// Usuário: "Como faço para ver meu treino de hoje?"
-// AI detecta intenção → Chama tool "navigate" → router.push('/workouts/today')
-```
-
-## Benefícios
-
-✅ **Centralizado**: Uma fonte de verdade para toda I.A.  
-✅ **Reutilizável**: Mesma lógica para treino, nutrição, chat  
-✅ **Escalável**: Fácil adicionar novos recursos (voz, vídeo)  
-✅ **Testável**: Mocks mais simples, testes isolados  
-✅ **Manutenível**: Mudanças na API Gemini = 1 arquivo só
+> `GeminiService`, `AiToolRegistry` e `workoutTools` foram removidos em
+> 2026-08-02: haviam ficado órfãos após a migração para o BFF e ninguém os
+> importava.

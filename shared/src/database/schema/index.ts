@@ -1,3 +1,4 @@
+export * from "./ai";
 export * from "./assessment";
 export * from "./auth";
 export * from "./gamification";

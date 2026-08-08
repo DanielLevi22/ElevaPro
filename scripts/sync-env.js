@@ -39,9 +39,10 @@ for (const line of raw.split("\n")) {
 const appEnvMap = {
   SUPABASE_URL: "EXPO_PUBLIC_SUPABASE_URL",
   SUPABASE_ANON_KEY: "EXPO_PUBLIC_SUPABASE_ANON_KEY",
-  GEMINI_API_KEY: "EXPO_PUBLIC_GEMINI_API_KEY",
   API_URL: "EXPO_PUBLIC_API_URL", // base do BFF no web — sem ela as features de IA quebram
   // DATABASE_URL não vai pro app — é só para migrations
+  // Nenhuma chave de provedor de IA vai pro mobile: EXPO_PUBLIC_* entra no
+  // bundle e é extraível. Toda IA passa pelo BFF (ADR-004).
 };
 
 const webEnvMap = {
@@ -50,7 +51,6 @@ const webEnvMap = {
   SUPABASE_SERVICE_ROLE_KEY: "SUPABASE_SERVICE_ROLE_KEY", // server-side only, sem prefixo NEXT_PUBLIC_
   DATABASE_URL: "DATABASE_URL",
   ANTHROPIC_API_KEY: "ANTHROPIC_API_KEY", // server-side only — usada por todas as rotas /api/ai/*
-  // GEMINI_API_KEY não vai pro web — é só para o mobile
 };
 
 // ─── Geração dos arquivos ──────────────────────────────────────────────────

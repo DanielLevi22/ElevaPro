@@ -325,7 +325,7 @@ describe('workoutStore', () => {
       id: 'new-p',
       name: 'New P',
       student_id: 's1',
-      personal_id: 'p1',
+      specialist_id: 'p1',
       start_date: '2024-01-01',
       end_date: '2024-02-01',
       status: 'active',
@@ -356,7 +356,7 @@ describe('workoutStore', () => {
     const result = await useWorkoutStore.getState().createPeriodization({
       name: 'New P',
       student_id: 's1',
-      personal_id: 'p1',
+      specialist_id: 'p1',
       start_date: '2024-01-01',
       end_date: '2024-02-01',
       status: 'active',

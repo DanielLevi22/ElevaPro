@@ -8,6 +8,9 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
+    "db:generate": "drizzle-kit generate",
+    "db:check": "drizzle-kit check",
+    "db:check-refs": "node scripts/check-schema-refs.js",
     "env:sync": "node scripts/sync-env.js",
     "env:sync:preview": "node scripts/sync-env.js preview",
     "env:sync:production": "node scripts/sync-env.js production"
@@ -17,6 +20,7 @@
     "@commitlint/cli": "^20.4.2",
     "@commitlint/config-conventional": "^20.4.2",
     "@supabase/supabase-js": "^2.103.3",
+    "drizzle-kit": "^0.31.7",
     "drizzle-orm": "^0.45.2",
     "husky": "^9.1.7",
     "typescript": "~5.9.2"

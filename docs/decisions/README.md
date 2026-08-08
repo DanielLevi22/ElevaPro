@@ -21,6 +21,7 @@
 |---|---|---|
 | [ADR-002](002-flat-monorepo.md) | Flat Monorepo com /packages/ na raiz (sem Turborepo) | accepted |
 | [ADR-003](003-environment-strategy.md) | Estratégia de ambientes Local → Preview → Production | accepted |
+| [ADR-009](009-migration-strategy.md) | Migrations aplicadas pelo pipeline, não à mão | accepted |
 
 ### Arquitetura web
 

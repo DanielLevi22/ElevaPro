@@ -185,7 +185,7 @@ export default function WorkoutDetailScreen() {
           onPress: async () => {
             setDeleting(true);
             try {
-              await supabase.from('workout_items').delete().eq('workout_id', id);
+              await supabase.from('workout_exercises').delete().eq('workout_id', id);
               const { error } = await supabase.from('workouts').delete().eq('id', id);
               if (error) throw error;
               Alert.alert('Sucesso! ✅', 'Treino deletado com sucesso!');
@@ -203,7 +203,7 @@ export default function WorkoutDetailScreen() {
 
   const handleDeleteExercise = async (exerciseItemId: string) => {
     try {
-      await supabase.from('workout_items').delete().eq('id', exerciseItemId);
+      await supabase.from('workout_exercises').delete().eq('id', exerciseItemId);
       fetchWorkoutDetails();
     } catch (e) {
       Alert.alert('Erro ao deletar exercício', e instanceof Error ? e.message : String(e));
@@ -220,7 +220,7 @@ export default function WorkoutDetailScreen() {
 
     try {
       const { error } = await supabase
-        .from('workout_items')
+        .from('workout_exercises')
         .update({
           sets: updatedExercise.sets,
           reps: updatedExercise.reps.toString(),

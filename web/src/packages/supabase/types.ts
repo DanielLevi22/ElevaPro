@@ -29,7 +29,6 @@ export interface ChatMessage {
 /** @deprecated chat module pendente */
 export interface ConversationWithDetails {
   id: string;
-  personal_id: string;
   specialist_id: string;
   student_id: string;
   last_message_at: string;

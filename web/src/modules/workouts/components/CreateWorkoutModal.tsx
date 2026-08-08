@@ -3,13 +3,11 @@
 import { supabase } from "@elevapro/supabase";
 import { useEffect, useState } from "react";
 import type { Exercise } from "@/shared/hooks/useExercises";
-import { useStudents } from "@/shared/hooks/useStudents";
 import { useCreateWorkout, useUpdateWorkout } from "@/shared/hooks/useWorkoutMutations";
 import { useWorkout } from "@/shared/hooks/useWorkouts";
 import { ExerciseConfigModal, type SelectedExercise } from "./ExerciseConfigModal";
 import { ExerciseListItem } from "./ExerciseListItem";
 import { SelectExercisesModal } from "./SelectExercisesModal";
-import { StudentMultiSelect } from "./StudentMultiSelect";
 
 interface CreateWorkoutModalProps {
   isOpen: boolean;
@@ -40,7 +38,6 @@ export function CreateWorkoutModal({
     "intermediate",
   );
 
-  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [selectedExercises, setSelectedExercises] = useState<SelectedExercise[]>([]);
   const [showSelectModal, setShowSelectModal] = useState(false);
   const [showConfigModal, setShowConfigModal] = useState(false);
@@ -56,7 +53,6 @@ export function CreateWorkoutModal({
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   const { data: existingWorkout } = useWorkout(workoutId || "");
-  const { data: students = [] } = useStudents();
   const createMutation = useCreateWorkout();
   const updateMutation = useUpdateWorkout();
 
@@ -81,7 +77,6 @@ export function CreateWorkoutModal({
       setIdentifier("");
       setEstimatedDuration("");
       setDifficultyLevel("intermediate");
-      setSelectedStudentIds([]);
       setSelectedExercises([]);
     }
   }, [isOpen]);
@@ -136,25 +131,6 @@ export function CreateWorkoutModal({
           const { error: itemsError } = await supabase.from("workout_exercises").insert(items);
 
           if (itemsError) throw itemsError;
-        }
-
-        // Assignments: only for specialists without a training plan
-        if (!trainingPlanId && !memberStudentId && selectedStudentIds.length > 0) {
-          // Delete existing assignments if editing
-          if (isEditing) {
-            await supabase.from("workout_assignments").delete().eq("workout_id", newWorkoutId);
-          }
-
-          const assignments = selectedStudentIds.map((studentId) => ({
-            workout_id: newWorkoutId,
-            student_id: studentId,
-          }));
-
-          const { error: assignmentError } = await supabase
-            .from("workout_assignments")
-            .insert(assignments);
-
-          if (assignmentError) throw assignmentError;
         }
       }
 
@@ -337,20 +313,6 @@ export function CreateWorkoutModal({
                       </button>
                     ))}
                   </div>
-                </div>
-              )}
-
-              {/* Student Selection - only for specialists without a training plan */}
-              {!trainingPlanId && !memberStudentId && (
-                <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-1">
-                    Atribuir a Alunos (Opcional)
-                  </label>
-                  <StudentMultiSelect
-                    students={students}
-                    selectedIds={selectedStudentIds}
-                    onSelectionChange={setSelectedStudentIds}
-                  />
                 </div>
               )}
             </div>

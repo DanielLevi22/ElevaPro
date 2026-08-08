@@ -49,7 +49,7 @@ export default function CreateTrainingPlanScreen() {
       const { data, error } = await supabase
         .from('workouts')
         .select('id, title, description')
-        .eq('professional_id', user.id)
+        .eq('specialist_id', user.id)
         .order('created_at', { ascending: false });
 
       if (!error && data) {
@@ -90,19 +90,15 @@ export default function CreateTrainingPlanScreen() {
 
       if (planError) throw planError;
 
-      // Add workouts to plan
+      // Vincula os treinos à ficha. O modelo atual é relação direta via
+      // workouts.training_plan_id — não existe tabela de junção.
       if (selectedWorkouts.length > 0 && planData) {
-        const workoutLinks = selectedWorkouts.map((workoutId, index) => ({
-          training_plan_id: planData.id,
-          workout_id: workoutId,
-          order_index: index,
-        }));
+        const { error: linkError } = await supabase
+          .from('workouts')
+          .update({ training_plan_id: planData.id })
+          .in('id', selectedWorkouts);
 
-        const { error: linksError } = await supabase
-          .from('training_plan_workouts')
-          .insert(workoutLinks);
-
-        if (linksError) throw linksError;
+        if (linkError) throw linkError;
       }
 
       Alert.alert('Sucesso', 'Ficha criada com sucesso!', [

@@ -5,7 +5,7 @@ export interface Workout {
   id: string;
   title: string;
   description: string | null;
-  personal_id: string;
+  specialist_id: string;
   student_id: string | null;
   created_at: string;
 }
@@ -17,7 +17,7 @@ export function useWorkouts(personalId?: string) {
       let query = supabase.from('workouts').select('*').order('created_at', { ascending: false });
 
       if (personalId) {
-        query = query.eq('personal_id', personalId);
+        query = query.eq('specialist_id', personalId);
       }
 
       const { data, error } = await query;
