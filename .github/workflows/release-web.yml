@@ -94,8 +94,26 @@ jobs:
           # consome a IA via BFF, as features de IA do app param junto.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
+      # `vercel deploy` pelo CLI gera um domínio novo com hash a cada execução —
+      # a integração Git do Vercel é quem cria o alias de branch, e ela não está
+      # no caminho aqui. Sem alias fixo, nada externo consegue apontar para o
+      # preview: o build do mobile congelaria no deploy do dia.
       - name: Deploy to Vercel (Preview)
-        run: npx vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+        id: deploy
+        run: |
+          url=$(npx vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} | tail -1)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployment: $url"
+
+      - name: Alias estável de preview
+        run: |
+          npx vercel alias set "${{ steps.deploy.outputs.url }}" "$PREVIEW_DOMAIN" \
+            --token=${{ secrets.VERCEL_TOKEN }} --scope="$VERCEL_ORG_ID"
+          echo "### 🌐 Preview" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Estável: https://$PREVIEW_DOMAIN" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Deployment: ${{ steps.deploy.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"
+        env:
+          PREVIEW_DOMAIN: ${{ vars.VERCEL_PREVIEW_DOMAIN || 'elevapro-preview.vercel.app' }}
 
   # ─────────────────────────────────────────
   # 4. DEPLOY PRODUCTION (push em main ou tag)
