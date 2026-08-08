@@ -17,6 +17,10 @@ on:
       - "supabase/**"
     tags:
       - "web/v*.*.*"
+  # Deploy sob demanda. Mudança só no workflow ou em docs não bate nos filtros de
+  # path acima, então alterações no próprio pipeline — como o alias de preview —
+  # não se aplicavam até alguém tocar em web/, shared/ ou supabase/.
+  workflow_dispatch:
 
 jobs:
   # ─────────────────────────────────────────
