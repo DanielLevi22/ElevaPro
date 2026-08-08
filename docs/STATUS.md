@@ -52,7 +52,8 @@
 | [local-dev-environment](PRDs/local-dev-environment.md) | 3 ambientes: Local→Preview→Production | ✅ done | — |
 | [social-and-engagement](PRDs/social-and-engagement.md) | Comunidade, ranking, chat, notificações | draft | — |
 | [health-background-tracking](PRDs/health-background-tracking.md) | Passos/calorias: correção da leitura + coleta em background (Android; iOS fora de escopo) | ✅ done | `feature/health-background-tracking` |
-| [schema-drift-alignment](PRDs/schema-drift-alignment.md) | Alinha mobile e web ao schema real + guarda em CI contra recorrência | ⚠️ in-progress | `feature/schema-drift-alignment` |
+| [schema-drift-alignment](PRDs/schema-drift-alignment.md) | Alinha mobile e web ao schema real + guarda em CI contra recorrência | ✅ done | `feature/schema-drift-alignment` |
+| [admin-panel-restore](PRDs/admin-panel-restore.md) | Torna o painel /admin acessível, sem dar ao admin acesso a dados de saúde | draft | `feature/admin-panel-restore` |
 
 > Adicionar linha aqui ao criar um novo PRD via `node scripts/new-feature.js`.
 
@@ -70,6 +71,8 @@
 | 6 | `assessment` module usa `as unknown as AssessmentInsert` — field mapping com nomes legados | 🟡 Média | — |
 | 7 | **12 tabelas referenciadas em código não existem no banco** — schema construído tabela a tabela, telas não acompanharam os renomes. Causa bugs silenciosos (deletar exercício não deleta). Inventário completo em [PRD schema-drift-alignment](PRDs/schema-drift-alignment.md) | 🔴 Alta | — |
 | 8 | Tela de perfil (mobile) exibe barra de XP sem fonte de dados — não existe sistema de nível/XP no schema | 🟢 Baixa | — |
+| 10 | **Painel `/admin` inacessível a todos** — `layout.tsx` consulta `is_super_admin`, coluna inexistente, e redireciona qualquer usuário. Mais 3 colunas fantasma em `profiles`. Ver [PRD admin-panel-restore](PRDs/admin-panel-restore.md) | 🔴 Alta | — |
+| 11 | `check-schema-refs.js` valida só nomes de tabela, não colunas — as 4 colunas fantasma de `profiles` passariam pela guarda | 🟡 Média | — |
 | 9 | Duas representações concorrentes de execução de treino: `workout_session_exercises.sets_data` (JSONB) e `workout_session_sets` (normalizada) | 🟡 Média | — |
 
 ---
