@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Eleva Pro",
-    "slug": "eleva-pro",
+    "slug": "elevapro",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./src/assets/images/icon.png",
@@ -92,7 +92,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "cfcc0b23-987d-4039-9679-dab9739f6552"
+        "projectId": "3f017fd3-935c-4744-9b85-ba1ddc21da13"
       }
     },
     "owner": "daniellevi98"
