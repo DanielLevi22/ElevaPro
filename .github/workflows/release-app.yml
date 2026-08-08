@@ -15,6 +15,10 @@ on:
       - "app/**"
     tags:
       - "app/v*.*.*"
+  # Build sob demanda. O gatilho de push exige mudança em app/**, então não havia
+  # como gerar um binário para testar sem commit artificial — e re-executar um run
+  # antigo usa a versão do workflow daquele commit, não a atual.
+  workflow_dispatch:
 
 jobs:
   # ─────────────────────────────────────────
