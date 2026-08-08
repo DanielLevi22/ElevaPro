@@ -44,6 +44,33 @@ jobs:
         with:
           version: latest
 
+      # Sem isto, secret ausente vira `--db-url ""` e o CLI tenta o socket
+      # local do runner; string Direct falha com ECONNREFUSED num IPv6. Os
+      # dois erros são ilegíveis para quem só esqueceu de configurar o secret.
+      - name: Validar connection string
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "❌ SUPABASE_DB_URL não configurado no environment '$ENVIRONMENT'."
+            echo "   Settings → Environments → $ENVIRONMENT → Add secret"
+            exit 1
+          fi
+
+          # Direct connection é IPv6-only; runners do GitHub são IPv4.
+          case "$SUPABASE_DB_URL" in
+            *db.*.supabase.co*)
+              echo "❌ SUPABASE_DB_URL usa a Direct connection (db.<ref>.supabase.co)."
+              echo "   Ela é IPv6-only e os runners do GitHub são IPv4."
+              echo "   Use a string do Session pooler:"
+              echo "   postgresql://postgres.<ref>:<senha>@aws-0-<regiao>.pooler.supabase.com:5432/postgres"
+              exit 1
+              ;;
+          esac
+
+          echo "✓ Connection string via pooler."
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
+
       # `--db-url` dispensa link, access token e project ref: a connection
       # string já carrega host, projeto e senha. Um secret em vez de quatro.
       #
