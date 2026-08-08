@@ -4,7 +4,7 @@ import type { ServiceType } from "@elevapro/shared";
 import { supabase } from "@elevapro/supabase";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useAuthStore } from "@/modules/auth";
 
 type AccountRole = "specialist" | "student";
@@ -34,7 +34,7 @@ function deriveInitialState(roleParam: string | null): {
   return { role: "specialist", services };
 }
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const roleParam = searchParams.get("role");
@@ -324,5 +324,27 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * `useSearchParams` força bailout de CSR no prerender estático, então o build
+ * de produção falha sem um limite de Suspense — erro que só aparece em
+ * `next build`, nunca em `next dev`.
+ *
+ * O fallback repete a moldura visual da página para não haver salto de layout
+ * enquanto os search params resolvem.
+ */
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="text-muted-foreground text-sm">Carregando…</div>
+        </div>
+      }
+    >
+      <RegisterForm />
+    </Suspense>
   );
 }
