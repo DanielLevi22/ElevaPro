@@ -47,7 +47,7 @@ export const useWorkoutLogStore = create<WorkoutLogState>((set, get) => ({
     set({ loading: true });
     try {
       const { data, error } = await supabase
-        .from('workout_executions')
+        .from('workout_sessions')
         .select('*')
         .eq('student_id', studentId)
         .order('completed_at', { ascending: false });
@@ -72,7 +72,7 @@ export const useWorkoutLogStore = create<WorkoutLogState>((set, get) => ({
 
       const now = new Date().toISOString();
 
-      const { error } = await supabase.from('workout_executions').insert({
+      const { error } = await supabase.from('workout_sessions').insert({
         student_id: user.id,
         workout_id: workoutId,
         notes: feedback || null,

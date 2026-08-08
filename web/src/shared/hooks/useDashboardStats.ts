@@ -28,7 +28,7 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
   const { count: totalWorkouts } = await supabase
     .from("workouts")
     .select("*", { count: "exact", head: true })
-    .eq("personal_id", user.id);
+    .eq("specialist_id", user.id);
 
   // Get active diet plans
   const { count: activeDiets } = await supabase
@@ -42,9 +42,9 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
   const { count: completedWorkoutsThisWeek } = await supabase
-    .from("workout_executions")
-    .select("workout_id, workouts!inner(professional_id)", { count: "exact", head: true })
-    .eq("workouts.professional_id", user.id)
+    .from("workout_sessions")
+    .select("workout_id, workouts!inner(specialist_id)", { count: "exact", head: true })
+    .eq("workouts.specialist_id", user.id)
     .not("completed_at", "is", null)
     .gte("completed_at", oneWeekAgo.toISOString());
 

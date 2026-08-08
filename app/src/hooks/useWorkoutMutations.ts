@@ -6,14 +6,14 @@ import type { Workout } from './useWorkouts';
 export interface CreateWorkoutInput {
   title: string;
   description?: string;
-  personal_id: string;
+  specialist_id: string;
   items: Array<{
     exercise_id: string;
     sets: number;
     reps: string;
     weight?: string;
-    rest_time: number;
-    order: number;
+    rest_seconds: number;
+    order_index: number;
   }>;
 }
 
@@ -28,7 +28,7 @@ export function useCreateWorkout() {
         .insert({
           title: workout.title,
           description: workout.description || null,
-          personal_id: workout.personal_id,
+          specialist_id: workout.specialist_id,
         })
         .select()
         .single();
@@ -43,11 +43,11 @@ export function useCreateWorkout() {
           sets: item.sets,
           reps: item.reps,
           weight: item.weight || null,
-          rest_time: item.rest_time,
-          order: item.order,
+          rest_seconds: item.rest_seconds,
+          order_index: item.order_index,
         }));
 
-        const { error: itemsError } = await supabase.from('workout_items').insert(workoutItems);
+        const { error: itemsError } = await supabase.from('workout_exercises').insert(workoutItems);
 
         if (itemsError) throw itemsError;
       }
@@ -94,7 +94,7 @@ export function useDeleteWorkout() {
   return useMutation({
     mutationFn: async (id: string) => {
       // Deletar workout items primeiro
-      await supabase.from('workout_items').delete().eq('workout_id', id);
+      await supabase.from('workout_exercises').delete().eq('workout_id', id);
 
       const { error } = await supabase.from('workouts').delete().eq('id', id);
       if (error) throw error;

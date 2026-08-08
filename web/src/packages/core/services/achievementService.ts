@@ -266,7 +266,7 @@ export const achievementService = {
         .eq("student_id", studentId)
         .eq("status", "completed"),
       supabase
-        .from("diet_logs")
+        .from("meal_logs")
         .select("*", { count: "exact", head: true })
         .eq("student_id", studentId)
         .eq("completed", true),

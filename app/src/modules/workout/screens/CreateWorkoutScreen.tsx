@@ -45,7 +45,7 @@ export default function CreateWorkoutScreen() {
       description,
       difficulty,
       muscle_group: muscleGroup,
-      personal_id: user.id,
+      specialist_id: user.id,
     });
 
     if (result.success) {
