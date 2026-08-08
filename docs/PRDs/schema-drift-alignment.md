@@ -27,7 +27,7 @@ typecheck pega, porque nome de tabela é string.
 - [x] Verificação em CI falha o build se uma referência órfã for introduzida
 - [x] Deletar exercício de um treino remove a linha de fato
 - [x] Criar treino com exercícios persiste os exercícios
-- [ ] Teste de regressão para cada tela corrigida
+- [x] Teste de regressão para cada tela corrigida
 - [x] `npm run lint` e `tsc --noEmit` limpos nos dois projetos
 
 ---
