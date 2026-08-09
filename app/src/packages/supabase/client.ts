@@ -20,8 +20,21 @@ const supabaseUrl =
 const supabaseAnonKey =
   process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
+// O Expo escolhe o arquivo .env pelo NODE_ENV, não pelo perfil de build: um APK de
+// release lê .env.production, não .env.development. Quando esse arquivo falta, as
+// duas variáveis chegam vazias aqui e o app morre logo depois da splash, sem log —
+// daí a mensagem dizer qual variável faltou e de onde ela deveria ter vindo.
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
+  const missing = [
+    !supabaseUrl && 'EXPO_PUBLIC_SUPABASE_URL',
+    !supabaseAnonKey && 'EXPO_PUBLIC_SUPABASE_ANON_KEY',
+  ].filter(Boolean);
+  throw new Error(
+    `Supabase sem configuração: ${missing.join(' e ')} vazia(s). ` +
+      `Build de desenvolvimento lê app/.env.development; build de release lê ` +
+      `app/.env.production; build no EAS lê as variáveis do environment do perfil ` +
+      `(eas.json). Esperado: URL https://<ref>.supabase.co e chave publishable.`
+  );
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
