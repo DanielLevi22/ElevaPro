@@ -11,27 +11,45 @@ Notifications.setNotificationHandler({
   }),
 });
 
+export const MEAL_CHANNEL_ID = 'meal-reminders';
+export const WORKOUT_CHANNEL_ID = 'workout-reminders';
+
+/**
+ * Canais precisam existir antes de qualquer agendamento — uma notificação
+ * enviada para canal inexistente é descartada pelo Android sem aviso.
+ *
+ * Criar canal não exige permissão, então isto roda mesmo se o usuário recusar:
+ * se ele conceder depois, os canais já estão lá.
+ */
+async function ensureAndroidChannels(): Promise<void> {
+  if (Platform.OS !== 'android') return;
+
+  const config = {
+    importance: Notifications.AndroidImportance.HIGH,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: '#00FF88',
+  };
+
+  await Notifications.setNotificationChannelAsync(MEAL_CHANNEL_ID, {
+    name: 'Lembretes de refeição',
+    ...config,
+  });
+  await Notifications.setNotificationChannelAsync(WORKOUT_CHANNEL_ID, {
+    name: 'Lembretes de treino',
+    ...config,
+  });
+}
+
 export async function requestNotificationPermissions(): Promise<boolean> {
+  await ensureAndroidChannels();
+
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
+  if (existingStatus === 'granted') return true;
 
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-
-  if (finalStatus !== 'granted') {
-    console.warn('Failed to get notification permissions');
+  const { status } = await Notifications.requestPermissionsAsync();
+  if (status !== 'granted') {
+    console.warn('[Notifications] Permissão não concedida — nada será entregue.');
     return false;
-  }
-
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('meal-reminders', {
-      name: 'Meal Reminders',
-      importance: Notifications.AndroidImportance.HIGH,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#00FF88',
-    });
   }
 
   return true;
@@ -113,6 +131,7 @@ export async function scheduleMealNotifications(
           const trigger: Notifications.DateTriggerInput = {
             type: Notifications.SchedulableTriggerInputTypes.DATE,
             date: targetDate,
+            channelId: MEAL_CHANNEL_ID,
           };
 
           await Notifications.scheduleNotificationAsync({
@@ -122,8 +141,6 @@ export async function scheduleMealNotifications(
               body: bodyText,
               data: { planId, mealId: meal.mealId },
               sound: true,
-              // @ts-expect-error
-              channelId: 'meal-reminders',
             },
             trigger,
           });
@@ -211,6 +228,7 @@ export async function scheduleWorkoutReminder(hour: number = 8, minute: number =
           type: Notifications.SchedulableTriggerInputTypes.DAILY,
           hour,
           minute,
+          channelId: WORKOUT_CHANNEL_ID,
         },
       });
     } else {
@@ -238,6 +256,7 @@ export async function schedulePostWorkoutReminder(): Promise<void> {
     const trigger: Notifications.DateTriggerInput = {
       type: Notifications.SchedulableTriggerInputTypes.DATE,
       date: new Date(Date.now() + 30 * 60 * 1000),
+      channelId: WORKOUT_CHANNEL_ID,
     };
 
     await Notifications.scheduleNotificationAsync({
