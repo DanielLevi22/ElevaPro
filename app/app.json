@@ -46,9 +46,10 @@
     "plugins": [
       "expo-router",
       [
-        "react-native-health",
+        "@kingstinct/react-native-healthkit",
         {
-          "isClinicalDataEnabled": false
+          "NSHealthShareUsageDescription": "Precisamos acessar seus dados de saúde para sincronizar passos e calorias.",
+          "NSHealthUpdateUsageDescription": "Precisamos acessar seus dados de saúde para salvar seus treinos."
         }
       ],
       "react-native-health-connect",

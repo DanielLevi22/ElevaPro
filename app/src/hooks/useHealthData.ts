@@ -1,6 +1,9 @@
+import {
+  queryStatisticsForQuantity,
+  requestAuthorization,
+} from '@kingstinct/react-native-healthkit';
 import { useCallback, useEffect, useState } from 'react';
 import { AppState, Platform } from 'react-native';
-import AppleHealthKit, { type HealthKitPermissions, type HealthValue } from 'react-native-health';
 import { getGrantedPermissions, initialize, readRecords } from 'react-native-health-connect';
 import { localDateKey, syncDailyMetrics } from '@/services/healthSync';
 
@@ -26,15 +29,9 @@ interface HealthMetrics {
 
 const MOCK_METRICS: HealthMetrics = { steps: 7543, calories: 450 };
 
-const IOS_PERMISSIONS = {
-  permissions: {
-    read: [
-      AppleHealthKit.Constants.Permissions.Steps,
-      AppleHealthKit.Constants.Permissions.ActiveEnergyBurned,
-    ],
-    write: [],
-  },
-} as HealthKitPermissions;
+const IOS_AUTH = {
+  toRead: ['HKQuantityTypeIdentifierStepCount', 'HKQuantityTypeIdentifierActiveEnergyBurned'],
+} as const;
 
 function todayRange(): { startTime: string; endTime: string } {
   const start = new Date();
@@ -143,20 +140,25 @@ export function useHealthData() {
     }
   }, []);
 
-  const loadIOS = useCallback(() => {
-    AppleHealthKit.initHealthKit(IOS_PERMISSIONS, (initError: string) => {
-      if (initError) {
-        setData(unavailableState(initError));
+  const loadIOS = useCallback(async () => {
+    try {
+      const granted = await requestAuthorization(IOS_AUTH);
+      if (!granted) {
+        setData(unavailableState('Permissão não concedida'));
         return;
       }
-      readIOSMetrics(setData);
-    });
+      setData({ ...(await readIOSMetrics()), loading: false, error: null, source: 'device' });
+    } catch (err: unknown) {
+      const reason = err instanceof Error ? err.message : String(err);
+      console.log('[HealthKit] Falha ao ler dados:', reason);
+      setData(unavailableState(reason));
+    }
   }, []);
 
   const refetch = useCallback(async () => {
     setData((prev) => ({ ...prev, loading: true }));
     if (Platform.OS === 'ios') {
-      loadIOS();
+      await loadIOS();
       return;
     }
     await loadAndroid();
@@ -176,31 +178,29 @@ export function useHealthData() {
   return { ...data, refetch, hasPermissions: data.source === 'device' };
 }
 
-function readIOSMetrics(setData: (state: HealthData) => void): void {
-  const options = { date: new Date().toISOString(), includeManuallyAdded: true };
+/**
+ * Total do dia no HealthKit.
+ *
+ * `queryStatisticsForQuantity` com `cumulativeSum` devolve o agregado pronto,
+ * o que dispensa somar amostras na mão como fazia a API antiga.
+ */
+async function readIOSMetrics(): Promise<HealthMetrics> {
+  const { startTime, endTime } = todayRange();
+  const filter = {
+    filter: { date: { startDate: new Date(startTime), endDate: new Date(endTime) } },
+  };
 
-  AppleHealthKit.getStepCount(options, (stepsError: string, stepsResult: HealthValue) => {
-    if (stepsError) {
-      setData(unavailableState(stepsError));
-      return;
-    }
+  const [stepsStats, caloriesStats] = await Promise.all([
+    queryStatisticsForQuantity('HKQuantityTypeIdentifierStepCount', ['cumulativeSum'], filter),
+    queryStatisticsForQuantity(
+      'HKQuantityTypeIdentifierActiveEnergyBurned',
+      ['cumulativeSum'],
+      filter
+    ),
+  ]);
 
-    AppleHealthKit.getActiveEnergyBurned(
-      options,
-      (caloriesError: string, samples: HealthValue[]) => {
-        if (caloriesError) {
-          setData(unavailableState(caloriesError));
-          return;
-        }
-        const calories = samples.reduce((acc, curr) => acc + curr.value, 0);
-        setData({
-          steps: stepsResult.value,
-          calories: Math.round(calories),
-          loading: false,
-          error: null,
-          source: 'device',
-        });
-      }
-    );
-  });
+  return {
+    steps: Math.round(stepsStats.sumQuantity?.quantity ?? 0),
+    calories: Math.round(caloriesStats.sumQuantity?.quantity ?? 0),
+  };
 }
