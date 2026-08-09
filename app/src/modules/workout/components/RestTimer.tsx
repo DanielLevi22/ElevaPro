@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -15,32 +14,10 @@ export function RestTimer({ restSeconds, onComplete, autoStart = false }: RestTi
   const [timeRemaining, setTimeRemaining] = useState(restSeconds);
   const [isRunning, setIsRunning] = useState(autoStart);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const soundRef = useRef<Audio.Sound | null>(null);
-
-  // Load alarm sound
-  useEffect(() => {
-    const loadSound = async () => {
-      try {
-        // TODO: Add alarm.mp3 file to assets folder
-        // const { sound } = await Audio.Sound.createAsync(
-        //   require('../assets/alarm.mp3'),
-        //   { shouldPlay: false }
-        // );
-        // soundRef.current = sound;
-        // biome-ignore lint/correctness/noUnreachable: empty try block
-      } catch (error) {
-        console.log('Error loading sound:', error);
-      }
-    };
-
-    loadSound();
-
-    return () => {
-      if (soundRef.current) {
-        soundRef.current.unloadAsync();
-      }
-    };
-  }, []);
+  // TODO: som de alarme ao fim do descanso. O andaime anterior usava expo-av,
+  // que foi removido: o pacote está descontinuado e sua biblioteca nativa
+  // derrubava o app no boot com UnsatisfiedLinkError no RN 0.86, procurando um
+  // símbolo JSI que não existe mais. O sucessor é `expo-audio`.
 
   // Timer logic
   // biome-ignore lint/correctness/useExhaustiveDependencies: auto-suppressed during final sweep
@@ -70,15 +47,6 @@ export function RestTimer({ restSeconds, onComplete, autoStart = false }: RestTi
 
   const handleTimerComplete = async () => {
     setIsRunning(false);
-
-    // Play sound
-    try {
-      if (soundRef.current) {
-        await soundRef.current.replayAsync();
-      }
-    } catch (error) {
-      console.log('Error playing sound:', error);
-    }
 
     // Vibrate
     try {
