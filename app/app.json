@@ -68,7 +68,7 @@
         }
       ],
       [
-        "@react-native-voice/voice",
+        "expo-speech-recognition",
         {
           "microphonePermission": "Permitir acesso ao microfone para comandos de voz?",
           "speechRecognitionPermission": "Permitir reconhecimento de voz para comandos?"
