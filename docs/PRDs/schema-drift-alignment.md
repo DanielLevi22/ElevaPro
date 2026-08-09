@@ -1,7 +1,7 @@
 # PRD: schema-drift-alignment
 
 **Data de criação:** 2026-08-02
-**Status:** approved
+**Status:** done
 **Branch:** feature/schema-drift-alignment
 **Autor:** Daniel Levi
 
@@ -173,6 +173,6 @@ caso precisa da pergunta: essa feature deve existir? Se sim, PRD próprio.
 > Só muda o Status para `done` quando TODOS estão marcados.
 
 - [x] Código funciona e passou em lint + typecheck + testes
-- [ ] PR mergeado em `development`
+- [x] PR mergeado em `development`
 - [x] `docs/features/schema-drift-alignment.md` criado ou atualizado
 - [x] `docs/STATUS.md` atualizado

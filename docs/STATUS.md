@@ -1,6 +1,6 @@
-# Status dos Módulos — MeuPersonal
+# Status dos Módulos — Eleva Pro
 
-> **Atualizado em:** 2026-05-04 (feature/student-web-dashboard)
+> **Atualizado em:** 2026-08-09 (docs/status-refresh)
 > **Regra:** atualizar ao fechar cada PR. Nenhuma feature é `done` sem este arquivo atualizado.
 
 ---
@@ -27,7 +27,7 @@
 | **Students** | ✅ | ⚠️ parcial | 🔄 pendente | ⚠️ parcial | ⚠️ parcial |
 | **Assessment** | N/A | ✅ | 🔄 pendente | N/A | ⚠️ parcial |
 | **Gamification** | ⚠️ parcial | ✅ | ✅ | ❌ | ❌ |
-| **AI / Agentes** | ⚠️ student coach (web) | ❌ | ⚠️ draft (blueprint) | ⚠️ parcial (service + readiness) | ❌ |
+| **AI / Agentes** | ⚠️ student coach (web) | ⚠️ cliente do BFF ([ADR-004](decisions/004-ai-bff-pattern.md)) | ⚠️ draft (blueprint) | ⚠️ parcial (service + readiness) | ⚠️ parcial |
 | **Packages / Shared** | ✅ centralizado (students + auth + workouts + nutrition + gamification) | ✅ centralizado (students + auth + workouts + nutrition + gamification) | ✅ | N/A | N/A |
 | **Database Schema** | ✅ | ✅ | ✅ | N/A | N/A |
 | **Database Types** | ✅ gerado (`database.types.ts`) | ✅ | ✅ | N/A | N/A |
@@ -47,13 +47,13 @@
 | [shared-workouts-service](PRDs/shared-workouts-service.md) | Serviço centralizado workouts em shared/ | ✅ done | `feature/shared-workouts-service` |
 | [shared-nutrition-service](PRDs/shared-nutrition-service.md) | Serviço centralizado nutrition em shared/ | ✅ done | `feature/shared-nutrition-service` |
 | [shared-gamification-service](PRDs/shared-gamification-service.md) | Serviço centralizado gamification em shared/ | ✅ done | `feature/shared-gamification-service` |
-| [3d-muscle-map](PRDs/3d-muscle-map.md) | Mapa muscular 3D interativo com volume de treino | ⚠️ in-progress | `feature/3d-muscle-map` |
-| [ai-student-personalized-coach](PRDs/ai/ai-student-personalized-coach.md) | Coach IA para aluno: dual-persona, análise visual, motor de explicabilidade | ⚠️ in-progress | `feature/auth-student-registration` |
+| [3d-muscle-map](PRDs/3d-muscle-map.md) | Mapa muscular 3D interativo com volume de treino | approved | — (branch não existe) |
+| [ai-student-personalized-coach](PRDs/ai/ai-student-personalized-coach.md) | Coach IA para aluno: dual-persona, análise visual, motor de explicabilidade | approved | — (fase 1 mergeada) |
 | [local-dev-environment](PRDs/local-dev-environment.md) | 3 ambientes: Local→Preview→Production | ✅ done | — |
 | [social-and-engagement](PRDs/social-and-engagement.md) | Comunidade, ranking, chat, notificações | draft | — |
-| [health-background-tracking](PRDs/health-background-tracking.md) | Passos/calorias: correção da leitura + coleta em background (Android; iOS fora de escopo) | ✅ done | `feature/health-background-tracking` |
-| [schema-drift-alignment](PRDs/schema-drift-alignment.md) | Alinha mobile e web ao schema real + guarda em CI contra recorrência | ✅ done | `feature/schema-drift-alignment` |
-| [admin-panel-restore](PRDs/admin-panel-restore.md) | Torna o painel /admin acessível, sem dar ao admin acesso a dados de saúde | draft | `feature/admin-panel-restore` |
+| [health-background-tracking](PRDs/health-background-tracking.md) | Passos/calorias: correção da leitura + coleta em background (Android) | ✅ done | — (mergeada) |
+| [schema-drift-alignment](PRDs/schema-drift-alignment.md) | Alinha mobile e web ao schema real + guarda em CI contra recorrência | ✅ done | — (mergeada) |
+| [admin-panel-restore](PRDs/admin-panel-restore.md) | Torna o painel /admin acessível, sem dar ao admin acesso a dados de saúde | draft — **aguarda decisão sobre 3 colunas** | — |
 
 > Adicionar linha aqui ao criar um novo PRD via `node scripts/new-feature.js`.
 
@@ -65,15 +65,19 @@
 |---|-----------|------------|-----------------|
 | 1 | `packages/core` e `packages/supabase` duplicados em web e app — já divergiram (students, auth, workouts, nutrition e gamification centralizados) | 🟡 Média | [ADR-002](decisions/002-flat-monorepo.md) |
 | 2 | Specs técnicas dos módulos implementados pendentes (auth, workouts, students) | 🟡 Média | — |
-| 3 | ~~Separação de ambientes Supabase (dev/preview/prod)~~ — **resolvido** (ambientes separados) | ✅ | — |
-| 4 | Testes de cobertura insuficientes em todos os módulos (AI module iniciado) | 🟡 Média | — |
-| 5 | ~~Código mobile/web referenciando tabelas antigas~~ — **resolvido** (`student_specialists`, `diet_plans`, `diet_meals`) | ✅ | — |
+| 3 | ~~Separação de ambientes Supabase (dev/preview/prod)~~ — **resolvido** | ✅ | [ADR-003](decisions/003-environment-strategy.md) |
+| 4 | Testes de cobertura insuficientes em todos os módulos | 🟡 Média | — |
+| 5 | ~~Código mobile/web referenciando tabelas antigas~~ — **resolvido** | ✅ | — |
 | 6 | `assessment` module usa `as unknown as AssessmentInsert` — field mapping com nomes legados | 🟡 Média | — |
-| 7 | **12 tabelas referenciadas em código não existem no banco** — schema construído tabela a tabela, telas não acompanharam os renomes. Causa bugs silenciosos (deletar exercício não deleta). Inventário completo em [PRD schema-drift-alignment](PRDs/schema-drift-alignment.md) | 🔴 Alta | — |
+| 7 | ~~12 tabelas referenciadas em código não existem no banco~~ — **resolvido**, com guarda em CI contra recorrência | ✅ | [PRD](PRDs/schema-drift-alignment.md) |
 | 8 | Tela de perfil (mobile) exibe barra de XP sem fonte de dados — não existe sistema de nível/XP no schema | 🟢 Baixa | — |
-| 10 | **Painel `/admin` inacessível a todos** — `layout.tsx` consulta `is_super_admin`, coluna inexistente, e redireciona qualquer usuário. Mais 3 colunas fantasma em `profiles`. Ver [PRD admin-panel-restore](PRDs/admin-panel-restore.md) | 🔴 Alta | — |
-| 11 | `check-schema-refs.js` valida só nomes de tabela, não colunas — as 4 colunas fantasma de `profiles` passariam pela guarda | 🟡 Média | — |
 | 9 | Duas representações concorrentes de execução de treino: `workout_session_exercises.sets_data` (JSONB) e `workout_session_sets` (normalizada) | 🟡 Média | — |
+| 10 | **Painel `/admin` inacessível a todos** — `layout.tsx` consulta `is_super_admin`, coluna inexistente, e redireciona qualquer usuário. Mais 3 colunas fantasma em `profiles` | 🔴 Alta | [PRD](PRDs/admin-panel-restore.md) |
+| 11 | `check-schema-refs.js` valida só nomes de tabela, não colunas — as 4 colunas fantasma de `profiles` passariam pela guarda | 🟡 Média | — |
+| 12 | Nenhum job de CI roda `next build`. Erro de prerender só aparece no deploy, depois do merge — foi assim com o `useSearchParams` em `/auth/register` | 🟡 Média | — |
+| 13 | `sync-env.js` não é exercitado por nenhum teste, e já divergiu duas vezes dos `.env.example` | 🟢 Baixa | [ADR-009](decisions/009-migration-strategy.md) |
+| 14 | 6 tabelas removidas do código podem ser features legítimas nunca implementadas: `workout_assignments`, `workout_feedback`, `nutrition_progress` e 3 de admin | 🟡 Média | [PRD](PRDs/schema-drift-alignment.md) |
+| 15 | iOS nunca foi buildado — não existe `app/ios`. O caminho HealthKit e o background delivery seguem sem qualquer verificação | 🟡 Média | — |
 
 ---
 
@@ -83,8 +87,12 @@
 
 1. ~~Criar projetos Supabase Preview + Production~~ — **feito**
 2. ~~Atualizar código para usar novo schema~~ — **feito** (diet_plans, diet_meals, student_specialists)
-3. Fechar PR `feature/auth-student-registration` (auth fix + AI student coach + type safety)
-4. Migração de packages para `/packages/` na raiz (ADR-002)
-5. Spec técnica de Auth (`docs/features/auth.md`)
-6. Spec técnica de Workouts (`docs/features/workouts.md`)
-7. AI student coach: fase 2 (mobile + spec técnica)
+3. ~~Fechar PR `feature/auth-student-registration`~~ — **feito** (branch mergeada e removida)
+4. **Validar em aparelho** o que só se prova em uso: comandos de voz no treino,
+   entrega de notificação, e coleta de passos em background
+5. Corrigir `icon.png` e `adaptive-icon.png` — são JPEG com extensão `.png`,
+   último item aberto do `expo-doctor` e motivo comum de recusa em loja
+6. Migração de packages para `/packages/` na raiz (ADR-002)
+7. Spec técnica de Auth (`docs/features/auth.md`)
+8. Spec técnica de Workouts (`docs/features/workouts.md`)
+9. AI student coach: fase 2 (mobile + spec técnica)
