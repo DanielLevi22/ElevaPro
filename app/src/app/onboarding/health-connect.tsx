@@ -36,29 +36,19 @@ export default function HealthConnectScreen() {
   const handleConnect = async () => {
     try {
       if (isIOS) {
-        const permissions = {
-          permissions: {
-            read: [
-              // @ts-expect-error
-              Ionicons.AppleHealthKit?.Constants?.Permissions?.Steps ?? 'Steps',
-              // @ts-expect-error
-              Ionicons.AppleHealthKit?.Constants?.Permissions?.ActiveEnergyBurned ??
-                'ActiveEnergyBurned',
-            ],
-            write: [],
-          },
-        };
+        // O trecho anterior lia as permissoes de `Ionicons.AppleHealthKit`, o
+        // import de icones — codigo sem efeito, mascarado por @ts-expect-error.
+        const { requestAuthorization } = require('@kingstinct/react-native-healthkit');
 
-        const AppleHealthKit = require('react-native-health').default;
-
-        AppleHealthKit.initHealthKit(permissions, async (error: string) => {
-          if (error) {
-            console.log('[HealthConnectScreen] Error initializing HealthKit:', error);
-          } else {
-            await recordCollectionConsent();
-          }
-          router.replace('/(tabs)');
+        const granted = await requestAuthorization({
+          toRead: [
+            'HKQuantityTypeIdentifierStepCount',
+            'HKQuantityTypeIdentifierActiveEnergyBurned',
+          ],
         });
+
+        if (granted) await recordCollectionConsent();
+        router.replace('/(tabs)');
       } else {
         const { initialize, requestPermission } = require('react-native-health-connect');
 

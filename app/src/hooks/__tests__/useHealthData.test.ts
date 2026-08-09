@@ -9,14 +9,11 @@ jest.mock('react-native-health-connect', () => ({
   readRecords: jest.fn(),
 }));
 
-jest.mock('react-native-health', () => ({
-  __esModule: true,
-  default: {
-    Constants: { Permissions: { Steps: 'Steps', ActiveEnergyBurned: 'ActiveEnergyBurned' } },
-    initHealthKit: jest.fn(),
-    getStepCount: jest.fn(),
-    getActiveEnergyBurned: jest.fn(),
-  },
+// Só o caminho Android é exercitado aqui; o mock existe para o import não
+// carregar o módulo nativo do HealthKit no ambiente de teste.
+jest.mock('@kingstinct/react-native-healthkit', () => ({
+  requestAuthorization: jest.fn(),
+  queryStatisticsForQuantity: jest.fn(),
 }));
 
 const mockInitialize = initialize as unknown as jest.Mock;
