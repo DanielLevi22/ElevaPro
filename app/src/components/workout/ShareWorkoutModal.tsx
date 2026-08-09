@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Text, TouchableOpacity, View } from 'react-native';
-import ViewShot, { captureRef } from 'react-native-view-shot';
+import ViewShot, { captureRef, type ViewShotRef } from 'react-native-view-shot';
 import { WorkoutShareCard } from './WorkoutShareCard';
 
 interface ShareWorkoutModalProps {
@@ -18,7 +18,7 @@ interface ShareWorkoutModalProps {
 }
 
 export function ShareWorkoutModal({ visible, onClose, stats }: ShareWorkoutModalProps) {
-  const viewShotRef = useRef<ViewShot>(null);
+  const viewShotRef = useRef<ViewShotRef>(null);
   const [isSharing, setIsSharing] = useState(false);
 
   const handleShare = async () => {

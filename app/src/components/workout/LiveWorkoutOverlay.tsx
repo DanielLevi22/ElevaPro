@@ -84,7 +84,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    // RN 0.86 removeu StyleSheet.absoluteFillObject; absoluteFill cobre o
+    // mesmo caso e pode ser espalhado do mesmo jeito.
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(10, 14, 26, 0.95)',
   },
   content: {

@@ -9,3 +9,8 @@ expo-env.d.ts
 !.env.example
 node_modules
 coverage
+# Projeto nativo — gerado por `expo prebuild` a partir do app.json (CNG).
+# Versionar android/ faz o EAS ignorar plugins, permissoes e icones do app.json:
+# a pasta commitada vence, e mudancas de config sao descartadas em silencio.
+android/
+ios/

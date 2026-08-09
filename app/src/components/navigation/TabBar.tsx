@@ -1,9 +1,11 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+// O expo-router publica o compat como `expo-router/react-navigation`, mas sem
+// shim para os subpacotes — o de bottom-tabs só resolve pelo caminho de build.
+import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
 import React, { memo, useMemo } from 'react';
 import { Dimensions, Platform, Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
