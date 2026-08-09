@@ -1,6 +1,6 @@
 import { createGamificationService, type DailyGoal } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Dimensions, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';

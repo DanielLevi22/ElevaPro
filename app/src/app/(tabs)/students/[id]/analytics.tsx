@@ -1,8 +1,7 @@
 import { createGamificationService, type DailyGoal } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { ConsistencyHeatmap } from '@/components/gamification/ConsistencyHeatmap';

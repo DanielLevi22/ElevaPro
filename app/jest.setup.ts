@@ -4,17 +4,6 @@ global.__DEV__ = true;
 // Mock react-native-url-polyfill globally to prevent "URL is not defined" errors
 jest.mock('react-native-url-polyfill/auto', () => ({}));
 
-// @ts-expect-error
-global.expo = {
-  EventEmitter: class EventEmitter {
-    addListener = jest.fn(() => ({ remove: jest.fn() }));
-    removeListener = jest.fn();
-    emit = jest.fn();
-    removeAllListeners = jest.fn();
-    listenerCount = jest.fn(() => 0);
-  },
-  modules: {},
-};
 process.env.EXPO_PUBLIC_SUPABASE_URL = 'https://mock.supabase.co';
 process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = 'mock-key';
 process.env.EXPO_OS = 'ios';
@@ -48,21 +37,6 @@ jest.mock('expo-secure-store', () => ({
   setItemAsync: jest.fn(),
   deleteItemAsync: jest.fn(),
 }));
-
-jest.mock('expo-modules-core', () => {
-  const EventEmitter = class EventEmitter {
-    addListener = jest.fn(() => ({ remove: jest.fn() }));
-    removeListener = jest.fn();
-    emit = jest.fn();
-    removeAllListeners = jest.fn();
-    listenerCount = jest.fn(() => 0);
-  };
-  return {
-    EventEmitter,
-    NativeModulesProxy: {},
-    requireNativeModule: jest.fn(() => ({})),
-  };
-});
 
 jest.mock('expo-notifications', () => ({
   setNotificationHandler: jest.fn(),
