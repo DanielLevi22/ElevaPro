@@ -53,25 +53,21 @@ export const createNutritionService = (supabase: SupabaseClient) => ({
   fetchDietPlans: async (
     specialistId: string,
   ): Promise<(DietPlan & { student?: { id: string; full_name: string } })[]> => {
+    // Embed em vez de duas queries sequenciais: a busca dos perfis esperava a
+    // dos planos terminar, dobrando a latência da listagem. O nome da constraint
+    // é obrigatório porque diet_plans tem duas FKs para profiles (student_id e
+    // specialist_id) e o PostgREST não saberia qual seguir.
     const { data: plans, error } = await supabase
       .from("diet_plans")
-      .select("*")
+      .select("*, student:profiles!diet_plans_student_id_profiles_id_fk(id, full_name)")
       .eq("specialist_id", specialistId)
       .order("created_at", { ascending: false });
     if (error) throw error;
     if (!plans || plans.length === 0) return [];
 
-    const studentIds = [...new Set(plans.map((p) => p.student_id))];
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .in("id", studentIds);
-
-    const profileMap = new Map(profiles?.map((p) => [p.id, p]));
-    return plans.map((p) => ({
-      ...p,
-      student: profileMap.get(p.student_id) ?? undefined,
-    })) as (DietPlan & { student?: { id: string; full_name: string } })[];
+    return plans as unknown as (DietPlan & {
+      student?: { id: string; full_name: string };
+    })[];
   },
 
   fetchActiveDietPlan: async (studentId: string): Promise<DietPlan | null> => {
