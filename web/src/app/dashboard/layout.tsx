@@ -287,7 +287,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div
         className={`min-h-screen relative z-10 transition-[padding] duration-300 ${isCollapsed ? "lg:pl-22" : "lg:pl-70"}`}
       >
-        <main className="max-w-[1500px] mx-auto min-h-screen p-8 lg:p-12">
+        {/* Sem max-width: com a largura travada, recolher o sidebar so aumentava
+            a margem em vez de devolver o espaco ao conteudo. */}
+        <main className="w-full min-h-screen p-6 lg:p-8">
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">{children}</div>
         </main>
       </div>
