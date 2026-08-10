@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useState } from "react";
 import CalendarHeatmap, { type ReactCalendarHeatmapValue } from "react-calendar-heatmap";
 import "react-calendar-heatmap/dist/styles.css";
@@ -431,7 +431,6 @@ type MetricsTab = "workouts" | "nutrition";
 
 export default function StudentMetricsPage() {
   const params = useParams();
-  const router = useRouter();
   const studentId = params.id as string;
   const [activeTab, setActiveTab] = useState<MetricsTab>("workouts");
 
@@ -444,20 +443,6 @@ export default function StudentMetricsPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <button
-          onClick={() => router.back()}
-          className="text-sm text-muted-foreground hover:text-foreground mb-3 flex items-center gap-1 transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          Voltar
-        </button>
         <h1 className="text-3xl font-bold text-foreground">Métricas</h1>
         <p className="text-muted-foreground mt-1">Evolução e desempenho do aluno.</p>
       </div>
