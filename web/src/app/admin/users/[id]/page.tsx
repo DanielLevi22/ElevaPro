@@ -3,8 +3,8 @@
 import { supabase } from "@elevapro/supabase";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
 import { AccountTypeBadge } from "@/shared";
+import { ConfirmModal } from "@/shared/components/ui/ConfirmModal";
 
 interface UserDetails {
   id: string;
@@ -204,13 +204,13 @@ export default function UserDetailsPage() {
 
   return (
     <div className="p-8">
-      <ConfirmationModal
+      <ConfirmModal
         isOpen={modalOpen}
         title={modalConfig.title}
-        message={modalConfig.message}
-        variant={modalConfig.variant}
+        description={modalConfig.message}
+        variant={modalConfig.variant === "danger" ? "danger" : "primary"}
         onConfirm={handleConfirmAction}
-        onCancel={() => setModalOpen(false)}
+        onClose={() => setModalOpen(false)}
         isLoading={actionLoading}
       />
 

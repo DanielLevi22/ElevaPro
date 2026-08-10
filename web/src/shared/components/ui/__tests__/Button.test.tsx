@@ -44,22 +44,33 @@ describe("Button", () => {
     expect(btn.className).toMatch(/bg-transparent/);
   });
 
+  // Token semantico, nao cor crua: `bg-red-600` nao acompanha o tema, e era
+  // esse acoplamento que fazia cada botao precisar de conserto proprio.
   it("applies destructive variant styles", () => {
     render(<Button variant="destructive">Excluir</Button>);
     const btn = screen.getByRole("button");
-    expect(btn.className).toMatch(/bg-red/);
+    expect(btn.className).toMatch(/bg-destructive/);
+    expect(btn.className).not.toMatch(/bg-red/);
   });
 
-  it("applies sm size styles", () => {
-    render(<Button size="sm">Pequeno</Button>);
-    const btn = screen.getByRole("button");
-    expect(btn.className).toMatch(/text-sm/);
+  it.each([
+    ["sm", "h-8"],
+    ["md", "h-10"],
+    ["lg", "h-12"],
+  ] as const)("applies %s size styles", (size, expectedHeight) => {
+    render(<Button size={size}>Tamanho</Button>);
+    expect(screen.getByRole("button").className).toContain(expectedHeight);
   });
 
-  it("applies lg size styles", () => {
-    render(<Button size="lg">Grande</Button>);
-    const btn = screen.getByRole("button");
-    expect(btn.className).toMatch(/text-base/);
+  // Sem type explicito o botao vira submit e envia o formulario que o contem.
+  it("defaults to type=button", () => {
+    render(<Button>Acao</Button>);
+    expect(screen.getByRole("button")).toHaveAttribute("type", "button");
+  });
+
+  it("respects an explicit type", () => {
+    render(<Button type="submit">Salvar</Button>);
+    expect(screen.getByRole("button")).toHaveAttribute("type", "submit");
   });
 
   it("shows loading state", () => {

@@ -44,7 +44,7 @@ export function Dialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-background/70 backdrop-blur-sm p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -55,7 +55,7 @@ export function Dialog({
         aria-modal="true"
         aria-labelledby="dialog-title"
         className={cn(
-          "w-full bg-surface border border-white/10 rounded-2xl shadow-2xl",
+          "w-full bg-surface border border-border rounded-2xl shadow-2xl",
           maxWidthMap[maxWidth],
           className,
         )}
@@ -72,7 +72,7 @@ export function Dialog({
             type="button"
             onClick={onClose}
             aria-label="Fechar"
-            className="rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors"
+            className="rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-overlay-10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             <svg
               className="h-5 w-5"

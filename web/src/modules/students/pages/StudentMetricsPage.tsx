@@ -25,7 +25,7 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
+} from "@/shared/components/ui/chart";
 import {
   type ExerciseOption,
   type LoadPoint,

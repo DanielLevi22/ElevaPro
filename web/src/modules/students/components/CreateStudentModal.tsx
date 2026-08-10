@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
-import { Dialog } from "@/components/ui/Dialog";
-import { FormField } from "@/components/ui/FormField";
-import { Input } from "@/components/ui/Input";
+import { Button } from "@/shared/components/ui/Button";
+import { Dialog } from "@/shared/components/ui/Dialog";
+import { FormField } from "@/shared/components/ui/FormField";
+import { Input } from "@/shared/components/ui/Input";
 import { useCreateStudent } from "../hooks/useCreateStudent";
 
 interface CreateStudentModalProps {

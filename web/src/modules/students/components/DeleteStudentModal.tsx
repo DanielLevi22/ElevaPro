@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
-import { Dialog } from "@/components/ui/Dialog";
+import { Button } from "@/shared/components/ui/Button";
+import { Dialog } from "@/shared/components/ui/Dialog";
 import { useDeleteStudent } from "../hooks/useDeleteStudent";
 
 interface DeleteStudentModalProps {
