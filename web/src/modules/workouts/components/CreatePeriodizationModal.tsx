@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Button } from "@/shared/components/ui/Button";
 import { DateField } from "@/shared/components/ui/DateField";
+import { Dialog } from "@/shared/components/ui/Dialog";
 import {
   type CreatePeriodizationInput,
   useCreatePeriodization,
@@ -116,139 +118,110 @@ export function CreatePeriodizationModal({
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-      <div className="bg-surface border border-overlay-10 rounded-2xl w-full max-w-lg">
-        <div className="p-6 border-b border-overlay-10 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-foreground">
-            {isEditing ? "Editar Periodização" : "Nova Periodização"}
-          </h2>
-          <button
-            onClick={handleClose}
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
+    <Dialog
+      open={isOpen}
+      onClose={handleClose}
+      title={isEditing ? "Editar Periodização" : "Nova Periodização"}
+      maxWidth="lg"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Nome */}
+        <div>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">
+            Nome <span className="text-destructive">*</span>
+          </label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Ex: Hipertrofia - Ciclo 1"
+            required
+            className="w-full px-3 py-2 bg-background border border-overlay-10 rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Nome */}
+        {/* Aluno — oculto para membros (sempre são eles mesmos) */}
+        {!isMemberMode && (
           <div>
             <label className="block text-sm font-medium text-muted-foreground mb-1">
-              Nome <span className="text-destructive">*</span>
+              Aluno <span className="text-destructive">*</span>
             </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: Hipertrofia - Ciclo 1"
+            <select
+              value={studentId}
+              onChange={(e) => setStudentId(e.target.value)}
               required
-              className="w-full px-3 py-2 bg-background border border-overlay-10 rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
-          </div>
-
-          {/* Aluno — oculto para membros (sempre são eles mesmos) */}
-          {!isMemberMode && (
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">
-                Aluno <span className="text-destructive">*</span>
-              </label>
-              <select
-                value={studentId}
-                onChange={(e) => setStudentId(e.target.value)}
-                required
-                className="w-full px-3 py-2 bg-background border border-overlay-10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-              >
-                <option value="">Selecionar aluno...</option>
-                {activeStudents.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.full_name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Objetivo */}
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-2">
-              Objetivo <span className="text-destructive">*</span>
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {OBJECTIVES.map((obj) => (
-                <button
-                  key={obj.value}
-                  type="button"
-                  onClick={() => setObjective(obj.value)}
-                  className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                    objective === obj.value
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-background border border-overlay-10 text-muted-foreground hover:bg-overlay-05"
-                  }`}
-                >
-                  {obj.label}
-                </button>
+              className="w-full px-3 py-2 bg-background border border-overlay-10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
+              <option value="">Selecionar aluno...</option>
+              {activeStudents.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.full_name}
+                </option>
               ))}
-            </div>
+            </select>
           </div>
+        )}
 
-          {/* Datas — o fim nao pode anteceder o inicio, e DateField ja limita a faixa */}
-          <div className="grid grid-cols-2 gap-4">
-            <DateField label="Início" value={startDate} onChange={setStartDate} required />
-            <DateField
-              label="Fim"
-              value={endDate}
-              onChange={setEndDate}
-              min={startDate || undefined}
-              required
-            />
+        {/* Objetivo */}
+        <div>
+          <label className="block text-sm font-medium text-muted-foreground mb-2">
+            Objetivo <span className="text-destructive">*</span>
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {OBJECTIVES.map((obj) => (
+              <button
+                key={obj.value}
+                type="button"
+                onClick={() => setObjective(obj.value)}
+                className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                  objective === obj.value
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background border border-overlay-10 text-muted-foreground hover:bg-overlay-05"
+                }`}
+              >
+                {obj.label}
+              </button>
+            ))}
           </div>
+        </div>
 
-          {/* Observações */}
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1">
-              Observações
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Informações adicionais..."
-              rows={2}
-              className="w-full px-3 py-2 bg-background border border-overlay-10 rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
-            />
-          </div>
+        {/* Datas — o fim nao pode anteceder o inicio, e DateField ja limita a faixa */}
+        <div className="grid grid-cols-2 gap-4">
+          <DateField label="Início" value={startDate} onChange={setStartDate} required />
+          <DateField
+            label="Fim"
+            value={endDate}
+            onChange={setEndDate}
+            min={startDate || undefined}
+            required
+          />
+        </div>
 
-          {/* Ações */}
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="px-4 py-2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="px-5 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {isPending && (
-                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-              )}
-              {isEditing ? "Salvar" : "Criar Periodização"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        {/* Observações */}
+        <div>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">
+            Observações
+          </label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Informações adicionais..."
+            rows={2}
+            className="w-full px-3 py-2 bg-background border border-overlay-10 rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+          />
+        </div>
+
+        {/* Ações */}
+        <div className="flex justify-end gap-3 pt-2">
+          <Button variant="ghost" onClick={handleClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" isLoading={isPending}>
+            {isEditing ? "Salvar" : "Criar Periodização"}
+          </Button>
+        </div>
+      </form>
+    </Dialog>
   );
 }
