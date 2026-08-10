@@ -1,7 +1,7 @@
 "use client";
 
 import type { Periodization } from "@elevapro/shared";
-import { format, parseISO } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Link from "next/link";
 
@@ -32,11 +32,22 @@ const STATUS_LABEL: Record<string, string> = {
   completed: "Concluída",
 };
 
-/** parseISO, nao `new Date`: a coluna e date-only e o construtor a leria como UTC. */
+/**
+ * parseISO, nao `new Date`: a coluna e date-only e o construtor a leria como UTC.
+ *
+ * O isValid nao e defensivo por precaucao: existem linhas gravadas com ano de
+ * cinco digitos ("12312-12-23"). O format do date-fns LANCA com data invalida,
+ * derrubando a listagem inteira por causa de um registro.
+ */
+function shortDate(value: string | null): string {
+  if (!value) return "—";
+  const parsed = parseISO(value);
+  return isValid(parsed) ? format(parsed, "d MMM", { locale: ptBR }) : "—";
+}
+
 function formatPeriod(start: string | null, end: string | null): string {
   if (!start && !end) return "—";
-  const short = (v: string) => format(parseISO(v), "d MMM", { locale: ptBR });
-  return `${start ? short(start) : "—"} → ${end ? short(end) : "—"}`;
+  return `${shortDate(start)} → ${shortDate(end)}`;
 }
 
 function phaseCount(count: number | null | undefined): string {

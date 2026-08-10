@@ -64,6 +64,24 @@ describe("PeriodizationsTable", () => {
     expect(screen.getByText("João Silva")).toBeInTheDocument();
   });
 
+  // Regressao: existem linhas gravadas com ano de cinco digitos
+  // ("12312-12-23"). parseISO devolve Invalid Date e o format do date-fns LANCA
+  // -- um unico registro ruim derrubava a listagem inteira em runtime.
+  it("data corrompida no banco nao derruba a listagem", () => {
+    expect(() =>
+      render(
+        <PeriodizationsTable
+          periodizations={[
+            makePeriodization({ start_date: "12312-12-23", end_date: "0213-03-31" }),
+            makePeriodization({ id: "p-2", name: "Ciclo valido" }),
+          ]}
+          isMember={false}
+        />,
+      ),
+    ).not.toThrow();
+    expect(screen.getByText("Ciclo valido")).toBeInTheDocument();
+  });
+
   it("periodo incompleto nao vira Invalid Date", () => {
     render(
       <PeriodizationsTable

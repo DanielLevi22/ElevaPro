@@ -1,7 +1,7 @@
 "use client";
 
 import type { DietPlan } from "@elevapro/shared";
-import { format, parseISO } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Trash2 } from "lucide-react";
 
@@ -26,12 +26,21 @@ const STATUS_LABEL: Record<DietPlan["status"], string> = {
   finished: "Finalizado",
 };
 
+/**
+ * parseISO, não `new Date`: a string vem só com a data ("2026-08-01") e o
+ * construtor a lê como UTC. Formatada em fuso negativo, voltaria um dia.
+ *
+ * O isValid protege contra data corrompida no banco — o format do date-fns
+ * LANÇA com data inválida, e uma linha ruim derrubaria a listagem inteira.
+ */
+function shortDate(value: string): string {
+  const parsed = parseISO(value);
+  return isValid(parsed) ? format(parsed, "d MMM", { locale: ptBR }) : "—";
+}
+
 function formatPeriod(start: string | null, end: string | null): string {
   if (!start || !end) return "—";
-  // parseISO, não `new Date`: a string vem só com a data ("2026-08-01") e o
-  // construtor a lê como UTC. Formatada em fuso negativo, voltaria um dia.
-  const asShortDate = (value: string) => format(parseISO(value), "d MMM", { locale: ptBR });
-  return `${asShortDate(start)} → ${asShortDate(end)}`;
+  return `${shortDate(start)} → ${shortDate(end)}`;
 }
 
 function formatMacros(plan: DietPlan): string {

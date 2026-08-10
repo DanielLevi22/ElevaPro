@@ -79,6 +79,20 @@ describe("DietsTable", () => {
     expect(screen.getByText("1 ago → 1 set")).toBeInTheDocument();
   });
 
+  // Regressão: o format do date-fns lança com data inválida, e o banco tem
+  // registros com ano fora de faixa. Uma linha ruim derrubava a tabela toda.
+  it("data corrompida no banco não derruba a listagem", () => {
+    expect(() =>
+      render(
+        <DietsTable
+          dietPlans={[makePlan({ start_date: "12312-12-23" })]}
+          onView={vi.fn()}
+          onDelete={vi.fn()}
+        />,
+      ),
+    ).not.toThrow();
+  });
+
   it("período incompleto vira travessão em vez de Invalid Date", () => {
     render(
       <DietsTable dietPlans={[makePlan({ end_date: null })]} onView={vi.fn()} onDelete={vi.fn()} />,
