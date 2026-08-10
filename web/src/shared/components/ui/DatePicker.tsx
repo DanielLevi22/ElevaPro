@@ -10,6 +10,7 @@ import {
   getYear,
   isSameDay,
   isSameMonth,
+  parseISO,
   startOfMonth,
   startOfWeek,
   subMonths,
@@ -41,10 +42,12 @@ const MONTHS = [
 
 export function DatePicker({ value, onChange, label }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState(new Date(value || new Date()));
+  // parseISO, não `new Date`: o valor é só a data ("2026-08-01") e o construtor
+  // a interpreta como UTC — em fuso negativo o calendário marcava o dia anterior.
+  const [currentMonth, setCurrentMonth] = useState(value ? parseISO(value) : new Date());
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const selectedDate = value ? new Date(value) : null;
+  const selectedDate = value ? parseISO(value) : null;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -62,7 +65,7 @@ export function DatePicker({ value, onChange, label }: DatePickerProps) {
         <button
           type="button"
           onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-          className="w-8 h-8 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors"
+          className="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-highlight text-muted-foreground hover:bg-overlay-10 hover:text-foreground transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -73,13 +76,13 @@ export function DatePicker({ value, onChange, label }: DatePickerProps) {
             />
           </svg>
         </button>
-        <div className="text-sm font-black text-white italic uppercase tracking-tight">
+        <div className="text-sm font-black text-foreground italic uppercase tracking-tight">
           {MONTHS[getMonth(currentMonth)]} {getYear(currentMonth)}
         </div>
         <button
           type="button"
           onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-          className="w-8 h-8 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors"
+          className="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-highlight text-muted-foreground hover:bg-overlay-10 hover:text-foreground transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -94,7 +97,10 @@ export function DatePicker({ value, onChange, label }: DatePickerProps) {
     return (
       <div className="grid grid-cols-7 mb-2">
         {days.map((day) => (
-          <div key={day} className="text-[10px] font-black text-zinc-600 text-center uppercase">
+          <div
+            key={day}
+            className="text-[10px] font-black text-muted-foreground text-center uppercase"
+          >
             {day}
           </div>
         ))}
@@ -129,7 +135,7 @@ export function DatePicker({ value, onChange, label }: DatePickerProps) {
             }}
             className={`
               relative h-9 rounded-xl flex items-center justify-center cursor-pointer text-xs font-bold transition-all
-              ${!isCurrentMonth ? "text-zinc-800 pointer-events-none" : isSelected ? "bg-primary text-black shadow-lg shadow-primary/20 scale-110 z-10" : "text-zinc-400 hover:bg-zinc-800/50 hover:text-white"}
+              ${!isCurrentMonth ? "text-muted-foreground/40 pointer-events-none" : isSelected ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-110 z-10" : "text-muted-foreground hover:bg-overlay-08 hover:text-foreground"}
             `}
           >
             {formattedDate}
@@ -157,7 +163,7 @@ export function DatePicker({ value, onChange, label }: DatePickerProps) {
   return (
     <div className="relative" ref={containerRef}>
       {label && (
-        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-1 mb-2 block">
+        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1 mb-2 block">
           {label}
         </label>
       )}
@@ -165,7 +171,7 @@ export function DatePicker({ value, onChange, label }: DatePickerProps) {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-zinc-950/80 border border-white/5 rounded-[20px] px-4 py-4 flex items-center justify-between hover:border-white/10 transition-all text-white font-bold"
+        className="w-full bg-background border border-border rounded-[20px] px-4 py-4 flex items-center justify-between hover:border-overlay-15 transition-all text-foreground font-bold focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
       >
         <span className="text-[13px] whitespace-nowrap truncate">
           {selectedDate
@@ -173,7 +179,7 @@ export function DatePicker({ value, onChange, label }: DatePickerProps) {
             : "Selecionar data"}
         </span>
         <svg
-          className={`w-5 h-5 text-zinc-500 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+          className={`w-5 h-5 text-muted-foreground transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -193,20 +199,20 @@ export function DatePicker({ value, onChange, label }: DatePickerProps) {
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="absolute left-0 right-0 mt-3 z-[60] p-4 bg-zinc-900/95 backdrop-blur-2xl border border-white/10 rounded-[32px] shadow-2xl shadow-black/80"
+            className="absolute left-0 right-0 mt-3 z-60 p-4 bg-surface backdrop-blur-2xl border border-border rounded-4xl shadow-2xl shadow-black/30"
           >
             {renderHeader()}
             {renderDays()}
             {renderCells()}
 
-            <div className="mt-4 pt-4 border-t border-white/5 flex justify-end">
+            <div className="mt-4 pt-4 border-t border-border flex justify-end">
               <button
                 type="button"
                 onClick={() => {
                   onChange(format(new Date(), "yyyy-MM-dd"));
                   setIsOpen(false);
                 }}
-                className="text-[10px] font-black text-primary uppercase tracking-widest hover:opacity-70 transition-opacity"
+                className="text-[10px] font-black text-primary-text uppercase tracking-widest hover:opacity-70 transition-opacity"
               >
                 Hoje
               </button>
