@@ -12,6 +12,7 @@ import {
   updatePhaseDatesAction,
   updatePhaseStatusAction,
 } from "@/app/dashboard/workouts/actions";
+import { DateField } from "@/shared/components/ui/DateField";
 import { CreateWorkoutModal } from "../components/CreateWorkoutModal";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import { ImportWorkoutModal } from "../components/ImportWorkoutModal";
@@ -148,6 +149,11 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
       router.push(`/dashboard/workouts/periodizations/${periodizationId}`);
     });
   }, [plan.name, phaseId, periodizationId, router]);
+
+  // Espelham o que veio do servidor; o revalidate do router traz o valor real
+  // de volta se a acao falhar.
+  const [startDate, setStartDate] = useState(plan.start_date?.split("T")[0] ?? "");
+  const [endDate, setEndDate] = useState(plan.end_date?.split("T")[0] ?? "");
 
   const handleUpdateDate = useCallback(
     async (field: "start_date" | "end_date", value: string) => {
@@ -337,38 +343,27 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
 
         <div className="border-t border-overlay-08" />
 
-        {/* Dates */}
+        {/* Dates — DateField ja limita a faixa aceita */}
         <div className="flex gap-4">
-          <div className="flex-1">
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
-              Início
-            </p>
-            <input
-              type="date"
-              defaultValue={plan.start_date?.split("T")[0] ?? ""}
-              onBlur={(e) => {
-                if (e.target.value && e.target.value !== plan.start_date?.split("T")[0]) {
-                  handleUpdateDate("start_date", e.target.value);
-                }
-              }}
-              className="w-full bg-overlay-05 border border-overlay-10 rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
-          </div>
-          <div className="flex-1">
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
-              Término
-            </p>
-            <input
-              type="date"
-              defaultValue={plan.end_date?.split("T")[0] ?? ""}
-              onBlur={(e) => {
-                if (e.target.value && e.target.value !== plan.end_date?.split("T")[0]) {
-                  handleUpdateDate("end_date", e.target.value);
-                }
-              }}
-              className="w-full bg-overlay-05 border border-overlay-10 rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
-          </div>
+          <DateField
+            className="flex-1"
+            label="Início"
+            value={startDate}
+            onChange={(value) => {
+              setStartDate(value);
+              if (value) handleUpdateDate("start_date", value);
+            }}
+          />
+          <DateField
+            className="flex-1"
+            label="Término"
+            value={endDate}
+            min={startDate || undefined}
+            onChange={(value) => {
+              setEndDate(value);
+              if (value) handleUpdateDate("end_date", value);
+            }}
+          />
         </div>
       </div>
 

@@ -9,6 +9,7 @@ import {
   addPhaseAction,
   completePeriodizationAction,
 } from "@/app/dashboard/workouts/actions";
+import { formatDateRange } from "@/shared/utils/formatDate";
 import { CreatePeriodizationModal } from "../components/CreatePeriodizationModal";
 import { WelcomeBanner } from "../components/WelcomeBanner";
 
@@ -32,14 +33,6 @@ const PLAN_STATUS_CONFIG: Record<string, { label: string; className: string }> =
   active: { label: "Ativa", className: "bg-success/10 text-success" },
   completed: { label: "Concluída", className: "bg-overlay-05 text-muted-foreground" },
 };
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 function PlanCard({ plan, periodizationId }: { plan: TrainingPlan; periodizationId: string }) {
   const statusCfg = PLAN_STATUS_CONFIG[plan.status] ?? PLAN_STATUS_CONFIG.planned;
@@ -70,8 +63,7 @@ function PlanCard({ plan, periodizationId }: { plan: TrainingPlan; periodization
             {plan.name}
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {plan.start_date ? formatDate(plan.start_date) : "—"} →{" "}
-            {plan.end_date ? formatDate(plan.end_date) : "—"}
+            {formatDateRange(plan.start_date, plan.end_date, "medium")}
           </p>
         </div>
       </div>
@@ -162,8 +154,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
             <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground">
               <span className="px-2 py-0.5 rounded-md bg-overlay-05 text-xs">{objective}</span>
               <span>
-                {periodization.start_date ? formatDate(periodization.start_date) : "—"} →{" "}
-                {periodization.end_date ? formatDate(periodization.end_date) : "—"}
+                {formatDateRange(periodization.start_date, periodization.end_date, "medium")}
               </span>
               <span>
                 {plans.length} fase{plans.length !== 1 ? "s" : ""}

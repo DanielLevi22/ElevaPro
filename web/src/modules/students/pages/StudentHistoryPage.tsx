@@ -2,18 +2,9 @@
 
 import { useParams } from "next/navigation";
 import { useStudents } from "@/shared/hooks/useStudents";
+import { formatDate } from "@/shared/utils/formatDate";
 import type { HistoryEvent } from "../hooks/useStudentHistory";
 import { useStudentHistory } from "../hooks/useStudentHistory";
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 function EventIcon({ type }: { type: HistoryEvent["type"] }) {
   if (type === "workout_session") {
@@ -181,7 +172,7 @@ export default function StudentHistoryPage() {
                     <div className="flex items-center gap-2 shrink-0">
                       <StatusBadge status={event.status} />
                       <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        {formatDate(event.date)}
+                        {formatDate(event.date, "dateTime")}
                       </span>
                     </div>
                   </div>

@@ -3,17 +3,10 @@
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { useStudents } from "@/shared/hooks/useStudents";
+import { formatDate } from "@/shared/utils/formatDate";
 import { AssessmentModal } from "../components/AssessmentModal";
 import type { Assessment } from "../hooks/useStudentAssessments";
 import { useStudentAssessments } from "../hooks/useStudentAssessments";
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 function StatCell({ label, value, unit }: { label: string; value: number | null; unit?: string }) {
   return (
@@ -51,7 +44,9 @@ function AssessmentCard({
             {index + 1}
           </div>
           <div>
-            <p className="font-semibold text-foreground">{formatDate(assessment.created_at)}</p>
+            <p className="font-semibold text-foreground">
+              {formatDate(assessment.created_at, "medium")}
+            </p>
             {previous && weightDelta !== null && (
               <p
                 className={`text-xs mt-0.5 ${weightDelta < 0 ? "text-emerald-400" : weightDelta > 0 ? "text-orange-400" : "text-muted-foreground"}`}

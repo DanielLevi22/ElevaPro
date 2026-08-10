@@ -6,6 +6,7 @@ import type { AnamnesisQuestion } from "@/modules/students/data/anamnesisQuestio
 import { GENERAL_ANAMNESIS } from "@/modules/students/data/anamnesisQuestions";
 import type { AnamnesisResponseValue } from "@/modules/students/hooks/useStudentAnamnesis";
 import { useStudentAnamnesis } from "@/modules/students/hooks/useStudentAnamnesis";
+import { DateField } from "@/shared/components/ui/DateField";
 import { useAnamnesisForm } from "../hooks/useAnamnesisForm";
 import { useCurrentStudentId } from "../hooks/useStudentDashboardData";
 
@@ -53,14 +54,7 @@ function QuestionField({
   }
 
   if (question.type === "date") {
-    return (
-      <input
-        type="date"
-        className={inputBase}
-        value={(value as string) ?? ""}
-        onChange={(e) => onChange(e.target.value)}
-      />
-    );
+    return <DateField value={(value as string) ?? ""} onChange={onChange} />;
   }
 
   if (question.type === "boolean") {

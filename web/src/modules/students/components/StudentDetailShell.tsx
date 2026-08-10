@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useStudents } from "@/shared/hooks/useStudents";
+import { formatDate } from "@/shared/utils/formatDate";
 import { AssessmentModal } from "./AssessmentModal";
 import { EditStudentModal } from "./EditStudentModal";
 
@@ -38,11 +39,7 @@ const STATUS_STYLE: Record<string, string> = {
 
 function formatMemberSince(linkCreatedAt: string | null): string {
   if (!linkCreatedAt) return "";
-  const since = new Date(linkCreatedAt).toLocaleDateString("pt-BR", {
-    month: "short",
-    year: "numeric",
-  });
-  return ` · membro desde ${since}`;
+  return ` · membro desde ${formatDate(linkCreatedAt, "monthYear")}`;
 }
 
 export function StudentDetailShell({ children }: { children: React.ReactNode }) {

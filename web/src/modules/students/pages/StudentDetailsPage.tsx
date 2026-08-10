@@ -3,6 +3,7 @@
 import type { Student } from "@elevapro/shared";
 import { useParams } from "next/navigation";
 import { useStudents } from "@/shared/hooks/useStudents";
+import { formatDate } from "@/shared/utils/formatDate";
 
 const SERVICE_LABEL: Record<string, string> = {
   personal_training: "Personal Training",
@@ -14,11 +15,6 @@ const LINK_LABEL: Record<string, string> = {
   pending: "Pendente",
   inactive: "Encerrado",
 };
-
-function formatMonthYear(value: string | null): string {
-  if (!value) return "—";
-  return new Date(value).toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
-}
 
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
@@ -42,7 +38,7 @@ export default function StudentDetailsPage() {
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <InfoCard label="Membro desde" value={formatMonthYear(student.link_created_at)} />
+      <InfoCard label="Membro desde" value={formatDate(student.link_created_at, "monthYear")} />
       <InfoCard
         label="Serviço"
         value={SERVICE_LABEL[student.service_type] ?? student.service_type}

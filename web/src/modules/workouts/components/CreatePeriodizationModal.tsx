@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { DateField } from "@/shared/components/ui/DateField";
 import {
   type CreatePeriodizationInput,
   useCreatePeriodization,
@@ -200,32 +201,16 @@ export function CreatePeriodizationModal({
             </div>
           </div>
 
-          {/* Datas */}
+          {/* Datas — o fim nao pode anteceder o inicio, e DateField ja limita a faixa */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">
-                Início <span className="text-destructive">*</span>
-              </label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                required
-                className="w-full px-3 py-2 bg-background border border-overlay-10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">
-                Fim <span className="text-destructive">*</span>
-              </label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                required
-                className="w-full px-3 py-2 bg-background border border-overlay-10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
-            </div>
+            <DateField label="Início" value={startDate} onChange={setStartDate} required />
+            <DateField
+              label="Fim"
+              value={endDate}
+              onChange={setEndDate}
+              min={startDate || undefined}
+              required
+            />
           </div>
 
           {/* Observações */}

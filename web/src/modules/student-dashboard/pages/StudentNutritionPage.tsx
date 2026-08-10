@@ -1,11 +1,10 @@
 "use client";
 
 import type { DietPlan } from "@elevapro/shared";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import Link from "next/link";
 import { useAuthStore } from "@/modules/auth";
 import { NutritionFlowBanner } from "@/modules/nutrition/components/NutritionFlowBanner";
+import { formatDateRange } from "@/shared/utils/formatDate";
 import { EmptyPlanState } from "../components/EmptyPlanState";
 import { useCurrentStudentId, useStudentActiveDietPlan } from "../hooks/useStudentDashboardData";
 
@@ -63,9 +62,6 @@ function ActiveDietPlanView({ plan, isMember }: { plan: DietPlan; isMember: bool
     { label: "Gordura", value: plan.target_fat, unit: "g", color: "text-yellow-400" },
   ];
 
-  const formatDate = (d: string | null) =>
-    d ? format(new Date(d), "dd 'de' MMM", { locale: ptBR }) : "—";
-
   return (
     <div className="flex flex-col gap-4">
       {/* Plan card */}
@@ -77,7 +73,7 @@ function ActiveDietPlanView({ plan, isMember }: { plan: DietPlan; isMember: bool
               {plan.name}
             </h2>
             <p className="text-xs text-muted-foreground">
-              {formatDate(plan.start_date)} → {formatDate(plan.end_date)}
+              {formatDateRange(plan.start_date, plan.end_date)}
             </p>
           </div>
           <span className="shrink-0 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[10px] font-black text-emerald-400 uppercase tracking-widest">
