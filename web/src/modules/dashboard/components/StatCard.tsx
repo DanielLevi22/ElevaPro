@@ -5,64 +5,38 @@ interface StatCardProps {
   value: number | string;
   icon: ReactNode;
   color: "primary" | "secondary" | "accent";
-  trend?: {
-    value: number;
-    direction: "up" | "down";
-  };
   loading?: boolean;
 }
 
-const colorClasses = {
-  primary: {
-    text: "text-primary",
-    glow: "shadow-primary/50",
-    bg: "bg-primary/10",
-  },
-  secondary: {
-    text: "text-secondary",
-    glow: "shadow-secondary/50",
-    bg: "bg-secondary/10",
-  },
-  accent: {
-    text: "text-accent",
-    glow: "shadow-accent/50",
-    bg: "bg-accent/10",
-  },
+// primary usa --primary-text, nao --primary: o lime puro nao tem contraste
+// suficiente como texto/icone sobre superficie clara.
+const TONE = {
+  primary: { text: "text-primary-text", bg: "bg-primary/12" },
+  secondary: { text: "text-secondary", bg: "bg-secondary/12" },
+  accent: { text: "text-accent", bg: "bg-accent/12" },
 };
 
-export function StatCard({ title, value, icon, color, trend, loading }: StatCardProps) {
-  const colors = colorClasses[color];
+export function StatCard({ title, value, icon, color, loading }: StatCardProps) {
+  const tone = TONE[color];
 
   if (loading) {
     return (
-      <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl p-6 animate-pulse">
-        <div className="h-4 bg-white/10 rounded w-1/2 mb-4" />
-        <div className="h-10 bg-white/10 rounded w-3/4" />
+      <div className="bg-surface border border-border rounded-[22px] p-5" aria-hidden="true">
+        <div className="h-3 w-1/2 rounded bg-overlay-10 animate-pulse" />
+        <div className="mt-3.5 h-8 w-2/5 rounded bg-overlay-10 animate-pulse" />
       </div>
     );
   }
 
   return (
-    <div className="group bg-surface border border-white/10 rounded-xl p-6 hover:border-white/20 transition-all duration-300 hover:shadow-lg hover:shadow-black/20">
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="text-sm text-muted-foreground font-medium mb-2">{title}</p>
-          <div className="flex items-baseline gap-2">
-            <h3 className="text-4xl font-bold text-foreground">{value}</h3>
-            {trend && (
-              <span
-                className={`text-sm font-medium flex items-center gap-1 ${
-                  trend.direction === "up" ? "text-green-500" : "text-red-500"
-                }`}
-              >
-                {trend.direction === "up" ? "↑" : "↓"}
-                {trend.value}%
-              </span>
-            )}
-          </div>
+    <div className="bg-surface border border-border rounded-[22px] p-5 transition-colors hover:border-overlay-15">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold text-muted-foreground">{title}</p>
+          <p className="mt-1.5 font-display text-3xl font-extrabold text-foreground">{value}</p>
         </div>
         <div
-          className={`p-3 rounded-lg bg-white/5 ${colors.text} group-hover:scale-110 transition-transform duration-300`}
+          className={`w-9 h-9 shrink-0 rounded-[10px] flex items-center justify-center ${tone.bg} ${tone.text}`}
         >
           {icon}
         </div>

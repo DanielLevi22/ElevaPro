@@ -65,15 +65,15 @@ function getRelativeTime(date: Date): string {
 export function ActivityFeed({ activities, loading }: ActivityFeedProps) {
   if (loading) {
     return (
-      <div className="bg-surface border border-white/10 rounded-xl p-6">
+      <div className="bg-surface border border-border rounded-2xl p-5.5">
         <h3 className="text-lg font-semibold text-foreground mb-4">Atividades Recentes</h3>
         <div className="space-y-4">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="flex items-start gap-3 animate-pulse">
-              <div className="w-10 h-10 bg-white/10 rounded-full" />
+              <div className="w-10 h-10 bg-overlay-10 rounded-full" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 bg-white/10 rounded w-3/4" />
-                <div className="h-3 bg-white/10 rounded w-1/2" />
+                <div className="h-4 bg-overlay-10 rounded w-3/4" />
+                <div className="h-3 bg-overlay-10 rounded w-1/2" />
               </div>
             </div>
           ))}
@@ -84,7 +84,7 @@ export function ActivityFeed({ activities, loading }: ActivityFeedProps) {
 
   if (activities.length === 0) {
     return (
-      <div className="bg-surface border border-white/10 rounded-xl p-6">
+      <div className="bg-surface border border-border rounded-2xl p-5.5">
         <h3 className="text-lg font-semibold text-foreground mb-4">Atividades Recentes</h3>
         <div className="text-center py-8">
           <div className="text-muted-foreground text-sm">
@@ -97,13 +97,13 @@ export function ActivityFeed({ activities, loading }: ActivityFeedProps) {
   }
 
   return (
-    <div className="bg-surface border border-white/10 rounded-xl p-6">
+    <div className="bg-surface border border-border rounded-2xl p-5.5">
       <h3 className="text-lg font-semibold text-foreground mb-4">Atividades Recentes</h3>
       <div className="space-y-4">
         {activities.map((activity) => (
           <div
             key={activity.id}
-            className="flex items-start gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors"
+            className="flex items-start gap-3 p-3 rounded-lg hover:bg-overlay-05 transition-colors"
           >
             <div className={`p-2 rounded-full ${activityColors[activity.type]}`}>
               {activityIcons[activity.type]}

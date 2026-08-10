@@ -17,42 +17,39 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
-  // Get total students (active relationships)
-  const { count: totalStudents } = await supabase
-    .from("student_specialists")
-    .select("*", { count: "exact", head: true })
-    .eq("specialist_id", user.id)
-    .eq("status", "active");
-
-  // Get total workouts created by this personal
-  const { count: totalWorkouts } = await supabase
-    .from("workouts")
-    .select("*", { count: "exact", head: true })
-    .eq("specialist_id", user.id);
-
-  // Get active diet plans
-  const { count: activeDiets } = await supabase
-    .from("diet_plans")
-    .select("*", { count: "exact", head: true })
-    .eq("specialist_id", user.id)
-    .eq("status", "active");
-
-  // Get completed workouts this week
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-  const { count: completedWorkoutsThisWeek } = await supabase
-    .from("workout_sessions")
-    .select("workout_id, workouts!inner(specialist_id)", { count: "exact", head: true })
-    .eq("workouts.specialist_id", user.id)
-    .not("completed_at", "is", null)
-    .gte("completed_at", oneWeekAgo.toISOString());
+  // As quatro contagens sao independentes: em serie, o dashboard esperava quatro
+  // idas ao banco antes de pintar qualquer numero.
+  const [students, workouts, diets, completed] = await Promise.all([
+    supabase
+      .from("student_specialists")
+      .select("*", { count: "exact", head: true })
+      .eq("specialist_id", user.id)
+      .eq("status", "active"),
+    supabase
+      .from("workouts")
+      .select("*", { count: "exact", head: true })
+      .eq("specialist_id", user.id),
+    supabase
+      .from("diet_plans")
+      .select("*", { count: "exact", head: true })
+      .eq("specialist_id", user.id)
+      .eq("status", "active"),
+    supabase
+      .from("workout_sessions")
+      .select("workout_id, workouts!inner(specialist_id)", { count: "exact", head: true })
+      .eq("workouts.specialist_id", user.id)
+      .not("completed_at", "is", null)
+      .gte("completed_at", oneWeekAgo.toISOString()),
+  ]);
 
   return {
-    totalStudents: totalStudents || 0,
-    totalWorkouts: totalWorkouts || 0,
-    activeDiets: activeDiets || 0,
-    completedWorkoutsThisWeek: completedWorkoutsThisWeek || 0,
+    totalStudents: students.count || 0,
+    totalWorkouts: workouts.count || 0,
+    activeDiets: diets.count || 0,
+    completedWorkoutsThisWeek: completed.count || 0,
   };
 }
 
