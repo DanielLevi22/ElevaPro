@@ -28,7 +28,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}>
+      {/* Sem `dark` cravado aqui: o next-themes escreve a classe de tema no
+          <html>, e uma classe fixa no <body> vencia essa escrita para sempre. */}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>{children}</Providers>
         <Toaster richColors position="bottom-right" />
       </body>

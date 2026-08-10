@@ -82,7 +82,7 @@ const ReviewCard = ({
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary selection:text-black relative">
+    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary selection:text-primary-foreground relative">
       <BackgroundGrid />
       <Header />
 
@@ -92,7 +92,7 @@ export default function Home() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-primary/20 blur-[120px] rounded-full pointer-events-none opacity-50" />
 
         <div className="container mx-auto text-center max-w-5xl relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface/50 border border-white/10 backdrop-blur-md mb-8 animate-fade-in-up">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface/50 border border-overlay-10 backdrop-blur-md mb-8 animate-fade-in-up">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
             <span className="text-sm font-medium text-muted-foreground">
               Para personal trainers e nutricionistas sérios
@@ -114,13 +114,13 @@ export default function Home() {
           <div className="flex flex-col md:flex-row items-center justify-center gap-4">
             <button
               type="button"
-              className="w-full md:w-auto px-8 py-4 bg-primary text-black font-bold rounded-full hover:bg-primary-hover transition-all transform hover:scale-105 hover:shadow-[0_0_30px_-5px_rgba(204,255,0,0.6)]"
+              className="w-full md:w-auto px-8 py-4 bg-primary text-primary-foreground font-bold rounded-full hover:bg-primary-hover transition-all transform hover:scale-105 hover:shadow-[0_0_30px_-5px_hsl(var(--primary)/0.6)]"
             >
               Começar Gratuitamente
             </button>
             <button
               type="button"
-              className="w-full md:w-auto px-8 py-4 bg-surface border border-white/10 text-white font-bold rounded-full hover:bg-white/5 transition-all"
+              className="w-full md:w-auto px-8 py-4 bg-surface border border-overlay-10 text-foreground font-bold rounded-full hover:bg-overlay-05 transition-all"
             >
               Ver Demonstração
             </button>
@@ -251,28 +251,28 @@ export default function Home() {
 
       {/* CTA Section */}
       <section className="pt-48 pb-32 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-zinc-900 to-black dark:from-zinc-950 dark:via-zinc-900 dark:to-black z-0" />
+        <div className="absolute inset-0 bg-gradient-to-br from-background via-surface-highlight to-background z-0" />
 
         {/* Animated Grid Background */}
-        <div className="absolute inset-0 opacity-20 dark:opacity-10 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] animate-grid-expand" />
+        <div className="absolute inset-0 opacity-20 dark:opacity-10 bg-[linear-gradient(to_right,rgb(var(--overlay-15))_1px,transparent_1px),linear-gradient(to_bottom,rgb(var(--overlay-15))_1px,transparent_1px)] bg-size-[24px_24px] animate-grid-expand" />
 
         {/* Glow Effects */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/20 blur-[120px] rounded-full pointer-events-none" />
 
         <div className="container mx-auto px-4 relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-overlay-05 border border-overlay-10 backdrop-blur-md mb-8">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span className="text-sm font-medium text-white">Vagas limitadas para o beta</span>
+            <span className="text-sm font-medium text-foreground">Vagas limitadas para o beta</span>
           </div>
 
-          <h2 className="text-5xl md:text-7xl font-display font-bold text-white mb-8 tracking-tight">
+          <h2 className="text-5xl md:text-7xl font-display font-bold text-foreground mb-8 tracking-tight">
             PRONTO PARA <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-text to-primary-text/60">
               ELEVAR SEU NÍVEL?
             </span>
           </h2>
 
-          <p className="text-zinc-400 text-xl md:text-2xl mb-12 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-muted-foreground text-xl md:text-2xl mb-12 max-w-2xl mx-auto leading-relaxed">
             Acompanhamento que não para. Resultado que não mente. <br className="hidden md:block" />
             Experimente 14 dias grátis, sem cartão.
           </p>
@@ -280,7 +280,7 @@ export default function Home() {
           <div className="flex flex-col md:flex-row items-center justify-center gap-4">
             <button
               type="button"
-              className="group relative px-8 py-4 bg-primary text-black rounded-full font-bold text-lg transition-all hover:scale-105 hover:shadow-[0_0_40px_-10px_rgba(204,255,0,0.5)]"
+              className="group relative px-8 py-4 bg-primary text-primary-foreground rounded-full font-bold text-lg transition-all hover:scale-105 hover:shadow-[0_0_40px_-10px_hsl(var(--primary)/0.5)]"
             >
               <span className="relative z-10 flex items-center gap-2">
                 Começar Agora
@@ -303,7 +303,7 @@ export default function Home() {
 
             <button
               type="button"
-              className="px-8 py-4 bg-white/5 text-white border border-white/10 rounded-full font-bold text-lg transition-all hover:bg-white/10 backdrop-blur-sm"
+              className="px-8 py-4 bg-overlay-05 text-foreground border border-overlay-10 rounded-full font-bold text-lg transition-all hover:bg-overlay-10 backdrop-blur-sm"
             >
               Falar com Consultor
             </button>

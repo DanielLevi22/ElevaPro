@@ -15,8 +15,16 @@
   --popover: 0 0% 100%;
   --popover-foreground: 240 10% 3.9%;
 
-  --primary: 84 100% 50%; /* #CCFF00 - Neon Lime */
-  --primary-foreground: 0 0% 0%;
+  /* O lime do claro NÃO é o lime do escuro. #CCFF00 puro tem luminância alta
+     demais: como superfície pede texto preto, e como texto sobre branco fica em
+     ~1.4:1. Escurecido, passa AA nos dois papéis. */
+  --primary: 84 65% 38%;
+  --primary-foreground: 0 0% 100%;
+  /* Lime ainda mais escuro, só para texto/ícone sobre fundo claro */
+  --primary-text: 88 65% 28%;
+  --primary-hover: 84 65% 32%;
+  --secondary-hover: 184 80% 38%;
+  --accent-hover: 324 85% 42%;
 
   --secondary: 184 100% 50%; /* #00F0FF - Cyber Blue */
   --secondary-foreground: 0 0% 0%;
@@ -30,15 +38,32 @@
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
 
+  --success: 160 84% 39%;
+  --success-foreground: 0 0% 100%;
+
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 0%;
+
   --border: 240 5.9% 90%; /* Zinc 200 */
   --input: 240 5.9% 90%;
-  --ring: 84 100% 50%;
+  --ring: 84 65% 38%;
 
   --radius: 0.5rem;
 
   /* Custom Surface Colors for Light Mode */
   --surface: 0 0% 100%; /* White */
   --surface-highlight: 0 0% 98%; /* Zinc 50 */
+
+  /* Véus neutros. No claro escurecem, no escuro clareiam — é o que permite
+     `bg-overlay-10` substituir o `bg-white/10` cravado, que some no claro. */
+  --overlay-05: 0 0 0 / 0.04;
+  --overlay-08: 0 0 0 / 0.06;
+  --overlay-10: 0 0 0 / 0.08;
+  --overlay-15: 0 0 0 / 0.1;
+
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --panel-bg: rgba(0, 0, 0, 0.03);
 }
 
 .dark {
@@ -54,6 +79,10 @@
 
   --primary: 84 100% 50%;
   --primary-foreground: 0 0% 0%;
+  --primary-text: 84 100% 50%;
+  --primary-hover: 84 100% 45%;
+  --secondary-hover: 184 100% 45%;
+  --accent-hover: 324 100% 45%;
 
   --secondary: 184 100% 50%;
   --secondary-foreground: 0 0% 0%;
@@ -67,6 +96,12 @@
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 0 0% 98%;
 
+  --success: 160 84% 39%;
+  --success-foreground: 0 0% 100%;
+
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 0%;
+
   --border: 240 3.7% 15.9%; /* Zinc 800 */
   --input: 240 3.7% 15.9%;
   --ring: 84 100% 50%;
@@ -74,6 +109,15 @@
   /* Custom Surface Colors for Dark Mode */
   --surface: 240 5.9% 10%; /* Zinc 900 - #18181B */
   --surface-highlight: 240 3.7% 15.9%; /* Zinc 800 - #27272A */
+
+  --overlay-05: 255 255 255 / 0.05;
+  --overlay-08: 255 255 255 / 0.08;
+  --overlay-10: 255 255 255 / 0.1;
+  --overlay-15: 255 255 255 / 0.15;
+
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --panel-bg: rgba(0, 0, 0, 0.4);
 }
 
 @theme inline {
@@ -88,21 +132,29 @@
 
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-primary-hover: hsl(84 100% 45%);
+  --color-primary-hover: hsl(var(--primary-hover));
 
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
-  --color-secondary-hover: hsl(184 100% 45%);
+  --color-secondary-hover: hsl(var(--secondary-hover));
 
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
 
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
-  --color-accent-hover: hsl(324 100% 45%);
+  --color-accent-hover: hsl(var(--accent-hover));
 
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+
+  --color-primary-text: hsl(var(--primary-text));
 
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
@@ -110,6 +162,11 @@
 
   --color-surface: hsl(var(--surface));
   --color-surface-highlight: hsl(var(--surface-highlight));
+
+  --color-overlay-05: rgb(var(--overlay-05));
+  --color-overlay-08: rgb(var(--overlay-08));
+  --color-overlay-10: rgb(var(--overlay-10));
+  --color-overlay-15: rgb(var(--overlay-15));
 
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
@@ -174,28 +231,34 @@
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgb(var(--overlay-10));
     border-radius: 10px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgb(var(--overlay-15));
   }
 
   .bg-surface {
     background-color: hsl(var(--surface));
   }
 
+  /* Painel flutuante de vidro — sidebar do dashboard */
+  .glass-panel {
+    background: var(--glass-bg);
+    border-color: var(--glass-border);
+    backdrop-filter: blur(24px);
+  }
+
   /* Cyber-Premium Utilities */
   .bg-grid {
     background-size: 40px 40px;
-    background-image: 
-      linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-image: linear-gradient(to right, rgb(var(--overlay-05)) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(var(--overlay-05)) 1px, transparent 1px);
   }
 
   .bg-dot {
     background-size: 20px 20px;
-    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-image: radial-gradient(circle, rgb(var(--overlay-05)) 1px, transparent 1px);
   }
 
   .neon-glow-primary {

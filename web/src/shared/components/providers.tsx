@@ -31,10 +31,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
+    // enableSystem desligado de propósito: as telas nunca foram exercitadas no
+    // tema claro, então seguir o SO jogaria usuário em tela não validada sem ele
+    // pedir. O claro é opt-in pelo ThemeToggle até a fase 4 do PRD
+    // design-system-unification zerar os hex cravados.
     <NextThemesProvider
       attribute="class"
       defaultTheme="dark"
-      enableSystem
+      enableSystem={false}
       disableTransitionOnChange
     >
       <QueryClientProvider client={queryClient}>

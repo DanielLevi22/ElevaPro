@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function Footer() {
   return (
-    <footer className="bg-background border-t border-white/10 py-12">
+    <footer className="bg-background border-t border-overlay-10 py-12">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
@@ -50,7 +50,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-white/10 text-center text-sm text-muted-foreground">
+        <div className="mt-12 pt-8 border-t border-overlay-10 text-center text-sm text-muted-foreground">
           © {new Date().getFullYear()} Eleva Pro. Todos os direitos reservados.
         </div>
       </div>
