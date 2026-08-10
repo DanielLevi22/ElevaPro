@@ -19,7 +19,7 @@ export function WorkoutCard({ workout, onEdit, onDelete }: WorkoutCardProps) {
   });
 
   return (
-    <div className="group bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl p-6 hover:border-white/20 hover:shadow-lg hover:shadow-white/5 transition-all duration-300">
+    <div className="group bg-overlay-05 backdrop-blur-lg border border-overlay-10 rounded-xl p-6 hover:border-overlay-15 hover:shadow-lg hover:shadow-white/5 transition-all duration-300">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1 min-w-0">
@@ -76,13 +76,13 @@ export function WorkoutCard({ workout, onEdit, onDelete }: WorkoutCardProps) {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-4 border-t border-white/10">
+      <div className="flex items-center justify-between pt-4 border-t border-overlay-10">
         <span className="text-xs text-muted-foreground">Criado em {formattedDate}</span>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => onEdit(workout.id)}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 hover:bg-overlay-10 rounded-lg transition-colors"
             title="Editar treino"
           >
             <svg

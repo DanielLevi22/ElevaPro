@@ -57,10 +57,10 @@ export function ExerciseConfigModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-surface/95 backdrop-blur-xl border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+      <div className="relative bg-surface/95 backdrop-blur-xl border border-overlay-10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
         {/* Header */}
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-foreground mb-2">Configurar Exercício</h2>
@@ -82,7 +82,7 @@ export function ExerciseConfigModal({
               value={sets}
               onChange={(e) => setSets(parseInt(e.target.value, 10) || 0)}
               min="1"
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              className="w-full bg-overlay-05 border border-overlay-10 rounded-lg px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             />
           </div>
 
@@ -94,7 +94,7 @@ export function ExerciseConfigModal({
               value={reps}
               onChange={(e) => setReps(parseInt(e.target.value, 10) || 0)}
               min="1"
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              className="w-full bg-overlay-05 border border-overlay-10 rounded-lg px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             />
           </div>
 
@@ -110,7 +110,7 @@ export function ExerciseConfigModal({
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
               placeholder="Ex: 20"
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              className="w-full bg-overlay-05 border border-overlay-10 rounded-lg px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             />
           </div>
 
@@ -125,7 +125,7 @@ export function ExerciseConfigModal({
               onChange={(e) => setRestSeconds(parseInt(e.target.value, 10) || 0)}
               min="0"
               step="15"
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              className="w-full bg-overlay-05 border border-overlay-10 rounded-lg px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             />
           </div>
         </div>
@@ -135,7 +135,7 @@ export function ExerciseConfigModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-foreground font-medium hover:bg-white/10 transition-colors"
+            className="flex-1 px-4 py-3 bg-overlay-05 border border-overlay-10 rounded-lg text-foreground font-medium hover:bg-overlay-10 transition-colors"
           >
             Cancelar
           </button>

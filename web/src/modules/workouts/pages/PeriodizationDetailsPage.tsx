@@ -22,15 +22,15 @@ const OBJECTIVE_LABELS: Record<string, string> = {
 };
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  planned: { label: "Planejada", className: "bg-blue-500/10 text-blue-400" },
-  active: { label: "Ativa", className: "bg-emerald-500/10 text-emerald-400" },
-  completed: { label: "Concluída", className: "bg-white/5 text-muted-foreground" },
+  planned: { label: "Planejada", className: "bg-secondary/10 text-secondary" },
+  active: { label: "Ativa", className: "bg-success/10 text-success" },
+  completed: { label: "Concluída", className: "bg-overlay-05 text-muted-foreground" },
 };
 
 const PLAN_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  planned: { label: "Planejada", className: "bg-blue-500/10 text-blue-400" },
-  active: { label: "Ativa", className: "bg-emerald-500/10 text-emerald-400" },
-  completed: { label: "Concluída", className: "bg-white/5 text-muted-foreground" },
+  planned: { label: "Planejada", className: "bg-secondary/10 text-secondary" },
+  active: { label: "Ativa", className: "bg-success/10 text-success" },
+  completed: { label: "Concluída", className: "bg-overlay-05 text-muted-foreground" },
 };
 
 function formatDate(iso: string) {
@@ -47,7 +47,7 @@ function PlanCard({ plan, periodizationId }: { plan: TrainingPlan; periodization
   return (
     <Link
       href={`/dashboard/workouts/periodizations/${periodizationId}/phases/${plan.id}`}
-      className="group bg-surface border border-white/10 rounded-xl p-4 hover:border-primary/40 transition-all flex items-center justify-between gap-4"
+      className="group bg-surface border border-overlay-10 rounded-xl p-4 hover:border-primary/40 transition-all flex items-center justify-between gap-4"
     >
       <div className="flex items-center gap-4 flex-1 min-w-0">
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
@@ -147,7 +147,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
       </div>
 
       {/* Header card */}
-      <div className="bg-surface border border-white/10 rounded-2xl p-6">
+      <div className="bg-surface border border-overlay-10 rounded-2xl p-6">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-1">
@@ -160,7 +160,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
               <p className="text-muted-foreground">{periodization.student.full_name}</p>
             )}
             <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground">
-              <span className="px-2 py-0.5 rounded-md bg-white/5 text-xs">{objective}</span>
+              <span className="px-2 py-0.5 rounded-md bg-overlay-05 text-xs">{objective}</span>
               <span>
                 {periodization.start_date ? formatDate(periodization.start_date) : "—"} →{" "}
                 {periodization.end_date ? formatDate(periodization.end_date) : "—"}
@@ -175,7 +175,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
           <div className="flex gap-2 shrink-0">
             <button
               onClick={() => setEditingPeriodization(true)}
-              className="px-4 py-2 bg-white/5 border border-white/10 text-muted-foreground rounded-lg text-sm font-medium hover:bg-white/10 transition-colors"
+              className="px-4 py-2 bg-overlay-05 border border-overlay-10 text-muted-foreground rounded-lg text-sm font-medium hover:bg-overlay-10 transition-colors"
             >
               Editar
             </button>
@@ -183,7 +183,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
               <button
                 onClick={handleActivate}
                 disabled={isPending}
-                className="px-4 py-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg text-sm font-medium hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-success/10 text-success border border-success/20 rounded-lg text-sm font-medium hover:bg-success/20 transition-colors disabled:opacity-50"
               >
                 Ativar
               </button>
@@ -192,7 +192,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
               <button
                 onClick={handleComplete}
                 disabled={isPending}
-                className="px-4 py-2 bg-white/5 text-muted-foreground border border-white/10 rounded-lg text-sm font-medium hover:bg-white/10 transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-overlay-05 text-muted-foreground border border-overlay-10 rounded-lg text-sm font-medium hover:bg-overlay-10 transition-colors disabled:opacity-50"
               >
                 Concluir
               </button>
@@ -227,7 +227,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
         </div>
 
         {plans.length === 0 ? (
-          <div className="bg-surface border border-white/10 rounded-2xl p-8 text-center">
+          <div className="bg-surface border border-overlay-10 rounded-2xl p-8 text-center">
             <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
               <svg
                 className="w-6 h-6 text-primary"

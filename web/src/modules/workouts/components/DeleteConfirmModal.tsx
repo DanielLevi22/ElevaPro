@@ -29,10 +29,10 @@ export function DeleteConfirmModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-surface/95 backdrop-blur-xl border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+      <div className="relative bg-surface/95 backdrop-blur-xl border border-overlay-10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
         {/* Icon */}
         <div className="flex items-center justify-center mb-4">
           <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center">
@@ -67,7 +67,7 @@ export function DeleteConfirmModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-foreground font-medium hover:bg-white/10 transition-colors"
+            className="flex-1 px-4 py-3 bg-overlay-05 border border-overlay-10 rounded-lg text-foreground font-medium hover:bg-overlay-10 transition-colors"
             disabled={isLoading}
           >
             Cancelar

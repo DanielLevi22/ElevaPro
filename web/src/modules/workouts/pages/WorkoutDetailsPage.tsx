@@ -163,14 +163,14 @@ export default function WorkoutDetailsPage() {
       </nav>
 
       {/* Header card */}
-      <div className="bg-surface border border-white/10 rounded-2xl p-6">
+      <div className="bg-surface border border-overlay-10 rounded-2xl p-6">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="flex items-start gap-4">
             <div>
               <h1 className="text-2xl font-bold text-foreground">{workout.title}</h1>
               <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
                 {workout.difficulty && (
-                  <span className="px-2 py-0.5 rounded-md bg-white/5">
+                  <span className="px-2 py-0.5 rounded-md bg-overlay-05">
                     {DIFFICULTY_LABELS[workout.difficulty]}
                   </span>
                 )}
@@ -185,7 +185,7 @@ export default function WorkoutDetailsPage() {
           </div>
           <button
             onClick={() => setEditWorkoutOpen(true)}
-            className="px-4 py-2 bg-white/5 border border-white/10 text-muted-foreground rounded-lg text-sm hover:bg-white/10 transition-colors self-start shrink-0"
+            className="px-4 py-2 bg-overlay-05 border border-overlay-10 text-muted-foreground rounded-lg text-sm hover:bg-overlay-10 transition-colors self-start shrink-0"
           >
             Editar Treino
           </button>
@@ -213,7 +213,7 @@ export default function WorkoutDetailsPage() {
         </div>
 
         {items.length === 0 ? (
-          <div className="bg-surface border border-white/10 rounded-2xl p-8 text-center">
+          <div className="bg-surface border border-overlay-10 rounded-2xl p-8 text-center">
             <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
               <svg
                 className="w-6 h-6 text-primary"
@@ -245,10 +245,10 @@ export default function WorkoutDetailsPage() {
             {items.map((item, index) => (
               <div
                 key={item.id}
-                className="bg-surface border border-white/10 rounded-xl p-4 flex items-center gap-4"
+                className="bg-surface border border-overlay-10 rounded-xl p-4 flex items-center gap-4"
               >
                 {/* Order */}
-                <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-overlay-05 flex items-center justify-center shrink-0">
                   <span className="text-xs text-muted-foreground font-medium">{index + 1}</span>
                 </div>
 
@@ -290,7 +290,7 @@ export default function WorkoutDetailsPage() {
                   <button
                     type="button"
                     onClick={() => setEditingItem(item)}
-                    className="p-1.5 rounded-lg hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-overlay-10 text-muted-foreground hover:text-foreground transition-colors"
                     title="Editar"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -306,7 +306,7 @@ export default function WorkoutDetailsPage() {
                   <button
                     type="button"
                     onClick={() => setDeletingItem(item)}
-                    className="p-1.5 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
                     title="Remover"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

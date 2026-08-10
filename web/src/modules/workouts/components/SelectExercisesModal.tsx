@@ -31,12 +31,12 @@ export function SelectExercisesModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-surface/95 backdrop-blur-xl border border-white/10 rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
+      <div className="relative bg-surface/95 backdrop-blur-xl border border-overlay-10 rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
         {/* Header */}
-        <div className="p-6 border-b border-white/10">
+        <div className="p-6 border-b border-overlay-10">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-2xl font-bold text-foreground">Selecionar Exercícios</h2>
@@ -46,7 +46,7 @@ export function SelectExercisesModal({
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 hover:bg-overlay-10 rounded-lg transition-colors"
             >
               <svg
                 className="w-5 h-5 text-muted-foreground"
@@ -71,7 +71,7 @@ export function SelectExercisesModal({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar exercícios..."
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 pl-10 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              className="w-full bg-overlay-05 border border-overlay-10 rounded-lg px-4 py-3 pl-10 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             />
             <svg
               className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
@@ -112,7 +112,7 @@ export function SelectExercisesModal({
                     className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                       isSelected
                         ? "bg-primary/10 border-primary"
-                        : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10"
+                        : "bg-overlay-05 border-overlay-10 hover:border-overlay-15 hover:bg-overlay-10"
                     }`}
                   >
                     <div className="flex items-start justify-between">
@@ -148,7 +148,7 @@ export function SelectExercisesModal({
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-white/10">
+        <div className="p-6 border-t border-overlay-10">
           <button
             onClick={onClose}
             className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/50 transition-all"
