@@ -1,0 +1,10 @@
+:root{
+--shadow-card:0 4px 24px -4px rgba(0,0,0,0.4);
+--shadow-panel:0 25px 50px -12px rgba(0,0,0,0.5);
+--glow-primary:0 0 30px -5px rgba(204,255,0,0.5);
+--glow-secondary:0 0 30px -5px rgba(0,240,255,0.4);
+--glow-accent:0 0 30px -5px rgba(255,0,153,0.4);
+--blur-panel:blur(24px);/* @kind other */
+--ease-standard:cubic-bezier(0.4,0,0.2,1);/* @kind other */
+--duration-fast:150ms;/* @kind other */--duration-standard:300ms;/* @kind other */
+}

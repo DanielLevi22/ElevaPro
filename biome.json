@@ -32,6 +32,11 @@
       "formatter": { "enabled": false }
     },
     {
+      "includes": ["design/**"],
+      "linter": { "enabled": false },
+      "formatter": { "enabled": false }
+    },
+    {
       "includes": ["app/**/*"],
       "linter": {
         "rules": {

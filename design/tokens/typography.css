@@ -1,0 +1,11 @@
+@font-face{font-family:"Inter";font-style:normal;font-weight:400 700;font-display:swap;src:url(https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMa1ZL7.woff2) format("woff2");}
+@font-face{font-family:"Outfit";font-style:normal;font-weight:400 800;font-display:swap;src:url(https://fonts.gstatic.com/s/outfit/v11/QGYyz_MVcBeNP4NjuGObqx1XmO1I4TC1O2c.woff2) format("woff2");}
+@font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:400 600;font-display:swap;src:url(https://fonts.gstatic.com/s/jetbrainsmono/v18/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKxjPVmUsaaDhw.woff2) format("woff2");}
+:root{
+--font-sans:"Inter",system-ui,-apple-system,sans-serif;
+--font-display:"Outfit","Inter",system-ui,sans-serif;
+--font-mono:"JetBrains Mono",ui-monospace,monospace;
+--text-display:32px;--text-h1:24px;--text-h2:20px;--text-h3:16px;--text-body:14px;--text-small:12px;--text-micro:10px;
+--leading-tight:1.1;--leading-normal:1.5;
+--tracking-tight:-0.02em;--tracking-wide:0.08em;--tracking-widest:0.2em;
+}
