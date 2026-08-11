@@ -40,29 +40,31 @@ export function SpecialistLinkSection({ studentId, isMember }: Props) {
   }
 
   if (isLoading) {
-    return <div className="h-24 bg-zinc-900/40 border border-white/5 rounded-2xl animate-pulse" />;
+    return (
+      <div className="h-24 bg-surface/40 border border-overlay-08 rounded-2xl animate-pulse" />
+    );
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
         Especialistas vinculados
       </p>
 
       {links.length === 0 ? (
-        <p className="text-sm text-zinc-600">Nenhum especialista vinculado.</p>
+        <p className="text-sm text-muted-foreground">Nenhum especialista vinculado.</p>
       ) : (
         <div className="flex flex-col gap-2">
           {links.map((link) => (
             <div
               key={link.id}
-              className="flex items-center justify-between bg-zinc-900/60 border border-white/5 rounded-xl px-4 py-3"
+              className="flex items-center justify-between bg-surface/60 border border-overlay-08 rounded-xl px-4 py-3"
             >
               <div>
-                <p className="text-sm font-bold text-white">
+                <p className="text-sm font-bold text-foreground">
                   {link.specialist_name ?? "Especialista"}
                 </p>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
                   {SERVICE_TYPE[link.service_type as keyof typeof SERVICE_TYPE] ??
                     link.service_type}
                 </p>
@@ -71,7 +73,7 @@ export function SpecialistLinkSection({ studentId, isMember }: Props) {
                 type="button"
                 onClick={() => endLink({ linkId: link.id, studentId })}
                 disabled={endingLink}
-                className="text-xs font-bold text-zinc-600 hover:text-red-400 transition-colors disabled:opacity-50"
+                className="text-xs font-bold text-muted-foreground hover:text-red-400 transition-colors disabled:opacity-50"
               >
                 Encerrar
               </button>
@@ -82,20 +84,20 @@ export function SpecialistLinkSection({ studentId, isMember }: Props) {
 
       {isMember && (
         <div className="flex flex-col gap-3 mt-2">
-          <p className="text-xs text-zinc-600">
+          <p className="text-xs text-muted-foreground">
             Gere um código e passe ao seu especialista para que ele confirme o vínculo.
           </p>
 
           {generatedCode ? (
             <div className="flex items-center gap-3">
-              <div className="flex-1 bg-zinc-900 border border-primary/20 rounded-xl px-4 py-3 flex items-center justify-between">
+              <div className="flex-1 bg-surface border border-primary/20 rounded-xl px-4 py-3 flex items-center justify-between">
                 <span className="text-xl font-black text-primary tracking-[0.3em]">
                   {generatedCode}
                 </span>
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="text-[10px] font-bold text-zinc-500 hover:text-white transition-colors uppercase tracking-widest"
+                  className="text-[10px] font-bold text-muted-foreground hover:text-foreground transition-colors uppercase tracking-widest"
                 >
                   {copied ? "Copiado!" : "Copiar"}
                 </button>
@@ -104,7 +106,7 @@ export function SpecialistLinkSection({ studentId, isMember }: Props) {
                 type="button"
                 onClick={handleGenerateCode}
                 disabled={generatingCode}
-                className="text-[10px] font-bold text-zinc-600 hover:text-zinc-400 transition-colors uppercase tracking-widest whitespace-nowrap"
+                className="text-[10px] font-bold text-muted-foreground hover:text-muted-foreground transition-colors uppercase tracking-widest whitespace-nowrap"
               >
                 Novo código
               </button>
@@ -114,7 +116,7 @@ export function SpecialistLinkSection({ studentId, isMember }: Props) {
               type="button"
               onClick={handleGenerateCode}
               disabled={generatingCode}
-              className="px-5 py-2.5 bg-zinc-800 border border-white/10 text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-zinc-700 transition-colors disabled:opacity-50 self-start"
+              className="px-5 py-2.5 bg-surface-highlight border border-overlay-10 text-foreground font-black text-xs uppercase tracking-widest rounded-xl hover:bg-surface-highlight transition-colors disabled:opacity-50 self-start"
             >
               {generatingCode ? "Gerando..." : "Gerar código de vínculo"}
             </button>
@@ -122,7 +124,7 @@ export function SpecialistLinkSection({ studentId, isMember }: Props) {
 
           {codeError && <p className="text-xs text-red-400">{codeError}</p>}
           {generatedCode && (
-            <p className="text-[10px] text-zinc-600">Código válido por 24 horas.</p>
+            <p className="text-[10px] text-muted-foreground">Código válido por 24 horas.</p>
           )}
         </div>
       )}

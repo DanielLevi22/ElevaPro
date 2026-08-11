@@ -1,0 +1,40 @@
+:root{
+/* Base palette — "Cyber Fitness" (unified 2026-08-09, see readme.md > Visual foundations) */
+--lime:84 100% 50%;/* @kind color */--lime-hex:#CCFF00;/* @kind color */
+--cyber-blue:184 100% 50%;/* @kind color */--cyber-blue-hex:#00F0FF;/* @kind color */
+--hot-pink:324 100% 50%;/* @kind color */--hot-pink-hex:#FF0099;/* @kind color */
+--zinc-950:240 10% 3.9%;/* @kind color */--zinc-900:240 5.9% 10%;/* @kind color */--zinc-800:240 3.7% 15.9%;/* @kind color */--zinc-600:240 5.2% 33.9%;/* @kind color */--zinc-500:240 5% 64.9%;/* @kind color */--zinc-50:0 0% 98%;/* @kind color */
+--white:0 0% 100%;/* @kind color */--black:0 0% 0%;/* @kind color */
+--emerald-500:160 84% 39%;/* @kind color */--amber-500:38 92% 50%;/* @kind color */--red-500:0 84% 60%;/* @kind color */
+
+/* Semantic — dark mode (DEFAULT; the product ships dark-only today) */
+--background:var(--zinc-950);/* @kind color */--foreground:var(--zinc-50);/* @kind color */
+--card:var(--zinc-950);/* @kind color */--card-foreground:var(--zinc-50);/* @kind color */
+--surface:var(--zinc-900);/* @kind color */--surface-highlight:var(--zinc-800);/* @kind color */
+--popover:var(--zinc-950);/* @kind color */--popover-foreground:var(--zinc-50);/* @kind color */
+--primary:var(--lime);/* @kind color */--primary-foreground:var(--black);/* @kind color */
+--secondary:var(--cyber-blue);/* @kind color */--secondary-foreground:var(--black);/* @kind color */
+--accent:var(--hot-pink);/* @kind color */--accent-foreground:var(--white);/* @kind color */
+--muted:var(--zinc-800);/* @kind color */--muted-foreground:var(--zinc-500);/* @kind color */
+--destructive:var(--red-500);/* @kind color */--destructive-foreground:var(--zinc-50);/* @kind color */
+--success:var(--emerald-500);/* @kind color */--success-foreground:var(--white);/* @kind color */
+--warning:var(--amber-500);/* @kind color */--warning-foreground:var(--black);/* @kind color */
+--border:var(--zinc-800);/* @kind color */--input:var(--zinc-800);/* @kind color */--ring:var(--lime);/* @kind color */
+--radius:0.5rem;/* @kind radius */
+--primary-text:84 90% 45%;/* @kind color */
+--overlay-05:255 255 255/0.05;/* @kind color */--overlay-08:255 255 255/0.08;/* @kind color */--overlay-10:255 255 255/0.1;/* @kind color */--overlay-15:255 255 255/0.15;/* @kind color */
+--glass-bg:rgba(255,255,255,0.03);--glass-border:rgba(255,255,255,0.05);--panel-bg:rgba(0,0,0,0.4);
+}
+.light{
+/* Light mode — defined in source but not yet exercised in shipped product; use for light surfaces now available in both UI kits via a theme toggle */
+--background:240 4.8% 95.9%;/* @kind color */--foreground:240 10% 3.9%;/* @kind color */
+--card:0 0% 100%;/* @kind color */--card-foreground:240 10% 3.9%;/* @kind color */
+--surface:0 0% 100%;/* @kind color */--surface-highlight:0 0% 98%;/* @kind color */
+--popover:0 0% 100%;/* @kind color */--popover-foreground:240 10% 3.9%;/* @kind color */
+--muted:240 4.8% 95.9%;/* @kind color */--muted-foreground:240 5.2% 33.9%;/* @kind color */
+--border:240 5.9% 90%;/* @kind color */--input:240 5.9% 90%;/* @kind color */
+--overlay-05:0 0 0/0.04;/* @kind color */--overlay-08:0 0 0/0.06;/* @kind color */--overlay-10:0 0 0/0.08;/* @kind color */--overlay-15:0 0 0/0.1;/* @kind color */
+--glass-bg:rgba(255,255,255,0.7);--glass-border:rgba(0,0,0,0.06);--panel-bg:rgba(0,0,0,0.03);
+--primary-text:88 65% 28%;/* @kind color */
+--primary:84 65% 38%;/* @kind color */--primary-foreground:0 0% 100%;/* @kind color */
+}

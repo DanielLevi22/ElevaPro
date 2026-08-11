@@ -11,7 +11,7 @@ interface Props {
 
 export function WelcomeBanner({ currentStep }: Props) {
   return (
-    <div className="bg-surface border border-white/10 rounded-2xl px-6 py-4">
+    <div className="bg-surface border border-overlay-10 rounded-2xl px-6 py-4">
       <div className="flex items-start gap-2 flex-wrap md:flex-nowrap">
         {STEPS.map((step, i) => {
           const done = step.n < currentStep;
@@ -27,7 +27,7 @@ export function WelcomeBanner({ currentStep }: Props) {
                       ? "bg-primary text-primary-foreground"
                       : active
                         ? "bg-primary/20 border-2 border-primary text-primary"
-                        : "bg-white/5 border border-white/10 text-muted-foreground"
+                        : "bg-overlay-05 border border-overlay-10 text-muted-foreground"
                   }`}
                 >
                   {done ? (
@@ -46,7 +46,7 @@ export function WelcomeBanner({ currentStep }: Props) {
                 {/* Connector line below (mobile) */}
                 {i < STEPS.length - 1 && (
                   <div
-                    className={`w-px h-4 mt-1 md:hidden ${done ? "bg-primary/40" : "bg-white/10"}`}
+                    className={`w-px h-4 mt-1 md:hidden ${done ? "bg-primary/40" : "bg-overlay-10"}`}
                   />
                 )}
               </div>
@@ -66,7 +66,7 @@ export function WelcomeBanner({ currentStep }: Props) {
               {/* Connector line (desktop) */}
               {i < STEPS.length - 1 && (
                 <div
-                  className={`hidden md:block h-px w-8 mt-4 shrink-0 ${done ? "bg-primary/40" : "bg-white/10"}`}
+                  className={`hidden md:block h-px w-8 mt-4 shrink-0 ${done ? "bg-primary/40" : "bg-overlay-10"}`}
                 />
               )}
             </div>

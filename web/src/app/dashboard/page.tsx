@@ -1,195 +1,113 @@
 "use client";
 
-import { supabase } from "@elevapro/supabase";
-import { useEffect, useState } from "react";
 import { ActivityFeed, QuickActions, StatCard } from "@/dashboard";
+import { useAuthUser } from "@/shared/hooks/useAuthUser";
 import { useDashboardStats } from "@/shared/hooks/useDashboardStats";
 import { useRecentActivity } from "@/shared/hooks/useRecentActivity";
 
+const ICON = {
+  students: (
+    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+      />
+    </svg>
+  ),
+  workouts: (
+    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M13 10V3L4 14h7v7l9-11h-7z"
+      />
+    </svg>
+  ),
+  diets: (
+    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+      />
+    </svg>
+  ),
+  completed: (
+    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+      />
+    </svg>
+  ),
+};
+
 export default function DashboardPage() {
-  const [userName, setUserName] = useState<string>("");
+  // useAuthUser em vez de consultar profiles aqui: query em componente e proibida
+  // pelo CLAUDE.md, e este hook ja mantem o perfil em cache.
+  const { data: authUser } = useAuthUser();
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: activities = [], isLoading: activitiesLoading } = useRecentActivity();
 
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser();
-
-        if (userError) {
-          console.error("❌ Error getting user:", userError);
-          return;
-        }
-
-        if (user) {
-          console.log("✅ User authenticateds:", user.id, user.email);
-
-          // Try to get full name from profiles
-          const { data: profile, error: profileError } = await supabase
-            .from("profiles")
-            .select("full_name")
-            .eq("id", user.id)
-            .single();
-
-          if (profileError) {
-            console.error("❌ Error fetching profile:", profileError);
-            console.error("Error details:", {
-              message: profileError.message,
-              details: profileError.details,
-              hint: profileError.hint,
-              code: profileError.code,
-            });
-          } else {
-            console.log("✅ Profile loaded:", profile);
-          }
-
-          setUserName(profile?.full_name || user.email?.split("@")[0] || "Profissional");
-        }
-      } catch (error) {
-        console.error("❌ Unexpected error:", error);
-      }
-    };
-
-    getUser();
-  }, []);
-
-  // Get current date formatted
-  const currentDate = new Date().toLocaleDateString("pt-BR", {
+  const today = new Date().toLocaleDateString("pt-BR", {
     weekday: "long",
-    year: "numeric",
-    month: "long",
     day: "numeric",
+    month: "long",
   });
 
   return (
-    <div className="space-y-8 relative">
-      {/* Background Effects Removed */}
-
-      {/* Header */}
-      <div className="relative">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-              Dashboard
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Bem-vindo de volta, <span className="text-foreground font-medium">{userName}</span>!
-            </p>
-            <p className="text-sm text-muted-foreground mt-1 capitalize">{currentDate}</p>
-          </div>
-        </div>
+    <div className="space-y-5">
+      <div>
+        <h1 className="font-display text-3xl font-extrabold bg-linear-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+          Dashboard
+        </h1>
+        <p className="mt-2 text-[13px] text-muted-foreground">
+          Bem-vindo de volta,{" "}
+          <span className="font-semibold text-foreground">{authUser?.fullName ?? "..."}</span>!{" "}
+          <span className="capitalize">· {today}</span>
+        </p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
           title="Total de Alunos"
           value={stats?.totalStudents ?? 0}
-          icon={
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-              />
-            </svg>
-          }
+          icon={ICON.students}
           color="primary"
           loading={statsLoading}
         />
-
         <StatCard
           title="Treinos Criados"
           value={stats?.totalWorkouts ?? 0}
-          icon={
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-              />
-            </svg>
-          }
+          icon={ICON.workouts}
           color="secondary"
           loading={statsLoading}
         />
-
         <StatCard
           title="Dietas Ativas"
           value={stats?.activeDiets ?? 0}
-          icon={
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-          }
+          icon={ICON.diets}
           color="accent"
           loading={statsLoading}
         />
-
         <StatCard
-          title="Treinos Completados"
+          title="Concluídos (7d)"
           value={stats?.completedWorkoutsThisWeek ?? 0}
-          icon={
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-              />
-            </svg>
-          }
+          icon={ICON.completed}
           color="primary"
           loading={statsLoading}
         />
       </div>
 
-      {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
-        {/* Activity Feed - 2/3 width */}
-        <div className="lg:col-span-2">
-          <ActivityFeed activities={activities} loading={activitiesLoading} />
-        </div>
+      <QuickActions />
 
-        {/* Quick Actions - 1/3 width */}
-        <div>
-          <QuickActions />
-        </div>
-      </div>
+      <ActivityFeed activities={activities} loading={activitiesLoading} />
     </div>
   );
 }

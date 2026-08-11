@@ -16,7 +16,7 @@ export function DayOverviewCard({ todayWorkout, activeDietPlan, isLoading }: Pro
         {[0, 1].map((i) => (
           <div
             key={i}
-            className="h-32 bg-zinc-900/40 border border-white/5 rounded-2xl animate-pulse"
+            className="h-32 bg-surface/40 border border-overlay-08 rounded-2xl animate-pulse"
           />
         ))}
       </div>
@@ -66,18 +66,20 @@ function OverviewTile({ icon, label, title, subtitle, href, isEmpty }: TileProps
   return (
     <Link
       href={href}
-      className="group block bg-zinc-900/40 border border-white/5 rounded-2xl p-6 hover:border-primary/20 transition-all"
+      className="group block bg-surface/40 border border-overlay-08 rounded-2xl p-6 hover:border-primary/20 transition-all"
     >
-      <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-3">{label}</p>
+      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">
+        {label}
+      </p>
       <div className="flex items-center gap-3">
         <span className="text-3xl">{icon}</span>
         <div>
           <p
-            className={`font-black text-sm uppercase tracking-tight ${isEmpty ? "text-zinc-600" : "text-white group-hover:text-primary transition-colors"}`}
+            className={`font-black text-sm uppercase tracking-tight ${isEmpty ? "text-muted-foreground" : "text-foreground group-hover:text-primary transition-colors"}`}
           >
             {title}
           </p>
-          {subtitle && <p className="text-xs text-zinc-500 mt-0.5">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
         </div>
       </div>
     </Link>

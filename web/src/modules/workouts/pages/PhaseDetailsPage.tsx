@@ -12,6 +12,7 @@ import {
   updatePhaseDatesAction,
   updatePhaseStatusAction,
 } from "@/app/dashboard/workouts/actions";
+import { DateField } from "@/shared/components/ui/DateField";
 import { CreateWorkoutModal } from "../components/CreateWorkoutModal";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import { ImportWorkoutModal } from "../components/ImportWorkoutModal";
@@ -22,21 +23,21 @@ const SPLITS = ["A", "AB", "ABC", "ABCD", "ABCDE", "ABCDEF"];
 const PLAN_STATUS_CONFIG = {
   planned: {
     label: "Planejado",
-    className: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
+    className: "bg-secondary/10 text-secondary border border-secondary/20",
   },
   active: {
     label: "Ativo",
-    className: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+    className: "bg-success/10 text-success border border-success/20",
   },
   completed: {
     label: "Concluído",
-    className: "bg-white/5 text-muted-foreground border border-white/10",
+    className: "bg-overlay-05 text-muted-foreground border border-overlay-10",
   },
 } as const;
 
 function WorkoutCard({ workout, onDelete }: { workout: Workout; onDelete: (w: Workout) => void }) {
   return (
-    <div className="group bg-surface border border-white/10 rounded-xl hover:border-primary/40 transition-all flex items-center">
+    <div className="group bg-surface border border-overlay-10 rounded-xl hover:border-primary/40 transition-all flex items-center">
       <Link
         href={`/dashboard/workouts/${workout.id}`}
         className="flex items-center gap-4 flex-1 min-w-0 p-4"
@@ -65,7 +66,7 @@ function WorkoutCard({ workout, onDelete }: { workout: Workout; onDelete: (w: Wo
       <button
         type="button"
         onClick={() => onDelete(workout)}
-        className="p-3 mr-1 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors shrink-0"
+        className="p-3 mr-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors shrink-0"
         title="Remover treino"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,6 +150,11 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
     });
   }, [plan.name, phaseId, periodizationId, router]);
 
+  // Espelham o que veio do servidor; o revalidate do router traz o valor real
+  // de volta se a acao falhar.
+  const [startDate, setStartDate] = useState(plan.start_date?.split("T")[0] ?? "");
+  const [endDate, setEndDate] = useState(plan.end_date?.split("T")[0] ?? "");
+
   const handleUpdateDate = useCallback(
     async (field: "start_date" | "end_date", value: string) => {
       await updatePhaseDatesAction(phaseId, periodizationId, { [field]: value });
@@ -213,7 +219,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
               </svg>
             </button>
             {showStatusMenu && (
-              <div className="absolute right-0 top-full mt-1 bg-surface border border-white/10 rounded-xl shadow-xl z-20 p-1.5 flex flex-col gap-0.5 min-w-35">
+              <div className="absolute right-0 top-full mt-1 bg-surface border border-overlay-10 rounded-xl shadow-xl z-20 p-1.5 flex flex-col gap-0.5 min-w-35">
                 {(["planned", "active", "completed"] as const).map((s) => {
                   const cfg = PLAN_STATUS_CONFIG[s];
                   return (
@@ -223,7 +229,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
                         handleUpdateStatus(s);
                         setShowStatusMenu(false);
                       }}
-                      className={`px-3 py-2 rounded-lg text-left text-xs font-medium transition-colors hover:bg-white/5 ${
+                      className={`px-3 py-2 rounded-lg text-left text-xs font-medium transition-colors hover:bg-overlay-05 ${
                         plan.status === s ? "opacity-50 cursor-default" : ""
                       } ${cfg.className}`}
                       disabled={plan.status === s}
@@ -239,7 +245,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
           <button
             onClick={handleDeletePhase}
             disabled={isPending}
-            className="p-2 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors disabled:opacity-50"
+            className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
             title="Excluir fase"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -255,7 +261,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
       </div>
 
       {/* Config card */}
-      <div className="bg-surface border border-white/10 rounded-2xl p-6 space-y-5">
+      <div className="bg-surface border border-overlay-10 rounded-2xl p-6 space-y-5">
         {/* Split picker (creates workouts per letter) */}
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
@@ -265,7 +271,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
             <button
               onClick={() => setShowSplitPicker((v) => !v)}
               disabled={changingSplit}
-              className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2.5 rounded-xl hover:bg-white/10 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 bg-overlay-05 border border-overlay-10 px-4 py-2.5 rounded-xl hover:bg-overlay-10 transition-colors disabled:opacity-50"
             >
               <span className="text-foreground font-bold text-lg uppercase">
                 {workouts.map((w) => w.title.charAt(0)).join("") || "--"}
@@ -286,7 +292,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
             </button>
 
             {showSplitPicker && (
-              <div className="absolute left-0 top-full mt-1 bg-surface border border-white/10 rounded-xl shadow-xl z-20 p-2 flex flex-col gap-1 min-w-40">
+              <div className="absolute left-0 top-full mt-1 bg-surface border border-overlay-10 rounded-xl shadow-xl z-20 p-2 flex flex-col gap-1 min-w-40">
                 {SPLITS.map((s) => (
                   <button
                     key={s}
@@ -303,7 +309,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
                   </button>
                 ))}
                 {/* Custom split input */}
-                <div className="border-t border-white/10 mt-1 pt-2 px-1">
+                <div className="border-t border-overlay-10 mt-1 pt-2 px-1">
                   <p className="text-xs text-muted-foreground mb-1.5 px-1">Personalizado</p>
                   <div className="flex gap-1">
                     <input
@@ -314,7 +320,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
                       }
                       placeholder="Ex: ABCBAC"
                       maxLength={12}
-                      className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 font-mono uppercase"
+                      className="flex-1 min-w-0 bg-overlay-05 border border-overlay-10 rounded-lg px-2 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 font-mono uppercase"
                     />
                     <button
                       type="button"
@@ -335,40 +341,29 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
           </div>
         </div>
 
-        <div className="border-t border-white/5" />
+        <div className="border-t border-overlay-08" />
 
-        {/* Dates */}
+        {/* Dates — DateField ja limita a faixa aceita */}
         <div className="flex gap-4">
-          <div className="flex-1">
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
-              Início
-            </p>
-            <input
-              type="date"
-              defaultValue={plan.start_date?.split("T")[0] ?? ""}
-              onBlur={(e) => {
-                if (e.target.value && e.target.value !== plan.start_date?.split("T")[0]) {
-                  handleUpdateDate("start_date", e.target.value);
-                }
-              }}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
-          </div>
-          <div className="flex-1">
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
-              Término
-            </p>
-            <input
-              type="date"
-              defaultValue={plan.end_date?.split("T")[0] ?? ""}
-              onBlur={(e) => {
-                if (e.target.value && e.target.value !== plan.end_date?.split("T")[0]) {
-                  handleUpdateDate("end_date", e.target.value);
-                }
-              }}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
-          </div>
+          <DateField
+            className="flex-1"
+            label="Início"
+            value={startDate}
+            onChange={(value) => {
+              setStartDate(value);
+              if (value) handleUpdateDate("start_date", value);
+            }}
+          />
+          <DateField
+            className="flex-1"
+            label="Término"
+            value={endDate}
+            min={startDate || undefined}
+            onChange={(value) => {
+              setEndDate(value);
+              if (value) handleUpdateDate("end_date", value);
+            }}
+          />
         </div>
       </div>
 
@@ -419,7 +414,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 !selectedMuscle
                   ? "bg-primary text-primary-foreground"
-                  : "bg-surface border border-white/10 text-muted-foreground hover:bg-white/5"
+                  : "bg-surface border border-overlay-10 text-muted-foreground hover:bg-overlay-05"
               }`}
             >
               Todos
@@ -431,7 +426,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   selectedMuscle === m
                     ? "bg-primary text-primary-foreground"
-                    : "bg-surface border border-white/10 text-muted-foreground hover:bg-white/5"
+                    : "bg-surface border border-overlay-10 text-muted-foreground hover:bg-overlay-05"
                 }`}
               >
                 {m}
@@ -450,7 +445,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
 
         {/* Empty state */}
         {!changingSplit && filteredWorkouts.length === 0 && (
-          <div className="bg-surface border border-white/10 rounded-2xl p-8 text-center">
+          <div className="bg-surface border border-overlay-10 rounded-2xl p-8 text-center">
             {selectedMuscle ? (
               <p className="text-sm text-muted-foreground">
                 Nenhum treino com foco em <span className="text-foreground">{selectedMuscle}</span>.
@@ -533,14 +528,14 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
       {pendingSplit !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-background/60 backdrop-blur-sm"
             onClick={() => setPendingSplit(null)}
           />
-          <div className="relative bg-surface/95 backdrop-blur-xl border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+          <div className="relative bg-surface/95 backdrop-blur-xl border border-overlay-10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
             <div className="flex items-center justify-center mb-4">
-              <div className="w-14 h-14 bg-yellow-500/10 rounded-full flex items-center justify-center">
+              <div className="w-14 h-14 bg-warning/10 rounded-full flex items-center justify-center">
                 <svg
-                  className="w-7 h-7 text-yellow-400"
+                  className="w-7 h-7 text-warning"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -571,7 +566,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
               <button
                 type="button"
                 onClick={() => setPendingSplit(null)}
-                className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-foreground font-medium hover:bg-white/10 transition-colors"
+                className="flex-1 px-4 py-2.5 bg-overlay-05 border border-overlay-10 rounded-lg text-foreground font-medium hover:bg-overlay-10 transition-colors"
               >
                 Cancelar
               </button>

@@ -1,0 +1,7 @@
+@import "tokens/colors.css";
+@import "tokens/typography.css";
+@import "tokens/spacing.css";
+@import "tokens/effects.css";
+body{background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans);}
+a{color:hsl(var(--primary));text-decoration:none;}
+a:hover{color:hsl(var(--secondary));}

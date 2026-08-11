@@ -1,19 +1,10 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useStudents } from "@/shared/hooks/useStudents";
+import { formatDate } from "@/shared/utils/formatDate";
 import type { HistoryEvent } from "../hooks/useStudentHistory";
 import { useStudentHistory } from "../hooks/useStudentHistory";
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 function EventIcon({ type }: { type: HistoryEvent["type"] }) {
   if (type === "workout_session") {
@@ -96,7 +87,6 @@ function StatusBadge({ status }: { status?: HistoryEvent["status"] }) {
 
 export default function StudentHistoryPage() {
   const params = useParams();
-  const router = useRouter();
   const studentId = params.id as string;
 
   const { data: students = [] } = useStudents();
@@ -108,21 +98,6 @@ export default function StudentHistoryPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <button
-          onClick={() => router.back()}
-          className="p-2 rounded-lg hover:bg-white/5 text-muted-foreground hover:text-foreground transition-colors"
-          aria-label="Voltar"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </button>
-
         <div>
           <h1 className="text-2xl font-bold text-foreground">Histórico</h1>
           {student && <p className="text-sm text-muted-foreground">{student.full_name}</p>}
@@ -197,7 +172,7 @@ export default function StudentHistoryPage() {
                     <div className="flex items-center gap-2 shrink-0">
                       <StatusBadge status={event.status} />
                       <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        {formatDate(event.date)}
+                        {formatDate(event.date, "dateTime")}
                       </span>
                     </div>
                   </div>

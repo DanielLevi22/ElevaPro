@@ -4,7 +4,6 @@
 export { AddFoodQuantityModal } from "./components/AddFoodQuantityModal";
 export { AddMealModal } from "./components/AddMealModal";
 export { DayOptionsModal } from "./components/DayOptionsModal";
-export { DietCard } from "./components/DietCard";
 export { EditFoodModal } from "./components/EditFoodModal";
 export { EditMealTimeModal } from "./components/EditMealTimeModal";
 export { FoodSelector } from "./components/FoodSelector";

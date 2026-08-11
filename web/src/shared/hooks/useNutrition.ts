@@ -15,6 +15,22 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { StrategyResult } from "../utils/dietStrategies";
 import { useAuthUser } from "./useAuthUser";
 
+/**
+ * O CASL só concede acesso a dietas a quem tem serviço cadastrado — um
+ * specialist sem linha em `specialist_services` não lê plano nenhum.
+ */
+export class DietPermissionError extends Error {
+  constructor(accountType: string, services: string[]) {
+    const owned = services.length > 0 ? services.join(", ") : "nenhum";
+    super(
+      `Conta "${accountType}" com serviços [${owned}] não pode ler dietas. ` +
+        "É preciso account_type 'student'/'member', ou 'specialist' com " +
+        "'personal_training' ou 'nutrition_consulting' em specialist_services.",
+    );
+    this.name = "DietPermissionError";
+  }
+}
+
 const nutritionService = createNutritionService(supabase);
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -49,7 +65,12 @@ export function useDietPlans(studentId?: string) {
   const { data: currentUser } = useAuthUser();
 
   return useQuery({
-    queryKey: ["diet_plans", studentId, currentUser?.id],
+    // `studentId` fica FORA da chave de propósito: a busca sempre traz todos os
+    // planos do especialista e o recorte é local. Com ele na chave, cada aluno
+    // virava uma entrada de cache própria refazendo a mesma busca completa — e
+    // as telas que chamam este hook dentro de um laço de alunos disparavam uma
+    // busca por aluno. Agora todas compartilham uma única resposta.
+    queryKey: ["diet_plans", currentUser?.id],
     queryFn: async () => {
       if (!currentUser) return [];
 
@@ -58,12 +79,17 @@ export function useDietPlans(studentId?: string) {
         services: currentUser.services as never[],
       });
       if (ability.cannot("read", "Diet")) {
-        throw new Error("Você não tem permissão para visualizar dietas");
+        throw new DietPermissionError(currentUser.accountType, currentUser.services);
       }
 
-      const plans = await nutritionService.fetchDietPlans(currentUser.id);
-      return studentId ? plans.filter((p) => p.student_id === studentId) : plans;
+      return nutritionService.fetchDietPlans(currentUser.id);
     },
+    // Repetir uma negação de permissão só adia o inevitável: eram 3 tentativas
+    // com backoff exibindo skeleton antes de cair num estado vazio que parecia
+    // "nenhum plano cadastrado". A falha precisa aparecer na hora.
+    retry: (failureCount, error) => !(error instanceof DietPermissionError) && failureCount < 2,
+    // `select` recorta do cache sem refazer a requisição nem reexibir skeleton.
+    select: (plans) => (studentId ? plans.filter((p) => p.student_id === studentId) : plans),
     enabled: !!currentUser,
     staleTime: 1000 * 60 * 10,
     refetchOnWindowFocus: false,

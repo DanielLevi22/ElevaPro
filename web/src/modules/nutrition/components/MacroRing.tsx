@@ -44,7 +44,7 @@ export function MacroRing({
             cx={center}
             cy={center}
             r={radius}
-            className="stroke-white/5 fill-none"
+            className="stroke-overlay-10 fill-none"
             strokeWidth={stroke}
           />
           <motion.circle
@@ -70,11 +70,15 @@ export function MacroRing({
               {icon}
             </div>
           )}
-          <div className={`${font} font-black text-white italic tracking-tighter leading-none`}>
+          <div
+            className={`${font} font-black text-foreground italic tracking-tighter leading-none`}
+          >
             {value}
             <span className="text-[10px] ml-0.5 opacity-50 not-italic font-medium">{unit}</span>
           </div>
-          <div className={`${labelSize} font-black text-zinc-500 uppercase tracking-widest mt-1`}>
+          <div
+            className={`${labelSize} font-black text-muted-foreground uppercase tracking-widest mt-1`}
+          >
             {label}
           </div>
         </div>

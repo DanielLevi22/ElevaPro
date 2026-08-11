@@ -35,33 +35,33 @@ function AnamnesisProgressBanner({ studentId }: { studentId: string | null }) {
   return (
     <Link
       href="/dashboard/student/anamnesis"
-      className="flex items-center gap-4 p-4 rounded-2xl border border-white/8 bg-zinc-900/50 hover:bg-zinc-800/60 transition-all group"
+      className="flex items-center gap-4 p-4 rounded-2xl border border-overlay-08 bg-surface/50 hover:bg-surface-highlight/60 transition-all group"
     >
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold text-white">
+          <p className="text-xs font-semibold text-foreground">
             {isComplete
               ? "Perfil incompleto"
               : hasStarted
                 ? "Continuar perfil"
                 : "Criar perfil de treino"}
           </p>
-          <span className="text-xs font-black text-zinc-400 tabular-nums">{score}%</span>
+          <span className="text-xs font-black text-muted-foreground tabular-nums">{score}%</span>
         </div>
-        <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+        <div className="h-1 bg-surface-highlight rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{ width: `${score}%`, backgroundColor: barColor }}
           />
         </div>
-        <p className="text-[10px] text-zinc-600 mt-1.5">
+        <p className="text-[10px] text-muted-foreground mt-1.5">
           {score >= 60
             ? "Complete para melhorar a precisão do seu plano"
             : "Responda as perguntas para personalizar seu plano"}
         </p>
       </div>
       <svg
-        className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors shrink-0"
+        className="w-4 h-4 text-muted-foreground group-hover:text-muted-foreground transition-colors shrink-0"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -88,8 +88,8 @@ export function StudentHomePage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-2xl font-black text-white uppercase tracking-tight">Seu dia</h1>
-        <p className="text-sm text-zinc-500 mt-1">
+        <h1 className="text-2xl font-black text-foreground uppercase tracking-tight">Seu dia</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           {isMember
             ? "Acompanhe seus planos e progresso"
             : "Veja o que seu personal preparou para hoje"}

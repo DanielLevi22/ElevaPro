@@ -4,7 +4,7 @@ import type { Student } from "@elevapro/shared";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CreateStudentModal } from "../components/CreateStudentModal";
-import { StudentCard } from "../components/StudentCard";
+import { StudentsTable } from "../components/StudentsTable";
 import { TransferRequestsList } from "../components/TransferRequestsList";
 
 interface StudentsClientProps {
@@ -32,14 +32,15 @@ export function StudentsClient({ initialStudents }: StudentsClientProps) {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Meus Alunos</h1>
-          <p className="text-muted-foreground mt-2">
-            Gerencie seus alunos e acompanhe o progresso deles.
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
+            Gestão
           </p>
+          <h1 className="font-display text-2xl font-extrabold text-foreground">Alunos</h1>
         </div>
         <button
+          type="button"
           onClick={() => setIsCreateModalOpen(true)}
-          className="px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
+          className="px-4 py-2.5 bg-primary text-primary-foreground text-[13px] font-bold rounded-[10px] hover:bg-primary-hover transition-colors flex items-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -72,19 +73,14 @@ export function StudentsClient({ initialStudents }: StudentsClientProps) {
         <input
           type="text"
           placeholder="Buscar por nome ou email..."
-          className="block w-full pl-10 pr-3 py-2 border border-white/10 rounded-lg leading-5 bg-surface text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition-colors"
+          className="block w-full pl-10 pr-3 py-2.5 border border-border rounded-[10px] leading-5 bg-surface text-foreground placeholder-muted-foreground text-[13px] outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
-      {/* Students Grid */}
       {filtered.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((student) => (
-            <StudentCard key={student.id} student={student} />
-          ))}
-        </div>
+        <StudentsTable students={filtered} />
       ) : (
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center mx-auto mb-4">

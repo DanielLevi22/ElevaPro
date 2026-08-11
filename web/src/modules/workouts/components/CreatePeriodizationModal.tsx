@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { DateField } from "@/shared/components/ui/DateField";
 import {
   type CreatePeriodizationInput,
   useCreatePeriodization,
@@ -118,9 +119,9 @@ export function CreatePeriodizationModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-surface border border-white/10 rounded-2xl w-full max-w-lg">
-        <div className="p-6 border-b border-white/10 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+      <div className="bg-surface border border-overlay-10 rounded-2xl w-full max-w-lg">
+        <div className="p-6 border-b border-overlay-10 flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">
             {isEditing ? "Editar Periodização" : "Nova Periodização"}
           </h2>
@@ -143,7 +144,7 @@ export function CreatePeriodizationModal({
           {/* Nome */}
           <div>
             <label className="block text-sm font-medium text-muted-foreground mb-1">
-              Nome <span className="text-red-400">*</span>
+              Nome <span className="text-destructive">*</span>
             </label>
             <input
               type="text"
@@ -151,7 +152,7 @@ export function CreatePeriodizationModal({
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex: Hipertrofia - Ciclo 1"
               required
-              className="w-full px-3 py-2 bg-background border border-white/10 rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full px-3 py-2 bg-background border border-overlay-10 rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
           </div>
 
@@ -159,13 +160,13 @@ export function CreatePeriodizationModal({
           {!isMemberMode && (
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-1">
-                Aluno <span className="text-red-400">*</span>
+                Aluno <span className="text-destructive">*</span>
               </label>
               <select
                 value={studentId}
                 onChange={(e) => setStudentId(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-background border border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-3 py-2 bg-background border border-overlay-10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
                 <option value="">Selecionar aluno...</option>
                 {activeStudents.map((s) => (
@@ -180,7 +181,7 @@ export function CreatePeriodizationModal({
           {/* Objetivo */}
           <div>
             <label className="block text-sm font-medium text-muted-foreground mb-2">
-              Objetivo <span className="text-red-400">*</span>
+              Objetivo <span className="text-destructive">*</span>
             </label>
             <div className="grid grid-cols-3 gap-2">
               {OBJECTIVES.map((obj) => (
@@ -191,7 +192,7 @@ export function CreatePeriodizationModal({
                   className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
                     objective === obj.value
                       ? "bg-primary text-primary-foreground"
-                      : "bg-background border border-white/10 text-muted-foreground hover:bg-white/5"
+                      : "bg-background border border-overlay-10 text-muted-foreground hover:bg-overlay-05"
                   }`}
                 >
                   {obj.label}
@@ -200,32 +201,16 @@ export function CreatePeriodizationModal({
             </div>
           </div>
 
-          {/* Datas */}
+          {/* Datas — o fim nao pode anteceder o inicio, e DateField ja limita a faixa */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">
-                Início <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                required
-                className="w-full px-3 py-2 bg-background border border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">
-                Fim <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                required
-                className="w-full px-3 py-2 bg-background border border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
-            </div>
+            <DateField label="Início" value={startDate} onChange={setStartDate} required />
+            <DateField
+              label="Fim"
+              value={endDate}
+              onChange={setEndDate}
+              min={startDate || undefined}
+              required
+            />
           </div>
 
           {/* Observações */}
@@ -238,7 +223,7 @@ export function CreatePeriodizationModal({
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Informações adicionais..."
               rows={2}
-              className="w-full px-3 py-2 bg-background border border-white/10 rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+              className="w-full px-3 py-2 bg-background border border-overlay-10 rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
             />
           </div>
 

@@ -1,0 +1,130 @@
+<!DOCTYPE html><html data-theme="light"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js"></script>
+<style>
+*{box-sizing:border-box}
+html[data-theme="light"]{--bg:250 20% 98%;--panel:0 0% 100%;--panel-border:220 15% 90%;--text:222 20% 12%;--text-muted:220 10% 45%;--overlay:222 20% 12%;--accent-text:82 60% 32%;}
+html[data-theme="dark"]{--bg:240 10% 3.9%;--panel:240 5.9% 10%;--panel-border:240 3.7% 15.9%;--text:0 0% 98%;--text-muted:240 5% 64.9%;--overlay:0 0% 100%;--accent-text:84 100% 50%;}
+body{margin:0;background:hsl(var(--bg));color:hsl(var(--text));font-family:var(--font-sans);transition:background .3s,color .3s}
+</style>
+</head><body><div id="root"></div>
+<script type="text/babel" data-presets="react">
+const I = (name, size=18, color) => <i data-lucide={name} style={{width:size,height:size,display:"block",color}}></i>;
+
+const STUDENTS = [
+  { name: "João Silva", email: "joao@email.com", status: "active", plan: "Hipertrofia — Fase 2" },
+  { name: "Ana Costa", email: "ana@email.com", status: "active", plan: "Recomposição" },
+  { name: "Marcos Lima", email: "marcos@email.com", status: "invited", plan: "—" },
+  { name: "Beatriz Souza", email: "bia@email.com", status: "active", plan: "Força" },
+  { name: "Rafael Nunes", email: "rafael@email.com", status: "active", plan: "Emagrecimento" },
+  { name: "Carla Dias", email: "carla@email.com", status: "active", plan: "Hipertrofia — Fase 1" },
+];
+
+function ThemeToggle({theme, setTheme}){
+  return (
+    <button onClick={()=>setTheme(theme==="light"?"dark":"light")} style={{display:"flex",alignItems:"center",gap:8,border:"1px solid hsl(var(--panel-border))",background:"hsl(var(--panel))",borderRadius:999,padding:"8px 16px",cursor:"pointer",color:"hsl(var(--text))",fontSize:13,fontWeight:600}}>
+      {I(theme==="light"?"moon":"sun",16)} {theme==="light"?"Escuro":"Claro"}
+    </button>
+  );
+}
+
+function Sidebar(){
+  const items = [
+    {icon:"layout-grid", label:"Dashboard", active:true},
+    {icon:"users", label:"Alunos"},
+    {icon:"dumbbell", label:"Treinos"},
+    {icon:"utensils", label:"Nutrição"},
+    {icon:"sparkles", label:"Coach IA"},
+  ];
+  return (
+    <aside style={{width:260,padding:"32px 20px",borderRight:"1px solid hsl(var(--panel-border))",height:"100%"}}>
+      <div style={{fontFamily:"var(--font-display)",fontWeight:800,fontSize:20,marginBottom:40,letterSpacing:"-0.01em"}}>Eleva <span style={{color:"hsl(var(--accent-text))"}}>Pro</span></div>
+      <nav style={{display:"flex",flexDirection:"column",gap:4}}>
+        {items.map(it=>(
+          <div key={it.label} style={{display:"flex",alignItems:"center",gap:12,padding:"11px 14px",borderRadius:12,fontSize:14,fontWeight:600,cursor:"pointer",
+            background: it.active ? "hsl(var(--overlay)/0.06)" : "transparent", color: it.active ? "hsl(var(--text))" : "hsl(var(--text-muted))"}}>
+            {I(it.icon,18)}{it.label}
+          </div>
+        ))}
+      </nav>
+    </aside>
+  );
+}
+
+function StatBig({label, value, sub, icon}){
+  return (
+    <div style={{flex:1,background:"hsl(var(--panel))",border:"1px solid hsl(var(--panel-border))",borderRadius:20,padding:24}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+        <span style={{fontSize:13,fontWeight:600,color:"hsl(var(--text-muted))"}}>{label}</span>
+        <div style={{color:"hsl(var(--text-muted))"}}>{I(icon,18)}</div>
+      </div>
+      <div style={{fontFamily:"var(--font-display)",fontWeight:800,fontSize:34,letterSpacing:"-0.02em"}}>{value}</div>
+      <div style={{fontSize:12,color:"hsl(var(--accent-text))",fontWeight:700,marginTop:4}}>{sub}</div>
+    </div>
+  );
+}
+
+function StudentRow({s}){
+  return (
+    <div style={{display:"flex",alignItems:"center",gap:16,padding:"16px 4px",borderBottom:"1px solid hsl(var(--panel-border))"}}>
+      <div style={{width:40,height:40,borderRadius:"50%",background:"hsl(84 70% 92%)",color:"hsl(var(--accent-text))",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontFamily:"var(--font-display)"}}>{s.name.charAt(0)}</div>
+      <div style={{flex:1}}>
+        <div style={{fontWeight:700,fontSize:14}}>{s.name}</div>
+        <div style={{fontSize:12,color:"hsl(var(--text-muted))"}}>{s.email}</div>
+      </div>
+      <div style={{fontSize:13,color:"hsl(var(--text-muted))",width:180}}>{s.plan}</div>
+      <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.05em",padding:"4px 10px",borderRadius:999,
+        background: s.status==="active" ? "hsl(160 60% 92%)" : "hsl(38 90% 92%)",
+        color: s.status==="active" ? "hsl(160 60% 30%)" : "hsl(38 80% 35%)"}}>{s.status==="active"?"Ativo":"Pendente"}</span>
+    </div>
+  );
+}
+
+function Dashboard(){
+  return (
+    <div style={{padding:"40px 48px",flex:1,overflow:"auto"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:32}}>
+        <div>
+          <div style={{fontSize:13,color:"hsl(var(--text-muted))",fontWeight:600,marginBottom:6}}>Terça-feira, 12 de agosto</div>
+          <div style={{fontFamily:"var(--font-display)",fontWeight:800,fontSize:30,letterSpacing:"-0.02em"}}>Bom dia, Daniel</div>
+        </div>
+        <button style={{display:"flex",alignItems:"center",gap:8,background:"hsl(84 90% 45%)",color:"#0d1a00",border:"none",borderRadius:999,padding:"12px 20px",fontWeight:700,fontSize:14,cursor:"pointer"}}>{I("user-plus",16)}Novo Aluno</button>
+      </div>
+
+      <div style={{display:"flex",gap:16,marginBottom:16}}>
+        <StatBig label="Alunos Ativos" value="24" sub="+3 esse mês" icon="users" />
+        <StatBig label="Sessões IA" value="86" sub="+18%" icon="sparkles" />
+        <StatBig label="Treinos Ativos" value="12" sub="Sem alteração" icon="dumbbell" />
+        <StatBig label="Retenção" value="94%" sub="+2pp" icon="trending-up" />
+      </div>
+
+      <div style={{background:"hsl(var(--panel))",border:"1px solid hsl(var(--panel-border))",borderRadius:20,padding:"8px 24px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 4px 12px",borderBottom:"1px solid hsl(var(--panel-border))"}}>
+          <span style={{fontFamily:"var(--font-display)",fontWeight:700,fontSize:16}}>Alunos</span>
+          <span style={{fontSize:13,color:"hsl(var(--accent-text))",fontWeight:700,cursor:"pointer"}}>Ver todos</span>
+        </div>
+        {STUDENTS.map(s=><StudentRow key={s.email} s={s}/>)}
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const [theme, setTheme] = React.useState("light");
+  React.useEffect(()=>{ document.documentElement.setAttribute("data-theme", theme); window.lucide?.createIcons(); },[theme]);
+  React.useEffect(()=>{ window.lucide?.createIcons(); });
+  return (
+    <div style={{display:"flex",height:"100vh"}}>
+      <Sidebar/>
+      <div style={{flex:1,display:"flex",flexDirection:"column"}}>
+        <div style={{display:"flex",justifyContent:"flex-end",padding:"20px 32px 0"}}><ThemeToggle theme={theme} setTheme={setTheme}/></div>
+        <Dashboard/>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script></body></html>

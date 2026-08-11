@@ -69,7 +69,7 @@ function QuestionField({
   onChange: (v: AnamnesisResponseValue) => void;
 }) {
   const base =
-    "bg-zinc-800/60 border border-white/10 rounded-xl text-white text-sm px-4 py-3 w-full focus:outline-none focus:border-white/30 placeholder:text-zinc-600";
+    "bg-surface-highlight/60 border border-overlay-10 rounded-xl text-foreground text-sm px-4 py-3 w-full focus:outline-none focus:border-overlay-15 placeholder:text-muted-foreground";
 
   if (question.type === "text") {
     return (
@@ -93,7 +93,7 @@ function QuestionField({
           placeholder={question.placeholder ?? "0"}
         />
         {question.unit && (
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 text-sm font-medium pointer-events-none">
+          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium pointer-events-none">
             {question.unit}
           </span>
         )}
@@ -111,8 +111,8 @@ function QuestionField({
             onClick={() => onChange(opt)}
             className={`flex-1 py-3 rounded-xl text-sm font-bold border transition-all ${
               value === opt
-                ? "bg-white text-black border-white scale-[1.02]"
-                : "bg-zinc-900 text-zinc-400 border-white/10 hover:border-white/30"
+                ? "bg-foreground text-background border-foreground scale-[1.02]"
+                : "bg-surface text-muted-foreground border-overlay-10 hover:border-overlay-15"
             }`}
           >
             {opt ? "Sim" : "Não"}
@@ -132,8 +132,8 @@ function QuestionField({
             onClick={() => onChange(opt)}
             className={`w-full px-5 py-3 rounded-xl text-sm font-medium border text-left transition-all ${
               value === opt
-                ? "bg-white text-black border-white"
-                : "bg-zinc-900 text-zinc-300 border-white/10 hover:border-white/20 hover:bg-zinc-800"
+                ? "bg-foreground text-background border-foreground"
+                : "bg-surface text-muted-foreground border-overlay-10 hover:border-overlay-15 hover:bg-surface-highlight"
             }`}
           >
             {opt}
@@ -158,17 +158,17 @@ function QuestionField({
               onClick={() => toggle(opt)}
               className={`w-full px-5 py-3 rounded-xl text-sm font-medium border text-left transition-all ${
                 isSelected
-                  ? "bg-white text-black border-white"
-                  : "bg-zinc-900 text-zinc-300 border-white/10 hover:border-white/20 hover:bg-zinc-800"
+                  ? "bg-foreground text-background border-foreground"
+                  : "bg-surface text-muted-foreground border-overlay-10 hover:border-overlay-15 hover:bg-surface-highlight"
               }`}
             >
               <span className="flex items-center gap-2.5">
                 <span
                   className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
-                    isSelected ? "bg-black border-black" : "border-zinc-600"
+                    isSelected ? "bg-background border-border" : "border-border"
                   }`}
                 >
-                  {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
+                  {isSelected && <CheckCircle2 className="w-3 h-3 text-foreground" />}
                 </span>
                 {opt}
               </span>
@@ -188,11 +188,13 @@ function PersonaScreen({ onSelect }: { onSelect: (t: PersonaTrack) => void }) {
   return (
     <div className="flex flex-col gap-6 max-w-lg mx-auto">
       <div>
-        <p className="text-[11px] text-zinc-600 font-medium uppercase tracking-widest mb-2">
+        <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-widest mb-2">
           Passo inicial
         </p>
-        <h1 className="text-2xl font-black text-white leading-tight">Como você se descreveria?</h1>
-        <p className="text-sm text-zinc-500 mt-1.5">
+        <h1 className="text-2xl font-black text-foreground leading-tight">
+          Como você se descreveria?
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1.5">
           Vamos montar seu plano a partir do seu nível real.
         </p>
       </div>
@@ -205,16 +207,16 @@ function PersonaScreen({ onSelect }: { onSelect: (t: PersonaTrack) => void }) {
               key={opt.track}
               type="button"
               onClick={() => onSelect(opt.track)}
-              className="w-full flex items-center gap-4 p-4 rounded-2xl border border-white/8 bg-zinc-900/50 hover:bg-zinc-800/60 hover:border-white/15 transition-all text-left group"
+              className="w-full flex items-center gap-4 p-4 rounded-2xl border border-overlay-08 bg-surface/50 hover:bg-surface-highlight/60 hover:border-overlay-15 transition-all text-left group"
             >
-              <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center shrink-0 group-hover:bg-zinc-700 transition-colors">
+              <div className="w-10 h-10 rounded-xl bg-surface-highlight flex items-center justify-center shrink-0 group-hover:bg-surface-highlight transition-colors">
                 <Icon className={`w-5 h-5 ${iconColor}`} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-white font-semibold text-sm">{opt.label}</p>
-                <p className="text-zinc-500 text-xs mt-0.5">{opt.detail}</p>
+                <p className="text-foreground font-semibold text-sm">{opt.label}</p>
+                <p className="text-muted-foreground text-xs mt-0.5">{opt.detail}</p>
               </div>
-              <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors shrink-0" />
+              <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-muted-foreground transition-colors shrink-0" />
             </button>
           );
         })}
@@ -230,20 +232,22 @@ function UnlockScreen({ card, onContinue }: { card: UnlockCard; onContinue: () =
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center gap-5 max-w-sm mx-auto">
       <div className="relative">
-        <div className="w-20 h-20 rounded-2xl bg-zinc-800 border border-white/10 flex items-center justify-center">
-          <Icon className="w-9 h-9 text-white" strokeWidth={1.5} />
+        <div className="w-20 h-20 rounded-2xl bg-surface-highlight border border-overlay-10 flex items-center justify-center">
+          <Icon className="w-9 h-9 text-foreground" strokeWidth={1.5} />
         </div>
         <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
-          <CheckCircle2 className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
+          <CheckCircle2 className="w-3.5 h-3.5 text-foreground" strokeWidth={2.5} />
         </div>
       </div>
       <div>
-        <h2 className="text-lg font-black text-white uppercase tracking-tight">{card.title}</h2>
-        <p className="text-sm text-zinc-400 mt-2 leading-relaxed">{card.detail}</p>
+        <h2 className="text-lg font-black text-foreground uppercase tracking-tight">
+          {card.title}
+        </h2>
+        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{card.detail}</p>
       </div>
       <button
         onClick={onContinue}
-        className="w-full py-3 bg-white text-black font-bold text-sm rounded-xl hover:bg-white/90 transition-colors flex items-center justify-center gap-2"
+        className="w-full py-3 bg-foreground text-background font-bold text-sm rounded-xl hover:bg-foreground/90 transition-colors flex items-center justify-center gap-2"
       >
         Continuar <ArrowRight className="w-4 h-4" />
       </button>
@@ -267,7 +271,7 @@ function CompletionScreen({
       ? { label: "Perfil completo", color: "text-emerald-400", ring: "border-emerald-500/40" }
       : score >= 60
         ? { label: "Bom começo", color: "text-amber-400", ring: "border-amber-500/40" }
-        : { label: "Dados iniciais", color: "text-zinc-400", ring: "border-zinc-600" };
+        : { label: "Dados iniciais", color: "text-muted-foreground", ring: "border-border" };
 
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center gap-6 max-w-sm mx-auto">
@@ -275,13 +279,15 @@ function CompletionScreen({
         className={`w-28 h-28 rounded-full border-2 ${tier.ring} flex flex-col items-center justify-center gap-0.5`}
       >
         <span className={`text-2xl font-black ${tier.color}`}>{score}%</span>
-        <span className="text-[10px] text-zinc-600 uppercase tracking-wide font-medium">
+        <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">
           precisão
         </span>
       </div>
       <div>
-        <h2 className="text-xl font-black text-white uppercase tracking-tight">{tier.label}</h2>
-        <p className="text-sm text-zinc-400 mt-2 leading-relaxed max-w-60 mx-auto">
+        <h2 className="text-xl font-black text-foreground uppercase tracking-tight">
+          {tier.label}
+        </h2>
+        <p className="text-sm text-muted-foreground mt-2 leading-relaxed max-w-60 mx-auto">
           {score >= 80
             ? "Seu coach tem tudo que precisa para montar um plano personalizado."
             : score >= 60
@@ -292,13 +298,13 @@ function CompletionScreen({
       <div className="flex flex-col gap-2.5 w-full">
         <button
           onClick={onStartCoach}
-          className="w-full py-3 bg-white text-black font-bold text-sm rounded-xl hover:bg-white/90 transition-colors flex items-center justify-center gap-2"
+          className="w-full py-3 bg-foreground text-background font-bold text-sm rounded-xl hover:bg-foreground/90 transition-colors flex items-center justify-center gap-2"
         >
           <Zap className="w-4 h-4" /> Gerar meu plano agora
         </button>
         <button
           onClick={onRetake}
-          className="w-full py-2.5 text-zinc-500 text-xs font-medium hover:text-zinc-300 transition-colors"
+          className="w-full py-2.5 text-muted-foreground text-xs font-medium hover:text-muted-foreground transition-colors"
         >
           Refazer anamnese
         </button>
@@ -458,27 +464,27 @@ export function StudentAnamnesisJourneyPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <TrackIcon className={`w-3.5 h-3.5 ${TRACK_COLORS[track]}`} />
-            <span className="text-xs text-zinc-500 font-medium">{TRACK_LABELS[track]}</span>
+            <span className="text-xs text-muted-foreground font-medium">{TRACK_LABELS[track]}</span>
           </div>
-          <span className="text-xs text-zinc-500 tabular-nums">
+          <span className="text-xs text-muted-foreground tabular-nums">
             {step + 1} / {questions.length}
           </span>
         </div>
-        <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+        <div className="h-1 bg-surface-highlight rounded-full overflow-hidden">
           <div
-            className="h-full bg-white rounded-full transition-all duration-500"
+            className="h-full bg-foreground rounded-full transition-all duration-500"
             style={{ width: `${progressPct}%` }}
           />
         </div>
       </div>
 
       {/* Question card */}
-      <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-6 flex flex-col gap-5">
+      <div className="bg-surface/40 border border-overlay-08 rounded-2xl p-6 flex flex-col gap-5">
         <div>
-          <p className="text-[10px] text-zinc-600 uppercase tracking-wider font-medium mb-2">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-2">
             Pergunta {step + 1}
           </p>
-          <h2 className="text-xl font-black text-white leading-snug">{currentQ.text}</h2>
+          <h2 className="text-xl font-black text-foreground leading-snug">{currentQ.text}</h2>
         </div>
 
         <QuestionField
@@ -490,31 +496,31 @@ export function StudentAnamnesisJourneyPage() {
         <button
           type="button"
           onClick={() => setShowWhy((v) => !v)}
-          className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors flex items-center gap-1 w-fit"
+          className="text-xs text-muted-foreground hover:text-muted-foreground transition-colors flex items-center gap-1 w-fit"
         >
           Por que perguntamos?
           {showWhy ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
         </button>
         {showWhy && (
-          <p className="text-xs text-zinc-500 leading-relaxed -mt-3 border-l border-white/10 pl-3">
+          <p className="text-xs text-muted-foreground leading-relaxed -mt-3 border-l border-overlay-10 pl-3">
             {currentQ.whyWeAsk}
           </p>
         )}
       </div>
 
       {/* Precision meter */}
-      <div className="bg-zinc-900/40 border border-white/5 rounded-xl p-4 relative overflow-hidden">
+      <div className="bg-surface/40 border border-overlay-08 rounded-xl p-4 relative overflow-hidden">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-xs text-zinc-500 font-medium">Precisão do plano</span>
-          <span className="text-sm font-black text-white">{precision}%</span>
+          <span className="text-xs text-muted-foreground font-medium">Precisão do plano</span>
+          <span className="text-sm font-black text-foreground">{precision}%</span>
         </div>
-        <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-surface-highlight rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-700"
             style={{ width: `${precision}%`, backgroundColor: barColor }}
           />
         </div>
-        <p className="text-[10px] text-zinc-600 mt-2">Plano genérico: 30% · Meta: 94%</p>
+        <p className="text-[10px] text-muted-foreground mt-2">Plano genérico: 30% · Meta: 94%</p>
         {precisionDelta !== null && (
           <span className="absolute top-3 right-4 text-xs font-black text-emerald-400">
             +{precisionDelta}%
@@ -527,7 +533,7 @@ export function StudentAnamnesisJourneyPage() {
         <button
           type="button"
           onClick={handleBack}
-          className="px-5 py-3 bg-zinc-900 text-zinc-400 font-semibold text-sm rounded-xl border border-white/10 hover:border-white/20 transition-colors"
+          className="px-5 py-3 bg-surface text-muted-foreground font-semibold text-sm rounded-xl border border-overlay-10 hover:border-overlay-15 transition-colors"
         >
           {step === 0 ? "Voltar" : "Anterior"}
         </button>
@@ -535,7 +541,7 @@ export function StudentAnamnesisJourneyPage() {
           type="button"
           onClick={handleNext}
           disabled={isPending}
-          className="flex-1 py-3 bg-white text-black font-bold text-sm rounded-xl hover:bg-white/90 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+          className="flex-1 py-3 bg-foreground text-background font-bold text-sm rounded-xl hover:bg-foreground/90 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
         >
           {isPending ? (
             "Salvando..."

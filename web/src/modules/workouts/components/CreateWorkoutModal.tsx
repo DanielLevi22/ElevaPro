@@ -195,9 +195,9 @@ export function CreateWorkoutModal({
 
   const contentBox = (
     <div
-      className={`bg-surface border border-white/10 rounded-2xl w-full flex flex-col overflow-hidden ${asPage ? "" : "max-h-[90vh]"} ${isEditing || hideExercises ? "max-w-lg" : "max-w-6xl"}`}
+      className={`bg-surface border border-overlay-10 rounded-2xl w-full flex flex-col overflow-hidden ${asPage ? "" : "max-h-[90vh]"} ${isEditing || hideExercises ? "max-w-lg" : "max-w-6xl"}`}
     >
-      <div className="p-6 border-b border-white/10 flex items-center justify-between bg-surface z-10 flex-none">
+      <div className="p-6 border-b border-overlay-10 flex items-center justify-between bg-surface z-10 flex-none">
         <h2 className="text-2xl font-bold text-foreground">
           {isEditing ? "Editar Treino" : "Novo Treino"}
         </h2>
@@ -234,7 +234,7 @@ export function CreateWorkoutModal({
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-4 py-2 bg-background border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground/50"
+                    className="w-full px-4 py-2 bg-background border border-overlay-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground/50"
                     placeholder="Ex: Treino A - Peito e Tríceps"
                     required
                   />
@@ -245,13 +245,13 @@ export function CreateWorkoutModal({
                 <div className={hideExercises ? "space-y-4" : "grid grid-cols-2 gap-4"}>
                   <div>
                     <label className="block text-sm font-medium text-muted-foreground mb-1">
-                      Identificador <span className="text-red-400">*</span>
+                      Identificador <span className="text-destructive">*</span>
                     </label>
                     <input
                       type="text"
                       value={identifier}
                       onChange={(e) => setIdentifier(e.target.value.toUpperCase())}
-                      className="w-full px-4 py-2 bg-background border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground/50 font-mono"
+                      className="w-full px-4 py-2 bg-background border border-overlay-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground/50 font-mono"
                       placeholder="Ex: D, E"
                       maxLength={5}
                       required={hideExercises}
@@ -271,7 +271,7 @@ export function CreateWorkoutModal({
                       type="number"
                       value={estimatedDuration}
                       onChange={(e) => setEstimatedDuration(e.target.value)}
-                      className="w-full px-4 py-2 bg-background border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground/50"
+                      className="w-full px-4 py-2 bg-background border border-overlay-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground/50"
                       placeholder="Ex: 60"
                     />
                   </div>
@@ -285,7 +285,7 @@ export function CreateWorkoutModal({
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-4 py-2 bg-background border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground/50 min-h-[100px]"
+                  className="w-full px-4 py-2 bg-background border border-overlay-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground/50 min-h-[100px]"
                   placeholder="Instruções gerais para o treino..."
                 />
               </div>
@@ -304,7 +304,7 @@ export function CreateWorkoutModal({
                         className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
                           difficultyLevel === level
                             ? "bg-primary text-primary-foreground"
-                            : "bg-background border border-white/10 text-muted-foreground hover:bg-white/5"
+                            : "bg-background border border-overlay-10 text-muted-foreground hover:bg-overlay-05"
                         }`}
                       >
                         {level === "beginner" && "Iniciante"}
@@ -341,10 +341,10 @@ export function CreateWorkoutModal({
                   </button>
                 </div>
 
-                <div className="flex-1 bg-background/30 border border-white/10 rounded-xl overflow-hidden flex flex-col relative">
+                <div className="flex-1 bg-background/30 border border-overlay-10 rounded-xl overflow-hidden flex flex-col relative">
                   {selectedExercises.length === 0 ? (
                     <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
-                      <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
+                      <div className="w-16 h-16 bg-overlay-05 rounded-full flex items-center justify-center mb-4">
                         <svg
                           className="w-8 h-8 opacity-50"
                           fill="none"
@@ -390,7 +390,7 @@ export function CreateWorkoutModal({
           </div>
         </div>
 
-        <div className="flex-none p-6 border-t border-white/10 bg-surface flex justify-end gap-3 z-10">
+        <div className="flex-none p-6 border-t border-overlay-10 bg-surface flex justify-end gap-3 z-10">
           <button
             type="button"
             onClick={onClose}
@@ -418,7 +418,7 @@ export function CreateWorkoutModal({
       {asPage ? (
         contentBox
       ) : (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
           {contentBox}
         </div>
       )}

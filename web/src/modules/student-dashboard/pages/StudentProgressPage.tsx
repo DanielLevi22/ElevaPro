@@ -10,8 +10,8 @@ export function StudentProgressPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-2xl font-black text-white uppercase tracking-tight">Progresso</h1>
-        <p className="text-sm text-zinc-500 mt-1">Últimos 90 dias de treino</p>
+        <h1 className="text-2xl font-black text-foreground uppercase tracking-tight">Progresso</h1>
+        <p className="text-sm text-muted-foreground mt-1">Últimos 90 dias de treino</p>
       </div>
 
       {isLoading ? (
@@ -19,7 +19,7 @@ export function StudentProgressPage() {
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
-              className="h-24 bg-zinc-900/40 border border-white/5 rounded-2xl animate-pulse"
+              className="h-24 bg-surface/40 border border-overlay-08 rounded-2xl animate-pulse"
             />
           ))}
         </div>
@@ -37,21 +37,23 @@ export function StudentProgressPage() {
           </div>
 
           {(metrics?.stimulus ?? []).length > 0 && (
-            <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-6">
-              <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-4">
+            <div className="bg-surface/40 border border-overlay-08 rounded-2xl p-6">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-4">
                 Distribuição de estímulo
               </p>
               <div className="flex flex-col gap-3">
                 {(metrics?.stimulus ?? []).map((s) => (
                   <div key={s.name} className="flex items-center gap-3">
-                    <span className="text-xs font-bold text-zinc-400 w-20 shrink-0">{s.name}</span>
-                    <div className="flex-1 h-2 bg-zinc-800 rounded-full overflow-hidden">
+                    <span className="text-xs font-bold text-muted-foreground w-20 shrink-0">
+                      {s.name}
+                    </span>
+                    <div className="flex-1 h-2 bg-surface-highlight rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all"
                         style={{ width: `${s.value}%`, backgroundColor: s.color }}
                       />
                     </div>
-                    <span className="text-xs font-black text-zinc-300 w-10 text-right">
+                    <span className="text-xs font-black text-muted-foreground w-10 text-right">
                       {s.value}%
                     </span>
                   </div>
@@ -75,10 +77,12 @@ function MetricCard({
   unit: string;
 }) {
   return (
-    <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-5">
-      <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-2">{label}</p>
-      <p className="text-2xl font-black text-white leading-none">{value}</p>
-      {unit && <p className="text-[10px] text-zinc-500 font-bold mt-1">{unit}</p>}
+    <div className="bg-surface/40 border border-overlay-08 rounded-2xl p-5">
+      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
+        {label}
+      </p>
+      <p className="text-2xl font-black text-foreground leading-none">{value}</p>
+      {unit && <p className="text-[10px] text-muted-foreground font-bold mt-1">{unit}</p>}
     </div>
   );
 }

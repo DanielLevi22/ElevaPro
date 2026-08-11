@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DateField } from "@/shared/components/ui/DateField";
 import { useCreateTrainingPlan } from "@/shared/hooks/useTrainingPlanMutations";
 
 type TrainingSplit =
@@ -199,35 +200,23 @@ export function CreateTrainingPlanModal({
 
           {/* Dates */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="startDate" className="block text-sm font-medium text-foreground mb-2">
-                Data de Início *
-              </label>
-              <input
-                id="startDate"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <div>
-              <label htmlFor="endDate" className="block text-sm font-medium text-foreground mb-2">
-                Data de Término *
-              </label>
-              <input
-                id="endDate"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                min={startDate}
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                required
-                disabled={isLoading}
-              />
-            </div>
+            <DateField
+              label="Data de Início"
+              name="startDate"
+              value={startDate}
+              onChange={setStartDate}
+              required
+              disabled={isLoading}
+            />
+            <DateField
+              label="Data de Término"
+              name="endDate"
+              value={endDate}
+              onChange={setEndDate}
+              min={startDate || undefined}
+              required
+              disabled={isLoading}
+            />
           </div>
 
           {/* Goals */}
