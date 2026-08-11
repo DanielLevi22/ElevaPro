@@ -142,6 +142,24 @@ Auditoria das 19 rotas em `web/src/app/api/`:
 | A8 | RLS aplicada em preview mas nunca verificada; produção só recebe no push para `main` | 🔴 Crítica | ⏳ aguarda credencial |
 | A9 | `getUserContextJWT` (web) caía em `user_metadata.account_type` — gravar `'admin'` e derrubar a leitura de `profiles` dava CASL de admin | 🟠 Alta | ✅ fechado |
 | A10 | `handle_new_user` caía em `'specialist'` quando o cadastro não mandava o tipo — o padrão era a conta mais privilegiada | 🟡 Média | ✅ fechado |
+| A11 | O gate do CI ficava verde com a suíte inteira pulada quando a detecção de mudanças falhava | 🟠 Alta | ✅ fechado |
+
+### A11 — o gate que aprovava sem testar (encontrado no próprio PR)
+
+O primeiro CI deste PR mostrou `✅ CI Passed` com **todos** os jobs de app e web
+como `skipping`. O job `changes` falhou com `Resource not accessible by
+integration`: em evento `pull_request`, o `dorny/paths-filter` lista os arquivos
+pela API do GitHub e precisa de `pull-requests: read`, que o `GITHUB_TOKEN` do
+repositório não concede por padrão.
+
+Com o job falhando, `needs.changes.outputs.app` e `.web` saem **vazios**. O
+script do `ci-success` compara com `"true"`, lê "nada mudou", pula as
+verificações e sai com zero. Um PR de segurança passou no gate obrigatório sem
+rodar um único teste.
+
+Duas correções, porque são dois defeitos: a permissão faltando, e o gate que
+trata "não sei" como "nada a fazer". O segundo é o grave — sem ele, a próxima
+falha de detecção volta a aprovar tudo em silêncio.
 
 ### Prova do A1
 

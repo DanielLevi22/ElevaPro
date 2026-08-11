@@ -127,6 +127,7 @@ Três armadilhas que já custaram tempo:
 | 30 | Cadastro público cria especialista com `email_confirm: true` e `account_status: 'active'` — sem verificação de e-mail e pulando a aprovação que existe no `/admin` | 🟡 Média | [PRD](PRDs/api-security-hardening.md) |
 | 31 | `students.service.ts` invoca a edge function `create-student`, que não existe em `supabase/functions/`. Ou o cadastro de aluno está quebrado, ou há código fora do controle de versão rodando com `service_role` | 🟡 Média | [PRD](PRDs/api-security-hardening.md) |
 | 32 | `loadStudentContext` manda a anamnese inteira (`select("*")`) para o prompt da Anthropic — Necessidade (Art. 6°, III) | 🟡 Média | [LGPD](LGPD_COMPLIANCE.md) |
+| 33 | ~~Gate do CI ficava verde com a suíte pulada~~ — `paths-filter` sem `pull-requests: read` falhava, os outputs saíam vazios e o `ci-success` lia "nada mudou". **Resolvido**: permissão + o gate exige que a detecção tenha passado | ✅ | [PRD](PRDs/api-security-hardening.md) |
 
 ---
 

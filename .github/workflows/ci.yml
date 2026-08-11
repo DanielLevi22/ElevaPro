@@ -22,6 +22,13 @@ jobs:
   changes:
     name: 🔎 Detect Changes
     runs-on: ubuntu-latest
+    # Em `pull_request`, o paths-filter lista os arquivos pela API do GitHub, e
+    # sem esta permissão o GITHUB_TOKEN devolve "Resource not accessible by
+    # integration". O job falhava, os outputs saíam vazios, todo job de app e
+    # web era pulado — e o gate final continuava verde.
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       app: ${{ steps.filter.outputs.app }}
       web: ${{ steps.filter.outputs.web }}
@@ -286,6 +293,15 @@ jobs:
         run: |
           app_changed="${{ needs.changes.outputs.app }}"
           web_changed="${{ needs.changes.outputs.web }}"
+
+          # A detecção de mudanças precisa ter passado. Se ela falha, os outputs
+          # saem vazios, todo job filtrado é pulado e o resto deste script leria
+          # "nada mudou" — o gate ficava verde com a suíte inteira sem rodar.
+          # Aconteceu no PR #99: um PR de segurança passou com zero testes.
+          if [ "${{ needs.changes.result }}" != "success" ]; then
+            echo "❌ Detecção de mudanças falhou — nenhum job filtrado rodou"
+            exit 1
+          fi
 
           # Ambos rodam sempre — não dependem de filtro de path
           if [ "${{ needs.root-lint.result }}" != "success" ]; then
