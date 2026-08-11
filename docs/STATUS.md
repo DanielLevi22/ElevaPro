@@ -78,6 +78,8 @@
 | 13 | `sync-env.js` não é exercitado por nenhum teste, e já divergiu duas vezes dos `.env.example` | 🟢 Baixa | [ADR-009](decisions/009-migration-strategy.md) |
 | 14 | 6 tabelas removidas do código podem ser features legítimas nunca implementadas: `workout_assignments`, `workout_feedback`, `nutrition_progress` e 3 de admin | 🟡 Média | [PRD](PRDs/schema-drift-alignment.md) |
 | 15 | iOS nunca foi buildado — não existe `app/ios`. O caminho HealthKit e o background delivery seguem sem qualquer verificação | 🟡 Média | — |
+| 16 | **RLS ausente nas tabelas centrais** — `workout_sessions`, `student_anamnesis`, `physical_assessments`, `profiles` e `student_specialists` não têm RLS. Só 9 tabelas têm. Qualquer autenticado lê treino e anamnese de qualquer aluno | 🔴 Alta | [PRD](PRDs/briefing.md) |
+| 17 | `workout_session_sets` tem RLS só do aluno — o especialista não lê carga executada dos próprios alunos, então qualquer métrica de recorde ou evolução volta vazia sem erro | 🟡 Média | [PRD](PRDs/briefing.md) |
 
 ---
 
