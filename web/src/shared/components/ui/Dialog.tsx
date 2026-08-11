@@ -10,13 +10,20 @@ export interface DialogProps {
   description?: string;
   children: React.ReactNode;
   className?: string;
-  maxWidth?: "sm" | "md" | "lg";
+  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl";
+  /**
+   * Limita a altura e rola o corpo. Para listas longas — sem isto o painel
+   * cresce alem da janela e o rodape sai da tela.
+   */
+  scrollable?: boolean;
 }
 
 const maxWidthMap = {
   sm: "max-w-sm",
   md: "max-w-md",
   lg: "max-w-lg",
+  xl: "max-w-xl",
+  "2xl": "max-w-2xl",
 };
 
 export function Dialog({
@@ -27,6 +34,7 @@ export function Dialog({
   children,
   className,
   maxWidth = "md",
+  scrollable = false,
 }: DialogProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -57,11 +65,12 @@ export function Dialog({
         className={cn(
           "w-full bg-surface border border-border rounded-2xl shadow-2xl",
           maxWidthMap[maxWidth],
+          scrollable && "max-h-[85vh] flex flex-col",
           className,
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 pb-0">
+        <div className="flex items-center justify-between p-6 pb-0 shrink-0">
           <div>
             <h2 id="dialog-title" className="text-xl font-bold text-foreground">
               {title}
@@ -92,7 +101,9 @@ export function Dialog({
         </div>
 
         {/* Body */}
-        <div className="p-6">{children}</div>
+        <div className={cn("p-6", scrollable && "flex-1 overflow-y-auto custom-scrollbar")}>
+          {children}
+        </div>
       </div>
     </div>
   );
