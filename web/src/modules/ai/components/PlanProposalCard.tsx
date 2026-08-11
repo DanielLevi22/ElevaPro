@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/shared/components/ui/Button";
 import type { PlanProposalData } from "../types";
 
 interface Props {
@@ -92,20 +93,12 @@ export function PlanProposalCard({ data, loading, onApprove, onReject }: Props) 
 
         {/* Actions */}
         <div className="flex gap-2 pt-1">
-          <button
-            onClick={onApprove}
-            disabled={loading}
-            className="flex-1 py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50"
-          >
+          <Button fullWidth onClick={onApprove} isLoading={loading}>
             {loading ? "Salvando..." : "Aprovar plano"}
-          </button>
-          <button
-            onClick={onReject}
-            disabled={loading}
-            className="flex-1 py-2.5 bg-white/5 border border-white/10 text-foreground text-sm font-medium rounded-xl hover:bg-white/10 transition-colors disabled:opacity-50"
-          >
+          </Button>
+          <Button fullWidth variant="secondary" onClick={onReject} disabled={loading}>
             Ajustar
-          </button>
+          </Button>
         </div>
       </div>
     </div>

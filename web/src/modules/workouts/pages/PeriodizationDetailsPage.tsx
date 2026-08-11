@@ -1,6 +1,7 @@
 "use client";
 
 import type { Periodization, TrainingPlan } from "@elevapro/shared";
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -9,6 +10,7 @@ import {
   addPhaseAction,
   completePeriodizationAction,
 } from "@/app/dashboard/workouts/actions";
+import { Button } from "@/shared/components/ui/Button";
 import { formatDateRange } from "@/shared/utils/formatDate";
 import { CreatePeriodizationModal } from "../components/CreatePeriodizationModal";
 import { WelcomeBanner } from "../components/WelcomeBanner";
@@ -196,25 +198,10 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">Fases</h2>
-          <button
-            onClick={handleAddPhase}
-            disabled={isPending}
-            className="px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors text-sm flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isPending ? (
-              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-            )}
+          <Button onClick={handleAddPhase} isLoading={isPending}>
+            {isPending ? null : <Plus className="w-4 h-4" />}
             Nova Fase
-          </button>
+          </Button>
         </div>
 
         {plans.length === 0 ? (
@@ -244,13 +231,9 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
               Ex: <span className="text-foreground">"Semanas 1–4 · Adaptação"</span>,{" "}
               <span className="text-foreground">"Semanas 5–8 · Força"</span>
             </p>
-            <button
-              onClick={handleAddPhase}
-              disabled={isPending}
-              className="px-5 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors text-sm disabled:opacity-50"
-            >
+            <Button onClick={handleAddPhase} isLoading={isPending}>
               Nova Fase
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="flex flex-col gap-3">

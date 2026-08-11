@@ -3,6 +3,7 @@
 import { supabase } from "@elevapro/supabase";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/shared/components/ui/Button";
 
 interface Exercise {
   id: string;
@@ -102,18 +103,14 @@ export default function ExercisesPage() {
     <div className="p-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent mb-2">
+          <h1 className="text-4xl font-bold bg-linear-to-r from-primary via-secondary to-accent bg-clip-text text-transparent mb-2">
             Exercícios
           </h1>
           <p className="text-muted-foreground">Gerencie e modere exercícios</p>
         </div>
-        <button
-          type="button"
-          onClick={() => router.push("/admin/content/exercises/create")}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium"
-        >
+        <Button onClick={() => router.push("/admin/content/exercises/create")}>
           + Novo Exercício
-        </button>
+        </Button>
       </div>
 
       {/* Filters */}

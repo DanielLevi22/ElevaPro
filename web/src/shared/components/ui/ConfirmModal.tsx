@@ -1,6 +1,7 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { Button } from "./Button";
+import { Dialog } from "./Dialog";
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -10,9 +11,26 @@ interface ConfirmModalProps {
   description: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  /** `danger` para acao destrutiva — exclusao, cancelamento de vinculo. */
   variant?: "danger" | "primary";
+  isLoading?: boolean;
 }
 
+/**
+ * Confirmacao de acao. Unico modal de confirmacao do produto: antes existiam
+ * tres (ConfirmationModal, ConfirmModal e DeleteConfirmModal), cada um com seu
+ * proprio overlay, tipografia e botoes.
+ *
+ * @example
+ * <ConfirmModal
+ *   isOpen={isOpen}
+ *   onClose={close}
+ *   onConfirm={remove}
+ *   title="Excluir plano"
+ *   description="Esta acao nao pode ser desfeita."
+ *   variant="danger"
+ * />
+ */
 export function ConfirmModal({
   isOpen,
   onClose,
@@ -22,60 +40,22 @@ export function ConfirmModal({
   confirmLabel = "Confirmar",
   cancelLabel = "Cancelar",
   variant = "primary",
+  isLoading = false,
 }: ConfirmModalProps) {
-  if (!isOpen) return null;
-
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-          onClick={onClose}
-        />
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="relative bg-zinc-900 border border-white/10 rounded-[32px] w-full max-w-sm overflow-hidden shadow-2xl shadow-black"
+    <Dialog open={isOpen} onClose={onClose} title={title} description={description} maxWidth="sm">
+      <div className="flex gap-3 justify-end">
+        <Button variant="secondary" onClick={onClose} disabled={isLoading}>
+          {cancelLabel}
+        </Button>
+        <Button
+          variant={variant === "danger" ? "destructive" : "primary"}
+          onClick={onConfirm}
+          isLoading={isLoading}
         >
-          <div className="p-8 space-y-6">
-            <div className="space-y-2 text-center">
-              <h2 className="text-xl font-black text-white italic uppercase tracking-tight">
-                {title}
-              </h2>
-              <p className="text-sm text-zinc-400 font-medium leading-relaxed">{description}</p>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 px-6 py-4 rounded-2xl bg-zinc-800 text-zinc-400 text-xs font-black italic uppercase tracking-widest hover:bg-zinc-700 hover:text-white transition-all shadow-lg"
-              >
-                {cancelLabel}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  onConfirm();
-                  onClose();
-                }}
-                className={`flex-1 px-6 py-4 rounded-2xl text-black text-xs font-black italic uppercase tracking-widest transition-all shadow-lg active:scale-95 ${
-                  variant === "danger"
-                    ? "bg-red-500 hover:bg-red-400 shadow-red-500/20"
-                    : "bg-primary hover:bg-primary-dark shadow-primary/20"
-                }`}
-              >
-                {confirmLabel}
-              </button>
-            </div>
-          </div>
-        </motion.div>
+          {confirmLabel}
+        </Button>
       </div>
-    </AnimatePresence>
+    </Dialog>
   );
 }

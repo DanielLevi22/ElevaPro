@@ -2,6 +2,7 @@
 
 import { supabase } from "@elevapro/supabase";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/shared/components/ui/Button";
 
 interface PendingProfile {
   id: string;
@@ -125,14 +126,12 @@ export function PendingApprovalsList() {
               >
                 Rejeitar
               </button>
-              <button
-                type="button"
+              <Button
                 onClick={() => updateStatus.mutate({ id: profile.id, status: "active" })}
-                disabled={updateStatus.isPending}
-                className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+                isLoading={updateStatus.isPending}
               >
                 {updateStatus.isPending ? "Processando..." : "Aprovar Acesso"}
-              </button>
+              </Button>
             </div>
           </div>
         ))}

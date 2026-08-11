@@ -1,6 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -9,6 +10,7 @@ import {
   deleteExerciseAction,
   updateExerciseAction,
 } from "@/app/dashboard/workouts/actions";
+import { Button } from "@/shared/components/ui/Button";
 import { useWorkout, useWorkoutItems, type WorkoutItem } from "@/shared/hooks/useWorkouts";
 import { CreateWorkoutModal } from "../components/CreateWorkoutModal";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
@@ -196,20 +198,10 @@ export default function WorkoutDetailsPage() {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">Exercícios</h2>
-          <button
-            onClick={() => setSelectExercisesOpen(true)}
-            className="px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors text-sm flex items-center gap-1.5"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
+          <Button onClick={() => setSelectExercisesOpen(true)}>
+            <Plus className="w-4 h-4" />
             Adicionar Exercício
-          </button>
+          </Button>
         </div>
 
         {items.length === 0 ? (
@@ -233,12 +225,7 @@ export default function WorkoutDetailsPage() {
             <p className="text-sm text-muted-foreground mb-6">
               Busque na biblioteca e configure séries, repetições e carga para cada exercício.
             </p>
-            <button
-              onClick={() => setSelectExercisesOpen(true)}
-              className="px-5 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors text-sm"
-            >
-              Adicionar Exercício
-            </button>
+            <Button onClick={() => setSelectExercisesOpen(true)}>Adicionar Exercício</Button>
           </div>
         ) : (
           <div className="flex flex-col gap-2">
