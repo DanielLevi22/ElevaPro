@@ -2,6 +2,7 @@
 
 import { supabase } from "@elevapro/supabase";
 import { useEffect, useState } from "react";
+import { Button } from "@/shared/components/ui/Button";
 import type { Exercise } from "@/shared/hooks/useExercises";
 import { useCreateWorkout, useUpdateWorkout } from "@/shared/hooks/useWorkoutMutations";
 import { useWorkout } from "@/shared/hooks/useWorkouts";
@@ -391,23 +392,12 @@ export function CreateWorkoutModal({
         </div>
 
         <div className="flex-none p-6 border-t border-overlay-10 bg-surface flex justify-end gap-3 z-10">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
+          <Button variant="ghost" onClick={onClose}>
             Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {isLoading && (
-              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-            )}
+          </Button>
+          <Button type="submit" isLoading={isLoading}>
             {isEditing ? "Salvar Alterações" : "Criar Treino"}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

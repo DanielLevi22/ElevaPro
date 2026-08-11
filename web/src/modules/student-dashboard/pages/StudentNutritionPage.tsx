@@ -1,9 +1,11 @@
 "use client";
 
 import type { DietPlan } from "@elevapro/shared";
+import { Pencil } from "lucide-react";
 import Link from "next/link";
 import { useAuthStore } from "@/modules/auth";
 import { NutritionFlowBanner } from "@/modules/nutrition/components/NutritionFlowBanner";
+import { Button } from "@/shared/components/ui/Button";
 import { formatDateRange } from "@/shared/utils/formatDate";
 import { EmptyPlanState } from "../components/EmptyPlanState";
 import { useCurrentStudentId, useStudentActiveDietPlan } from "../hooks/useStudentDashboardData";
@@ -34,12 +36,9 @@ export function StudentNutritionPage() {
           </p>
         </div>
         {isMember && (
-          <Link
-            href="/dashboard/student/nutrition/new"
-            className="px-5 py-2.5 bg-primary text-primary-foreground font-black text-xs uppercase tracking-widest rounded-xl hover:bg-primary/90 transition-colors"
-          >
-            + Novo plano
-          </Link>
+          <Button asChild>
+            <Link href="/dashboard/student/nutrition/new">+ Novo plano</Link>
+          </Button>
         )}
       </div>
 
@@ -99,20 +98,12 @@ function ActiveDietPlanView({ plan, isMember }: { plan: DietPlan; isMember: bool
 
         {/* CTA */}
         <div className="flex flex-col sm:flex-row gap-3 pt-1 border-t border-overlay-08">
-          <Link
-            href={`/dashboard/diets/${plan.id}`}
-            className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-primary text-primary-foreground font-black text-xs uppercase tracking-widest rounded-xl hover:bg-primary/90 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-              />
-            </svg>
-            Gerenciar refeições e alimentos
-          </Link>
+          <Button asChild size="lg" className="flex-1">
+            <Link href={`/dashboard/diets/${plan.id}`}>
+              <Pencil className="w-4 h-4" />
+              Gerenciar refeições e alimentos
+            </Link>
+          </Button>
           {isMember && (
             <Link
               href="/dashboard/student/nutrition/new"

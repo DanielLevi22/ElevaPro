@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/modules/auth";
+import { Button } from "@/shared/components/ui/Button";
 import type { ChatMessage, PeriodizationProposal, SseEvent } from "../types";
 
 interface Props {
@@ -241,20 +242,23 @@ export function AiCoachChat({ studentId }: Props) {
 
               {!proposal.savedId && (
                 <div className="flex gap-2 pt-1">
-                  <button
+                  <Button
+                    fullWidth
+                    size="sm"
                     onClick={() => sendMessage("Aprovado! Pode salvar a periodização.")}
                     disabled={loading}
-                    className="flex-1 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
                   >
                     Aprovar e Salvar
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    fullWidth
+                    size="sm"
+                    variant="secondary"
                     onClick={() => sendMessage("Quero ajustar algumas coisas na proposta.")}
                     disabled={loading}
-                    className="flex-1 py-2 bg-white/5 border border-white/10 text-foreground text-sm font-medium rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50"
                   >
                     Ajustar
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -283,10 +287,12 @@ export function AiCoachChat({ studentId }: Props) {
               t.style.height = `${Math.min(t.scrollHeight, 128)}px`;
             }}
           />
-          <button
+          <Button
+            size="icon"
+            aria-label="Enviar mensagem"
             onClick={() => sendMessage()}
             disabled={!input.trim() || loading}
-            className="p-3 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            className="shrink-0"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -296,7 +302,7 @@ export function AiCoachChat({ studentId }: Props) {
                 d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
               />
             </svg>
-          </button>
+          </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-2 text-center">
           Shift+Enter para nova linha · Enter para enviar

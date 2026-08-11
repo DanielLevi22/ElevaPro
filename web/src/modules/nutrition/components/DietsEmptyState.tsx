@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/shared/components/ui/Button";
+
 interface DietsEmptyStateProps {
   hasFilter: boolean;
   onCreateClick: () => void;
@@ -29,12 +31,9 @@ export function DietsEmptyState({ hasFilter, onCreateClick }: DietsEmptyStatePro
           ? "Este aluno ainda não possui planos alimentares cadastrados."
           : "Você ainda não possui planos alimentares cadastrados para seus alunos."}
       </p>
-      <button
-        onClick={onCreateClick}
-        className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/50 transition-all"
-      >
+      <Button size="lg" onClick={onCreateClick}>
         Criar Primeiro Plano
-      </button>
+      </Button>
     </div>
   );
 }

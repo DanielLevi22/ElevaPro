@@ -190,11 +190,39 @@ um lado só. Quem manda em runtime é `globals.css`.
 
 ---
 
+## Andamento — 2026-08-10
+
+Fases 1 a 3 feitas; 4 e 5 abertas. 15 commits em
+`feature/design-system-unification`, com 245 testes, tsc e Biome limpos.
+
+**Fase 1 — tema claro alcançável.** A causa era o `dark` cravado no `<body>`,
+que vencia a classe escrita pelo next-themes no `<html>`. Valores do claro
+portados, incluindo o lime escurecido e o `--primary-text`. Tokens novos:
+`success`, `warning`, escala `overlay-*`, `glass-*`, `panel-bg` e os hovers por
+tema.
+
+**Fase 2 — tokens que faltavam.** Convertidos os módulos de dashboard, alunos,
+treinos, nutrição e a área do aluno — só esta última tinha 165 ocorrências.
+
+**Fase 3 — ajustes de tela.** Dashboard, listagem e criação de dietas, fluxo de
+treinos, lista e detalhe de aluno. O detalhe do aluno trocou a grade de oito
+cartões por abas persistentes num layout de rota.
+
+**Fora do plano original, e o maior ganho:** as primitivas. `DataTable`,
+`StatusBadge`, `PageHeader`, `FilterBar`, `DateField`, `formatDate`, mais a
+unificação de `src/components/ui` em `shared/components/ui` — havia dois
+diretórios de UI paralelos e **três** modais de confirmação. Ver `docs/STATUS.md`.
+
+Defeitos corrigidos no caminho, todos com teste de regressão: nome do aluno que
+nunca aparecia (`as any` escondendo campo errado), datas um dia atrasadas por
+fuso, listagem derrubada por data inválida, N+1 de buscas de dieta, negação de
+permissão disfarçada de lista vazia, e item de menu ativo em duplicidade.
+
 ## Checklist de done
 
 > Só muda o Status para `done` quando TODOS estão marcados.
 
-- [ ] Código funciona e passou em lint + typecheck + testes
+- [x] Código funciona e passou em lint + typecheck + testes
 - [ ] PR mergeado em `development`
 - [ ] `docs/features/design-system-unification.md` criado ou atualizado
-- [ ] `docs/STATUS.md` atualizado
+- [x] `docs/STATUS.md` atualizado

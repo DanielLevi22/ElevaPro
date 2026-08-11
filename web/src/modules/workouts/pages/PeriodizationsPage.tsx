@@ -1,14 +1,25 @@
 "use client";
 
 import type { Periodization } from "@elevapro/shared";
+import { Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/shared/components/ui/Button";
+import { FilterBar, type FilterTab } from "@/shared/components/ui/FilterBar";
+import { PageHeader } from "@/shared/components/ui/PageHeader";
 import { CreatePeriodizationModal } from "../components/CreatePeriodizationModal";
 import { PeriodizationsTable } from "../components/PeriodizationsTable";
 import { WelcomeBanner } from "../components/WelcomeBanner";
 
 type PeriodizationStatus = "planned" | "active" | "completed";
+
+const STATUS_TABS: FilterTab<PeriodizationStatus | "all">[] = [
+  { value: "all", label: "Todas" },
+  { value: "active", label: "Ativas" },
+  { value: "planned", label: "Planejadas" },
+  { value: "completed", label: "Concluídas" },
+];
 
 interface Props {
   periodizations: Periodization[];
@@ -32,97 +43,40 @@ export default function PeriodizationsPage({ periodizations, isMember, memberStu
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl font-extrabold text-foreground">Periodizações</h1>
-          <p className="text-[13px] text-muted-foreground mt-1">
-            {isMember
-              ? "Seus ciclos de treino"
-              : "Planeje ciclos de treino completos para seus alunos"}
-          </p>
-        </div>
-        <div className="flex gap-2 self-start md:self-auto flex-wrap">
-          {isMember && (
-            <Link
-              href="/dashboard/student/coach"
-              className="px-5 py-2.5 bg-overlay-05 border border-overlay-10 text-muted-foreground font-medium rounded-lg hover:bg-overlay-10 transition-colors flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                />
-              </svg>
-              Criar com Coach IA
-            </Link>
-          )}
-          <button
-            onClick={() => setModalOpen(true)}
-            className="px-5 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            Nova Periodização
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Periodizações"
+        description={
+          isMember ? "Seus ciclos de treino" : "Planeje ciclos de treino completos para seus alunos"
+        }
+        actions={
+          <>
+            {isMember && (
+              <Button asChild variant="secondary">
+                <Link href="/dashboard/student/coach">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Criar com Coach IA
+                </Link>
+              </Button>
+            )}
+            <Button onClick={() => setModalOpen(true)}>
+              <Plus className="w-3.5 h-3.5" />
+              Nova Periodização
+            </Button>
+          </>
+        }
+      />
 
       <WelcomeBanner currentStep={1} />
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={isMember ? "Buscar por nome..." : "Buscar por nome ou aluno..."}
-            className="w-full pl-10 pr-4 py-2.5 bg-surface border border-border rounded-[10px] text-[13px] text-foreground placeholder:text-muted-foreground outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
-          />
-          <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-        </div>
-        <div className="flex gap-2">
-          {(["all", "active", "planned", "completed"] as const).map((s) => (
-            <button
-              key={s}
-              onClick={() => setFilterStatus(s)}
-              type="button"
-              aria-pressed={filterStatus === s}
-              className={`px-4 py-2.5 rounded-[10px] text-[12.5px] font-bold border transition-colors ${
-                filterStatus === s
-                  ? "bg-primary text-primary-foreground border-transparent"
-                  : "bg-surface border-border text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {s === "all" && "Todas"}
-              {s === "active" && "Ativas"}
-              {s === "planned" && "Planejadas"}
-              {s === "completed" && "Concluídas"}
-            </button>
-          ))}
-        </div>
-      </div>
+      <FilterBar
+        query={search}
+        onQueryChange={setSearch}
+        searchPlaceholder={isMember ? "Buscar por nome..." : "Buscar por nome ou aluno..."}
+        searchLabel="Buscar periodização"
+        tabs={STATUS_TABS}
+        activeTab={filterStatus}
+        onTabChange={setFilterStatus}
+      />
 
       {/* Empty */}
       {filtered.length === 0 && (
@@ -179,32 +133,14 @@ export default function PeriodizationsPage({ periodizations, isMember, memberStu
                 </p>
                 <div className="flex gap-3 justify-center flex-wrap">
                   {isMember && (
-                    <Link
-                      href="/dashboard/student/coach"
-                      className="px-5 py-2.5 bg-overlay-05 border border-overlay-10 text-muted-foreground font-medium rounded-lg hover:bg-overlay-10 transition-colors flex items-center gap-2"
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                        />
-                      </svg>
-                      Criar com Coach IA
-                    </Link>
+                    <Button asChild variant="secondary">
+                      <Link href="/dashboard/student/coach">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        Criar com Coach IA
+                      </Link>
+                    </Button>
                   )}
-                  <button
-                    onClick={() => setModalOpen(true)}
-                    className="px-5 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
-                  >
-                    Nova Periodização
-                  </button>
+                  <Button onClick={() => setModalOpen(true)}>Nova Periodização</Button>
                 </div>
               </div>
             </>

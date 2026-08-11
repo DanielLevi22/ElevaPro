@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/shared/components/ui/Button";
 
 type SpecialistRole = "personal_trainer" | "nutritionist";
 type AnyRole = SpecialistRole | "student";
@@ -165,14 +166,14 @@ export default function RoleSelectionPage() {
         </button>
 
         <div className="flex flex-col items-center gap-6 mt-10">
-          <button
-            type="button"
+          <Button
+            size="lg"
             onClick={handleContinue}
             disabled={selected.length === 0}
-            className="w-full max-w-md py-4 bg-primary text-primary-foreground font-bold text-lg rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all duration-200"
+            className="w-full max-w-md"
           >
             Continuar Cadastro
-          </button>
+          </Button>
 
           <button
             type="button"

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import { useAuthStore } from "@/modules/auth";
+import { Button } from "@/shared/components/ui/Button";
 
 type AccountRole = "specialist" | "student";
 
@@ -303,13 +304,9 @@ function RegisterForm() {
               ))}
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 px-4 bg-primary text-primary-foreground font-semibold rounded-lg shadow-lg shadow-primary/50 hover:shadow-primary/70 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all duration-200"
-            >
+            <Button type="submit" size="lg" fullWidth isLoading={loading}>
               {loading ? "Criando conta..." : "Criar Conta"}
-            </button>
+            </Button>
           </form>
 
           <div className="text-center text-sm text-muted-foreground">

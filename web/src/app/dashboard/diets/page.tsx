@@ -11,7 +11,7 @@ import {
   type DietTypeFilter,
 } from "@/modules/nutrition/components/DietsFilter";
 import { DietsHeader } from "@/modules/nutrition/components/DietsHeader";
-import { DietsTable, DietsTableSkeleton } from "@/modules/nutrition/components/DietsTable";
+import { DietsTable } from "@/modules/nutrition/components/DietsTable";
 import { ImportDietModal } from "@/nutrition";
 import { useAuthUser, useDeleteDietPlan, useDietPlans } from "@/shared/hooks";
 import { useStudents } from "@/shared/hooks/useStudents";
@@ -94,13 +94,11 @@ export default function DietsPage() {
           <p className="text-sm font-bold text-destructive">Não foi possível carregar as dietas</p>
           <p className="mt-1.5 text-[13px] text-muted-foreground">{dietsError.message}</p>
         </div>
-      ) : isLoading ? (
-        <DietsTableSkeleton />
-      ) : visiblePlans.length === 0 ? (
-        <DietsEmptyState hasFilter={hasFilter} onCreateClick={handleCreate} />
       ) : (
         <DietsTable
           dietPlans={visiblePlans}
+          isLoading={isLoading}
+          emptyState={<DietsEmptyState hasFilter={hasFilter} onCreateClick={handleCreate} />}
           onView={(id) => router.push(`/dashboard/diets/${id}`)}
           onDelete={handleDelete}
         />

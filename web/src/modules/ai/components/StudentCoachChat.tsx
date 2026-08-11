@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { Button } from "@/shared/components/ui/Button";
 import { useStudentCoach } from "../hooks/useStudentCoach";
 import { AiReadinessGate } from "./AiReadinessGate";
 import { PlanProposalCard } from "./PlanProposalCard";
@@ -138,10 +139,12 @@ export function StudentCoachChat() {
               t.style.height = `${Math.min(t.scrollHeight, 128)}px`;
             }}
           />
-          <button
+          <Button
+            size="icon"
+            aria-label="Enviar mensagem"
             onClick={() => sendMessage()}
             disabled={!input.trim() || loading}
-            className="p-3 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            className="shrink-0"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -151,7 +154,7 @@ export function StudentCoachChat() {
                 d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
               />
             </svg>
-          </button>
+          </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-2 text-center">
           Shift+Enter para nova linha · Enter para enviar

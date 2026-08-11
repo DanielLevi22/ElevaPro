@@ -1,8 +1,12 @@
 "use client";
 
 import type { Student } from "@elevapro/shared";
+import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/shared/components/ui/Button";
+import { FilterBar } from "@/shared/components/ui/FilterBar";
+import { PageHeader } from "@/shared/components/ui/PageHeader";
 import { CreateStudentModal } from "../components/CreateStudentModal";
 import { StudentsTable } from "../components/StudentsTable";
 import { TransferRequestsList } from "../components/TransferRequestsList";
@@ -29,55 +33,27 @@ export function StudentsClient({ initialStudents }: StudentsClientProps) {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
-            Gestão
-          </p>
-          <h1 className="font-display text-2xl font-extrabold text-foreground">Alunos</h1>
-        </div>
-        <button
-          type="button"
-          onClick={() => setIsCreateModalOpen(true)}
-          className="px-4 py-2.5 bg-primary text-primary-foreground text-[13px] font-bold rounded-[10px] hover:bg-primary-hover transition-colors flex items-center gap-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Novo Aluno
-        </button>
-      </div>
+      <PageHeader
+        eyebrow="Gestão"
+        title="Alunos"
+        actions={
+          <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Plus className="w-3.5 h-3.5" />
+            Novo Aluno
+          </Button>
+        }
+      />
 
       <CreateStudentModal isOpen={isCreateModalOpen} onClose={handleStudentCreated} />
 
       <TransferRequestsList />
 
-      {/* Search */}
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <svg
-            className="h-5 w-5 text-muted-foreground"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-        </div>
-        <input
-          type="text"
-          placeholder="Buscar por nome ou email..."
-          className="block w-full pl-10 pr-3 py-2.5 border border-border rounded-[10px] leading-5 bg-surface text-foreground placeholder-muted-foreground text-[13px] outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
+      <FilterBar
+        query={searchTerm}
+        onQueryChange={setSearchTerm}
+        searchPlaceholder="Buscar por nome ou email..."
+        searchLabel="Buscar aluno por nome ou email"
+      />
 
       {filtered.length > 0 ? (
         <StudentsTable students={filtered} />

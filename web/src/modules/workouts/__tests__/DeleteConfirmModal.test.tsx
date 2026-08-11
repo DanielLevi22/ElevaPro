@@ -78,18 +78,27 @@ describe("DeleteConfirmModal", () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
+  // Afirma comportamento, nao markup: o overlay agora vem do Dialog do design
+  // system, entao prender o teste a uma classe interna o quebraria de novo na
+  // proxima mudanca visual.
   it("calls onClose when backdrop is clicked", async () => {
     const onClose = vi.fn();
-    const { container } = render(
-      <DeleteConfirmModal isOpen={true} onClose={onClose} onConfirm={vi.fn()} />,
-    );
-    // backdrop is the absolute div before the modal card
-    const backdrop = container.querySelector(".absolute.inset-0");
-    expect(backdrop).not.toBeNull();
-    if (backdrop) {
-      await userEvent.click(backdrop);
-    }
+    render(<DeleteConfirmModal isOpen={true} onClose={onClose} onConfirm={vi.fn()} />);
+
+    const overlay = screen.getByRole("dialog").parentElement;
+    expect(overlay).not.toBeNull();
+    if (overlay) await userEvent.click(overlay);
+
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("does not close when the panel itself is clicked", async () => {
+    const onClose = vi.fn();
+    render(<DeleteConfirmModal isOpen={true} onClose={onClose} onConfirm={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole("dialog"));
+
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it("disables buttons and shows loading text when isLoading=true", () => {
