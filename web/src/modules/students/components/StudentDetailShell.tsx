@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/shared/components/ui/Button";
 import { useStudents } from "@/shared/hooks/useStudents";
 import { formatDate } from "@/shared/utils/formatDate";
 import { AssessmentModal } from "./AssessmentModal";
@@ -110,20 +111,10 @@ export function StudentDetailShell({ children }: { children: React.ReactNode }) 
         </div>
 
         <div className="flex gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => setEditingId(studentId)}
-            className="px-3.5 py-2 rounded-[10px] bg-surface border border-border text-[13px] font-bold text-foreground transition-colors hover:bg-overlay-05"
-          >
+          <Button variant="secondary" onClick={() => setEditingId(studentId)}>
             Editar Perfil
-          </button>
-          <button
-            type="button"
-            onClick={() => setAssessingId(studentId)}
-            className="px-3.5 py-2 rounded-[10px] bg-primary text-primary-foreground text-[13px] font-bold transition-colors hover:bg-primary-hover"
-          >
-            Nova Avaliação
-          </button>
+          </Button>
+          <Button onClick={() => setAssessingId(studentId)}>Nova Avaliação</Button>
         </div>
       </div>
 

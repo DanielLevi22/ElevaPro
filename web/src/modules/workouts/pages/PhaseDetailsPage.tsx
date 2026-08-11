@@ -12,6 +12,7 @@ import {
   updatePhaseDatesAction,
   updatePhaseStatusAction,
 } from "@/app/dashboard/workouts/actions";
+import { Button } from "@/shared/components/ui/Button";
 import { ConfirmModal } from "@/shared/components/ui/ConfirmModal";
 import { DateField } from "@/shared/components/ui/DateField";
 import { CreateWorkoutModal } from "../components/CreateWorkoutModal";
@@ -331,7 +332,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
                         setPendingSplit(customSplitInput);
                         setCustomSplitInput("");
                       }}
-                      className="px-2 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium disabled:opacity-40 hover:bg-primary/90 transition-colors"
+                      className="px-2 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium disabled:opacity-40 hover:bg-primary-hover transition-colors"
                     >
                       OK
                     </button>
@@ -478,12 +479,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
                   Ou use <span className="text-foreground">Novo Treino</span> para adicionar
                   manualmente.
                 </p>
-                <button
-                  onClick={() => setShowSplitPicker(true)}
-                  className="px-5 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors text-sm"
-                >
-                  Escolher divisão
-                </button>
+                <Button onClick={() => setShowSplitPicker(true)}>Escolher divisão</Button>
               </>
             )}
           </div>

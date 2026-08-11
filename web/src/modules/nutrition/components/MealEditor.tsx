@@ -3,6 +3,7 @@
 import type { DietMeal, DietMealItem, Food } from "@elevapro/shared";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Button } from "@/shared/components/ui/Button";
 import { ConfirmModal } from "@/shared/components/ui/ConfirmModal";
 import { Dialog } from "@/shared/components/ui/Dialog";
 import {
@@ -174,12 +175,9 @@ export function MealEditor({ dietPlanId, dayOfWeek }: MealEditorProps) {
               ))}
             </div>
 
-            <button
-              onClick={() => setIsAddMealModalOpen(true)}
-              className="w-full py-3 bg-primary text-primary-foreground font-bold text-sm rounded-xl hover:bg-primary/90 transition-colors"
-            >
+            <Button fullWidth onClick={() => setIsAddMealModalOpen(true)}>
               + Adicionar primeira refeição
-            </button>
+            </Button>
           </div>
         ) : (
           <>

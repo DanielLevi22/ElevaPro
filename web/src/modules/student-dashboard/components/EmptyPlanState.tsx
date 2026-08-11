@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Button } from "@/shared/components/ui/Button";
 
 interface Props {
   type: "workout" | "nutrition";
@@ -35,12 +36,9 @@ export function EmptyPlanState({ type, isMember }: Props) {
 
       {isMember ? (
         <div className="flex flex-col sm:flex-row gap-3 mt-2">
-          <Link
-            href={cfg.aiHref}
-            className="px-6 py-3 bg-primary text-primary-foreground font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-primary/90 transition-colors"
-          >
-            Criar com IA
-          </Link>
+          <Button asChild size="lg">
+            <Link href={cfg.aiHref}>Criar com IA</Link>
+          </Button>
           <Link
             href={cfg.manualHref}
             className="px-6 py-3 bg-surface-highlight border border-overlay-10 text-foreground font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-surface-highlight transition-colors"
