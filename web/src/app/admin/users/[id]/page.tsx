@@ -4,6 +4,7 @@ import { supabase } from "@elevapro/supabase";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { AccountTypeBadge } from "@/shared";
+import { Button } from "@/shared/components/ui/Button";
 import { ConfirmModal } from "@/shared/components/ui/ConfirmModal";
 
 interface UserDetails {
@@ -351,23 +352,16 @@ export default function UserDetailsPage() {
                   placeholder="Adicionar notas internas sobre este usuário..."
                 />
                 <div className="flex gap-2 mt-4">
-                  <button
-                    type="button"
-                    onClick={saveNotes}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium"
-                  >
-                    Salvar
-                  </button>
-                  <button
-                    type="button"
+                  <Button onClick={saveNotes}>Salvar</Button>
+                  <Button
+                    variant="secondary"
                     onClick={() => {
                       setEditedNotes(user.admin_notes || "");
                       setIsEditing(false);
                     }}
-                    className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 font-medium"
                   >
                     Cancelar
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
