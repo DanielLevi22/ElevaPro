@@ -382,9 +382,21 @@ enxerga o quê — incluindo o especialista desvinculado perdendo acesso na mesm
 consulta, sem job de limpeza. `scripts/check-rls.js` roda no pre-commit e no CI
 e falha se uma tabela nova nascer sem RLS.
 
-**O que a RLS não cobre.** `body_scans` guarda a URL da foto, não o binário. A
-RLS protege a linha; o arquivo no bucket do Storage precisa de política própria.
-Pendência aberta.
+**O que a RLS não cobre — 1: o Storage.** `body_scans` guarda a URL da foto, não
+o binário. A RLS protege a linha; o arquivo precisa de política própria. O
+bucket `assessments`, para onde o mobile envia as fotos de análise postural,
+**não existia** em ambiente nenhum até a migration `0021`, que o cria privado e
+com política de dono + especialista vinculado. O bucket das fotos de
+`body_scans` segue pendente.
+
+**O que a RLS não cobre — 2: as rotas com `service_role`.** As rotas do BFF em
+`web/src/app/api/` usam a chave de serviço, que ignora RLS por definição. Ali a
+única barreira é a checagem do próprio código. Em 2026-08-11, duas rotas de IA
+recebiam o `studentId` pela URL e não checavam vínculo: um token de aluno
+qualquer obtinha `HTTP 200` e a anamnese de qualquer outro aluno no contexto do
+modelo. Fechado pelo PRD
+[api-security-hardening](PRDs/api-security-hardening.md), com helper único
+(`web/src/lib/api-auth.ts`), guarda no CI e teste com quatro usuários reais.
 
 ---
 
@@ -533,6 +545,7 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 | Consentimento da tela de Body Scan deve mencionar explicitamente envio de fotos a serviço de IA externo | Atualizar texto da tela `BodyScanIntroduction.tsx` | Dev + Legal |
 | Anthropic e Google devem ser listados como sub-processadores na Política de Privacidade | Atualizar política de privacidade | Legal |
 | Rota `/api/ai/body-scan` deve verificar `student_consents` (tipo `health_data_collection`) antes de processar | Adicionar middleware de consentimento na rota, igual ao padrão de `nutribot` e `scan-food` | Dev |
+| `loadStudentContext` manda a anamnese inteira (`select("*")`) para o prompt da Anthropic | Recortar os campos que o modelo realmente usa para montar treino — Necessidade (Art. 6°, III) | Dev |
 | Rota `/api/ai/nutrition/adherence` deve verificar `student_consents` antes de processar | Idem | Dev |
 | ~~Verificar DPA Google (Gemini) para dado biométrico de voz~~ | Eliminado — voice command removido do escopo | — |
 

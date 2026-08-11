@@ -1,6 +1,6 @@
 # Status dos Módulos — Eleva Pro
 
-> **Atualizado em:** 2026-08-11 (feature/rls-security-hardening)
+> **Atualizado em:** 2026-08-11 (feature/api-security-hardening)
 > **Regra:** atualizar ao fechar cada PR. Nenhuma feature é `done` sem este arquivo atualizado.
 
 ---
@@ -83,7 +83,8 @@ Três armadilhas que já custaram tempo:
 | [schema-drift-alignment](PRDs/schema-drift-alignment.md) | Alinha mobile e web ao schema real + guarda em CI contra recorrência | ✅ done | — (mergeada) |
 | [admin-panel-restore](PRDs/admin-panel-restore.md) | Torna o painel /admin acessível, sem dar ao admin acesso a dados de saúde | draft — **aguarda decisão sobre 3 colunas** | — |
 | [design-system-unification](PRDs/design-system-unification.md) | Tema claro alcançável, tokens e primitivas de UI do web | ⚠️ em andamento — fases 1–3 feitas, falta erradicar hex e a guarda de lint | `feature/design-system-unification` |
-| [rls-security-hardening](PRDs/rls-security-hardening.md) | RLS nas 27 tabelas + guarda em CI + teste de isolamento | approved — **falta aplicar em preview/produção** | `feature/rls-security-hardening` |
+| [rls-security-hardening](PRDs/rls-security-hardening.md) | RLS nas 27 tabelas + guarda em CI + teste de isolamento | ✅ mergeado — **falta verificar preview e aplicar em produção** | `feature/rls-security-hardening` |
+| [api-security-hardening](PRDs/api-security-hardening.md) | Autorização das rotas do BFF, que a RLS não alcança | approved | `feature/api-security-hardening` |
 | briefing | Briefing diário do especialista | draft — desbloqueado pela RLS; o PRD ainda vive em `feature/briefing` | `feature/briefing` |
 
 > Adicionar linha aqui ao criar um novo PRD via `node scripts/new-feature.js`.
@@ -117,9 +118,16 @@ Três armadilhas que já custaram tempo:
 | 21 | ~~**18 de 27 tabelas sem RLS**~~ — **resolvido** nas migrations `0016`–`0020`, com guarda no pre-commit e no CI contra recorrência | ✅ | [PRD](PRDs/rls-security-hardening.md) |
 | 22 | ~~**Escalonamento por `student_specialists`**~~ — **resolvido**: a tabela perdeu INSERT e DELETE, e o vínculo só nasce pela RPC `link_student_by_code` | ✅ | [PRD](PRDs/rls-security-hardening.md) |
 | 23 | ~~`workout_session_sets` tem RLS só do aluno~~ — **resolvido** na `0017` (`sets_specialist_read`) | ✅ | [PRD](PRDs/rls-security-hardening.md) |
-| 24 | `body_scans` guarda URL de foto corporal. RLS na tabela não protege o arquivo no Storage se a URL vazar — política de bucket é trabalho separado | 🟡 Média | [PRD](PRDs/rls-security-hardening.md) |
-| 25 | RLS verificada apenas no ambiente local. Preview e produção ainda rodam sem as políticas — aplicar antes de qualquer dado real entrar | 🔴 Crítica | [PRD](PRDs/rls-security-hardening.md) |
+| 24 | `body_scans` guarda URL de foto corporal. RLS na tabela não protege o arquivo no Storage se a URL vazar — o bucket dessas fotos ainda não é versionado | 🟡 Média | [PRD](PRDs/rls-security-hardening.md) |
+| 25 | RLS aplicada em preview no merge do #98, mas **nunca verificada** com o teste de isolamento. Produção só recebe no push para `main` | 🔴 Crítica | [PRD](PRDs/rls-security-hardening.md) |
 | 26 | Rota `/api/students/[id]` faz UPDATE em `physical_assessments` pelo `service_role`, contornando a imutabilidade que a RLS impõe ao cliente | 🟡 Média | — |
+| 27 | ~~**IDOR nas rotas de IA do especialista**~~ — `studentId` vinha da URL e nenhuma checagem de vínculo; um token de aluno lia a anamnese de qualquer outro. **Resolvido** com `@/lib/api-auth` + guarda no CI | ✅ | [PRD](PRDs/api-security-hardening.md) |
+| 28 | ~~Privilégio saindo de `user_metadata`~~ — `ensure-profile` e `getUserContextJWT` (web) liam o `account_type` de campo que o próprio usuário edita. **Resolvido**: sai de `profiles` | ✅ | [PRD](PRDs/api-security-hardening.md) |
+| 29 | Nenhuma rota de IA tem rate limit. Cada chamada custa dinheiro e qualquer conta autenticada chama à vontade — abuso de custo, não vazamento | 🟡 Média | [PRD](PRDs/api-security-hardening.md) |
+| 30 | Cadastro público cria especialista com `email_confirm: true` e `account_status: 'active'` — sem verificação de e-mail e pulando a aprovação que existe no `/admin` | 🟡 Média | [PRD](PRDs/api-security-hardening.md) |
+| 31 | `students.service.ts` invoca a edge function `create-student`, que não existe em `supabase/functions/`. Ou o cadastro de aluno está quebrado, ou há código fora do controle de versão rodando com `service_role` | 🟡 Média | [PRD](PRDs/api-security-hardening.md) |
+| 32 | `loadStudentContext` manda a anamnese inteira (`select("*")`) para o prompt da Anthropic — Necessidade (Art. 6°, III) | 🟡 Média | [LGPD](LGPD_COMPLIANCE.md) |
+| 33 | ~~Gate do CI ficava verde com a suíte pulada~~ — `paths-filter` sem `pull-requests: read` falhava, os outputs saíam vazios e o `ci-success` lia "nada mudou". **Resolvido**: permissão + o gate exige que a detecção tenha passado | ✅ | [PRD](PRDs/api-security-hardening.md) |
 
 ---
 

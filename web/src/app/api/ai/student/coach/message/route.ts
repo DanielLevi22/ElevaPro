@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
+import { authorizeStudent } from "@/lib/api-auth";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { StudentCoachOrchestrator } from "@/modules/ai/orchestrators/student-coach.orchestrator";
 import {
@@ -14,23 +14,10 @@ import {
 } from "@/modules/ai/services/studentCoachService";
 import type { PlanProposalData, SseEvent } from "@/modules/ai/types";
 
-async function getStudentId(request: NextRequest): Promise<string | null> {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
-  const token = authHeader.slice(7);
-  const client = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-  );
-  const { data } = await client.auth.getUser(token);
-  return data.user?.id ?? null;
-}
-
 export async function POST(request: NextRequest) {
-  const studentId = await getStudentId(request);
-  if (!studentId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await authorizeStudent(request);
+  if (!auth.ok) return auth.response;
+  const studentId = auth.caller.id;
 
   const body = await request.json().catch(() => null);
   if (!body?.message) {
