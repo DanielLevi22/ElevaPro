@@ -1,35 +1,12 @@
-import { createClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
+import { authorizeSpecialist } from "@/lib/api-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-
-async function getCallerSpecialist(request: NextRequest) {
-  const authorization = request.headers.get("authorization");
-  if (!authorization?.startsWith("Bearer ")) return null;
-
-  const token = authorization.replace("Bearer ", "");
-  const callerClient = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-  );
-  const {
-    data: { user },
-  } = await callerClient.auth.getUser(token);
-  if (!user) return null;
-
-  const { data: profile } = await supabaseAdmin
-    .from("profiles")
-    .select("account_type")
-    .eq("id", user.id)
-    .single();
-
-  if ((profile as unknown as Record<string, unknown>)?.account_type !== "specialist") return null;
-  return user;
-}
 
 export async function POST(request: NextRequest) {
   try {
-    const caller = await getCallerSpecialist(request);
-    if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await authorizeSpecialist(request);
+    if (!auth.ok) return auth.response;
+    const caller = auth.caller;
 
     const body = await request.json();
     const { fullName, email, password } = body;

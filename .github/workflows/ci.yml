@@ -68,7 +68,7 @@ jobs:
   # Roda sempre, sem filtro de path: uma tabela pode ser removida do schema
   # sem que nenhum arquivo de app/ ou web/ mude no mesmo commit.
   schema-refs:
-    name: 🗃️ Schema References & RLS
+    name: 🗃️ Schema, RLS & API Auth
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -85,6 +85,12 @@ jobs:
       # foi assim que 18 das 27 tabelas ficaram abertas até 2026-08-11.
       - name: Verificar RLS nas tabelas
         run: npm run db:check-rls
+
+      # A RLS não alcança rota que usa service_role: lá a única barreira é o
+      # código. Em 2026-08-11 duas rotas de IA entregavam a anamnese de
+      # qualquer aluno a qualquer conta autenticada, e o check de RLS passava.
+      - name: Verificar autorização das rotas
+        run: npm run api:check-auth
 
   # ─────────────────────────────────────────
   # APP — 1. LINT
@@ -288,7 +294,7 @@ jobs:
           fi
 
           if [ "${{ needs.schema-refs.result }}" != "success" ]; then
-            echo "❌ Referência a tabela inexistente no schema, ou tabela sem RLS"
+            echo "❌ Tabela inexistente, tabela sem RLS, ou rota sem autorização"
             exit 1
           fi
 

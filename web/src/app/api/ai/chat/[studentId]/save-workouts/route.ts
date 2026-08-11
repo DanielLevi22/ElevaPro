@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
+import { authorizeLinkedSpecialist } from "@/lib/api-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import {
   getOrCreateSession,
@@ -7,18 +7,6 @@ import {
   updateSessionState,
 } from "@/modules/ai/services/chatService";
 import type { BulkWorkoutExercise, BulkWorkoutItem } from "@/modules/ai/types";
-
-async function getCallerSpecialist(request: NextRequest): Promise<string | null> {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
-  const token = authHeader.slice(7);
-  const client = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-  );
-  const { data } = await client.auth.getUser(token);
-  return data.user?.id ?? null;
-}
 
 async function saveWorkout(
   workout: BulkWorkoutItem,
@@ -108,10 +96,12 @@ export async function POST(
 ) {
   const { studentId } = await params;
 
-  const specialistId = await getCallerSpecialist(request);
-  if (!specialistId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  // `studentId` vem da URL: sem a checagem de vínculo, esta rota grava
+  // prescrição na conta de qualquer aluno. O `service_role` abaixo não consulta
+  // RLS — a barreira é esta linha.
+  const auth = await authorizeLinkedSpecialist(request, studentId);
+  if (!auth.ok) return auth.response;
+  const specialistId = auth.caller.id;
 
   const sessionId = await getOrCreateSession(studentId, specialistId, "workout");
   const sessionState = await getSessionState(sessionId);

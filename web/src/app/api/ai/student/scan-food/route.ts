@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { createClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
+import { authorizeStudent } from "@/lib/api-auth";
 
 interface FoodAnalysisResult {
   name: string;
@@ -11,18 +11,6 @@ interface FoodAnalysisResult {
   confidence: number;
 }
 
-async function getStudentId(request: NextRequest): Promise<string | null> {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
-  const token = authHeader.slice(7);
-  const client = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-  );
-  const { data } = await client.auth.getUser(token);
-  return data.user?.id ?? null;
-}
-
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const SYSTEM_PROMPT = `Você é um analista nutricional. Analise o alimento na imagem e retorne APENAS JSON válido:
@@ -30,10 +18,10 @@ const SYSTEM_PROMPT = `Você é um analista nutricional. Analise o alimento na i
 Se não for claro, estime com confidence menor. Nunca retorne texto fora do JSON.`;
 
 export async function POST(request: NextRequest) {
-  const studentId = await getStudentId(request);
-  if (!studentId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  // A rota não lê nada do banco: só o Gemini olha a foto. A checagem existe
+  // para não deixar o endpoint de IA aberto a qualquer portador de token.
+  const auth = await authorizeStudent(request);
+  if (!auth.ok) return auth.response;
 
   const body = (await request.json()) as { imageBase64?: string; mimeType?: string };
   const { imageBase64, mimeType = "image/jpeg" } = body;

@@ -1,23 +1,11 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { createClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
+import { authorizeStudent } from "@/lib/api-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
-}
-
-async function getStudentId(request: NextRequest): Promise<string | null> {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
-  const token = authHeader.slice(7);
-  const client = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-  );
-  const { data } = await client.auth.getUser(token);
-  return data.user?.id ?? null;
 }
 
 async function loadDietContext(studentId: string): Promise<string> {
@@ -62,10 +50,9 @@ async function loadDietContext(studentId: string): Promise<string> {
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export async function POST(request: NextRequest) {
-  const studentId = await getStudentId(request);
-  if (!studentId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await authorizeStudent(request);
+  if (!auth.ok) return auth.response;
+  const studentId = auth.caller.id;
 
   const body = (await request.json()) as { message?: string; history?: ChatMessage[] };
   const { message, history = [] } = body;

@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
+import { authorizeLinkedSpecialist } from "@/lib/api-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import {
   getOrCreateSession,
@@ -10,19 +10,6 @@ import {
 import { formatContextForPrompt, loadStudentContext } from "@/modules/ai/services/contextLoader";
 import { runWorkoutOrchestrator } from "@/modules/ai/services/workoutOrchestrator";
 import type { SseEvent } from "@/modules/ai/types";
-
-async function getCallerSpecialist(request: NextRequest): Promise<string | null> {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
-
-  const token = authHeader.slice(7);
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-  const client = createClient(supabaseUrl, supabaseAnonKey);
-
-  const { data } = await client.auth.getUser(token);
-  return data.user?.id ?? null;
-}
 
 async function handleQueryExercises(input: Record<string, unknown>): Promise<string> {
   let query = supabaseAdmin
@@ -48,10 +35,13 @@ export async function POST(
 ) {
   const { studentId } = await params;
 
-  const specialistId = await getCallerSpecialist(request);
-  if (!specialistId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  // `studentId` vem da URL e `loadStudentContext` lê anamnese e avaliação
+  // física pelo `service_role`, que não consulta RLS. Sem esta linha, qualquer
+  // conta autenticada recebe o dado de saúde de qualquer aluno na resposta do
+  // modelo — verificado em 2026-08-11.
+  const auth = await authorizeLinkedSpecialist(request, studentId);
+  if (!auth.ok) return auth.response;
+  const specialistId = auth.caller.id;
 
   const body = await request.json().catch(() => null);
   if (!body?.message) {
@@ -163,12 +153,10 @@ export async function GET(
 ) {
   const { studentId } = await params;
 
-  const specialistId = await getCallerSpecialist(request);
-  if (!specialistId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await authorizeLinkedSpecialist(request, studentId);
+  if (!auth.ok) return auth.response;
 
-  const sessionId = await getOrCreateSession(studentId, specialistId, "workout");
+  const sessionId = await getOrCreateSession(studentId, auth.caller.id, "workout");
   const messages = await getSessionMessages(sessionId);
 
   return NextResponse.json({ sessionId, messages });

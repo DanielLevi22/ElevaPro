@@ -70,6 +70,11 @@ npm run db:check-refs
 # legível por qualquer conta autenticada. Sintoma zero até vazar.
 npm run db:check-rls
 
+# ── Autorização das rotas do BFF ──────────────────────────────────────────────
+# service_role ignora RLS. Numa rota que o usa, a RLS não participa e a única
+# barreira é o `if` do próprio código — que já divergiu em duas cópias.
+npm run api:check-auth
+
 # ── Lint e TypeCheck ──────────────────────────────────────────────────────────
 # O lint da raiz cobre app/, web/, shared/ e scripts/ com o mesmo biome.json.
 # Antes só app/ e web/ eram verificados, então shared/ passava direto.

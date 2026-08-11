@@ -13,6 +13,8 @@
     "db:check-refs": "node scripts/check-schema-refs.js",
     "db:check-rls": "node scripts/check-rls.js",
     "db:test-rls": "node scripts/test-rls-isolation.mjs",
+    "api:check-auth": "node scripts/check-api-auth.js",
+    "api:test-auth": "node scripts/test-api-auth.mjs",
     "env:sync": "node scripts/sync-env.js",
     "env:sync:preview": "node scripts/sync-env.js preview",
     "env:sync:production": "node scripts/sync-env.js production"
