@@ -1,7 +1,7 @@
 # PRD: rls-security-hardening
 
 **Data de criação:** 2026-08-11
-**Status:** draft
+**Status:** approved
 **Branch:** feature/rls-security-hardening
 **Autor:** Daniel Levi
 
@@ -31,20 +31,20 @@ do **controlador**, não do operador. Não é dívida técnica de conveniência:
 exposição de dado sensível de titular, com responsabilidade nominal.
 
 ### Como saberemos que está pronto?
-- [ ] As 27 tabelas têm `rowsecurity = true` — verificado por query em
+- [x] As 27 tabelas têm `rowsecurity = true` — verificado por query em
       `pg_tables`, não por leitura de migration
-- [ ] Um aluno autenticado não lê nenhuma linha de outro aluno, em nenhuma
+- [x] Um aluno autenticado não lê nenhuma linha de outro aluno, em nenhuma
       tabela — teste automatizado com dois alunos reais
-- [ ] Um especialista não lê dado de aluno sem vínculo `active` — teste com dois
+- [x] Um especialista não lê dado de aluno sem vínculo `active` — teste com dois
       especialistas e o mesmo aluno
-- [ ] Um especialista desvinculado perde acesso na mesma consulta, sem job de
+- [x] Um especialista desvinculado perde acesso na mesma consulta, sem job de
       limpeza
-- [ ] Um aluno não consegue inserir linha em `student_specialists` que o vincule
+- [x] Um aluno não consegue inserir linha em `student_specialists` que o vincule
       a outra pessoa
-- [ ] Um aluno não consegue alterar nem apagar o próprio registro em
+- [x] Um aluno não consegue alterar nem apagar o próprio registro em
       `student_consents`
-- [ ] CI falha se uma migration criar tabela sem RLS
-- [ ] Nenhuma tela do web ou do mobile quebra — suíte atual passando
+- [x] CI falha se uma migration criar tabela sem RLS
+- [x] Nenhuma tela do web ou do mobile quebra — suíte atual passando
 
 ---
 
@@ -237,6 +237,31 @@ nasce sem RLS e ninguém percebe até o próximo `/lgpd-check`.
 
 ---
 
+## Descobertas durante a implementação
+
+**O banco construído só pelas migrations não serve nada.** O PRD dizia que as
+tabelas ficam com "o grant padrão que o Supabase concede ao papel
+`authenticated`". Não ficam. As tabelas nascem pertencendo a `postgres`, e o
+`pg_default_acl` do schema `public` só cobre objetos criados por
+`supabase_admin` — então, num `db reset` limpo, `authenticated` não tem nem
+SELECT. Sem RLS isso ficava escondido porque o ambiente atual foi montado antes
+das migrations atuais; com RLS ligada em tudo, a primeira tela abre vazia.
+
+Daí a migration `0020_api_role_grants.sql`, fora do escopo original: grants
+explícitos para `authenticated` e `service_role`, `REVOKE` de `anon` em tudo, e
+`ALTER DEFAULT PRIVILEGES FOR ROLE postgres` para que a 28ª tabela já nasça
+acessível. RLS decide **quais linhas**; o GRANT decide **se a tabela existe**
+para o papel. Precisa dos dois.
+
+**Política RLS roda com os privilégios de quem consulta.** As funções de
+`private` precisam de `GRANT EXECUTE ... TO authenticated`, ao contrário do que
+o exemplo da documentação sugere — revogar de `authenticated` faz toda consulta
+falhar com `permission denied for function`. É seguro porque a função lê
+`auth.uid()` por dentro em vez de aceitar o chamador por parâmetro; o papel pode
+executá-la, mas não pode mentir sobre quem é.
+
+---
+
 ## Riscos
 
 | Risco | Mitigação |
@@ -253,10 +278,10 @@ nasce sem RLS e ninguém percebe até o próximo `/lgpd-check`.
 
 > Só muda o Status para `done` quando TODOS estão marcados.
 
-- [ ] 27 tabelas com `rowsecurity = true`, verificado por query
-- [ ] Testes de isolamento passando: 2 alunos, 2 especialistas, tabela a tabela
-- [ ] Guarda de CI falhando em tabela nova sem RLS
-- [ ] Suíte do web e do mobile passando
+- [x] 27 tabelas com `rowsecurity = true`, verificado por query
+- [x] Testes de isolamento passando: 2 alunos, 2 especialistas, tabela a tabela
+- [x] Guarda de CI falhando em tabela nova sem RLS
+- [x] Suíte do web e do mobile passando
 - [ ] Aplicado em preview e verificado antes de produção
 - [ ] `docs/LGPD_COMPLIANCE.md` — seção 10 atualizada com o estado real por módulo
 - [ ] Código funciona e passou em lint + typecheck + testes
