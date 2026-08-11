@@ -1,6 +1,6 @@
 # Status dos Módulos — Eleva Pro
 
-> **Atualizado em:** 2026-08-09 (docs/status-refresh)
+> **Atualizado em:** 2026-08-11 (feature/rls-security-hardening)
 > **Regra:** atualizar ao fechar cada PR. Nenhuma feature é `done` sem este arquivo atualizado.
 
 ---
@@ -54,6 +54,8 @@
 | [health-background-tracking](PRDs/health-background-tracking.md) | Passos/calorias: correção da leitura + coleta em background (Android) | ✅ done | — (mergeada) |
 | [schema-drift-alignment](PRDs/schema-drift-alignment.md) | Alinha mobile e web ao schema real + guarda em CI contra recorrência | ✅ done | — (mergeada) |
 | [admin-panel-restore](PRDs/admin-panel-restore.md) | Torna o painel /admin acessível, sem dar ao admin acesso a dados de saúde | draft — **aguarda decisão sobre 3 colunas** | — |
+| [rls-security-hardening](PRDs/rls-security-hardening.md) | RLS nas 27 tabelas + guarda em CI + teste de isolamento | approved — **falta aplicar em preview/produção** | `feature/rls-security-hardening` |
+| briefing | Briefing diário do especialista | draft — desbloqueado pela RLS; o PRD ainda vive em `feature/briefing` | `feature/briefing` |
 
 > Adicionar linha aqui ao criar um novo PRD via `node scripts/new-feature.js`.
 
@@ -78,10 +80,12 @@
 | 13 | `sync-env.js` não é exercitado por nenhum teste, e já divergiu duas vezes dos `.env.example` | 🟢 Baixa | [ADR-009](decisions/009-migration-strategy.md) |
 | 14 | 6 tabelas removidas do código podem ser features legítimas nunca implementadas: `workout_assignments`, `workout_feedback`, `nutrition_progress` e 3 de admin | 🟡 Média | [PRD](PRDs/schema-drift-alignment.md) |
 | 15 | iOS nunca foi buildado — não existe `app/ios`. O caminho HealthKit e o background delivery seguem sem qualquer verificação | 🟡 Média | — |
-| 16 | **18 de 27 tabelas sem RLS** — inclui `body_scans` (fotos corporais), `student_anamnesis`, `physical_assessments`, `workout_sessions` e `profiles`. Sem `GRANT`/`REVOKE` nas migrations, o papel `authenticated` lê e escreve direto pela API | 🔴 Crítica | [PRD](PRDs/rls-security-hardening.md) |
-| 17 | **Escalonamento por `student_specialists`** — a tabela de vínculo não tem RLS, e cinco políticas existentes dependem dela. Inserir uma linha de vínculo concede acesso legítimo a `meal_logs`, `health_daily_metrics` e planos de dieta de qualquer aluno | 🔴 Crítica | [PRD](PRDs/rls-security-hardening.md) |
-| 18 | `workout_session_sets` tem RLS só do aluno — especialista não lê carga executada dos próprios alunos, então métrica de recorde ou evolução volta vazia sem erro | 🟡 Média | [PRD](PRDs/briefing.md) |
+| 16 | ~~**18 de 27 tabelas sem RLS**~~ — **resolvido** nas migrations `0016`–`0020`, com guarda no pre-commit e no CI contra recorrência | ✅ | [PRD](PRDs/rls-security-hardening.md) |
+| 17 | ~~**Escalonamento por `student_specialists`**~~ — **resolvido**: a tabela perdeu INSERT e DELETE, e o vínculo só nasce pela RPC `link_student_by_code` | ✅ | [PRD](PRDs/rls-security-hardening.md) |
+| 18 | ~~`workout_session_sets` tem RLS só do aluno~~ — **resolvido** na `0017` (`sets_specialist_read`) | ✅ | [PRD](PRDs/rls-security-hardening.md) |
 | 19 | `body_scans` guarda URL de foto corporal. RLS na tabela não protege o arquivo no Storage se a URL vazar — política de bucket é trabalho separado | 🟡 Média | [PRD](PRDs/rls-security-hardening.md) |
+| 20 | RLS verificada apenas no ambiente local. Preview e produção ainda rodam sem as políticas — aplicar antes de qualquer dado real entrar | 🔴 Crítica | [PRD](PRDs/rls-security-hardening.md) |
+| 21 | Rota `/api/students/[id]` faz UPDATE em `physical_assessments` pelo `service_role`, contornando a imutabilidade que a RLS impõe ao cliente | 🟡 Média | — |
 
 ---
 

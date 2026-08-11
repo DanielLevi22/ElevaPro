@@ -63,12 +63,12 @@ jobs:
         run: npm run lint
 
   # ─────────────────────────────────────────
-  # SCHEMA — referências de tabela
+  # SCHEMA — referências de tabela e RLS
   # ─────────────────────────────────────────
   # Roda sempre, sem filtro de path: uma tabela pode ser removida do schema
   # sem que nenhum arquivo de app/ ou web/ mude no mesmo commit.
   schema-refs:
-    name: 🗃️ Schema References
+    name: 🗃️ Schema References & RLS
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -79,6 +79,12 @@ jobs:
 
       - name: Verificar referências de tabela
         run: npm run db:check-refs
+
+      # Tabela sem RLS não quebra nada: a aplicação segue funcionando e o dado
+      # fica legível por qualquer conta autenticada. Sintoma zero até vazar —
+      # foi assim que 18 das 27 tabelas ficaram abertas até 2026-08-11.
+      - name: Verificar RLS nas tabelas
+        run: npm run db:check-rls
 
   # ─────────────────────────────────────────
   # APP — 1. LINT
@@ -282,7 +288,7 @@ jobs:
           fi
 
           if [ "${{ needs.schema-refs.result }}" != "success" ]; then
-            echo "❌ Referência a tabela inexistente no schema"
+            echo "❌ Referência a tabela inexistente no schema, ou tabela sem RLS"
             exit 1
           fi
 

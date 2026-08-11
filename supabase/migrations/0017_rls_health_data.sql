@@ -22,15 +22,26 @@ CREATE POLICY "anamnesis_specialist_read" ON student_anamnesis
 
 -- ── physical_assessments ─────────────────────────────────────────────────────
 -- Aqui o specialist escreve: a avaliação física é feita por ele, não pelo aluno.
+--
+-- Mas só INSERT. O LGPD_COMPLIANCE (seção 10, módulo Students) registra a
+-- avaliação como imutável — "nunca UPDATE", pelo princípio da qualidade do
+-- dado: corrigir uma medida antiga reescreve o histórico clínico do aluno.
+-- Medida errada se corrige com avaliação nova, que é o que o histórico mostra.
 
 ALTER TABLE physical_assessments ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "assessments_student_read" ON physical_assessments
   FOR SELECT USING (student_id = (SELECT auth.uid()));
 
-CREATE POLICY "assessments_specialist_manage" ON physical_assessments
-  FOR ALL USING ((SELECT private.is_linked_specialist(student_id)))
-  WITH CHECK ((SELECT private.is_linked_specialist(student_id)));
+CREATE POLICY "assessments_specialist_read" ON physical_assessments
+  FOR SELECT USING ((SELECT private.is_linked_specialist(student_id)));
+
+CREATE POLICY "assessments_specialist_insert" ON physical_assessments
+  FOR INSERT WITH CHECK ((SELECT private.is_linked_specialist(student_id)));
+
+-- Sem UPDATE e sem DELETE, de propósito. A rota /api/students/[id] ainda faz
+-- UPDATE, mas pelo service_role, que ignora RLS — é dívida registrada, não
+-- permissão concedida ao cliente.
 
 CREATE INDEX IF NOT EXISTS physical_assessments_student_idx
   ON physical_assessments (student_id);

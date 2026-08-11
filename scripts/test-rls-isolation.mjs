@@ -191,6 +191,37 @@ async function main() {
     !consent.ok || (restou.data?.length ?? 0) >= 0,
   );
 
+  console.log("\n-- Avaliação física é imutável pelo cliente --");
+  // Sem política de UPDATE, o PostgREST responde 204 e afeta zero linhas: a
+  // chamada "dá certo" e nada muda. Por isso a asserção lê o valor de volta em
+  // vez de olhar o status.
+  await api("/rest/v1/physical_assessments", {
+    method: "POST",
+    token: espec1.token,
+    body: { student_id: alunoA.id, specialist_id: espec1.id, weight_kg: 80 },
+  });
+  const criou = await api(
+    `/rest/v1/physical_assessments?select=id,weight_kg&student_id=eq.${alunoA.id}`,
+    { token: SERVICE },
+  );
+  check("especialista vinculado cria avaliação", (criou.data?.length ?? 0) === 1);
+
+  const avaliacaoId = criou.data?.[0]?.id;
+  await api(`/rest/v1/physical_assessments?id=eq.${avaliacaoId}`, {
+    method: "PATCH",
+    token: espec1.token,
+    body: { weight_kg: 99 },
+  });
+  await api(`/rest/v1/physical_assessments?id=eq.${avaliacaoId}`, {
+    method: "DELETE",
+    token: espec1.token,
+  });
+  const depois = await api(`/rest/v1/physical_assessments?select=weight_kg&id=eq.${avaliacaoId}`, {
+    token: SERVICE,
+  });
+  check("UPDATE não altera a avaliação", Number(depois.data?.[0]?.weight_kg) === 80);
+  check("DELETE não apaga a avaliação", (depois.data?.length ?? 0) === 1);
+
   console.log("\n-- Vínculo pela RPC (o único caminho que restou) --");
   const codigo = `TEST${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
   await api("/rest/v1/specialist_services", {

@@ -50,8 +50,8 @@ exposição de dado sensível de titular, com responsabilidade nominal.
 
 ## Contexto
 
-Levantado em 2026-08-11 durante o `/lgpd-check` do PRD [briefing](briefing.md),
-que precisava ler `workout_sessions` e parou nisso.
+Levantado em 2026-08-11 durante o `/lgpd-check` do PRD do briefing (ainda na
+branch `feature/briefing`), que precisava ler `workout_sessions` e parou nisso.
 
 Auditoria das migrations em `supabase/migrations/`:
 
