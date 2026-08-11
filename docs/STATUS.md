@@ -1,6 +1,6 @@
 # Status dos Módulos — Eleva Pro
 
-> **Atualizado em:** 2026-08-10 (feature/design-system-unification)
+> **Atualizado em:** 2026-08-11 (feature/rls-security-hardening)
 > **Regra:** atualizar ao fechar cada PR. Nenhuma feature é `done` sem este arquivo atualizado.
 
 ---
@@ -83,6 +83,8 @@ Três armadilhas que já custaram tempo:
 | [schema-drift-alignment](PRDs/schema-drift-alignment.md) | Alinha mobile e web ao schema real + guarda em CI contra recorrência | ✅ done | — (mergeada) |
 | [admin-panel-restore](PRDs/admin-panel-restore.md) | Torna o painel /admin acessível, sem dar ao admin acesso a dados de saúde | draft — **aguarda decisão sobre 3 colunas** | — |
 | [design-system-unification](PRDs/design-system-unification.md) | Tema claro alcançável, tokens e primitivas de UI do web | ⚠️ em andamento — fases 1–3 feitas, falta erradicar hex e a guarda de lint | `feature/design-system-unification` |
+| [rls-security-hardening](PRDs/rls-security-hardening.md) | RLS nas 27 tabelas + guarda em CI + teste de isolamento | approved — **falta aplicar em preview/produção** | `feature/rls-security-hardening` |
+| briefing | Briefing diário do especialista | draft — desbloqueado pela RLS; o PRD ainda vive em `feature/briefing` | `feature/briefing` |
 
 > Adicionar linha aqui ao criar um novo PRD via `node scripts/new-feature.js`.
 
@@ -112,6 +114,12 @@ Três armadilhas que já custaram tempo:
 | 18 | 10 periodizações no banco com data inválida, incluindo ano de 5 dígitos (`12312-12-23`). A leitura agora aguenta, mas os registros seguem corrompidos | 🟢 Baixa | — |
 | 19 | `CreateWorkoutModal` é o único modal com casca própria — tem dois modos (página/modal) e rodapé fixo, que o `Dialog` não oferece | 🟢 Baixa | — |
 | 20 | Sparklines do dashboard não existem: `useDashboardStats` devolve só contagens do momento, sem série histórica | 🟢 Baixa | — |
+| 21 | ~~**18 de 27 tabelas sem RLS**~~ — **resolvido** nas migrations `0016`–`0020`, com guarda no pre-commit e no CI contra recorrência | ✅ | [PRD](PRDs/rls-security-hardening.md) |
+| 22 | ~~**Escalonamento por `student_specialists`**~~ — **resolvido**: a tabela perdeu INSERT e DELETE, e o vínculo só nasce pela RPC `link_student_by_code` | ✅ | [PRD](PRDs/rls-security-hardening.md) |
+| 23 | ~~`workout_session_sets` tem RLS só do aluno~~ — **resolvido** na `0017` (`sets_specialist_read`) | ✅ | [PRD](PRDs/rls-security-hardening.md) |
+| 24 | `body_scans` guarda URL de foto corporal. RLS na tabela não protege o arquivo no Storage se a URL vazar — política de bucket é trabalho separado | 🟡 Média | [PRD](PRDs/rls-security-hardening.md) |
+| 25 | RLS verificada apenas no ambiente local. Preview e produção ainda rodam sem as políticas — aplicar antes de qualquer dado real entrar | 🔴 Crítica | [PRD](PRDs/rls-security-hardening.md) |
+| 26 | Rota `/api/students/[id]` faz UPDATE em `physical_assessments` pelo `service_role`, contornando a imutabilidade que a RLS impõe ao cliente | 🟡 Média | — |
 
 ---
 

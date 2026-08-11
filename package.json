@@ -11,6 +11,8 @@
     "db:generate": "drizzle-kit generate",
     "db:check": "drizzle-kit check",
     "db:check-refs": "node scripts/check-schema-refs.js",
+    "db:check-rls": "node scripts/check-rls.js",
+    "db:test-rls": "node scripts/test-rls-isolation.mjs",
     "env:sync": "node scripts/sync-env.js",
     "env:sync:preview": "node scripts/sync-env.js preview",
     "env:sync:production": "node scripts/sync-env.js production"

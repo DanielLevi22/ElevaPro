@@ -65,6 +65,11 @@ fi
 # Nome de tabela é string: nem tsc nem os testes acusam quando ela não existe.
 npm run db:check-refs
 
+# ── RLS ───────────────────────────────────────────────────────────────────────
+# Tabela sem RLS não quebra nada: a aplicação segue funcionando e o dado fica
+# legível por qualquer conta autenticada. Sintoma zero até vazar.
+npm run db:check-rls
+
 # ── Lint e TypeCheck ──────────────────────────────────────────────────────────
 # O lint da raiz cobre app/, web/, shared/ e scripts/ com o mesmo biome.json.
 # Antes só app/ e web/ eram verificados, então shared/ passava direto.
