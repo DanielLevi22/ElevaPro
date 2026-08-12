@@ -1,8 +1,23 @@
+import { createHealthService } from '@elevapro/shared';
+import { supabase } from '@elevapro/supabase';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useAuthStore } from '@/modules/auth/store/authStore';
 import { BodyScanResult } from '../types/assessment';
 
 const bffUrl = () => `${process.env.EXPO_PUBLIC_API_URL}/api/ai/body-scan`;
+
+/**
+ * Falta de consentimento, separada de falha.
+ *
+ * São situações opostas para o aluno — uma se resolve com um toque, a outra é
+ * um erro — e uma `Error` genérica faria as duas virarem a mesma tela.
+ */
+export class BodyScanConsentError extends Error {
+  constructor() {
+    super('Consentimento de dados de saúde não concedido');
+    this.name = 'BodyScanConsentError';
+  }
+}
 
 async function resizeToBase64(uri: string): Promise<string | null> {
   try {
@@ -23,8 +38,16 @@ export const AIBodyScanService = {
     back?: string;
     side?: string;
   }): Promise<BodyScanResult> => {
-    const token = useAuthStore.getState().session?.access_token;
-    if (!token) throw new Error('Authentication required');
+    const session = useAuthStore.getState().session;
+    const token = session?.access_token;
+    if (!token || !session?.user?.id) throw new Error('Authentication required');
+
+    // Checado aqui, antes de a foto ser lida do dispositivo. O BFF checa de
+    // novo — ele é a barreira que vale —, mas nesta ordem a imagem nem chega a
+    // ser codificada quando não há consentimento (Art. 11, I).
+    if (!(await createHealthService(supabase).hasCollectionConsent(session.user.id))) {
+      throw new BodyScanConsentError();
+    }
 
     const base64Images: Record<string, string> = {};
     for (const key of ['front', 'back', 'side'] as const) {
@@ -46,6 +69,12 @@ export const AIBodyScanService = {
       },
       body: JSON.stringify({ images: base64Images }),
     });
+
+    // 403 do BFF é sempre falta de consentimento nesta rota: o aluno analisa a
+    // si mesmo, então não há outro motivo para ele ser barrado.
+    if (response.status === 403) {
+      throw new BodyScanConsentError();
+    }
 
     if (!response.ok) {
       throw new Error(`body-scan BFF error: ${response.status}`);

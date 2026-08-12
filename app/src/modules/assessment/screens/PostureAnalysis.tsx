@@ -526,8 +526,7 @@ export default function PostureAnalysis() {
   const feedback = lastResult?.postureAnalysis?.feedback || {
     front: ANALYSIS_VIEWS[0].feedback,
     back: ANALYSIS_VIEWS[1].feedback,
-    side_right: ANALYSIS_VIEWS[2].feedback,
-    side_left: ANALYSIS_VIEWS[3].feedback,
+    side: ANALYSIS_VIEWS[2].feedback,
   };
 
   const recommendations =
@@ -783,8 +782,7 @@ export default function PostureAnalysis() {
                   let detailedFeedback = '\n[DETALHES]\n';
                   detailedFeedback += `\nFRENTE: ${feedback.front?.map((f: { title: string; risk: string }) => `${f.title} (${f.risk})`).join(', ') || 'OK'}`;
                   detailedFeedback += `\nCOSTAS: ${feedback.back?.map((f: { title: string; risk: string }) => `${f.title} (${f.risk})`).join(', ') || 'OK'}`;
-                  detailedFeedback += `\nLAT. DIR: ${feedback.side_right?.map((f: { title: string; risk: string }) => `${f.title} (${f.risk})`).join(', ') || 'OK'}`;
-                  detailedFeedback += `\nLAT. ESQ: ${feedback.side_left?.map((f: { title: string; risk: string }) => `${f.title} (${f.risk})`).join(', ') || 'OK'}`;
+                  detailedFeedback += `\nLATERAL: ${feedback.side?.map((f: { title: string; risk: string }) => `${f.title} (${f.risk})`).join(', ') || 'OK'}`;
 
                   const formattedNotes = `Análise Corporal I.A.\n\n${scoreSummary}\n${detailedFeedback}\n\n[RECOMENDAÇÃO]\n${recommendations}`;
 

@@ -552,7 +552,7 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 |------|-----------------|--------------|-----------|------------|
 | `/api/ai/nutrition/chat/[studentId]` | Os mesmos campos do coach de treino: objetivo, experiência, **lesões**, **condições de saúde**, peso, altura, % gordura. **Sem o nome do titular** | Anthropic | ✅ Sim (Art. 11) | Consentimento explícito — verificado na rota |
 | `/api/ai/chat/[studentId]` | Objetivo, experiência, frequência, dias, **lesões**, **condições de saúde**, peso, altura, % gordura, periodizações. **Sem o nome do titular** | Anthropic | ✅ Sim (Art. 11) | Consentimento explícito — verificado na rota desde 2026-08-12 |
-| `/api/ai/body-scan` | Fotos corporais (base64) + métricas inferidas | Anthropic | ✅ Sim (Art. 5°, II) | Consentimento explícito (Art. 11, I) |
+| `/api/ai/body-scan` | Fotos corporais (base64, 3 imagens) + métricas estimadas | Anthropic | ✅ Sim (Art. 5°, II) | Consentimento explícito (Art. 11, I) — **verificado na rota**. A imagem não é persistida: guarda-se só o resultado |
 | `/api/ai/nutrition/adherence` | `diet_logs` anonimizados + nome do plano | Anthropic | ✅ Sim | Consentimento explícito |
 | `/api/ai/voice-command` | Removido — rota e serviço eliminados | — | — | — |
 | `/api/ai/workout/negotiate` | Nível do aluno, objetivo, lista de exercícios | Anthropic | ❌ Não sensível | Execução de contrato |
@@ -580,9 +580,9 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 
 | Item | Ação necessária | Responsável |
 |------|----------------|-------------|
-| Consentimento da tela de Body Scan deve mencionar explicitamente envio de fotos a serviço de IA externo | Atualizar texto da tela `BodyScanIntroduction.tsx` | Dev + Legal |
+| ~~Consentimento da tela de Body Scan deve mencionar envio de fotos a serviço de IA externo~~ | ✅ Resolvido — `BodyScanIntroduction.tsx` diz que a imagem vai para a Anthropic nos EUA e que nenhuma foto é guardada. A promessa de "método extremamente preciso" saiu (Art. 6°, VI) | — |
 | Anthropic e Google devem ser listados como sub-processadores na Política de Privacidade | Atualizar política de privacidade | Legal |
-| Rota `/api/ai/body-scan` deve verificar `student_consents` (tipo `health_data_collection`) antes de processar | Adicionar middleware de consentimento na rota, igual ao padrão de `nutribot` e `scan-food` | Dev |
+| ~~Rota `/api/ai/body-scan` deve verificar `student_consents` antes de processar~~ | ✅ Resolvido — a rota checa `hasCollectionConsent` sob a identidade do titular antes de desserializar o corpo, e devolve `403 consent_required`. O app checa antes de ler a foto do aparelho e oferece o fluxo (`ADR-010`) | — |
 | `loadStudentContext` manda a anamnese inteira (`select("*")`) para o prompt da Anthropic | Recortar os campos que o modelo realmente usa para montar treino — Necessidade (Art. 6°, III) | Dev |
 | Rota `/api/ai/nutrition/adherence` deve verificar `student_consents` antes de processar | Idem | Dev |
 | ~~Verificar DPA Google (Gemini) para dado biométrico de voz~~ | Eliminado — voice command removido do escopo | — |

@@ -1,12 +1,21 @@
-import { AIBodyScanService } from '../../services/aiBodyScan';
+import { AIBodyScanService, BodyScanConsentError } from '../../services/aiBodyScan';
 import { AssessmentStatus } from '../../types/assessment';
 import { useAssessmentStore } from '../assessmentStore';
 
-jest.mock('../../services/aiBodyScan', () => ({
-  AIBodyScanService: {
-    analyzeImages: jest.fn(),
-  },
-}));
+// A classe precisa ser real no mock: o store usa `instanceof` para separar
+// falta de consentimento de falha, e um stub não satisfaria a checagem.
+jest.mock('../../services/aiBodyScan', () => {
+  class BodyScanConsentError extends Error {
+    constructor() {
+      super('Consentimento de dados de saúde não concedido');
+      this.name = 'BodyScanConsentError';
+    }
+  }
+  return {
+    AIBodyScanService: { analyzeImages: jest.fn() },
+    BodyScanConsentError,
+  };
+});
 
 describe('assessmentStore', () => {
   beforeEach(() => {
@@ -83,5 +92,31 @@ describe('assessmentStore', () => {
 
     expect(useAssessmentStore.getState().status).toBe(AssessmentStatus.ERROR);
     consoleSpy.mockRestore();
+  });
+});
+
+describe('submitScan — consentimento', () => {
+  beforeEach(() => {
+    useAssessmentStore.getState().reset();
+    jest.clearAllMocks();
+    useAssessmentStore.getState().setCapturedImage('front', 'uri-front');
+  });
+
+  it('marca NEEDS_CONSENT quando falta consentimento, sem virar erro', async () => {
+    (AIBodyScanService.analyzeImages as jest.Mock).mockRejectedValue(new BodyScanConsentError());
+
+    await useAssessmentStore.getState().submitScan();
+
+    expect(useAssessmentStore.getState().status).toBe(AssessmentStatus.NEEDS_CONSENT);
+  });
+
+  it('marca ERROR em qualquer outra falha — a guarda não engole tudo', async () => {
+    (AIBodyScanService.analyzeImages as jest.Mock).mockRejectedValue(
+      new Error('body-scan BFF error: 502')
+    );
+
+    await useAssessmentStore.getState().submitScan();
+
+    expect(useAssessmentStore.getState().status).toBe(AssessmentStatus.ERROR);
   });
 });

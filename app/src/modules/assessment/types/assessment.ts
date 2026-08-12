@@ -36,8 +36,7 @@ export interface BodyScanResult {
     feedback: {
       front: Array<{ title: string; risk: string; text: string }>;
       back: Array<{ title: string; risk: string; text: string }>;
-      side_right: Array<{ title: string; risk: string; text: string }>;
-      side_left: Array<{ title: string; risk: string; text: string }>;
+      side: Array<{ title: string; risk: string; text: string }>;
     };
     recommendations: string;
   };
@@ -49,6 +48,8 @@ export enum AssessmentStatus {
   ANALYZING = 'analyzing',
   COMPLETED = 'completed',
   ERROR = 'error',
+  /** Falta consentir a coleta de dados de saúde. Um toque resolve — não é erro. */
+  NEEDS_CONSENT = 'needs_consent',
 }
 
 export type QuestionType =

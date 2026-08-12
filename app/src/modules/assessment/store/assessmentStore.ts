@@ -1,7 +1,7 @@
 import { createMMKV } from 'react-native-mmkv';
 import { create } from 'zustand';
 import { createJSONStorage, persist, StateStorage } from 'zustand/middleware';
-import { AIBodyScanService } from '../services/aiBodyScan';
+import { AIBodyScanService, BodyScanConsentError } from '../services/aiBodyScan';
 import { AnamnesisService } from '../services/anamnesisService';
 import { AnamnesisResponse, AssessmentStatus, BodyScanResult } from '../types/assessment';
 
@@ -90,6 +90,12 @@ export const useAssessmentStore = create<AssessmentState>()(
             history: [result, ...state.history],
           }));
         } catch (error) {
+          // Falta de consentimento não é falha: leva a uma tela que resolve,
+          // não à mesma mensagem de erro genérica.
+          if (error instanceof BodyScanConsentError) {
+            set({ status: AssessmentStatus.NEEDS_CONSENT });
+            return;
+          }
           set({ status: AssessmentStatus.ERROR });
           console.error('Body scan failed', error);
         }

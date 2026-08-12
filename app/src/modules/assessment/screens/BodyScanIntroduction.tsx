@@ -193,10 +193,24 @@ export default function BodyScanIntroduction({ hideHeader = false }: { hideHeade
             <Text className="text-white text-3xl font-black font-display text-center leading-tight">
               Escaneamento <Text style={{ color: colors.primary.start }}>Corporal</Text>
             </Text>
+            {/* Dizia "método extremamente preciso". Sobre estimativa de IA isso
+                é informação enganosa, e o Art. 6°, VI exige transparência. */}
             <Text className="text-zinc-400 text-center text-sm mt-3 px-4 leading-relaxed">
-              O escaneamento corporal por IA é um método extremamente preciso para coleta de
-              medidas.
+              Três fotos viram uma estimativa de proporção, simetria e postura, para acompanhar sua
+              evolução entre as avaliações. Não substitui a fita métrica.
             </Text>
+
+            <View className="mt-5 mx-2 p-4 rounded-2xl bg-zinc-900/60 border border-white/10">
+              <Text className="text-zinc-300 text-xs leading-relaxed">
+                <Text className="text-white font-bold">Suas fotos saem do aparelho.</Text> Elas são
+                enviadas a um serviço de inteligência artificial externo (Anthropic, nos Estados
+                Unidos) só para gerar a análise.
+              </Text>
+              <Text className="text-zinc-300 text-xs leading-relaxed mt-2">
+                <Text className="text-white font-bold">Nenhuma foto é guardada.</Text> O que fica
+                salvo é o resultado — as medidas estimadas e as notas de postura.
+              </Text>
+            </View>
           </View>
 
           {/* MAIN VISUALIZER CONTAINER */}
