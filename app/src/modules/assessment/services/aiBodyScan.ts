@@ -19,6 +19,19 @@ export class BodyScanConsentError extends Error {
   }
 }
 
+/**
+ * Falta a altura, que é a régua da imagem.
+ *
+ * Sem ela não há como converter pixel em centímetro, e a alternativa seria o
+ * modelo chutar — que é exatamente o que este PRD removeu (`ADR-010`).
+ */
+export class BodyScanScaleError extends Error {
+  constructor() {
+    super('Altura não encontrada — sem régua não há medida');
+    this.name = 'BodyScanScaleError';
+  }
+}
+
 async function resizeToBase64(uri: string): Promise<string | null> {
   try {
     const result = await ImageManipulator.manipulateAsync(uri, [{ resize: { width: 800 } }], {
@@ -33,11 +46,15 @@ async function resizeToBase64(uri: string): Promise<string | null> {
 }
 
 export const AIBodyScanService = {
-  analyzeImages: async (images: {
-    front?: string;
-    back?: string;
-    side?: string;
-  }): Promise<BodyScanResult> => {
+  analyzeImages: async (
+    images: {
+      front?: string;
+      back?: string;
+      side?: string;
+    },
+    /** Só quando o aluno ainda não tem avaliação física registrada. */
+    informed?: { heightCm: number; weightKg?: number }
+  ): Promise<BodyScanResult> => {
     const session = useAuthStore.getState().session;
     const token = session?.access_token;
     if (!token || !session?.user?.id) throw new Error('Authentication required');
@@ -67,13 +84,21 @@ export const AIBodyScanService = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ images: base64Images }),
+      body: JSON.stringify({
+        images: base64Images,
+        heightCm: informed?.heightCm,
+        weightKg: informed?.weightKg,
+      }),
     });
 
     // 403 do BFF é sempre falta de consentimento nesta rota: o aluno analisa a
     // si mesmo, então não há outro motivo para ele ser barrado.
     if (response.status === 403) {
       throw new BodyScanConsentError();
+    }
+
+    if (response.status === 422) {
+      throw new BodyScanScaleError();
     }
 
     if (!response.ok) {

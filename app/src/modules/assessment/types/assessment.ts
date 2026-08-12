@@ -27,6 +27,12 @@ export interface BodyScanResult {
     shoulders?: number;
   };
   imageUrl: string;
+  /**
+   * De onde vieram altura e peso — nunca do modelo (`ADR-010`). A tela usa isto
+   * para dizer se a régua é medida ou informada, o que muda a confiança nas
+   * circunferências derivadas dela.
+   */
+  scaleSource?: 'assessment' | 'informed';
   postureAnalysis?: {
     scores: {
       symmetry: number;

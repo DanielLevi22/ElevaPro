@@ -1,4 +1,8 @@
-import { AIBodyScanService, BodyScanConsentError } from '../../services/aiBodyScan';
+import {
+  AIBodyScanService,
+  BodyScanConsentError,
+  BodyScanScaleError,
+} from '../../services/aiBodyScan';
 import { AssessmentStatus } from '../../types/assessment';
 import { useAssessmentStore } from '../assessmentStore';
 
@@ -11,9 +15,16 @@ jest.mock('../../services/aiBodyScan', () => {
       this.name = 'BodyScanConsentError';
     }
   }
+  class BodyScanScaleError extends Error {
+    constructor() {
+      super('Altura não encontrada — sem régua não há medida');
+      this.name = 'BodyScanScaleError';
+    }
+  }
   return {
     AIBodyScanService: { analyzeImages: jest.fn() },
     BodyScanConsentError,
+    BodyScanScaleError,
   };
 });
 
@@ -118,5 +129,23 @@ describe('submitScan — consentimento', () => {
     await useAssessmentStore.getState().submitScan();
 
     expect(useAssessmentStore.getState().status).toBe(AssessmentStatus.ERROR);
+  });
+});
+
+describe('submitScan — sem régua', () => {
+  beforeEach(() => {
+    useAssessmentStore.getState().reset();
+    jest.clearAllMocks();
+    useAssessmentStore.getState().setCapturedImage('front', 'uri-front');
+  });
+
+  it('não conclui quando falta a altura — o modelo não pode voltar a chutar', async () => {
+    (AIBodyScanService.analyzeImages as jest.Mock).mockRejectedValue(new BodyScanScaleError());
+
+    await useAssessmentStore.getState().submitScan();
+
+    const state = useAssessmentStore.getState();
+    expect(state.status).not.toBe(AssessmentStatus.COMPLETED);
+    expect(state.lastResult).toBeNull();
   });
 });

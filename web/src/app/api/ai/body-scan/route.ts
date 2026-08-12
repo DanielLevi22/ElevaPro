@@ -9,13 +9,17 @@ import { type NextRequest, NextResponse } from "next/server";
 // plano Hobby; no Pro dá para subir até 300.
 export const maxDuration = 60;
 
-interface BodyScanPayload {
+/**
+ * O que o modelo devolve.
+ *
+ * `height` e `weight` **não** estão aqui: peso é massa e nenhuma câmera mede
+ * massa; altura exige referência de escala no enquadramento. Os dois entram
+ * como parâmetro e a rota os recoloca na resposta final — ver `ADR-010`.
+ */
+interface ModelPayload {
   metrics: {
-    height: number;
-    weight: number;
     bodyFat: number;
     muscleMass: number;
-    bmi: number;
   };
   segments: {
     chest: number;
@@ -35,6 +39,42 @@ interface BodyScanPayload {
       side: Array<{ title: string; risk: string; text: string }>;
     };
     recommendations: string;
+  };
+}
+
+/** A resposta ao app: o que o modelo estimou mais a régua que veio de fora. */
+interface BodyScanPayload extends ModelPayload {
+  metrics: ModelPayload["metrics"] & {
+    height: number;
+    weight: number;
+    bmi: number;
+  };
+  /** De onde vieram altura e peso. A tela precisa poder dizer isso ao aluno. */
+  scaleSource: "assessment" | "informed";
+}
+
+/** Última avaliação física com altura registrada — a régua da imagem. */
+async function loadScale(
+  client: SupabaseClient,
+  studentId: string,
+): Promise<{ heightCm: number; weightKg: number | null } | null> {
+  const { data, error } = await client
+    .from("physical_assessments")
+    .select("height_cm, weight_kg")
+    .eq("student_id", studentId)
+    .not("height_cm", "is", null)
+    .order("assessed_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  // Erro não é ausência: engolir aqui faria "falhou a consulta" virar "não tem
+  // avaliação", e o aluno digitaria de novo um dado que já existe.
+  if (error) throw error;
+  if (!data?.height_cm) return null;
+
+  return {
+    heightCm: Number(data.height_cm),
+    weightKg: data.weight_kg === null ? null : Number(data.weight_kg),
   };
 }
 
@@ -64,9 +104,29 @@ async function authenticateStudent(
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const SYSTEM_PROMPT = `Você é um especialista em avaliação física e análise postural. Analise as imagens corporais fornecidas e retorne APENAS JSON válido com esta estrutura exata:
+/**
+ * Monta o prompt com a altura real como escala.
+ *
+ * A altura é a régua: sabendo que o corpo mede N cm e quantos pixels ele ocupa,
+ * qualquer largura na imagem converte para centímetro. Sem ela o modelo só
+ * poderia chutar — que é o que a versão anterior deste prompt mandava fazer.
+ */
+function buildSystemPrompt(heightCm: number, weightKg: number | null): string {
+  const peso = weightKg === null ? "não informado" : `${weightKg} kg`;
+
+  return `Você é um especialista em avaliação física e análise postural.
+
+MEDIDAS CONHECIDAS DO ALUNO (não estime nenhuma delas):
+- Altura: ${heightCm} cm
+- Peso: ${peso}
+
+Use a altura como escala da imagem: o corpo inteiro, da cabeça aos pés, mede ${heightCm} cm. Converta as larguras que você observa para centímetro a partir dessa proporção.
+
+As circunferências que você devolver são ESTIMATIVAS derivadas dessa escala, não medições. Prefira errar para o conservador a inventar precisão.
+
+Retorne APENAS JSON válido com esta estrutura exata:
 {
-  "metrics": { "height": number (cm), "weight": number (kg), "bodyFat": number (%), "muscleMass": number (kg), "bmi": number },
+  "metrics": { "bodyFat": number (%), "muscleMass": number (kg) },
   "segments": { "chest": number (cm), "waist": number (cm), "hips": number (cm), "arms": number (cm), "thighs": number (cm), "calves": number, "neck": number, "shoulders": number },
   "postureAnalysis": {
     "scores": { "symmetry": number (0-100), "muscle": number (0-100), "posture": number (0-100) },
@@ -78,7 +138,9 @@ const SYSTEM_PROMPT = `Você é um especialista em avaliação física e anális
     "recommendations": string
   }
 }
-Nunca retorne texto fora do JSON. Estime com base nas imagens disponíveis.`;
+
+Nunca retorne "height" nem "weight" — eles já são conhecidos. Nunca retorne texto fora do JSON.`;
+}
 
 export async function POST(request: NextRequest) {
   const auth = await authenticateStudent(request);
@@ -108,10 +170,36 @@ export async function POST(request: NextRequest) {
       back?: string;
       side?: string;
     };
+    /** Digitados pelo aluno quando ainda não há avaliação física. */
+    heightCm?: number;
+    weightKg?: number;
   };
 
   if (!body?.images || !Object.values(body.images).some(Boolean)) {
     return NextResponse.json({ error: "At least one image is required" }, { status: 400 });
+  }
+
+  // A avaliação física vence o que veio no corpo: é medida com fita, não
+  // digitada de memória.
+  let scale: { heightCm: number; weightKg: number | null } | null;
+  try {
+    scale = await loadScale(auth.client, auth.userId);
+  } catch {
+    return NextResponse.json({ error: "scale_lookup_failed" }, { status: 503 });
+  }
+
+  let scaleSource: BodyScanPayload["scaleSource"] = "assessment";
+
+  if (!scale && typeof body.heightCm === "number") {
+    scale = { heightCm: body.heightCm, weightKg: body.weightKg ?? null };
+    scaleSource = "informed";
+  }
+
+  // Sem altura não há régua, e sem régua o modelo voltaria a chutar. Recusar é
+  // a única saída honesta — a tela pede o dado em vez de mostrar um número
+  // inventado.
+  if (!scale) {
+    return NextResponse.json({ error: "height_required" }, { status: 422 });
   }
 
   const imageContent: Anthropic.MessageParam["content"] = [];
@@ -143,22 +231,39 @@ export async function POST(request: NextRequest) {
   const response = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 1024,
-    system: SYSTEM_PROMPT,
+    system: buildSystemPrompt(scale.heightCm, scale.weightKg),
     messages: [{ role: "user", content: imageContent }],
   });
 
   const text = response.content[0].type === "text" ? response.content[0].text : "";
 
-  let result: BodyScanPayload;
+  let modelResult: ModelPayload;
   try {
-    result = JSON.parse(text.replace(/```json|```/g, "").trim()) as BodyScanPayload;
+    modelResult = JSON.parse(text.replace(/```json|```/g, "").trim()) as ModelPayload;
   } catch {
     return NextResponse.json({ error: "Failed to parse AI response" }, { status: 502 });
   }
 
-  if (!result?.metrics) {
+  if (!modelResult?.metrics) {
     return NextResponse.json({ error: "Invalid AI response structure" }, { status: 502 });
   }
+
+  // O IMC é calculado aqui, sobre a altura e o peso reais. Antes vinha do
+  // modelo, calculado sobre dois valores que ele mesmo tinha inventado.
+  const heightM = scale.heightCm / 100;
+  const bmi =
+    scale.weightKg === null ? 0 : Number((scale.weightKg / (heightM * heightM)).toFixed(1));
+
+  const result: BodyScanPayload = {
+    ...modelResult,
+    metrics: {
+      ...modelResult.metrics,
+      height: scale.heightCm,
+      weight: scale.weightKg ?? 0,
+      bmi,
+    },
+    scaleSource,
+  };
 
   return NextResponse.json(result);
 }

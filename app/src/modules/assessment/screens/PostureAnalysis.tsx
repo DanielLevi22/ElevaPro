@@ -784,12 +784,22 @@ export default function PostureAnalysis() {
                   detailedFeedback += `\nCOSTAS: ${feedback.back?.map((f: { title: string; risk: string }) => `${f.title} (${f.risk})`).join(', ') || 'OK'}`;
                   detailedFeedback += `\nLATERAL: ${feedback.side?.map((f: { title: string; risk: string }) => `${f.title} (${f.risk})`).join(', ') || 'OK'}`;
 
-                  const formattedNotes = `Análise Corporal I.A.\n\n${scoreSummary}\n${detailedFeedback}\n\n[RECOMENDAÇÃO]\n${recommendations}`;
+                  // O aviso vai no topo porque estas circunferências são
+                  // estimadas a partir da altura como escala, não medidas com
+                  // fita. Quem ler o registro depois precisa saber disso antes
+                  // de qualquer número (ADR-010).
+                  const aviso =
+                    '⚠️ Circunferências ESTIMADAS por imagem, não medidas. Erro típico de 5 a 10%. Use para acompanhar evolução, não como medida.';
+
+                  const formattedNotes = `Análise Corporal I.A.\n${aviso}\n\n${scoreSummary}\n${detailedFeedback}\n\n[RECOMENDAÇÃO]\n${recommendations}`;
 
                   // 3. Prepare Data
+                  // Sem `|| 70` e `|| 170`: gravar um peso inventado num
+                  // registro de saúde é o defeito que este PRD existe para
+                  // remover. Altura e peso agora vêm da avaliação física.
                   const aiDataToSave = {
-                    weight: lastResult?.metrics?.weight || 70,
-                    height: (lastResult?.metrics?.height || 170) / 100, // cm to m
+                    weight: lastResult?.metrics?.weight ?? 0,
+                    height: (lastResult?.metrics?.height ?? 0) / 100, // cm to m
                     notes: formattedNotes,
                     // Mapping some AI inputs to measurements
                     neck: lastResult?.segments?.neck || 0,
