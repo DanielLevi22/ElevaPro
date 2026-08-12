@@ -1,12 +1,11 @@
 "use client";
 
 import type { DietPlan } from "@elevapro/shared";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useDeleteDietPlan, useUpdateDietPlanStatus } from "@/shared/hooks/useNutrition";
+import { formatDateRange } from "@/shared/utils/formatDate";
 import { DeleteDietPlanModal } from "./DeleteDietPlanModal";
 import { MacroRing } from "./MacroRing";
 
@@ -165,9 +164,12 @@ export function DietDetailsHeader({
                 )}
               </AnimatePresence>
             </div>
+            {/* `format` do date-fns LANÇA com data inválida, e `new Date("")` é
+                Invalid Date — um plano sem período derrubava a tela inteira. O
+                utilitário devolve traço em vez de quebrar, e a 0025 passou a
+                recusar data nula no banco. */}
             <span className="text-zinc-600 font-medium">
-              {format(new Date(dietPlan.start_date ?? ""), "d 'de' MMM", { locale: ptBR })} -{" "}
-              {format(new Date(dietPlan.end_date ?? ""), "d 'de' MMM", { locale: ptBR })}
+              {formatDateRange(dietPlan.start_date, dietPlan.end_date, "short")}
             </span>
           </div>
 

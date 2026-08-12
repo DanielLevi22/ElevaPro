@@ -167,11 +167,13 @@ export async function getSessionState(sessionId: string): Promise<AiSessionState
 
   if (error) throw error;
 
+  // Espalha o que está guardado e só garante o padrão de `savedWorkouts`.
+  // A versão anterior montava o objeto campo a campo, e isso **descartava em
+  // silêncio** qualquer chave nova: as propostas de dieta eram gravadas e
+  // sumiam na leitura seguinte, com a aprovação respondendo "nenhuma proposta
+  // pendente". Lista branca em getter é armadilha — cresce sem avisar.
   const state = (data?.state ?? {}) as Partial<AiSessionState>;
-  return {
-    savedWorkouts: state.savedWorkouts ?? [],
-    pendingWorkoutProposal: state.pendingWorkoutProposal,
-  };
+  return { ...state, savedWorkouts: state.savedWorkouts ?? [] };
 }
 
 export async function updateSessionState(

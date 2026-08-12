@@ -29,6 +29,9 @@ const TOOL_LABELS: Record<string, string> = {
   propose_periodization: "Montando a proposta de periodização",
   save_periodization: "Salvando a periodização",
   propose_workouts: "Montando a proposta de treinos",
+  query_foods: "Consultando o catálogo de alimentos",
+  propose_diet_plan: "Calculando as metas do plano",
+  propose_meals: "Montando as refeições",
 };
 
 export abstract class BaseOrchestrator {
