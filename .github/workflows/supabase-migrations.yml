@@ -21,7 +21,11 @@ on:
     paths:
       - "supabase/migrations/**"
       - "supabase/seed.sql"
+      - "scripts/verify-rls.sql"
   workflow_call:
+  # Permite reverificar um ambiente sem push. `db push` é forward-only e a
+  # verificação não escreve nada, então rodar de novo é seguro.
+  workflow_dispatch:
 
 # Serializa: um push que toca web/** e supabase/** dispara este workflow pelas
 # duas vias. `db push` é idempotente, mas execuções concorrentes disputariam o
@@ -92,9 +96,24 @@ jobs:
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
 
+      # `db push` responder "success" só diz que o SQL rodou. Não diz que a
+      # política se comporta igual aqui: local nasce de `db reset`, com tudo do
+      # mesmo dono; preview e produção nascem do painel e recebem só o pendente,
+      # sobre objetos com outro dono e outro `pg_default_acl`. A migration 0020
+      # existe por causa dessa diferença.
+      #
+      # Este passo assume o papel `authenticated` com as claims do PostgREST e
+      # afirma o isolamento no banco de verdade, dentro de uma transação que
+      # termina em ROLLBACK.
+      - name: Verificar RLS no ambiente
+        run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/verify-rls.sql
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
       - name: Resumo
         run: |
           echo "### 🗄️ Migrations aplicadas" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "- Ambiente: \`${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Commit: \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- RLS verificada no banco, não só aplicada" >> "$GITHUB_STEP_SUMMARY"

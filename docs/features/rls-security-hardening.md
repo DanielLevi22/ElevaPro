@@ -91,10 +91,31 @@ tinham RLS das migrations 0003, 0013 e 0015 — mas dependiam de
 |---|---|---|
 | `check-rls.js` | Toda tabela criada por migration habilita RLS **e** tem ao menos uma política | pre-commit + CI (`schema-refs`) |
 | `test-rls-isolation.mjs` | Quem enxerga o quê, com 4 usuários reais falando com o PostgREST | manual: `npm run db:test-rls` |
+| `verify-rls.sql` | O mesmo isolamento **no ambiente que acabou de receber a migration** | automático, no job que aplica (preview e produção) |
 
-`check-rls.js` lê as migrations, não o banco — o CI não tem credencial. A
-limitação é assumida: ele prova que a política **existe**, nunca que está
-**correta**. Quem prova comportamento é o teste de isolamento.
+`check-rls.js` lê as migrations, não o banco. A limitação é assumida: ele prova
+que a política **existe**, nunca que está **correta**. Quem prova comportamento
+são os outros dois.
+
+`verify-rls.sql` roda no job de migrations, com o `SUPABASE_DB_URL` que ele já
+usa — nenhuma chave nova. Assume o papel `authenticated` com as claims que o
+PostgREST injeta (`SET LOCAL ROLE` + `request.jwt.claims`) e afirma o isolamento
+dentro de uma transação que termina em `ROLLBACK`: nada é gravado no ambiente
+verificado. Rodar de novo é seguro, e o workflow aceita `workflow_dispatch` para
+isso.
+
+Para rodar à mão contra um ambiente:
+
+```bash
+psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/verify-rls.sql
+```
+
+**Por que verificar por ambiente e não confiar no local.** Local nasce de
+`db reset`: recria tudo, e cada objeto pertence ao mesmo dono. Preview e
+produção nasceram pelo painel e recebem `db push`, que aplica só o pendente
+sobre objetos com outro dono e outro `pg_default_acl`. A migration `0020` existe
+por causa dessa diferença — é o contra-exemplo de "se funciona aqui, funciona
+lá".
 
 ### Aplicação (`shared/`)
 
