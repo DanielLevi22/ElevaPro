@@ -13,6 +13,12 @@ import { queryExercises, unknownExerciseNames } from "@/modules/ai/services/exer
 import { runWorkoutOrchestrator } from "@/modules/ai/services/workoutOrchestrator";
 import type { BulkWorkoutItem, SseEvent } from "@/modules/ai/types";
 
+// Na Vercel uma rota sem isto morre no default de poucos segundos. Uma conversa
+// com uso de ferramenta passa disso com folga, e localmente não existe teto —
+// por isso o chat funcionava na máquina e não no preview. 60s é o máximo do
+// plano Hobby; no Pro dá para subir até 300.
+export const maxDuration = 60;
+
 async function handleQueryExercises(input: Record<string, unknown>): Promise<string> {
   const result = await queryExercises({
     muscle_groups: Array.isArray(input.muscle_groups)

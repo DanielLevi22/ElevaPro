@@ -3,6 +3,12 @@ import { type NextRequest, NextResponse } from "next/server";
 import { authorizeStudent } from "@/lib/api-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
+// Na Vercel uma rota sem isto morre no default de poucos segundos. Uma conversa
+// com uso de ferramenta passa disso com folga, e localmente não existe teto —
+// por isso o chat funcionava na máquina e não no preview. 60s é o máximo do
+// plano Hobby; no Pro dá para subir até 300.
+export const maxDuration = 60;
+
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;

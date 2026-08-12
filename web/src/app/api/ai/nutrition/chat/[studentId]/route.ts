@@ -12,6 +12,12 @@ import { formatContextForPrompt, loadStudentContext } from "@/modules/ai/service
 import { queryFoods, unknownFoodNames } from "@/modules/ai/services/foodCatalog";
 import type { DietMealsProposal, DietPlanProposal, SseEvent } from "@/modules/ai/types";
 
+// Na Vercel uma rota sem isto morre no default de poucos segundos. Uma conversa
+// com uso de ferramenta passa disso com folga, e localmente não existe teto —
+// por isso o chat funcionava na máquina e não no preview. 60s é o máximo do
+// plano Hobby; no Pro dá para subir até 300.
+export const maxDuration = 60;
+
 const MODULE = "nutrition" as const;
 
 export async function POST(
