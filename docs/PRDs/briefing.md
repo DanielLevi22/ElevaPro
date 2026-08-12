@@ -1,7 +1,7 @@
 # PRD: briefing
 
 **Data de criação:** 2026-08-11
-**Status:** draft — **bloqueado**, ver "Bloqueadores"
+**Status:** approved
 **Branch:** feature/briefing
 **Autor:** Daniel Levi
 
@@ -68,9 +68,24 @@ precisa saber disso antes de escrever a query.
 
 ## Bloqueadores
 
-> Não implementar sem resolver. Levantado no `/lgpd-check` de 2026-08-11.
+> Levantados no `/lgpd-check` de 2026-08-11 e mantidos aqui como registro do que
+> impedia a tela. Estado em 2026-08-12:
 
-### 1. `workout_sessions` e `student_anamnesis` não têm RLS — nenhuma 🔴
+| # | Bloqueador | Estado |
+|---|---|---|
+| 1 | RLS ausente nas tabelas centrais | ✅ **resolvido** — migrations `0016` e `0017` ([PRD](rls-security-hardening.md)), verificadas em preview |
+| 2 | `workout_session_sets` sem leitura para o especialista | ⚠️ **parcial** — a política existe (`sets_specialist_read`), mas a dívida #9 continua: seguem duas representações do mesmo dado. Recordes permanecem fora do escopo |
+| 3 | "94% retenção" sem definição nem fonte | ❌ **aberto** — permanece fora do escopo |
+
+O bloqueador 1 caiu por inteiro: as 27 tabelas têm RLS, o especialista só lê
+aluno com vínculo `active`, e `scripts/verify-rls.sql` reafirma isso a cada
+deploy. A fase 2 (inatividade) está liberada.
+
+O 2 mudou de natureza: era "a query voltaria vazia", virou "a query funciona,
+mas não se sabe qual das duas tabelas é a verdade". Isso é decisão de schema,
+não desta tela.
+
+### 1. `workout_sessions` e `student_anamnesis` não têm RLS — nenhuma 🔴 *(histórico)*
 
 Auditoria das migrations: RLS está habilitado em **9 tabelas** —
 `ai_chat_sessions`, `ai_chat_messages` (0003), `workout_session_sets` (0007),
@@ -96,7 +111,12 @@ padrão que `meal_logs` e `health_daily_metrics` já usam — aluno dono + leitu
 para especialista com `student_specialists.status = 'active'`. Isso é PRD
 próprio, não item deste.
 
-### 2. "Bateu 3 PRs" é impossível para o especialista hoje 🔴
+> **Feito.** Virou o [rls-security-hardening](rls-security-hardening.md), que
+> cobriu 18 tabelas em vez de 4 e ainda achou o escalonamento por
+> `student_specialists` — a tabela aceitava INSERT direto, então as 9 políticas
+> que já existiam eram decorativas.
+
+### 2. "Bateu 3 PRs" é impossível para o especialista hoje 🔴 *(histórico)*
 
 `workout_session_sets` **tem** RLS, e a política é só do aluno:
 
@@ -112,7 +132,7 @@ Some ainda um segundo problema: `workout_session_sets` convive com
 `workout_session_exercises.sets_data` guardando o mesmo dado em JSONB — a dívida
 #9 do `STATUS.md`. Detectar recorde exige antes decidir qual das duas manda.
 
-### 3. "94% retenção" não tem definição, nem dado 🟡
+### 3. "94% retenção" não tem definição, nem dado 🟡 *(aberto)*
 
 Não existe tabela de churn, nem definição de o que conta como retido. Inventar
 um número que o especialista lê como real é pior do que omitir.
