@@ -88,7 +88,7 @@ Três armadilhas que já custaram tempo:
 | [api-security-hardening](PRDs/api-security-hardening.md) | Autorização das rotas do BFF, que a RLS não alcança | approved | `feature/api-security-hardening` |
 | [briefing](PRDs/briefing.md) | Briefing diário do especialista: quem precisa de mim hoje | ✅ done — recordes desbloqueados pela `0023`, ainda não implementados | `feature/briefing` |
 | [workout-execution-consolidation](PRDs/workout-execution-consolidation.md) | Uma única representação de treino executado | ✅ done | `feature/workout-execution-consolidation` |
-| [ai-coach-workout-stage](PRDs/ai-coach-workout-stage.md) | Coach de IA enxergando o aluno + estágio de criação de treino | approved | `feature/ai-coach-workout-stage` |
+| [ai-coach-workout-stage](PRDs/ai-coach-workout-stage.md) | Coach de IA enxergando o aluno + estágio de criação de treino | ✅ done | `feature/ai-coach-workout-stage` |
 
 > Adicionar linha aqui ao criar um novo PRD via `node scripts/new-feature.js`.
 
@@ -128,14 +128,15 @@ Três armadilhas que já custaram tempo:
 | 28 | ~~Privilégio saindo de `user_metadata`~~ — `ensure-profile` e `getUserContextJWT` (web) liam o `account_type` de campo que o próprio usuário edita. **Resolvido**: sai de `profiles` | ✅ | [PRD](PRDs/api-security-hardening.md) |
 | 29 | Nenhuma rota de IA tem rate limit. Cada chamada custa dinheiro e qualquer conta autenticada chama à vontade — abuso de custo, não vazamento | 🟡 Média | [PRD](PRDs/api-security-hardening.md) |
 | 30 | Cadastro público cria especialista com `email_confirm: true` e `account_status: 'active'` — sem verificação de e-mail e pulando a aprovação que existe no `/admin` | 🟡 Média | [PRD](PRDs/api-security-hardening.md) |
+| 40 | O schema Drizzle está 4 colunas atrás do banco: `training_periodizations.level/duration_weeks` e `training_plans.duration_weeks/focus` vieram na `0004` e nunca entraram em `shared/src/database/schema/workouts.ts` | 🟡 Média | — |
 | 35 | `useProgressionAnalysis` monta o objeto, itera e descarta o resultado (`void effectiveItem`) — a análise de progressão do treino nunca funcionou. `analyzeExerciseProgression` está pronta e testada; falta ligar o hook | 🟡 Média | [PRD](PRDs/workout-execution-consolidation.md) |
 | 34 | ~~Especialista nascia sem `specialist_services`~~ — o cadastro reinseria o perfil que o trigger já criara, batia em chave duplicada e pulava os serviços; o autoconserto do `ensure-profile` falhava com 42P10 por falta de UNIQUE. **Resolvido** na `0022` + rota corrigida | ✅ | — |
 | 31 | `students.service.ts` invoca a edge function `create-student`, que não existe em `supabase/functions/`. Ou o cadastro de aluno está quebrado, ou há código fora do controle de versão rodando com `service_role` | 🟡 Média | [PRD](PRDs/api-security-hardening.md) |
-| 32 | `loadStudentContext` faz `select("*")` na anamnese. **Correção:** o formatador só usa 6 campos, e hoje não envia nenhum — ver dívida 36. Resta recortar o `select` ao que é usado | 🟡 Média | [PRD](PRDs/ai-coach-workout-stage.md) |
-| 36 | **O coach de IA prescreve às cegas** — a anamnese é lida fora de `responses` e a avaliação física consulta colunas inexistentes (`weight` em vez de `weight_kg`, erro 42703 descartado). Aluna com hérnia de disco registrada: o coach respondeu "Lesões: nenhuma registrada" | 🔴 Crítica | [PRD](PRDs/ai-coach-workout-stage.md) |
-| 37 | `query_exercises` manda o modelo buscar `Ombros` e `Braços`; o banco tem `ombro`, `biceps`, `triceps`. Dos 9 grupos, 4 sempre voltam vazios e o coach afirma que o banco não tem exercícios | 🟠 Alta | [PRD](PRDs/ai-coach-workout-stage.md) |
-| 38 | `/api/ai/chat/[studentId]` não verifica `student_consents` e **não está no mapa de rotas de IA** da seção 10 do LGPD — é a rota que passará a enviar o dado mais sensível | 🔴 Crítica | [PRD](PRDs/ai-coach-workout-stage.md) |
-| 39 | O estágio de criação de treino existe pela metade: `BulkWorkoutProposalCard` sem importador, `pendingWorkoutProposal` que nada escreve, e a rota `save-workouts` lendo proposta que ninguém produz | 🟠 Alta | [PRD](PRDs/ai-coach-workout-stage.md) |
+| 32 | ~~`loadStudentContext` faz `select("*")` na anamnese~~ — **resolvido**: lê só `responses` e usa seis campos nomeados | ✅ | [PRD](PRDs/ai-coach-workout-stage.md) |
+| 36 | ~~**O coach de IA prescreve às cegas**~~ — **resolvido**: a anamnese é lida de `responses`, a avaliação pelos nomes reais, e a leitura de periodizações pedia `goal` em vez de `objective` — três 42703 descartados no mesmo arquivo. Agora o erro sobe | ✅ | [PRD](PRDs/ai-coach-workout-stage.md) |
+| 37 | ~~`query_exercises` manda o modelo buscar `Ombros` e `Braços`~~ — **resolvido**: o parâmetro virou enum dos nove grupos reais, com normalização de acento e plural, e grupo desconhecido responde o que existe | ✅ | [PRD](PRDs/ai-coach-workout-stage.md) |
+| 38 | ~~`/api/ai/chat/[studentId]` não verifica `student_consents`~~ — **resolvido**: consentimento checado antes de o dado sair do banco, nome do titular fora do prompt, e a rota entrou no mapa da seção 10 | ✅ | [PRD](PRDs/ai-coach-workout-stage.md) |
+| 39 | ~~O estágio de criação de treino existe pela metade~~ — **resolvido**: `propose_workouts` guarda a proposta, o cartão renderiza e a aprovação salva a cópia guardada | ✅ | [PRD](PRDs/ai-coach-workout-stage.md) |
 | 33 | ~~Gate do CI ficava verde com a suíte pulada~~ — `paths-filter` sem `pull-requests: read` falhava, os outputs saíam vazios e o `ci-success` lia "nada mudou". **Resolvido**: permissão + o gate exige que a detecção tenha passado | ✅ | [PRD](PRDs/api-security-hardening.md) |
 
 ---

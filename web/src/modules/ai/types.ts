@@ -100,6 +100,7 @@ export interface AiSessionState {
 export type SseEvent =
   | { type: "text"; content: string }
   | { type: "proposal"; data: PeriodizationProposal }
+  | { type: "workout_proposal"; data: BulkWorkoutProposal }
   | { type: "plan_proposal"; data: PlanProposalData }
   | { type: "saved"; entity: "periodization"; id: string; name: string }
   | { type: "done" }

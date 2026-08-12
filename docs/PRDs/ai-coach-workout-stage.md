@@ -41,12 +41,12 @@ industrializar o erro.
 - [x] Com avaliação física registrada, o coach informa peso e altura corretos
 - [x] Falha de consulta no contexto aparece como erro, nunca como "não
       registrado"
-- [ ] `query_exercises` devolve resultado para os nove grupos que existem no
+- [x] `query_exercises` devolve resultado para os nove grupos que existem no
       banco, incluindo ombro, bíceps, tríceps, glúteos e abdômen
-- [ ] O especialista cria treino com exercícios pela conversa, revisa e salva
+- [x] O especialista cria treino com exercícios pela conversa, revisa e salva
 - [x] Nenhum dado de saúde vai para a Anthropic sem consentimento vigente
       registrado em `student_consents`
-- [ ] Um especialista sem vínculo ativo não abre conversa sobre o aluno
+- [x] Um especialista sem vínculo ativo não abre conversa sobre o aluno
 - [x] Mensagem de erro do chat não expõe texto técnico ao usuário
 
 ---
@@ -233,12 +233,12 @@ para a feature de direitos do titular, já pendente.
   de texto, com Legal; a entrega registra a pendência
 
 ### Atualizações necessárias em `docs/LGPD_COMPLIANCE.md`
-- [ ] Seção 2.2: incluir `ai_chat_messages.content` como local secundário de
+- [x] Seção 2.2: incluir `ai_chat_messages.content` como local secundário de
       dado sensível
-- [ ] Seção 7: retenção de `ai_chat_sessions` e `ai_chat_messages`
-- [ ] Seção 10: incluir `/api/ai/chat/[studentId]` no mapa, com o recorte real
+- [x] Seção 7: retenção de `ai_chat_sessions` e `ai_chat_messages`
+- [x] Seção 10: incluir `/api/ai/chat/[studentId]` no mapa, com o recorte real
       do que trafega
-- [ ] Seção 10: corrigir a dívida 32 — o `select("*")` não chega ao prompt
+- [x] Seção 10: corrigir a dívida 32 — o `select("*")` não chega ao prompt
 
 ---
 
@@ -351,13 +351,13 @@ a distinguir as duas.
 ## Checklist de done
 
 - [x] D1 fechado — verificado com anamnese e avaliação semeadas
-- [ ] D2 fechado — os nove grupos respondem
-- [ ] D3 entregue — treino criado e salvo pela conversa
+- [x] D2 fechado — os nove grupos respondem
+- [x] D3 entregue — treino criado e salvo pela conversa
 - [x] D4 fechado — erro sem termo técnico
 - [x] Consentimento verificado antes de qualquer dado de saúde ir para o prompt
 - [x] Nome do titular fora do payload
-- [ ] `docs/LGPD_COMPLIANCE.md` — seções 2.2, 7 e 10 atualizadas
-- [ ] Código funciona e passou em lint + typecheck + testes
+- [x] `docs/LGPD_COMPLIANCE.md` — seções 2.2, 7 e 10 atualizadas
+- [x] Código funciona e passou em lint + typecheck + testes
 - [ ] PR mergeado em `development`
-- [ ] `docs/features/ai-coach-workout-stage.md` criado
-- [ ] `docs/STATUS.md` atualizado
+- [x] `docs/features/ai-coach-workout-stage.md` criado
+- [x] `docs/STATUS.md` atualizado

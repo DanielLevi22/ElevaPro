@@ -206,8 +206,11 @@ export function formatContextForPrompt(ctx: StudentContext): string {
     for (const p of ctx.periodizations) {
       lines.push(`• ${p.name} (${p.goal}) — Status: ${p.status}`);
       if (p.phases.length > 0) {
+        // O id vai junto porque `propose_workouts` exige a fase. Sem ele o
+        // modelo inventa um slug — "fase-1-adaptacao" — e a gravação morre com
+        // "invalid input syntax for type uuid".
         for (const ph of p.phases) {
-          lines.push(`  - ${ph.name}: ${ph.weeks} semanas — ${ph.focus}`);
+          lines.push(`  - [id: ${ph.id}] ${ph.name}: ${ph.weeks} semanas — ${ph.focus}`);
         }
       } else {
         lines.push("  (sem fases definidas)");

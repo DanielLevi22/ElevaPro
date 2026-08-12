@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
-import type { ChatMessage, PeriodizationProposal, SseEvent } from "../types";
+import type { BulkWorkoutProposal, ChatMessage, PeriodizationProposal, SseEvent } from "../types";
+import { BulkWorkoutProposalCard } from "./BulkWorkoutProposalCard";
 
 interface Props {
   studentId: string;
@@ -21,6 +22,9 @@ export function AiCoachChat({ studentId }: Props) {
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [proposal, setProposal] = useState<PeriodizationCard | null>(null);
+  const [workoutProposal, setWorkoutProposal] = useState<BulkWorkoutProposal | null>(null);
+  const [savedWorkoutTitles, setSavedWorkoutTitles] = useState<string[]>([]);
+  const [savingWorkouts, setSavingWorkouts] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -51,7 +55,57 @@ export function AiCoachChat({ studentId }: Props) {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, proposal]);
+  }, [messages, proposal, workoutProposal]);
+
+  /**
+   * Salva a proposta guardada no servidor, não a que está na tela.
+   *
+   * O modelo já emitiu a proposta uma vez e ela ficou em `pendingWorkoutProposal`;
+   * pedir para ele reemitir na aprovação abriria espaço para divergir do que o
+   * especialista aprovou olhando o cartão.
+   */
+  async function approveWorkouts() {
+    if (!workoutProposal || savingWorkouts || !session?.access_token) return;
+
+    setSavingWorkouts(true);
+    try {
+      const res = await fetch(`/api/ai/chat/${studentId}/save-workouts`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data?.error ?? "falha ao salvar");
+
+      const salvos = (data.saved ?? []) as { title: string }[];
+      setSavedWorkoutTitles(salvos.map((w) => w.title));
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: `Pronto! ${salvos.length === 1 ? "1 treino salvo" : `${salvos.length} treinos salvos`} na fase ${workoutProposal.phase_name}.`,
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+    } catch (err) {
+      console.error("[AiCoachChat] salvar treinos", err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: "Não consegui salvar os treinos agora. Tente de novo em instantes.",
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+    } finally {
+      setSavingWorkouts(false);
+    }
+  }
 
   async function sendMessage(text?: string) {
     const msg = (text ?? input).trim();
@@ -59,6 +113,7 @@ export function AiCoachChat({ studentId }: Props) {
 
     setInput("");
     setProposal(null);
+    setWorkoutProposal(null);
 
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
@@ -112,6 +167,9 @@ export function AiCoachChat({ studentId }: Props) {
               );
             } else if (event.type === "proposal") {
               setProposal({ data: event.data });
+            } else if (event.type === "workout_proposal") {
+              setWorkoutProposal(event.data);
+              setSavedWorkoutTitles([]);
             } else if (event.type === "saved" && event.entity === "periodization") {
               setProposal((prev) => (prev ? { ...prev, savedId: event.id } : null));
             } else if (event.type === "error") {
@@ -263,6 +321,18 @@ export function AiCoachChat({ studentId }: Props) {
               )}
             </div>
           </div>
+        )}
+
+        {/* Proposta de treinos — a aprovação acontece aqui, não no chat: o que
+            é salvo é a cópia guardada no servidor, idêntica à revisada. */}
+        {workoutProposal && (
+          <BulkWorkoutProposalCard
+            data={workoutProposal}
+            savedTitles={savedWorkoutTitles}
+            loading={savingWorkouts || loading}
+            onApproveAll={approveWorkouts}
+            onAdjust={() => sendMessage("Quero ajustar os treinos da proposta.")}
+          />
         )}
 
         <div ref={bottomRef} />

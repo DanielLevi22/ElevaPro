@@ -3,13 +3,15 @@ import { authorizeLinkedSpecialist } from "@/lib/api-auth";
 import {
   getOrCreateSession,
   getSessionMessages,
+  phaseOwnedBy,
   saveMessage,
   savePeriodization,
+  updateSessionState,
 } from "@/modules/ai/services/chatService";
 import { formatContextForPrompt, loadStudentContext } from "@/modules/ai/services/contextLoader";
-import { queryExercises } from "@/modules/ai/services/exerciseCatalog";
+import { queryExercises, unknownExerciseNames } from "@/modules/ai/services/exerciseCatalog";
 import { runWorkoutOrchestrator } from "@/modules/ai/services/workoutOrchestrator";
-import type { SseEvent } from "@/modules/ai/types";
+import type { BulkWorkoutItem, SseEvent } from "@/modules/ai/types";
 
 async function handleQueryExercises(input: Record<string, unknown>): Promise<string> {
   const result = await queryExercises({
@@ -101,6 +103,52 @@ export async function POST(
             } catch (err) {
               return JSON.stringify({ error: String(err) });
             }
+          }
+
+          if (name === "propose_workouts") {
+            // A proposta fica guardada no servidor e a aprovação salva a cópia
+            // guardada. Se o modelo tivesse que reemitir tudo num segundo
+            // tool call, uma proposta de 4 treinos × 6 exercícios teria espaço
+            // de sobra para divergir entre o que foi mostrado e o que foi
+            // salvo — e quem aprova é o especialista, olhando o cartão.
+            const proposal = {
+              phase_id: typedInput.phase_id as string,
+              phase_name: typedInput.phase_name as string,
+              workouts: (typedInput.workouts ?? []) as BulkWorkoutItem[],
+            };
+
+            // A fase vem do modelo, então é entrada não confiável: precisa ser
+            // uma fase deste aluno com este especialista. Sem a checagem, um id
+            // alucinado grava treino na fase de outra pessoa — a rota de salvar
+            // usa `service_role`, que não consulta RLS.
+            const fase = await phaseOwnedBy(proposal.phase_id, studentId, specialistId);
+            if (!fase) {
+              return JSON.stringify({
+                error: "phase_id não é uma fase deste aluno.",
+                instrucao:
+                  "Use o id que aparece entre colchetes em PERIODIZAÇÕES EXISTENTES, no formato uuid.",
+              });
+            }
+
+            const nomes = proposal.workouts.flatMap((w) =>
+              (w.exercises ?? []).map((e) => e.exercise_name),
+            );
+            const desconhecidos = await unknownExerciseNames(nomes);
+            if (desconhecidos.length > 0) {
+              // Devolver o problema ao modelo em vez de gravar pela metade: o
+              // `saveExercises` descarta em silêncio o que não casa, então o
+              // especialista aprovaria 6 exercícios e receberia 4.
+              return JSON.stringify({
+                error: "Alguns exercícios não existem no catálogo.",
+                nao_encontrados: desconhecidos,
+                instrucao:
+                  "Use 'query_exercises' e refaça a proposta com os nomes exatos do catálogo.",
+              });
+            }
+
+            await updateSessionState(sessionId, { pendingWorkoutProposal: proposal });
+            controller.enqueue(sseChunk({ type: "workout_proposal", data: proposal }));
+            return JSON.stringify({ success: true, aguardando: "aprovação do especialista" });
           }
 
           if (name === "query_exercises") {

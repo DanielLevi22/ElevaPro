@@ -95,6 +95,28 @@ export interface ExerciseQueryResult {
 /** Teto alto o bastante para caber um grupo inteiro (o maior tem 12). */
 const MAX_RESULTS = 40;
 
+/**
+ * Quais destes nomes não existem no catálogo.
+ *
+ * A gravação casa por nome exato e depois tenta um `ilike`; o que não casa é
+ * descartado em silêncio. Sem esta checagem antes, o especialista aprova seis
+ * exercícios e recebe quatro, sem nada dizendo o contrário.
+ */
+export async function unknownExerciseNames(names: string[]): Promise<string[]> {
+  if (names.length === 0) return [];
+
+  // Lê o catálogo inteiro em vez de filtrar por `in`: o modelo reescreve a
+  // caixa do que leu ("Supino Reto com Barra" para "Supino reto com barra"), e
+  // um `in` exato acusaria como inexistente todo exercício que ele propõe. São
+  // 57 linhas de duas colunas — comparar normalizado sai mais barato que errar.
+  const { data, error } = await supabaseAdmin.from("exercises").select("name");
+
+  if (error) throw error;
+
+  const existentes = new Set(((data ?? []) as { name: string }[]).map((e) => normalize(e.name)));
+  return names.filter((n) => !existentes.has(normalize(n)));
+}
+
 export async function queryExercises(input: ExerciseQueryInput): Promise<ExerciseQueryResult> {
   let groups: MuscleGroup[] = [];
 

@@ -37,7 +37,9 @@ vi.mock("@/lib/supabase-admin", () => ({
   supabaseAdmin: { from: () => mockFrom() },
 }));
 
-const { MUSCLE_GROUPS, queryExercises, resolveMuscleGroups } = await import("../exerciseCatalog");
+const { MUSCLE_GROUPS, queryExercises, resolveMuscleGroups, unknownExerciseNames } = await import(
+  "../exerciseCatalog"
+);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -123,5 +125,39 @@ describe("queryExercises", () => {
 
     expect(filters.ilike).toEqual(["name", "%Supino%"]);
     expect(filters.in).toBeUndefined();
+  });
+});
+
+describe("unknownExerciseNames", () => {
+  beforeEach(() => {
+    rows = [
+      { name: "Supino reto com barra", muscle_group: "peito" },
+      { name: "Elevação lateral com halteres", muscle_group: "ombro" },
+    ];
+  });
+
+  // O modelo reescreve a caixa do que leu, e reescreve acento. Um `in` exato
+  // acusaria como inexistente todo exercício que ele propõe.
+  it("aceita o nome com a caixa trocada pelo modelo", async () => {
+    const faltando = await unknownExerciseNames(["Supino Reto Com Barra"]);
+    expect(faltando).toEqual([]);
+  });
+
+  it("aceita nome sem acento", async () => {
+    const faltando = await unknownExerciseNames(["Elevacao lateral com halteres"]);
+    expect(faltando).toEqual([]);
+  });
+
+  it("aponta o que não existe, e só ele", async () => {
+    const faltando = await unknownExerciseNames([
+      "Supino reto com barra",
+      "Supino marciano invertido",
+    ]);
+    expect(faltando).toEqual(["Supino marciano invertido"]);
+  });
+
+  it("não consulta nada quando não há nome", async () => {
+    expect(await unknownExerciseNames([])).toEqual([]);
+    expect(mockFrom).not.toHaveBeenCalled();
   });
 });
