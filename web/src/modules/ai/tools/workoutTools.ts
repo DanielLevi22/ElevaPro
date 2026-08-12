@@ -74,13 +74,28 @@ export const WORKOUT_TOOLS: ToolDefinition[] = [
   {
     name: "query_exercises",
     description:
-      "Busca exercícios disponíveis no banco. Use para consultar opções antes de sugerir ao especialista.",
+      "Busca exercícios do catálogo. Use antes de sugerir qualquer exercício ao especialista — nunca invente nome que não veio daqui. A resposta traz `total`, então você sabe se está vendo o grupo inteiro.",
     input_schema: {
       type: "object" as const,
       properties: {
         muscle_group: {
+          // Os valores reais do banco. A versão anterior sugeria "Ombros" e
+          // "Braços", que não existem, e a busca voltava vazia — o coach então
+          // afirmava que o catálogo estava vazio.
           type: "string",
-          description: "Filtrar por grupo muscular (ex: Peito, Costas, Pernas, Ombros, Braços)",
+          enum: [
+            "peito",
+            "costas",
+            "ombro",
+            "biceps",
+            "triceps",
+            "pernas",
+            "gluteos",
+            "abdomen",
+            "cardio",
+          ],
+          description:
+            "Grupo muscular. Use exatamente um destes valores. Para 'braços', consulte biceps e triceps separadamente.",
         },
         search_term: {
           type: "string",

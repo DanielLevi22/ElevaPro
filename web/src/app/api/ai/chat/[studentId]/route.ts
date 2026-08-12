@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeLinkedSpecialist } from "@/lib/api-auth";
-import { supabaseAdmin } from "@/lib/supabase-admin";
 import {
   getOrCreateSession,
   getSessionMessages,
@@ -8,25 +7,25 @@ import {
   savePeriodization,
 } from "@/modules/ai/services/chatService";
 import { formatContextForPrompt, loadStudentContext } from "@/modules/ai/services/contextLoader";
+import { queryExercises } from "@/modules/ai/services/exerciseCatalog";
 import { runWorkoutOrchestrator } from "@/modules/ai/services/workoutOrchestrator";
 import type { SseEvent } from "@/modules/ai/types";
 
 async function handleQueryExercises(input: Record<string, unknown>): Promise<string> {
-  let query = supabaseAdmin
-    .from("exercises" as never)
-    .select("name, muscle_group")
-    .limit(15);
+  const result = await queryExercises({
+    muscle_group: typeof input.muscle_group === "string" ? input.muscle_group : undefined,
+    search_term: typeof input.search_term === "string" ? input.search_term : undefined,
+  });
 
-  if (input.muscle_group) {
-    query = query.ilike("muscle_group", `%${input.muscle_group}%` as never);
-  }
-  if (input.search_term) {
-    query = query.ilike("name", `%${input.search_term}%` as never);
+  if (result.unknownGroup) {
+    return JSON.stringify({
+      exercises: [],
+      erro: `Grupo "${result.unknownGroup.requested}" não existe no catálogo.`,
+      grupos_disponiveis: result.unknownGroup.available,
+    });
   }
 
-  const { data } = await query;
-  const exercises = (data as { name: string; muscle_group: string }[] | null) ?? [];
-  return JSON.stringify({ exercises });
+  return JSON.stringify(result);
 }
 
 export async function POST(
