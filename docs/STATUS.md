@@ -1,6 +1,6 @@
 # Status dos Módulos — Eleva Pro
 
-> **Atualizado em:** 2026-08-12 (feature/briefing)
+> **Atualizado em:** 2026-08-12 (feature/workout-execution-consolidation)
 > **Regra:** atualizar ao fechar cada PR. Nenhuma feature é `done` sem este arquivo atualizado.
 
 ---
@@ -86,7 +86,8 @@ Três armadilhas que já custaram tempo:
 | [design-system-unification](PRDs/design-system-unification.md) | Tema claro alcançável, tokens e primitivas de UI do web | ⚠️ em andamento — fases 1–3 feitas, falta erradicar hex e a guarda de lint | `feature/design-system-unification` |
 | [rls-security-hardening](PRDs/rls-security-hardening.md) | RLS nas 27 tabelas + guarda em CI + teste de isolamento | ✅ mergeado — **falta verificar preview e aplicar em produção** | `feature/rls-security-hardening` |
 | [api-security-hardening](PRDs/api-security-hardening.md) | Autorização das rotas do BFF, que a RLS não alcança | approved | `feature/api-security-hardening` |
-| [briefing](PRDs/briefing.md) | Briefing diário do especialista: quem precisa de mim hoje | ✅ done — fases 1 a 3; recordes e retenção seguem fora do escopo | `feature/briefing` |
+| [briefing](PRDs/briefing.md) | Briefing diário do especialista: quem precisa de mim hoje | ✅ done — recordes desbloqueados pela `0023`, ainda não implementados | `feature/briefing` |
+| [workout-execution-consolidation](PRDs/workout-execution-consolidation.md) | Uma única representação de treino executado | ✅ done | `feature/workout-execution-consolidation` |
 
 > Adicionar linha aqui ao criar um novo PRD via `node scripts/new-feature.js`.
 
@@ -104,7 +105,7 @@ Três armadilhas que já custaram tempo:
 | 6 | `assessment` module usa `as unknown as AssessmentInsert` — field mapping com nomes legados | 🟡 Média | — |
 | 7 | ~~12 tabelas referenciadas em código não existem no banco~~ — **resolvido**, com guarda em CI contra recorrência | ✅ | [PRD](PRDs/schema-drift-alignment.md) |
 | 8 | Tela de perfil (mobile) exibe barra de XP sem fonte de dados — não existe sistema de nível/XP no schema | 🟢 Baixa | — |
-| 9 | Duas representações concorrentes de execução de treino: `workout_session_exercises.sets_data` (JSONB) e `workout_session_sets` (normalizada) | 🟡 Média | — |
+| 9 | ~~Duas representações concorrentes de execução de treino~~ — **resolvido** na `0023`: `sets_data` apagada, as três telas gravam em `workout_session_sets` | ✅ | [PRD](PRDs/workout-execution-consolidation.md) |
 | 10 | **Painel `/admin` inacessível a todos** — `layout.tsx` consulta `is_super_admin`, coluna inexistente, e redireciona qualquer usuário. Mais 3 colunas fantasma em `profiles` | 🔴 Alta | [PRD](PRDs/admin-panel-restore.md) |
 | 11 | `check-schema-refs.js` valida só nomes de tabela, não colunas — as 4 colunas fantasma de `profiles` passariam pela guarda | 🟡 Média | — |
 | 12 | Nenhum job de CI roda `next build`. Erro de prerender só aparece no deploy, depois do merge — foi assim com o `useSearchParams` em `/auth/register` | 🟡 Média | — |
@@ -126,6 +127,7 @@ Três armadilhas que já custaram tempo:
 | 28 | ~~Privilégio saindo de `user_metadata`~~ — `ensure-profile` e `getUserContextJWT` (web) liam o `account_type` de campo que o próprio usuário edita. **Resolvido**: sai de `profiles` | ✅ | [PRD](PRDs/api-security-hardening.md) |
 | 29 | Nenhuma rota de IA tem rate limit. Cada chamada custa dinheiro e qualquer conta autenticada chama à vontade — abuso de custo, não vazamento | 🟡 Média | [PRD](PRDs/api-security-hardening.md) |
 | 30 | Cadastro público cria especialista com `email_confirm: true` e `account_status: 'active'` — sem verificação de e-mail e pulando a aprovação que existe no `/admin` | 🟡 Média | [PRD](PRDs/api-security-hardening.md) |
+| 35 | `useProgressionAnalysis` monta o objeto, itera e descarta o resultado (`void effectiveItem`) — a análise de progressão do treino nunca funcionou. `analyzeExerciseProgression` está pronta e testada; falta ligar o hook | 🟡 Média | [PRD](PRDs/workout-execution-consolidation.md) |
 | 34 | ~~Especialista nascia sem `specialist_services`~~ — o cadastro reinseria o perfil que o trigger já criara, batia em chave duplicada e pulava os serviços; o autoconserto do `ensure-profile` falhava com 42P10 por falta de UNIQUE. **Resolvido** na `0022` + rota corrigida | ✅ | — |
 | 31 | `students.service.ts` invoca a edge function `create-student`, que não existe em `supabase/functions/`. Ou o cadastro de aluno está quebrado, ou há código fora do controle de versão rodando com `service_role` | 🟡 Média | [PRD](PRDs/api-security-hardening.md) |
 | 32 | `loadStudentContext` manda a anamnese inteira (`select("*")`) para o prompt da Anthropic — Necessidade (Art. 6°, III) | 🟡 Média | [LGPD](LGPD_COMPLIANCE.md) |

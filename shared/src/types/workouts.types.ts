@@ -99,7 +99,28 @@ export interface WorkoutSessionExercise {
   id: string;
   session_id: string;
   workout_exercise_id: string | null;
-  sets_data: unknown[];
+  created_at: string;
+}
+
+/**
+ * Uma série executada.
+ *
+ * Prescrito e executado são campos distintos de propósito: comparar o que foi
+ * pedido com o que foi feito é o que torna a evolução mensurável. Gravar o
+ * executado nos dois destrói essa informação.
+ */
+export interface WorkoutSessionSet {
+  id: string;
+  session_exercise_id: string;
+  set_index: number;
+  reps_prescribed: string | null;
+  reps_actual: number | null;
+  weight_prescribed: number | null;
+  weight_actual: number | null;
+  rest_prescribed: number | null;
+  rest_actual: number | null;
+  completed: boolean;
+  skipped: boolean;
   created_at: string;
 }
 
@@ -184,7 +205,21 @@ export interface CreateWorkoutSessionInput {
   notes?: string;
 }
 
+/** Uma série como a tela de execução a conhece. */
+export interface SaveSessionSetInput {
+  reps_prescribed?: string | null;
+  reps_actual?: number | null;
+  weight_prescribed?: number | null;
+  weight_actual?: number | null;
+  rest_prescribed?: number | null;
+  rest_actual?: number | null;
+  completed?: boolean;
+  skipped?: boolean;
+}
+
 export interface SaveSessionExerciseInput {
   workout_exercise_id?: string | null;
-  sets_data: unknown[];
+  /** Exercício efetivamente feito, quando difere do prescrito. */
+  exercise_id?: string | null;
+  sets: SaveSessionSetInput[];
 }

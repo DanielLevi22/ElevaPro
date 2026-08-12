@@ -419,18 +419,64 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
     return data as WorkoutSession;
   },
 
+  /**
+   * Grava os exercícios da sessão e as séries de cada um.
+   *
+   * Os dois passos moram aqui, e não na tela, porque cada tela que os
+   * reimplementava esquecia um: até a `0023` havia três telas de execução, e
+   * duas gravavam só o JSON de `sets_data`, invisível para as métricas.
+   *
+   * @example
+   * await saveSessionExercises(sessionId, [
+   *   { workout_exercise_id: "abc", sets: [{ reps_actual: 10, weight_actual: 40 }] },
+   * ]);
+   */
   saveSessionExercises: async (
     sessionId: string,
     items: SaveSessionExerciseInput[],
   ): Promise<WorkoutSessionExercise[]> => {
-    const rows = items.map((item) => ({
-      session_id: sessionId,
-      workout_exercise_id: item.workout_exercise_id ?? null,
-      sets_data: item.sets_data,
-    }));
-    const { data, error } = await supabase.from("workout_session_exercises").insert(rows).select();
+    if (items.length === 0) return [];
+
+    const { data, error } = await supabase
+      .from("workout_session_exercises")
+      .insert(
+        items.map((item) => ({
+          session_id: sessionId,
+          workout_exercise_id: item.workout_exercise_id ?? null,
+          exercise_id: item.exercise_id ?? null,
+        })),
+      )
+      .select();
+
     if (error) throw error;
-    return (data || []) as WorkoutSessionExercise[];
+
+    const exercises = (data || []) as WorkoutSessionExercise[];
+
+    // A ordem do retorno do PostgREST acompanha a do INSERT, então o índice
+    // liga cada exercício às suas séries sem precisar de uma segunda leitura.
+    const setRows = items.flatMap((item, index) => {
+      const sessionExerciseId = exercises[index]?.id;
+      if (!sessionExerciseId) return [];
+      return item.sets.map((set, setIndex) => ({
+        session_exercise_id: sessionExerciseId,
+        set_index: setIndex,
+        reps_prescribed: set.reps_prescribed ?? null,
+        reps_actual: set.reps_actual ?? null,
+        weight_prescribed: set.weight_prescribed ?? null,
+        weight_actual: set.weight_actual ?? null,
+        rest_prescribed: set.rest_prescribed ?? null,
+        rest_actual: set.rest_actual ?? null,
+        completed: set.completed ?? true,
+        skipped: set.skipped ?? false,
+      }));
+    });
+
+    if (setRows.length > 0) {
+      const { error: setsError } = await supabase.from("workout_session_sets").insert(setRows);
+      if (setsError) throw setsError;
+    }
+
+    return exercises;
   },
 });
 

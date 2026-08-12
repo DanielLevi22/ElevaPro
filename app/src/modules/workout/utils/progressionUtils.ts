@@ -41,11 +41,14 @@ export function calculateMetricChange(
 }
 
 /**
- * Analyzes progression for a single exercise comparing current and previous session
- * @param currentItem - Current workout item
- * @param previousSessionItem - Previous session data for this exercise
- * @param currentSetsCompleted - Number of sets completed in current session
- * @returns ProgressionAnalysis object with metrics for weight, sets, and reps
+ * Progressão de carga e de séries entre a sessão anterior e a atual.
+ *
+ * A carga anterior sai de `weight_actual` — o que o aluno levantou —, não do
+ * prescrito. Antes vinha do primeiro item de `sets_data`, um JSON que misturava
+ * prescrito e executado; a coluna saiu na `0023`.
+ *
+ * @example
+ * analyzeExerciseProgression(exercicioAtual, sessaoAnterior, 4)
  */
 export function analyzeExerciseProgression(
   currentItem: WorkoutItem,
@@ -54,30 +57,36 @@ export function analyzeExerciseProgression(
 ): ProgressionAnalysis {
   const analysis: ProgressionAnalysis = {};
 
-  // Analyze weight progression
   const currentWeight = parseFloat(String(currentItem.weight)) || 0;
-  const previousWeight = parseFloat(String(previousSessionItem.sets_data?.[0]?.weight ?? 0)) || 0;
+  const previousWeight = heaviestSet(previousSessionItem);
 
   const weightChange = calculateMetricChange(currentWeight, previousWeight, 'kg');
   if (weightChange) {
     analysis.weight = weightChange;
   }
 
-  // Analyze sets completed progression
-  const previousSetsCompleted = previousSessionItem.sets_data?.length || 0;
+  // Só série concluída conta: série pulada não é evolução nem regressão.
+  const previousSetsCompleted =
+    previousSessionItem.sets?.filter((set) => set.completed).length || 0;
 
   if (currentSetsCompleted > 0 || previousSetsCompleted > 0) {
     const setsChange = calculateMetricChange(currentSetsCompleted, previousSetsCompleted, '');
     if (setsChange) {
       analysis.sets = {
         ...setsChange,
-        diff: setsChange.diff.replace(/\.0$/, ''), // Remove decimal for whole numbers
+        diff: setsChange.diff.replace(/\.0$/, ''),
       };
     }
   }
 
-  // Could add reps analysis here in the future if needed
-  // const repsChange = calculateMetricChange(currentItem.reps, previousSessionItem.reps, '');
-
   return analysis;
+}
+
+/** Maior carga executada do exercício na sessão. */
+function heaviestSet(item: SessionItem): number {
+  let heaviest = 0;
+  for (const set of item.sets ?? []) {
+    if (set.weight_actual != null && set.weight_actual > heaviest) heaviest = set.weight_actual;
+  }
+  return heaviest;
 }
