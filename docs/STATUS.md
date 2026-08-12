@@ -1,6 +1,6 @@
 # Status dos Módulos — Eleva Pro
 
-> **Atualizado em:** 2026-08-11 (feature/api-security-hardening)
+> **Atualizado em:** 2026-08-12 (feature/briefing)
 > **Regra:** atualizar ao fechar cada PR. Nenhuma feature é `done` sem este arquivo atualizado.
 
 ---
@@ -31,6 +31,7 @@
 | **Packages / Shared** | ✅ centralizado (students + auth + workouts + nutrition + gamification) | ✅ centralizado (students + auth + workouts + nutrition + gamification) | ✅ | N/A | N/A |
 | **Database Schema** | ✅ | ✅ | ✅ | N/A | N/A |
 | **Database Types** | ✅ gerado (`database.types.ts`) | ✅ | ✅ | N/A | N/A |
+| **Briefing** | ✅ | N/A | ✅ | ✅ 21 testes | N/A |
 
 ---
 
@@ -85,7 +86,7 @@ Três armadilhas que já custaram tempo:
 | [design-system-unification](PRDs/design-system-unification.md) | Tema claro alcançável, tokens e primitivas de UI do web | ⚠️ em andamento — fases 1–3 feitas, falta erradicar hex e a guarda de lint | `feature/design-system-unification` |
 | [rls-security-hardening](PRDs/rls-security-hardening.md) | RLS nas 27 tabelas + guarda em CI + teste de isolamento | ✅ mergeado — **falta verificar preview e aplicar em produção** | `feature/rls-security-hardening` |
 | [api-security-hardening](PRDs/api-security-hardening.md) | Autorização das rotas do BFF, que a RLS não alcança | approved | `feature/api-security-hardening` |
-| briefing | Briefing diário do especialista | draft — desbloqueado pela RLS; o PRD ainda vive em `feature/briefing` | `feature/briefing` |
+| [briefing](PRDs/briefing.md) | Briefing diário do especialista: quem precisa de mim hoje | ✅ done — fases 1 a 3; recordes e retenção seguem fora do escopo | `feature/briefing` |
 
 > Adicionar linha aqui ao criar um novo PRD via `node scripts/new-feature.js`.
 

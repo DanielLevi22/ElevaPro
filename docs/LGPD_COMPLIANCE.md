@@ -107,6 +107,18 @@ Para cada tipo de tratamento, deve existir uma base legal documentada. Não exis
 | Dados de gamificação | Execução de contrato | Art. 7°, V |
 | Histórico de mensagens | Execução de contrato | Art. 7°, V |
 | Member cria plano alimentar próprio (sem especialista) | Consentimento explícito | Art. 11, I |
+| Sinal derivado de inatividade para o especialista vinculado (briefing) | Mesma base do dado de origem — Execução de contrato para `workout_sessions`, Consentimento explícito para a data de conclusão da anamnese | Art. 7°, V + Art. 11, I |
+
+**Sobre o sinal derivado.** O briefing não é tratamento novo: agrega dado que o
+especialista vinculado já pode ler, para a mesma finalidade — acompanhar o
+aluno. O que o mantém dentro da minimização é o **recorte**: lê
+`student_anamnesis.completed_at` e nunca `responses`; lê a data da última sessão
+e nunca carga, repetição ou intensidade. O que chega à tela é "não treina há 12
+dias", jamais o treino. Verificado por teste
+(`web/src/modules/briefing/__tests__/briefingService.test.ts`).
+
+O sinal também não vai para log: `"João Silva não treina há 5 dias"` é
+inferência sobre saúde de titular identificado.
 
 **Regra do consentimento (Art. 8°):** Quando usamos consentimento como base, ele precisa ser:
 - **Livre**: o aluno não pode ser forçado a aceitar para usar o serviço principal
@@ -452,6 +464,13 @@ modelo. Fechado pelo PRD
 | DELETE proibido via RLS em sessions | Histórico é imutável — só deletado quando o próprio aluno exclui a conta |
 | CASCADE DELETE em student_id de workout_sessions | Exclusão de conta do aluno elimina todo o histórico de sessões |
 | Dados de performance não são dados sensíveis (Art. 5°, II) | Base legal: execução de contrato (Art. 7°, V) — sem necessidade de consentimento explícito |
+| Briefing lê `workout_sessions.completed_at` e nada mais — nem carga, nem repetição, nem intensidade | Necessidade (Art. 6°, III): o sinal é "não treina há N dias", não o treino |
+
+> **Revisão de 2026-08-11 — reprovou em RLS.** As decisões acima falavam em "RLS
+> bloqueia" desde a revisão do módulo, mas a auditoria foi ao banco e encontrou
+> `workout_sessions` e `workout_session_exercises` **sem RLS nenhuma**. Corrigido
+> na migration `0017`. O caso está registrado na abertura da seção 10: decisão
+> documentada não é controle implementado.
 
 ---
 

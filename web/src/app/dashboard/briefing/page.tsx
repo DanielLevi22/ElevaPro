@@ -1,0 +1,35 @@
+import { createBriefingService } from "@elevapro/shared";
+import { redirect } from "next/navigation";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import BriefingPage from "@/modules/briefing/pages/BriefingPage";
+
+/**
+ * Server Component de propósito: o que atravessa a fronteira é o sinal já
+ * derivado ("não treina há 5 dias"), não a lista de sessões. Se o cliente
+ * recebesse as linhas para calcular a inatividade, o dado de saúde cru ficaria
+ * no HTML da página.
+ */
+export default async function Page() {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
+
+  const { data: profile } = await supabase
+    .from("profiles" as never)
+    .select("account_type")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const accountType = (profile as { account_type: string } | null)?.account_type;
+  // O briefing é a tela do especialista. O aluno tem a própria em /dashboard/student.
+  if (accountType !== "specialist") redirect("/dashboard");
+
+  const briefingService = createBriefingService(supabase as never);
+  const { signals, stats } = await briefingService.fetchBriefing(user.id);
+
+  const today = new Date().toLocaleDateString("pt-BR", { day: "numeric", month: "long" });
+
+  return <BriefingPage signals={signals} stats={stats} today={today} />;
+}
