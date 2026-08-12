@@ -13,6 +13,14 @@ const DAY_LABELS: Record<string, string> = {
   sunday: "Domingo",
 };
 
+/** 90 vira "1min30", 60 vira "1min" — segundos crus são difíceis de comparar. */
+function formatRest(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const minutos = Math.floor(seconds / 60);
+  const resto = seconds % 60;
+  return resto === 0 ? `${minutos}min` : `${minutos}min${resto}`;
+}
+
 interface Props {
   data: BulkWorkoutProposal;
   savedTitles: string[];
@@ -95,6 +103,28 @@ export function BulkWorkoutProposalCard({
                       .filter(Boolean)
                       .join(" · ")}
                   </p>
+
+                  {/* A prescrição inteira, não só a contagem. Sem isto o
+                      especialista aprova sem saber série, repetição nem
+                      descanso — e é justamente o que ele precisa conferir. */}
+                  {workout.exercises && workout.exercises.length > 0 && (
+                    <ul className="mt-2 space-y-1">
+                      {workout.exercises.map((ex, j) => (
+                        <li
+                          key={`${ex.exercise_name}-${j}`}
+                          className="flex items-baseline justify-between gap-2 text-xs"
+                        >
+                          <span className="min-w-0 truncate text-foreground/90">
+                            {ex.exercise_name}
+                          </span>
+                          <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
+                            {ex.sets}×{ex.reps}
+                            {ex.rest_seconds ? ` · ${formatRest(ex.rest_seconds)}` : ""}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
                 {isSaved && <span className="text-xs text-emerald-400 shrink-0">✓</span>}
               </div>

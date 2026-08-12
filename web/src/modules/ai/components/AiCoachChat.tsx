@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
-import type { ChatMessage, PeriodizationProposal, SseEvent } from "../types";
+import { formatDate, formatDateRange } from "@/shared/utils/formatDate";
+import type { BulkWorkoutProposal, ChatMessage, PeriodizationProposal, SseEvent } from "../types";
+import { BulkWorkoutProposalCard } from "./BulkWorkoutProposalCard";
 
 interface Props {
   studentId: string;
@@ -14,6 +16,30 @@ interface PeriodizationCard {
   savedId?: string;
 }
 
+const DIA_MS = 86_400_000;
+
+/**
+ * `AAAA-MM-DD` somado em semanas, em UTC.
+ *
+ * `new Date("2026-08-12")` já é interpretado como UTC; somar em milissegundos e
+ * cortar de volta em 10 caracteres evita o dia a menos em fuso negativo — a
+ * armadilha registrada no `formatDate`.
+ */
+function addWeeks(isoDate: string, weeks: number): string {
+  const base = new Date(`${isoDate}T00:00:00Z`).getTime();
+  if (Number.isNaN(base)) return isoDate;
+  return new Date(base + weeks * 7 * DIA_MS).toISOString().slice(0, 10);
+}
+
+/** Janela de uma fase: começa onde a anterior terminou — a regra do servidor. */
+function phaseWindow(data: PeriodizationProposal, index: number): { start: string; end: string } {
+  let start = data.startDate;
+  for (let i = 0; i < index; i++) {
+    start = addWeeks(start, data.phases[i]?.weeks ?? 0);
+  }
+  return { start, end: addWeeks(start, data.phases[index]?.weeks ?? 0) };
+}
+
 export function AiCoachChat({ studentId }: Props) {
   const session = useAuthStore((s) => s.session);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -21,6 +47,11 @@ export function AiCoachChat({ studentId }: Props) {
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [proposal, setProposal] = useState<PeriodizationCard | null>(null);
+  const [workoutProposal, setWorkoutProposal] = useState<BulkWorkoutProposal | null>(null);
+  const [savedWorkoutTitles, setSavedWorkoutTitles] = useState<string[]>([]);
+  const [savingWorkouts, setSavingWorkouts] = useState(false);
+  /** O que o coach está fazendo agora, enquanto a ferramenta roda. */
+  const [activity, setActivity] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -51,7 +82,57 @@ export function AiCoachChat({ studentId }: Props) {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, proposal]);
+  }, [messages, proposal, workoutProposal, activity]);
+
+  /**
+   * Salva a proposta guardada no servidor, não a que está na tela.
+   *
+   * O modelo já emitiu a proposta uma vez e ela ficou em `pendingWorkoutProposal`;
+   * pedir para ele reemitir na aprovação abriria espaço para divergir do que o
+   * especialista aprovou olhando o cartão.
+   */
+  async function approveWorkouts() {
+    if (!workoutProposal || savingWorkouts || !session?.access_token) return;
+
+    setSavingWorkouts(true);
+    try {
+      const res = await fetch(`/api/ai/chat/${studentId}/save-workouts`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data?.error ?? "falha ao salvar");
+
+      const salvos = (data.saved ?? []) as { title: string }[];
+      setSavedWorkoutTitles(salvos.map((w) => w.title));
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: `Pronto! ${salvos.length === 1 ? "1 treino salvo" : `${salvos.length} treinos salvos`} na fase ${workoutProposal.phase_name}.`,
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+    } catch (err) {
+      console.error("[AiCoachChat] salvar treinos", err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: "Não consegui salvar os treinos agora. Tente de novo em instantes.",
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+    } finally {
+      setSavingWorkouts(false);
+    }
+  }
 
   async function sendMessage(text?: string) {
     const msg = (text ?? input).trim();
@@ -59,6 +140,8 @@ export function AiCoachChat({ studentId }: Props) {
 
     setInput("");
     setProposal(null);
+    setWorkoutProposal(null);
+    setActivity(null);
 
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
@@ -112,6 +195,13 @@ export function AiCoachChat({ studentId }: Props) {
               );
             } else if (event.type === "proposal") {
               setProposal({ data: event.data });
+            } else if (event.type === "tool_start") {
+              setActivity(event.label);
+            } else if (event.type === "tool_end") {
+              setActivity(null);
+            } else if (event.type === "workout_proposal") {
+              setWorkoutProposal(event.data);
+              setSavedWorkoutTitles([]);
             } else if (event.type === "saved" && event.entity === "periodization") {
               setProposal((prev) => (prev ? { ...prev, savedId: event.id } : null));
             } else if (event.type === "error") {
@@ -128,6 +218,7 @@ export function AiCoachChat({ studentId }: Props) {
       }
     } finally {
       setLoading(false);
+      setActivity(null);
       inputRef.current?.focus();
     }
   }
@@ -179,6 +270,27 @@ export function AiCoachChat({ studentId }: Props) {
           </div>
         ))}
 
+        {/* Fica visível o turno inteiro, não só durante a ferramenta.
+            O JSON da proposta é gerado DENTRO do bloco `tool_use`, que só chega
+            completo — então entre a última palavra do modelo ("um momento!") e o
+            `tool_start` passam 15 a 20 segundos sem um único evento. Era aí que
+            o coach parecia ter parado de funcionar. */}
+        {loading && (
+          <div className="flex justify-start">
+            <div
+              className="flex items-center gap-2.5 rounded-2xl rounded-bl-sm border border-white/10 bg-surface px-4 py-2.5 text-sm text-muted-foreground"
+              aria-live="polite"
+            >
+              <span className="flex gap-1">
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:0ms]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:150ms]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:300ms]" />
+              </span>
+              {activity ?? "Preparando"}…
+            </div>
+          </div>
+        )}
+
         {/* Periodization Proposal Card */}
         {proposal && (
           <div className="mx-auto max-w-lg">
@@ -215,6 +327,18 @@ export function AiCoachChat({ studentId }: Props) {
                   <p className="text-muted-foreground text-xs">Nível</p>
                   <p className="text-foreground font-medium">{proposal.data.level}</p>
                 </div>
+                {/* O período faltava, e é o que coloca a periodização no
+                    calendário — sem ele a tela de detalhe mostra um traço. */}
+                <div className="col-span-2">
+                  <p className="text-muted-foreground text-xs">Período</p>
+                  <p className="text-foreground font-medium">
+                    {formatDateRange(
+                      proposal.data.startDate,
+                      addWeeks(proposal.data.startDate, proposal.data.durationWeeks),
+                      "medium",
+                    )}
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -232,6 +356,10 @@ export function AiCoachChat({ studentId }: Props) {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground">{phase.name}</p>
                       <p className="text-xs text-muted-foreground">{phase.focus}</p>
+                      <p className="text-xs text-muted-foreground/80">
+                        {formatDate(phaseWindow(proposal.data, i).start, "short")} →{" "}
+                        {formatDate(phaseWindow(proposal.data, i).end, "short")}
+                      </p>
                     </div>
                     <span className="text-xs text-muted-foreground shrink-0">
                       {phase.weeks} sem
@@ -263,6 +391,18 @@ export function AiCoachChat({ studentId }: Props) {
               )}
             </div>
           </div>
+        )}
+
+        {/* Proposta de treinos — a aprovação acontece aqui, não no chat: o que
+            é salvo é a cópia guardada no servidor, idêntica à revisada. */}
+        {workoutProposal && (
+          <BulkWorkoutProposalCard
+            data={workoutProposal}
+            savedTitles={savedWorkoutTitles}
+            loading={savingWorkouts || loading}
+            onApproveAll={approveWorkouts}
+            onAdjust={() => sendMessage("Quero ajustar os treinos da proposta.")}
+          />
         )}
 
         <div ref={bottomRef} />

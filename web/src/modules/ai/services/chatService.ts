@@ -55,6 +55,14 @@ export async function saveMessage(
     .insert({ session_id: sessionId, role, content, metadata: (metadata ?? {}) as Json });
 }
 
+const DIA_MS = 86_400_000;
+
+/** `AAAA-MM-DD` somado em semanas, sem passar por fuso. */
+function somaSemanas(isoDate: string, weeks: number): string {
+  const base = new Date(`${isoDate}T00:00:00Z`).getTime();
+  return new Date(base + weeks * 7 * DIA_MS).toISOString().slice(0, 10);
+}
+
 export async function savePeriodization(
   studentId: string,
   specialistId: string,
@@ -62,6 +70,7 @@ export async function savePeriodization(
     name: string;
     goal: string;
     durationWeeks: number;
+    startDate: string;
     level: string;
     phases: { name: string; weeks: number; focus: string }[];
   },
@@ -74,6 +83,10 @@ export async function savePeriodization(
       name: data.name,
       objective: data.goal,
       duration_weeks: data.durationWeeks,
+      // Sem data, a periodização não entra no calendário e a tela mostra um
+      // traço. A `0024` passou a recusar nulo aqui.
+      start_date: data.startDate,
+      end_date: somaSemanas(data.startDate, data.durationWeeks),
       level: data.level,
       status: "active",
     })
@@ -83,12 +96,23 @@ export async function savePeriodization(
   if (periodError || !period)
     throw new Error(`Failed to save periodization: ${periodError?.message}`);
 
-  const phaseRows = data.phases.map((ph) => ({
-    periodization_id: period.id,
-    name: ph.name,
-    duration_weeks: ph.weeks,
-    focus: ph.focus,
-  }));
+  // As fases se encaixam em sequência: cada uma começa onde a anterior terminou.
+  // Antes nenhuma recebia data, e a tela de detalhe mostrava traço em todas.
+  let inicioDaFase = data.startDate;
+  const phaseRows = data.phases.map((ph, index) => {
+    const start = inicioDaFase;
+    const end = somaSemanas(start, ph.weeks);
+    inicioDaFase = end;
+    return {
+      periodization_id: period.id,
+      name: ph.name,
+      duration_weeks: ph.weeks,
+      focus: ph.focus,
+      start_date: start,
+      end_date: end,
+      order_index: index,
+    };
+  });
 
   const { error: phaseError } = await supabaseAdmin.from("training_plans").insert(phaseRows);
 
@@ -97,14 +121,57 @@ export async function savePeriodization(
   return period.id;
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * A fase existe e pertence a este aluno com este especialista?
+ *
+ * O `phase_id` chega do modelo, que já inventou `"fase-1-adaptacao"` em vez do
+ * uuid. Além de quebrar a gravação, um id válido de outra pessoa gravaria
+ * treino na fase dela: a rota de salvar usa `service_role` e não passa pela RLS.
+ */
+export async function phaseOwnedBy(
+  phaseId: string,
+  studentId: string,
+  specialistId: string,
+): Promise<boolean> {
+  if (!UUID.test(phaseId ?? "")) return false;
+
+  const { data, error } = await supabaseAdmin
+    .from("training_plans")
+    .select("id, training_periodizations!inner(student_id, specialist_id)")
+    .eq("id", phaseId)
+    .eq("training_periodizations.student_id", studentId)
+    .eq("training_periodizations.specialist_id", specialistId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return Boolean(data);
+}
+
+/**
+ * Estado da sessão, sempre com a forma completa.
+ *
+ * `ai_chat_sessions.state` nasce como `{}` — um valor, não ausência —, então o
+ * `?? { savedWorkouts: [] }` anterior nunca disparava e `savedWorkouts` chegava
+ * indefinido. O `...sessionState.savedWorkouts` na rota de salvar estourava
+ * depois de os treinos já terem sido gravados: 500 de corpo vazio, com o dado
+ * no banco e o especialista sem saber.
+ */
 export async function getSessionState(sessionId: string): Promise<AiSessionState> {
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from("ai_chat_sessions")
     .select("state")
     .eq("id", sessionId)
     .single();
-  const state = data?.state as AiSessionState | null;
-  return state ?? { savedWorkouts: [] };
+
+  if (error) throw error;
+
+  const state = (data?.state ?? {}) as Partial<AiSessionState>;
+  return {
+    savedWorkouts: state.savedWorkouts ?? [],
+    pendingWorkoutProposal: state.pendingWorkoutProposal,
+  };
 }
 
 export async function updateSessionState(

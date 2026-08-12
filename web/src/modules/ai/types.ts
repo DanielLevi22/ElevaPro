@@ -22,6 +22,8 @@ export interface PeriodizationProposal {
   name: string;
   goal: string;
   durationWeeks: number;
+  /** AAAA-MM-DD. O card mostra o período e o banco recusa nulo desde a 0024. */
+  startDate: string;
   level: string;
   phases: {
     name: string;
@@ -30,11 +32,36 @@ export interface PeriodizationProposal {
   }[];
 }
 
+/** Os campos da anamnese que o prompt usa. Nada além disso atravessa a fronteira. */
+export interface StudentHealthContext {
+  objective?: string;
+  trainingExperience?: string;
+  trainingFrequency?: string;
+  availableDays?: string;
+  /** Dado sensível (Art. 11): é o que impede prescrição contraindicada. */
+  injuries?: string;
+  healthConditions?: string;
+  weightKg?: number;
+  heightCm?: number;
+  bodyFatPct?: number;
+}
+
+/**
+ * O que vai para o prompt da Anthropic.
+ *
+ * **Sem o nome do titular, de propósito.** O modelo monta treino igual chamando
+ * de "o aluno", e o payload deixa de identificar quem é — Necessidade
+ * (Art. 6°, III).
+ *
+ * `health` é `null` quando não há consentimento vigente
+ * (`student_consents.health_data_collection`), e aí o coach diz isso em vez de
+ * agir como se o aluno não tivesse histórico.
+ */
 export interface StudentContext {
   studentId: string;
-  name: string;
-  anamnesis: Record<string, unknown> | null;
-  lastAssessment: Record<string, unknown> | null;
+  health: StudentHealthContext | null;
+  /** Por que a saúde não veio — separa "sem consentimento" de "sem dado". */
+  healthUnavailableReason: "no_consent" | null;
   periodizations: {
     id: string;
     name: string;
@@ -74,7 +101,11 @@ export interface AiSessionState {
 
 export type SseEvent =
   | { type: "text"; content: string }
+  /** O modelo parou para consultar ou gravar. Sem isto o stream fica mudo. */
+  | { type: "tool_start"; tool: string; label: string }
+  | { type: "tool_end"; tool: string }
   | { type: "proposal"; data: PeriodizationProposal }
+  | { type: "workout_proposal"; data: BulkWorkoutProposal }
   | { type: "plan_proposal"; data: PlanProposalData }
   | { type: "saved"; entity: "periodization"; id: string; name: string }
   | { type: "done" }

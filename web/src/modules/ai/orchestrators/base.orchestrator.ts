@@ -16,6 +16,21 @@ export interface OrchestratorRunInput {
   onToolCall?: ToolCallHandler;
 }
 
+/**
+ * O que dizer ao especialista enquanto a ferramenta roda.
+ *
+ * A ida ao banco mais o segundo turno do modelo levam de 8 a 10 segundos, e até
+ * aqui o stream ficava mudo o tempo todo — o chat parecia travado. Dez segundos
+ * com "consultando o catálogo" são trabalho; dez segundos em silêncio são
+ * defeito.
+ */
+const TOOL_LABELS: Record<string, string> = {
+  query_exercises: "Consultando o catálogo de exercícios",
+  propose_periodization: "Montando a proposta de periodização",
+  save_periodization: "Salvando a periodização",
+  propose_workouts: "Montando a proposta de treinos",
+};
+
 export abstract class BaseOrchestrator {
   constructor(protected provider: AIProvider) {}
 
@@ -62,11 +77,19 @@ export abstract class BaseOrchestrator {
       const toolResultBlocks: ContentBlock[] = [];
 
       for (const toolUse of toolUses) {
+        yield {
+          type: "tool_start",
+          tool: toolUse.name,
+          label: TOOL_LABELS[toolUse.name] ?? "Trabalhando nisso",
+        };
+
         const { sseEvents, result } = await this.handleTool(
           toolUse.name,
           toolUse.input,
           input.onToolCall,
         );
+
+        yield { type: "tool_end", tool: toolUse.name };
         for (const e of sseEvents) yield e;
         toolResultBlocks.push({
           type: "tool_result",

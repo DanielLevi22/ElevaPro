@@ -74,6 +74,16 @@ Dados referentes à saúde exigem **base legal específica** e proteção refor�
 | Passos por dia (agregado) | `health_daily_metrics.steps` | Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I) | Acompanhamento de atividade entre sessões de treino |
 | Calorias ativas por dia (agregado) | `health_daily_metrics.active_calories` | Tutela da saúde + Consentimento | Estimativa de gasto energético para ajuste do plano |
 
+| Conversa do especialista com o coach de IA | `ai_chat_messages.content` | Consentimento explícito (Art. 11, I) — a mesma do dado de origem | Prescrição assistida |
+
+> **`ai_chat_messages` é um local secundário de dado sensível.** A conversa
+> guarda o que o modelo repetir sobre lesão, medicação e medida — em texto
+> livre, fora da tabela onde o dado nasceu. Verificado em 2026-08-12: com
+> consentimento, o coach responde citando a hérnia de disco e a medicação, e
+> essa resposta é persistida. Vale a mesma base legal da anamnese, e o
+> `ON DELETE CASCADE` a partir de `profiles` garante a eliminação junto com a
+> conta.
+
 | Registro de consentimento | `student_consents` | Consentimento explícito (Art. 11, I) | Provar que o aluno autorizou coleta de dados de saúde |
 
 **Atenção:** O tratamento de dados sensíveis sem base legal adequada é considerado **infração grave** pela ANPD. A base de tutela da saúde exige que o tratamento seja realizado por profissional da área ou sob sua supervisão — o que se aplica ao contexto de personal trainers e nutricionistas usando o sistema.
@@ -297,6 +307,7 @@ A LGPD exige que dados sejam eliminados quando deixam de ser necessários (Art. 
 | Histórico de treinos | Enquanto a conta estiver ativa | Histórico de evolução |
 | Histórico de dietas | Enquanto a conta estiver ativa | Histórico de evolução |
 | Passos e calorias diários | Enquanto a conta estiver ativa | Comparação de longo prazo é a finalidade; `ON DELETE CASCADE` elimina junto com a conta |
+| Conversa com o coach de IA (`ai_chat_sessions`, `ai_chat_messages`) | Enquanto a conta do aluno estiver ativa | É o registro da prescrição assistida. `ON DELETE CASCADE` a partir de `profiles` elimina junto com a conta |
 | Logs de autenticação | 90 dias | Segurança — detecção de acessos suspeitos |
 | Dados após exclusão de conta | 0 dias (eliminar ou anonimizar) | Princípio da necessidade |
 
@@ -539,6 +550,7 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 
 | Rota | Dado transmitido | Destinatário | Sensível? | Base legal |
 |------|-----------------|--------------|-----------|------------|
+| `/api/ai/chat/[studentId]` | Objetivo, experiência, frequência, dias, **lesões**, **condições de saúde**, peso, altura, % gordura, periodizações. **Sem o nome do titular** | Anthropic | ✅ Sim (Art. 11) | Consentimento explícito — verificado na rota desde 2026-08-12 |
 | `/api/ai/body-scan` | Fotos corporais (base64) + métricas inferidas | Anthropic | ✅ Sim (Art. 5°, II) | Consentimento explícito (Art. 11, I) |
 | `/api/ai/nutrition/adherence` | `diet_logs` anonimizados + nome do plano | Anthropic | ✅ Sim | Consentimento explícito |
 | `/api/ai/voice-command` | Removido — rota e serviço eliminados | — | — | — |
@@ -552,6 +564,10 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 | Decisão | Princípio atendido |
 |---------|-------------------|
 | `studentName` removido do prompt da rota `/nutrition/adherence` — IA não precisa do nome para analisar aderência | Necessidade (Art. 6°, III) |
+| Nome do titular removido do prompt do coach do especialista — o modelo diz "o aluno" | Necessidade (Art. 6°, III) |
+| `/api/ai/chat/[studentId]` só monta o contexto de saúde com `student_consents` vigente; sem consentimento o coach avisa e segue por estrutura | Base legal Art. 11, I |
+| O contexto lê seis campos nomeados da anamnese, nunca `responses` inteiro | Necessidade (Art. 6°, III) |
+| Erro do chat não expõe texto técnico ao usuário; o log registra a sessão, nunca o conteúdo do contexto | Prevenção (Art. 6°, VIII) |
 | Nenhum dado é persistido nas rotas BFF — processamento em memória e descartado | Necessidade + Segurança |
 | Autenticação obrigatória (Bearer token validado via Supabase) antes de qualquer processamento | Segurança (Art. 6°, VII) |
 | Transmissão via HTTPS (Vercel → Anthropic/Google) | Segurança |
