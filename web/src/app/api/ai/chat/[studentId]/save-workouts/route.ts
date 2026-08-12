@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import {
   getOrCreateSession,
   getSessionState,
+  saveMessage,
   updateSessionState,
 } from "@/modules/ai/services/chatService";
 import type { BulkWorkoutExercise, BulkWorkoutItem } from "@/modules/ai/types";
@@ -132,6 +133,17 @@ export async function POST(
     ],
     pendingWorkoutProposal: undefined,
   });
+
+  // A aprovação acontece no cartão, fora da conversa. Sem esta linha o
+  // histórico não registra nada, e no turno seguinte o coach responde que ainda
+  // falta aprovar — o especialista acabou de aprovar e ouve que não aprovou.
+  await saveMessage(
+    sessionId,
+    "assistant",
+    `✅ Treinos aprovados e salvos na fase ${proposal.phase_name}: ${saved
+      .map((w) => w.title)
+      .join(", ")}.`,
+  );
 
   return NextResponse.json({ saved });
 }

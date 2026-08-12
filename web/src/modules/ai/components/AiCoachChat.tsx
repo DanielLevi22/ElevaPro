@@ -270,9 +270,12 @@ export function AiCoachChat({ studentId }: Props) {
           </div>
         ))}
 
-        {/* Enquanto a ferramenta roda o stream fica mudo por 8 a 10 segundos.
-            Sem esta linha o chat parece travado — era a queixa mais frequente. */}
-        {activity && (
+        {/* Fica visível o turno inteiro, não só durante a ferramenta.
+            O JSON da proposta é gerado DENTRO do bloco `tool_use`, que só chega
+            completo — então entre a última palavra do modelo ("um momento!") e o
+            `tool_start` passam 15 a 20 segundos sem um único evento. Era aí que
+            o coach parecia ter parado de funcionar. */}
+        {loading && (
           <div className="flex justify-start">
             <div
               className="flex items-center gap-2.5 rounded-2xl rounded-bl-sm border border-white/10 bg-surface px-4 py-2.5 text-sm text-muted-foreground"
@@ -283,7 +286,7 @@ export function AiCoachChat({ studentId }: Props) {
                 <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:150ms]" />
                 <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:300ms]" />
               </span>
-              {activity}…
+              {activity ?? "Preparando"}…
             </div>
           </div>
         )}
