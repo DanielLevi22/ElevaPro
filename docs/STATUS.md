@@ -1,6 +1,6 @@
 # Status dos Módulos — Eleva Pro
 
-> **Atualizado em:** 2026-08-12 (feature/workout-execution-consolidation)
+> **Atualizado em:** 2026-08-12 (feature/ai-coach-workout-stage)
 > **Regra:** atualizar ao fechar cada PR. Nenhuma feature é `done` sem este arquivo atualizado.
 
 ---
@@ -88,6 +88,7 @@ Três armadilhas que já custaram tempo:
 | [api-security-hardening](PRDs/api-security-hardening.md) | Autorização das rotas do BFF, que a RLS não alcança | approved | `feature/api-security-hardening` |
 | [briefing](PRDs/briefing.md) | Briefing diário do especialista: quem precisa de mim hoje | ✅ done — recordes desbloqueados pela `0023`, ainda não implementados | `feature/briefing` |
 | [workout-execution-consolidation](PRDs/workout-execution-consolidation.md) | Uma única representação de treino executado | ✅ done | `feature/workout-execution-consolidation` |
+| [ai-coach-workout-stage](PRDs/ai-coach-workout-stage.md) | Coach de IA enxergando o aluno + estágio de criação de treino | approved | `feature/ai-coach-workout-stage` |
 
 > Adicionar linha aqui ao criar um novo PRD via `node scripts/new-feature.js`.
 
@@ -130,7 +131,11 @@ Três armadilhas que já custaram tempo:
 | 35 | `useProgressionAnalysis` monta o objeto, itera e descarta o resultado (`void effectiveItem`) — a análise de progressão do treino nunca funcionou. `analyzeExerciseProgression` está pronta e testada; falta ligar o hook | 🟡 Média | [PRD](PRDs/workout-execution-consolidation.md) |
 | 34 | ~~Especialista nascia sem `specialist_services`~~ — o cadastro reinseria o perfil que o trigger já criara, batia em chave duplicada e pulava os serviços; o autoconserto do `ensure-profile` falhava com 42P10 por falta de UNIQUE. **Resolvido** na `0022` + rota corrigida | ✅ | — |
 | 31 | `students.service.ts` invoca a edge function `create-student`, que não existe em `supabase/functions/`. Ou o cadastro de aluno está quebrado, ou há código fora do controle de versão rodando com `service_role` | 🟡 Média | [PRD](PRDs/api-security-hardening.md) |
-| 32 | `loadStudentContext` manda a anamnese inteira (`select("*")`) para o prompt da Anthropic — Necessidade (Art. 6°, III) | 🟡 Média | [LGPD](LGPD_COMPLIANCE.md) |
+| 32 | `loadStudentContext` faz `select("*")` na anamnese. **Correção:** o formatador só usa 6 campos, e hoje não envia nenhum — ver dívida 36. Resta recortar o `select` ao que é usado | 🟡 Média | [PRD](PRDs/ai-coach-workout-stage.md) |
+| 36 | **O coach de IA prescreve às cegas** — a anamnese é lida fora de `responses` e a avaliação física consulta colunas inexistentes (`weight` em vez de `weight_kg`, erro 42703 descartado). Aluna com hérnia de disco registrada: o coach respondeu "Lesões: nenhuma registrada" | 🔴 Crítica | [PRD](PRDs/ai-coach-workout-stage.md) |
+| 37 | `query_exercises` manda o modelo buscar `Ombros` e `Braços`; o banco tem `ombro`, `biceps`, `triceps`. Dos 9 grupos, 4 sempre voltam vazios e o coach afirma que o banco não tem exercícios | 🟠 Alta | [PRD](PRDs/ai-coach-workout-stage.md) |
+| 38 | `/api/ai/chat/[studentId]` não verifica `student_consents` e **não está no mapa de rotas de IA** da seção 10 do LGPD — é a rota que passará a enviar o dado mais sensível | 🔴 Crítica | [PRD](PRDs/ai-coach-workout-stage.md) |
+| 39 | O estágio de criação de treino existe pela metade: `BulkWorkoutProposalCard` sem importador, `pendingWorkoutProposal` que nada escreve, e a rota `save-workouts` lendo proposta que ninguém produz | 🟠 Alta | [PRD](PRDs/ai-coach-workout-stage.md) |
 | 33 | ~~Gate do CI ficava verde com a suíte pulada~~ — `paths-filter` sem `pull-requests: read` falhava, os outputs saíam vazios e o `ci-success` lia "nada mudou". **Resolvido**: permissão + o gate exige que a detecção tenha passado | ✅ | [PRD](PRDs/api-security-hardening.md) |
 
 ---
