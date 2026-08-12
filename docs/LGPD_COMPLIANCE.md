@@ -539,6 +539,7 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 
 | Rota | Dado transmitido | Destinatário | Sensível? | Base legal |
 |------|-----------------|--------------|-----------|------------|
+| `/api/ai/chat/[studentId]` | Objetivo, experiência, frequência, dias, **lesões**, **condições de saúde**, peso, altura, % gordura, periodizações. **Sem o nome do titular** | Anthropic | ✅ Sim (Art. 11) | Consentimento explícito — verificado na rota desde 2026-08-12 |
 | `/api/ai/body-scan` | Fotos corporais (base64) + métricas inferidas | Anthropic | ✅ Sim (Art. 5°, II) | Consentimento explícito (Art. 11, I) |
 | `/api/ai/nutrition/adherence` | `diet_logs` anonimizados + nome do plano | Anthropic | ✅ Sim | Consentimento explícito |
 | `/api/ai/voice-command` | Removido — rota e serviço eliminados | — | — | — |
@@ -552,6 +553,10 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 | Decisão | Princípio atendido |
 |---------|-------------------|
 | `studentName` removido do prompt da rota `/nutrition/adherence` — IA não precisa do nome para analisar aderência | Necessidade (Art. 6°, III) |
+| Nome do titular removido do prompt do coach do especialista — o modelo diz "o aluno" | Necessidade (Art. 6°, III) |
+| `/api/ai/chat/[studentId]` só monta o contexto de saúde com `student_consents` vigente; sem consentimento o coach avisa e segue por estrutura | Base legal Art. 11, I |
+| O contexto lê seis campos nomeados da anamnese, nunca `responses` inteiro | Necessidade (Art. 6°, III) |
+| Erro do chat não expõe texto técnico ao usuário; o log registra a sessão, nunca o conteúdo do contexto | Prevenção (Art. 6°, VIII) |
 | Nenhum dado é persistido nas rotas BFF — processamento em memória e descartado | Necessidade + Segurança |
 | Autenticação obrigatória (Bearer token validado via Supabase) antes de qualquer processamento | Segurança (Art. 6°, VII) |
 | Transmissão via HTTPS (Vercel → Anthropic/Google) | Segurança |

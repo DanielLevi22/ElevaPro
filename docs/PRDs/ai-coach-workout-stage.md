@@ -36,18 +36,18 @@ de treino que falta: entregar a criação de treino sobre um contexto cego seria
 industrializar o erro.
 
 ### Como saberemos que está pronto?
-- [ ] Com anamnese preenchida, o coach cita a lesão e a restrição quando
+- [x] Com anamnese preenchida, o coach cita a lesão e a restrição quando
       perguntado — verificado com dado semeado, não por leitura de código
-- [ ] Com avaliação física registrada, o coach informa peso e altura corretos
-- [ ] Falha de consulta no contexto aparece como erro, nunca como "não
+- [x] Com avaliação física registrada, o coach informa peso e altura corretos
+- [x] Falha de consulta no contexto aparece como erro, nunca como "não
       registrado"
 - [ ] `query_exercises` devolve resultado para os nove grupos que existem no
       banco, incluindo ombro, bíceps, tríceps, glúteos e abdômen
 - [ ] O especialista cria treino com exercícios pela conversa, revisa e salva
-- [ ] Nenhum dado de saúde vai para a Anthropic sem consentimento vigente
+- [x] Nenhum dado de saúde vai para a Anthropic sem consentimento vigente
       registrado em `student_consents`
 - [ ] Um especialista sem vínculo ativo não abre conversa sobre o aluno
-- [ ] Mensagem de erro do chat não expõe texto técnico ao usuário
+- [x] Mensagem de erro do chat não expõe texto técnico ao usuário
 
 ---
 
@@ -350,12 +350,12 @@ a distinguir as duas.
 
 ## Checklist de done
 
-- [ ] D1 fechado — verificado com anamnese e avaliação semeadas
+- [x] D1 fechado — verificado com anamnese e avaliação semeadas
 - [ ] D2 fechado — os nove grupos respondem
 - [ ] D3 entregue — treino criado e salvo pela conversa
-- [ ] D4 fechado — erro sem termo técnico
-- [ ] Consentimento verificado antes de qualquer dado de saúde ir para o prompt
-- [ ] Nome do titular fora do payload
+- [x] D4 fechado — erro sem termo técnico
+- [x] Consentimento verificado antes de qualquer dado de saúde ir para o prompt
+- [x] Nome do titular fora do payload
 - [ ] `docs/LGPD_COMPLIANCE.md` — seções 2.2, 7 e 10 atualizadas
 - [ ] Código funciona e passou em lint + typecheck + testes
 - [ ] PR mergeado em `development`

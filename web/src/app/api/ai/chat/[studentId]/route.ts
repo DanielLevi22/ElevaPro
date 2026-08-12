@@ -129,8 +129,19 @@ export async function POST(
           );
         }
       } catch (err) {
+        // O técnico vai para o log, o humano para a tela. Antes a bolha do chat
+        // recebia o `message` cru — e um objeto de erro do PostgREST virava
+        // literalmente "[object Object]" na conversa.
+        //
+        // O log registra a sessão, nunca o contexto: "não treina há 5 dias" ou
+        // uma lesão em texto claro é inferência sobre saúde de titular
+        // identificado (LGPD_COMPLIANCE, seção 4).
+        console.error("[POST /api/ai/chat] sessão do especialista", specialistId, err);
         controller.enqueue(
-          sseChunk({ type: "error", message: err instanceof Error ? err.message : String(err) }),
+          sseChunk({
+            type: "error",
+            message: "Não consegui responder agora. Tente de novo em instantes.",
+          }),
         );
       } finally {
         controller.close();
