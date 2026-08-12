@@ -550,6 +550,7 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 
 | Rota | Dado transmitido | Destinatário | Sensível? | Base legal |
 |------|-----------------|--------------|-----------|------------|
+| `/api/ai/nutrition/chat/[studentId]` | Os mesmos campos do coach de treino: objetivo, experiência, **lesões**, **condições de saúde**, peso, altura, % gordura. **Sem o nome do titular** | Anthropic | ✅ Sim (Art. 11) | Consentimento explícito — verificado na rota |
 | `/api/ai/chat/[studentId]` | Objetivo, experiência, frequência, dias, **lesões**, **condições de saúde**, peso, altura, % gordura, periodizações. **Sem o nome do titular** | Anthropic | ✅ Sim (Art. 11) | Consentimento explícito — verificado na rota desde 2026-08-12 |
 | `/api/ai/body-scan` | Fotos corporais (base64) + métricas inferidas | Anthropic | ✅ Sim (Art. 5°, II) | Consentimento explícito (Art. 11, I) |
 | `/api/ai/nutrition/adherence` | `diet_logs` anonimizados + nome do plano | Anthropic | ✅ Sim | Consentimento explícito |
@@ -568,6 +569,8 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 | `/api/ai/chat/[studentId]` só monta o contexto de saúde com `student_consents` vigente; sem consentimento o coach avisa e segue por estrutura | Base legal Art. 11, I |
 | O contexto lê seis campos nomeados da anamnese, nunca `responses` inteiro | Necessidade (Art. 6°, III) |
 | Erro do chat não expõe texto técnico ao usuário; o log registra a sessão, nunca o conteúdo do contexto | Prevenção (Art. 6°, VIII) |
+| O coach de nutrição reusa o mesmo carregador de contexto, então herda a checagem de consentimento e a ausência do nome do titular — não existe um segundo caminho para o dado sair do banco | Base legal Art. 11, I + Necessidade |
+| A IA não cria alimento no catálogo: `foods` é compartilhado entre todos os especialistas | Qualidade dos dados (Art. 6°, V) |
 | Nenhum dado é persistido nas rotas BFF — processamento em memória e descartado | Necessidade + Segurança |
 | Autenticação obrigatória (Bearer token validado via Supabase) antes de qualquer processamento | Segurança (Art. 6°, VII) |
 | Transmissão via HTTPS (Vercel → Anthropic/Google) | Segurança |

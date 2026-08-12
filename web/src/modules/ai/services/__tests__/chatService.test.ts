@@ -62,6 +62,22 @@ describe("getSessionState", () => {
     const state = await getSessionState("s1");
     expect(state.savedWorkouts).toEqual([]);
   });
+
+  // A versão anterior montava o objeto campo a campo e descartava em silêncio
+  // qualquer chave nova: a proposta de dieta era gravada e sumia na leitura
+  // seguinte, com a aprovação respondendo "nenhuma proposta pendente".
+  it("preserva chaves que o getter não conhece", async () => {
+    sessionState = {
+      savedWorkouts: [],
+      pendingDietPlan: { name: "Cutting", target_calories: 1900 },
+      savedDietPlanId: "plan-1",
+    };
+
+    const state = await getSessionState("s1");
+
+    expect(state.pendingDietPlan).toMatchObject({ name: "Cutting" });
+    expect(state.savedDietPlanId).toBe("plan-1");
+  });
 });
 
 describe("phaseOwnedBy", () => {

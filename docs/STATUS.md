@@ -1,6 +1,6 @@
 # Status dos Módulos — Eleva Pro
 
-> **Atualizado em:** 2026-08-12 (feature/ai-coach-workout-stage)
+> **Atualizado em:** 2026-08-12 (feature/ai-nutrition-coach)
 > **Regra:** atualizar ao fechar cada PR. Nenhuma feature é `done` sem este arquivo atualizado.
 
 ---
@@ -128,6 +128,9 @@ Três armadilhas que já custaram tempo:
 | 28 | ~~Privilégio saindo de `user_metadata`~~ — `ensure-profile` e `getUserContextJWT` (web) liam o `account_type` de campo que o próprio usuário edita. **Resolvido**: sai de `profiles` | ✅ | [PRD](PRDs/api-security-hardening.md) |
 | 29 | Nenhuma rota de IA tem rate limit. Cada chamada custa dinheiro e qualquer conta autenticada chama à vontade — abuso de custo, não vazamento | 🟡 Média | [PRD](PRDs/api-security-hardening.md) |
 | 30 | Cadastro público cria especialista com `email_confirm: true` e `account_status: 'active'` — sem verificação de e-mail e pulando a aprovação que existe no `/admin` | 🟡 Média | [PRD](PRDs/api-security-hardening.md) |
+| 41 | Os 44 alimentos de `foods` têm `category` NULL. Nenhuma busca por categoria funciona, e a curadoria nunca foi feita | 🟡 Média | [PRD](PRDs/ai-nutrition-coach.md) |
+| 42 | ~~`DietDetailsHeader` derrubava a tela com plano sem período~~ — `format(new Date(""))` lança RangeError. **Resolvido**: utilitário de data + `0025` recusando nulo | ✅ | [PRD](PRDs/ai-nutrition-coach.md) |
+| 43 | O cartão de refeições não soma calorias por refeição. O catálogo tem os macros; falta o cálculo por quantidade | 🟢 Baixa | [PRD](PRDs/ai-nutrition-coach.md) |
 | 40 | O schema Drizzle está 4 colunas atrás do banco: `training_periodizations.level/duration_weeks` e `training_plans.duration_weeks/focus` vieram na `0004` e nunca entraram em `shared/src/database/schema/workouts.ts` | 🟡 Média | — |
 | 35 | `useProgressionAnalysis` monta o objeto, itera e descarta o resultado (`void effectiveItem`) — a análise de progressão do treino nunca funcionou. `analyzeExerciseProgression` está pronta e testada; falta ligar o hook | 🟡 Média | [PRD](PRDs/workout-execution-consolidation.md) |
 | 34 | ~~Especialista nascia sem `specialist_services`~~ — o cadastro reinseria o perfil que o trigger já criara, batia em chave duplicada e pulava os serviços; o autoconserto do `ensure-profile` falhava com 42P10 por falta de UNIQUE. **Resolvido** na `0022` + rota corrigida | ✅ | — |

@@ -94,9 +94,45 @@ export interface BulkWorkoutProposal {
   workouts: BulkWorkoutItem[];
 }
 
+export interface DietPlanProposal {
+  name: string;
+  plan_type: "unique" | "cyclic";
+  start_date: string;
+  duration_weeks: number;
+  target_calories: number;
+  target_protein: number;
+  target_carbs: number;
+  target_fat: number;
+  notes?: string;
+}
+
+export interface DietMealItemProposal {
+  food_name: string;
+  quantity: number;
+  unit: string;
+}
+
+export interface DietMealProposal {
+  name: string;
+  meal_time?: string;
+  /** 0=Dom a 6=Sáb, só na dieta cíclica. */
+  day_of_week?: number;
+  items: DietMealItemProposal[];
+}
+
+export interface DietMealsProposal {
+  plan_name: string;
+  plan_type: "unique" | "cyclic";
+  meals: DietMealProposal[];
+}
+
 export interface AiSessionState {
   savedWorkouts: { id: string; title: string; phaseId: string }[];
   pendingWorkoutProposal?: BulkWorkoutProposal;
+  /** Guardadas no servidor: a aprovação salva a cópia, não o que o modelo reemitir. */
+  pendingDietPlan?: DietPlanProposal;
+  pendingDietMeals?: DietMealsProposal;
+  savedDietPlanId?: string;
 }
 
 export type SseEvent =
@@ -106,7 +142,9 @@ export type SseEvent =
   | { type: "tool_end"; tool: string }
   | { type: "proposal"; data: PeriodizationProposal }
   | { type: "workout_proposal"; data: BulkWorkoutProposal }
+  | { type: "diet_plan_proposal"; data: DietPlanProposal }
+  | { type: "diet_meals_proposal"; data: DietMealsProposal }
   | { type: "plan_proposal"; data: PlanProposalData }
-  | { type: "saved"; entity: "periodization"; id: string; name: string }
+  | { type: "saved"; entity: "periodization" | "diet_plan"; id: string; name: string }
   | { type: "done" }
   | { type: "error"; message: string };
