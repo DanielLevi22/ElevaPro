@@ -27,17 +27,17 @@ silêncio é invisível na tela atual, e é exatamente o sinal que chega cedo o
 bastante para o especialista agir.
 
 ### Como saberemos que está pronto?
-- [ ] Um aluno sem sessão de treino há N dias aparece no briefing, e o número de
+- [x] Um aluno sem sessão de treino há N dias aparece no briefing, e o número de
       dias exibido bate com a última sessão registrada
-- [ ] Um convite pendente há mais de 3 dias aparece, com a contagem correta
-- [ ] Uma anamnese concluída sem plano de treino ativo aparece
-- [ ] O especialista **não** vê nenhum aluno fora dos seus vínculos ativos —
+- [x] Um convite pendente há mais de 3 dias aparece, com a contagem correta
+- [x] Uma anamnese concluída sem plano de treino ativo aparece
+- [x] O especialista **não** vê nenhum aluno fora dos seus vínculos ativos —
       verificado por teste com dois especialistas e o mesmo aluno
-- [ ] Nenhuma resposta do briefing contém conteúdo de anamnese, peso, medida ou
+- [x] Nenhuma resposta do briefing contém conteúdo de anamnese, peso, medida ou
       carga; apenas nome, contagem e rótulo de situação
-- [ ] Sem alunos, ou sem nada a sinalizar, a tela diz isso — não mostra
+- [x] Sem alunos, ou sem nada a sinalizar, a tela diz isso — não mostra
       esqueleto infinito nem cartão vazio
-- [ ] `npm run lint`, `tsc --noEmit` e testes limpos
+- [x] `npm run lint`, `tsc --noEmit` e testes limpos
 
 ---
 
@@ -256,9 +256,9 @@ sobre saúde de um titular identificado. Log só com contagem agregada.
   fora do escopo
 
 ### Atualizações necessárias em docs/LGPD_COMPLIANCE.md
-- [ ] Seção 3: registrar "Sinal derivado de inatividade para o especialista
+- [x] Seção 3: registrar "Sinal derivado de inatividade para o especialista
       vinculado" como tratamento, sob a mesma base do dado de origem
-- [ ] Seção 10: marcar que o módulo de workouts foi revisado e **reprovou** em
+- [x] Seção 10: marcar que o módulo de workouts foi revisado e **reprovou** em
       RLS
 
 ---
@@ -288,9 +288,9 @@ aluno. Registrar a escolha e a razão, ou derivar da frequência do plano.
 
 > Só muda o Status para `done` quando TODOS estão marcados.
 
-- [ ] Bloqueadores resolvidos ou escopo reduzido às fases sem bloqueio
-- [ ] Código funciona e passou em lint + typecheck + testes
-- [ ] Teste de isolamento: dois especialistas, um aluno, nenhum vê o do outro
+- [x] Bloqueadores resolvidos ou escopo reduzido às fases sem bloqueio
+- [x] Código funciona e passou em lint + typecheck + testes
+- [x] Teste de isolamento: dois especialistas, um aluno, nenhum vê o do outro
 - [ ] PR mergeado em `development`
-- [ ] `docs/features/briefing.md` criado ou atualizado
-- [ ] `docs/STATUS.md` atualizado
+- [x] `docs/features/briefing.md` criado ou atualizado
+- [x] `docs/STATUS.md` atualizado
