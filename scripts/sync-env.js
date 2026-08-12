@@ -55,7 +55,18 @@ const webEnvMap = {
 
 // ─── Geração dos arquivos ──────────────────────────────────────────────────
 
-function buildEnvFile(varMap, extras = {}) {
+// Dentro do emulador Android, 127.0.0.1 é o próprio emulador — não a máquina
+// que roda o Supabase. 10.0.2.2 é o alias do loopback do host. Sem esta
+// tradução o login falha por timeout enquanto o web, que roda no host, funciona
+// com a mesma URL: o mesmo valor significa máquinas diferentes nos dois lados.
+// Só se aplica ao app, e só a endereço local — URL de nuvem passa intacta.
+const ANDROID_EMULATOR_HOST = "10.0.2.2";
+
+function toEmulatorHost(value) {
+  return value.replace(/\/\/(127\.0\.0\.1|localhost)(?=[:/]|$)/, `//${ANDROID_EMULATOR_HOST}`);
+}
+
+function buildEnvFile(varMap, extras = {}, { forAndroidEmulator = false } = {}) {
   const lines = [
     `# Gerado automaticamente por scripts/sync-env.js`,
     `# Fonte: .env.${env} — NÃO edite este arquivo diretamente`,
@@ -63,7 +74,8 @@ function buildEnvFile(varMap, extras = {}) {
   ];
   for (const [src, dest] of Object.entries(varMap)) {
     if (vars[src] !== undefined) {
-      lines.push(`${dest}=${vars[src]}`);
+      const value = forAndroidEmulator ? toEmulatorHost(vars[src]) : vars[src];
+      lines.push(`${dest}=${value}`);
     }
   }
   for (const [key, value] of Object.entries(extras)) {
@@ -74,8 +86,31 @@ function buildEnvFile(varMap, extras = {}) {
 
 // app/.env.<environment>
 const appFile = path.join(ROOT, "app", `.env.${env}`);
-const appContent = buildEnvFile(appEnvMap, { EXPO_PUBLIC_APP_ENV: env });
+const appContent = buildEnvFile(
+  appEnvMap,
+  { EXPO_PUBLIC_APP_ENV: env },
+  { forAndroidEmulator: true },
+);
 fs.writeFileSync(appFile, appContent);
+
+// Um endereço de loopback sobrevivendo até aqui significa que o app vai
+// procurar o serviço dentro do próprio emulador. O sintoma é login que falha
+// por timeout enquanto o web funciona — some da tela, não do log. Falhar aqui
+// é a única chance de o erro aparecer antes do aparelho.
+const loopbackLeak = appContent
+  .split("\n")
+  .filter((line) => /^EXPO_PUBLIC_\w+=.*\/\/(127\.0\.0\.1|localhost)(?=[:/]|$)/.test(line));
+
+if (loopbackLeak.length > 0) {
+  console.error(`\n✗ ${path.relative(ROOT, appFile)} aponta para o loopback:`);
+  for (const line of loopbackLeak) console.error(`    ${line}`);
+  console.error(
+    `\n  Dentro do emulador Android isso é o próprio emulador, não a sua máquina.` +
+      `\n  Use ${ANDROID_EMULATOR_HOST} — a tradução deveria ter acontecido em toEmulatorHost().\n`,
+  );
+  process.exit(1);
+}
+
 console.log(`✓ ${path.relative(ROOT, appFile)}`);
 
 // web/.env.local — precedência maior que .env no Next. Escrever em .env deixaria
