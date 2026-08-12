@@ -1,6 +1,7 @@
 import type {
   Exercise,
   Periodization,
+  SaveSessionSetInput,
   TrainingPlan,
   UpdatePeriodizationInput,
   UpdateTrainingPlanInput,
@@ -93,7 +94,7 @@ interface WorkoutState {
     studentId: string;
     startedAt: string;
     completedAt: string;
-    items: { workoutExerciseId: string; setsData: unknown[] }[];
+    items: { workoutExerciseId: string; sets: SaveSessionSetInput[] }[];
     intensity?: number;
     notes?: string;
   }) => Promise<string>;
@@ -571,7 +572,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
           session.id,
           sessionData.items.map((item) => ({
             workout_exercise_id: item.workoutExerciseId,
-            sets_data: item.setsData,
+            sets: item.sets,
           }))
         );
       }
@@ -651,9 +652,15 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     try {
       const { data, error } = await supabase
         .from('workout_sessions')
+        // Série a série, com carga e repetição executadas — o que a análise de
+        // progressão precisa e o antigo `sets_data` não entregava em formato
+        // consultável.
         .select(`
           id, workout_id, student_id, started_at, completed_at, intensity, notes,
-          exercises:workout_session_exercises(workout_exercise_id, sets_data)
+          exercises:workout_session_exercises(
+            workout_exercise_id,
+            sets:workout_session_sets(set_index, reps_actual, weight_actual, completed)
+          )
         `)
         .eq('workout_id', workoutId)
         .eq('student_id', studentId)

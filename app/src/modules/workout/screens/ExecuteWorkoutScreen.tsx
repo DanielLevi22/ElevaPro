@@ -368,18 +368,23 @@ export default function ExecuteWorkoutScreen() {
         if (!user?.id || !startTime) return;
         const endTime = new Date();
 
-        // Include edited parameters in session items
+        // Uma linha por série. O prescrito vem do treino, o executado vem do que
+        // o aluno ajustou na tela — separá-los é o que torna a evolução
+        // mensurável, e era o que o JSON de `sets_data` misturava.
         const sessionItems = Object.entries(completedSets).map(([itemId, setsCount]) => {
           const editedItem = editedWorkoutItems[itemId];
           const originalItem = workout?.exercises?.find((ex) => ex.id === itemId);
-          const reps = editedItem?.reps ?? originalItem?.reps ?? '0';
-          const weight = editedItem?.weight ?? originalItem?.weight ?? '';
+          const repsActual = parseInt(String(editedItem?.reps ?? originalItem?.reps ?? ''), 10);
+          const weightActual = parseFloat(String(editedItem?.weight ?? originalItem?.weight ?? ''));
+
           return {
             workoutExerciseId: itemId,
-            setsData: Array.from({ length: setsCount }, () => ({
-              sets: 1,
-              reps: parseInt(String(reps), 10) || 0,
-              weight: weight ? parseFloat(String(weight)) : undefined,
+            sets: Array.from({ length: setsCount }, () => ({
+              reps_prescribed: originalItem?.reps != null ? String(originalItem.reps) : null,
+              reps_actual: Number.isNaN(repsActual) ? null : repsActual,
+              weight_prescribed: originalItem?.weight != null ? Number(originalItem.weight) : null,
+              weight_actual: Number.isNaN(weightActual) ? null : weightActual,
+              completed: true,
             })),
           };
         });

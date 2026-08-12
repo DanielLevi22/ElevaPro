@@ -1,31 +1,6 @@
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+﻿export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
   public: {
     Tables: {
       achievements: {
@@ -546,6 +521,44 @@ export type Database = {
           {
             foreignKeyName: "foods_created_by_profiles_id_fk";
             columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      health_daily_metrics: {
+        Row: {
+          active_calories: number;
+          created_at: string;
+          date: string;
+          id: string;
+          steps: number;
+          student_id: string;
+          synced_at: string;
+        };
+        Insert: {
+          active_calories?: number;
+          created_at?: string;
+          date: string;
+          id?: string;
+          steps?: number;
+          student_id: string;
+          synced_at?: string;
+        };
+        Update: {
+          active_calories?: number;
+          created_at?: string;
+          date?: string;
+          id?: string;
+          steps?: number;
+          student_id?: string;
+          synced_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "health_daily_metrics_student_id_profiles_id_fk";
+            columns: ["student_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
@@ -1134,7 +1147,6 @@ export type Database = {
           id: string;
           notes: string | null;
           session_id: string;
-          sets_data: Json;
           workout_exercise_id: string | null;
         };
         Insert: {
@@ -1143,7 +1155,6 @@ export type Database = {
           id?: string;
           notes?: string | null;
           session_id: string;
-          sets_data?: Json;
           workout_exercise_id?: string | null;
         };
         Update: {
@@ -1152,7 +1163,6 @@ export type Database = {
           id?: string;
           notes?: string | null;
           session_id?: string;
-          sets_data?: Json;
           workout_exercise_id?: string | null;
         };
         Relationships: [
@@ -1288,7 +1298,8 @@ export type Database = {
           difficulty: Database["public"]["Enums"]["workout_difficulty"] | null;
           id: string;
           muscle_group: string | null;
-          specialist_id: string;
+          specialist_id: string | null;
+          student_id: string | null;
           title: string;
           training_plan_id: string | null;
           updated_at: string;
@@ -1300,7 +1311,8 @@ export type Database = {
           difficulty?: Database["public"]["Enums"]["workout_difficulty"] | null;
           id?: string;
           muscle_group?: string | null;
-          specialist_id: string;
+          specialist_id?: string | null;
+          student_id?: string | null;
           title: string;
           training_plan_id?: string | null;
           updated_at?: string;
@@ -1312,7 +1324,8 @@ export type Database = {
           difficulty?: Database["public"]["Enums"]["workout_difficulty"] | null;
           id?: string;
           muscle_group?: string | null;
-          specialist_id?: string;
+          specialist_id?: string | null;
+          student_id?: string | null;
           title?: string;
           training_plan_id?: string | null;
           updated_at?: string;
@@ -1321,6 +1334,13 @@ export type Database = {
           {
             foreignKeyName: "workouts_specialist_id_profiles_id_fk";
             columns: ["specialist_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "workouts_student_id_fkey";
+            columns: ["student_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
@@ -1339,7 +1359,7 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      link_student_by_code: { Args: { p_code: string }; Returns: Json };
     };
     Enums: {
       account_status: "active" | "inactive" | "invited";
@@ -1482,9 +1502,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       account_status: ["active", "inactive", "invited"],

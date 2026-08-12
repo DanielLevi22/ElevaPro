@@ -165,6 +165,61 @@ describe('workoutStore', () => {
     expect(mockSupabase.from).toHaveBeenCalledWith('workout_sessions');
   });
 
+  // A sessão precisa terminar em `workout_session_sets`, uma linha por série.
+  // Até a 0023 esta tela gravava só o JSON de `sets_data`, invisível para as
+  // métricas de evolução — o aluno treinava e o gráfico não mexia.
+  it('grava uma linha por série executada, com carga e repetição', async () => {
+    const setsInsert = jest.fn().mockResolvedValue({ data: null, error: null });
+
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === 'workout_sessions') {
+        return {
+          insert: jest.fn().mockReturnThis(),
+          select: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: { id: 'session-123' }, error: null }),
+        };
+      }
+      if (table === 'workout_session_exercises') {
+        return {
+          insert: jest.fn().mockReturnThis(),
+          select: jest.fn().mockResolvedValue({ data: [{ id: 'se-1' }], error: null }),
+        };
+      }
+      if (table === 'workout_session_sets') {
+        return { insert: setsInsert };
+      }
+      return {};
+    });
+
+    await useWorkoutStore.getState().saveWorkoutSession({
+      workoutId: 'w1',
+      studentId: 's1',
+      startedAt: new Date().toISOString(),
+      completedAt: new Date().toISOString(),
+      items: [
+        {
+          workoutExerciseId: 'we-1',
+          sets: [
+            { reps_actual: 10, weight_actual: 40, completed: true },
+            { reps_actual: 8, weight_actual: 42.5, completed: true },
+          ],
+        },
+      ],
+    });
+
+    expect(mockSupabase.from).toHaveBeenCalledWith('workout_session_sets');
+    const rows = setsInsert.mock.calls[0][0];
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({
+      session_exercise_id: 'se-1',
+      set_index: 0,
+      reps_actual: 10,
+      weight_actual: 40,
+      completed: true,
+    });
+    expect(rows[1]).toMatchObject({ set_index: 1, weight_actual: 42.5 });
+  });
+
   it('should handle saveWorkoutSession error gracefully', async () => {
     mockSupabase.from.mockImplementation((table: string) => {
       if (table === 'workout_sessions') {

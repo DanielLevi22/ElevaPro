@@ -1,8 +1,12 @@
+// `export type ... from` reexporta mas não traz o nome para o escopo local.
+import type { SaveSessionSetInput } from '@elevapro/shared';
+
 // Alias for backward-compatibility within app module
 export type {
   DayOfWeek,
   Exercise,
   Periodization,
+  SaveSessionSetInput,
   TrainingPlan,
   TrainingStatus,
   Workout,
@@ -16,11 +20,12 @@ export type {
 export interface SessionItem {
   id?: string;
   workout_exercise_id: string;
-  sets_data: {
-    sets: number;
-    reps: number;
-    weight?: number;
-    rest_seconds?: number;
+  /** Uma entrada por série executada, vinda de `workout_session_sets`. */
+  sets: {
+    set_index: number;
+    reps_actual: number | null;
+    weight_actual: number | null;
+    completed: boolean;
   }[];
   editedSets?: number;
   editedReps?: number;
@@ -62,7 +67,7 @@ export interface SaveSessionParams {
   completedAt: string;
   items: {
     workoutExerciseId: string;
-    setsData: unknown[];
+    sets: SaveSessionSetInput[];
   }[];
   intensity: number;
   notes: string;

@@ -136,13 +136,15 @@ export default function ExecuteWorkoutScreen() {
 
       const endTime = new Date();
 
-      // Prepare items data for store
+      // Uma linha por série executada. Esta tela não coleta repetição por série,
+      // então `reps_actual` fica nulo em vez de zero: zero repetição é uma
+      // afirmação falsa sobre o treino, nulo é a ausência de medida.
       const sessionItems = Object.values(progress).map((prog) => ({
         workoutExerciseId: prog.id,
-        setsData: Array.from({ length: prog.setsCompleted }, () => ({
-          sets: 1,
-          reps: 0,
-          weight: prog.weight ? parseFloat(prog.weight) : undefined,
+        sets: Array.from({ length: prog.setsCompleted }, () => ({
+          reps_actual: null,
+          weight_actual: prog.weight ? parseFloat(prog.weight) : null,
+          completed: true,
         })),
       }));
 
