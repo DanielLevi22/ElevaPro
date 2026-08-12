@@ -230,6 +230,14 @@ política está certa é o erro que produziu esta situação — o PRD anterior 
 "RLS" e ninguém verificou tabela a tabela. O critério de pronto é query em
 `pg_tables` e teste com dois usuários reais.
 
+**Cada ambiente se verifica sozinho, no próprio deploy.** "Passou no local"
+também não basta, e não por desconfiança: local nasce de `db reset`, com tudo do
+mesmo dono, enquanto preview e produção nasceram pelo painel e recebem só o
+pendente, sobre objetos com outro dono e outro `pg_default_acl`. A migration
+0020 existe exatamente por causa dessa diferença. `scripts/verify-rls.sql` roda
+no mesmo job que aplica as migrations, com a connection string que ele já usa —
+sem chave nova, sem passo manual que alguém esquece.
+
 **A guarda antes da limpeza.** Mesma lição do
 [schema-drift-alignment](schema-drift-alignment.md) e do
 [design-system-unification](design-system-unification.md): sem CI, a 28ª tabela

@@ -119,7 +119,7 @@ Três armadilhas que já custaram tempo:
 | 22 | ~~**Escalonamento por `student_specialists`**~~ — **resolvido**: a tabela perdeu INSERT e DELETE, e o vínculo só nasce pela RPC `link_student_by_code` | ✅ | [PRD](PRDs/rls-security-hardening.md) |
 | 23 | ~~`workout_session_sets` tem RLS só do aluno~~ — **resolvido** na `0017` (`sets_specialist_read`) | ✅ | [PRD](PRDs/rls-security-hardening.md) |
 | 24 | `body_scans` guarda URL de foto corporal. RLS na tabela não protege o arquivo no Storage se a URL vazar — o bucket dessas fotos ainda não é versionado | 🟡 Média | [PRD](PRDs/rls-security-hardening.md) |
-| 25 | RLS aplicada em preview no merge do #98, mas **nunca verificada** com o teste de isolamento. Produção só recebe no push para `main` | 🔴 Crítica | [PRD](PRDs/rls-security-hardening.md) |
+| 25 | Produção ainda não recebeu as migrations — só entram no push para `main`. O preview passou a se verificar sozinho no deploy (`scripts/verify-rls.sql`) | 🔴 Crítica | [PRD](PRDs/rls-security-hardening.md) |
 | 26 | Rota `/api/students/[id]` faz UPDATE em `physical_assessments` pelo `service_role`, contornando a imutabilidade que a RLS impõe ao cliente | 🟡 Média | — |
 | 27 | ~~**IDOR nas rotas de IA do especialista**~~ — `studentId` vinha da URL e nenhuma checagem de vínculo; um token de aluno lia a anamnese de qualquer outro. **Resolvido** com `@/lib/api-auth` + guarda no CI | ✅ | [PRD](PRDs/api-security-hardening.md) |
 | 28 | ~~Privilégio saindo de `user_metadata`~~ — `ensure-profile` e `getUserContextJWT` (web) liam o `account_type` de campo que o próprio usuário edita. **Resolvido**: sai de `profiles` | ✅ | [PRD](PRDs/api-security-hardening.md) |
