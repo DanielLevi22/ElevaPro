@@ -31,35 +31,29 @@ export async function POST(request: Request) {
 
   const userId = data.user.id;
 
-  // Create profile
-  const { error: profileError } = await supabaseAdmin.from("profiles" as never).insert({
-    id: userId,
-    email,
-    full_name,
-    account_type: "specialist",
-    account_status: "active",
-  } as never);
+  // O perfil já existe: o trigger `handle_new_user` o cria no INSERT em
+  // auth.users, a partir do `user_metadata` acima. Esta rota tentava inserir de
+  // novo, batia em chave duplicada, e o `if (!profileError)` abaixo pulava os
+  // serviços — então todo especialista nascia sem nenhum, e o CASL negava
+  // dietas com "Conta specialist com serviços [nenhum]".
+  const serviceRows = (service_types as string[]).map((service_type) => ({
+    specialist_id: userId,
+    service_type,
+  }));
 
-  if (profileError) {
-    console.error("[register] profile insert error:", profileError);
-    // Don't fail registration — ensure-profile will fix it on first login
-  }
+  const { error: servicesError } = await supabaseAdmin
+    .from("specialist_services" as never)
+    .insert(serviceRows as never[]);
 
-  // Create specialist_services — one row per service
-  if (!profileError) {
-    const serviceRows = (service_types as string[]).map((service_type) => ({
-      specialist_id: userId,
-      service_type,
-    }));
-
-    const { error: servicesError } = await supabaseAdmin
-      .from("specialist_services" as never)
-      .insert(serviceRows as never[]);
-
-    if (servicesError) {
-      console.error("[register] specialist_services insert error:", servicesError);
-      // Logged but not fatal — ensure-profile will fix on first login
-    }
+  // Falhar aqui deixa a conta pela metade: existe, entra, e não lê dieta nem
+  // treino. Melhor recusar o cadastro do que entregar isso ao usuário.
+  if (servicesError) {
+    console.error("[register] specialist_services insert error:", servicesError);
+    await supabaseAdmin.auth.admin.deleteUser(userId);
+    return NextResponse.json(
+      { error: "Não foi possível concluir o cadastro. Tente novamente." },
+      { status: 500 },
+    );
   }
 
   return NextResponse.json({ success: true });
