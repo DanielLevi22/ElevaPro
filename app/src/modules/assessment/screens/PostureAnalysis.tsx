@@ -279,9 +279,10 @@ export default function PostureAnalysis() {
       case 'back':
         return capturedImages.back;
       case 'side_r':
-        return capturedImages.side_right;
       case 'side_l':
-        return capturedImages.side_left;
+        // As duas vistas laterais viraram uma só na captura: davam a mesma
+        // informação e dobravam o incômodo de se fotografar.
+        return capturedImages.side;
       default:
         return null;
     }

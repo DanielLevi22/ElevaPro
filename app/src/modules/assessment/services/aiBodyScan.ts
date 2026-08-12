@@ -20,15 +20,14 @@ async function resizeToBase64(uri: string): Promise<string | null> {
 export const AIBodyScanService = {
   analyzeImages: async (images: {
     front?: string;
-    side_right?: string;
     back?: string;
-    side_left?: string;
+    side?: string;
   }): Promise<BodyScanResult> => {
     const token = useAuthStore.getState().session?.access_token;
     if (!token) throw new Error('Authentication required');
 
     const base64Images: Record<string, string> = {};
-    for (const key of ['front', 'side_right', 'back', 'side_left'] as const) {
+    for (const key of ['front', 'back', 'side'] as const) {
       const uri = images[key];
       if (!uri) continue;
       const b64 = await resizeToBase64(uri);

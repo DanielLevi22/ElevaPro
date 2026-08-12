@@ -39,11 +39,11 @@ describe('assessmentStore', () => {
   it('should set captured images', () => {
     const store = useAssessmentStore.getState();
     store.setCapturedImage('front', 'uri-front');
-    store.setCapturedImage('side_right', 'uri-side-right');
+    store.setCapturedImage('side', 'uri-side');
 
     const state = useAssessmentStore.getState();
     expect(state.capturedImages.front).toBe('uri-front');
-    expect(state.capturedImages.side_right).toBe('uri-side-right');
+    expect(state.capturedImages.side).toBe('uri-side');
   });
 
   it('should handle successful submitScan', async () => {

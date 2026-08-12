@@ -27,9 +27,8 @@ interface AssessmentState {
   history: BodyScanResult[];
   capturedImages: {
     front?: string;
-    side_right?: string;
     back?: string;
-    side_left?: string;
+    side?: string;
   };
   // Anamnesis State
   anamnesisResponses: Record<string, AnamnesisResponse>;
@@ -38,7 +37,7 @@ interface AssessmentState {
 
   setStudentId: (id: string) => void;
   startScan: () => Promise<void>;
-  setCapturedImage: (type: 'front' | 'side_right' | 'back' | 'side_left', uri: string) => void;
+  setCapturedImage: (type: 'front' | 'back' | 'side', uri: string) => void;
   submitScan: () => Promise<void>;
 
   // Anamnesis Actions
@@ -68,7 +67,7 @@ export const useAssessmentStore = create<AssessmentState>()(
         set({ status: AssessmentStatus.SCANNING, capturedImages: {} }); // Keep studentId
       },
 
-      setCapturedImage: (type: 'front' | 'side_right' | 'back' | 'side_left', uri: string) => {
+      setCapturedImage: (type: 'front' | 'back' | 'side', uri: string) => {
         console.log('[AssessmentStore] Setting captured image:', type, uri);
         set((state) => {
           const newImages = { ...state.capturedImages, [type]: uri };

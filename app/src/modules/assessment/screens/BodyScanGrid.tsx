@@ -13,7 +13,7 @@ const { width } = Dimensions.get('window');
 const GRID_SPACING = 16;
 const CARD_WIDTH = (width - 48 - GRID_SPACING) / 2;
 
-type PoseType = 'front' | 'side_right' | 'back' | 'side_left';
+type PoseType = 'front' | 'back' | 'side';
 
 interface PoseConfig {
   id: PoseType;
@@ -22,21 +22,13 @@ interface PoseConfig {
   description: string;
 }
 
+// Três fotos, não quatro. As duas laterais davam a mesma informação para a
+// análise e dobravam o incômodo de se fotografar — o que faz o aluno desistir
+// no meio.
 const POSES: PoseConfig[] = [
   { id: 'front', label: 'Frente', icon: 'human-handsup', description: 'Pés alinhados' },
-  {
-    id: 'side_right',
-    label: 'Lado Direito',
-    icon: 'human-greeting',
-    description: 'Perfil direito',
-  },
   { id: 'back', label: 'Costas', icon: 'human-handsup', description: 'Vista posterior' },
-  {
-    id: 'side_left',
-    label: 'Lado Esquerdo',
-    icon: 'human-greeting',
-    description: 'Perfil esquerdo',
-  },
+  { id: 'side', label: 'Lateral', icon: 'human-greeting', description: 'Perfil, um dos lados' },
 ];
 
 export default function BodyScanGrid() {

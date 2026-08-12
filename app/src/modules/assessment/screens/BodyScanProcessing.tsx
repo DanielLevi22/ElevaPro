@@ -80,15 +80,6 @@ export default function BodyScanProcessing() {
             <Text className="text-zinc-500 text-[10px]">Frente</Text>
           </View>
         )}
-        {capturedImages.side_right && (
-          <View className="items-center gap-1">
-            <Image
-              source={{ uri: capturedImages.side_right }}
-              className="w-16 h-24 rounded-lg border-2 border-primary/50"
-            />
-            <Text className="text-zinc-500 text-[10px]">Lado Dir.</Text>
-          </View>
-        )}
         {capturedImages.back && (
           <View className="items-center gap-1">
             <Image
@@ -98,13 +89,13 @@ export default function BodyScanProcessing() {
             <Text className="text-zinc-500 text-[10px]">Costas</Text>
           </View>
         )}
-        {capturedImages.side_left && (
+        {capturedImages.side && (
           <View className="items-center gap-1">
             <Image
-              source={{ uri: capturedImages.side_left }}
+              source={{ uri: capturedImages.side }}
               className="w-16 h-24 rounded-lg border-2 border-primary/50"
             />
-            <Text className="text-zinc-500 text-[10px]">Lado Esq.</Text>
+            <Text className="text-zinc-500 text-[10px]">Lateral</Text>
           </View>
         )}
       </Animated.View>
