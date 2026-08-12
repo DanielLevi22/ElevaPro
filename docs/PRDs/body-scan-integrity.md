@@ -232,6 +232,20 @@ de conta elimina junto. Falta a seção 7 registrar a retenção.
   detalhe quando for usar. Índice no contexto, detalhe por ferramenta — somar o
   scan inteiro a todo turno encareceria a conversa sem necessidade
 
+**Fase 7 — captura guiada e calibrada** (arquitetura em `ADR-010`)
+- Marcas fixas na tela (10% e 90% da altura) e nível pelo acelerômetro. O aluno
+  encaixa cabeça e pés; o disparo só libera com o aparelho nivelado
+- `physical_assessments.height_cm` vira a régua do frame: altura real sobre
+  altura em pixels dá `px_por_cm`, e qualquer largura na imagem converte para
+  centímetro por regra de três
+- Circunferência sai da elipse entre largura de frente e profundidade de lado —
+  aproximação com erro conhecido (5 a 10%), não número escolhido pelo modelo
+- Os parâmetros do enquadramento ficam gravados no scan, para o próximo
+  escaneamento reproduzir a mesma distância
+- Detecção de pose no dispositivo fica **fora** desta fase: exige dev build e,
+  no iOS, que o app seja buildado pela primeira vez. Entra quando houver dois
+  escaneamentos reais mostrando que a comparação é ruidosa
+
 ### Fora do escopo (explicitamente)
 
 - **Guardar a foto.** O resultado derivado basta para o acompanhamento, e não
@@ -278,6 +292,20 @@ coluna para as notas de postura.
 ---
 
 ## Decisões técnicas
+
+**A régua é a altura do próprio aluno.** A referência de escala não precisa vir
+da câmera nem de um objeto na mão — vem da pessoa. Foi por não enxergar isso que
+o levantamento inicial concluiu que "sem referência não dá medida"; dá, e o dado
+já está em `physical_assessments`.
+
+**O vídeo é visor, não carga.** A orientação de captura roda no dispositivo e o
+que atravessa a fronteira continuam sendo três fotos. Vídeo multiplicaria tokens
+e latência sem melhorar a análise — o modelo não precisa de 300 frames de um
+corpo parado — e ampliaria a exposição de dado sensível contra o Bloco A.
+
+**A comparação não custa chamada de IA.** O delta entre dois escaneamentos é
+subtração sobre linhas de `body_scans`. O histórico no web e o `query_body_scan`
+no chat leem número gravado; nenhuma foto é reenviada.
 
 **A análise vale pelo delta, não pelo valor absoluto.** Uma foto isolada dá um
 número discutível. Duas fotos na mesma pose, separadas por semanas, dão uma

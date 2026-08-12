@@ -207,6 +207,18 @@ export const AI_MODELS = {
 } as const;
 ```
 
+### Análise corporal por imagem — o modelo não mede, ele interpreta
+
+Peso e altura **entram** na chamada, vindos de `physical_assessments`; nunca
+saem dela. A altura é a régua que converte pixel em centímetro, e a captura no
+mobile guia o enquadramento para que dois escaneamentos sejam comparáveis.
+
+A imagem **não é persistida** — só o resultado, em `body_scans`. A comparação
+entre escaneamentos é subtração sobre linhas gravadas, não chamada de IA. Os
+coaches leem o resultado por `query_body_scan`; foto nunca é reenviada ao chat.
+
+Fluxo completo e o porquê de cada escolha: `docs/decisions/ADR-010-body-scan-calibrado.md`.
+
 ### Prompt caching — obrigatório onde contexto > 1000 tokens
 
 ```typescript
