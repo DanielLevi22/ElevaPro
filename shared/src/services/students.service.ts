@@ -115,55 +115,27 @@ export const createStudentsService = (supabase: SupabaseClient) => ({
     return code;
   },
 
-  linkStudent: async (specialistId: string, code: string): Promise<LinkStudentResult> => {
-    const cleanCode = code.trim().toUpperCase();
+  /**
+   * Vincula um aluno pelo código, via RPC.
+   *
+   * Os cinco passos (ler código, ler serviço, checar duplicado, inserir, apagar
+   * código) rodavam aqui no cliente. Validação no cliente não é validação: como
+   * `student_specialists` aceitava INSERT direto, bastava falar com o PostgREST
+   * para pular tudo e se vincular a qualquer aluno — verificado em 2026-08-11.
+   *
+   * Agora é uma transação em `public.link_student_by_code`, com o specialist
+   * saindo de `auth.uid()` no servidor e não de um parâmetro do chamador.
+   *
+   * @param _specialistId mantido pela assinatura pública; o servidor ignora e
+   *   usa `auth.uid()`. Aceitar quem é o specialist por parâmetro foi justamente
+   *   o furo.
+   */
+  linkStudent: async (_specialistId: string, code: string): Promise<LinkStudentResult> => {
+    const { data, error } = await supabase.rpc("link_student_by_code", { p_code: code });
 
-    const { data: linkCode, error: codeError } = await supabase
-      .from("student_link_codes")
-      .select("student_id, expires_at")
-      .eq("code", cleanCode)
-      .gt("expires_at", new Date().toISOString())
-      .single();
+    if (error) throw error;
 
-    if (codeError || !linkCode) {
-      return { success: false, error: "Código inválido ou expirado." };
-    }
-
-    const { data: services } = await supabase
-      .from("specialist_services")
-      .select("service_type")
-      .eq("specialist_id", specialistId)
-      .limit(1)
-      .single();
-
-    if (!services) {
-      return { success: false, error: "Especialista sem serviço cadastrado." };
-    }
-
-    const { data: existing } = await supabase
-      .from("student_specialists")
-      .select("id")
-      .eq("student_id", linkCode.student_id)
-      .eq("service_type", services.service_type)
-      .eq("status", "active")
-      .maybeSingle();
-
-    if (existing) {
-      return { success: false, error: "Aluno já vinculado a um especialista deste serviço." };
-    }
-
-    const { error: linkError } = await supabase.from("student_specialists").insert({
-      student_id: linkCode.student_id,
-      specialist_id: specialistId,
-      service_type: services.service_type,
-      status: "active",
-    });
-
-    if (linkError) throw linkError;
-
-    await supabase.from("student_link_codes").delete().eq("code", cleanCode);
-
-    return { success: true };
+    return data as LinkStudentResult;
   },
 
   removeStudent: async (

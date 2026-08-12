@@ -1,6 +1,6 @@
 # Status dos Módulos — Eleva Pro
 
-> **Atualizado em:** 2026-08-09 (docs/status-refresh)
+> **Atualizado em:** 2026-08-11 (feature/api-security-hardening)
 > **Regra:** atualizar ao fechar cada PR. Nenhuma feature é `done` sem este arquivo atualizado.
 
 ---
@@ -34,6 +34,34 @@
 
 ---
 
+## Design system (web)
+
+Casa única: `web/src/shared/components/ui/`. Não criar outro diretório de UI —
+o CLAUDE.md manda `Módulo → shared/`. **Procurar aqui antes de criar componente.**
+
+| Primitiva | Papel |
+|---|---|
+| `DataTable` | Casca, cabeçalho, divisórias, hover, foco, esqueleto e vazio das listagens |
+| `StatusBadge` | Pílula de status por tom semântico (`success`, `warning`, `info`, `danger`, `neutral`) |
+| `PageHeader` | Sobrelinha, título, descrição e ações do topo da página |
+| `FilterBar` | Busca, selects e pílulas de filtro |
+| `Button` | Variantes, tamanhos e `isLoading`. Emite `type="button"` por padrão |
+| `Dialog` | Overlay, painel, Escape, `role="dialog"`; `scrollable` para listas longas |
+| `ConfirmModal` | Confirmação de ação — único do produto |
+| `DateField` | Entrada de data com faixa aceita embutida |
+| `formatDate` / `formatDateRange` | Exibição de data em `shared/utils/formatDate.ts` |
+
+Três armadilhas que já custaram tempo:
+
+- **Tailwind só gera classe que aparece literalmente no fonte.** Nunca montar
+  `${breakpoint}:${width}` em runtime — a classe não existe no CSS.
+- **`format` do date-fns lança** com data inválida, diferente de
+  `toLocaleDateString`. Sempre usar o utilitário, nunca `format` direto.
+- **`new Date("2026-08-01")` é lido como UTC** e volta um dia em fuso negativo.
+  As colunas de data são *date-only*; usar `parseISO`.
+
+---
+
 ## PRDs ativos
 
 | PRD | Feature | Status | Branch |
@@ -54,6 +82,10 @@
 | [health-background-tracking](PRDs/health-background-tracking.md) | Passos/calorias: correção da leitura + coleta em background (Android) | ✅ done | — (mergeada) |
 | [schema-drift-alignment](PRDs/schema-drift-alignment.md) | Alinha mobile e web ao schema real + guarda em CI contra recorrência | ✅ done | — (mergeada) |
 | [admin-panel-restore](PRDs/admin-panel-restore.md) | Torna o painel /admin acessível, sem dar ao admin acesso a dados de saúde | draft — **aguarda decisão sobre 3 colunas** | — |
+| [design-system-unification](PRDs/design-system-unification.md) | Tema claro alcançável, tokens e primitivas de UI do web | ⚠️ em andamento — fases 1–3 feitas, falta erradicar hex e a guarda de lint | `feature/design-system-unification` |
+| [rls-security-hardening](PRDs/rls-security-hardening.md) | RLS nas 27 tabelas + guarda em CI + teste de isolamento | ✅ mergeado — **falta verificar preview e aplicar em produção** | `feature/rls-security-hardening` |
+| [api-security-hardening](PRDs/api-security-hardening.md) | Autorização das rotas do BFF, que a RLS não alcança | approved | `feature/api-security-hardening` |
+| [briefing](PRDs/briefing.md) | Briefing diário do especialista: quem precisa de mim hoje | approved — desbloqueado pelas migrations `0016`–`0017` | `feature/briefing` |
 
 > Adicionar linha aqui ao criar um novo PRD via `node scripts/new-feature.js`.
 
@@ -78,8 +110,24 @@
 | 13 | `sync-env.js` não é exercitado por nenhum teste, e já divergiu duas vezes dos `.env.example` | 🟢 Baixa | [ADR-009](decisions/009-migration-strategy.md) |
 | 14 | 6 tabelas removidas do código podem ser features legítimas nunca implementadas: `workout_assignments`, `workout_feedback`, `nutrition_progress` e 3 de admin | 🟡 Média | [PRD](PRDs/schema-drift-alignment.md) |
 | 15 | iOS nunca foi buildado — não existe `app/ios`. O caminho HealthKit e o background delivery seguem sem qualquer verificação | 🟡 Média | — |
-| 16 | **RLS ausente nas tabelas centrais** — `workout_sessions`, `student_anamnesis`, `physical_assessments`, `profiles` e `student_specialists` não têm RLS. Só 9 tabelas têm. Qualquer autenticado lê treino e anamnese de qualquer aluno | 🔴 Alta | [PRD](PRDs/briefing.md) |
-| 17 | `workout_session_sets` tem RLS só do aluno — o especialista não lê carga executada dos próprios alunos, então qualquer métrica de recorde ou evolução volta vazia sem erro | 🟡 Média | [PRD](PRDs/briefing.md) |
+| 16 | **Mobile continua com o bug do coral**: `app/tailwind.config.js` sobrescreve o lime de `app/src/global.css`, então `bg-primary` e `var(--color-primary)` devolvem cores distintas na mesma tela. Mais 873 hex cravados em `app/src` | 🟡 Média | [PRD](PRDs/design-system-unification.md) |
+| 17 | Tema claro do web nunca foi exercitado em uso real. `enableSystem` está desligado de propósito para que ninguém caia nele sem pedir — só volta a ligar depois de validar as telas | 🟡 Média | [PRD](PRDs/design-system-unification.md) |
+| 18 | 10 periodizações no banco com data inválida, incluindo ano de 5 dígitos (`12312-12-23`). A leitura agora aguenta, mas os registros seguem corrompidos | 🟢 Baixa | — |
+| 19 | `CreateWorkoutModal` é o único modal com casca própria — tem dois modos (página/modal) e rodapé fixo, que o `Dialog` não oferece | 🟢 Baixa | — |
+| 20 | Sparklines do dashboard não existem: `useDashboardStats` devolve só contagens do momento, sem série histórica | 🟢 Baixa | — |
+| 21 | ~~**18 de 27 tabelas sem RLS**~~ — **resolvido** nas migrations `0016`–`0020`, com guarda no pre-commit e no CI contra recorrência | ✅ | [PRD](PRDs/rls-security-hardening.md) |
+| 22 | ~~**Escalonamento por `student_specialists`**~~ — **resolvido**: a tabela perdeu INSERT e DELETE, e o vínculo só nasce pela RPC `link_student_by_code` | ✅ | [PRD](PRDs/rls-security-hardening.md) |
+| 23 | ~~`workout_session_sets` tem RLS só do aluno~~ — **resolvido** na `0017` (`sets_specialist_read`) | ✅ | [PRD](PRDs/rls-security-hardening.md) |
+| 24 | `body_scans` guarda URL de foto corporal. RLS na tabela não protege o arquivo no Storage se a URL vazar — o bucket dessas fotos ainda não é versionado | 🟡 Média | [PRD](PRDs/rls-security-hardening.md) |
+| 25 | Produção ainda não recebeu as migrations — só entram no push para `main`. O preview passou a se verificar sozinho no deploy (`scripts/verify-rls.sql`) | 🔴 Crítica | [PRD](PRDs/rls-security-hardening.md) |
+| 26 | Rota `/api/students/[id]` faz UPDATE em `physical_assessments` pelo `service_role`, contornando a imutabilidade que a RLS impõe ao cliente | 🟡 Média | — |
+| 27 | ~~**IDOR nas rotas de IA do especialista**~~ — `studentId` vinha da URL e nenhuma checagem de vínculo; um token de aluno lia a anamnese de qualquer outro. **Resolvido** com `@/lib/api-auth` + guarda no CI | ✅ | [PRD](PRDs/api-security-hardening.md) |
+| 28 | ~~Privilégio saindo de `user_metadata`~~ — `ensure-profile` e `getUserContextJWT` (web) liam o `account_type` de campo que o próprio usuário edita. **Resolvido**: sai de `profiles` | ✅ | [PRD](PRDs/api-security-hardening.md) |
+| 29 | Nenhuma rota de IA tem rate limit. Cada chamada custa dinheiro e qualquer conta autenticada chama à vontade — abuso de custo, não vazamento | 🟡 Média | [PRD](PRDs/api-security-hardening.md) |
+| 30 | Cadastro público cria especialista com `email_confirm: true` e `account_status: 'active'` — sem verificação de e-mail e pulando a aprovação que existe no `/admin` | 🟡 Média | [PRD](PRDs/api-security-hardening.md) |
+| 31 | `students.service.ts` invoca a edge function `create-student`, que não existe em `supabase/functions/`. Ou o cadastro de aluno está quebrado, ou há código fora do controle de versão rodando com `service_role` | 🟡 Média | [PRD](PRDs/api-security-hardening.md) |
+| 32 | `loadStudentContext` manda a anamnese inteira (`select("*")`) para o prompt da Anthropic — Necessidade (Art. 6°, III) | 🟡 Média | [LGPD](LGPD_COMPLIANCE.md) |
+| 33 | ~~Gate do CI ficava verde com a suíte pulada~~ — `paths-filter` sem `pull-requests: read` falhava, os outputs saíam vazios e o `ci-success` lia "nada mudou". **Resolvido**: permissão + o gate exige que a detecção tenha passado | ✅ | [PRD](PRDs/api-security-hardening.md) |
 
 ---
 

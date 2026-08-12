@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { HealthDataConsentModal } from "@/modules/nutrition/components/HealthDataConsentModal";
 import { MacroRing } from "@/modules/nutrition/components/MacroRing";
+import { Button } from "@/shared/components/ui/Button";
 import { DatePicker } from "@/shared/components/ui/DatePicker";
 import { useAuthUser } from "@/shared/hooks/useAuthUser";
 import { useHealthDataConsent } from "@/shared/hooks/useHealthDataConsent";
@@ -295,20 +296,12 @@ export function DietCreatorPage() {
         </section>
 
         <div className="flex justify-end gap-2 pt-6">
-          <button
-            type="button"
-            onClick={() => router.push("/dashboard/diets")}
-            className="px-4 py-2.5 rounded-[10px] border border-border bg-surface text-[13px] font-bold text-foreground transition-colors hover:bg-overlay-05"
-          >
+          <Button variant="secondary" onClick={() => router.push("/dashboard/diets")}>
             Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={createMutation.isPending}
-            className="px-4 py-2.5 rounded-[10px] bg-primary text-primary-foreground text-[13px] font-bold transition-colors hover:bg-primary-hover disabled:opacity-60"
-          >
+          </Button>
+          <Button type="submit" isLoading={createMutation.isPending}>
             {createMutation.isPending ? "Criando..." : "Criar Plano"}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

@@ -1,45 +1,9 @@
-import { createClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
+import { authorizeLinkedSpecialist } from "@/lib/api-auth";
 import type { Database } from "@/lib/database.types";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 type AssessmentInsert = Database["public"]["Tables"]["physical_assessments"]["Insert"];
-
-async function getCallerSpecialist(request: NextRequest) {
-  const authorization = request.headers.get("authorization");
-  if (!authorization?.startsWith("Bearer ")) return null;
-
-  const token = authorization.replace("Bearer ", "");
-  const callerClient = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-  );
-  const {
-    data: { user },
-  } = await callerClient.auth.getUser(token);
-  if (!user) return null;
-
-  const { data: profile } = await supabaseAdmin
-    .from("profiles")
-    .select("account_type")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.account_type !== "specialist") return null;
-  return user;
-}
-
-async function verifyOwnership(specialistId: string, studentId: string) {
-  const { data } = await supabaseAdmin
-    .from("student_specialists")
-    .select("id")
-    .eq("specialist_id", specialistId)
-    .eq("student_id", studentId)
-    .eq("status", "active")
-    .limit(1)
-    .maybeSingle();
-  return !!data;
-}
 
 export interface Assessment {
   id: string;
@@ -110,13 +74,10 @@ const NUMERIC_FIELDS: Array<
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const caller = await getCallerSpecialist(request);
-    if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
     const { id: studentId } = await params;
-    if (!(await verifyOwnership(caller.id, studentId))) {
-      return NextResponse.json({ error: "Aluno não encontrado" }, { status: 404 });
-    }
+
+    const auth = await authorizeLinkedSpecialist(request, studentId);
+    if (!auth.ok) return auth.response;
 
     const { data, error } = await supabaseAdmin
       .from("physical_assessments")
@@ -135,13 +96,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const caller = await getCallerSpecialist(request);
-    if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
     const { id: studentId } = await params;
-    if (!(await verifyOwnership(caller.id, studentId))) {
-      return NextResponse.json({ error: "Aluno não encontrado" }, { status: 404 });
-    }
+
+    const auth = await authorizeLinkedSpecialist(request, studentId);
+    if (!auth.ok) return auth.response;
+    const caller = auth.caller;
 
     const body = await request.json();
     const record: Record<string, unknown> = {

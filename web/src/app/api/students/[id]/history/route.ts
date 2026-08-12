@@ -1,30 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
+import { authorizeLinkedSpecialist } from "@/lib/api-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-
-async function getCallerSpecialist(request: NextRequest) {
-  const authorization = request.headers.get("authorization");
-  if (!authorization?.startsWith("Bearer ")) return null;
-
-  const token = authorization.replace("Bearer ", "");
-  const callerClient = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-  );
-  const {
-    data: { user },
-  } = await callerClient.auth.getUser(token);
-  if (!user) return null;
-
-  const { data: profile } = await supabaseAdmin
-    .from("profiles")
-    .select("account_type")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.account_type !== "specialist") return null;
-  return user;
-}
 
 export interface HistoryEvent {
   id: string;
@@ -37,22 +13,10 @@ export interface HistoryEvent {
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const caller = await getCallerSpecialist(request);
-    if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
     const { id: studentId } = await params;
 
-    // Verify active link exists
-    const { data: link } = await supabaseAdmin
-      .from("student_specialists")
-      .select("id")
-      .eq("specialist_id", caller.id)
-      .eq("student_id", studentId)
-      .eq("status", "active")
-      .limit(1)
-      .maybeSingle();
-
-    if (!link) return NextResponse.json({ error: "Aluno não encontrado" }, { status: 404 });
+    const auth = await authorizeLinkedSpecialist(request, studentId);
+    if (!auth.ok) return auth.response;
 
     const [sessionsResult, assessmentsResult, dietPlansResult] = await Promise.all([
       supabaseAdmin

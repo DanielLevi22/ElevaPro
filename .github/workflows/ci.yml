@@ -22,6 +22,13 @@ jobs:
   changes:
     name: 🔎 Detect Changes
     runs-on: ubuntu-latest
+    # Em `pull_request`, o paths-filter lista os arquivos pela API do GitHub, e
+    # sem esta permissão o GITHUB_TOKEN devolve "Resource not accessible by
+    # integration". O job falhava, os outputs saíam vazios, todo job de app e
+    # web era pulado — e o gate final continuava verde.
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       app: ${{ steps.filter.outputs.app }}
       web: ${{ steps.filter.outputs.web }}
@@ -63,12 +70,12 @@ jobs:
         run: npm run lint
 
   # ─────────────────────────────────────────
-  # SCHEMA — referências de tabela
+  # SCHEMA — referências de tabela e RLS
   # ─────────────────────────────────────────
   # Roda sempre, sem filtro de path: uma tabela pode ser removida do schema
   # sem que nenhum arquivo de app/ ou web/ mude no mesmo commit.
   schema-refs:
-    name: 🗃️ Schema References
+    name: 🗃️ Schema, RLS & API Auth
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -79,6 +86,18 @@ jobs:
 
       - name: Verificar referências de tabela
         run: npm run db:check-refs
+
+      # Tabela sem RLS não quebra nada: a aplicação segue funcionando e o dado
+      # fica legível por qualquer conta autenticada. Sintoma zero até vazar —
+      # foi assim que 18 das 27 tabelas ficaram abertas até 2026-08-11.
+      - name: Verificar RLS nas tabelas
+        run: npm run db:check-rls
+
+      # A RLS não alcança rota que usa service_role: lá a única barreira é o
+      # código. Em 2026-08-11 duas rotas de IA entregavam a anamnese de
+      # qualquer aluno a qualquer conta autenticada, e o check de RLS passava.
+      - name: Verificar autorização das rotas
+        run: npm run api:check-auth
 
   # ─────────────────────────────────────────
   # APP — 1. LINT
@@ -275,6 +294,15 @@ jobs:
           app_changed="${{ needs.changes.outputs.app }}"
           web_changed="${{ needs.changes.outputs.web }}"
 
+          # A detecção de mudanças precisa ter passado. Se ela falha, os outputs
+          # saem vazios, todo job filtrado é pulado e o resto deste script leria
+          # "nada mudou" — o gate ficava verde com a suíte inteira sem rodar.
+          # Aconteceu no PR #99: um PR de segurança passou com zero testes.
+          if [ "${{ needs.changes.result }}" != "success" ]; then
+            echo "❌ Detecção de mudanças falhou — nenhum job filtrado rodou"
+            exit 1
+          fi
+
           # Ambos rodam sempre — não dependem de filtro de path
           if [ "${{ needs.root-lint.result }}" != "success" ]; then
             echo "❌ Lint da raiz falhou"
@@ -282,7 +310,7 @@ jobs:
           fi
 
           if [ "${{ needs.schema-refs.result }}" != "success" ]; then
-            echo "❌ Referência a tabela inexistente no schema"
+            echo "❌ Tabela inexistente, tabela sem RLS, ou rota sem autorização"
             exit 1
           fi
 

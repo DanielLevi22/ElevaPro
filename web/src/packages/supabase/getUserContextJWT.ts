@@ -29,31 +29,14 @@ export async function getUserContextJWT(userId: string, session?: Session): Prom
   }
 
   if (userError || !user) {
-    // Log the actual DB error for debugging
     console.error("[getUserContextJWT] DB error after retries:", userError);
 
-    // Fallback: use user_metadata from JWT (set during signUp)
-    const meta = activeSession?.user?.user_metadata;
-    const accountType = meta?.account_type as AccountType | undefined;
-    if (accountType) {
-      console.warn("[getUserContextJWT] Profile not in DB — falling back to user_metadata");
-      // Try to create the profile via API so next login works
-      if (activeSession?.access_token) {
-        fetch("/api/auth/ensure-profile", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${activeSession.access_token}`,
-          },
-        }).catch(() => {});
-      }
-      return {
-        accountType,
-        accountStatus: (meta?.account_status ?? "active") as AccountStatus,
-        services: (meta?.service_types ?? []) as ServiceType[],
-      };
-    }
-
+    // Aqui havia um fallback para `user_metadata.account_type`. O usuário
+    // escreve o próprio `user_metadata` com `updateUser`, então bastava gravar
+    // 'admin' e derrubar a leitura de `profiles` para o CASL montar as
+    // permissões de admin. Só concedia UI — o dado segue protegido por RLS e
+    // pelas rotas do BFF —, mas privilégio nunca sai de campo que o titular
+    // edita.
     throw new Error("User profile not found");
   }
 

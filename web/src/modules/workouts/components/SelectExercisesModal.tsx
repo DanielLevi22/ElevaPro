@@ -1,6 +1,9 @@
 "use client";
 
+import { Search } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/shared/components/ui/Button";
+import { Dialog } from "@/shared/components/ui/Dialog";
 import type { Exercise } from "@/shared/hooks/useExercises";
 import { useExercises } from "@/shared/hooks/useExercises";
 
@@ -26,71 +29,31 @@ export function SelectExercisesModal({
       exercise.muscle_group?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" onClick={onClose} />
-
-      {/* Modal */}
-      <div className="relative bg-surface/95 backdrop-blur-xl border border-overlay-10 rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
-        {/* Header */}
-        <div className="p-6 border-b border-overlay-10">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground">Selecionar Exercícios</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                {selectedIds.length} {selectedIds.length === 1 ? "selecionado" : "selecionados"}
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-overlay-10 rounded-lg transition-colors"
-            >
-              <svg
-                className="w-5 h-5 text-muted-foreground"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-
-          {/* Search */}
-          <div className="relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar exercícios..."
-              className="w-full bg-overlay-05 border border-overlay-10 rounded-lg px-4 py-3 pl-10 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-            />
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-          </div>
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      scrollable
+      maxWidth="2xl"
+      title="Selecionar Exercícios"
+      description={`${selectedIds.length} ${selectedIds.length === 1 ? "selecionado" : "selecionados"}`}
+    >
+      <div className="space-y-4">
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Buscar exercícios..."
+            aria-label="Buscar exercícios"
+            className="w-full bg-overlay-05 border border-border rounded-lg px-4 py-3 pl-10 text-foreground placeholder:text-muted-foreground outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
+          />
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div>
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -148,15 +111,12 @@ export function SelectExercisesModal({
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-overlay-10">
-          <button
-            onClick={onClose}
-            className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/50 transition-all"
-          >
+        <div className="pt-2">
+          <Button fullWidth onClick={onClose}>
             Concluir
-          </button>
+          </Button>
         </div>
       </div>
-    </div>
+    </Dialog>
   );
 }

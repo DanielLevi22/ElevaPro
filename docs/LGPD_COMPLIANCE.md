@@ -344,6 +344,62 @@ Itens obrigatórios antes de abrir para o público:
 
 ## 10. Impacto no schema — status por módulo
 
+### Estado real da RLS — verificado em 2026-08-11
+
+As tabelas abaixo registravam decisões de RLS como tomadas desde a revisão de
+cada módulo. A auditoria de 2026-08-11 foi ao banco e encontrou **18 das 27
+tabelas sem RLS nenhuma**: a decisão estava documentada, a migration nunca
+existiu. Fotos corporais, anamneses, avaliações físicas e histórico de treino
+eram legíveis por qualquer conta autenticada falando direto com o PostgREST —
+falha do **controlador**, na definição da seção 1 deste documento.
+
+Corrigido pelas migrations `0016`–`0020` (PRD
+[rls-security-hardening](PRDs/rls-security-hardening.md)).
+
+| Módulo | Tabelas | RLS | Migration |
+|---|---|---|---|
+| Auth / Students | `profiles`, `student_specialists`, `student_consents`, `student_link_codes` | ✅ | 0016 |
+| Saúde | `student_anamnesis`, `physical_assessments`, `body_scans`, `workout_sessions`, `workout_session_exercises` | ✅ | 0017 |
+| Prescrição e catálogo | `workouts`, `workout_exercises`, `training_periodizations`, `training_plans`, `exercises`, `specialist_services` | ✅ | 0018 |
+| Gamificação | `achievements`, `daily_goals`, `student_streaks` | ✅ | 0019 |
+| Nutrição | `diet_plans`, `diet_meals`, `diet_meal_items`, `meal_logs`, `foods` | ✅ | 0013 |
+| Saúde diária | `health_daily_metrics` | ✅ | 0015 |
+| IA | `ai_chat_sessions`, `ai_chat_messages` | ✅ | 0003 |
+| Treino (séries) | `workout_session_sets` | ✅ | 0011 + 0017 |
+
+**O escalonamento que invalidava as políticas existentes.** `student_specialists`
+aceitava INSERT de qualquer autenticado, e as políticas de `meal_logs`,
+`health_daily_metrics` e dos planos de dieta consultam essa tabela para decidir
+acesso. Inserir uma linha de vínculo concedia acesso *legitimamente* ao dado de
+saúde de qualquer aluno. A tabela agora não tem política de INSERT nem de
+DELETE: o vínculo só nasce pela função `public.link_student_by_code`, que tira o
+especialista de `auth.uid()` no servidor em vez de aceitá-lo por parâmetro.
+
+**Garantias verificadas por teste, não por leitura de migration.**
+`scripts/test-rls-isolation.mjs` autentica dois alunos e dois especialistas
+reais, semeia dado de saúde para os dois lados e afirma tabela a tabela quem
+enxerga o quê — incluindo o especialista desvinculado perdendo acesso na mesma
+consulta, sem job de limpeza. `scripts/check-rls.js` roda no pre-commit e no CI
+e falha se uma tabela nova nascer sem RLS.
+
+**O que a RLS não cobre — 1: o Storage.** `body_scans` guarda a URL da foto, não
+o binário. A RLS protege a linha; o arquivo precisa de política própria. O
+bucket `assessments`, para onde o mobile envia as fotos de análise postural,
+**não existia** em ambiente nenhum até a migration `0021`, que o cria privado e
+com política de dono + especialista vinculado. O bucket das fotos de
+`body_scans` segue pendente.
+
+**O que a RLS não cobre — 2: as rotas com `service_role`.** As rotas do BFF em
+`web/src/app/api/` usam a chave de serviço, que ignora RLS por definição. Ali a
+única barreira é a checagem do próprio código. Em 2026-08-11, duas rotas de IA
+recebiam o `studentId` pela URL e não checavam vínculo: um token de aluno
+qualquer obtinha `HTTP 200` e a anamnese de qualquer outro aluno no contexto do
+modelo. Fechado pelo PRD
+[api-security-hardening](PRDs/api-security-hardening.md), com helper único
+(`web/src/lib/api-auth.ts`), guarda no CI e teste com quatro usuários reais.
+
+---
+
 ### Módulo Auth ✅ Revisado
 
 | Decisão | Princípio atendido |
@@ -433,7 +489,7 @@ Itens obrigatórios antes de abrir para o público:
 
 | Item | Ação necessária |
 |------|----------------|
-| RLS nas tabelas de gamificação (`daily_goals`, `student_streaks`, `achievements`) | Criar migration (aluno lê/escreve apenas seus próprios dados; especialista lê dados de alunos ativos) |
+| ~~RLS nas tabelas de gamificação (`daily_goals`, `student_streaks`, `achievements`)~~ | ✅ Feito na migration `0019` — aluno lê e escreve o próprio; especialista com vínculo `active` só lê |
 | `ranking_scores` não existe no schema Drizzle nem nas migrations | Criar tabela com RLS antes de usar o leaderboard em produção |
 | Leaderboard global mostra `full_name` de todos os alunos ranqueados — verificar se há consentimento necessário para participação pública | Avaliar se `ranking_scores` deve ser opt-in (consentimento) ou opt-out |
 
@@ -489,6 +545,7 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 | Consentimento da tela de Body Scan deve mencionar explicitamente envio de fotos a serviço de IA externo | Atualizar texto da tela `BodyScanIntroduction.tsx` | Dev + Legal |
 | Anthropic e Google devem ser listados como sub-processadores na Política de Privacidade | Atualizar política de privacidade | Legal |
 | Rota `/api/ai/body-scan` deve verificar `student_consents` (tipo `health_data_collection`) antes de processar | Adicionar middleware de consentimento na rota, igual ao padrão de `nutribot` e `scan-food` | Dev |
+| `loadStudentContext` manda a anamnese inteira (`select("*")`) para o prompt da Anthropic | Recortar os campos que o modelo realmente usa para montar treino — Necessidade (Art. 6°, III) | Dev |
 | Rota `/api/ai/nutrition/adherence` deve verificar `student_consents` antes de processar | Idem | Dev |
 | ~~Verificar DPA Google (Gemini) para dado biométrico de voz~~ | Eliminado — voice command removido do escopo | — |
 

@@ -3,6 +3,7 @@
 import { supabase } from "@elevapro/supabase";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Button } from "@/shared/components/ui/Button";
 
 export default function EditExercisePage() {
   const router = useRouter();
@@ -219,20 +220,12 @@ export default function EditExercisePage() {
         </div>
 
         <div className="flex justify-end gap-4">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="px-6 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 font-medium"
-          >
+          <Button variant="secondary" onClick={() => router.back()}>
             Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium disabled:opacity-50"
-          >
+          </Button>
+          <Button type="submit" isLoading={isSaving}>
             {isSaving ? "Salvando..." : "Salvar Alterações"}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

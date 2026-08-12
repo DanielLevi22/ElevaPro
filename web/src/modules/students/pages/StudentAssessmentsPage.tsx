@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/shared/components/ui/Button";
 import { useStudents } from "@/shared/hooks/useStudents";
 import { formatDate } from "@/shared/utils/formatDate";
 import { AssessmentModal } from "../components/AssessmentModal";
@@ -114,12 +115,7 @@ export default function StudentAssessmentsPage() {
           </div>
         </div>
 
-        <button
-          onClick={() => setModalOpen(true)}
-          className="px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors text-sm"
-        >
-          + Nova Avaliação
-        </button>
+        <Button onClick={() => setModalOpen(true)}>+ Nova Avaliação</Button>
       </div>
 
       {/* Content */}
@@ -159,12 +155,7 @@ export default function StudentAssessmentsPage() {
           <p className="text-sm text-muted-foreground mb-6">
             Registre a primeira avaliação física deste aluno.
           </p>
-          <button
-            onClick={() => setModalOpen(true)}
-            className="px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors text-sm"
-          >
-            Nova Avaliação
-          </button>
+          <Button onClick={() => setModalOpen(true)}>Nova Avaliação</Button>
         </div>
       )}
 

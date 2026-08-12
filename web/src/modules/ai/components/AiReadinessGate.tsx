@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/shared/components/ui/Button";
 import type { AiReadinessScore } from "../services/aiReadiness";
 
 interface Props {
@@ -80,19 +81,13 @@ export function AiReadinessGate({ readiness, onProceed, onCompleteProfile }: Pro
       {/* Actions */}
       <div className="flex flex-col gap-2">
         {level !== "blocked" && (
-          <button
-            onClick={onProceed}
-            className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 transition-colors"
-          >
+          <Button size="lg" fullWidth onClick={onProceed}>
             {level === "ready" ? "Iniciar Coach IA" : "Continuar assim mesmo"}
-          </button>
+          </Button>
         )}
-        <button
-          onClick={onCompleteProfile}
-          className="w-full py-3 bg-white/5 border border-white/10 text-foreground font-medium rounded-xl hover:bg-white/10 transition-colors"
-        >
+        <Button size="lg" fullWidth variant="secondary" onClick={onCompleteProfile}>
           {level === "blocked" ? "Completar perfil agora" : "Completar perfil primeiro"}
-        </button>
+        </Button>
       </div>
     </div>
   );

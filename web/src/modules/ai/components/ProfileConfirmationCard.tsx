@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/shared/components/ui/Button";
+
 interface Props {
   profileSummary: Record<string, string | null>;
   coachMode: "express" | "analytical";
@@ -74,12 +76,9 @@ export function ProfileConfirmationCard({
           </p>
         </div>
 
-        <button
-          onClick={onConfirm}
-          className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 transition-colors"
-        >
+        <Button size="lg" fullWidth onClick={onConfirm}>
           Confirmar e iniciar
-        </button>
+        </Button>
       </div>
     </div>
   );

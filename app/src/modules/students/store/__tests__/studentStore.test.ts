@@ -137,26 +137,41 @@ describe('studentStore', () => {
     expect(mockSupabase.from).toHaveBeenCalledWith('student_link_codes');
   });
 
+  // O vínculo virou uma RPC. Antes eram cinco passos no cliente — ler o código,
+  // ler o serviço, checar duplicado, inserir e apagar —, e por isso o teste
+  // enfileirava cinco respostas de `from`. Validação no cliente não é validação:
+  // como `student_specialists` aceitava INSERT direto, dava para pular tudo
+  // falando com o PostgREST. Agora o servidor decide, e o teste só verifica que
+  // o código sai daqui e a decisão volta de lá.
   it('should link student successfully', async () => {
-    mockSupabase.from
-      .mockReturnValueOnce(mockSupabaseQuery({ student_id: 's1', expires_at: '2099-01-01' }))
-      .mockReturnValueOnce(mockSupabaseQuery({ service_type: 'personal_training' }))
-      .mockReturnValueOnce(mockSupabaseQuery(null))
-      .mockReturnValueOnce(mockSupabaseQuery(null))
-      .mockReturnValueOnce(mockSupabaseQuery(null));
+    mockSupabase.rpc.mockResolvedValueOnce({ data: { success: true }, error: null });
 
     const result = await useStudentStore.getState().linkStudent('specialist-1', 'CODE12');
 
     expect(result.success).toBe(true);
-    expect(mockSupabase.from).toHaveBeenCalledWith('student_link_codes');
+    expect(mockSupabase.rpc).toHaveBeenCalledWith('link_student_by_code', { p_code: 'CODE12' });
   });
 
   it('should handle invalid code when linking', async () => {
-    mockSupabase.from.mockReturnValue(mockSupabaseQuery(null, { message: 'Not found' }));
+    mockSupabase.rpc.mockResolvedValueOnce({
+      data: { success: false, error: 'Código inválido ou expirado.' },
+      error: null,
+    });
 
     const result = await useStudentStore.getState().linkStudent('s1', 'WRONG');
 
     expect(result.success).toBe(false);
+  });
+
+  // O specialist_id não vai mais no payload: o servidor tira de auth.uid().
+  // Aceitar quem é o specialist por parâmetro foi exatamente o furo.
+  it('não envia o specialist_id para a RPC', async () => {
+    mockSupabase.rpc.mockResolvedValueOnce({ data: { success: true }, error: null });
+
+    await useStudentStore.getState().linkStudent('specialist-1', 'CODE12');
+
+    const [, params] = mockSupabase.rpc.mock.calls[0];
+    expect(params).not.toHaveProperty('p_specialist_id');
   });
 
   it('should remove student (soft delete)', async () => {

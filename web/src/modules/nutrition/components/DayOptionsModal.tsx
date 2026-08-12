@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { Button } from "@/shared/components/ui/Button";
 import { ConfirmModal } from "@/shared/components/ui/ConfirmModal";
+import { Dialog } from "@/shared/components/ui/Dialog";
 
 interface DayOptionsModalProps {
   isOpen: boolean;
@@ -28,32 +30,10 @@ export function DayOptionsModal({
 }: DayOptionsModalProps) {
   const [isConfirmClearOpen, setIsConfirmClearOpen] = useState(false);
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-
-      <div className="relative bg-surface border border-white/10 rounded-xl w-full max-w-sm shadow-2xl">
-        <div className="p-6 space-y-4">
-          <div className="flex justify-between items-center border-b border-white/10 pb-4">
-            <h2 className="text-xl font-bold text-foreground">Opções - {dayName}</h2>
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-
+    <>
+      <Dialog open={isOpen} onClose={onClose} title={`Opções - ${dayName}`} maxWidth="sm">
+        <div className="space-y-4">
           <div className="space-y-2">
             <button
               onClick={onCopy}
@@ -159,15 +139,12 @@ export function DayOptionsModal({
           </div>
 
           <div className="pt-2">
-            <button
-              onClick={onClose}
-              className="w-full px-4 py-2 text-muted-foreground hover:text-foreground transition-colors"
-            >
+            <Button fullWidth variant="ghost" onClick={onClose}>
               Cancelar
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
+      </Dialog>
 
       <ConfirmModal
         isOpen={isConfirmClearOpen}
@@ -178,6 +155,6 @@ export function DayOptionsModal({
         confirmLabel="Limpar tudo"
         variant="danger"
       />
-    </div>
+    </>
   );
 }

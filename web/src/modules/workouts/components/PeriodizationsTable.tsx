@@ -1,12 +1,13 @@
 "use client";
 
 import type { Periodization } from "@elevapro/shared";
-import Link from "next/link";
+import { DataTable, type DataTableColumn } from "@/shared/components/ui/DataTable";
+import { StatusBadge, type StatusTone } from "@/shared/components/ui/StatusBadge";
 import { formatDateRange } from "@/shared/utils/formatDate";
 
 interface PeriodizationsTableProps {
   periodizations: Periodization[];
-  /** O aluno ve os proprios ciclos, entao a coluna de nome do aluno nao faz sentido. */
+  /** O aluno ve os proprios ciclos, entao repetir o nome dele em toda linha e ruido. */
   isMember: boolean;
 }
 
@@ -19,16 +20,10 @@ const OBJECTIVE_LABEL: Record<string, string> = {
   general_fitness: "Saúde Geral",
 };
 
-const STATUS_STYLE: Record<string, string> = {
-  planned: "bg-secondary/10 text-secondary border-secondary/20",
-  active: "bg-success/10 text-success border-success/20",
-  completed: "bg-muted text-muted-foreground border-border",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  planned: "Planejada",
-  active: "Ativa",
-  completed: "Concluída",
+const STATUS: Record<string, { label: string; tone: StatusTone }> = {
+  planned: { label: "Planejada", tone: "info" },
+  active: { label: "Ativa", tone: "success" },
+  completed: { label: "Concluída", tone: "neutral" },
 };
 
 function phaseCount(count: number | null | undefined): string {
@@ -36,56 +31,62 @@ function phaseCount(count: number | null | undefined): string {
   return `${total} ${total === 1 ? "fase" : "fases"}`;
 }
 
+function buildColumns(isMember: boolean): DataTableColumn<Periodization>[] {
+  return [
+    {
+      key: "name",
+      header: "Nome",
+      render: (p) => (
+        <span className="block min-w-0">
+          <span className="block text-[12.5px] font-bold text-foreground truncate">{p.name}</span>
+          {!isMember && p.student && (
+            <span className="block text-[11px] text-muted-foreground truncate">
+              {p.student.full_name}
+            </span>
+          )}
+        </span>
+      ),
+    },
+    {
+      key: "objective",
+      header: "Objetivo",
+      width: "lg:w-28",
+      render: (p) => OBJECTIVE_LABEL[p.objective ?? ""] ?? p.objective ?? "—",
+    },
+    {
+      key: "period",
+      header: "Período",
+      width: "lg:w-36",
+      render: (p) => formatDateRange(p.start_date, p.end_date),
+    },
+    {
+      key: "phases",
+      header: "Fases",
+      width: "lg:w-20",
+      render: (p) => phaseCount(p.training_plans_count),
+    },
+    {
+      key: "status",
+      header: "Status",
+      width: "lg:w-24",
+      keepOnMobile: true,
+      render: (p) => {
+        const status = STATUS[p.status] ?? STATUS.planned;
+        return <StatusBadge tone={status.tone}>{status.label}</StatusBadge>;
+      },
+    },
+  ];
+}
+
 export function PeriodizationsTable({ periodizations, isMember }: PeriodizationsTableProps) {
   return (
-    <div className="bg-surface border border-border rounded-2xl overflow-hidden">
-      <div className="hidden lg:flex items-center gap-3 px-4 py-2.5 border-b border-border text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
-        <span className="flex-1">Nome</span>
-        <span className="w-28">Objetivo</span>
-        <span className="w-36">Período</span>
-        <span className="w-20">Fases</span>
-        <span className="w-24">Status</span>
-      </div>
-
-      <ul>
-        {periodizations.map((p) => (
-          <li key={p.id} className="border-b border-border last:border-b-0">
-            <Link
-              href={`/dashboard/workouts/periodizations/${p.id}`}
-              className="flex flex-col lg:flex-row lg:items-center gap-1.5 lg:gap-3 px-4 py-3 transition-colors hover:bg-overlay-05 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
-            >
-              <span className="flex-1 min-w-0">
-                <span className="block text-[12.5px] font-bold text-foreground truncate">
-                  {p.name}
-                </span>
-                {!isMember && p.student && (
-                  <span className="block text-[11px] text-muted-foreground truncate">
-                    {p.student.full_name}
-                  </span>
-                )}
-              </span>
-
-              <span className="lg:w-28 text-[11.5px] text-muted-foreground truncate">
-                {OBJECTIVE_LABEL[p.objective ?? ""] ?? p.objective ?? "—"}
-              </span>
-              <span className="lg:w-36 text-[11.5px] text-muted-foreground">
-                {formatDateRange(p.start_date, p.end_date)}
-              </span>
-              <span className="lg:w-20 text-[11.5px] text-muted-foreground">
-                {phaseCount(p.training_plans_count)}
-              </span>
-
-              <span className="lg:w-24">
-                <span
-                  className={`inline-block px-2 py-0.5 rounded-full border text-[10px] font-bold ${STATUS_STYLE[p.status] ?? STATUS_STYLE.planned}`}
-                >
-                  {STATUS_LABEL[p.status] ?? STATUS_LABEL.planned}
-                </span>
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <DataTable
+      breakpoint="lg"
+      columns={buildColumns(isMember)}
+      rows={periodizations}
+      rowKey={(p) => p.id}
+      rowHref={(p) => `/dashboard/workouts/periodizations/${p.id}`}
+      rowLabel={(p) => `Abrir ${p.name}`}
+    />
   );
 }

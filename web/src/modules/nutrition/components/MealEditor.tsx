@@ -3,7 +3,9 @@
 import type { DietMeal, DietMealItem, Food } from "@elevapro/shared";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Button } from "@/shared/components/ui/Button";
 import { ConfirmModal } from "@/shared/components/ui/ConfirmModal";
+import { Dialog } from "@/shared/components/ui/Dialog";
 import {
   useAddFoodToMeal,
   useAddMeal,
@@ -173,12 +175,9 @@ export function MealEditor({ dietPlanId, dayOfWeek }: MealEditorProps) {
               ))}
             </div>
 
-            <button
-              onClick={() => setIsAddMealModalOpen(true)}
-              className="w-full py-3 bg-primary text-primary-foreground font-bold text-sm rounded-xl hover:bg-primary/90 transition-colors"
-            >
+            <Button fullWidth onClick={() => setIsAddMealModalOpen(true)}>
               + Adicionar primeira refeição
-            </button>
+            </Button>
           </div>
         ) : (
           <>
@@ -233,43 +232,23 @@ export function MealEditor({ dietPlanId, dayOfWeek }: MealEditorProps) {
         )}
       </div>
 
-      {isFoodModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setIsFoodModalOpen(false)}
-          />
-          <div className="relative bg-surface border border-white/10 rounded-xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl">
-            <div className="p-4 border-b border-white/10 flex justify-between items-center">
-              <h3 className="text-lg font-bold text-foreground">Seleção de Alimentos</h3>
-              <button
-                onClick={() => setIsFoodModalOpen(false)}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <div className="p-4 flex-1 overflow-hidden">
-              <FoodSelector
-                onSelect={(food, q) => {
-                  if (q) handleConfirmQuantity(q, food);
-                  else {
-                    setPendingFood({ food, calculatedQuantity: q });
-                    setIsQuantityModalOpen(true);
-                  }
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog
+        open={isFoodModalOpen}
+        onClose={() => setIsFoodModalOpen(false)}
+        title="Seleção de Alimentos"
+        maxWidth="lg"
+        scrollable
+      >
+        <FoodSelector
+          onSelect={(food, q) => {
+            if (q) handleConfirmQuantity(q, food);
+            else {
+              setPendingFood({ food, calculatedQuantity: q });
+              setIsQuantityModalOpen(true);
+            }
+          }}
+        />
+      </Dialog>
 
       <EditFoodModal
         isOpen={isEditModalOpen}
@@ -324,42 +303,22 @@ export function MealEditor({ dietPlanId, dayOfWeek }: MealEditorProps) {
         }}
       />
 
-      {isDeleteConfirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setIsDeleteConfirmOpen(false)}
-          />
-          <div className="relative bg-surface border border-white/10 rounded-xl w-full max-w-sm shadow-2xl p-6">
-            <h3 className="text-lg font-bold text-foreground mb-4">Remover Alimento?</h3>
-            <p className="text-muted-foreground mb-6">
-              Esta ação removerá permanentemente o alimento desta refeição.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setIsDeleteConfirmOpen(false)}
-                className="px-4 py-2 text-muted-foreground hover:text-foreground text-sm"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  if (itemToDelete) {
-                    removeFoodMutation.mutate(itemToDelete, {
-                      onSuccess: () => toast.success("Alimento removido!"),
-                      onError: () => toast.error("Erro ao remover alimento."),
-                    });
-                  }
-                  setIsDeleteConfirmOpen(false);
-                }}
-                className="px-6 py-2 bg-red-500 text-white rounded-lg font-bold text-sm hover:bg-red-600 transition-colors"
-              >
-                Confirmar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={() => {
+          if (itemToDelete) {
+            removeFoodMutation.mutate(itemToDelete, {
+              onSuccess: () => toast.success("Alimento removido!"),
+              onError: () => toast.error("Erro ao remover alimento."),
+            });
+          }
+          setIsDeleteConfirmOpen(false);
+        }}
+        title="Remover Alimento?"
+        description="Esta ação removerá permanentemente o alimento desta refeição."
+        variant="danger"
+      />
 
       <ConfirmModal
         isOpen={isConfirmDeleteMealOpen}
