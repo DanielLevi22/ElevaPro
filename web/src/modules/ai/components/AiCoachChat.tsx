@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
+import { formatDate, formatDateRange } from "@/shared/utils/formatDate";
 import type { BulkWorkoutProposal, ChatMessage, PeriodizationProposal, SseEvent } from "../types";
 import { BulkWorkoutProposalCard } from "./BulkWorkoutProposalCard";
 
@@ -15,6 +16,30 @@ interface PeriodizationCard {
   savedId?: string;
 }
 
+const DIA_MS = 86_400_000;
+
+/**
+ * `AAAA-MM-DD` somado em semanas, em UTC.
+ *
+ * `new Date("2026-08-12")` já é interpretado como UTC; somar em milissegundos e
+ * cortar de volta em 10 caracteres evita o dia a menos em fuso negativo — a
+ * armadilha registrada no `formatDate`.
+ */
+function addWeeks(isoDate: string, weeks: number): string {
+  const base = new Date(`${isoDate}T00:00:00Z`).getTime();
+  if (Number.isNaN(base)) return isoDate;
+  return new Date(base + weeks * 7 * DIA_MS).toISOString().slice(0, 10);
+}
+
+/** Janela de uma fase: começa onde a anterior terminou — a regra do servidor. */
+function phaseWindow(data: PeriodizationProposal, index: number): { start: string; end: string } {
+  let start = data.startDate;
+  for (let i = 0; i < index; i++) {
+    start = addWeeks(start, data.phases[i]?.weeks ?? 0);
+  }
+  return { start, end: addWeeks(start, data.phases[index]?.weeks ?? 0) };
+}
+
 export function AiCoachChat({ studentId }: Props) {
   const session = useAuthStore((s) => s.session);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -25,6 +50,8 @@ export function AiCoachChat({ studentId }: Props) {
   const [workoutProposal, setWorkoutProposal] = useState<BulkWorkoutProposal | null>(null);
   const [savedWorkoutTitles, setSavedWorkoutTitles] = useState<string[]>([]);
   const [savingWorkouts, setSavingWorkouts] = useState(false);
+  /** O que o coach está fazendo agora, enquanto a ferramenta roda. */
+  const [activity, setActivity] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -55,7 +82,7 @@ export function AiCoachChat({ studentId }: Props) {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, proposal, workoutProposal]);
+  }, [messages, proposal, workoutProposal, activity]);
 
   /**
    * Salva a proposta guardada no servidor, não a que está na tela.
@@ -114,6 +141,7 @@ export function AiCoachChat({ studentId }: Props) {
     setInput("");
     setProposal(null);
     setWorkoutProposal(null);
+    setActivity(null);
 
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
@@ -167,6 +195,10 @@ export function AiCoachChat({ studentId }: Props) {
               );
             } else if (event.type === "proposal") {
               setProposal({ data: event.data });
+            } else if (event.type === "tool_start") {
+              setActivity(event.label);
+            } else if (event.type === "tool_end") {
+              setActivity(null);
             } else if (event.type === "workout_proposal") {
               setWorkoutProposal(event.data);
               setSavedWorkoutTitles([]);
@@ -186,6 +218,7 @@ export function AiCoachChat({ studentId }: Props) {
       }
     } finally {
       setLoading(false);
+      setActivity(null);
       inputRef.current?.focus();
     }
   }
@@ -237,6 +270,24 @@ export function AiCoachChat({ studentId }: Props) {
           </div>
         ))}
 
+        {/* Enquanto a ferramenta roda o stream fica mudo por 8 a 10 segundos.
+            Sem esta linha o chat parece travado — era a queixa mais frequente. */}
+        {activity && (
+          <div className="flex justify-start">
+            <div
+              className="flex items-center gap-2.5 rounded-2xl rounded-bl-sm border border-white/10 bg-surface px-4 py-2.5 text-sm text-muted-foreground"
+              aria-live="polite"
+            >
+              <span className="flex gap-1">
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:0ms]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:150ms]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:300ms]" />
+              </span>
+              {activity}…
+            </div>
+          </div>
+        )}
+
         {/* Periodization Proposal Card */}
         {proposal && (
           <div className="mx-auto max-w-lg">
@@ -273,6 +324,18 @@ export function AiCoachChat({ studentId }: Props) {
                   <p className="text-muted-foreground text-xs">Nível</p>
                   <p className="text-foreground font-medium">{proposal.data.level}</p>
                 </div>
+                {/* O período faltava, e é o que coloca a periodização no
+                    calendário — sem ele a tela de detalhe mostra um traço. */}
+                <div className="col-span-2">
+                  <p className="text-muted-foreground text-xs">Período</p>
+                  <p className="text-foreground font-medium">
+                    {formatDateRange(
+                      proposal.data.startDate,
+                      addWeeks(proposal.data.startDate, proposal.data.durationWeeks),
+                      "medium",
+                    )}
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -290,6 +353,10 @@ export function AiCoachChat({ studentId }: Props) {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground">{phase.name}</p>
                       <p className="text-xs text-muted-foreground">{phase.focus}</p>
+                      <p className="text-xs text-muted-foreground/80">
+                        {formatDate(phaseWindow(proposal.data, i).start, "short")} →{" "}
+                        {formatDate(phaseWindow(proposal.data, i).end, "short")}
+                      </p>
                     </div>
                     <span className="text-xs text-muted-foreground shrink-0">
                       {phase.weeks} sem

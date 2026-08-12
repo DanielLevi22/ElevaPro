@@ -22,6 +22,8 @@ export interface PeriodizationProposal {
   name: string;
   goal: string;
   durationWeeks: number;
+  /** AAAA-MM-DD. O card mostra o período e o banco recusa nulo desde a 0024. */
+  startDate: string;
   level: string;
   phases: {
     name: string;
@@ -99,6 +101,9 @@ export interface AiSessionState {
 
 export type SseEvent =
   | { type: "text"; content: string }
+  /** O modelo parou para consultar ou gravar. Sem isto o stream fica mudo. */
+  | { type: "tool_start"; tool: string; label: string }
+  | { type: "tool_end"; tool: string }
   | { type: "proposal"; data: PeriodizationProposal }
   | { type: "workout_proposal"; data: BulkWorkoutProposal }
   | { type: "plan_proposal"; data: PlanProposalData }

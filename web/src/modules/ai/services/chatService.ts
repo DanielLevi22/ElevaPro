@@ -55,6 +55,14 @@ export async function saveMessage(
     .insert({ session_id: sessionId, role, content, metadata: (metadata ?? {}) as Json });
 }
 
+const DIA_MS = 86_400_000;
+
+/** `AAAA-MM-DD` somado em semanas, sem passar por fuso. */
+function somaSemanas(isoDate: string, weeks: number): string {
+  const base = new Date(`${isoDate}T00:00:00Z`).getTime();
+  return new Date(base + weeks * 7 * DIA_MS).toISOString().slice(0, 10);
+}
+
 export async function savePeriodization(
   studentId: string,
   specialistId: string,
@@ -62,6 +70,7 @@ export async function savePeriodization(
     name: string;
     goal: string;
     durationWeeks: number;
+    startDate: string;
     level: string;
     phases: { name: string; weeks: number; focus: string }[];
   },
@@ -74,6 +83,10 @@ export async function savePeriodization(
       name: data.name,
       objective: data.goal,
       duration_weeks: data.durationWeeks,
+      // Sem data, a periodização não entra no calendário e a tela mostra um
+      // traço. A `0024` passou a recusar nulo aqui.
+      start_date: data.startDate,
+      end_date: somaSemanas(data.startDate, data.durationWeeks),
       level: data.level,
       status: "active",
     })
@@ -83,12 +96,23 @@ export async function savePeriodization(
   if (periodError || !period)
     throw new Error(`Failed to save periodization: ${periodError?.message}`);
 
-  const phaseRows = data.phases.map((ph) => ({
-    periodization_id: period.id,
-    name: ph.name,
-    duration_weeks: ph.weeks,
-    focus: ph.focus,
-  }));
+  // As fases se encaixam em sequência: cada uma começa onde a anterior terminou.
+  // Antes nenhuma recebia data, e a tela de detalhe mostrava traço em todas.
+  let inicioDaFase = data.startDate;
+  const phaseRows = data.phases.map((ph, index) => {
+    const start = inicioDaFase;
+    const end = somaSemanas(start, ph.weeks);
+    inicioDaFase = end;
+    return {
+      periodization_id: period.id,
+      name: ph.name,
+      duration_weeks: ph.weeks,
+      focus: ph.focus,
+      start_date: start,
+      end_date: end,
+      order_index: index,
+    };
+  });
 
   const { error: phaseError } = await supabaseAdmin.from("training_plans").insert(phaseRows);
 

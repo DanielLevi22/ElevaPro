@@ -80,7 +80,8 @@ export function resolveMuscleGroups(term: string): MuscleGroup[] {
 }
 
 export interface ExerciseQueryInput {
-  muscle_group?: string;
+  /** Vários de uma vez: uma chamada por grupo custava um turno do modelo cada. */
+  muscle_groups?: string[];
   search_term?: string;
 }
 
@@ -89,11 +90,14 @@ export interface ExerciseQueryResult {
   /** Quantos existem no filtro — o modelo precisa saber se está vendo tudo. */
   total: number;
   /** Preenchido quando o grupo pedido não existe, com os que existem. */
-  unknownGroup?: { requested: string; available: readonly string[] };
+  unknownGroup?: { requested: string[]; available: readonly string[] };
 }
 
-/** Teto alto o bastante para caber um grupo inteiro (o maior tem 12). */
-const MAX_RESULTS = 40;
+/**
+ * Teto alto o bastante para caber vários grupos numa consulta só — uma divisão
+ * ABC pede sete de uma vez, e o catálogo inteiro tem 57.
+ */
+const MAX_RESULTS = 80;
 
 /**
  * Quais destes nomes não existem no catálogo.
@@ -118,19 +122,18 @@ export async function unknownExerciseNames(names: string[]): Promise<string[]> {
 }
 
 export async function queryExercises(input: ExerciseQueryInput): Promise<ExerciseQueryResult> {
-  let groups: MuscleGroup[] = [];
+  const pedidos = input.muscle_groups ?? [];
+  const groups = [...new Set(pedidos.flatMap(resolveMuscleGroups))];
+  const naoReconhecidos = pedidos.filter((p) => resolveMuscleGroups(p).length === 0);
 
-  if (input.muscle_group) {
-    groups = resolveMuscleGroups(input.muscle_group);
-    if (groups.length === 0) {
-      // Devolver lista vazia aqui foi o que fez o coach afirmar que o banco
-      // estava vazio. Dizer o que existe deixa o modelo se corrigir sozinho.
-      return {
-        exercises: [],
-        total: 0,
-        unknownGroup: { requested: input.muscle_group, available: MUSCLE_GROUPS },
-      };
-    }
+  if (pedidos.length > 0 && groups.length === 0) {
+    // Devolver lista vazia aqui foi o que fez o coach afirmar que o banco
+    // estava vazio. Dizer o que existe deixa o modelo se corrigir sozinho.
+    return {
+      exercises: [],
+      total: 0,
+      unknownGroup: { requested: naoReconhecidos, available: MUSCLE_GROUPS },
+    };
   }
 
   let query = supabaseAdmin

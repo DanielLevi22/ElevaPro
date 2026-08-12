@@ -82,31 +82,39 @@ describe("resolveMuscleGroups", () => {
 
 describe("queryExercises", () => {
   it("filtra pelos grupos resolvidos, não pelo texto cru", async () => {
-    await queryExercises({ muscle_group: "Ombros" });
+    await queryExercises({ muscle_groups: ["Ombros"] });
 
     expect(filters.in).toEqual(["muscle_group", ["ombro"]]);
     expect(filters.ilike).toBeUndefined();
   });
 
   it("consulta os dois grupos quando o pedido é braços", async () => {
-    await queryExercises({ muscle_group: "braços" });
+    await queryExercises({ muscle_groups: ["braços"] });
 
     expect(filters.in).toEqual(["muscle_group", ["biceps", "triceps"]]);
   });
 
+  // Uma chamada por grupo custava um turno do modelo cada: 27 segundos para
+  // montar um ABC, medidos em 2026-08-12.
+  it("resolve vários grupos numa consulta só, sem repetir", async () => {
+    await queryExercises({ muscle_groups: ["peito", "Braços", "biceps"] });
+
+    expect(filters.in).toEqual(["muscle_group", ["peito", "biceps", "triceps"]]);
+  });
+
   // Era isto que fazia o coach afirmar que o catálogo estava vazio.
   it("responde 'grupo desconhecido' com a lista do que existe", async () => {
-    const resultado = await queryExercises({ muscle_group: "panturrilha" });
+    const resultado = await queryExercises({ muscle_groups: ["panturrilha"] });
 
     expect(resultado.unknownGroup).toEqual({
-      requested: "panturrilha",
+      requested: ["panturrilha"],
       available: MUSCLE_GROUPS,
     });
     expect(mockFrom).not.toHaveBeenCalled();
   });
 
   it("devolve o total para o modelo saber se viu tudo", async () => {
-    const resultado = await queryExercises({ muscle_group: "ombro" });
+    const resultado = await queryExercises({ muscle_groups: ["ombro"] });
 
     expect(resultado.total).toBe(6);
     expect(resultado.exercises).toHaveLength(1);
@@ -115,7 +123,7 @@ describe("queryExercises", () => {
   it("propaga erro em vez de devolver lista vazia", async () => {
     queryError = { code: "42P01", message: "relation does not exist" };
 
-    await expect(queryExercises({ muscle_group: "peito" })).rejects.toMatchObject({
+    await expect(queryExercises({ muscle_groups: ["peito"] })).rejects.toMatchObject({
       code: "42P01",
     });
   });

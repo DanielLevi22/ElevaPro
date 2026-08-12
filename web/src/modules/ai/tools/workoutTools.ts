@@ -20,6 +20,11 @@ export const WORKOUT_TOOLS: ToolDefinition[] = [
           type: "number",
           description: "Duração total em semanas",
         },
+        startDate: {
+          type: "string",
+          description:
+            "Data de início, no formato AAAA-MM-DD. PERGUNTE ao especialista — não invente nem assuma hoje. Sem ela a periodização não entra no calendário.",
+        },
         level: {
           type: "string",
           description: "Nível do aluno (Iniciante, Intermediário, Avançado)",
@@ -41,7 +46,7 @@ export const WORKOUT_TOOLS: ToolDefinition[] = [
           },
         },
       },
-      required: ["name", "goal", "durationWeeks", "level", "phases"],
+      required: ["name", "goal", "durationWeeks", "startDate", "level", "phases"],
     },
   },
   {
@@ -54,6 +59,7 @@ export const WORKOUT_TOOLS: ToolDefinition[] = [
         name: { type: "string" },
         goal: { type: "string" },
         durationWeeks: { type: "number" },
+        startDate: { type: "string", description: "AAAA-MM-DD, o mesmo da proposta" },
         level: { type: "string" },
         phases: {
           type: "array",
@@ -68,7 +74,7 @@ export const WORKOUT_TOOLS: ToolDefinition[] = [
           },
         },
       },
-      required: ["name", "goal", "durationWeeks", "level", "phases"],
+      required: ["name", "goal", "durationWeeks", "startDate", "level", "phases"],
     },
   },
   {
@@ -130,24 +136,30 @@ export const WORKOUT_TOOLS: ToolDefinition[] = [
     input_schema: {
       type: "object" as const,
       properties: {
-        muscle_group: {
-          // Os valores reais do banco. A versão anterior sugeria "Ombros" e
-          // "Braços", que não existem, e a busca voltava vazia — o coach então
-          // afirmava que o catálogo estava vazio.
-          type: "string",
-          enum: [
-            "peito",
-            "costas",
-            "ombro",
-            "biceps",
-            "triceps",
-            "pernas",
-            "gluteos",
-            "abdomen",
-            "cardio",
-          ],
+        muscle_groups: {
+          // Lista, não um por chamada: montar um ABC pedia sete consultas em
+          // sequência, cada uma com um turno do modelo — 27 segundos medidos.
+          //
+          // Os valores são os reais do banco. A versão anterior descrevia
+          // "Ombros" e "Braços" em prosa, que não existem, e a busca voltava
+          // vazia — o coach então afirmava que o catálogo estava vazio.
+          type: "array",
+          items: {
+            type: "string",
+            enum: [
+              "peito",
+              "costas",
+              "ombro",
+              "biceps",
+              "triceps",
+              "pernas",
+              "gluteos",
+              "abdomen",
+              "cardio",
+            ],
+          },
           description:
-            "Grupo muscular. Use exatamente um destes valores. Para 'braços', consulte biceps e triceps separadamente.",
+            "Grupos musculares a consultar DE UMA VEZ. Peça todos os que vai usar na divisão inteira numa chamada só — não faça uma chamada por grupo.",
         },
         search_term: {
           type: "string",

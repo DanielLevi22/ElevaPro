@@ -15,14 +15,16 @@ import type { BulkWorkoutItem, SseEvent } from "@/modules/ai/types";
 
 async function handleQueryExercises(input: Record<string, unknown>): Promise<string> {
   const result = await queryExercises({
-    muscle_group: typeof input.muscle_group === "string" ? input.muscle_group : undefined,
+    muscle_groups: Array.isArray(input.muscle_groups)
+      ? (input.muscle_groups as string[])
+      : undefined,
     search_term: typeof input.search_term === "string" ? input.search_term : undefined,
   });
 
   if (result.unknownGroup) {
     return JSON.stringify({
       exercises: [],
-      erro: `Grupo "${result.unknownGroup.requested}" não existe no catálogo.`,
+      erro: `Não conheço: ${result.unknownGroup.requested.join(", ")}.`,
       grupos_disponiveis: result.unknownGroup.available,
     });
   }
@@ -87,6 +89,7 @@ export async function POST(
                 name: typedInput.name as string,
                 goal: typedInput.goal as string,
                 durationWeeks: typedInput.durationWeeks as number,
+                startDate: typedInput.startDate as string,
                 level: typedInput.level as string,
                 phases: typedInput.phases as { name: string; weeks: number; focus: string }[],
               });
