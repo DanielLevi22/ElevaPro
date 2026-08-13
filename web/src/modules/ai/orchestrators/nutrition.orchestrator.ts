@@ -1,5 +1,6 @@
 import { NUTRITION_COACH_PROMPT } from "../prompts/nutrition.prompts";
 import type { SystemBlock, ToolDefinition } from "../providers/types";
+import { BODY_SCAN_TOOL } from "../tools/bodyScanTools";
 import { NUTRITION_TOOLS } from "../tools/nutritionTools";
 import { BaseOrchestrator } from "./base.orchestrator";
 
@@ -23,6 +24,6 @@ export class NutritionOrchestrator extends BaseOrchestrator {
   }
 
   getTools(): ToolDefinition[] {
-    return NUTRITION_TOOLS;
+    return [...NUTRITION_TOOLS, BODY_SCAN_TOOL];
   }
 }

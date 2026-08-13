@@ -26,6 +26,7 @@ export interface OrchestratorRunInput {
  */
 const TOOL_LABELS: Record<string, string> = {
   query_exercises: "Consultando o catálogo de exercícios",
+  query_body_scan: "Consultando a análise corporal",
   propose_periodization: "Montando a proposta de periodização",
   save_periodization: "Salvando a periodização",
   propose_workouts: "Montando a proposta de treinos",
