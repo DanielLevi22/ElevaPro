@@ -140,10 +140,6 @@ export type Database = {
           height_cm: number | null;
           id: string;
           muscle_mass_kg: number | null;
-          photo_back_url: string | null;
-          photo_front_url: string | null;
-          photo_side_left_url: string | null;
-          photo_side_right_url: string | null;
           posture_feedback: Json | null;
           posture_muscle_score: number | null;
           posture_overall_score: number | null;
@@ -168,10 +164,6 @@ export type Database = {
           height_cm?: number | null;
           id?: string;
           muscle_mass_kg?: number | null;
-          photo_back_url?: string | null;
-          photo_front_url?: string | null;
-          photo_side_left_url?: string | null;
-          photo_side_right_url?: string | null;
           posture_feedback?: Json | null;
           posture_muscle_score?: number | null;
           posture_overall_score?: number | null;
@@ -196,10 +188,6 @@ export type Database = {
           height_cm?: number | null;
           id?: string;
           muscle_mass_kg?: number | null;
-          photo_back_url?: string | null;
-          photo_front_url?: string | null;
-          photo_side_left_url?: string | null;
-          photo_side_right_url?: string | null;
           posture_feedback?: Json | null;
           posture_muscle_score?: number | null;
           posture_overall_score?: number | null;

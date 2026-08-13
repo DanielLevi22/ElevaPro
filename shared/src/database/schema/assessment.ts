@@ -51,11 +51,8 @@ export const bodyScans = pgTable("body_scans", {
     .notNull()
     .references(() => profiles.id, { onDelete: "cascade" }),
   scanned_at: timestamp("scanned_at", { withTimezone: true }).notNull().defaultNow(),
-  // Fotos (URLs Supabase Storage — bucket privado)
-  photo_front_url: text("photo_front_url"),
-  photo_back_url: text("photo_back_url"),
-  photo_side_right_url: text("photo_side_right_url"),
-  photo_side_left_url: text("photo_side_left_url"),
+  // Sem coluna de foto, de propósito: a imagem não é persistida — só o
+  // resultado derivado (`ADR-010`). As quatro `photo_*_url` saíram na 0026.
   // Métricas derivadas pela IA
   height_cm: numeric("height_cm", { precision: 5, scale: 2 }),
   weight_kg: numeric("weight_kg", { precision: 5, scale: 2 }),
