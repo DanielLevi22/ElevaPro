@@ -16,6 +16,7 @@ import Svg, { Circle, Line, Polygon, Text as SvgText } from 'react-native-svg';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { colors } from '@/constants/colors';
 import { useStudentStore } from '@/modules/students';
+import { ScanComparison } from '../components/ScanComparison';
 
 const { width } = Dimensions.get('window');
 const PHOTO_ASPECT_RATIO = 4 / 3;
@@ -244,10 +245,25 @@ export default function PostureAnalysis() {
     studentId?: string;
     id?: string;
   }>();
-  const { capturedImages, lastResult, studentId: storeStudentId } = useAssessmentStore();
+  const {
+    capturedImages,
+    lastResult,
+    studentId: storeStudentId,
+    scanDeltas,
+    loadHistory,
+  } = useAssessmentStore();
 
   // Prioritize Store ID, then Params (check both 'studentId' and 'id' for compatibility)
   const id = storeStudentId || paramStudentId || paramId;
+
+  useEffect(() => {
+    if (!id) return;
+    // Falha aqui não derruba a tela: a análise atual continua legível sem a
+    // comparação. O que não pode é a tela sumir por causa do histórico.
+    loadHistory(id).catch((error) => {
+      console.log('[PostureAnalysis] Histórico indisponível:', String(error));
+    });
+  }, [id, loadHistory]);
 
   useEffect(() => {
     if (!id) {
@@ -562,6 +578,11 @@ export default function PostureAnalysis() {
             </Text>
           </View>
         )}
+
+        {/* A comparação vem antes das fotos e dos valores absolutos: é o número
+            mais confiável da tela, porque o erro da estimativa se cancela na
+            diferença (ADR-010). */}
+        {!isDemo && <ScanComparison deltas={scanDeltas} />}
 
         {/* Photo Container with Navigation */}
         <View className="items-center mt-6 relative">

@@ -1,3 +1,6 @@
+import type { BodyScanDelta, BodyScanRecord } from '@elevapro/shared';
+import { createBodyScanService } from '@elevapro/shared';
+import { supabase } from '@elevapro/supabase';
 import { createMMKV } from 'react-native-mmkv';
 import { create } from 'zustand';
 import { createJSONStorage, persist, StateStorage } from 'zustand/middleware';
@@ -46,6 +49,10 @@ interface AssessmentState {
   submitAnamnesis: () => Promise<void>;
   syncAnamnesis: (studentId: string) => Promise<void>;
 
+  /** Histórico e comparação vindos do banco — antes só existiam em memória. */
+  loadHistory: (studentId: string) => Promise<void>;
+  scanHistory: BodyScanRecord[];
+  scanDeltas: BodyScanDelta[];
   reset: () => void;
 }
 
@@ -56,6 +63,8 @@ export const useAssessmentStore = create<AssessmentState>()(
       studentId: null,
       lastResult: null,
       history: [],
+      scanHistory: [],
+      scanDeltas: [],
       capturedImages: {},
       anamnesisResponses: {},
       currentSectionIndex: 0,
@@ -152,6 +161,22 @@ export const useAssessmentStore = create<AssessmentState>()(
         }
       },
 
+      /**
+       * Lê o histórico do banco.
+       *
+       * Antes o resultado vivia só no Zustand e o `partialize` guardava apenas
+       * a anamnese — fechar o app apagava tudo. Sem histórico não existe delta,
+       * e o delta é onde está o valor da feature (ADR-010).
+       */
+      loadHistory: async (studentId: string) => {
+        const service = createBodyScanService(supabase);
+        const [scans, comparison] = await Promise.all([
+          service.list(studentId),
+          service.latestWithComparison(studentId),
+        ]);
+        set({ scanHistory: scans, scanDeltas: comparison.deltas });
+      },
+
       reset: () => {
         set({
           status: AssessmentStatus.IDLE,
@@ -161,6 +186,8 @@ export const useAssessmentStore = create<AssessmentState>()(
           anamnesisResponses: {},
           currentSectionIndex: 0,
           isAnamnesisSubmitted: false,
+          scanHistory: [],
+          scanDeltas: [],
         });
       },
     }),

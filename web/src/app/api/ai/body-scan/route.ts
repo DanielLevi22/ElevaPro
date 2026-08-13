@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { createHealthService } from "@elevapro/shared";
+import { createBodyScanService, createHealthService } from "@elevapro/shared";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -51,6 +51,8 @@ interface BodyScanPayload extends ModelPayload {
   };
   /** De onde vieram altura e peso. A tela precisa poder dizer isso ao aluno. */
   scaleSource: "assessment" | "informed";
+  /** Falso quando a análise deu certo mas a gravação falhou — estados distintos. */
+  persisted?: boolean;
 }
 
 /** Última avaliação física com altura registrada — a régua da imagem. */
@@ -265,5 +267,38 @@ export async function POST(request: NextRequest) {
     scaleSource,
   };
 
-  return NextResponse.json(result);
+  // Gravar é o que dá sentido à feature: sem histórico não existe delta, e o
+  // delta é onde está o valor. O `student_id` vem do token, nunca do corpo.
+  // A imagem não é gravada — só o derivado (ADR-010).
+  const segments = modelResult.segments ?? {};
+  try {
+    await createBodyScanService(auth.client).save(auth.userId, {
+      height_cm: scale.heightCm,
+      weight_kg: scale.weightKg,
+      body_fat_pct: modelResult.metrics.bodyFat ?? null,
+      muscle_mass_kg: modelResult.metrics.muscleMass ?? null,
+      bmi: scale.weightKg === null ? null : bmi,
+      circ_chest: segments.chest ?? null,
+      circ_waist: segments.waist ?? null,
+      circ_hips: segments.hips ?? null,
+      circ_arms: segments.arms ?? null,
+      circ_thighs: segments.thighs ?? null,
+      circ_calves: segments.calves ?? null,
+      circ_neck: segments.neck ?? null,
+      circ_shoulders: segments.shoulders ?? null,
+      posture_symmetry_score: modelResult.postureAnalysis?.scores?.symmetry ?? null,
+      posture_muscle_score: modelResult.postureAnalysis?.scores?.muscle ?? null,
+      posture_overall_score: modelResult.postureAnalysis?.scores?.posture ?? null,
+      posture_feedback: modelResult.postureAnalysis?.feedback ?? null,
+      recommendations: modelResult.postureAnalysis?.recommendations ?? null,
+    });
+  } catch (error) {
+    // Falha de gravação não pode virar falha da análise: a foto já foi enviada
+    // e o aluno já pagou a espera. Mas também não some — devolvemos o
+    // resultado marcado como não persistido, para a tela poder avisar.
+    console.error("[body-scan] falha ao gravar em body_scans", error);
+    return NextResponse.json({ ...result, persisted: false });
+  }
+
+  return NextResponse.json({ ...result, persisted: true });
 }
