@@ -4,7 +4,11 @@ import { supabase } from '@elevapro/supabase';
 import { createMMKV } from 'react-native-mmkv';
 import { create } from 'zustand';
 import { createJSONStorage, persist, StateStorage } from 'zustand/middleware';
-import { AIBodyScanService, BodyScanConsentError } from '../services/aiBodyScan';
+import {
+  AIBodyScanService,
+  BodyScanAnalysisError,
+  BodyScanConsentError,
+} from '../services/aiBodyScan';
 import { AnamnesisService } from '../services/anamnesisService';
 import { AnamnesisResponse, AssessmentStatus, BodyScanResult } from '../types/assessment';
 
@@ -52,6 +56,8 @@ interface AssessmentState {
   /** Histórico e comparação vindos do banco — antes só existiam em memória. */
   loadHistory: (studentId: string) => Promise<void>;
   scanHistory: BodyScanRecord[];
+  /** Texto pronto para a tela. Null quando não houve falha. */
+  errorMessage: string | null;
   scanDeltas: BodyScanDelta[];
   reset: () => void;
 }
@@ -65,6 +71,7 @@ export const useAssessmentStore = create<AssessmentState>()(
       history: [],
       scanHistory: [],
       scanDeltas: [],
+      errorMessage: null,
       capturedImages: {},
       anamnesisResponses: {},
       currentSectionIndex: 0,
@@ -86,7 +93,9 @@ export const useAssessmentStore = create<AssessmentState>()(
       },
 
       submitScan: async () => {
-        set({ status: AssessmentStatus.ANALYZING });
+        // Limpa a falha anterior: tentar de novo com a mensagem antiga na tela
+        // faz o retry parecer que falhou de novo antes mesmo de terminar.
+        set({ status: AssessmentStatus.ANALYZING, errorMessage: null });
         try {
           const capturedImages = get().capturedImages;
           console.log('Starting AI Analysis with images:', Object.keys(capturedImages));
@@ -105,7 +114,13 @@ export const useAssessmentStore = create<AssessmentState>()(
             set({ status: AssessmentStatus.NEEDS_CONSENT });
             return;
           }
-          set({ status: AssessmentStatus.ERROR });
+          set({
+            status: AssessmentStatus.ERROR,
+            errorMessage:
+              error instanceof BodyScanAnalysisError
+                ? error.message
+                : 'Não consegui completar a análise. Tente de novo.',
+          });
           console.error('Body scan failed', error);
         }
       },
@@ -188,6 +203,7 @@ export const useAssessmentStore = create<AssessmentState>()(
           isAnamnesisSubmitted: false,
           scanHistory: [],
           scanDeltas: [],
+          errorMessage: null,
         });
       },
     }),

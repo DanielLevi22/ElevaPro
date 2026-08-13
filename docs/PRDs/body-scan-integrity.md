@@ -1,7 +1,7 @@
 # PRD: body-scan-integrity
 
 **Data de criação:** 2026-08-12
-**Status:** approved
+**Status:** done
 **Branch:** feature/body-scan-integrity
 **Autor:** Daniel Levi
 
@@ -42,15 +42,15 @@ Anthropic **sem verificação de consentimento**, que é pendência já registra
 seção 10 do `LGPD_COMPLIANCE.md`.
 
 ### Como saberemos que está pronto?
-- [ ] Nenhum campo devolvido pela análise é fisicamente inestimável a partir de
+- [x] Nenhum campo devolvido pela análise é fisicamente inestimável a partir de
       imagem — peso e altura passam a ser entrada do usuário, não saída do modelo
-- [ ] As circunferências saem em proporção calibrada pela altura informada, e a
+- [x] As circunferências saem em proporção calibrada pela altura informada, e a
       tela diz que são estimativas
-- [ ] O resultado é gravado em `body_scans` e sobrevive a fechar o app
-- [ ] A foto não sai do dispositivo sem `student_consents` vigente
-- [ ] A tela de introdução diz que a imagem é enviada a um serviço de IA externo
-- [ ] Resposta truncada do modelo deixa de virar erro genérico
-- [ ] Falha na análise mostra mensagem humana e permite tentar de novo
+- [x] O resultado é gravado em `body_scans` e sobrevive a fechar o app
+- [x] A foto não sai do dispositivo sem `student_consents` vigente
+- [x] A tela de introdução diz que a imagem é enviada a um serviço de IA externo
+- [x] Resposta truncada do modelo deixa de virar erro genérico
+- [x] Falha na análise mostra mensagem humana e permite tentar de novo
 
 ---
 
@@ -183,9 +183,9 @@ de conta elimina junto. Falta a seção 7 registrar a retenção.
 3. A Anthropic segue fora da Política de Privacidade como sub-processadora.
 
 **Atualizações necessárias em `docs/LGPD_COMPLIANCE.md`**
-- [ ] Seção 7: retenção de `body_scans`
-- [ ] Seção 10: marcar as duas pendências de body-scan como resolvidas
-- [ ] Seção 10: registrar que a imagem **não é persistida**, só o resultado
+- [x] Seção 7: retenção de `body_scans`
+- [x] Seção 10: marcar as duas pendências de body-scan como resolvidas
+- [x] Seção 10: registrar que a imagem **não é persistida**, só o resultado
 
 ---
 
@@ -352,14 +352,14 @@ uma questão de transparência, e não só de exatidão.
 
 ## Checklist de done
 
-- [ ] Nenhum campo inestimável na resposta do modelo
-- [ ] Consentimento verificado antes de a imagem ser lida
-- [ ] Texto da tela revisado — sem "extremamente preciso", com o envio a
+- [x] Nenhum campo inestimável na resposta do modelo
+- [x] Consentimento verificado antes de a imagem ser lida
+- [x] Texto da tela revisado — sem "extremamente preciso", com o envio a
       terceiro declarado
-- [ ] Resultado gravado em `body_scans` e visível no histórico
-- [ ] Erro com mensagem humana e nova tentativa sem refazer fotos
-- [ ] `docs/LGPD_COMPLIANCE.md` seções 7 e 10 atualizadas
-- [ ] Código funciona e passou em lint + typecheck + testes
+- [x] Resultado gravado em `body_scans` e visível no histórico
+- [x] Erro com mensagem humana e nova tentativa sem refazer fotos
+- [x] `docs/LGPD_COMPLIANCE.md` seções 7 e 10 atualizadas
+- [x] Código funciona e passou em lint + typecheck + testes
 - [ ] PR mergeado em `development`
 - [ ] `docs/features/body-scan-integrity.md` criado
 - [ ] `docs/STATUS.md` atualizado

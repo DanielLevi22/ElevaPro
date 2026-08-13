@@ -13,7 +13,13 @@ import { AssessmentStatus } from '../types/assessment';
 export default function BodyScanProcessing() {
   const { studentId: paramIdRaw, id: fallbackIdRaw } = useLocalSearchParams();
   const router = useRouter();
-  const { capturedImages, submitScan, status, studentId: storeId } = useAssessmentStore();
+  const {
+    capturedImages,
+    submitScan,
+    status,
+    studentId: storeId,
+    errorMessage,
+  } = useAssessmentStore();
   const [granting, setGranting] = useState(false);
 
   useEffect(() => {
@@ -69,6 +75,43 @@ export default function BodyScanProcessing() {
       setGranting(false);
     }
   };
+
+  if (status === AssessmentStatus.ERROR) {
+    return (
+      <View className="flex-1 bg-black items-center justify-center px-8">
+        <LinearGradient
+          colors={[colors.background.primary, '#1a1a2e', '#000000']}
+          style={{ position: 'absolute', width: '100%', height: '100%' }}
+        />
+        <Animated.View entering={FadeInUp.springify()} className="items-center">
+          <Text className="text-white text-2xl font-black text-center">
+            A análise não completou
+          </Text>
+          <Text className="text-zinc-400 text-sm text-center mt-4 leading-relaxed">
+            {errorMessage ?? 'Não consegui completar a análise. Tente de novo.'}
+          </Text>
+          {/* As fotos continuam no store: repetir a captura depois de esperar
+              a análise é o que fazia o aluno desistir. */}
+          <Text className="text-zinc-500 text-xs text-center mt-3">
+            Suas fotos foram mantidas — não precisa tirar de novo.
+          </Text>
+
+          <TouchableOpacity
+            onPress={() => submitScan()}
+            className="mt-8 bg-primary px-8 py-4 rounded-2xl w-full items-center"
+          >
+            <Text className="text-black font-black uppercase tracking-widest text-xs">
+              Tentar de novo
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => router.back()} className="mt-4 py-3">
+            <Text className="text-zinc-500 text-xs uppercase tracking-widest">Voltar</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
+    );
+  }
 
   if (status === AssessmentStatus.NEEDS_CONSENT) {
     return (

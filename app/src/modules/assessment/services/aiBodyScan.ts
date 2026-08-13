@@ -32,6 +32,31 @@ export class BodyScanScaleError extends Error {
   }
 }
 
+/** Mensagem por código do BFF. Sem entrada, cai no texto genérico. */
+const ANALYSIS_MESSAGES: Record<string, string> = {
+  response_truncated: 'A análise ficou grande demais e foi cortada. Tente de novo.',
+  ai_unavailable: 'O serviço de análise não respondeu. Tente de novo em instantes.',
+  invalid_ai_response: 'A análise voltou incompleta. Tente de novo.',
+  scale_lookup_failed: 'Não consegui buscar sua altura. Tente de novo.',
+  consent_check_failed: 'Não consegui verificar sua autorização. Tente de novo.',
+};
+
+/**
+ * A análise falhou, com texto que o aluno entende.
+ *
+ * Guarda o código junto: `AssessmentStatus.ERROR` sozinho fazia a tela mostrar
+ * o mesmo estado mudo para quatro causas diferentes.
+ */
+export class BodyScanAnalysisError extends Error {
+  readonly code: string;
+
+  constructor(code: string) {
+    super(ANALYSIS_MESSAGES[code] ?? 'Não consegui completar a análise. Tente de novo.');
+    this.name = 'BodyScanAnalysisError';
+    this.code = code;
+  }
+}
+
 async function resizeToBase64(uri: string): Promise<string | null> {
   try {
     const result = await ImageManipulator.manipulateAsync(uri, [{ resize: { width: 800 } }], {
@@ -102,7 +127,14 @@ export const AIBodyScanService = {
     }
 
     if (!response.ok) {
-      throw new Error(`body-scan BFF error: ${response.status}`);
+      // O código do BFF vira mensagem aqui, e não na tela, para as duas rotas
+      // de erro (rede e resposta ruim) chegarem no mesmo formato.
+      const code = await response
+        .json()
+        .then((b) => (b as { error?: string }).error)
+        .catch(() => undefined);
+
+      throw new BodyScanAnalysisError(code ?? `http_${response.status}`);
     }
 
     const data = (await response.json()) as Omit<BodyScanResult, 'id' | 'date' | 'imageUrl'>;

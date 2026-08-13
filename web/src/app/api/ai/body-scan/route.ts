@@ -230,24 +230,41 @@ export async function POST(request: NextRequest) {
     text: "Analise estas imagens corporais e retorne o JSON de avaliação física.",
   });
 
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 1024,
-    system: buildSystemPrompt(scale.heightCm, scale.weightKg),
-    messages: [{ role: "user", content: imageContent }],
-  });
+  let response: Anthropic.Message;
+  try {
+    response = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      // O JSON pedido tem 2 métricas, 8 segmentos, 3 notas, 3 arrays de
+      // feedback com título, risco e texto, e as recomendações. Com 1024 isso
+      // ficava na fronteira e passava dela sempre que o modelo escrevia um
+      // pouco mais — e a resposta cortada virava "502 falha ao interpretar",
+      // indistinguível de o modelo ter errado.
+      max_tokens: 4096,
+      system: buildSystemPrompt(scale.heightCm, scale.weightKg),
+      messages: [{ role: "user", content: imageContent }],
+    });
+  } catch (error) {
+    console.error("[body-scan] chamada ao modelo falhou", error);
+    return NextResponse.json({ error: "ai_unavailable" }, { status: 503 });
+  }
 
-  const text = response.content[0].type === "text" ? response.content[0].text : "";
+  // Truncada não é inválida: uma diz "peça de novo", a outra diz "o modelo
+  // errou". Somadas no mesmo 502, ninguém sabia qual era.
+  if (response.stop_reason === "max_tokens") {
+    return NextResponse.json({ error: "response_truncated" }, { status: 502 });
+  }
+
+  const text = response.content[0]?.type === "text" ? response.content[0].text : "";
 
   let modelResult: ModelPayload;
   try {
     modelResult = JSON.parse(text.replace(/```json|```/g, "").trim()) as ModelPayload;
   } catch {
-    return NextResponse.json({ error: "Failed to parse AI response" }, { status: 502 });
+    return NextResponse.json({ error: "invalid_ai_response" }, { status: 502 });
   }
 
   if (!modelResult?.metrics) {
-    return NextResponse.json({ error: "Invalid AI response structure" }, { status: 502 });
+    return NextResponse.json({ error: "invalid_ai_response" }, { status: 502 });
   }
 
   // O IMC é calculado aqui, sobre a altura e o peso reais. Antes vinha do
