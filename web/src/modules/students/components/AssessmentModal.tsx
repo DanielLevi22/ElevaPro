@@ -1,5 +1,6 @@
 "use client";
 
+import { CIRCUMFERENCE_FIELDS, SKINFOLD_FIELDS } from "@elevapro/shared";
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
 import { Dialog } from "@/shared/components/ui/Dialog";
@@ -14,35 +15,14 @@ interface AssessmentModalProps {
 
 type Tab = "composicao" | "circunferencias" | "dobras";
 
-const CIRCUMFERENCE_FIELDS: Array<{ key: string; label: string }> = [
-  { key: "neck", label: "Pescoço" },
-  { key: "shoulder", label: "Ombro" },
-  { key: "chest", label: "Peito" },
-  { key: "waist", label: "Cintura" },
-  { key: "abdomen", label: "Abdômen" },
-  { key: "hips", label: "Quadril" },
-  { key: "arm_right_relaxed", label: "Braço D (relaxado)" },
-  { key: "arm_left_relaxed", label: "Braço E (relaxado)" },
-  { key: "arm_right_contracted", label: "Braço D (contraído)" },
-  { key: "arm_left_contracted", label: "Braço E (contraído)" },
-  { key: "forearm", label: "Antebraço" },
-  { key: "thigh_proximal", label: "Coxa proximal" },
-  { key: "thigh_distal", label: "Coxa distal" },
-  { key: "calf", label: "Panturrilha" },
-];
-
-const SKINFOLD_FIELDS: Array<{ key: string; label: string }> = [
-  { key: "skinfold_chest", label: "Peitoral" },
-  { key: "skinfold_abdominal", label: "Abdominal" },
-  { key: "skinfold_thigh", label: "Coxa" },
-  { key: "skinfold_triceps", label: "Tríceps" },
-  { key: "skinfold_suprailiac", label: "Suprailíaca" },
-  { key: "skinfold_subscapular", label: "Subescapular" },
-  { key: "skinfold_midaxillary", label: "Axilar média" },
-];
+// As listas vivem em `@elevapro/shared`: antes cada plataforma tinha a sua, e
+// elas já discordavam sobre lateralidade — o web pedia "antebraço" e o mobile
+// exibia "antebraço D/E".
 
 function numericField(
-  fields: Array<{ key: string; label: string }>,
+  // `readonly` porque as listas vêm de `as const` no shared — o que impede
+  // qualquer tela de reordenar ou mutar a ficha por acidente.
+  fields: ReadonlyArray<{ readonly key: string; readonly label: string }>,
   values: Record<string, string>,
   onChange: (key: string, val: string) => void,
 ) {

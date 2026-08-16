@@ -1,19 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-
-// Platform detection
-const isReactNative = typeof navigator !== 'undefined' && navigator.product === 'ReactNative';
-
-// Storage adapter factory
-const createStorageAdapter = () => {
-  if (isReactNative) {
-    // For React Native, storage will be injected from the mobile app
-    // This allows us to use expo-secure-store
-    return undefined; // Will be set by mobile app
-  } else {
-    // For web, use localStorage
-    return typeof window !== 'undefined' ? window.localStorage : undefined;
-  }
-};
+import { Platform } from 'react-native';
+import { createMMKV } from 'react-native-mmkv';
 
 const supabaseUrl =
   process.env.EXPO_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -37,21 +24,53 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+const isWeb = Platform.OS === 'web';
+
+/**
+ * Sessão em MMKV, não em SecureStore.
+ *
+ * O `SecureStore` do Android recusa valores acima de 2048 bytes, e uma sessão
+ * do Supabase — dois JWT mais metadados — passa disso com folga. O gravar
+ * falhava em silêncio e o login "sumia" no restart sem nenhum erro visível.
+ *
+ * MMKV não tem esse teto e já é o storage do resto do app.
+ */
+const sessionStorage = createMMKV({ id: 'supabase-auth' });
+
+const mmkvStorageAdapter = {
+  getItem: (key: string) => sessionStorage.getString(key) ?? null,
+  setItem: (key: string, value: string) => {
+    sessionStorage.set(key, value);
+  },
+  removeItem: (key: string) => {
+    sessionStorage.remove(key);
+  },
+};
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: createStorageAdapter(),
+    // Entregue na construção. Antes o adapter era atribuído depois, em
+    // `supabase.auth.storage`, e o cliente já tinha inicializado com o storage
+    // de memória — a sessão nunca chegava ao disco.
+    storage: isWeb ? undefined : mmkvStorageAdapter,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: !isReactNative,
+    // Fora da web não existe URL de callback para inspecionar. Ligado, o
+    // GoTrue tenta ler a sessão da URL durante o initialize e o login trava.
+    // A detecção antiga era `navigator.product === 'ReactNative'`, que não é
+    // garantido no Hermes — quando dava falso, isto virava `true` no Android.
+    detectSessionInUrl: isWeb,
   },
 });
 
-// Helper to set storage for React Native
-export const setSupabaseStorage = (storage: unknown) => {
-  // This will be called from the mobile app to inject expo-secure-store
-  if (isReactNative && storage) {
-    (supabase.auth as unknown as { storage: unknown }).storage = storage;
-  }
+/**
+ * @deprecated O storage agora é entregue na construção do cliente. Mantida
+ * porque `app/src/lib/supabase.ts` ainda a chama; remover junto com aquele
+ * arquivo.
+ */
+export const setSupabaseStorage = (_storage: unknown) => {
+  // Intencionalmente vazio: atribuir storage depois da construção não tinha
+  // efeito e mascarava o defeito real.
 };
 
 // Types export (will be populated later)

@@ -1,9 +1,11 @@
+import {
+  CIRCUMFERENCE_FIELDS,
+  type PhysicalAssessmentInput,
+  SKINFOLD_FIELDS,
+} from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeLinkedSpecialist } from "@/lib/api-auth";
-import type { Database } from "@/lib/database.types";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-
-type AssessmentInsert = Database["public"]["Tables"]["physical_assessments"]["Insert"];
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -30,12 +32,24 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     // Upsert measurements into physical_assessments
     if (measurements && Object.values(measurements).some((v) => v !== null && v !== "")) {
-      const numeric: Record<string, number | null> = {};
+      // O corpo da requisição não escolhe coluna. Só as chaves da ficha
+      // passam; qualquer outra é descartada em vez de seguir para o banco.
+      const camposPermitidos = new Set<string>([
+        ...CIRCUMFERENCE_FIELDS.map((f) => f.key),
+        ...SKINFOLD_FIELDS.map((f) => f.key),
+        "weight_kg",
+        "height_cm",
+        "body_fat_pct",
+        "muscle_mass_kg",
+      ]);
+
+      const numeric: PhysicalAssessmentInput = {};
       for (const [key, val] of Object.entries(measurements)) {
-        numeric[key] = val !== null && val !== "" ? Number(val) : null;
+        if (!camposPermitidos.has(key)) continue;
+        Object.assign(numeric, { [key]: val !== null && val !== "" ? Number(val) : null });
       }
 
-      const { data: latest } = await supabaseAdmin
+      const { data: latest, error: lookupError } = await supabaseAdmin
         .from("physical_assessments")
         .select("id")
         .eq("student_id", studentId)
@@ -44,22 +58,23 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         .limit(1)
         .maybeSingle();
 
-      if (latest) {
-        await supabaseAdmin
-          .from("physical_assessments")
-          // field mapping uses legacy names — tracked as tech debt in assessments module
-          .update(numeric as unknown as AssessmentInsert)
-          .eq("id", latest.id);
-      } else {
-        await supabaseAdmin
-          .from("physical_assessments")
-          // field mapping uses legacy names — tracked as tech debt in assessments module
-          .insert({
+      if (lookupError) throw lookupError;
+
+      // Sem `as unknown as AssessmentInsert`. O cast existia para calar o tipo
+      // gerado do schema — que teria acusado, um a um, os catorze nomes de
+      // coluna que não existiam. Com ele fora, o compilador volta a ser a
+      // guarda que impede esta rota de gravar em campo inventado.
+      const { error: writeError } = latest
+        ? await supabaseAdmin.from("physical_assessments").update(numeric).eq("id", latest.id)
+        : await supabaseAdmin.from("physical_assessments").insert({
             student_id: studentId,
             specialist_id: caller.id,
             ...numeric,
-          } as unknown as AssessmentInsert);
-      }
+          });
+
+      // O resultado do insert e do update era descartado: a gravação falhava e
+      // a rota respondia `success: true`.
+      if (writeError) throw writeError;
     }
 
     return NextResponse.json({ success: true });

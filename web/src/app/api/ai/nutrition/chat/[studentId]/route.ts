@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { authorizeLinkedSpecialist } from "@/lib/api-auth";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { NutritionOrchestrator } from "@/modules/ai/orchestrators/nutrition.orchestrator";
+import { formatBodyScanIndex, queryBodyScan } from "@/modules/ai/services/bodyScanContext";
 import {
   getOrCreateSession,
   getSessionMessages,
@@ -11,6 +12,17 @@ import {
 import { formatContextForPrompt, loadStudentContext } from "@/modules/ai/services/contextLoader";
 import { queryFoods, unknownFoodNames } from "@/modules/ai/services/foodCatalog";
 import type { DietMealsProposal, DietPlanProposal, SseEvent } from "@/modules/ai/types";
+
+/** Linha em branco entre os blocos do contexto. */
+const SECTION_SEPARATOR = `
+
+`;
+
+// Na Vercel uma rota sem isto morre no default de poucos segundos. Uma conversa
+// com uso de ferramenta passa disso com folga, e localmente não existe teto —
+// por isso o chat funcionava na máquina e não no preview. 60s é o máximo do
+// plano Hobby; no Pro dá para subir até 300.
+export const maxDuration = 60;
 
 const MODULE = "nutrition" as const;
 
@@ -52,7 +64,15 @@ export async function POST(
           content: m.content,
         }));
 
-        const contextText = formatContextForPrompt(studentCtx);
+        // Só o índice, não o conteúdo: o contexto vai em todo turno, e a
+        // análise inteira encareceria a conversa por um dado que a maioria dos
+        // turnos não usa. O detalhe vem por `query_body_scan` (ADR-010).
+        // Falha aqui não derruba o chat — o coach só deixa de saber que existe.
+        const bodyScanIndex = await formatBodyScanIndex(studentId).catch(() => "");
+
+        const contextText = [formatContextForPrompt(studentCtx), bodyScanIndex]
+          .filter(Boolean)
+          .join(SECTION_SEPARATOR);
         await saveMessage(sessionId, "user", userMessage);
 
         let assistantFullText = "";
@@ -100,6 +120,10 @@ export async function POST(
             await updateSessionState(sessionId, { pendingDietMeals: proposal });
             controller.enqueue(sseChunk({ type: "diet_meals_proposal", data: proposal }));
             return JSON.stringify({ success: true, aguardando: "aprovação do especialista" });
+          }
+
+          if (name === "query_body_scan") {
+            return queryBodyScan(studentId);
           }
 
           return JSON.stringify({ error: "unknown tool" });

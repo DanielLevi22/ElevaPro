@@ -1,4 +1,4 @@
-import { jsonb, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, jsonb, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { profiles } from "./auth";
 
 export const studentAnamnesis = pgTable("student_anamnesis", {
@@ -9,6 +9,9 @@ export const studentAnamnesis = pgTable("student_anamnesis", {
     .references(() => profiles.id, { onDelete: "cascade" }),
   responses: jsonb("responses").notNull().default({}),
   completed_at: timestamp("completed_at", { withTimezone: true }),
+  // O mobile já mandava esta coluna no upsert; ela não existia e derrubava
+  // todo salvamento com 42703 (migration 0029).
+  updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -41,6 +44,16 @@ export const physicalAssessments = pgTable("physical_assessments", {
   circ_left_arm: numeric("circ_left_arm", { precision: 5, scale: 2 }),
   circ_right_thigh: numeric("circ_right_thigh", { precision: 5, scale: 2 }),
   circ_left_thigh: numeric("circ_left_thigh", { precision: 5, scale: 2 }),
+  // Completadas na 0030: o web já coletava e o mobile já exibia estas sete,
+  // e não havia onde gravar. Bilateral onde a assimetria importa.
+  circ_neck: numeric("circ_neck", { precision: 5, scale: 2 }),
+  circ_shoulder: numeric("circ_shoulder", { precision: 5, scale: 2 }),
+  /** Na altura do umbigo — `circ_waist` é a parte mais estreita. */
+  circ_abdomen: numeric("circ_abdomen", { precision: 5, scale: 2 }),
+  circ_right_forearm: numeric("circ_right_forearm", { precision: 5, scale: 2 }),
+  circ_left_forearm: numeric("circ_left_forearm", { precision: 5, scale: 2 }),
+  circ_right_calf: numeric("circ_right_calf", { precision: 5, scale: 2 }),
+  circ_left_calf: numeric("circ_left_calf", { precision: 5, scale: 2 }),
   notes: text("notes"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -51,11 +64,8 @@ export const bodyScans = pgTable("body_scans", {
     .notNull()
     .references(() => profiles.id, { onDelete: "cascade" }),
   scanned_at: timestamp("scanned_at", { withTimezone: true }).notNull().defaultNow(),
-  // Fotos (URLs Supabase Storage — bucket privado)
-  photo_front_url: text("photo_front_url"),
-  photo_back_url: text("photo_back_url"),
-  photo_side_right_url: text("photo_side_right_url"),
-  photo_side_left_url: text("photo_side_left_url"),
+  // Sem coluna de foto, de propósito: a imagem não é persistida — só o
+  // resultado derivado (`ADR-010`). As quatro `photo_*_url` saíram na 0026.
   // Métricas derivadas pela IA
   height_cm: numeric("height_cm", { precision: 5, scale: 2 }),
   weight_kg: numeric("weight_kg", { precision: 5, scale: 2 }),
@@ -76,6 +86,15 @@ export const bodyScans = pgTable("body_scans", {
   posture_muscle_score: numeric("posture_muscle_score", { precision: 4, scale: 2 }),
   posture_overall_score: numeric("posture_overall_score", { precision: 4, scale: 2 }),
   // Análise textual da IA
+  // Como a foto foi enquadrada — o que permite dizer se dois escaneamentos são
+  // comparáveis. Nulável: capturas anteriores à 0027 não têm (`ADR-010`).
+  framing_mark_top: numeric("framing_mark_top", { precision: 4, scale: 3 }),
+  framing_mark_bottom: numeric("framing_mark_bottom", { precision: 4, scale: 3 }),
+  framing_pitch: numeric("framing_pitch", { precision: 5, scale: 2 }),
+  framing_roll: numeric("framing_roll", { precision: 5, scale: 2 }),
+  framing_level_sensor: boolean("framing_level_sensor"),
+  /** 'front' | 'back' — CHECK no banco (0028). Lentes diferentes não comparam. */
+  framing_camera: text("framing_camera"),
   posture_feedback: jsonb("posture_feedback"),
   recommendations: text("recommendations"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

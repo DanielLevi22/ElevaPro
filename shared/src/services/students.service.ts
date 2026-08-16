@@ -1,10 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
+  PhysicalAssessment,
+  PhysicalAssessmentInput,
+} from "../types/physicalAssessment.types";
+import type {
   CreateStudentData,
   FetchStudentsParams,
   FetchStudentsResult,
   LinkStudentResult,
-  PhysicalAssessment,
   Student,
 } from "../types/students.types";
 
@@ -182,7 +185,7 @@ export const createStudentsService = (supabase: SupabaseClient) => ({
   addPhysicalAssessment: async (
     studentId: string,
     specialistId: string,
-    data: Partial<PhysicalAssessment>,
+    data: PhysicalAssessmentInput,
   ): Promise<void> => {
     const { error } = await supabase
       .from("physical_assessments")

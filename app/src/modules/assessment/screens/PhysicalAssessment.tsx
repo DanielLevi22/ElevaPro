@@ -1,14 +1,11 @@
+import type { PhysicalAssessment as PhysicalAssessmentRecord } from '@elevapro/shared';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { colors } from '@/constants/colors';
-import { SupabaseStorageService } from '@/services/SupabaseStorageService';
-import {
-  type PhysicalAssessmentData,
-  PhysicalAssessmentService,
-} from '../services/physicalAssessmentService';
+import { PhysicalAssessmentService } from '../services/physicalAssessmentService';
 import { useAssessmentStore } from '../store/assessmentStore';
 
 const MetricCard = ({
@@ -49,64 +46,56 @@ function fmtDate(iso: string | null): string {
   });
 }
 
-type PhotoUrls = {
-  front: string | null;
-  back: string | null;
-  side_right: string | null;
-  side_left: string | null;
-};
-
 export default function PhysicalAssessment() {
   const router = useRouter();
   const { studentId } = useAssessmentStore();
-  const [assessment, setAssessment] = useState<PhysicalAssessmentData | null>(null);
-  const [photoUrls, setPhotoUrls] = useState<PhotoUrls>({
-    front: null,
-    back: null,
-    side_right: null,
-    side_left: null,
-  });
+  const [assessment, setAssessment] = useState<PhysicalAssessmentRecord | null>(null);
 
   useEffect(() => {
     if (!studentId) return;
-    PhysicalAssessmentService.getLatestAssessment(studentId).then(async (data) => {
-      if (!data) return;
-      setAssessment(data);
-
-      const urls: PhotoUrls = { front: null, back: null, side_right: null, side_left: null };
-      for (const key of ['front', 'back', 'side_right', 'side_left'] as const) {
-        const path = data[`photo_${key}` as keyof PhysicalAssessmentData] as string | null;
-        if (path) urls[key] = await SupabaseStorageService.getSignedUrl(path);
-      }
-      setPhotoUrls(urls);
-    });
+    // A avaliação física não guarda foto: as colunas `photo_*` nunca existiram
+    // no banco, e a imagem da análise por IA também não é persistida
+    // (`ADR-010`). O carregamento de URLs assinadas foi removido.
+    PhysicalAssessmentService.getLatest(studentId)
+      .then(setAssessment)
+      .catch((error) => {
+        console.log('[PhysicalAssessment] Falha ao carregar:', String(error));
+      });
   }, [studentId]);
 
   const circumferences = assessment
     ? [
-        { label: 'Pescoço', value: fmt(assessment.neck), icon: 'human' },
-        { label: 'Ombros', value: fmt(assessment.shoulder), icon: 'human-handsup' },
-        { label: 'Tórax', value: fmt(assessment.chest), icon: 'human-male' },
-        { label: 'Cintura', value: fmt(assessment.waist), icon: 'human-male-board' },
-        { label: 'Abdômen', value: fmt(assessment.abdomen), icon: 'stomach' },
-        { label: 'Quadril', value: fmt(assessment.hips), icon: 'human-male' },
-        { label: 'Braço Dir.', value: fmt(assessment.arm_right_relaxed), icon: 'arm-flex' },
-        { label: 'Braço Esq.', value: fmt(assessment.arm_left_relaxed), icon: 'arm-flex' },
-        { label: 'Antebraço Dir.', value: fmt(assessment.forearm_right), icon: 'arm-flex-outline' },
-        { label: 'Antebraço Esq.', value: fmt(assessment.forearm_left), icon: 'arm-flex-outline' },
-        { label: 'Coxa Dir.', value: fmt(assessment.thigh_proximal_right), icon: 'run' },
-        { label: 'Coxa Esq.', value: fmt(assessment.thigh_proximal_left), icon: 'run' },
-        { label: 'Panturrilha Dir.', value: fmt(assessment.calf_right), icon: 'run-fast' },
-        { label: 'Panturrilha Esq.', value: fmt(assessment.calf_left), icon: 'run-fast' },
+        { label: 'Pescoço', value: fmt(assessment.circ_neck), icon: 'human' },
+        { label: 'Ombros', value: fmt(assessment.circ_shoulder), icon: 'human-handsup' },
+        { label: 'Tórax', value: fmt(assessment.circ_chest), icon: 'human-male' },
+        { label: 'Cintura', value: fmt(assessment.circ_waist), icon: 'human-male-board' },
+        { label: 'Abdômen', value: fmt(assessment.circ_abdomen), icon: 'stomach' },
+        { label: 'Quadril', value: fmt(assessment.circ_hip), icon: 'human-male' },
+        { label: 'Braço Dir.', value: fmt(assessment.circ_right_arm), icon: 'arm-flex' },
+        { label: 'Braço Esq.', value: fmt(assessment.circ_left_arm), icon: 'arm-flex' },
+        {
+          label: 'Antebraço Dir.',
+          value: fmt(assessment.circ_right_forearm),
+          icon: 'arm-flex-outline',
+        },
+        {
+          label: 'Antebraço Esq.',
+          value: fmt(assessment.circ_left_forearm),
+          icon: 'arm-flex-outline',
+        },
+        { label: 'Coxa Dir.', value: fmt(assessment.circ_right_thigh), icon: 'run' },
+        { label: 'Coxa Esq.', value: fmt(assessment.circ_left_thigh), icon: 'run' },
+        { label: 'Panturrilha Dir.', value: fmt(assessment.circ_right_calf), icon: 'run-fast' },
+        { label: 'Panturrilha Esq.', value: fmt(assessment.circ_left_calf), icon: 'run-fast' },
       ]
     : [];
 
   const skinfolds = assessment
     ? [
-        { label: 'Tricipital', value: fmt(assessment.skinfold_triceps) },
+        { label: 'Tricipital', value: fmt(assessment.skinfold_tricep) },
         { label: 'Subescapular', value: fmt(assessment.skinfold_subscapular) },
         { label: 'Suprailíaca', value: fmt(assessment.skinfold_suprailiac) },
-        { label: 'Abdominal', value: fmt(assessment.skinfold_abdominal) },
+        { label: 'Abdominal', value: fmt(assessment.skinfold_abdomen) },
         { label: 'Coxa', value: fmt(assessment.skinfold_thigh) },
         { label: 'Peitoral', value: fmt(assessment.skinfold_chest) },
       ]
@@ -126,7 +115,7 @@ export default function PhysicalAssessment() {
             <View className="flex-row items-center mt-1">
               <Ionicons name="calendar-outline" size={14} color={colors.primary.solid} />
               <Text className="text-white text-lg font-bold ml-2">
-                {fmtDate(assessment?.createdAt ?? null)}
+                {fmtDate(assessment?.assessed_at ?? null)}
               </Text>
             </View>
           </View>
@@ -163,7 +152,7 @@ export default function PhysicalAssessment() {
             <View className="w-[48%]">
               <MetricCard
                 label="Peso"
-                value={fmt(assessment.weight, 1)}
+                value={fmt(assessment.weight_kg, 1)}
                 unit="kg"
                 icon="scale-bathroom"
                 color={colors.secondary.main}
@@ -172,7 +161,7 @@ export default function PhysicalAssessment() {
             <View className="w-[48%]">
               <MetricCard
                 label="Altura"
-                value={fmt(assessment.height, 2)}
+                value={fmt(assessment.height_cm, 2)}
                 unit="m"
                 icon="human-male-height"
                 color={colors.primary.start}
@@ -251,40 +240,11 @@ export default function PhysicalAssessment() {
               />
               <Text className="text-white text-lg font-bold">Fotos Comparativas</Text>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
-              {(
-                [
-                  { label: 'Frontal', key: 'front' },
-                  { label: 'Costas', key: 'back' },
-                  { label: 'Lateral Dir.', key: 'side_right' },
-                  { label: 'Lateral Esq.', key: 'side_left' },
-                ] as const
-              ).map(({ label, key }) => {
-                const url = photoUrls[key];
-                return (
-                  <View key={key} className="mr-3">
-                    <View className="w-24 h-32 bg-zinc-900/50 rounded-xl border border-white/10 overflow-hidden mb-2">
-                      {url ? (
-                        <Image
-                          source={{ uri: url }}
-                          style={{ width: '100%', height: '100%' }}
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <View className="flex-1 items-center justify-center">
-                          <MaterialCommunityIcons
-                            name="camera-outline"
-                            size={32}
-                            color={colors.text.muted}
-                          />
-                        </View>
-                      )}
-                    </View>
-                    <Text className="text-center text-zinc-500 text-xs font-medium">{label}</Text>
-                  </View>
-                );
-              })}
-            </ScrollView>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="flex-row"
+            ></ScrollView>
           </View>
 
           {/* Notes from AI analysis */}

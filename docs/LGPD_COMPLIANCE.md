@@ -308,6 +308,7 @@ A LGPD exige que dados sejam eliminados quando deixam de ser necessários (Art. 
 | Histórico de dietas | Enquanto a conta estiver ativa | Histórico de evolução |
 | Passos e calorias diários | Enquanto a conta estiver ativa | Comparação de longo prazo é a finalidade; `ON DELETE CASCADE` elimina junto com a conta |
 | Conversa com o coach de IA (`ai_chat_sessions`, `ai_chat_messages`) | Enquanto a conta do aluno estiver ativa | É o registro da prescrição assistida. `ON DELETE CASCADE` a partir de `profiles` elimina junto com a conta |
+| Análise corporal por imagem (`body_scans`) | Enquanto a conta estiver ativa | A comparação entre escaneamentos é a finalidade, e ela precisa do histórico. **A imagem não é guardada** — as colunas de URL de foto foram removidas na `0026`, para que ninguém as preencha por engano — só o resultado derivado, que é a maior minimização possível para um dado biométrico (`ADR-010`). `ON DELETE CASCADE` a partir de `profiles` elimina junto com a conta |
 | Logs de autenticação | 90 dias | Segurança — detecção de acessos suspeitos |
 | Dados após exclusão de conta | 0 dias (eliminar ou anonimizar) | Princípio da necessidade |
 
@@ -552,7 +553,7 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 |------|-----------------|--------------|-----------|------------|
 | `/api/ai/nutrition/chat/[studentId]` | Os mesmos campos do coach de treino: objetivo, experiência, **lesões**, **condições de saúde**, peso, altura, % gordura. **Sem o nome do titular** | Anthropic | ✅ Sim (Art. 11) | Consentimento explícito — verificado na rota |
 | `/api/ai/chat/[studentId]` | Objetivo, experiência, frequência, dias, **lesões**, **condições de saúde**, peso, altura, % gordura, periodizações. **Sem o nome do titular** | Anthropic | ✅ Sim (Art. 11) | Consentimento explícito — verificado na rota desde 2026-08-12 |
-| `/api/ai/body-scan` | Fotos corporais (base64) + métricas inferidas | Anthropic | ✅ Sim (Art. 5°, II) | Consentimento explícito (Art. 11, I) |
+| `/api/ai/body-scan` | Fotos corporais (base64, 3 imagens) + métricas estimadas | Anthropic | ✅ Sim (Art. 5°, II) | Consentimento explícito (Art. 11, I) — **verificado na rota**. A imagem não é persistida: guarda-se só o resultado |
 | `/api/ai/nutrition/adherence` | `diet_logs` anonimizados + nome do plano | Anthropic | ✅ Sim | Consentimento explícito |
 | `/api/ai/voice-command` | Removido — rota e serviço eliminados | — | — | — |
 | `/api/ai/workout/negotiate` | Nível do aluno, objetivo, lista de exercícios | Anthropic | ❌ Não sensível | Execução de contrato |
@@ -580,9 +581,9 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 
 | Item | Ação necessária | Responsável |
 |------|----------------|-------------|
-| Consentimento da tela de Body Scan deve mencionar explicitamente envio de fotos a serviço de IA externo | Atualizar texto da tela `BodyScanIntroduction.tsx` | Dev + Legal |
+| ~~Consentimento da tela de Body Scan deve mencionar envio de fotos a serviço de IA externo~~ | ✅ Resolvido — `BodyScanIntroduction.tsx` diz que a imagem vai para a Anthropic nos EUA e que nenhuma foto é guardada. A promessa de "método extremamente preciso" saiu (Art. 6°, VI) | — |
 | Anthropic e Google devem ser listados como sub-processadores na Política de Privacidade | Atualizar política de privacidade | Legal |
-| Rota `/api/ai/body-scan` deve verificar `student_consents` (tipo `health_data_collection`) antes de processar | Adicionar middleware de consentimento na rota, igual ao padrão de `nutribot` e `scan-food` | Dev |
+| ~~Rota `/api/ai/body-scan` deve verificar `student_consents` antes de processar~~ | ✅ Resolvido — a rota checa `hasCollectionConsent` sob a identidade do titular antes de desserializar o corpo, e devolve `403 consent_required`. O app checa antes de ler a foto do aparelho e oferece o fluxo (`ADR-010`) | — |
 | `loadStudentContext` manda a anamnese inteira (`select("*")`) para o prompt da Anthropic | Recortar os campos que o modelo realmente usa para montar treino — Necessidade (Art. 6°, III) | Dev |
 | Rota `/api/ai/nutrition/adherence` deve verificar `student_consents` antes de processar | Idem | Dev |
 | ~~Verificar DPA Google (Gemini) para dado biométrico de voz~~ | Eliminado — voice command removido do escopo | — |

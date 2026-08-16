@@ -1,18 +1,58 @@
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Ionicons } from '@expo/vector-icons';
+import { type CameraType, CameraView, useCameraPermissions } from 'expo-camera';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useRef } from 'react';
-import { Alert, Dimensions, Text, TouchableOpacity, Vibration, View } from 'react-native';
-import { CameraOverlayGuides } from '../components/CameraOverlayGuides';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, Text, TouchableOpacity, Vibration, View } from 'react-native';
+import { useDeviceLevel } from '../hooks/useDeviceLevel';
 import { useAssessmentStore } from '../store/assessmentStore';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+/**
+ * Onde a cabeça e os pés devem ficar, em fração da altura da tela.
+ *
+ * São as marcas que tornam duas capturas comparáveis: encaixando o corpo entre
+ * elas, a distância até a câmera é a mesma nas duas vezes, para a mesma pessoa
+ * e a mesma lente. É disso que o delta depende (`ADR-010`).
+ */
+const MARCA_TOPO = 0.1;
+const MARCA_BASE = 0.9;
+
+/**
+ * Segundos do temporizador.
+ *
+ * Existe por causa da câmera frontal: para o corpo inteiro caber, o aparelho
+ * fica a metros de distância — e aí ninguém alcança o botão. Sem temporizador,
+ * a frontal deixa o aluno se ver e continua exigindo uma segunda pessoa.
+ */
+const TEMPORIZADOR_SEGUNDOS = 10;
 
 export default function BodyScanCamera() {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const router = useRouter();
   const params = useLocalSearchParams();
-  const target = params.target as 'front' | 'side_right' | 'back' | 'side_left';
+  const target = params.target as 'front' | 'back' | 'side';
+  const { pitch, roll, nivelado, disponivel } = useDeviceLevel();
+  const [facing, setFacing] = useState<CameraType>('back');
+  const [temporizador, setTemporizador] = useState(false);
+  const [contagem, setContagem] = useState<number | null>(null);
+
+  // `useRef` para o efeito da contagem não depender da função e reiniciar o
+  // temporizador a cada re-render do sensor de nível, que emite 5x por segundo.
+  const dispararRef = useRef<() => void>(() => {});
+
+  useEffect(() => {
+    if (contagem === null) return;
+
+    if (contagem <= 0) {
+      setContagem(null);
+      dispararRef.current();
+      return;
+    }
+
+    Vibration.vibrate(30);
+    const id = setTimeout(() => setContagem((n) => (n === null ? null : n - 1)), 1000);
+    return () => clearTimeout(id);
+  }, [contagem]);
 
   // Handle permission
   if (!permission) return <View />;
@@ -32,29 +72,53 @@ export default function BodyScanCamera() {
   }
 
   const takePicture = async () => {
-    console.log('--- TAKE PICTURE PRESSED ---');
-    if (!cameraRef.current) return;
+    // Revalidado no disparo, não no toque: com o temporizador o aparelho fica
+    // apoiado em algum lugar e pode ter escorregado nesses 10 segundos.
+    if (!cameraRef.current || !nivelado) {
+      Alert.alert('Fora de nível', 'Ajuste o aparelho e tente de novo.');
+      return;
+    }
 
     try {
       Vibration.vibrate(50);
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.5,
+        // Era 0.5, e a imagem ainda passava por `compress: 0.6` no envio: duas
+        // compressões, a primeira jogando fora informação antes da segunda. O
+        // tamanho enviado é decidido no resize, então comprimir aqui não
+        // economiza nada — só piora a medida de largura em pixels.
+        quality: 1,
         base64: false,
-        skipProcessing: true,
+        // Era `true`, o que pula a correção de orientação do Android e pode
+        // devolver a rotação só na EXIF. Com a altura em pixels virando régua,
+        // largura e altura trocadas quebrariam a escala em silêncio.
+        skipProcessing: false,
       });
 
-      console.log('CAPTURED:', photo?.uri);
-
       if (photo?.uri) {
-        const { setCapturedImage } = useAssessmentStore.getState();
+        const { setCapturedImage, setCaptureFraming } = useAssessmentStore.getState();
 
-        if (target) {
-          setCapturedImage(target, photo.uri);
-          router.back();
-        } else {
+        if (!target) {
           Alert.alert('Erro', 'Modo de captura inválido');
           router.back();
+          return;
         }
+
+        setCapturedImage(target, photo.uri);
+        // Guardado para o próximo escaneamento reproduzir o mesmo
+        // enquadramento — sem isso a comparação perde a base.
+        setCaptureFraming({
+          markTop: MARCA_TOPO,
+          markBottom: MARCA_BASE,
+          pitch,
+          roll,
+          levelSensor: disponivel,
+          // Qual lente. Frontal e traseira têm distância focal diferente, então
+          // "o corpo ocupando a mesma fração do quadro" não significa a mesma
+          // distância entre as duas — comparar escaneamentos de lentes
+          // diferentes introduz um erro que ninguém veria sem este campo.
+          camera: facing,
+        });
+        router.back();
       }
     } catch (e) {
       console.error('ERROR:', e);
@@ -62,47 +126,138 @@ export default function BodyScanCamera() {
     }
   };
 
+  // A contagem dispara pelo ref para o efeito não depender desta função, que
+  // muda a cada leitura do sensor.
+  dispararRef.current = takePicture;
+
   const getTitle = () => {
     switch (target) {
       case 'front':
         return 'Frente';
-      case 'side_right':
-        return 'Lado Direito';
       case 'back':
         return 'Costas';
-      case 'side_left':
-        return 'Lado Esquerdo';
+      case 'side':
+        return 'Lateral';
       default:
         return 'Foto';
     }
   };
 
+  const dicaDeNivel = () => {
+    if (!disponivel) return 'Mantenha o celular em pé';
+    if (Math.abs(pitch) > Math.abs(roll)) {
+      return pitch > 0 ? 'Incline o topo para trás' : 'Incline o topo para a frente';
+    }
+    return roll > 0 ? 'Gire para a esquerda' : 'Gire para a direita';
+  };
+
   return (
     <View className="flex-1 bg-black">
-      <CameraView ref={cameraRef} style={{ flex: 1 }} facing="back" mode="picture" />
+      <CameraView
+        ref={cameraRef}
+        style={{ flex: 1 }}
+        facing={facing}
+        mode="picture"
+        // Explícito, e nunca `true`: espelhar troca esquerda e direita, e a
+        // análise reporta lado ("ombro direito elevado"). Uma imagem espelhada
+        // faria o laudo apontar o ombro errado — e pareceria correto.
+        mirror={false}
+      />
 
-      {/* Body positioning guide */}
-      <View style={{ position: 'absolute', top: 0, left: 0 }} pointerEvents="none">
-        <CameraOverlayGuides step={target || 'front'} width={SCREEN_WIDTH} height={SCREEN_HEIGHT} />
+      {/* Marcas de enquadramento. Diferente da silhueta antiga, elas não são
+          decoração: o disparo só libera com o aparelho nivelado. */}
+      <View
+        pointerEvents="none"
+        className="absolute left-0 right-0"
+        style={{ top: `${MARCA_TOPO * 100}%` }}
+      >
+        <View className="h-[2px] bg-primary/70" />
+        <Text className="text-primary text-[10px] font-bold uppercase tracking-widest ml-4 mt-1">
+          topo da cabeça
+        </Text>
       </View>
 
-      {/* Absolute Overlay Controls */}
+      <View
+        pointerEvents="none"
+        className="absolute left-0 right-0"
+        style={{ top: `${MARCA_BASE * 100}%` }}
+      >
+        <View className="h-[2px] bg-primary/70" />
+        <Text className="text-primary text-[10px] font-bold uppercase tracking-widest ml-4 mt-1">
+          pés
+        </Text>
+      </View>
+
       <View className="absolute top-12 left-0 right-0 items-center">
-        <View className="bg-black/50 px-6 py-3 rounded-full border border-white/20 backdrop-blur-md">
+        <View className="bg-black/50 px-6 py-3 rounded-full border border-white/20">
           <Text className="text-white font-bold text-lg">{getTitle()}</Text>
         </View>
+        <Text className="text-white/80 text-xs mt-3 px-10 text-center leading-relaxed">
+          {facing === 'front'
+            ? 'Apoie o celular, ligue o temporizador e afaste-se até caber entre as marcas.'
+            : 'Encaixe a cabeça na marca de cima e os pés na de baixo. Descalço, roupa justa.'}
+        </Text>
       </View>
 
-      <View className="absolute bottom-12 w-full items-center">
+      {/* Trocar de lente e ligar o temporizador ficam no topo direito, longe do
+          disparo: são ajustes de preparo, não parte do gesto de fotografar. */}
+      <View className="absolute top-12 right-5 gap-3">
         <TouchableOpacity
-          onPress={takePicture}
-          className="w-20 h-20 bg-white rounded-full border-4 border-gray-300 items-center justify-center shadow-lg"
+          onPress={() => setFacing((atual) => (atual === 'back' ? 'front' : 'back'))}
+          className="w-12 h-12 rounded-full bg-black/50 border border-white/20 items-center justify-center"
+          accessibilityLabel={facing === 'back' ? 'Usar câmera frontal' : 'Usar câmera traseira'}
         >
-          <View className="w-16 h-16 bg-white rounded-full border-2 border-black" />
+          <Ionicons name="camera-reverse-outline" size={22} color="white" />
         </TouchableOpacity>
 
         <TouchableOpacity
-          className="mt-6 bg-black/50 px-6 py-3 rounded-full backdrop-blur-md"
+          onPress={() => setTemporizador((v) => !v)}
+          className={`w-12 h-12 rounded-full items-center justify-center border ${
+            temporizador ? 'bg-primary border-primary' : 'bg-black/50 border-white/20'
+          }`}
+          accessibilityLabel={
+            temporizador ? 'Desligar temporizador' : `Temporizador de ${TEMPORIZADOR_SEGUNDOS}s`
+          }
+        >
+          <Ionicons name="timer-outline" size={22} color={temporizador ? 'black' : 'white'} />
+        </TouchableOpacity>
+      </View>
+
+      {contagem !== null && (
+        <View pointerEvents="none" className="absolute inset-0 items-center justify-center">
+          <Text className="text-white text-[120px] font-black">{contagem}</Text>
+        </View>
+      )}
+
+      <View className="absolute bottom-12 w-full items-center">
+        {!nivelado && (
+          <View className="mb-4 bg-amber-500/20 border border-amber-500/40 px-5 py-2 rounded-full">
+            <Text className="text-amber-300 text-xs font-bold">{dicaDeNivel()}</Text>
+          </View>
+        )}
+
+        <TouchableOpacity
+          onPress={() => {
+            if (temporizador) {
+              setContagem(TEMPORIZADOR_SEGUNDOS);
+              return;
+            }
+            takePicture();
+          }}
+          disabled={!nivelado || contagem !== null}
+          className={`w-20 h-20 rounded-full border-4 items-center justify-center ${
+            nivelado ? 'bg-white border-gray-300' : 'bg-white/30 border-white/30'
+          }`}
+        >
+          <View
+            className={`w-16 h-16 rounded-full border-2 ${
+              nivelado ? 'bg-white border-black' : 'bg-white/40 border-black/30'
+            }`}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          className="mt-6 bg-black/50 px-6 py-3 rounded-full"
           onPress={() => router.back()}
         >
           <Text className="text-white font-semibold">Cancelar</Text>

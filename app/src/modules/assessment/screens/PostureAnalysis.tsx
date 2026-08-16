@@ -2,7 +2,6 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Dimensions,
   Image,
   Animated as RNAnimated,
@@ -15,7 +14,7 @@ import Animated, { FadeIn, FadeInDown, ZoomIn } from 'react-native-reanimated';
 import Svg, { Circle, Line, Polygon, Text as SvgText } from 'react-native-svg';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { colors } from '@/constants/colors';
-import { useStudentStore } from '@/modules/students';
+import { ScanComparison } from '../components/ScanComparison';
 
 const { width } = Dimensions.get('window');
 const PHOTO_ASPECT_RATIO = 4 / 3;
@@ -233,7 +232,6 @@ const RadarChart = ({ data, size = 120 }: { data: Record<string, number>; size?:
   );
 };
 
-import { SupabaseStorageService } from '@/services/SupabaseStorageService';
 import { useAssessmentStore } from '../store/assessmentStore';
 
 // ... (existing helper functions like SkeletonOverlay etc remain, we just update the component logic)
@@ -244,10 +242,25 @@ export default function PostureAnalysis() {
     studentId?: string;
     id?: string;
   }>();
-  const { capturedImages, lastResult, studentId: storeStudentId } = useAssessmentStore();
+  const {
+    capturedImages,
+    lastResult,
+    studentId: storeStudentId,
+    scanDeltas,
+    loadHistory,
+  } = useAssessmentStore();
 
   // Prioritize Store ID, then Params (check both 'studentId' and 'id' for compatibility)
   const id = storeStudentId || paramStudentId || paramId;
+
+  useEffect(() => {
+    if (!id) return;
+    // Falha aqui não derruba a tela: a análise atual continua legível sem a
+    // comparação. O que não pode é a tela sumir por causa do histórico.
+    loadHistory(id).catch((error) => {
+      console.log('[PostureAnalysis] Histórico indisponível:', String(error));
+    });
+  }, [id, loadHistory]);
 
   useEffect(() => {
     if (!id) {
@@ -257,9 +270,7 @@ export default function PostureAnalysis() {
     }
   }, [id]);
   const [analyzing, setAnalyzing] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [currentViewIndex, setCurrentViewIndex] = useState(0);
-  const addPhysicalAssessment = useStudentStore((state) => state.addPhysicalAssessment);
   const [scanPosition] = useState(new RNAnimated.Value(0));
 
   const currentView = ANALYSIS_VIEWS[currentViewIndex];
@@ -279,9 +290,10 @@ export default function PostureAnalysis() {
       case 'back':
         return capturedImages.back;
       case 'side_r':
-        return capturedImages.side_right;
       case 'side_l':
-        return capturedImages.side_left;
+        // As duas vistas laterais viraram uma só na captura: davam a mesma
+        // informação e dobravam o incômodo de se fotografar.
+        return capturedImages.side;
       default:
         return null;
     }
@@ -525,8 +537,7 @@ export default function PostureAnalysis() {
   const feedback = lastResult?.postureAnalysis?.feedback || {
     front: ANALYSIS_VIEWS[0].feedback,
     back: ANALYSIS_VIEWS[1].feedback,
-    side_right: ANALYSIS_VIEWS[2].feedback,
-    side_left: ANALYSIS_VIEWS[3].feedback,
+    side: ANALYSIS_VIEWS[2].feedback,
   };
 
   const recommendations =
@@ -562,6 +573,11 @@ export default function PostureAnalysis() {
             </Text>
           </View>
         )}
+
+        {/* A comparação vem antes das fotos e dos valores absolutos: é o número
+            mais confiável da tela, porque o erro da estimativa se cancela na
+            diferença (ADR-010). */}
+        {!isDemo && <ScanComparison deltas={scanDeltas} />}
 
         {/* Photo Container with Navigation */}
         <View className="items-center mt-6 relative">
@@ -732,118 +748,13 @@ export default function PostureAnalysis() {
                 <Text className="text-zinc-400 font-bold">Refazer Scan</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                className="flex-1 py-4 rounded-xl items-center flex-row justify-center"
-                style={{ backgroundColor: colors.primary.solid, opacity: saving ? 0.7 : 1 }}
-                disabled={saving}
-                onPress={async () => {
-                  if (!id) {
-                    alert('Erro: Aluno não identificado');
-                    return;
-                  }
-
-                  setSaving(true);
-
-                  // 1. Upload Photos
-                  const uploadedPhotos: Record<string, string | null> = {};
-                  const photoTypes = ['front', 'back', 'side_right', 'side_left'];
-
-                  try {
-                    for (const type of photoTypes) {
-                      const localUri = capturedImages[type as keyof typeof capturedImages];
-                      if (localUri) {
-                        const path = SupabaseStorageService.getAssessmentPhotoPath(
-                          id as string,
-                          type as 'front' | 'back' | 'side_right' | 'side_left'
-                        );
-                        // Upload returns { path, error } - publicUrl is null for private buckets
-                        const { path: uploadedPath, error } =
-                          await SupabaseStorageService.uploadFile(localUri, 'assessments', path);
-
-                        if (error || !uploadedPath) {
-                          console.warn(`Failed to upload ${type}`, error);
-                          // Ensure we don't save a local URI to the DB for the permanent record if upload fails,
-                          // or handle as needed. For now, setting null or keeping existing behavior if preferred.
-                          // Keeping null is safer than saving a file:// that won't work elsewhere.
-                          uploadedPhotos[`photo_${type}`] = null;
-                        } else {
-                          // Save the STORAGE PATH to the database, not the URL
-                          uploadedPhotos[`photo_${type}`] = uploadedPath;
-                        }
-                      }
-                    }
-                  } catch (uploadError) {
-                    console.error('Upload process error', uploadError);
-                  }
-
-                  // 2. Format AI Insights for Notes
-                  const scoreSummary = `[SCORES] Simetria: ${scores.symmetry}, Muscular: ${scores.muscle}, Postura: ${scores.posture}`;
-
-                  let detailedFeedback = '\n[DETALHES]\n';
-                  detailedFeedback += `\nFRENTE: ${feedback.front?.map((f: { title: string; risk: string }) => `${f.title} (${f.risk})`).join(', ') || 'OK'}`;
-                  detailedFeedback += `\nCOSTAS: ${feedback.back?.map((f: { title: string; risk: string }) => `${f.title} (${f.risk})`).join(', ') || 'OK'}`;
-                  detailedFeedback += `\nLAT. DIR: ${feedback.side_right?.map((f: { title: string; risk: string }) => `${f.title} (${f.risk})`).join(', ') || 'OK'}`;
-                  detailedFeedback += `\nLAT. ESQ: ${feedback.side_left?.map((f: { title: string; risk: string }) => `${f.title} (${f.risk})`).join(', ') || 'OK'}`;
-
-                  const formattedNotes = `Análise Corporal I.A.\n\n${scoreSummary}\n${detailedFeedback}\n\n[RECOMENDAÇÃO]\n${recommendations}`;
-
-                  // 3. Prepare Data
-                  const aiDataToSave = {
-                    weight: lastResult?.metrics?.weight || 70,
-                    height: (lastResult?.metrics?.height || 170) / 100, // cm to m
-                    notes: formattedNotes,
-                    // Mapping some AI inputs to measurements
-                    neck: lastResult?.segments?.neck || 0,
-                    shoulder: lastResult?.segments?.shoulders || 0,
-                    chest: lastResult?.segments?.chest || 0,
-                    waist: lastResult?.segments?.waist || 0,
-                    abdomen: lastResult?.segments?.waist || 0, // approx
-                    hips: lastResult?.segments?.hips || 0,
-                    arm_right_relaxed: lastResult?.segments?.arms || 0,
-                    arm_left_relaxed: lastResult?.segments?.arms || 0,
-                    forearm_right: 0,
-                    forearm_left: 0,
-                    thigh_proximal_right: lastResult?.segments?.thighs || 0,
-                    thigh_proximal_left: lastResult?.segments?.thighs || 0,
-                    calf_right: lastResult?.segments?.calves || 0,
-                    calf_left: lastResult?.segments?.calves || 0,
-                    // Skinfolds (usually 0 from vision)
-                    skinfold_chest: 0,
-                    skinfold_abdominal: 0,
-                    skinfold_thigh: 0,
-                    skinfold_triceps: 0,
-                    skinfold_suprailiac: 0,
-                    skinfold_subscapular: 0,
-                    // Use Uploaded Photos
-                    photo_front: uploadedPhotos.photo_front || null,
-                    photo_back: uploadedPhotos.photo_back || null,
-                    photo_side_right: uploadedPhotos.photo_side_right || null,
-                    photo_side_left: uploadedPhotos.photo_side_left || null,
-                  };
-
-                  try {
-                    const result = await addPhysicalAssessment(id as string, aiDataToSave);
-
-                    setSaving(false);
-
-                    if (result.success) {
-                      alert('Avaliação salva e integrada à ficha do aluno!');
-                      router.back();
-                    } else {
-                      alert(`Erro ao salvar: ${result.error}`);
-                    }
-                  } catch (e: unknown) {
-                    setSaving(false);
-                    alert(`Erro inesperado: ${e instanceof Error ? e.message : String(e)}`);
-                  }
-                }}
-              >
-                {saving ? (
-                  <ActivityIndicator size="small" color="black" />
-                ) : (
-                  <Text className="text-black font-bold">Salvar Análise</Text>
-                )}
-              </TouchableOpacity>
+              {/* O botão "Salvar Análise" saiu.
+                  Ele gravava o resultado da IA dentro de `physical_assessments`
+                  — a tabela da fita métrica — com nomes de coluna que nem
+                  existiam. Era gravação duplicada: a análise já é persistida em
+                  `body_scans` pelo próprio BFF, no momento em que acontece.
+                  Mantê-lo faria estimativa e medição virarem a mesma coisa na
+                  ficha do aluno (`ADR-010`). */}
             </View>
           </Animated.View>
         </View>

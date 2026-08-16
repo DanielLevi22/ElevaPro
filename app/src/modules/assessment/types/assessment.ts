@@ -1,3 +1,30 @@
+/**
+ * Como a foto foi enquadrada.
+ *
+ * Guardado com o escaneamento para o próximo reproduzir a mesma distância: é o
+ * que torna dois escaneamentos comparáveis, e a comparação é onde está o valor
+ * da feature (`ADR-010`).
+ */
+export interface CaptureFraming {
+  /** Fração da altura da tela onde ficava a marca do topo da cabeça. */
+  markTop: number;
+  /** Fração da altura da tela onde ficava a marca dos pés. */
+  markBottom: number;
+  /** Inclinação frente/trás no disparo, em graus. */
+  pitch: number;
+  /** Rotação lateral no disparo, em graus. */
+  roll: number;
+  /** Falso quando o aparelho não tem sensor — aí pitch e roll não valem nada. */
+  levelSensor: boolean;
+  /**
+   * Qual lente. Frontal e traseira têm distância focal diferente: o corpo
+   * ocupando a mesma fração do quadro não significa a mesma distância nas duas.
+   * Sem este campo, comparar escaneamentos de lentes diferentes introduziria um
+   * erro invisível.
+   */
+  camera: 'front' | 'back';
+}
+
 export interface BodyMetric {
   id: string;
   label: string;
@@ -27,6 +54,12 @@ export interface BodyScanResult {
     shoulders?: number;
   };
   imageUrl: string;
+  /**
+   * De onde vieram altura e peso — nunca do modelo (`ADR-010`). A tela usa isto
+   * para dizer se a régua é medida ou informada, o que muda a confiança nas
+   * circunferências derivadas dela.
+   */
+  scaleSource?: 'assessment' | 'informed';
   postureAnalysis?: {
     scores: {
       symmetry: number;
@@ -36,8 +69,7 @@ export interface BodyScanResult {
     feedback: {
       front: Array<{ title: string; risk: string; text: string }>;
       back: Array<{ title: string; risk: string; text: string }>;
-      side_right: Array<{ title: string; risk: string; text: string }>;
-      side_left: Array<{ title: string; risk: string; text: string }>;
+      side: Array<{ title: string; risk: string; text: string }>;
     };
     recommendations: string;
   };
@@ -49,6 +81,8 @@ export enum AssessmentStatus {
   ANALYZING = 'analyzing',
   COMPLETED = 'completed',
   ERROR = 'error',
+  /** Falta consentir a coleta de dados de saúde. Um toque resolve — não é erro. */
+  NEEDS_CONSENT = 'needs_consent',
 }
 
 export type QuestionType =

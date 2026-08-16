@@ -1,9 +1,21 @@
+import type { BodyScanDelta, BodyScanRecord } from '@elevapro/shared';
+import { createBodyScanService } from '@elevapro/shared';
+import { supabase } from '@elevapro/supabase';
 import { createMMKV } from 'react-native-mmkv';
 import { create } from 'zustand';
 import { createJSONStorage, persist, StateStorage } from 'zustand/middleware';
-import { AIBodyScanService } from '../services/aiBodyScan';
+import {
+  AIBodyScanService,
+  BodyScanAnalysisError,
+  BodyScanConsentError,
+} from '../services/aiBodyScan';
 import { AnamnesisService } from '../services/anamnesisService';
-import { AnamnesisResponse, AssessmentStatus, BodyScanResult } from '../types/assessment';
+import {
+  AnamnesisResponse,
+  AssessmentStatus,
+  BodyScanResult,
+  CaptureFraming,
+} from '../types/assessment';
 
 const storage = createMMKV();
 
@@ -27,9 +39,8 @@ interface AssessmentState {
   history: BodyScanResult[];
   capturedImages: {
     front?: string;
-    side_right?: string;
     back?: string;
-    side_left?: string;
+    side?: string;
   };
   // Anamnesis State
   anamnesisResponses: Record<string, AnamnesisResponse>;
@@ -38,7 +49,10 @@ interface AssessmentState {
 
   setStudentId: (id: string) => void;
   startScan: () => Promise<void>;
-  setCapturedImage: (type: 'front' | 'side_right' | 'back' | 'side_left', uri: string) => void;
+  setCapturedImage: (type: 'front' | 'back' | 'side', uri: string) => void;
+  /** Parâmetros do enquadramento da última captura — base da comparação. */
+  captureFraming: CaptureFraming | null;
+  setCaptureFraming: (framing: CaptureFraming) => void;
   submitScan: () => Promise<void>;
 
   // Anamnesis Actions
@@ -47,6 +61,12 @@ interface AssessmentState {
   submitAnamnesis: () => Promise<void>;
   syncAnamnesis: (studentId: string) => Promise<void>;
 
+  /** Histórico e comparação vindos do banco — antes só existiam em memória. */
+  loadHistory: (studentId: string) => Promise<void>;
+  scanHistory: BodyScanRecord[];
+  /** Texto pronto para a tela. Null quando não houve falha. */
+  errorMessage: string | null;
+  scanDeltas: BodyScanDelta[];
   reset: () => void;
 }
 
@@ -57,7 +77,11 @@ export const useAssessmentStore = create<AssessmentState>()(
       studentId: null,
       lastResult: null,
       history: [],
+      scanHistory: [],
+      scanDeltas: [],
+      errorMessage: null,
       capturedImages: {},
+      captureFraming: null,
       anamnesisResponses: {},
       currentSectionIndex: 0,
       isAnamnesisSubmitted: false, // Default false
@@ -68,7 +92,7 @@ export const useAssessmentStore = create<AssessmentState>()(
         set({ status: AssessmentStatus.SCANNING, capturedImages: {} }); // Keep studentId
       },
 
-      setCapturedImage: (type: 'front' | 'side_right' | 'back' | 'side_left', uri: string) => {
+      setCapturedImage: (type: 'front' | 'back' | 'side', uri: string) => {
         console.log('[AssessmentStore] Setting captured image:', type, uri);
         set((state) => {
           const newImages = { ...state.capturedImages, [type]: uri };
@@ -77,13 +101,21 @@ export const useAssessmentStore = create<AssessmentState>()(
         });
       },
 
+      setCaptureFraming: (framing: CaptureFraming) => set({ captureFraming: framing }),
+
       submitScan: async () => {
-        set({ status: AssessmentStatus.ANALYZING });
+        // Limpa a falha anterior: tentar de novo com a mensagem antiga na tela
+        // faz o retry parecer que falhou de novo antes mesmo de terminar.
+        set({ status: AssessmentStatus.ANALYZING, errorMessage: null });
         try {
           const capturedImages = get().capturedImages;
           console.log('Starting AI Analysis with images:', Object.keys(capturedImages));
 
-          const result = await AIBodyScanService.analyzeImages(capturedImages);
+          const result = await AIBodyScanService.analyzeImages(
+            capturedImages,
+            undefined,
+            get().captureFraming
+          );
 
           set((state) => ({
             status: AssessmentStatus.COMPLETED,
@@ -91,7 +123,19 @@ export const useAssessmentStore = create<AssessmentState>()(
             history: [result, ...state.history],
           }));
         } catch (error) {
-          set({ status: AssessmentStatus.ERROR });
+          // Falta de consentimento não é falha: leva a uma tela que resolve,
+          // não à mesma mensagem de erro genérica.
+          if (error instanceof BodyScanConsentError) {
+            set({ status: AssessmentStatus.NEEDS_CONSENT });
+            return;
+          }
+          set({
+            status: AssessmentStatus.ERROR,
+            errorMessage:
+              error instanceof BodyScanAnalysisError
+                ? error.message
+                : 'Não consegui completar a análise. Tente de novo.',
+          });
           console.error('Body scan failed', error);
         }
       },
@@ -147,15 +191,35 @@ export const useAssessmentStore = create<AssessmentState>()(
         }
       },
 
+      /**
+       * Lê o histórico do banco.
+       *
+       * Antes o resultado vivia só no Zustand e o `partialize` guardava apenas
+       * a anamnese — fechar o app apagava tudo. Sem histórico não existe delta,
+       * e o delta é onde está o valor da feature (ADR-010).
+       */
+      loadHistory: async (studentId: string) => {
+        const service = createBodyScanService(supabase);
+        const [scans, comparison] = await Promise.all([
+          service.list(studentId),
+          service.latestWithComparison(studentId),
+        ]);
+        set({ scanHistory: scans, scanDeltas: comparison.deltas });
+      },
+
       reset: () => {
         set({
           status: AssessmentStatus.IDLE,
           lastResult: null,
           capturedImages: {},
+          captureFraming: null,
           studentId: null,
           anamnesisResponses: {},
           currentSectionIndex: 0,
           isAnamnesisSubmitted: false,
+          scanHistory: [],
+          scanDeltas: [],
+          errorMessage: null,
         });
       },
     }),

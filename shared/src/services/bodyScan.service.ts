@@ -1,0 +1,125 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type {
+  BodyScanDelta,
+  BodyScanInput,
+  BodyScanRecord,
+  ComparableField,
+} from "../types/bodyScan.types";
+
+const COMPARABLE_FIELDS: ComparableField[] = [
+  "weight_kg",
+  "body_fat_pct",
+  "muscle_mass_kg",
+  "bmi",
+  "circ_chest",
+  "circ_waist",
+  "circ_hips",
+  "circ_arms",
+  "circ_thighs",
+  "circ_calves",
+  "circ_neck",
+  "circ_shoulders",
+];
+
+/**
+ * Diferença entre dois escaneamentos, campo a campo.
+ *
+ * É o número que a feature deve mostrar primeiro. Uma foto isolada dá uma
+ * estimativa discutível; duas na mesma pose dão uma comparação confiável,
+ * porque o erro sistemático se repete nas duas e se cancela na diferença
+ * (`ADR-010`).
+ *
+ * Campo nulo em qualquer um dos lados sai do resultado — "não medido" não é
+ * zero, e tratá-lo como zero inventaria uma variação que não houve.
+ *
+ * @example
+ * const deltas = compareScans(scans[0], scans[1]);
+ * // [{ field: 'circ_waist', current: 82, previous: 85, change: -3 }]
+ */
+export function compareScans(current: BodyScanRecord, previous: BodyScanRecord): BodyScanDelta[] {
+  const deltas: BodyScanDelta[] = [];
+
+  for (const field of COMPARABLE_FIELDS) {
+    const now = current[field];
+    const before = previous[field];
+    if (now === null || before === null) continue;
+
+    deltas.push({
+      field,
+      current: now,
+      previous: before,
+      change: Number((now - before).toFixed(2)),
+    });
+  }
+
+  return deltas;
+}
+
+export const createBodyScanService = (supabase: SupabaseClient) => ({
+  /**
+   * Grava uma análise. O `studentId` vem sempre do token de quem chamou —
+   * nunca do corpo da requisição.
+   */
+  save: async (studentId: string, input: BodyScanInput): Promise<BodyScanRecord> => {
+    const { data, error } = await supabase
+      .from("body_scans")
+      .insert({ student_id: studentId, ...input })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as BodyScanRecord;
+  },
+
+  /**
+   * Histórico, do mais recente para o mais antigo.
+   *
+   * A RLS da `0017` já limita a quem pode ler: o próprio aluno e o
+   * especialista com vínculo ativo. Não há filtro de papel aqui de propósito —
+   * duplicar a regra no cliente é onde as duas cópias divergem.
+   */
+  list: async (studentId: string, limit = 10): Promise<BodyScanRecord[]> => {
+    const { data, error } = await supabase
+      .from("body_scans")
+      .select("*")
+      .eq("student_id", studentId)
+      .order("scanned_at", { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return (data as BodyScanRecord[]) ?? [];
+  },
+
+  /**
+   * Último escaneamento e a comparação com o anterior, quando existe.
+   *
+   * `deltas` vem vazio no primeiro escaneamento — que é a resposta honesta:
+   * não há com o que comparar ainda.
+   */
+  latestWithComparison: async (
+    studentId: string,
+  ): Promise<{
+    latest: BodyScanRecord | null;
+    previous: BodyScanRecord | null;
+    deltas: BodyScanDelta[];
+  }> => {
+    const { data, error } = await supabase
+      .from("body_scans")
+      .select("*")
+      .eq("student_id", studentId)
+      .order("scanned_at", { ascending: false })
+      .limit(2);
+
+    if (error) throw error;
+
+    const scans = (data as BodyScanRecord[]) ?? [];
+    const latest = scans[0] ?? null;
+    const previous = scans[1] ?? null;
+
+    return {
+      latest,
+      previous,
+      deltas: latest && previous ? compareScans(latest, previous) : [],
+    };
+  },
+});

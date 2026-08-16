@@ -25,7 +25,7 @@
 | **Nutrition** | ✅ | ✅ | ✅ | ⚠️ parcial | ⚠️ parcial |
 | **Workouts** | ✅ | ✅ | 🔄 pendente | ⚠️ parcial | ⚠️ parcial |
 | **Students** | ✅ | ⚠️ parcial | 🔄 pendente | ⚠️ parcial | ⚠️ parcial |
-| **Assessment** | N/A | ✅ | 🔄 pendente | N/A | ⚠️ parcial |
+| **Assessment** | ✅ análise corporal (leitura) | ✅ | ✅ [body-scan-integrity](features/body-scan-integrity.md) | ⚠️ parcial | ⚠️ parcial |
 | **Gamification** | ⚠️ parcial | ✅ | ✅ | ❌ | ❌ |
 | **AI / Agentes** | ⚠️ student coach (web) | ⚠️ cliente do BFF ([ADR-004](decisions/004-ai-bff-pattern.md)) | ⚠️ draft (blueprint) | ⚠️ parcial (service + readiness) | ⚠️ parcial |
 | **Packages / Shared** | ✅ centralizado (students + auth + workouts + nutrition + gamification) | ✅ centralizado (students + auth + workouts + nutrition + gamification) | ✅ | N/A | N/A |
@@ -103,7 +103,7 @@ Três armadilhas que já custaram tempo:
 | 3 | ~~Separação de ambientes Supabase (dev/preview/prod)~~ — **resolvido** | ✅ | [ADR-003](decisions/003-environment-strategy.md) |
 | 4 | Testes de cobertura insuficientes em todos os módulos | 🟡 Média | — |
 | 5 | ~~Código mobile/web referenciando tabelas antigas~~ — **resolvido** | ✅ | — |
-| 6 | `assessment` module usa `as unknown as AssessmentInsert` — field mapping com nomes legados | 🟡 Média | — |
+| 6 | ~~`assessment` module usa `as unknown as AssessmentInsert`~~ — **Resolvido junto com a 44**: o cast saiu e o tipo gerado voltou a ser a guarda | ✅ | [PRD](PRDs/physical-assessment-schema-drift.md) |
 | 7 | ~~12 tabelas referenciadas em código não existem no banco~~ — **resolvido**, com guarda em CI contra recorrência | ✅ | [PRD](PRDs/schema-drift-alignment.md) |
 | 8 | Tela de perfil (mobile) exibe barra de XP sem fonte de dados — não existe sistema de nível/XP no schema | 🟢 Baixa | — |
 | 9 | ~~Duas representações concorrentes de execução de treino~~ — **resolvido** na `0023`: `sets_data` apagada, as três telas gravam em `workout_session_sets` | ✅ | [PRD](PRDs/workout-execution-consolidation.md) |
@@ -127,6 +127,7 @@ Três armadilhas que já custaram tempo:
 | 27 | ~~**IDOR nas rotas de IA do especialista**~~ — `studentId` vinha da URL e nenhuma checagem de vínculo; um token de aluno lia a anamnese de qualquer outro. **Resolvido** com `@/lib/api-auth` + guarda no CI | ✅ | [PRD](PRDs/api-security-hardening.md) |
 | 28 | ~~Privilégio saindo de `user_metadata`~~ — `ensure-profile` e `getUserContextJWT` (web) liam o `account_type` de campo que o próprio usuário edita. **Resolvido**: sai de `profiles` | ✅ | [PRD](PRDs/api-security-hardening.md) |
 | 29 | Nenhuma rota de IA tem rate limit. Cada chamada custa dinheiro e qualquer conta autenticada chama à vontade — abuso de custo, não vazamento | 🟡 Média | [PRD](PRDs/api-security-hardening.md) |
+| 44 | ~~**Nenhum caminho grava `physical_assessments` corretamente**~~ — **Resolvido**: nomes alinhados nas duas plataformas, lista de campos única em `@elevapro/shared`, cast removido, erros propagados. Migration `0030` completou as sete circunferências que o web já coletava. Antes: — mobile e web usam nomes de coluna que não existem, e os dois desligam a checagem (`const { data }` sem `error`; `as unknown as AssessmentInsert`). A leitura devolve "sem avaliação" em vez de erro. Bloqueava a régua do body scan (`ADR-010`) | ✅ | [PRD](PRDs/physical-assessment-schema-drift.md) |
 | 30 | Cadastro público cria especialista com `email_confirm: true` e `account_status: 'active'` — sem verificação de e-mail e pulando a aprovação que existe no `/admin` | 🟡 Média | [PRD](PRDs/api-security-hardening.md) |
 | 41 | Os 44 alimentos de `foods` têm `category` NULL. Nenhuma busca por categoria funciona, e a curadoria nunca foi feita | 🟡 Média | [PRD](PRDs/ai-nutrition-coach.md) |
 | 42 | ~~`DietDetailsHeader` derrubava a tela com plano sem período~~ — `format(new Date(""))` lança RangeError. **Resolvido**: utilitário de data + `0025` recusando nulo | ✅ | [PRD](PRDs/ai-nutrition-coach.md) |

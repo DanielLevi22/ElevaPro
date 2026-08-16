@@ -1,5 +1,6 @@
 import { SPECIALIST_COACH_PROMPT } from "../prompts/specialist.prompts";
 import type { SystemBlock, ToolDefinition } from "../providers/types";
+import { BODY_SCAN_TOOL } from "../tools/bodyScanTools";
 import { WORKOUT_TOOLS } from "../tools/workoutTools";
 import type { PeriodizationProposal, SseEvent } from "../types";
 import { BaseOrchestrator, type ToolCallHandler } from "./base.orchestrator";
@@ -13,7 +14,7 @@ export class WorkoutOrchestrator extends BaseOrchestrator {
   }
 
   getTools(): ToolDefinition[] {
-    return WORKOUT_TOOLS;
+    return [...WORKOUT_TOOLS, BODY_SCAN_TOOL];
   }
 
   // propose_periodization yields a proposal SSE event and returns a static string.
