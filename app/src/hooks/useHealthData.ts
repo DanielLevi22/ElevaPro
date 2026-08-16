@@ -59,7 +59,7 @@ function todayRange(): { startTime: string; endTime: string } {
  * @example
  * if (await hasAndroidPermissions()) await readAndroidMetrics();
  */
-async function hasAndroidPermissions(): Promise<boolean> {
+async function hasAndroidPermissions(options?: { background?: boolean }): Promise<boolean> {
   const isInitialized = await initialize();
   if (!isInitialized) return false;
 
@@ -67,7 +67,18 @@ async function hasAndroidPermissions(): Promise<boolean> {
   const canRead = (recordType: string) =>
     granted.some((p) => p.recordType === recordType && p.accessType === 'read');
 
-  return canRead('Steps') && canRead('ActiveCaloriesBurned');
+  if (!canRead('Steps') || !canRead('ActiveCaloriesBurned')) return false;
+
+  // A leitura em background exige uma permissão própria, concedida à parte das
+  // comuns. Sem ela o Health Connect devolve lista vazia em vez de recusar —
+  // o dano já está contido por `hasRecords`, mas sem esta checagem ninguém
+  // sabe *por que* o background nunca traz nada.
+  if (options?.background && !canRead('BackgroundAccessPermission')) {
+    console.log('[HealthConnect] leitura em background sem permissão própria');
+    return false;
+  }
+
+  return true;
 }
 
 /**
@@ -92,7 +103,7 @@ export async function readDeviceMetrics(): Promise<HealthMetrics | null> {
     }
 
     if (Platform.OS !== 'android') return null;
-    if (!(await hasAndroidPermissions())) return null;
+    if (!(await hasAndroidPermissions({ background: true }))) return null;
 
     const metrics = await readAndroidMetrics();
 

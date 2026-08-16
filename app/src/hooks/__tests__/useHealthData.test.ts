@@ -28,10 +28,19 @@ const mockInitialize = initialize as unknown as jest.Mock;
 const mockGetGranted = getGrantedPermissions as unknown as jest.Mock;
 const mockReadRecords = readRecords as unknown as jest.Mock;
 
+/** Permissões comuns — o que a tela em primeiro plano precisa. */
 const grantAll = () =>
   mockGetGranted.mockResolvedValue([
     { recordType: 'Steps', accessType: 'read' },
     { recordType: 'ActiveCaloriesBurned', accessType: 'read' },
+  ]);
+
+/** Comuns mais a de background, que é concedida à parte. */
+const grantAllWithBackground = () =>
+  mockGetGranted.mockResolvedValue([
+    { recordType: 'Steps', accessType: 'read' },
+    { recordType: 'ActiveCaloriesBurned', accessType: 'read' },
+    { recordType: 'BackgroundAccessPermission', accessType: 'read' },
   ]);
 
 const stubRecords = () =>
@@ -147,12 +156,14 @@ describe('leitura vazia não vira zero', () => {
   });
 
   it('readDeviceMetrics devolve ausência quando não há registro', async () => {
+    grantAllWithBackground();
     mockReadRecords.mockResolvedValue({ records: [] });
 
     await expect(readDeviceMetrics()).resolves.toBeNull();
   });
 
-  it('readDeviceMetrics devolve as métricas quando há registro', async () => {
+  it('readDeviceMetrics devolve as métricas quando há registro e permissão de background', async () => {
+    grantAllWithBackground();
     stubRecords();
 
     await expect(readDeviceMetrics()).resolves.toEqual({
@@ -160,5 +171,15 @@ describe('leitura vazia não vira zero', () => {
       calories: 88,
       hasRecords: true,
     });
+  });
+
+  it('readDeviceMetrics recusa sem a permissão de background', async () => {
+    // Só as comuns concedidas. Sem a de background o Health Connect devolveria
+    // lista vazia em vez de recusar — parar aqui deixa o motivo no log em vez
+    // de virar mais um "não tem dado".
+    grantAll();
+    stubRecords();
+
+    await expect(readDeviceMetrics()).resolves.toBeNull();
   });
 });
