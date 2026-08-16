@@ -24,10 +24,10 @@ async function fetchStudentHistory(
   const [assessmentsResult, dietPlansResult] = await Promise.all([
     supabase
       .from('physical_assessments')
-      .select('id, created_at, weight')
+      .select('id, assessed_at, weight_kg')
       .eq('student_id', studentId)
       .eq('specialist_id', specialistId)
-      .order('created_at', { ascending: false })
+      .order('assessed_at', { ascending: false })
       .limit(20),
 
     supabase
@@ -35,7 +35,7 @@ async function fetchStudentHistory(
       .select('id, created_at, name, status')
       .eq('student_id', studentId)
       .eq('specialist_id', specialistId)
-      .order('created_at', { ascending: false })
+      .order('assessed_at', { ascending: false })
       .limit(20),
   ]);
 
@@ -43,12 +43,12 @@ async function fetchStudentHistory(
 
   for (const a of assessmentsResult.data ?? []) {
     const parts: string[] = [];
-    if (a.weight) parts.push(`${a.weight} kg`);
+    if (a.weight_kg) parts.push(`${a.weight_kg} kg`);
     events.push({
       id: `assessment-${a.id}`,
       type: 'assessment',
       title: 'Avaliação Física',
-      date: a.created_at,
+      date: a.assessed_at,
       subtitle: parts.join(' · ') || undefined,
     });
   }

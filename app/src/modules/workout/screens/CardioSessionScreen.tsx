@@ -66,30 +66,40 @@ export default function CardioSessionScreen() {
     async function fetchUserWeight() {
       if (!user?.id) return;
 
+      // Buscava `profiles.weight` e caía em `physical_assessments.weight` —
+      // **as duas inexistentes**. As consultas falhavam com 42703, o erro era
+      // engolido, e toda sessão de cardio calculava caloria com os 70 kg do
+      // valor inicial, para qualquer pessoa.
       try {
-        // First try to get from profile
-        // biome-ignore lint/correctness/noUnusedVariables: auto-suppressed during final sweep
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('weight')
-          .eq('id', user.id)
-          .single();
+        const { data: assessment, error } = await supabase
+          .from('physical_assessments')
+          .select('weight_kg')
+          .eq('student_id', user.id)
+          .not('weight_kg', 'is', null)
+          .order('assessed_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-        if (data?.weight) {
-          setUserWeight(data.weight);
-        } else {
-          // If not in profile, try to get from latest assessment
-          const { data: assessment } = await supabase
-            .from('physical_assessments')
-            .select('weight')
-            .eq('student_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
+        if (error) throw error;
 
-          if (assessment?.weight) {
-            setUserWeight(assessment.weight);
-          }
+        if (assessment?.weight_kg) {
+          setUserWeight(Number(assessment.weight_kg));
+          return;
+        }
+
+        // Sem avaliação física, o peso declarado na anamnese vale mais que um
+        // padrão inventado — é o próprio aluno que informou.
+        const { data: anamnese } = await supabase
+          .from('student_anamnesis')
+          .select('responses')
+          .eq('student_id', user.id)
+          .maybeSingle();
+
+        const declarado = (anamnese?.responses as Record<string, { value?: unknown }> | null)
+          ?.weight?.value;
+
+        if (typeof declarado === 'number' && declarado > 0) {
+          setUserWeight(declarado);
         }
       } catch (error) {
         console.log('Error fetching weight:', error);

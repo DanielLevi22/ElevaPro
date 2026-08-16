@@ -12,9 +12,6 @@ interface User {
   account_type: string;
   account_status: string | null;
   created_at: string;
-  last_login_at: string | null;
-  is_super_admin: boolean;
-  invite_code: string | null;
 }
 
 export default function UsersPage() {
@@ -31,9 +28,7 @@ export default function UsersPage() {
 
       const query = supabase
         .from("profiles")
-        .select(
-          "id, email, full_name, account_type, account_status, created_at, last_login_at, is_super_admin, invite_code",
-        )
+        .select("id, email, full_name, account_type, account_status, created_at")
         .order("created_at", { ascending: false });
 
       const { data, error } = await query;
@@ -198,18 +193,12 @@ export default function UsersPage() {
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
                   Usuário
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                  Código
-                </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Tipo</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
                   Status
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
                   Criado em
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                  Último Login
                 </th>
                 <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">
                   Ações
@@ -245,28 +234,11 @@ export default function UsersPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    {user.invite_code ? (
-                      <span className="font-mono text-xs bg-muted px-2 py-1 rounded border border-border">
-                        {user.invite_code}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">-</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <AccountTypeBadge
-                      accountType={user.account_type}
-                      isSuperAdmin={user.is_super_admin}
-                    />
+                    <AccountTypeBadge accountType={user.account_type} />
                   </td>
                   <td className="px-6 py-4">{getStatusBadge(user.account_status)}</td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">
                     {new Date(user.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">
-                    {user.last_login_at
-                      ? new Date(user.last_login_at).toLocaleDateString()
-                      : "Nunca"}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">

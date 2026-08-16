@@ -54,14 +54,11 @@ export function useStudentDetails(studentId: string | null) {
           .single(),
         supabase
           .from("physical_assessments")
-          .select(
-            "weight, height, notes, neck, shoulder, chest, waist, abdomen, hips, " +
-              "arm_right_relaxed, arm_left_relaxed, arm_right_contracted, arm_left_contracted, " +
-              "forearm_right, forearm_left, thigh_proximal_right, thigh_proximal_left, " +
-              "thigh_medial_right, thigh_medial_left, calf_right, calf_left",
-          )
+          // Nomes reais do schema. A lista anterior pedia 21 colunas que não
+          // existem, e o PostgREST recusava a consulta inteira com 42703.
+          .select("*")
           .eq("student_id", studentId)
-          .order("created_at", { ascending: false })
+          .order("assessed_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
       ]);

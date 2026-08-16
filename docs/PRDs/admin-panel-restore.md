@@ -1,7 +1,7 @@
 # PRD: admin-panel-restore
 
 **Data de criação:** 2026-08-08
-**Status:** draft
+**Status:** approved
 **Branch:** feature/admin-panel-restore
 **Autor:** Daniel Levi
 

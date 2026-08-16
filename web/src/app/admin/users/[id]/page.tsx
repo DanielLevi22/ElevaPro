@@ -14,8 +14,6 @@ interface UserDetails {
   account_type: string;
   account_status: string | null;
   created_at: string;
-  last_login_at: string | null;
-  is_super_admin: boolean;
   admin_notes: string | null;
 }
 
@@ -232,11 +230,7 @@ export default function UserDetailsPage() {
             <p className="text-muted-foreground">{user.email}</p>
           </div>
           <div className="flex gap-2">
-            <AccountTypeBadge
-              accountType={user.account_type}
-              isSuperAdmin={user.is_super_admin}
-              size="md"
-            />
+            <AccountTypeBadge accountType={user.account_type} size="md" />
             {getStatusBadge(user.account_status)}
           </div>
         </div>
@@ -293,11 +287,7 @@ export default function UserDetailsPage() {
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Tipo de Conta</label>
                 <div className="mt-2">
-                  <AccountTypeBadge
-                    accountType={user.account_type}
-                    isSuperAdmin={user.is_super_admin}
-                    size="md"
-                  />
+                  <AccountTypeBadge accountType={user.account_type} size="md" />
                 </div>
               </div>
               <div>
@@ -314,12 +304,6 @@ export default function UserDetailsPage() {
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Criado em</label>
                 <p className="text-foreground mt-1">{new Date(user.created_at).toLocaleString()}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Último Login</label>
-                <p className="text-foreground mt-1">
-                  {user.last_login_at ? new Date(user.last_login_at).toLocaleString() : "Nunca"}
-                </p>
               </div>
             </div>
           </div>
@@ -430,8 +414,13 @@ export default function UserDetailsPage() {
             </div>
           </div>
 
-          {/* Danger Zone */}
-          {!user.is_super_admin && (
+          {/* Danger Zone.
+              A guarda era `!user.is_super_admin`, coluna que nunca existiu:
+              com `user` sempre null pela consulta recusada, a zona ou não
+              renderizava ou renderizava para todos, dependendo do caminho.
+              `account_type` é a coluna real e preserva a intenção — o painel
+              não deleta quem administra o painel. */}
+          {user.account_type !== "admin" && (
             <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-6">
               <h3 className="text-lg font-bold text-red-400 mb-4">Zona de Perigo</h3>
               <div className="space-y-2">
