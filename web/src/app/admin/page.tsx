@@ -33,14 +33,22 @@ export default function AdminDashboard() {
         .from("profiles")
         .select("*", { count: "exact", head: true });
 
-      // Get active users (last 7 days)
+      // Atividade nos últimos 7 dias.
+      //
+      // Media por `workout_sessions`, não por `profiles.last_login_at` — que
+      // não existe, fazia o PostgREST recusar a contagem, e devolvia um número
+      // vazio apresentado como métrica.
+      //
+      // Sessão de treino também é a medida melhor: abrir o app não é usar o
+      // produto, treinar é. E `workout_sessions` não expõe conteúdo de saúde à
+      // contagem — só o `student_id` e a data.
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
       const { count: activeUsers } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .gte("last_login_at", sevenDaysAgo.toISOString());
+        .from("workout_sessions")
+        .select("student_id", { count: "exact", head: true })
+        .gte("started_at", sevenDaysAgo.toISOString());
 
       // Get specialists count
       const { count: totalSpecialists } = await supabase

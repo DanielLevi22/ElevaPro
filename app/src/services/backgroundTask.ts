@@ -27,7 +27,12 @@ TaskManager.defineTask(BACKGROUND_DIET_SYNC, async () => {
     // 2. Fetch the active diet plan for this student
     const { data: activePlan, error } = await supabase
       .from('diet_plans')
-      .select('id, version, updated_at')
+      // `updated_at` não existe em `diet_plans`, e pedi-la fazia o PostgREST
+      // recusar a consulta inteira com 42703. O erro caía no `if` abaixo e
+      // virava "nenhum plano ativo" — a sincronização em background da dieta
+      // nunca rodou, e o log dizia que era falta de plano.
+      // O `version` já é o que a comparação usa; a coluna extra era só ruído.
+      .select('id, version')
       .eq('student_id', studentId)
       .eq('status', 'active')
       .single();

@@ -26,6 +26,8 @@ export const profiles = pgTable("profiles", {
   account_type: accountTypeEnum("account_type").notNull(),
   account_status: accountStatusEnum("account_status").notNull().default("active"),
   persona_track: text("persona_track"),
+  /** Anotação administrativa sobre a conta (0031). Não é dado de saúde. */
+  admin_notes: text("admin_notes"),
   coach_mode: text("coach_mode"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

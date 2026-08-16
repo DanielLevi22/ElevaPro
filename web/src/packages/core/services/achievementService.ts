@@ -264,7 +264,9 @@ export const achievementService = {
         .from("workout_sessions")
         .select("*", { count: "exact", head: true })
         .eq("student_id", studentId)
-        .eq("status", "completed"),
+        // `workout_sessions` não tem `status`: sessão concluída é
+        // `completed_at` preenchido. A conquista nunca contou nada.
+        .not("completed_at", "is", null),
       supabase
         .from("meal_logs")
         .select("*", { count: "exact", head: true })

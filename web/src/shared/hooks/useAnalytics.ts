@@ -52,18 +52,18 @@ export function useAnalytics() {
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
       const { count: activeUsersLast7Days } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .gte("last_login_at", sevenDaysAgo.toISOString());
+        .from("workout_sessions")
+        .select("student_id", { count: "exact", head: true })
+        .gte("started_at", sevenDaysAgo.toISOString());
 
       // 4. Get active users (last 30 days)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
       const { count: activeUsersLast30Days } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .gte("last_login_at", thirtyDaysAgo.toISOString());
+        .from("workout_sessions")
+        .select("student_id", { count: "exact", head: true })
+        .gte("started_at", thirtyDaysAgo.toISOString());
 
       // 5. Get users by type
       const fetchCountByType = async (type: string) => {

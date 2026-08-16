@@ -1,7 +1,7 @@
 # PRD: admin-panel-restore
 
 **Data de criação:** 2026-08-08
-**Status:** draft
+**Status:** approved
 **Branch:** feature/admin-panel-restore
 **Autor:** Daniel Levi
 
@@ -21,15 +21,15 @@ pendentes, suspender contas, ou ver métricas de uso. O painel existe em código
 mas toda query dele falha.
 
 ### Como saberemos que está pronto?
-- [ ] Um usuário com `account_type = 'admin'` entra em `/admin` sem ser redirecionado
-- [ ] A listagem de usuários mostra todos os perfis
-- [ ] Admin consegue alterar `account_status` de um usuário
-- [ ] Admin **não** consegue ler `physical_assessments`, `student_anamnesis`,
+- [x] Um usuário com `account_type = 'admin'` entra em `/admin` sem ser redirecionado
+- [x] A listagem de usuários mostra todos os perfis
+- [x] Admin consegue alterar `account_status` de um usuário
+- [x] Admin **não** consegue ler `physical_assessments`, `student_anamnesis`,
       `health_daily_metrics`, `meal_logs` nem `diet_plans` — verificado com
       `set local role authenticated` no banco
-- [ ] Métricas de uso funcionam sem que o admin leia linha de tabela sensível
-- [ ] Teste de RLS cobrindo cada afirmação acima
-- [ ] `npm run lint`, `tsc --noEmit` e `db:check-refs` limpos
+- [x] Métricas de uso funcionam sem que o admin leia linha de tabela sensível
+- [x] Teste de RLS cobrindo cada afirmação acima
+- [x] `npm run lint`, `tsc --noEmit` e `db:check-refs` limpos
 
 ---
 
@@ -54,9 +54,9 @@ para `/dashboard`. Falha fechada — não é brecha, mas o painel é inalcançá
 | Coluna | Usada em | Deve existir? |
 |---|---|---|
 | `is_super_admin` | `admin/layout`, `admin/users`, `admin/users/[id]` | **Não** — decidido: só existe `admin` |
-| `last_login_at` | as 3 acima + `useAnalytics` | A decidir |
-| `invite_code` | `admin/users` | A decidir |
-| `admin_notes` | `admin/users/[id]` | A decidir |
+| `last_login_at` | as 3 acima + `useAnalytics` | **Não** — a métrica passou a medir `workout_sessions`. Login não é uso; treino é |
+| `invite_code` | `admin/users` | **Não** — o produto não tem código de convite; só existia num teste |
+| `admin_notes` | `admin/users/[id]` | **Sim** — criada na `0031`. Anotar sobre uma conta é trabalho real de quem administra |
 
 Colunas reais: `id, email, full_name, avatar_url, account_type, account_status,
 created_at, coach_mode, persona_track`.
@@ -114,11 +114,56 @@ fica menos crítica — mas alteração de `account_status` por admin é ação 
 terceiro e merece registro. Fora do escopo aqui; vira PRD próprio se necessário.
 
 ### Atualizações necessárias em docs/LGPD_COMPLIANCE.md
-- [ ] Registrar em 2.1 as colunas novas de `profiles` que forem aprovadas
-- [ ] Documentar base legal do acesso administrativo a `profiles`
-- [ ] Registrar explicitamente que admin **não** acessa dados de saúde
+- [x] Registrar em 2.1 as colunas novas de `profiles` que forem aprovadas
+- [x] Documentar base legal do acesso administrativo a `profiles`
+- [x] Registrar explicitamente que admin **não** acessa dados de saúde
 
 ---
+
+---
+
+## O que a investigação encontrou além do painel
+
+O defeito do `/admin` — coluna inexistente num `select`, erro descartado, tela
+mostrando "sem dados" — não era um caso isolado. Uma varredura sistemática
+(`scripts/check-column-refs.js`, criado nesta branch) encontrou o mesmo padrão
+em mais **oito** lugares, nenhum deles no admin:
+
+| Onde | Coluna pedida | Consequência |
+|---|---|---|
+| `useStudentDetails.ts` (web) | 21 colunas legadas de `physical_assessments` | A ficha do aluno no web nunca carregou medida nenhuma |
+| `StudentHistoryScreen.tsx` (mobile) | `weight`, `created_at` | O histórico do aluno não mostrava avaliação |
+| `CardioSessionScreen.tsx` | `profiles.weight` **e** `physical_assessments.weight` | Toda sessão de cardio calculava caloria com **70 kg fixo**, para qualquer pessoa |
+| `backgroundTask.ts` | `diet_plans.updated_at` | A sincronização da dieta em background **nunca rodou** — o log dizia "nenhum plano ativo" |
+| `useAnalytics.ts` | `profiles.last_login_at` (×2) | "Usuários ativos em 7/30 dias" nunca contou nada |
+| `achievementService.ts` | `workout_sessions.status` | Conquistas por sessão concluída nunca contaram |
+| `execute-workout.tsx` | `workout_exercises.order` | Exercícios sem ordenação na execução do treino |
+| `test-rls-isolation.mjs` | `body_scans.photo_front_url` | O próprio teste de RLS falhava em 2 asserções — a coluna saiu na `0026` |
+
+### E o schema estava mentindo
+
+A guarda compara com o schema Drizzle, e ao rodá-la descobriu-se que o schema
+divergia do banco: `workout_session_exercises.exercise_id` existia no banco e
+não no schema, e `sets_data` continuava declarado depois de ter sido dropado na
+`0023`. Enquanto isso durasse, a própria guarda estaria validando contra uma
+tabela imaginária. Os dois foram sincronizados.
+
+### Por que nenhum desses apareceu antes
+
+Nenhum foi pego por tipo, lint ou teste. O PostgREST recusa a consulta inteira
+com `42703`, e todo esse código descartava o `error` — `const { data } = await
+supabase...`. O resultado é `null`, que o código lê como "não tem dado".
+
+**Falha e ausência com a mesma aparência.** É o padrão que mais se repete neste
+projeto, e a razão de a guarda existir: transformar isso em erro de CI em vez de
+algo que alguém descobre abrindo a tela e estranhando.
+
+### Limite conhecido da guarda
+
+Só entende `.select()` e filtros com string literal. Select dinâmico ou `*`
+passa direto. É a fatia que dá para verificar sem interpretar o código, e está
+escrito no arquivo.
+
 
 ## Escopo
 
@@ -221,8 +266,8 @@ Recomendação: `last_login_at` via RPC sobre `auth.users` em vez de coluna nova
 
 > Só muda o Status para `done` quando TODOS estão marcados.
 
-- [ ] Código funciona e passou em lint + typecheck + testes
+- [x] Código funciona e passou em lint + typecheck + testes
 - [ ] PR mergeado em `development`
-- [ ] `docs/features/admin-panel-restore.md` criado ou atualizado
-- [ ] `docs/STATUS.md` atualizado
-- [ ] `docs/LGPD_COMPLIANCE.md` atualizado
+- [x] `docs/features/admin-panel-restore.md` criado ou atualizado
+- [x] `docs/STATUS.md` atualizado
+- [x] `docs/LGPD_COMPLIANCE.md` atualizado

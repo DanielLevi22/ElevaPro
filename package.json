@@ -12,6 +12,7 @@
     "db:check": "drizzle-kit check",
     "db:check-refs": "node scripts/check-schema-refs.js",
     "db:check-rls": "node scripts/check-rls.js",
+    "db:check-columns": "node scripts/check-column-refs.js",
     "db:test-rls": "node scripts/test-rls-isolation.mjs",
     "api:check-auth": "node scripts/check-api-auth.js",
     "api:test-auth": "node scripts/test-api-auth.mjs",

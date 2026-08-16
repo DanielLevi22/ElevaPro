@@ -87,6 +87,13 @@ jobs:
       - name: Verificar referências de tabela
         run: npm run db:check-refs
 
+      # Coluna inexistente num `.select()` faz o PostgREST recusar a consulta
+      # inteira com 42703. Quem descarta o `error` vê "sem dados" em vez de
+      # erro — foi assim que a avaliação física, a anamnese e o painel /admin
+      # ficaram quebrados sem nenhum sintoma.
+      - name: Verificar colunas referenciadas nas consultas
+        run: npm run db:check-columns
+
       # Tabela sem RLS não quebra nada: a aplicação segue funcionando e o dado
       # fica legível por qualquer conta autenticada. Sintoma zero até vazar —
       # foi assim que 18 das 27 tabelas ficaram abertas até 2026-08-11.

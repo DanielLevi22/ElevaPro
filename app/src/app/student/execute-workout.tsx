@@ -71,7 +71,7 @@ export default function ExecuteWorkoutScreen() {
           exercise:exercises(*)
         `)
         .eq('workout_id', id)
-        .order('order');
+        .order('order_index');
 
       setExercises(itemsData || []);
 

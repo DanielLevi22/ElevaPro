@@ -2,7 +2,6 @@ import {
   boolean,
   date,
   integer,
-  jsonb,
   numeric,
   pgEnum,
   pgTable,
@@ -138,7 +137,11 @@ export const workoutSessionExercises = pgTable("workout_session_exercises", {
   workout_exercise_id: uuid("workout_exercise_id").references(() => workoutExercises.id, {
     onDelete: "set null",
   }),
-  sets_data: jsonb("sets_data").notNull().default([]),
+  // Referencia o catálogo. Existe no banco desde antes da 0023 e faltava aqui:
+  // o schema descrevia uma tabela diferente da real, e como as guardas leem o
+  // schema, a divergência era invisível para elas também.
+  exercise_id: uuid("exercise_id"),
+  notes: text("notes"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

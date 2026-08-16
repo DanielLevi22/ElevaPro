@@ -26,12 +26,20 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         return;
       }
 
-      // Check if user is admin
-      const { data: profile } = await supabase
+      // `is_super_admin` não existe em `profiles`, e pedi-la fazia o PostgREST
+      // recusar a consulta inteira com 42703. Como o `error` era descartado,
+      // `profile` vinha null, a comparação abaixo dava verdadeira e **todo
+      // usuário era mandado para /dashboard** — inclusive um admin legítimo.
+      // A coluna também não decidia nada: só passava um adorno para o badge.
+      const { data: profile, error } = await supabase
         .from("profiles")
-        .select("account_type, is_super_admin, email")
+        .select("account_type, email")
         .eq("id", user.id)
         .single();
+
+      // Falha de consulta não é "não é admin". Somar as duas foi o que deixou
+      // o painel inacessível sem ninguém entender por quê.
+      if (error) throw error;
 
       if (profile?.account_type !== "admin") {
         router.push("/dashboard");

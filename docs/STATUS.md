@@ -107,7 +107,7 @@ Três armadilhas que já custaram tempo:
 | 7 | ~~12 tabelas referenciadas em código não existem no banco~~ — **resolvido**, com guarda em CI contra recorrência | ✅ | [PRD](PRDs/schema-drift-alignment.md) |
 | 8 | Tela de perfil (mobile) exibe barra de XP sem fonte de dados — não existe sistema de nível/XP no schema | 🟢 Baixa | — |
 | 9 | ~~Duas representações concorrentes de execução de treino~~ — **resolvido** na `0023`: `sets_data` apagada, as três telas gravam em `workout_session_sets` | ✅ | [PRD](PRDs/workout-execution-consolidation.md) |
-| 10 | **Painel `/admin` inacessível a todos** — `layout.tsx` consulta `is_super_admin`, coluna inexistente, e redireciona qualquer usuário. Mais 3 colunas fantasma em `profiles` | 🔴 Alta | [PRD](PRDs/admin-panel-restore.md) |
+| 10 | ~~**Painel `/admin` inacessível a todos**~~ — **Resolvido**: as colunas fantasma saíram das consultas, o `error` deixou de ser descartado, e `scripts/check-column-refs.js` passou a barrar coluna inexistente no pre-commit e no CI. A varredura achou o mesmo defeito em mais 8 lugares fora do admin — cardio calculando caloria com 70 kg fixo, sincronização de dieta que nunca rodou, conquistas que nunca contaram. Lista completa no PRD | ✅ | [PRD](PRDs/admin-panel-restore.md) |
 | 11 | `check-schema-refs.js` valida só nomes de tabela, não colunas — as 4 colunas fantasma de `profiles` passariam pela guarda | 🟡 Média | — |
 | 12 | Nenhum job de CI roda `next build`. Erro de prerender só aparece no deploy, depois do merge — foi assim com o `useSearchParams` em `/auth/register` | 🟡 Média | — |
 | 13 | `sync-env.js` não é exercitado por nenhum teste, e já divergiu duas vezes dos `.env.example` | 🟢 Baixa | [ADR-009](decisions/009-migration-strategy.md) |

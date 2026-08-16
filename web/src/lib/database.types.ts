@@ -735,6 +735,7 @@ export type Database = {
         Row: {
           account_status: Database["public"]["Enums"]["account_status"];
           account_type: Database["public"]["Enums"]["account_type"];
+          admin_notes: string | null;
           avatar_url: string | null;
           coach_mode: string | null;
           created_at: string;
@@ -746,6 +747,7 @@ export type Database = {
         Insert: {
           account_status?: Database["public"]["Enums"]["account_status"];
           account_type: Database["public"]["Enums"]["account_type"];
+          admin_notes?: string | null;
           avatar_url?: string | null;
           coach_mode?: string | null;
           created_at?: string;
@@ -757,6 +759,7 @@ export type Database = {
         Update: {
           account_status?: Database["public"]["Enums"]["account_status"];
           account_type?: Database["public"]["Enums"]["account_type"];
+          admin_notes?: string | null;
           avatar_url?: string | null;
           coach_mode?: string | null;
           created_at?: string;

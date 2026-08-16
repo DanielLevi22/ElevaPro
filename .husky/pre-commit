@@ -65,6 +65,12 @@ fi
 # Nome de tabela é string: nem tsc nem os testes acusam quando ela não existe.
 npm run db:check-refs
 
+# ── Colunas referenciadas ─────────────────────────────────────────────────────
+# Coluna inexistente num `.select()` faz o PostgREST recusar a consulta inteira
+# com 42703. Quem descarta o `error` vê "sem dados" — foi assim que a avaliação
+# física, a anamnese e o painel /admin ficaram quebrados sem ninguém notar.
+npm run db:check-columns
+
 # ── RLS ───────────────────────────────────────────────────────────────────────
 # Tabela sem RLS não quebra nada: a aplicação segue funcionando e o dado fica
 # legível por qualquer conta autenticada. Sintoma zero até vazar.
