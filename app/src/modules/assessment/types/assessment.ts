@@ -16,6 +16,13 @@ export interface CaptureFraming {
   roll: number;
   /** Falso quando o aparelho não tem sensor — aí pitch e roll não valem nada. */
   levelSensor: boolean;
+  /**
+   * Qual lente. Frontal e traseira têm distância focal diferente: o corpo
+   * ocupando a mesma fração do quadro não significa a mesma distância nas duas.
+   * Sem este campo, comparar escaneamentos de lentes diferentes introduziria um
+   * erro invisível.
+   */
+  camera: 'front' | 'back';
 }
 
 export interface BodyMetric {

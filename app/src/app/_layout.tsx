@@ -1,3 +1,6 @@
+// Antes de tudo: registra os componentes de terceiros no NativeWind. Sem isto,
+// todo `className` em LinearGradient e Image é descartado sem aviso.
+import '@/lib/nativewind-interop';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';

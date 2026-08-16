@@ -32,6 +32,8 @@ export interface BodyScanRecord {
   framing_roll: number | null;
   /** Falso: o aparelho não tinha sensor, então pitch e roll não valem. */
   framing_level_sensor: boolean | null;
+  /** Lente usada. Escaneamentos de lentes diferentes não são comparáveis. */
+  framing_camera: "front" | "back" | null;
   posture_feedback: unknown;
   recommendations: string | null;
 }
@@ -60,6 +62,8 @@ export interface BodyScanInput {
   framing_roll: number | null;
   /** Falso: o aparelho não tinha sensor, então pitch e roll não valem. */
   framing_level_sensor: boolean | null;
+  /** Lente usada. Escaneamentos de lentes diferentes não são comparáveis. */
+  framing_camera: "front" | "back" | null;
   posture_feedback: unknown;
   recommendations: string | null;
 }

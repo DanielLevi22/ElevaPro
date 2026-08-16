@@ -271,7 +271,7 @@ export default function BodyScanGrid() {
               <Text
                 className={`font-bold text-lg uppercase tracking-widest ${allCaptured ? 'text-white' : 'text-zinc-500'}`}
               >
-                {allCaptured ? 'Realizar Análise' : 'Complete as 4 Fotos'}
+                {allCaptured ? 'Realizar Análise' : `Complete as ${POSES.length} Fotos`}
               </Text>
             </LinearGradient>
           </TouchableOpacity>

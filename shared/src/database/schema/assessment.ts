@@ -80,6 +80,8 @@ export const bodyScans = pgTable("body_scans", {
   framing_pitch: numeric("framing_pitch", { precision: 5, scale: 2 }),
   framing_roll: numeric("framing_roll", { precision: 5, scale: 2 }),
   framing_level_sensor: boolean("framing_level_sensor"),
+  /** 'front' | 'back' — CHECK no banco (0028). Lentes diferentes não comparam. */
+  framing_camera: text("framing_camera"),
   posture_feedback: jsonb("posture_feedback"),
   recommendations: text("recommendations"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

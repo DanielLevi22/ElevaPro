@@ -182,6 +182,7 @@ export async function POST(request: NextRequest) {
       pitch: number;
       roll: number;
       levelSensor: boolean;
+      camera: "front" | "back";
     };
   };
 
@@ -323,6 +324,7 @@ export async function POST(request: NextRequest) {
       framing_pitch: body.framing?.pitch ?? null,
       framing_roll: body.framing?.roll ?? null,
       framing_level_sensor: body.framing?.levelSensor ?? null,
+      framing_camera: body.framing?.camera ?? null,
     });
   } catch (error) {
     // Falha de gravação não pode virar falha da análise: a foto já foi enviada
