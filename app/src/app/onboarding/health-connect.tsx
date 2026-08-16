@@ -3,7 +3,7 @@ import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Platform, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Platform, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
 
@@ -47,7 +47,14 @@ export default function HealthConnectScreen() {
           ],
         });
 
-        if (granted) await recordCollectionConsent();
+        if (granted) {
+          await recordCollectionConsent();
+        } else {
+          Alert.alert(
+            'Permissão não concedida',
+            'Sem acesso ao HealthKit não dá para ler seus passos. Você pode autorizar depois pelo perfil.'
+          );
+        }
         router.replace('/(tabs)');
       } else {
         const { initialize, requestPermission } = require('react-native-health-connect');
@@ -62,9 +69,32 @@ export default function HealthConnectScreen() {
         const permissions = [
           { accessType: 'read', recordType: 'Steps' },
           { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
+          // Declarada no app.json mas nunca pedida aqui. Sem ela o Health
+          // Connect devolve lista vazia nas leituras em background — e lista
+          // vazia é indistinguível de "não andou" sem a bandeira `hasRecords`.
+          { accessType: 'read', recordType: 'BackgroundAccessPermission' },
         ];
 
-        await requestPermission(permissions);
+        const granted = await requestPermission(permissions);
+
+        const concedeuLeitura = granted.some(
+          (p: { recordType: string; accessType: string }) =>
+            p.accessType === 'read' &&
+            (p.recordType === 'Steps' || p.recordType === 'ActiveCaloriesBurned')
+        );
+
+        // O retorno era descartado e o consentimento LGPD ficava gravado mesmo
+        // quando o usuário recusava — o iOS já checava, o Android não. Dava um
+        // estado impossível: consentimento concedido, permissão negada.
+        if (!concedeuLeitura) {
+          Alert.alert(
+            'Permissão não concedida',
+            'Sem acesso ao Health Connect não dá para ler seus passos. Você pode autorizar depois pelo perfil.'
+          );
+          router.replace('/(tabs)');
+          return;
+        }
+
         await recordCollectionConsent();
         router.replace('/(tabs)');
       }

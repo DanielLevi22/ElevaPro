@@ -574,6 +574,38 @@ export default function DashboardScreen() {
               <Ionicons name="chevron-forward" size={20} color={brandColors.text.muted} />
             </View>
           </TouchableOpacity>
+
+          {/* Conectar o Health Connect.
+              Só aparece enquanto os dados não vêm do aparelho: depois de
+              conectado, o selo "Live" na seção de Atividade já é a confirmação,
+              e um convite para conectar de novo seria ruído. */}
+          {healthSource !== 'device' && (
+            <TouchableOpacity
+              onPress={() => router.push(ROUTES.ONBOARDING.HEALTH_CONNECT as never)}
+              activeOpacity={0.8}
+              className="mt-4"
+            >
+              <View
+                className="rounded-[24px] p-5 flex-row items-center justify-between border bg-zinc-900"
+                style={{ borderColor: brandColors.border.default }}
+              >
+                <View className="flex-row items-center gap-4">
+                  <View className="p-3 rounded-xl border bg-emerald-500/10 border-emerald-500/20">
+                    <Ionicons name="heart-circle-outline" size={24} color="#10b981" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-white text-lg font-black font-display tracking-tight">
+                      Conectar Saúde
+                    </Text>
+                    <Text className="text-zinc-500 text-[10px] font-bold tracking-widest uppercase font-sans">
+                      {healthSource === 'mock' ? 'Dados simulados' : 'Passos e calorias'}
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={brandColors.text.muted} />
+              </View>
+            </TouchableOpacity>
+          )}
         </Animated.View>
 
         {/* Health Data (Bento Activity) */}

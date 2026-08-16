@@ -16,6 +16,12 @@ export const ROUTES = {
     BODY_SCAN: '/assessment/body-scan',
   },
 
+  // Onboarding
+  ONBOARDING: {
+    ROLE_SELECTION: '/onboarding/role-selection',
+    HEALTH_CONNECT: '/onboarding/health-connect',
+  },
+
   // Student Flows
   STUDENTS: {
     ROOT: '/(tabs)/students',
