@@ -98,6 +98,29 @@ for (const raiz of FONTES) {
         }
       }
     }
+
+    // Filtros e ordenação também nomeiam colunas, e falham do mesmo jeito.
+    // `profiles.last_login_at` escapou da primeira versão desta guarda por
+    // estar num `.gte()`, não num `.select()`.
+    for (const uso of texto.matchAll(
+      // A janela para no próximo `.from(` ou no `;`. Sem isso, consultas
+      // encadeadas num `Promise.all` emprestam filtros umas às outras e a
+      // guarda acusa coluna certa na tabela errada.
+      /\.from\(\s*["']([a-z_]+)["']\s*\)((?:(?!\.from\()[\s\S]){0,400}?);/g,
+    )) {
+      const [, tabela, corpo] = uso;
+      const colunas = tabelas.get(tabela);
+      if (!colunas) continue;
+
+      for (const filtro of corpo.matchAll(
+        /\.(?:eq|neq|gt|gte|lt|lte|like|ilike|is|in|contains|order)\(\s*["']([a-z_]+)["']/g,
+      )) {
+        const nome = filtro[1];
+        if (!colunas.has(nome)) {
+          problemas.push({ arquivo: path.relative(ROOT, arquivo), tabela, coluna: nome });
+        }
+      }
+    }
   }
 }
 

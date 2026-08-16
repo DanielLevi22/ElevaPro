@@ -84,6 +84,15 @@ async function main() {
   const alunoB = await createUser("aluno-b", "student");
   const espec1 = await createUser("espec-1", "specialist");
   const espec2 = await createUser("espec-2", "specialist");
+  const admin = await createUser("admin", "admin");
+
+  // `account_type` sai de `profiles`, não do `user_metadata` — foi a dívida 28.
+  // Sem este update o "admin" do teste seria só um rótulo sem efeito, e o teste
+  // passaria por não estar testando nada.
+  await api(`/rest/v1/profiles?id=eq.${admin.id}`, {
+    method: "PATCH",
+    body: { account_type: "admin" },
+  });
 
   // Vínculo só entre aluno A e especialista 1. Criado pelo service role, que é
   // o único caminho depois da 0016 — nem o aluno nem o especialista inserem.
@@ -118,7 +127,11 @@ async function main() {
     });
     await api("/rest/v1/body_scans", {
       method: "POST",
-      body: { student_id: aluno.id, weight_kg: 80, photo_front_url: "https://exemplo/foto.jpg" },
+      // Sem `photo_front_url`: a coluna saiu na 0026, porque a análise não
+      // guarda imagem (`ADR-010`). Enquanto ela esteve aqui, o insert falhava
+      // com 42703 e as duas asserções de `body_scans` acusavam bloqueio de RLS
+      // quando o problema era a semente não existir.
+      body: { student_id: aluno.id, weight_kg: 80 },
     });
   }
 
@@ -149,6 +162,34 @@ async function main() {
     const n = await rowsOf(t, espec2.token, alunoA.id);
     check(`especialista 2 NÃO lê ${t} do aluno A`, n === 0, n > 0 ? `viu ${n}` : "");
   }
+
+  console.log("\n-- Admin não alcança dado de saúde --");
+  // Administrar a plataforma é aprovar conta e ver métrica; não é ler a
+  // anamnese de ninguém. Hoje nenhuma política concede acesso a admin — este
+  // bloco é o que impede alguém de acrescentar uma sem perceber o que abre.
+  const saudeFechadaAoAdmin = [
+    "student_anamnesis",
+    "physical_assessments",
+    "health_daily_metrics",
+    "meal_logs",
+    "diet_plans",
+    "body_scans",
+    "workout_sessions",
+  ];
+  for (const t of saudeFechadaAoAdmin) {
+    const n = await rowsOf(t, admin.token, alunoA.id);
+    check(`admin NÃO lê ${t} do aluno A`, n === 0, n > 0 ? `viu ${n}` : "");
+  }
+
+  // O contraponto, sem o qual o bloco acima passaria por engano: o admin
+  // precisa enxergar perfis, senão o painel não tem o que listar e "zero
+  // linhas" viraria a resposta certa pelo motivo errado.
+  const perfis = await api("/rest/v1/profiles?select=id&limit=5", { token: admin.token });
+  check(
+    "admin lê profiles (é o que o painel lista)",
+    perfis.ok && (perfis.data?.length ?? 0) > 0,
+    perfis.ok ? "" : `status ${perfis.status}`,
+  );
 
   console.log("\n-- Escalonamento de privilégio --");
   const auto = await api("/rest/v1/student_specialists", {

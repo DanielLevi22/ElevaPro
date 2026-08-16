@@ -35,7 +35,7 @@ async function fetchStudentHistory(
       .select('id, created_at, name, status')
       .eq('student_id', studentId)
       .eq('specialist_id', specialistId)
-      .order('assessed_at', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(20),
   ]);
 

@@ -53,6 +53,7 @@ Qualquer dado que identifica ou pode identificar uma pessoa.
 | Foto de perfil | `profiles.avatar_url` | Consentimento | Personalização da interface |
 | Tipo de conta | `profiles.account_type` | Execução de contrato | Controle de acesso e fluxo de uso |
 | Status da conta | `profiles.account_status` | Execução de contrato | Gestão de ciclo de vida do usuário |
+| Anotação administrativa | `profiles.admin_notes` | Legítimo interesse (Art. 7°, IX) | Registro do suporte sobre a conta — por que foi suspensa, o que ficou combinado. Escrita pelo admin, não coletada do titular. **Não é dado de saúde.** Entra no direito de acesso (Art. 18, II): é dado pessoal do titular, ainda que escrito por terceiro |
 | Tipo de serviço | `specialist_services.service_type` | Execução de contrato | Definir quais funcionalidades o especialista acessa |
 
 ### 2.2 Dados pessoais sensíveis (Art. 5°, II)
@@ -294,6 +295,26 @@ O MeuPersonal é, na prática, uma plataforma de saúde. Dados de avaliação f�
 - O aluno deve conseguir ver quais especialistas têm acesso aos seus dados de saúde
 
 ---
+
+### Acesso administrativo — o que o admin alcança e o que não alcança
+
+Administrar a plataforma é aprovar conta, suspender conta e ver métrica de uso.
+**Não inclui ler dado de saúde de ninguém.**
+
+Nenhuma política de RLS concede acesso a `account_type = 'admin'` em
+`physical_assessments`, `student_anamnesis`, `health_daily_metrics`,
+`meal_logs`, `diet_plans`, `body_scans` ou `workout_sessions`. O admin alcança
+`profiles` — que é o que o painel lista.
+
+Isso não é afirmação de intenção: é verificado a cada execução de
+`scripts/test-rls-isolation.mjs`, que cria um admin de verdade, semeia dado de
+saúde para outro usuário e confere que a leitura volta vazia. Testado também no
+sentido inverso — abrindo uma política para admin, o teste acusa e nomeia a
+tabela.
+
+As métricas de uso do painel foram reescritas para contar `workout_sessions`
+por período, sem ler conteúdo: só `student_id` e data.
+
 
 ## 7. Retenção de dados — por quanto tempo guardar
 
