@@ -25,6 +25,13 @@ export interface BodyScanRecord {
   posture_symmetry_score: number | null;
   posture_muscle_score: number | null;
   posture_overall_score: number | null;
+  /** Como a foto foi enquadrada. Null em capturas anteriores à `0027`. */
+  framing_mark_top: number | null;
+  framing_mark_bottom: number | null;
+  framing_pitch: number | null;
+  framing_roll: number | null;
+  /** Falso: o aparelho não tinha sensor, então pitch e roll não valem. */
+  framing_level_sensor: boolean | null;
   posture_feedback: unknown;
   recommendations: string | null;
 }
@@ -46,6 +53,13 @@ export interface BodyScanInput {
   posture_symmetry_score: number | null;
   posture_muscle_score: number | null;
   posture_overall_score: number | null;
+  /** Como a foto foi enquadrada. Null em capturas anteriores à `0027`. */
+  framing_mark_top: number | null;
+  framing_mark_bottom: number | null;
+  framing_pitch: number | null;
+  framing_roll: number | null;
+  /** Falso: o aparelho não tinha sensor, então pitch e roll não valem. */
+  framing_level_sensor: boolean | null;
   posture_feedback: unknown;
   recommendations: string | null;
 }

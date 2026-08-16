@@ -1,3 +1,23 @@
+/**
+ * Como a foto foi enquadrada.
+ *
+ * Guardado com o escaneamento para o próximo reproduzir a mesma distância: é o
+ * que torna dois escaneamentos comparáveis, e a comparação é onde está o valor
+ * da feature (`ADR-010`).
+ */
+export interface CaptureFraming {
+  /** Fração da altura da tela onde ficava a marca do topo da cabeça. */
+  markTop: number;
+  /** Fração da altura da tela onde ficava a marca dos pés. */
+  markBottom: number;
+  /** Inclinação frente/trás no disparo, em graus. */
+  pitch: number;
+  /** Rotação lateral no disparo, em graus. */
+  roll: number;
+  /** Falso quando o aparelho não tem sensor — aí pitch e roll não valem nada. */
+  levelSensor: boolean;
+}
+
 export interface BodyMetric {
   id: string;
   label: string;

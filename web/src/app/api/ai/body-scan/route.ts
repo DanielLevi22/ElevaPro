@@ -175,6 +175,14 @@ export async function POST(request: NextRequest) {
     /** Digitados pelo aluno quando ainda não há avaliação física. */
     heightCm?: number;
     weightKg?: number;
+    /** Como a foto foi enquadrada — base para comparar escaneamentos. */
+    framing?: {
+      markTop: number;
+      markBottom: number;
+      pitch: number;
+      roll: number;
+      levelSensor: boolean;
+    };
   };
 
   if (!body?.images || !Object.values(body.images).some(Boolean)) {
@@ -308,6 +316,13 @@ export async function POST(request: NextRequest) {
       posture_overall_score: modelResult.postureAnalysis?.scores?.posture ?? null,
       posture_feedback: modelResult.postureAnalysis?.feedback ?? null,
       recommendations: modelResult.postureAnalysis?.recommendations ?? null,
+      // Null quando o app não mandou: captura de versão antiga não vira
+      // "enquadramento zerado", que pareceria uma medição válida.
+      framing_mark_top: body.framing?.markTop ?? null,
+      framing_mark_bottom: body.framing?.markBottom ?? null,
+      framing_pitch: body.framing?.pitch ?? null,
+      framing_roll: body.framing?.roll ?? null,
+      framing_level_sensor: body.framing?.levelSensor ?? null,
     });
   } catch (error) {
     // Falha de gravação não pode virar falha da análise: a foto já foi enviada

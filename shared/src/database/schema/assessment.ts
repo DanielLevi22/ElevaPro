@@ -1,4 +1,4 @@
-import { jsonb, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, jsonb, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { profiles } from "./auth";
 
 export const studentAnamnesis = pgTable("student_anamnesis", {
@@ -73,6 +73,13 @@ export const bodyScans = pgTable("body_scans", {
   posture_muscle_score: numeric("posture_muscle_score", { precision: 4, scale: 2 }),
   posture_overall_score: numeric("posture_overall_score", { precision: 4, scale: 2 }),
   // Análise textual da IA
+  // Como a foto foi enquadrada — o que permite dizer se dois escaneamentos são
+  // comparáveis. Nulável: capturas anteriores à 0027 não têm (`ADR-010`).
+  framing_mark_top: numeric("framing_mark_top", { precision: 4, scale: 3 }),
+  framing_mark_bottom: numeric("framing_mark_bottom", { precision: 4, scale: 3 }),
+  framing_pitch: numeric("framing_pitch", { precision: 5, scale: 2 }),
+  framing_roll: numeric("framing_roll", { precision: 5, scale: 2 }),
+  framing_level_sensor: boolean("framing_level_sensor"),
   posture_feedback: jsonb("posture_feedback"),
   recommendations: text("recommendations"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

@@ -10,7 +10,12 @@ import {
   BodyScanConsentError,
 } from '../services/aiBodyScan';
 import { AnamnesisService } from '../services/anamnesisService';
-import { AnamnesisResponse, AssessmentStatus, BodyScanResult } from '../types/assessment';
+import {
+  AnamnesisResponse,
+  AssessmentStatus,
+  BodyScanResult,
+  CaptureFraming,
+} from '../types/assessment';
 
 const storage = createMMKV();
 
@@ -45,6 +50,9 @@ interface AssessmentState {
   setStudentId: (id: string) => void;
   startScan: () => Promise<void>;
   setCapturedImage: (type: 'front' | 'back' | 'side', uri: string) => void;
+  /** Parâmetros do enquadramento da última captura — base da comparação. */
+  captureFraming: CaptureFraming | null;
+  setCaptureFraming: (framing: CaptureFraming) => void;
   submitScan: () => Promise<void>;
 
   // Anamnesis Actions
@@ -73,6 +81,7 @@ export const useAssessmentStore = create<AssessmentState>()(
       scanDeltas: [],
       errorMessage: null,
       capturedImages: {},
+      captureFraming: null,
       anamnesisResponses: {},
       currentSectionIndex: 0,
       isAnamnesisSubmitted: false, // Default false
@@ -92,6 +101,8 @@ export const useAssessmentStore = create<AssessmentState>()(
         });
       },
 
+      setCaptureFraming: (framing: CaptureFraming) => set({ captureFraming: framing }),
+
       submitScan: async () => {
         // Limpa a falha anterior: tentar de novo com a mensagem antiga na tela
         // faz o retry parecer que falhou de novo antes mesmo de terminar.
@@ -100,7 +111,11 @@ export const useAssessmentStore = create<AssessmentState>()(
           const capturedImages = get().capturedImages;
           console.log('Starting AI Analysis with images:', Object.keys(capturedImages));
 
-          const result = await AIBodyScanService.analyzeImages(capturedImages);
+          const result = await AIBodyScanService.analyzeImages(
+            capturedImages,
+            undefined,
+            get().captureFraming
+          );
 
           set((state) => ({
             status: AssessmentStatus.COMPLETED,
@@ -197,6 +212,7 @@ export const useAssessmentStore = create<AssessmentState>()(
           status: AssessmentStatus.IDLE,
           lastResult: null,
           capturedImages: {},
+          captureFraming: null,
           studentId: null,
           anamnesisResponses: {},
           currentSectionIndex: 0,

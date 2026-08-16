@@ -2,7 +2,7 @@ import { createHealthService } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useAuthStore } from '@/modules/auth/store/authStore';
-import { BodyScanResult } from '../types/assessment';
+import { BodyScanResult, CaptureFraming } from '../types/assessment';
 
 const bffUrl = () => `${process.env.EXPO_PUBLIC_API_URL}/api/ai/body-scan`;
 
@@ -78,7 +78,9 @@ export const AIBodyScanService = {
       side?: string;
     },
     /** Só quando o aluno ainda não tem avaliação física registrada. */
-    informed?: { heightCm: number; weightKg?: number }
+    informed?: { heightCm: number; weightKg?: number },
+    /** Enquadramento usado, para o próximo escaneamento reproduzir. */
+    framing?: CaptureFraming | null
   ): Promise<BodyScanResult> => {
     const session = useAuthStore.getState().session;
     const token = session?.access_token;
@@ -113,6 +115,7 @@ export const AIBodyScanService = {
         images: base64Images,
         heightCm: informed?.heightCm,
         weightKg: informed?.weightKg,
+        framing: framing ?? undefined,
       }),
     });
 
