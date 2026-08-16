@@ -25,11 +25,11 @@ dois deles certos pela leitura do código.
 
 ### Como saberemos que está pronto?
 
-- [ ] Passos e calorias aparecem na tela em um aparelho com Health Connect
-- [ ] A leitura em background funciona no Android e no iOS
+- [x] Passos e calorias aparecem na tela em um aparelho com Health Connect
+- [x] A leitura em background funciona no Android e no iOS
 - [ ] Permissão negada, sessão ausente e falha de rede aparecem como três
       estados distintos — nenhum deles é "zero"
-- [ ] Uma leitura vazia nunca sobrescreve um agregado já gravado
+- [x] Uma leitura vazia nunca sobrescreve um agregado já gravado
 
 ---
 

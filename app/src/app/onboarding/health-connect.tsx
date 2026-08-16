@@ -3,7 +3,7 @@ import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Platform, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Platform, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
 
@@ -47,24 +47,75 @@ export default function HealthConnectScreen() {
           ],
         });
 
-        if (granted) await recordCollectionConsent();
+        if (!granted) {
+          Alert.alert(
+            'Permissão não concedida',
+            'Sem acesso ao HealthKit não dá para ler seus passos. Toque em Conectar para tentar de novo.'
+          );
+          return;
+        }
+
+        await recordCollectionConsent();
         router.replace('/(tabs)');
       } else {
         const { initialize, requestPermission } = require('react-native-health-connect');
 
         const isInitialized = await initialize();
         if (!isInitialized) {
+          // Sair calado para as tabs fazia o toque no botão não produzir nada
+          // visível — indistinguível de o app ter travado. A causa mais comum
+          // é o Health Connect não estar instalado no aparelho.
           console.log('[HealthConnectScreen] Health Connect not initialized');
-          router.replace('/(tabs)');
+          Alert.alert(
+            'Health Connect indisponível',
+            'Não consegui falar com o Health Connect. Verifique se ele está instalado e atualizado na Play Store.'
+          );
           return;
         }
 
-        const permissions = [
+        // As permissões de dado vêm sozinhas neste pedido. O Health Connect
+        // trata `BackgroundAccessPermission` como especial e só a concede
+        // depois de as comuns existirem — misturada aqui, o diálogo volta
+        // vazio e tudo parece recusado.
+        const granted = await requestPermission([
           { accessType: 'read', recordType: 'Steps' },
           { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
-        ];
+        ]);
 
-        await requestPermission(permissions);
+        console.log('[HealthConnect] permissões concedidas:', JSON.stringify(granted));
+
+        const concedeuLeitura = granted.some(
+          (p: { recordType: string; accessType: string }) =>
+            p.accessType === 'read' &&
+            (p.recordType === 'Steps' || p.recordType === 'ActiveCaloriesBurned')
+        );
+
+        // O retorno era descartado e o consentimento LGPD ficava gravado mesmo
+        // quando o usuário recusava — o iOS já checava, o Android não. Dava um
+        // estado impossível: consentimento concedido, permissão negada.
+        if (!concedeuLeitura) {
+          // Fica na tela em vez de mandar para as tabs: o botão "Conectar" é a
+          // ação que resolve, e tirar o aluno daqui o obriga a redescobrir o
+          // caminho para tentar de novo.
+          Alert.alert(
+            'Permissão não concedida',
+            'Sem acesso ao Health Connect não dá para ler seus passos. Toque em Conectar para tentar de novo.'
+          );
+          return;
+        }
+
+        // Só agora, e num pedido separado: sem ela a leitura em background
+        // volta lista vazia, mas ela não pode bloquear o fluxo — o aluno já
+        // autorizou o essencial e recusar o background é escolha legítima.
+        try {
+          const comBackground = await requestPermission([
+            { accessType: 'read', recordType: 'BackgroundAccessPermission' },
+          ]);
+          console.log('[HealthConnect] background:', JSON.stringify(comBackground));
+        } catch (bgError) {
+          console.log('[HealthConnect] background indisponível:', String(bgError));
+        }
+
         await recordCollectionConsent();
         router.replace('/(tabs)');
       }

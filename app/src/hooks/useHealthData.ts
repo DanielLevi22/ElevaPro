@@ -25,9 +25,17 @@ export interface HealthData {
 interface HealthMetrics {
   steps: number;
   calories: number;
+  /**
+   * Falso quando o Health Connect não devolveu nenhum registro.
+   *
+   * Sem esta bandeira, "o aparelho não anda desde a meia-noite" e "a leitura
+   * foi negada" chegam idênticos aqui — os dois viram `{ steps: 0 }`. O
+   * segundo caso sobrescrevia o agregado bom com zero.
+   */
+  hasRecords: boolean;
 }
 
-const MOCK_METRICS: HealthMetrics = { steps: 7543, calories: 450 };
+const MOCK_METRICS: HealthMetrics = { steps: 7543, calories: 450, hasRecords: true };
 
 const IOS_AUTH = {
   toRead: ['HKQuantityTypeIdentifierStepCount', 'HKQuantityTypeIdentifierActiveEnergyBurned'],
@@ -51,7 +59,7 @@ function todayRange(): { startTime: string; endTime: string } {
  * @example
  * if (await hasAndroidPermissions()) await readAndroidMetrics();
  */
-async function hasAndroidPermissions(): Promise<boolean> {
+async function hasAndroidPermissions(options?: { background?: boolean }): Promise<boolean> {
   const isInitialized = await initialize();
   if (!isInitialized) return false;
 
@@ -59,7 +67,18 @@ async function hasAndroidPermissions(): Promise<boolean> {
   const canRead = (recordType: string) =>
     granted.some((p) => p.recordType === recordType && p.accessType === 'read');
 
-  return canRead('Steps') && canRead('ActiveCaloriesBurned');
+  if (!canRead('Steps') || !canRead('ActiveCaloriesBurned')) return false;
+
+  // A leitura em background exige uma permissão própria, concedida à parte das
+  // comuns. Sem ela o Health Connect devolve lista vazia em vez de recusar —
+  // o dano já está contido por `hasRecords`, mas sem esta checagem ninguém
+  // sabe *por que* o background nunca traz nada.
+  if (options?.background && !canRead('BackgroundAccessPermission')) {
+    console.log('[HealthConnect] leitura em background sem permissão própria');
+    return false;
+  }
+
+  return true;
 }
 
 /**
@@ -74,10 +93,26 @@ async function hasAndroidPermissions(): Promise<boolean> {
  * if (metrics) await syncDailyMetrics({ date, ...metrics });
  */
 export async function readDeviceMetrics(): Promise<HealthMetrics | null> {
-  if (Platform.OS !== 'android') return null;
   try {
-    if (!(await hasAndroidPermissions())) return null;
-    return await readAndroidMetrics();
+    // O iOS saía aqui com `return null` e a task de background nunca lia nada:
+    // `readIOSMetrics` existia, não era exportada, e ninguém a chamava. Em iOS
+    // a sincronização era um no-op completo.
+    if (Platform.OS === 'ios') {
+      const metrics = await readIOSMetrics();
+      return metrics.hasRecords ? metrics : null;
+    }
+
+    if (Platform.OS !== 'android') return null;
+    if (!(await hasAndroidPermissions({ background: true }))) return null;
+
+    const metrics = await readAndroidMetrics();
+
+    // Leitura sem nenhum registro vira ausência, não zero. Gravar `{steps: 0}`
+    // aqui sobrescreveria o agregado que o primeiro plano já salvou — o dado
+    // não sumia por não ser lido, sumia por ser sobrescrito.
+    if (!metrics.hasRecords) return null;
+
+    return metrics;
   } catch {
     return null;
   }
@@ -97,7 +132,12 @@ async function readAndroidMetrics(): Promise<HealthMetrics> {
     0
   );
 
-  return { steps, calories: Math.round(calories) };
+  // O Health Connect devolve lista vazia quando a leitura é negada, em vez de
+  // lançar — inclusive quando falta `READ_HEALTH_DATA_IN_BACKGROUND`, que é
+  // concedida à parte das permissões comuns.
+  const hasRecords = stepsResult.records.length > 0 || caloriesResult.records.length > 0;
+
+  return { steps, calories: Math.round(calories), hasRecords };
 }
 
 /** Em dev o emulador não tem Health Connect; sem o mock a tela fica sempre vazia. */
@@ -127,12 +167,15 @@ export function useHealthData() {
       const metrics = await readAndroidMetrics();
       setData({ ...metrics, loading: false, error: null, source: 'device' });
 
-      // Persiste só leitura real. O mock nunca chega ao banco.
-      await syncDailyMetrics({
-        date: localDateKey(),
-        steps: metrics.steps,
-        active_calories: metrics.calories,
-      });
+      // Persiste só leitura real, e só quando houve registro. O mock nunca
+      // chega ao banco, e zero-por-ausência nunca sobrescreve zero-medido.
+      if (metrics.hasRecords) {
+        await syncDailyMetrics({
+          date: localDateKey(),
+          steps: metrics.steps,
+          active_calories: metrics.calories,
+        });
+      }
     } catch (err: unknown) {
       const reason = err instanceof Error ? err.message : String(err);
       console.log('[HealthConnect] Falha ao ler dados:', reason);
@@ -199,8 +242,13 @@ async function readIOSMetrics(): Promise<HealthMetrics> {
     ),
   ]);
 
+  // `sumQuantity` ausente é o equivalente iOS da lista vazia do Android: não
+  // houve amostra no período. Distinto de ter havido e somado zero.
+  const semAmostra = stepsStats.sumQuantity == null && caloriesStats.sumQuantity == null;
+
   return {
     steps: Math.round(stepsStats.sumQuantity?.quantity ?? 0),
     calories: Math.round(caloriesStats.sumQuantity?.quantity ?? 0),
+    hasRecords: !semAmostra,
   };
 }

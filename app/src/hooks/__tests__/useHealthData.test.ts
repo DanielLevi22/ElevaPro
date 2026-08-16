@@ -1,7 +1,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { Platform } from 'react-native';
 import { getGrantedPermissions, initialize, readRecords } from 'react-native-health-connect';
-import { useHealthData } from '@/hooks/useHealthData';
+import { readDeviceMetrics, useHealthData } from '@/hooks/useHealthData';
+import { syncDailyMetrics } from '@/services/healthSync';
 
 jest.mock('react-native-health-connect', () => ({
   initialize: jest.fn(),
@@ -16,14 +17,30 @@ jest.mock('@kingstinct/react-native-healthkit', () => ({
   queryStatisticsForQuantity: jest.fn(),
 }));
 
+jest.mock('@/services/healthSync', () => ({
+  syncDailyMetrics: jest.fn().mockResolvedValue('saved'),
+  localDateKey: () => '2026-08-16',
+}));
+
+const mockSync = syncDailyMetrics as unknown as jest.Mock;
+
 const mockInitialize = initialize as unknown as jest.Mock;
 const mockGetGranted = getGrantedPermissions as unknown as jest.Mock;
 const mockReadRecords = readRecords as unknown as jest.Mock;
 
+/** Permissões comuns — o que a tela em primeiro plano precisa. */
 const grantAll = () =>
   mockGetGranted.mockResolvedValue([
     { recordType: 'Steps', accessType: 'read' },
     { recordType: 'ActiveCaloriesBurned', accessType: 'read' },
+  ]);
+
+/** Comuns mais a de background, que é concedida à parte. */
+const grantAllWithBackground = () =>
+  mockGetGranted.mockResolvedValue([
+    { recordType: 'Steps', accessType: 'read' },
+    { recordType: 'ActiveCaloriesBurned', accessType: 'read' },
+    { recordType: 'BackgroundAccessPermission', accessType: 'read' },
   ]);
 
 const stubRecords = () =>
@@ -99,5 +116,70 @@ describe('useHealthData', () => {
     expect(result.current.source).toBe('mock');
     // O mock não pode se passar por leitura real — era esse o defeito original.
     expect(result.current.hasPermissions).toBe(false);
+  });
+});
+
+describe('leitura vazia não vira zero', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockInitialize.mockResolvedValue(true);
+    grantAll();
+  });
+
+  it('não persiste quando o Health Connect devolve lista vazia', async () => {
+    // O Health Connect devolve lista vazia quando a leitura é negada — inclusive
+    // por falta de READ_HEALTH_DATA_IN_BACKGROUND — em vez de lançar. Persistir
+    // aqui gravava zero por cima do agregado bom.
+    mockReadRecords.mockResolvedValue({ records: [] });
+
+    renderHook(() => useHealthData());
+
+    await waitFor(() => expect(mockReadRecords).toHaveBeenCalled());
+    expect(mockSync).not.toHaveBeenCalled();
+  });
+
+  it('persiste quando há registro, mesmo somando zero', async () => {
+    // Zero passos medidos é um fato; zero por ausência de leitura não é. Os
+    // dois chegavam idênticos antes desta distinção.
+    mockReadRecords.mockImplementation((recordType: string) =>
+      recordType === 'Steps'
+        ? Promise.resolve({ records: [{ count: 0 }] })
+        : Promise.resolve({ records: [{ energy: { inKilocalories: 0 } }] })
+    );
+
+    renderHook(() => useHealthData());
+
+    await waitFor(() => expect(mockSync).toHaveBeenCalled());
+    expect(mockSync).toHaveBeenCalledWith(
+      expect.objectContaining({ steps: 0, active_calories: 0 })
+    );
+  });
+
+  it('readDeviceMetrics devolve ausência quando não há registro', async () => {
+    grantAllWithBackground();
+    mockReadRecords.mockResolvedValue({ records: [] });
+
+    await expect(readDeviceMetrics()).resolves.toBeNull();
+  });
+
+  it('readDeviceMetrics devolve as métricas quando há registro e permissão de background', async () => {
+    grantAllWithBackground();
+    stubRecords();
+
+    await expect(readDeviceMetrics()).resolves.toEqual({
+      steps: 1500,
+      calories: 88,
+      hasRecords: true,
+    });
+  });
+
+  it('readDeviceMetrics recusa sem a permissão de background', async () => {
+    // Só as comuns concedidas. Sem a de background o Health Connect devolveria
+    // lista vazia em vez de recusar — parar aqui deixa o motivo no log em vez
+    // de virar mais um "não tem dado".
+    grantAll();
+    stubRecords();
+
+    await expect(readDeviceMetrics()).resolves.toBeNull();
   });
 });

@@ -13,7 +13,13 @@ const SYNC_INTERVAL_SECONDS = 60 * 30;
 // Health Connect não pode suprimir o reagendamento de notificação de refeição.
 TaskManager.defineTask(BACKGROUND_HEALTH_SYNC, async () => {
   const metrics = await readDeviceMetrics();
-  if (!metrics) return BackgroundFetch.BackgroundFetchResult.NoData;
+
+  if (!metrics) {
+    // Sem leitura: pode ser permissão, pode ser plataforma, pode ser SDK. O
+    // `NoData` sozinho não distinguia nada — nem para nós, nem para o log.
+    console.log('[HealthSync] sem leitura do dispositivo (permissão ou sem registro)');
+    return BackgroundFetch.BackgroundFetchResult.NoData;
+  }
 
   const outcome = await syncDailyMetrics({
     date: localDateKey(),
@@ -21,9 +27,16 @@ TaskManager.defineTask(BACKGROUND_HEALTH_SYNC, async () => {
     active_calories: metrics.calories,
   });
 
-  return outcome === 'saved'
-    ? BackgroundFetch.BackgroundFetchResult.NewData
-    : BackgroundFetch.BackgroundFetchResult.NoData;
+  if (outcome !== 'saved') {
+    // Os três desfechos viravam o mesmo `NoData`, e não havia como saber, de
+    // fora, se o problema era sessão, consentimento ou rede. Sem o valor lido
+    // no log: passos são dado de saúde e não vão para observabilidade em texto
+    // claro (Art. 6°, VII).
+    console.log(`[HealthSync] não persistiu: ${outcome}`);
+    return BackgroundFetch.BackgroundFetchResult.NoData;
+  }
+
+  return BackgroundFetch.BackgroundFetchResult.NewData;
 });
 
 export async function registerHealthSyncAsync(): Promise<void> {
