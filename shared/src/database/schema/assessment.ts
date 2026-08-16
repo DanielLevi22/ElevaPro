@@ -9,6 +9,9 @@ export const studentAnamnesis = pgTable("student_anamnesis", {
     .references(() => profiles.id, { onDelete: "cascade" }),
   responses: jsonb("responses").notNull().default({}),
   completed_at: timestamp("completed_at", { withTimezone: true }),
+  // O mobile já mandava esta coluna no upsert; ela não existia e derrubava
+  // todo salvamento com 42703 (migration 0029).
+  updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

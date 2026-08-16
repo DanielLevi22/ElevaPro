@@ -1,3 +1,35 @@
+/** Os níveis que o prompt pede. Ordem crescente de atenção. */
+export const POSTURE_RISKS = ["ÓTIMO", "BOM", "NORMAL", "MODERADO", "ALTO"] as const;
+
+export type PostureRisk = (typeof POSTURE_RISKS)[number];
+
+export interface PostureFinding {
+  title: string;
+  /**
+   * Deliberadamente `string`, não a união.
+   *
+   * Vem do modelo, que pode devolver um rótulo fora da lista. Tipar como união
+   * aqui obrigaria a descartar o achado inteiro por causa de uma palavra — e um
+   * achado sobre a postura de alguém vale mais que a etiqueta dele. A tela cai
+   * num estilo neutro quando não reconhece.
+   */
+  risk: string;
+  text: string;
+}
+
+/**
+ * Achados por vista.
+ *
+ * É o conteúdo que substitui a foto na tela do especialista: em vez de olhar a
+ * imagem, ele lê o que a análise encontrou em cada ângulo. A imagem não é
+ * persistida (`ADR-010`), então isto é tudo o que sobra do que foi visto.
+ */
+export interface PostureFeedback {
+  front?: PostureFinding[];
+  back?: PostureFinding[];
+  side?: PostureFinding[];
+}
+
 /**
  * Uma análise corporal gravada.
  *
@@ -34,7 +66,7 @@ export interface BodyScanRecord {
   framing_level_sensor: boolean | null;
   /** Lente usada. Escaneamentos de lentes diferentes não são comparáveis. */
   framing_camera: "front" | "back" | null;
-  posture_feedback: unknown;
+  posture_feedback: PostureFeedback | null;
   recommendations: string | null;
 }
 
@@ -64,7 +96,7 @@ export interface BodyScanInput {
   framing_level_sensor: boolean | null;
   /** Lente usada. Escaneamentos de lentes diferentes não são comparáveis. */
   framing_camera: "front" | "back" | null;
-  posture_feedback: unknown;
+  posture_feedback: PostureFeedback | null;
   recommendations: string | null;
 }
 
