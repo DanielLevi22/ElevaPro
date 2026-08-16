@@ -361,5 +361,5 @@ uma questão de transparência, e não só de exatidão.
 - [x] `docs/LGPD_COMPLIANCE.md` seções 7 e 10 atualizadas
 - [x] Código funciona e passou em lint + typecheck + testes
 - [ ] PR mergeado em `development`
-- [ ] `docs/features/body-scan-integrity.md` criado
-- [ ] `docs/STATUS.md` atualizado
+- [x] `docs/features/body-scan-integrity.md` criado
+- [x] `docs/STATUS.md` atualizado

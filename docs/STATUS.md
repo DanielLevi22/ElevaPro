@@ -25,7 +25,7 @@
 | **Nutrition** | ✅ | ✅ | ✅ | ⚠️ parcial | ⚠️ parcial |
 | **Workouts** | ✅ | ✅ | 🔄 pendente | ⚠️ parcial | ⚠️ parcial |
 | **Students** | ✅ | ⚠️ parcial | 🔄 pendente | ⚠️ parcial | ⚠️ parcial |
-| **Assessment** | N/A | ✅ | 🔄 pendente | N/A | ⚠️ parcial |
+| **Assessment** | ✅ análise corporal (leitura) | ✅ | ✅ [body-scan-integrity](features/body-scan-integrity.md) | ⚠️ parcial | ⚠️ parcial |
 | **Gamification** | ⚠️ parcial | ✅ | ✅ | ❌ | ❌ |
 | **AI / Agentes** | ⚠️ student coach (web) | ⚠️ cliente do BFF ([ADR-004](decisions/004-ai-bff-pattern.md)) | ⚠️ draft (blueprint) | ⚠️ parcial (service + readiness) | ⚠️ parcial |
 | **Packages / Shared** | ✅ centralizado (students + auth + workouts + nutrition + gamification) | ✅ centralizado (students + auth + workouts + nutrition + gamification) | ✅ | N/A | N/A |
@@ -103,7 +103,7 @@ Três armadilhas que já custaram tempo:
 | 3 | ~~Separação de ambientes Supabase (dev/preview/prod)~~ — **resolvido** | ✅ | [ADR-003](decisions/003-environment-strategy.md) |
 | 4 | Testes de cobertura insuficientes em todos os módulos | 🟡 Média | — |
 | 5 | ~~Código mobile/web referenciando tabelas antigas~~ — **resolvido** | ✅ | — |
-| 6 | `assessment` module usa `as unknown as AssessmentInsert` — field mapping com nomes legados | 🟡 Média | — |
+| 6 | `assessment` module usa `as unknown as AssessmentInsert` — field mapping com nomes legados. **É a mesma causa da 44**, vista pelo lado do cast: o tipo gerado pegaria os nomes errados, e o cast existe para calá-lo | 🔴 Crítica | [PRD](PRDs/physical-assessment-schema-drift.md) |
 | 7 | ~~12 tabelas referenciadas em código não existem no banco~~ — **resolvido**, com guarda em CI contra recorrência | ✅ | [PRD](PRDs/schema-drift-alignment.md) |
 | 8 | Tela de perfil (mobile) exibe barra de XP sem fonte de dados — não existe sistema de nível/XP no schema | 🟢 Baixa | — |
 | 9 | ~~Duas representações concorrentes de execução de treino~~ — **resolvido** na `0023`: `sets_data` apagada, as três telas gravam em `workout_session_sets` | ✅ | [PRD](PRDs/workout-execution-consolidation.md) |
