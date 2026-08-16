@@ -575,37 +575,40 @@ export default function DashboardScreen() {
             </View>
           </TouchableOpacity>
 
-          {/* Conectar o Health Connect.
-              Só aparece enquanto os dados não vêm do aparelho: depois de
-              conectado, o selo "Live" na seção de Atividade já é a confirmação,
-              e um convite para conectar de novo seria ruído. */}
-          {healthSource !== 'device' && (
-            <TouchableOpacity
-              onPress={() => router.push(ROUTES.ONBOARDING.HEALTH_CONNECT as never)}
-              activeOpacity={0.8}
-              className="mt-4"
+          {/* Health Connect.
+              Sempre visível, como os cartões vizinhos: é o caminho para rever
+              ou revogar a autorização, não só para concedê-la. Esconder depois
+              de conectado tirava do aluno a única porta de volta. O subtítulo
+              carrega o estado. */}
+          <TouchableOpacity
+            onPress={() => router.push(ROUTES.ONBOARDING.HEALTH_CONNECT as never)}
+            activeOpacity={0.8}
+            className="mt-4"
+          >
+            <View
+              className="rounded-[24px] p-5 flex-row items-center justify-between border bg-zinc-900"
+              style={{ borderColor: brandColors.border.default }}
             >
-              <View
-                className="rounded-[24px] p-5 flex-row items-center justify-between border bg-zinc-900"
-                style={{ borderColor: brandColors.border.default }}
-              >
-                <View className="flex-row items-center gap-4">
-                  <View className="p-3 rounded-xl border bg-emerald-500/10 border-emerald-500/20">
-                    <Ionicons name="heart-circle-outline" size={24} color="#10b981" />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-white text-lg font-black font-display tracking-tight">
-                      Conectar Saúde
-                    </Text>
-                    <Text className="text-zinc-500 text-[10px] font-bold tracking-widest uppercase font-sans">
-                      {healthSource === 'mock' ? 'Dados simulados' : 'Passos e calorias'}
-                    </Text>
-                  </View>
+              <View className="flex-row items-center gap-4">
+                <View className="p-3 rounded-xl border bg-emerald-500/10 border-emerald-500/20">
+                  <Ionicons name="heart-circle-outline" size={24} color="#10b981" />
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={brandColors.text.muted} />
+                <View className="flex-1">
+                  <Text className="text-white text-lg font-black font-display tracking-tight">
+                    {healthSource === 'device' ? 'Saúde Conectada' : 'Conectar Saúde'}
+                  </Text>
+                  <Text className="text-zinc-500 text-[10px] font-bold tracking-widest uppercase font-sans">
+                    {healthSource === 'device'
+                      ? 'Passos e calorias do aparelho'
+                      : healthSource === 'mock'
+                        ? 'Dados simulados — toque para conectar'
+                        : 'Passos e calorias'}
+                  </Text>
+                </View>
               </View>
-            </TouchableOpacity>
-          )}
+              <Ionicons name="chevron-forward" size={20} color={brandColors.text.muted} />
+            </View>
+          </TouchableOpacity>
         </Animated.View>
 
         {/* Health Data (Bento Activity) */}
