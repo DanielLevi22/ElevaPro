@@ -618,6 +618,13 @@ export type Database = {
         Row: {
           assessed_at: string;
           body_fat_pct: number | null;
+          circ_abdomen: number | null;
+          circ_left_calf: number | null;
+          circ_left_forearm: number | null;
+          circ_neck: number | null;
+          circ_right_calf: number | null;
+          circ_right_forearm: number | null;
+          circ_shoulder: number | null;
           circ_chest: number | null;
           circ_hip: number | null;
           circ_left_arm: number | null;
@@ -644,6 +651,13 @@ export type Database = {
         Insert: {
           assessed_at?: string;
           body_fat_pct?: number | null;
+          circ_abdomen?: number | null;
+          circ_left_calf?: number | null;
+          circ_left_forearm?: number | null;
+          circ_neck?: number | null;
+          circ_right_calf?: number | null;
+          circ_right_forearm?: number | null;
+          circ_shoulder?: number | null;
           circ_chest?: number | null;
           circ_hip?: number | null;
           circ_left_arm?: number | null;
@@ -670,6 +684,13 @@ export type Database = {
         Update: {
           assessed_at?: string;
           body_fat_pct?: number | null;
+          circ_abdomen?: number | null;
+          circ_left_calf?: number | null;
+          circ_left_forearm?: number | null;
+          circ_neck?: number | null;
+          circ_right_calf?: number | null;
+          circ_right_forearm?: number | null;
+          circ_shoulder?: number | null;
           circ_chest?: number | null;
           circ_hip?: number | null;
           circ_left_arm?: number | null;

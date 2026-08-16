@@ -44,6 +44,16 @@ export const physicalAssessments = pgTable("physical_assessments", {
   circ_left_arm: numeric("circ_left_arm", { precision: 5, scale: 2 }),
   circ_right_thigh: numeric("circ_right_thigh", { precision: 5, scale: 2 }),
   circ_left_thigh: numeric("circ_left_thigh", { precision: 5, scale: 2 }),
+  // Completadas na 0030: o web já coletava e o mobile já exibia estas sete,
+  // e não havia onde gravar. Bilateral onde a assimetria importa.
+  circ_neck: numeric("circ_neck", { precision: 5, scale: 2 }),
+  circ_shoulder: numeric("circ_shoulder", { precision: 5, scale: 2 }),
+  /** Na altura do umbigo — `circ_waist` é a parte mais estreita. */
+  circ_abdomen: numeric("circ_abdomen", { precision: 5, scale: 2 }),
+  circ_right_forearm: numeric("circ_right_forearm", { precision: 5, scale: 2 }),
+  circ_left_forearm: numeric("circ_left_forearm", { precision: 5, scale: 2 }),
+  circ_right_calf: numeric("circ_right_calf", { precision: 5, scale: 2 }),
+  circ_left_calf: numeric("circ_left_calf", { precision: 5, scale: 2 }),
   notes: text("notes"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
