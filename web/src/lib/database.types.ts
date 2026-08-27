@@ -81,6 +81,8 @@ export type Database = {
       };
       ai_chat_sessions: {
         Row: {
+          archived_at: string | null;
+          title: string | null;
           created_at: string | null;
           id: string;
           module: string;
@@ -90,6 +92,8 @@ export type Database = {
           updated_at: string | null;
         };
         Insert: {
+          archived_at?: string | null;
+          title?: string | null;
           created_at?: string | null;
           id?: string;
           module?: string;
@@ -99,6 +103,8 @@ export type Database = {
           updated_at?: string | null;
         };
         Update: {
+          archived_at?: string | null;
+          title?: string | null;
           created_at?: string | null;
           id?: string;
           module?: string;

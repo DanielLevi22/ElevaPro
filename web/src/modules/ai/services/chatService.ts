@@ -1,6 +1,85 @@
 import type { Json } from "@/lib/database.types";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import type { AiSessionState, ChatMessage, ChatSession } from "../types";
+import type { AiSessionState, ChatMessage, ChatSession, ChatSessionSummary } from "../types";
+
+/**
+ * Confirma que a conversa é deste aluno com este especialista.
+ *
+ * O `sessionId` vem do cliente, e esta rota usa `service_role` — que não
+ * consulta RLS. Sem esta checagem, trocar o id na requisição lê a conversa de
+ * outro especialista sobre qualquer aluno: é a mesma classe do IDOR corrigido
+ * na dívida 27, reintroduzida por uma feature nova.
+ *
+ * Devolve `null` quando não pertence, e o chamador trata como conversa
+ * inexistente — não confirma nem desmente que o id existe.
+ *
+ * @example
+ * const sessionId = body.sessionId
+ *   ? await sessionOwnedBy(body.sessionId, studentId, specialistId)
+ *   : await getOrCreateSession(studentId, specialistId, "workout");
+ */
+export async function sessionOwnedBy(
+  sessionId: string,
+  studentId: string,
+  specialistId: string,
+): Promise<string | null> {
+  const { data, error } = await supabaseAdmin
+    .from("ai_chat_sessions")
+    .select("id")
+    .eq("id", sessionId)
+    .eq("student_id", studentId)
+    .eq("specialist_id", specialistId)
+    .maybeSingle();
+
+  // Erro não é "não é dono": engolir aqui transformaria falha de consulta em
+  // negativa de acesso, e o chamador criaria uma conversa nova sem motivo.
+  if (error) throw error;
+  return data?.id ?? null;
+}
+
+/**
+ * Abre uma conversa nova, mesmo havendo outras.
+ *
+ * Diferente de `getOrCreateSession`, que reaproveita a mais recente e por isso
+ * fazia toda conversa continuar a anterior.
+ *
+ * O que recomeça é o diálogo: mensagens e `state`. O que o coach sabe sobre o
+ * aluno — anamnese, avaliação, periodizações — é lido do banco a cada turno e
+ * **não** vive aqui, então conversa nova não significa coach sem contexto.
+ */
+export async function createSession(
+  studentId: string,
+  specialistId: string,
+  module: "workout" | "nutrition" | "general" = "workout",
+): Promise<string> {
+  const { data, error } = await supabaseAdmin
+    .from("ai_chat_sessions")
+    .insert({ student_id: studentId, specialist_id: specialistId, module })
+    .select("id")
+    .single();
+
+  if (error) throw error;
+  return data.id;
+}
+
+/** Conversas não arquivadas, da mais recente para a mais antiga. */
+export async function listSessions(
+  studentId: string,
+  specialistId: string,
+  module: "workout" | "nutrition" | "general" = "workout",
+): Promise<ChatSessionSummary[]> {
+  const { data, error } = await supabaseAdmin
+    .from("ai_chat_sessions")
+    .select("id, title, created_at, updated_at")
+    .eq("student_id", studentId)
+    .eq("specialist_id", specialistId)
+    .eq("module", module)
+    .is("archived_at", null)
+    .order("updated_at", { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []) as ChatSessionSummary[];
+}
 
 export async function getOrCreateSession(
   studentId: string,
