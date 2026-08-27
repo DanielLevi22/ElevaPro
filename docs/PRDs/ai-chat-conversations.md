@@ -1,7 +1,7 @@
 # PRD: ai-chat-conversations
 
 **Data de criação:** 2026-08-16
-**Status:** draft
+**Status:** approved
 **Branch:** feature/ai-chat-conversations
 **Autor:** Daniel Levi
 
@@ -142,11 +142,11 @@ guardada? Verificar antes de multiplicar o volume.
 
 ### Incluído
 
-**Fase 1 — o banco e a rota deixam de forçar uma só**
+**Fase 1 — o banco e a rota deixam de forçar uma só** ✅
 - `title` e `archived_at` em `ai_chat_sessions`
 - `getOrCreateSession` ganha um irmão: `createSession`, e a rota aceita
   `sessionId` opcional
-- **Validação de dono do `sessionId`**, com teste negativo
+- **Validação de dono do `sessionId`**, com teste negativo — `sessionOwnedBy`, quatro testes, verificados removendo o filtro por especialista
 - Sem `sessionId`, o comportamento atual é preservado — a última conversa
   continua sendo retomada
 

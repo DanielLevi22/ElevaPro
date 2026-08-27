@@ -16,6 +16,10 @@ export const aiChatSessions = pgTable("ai_chat_sessions", {
   specialist_id: uuid("specialist_id").references(() => profiles.id, { onDelete: "set null" }),
   module: text("module").notNull().default("workout"),
   state: jsonb("state").default({}),
+  /** Nulo até a conversa ganhar título pelo que foi discutido (0032). */
+  title: text("title"),
+  /** Arquivada sai da lista e permanece no banco — é registro de prescrição. */
+  archived_at: timestamp("archived_at", { withTimezone: true }),
   created_at: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });

@@ -9,6 +9,15 @@ export interface ChatMessage {
   createdAt: string;
 }
 
+/** O que a lista de conversas precisa mostrar. */
+export interface ChatSessionSummary {
+  id: string;
+  /** Nulo até a conversa ganhar título pelo que foi discutido. */
+  title: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ChatSession {
   id: string;
   studentId: string;

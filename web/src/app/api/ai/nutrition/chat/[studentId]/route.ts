@@ -7,6 +7,7 @@ import {
   getOrCreateSession,
   getSessionMessages,
   saveMessage,
+  sessionOwnedBy,
   updateSessionState,
 } from "@/modules/ai/services/chatService";
 import { formatContextForPrompt, loadStudentContext } from "@/modules/ai/services/contextLoader";
@@ -25,6 +26,26 @@ const SECTION_SEPARATOR = `
 export const maxDuration = 60;
 
 const MODULE = "nutrition" as const;
+
+/**
+ * Qual conversa esta requisição usa.
+ *
+ * Com `sessionId`, valida o dono antes de tocar em qualquer coisa: o id vem do
+ * cliente e esta rota usa `service_role`, que não consulta RLS. Sem `sessionId`,
+ * o comportamento antigo é preservado — retoma a mais recente.
+ *
+ * `null` significa "essa conversa não é sua": o chamador responde 404 sem
+ * confirmar nem desmentir que o id existe.
+ */
+async function resolverSessao(
+  sessionId: string | undefined,
+  studentId: string,
+  specialistId: string,
+  modulo: "workout" | "nutrition" | "general",
+): Promise<string | null> {
+  if (sessionId) return sessionOwnedBy(sessionId, studentId, specialistId);
+  return getOrCreateSession(studentId, specialistId, modulo);
+}
 
 export async function POST(
   request: NextRequest,
@@ -51,12 +72,22 @@ export async function POST(
     async start(controller) {
       try {
         const [sessionId, studentCtx] = await Promise.all([
-          getOrCreateSession(studentId, specialistId, MODULE),
+          resolverSessao(body.sessionId, studentId, specialistId, MODULE),
           // Verifica `student_consents` antes de ler dado de saúde, e não
           // devolve o nome do titular. Plano alimentar é dado sensível
           // (Art. 11, II, f + I) — ver LGPD_COMPLIANCE, seção 10.
           loadStudentContext(studentId, specialistId),
         ]);
+
+        // Conversa que não é deste aluno com este especialista não existe para
+        // quem perguntou. Encerrar aqui evita que o restante do stream trabalhe
+        // com uma sessão nula — e o tipo obriga a decidir, em vez de deixar
+        // passar com `!`.
+        if (!sessionId) {
+          controller.enqueue(sseChunk({ type: "error", message: "conversa não encontrada" }));
+          controller.close();
+          return;
+        }
 
         const storedMessages = await getSessionMessages(sessionId);
         const history = storedMessages.map((m) => ({
