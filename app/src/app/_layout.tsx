@@ -1,6 +1,7 @@
 // Antes de tudo: registra os componentes de terceiros no NativeWind. Sem isto,
 // todo `className` em LinearGradient e Image é descartado sem aviso.
 import '@/lib/nativewind-interop';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
@@ -34,10 +35,22 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    // Os icones vinham por conta do `@expo/vector-icons`, que so carrega a
+    // fonte quando o primeiro icone renderiza. Com 101 telas usando Ionicons,
+    // sao dezenas de `loadAsync` disparados juntos disputando o mesmo arquivo
+    // de cache no aparelho -- e o que sobrava era um .ttf de zero byte, com o
+    // erro "Font file for ionicons is empty".
+    //
+    // Aqui carrega uma vez, antes de qualquer tela existir.
+    ...Ionicons.font,
+    ...MaterialCommunityIcons.font,
   });
 
   useEffect(() => {
-    if (error) throw error;
+    // Fonte e acabamento. Lancar aqui trocava um icone sem forma por um app
+    // que nao abre -- e era o que acontecia: o erro subia como excecao nao
+    // tratada e derrubava a arvore inteira.
+    if (error) console.error('[fontes] falha ao carregar', error);
   }, [error]);
 
   // Move splash hiding to Nav component which knows about Auth state
@@ -47,7 +60,9 @@ export default function RootLayout() {
   //   }
   // }, [loaded]);
 
-  if (!loaded) {
+  // Sem o `|| error`, uma falha de fonte deixaria o app parado no nada para
+  // sempre: `loaded` nunca vira true e a tela fica em branco.
+  if (!loaded && !error) {
     return null;
   }
 

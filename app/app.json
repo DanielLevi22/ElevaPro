@@ -39,6 +39,7 @@
         "INTERNET"
       ]
     },
+    "platforms": ["ios", "android"],
     "web": {
       "bundler": "metro",
       "output": "static",
