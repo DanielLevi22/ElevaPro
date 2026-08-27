@@ -81,6 +81,21 @@ export async function listSessions(
   return (data ?? []) as ChatSessionSummary[];
 }
 
+/**
+ * Tira a conversa da lista sem apagá-la.
+ *
+ * Apagar não é opção: conversa com o coach é registro de prescrição assistida,
+ * e a seção 7 do LGPD_COMPLIANCE declara retenção enquanto a conta existir.
+ */
+export async function archiveSession(sessionId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from("ai_chat_sessions")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("id", sessionId);
+
+  if (error) throw error;
+}
+
 export async function getOrCreateSession(
   studentId: string,
   specialistId: string,

@@ -272,7 +272,19 @@ export async function GET(
   const auth = await authorizeLinkedSpecialist(request, studentId);
   if (!auth.ok) return auth.response;
 
-  const sessionId = await getOrCreateSession(studentId, auth.caller.id, "workout");
+  // Com `?sessionId=`, carrega aquela conversa — validando o dono, porque o id
+  // vem do cliente e esta rota usa `service_role`. Sem ele, retoma a mais
+  // recente, que é o comportamento de antes.
+  const pedida = request.nextUrl.searchParams.get("sessionId") ?? undefined;
+
+  const sessionId = pedida
+    ? await sessionOwnedBy(pedida, studentId, auth.caller.id)
+    : await getOrCreateSession(studentId, auth.caller.id, "workout");
+
+  if (!sessionId) {
+    return NextResponse.json({ error: "conversa não encontrada" }, { status: 404 });
+  }
+
   const messages = await getSessionMessages(sessionId);
 
   return NextResponse.json({ sessionId, messages });
