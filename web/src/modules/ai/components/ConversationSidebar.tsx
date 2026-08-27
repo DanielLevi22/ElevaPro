@@ -9,6 +9,7 @@ interface ConversationSidebarProps {
   onSelect: (session: ChatSessionSummary) => void;
   onCreate: (module: ChatModule) => void;
   onArchive: (sessionId: string) => void;
+  onRename: (sessionId: string, title: string) => void;
   busy?: boolean;
 }
 
@@ -88,9 +89,21 @@ export function ConversationSidebar({
   onSelect,
   onCreate,
   onArchive,
+  onRename,
   busy = false,
 }: ConversationSidebarProps) {
   const [aberta, setAberta] = useState(true);
+  /** Qual conversa está sendo renomeada, e o texto em edição. */
+  const [editando, setEditando] = useState<{ id: string; texto: string } | null>(null);
+
+  function confirmarRenome() {
+    if (!editando) return;
+    const texto = editando.texto.trim();
+    // Nome automático só age na primeira troca, então o que a pessoa escreve
+    // aqui não é sobrescrito depois. Texto vazio é desistência, não apagar.
+    if (texto) onRename(editando.id, texto);
+    setEditando(null);
+  }
 
   if (!aberta) {
     return (
@@ -179,14 +192,50 @@ export function ConversationSidebar({
               }`}
             >
               <IconeModulo module={sessao.module} />
+              {editando?.id === sessao.id ? (
+                <input
+                  // O campo nasce de um clique deliberado em "renomear": focar
+                  // pelo ref evita o `autoFocus`, que rouba o foco de quem
+                  // navega por teclado em outro ponto da tela.
+                  ref={(el) => el?.focus()}
+                  value={editando.texto}
+                  onChange={(e) => setEditando({ id: sessao.id, texto: e.target.value })}
+                  onBlur={confirmarRenome}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") confirmarRenome();
+                    if (e.key === "Escape") setEditando(null);
+                  }}
+                  aria-label="Novo nome da conversa"
+                  className="min-w-0 flex-1 rounded border border-border bg-surface px-1 text-foreground text-sm"
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onSelect(sessao)}
+                  onDoubleClick={() => setEditando({ id: sessao.id, texto: rotulo(sessao) })}
+                  disabled={busy}
+                  aria-current={ativa ? "true" : undefined}
+                  className="flex-1 truncate text-left text-sm disabled:opacity-50"
+                >
+                  {rotulo(sessao)}
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => onSelect(sessao)}
+                onClick={() => setEditando({ id: sessao.id, texto: rotulo(sessao) })}
                 disabled={busy}
-                aria-current={ativa ? "true" : undefined}
-                className="flex-1 truncate text-left text-sm disabled:opacity-50"
+                aria-label={`Renomear ${rotulo(sessao)}`}
+                className="shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
               >
-                {rotulo(sessao)}
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <title>Renomear</title>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
               </button>
               <button
                 type="button"

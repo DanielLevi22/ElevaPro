@@ -11,6 +11,7 @@ import {
   updateSessionState,
 } from "@/modules/ai/services/chatService";
 import { formatContextForPrompt, loadStudentContext } from "@/modules/ai/services/contextLoader";
+import { definirTituloProvisorio, nomearConversa } from "@/modules/ai/services/conversationTitle";
 import { queryFoods, unknownFoodNames } from "@/modules/ai/services/foodCatalog";
 import type { DietMealsProposal, DietPlanProposal, SseEvent } from "@/modules/ai/types";
 
@@ -104,7 +105,12 @@ export async function POST(
         const contextText = [formatContextForPrompt(studentCtx), bodyScanIndex]
           .filter(Boolean)
           .join(SECTION_SEPARATOR);
+        const primeiraTroca = storedMessages.length === 0;
+
         await saveMessage(sessionId, "user", userMessage);
+        if (primeiraTroca) {
+          await definirTituloProvisorio(sessionId, userMessage).catch(() => {});
+        }
 
         let assistantFullText = "";
 
@@ -173,6 +179,9 @@ export async function POST(
 
         if (assistantFullText.trim()) {
           await saveMessage(sessionId, "assistant", assistantFullText);
+
+          // Depois do stream, nunca durante.
+          if (primeiraTroca) await nomearConversa(sessionId, userMessage, assistantFullText);
         }
       } catch (err) {
         // O log registra a sessão, nunca o contexto: alimento e quantidade

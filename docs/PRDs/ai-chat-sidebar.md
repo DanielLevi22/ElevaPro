@@ -1,7 +1,7 @@
 # PRD: ai-chat-sidebar
 
 **Data de criação:** 2026-08-27
-**Status:** approved
+**Status:** done
 **Branch:** feature/ai-chat-sidebar
 **Autor:** Daniel Levi
 
@@ -49,28 +49,28 @@ que este projeto já coleciona — **falha e ausência com a mesma aparência**.
 ### Como saberemos que está pronto?
 
 **Lateral**
-- [ ] A lista de conversas fica visível sem nenhum clique
-- [ ] A conversa aberta é destacada na lista
-- [ ] "Nova conversa" está no topo da lateral, sempre alcançável
-- [ ] Em tela estreita a lateral recolhe e o chat ocupa a largura toda
-- [ ] As conversas de treino e as de nutrição aparecem na mesma lista, cada uma
+- [x] A lista de conversas fica visível sem nenhum clique
+- [x] A conversa aberta é destacada na lista
+- [x] "Nova conversa" está no topo da lateral, sempre alcançável
+- [x] Em tela estreita a lateral recolhe e o chat ocupa a largura toda
+- [x] As conversas de treino e as de nutrição aparecem na mesma lista, cada uma
       identificável pelo coach a que pertence
-- [ ] Abrir uma conversa de nutrição carrega **aquela** conversa, não a última
-- [ ] O coach de nutrição fica alcançável sem digitar URL
+- [x] Abrir uma conversa de nutrição carrega **aquela** conversa, não a última
+- [x] O coach de nutrição fica alcançável sem digitar URL
 
 **Título**
-- [ ] Conversa nova ganha título assim que a primeira mensagem é enviada — sem
+- [x] Conversa nova ganha título assim que a primeira mensagem é enviada — sem
       esperar a resposta do modelo
-- [ ] O título reflete o assunto, não a data
-- [ ] Renomear à mão sobrescreve o título automático e não é sobrescrito depois
-- [ ] Nenhuma condição clínica do aluno aparece no título
+- [x] O título reflete o assunto, não a data
+- [x] Renomear à mão sobrescreve o título automático e não é sobrescrito depois
+- [x] Nenhuma condição clínica do aluno aparece no título
 
 **Bug do mobile**
-- [ ] O aluno abre um treino prescrito dentro de uma fase e vê os exercícios
-- [ ] Teste em `test-rls-isolation.mjs` cobrindo esse caminho, verificado
+- [x] O aluno abre um treino prescrito dentro de uma fase e vê os exercícios
+- [x] Teste em `test-rls-isolation.mjs` cobrindo esse caminho, verificado
       negativamente (removida a política, o teste falha)
-- [ ] O aluno continua sem ver exercícios de treino que não é dele
-- [ ] A tela distingue "treino sem exercícios" de "não consegui carregar"
+- [x] O aluno continua sem ver exercícios de treino que não é dele
+- [x] A tela distingue "treino sem exercícios" de "não consegui carregar"
 
 ---
 

@@ -144,6 +144,19 @@ export function AiCoachWorkspace() {
     }
   }
 
+  async function renomear(sessionId: string, title: string) {
+    if (!accessToken) return;
+    await fetch(`/api/ai/chat/${studentId}/sessions`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ sessionId, title }),
+    });
+    await carregarLista();
+  }
+
   /**
    * O chat resolveu qual conversa abriu.
    *
@@ -189,6 +202,7 @@ export function AiCoachWorkspace() {
           onSelect={selecionar}
           onCreate={criar}
           onArchive={arquivar}
+          onRename={renomear}
           busy={busy}
         />
 

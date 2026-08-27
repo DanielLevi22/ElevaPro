@@ -89,7 +89,7 @@ Três armadilhas que já custaram tempo:
 | [briefing](PRDs/briefing.md) | Briefing diário do especialista: quem precisa de mim hoje | ✅ done — recordes desbloqueados pela `0023`, ainda não implementados | `feature/briefing` |
 | [workout-execution-consolidation](PRDs/workout-execution-consolidation.md) | Uma única representação de treino executado | ✅ done | `feature/workout-execution-consolidation` |
 | [ai-coach-workout-stage](PRDs/ai-coach-workout-stage.md) | Coach de IA enxergando o aluno + estágio de criação de treino | ✅ done | `feature/ai-coach-workout-stage` |
-| [ai-chat-sidebar](PRDs/ai-chat-sidebar.md) | Conversas na lateral com os dois coaches + título automático + bug do treino sem exercícios | ⚠️ em andamento — fase 1 feita, faltam título e a correção de RLS | `feature/ai-chat-sidebar` |
+| [ai-chat-sidebar](PRDs/ai-chat-sidebar.md) | Conversas na lateral com os dois coaches + título automático + bug do treino sem exercícios | ✅ done | `feature/ai-chat-sidebar` |
 
 > Adicionar linha aqui ao criar um novo PRD via `node scripts/new-feature.js`.
 
@@ -142,8 +142,8 @@ Três armadilhas que já custaram tempo:
 | 37 | ~~`query_exercises` manda o modelo buscar `Ombros` e `Braços`~~ — **resolvido**: o parâmetro virou enum dos nove grupos reais, com normalização de acento e plural, e grupo desconhecido responde o que existe | ✅ | [PRD](PRDs/ai-coach-workout-stage.md) |
 | 38 | ~~`/api/ai/chat/[studentId]` não verifica `student_consents`~~ — **resolvido**: consentimento checado antes de o dado sair do banco, nome do titular fora do prompt, e a rota entrou no mapa da seção 10 | ✅ | [PRD](PRDs/ai-coach-workout-stage.md) |
 | 39 | ~~O estágio de criação de treino existe pela metade~~ — **resolvido**: `propose_workouts` guarda a proposta, o cartão renderiza e a aprovação salva a cópia guardada | ✅ | [PRD](PRDs/ai-coach-workout-stage.md) |
-| 45 | **O aluno não vê os exercícios do treino prescrito.** `workout_exercises_student_read` (0018) só conhece o caminho do member (`workouts.student_id`); num treino de dentro de uma fase esse campo é NULL e o vínculo passa pela periodização. O treino abre, a lista vem vazia — e RLS não devolve erro, devolve zero linhas | 🔴 Crítica | [PRD](PRDs/ai-chat-sidebar.md) |
-| 46 | `test-rls-isolation.mjs` só prova uma direção: que quem não deve ver, não vê. Nenhuma asserção cobre quem **deve** ver e não está vendo — foi por isso que a 45 passou despercebida | 🟡 Média | [PRD](PRDs/ai-chat-sidebar.md) |
+| 45 | ~~**O aluno não vê os exercícios do treino prescrito**~~ — `workout_exercises_student_read` (0018) só conhecia o caminho do member (`workouts.student_id`), NULL no treino de dentro de uma fase. O treino abria e a lista vinha vazia, sem erro: RLS não recusa, devolve zero linhas. **Resolvido** na `0033`, com o caso nas duas direções em `test-rls-isolation.mjs` | ✅ | [PRD](PRDs/ai-chat-sidebar.md) |
+| 46 | ~~`test-rls-isolation.mjs` só provava uma direção~~ — nenhuma asserção cobria quem **deve** ver e não está vendo, e foi por isso que a 45 passou despercebida. **Resolvido**: 4 asserções novas, verificadas com a política antiga (1 falha) | ✅ | [PRD](PRDs/ai-chat-sidebar.md) |
 | 33 | ~~Gate do CI ficava verde com a suíte pulada~~ — `paths-filter` sem `pull-requests: read` falhava, os outputs saíam vazios e o `ci-success` lia "nada mudou". **Resolvido**: permissão + o gate exige que a detecção tenha passado | ✅ | [PRD](PRDs/api-security-hardening.md) |
 
 ---

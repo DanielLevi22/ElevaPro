@@ -5,6 +5,7 @@ import {
   createSession,
   listSessions,
   sessionOwnedBy,
+  updateSessionTitle,
 } from "@/modules/ai/services/chatService";
 
 /**
@@ -55,7 +56,13 @@ export async function POST(
   return NextResponse.json({ sessionId });
 }
 
-/** Arquiva: sai da lista, permanece no banco. */
+/**
+ * Arquiva ou renomeia.
+ *
+ * Renomear aceita texto do cliente numa rota que usa `service_role`; o dono e
+ * conferido pelo mesmo `sessionOwnedBy` do arquivamento, e o tamanho e cortado
+ * no servico -- a mesma regra que vale para o titulo automatico.
+ */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ studentId: string }> },
@@ -76,6 +83,11 @@ export async function PATCH(
   const owned = await sessionOwnedBy(body.sessionId, studentId, auth.caller.id);
   if (!owned) {
     return NextResponse.json({ error: "conversa não encontrada" }, { status: 404 });
+  }
+
+  if (typeof body.title === "string") {
+    await updateSessionTitle(owned, body.title);
+    return NextResponse.json({ success: true });
   }
 
   await archiveSession(owned);

@@ -19,6 +19,7 @@ function montar(props: Partial<React.ComponentProps<typeof ConversationSidebar>>
     onSelect: vi.fn(),
     onCreate: vi.fn(),
     onArchive: vi.fn(),
+    onRename: vi.fn(),
   };
   render(<ConversationSidebar sessions={[]} activeId={null} {...handlers} {...props} />);
   return handlers;
@@ -92,6 +93,40 @@ describe("ConversationSidebar", () => {
     fireEvent.click(screen.getByRole("button", { name: /arquivar antiga/i }));
 
     expect(onArchive).toHaveBeenCalledWith("a");
+  });
+
+  it("renomeia a conversa e devolve o texto novo", () => {
+    const { onRename } = montar({ sessions: [conversa({ id: "a", title: "Sem nome bom" })] });
+
+    fireEvent.click(screen.getByRole("button", { name: /renomear sem nome bom/i }));
+    const campo = screen.getByRole("textbox", { name: /novo nome da conversa/i });
+    fireEvent.change(campo, { target: { value: "Bloco de força" } });
+    fireEvent.keyDown(campo, { key: "Enter" });
+
+    expect(onRename).toHaveBeenCalledWith("a", "Bloco de força");
+  });
+
+  it("Escape desiste sem renomear", () => {
+    const { onRename } = montar({ sessions: [conversa({ id: "a", title: "Bloco de força" })] });
+
+    fireEvent.click(screen.getByRole("button", { name: /renomear bloco de força/i }));
+    const campo = screen.getByRole("textbox", { name: /novo nome da conversa/i });
+    fireEvent.change(campo, { target: { value: "abc" } });
+    fireEvent.keyDown(campo, { key: "Escape" });
+
+    expect(onRename).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Bloco de força" })).toBeInTheDocument();
+  });
+
+  it("nome vazio é desistência, não apagar o título", () => {
+    const { onRename } = montar({ sessions: [conversa({ id: "a", title: "Bloco de força" })] });
+
+    fireEvent.click(screen.getByRole("button", { name: /renomear bloco de força/i }));
+    const campo = screen.getByRole("textbox", { name: /novo nome da conversa/i });
+    fireEvent.change(campo, { target: { value: "   " } });
+    fireEvent.keyDown(campo, { key: "Enter" });
+
+    expect(onRename).not.toHaveBeenCalled();
   });
 
   it("recolhe e volta, sem perder o caminho de reabrir", () => {

@@ -114,6 +114,25 @@ export async function archiveSession(sessionId: string): Promise<void> {
   if (error) throw error;
 }
 
+/**
+ * Renomeia a conversa.
+ *
+ * O título aparece na lateral, então texto longo empurraria a lista; o corte é
+ * aqui, não na tela, para que a mesma regra valha para o título automático e
+ * para o que a pessoa digita.
+ */
+export async function updateSessionTitle(sessionId: string, title: string): Promise<void> {
+  const limpo = title.replace(/\s+/g, " ").trim().slice(0, 80);
+  if (!limpo) return;
+
+  const { error } = await supabaseAdmin
+    .from("ai_chat_sessions")
+    .update({ title: limpo })
+    .eq("id", sessionId);
+
+  if (error) throw error;
+}
+
 export async function getOrCreateSession(
   studentId: string,
   specialistId: string,
