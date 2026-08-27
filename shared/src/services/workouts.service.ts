@@ -306,8 +306,18 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
   },
 
   fetchTrainingPlanById: async (id: string): Promise<TrainingPlan | null> => {
-    const { data, error } = await supabase.from("training_plans").select("*").eq("id", id).single();
+    // `maybeSingle`, não `single`: com `single` a fase inexistente vira erro
+    // PGRST116 e a função lança, então o `if (!plan) notFound()` de quem chama
+    // era código morto — a resposta nunca chegava a ser `null`. Fase que não
+    // existe é 404; consulta que falhou é erro. São coisas diferentes.
+    const { data, error } = await supabase
+      .from("training_plans")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
     if (error) throw error;
+    if (!data) return null;
 
     const { count } = await supabase
       .from("workouts")
