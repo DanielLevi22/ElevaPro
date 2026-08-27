@@ -1,21 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
 import { formatDate, formatDateRange } from "@/shared/utils/formatDate";
-import type {
-  BulkWorkoutProposal,
-  ChatMessage,
-  ChatSessionSummary,
-  PeriodizationProposal,
-  SseEvent,
-} from "../types";
+import type { BulkWorkoutProposal, ChatMessage, PeriodizationProposal, SseEvent } from "../types";
 import { BulkWorkoutProposalCard } from "./BulkWorkoutProposalCard";
-import { ConversationPicker } from "./ConversationPicker";
 
 interface Props {
   studentId: string;
+  /** Qual conversa abrir. `null` retoma a mais recente, como antes da lateral. */
+  sessionId: string | null;
+  /** A conversa que o servidor de fato abriu — pode ser uma criada agora. */
+  onSessionResolved: (sessionId: string) => void;
+  /** Algo mudou o que a lista mostra: mensagem nova, ordem, título. */
+  onConversationChanged: () => void;
 }
 
 interface PeriodizationCard {
@@ -47,7 +46,12 @@ function phaseWindow(data: PeriodizationProposal, index: number): { start: strin
   return { start, end: addWeeks(start, data.phases[index]?.weeks ?? 0) };
 }
 
-export function AiCoachChat({ studentId }: Props) {
+export function AiCoachChat({
+  studentId,
+  sessionId,
+  onSessionResolved,
+  onConversationChanged,
+}: Props) {
   const session = useAuthStore((s) => s.session);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -59,38 +63,28 @@ export function AiCoachChat({ studentId }: Props) {
   const [savingWorkouts, setSavingWorkouts] = useState(false);
   /** O que o coach está fazendo agora, enquanto a ferramenta roda. */
   const [activity, setActivity] = useState<string | null>(null);
-  const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-  const [switchingSession, setSwitchingSession] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   /**
-   * Carrega uma conversa. Sem `sessionId`, retoma a mais recente — que é o
-   * comportamento de antes de existirem várias.
+   * Carrega a conversa que a lateral escolheu.
    *
-   * Limpa proposta e treinos salvos junto: eles pertencem à conversa que sai,
-   * e deixá-los na tela faria parecer que a conversa nova já tem pendência.
+   * Sem `sessionId`, retoma a mais recente — o comportamento de antes de
+   * existirem várias, preservado para a primeira visita.
    */
-  const carregarConversa = useCallback(
-    async (sessionId?: string) => {
-      if (!session?.access_token) return;
+  useEffect(() => {
+    if (!session?.access_token) return;
+    let cancelado = false;
 
-      setSwitchingSession(true);
-      setProposal(null);
-      setWorkoutProposal(null);
-      setSavedWorkoutTitles([]);
+    const url = sessionId
+      ? `/api/ai/chat/${studentId}?sessionId=${sessionId}`
+      : `/api/ai/chat/${studentId}`;
 
-      try {
-        const url = sessionId
-          ? `/api/ai/chat/${studentId}?sessionId=${sessionId}`
-          : `/api/ai/chat/${studentId}`;
-
-        const data = await fetch(url, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        }).then((r) => r.json());
-
-        setActiveSessionId(data.sessionId ?? null);
+    fetch(url, { headers: { Authorization: `Bearer ${session.access_token}` } })
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelado) return;
+        if (data.sessionId) onSessionResolved(data.sessionId);
         setMessages(
           data.messages?.length
             ? data.messages
@@ -104,32 +98,18 @@ export function AiCoachChat({ studentId }: Props) {
                 },
               ],
         );
-      } catch {
+      })
+      .catch(() => {
         // Silêncio aqui é o comportamento anterior; a tela mostra a boas-vindas.
-      } finally {
-        setSwitchingSession(false);
-        setInitializing(false);
-      }
-    },
-    [session?.access_token, studentId],
-  );
+      })
+      .finally(() => {
+        if (!cancelado) setInitializing(false);
+      });
 
-  const carregarLista = useCallback(async () => {
-    if (!session?.access_token) return;
-    try {
-      const data = await fetch(`/api/ai/chat/${studentId}/sessions`, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      }).then((r) => r.json());
-      setSessions(data.sessions ?? []);
-    } catch {
-      // A lista é conveniência: falhar aqui não pode impedir de conversar.
-    }
-  }, [session?.access_token, studentId]);
-
-  useEffect(() => {
-    carregarConversa();
-    carregarLista();
-  }, [carregarConversa, carregarLista]);
+    return () => {
+      cancelado = true;
+    };
+  }, [session?.access_token, studentId, sessionId, onSessionResolved]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -216,7 +196,7 @@ export function AiCoachChat({ studentId }: Props) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ message: msg }),
+        body: JSON.stringify({ message: msg, sessionId }),
       });
 
       if (!response.body) return;
@@ -271,6 +251,8 @@ export function AiCoachChat({ studentId }: Props) {
       setLoading(false);
       setActivity(null);
       inputRef.current?.focus();
+      // A conversa subiu para o topo da lista, e é aqui que ela ganha título.
+      onConversationChanged();
     }
   }
 
@@ -289,59 +271,8 @@ export function AiCoachChat({ studentId }: Props) {
     );
   }
 
-  const criarConversa = async () => {
-    if (!session?.access_token) return;
-    setSwitchingSession(true);
-    try {
-      const { sessionId } = await fetch(`/api/ai/chat/${studentId}/sessions`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ module: "workout" }),
-      }).then((r) => r.json());
-
-      await carregarConversa(sessionId);
-      await carregarLista();
-    } finally {
-      setSwitchingSession(false);
-    }
-  };
-
-  const arquivarConversa = async (sessionId: string) => {
-    if (!session?.access_token) return;
-    await fetch(`/api/ai/chat/${studentId}/sessions`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ sessionId }),
-    });
-
-    await carregarLista();
-    // Arquivar a conversa aberta deixaria a tela mostrando algo que saiu da
-    // lista: recai na mais recente que sobrou.
-    if (sessionId === activeSessionId) await carregarConversa();
-  };
-
   return (
     <div className="flex flex-col h-[calc(100vh-280px)] min-h-[500px]">
-      <div className="flex items-center justify-between pb-3 mb-1 border-b border-border">
-        <ConversationPicker
-          sessions={sessions}
-          activeId={activeSessionId}
-          onSelect={carregarConversa}
-          onCreate={criarConversa}
-          onArchive={arquivarConversa}
-          busy={switchingSession || loading}
-        />
-        <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-          Coach de Treino
-        </span>
-      </div>
-
       {/* Messages */}
       <div className="flex-1 overflow-y-auto space-y-4 pr-2 pb-4">
         {messages.map((msg) => (

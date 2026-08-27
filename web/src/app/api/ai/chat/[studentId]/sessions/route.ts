@@ -15,7 +15,13 @@ import {
  * não é verificado em lugar nenhum.
  */
 
-/** Lista as conversas não arquivadas, mais recente primeiro. */
+/**
+ * Lista as conversas não arquivadas, mais recente primeiro.
+ *
+ * `?module=all` traz treino e nutrição juntas — é o que a lateral mostra, e por
+ * isso cada linha da resposta carrega o `module`: sem ele a lista não saberia
+ * qual ícone pôr nem qual coach abrir ao clicar.
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ studentId: string }> },
@@ -25,8 +31,8 @@ export async function GET(
   const auth = await authorizeLinkedSpecialist(request, studentId);
   if (!auth.ok) return auth.response;
 
-  const module =
-    request.nextUrl.searchParams.get("module") === "nutrition" ? "nutrition" : "workout";
+  const pedido = request.nextUrl.searchParams.get("module");
+  const module = pedido === "all" || pedido === "nutrition" ? pedido : "workout";
 
   const sessions = await listSessions(studentId, auth.caller.id, module);
   return NextResponse.json({ sessions });
