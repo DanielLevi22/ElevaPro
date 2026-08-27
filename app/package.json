@@ -6,7 +6,7 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web",
+    "web": "echo O web do Eleva Pro e o Next.js em /web -- o app Expo nao tem alvo web (ver platforms em app.json). && exit 1",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
