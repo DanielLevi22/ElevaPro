@@ -1,5 +1,5 @@
-import { AiCoachPage } from "@/modules/ai";
+import { AiCoachWorkspace } from "@/modules/ai";
 
 export default function Page() {
-  return <AiCoachPage />;
+  return <AiCoachWorkspace />;
 }

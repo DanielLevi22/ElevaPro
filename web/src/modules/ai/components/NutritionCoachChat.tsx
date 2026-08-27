@@ -8,11 +8,22 @@ import { DietMealsProposalCard, DietPlanProposalCard } from "./DietProposalCards
 
 interface Props {
   studentId: string;
+  /** Qual conversa abrir. `null` retoma a mais recente, como antes da lateral. */
+  sessionId: string | null;
+  /** A conversa que o servidor de fato abriu — pode ser uma criada agora. */
+  onSessionResolved: (sessionId: string) => void;
+  /** Algo mudou o que a lista mostra: mensagem nova, ordem, título. */
+  onConversationChanged: () => void;
 }
 
 const BASE = "/api/ai/nutrition/chat";
 
-export function NutritionCoachChat({ studentId }: Props) {
+export function NutritionCoachChat({
+  studentId,
+  sessionId,
+  onSessionResolved,
+  onConversationChanged,
+}: Props) {
   const session = useAuthStore((s) => s.session);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -28,13 +39,23 @@ export function NutritionCoachChat({ studentId }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  /**
+   * Carrega a conversa que a lateral escolheu.
+   *
+   * Sem `sessionId`, retoma a mais recente — o comportamento de antes de
+   * existirem várias, preservado para a primeira visita.
+   */
   useEffect(() => {
     if (!session?.access_token) return;
-    fetch(`${BASE}/${studentId}`, {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    })
+    let cancelado = false;
+
+    const url = sessionId ? `${BASE}/${studentId}?sessionId=${sessionId}` : `${BASE}/${studentId}`;
+
+    fetch(url, { headers: { Authorization: `Bearer ${session.access_token}` } })
       .then((r) => r.json())
       .then((data) => {
+        if (cancelado) return;
+        if (data.sessionId) onSessionResolved(data.sessionId);
         setMessages(
           data.messages?.length
             ? data.messages
@@ -50,8 +71,14 @@ export function NutritionCoachChat({ studentId }: Props) {
         );
       })
       .catch(() => {})
-      .finally(() => setInitializing(false));
-  }, [studentId, session?.access_token]);
+      .finally(() => {
+        if (!cancelado) setInitializing(false);
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [studentId, session?.access_token, sessionId, onSessionResolved]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -124,7 +151,7 @@ export function NutritionCoachChat({ studentId }: Props) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ message: msg }),
+        body: JSON.stringify({ message: msg, sessionId }),
       });
       if (!response.body) return;
 
@@ -175,6 +202,8 @@ export function NutritionCoachChat({ studentId }: Props) {
       setLoading(false);
       setActivity(null);
       inputRef.current?.focus();
+      // A conversa subiu para o topo da lista, e é aqui que ela ganha título.
+      onConversationChanged();
     }
   }
 

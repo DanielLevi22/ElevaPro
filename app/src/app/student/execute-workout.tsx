@@ -55,16 +55,19 @@ export default function ExecuteWorkoutScreen() {
     try {
       if (!id) return;
 
-      const { data: workoutData } = await supabase
+      const { data: workoutData, error: workoutError } = await supabase
         .from('workouts')
         .select('*')
         .eq('id', id)
         .single();
 
+      if (workoutError) throw workoutError;
       setWorkout(workoutData);
       setStartTime(new Date());
 
-      const { data: itemsData } = await supabase
+      // Descartar o `error` aqui transformava recusa da consulta em treino sem
+      // exercicios, e o aluno comecava uma sessao vazia sem saber por que.
+      const { data: itemsData, error: itemsError } = await supabase
         .from('workout_exercises')
         .select(`
           *,
@@ -73,6 +76,7 @@ export default function ExecuteWorkoutScreen() {
         .eq('workout_id', id)
         .order('order_index');
 
+      if (itemsError) throw itemsError;
       setExercises(itemsData || []);
 
       const initialProgress: Record<string, ExerciseProgress> = {};
@@ -87,6 +91,10 @@ export default function ExecuteWorkoutScreen() {
       setProgress(initialProgress);
     } catch (error) {
       console.error(error);
+      Alert.alert(
+        'Nao consegui abrir o treino',
+        'Falha ao carregar os exercicios. Verifique a conexao e tente de novo.'
+      );
     }
   }, [id]);
 

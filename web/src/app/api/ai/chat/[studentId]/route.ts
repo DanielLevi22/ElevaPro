@@ -11,6 +11,7 @@ import {
   updateSessionState,
 } from "@/modules/ai/services/chatService";
 import { formatContextForPrompt, loadStudentContext } from "@/modules/ai/services/contextLoader";
+import { definirTituloProvisorio, nomearConversa } from "@/modules/ai/services/conversationTitle";
 import { queryExercises, unknownExerciseNames } from "@/modules/ai/services/exerciseCatalog";
 import { runWorkoutOrchestrator } from "@/modules/ai/services/workoutOrchestrator";
 import type { BulkWorkoutItem, SseEvent } from "@/modules/ai/types";
@@ -126,7 +127,16 @@ export async function POST(
           .filter(Boolean)
           .join(SECTION_SEPARATOR);
 
+        // Conversa sem mensagem nenhuma e conversa nova sao a mesma coisa, e e
+        // a unica vez que o titulo automatico age: depois disso, o que estiver
+        // ali foi escolhido -- pelo gerador ou pela pessoa -- e nao se mexe.
+        const primeiraTroca = storedMessages.length === 0;
+
         await saveMessage(sessionId, "user", userMessage);
+        if (primeiraTroca) {
+          // Antes da resposta: e enquanto o modelo responde que a lista e olhada.
+          await definirTituloProvisorio(sessionId, userMessage).catch(() => {});
+        }
 
         let assistantFullText = "";
         let savedPeriodizationId: string | undefined;
@@ -232,6 +242,10 @@ export async function POST(
             assistantFullText,
             savedPeriodizationId ? { saved_periodization_id: savedPeriodizationId } : undefined,
           );
+
+          // Depois do stream, nunca durante: somar uma chamada a resposta que a
+          // pessoa esta esperando trocaria organizacao por latencia.
+          if (primeiraTroca) await nomearConversa(sessionId, userMessage, assistantFullText);
         }
       } catch (err) {
         // O técnico vai para o log, o humano para a tela. Antes a bolha do chat
@@ -272,7 +286,19 @@ export async function GET(
   const auth = await authorizeLinkedSpecialist(request, studentId);
   if (!auth.ok) return auth.response;
 
-  const sessionId = await getOrCreateSession(studentId, auth.caller.id, "workout");
+  // Com `?sessionId=`, carrega aquela conversa — validando o dono, porque o id
+  // vem do cliente e esta rota usa `service_role`. Sem ele, retoma a mais
+  // recente, que é o comportamento de antes.
+  const pedida = request.nextUrl.searchParams.get("sessionId") ?? undefined;
+
+  const sessionId = pedida
+    ? await sessionOwnedBy(pedida, studentId, auth.caller.id)
+    : await getOrCreateSession(studentId, auth.caller.id, "workout");
+
+  if (!sessionId) {
+    return NextResponse.json({ error: "conversa não encontrada" }, { status: 404 });
+  }
+
   const messages = await getSessionMessages(sessionId);
 
   return NextResponse.json({ sessionId, messages });

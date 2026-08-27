@@ -37,13 +37,13 @@ insistiu —, o especialista não tem como recomeçar limpo.
 
 ### Como saberemos que está pronto?
 
-- [ ] O especialista cria uma conversa nova sobre um aluno sem perder as antigas
-- [ ] Uma lista mostra as conversas daquele aluno, com título e data
-- [ ] Trocar de conversa carrega o histórico dela, e só dela
-- [ ] Uma proposta pendente pertence à conversa onde nasceu — aprovar numa não
+- [x] O especialista cria uma conversa nova sobre um aluno sem perder as antigas
+- [x] Uma lista mostra as conversas daquele aluno, com título e data
+- [x] Trocar de conversa carrega o histórico dela, e só dela
+- [x] Uma proposta pendente pertence à conversa onde nasceu — aprovar numa não
       afeta a outra
-- [ ] Arquivar uma conversa a tira da lista sem apagar o registro
-- [ ] Conversa nova **não** re-pergunta o que já está na anamnese e na avaliação
+- [x] Arquivar uma conversa a tira da lista sem apagar o registro
+- [x] Conversa nova **não** re-pergunta o que já está na anamnese e na avaliação
 - [ ] O aluno continua sem acesso às conversas do especialista sobre ele
 - [ ] Teste cobrindo o isolamento de estado entre duas conversas do mesmo aluno
 
@@ -150,7 +150,7 @@ guardada? Verificar antes de multiplicar o volume.
 - Sem `sessionId`, o comportamento atual é preservado — a última conversa
   continua sendo retomada
 
-**Fase 2 — o especialista escolhe**
+**Fase 2 — o especialista escolhe** ✅ (coach de treino; nutrição pendente)
 - Lista de conversas do aluno, com título, data e contagem de mensagens
 - Botão de nova conversa
 - Trocar de conversa recarrega histórico e estado

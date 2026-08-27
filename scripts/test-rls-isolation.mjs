@@ -313,6 +313,99 @@ async function main() {
   });
   check("código é consumido no vínculo", (codigoRestou.data?.length ?? 1) === 0);
 
+  // -- O aluno enxerga o que foi prescrito para ele -------------------------
+  //
+  // As assercoes acima provam uma direcao: quem nao deve ver, nao ve. Esta
+  // prova a outra, e e a que faltava: `workout_exercises_student_read` so
+  // conhecia `workouts.student_id`, que e NULL no treino prescrito dentro de
+  // uma fase. O treino abria e a lista de exercicios vinha vazia, sem erro
+  // nenhum -- RLS nao recusa, devolve zero linhas.
+  console.log("\n-- O aluno enxerga o treino prescrito (a outra direcao) --");
+
+  const periodizacao = await api("/rest/v1/training_periodizations", {
+    method: "POST",
+    prefer: "return=representation",
+    body: {
+      specialist_id: espec1.id,
+      student_id: alunoA.id,
+      name: "Periodizacao do teste",
+      start_date: "2026-08-01",
+      end_date: "2026-10-01",
+    },
+  });
+  const fase = await api("/rest/v1/training_plans", {
+    method: "POST",
+    prefer: "return=representation",
+    body: {
+      periodization_id: periodizacao.data?.[0]?.id,
+      name: "Fase 1",
+      order_index: 0,
+      start_date: "2026-08-01",
+      end_date: "2026-09-01",
+    },
+  });
+  const exercicio = await api("/rest/v1/exercises", {
+    method: "POST",
+    prefer: "return=representation",
+    body: { name: `Supino ${Date.now()}`, is_verified: true },
+  });
+
+  // Prescrito: nasce com `student_id` NULL, e o vinculo passa pela fase.
+  const prescrito = await api("/rest/v1/workouts", {
+    method: "POST",
+    prefer: "return=representation",
+    body: { specialist_id: espec1.id, training_plan_id: fase.data?.[0]?.id, title: "Treino A" },
+  });
+  // Do proprio aluno: o outro caminho da politica, que ja funcionava.
+  const proprio = await api("/rest/v1/workouts", {
+    method: "POST",
+    prefer: "return=representation",
+    body: { student_id: alunoA.id, title: "Treino que o aluno criou" },
+  });
+
+  for (const w of [prescrito, proprio]) {
+    await api("/rest/v1/workout_exercises", {
+      method: "POST",
+      body: {
+        workout_id: w.data?.[0]?.id,
+        exercise_id: exercicio.data?.[0]?.id,
+        sets: 4,
+        reps: "10",
+        order_index: 0,
+      },
+    });
+  }
+
+  async function exerciciosVisiveis(workoutId, token) {
+    const { ok, data } = await api(
+      `/rest/v1/workout_exercises?select=id&workout_id=eq.${workoutId}`,
+      { token },
+    );
+    return ok && Array.isArray(data) ? data.length : -1;
+  }
+
+  const idPrescrito = prescrito.data?.[0]?.id;
+  const idProprio = proprio.data?.[0]?.id;
+
+  check("semente: os dois treinos foram criados", Boolean(idPrescrito && idProprio));
+
+  const vePrescrito = await exerciciosVisiveis(idPrescrito, alunoA.token);
+  check(
+    "aluno A ve os exercicios do treino PRESCRITO",
+    vePrescrito === 1,
+    vePrescrito === 0 ? "lista vazia: a politica voltou a ignorar a periodizacao" : "",
+  );
+
+  const veProprio = await exerciciosVisiveis(idProprio, alunoA.token);
+  check("aluno A ve os exercicios do treino que ele mesmo criou", veProprio === 1);
+
+  const outroVe = await exerciciosVisiveis(idPrescrito, alunoB.token);
+  check(
+    "aluno B NAO ve os exercicios do treino de A",
+    outroVe === 0,
+    outroVe > 0 ? `viu ${outroVe}` : "",
+  );
+
   console.log("\n-- Desvínculo tira o acesso na mesma consulta --");
   await api(
     `/rest/v1/student_specialists?student_id=eq.${alunoA.id}&specialist_id=eq.${espec1.id}`,
@@ -324,7 +417,7 @@ async function main() {
   }
 
   // Limpeza
-  for (const u of [alunoA, alunoB, espec1, espec2]) {
+  for (const u of [alunoA, alunoB, espec1, espec2, admin]) {
     await api(`/auth/v1/admin/users/${u.id}`, { method: "DELETE" });
   }
 

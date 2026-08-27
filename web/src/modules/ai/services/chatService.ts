@@ -1,6 +1,12 @@
 import type { Json } from "@/lib/database.types";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import type { AiSessionState, ChatMessage, ChatSession, ChatSessionSummary } from "../types";
+import type {
+  AiSessionState,
+  ChatMessage,
+  ChatModule,
+  ChatSession,
+  ChatSessionSummary,
+} from "../types";
 
 /**
  * Confirma que a conversa é deste aluno com este especialista.
@@ -50,7 +56,7 @@ export async function sessionOwnedBy(
 export async function createSession(
   studentId: string,
   specialistId: string,
-  module: "workout" | "nutrition" | "general" = "workout",
+  module: ChatModule = "workout",
 ): Promise<string> {
   const { data, error } = await supabaseAdmin
     .from("ai_chat_sessions")
@@ -62,29 +68,75 @@ export async function createSession(
   return data.id;
 }
 
-/** Conversas não arquivadas, da mais recente para a mais antiga. */
+/**
+ * Conversas não arquivadas, da mais recente para a mais antiga.
+ *
+ * `"all"` traz treino e nutrição na mesma lista, que é o que a lateral mostra.
+ * Dá para conseguir o mesmo com duas chamadas e uma ordenação no cliente, mas aí
+ * "mais recente" passa a ser calculado em dois lugares — e o banco já sabe
+ * ordenar.
+ *
+ * @example
+ * const todas = await listSessions(studentId, specialistId, "all");
+ */
 export async function listSessions(
   studentId: string,
   specialistId: string,
-  module: "workout" | "nutrition" | "general" = "workout",
+  module: ChatModule | "all" = "workout",
 ): Promise<ChatSessionSummary[]> {
-  const { data, error } = await supabaseAdmin
+  let query = supabaseAdmin
     .from("ai_chat_sessions")
-    .select("id, title, created_at, updated_at")
+    .select("id, title, module, created_at, updated_at")
     .eq("student_id", studentId)
     .eq("specialist_id", specialistId)
-    .eq("module", module)
-    .is("archived_at", null)
-    .order("updated_at", { ascending: false });
+    .is("archived_at", null);
+
+  if (module !== "all") query = query.eq("module", module);
+
+  const { data, error } = await query.order("updated_at", { ascending: false });
 
   if (error) throw error;
   return (data ?? []) as ChatSessionSummary[];
 }
 
+/**
+ * Tira a conversa da lista sem apagá-la.
+ *
+ * Apagar não é opção: conversa com o coach é registro de prescrição assistida,
+ * e a seção 7 do LGPD_COMPLIANCE declara retenção enquanto a conta existir.
+ */
+export async function archiveSession(sessionId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from("ai_chat_sessions")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("id", sessionId);
+
+  if (error) throw error;
+}
+
+/**
+ * Renomeia a conversa.
+ *
+ * O título aparece na lateral, então texto longo empurraria a lista; o corte é
+ * aqui, não na tela, para que a mesma regra valha para o título automático e
+ * para o que a pessoa digita.
+ */
+export async function updateSessionTitle(sessionId: string, title: string): Promise<void> {
+  const limpo = title.replace(/\s+/g, " ").trim().slice(0, 80);
+  if (!limpo) return;
+
+  const { error } = await supabaseAdmin
+    .from("ai_chat_sessions")
+    .update({ title: limpo })
+    .eq("id", sessionId);
+
+  if (error) throw error;
+}
+
 export async function getOrCreateSession(
   studentId: string,
   specialistId: string,
-  module: "workout" | "nutrition" | "general" = "workout",
+  module: ChatModule = "workout",
 ): Promise<string> {
   const { data: existing } = await supabaseAdmin
     .from("ai_chat_sessions")

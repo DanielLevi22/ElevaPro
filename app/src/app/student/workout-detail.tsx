@@ -39,6 +39,14 @@ export default function StudentWorkoutDetailScreen() {
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [exercises, setExercises] = useState<WorkoutExercise[]>([]);
   const [loading, setLoading] = useState(true);
+  /**
+   * Por que a lista veio vazia.
+   *
+   * Treino sem exercicio e falha de leitura produzem a mesma tela vazia, e o
+   * aluno nao tem como distinguir: foi assim que a politica incompleta de
+   * `workout_exercises` passou meses parecendo "treino sem exercicios".
+   */
+  const [erro, setErro] = useState<string | null>(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -47,6 +55,7 @@ export default function StudentWorkoutDetailScreen() {
   const { createLog, isWorkoutCompletedToday, fetchLogs } = useWorkoutLogStore();
 
   const fetchWorkoutDetails = useCallback(async () => {
+    setErro(null);
     try {
       const { data: workoutData, error: workoutError } = await supabase
         .from('workouts')
@@ -70,6 +79,7 @@ export default function StudentWorkoutDetailScreen() {
       setExercises(itemsData || []);
     } catch (error) {
       console.error(error);
+      setErro('Nao consegui carregar os exercicios deste treino.');
     } finally {
       setLoading(false);
     }
@@ -172,7 +182,18 @@ export default function StudentWorkoutDetailScreen() {
           Exercícios ({exercises.length})
         </Text>
 
-        {exercises.length === 0 ? (
+        {erro ? (
+          <View className="bg-surface p-8 rounded-2xl items-center border-2 border-dashed border-destructive/40">
+            <Ionicons
+              name="cloud-offline-outline"
+              size={48}
+              color="#52525B"
+              style={{ marginBottom: 12 }}
+            />
+            <Text className="text-muted-foreground text-center font-sans mb-4">{erro}</Text>
+            <Button onPress={fetchWorkoutDetails} variant="outline" label="Tentar de novo" />
+          </View>
+        ) : exercises.length === 0 ? (
           <View className="bg-surface p-8 rounded-2xl items-center border-2 border-dashed border-border">
             <Ionicons
               name="barbell-outline"

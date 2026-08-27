@@ -89,6 +89,7 @@ Três armadilhas que já custaram tempo:
 | [briefing](PRDs/briefing.md) | Briefing diário do especialista: quem precisa de mim hoje | ✅ done — recordes desbloqueados pela `0023`, ainda não implementados | `feature/briefing` |
 | [workout-execution-consolidation](PRDs/workout-execution-consolidation.md) | Uma única representação de treino executado | ✅ done | `feature/workout-execution-consolidation` |
 | [ai-coach-workout-stage](PRDs/ai-coach-workout-stage.md) | Coach de IA enxergando o aluno + estágio de criação de treino | ✅ done | `feature/ai-coach-workout-stage` |
+| [ai-chat-sidebar](PRDs/ai-chat-sidebar.md) | Conversas na lateral com os dois coaches + título automático + bug do treino sem exercícios | ✅ done | `feature/ai-chat-sidebar` |
 
 > Adicionar linha aqui ao criar um novo PRD via `node scripts/new-feature.js`.
 
@@ -132,7 +133,7 @@ Três armadilhas que já custaram tempo:
 | 41 | Os 44 alimentos de `foods` têm `category` NULL. Nenhuma busca por categoria funciona, e a curadoria nunca foi feita | 🟡 Média | [PRD](PRDs/ai-nutrition-coach.md) |
 | 42 | ~~`DietDetailsHeader` derrubava a tela com plano sem período~~ — `format(new Date(""))` lança RangeError. **Resolvido**: utilitário de data + `0025` recusando nulo | ✅ | [PRD](PRDs/ai-nutrition-coach.md) |
 | 43 | O cartão de refeições não soma calorias por refeição. O catálogo tem os macros; falta o cálculo por quantidade | 🟢 Baixa | [PRD](PRDs/ai-nutrition-coach.md) |
-| 40 | O schema Drizzle está 4 colunas atrás do banco: `training_periodizations.level/duration_weeks` e `training_plans.duration_weeks/focus` vieram na `0004` e nunca entraram em `shared/src/database/schema/workouts.ts` | 🟡 Média | — |
+| 40 | O schema Drizzle está 4 colunas atrás do banco: `training_periodizations.level/duration_weeks` e `training_plans.duration_weeks/focus` vieram na `0004` e nunca entraram em `shared/src/database/schema/workouts.ts`. **E diverge também na obrigatoriedade**: `start_date` das duas tabelas é NOT NULL no banco e nulável no schema — um insert que o tipo aceita o banco recusa | 🟡 Média | — |
 | 35 | `useProgressionAnalysis` monta o objeto, itera e descarta o resultado (`void effectiveItem`) — a análise de progressão do treino nunca funcionou. `analyzeExerciseProgression` está pronta e testada; falta ligar o hook | 🟡 Média | [PRD](PRDs/workout-execution-consolidation.md) |
 | 34 | ~~Especialista nascia sem `specialist_services`~~ — o cadastro reinseria o perfil que o trigger já criara, batia em chave duplicada e pulava os serviços; o autoconserto do `ensure-profile` falhava com 42P10 por falta de UNIQUE. **Resolvido** na `0022` + rota corrigida | ✅ | — |
 | 31 | `students.service.ts` invoca a edge function `create-student`, que não existe em `supabase/functions/`. Ou o cadastro de aluno está quebrado, ou há código fora do controle de versão rodando com `service_role` | 🟡 Média | [PRD](PRDs/api-security-hardening.md) |
@@ -141,6 +142,8 @@ Três armadilhas que já custaram tempo:
 | 37 | ~~`query_exercises` manda o modelo buscar `Ombros` e `Braços`~~ — **resolvido**: o parâmetro virou enum dos nove grupos reais, com normalização de acento e plural, e grupo desconhecido responde o que existe | ✅ | [PRD](PRDs/ai-coach-workout-stage.md) |
 | 38 | ~~`/api/ai/chat/[studentId]` não verifica `student_consents`~~ — **resolvido**: consentimento checado antes de o dado sair do banco, nome do titular fora do prompt, e a rota entrou no mapa da seção 10 | ✅ | [PRD](PRDs/ai-coach-workout-stage.md) |
 | 39 | ~~O estágio de criação de treino existe pela metade~~ — **resolvido**: `propose_workouts` guarda a proposta, o cartão renderiza e a aprovação salva a cópia guardada | ✅ | [PRD](PRDs/ai-coach-workout-stage.md) |
+| 45 | ~~**O aluno não vê os exercícios do treino prescrito**~~ — `workout_exercises_student_read` (0018) só conhecia o caminho do member (`workouts.student_id`), NULL no treino de dentro de uma fase. O treino abria e a lista vinha vazia, sem erro: RLS não recusa, devolve zero linhas. **Resolvido** na `0033`, com o caso nas duas direções em `test-rls-isolation.mjs` | ✅ | [PRD](PRDs/ai-chat-sidebar.md) |
+| 46 | ~~`test-rls-isolation.mjs` só provava uma direção~~ — nenhuma asserção cobria quem **deve** ver e não está vendo, e foi por isso que a 45 passou despercebida. **Resolvido**: 4 asserções novas, verificadas com a política antiga (1 falha) | ✅ | [PRD](PRDs/ai-chat-sidebar.md) |
 | 33 | ~~Gate do CI ficava verde com a suíte pulada~~ — `paths-filter` sem `pull-requests: read` falhava, os outputs saíam vazios e o `ci-success` lia "nada mudou". **Resolvido**: permissão + o gate exige que a detecção tenha passado | ✅ | [PRD](PRDs/api-security-hardening.md) |
 
 ---

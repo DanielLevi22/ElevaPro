@@ -11,6 +11,7 @@ import {
   updateSessionState,
 } from "@/modules/ai/services/chatService";
 import { formatContextForPrompt, loadStudentContext } from "@/modules/ai/services/contextLoader";
+import { definirTituloProvisorio, nomearConversa } from "@/modules/ai/services/conversationTitle";
 import { queryFoods, unknownFoodNames } from "@/modules/ai/services/foodCatalog";
 import type { DietMealsProposal, DietPlanProposal, SseEvent } from "@/modules/ai/types";
 
@@ -104,7 +105,12 @@ export async function POST(
         const contextText = [formatContextForPrompt(studentCtx), bodyScanIndex]
           .filter(Boolean)
           .join(SECTION_SEPARATOR);
+        const primeiraTroca = storedMessages.length === 0;
+
         await saveMessage(sessionId, "user", userMessage);
+        if (primeiraTroca) {
+          await definirTituloProvisorio(sessionId, userMessage).catch(() => {});
+        }
 
         let assistantFullText = "";
 
@@ -173,6 +179,9 @@ export async function POST(
 
         if (assistantFullText.trim()) {
           await saveMessage(sessionId, "assistant", assistantFullText);
+
+          // Depois do stream, nunca durante.
+          if (primeiraTroca) await nomearConversa(sessionId, userMessage, assistantFullText);
         }
       } catch (err) {
         // O log registra a sessão, nunca o contexto: alimento e quantidade
@@ -208,7 +217,21 @@ export async function GET(
   const auth = await authorizeLinkedSpecialist(request, studentId);
   if (!auth.ok) return auth.response;
 
-  const sessionId = await getOrCreateSession(studentId, auth.caller.id, MODULE);
+  // Com `?sessionId=`, carrega aquela conversa — validando o dono, porque o id
+  // vem do cliente e esta rota usa `service_role`. Sem ele, retoma a mais
+  // recente, que é o comportamento de antes.
+  //
+  // O POST já aceitava `sessionId` e o GET não: clicar numa conversa antiga de
+  // nutrição abriria a mais recente e escreveria na antiga. Duas conversas
+  // diferentes na mesma tela é pior que uma só.
+  const pedida = request.nextUrl.searchParams.get("sessionId") ?? undefined;
+
+  const sessionId = await resolverSessao(pedida, studentId, auth.caller.id, MODULE);
+
+  if (!sessionId) {
+    return NextResponse.json({ error: "conversa não encontrada" }, { status: 404 });
+  }
+
   const messages = await getSessionMessages(sessionId);
 
   return NextResponse.json({ sessionId, messages });

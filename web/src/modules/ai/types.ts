@@ -9,11 +9,21 @@ export interface ChatMessage {
   createdAt: string;
 }
 
+export type ChatModule = "workout" | "nutrition" | "general";
+
 /** O que a lista de conversas precisa mostrar. */
 export interface ChatSessionSummary {
   id: string;
   /** Nulo até a conversa ganhar título pelo que foi discutido. */
   title: string | null;
+  /**
+   * Qual coach conduz esta conversa.
+   *
+   * A lateral mistura treino e nutrição, e é isto que decide o ícone da linha e
+   * qual chat abre à direita — sem ele a lista seria ambígua e o clique abriria
+   * o coach errado.
+   */
+  module: ChatModule;
   created_at: string;
   updated_at: string;
 }
