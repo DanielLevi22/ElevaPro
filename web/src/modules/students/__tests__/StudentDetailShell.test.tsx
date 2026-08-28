@@ -77,7 +77,7 @@ describe("StudentDetailShell", () => {
       "Anamnese",
       "Métricas",
       "Mapa Muscular",
-      "Histórico",
+      "Atividades",
       "AI Coach",
     ]) {
       expect(screen.getByRole("link", { name: label })).toBeInTheDocument();

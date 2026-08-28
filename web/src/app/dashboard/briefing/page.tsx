@@ -1,4 +1,4 @@
-import { createBriefingService } from "@elevapro/shared";
+import { createActivityService, createBriefingService } from "@elevapro/shared";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import BriefingPage from "@/modules/briefing/pages/BriefingPage";
@@ -26,10 +26,17 @@ export default async function Page() {
   // O briefing é a tela do especialista. O aluno tem a própria em /dashboard/student.
   if (accountType !== "specialist") redirect("/dashboard");
 
-  const briefingService = createBriefingService(supabase as never);
-  const { signals, stats } = await briefingService.fetchBriefing(user.id);
+  // Independentes: em serie, a tela espera as duas antes de pintar qualquer
+  // coisa. O item de atividade que atravessa a fronteira ja vem resumido --
+  // nome, tipo, titulo, RPE e horario --, nunca a linha de sessao.
+  const [{ signals, stats }, recentActivity] = await Promise.all([
+    createBriefingService(supabase as never).fetchBriefing(user.id),
+    createActivityService(supabase as never).fetchRecentActivity(user.id),
+  ]);
 
   const today = new Date().toLocaleDateString("pt-BR", { day: "numeric", month: "long" });
 
-  return <BriefingPage signals={signals} stats={stats} today={today} />;
+  return (
+    <BriefingPage signals={signals} stats={stats} today={today} recentActivity={recentActivity} />
+  );
 }

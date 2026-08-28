@@ -1,10 +1,12 @@
-import type { Briefing } from "@elevapro/shared";
+import type { Briefing, RecentActivityItem } from "@elevapro/shared";
 import { AttentionCard } from "../components/AttentionCard";
 import { BriefingSummary } from "../components/BriefingSummary";
+import { RecentActivity } from "../components/RecentActivity";
 import { StatStrip } from "../components/StatStrip";
 
 interface BriefingPageProps extends Briefing {
   today: string;
+  recentActivity: RecentActivityItem[];
 }
 
 function NothingToDo({ hasStudents }: { hasStudents: boolean }) {
@@ -19,7 +21,7 @@ function NothingToDo({ hasStudents }: { hasStudents: boolean }) {
   );
 }
 
-export default function BriefingPage({ signals, stats, today }: BriefingPageProps) {
+export default function BriefingPage({ signals, stats, today, recentActivity }: BriefingPageProps) {
   return (
     <div className="w-full space-y-12">
       <BriefingSummary signals={signals} activeStudents={stats.activeStudents} today={today} />
@@ -44,6 +46,13 @@ export default function BriefingPage({ signals, stats, today }: BriefingPageProp
           </div>
         )}
       </section>
+
+      {/*
+        Entre os sinais e os numeros de proposito: o especialista le primeiro
+        quem precisa dele, depois o que os outros fizeram. Ate aqui o briefing
+        so mostrava o que estava ruim.
+      */}
+      <RecentActivity items={recentActivity} />
 
       <StatStrip stats={stats} />
     </div>

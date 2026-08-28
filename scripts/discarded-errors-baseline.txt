@@ -22,6 +22,5 @@ web/src/lib/api-auth.ts 2
 web/src/modules/ai/services/studentCoachService.ts 2
 web/src/packages/supabase/abilities.ts 1
 web/src/shared/hooks/useNutrition.ts 1
-web/src/shared/hooks/useRecentActivity.ts 3
 web/src/shared/hooks/useStudents.ts 1
 web/src/shared/hooks/useWorkoutMetrics.ts 7

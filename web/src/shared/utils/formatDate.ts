@@ -12,7 +12,7 @@ export const MAX_DATE = "2100-12-31";
 /** Exibido no lugar de uma data ausente ou corrompida. */
 export const EMPTY_DATE = "—";
 
-export type DateStyle = "short" | "medium" | "long" | "monthYear" | "dateTime";
+export type DateStyle = "short" | "medium" | "long" | "monthYear" | "dateTime" | "weekday";
 
 const PATTERN: Record<DateStyle, string> = {
   /** "1 ago" — colunas de tabela, onde o ano vem do contexto. */
@@ -22,6 +22,9 @@ const PATTERN: Record<DateStyle, string> = {
   long: "d 'de' MMMM 'de' yyyy",
   monthYear: "MMM yyyy",
   dateTime: "dd MMM yyyy, HH:mm",
+  /** "quinta" — o feed agrupa por dia, e o dia da semana e o que o personal usa
+   * para pensar na rotina do aluno ("ele nao treina as segundas"). */
+  weekday: "EEEE",
 };
 
 /**

@@ -1,9 +1,8 @@
 "use client";
 
-import { ActivityFeed, QuickActions, StatCard } from "@/dashboard";
+import { QuickActions, StatCard } from "@/dashboard";
 import { useAuthUser } from "@/shared/hooks/useAuthUser";
 import { useDashboardStats } from "@/shared/hooks/useDashboardStats";
-import { useRecentActivity } from "@/shared/hooks/useRecentActivity";
 
 const ICON = {
   students: (
@@ -77,7 +76,6 @@ export default function DashboardPage() {
   // pelo CLAUDE.md, e este hook ja mantem o perfil em cache.
   const { data: authUser } = useAuthUser();
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
-  const { data: activities = [], isLoading: activitiesLoading } = useRecentActivity();
 
   const today = new Date().toLocaleDateString("pt-BR", {
     weekday: "long",
@@ -129,9 +127,12 @@ export default function DashboardPage() {
         />
       </div>
 
+      {/*
+        O bloco de atividade saiu daqui em 2026-08-28. O Dashboard e painel de
+        numeros; "o que aconteceu e quem precisa de mim" e pergunta de Briefing,
+        e e la que o bloco passou a viver.
+      */}
       <QuickActions />
-
-      <ActivityFeed activities={activities} loading={activitiesLoading} />
     </div>
   );
 }

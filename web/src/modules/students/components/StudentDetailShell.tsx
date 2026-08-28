@@ -23,7 +23,7 @@ const TABS = [
   { segment: "metrics", label: "Métricas" },
   { segment: "muscle-map", label: "Mapa Muscular" },
   { segment: "body-scan", label: "Análise Corporal" },
-  { segment: "history", label: "Histórico" },
+  { segment: "activities", label: "Atividades" },
   { segment: "ai-coach", label: "AI Coach" },
 ];
 

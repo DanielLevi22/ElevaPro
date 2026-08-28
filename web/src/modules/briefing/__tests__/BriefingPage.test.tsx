@@ -25,7 +25,14 @@ const ready: BriefingSignal = {
 
 describe("BriefingPage", () => {
   it("abre com o parágrafo do dia e os sinais", () => {
-    render(<BriefingPage signals={[inactive, ready]} stats={STATS} today="12 de agosto" />);
+    render(
+      <BriefingPage
+        signals={[inactive, ready]}
+        stats={STATS}
+        today="12 de agosto"
+        recentActivity={[]}
+      />,
+    );
 
     expect(screen.getByText(/Briefing de 12 de agosto/)).toBeInTheDocument();
     expect(screen.getByText("João Silva")).toBeInTheDocument();
@@ -33,7 +40,9 @@ describe("BriefingPage", () => {
   });
 
   it("leva cada cartão ao aluno correspondente", () => {
-    render(<BriefingPage signals={[inactive]} stats={STATS} today="12 de agosto" />);
+    render(
+      <BriefingPage signals={[inactive]} stats={STATS} today="12 de agosto" recentActivity={[]} />,
+    );
 
     expect(screen.getByRole("link", { name: /João Silva/ })).toHaveAttribute(
       "href",
@@ -44,7 +53,7 @@ describe("BriefingPage", () => {
   // "Sem nada a sinalizar" é resposta, não ausência de tela: sem isto o
   // especialista fica olhando um espaço vazio sem saber se carregou.
   it("diz que está tudo em dia quando há alunos e nenhum sinal", () => {
-    render(<BriefingPage signals={[]} stats={STATS} today="12 de agosto" />);
+    render(<BriefingPage signals={[]} stats={STATS} today="12 de agosto" recentActivity={[]} />);
 
     expect(screen.getByText(/Ninguém precisa de ação agora/)).toBeInTheDocument();
     expect(screen.getByText(/Nada exige ação agora/)).toBeInTheDocument();
@@ -56,6 +65,7 @@ describe("BriefingPage", () => {
         signals={[]}
         stats={{ activeStudents: 0, workoutTemplates: 0, activeDietPlans: 0, aiSessions: 0 }}
         today="12 de agosto"
+        recentActivity={[]}
       />,
     );
 
@@ -69,6 +79,7 @@ describe("BriefingPage", () => {
         signals={[inactive]}
         stats={{ ...STATS, activeStudents: 1 }}
         today="12 de agosto"
+        recentActivity={[]}
       />,
     );
 
@@ -77,7 +88,7 @@ describe("BriefingPage", () => {
   });
 
   it("mostra os números no rodapé", () => {
-    render(<BriefingPage signals={[]} stats={STATS} today="12 de agosto" />);
+    render(<BriefingPage signals={[]} stats={STATS} today="12 de agosto" recentActivity={[]} />);
 
     expect(screen.getByText("12")).toBeInTheDocument();
     expect(screen.getByText("modelos de treino")).toBeInTheDocument();
