@@ -1282,6 +1282,7 @@ export type Database = {
           completed_at: string | null;
           created_at: string;
           duration_seconds: number | null;
+          feedback_edited_at: string | null;
           id: string;
           intensity: number | null;
           notes: string | null;
@@ -1296,6 +1297,7 @@ export type Database = {
           completed_at?: string | null;
           created_at?: string;
           duration_seconds?: number | null;
+          feedback_edited_at?: string | null;
           id?: string;
           intensity?: number | null;
           notes?: string | null;
@@ -1310,6 +1312,7 @@ export type Database = {
           completed_at?: string | null;
           created_at?: string;
           duration_seconds?: number | null;
+          feedback_edited_at?: string | null;
           id?: string;
           intensity?: number | null;
           notes?: string | null;

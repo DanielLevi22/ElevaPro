@@ -13,6 +13,7 @@ function evento(over: Partial<ActivityEvent> = {}): ActivityEvent {
     detail: null,
     rpe: null,
     studentNote: null,
+    noteEditedAt: null,
     ...over,
   };
 }
@@ -99,5 +100,40 @@ describe("ActivityDayCard", () => {
       />,
     );
     expect(screen.getByText("dia completo")).toBeInTheDocument();
+  });
+
+  // A marca é o que impede o especialista de agir sobre uma frase que já mudou.
+  // Sem ela, corrigir passa despercebido e a prescrição sai ajustada para a
+  // versão antiga — que é o cenário que motivou o PRD.
+  it("mostra que o feedback foi corrigido, e quando", () => {
+    render(
+      <ActivityDayCard
+        day={dia({
+          events: [
+            evento({ studentNote: "era o ombro esquerdo", noteEditedAt: "2026-08-28T14:00:00Z" }),
+          ],
+        })}
+      />,
+    );
+
+    expect(screen.getByText(/corrigido em/i)).toBeInTheDocument();
+  });
+
+  it("não mostra a marca em feedback que nunca foi corrigido", () => {
+    render(<ActivityDayCard day={dia({ events: [evento({ studentNote: "tudo certo" })] })} />);
+
+    expect(screen.queryByText(/corrigido em/i)).not.toBeInTheDocument();
+  });
+
+  // Apagar a observação também é correção (Art. 18, VI), e o vazio depois de um
+  // texto lido é justamente a informação que o especialista precisa ver.
+  it("mostra a marca mesmo quando a observação foi apagada", () => {
+    render(
+      <ActivityDayCard
+        day={dia({ events: [evento({ studentNote: null, noteEditedAt: "2026-08-28T14:00:00Z" })] })}
+      />,
+    );
+
+    expect(screen.getByText(/corrigido em/i)).toBeInTheDocument();
   });
 });

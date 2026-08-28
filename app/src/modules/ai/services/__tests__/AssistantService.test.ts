@@ -25,6 +25,8 @@ describe('AssistantService', () => {
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
+        status: 200,
+        headers: { get: () => 'application/json' },
         json: async () => mockResponse,
       });
 
@@ -70,6 +72,8 @@ describe('AssistantService', () => {
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
+        status: 200,
+        headers: { get: () => 'application/json' },
         json: async () => mockBatch,
       });
 
@@ -110,6 +114,8 @@ describe('AssistantService', () => {
     it('should call BFF and return summary text', async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
+        status: 200,
+        headers: { get: () => 'application/json' },
         json: async () => ({ summary: 'Ótima aderência!' }),
       });
 

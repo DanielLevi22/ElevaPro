@@ -1,7 +1,6 @@
 import { useAuthStore } from '@/modules/auth/store/authStore';
 import { Exercise } from '@/modules/workout/types';
-
-const bffBase = () => process.env.EXPO_PUBLIC_API_URL ?? '';
+import { fetchBff, lerRespostaBff, postBff as postBffCompartilhado } from '@/shared/bff';
 
 // Re-exporting types for consumers
 export interface AIWorkoutItem {
@@ -31,21 +30,14 @@ function getToken(): string {
   return token;
 }
 
+/**
+ * O `?? ''` que morava em `bffBase` era tão mudo quanto o `${undefined}` dos
+ * outros serviços: sem a variável, virava caminho relativo — e em React Native
+ * não existe origem para completar um caminho relativo. Agora a ausência tem
+ * nome (`BffConfigError`) e o helper compartilhado cuida do resto.
+ */
 async function postBff<T>(path: string, body: Record<string, unknown>): Promise<T> {
-  const response = await fetch(`${bffBase()}${path}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${getToken()}`,
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    throw new Error(`BFF error ${response.status} at ${path}`);
-  }
-
-  return response.json() as Promise<T>;
+  return postBffCompartilhado<T>(path, body, { token: getToken() });
 }
 
 export const AssistantService = {
@@ -152,13 +144,13 @@ export const AssistantService = {
     const lastMessage = history[history.length - 1]?.parts[0]?.text ?? '';
     try {
       const token = getToken();
-      const response = await fetch(`${bffBase()}/api/ai/chat/stub`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ message: lastMessage }),
-      });
+      const { response, url } = await fetchBff(
+        '/api/ai/chat/stub',
+        { message: lastMessage },
+        { token }
+      );
+      const data = await lerRespostaBff<{ text?: string }>(response, url);
       if (!response.ok) throw new Error(`BFF chat error ${response.status}`);
-      const data = (await response.json()) as { text?: string };
       return { type: 'text', text: data.text ?? 'Não consegui processar.' };
     } catch {
       return { type: 'text', text: 'Não consegui processar a resposta.' };

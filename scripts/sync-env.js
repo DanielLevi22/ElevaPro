@@ -120,4 +120,102 @@ const webContent = buildEnvFile(webEnvMap);
 fs.writeFileSync(webFile, webContent);
 console.log(`✓ ${path.relative(ROOT, webFile)}`);
 
+// ─── Divergência com o environment do EAS ──────────────────────────────────
+//
+// Este arquivo gera `app/.env.<env>`, e um build LOCAL de release lê daqui. Um
+// build no EAS NÃO lê: ele usa as variáveis do environment declarado no perfil
+// de `eas.json`. Os dois podem estar diferentes há meses sem que nada avise — e
+// o arquivo do repositório é o que a pessoa olha quando vai investigar.
+//
+// Foi assim que a IA do mobile ficou fora do ar em 2026-08-28. Pior: as
+// `EXPO_PUBLIC_*` são inlinadas no bundle em tempo de build, então um valor
+// errado não se corrige mudando o environment — exige build novo, e um APK na
+// mão de alguém carrega para sempre a URL do dia em que foi gerado.
+//
+// A comparação é AVISO, não bloqueio: exige EAS CLI autenticado, e uma guarda
+// que falha na máquina de quem só quer editar documentação vira `--no-verify`.
+// Mesma escolha de `check-db-types.js` com o Docker.
+
+function compararComEas(nomeEnv, varsDoArquivo) {
+  const { spawnSync } = require("node:child_process");
+
+  const r = spawnSync(
+    "npx",
+    ["--no-install", "eas", "env:list", "--environment", nomeEnv, "--format", "long"],
+    { encoding: "utf8", shell: process.platform === "win32", timeout: 60_000 },
+  );
+
+  if (r.status !== 0 || !r.stdout) {
+    console.log(
+      `\n⊘ Não deu para ler o environment '${nomeEnv}' do EAS (CLI ausente, sem login ou sem rede).` +
+        `\n  A comparação foi pulada. Para conferir à mão:  eas env:list --environment ${nomeEnv}`,
+    );
+    return;
+  }
+
+  // `--format long` imprime blocos "Name  X" / "Value  Y". Variável marcada como
+  // secret vem com o valor omitido — e omitido não é divergente.
+  const doEas = {};
+  let atual = null;
+  for (const linha of r.stdout.split("\n")) {
+    const nome = linha.match(/^\s*Name\s+(\S+)/);
+    if (nome) {
+      atual = nome[1];
+      continue;
+    }
+    const valor = linha.match(/^\s*Value\s+(.*)$/);
+    if (valor && atual) {
+      doEas[atual] = valor[1].trim();
+      atual = null;
+    }
+  }
+
+  const divergentes = [];
+  const ausentes = [];
+  for (const [chave, valorLocal] of Object.entries(varsDoArquivo)) {
+    const valorEas = doEas[chave];
+    if (valorEas === undefined) {
+      ausentes.push(chave);
+    } else if (valorEas !== "" && valorEas !== valorLocal) {
+      divergentes.push({ chave, local: valorLocal, eas: valorEas });
+    }
+  }
+
+  if (ausentes.length === 0 && divergentes.length === 0) {
+    console.log(`✓ environment '${nomeEnv}' do EAS bate com o arquivo do repositório`);
+    return;
+  }
+
+  console.warn(`\n⚠ O environment '${nomeEnv}' do EAS não bate com o arquivo do repositório.`);
+  console.warn(`  É o build do EAS que vai para o APK — não este arquivo.\n`);
+
+  for (const chave of ausentes) {
+    console.warn(`  ausente no EAS   ${chave}`);
+    console.warn(
+      `      eas env:create --environment ${nomeEnv} --name ${chave} --value "${varsDoArquivo[chave]}"`,
+    );
+  }
+  for (const d of divergentes) {
+    console.warn(`  divergente       ${d.chave}`);
+    console.warn(`      repositório: ${d.local}`);
+    console.warn(`      EAS:         ${d.eas}`);
+  }
+  console.warn(
+    `\n  Lembre: EXPO_PUBLIC_* é inlinada no bundle. Corrigir o environment não` +
+      `\n  conserta um APK já gerado — é preciso build novo.\n`,
+  );
+}
+
+// Só faz sentido para os environments que o EAS conhece (ver eas.json).
+if (["development", "preview", "production"].includes(env)) {
+  compararComEas(
+    env,
+    Object.fromEntries(
+      Object.entries(appEnvMap)
+        .filter(([src]) => vars[src] !== undefined)
+        .map(([src, dest]) => [dest, vars[src]]),
+    ),
+  );
+}
+
 console.log(`\nAmbiente: ${env} — sincronizado com sucesso.`);

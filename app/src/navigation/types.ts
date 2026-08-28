@@ -51,6 +51,13 @@ export const ROUTES = {
     DETAILS: (id: string): `/(tabs)/workouts/${string}` => `/(tabs)/workouts/${id}`,
     SELECT_EXERCISES: '/workouts/select-exercises',
   },
+
+  // Telas do próprio aluno sobre os dados dele
+  STUDENT: {
+    ANAMNESIS: '/student/anamnesis',
+    /** Histórico das próprias sessões, com o caminho de correção (Art. 18, III). */
+    SESSION_HISTORY: '/student/session-history',
+  },
 } as const;
 
 export type AppRoutes = typeof ROUTES;

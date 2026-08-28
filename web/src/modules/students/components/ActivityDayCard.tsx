@@ -62,6 +62,21 @@ function EventRow({ event }: { event: ActivityEvent }) {
             “{event.studentNote}”
           </p>
         )}
+
+        {/*
+          Discreta e ao lado do texto, não um selo de alerta: correção é o
+          titular usando um direito (Art. 18, III), não sinal de problema. O que
+          o especialista precisa saber é que a frase que ele leu ontem pode não
+          ser a de hoje — antes de ajustar a prescrição com base nela.
+
+          Aparece mesmo quando `studentNote` é nulo: apagar a observação também
+          é correção, e o vazio depois de um texto lido é a informação.
+        */}
+        {event.noteEditedAt && (
+          <p className="mt-1 pl-2.5 text-xs text-muted-foreground">
+            corrigido em {formatDate(event.noteEditedAt)}
+          </p>
+        )}
       </div>
     </li>
   );

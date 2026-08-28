@@ -41,6 +41,16 @@ export interface ActivityEvent {
    * viaja para quem passou por `authorizeLinkedSpecialist`.
    */
   studentNote: string | null;
+  /**
+   * ISO de quando o aluno corrigiu o próprio feedback (Art. 18, III); `null`
+   * enquanto nunca corrigiu.
+   *
+   * Atravessa a fronteira porque o especialista precisa saber que a frase que
+   * ele leu ontem pode não ser a de hoje. Não existe versão anterior para
+   * mostrar, de propósito: guardar o texto errado para sempre conserva
+   * exatamente o que o direito existe para remover.
+   */
+  noteEditedAt: string | null;
 }
 
 /**
@@ -94,4 +104,5 @@ export interface WorkoutSessionRow {
   duration_seconds: number | null;
   active_calories: number | null;
   activity_name: string | null;
+  feedback_edited_at: string | null;
 }

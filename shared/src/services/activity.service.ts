@@ -98,6 +98,7 @@ function eventoDeSessao(row: WorkoutSessionRow, tituloTreino: string | null): Ac
     detail: row.session_type === "cardio" ? detalheCardio(row) : null,
     rpe: row.intensity,
     studentNote: row.notes,
+    noteEditedAt: row.feedback_edited_at,
   };
 }
 
@@ -265,7 +266,7 @@ export const createActivityService = (supabase: SupabaseClient) => ({
       supabase
         .from("workout_sessions")
         .select(
-          "id, student_id, started_at, completed_at, intensity, notes, session_type, duration_seconds, active_calories, activity_name, workout:workouts(title)",
+          "id, student_id, started_at, completed_at, intensity, notes, feedback_edited_at, session_type, duration_seconds, active_calories, activity_name, workout:workouts(title)",
         )
         .eq("student_id", studentId)
         .order("started_at", { ascending: false })
@@ -326,6 +327,7 @@ export const createActivityService = (supabase: SupabaseClient) => ({
         detail: null,
         rpe: null,
         studentNote: null,
+        noteEditedAt: null,
       });
     }
 
@@ -344,6 +346,7 @@ export const createActivityService = (supabase: SupabaseClient) => ({
         detail: linha.weight_kg ? `${linha.weight_kg} kg` : "Medidas registradas",
         rpe: null,
         studentNote: null,
+        noteEditedAt: null,
       });
     }
 
@@ -366,6 +369,7 @@ export const createActivityService = (supabase: SupabaseClient) => ({
         detail: linha.status === "active" ? "Plano ativo" : "Plano encerrado",
         rpe: null,
         studentNote: null,
+        noteEditedAt: null,
       });
     }
 
