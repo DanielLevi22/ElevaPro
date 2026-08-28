@@ -15,11 +15,8 @@ import { Button } from '@/components/ui/Button';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { StatusModal } from '@/components/ui/StatusModal';
 import { colors as brandColors } from '@/constants/colors';
-import { useNutritionStore } from '@/modules/nutrition/routes';
-import {
-  type ShoppingCategory,
-  ShoppingListService,
-} from '@/modules/nutrition/services/ShoppingListService';
+import { useNutritionStore } from '../routes';
+import { type ShoppingCategory, ShoppingListService } from '../services/ShoppingListService';
 
 const CATEGORY_CONFIG: Record<string, { icon: string; color: string; bg: string }> = {
   Hortifruti: { icon: 'leaf', color: '#4ADE80', bg: 'rgba(74, 222, 128, 0.1)' },
@@ -363,7 +360,7 @@ export default function ShoppingListScreen() {
           <View className="mt-8">
             <View className="items-center mb-10">
               <View className="bg-orange-500/10 p-6 rounded-full mb-6 border-4 border-orange-500/20 shadow-xl shadow-orange-500/10">
-                <Ionicons name="cart" size={48} color="#FF6B35" />
+                <Ionicons name="cart" size={48} color="#CCFF00" />
               </View>
               <Text className="text-white text-2xl font-bold font-display text-center mb-2">
                 Planejar Compras

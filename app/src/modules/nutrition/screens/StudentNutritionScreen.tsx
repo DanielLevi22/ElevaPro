@@ -15,9 +15,9 @@ import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { StatusModal, type StatusModalType } from '@/components/ui/StatusModal';
 import { colors as brandColors } from '@/constants/colors';
 import { useHealthData } from '@/hooks/useHealthData';
-import { MealCard } from '@/modules/nutrition/components/MealCard';
-import FoodSearchScreen from '@/modules/nutrition/screens/FoodSearchScreen';
+import { MealCard } from '../components/MealCard';
 import { useNutritionStore } from '../store/nutritionStore';
+import FoodSearchScreen from './FoodSearchScreen';
 
 const DAYS = [
   { id: 0, label: 'DOM' },
@@ -351,7 +351,7 @@ export function StudentNutritionScreen() {
           </Text>
           {isMember && (
             <TouchableOpacity
-              onPress={() => router.push('/(tabs)/nutrition/create' as never)}
+              onPress={() => router.push('/(tabs)/nutrition/create')}
               className="rounded-2xl py-3 px-8 overflow-hidden"
               style={{ backgroundColor: brandColors.primary.start }}
             >
@@ -399,7 +399,7 @@ export function StudentNutritionScreen() {
           )}
 
           <TouchableOpacity
-            onPress={() => router.push('/(tabs)/nutrition/shopping-list' as never)}
+            onPress={() => router.push('/(tabs)/nutrition/shopping-list')}
             className="p-3 rounded-full border shadow-sm"
             style={{
               backgroundColor: brandColors.background.secondary,
@@ -411,7 +411,7 @@ export function StudentNutritionScreen() {
 
           {!isMasquerading && (
             <TouchableOpacity
-              onPress={() => router.push('/(tabs)/nutrition/scan' as never)}
+              onPress={() => router.push('/(tabs)/nutrition/scan')}
               className="p-3 rounded-full border shadow-sm"
               style={{
                 backgroundColor: brandColors.background.secondary,
@@ -696,7 +696,7 @@ export function StudentNutritionScreen() {
 
       {/* NutriBot FAB (Premium Glow) */}
       <TouchableOpacity
-        onPress={() => router.push('/(tabs)/nutrition/bot' as never)}
+        onPress={() => router.push('/(tabs)/nutrition/bot')}
         activeOpacity={0.9}
         className="absolute bottom-36 right-6 w-16 h-16 rounded-full items-center justify-center shadow-2xl z-50 overflow-hidden"
       >

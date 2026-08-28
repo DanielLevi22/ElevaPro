@@ -59,10 +59,17 @@ export function ImportWorkoutModal({ isOpen, onClose, phaseId }: Props) {
             </p>
           </div>
           <button
+            type="button"
             onClick={handleClose}
             className="text-muted-foreground hover:text-foreground transition-colors ml-4"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              aria-hidden="true"
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -84,6 +91,7 @@ export function ImportWorkoutModal({ isOpen, onClose, phaseId }: Props) {
               className="w-full pl-10 pr-4 py-2.5 bg-background border border-overlay-10 rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
             />
             <svg
+              aria-hidden="true"
               className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
               fill="none"
               stroke="currentColor"
@@ -112,6 +120,7 @@ export function ImportWorkoutModal({ isOpen, onClose, phaseId }: Props) {
           {!isLoading && filtered.length === 0 && (
             <div className="text-center py-16">
               <svg
+                aria-hidden="true"
                 className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3"
                 fill="none"
                 stroke="currentColor"
@@ -163,6 +172,7 @@ export function ImportWorkoutModal({ isOpen, onClose, phaseId }: Props) {
                       <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                     ) : isDone ? (
                       <svg
+                        aria-hidden="true"
                         className="w-5 h-5 text-success"
                         fill="none"
                         stroke="currentColor"
@@ -177,6 +187,7 @@ export function ImportWorkoutModal({ isOpen, onClose, phaseId }: Props) {
                       </svg>
                     ) : (
                       <svg
+                        aria-hidden="true"
                         className="w-5 h-5 text-primary"
                         fill="none"
                         stroke="currentColor"

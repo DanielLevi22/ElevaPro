@@ -246,6 +246,7 @@ function UnlockScreen({ card, onContinue }: { card: UnlockCard; onContinue: () =
         <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{card.detail}</p>
       </div>
       <button
+        type="button"
         onClick={onContinue}
         className="w-full py-3 bg-foreground text-background font-bold text-sm rounded-xl hover:bg-foreground/90 transition-colors flex items-center justify-center gap-2"
       >
@@ -297,12 +298,14 @@ function CompletionScreen({
       </div>
       <div className="flex flex-col gap-2.5 w-full">
         <button
+          type="button"
           onClick={onStartCoach}
           className="w-full py-3 bg-foreground text-background font-bold text-sm rounded-xl hover:bg-foreground/90 transition-colors flex items-center justify-center gap-2"
         >
           <Zap className="w-4 h-4" /> Gerar meu plano agora
         </button>
         <button
+          type="button"
           onClick={onRetake}
           className="w-full py-2.5 text-muted-foreground text-xs font-medium hover:text-muted-foreground transition-colors"
         >

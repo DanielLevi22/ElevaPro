@@ -1,4 +1,4 @@
-import type { Json } from "@/lib/database.types";
+import type { Json } from "@elevapro/shared";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type {
   AiSessionState,
@@ -138,7 +138,7 @@ export async function getOrCreateSession(
   specialistId: string,
   module: ChatModule = "workout",
 ): Promise<string> {
-  const { data: existing } = await supabaseAdmin
+  const { data: existing, error: buscaError } = await supabaseAdmin
     .from("ai_chat_sessions")
     .select("id")
     .eq("student_id", studentId)
@@ -148,6 +148,9 @@ export async function getOrCreateSession(
     .limit(1)
     .maybeSingle();
 
+  // Sem propagar, uma falha na busca virava "não existe sessão" e o serviço
+  // criava outra a cada chamada, fatiando o histórico da conversa.
+  if (buscaError) throw buscaError;
   if (existing) return existing.id;
 
   const { data: created, error } = await supabaseAdmin
@@ -161,11 +164,15 @@ export async function getOrCreateSession(
 }
 
 export async function getSessionMessages(sessionId: string): Promise<ChatMessage[]> {
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from("ai_chat_messages")
     .select("id, role, content, created_at")
     .eq("session_id", sessionId)
     .order("created_at", { ascending: true });
+
+  // "Sem mensagens" e "não consegui ler as mensagens" são coisas diferentes: a
+  // segunda, silenciada, faz o modelo responder sem o histórico da conversa.
+  if (error) throw error;
 
   return (data ?? []).map((row) => ({
     id: row.id,

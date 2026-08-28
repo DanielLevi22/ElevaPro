@@ -27,6 +27,10 @@ interface MealEditorProps {
   dayOfWeek: number; // 0-6 for cyclic, -1 for unique
 }
 
+function mensagemDoErro(erro: unknown, padrao: string): string {
+  return erro instanceof Error && erro.message ? erro.message : padrao;
+}
+
 export function MealEditor({ dietPlanId, dayOfWeek }: MealEditorProps) {
   const { data: allMeals = [], isLoading } = useDietMeals(dietPlanId);
   const addMealMutation = useAddMeal();
@@ -61,8 +65,8 @@ export function MealEditor({ dietPlanId, dayOfWeek }: MealEditorProps) {
       await deleteMealMutation.mutateAsync(id);
       toast.success("Refeição removida com sucesso!");
       setIsConfirmDeleteMealOpen(false);
-    } catch (error: any) {
-      toast.error(error.message || "Erro ao remover refeição.");
+    } catch (error: unknown) {
+      toast.error(mensagemDoErro(error, "Erro ao remover refeição."));
     }
   };
 
@@ -83,8 +87,8 @@ export function MealEditor({ dietPlanId, dayOfWeek }: MealEditorProps) {
         order_index: 999,
       });
       toast.success(`${foodToAdd.name} adicionado!`);
-    } catch (error: any) {
-      toast.error(error.message || "Erro ao adicionar alimento.");
+    } catch (error: unknown) {
+      toast.error(mensagemDoErro(error, "Erro ao adicionar alimento."));
     }
   };
 
@@ -100,6 +104,7 @@ export function MealEditor({ dietPlanId, dayOfWeek }: MealEditorProps) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
           <svg
+            aria-hidden="true"
             className="w-5 h-5 text-primary"
             fill="none"
             stroke="currentColor"
@@ -122,6 +127,7 @@ export function MealEditor({ dietPlanId, dayOfWeek }: MealEditorProps) {
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
                 <svg
+                  aria-hidden="true"
                   className="w-5 h-5 text-primary"
                   fill="none"
                   stroke="currentColor"
@@ -211,11 +217,18 @@ export function MealEditor({ dietPlanId, dayOfWeek }: MealEditorProps) {
               ))}
 
             <button
+              type="button"
               onClick={() => setIsAddMealModalOpen(true)}
               className="w-full py-8 border-2 border-dashed border-white/5 rounded-3xl text-zinc-500 hover:text-zinc-400 hover:border-white/10 transition-all flex flex-col items-center justify-center gap-3 group mt-4"
             >
               <div className="p-3 rounded-full bg-white/5 group-hover:bg-primary/10 group-hover:text-primary transition-all duration-500">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  aria-hidden="true"
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -293,12 +306,12 @@ export function MealEditor({ dietPlanId, dayOfWeek }: MealEditorProps) {
               day_of_week: dayOfWeek,
               name,
               meal_time: time,
-              meal_type: "custom" as any,
+              meal_type: "custom",
               meal_order: meals.length + 1,
             });
             setIsAddMealModalOpen(false);
-          } catch (error: any) {
-            toast.error(error.message || "Erro ao adicionar refeição.");
+          } catch (error: unknown) {
+            toast.error(mensagemDoErro(error, "Erro ao adicionar refeição."));
           }
         }}
       />

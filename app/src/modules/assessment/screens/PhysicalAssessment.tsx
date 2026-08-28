@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { colors } from '@/constants/colors';
+import { ROUTES } from '@/navigation/types';
 import { PhysicalAssessmentService } from '../services/physicalAssessmentService';
 import { useAssessmentStore } from '../store/assessmentStore';
 
@@ -122,7 +123,7 @@ export default function PhysicalAssessment() {
 
           <TouchableOpacity
             activeOpacity={0.8}
-            onPress={() => router.push('/assessment/anamnesis' as never)}
+            onPress={() => router.push(ROUTES.ASSESSMENT.ANAMNESIS)}
             className="bg-zinc-800 px-4 py-2 rounded-lg border border-zinc-700"
           >
             <Text className="text-white font-bold text-sm">Anamnese</Text>

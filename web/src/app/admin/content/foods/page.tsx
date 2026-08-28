@@ -5,18 +5,23 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
 
+// Espelha as colunas reais de `foods`. A interface antiga declarava "status" e
+// "is_verified", que a tabela nunca teve: o selo, o filtro e os botões de
+// aprovar/rejeitar/verificar operavam sobre campos inexistentes e toda escrita
+// era recusada com 42703. A distinção que a tabela realmente faz é `is_custom`
+// (criado por usuário) contra catálogo, com a procedência em `source`.
 interface Food {
   id: string;
   name: string;
-  category: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  serving_unit: string;
-  serving_size: number;
-  status: "pending" | "approved" | "rejected";
-  is_verified: boolean;
+  category: string | null;
+  calories: number | null;
+  protein: number | null;
+  carbs: number | null;
+  fat: number | null;
+  serving_unit: string | null;
+  serving_size: number | null;
+  is_custom: boolean;
+  source: string | null;
   created_by: string | null;
 }
 
@@ -25,14 +30,19 @@ export default function FoodsPage() {
   const [foods, setFoods] = useState<Food[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [originFilter, setOriginFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
   const loadFoods = useCallback(async () => {
     try {
       setIsLoading(true);
 
-      const { data, error } = await supabase.from("foods").select("*").order("name");
+      const { data, error } = await supabase
+        .from("foods")
+        .select(
+          "id, name, category, calories, protein, carbs, fat, serving_unit, serving_size, is_custom, source, created_by",
+        )
+        .order("name");
 
       if (error) throw error;
 
@@ -48,45 +58,15 @@ export default function FoodsPage() {
     loadFoods();
   }, [loadFoods]);
 
-  async function updateStatus(id: string, newStatus: "approved" | "rejected") {
-    try {
-      const { error } = await supabase.from("foods").update({ status: newStatus }).eq("id", id);
-
-      if (error) throw error;
-
-      setFoods((prev) =>
-        prev.map((food) => (food.id === id ? { ...food, status: newStatus } : food)),
-      );
-    } catch (error) {
-      console.error("Error updating status:", error);
-      alert("Failed to update status");
-    }
-  }
-
-  async function toggleVerified(id: string, current: boolean) {
-    try {
-      const { error } = await supabase.from("foods").update({ is_verified: !current }).eq("id", id);
-
-      if (error) throw error;
-
-      setFoods((prev) =>
-        prev.map((food) => (food.id === id ? { ...food, is_verified: !current } : food)),
-      );
-    } catch (error) {
-      console.error("Error updating verification:", error);
-      alert("Failed to update verification");
-    }
-  }
-
   const filteredFoods = foods.filter((food) => {
     const matchesSearch = food.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "all" || food.status === statusFilter;
+    const matchesOrigin = originFilter === "all" || String(food.is_custom) === originFilter;
     const matchesCategory = categoryFilter === "all" || food.category === categoryFilter;
 
-    return matchesSearch && matchesStatus && matchesCategory;
+    return matchesSearch && matchesOrigin && matchesCategory;
   });
 
-  const categories = Array.from(new Set(foods.map((f) => f.category)))
+  const categories = Array.from(new Set(foods.map((f) => f.category ?? "")))
     .filter(Boolean)
     .sort();
 
@@ -130,19 +110,18 @@ export default function FoodsPage() {
           </div>
 
           <div>
-            <label htmlFor="status-filter" className="sr-only">
-              Filtrar por status
+            <label htmlFor="origin-filter" className="sr-only">
+              Filtrar por origem
             </label>
             <select
-              id="status-filter"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              id="origin-filter"
+              value={originFilter}
+              onChange={(e) => setOriginFilter(e.target.value)}
               className="px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
-              <option value="all">Todos os Status</option>
-              <option value="pending">Pendente</option>
-              <option value="approved">Aprovado</option>
-              <option value="rejected">Rejeitado</option>
+              <option value="all">Todas as Origens</option>
+              <option value="false">Catálogo</option>
+              <option value="true">Criado por usuário</option>
             </select>
           </div>
 
@@ -189,11 +168,6 @@ export default function FoodsPage() {
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-foreground">{food.name}</span>
-                    {food.is_verified && (
-                      <span className="text-blue-400" title="Verificado">
-                        ✓
-                      </span>
-                    )}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
                     {food.serving_size}
@@ -203,55 +177,26 @@ export default function FoodsPage() {
                 <td className="px-6 py-4 text-sm text-muted-foreground">{food.category}</td>
                 <td className="px-6 py-4 text-sm text-muted-foreground">
                   <div className="flex gap-2">
-                    <span className="text-orange-400">{Math.round(food.calories)}kcal</span>
-                    <span className="text-blue-400">P:{food.protein}g</span>
-                    <span className="text-green-400">C:{food.carbs}g</span>
-                    <span className="text-yellow-400">G:{food.fat}g</span>
+                    <span className="text-orange-400">{Math.round(food.calories ?? 0)}kcal</span>
+                    <span className="text-blue-400">P:{food.protein ?? 0}g</span>
+                    <span className="text-green-400">C:{food.carbs ?? 0}g</span>
+                    <span className="text-yellow-400">G:{food.fat ?? 0}g</span>
                   </div>
                 </td>
                 <td className="px-6 py-4">
                   <span
                     className={`px-2 py-1 rounded-md text-xs font-medium border ${
-                      food.status === "approved"
-                        ? "bg-green-500/20 text-green-400 border-green-500/50"
-                        : food.status === "rejected"
-                          ? "bg-red-500/20 text-red-400 border-red-500/50"
-                          : "bg-yellow-500/20 text-yellow-400 border-yellow-500/50"
+                      food.is_custom
+                        ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/50"
+                        : "bg-green-500/20 text-green-400 border-green-500/50"
                     }`}
+                    title={food.source ?? undefined}
                   >
-                    {food.status || "approved"}
+                    {food.is_custom ? "Criado por usuário" : "Catálogo"}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-2">
-                    {food.status === "pending" && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => updateStatus(food.id, "approved")}
-                          className="p-1 text-green-400 hover:bg-green-500/10 rounded"
-                          title="Aprovar"
-                        >
-                          ✓
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => updateStatus(food.id, "rejected")}
-                          className="p-1 text-red-400 hover:bg-red-500/10 rounded"
-                          title="Rejeitar"
-                        >
-                          ✕
-                        </button>
-                      </>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => toggleVerified(food.id, food.is_verified)}
-                      className={`p-1 rounded ${food.is_verified ? "text-blue-400" : "text-muted-foreground hover:text-blue-400"}`}
-                      title="Alternar Verificado"
-                    >
-                      ★
-                    </button>
                     <button
                       type="button"
                       onClick={() => router.push(`/admin/content/foods/${food.id}`)}

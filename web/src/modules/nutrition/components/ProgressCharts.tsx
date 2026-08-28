@@ -24,6 +24,24 @@ interface ProgressChartsProps {
   endDate?: string;
 }
 
+/** Uma barra do gráfico de macros: um dia, com os quatro macros somados. */
+interface MacroPorDia {
+  date: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fullDate: string;
+}
+
+/** Uma barra do gráfico de aderência: refeições registradas e concluídas no dia. */
+interface AderenciaPorDia {
+  date: string;
+  total: number;
+  completed: number;
+  fullDate: string;
+}
+
 export function ProgressCharts({ studentId, startDate, endDate }: ProgressChartsProps) {
   const { data: dietLogs = [], isLoading: logsLoading } = useDietLogs(
     studentId,
@@ -57,7 +75,7 @@ export function ProgressCharts({ studentId, startDate, endDate }: ProgressCharts
   }));
 
   // Prepare macro consumption data (aggregate by date)
-  const macroData = dietLogs.reduce((acc: any[], log) => {
+  const macroData = dietLogs.reduce<MacroPorDia[]>((acc, log) => {
     const dateStr = format(new Date(log.logged_date), "dd/MM", { locale: ptBR });
     const existing = acc.find((item) => item.date === dateStr);
     const items = log.actual_items as Record<string, number> | null;
@@ -81,7 +99,7 @@ export function ProgressCharts({ studentId, startDate, endDate }: ProgressCharts
   }, []);
 
   // Prepare adherence data (meals completed per day)
-  const adherenceData = dietLogs.reduce((acc: any[], log) => {
+  const adherenceData = dietLogs.reduce<AderenciaPorDia[]>((acc, log) => {
     const dateStr = format(new Date(log.logged_date), "dd/MM", { locale: ptBR });
     const existing = acc.find((item) => item.date === dateStr);
 
@@ -215,7 +233,7 @@ export function ProgressCharts({ studentId, startDate, endDate }: ProgressCharts
                   color: "#fff",
                 }}
                 labelStyle={{ color: "#a0aec0" }}
-                formatter={(value: any) => `${value}%`}
+                formatter={(value: number) => `${value}%`}
               />
               <Bar dataKey="adherence" fill="#00ff88" radius={[8, 8, 0, 0]} name="Aderência (%)" />
             </BarChart>
@@ -230,6 +248,7 @@ export function ProgressCharts({ studentId, startDate, endDate }: ProgressCharts
           <div className="bg-surface border border-white/10 rounded-xl p-12 text-center">
             <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
+                aria-hidden="true"
                 className="w-8 h-8 text-muted-foreground"
                 fill="none"
                 stroke="currentColor"

@@ -3,7 +3,7 @@
 import { supabase } from "@elevapro/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export default function PendingApprovalPage() {
   const router = useRouter();
@@ -31,17 +31,20 @@ export default function PendingApprovalPage() {
     refetchOnWindowFocus: true,
   });
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     setIsLoggingOut(true);
     await supabase.auth.signOut();
     router.push("/auth/login");
-  };
+  }, [router]);
 
   // Redirect if approved or rejected
   useEffect(() => {
     if (profile?.account_status === "active") {
       router.push("/dashboard");
-    } else if (profile?.account_status === "rejected") {
+      // "rejected" não existe no enum `account_status`: o ramo nunca executava
+      // e conta recusada ficava presa nesta tela sem ser deslogada. Recusa e
+      // desativação são o mesmo estado no banco: "inactive".
+    } else if (profile?.account_status === "inactive") {
       handleLogout();
     }
   }, [profile, router, handleLogout]);
@@ -62,6 +65,7 @@ export default function PendingApprovalPage() {
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 space-y-6">
           <div className="w-20 h-20 bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg
+              aria-hidden="true"
               className="w-10 h-10 text-yellow-500 animate-pulse"
               fill="none"
               stroke="currentColor"
@@ -124,6 +128,7 @@ export default function PendingApprovalPage() {
           {/* Logout Button */}
           <div className="pt-2">
             <button
+              type="button"
               onClick={handleLogout}
               disabled={isLoggingOut}
               className="w-full px-6 py-3 text-sm font-medium text-muted-foreground hover:text-foreground bg-white/5 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -135,8 +140,8 @@ export default function PendingApprovalPage() {
           {/* Support */}
           <p className="text-xs text-muted-foreground">
             Dúvidas? Entre em contato:{" "}
-            <a href="mailto:suporte@meupersonal.app" className="text-primary hover:underline">
-              suporte@meupersonal.app
+            <a href="mailto:suporte@elevapro.app" className="text-primary hover:underline">
+              suporte@elevapro.app
             </a>
           </p>
         </div>

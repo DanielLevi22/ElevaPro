@@ -208,6 +208,7 @@ function RegisterForm() {
                           >
                             {selected && (
                               <svg
+                                aria-hidden="true"
                                 className="w-2 h-2 text-primary-foreground"
                                 fill="none"
                                 viewBox="0 0 24 24"

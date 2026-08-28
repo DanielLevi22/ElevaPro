@@ -364,7 +364,7 @@ export default function CreateStudentScreen() {
               className="mt-6 mb-10"
             >
               <LinearGradient
-                colors={['#FF6B35', '#FF2E63']}
+                colors={['#CCFF00', '#A3CC00']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 className="rounded-2xl py-4 items-center justify-center shadow-lg shadow-orange-500/20"

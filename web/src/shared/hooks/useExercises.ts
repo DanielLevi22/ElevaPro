@@ -11,16 +11,9 @@ const workoutsService = createWorkoutsService(supabase);
 export function useExercises() {
   return useQuery({
     queryKey: ["exercises"],
-    queryFn: async () => {
-      const exercises = await workoutsService.fetchExercises();
-      return exercises.filter(
-        (ex) =>
-          ex.name &&
-          ex.name.trim() !== "" &&
-          !ex.name.toLowerCase().includes("adicionar exercício") &&
-          !ex.name.toLowerCase().includes("adicionar exercicios"),
-      );
-    },
+    // O filtro de linhas-placeholder desceu para `fetchExercises`: enquanto
+    // vivia aqui, o mobile listava "Adicionar exercício" como exercício real.
+    queryFn: () => workoutsService.fetchExercises(),
     staleTime: 1000 * 60 * 10,
   });
 }

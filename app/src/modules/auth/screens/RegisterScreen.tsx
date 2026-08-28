@@ -1,4 +1,5 @@
 import { createAuthService, type ServiceType } from '@elevapro/shared';
+import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -7,7 +8,6 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { ServiceSelectionCard } from '@/components/ui/ServiceSelectionCard';
-import { supabase } from '../../../lib/supabase';
 
 const authService = createAuthService(supabase);
 
@@ -90,7 +90,7 @@ export function RegisterScreen() {
         if (!data.user) throw new Error('Erro ao criar usuário');
       }
 
-      router.replace('/(tabs)' as never);
+      router.replace('/(tabs)');
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : 'Erro desconhecido. Tente novamente.';

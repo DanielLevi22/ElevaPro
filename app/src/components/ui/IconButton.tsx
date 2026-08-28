@@ -11,6 +11,12 @@ type IconName = keyof typeof Ionicons.glyphMap;
 
 interface IconButtonProps extends TouchableOpacityProps {
   icon: IconName;
+  /**
+   * Obrigatório: este botão não tem texto, então sem rótulo o leitor de tela
+   * anuncia apenas "botão" — o usuário ouve que existe um controle e não o que
+   * ele faz. Descreva a ação ("Excluir treino"), não o ícone ("lixeira").
+   */
+  accessibilityLabel: string;
   variant?: 'default' | 'danger' | 'ghost' | 'solid' | 'outline';
   size?: number;
   iconColor?: string;
@@ -19,6 +25,7 @@ interface IconButtonProps extends TouchableOpacityProps {
 
 export function IconButton({
   icon,
+  accessibilityLabel,
   variant = 'default',
   size = 24,
   iconColor,
@@ -68,6 +75,8 @@ export function IconButton({
   return (
     <TouchableOpacity
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
       className="w-10 h-10 items-center justify-center border rounded-full"
       style={[
         {

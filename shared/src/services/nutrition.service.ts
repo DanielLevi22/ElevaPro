@@ -52,7 +52,7 @@ export const createNutritionService = (supabase: SupabaseClient) => ({
 
   fetchDietPlans: async (
     specialistId: string,
-  ): Promise<(DietPlan & { student?: { id: string; full_name: string } })[]> => {
+  ): Promise<(DietPlan & { student?: { id: string; full_name: string | null } })[]> => {
     // Embed em vez de duas queries sequenciais: a busca dos perfis esperava a
     // dos planos terminar, dobrando a latência da listagem. O nome da constraint
     // é obrigatório porque diet_plans tem duas FKs para profiles (student_id e
@@ -66,7 +66,7 @@ export const createNutritionService = (supabase: SupabaseClient) => ({
     if (!plans || plans.length === 0) return [];
 
     return plans as unknown as (DietPlan & {
-      student?: { id: string; full_name: string };
+      student?: { id: string; full_name: string | null };
     })[];
   },
 
@@ -415,8 +415,11 @@ export const createNutritionService = (supabase: SupabaseClient) => ({
 
   fetchMealLogs: async (studentId: string, date: string): Promise<MealLog[]> => {
     const { data, error } = await supabase
+      // Campos nomeados: tabela sensível pela LGPD_COMPLIANCE.md.
       .from("meal_logs")
-      .select("*")
+      .select(
+        "id, student_id, diet_plan_id, diet_meal_id, logged_date, completed, actual_items, notes, photo_url, created_at",
+      )
       .eq("student_id", studentId)
       .eq("logged_date", date);
     if (error) throw error;
@@ -429,8 +432,11 @@ export const createNutritionService = (supabase: SupabaseClient) => ({
     endDate: string,
   ): Promise<MealLog[]> => {
     const { data, error } = await supabase
+      // Campos nomeados: tabela sensível pela LGPD_COMPLIANCE.md.
       .from("meal_logs")
-      .select("*")
+      .select(
+        "id, student_id, diet_plan_id, diet_meal_id, logged_date, completed, actual_items, notes, photo_url, created_at",
+      )
       .eq("student_id", studentId)
       .gte("logged_date", startDate)
       .lte("logged_date", endDate)

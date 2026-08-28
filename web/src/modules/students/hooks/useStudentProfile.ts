@@ -13,11 +13,12 @@ export function useStudentProfile(studentId: string | null) {
     queryKey: ["student-profile", studentId],
     queryFn: async (): Promise<StudentProfile | null> => {
       if (!studentId) return null;
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select("persona_track, coach_mode")
         .eq("id", studentId)
         .maybeSingle();
+      if (error) throw error;
       return data ? { persona_track: data.persona_track, coach_mode: data.coach_mode } : null;
     },
     enabled: !!studentId,

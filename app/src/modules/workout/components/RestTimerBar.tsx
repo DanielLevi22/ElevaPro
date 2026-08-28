@@ -55,7 +55,7 @@ export function RestTimerBar({
   return (
     <TouchableOpacity onPress={onFinishWorkout} className="w-full">
       <LinearGradient
-        colors={['#FF6B35', '#FF2E63']}
+        colors={['#CCFF00', '#A3CC00']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         className="rounded-2xl py-5 items-center justify-center shadow-xl shadow-orange-500/20"

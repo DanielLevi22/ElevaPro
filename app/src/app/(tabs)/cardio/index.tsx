@@ -4,10 +4,14 @@ import { useRouter } from 'expo-router';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { IconButton } from '@/components/ui/IconButton';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
+import { colors } from '@/constants/colors';
 
+// Cor aqui separa modalidade, não é cor de marca: por isso a lista não vira
+// tudo lime. As duas primeiras ainda carregavam a paleta coral antiga e foram
+// trocadas pelas do design (cyber-blue e lime), mantendo as cinco distinguíveis.
 const CARDIO_ACTIVITIES = [
-  { id: 'walk', name: 'Caminhada', icon: 'walk', met: 3.5, color: ['#00D9FF', '#00B8D9'] },
-  { id: 'run', name: 'Corrida', icon: 'speedometer', met: 8.0, color: ['#FF6B35', '#FF2E63'] },
+  { id: 'walk', name: 'Caminhada', icon: 'walk', met: 3.5, color: ['#00F0FF', '#00C0CC'] },
+  { id: 'run', name: 'Corrida', icon: 'speedometer', met: 8.0, color: ['#CCFF00', '#A3CC00'] },
   { id: 'bike', name: 'Bicicleta', icon: 'bicycle', met: 6.0, color: ['#10B981', '#059669'] },
   { id: 'elliptical', name: 'Elíptico', icon: 'fitness', met: 5.0, color: ['#8B5CF6', '#7C3AED'] },
   { id: 'swim', name: 'Natação', icon: 'water', met: 7.0, color: ['#3B82F6', '#2563EB'] },
@@ -20,7 +24,7 @@ export default function CardioSelectionScreen() {
     <ScreenLayout>
       <View className="px-6 pt-8 pb-4 flex-row items-center">
         <View className="mr-4">
-          <IconButton icon="arrow-back" onPress={() => router.back()} />
+          <IconButton icon="arrow-back" accessibilityLabel="Voltar" onPress={() => router.back()} />
         </View>
         <View>
           <Text className="text-3xl font-extrabold text-white font-display tracking-tight">
@@ -73,7 +77,7 @@ export default function CardioSelectionScreen() {
 
         <View className="mt-8 bg-zinc-900 p-6 rounded-2xl border border-zinc-800">
           <View className="flex-row items-center mb-4">
-            <Ionicons name="information-circle" size={24} color="#FF6B35" />
+            <Ionicons name="information-circle" size={24} color={colors.primary.solid} />
             <Text className="text-white font-bold text-lg ml-3 font-display">Como funciona?</Text>
           </View>
           <Text className="text-zinc-400 leading-relaxed font-sans">

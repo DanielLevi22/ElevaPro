@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "lib/utils";
+import { cn } from "@/shared/utils/cn";
 
 interface MarqueeProps {
   className?: string;
@@ -37,6 +37,7 @@ export function Marquee({
         .fill(0)
         .map((_, i) => (
           <div
+            // biome-ignore lint/suspicious/noArrayIndexKey: slots fixos do marquee: a posição é a identidade
             key={`marquee-slot-${i}`}
             className={cn("flex shrink-0 justify-around [gap:var(--gap)]", {
               "animate-marquee flex-row": !vertical,

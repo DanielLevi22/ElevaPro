@@ -105,6 +105,7 @@ export default function PeriodizationsPage({ periodizations, isMember, memberStu
                     </div>
                     {i < arr.length - 1 && (
                       <svg
+                        aria-hidden="true"
                         className="w-4 h-4 text-muted-foreground/30 mb-5 shrink-0"
                         fill="none"
                         stroke="currentColor"

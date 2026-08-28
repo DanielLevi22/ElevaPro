@@ -28,7 +28,7 @@ export default function BodyScanProcessing() {
     const process = async () => {
       if (Object.keys(capturedImages).length === 0) {
         // No images? Go back
-        router.replace('/assessment/body-scan' as never);
+        router.replace('/assessment/body-scan');
         return;
       }
 

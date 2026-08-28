@@ -1,6 +1,6 @@
 "use client";
 
-import { supabase } from "@elevapro/supabase";
+import { type AccountType, supabase } from "@elevapro/supabase";
 import { useQuery } from "@tanstack/react-query";
 
 export interface AnalyticsData {
@@ -66,7 +66,7 @@ export function useAnalytics() {
         .gte("started_at", thirtyDaysAgo.toISOString());
 
       // 5. Get users by type
-      const fetchCountByType = async (type: string) => {
+      const fetchCountByType = async (type: AccountType) => {
         const { count } = await supabase
           .from("profiles")
           .select("*", { count: "exact", head: true })

@@ -1,5 +1,4 @@
-import type { PhysicalAssessment } from "@elevapro/shared";
-import type { Database } from "@/lib/database.types";
+import type { Database, PhysicalAssessment } from "@elevapro/shared";
 
 /**
  * Amarra `PhysicalAssessment` às colunas reais de `physical_assessments`.
@@ -16,8 +15,9 @@ import type { Database } from "@/lib/database.types";
  * A versão anterior comparava contra o schema Drizzle em tempo de execução —
  * mas isso puxava `drizzle-orm/pg-core` para dentro do vitest do web, onde ele
  * não está instalado: passava local por hoisting e quebrava no CI.
- * `database.types.ts` é gerado do banco e vive aqui, então não tem esse
- * problema — e é fonte melhor, porque vem do banco, não de outro arquivo à mão.
+ * `database.types.ts` é gerado do banco e vive em `shared/src/database/`, então
+ * não tem esse problema — e é fonte melhor, porque vem do banco, não de outro
+ * arquivo à mão.
  */
 type Row = Database["public"]["Tables"]["physical_assessments"]["Row"];
 

@@ -1,3 +1,4 @@
+import type { Database } from '@elevapro/shared';
 import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 import { createMMKV } from 'react-native-mmkv';
@@ -47,7 +48,11 @@ const mmkvStorageAdapter = {
   },
 };
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+// O genérico `Database` é o que faz `.from().select()` ser verificado. Sem ele
+// toda consulta do mobile devolvia `any`: coluna inexistente, tabela renomeada e
+// nulabilidade errada não eram erro de compilação — só 42703 em runtime, quase
+// sempre engolido por um `catch` que só logava.
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     // Entregue na construção. Antes o adapter era atribuído depois, em
     // `supabase.auth.storage`, e o cliente já tinha inicializado com o storage
@@ -72,6 +77,3 @@ export const setSupabaseStorage = (_storage: unknown) => {
   // Intencionalmente vazio: atribuir storage depois da construção não tinha
   // efeito e mascarava o defeito real.
 };
-
-// Types export (will be populated later)
-export type Database = Record<string, unknown>;

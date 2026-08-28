@@ -47,6 +47,7 @@ function PlanCard({ plan, periodizationId }: { plan: TrainingPlan; periodization
       <div className="flex items-center gap-4 flex-1 min-w-0">
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
           <svg
+            aria-hidden="true"
             className="w-5 h-5 text-primary"
             fill="none"
             stroke="currentColor"
@@ -77,6 +78,7 @@ function PlanCard({ plan, periodizationId }: { plan: TrainingPlan; periodization
           {statusCfg.label}
         </span>
         <svg
+          aria-hidden="true"
           className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors"
           fill="none"
           stroke="currentColor"
@@ -131,6 +133,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
       {/* Back */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <button
+          type="button"
           onClick={() => router.push("/dashboard/workouts")}
           className="hover:text-foreground transition-colors"
         >
@@ -167,6 +170,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
           {/* Status actions */}
           <div className="flex gap-2 shrink-0">
             <button
+              type="button"
               onClick={() => setEditingPeriodization(true)}
               className="px-4 py-2 bg-overlay-05 border border-overlay-10 text-muted-foreground rounded-lg text-sm font-medium hover:bg-overlay-10 transition-colors"
             >
@@ -174,6 +178,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
             </button>
             {periodization.status === "planned" && (
               <button
+                type="button"
                 onClick={handleActivate}
                 disabled={isPending}
                 className="px-4 py-2 bg-success/10 text-success border border-success/20 rounded-lg text-sm font-medium hover:bg-success/20 transition-colors disabled:opacity-50"
@@ -183,6 +188,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
             )}
             {periodization.status === "active" && (
               <button
+                type="button"
                 onClick={handleComplete}
                 disabled={isPending}
                 className="px-4 py-2 bg-overlay-05 text-muted-foreground border border-overlay-10 rounded-lg text-sm font-medium hover:bg-overlay-10 transition-colors disabled:opacity-50"
@@ -208,6 +214,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
           <div className="bg-surface border border-overlay-10 rounded-2xl p-8 text-center">
             <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
               <svg
+                aria-hidden="true"
                 className="w-6 h-6 text-primary"
                 fill="none"
                 stroke="currentColor"

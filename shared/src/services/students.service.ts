@@ -3,6 +3,7 @@ import type {
   PhysicalAssessment,
   PhysicalAssessmentInput,
 } from "../types/physicalAssessment.types";
+import { PHYSICAL_ASSESSMENT_COLUMNS } from "../types/physicalAssessment.types";
 import type {
   CreateStudentData,
   FetchStudentsParams,
@@ -11,7 +12,12 @@ import type {
   Student,
 } from "../types/students.types";
 
-export const createStudentsService = (supabase: SupabaseClient) => ({
+/**
+ * @param apiBaseUrl Origem do BFF para as operações que passam por `/api/`.
+ *   Vazio no web, onde a rota é servida pela mesma origem; no mobile é o
+ *   `EXPO_PUBLIC_API_URL`, porque lá não existe origem relativa.
+ */
+export const createStudentsService = (supabase: SupabaseClient, apiBaseUrl = "") => ({
   fetchStudents: async (
     specialistId: string,
     params: FetchStudentsParams = {},
@@ -79,7 +85,7 @@ export const createStudentsService = (supabase: SupabaseClient) => ({
   fetchStudentDetails: async (studentId: string): Promise<PhysicalAssessment | null> => {
     const { data, error } = await supabase
       .from("physical_assessments")
-      .select("*")
+      .select(PHYSICAL_ASSESSMENT_COLUMNS)
       .eq("student_id", studentId)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -92,7 +98,7 @@ export const createStudentsService = (supabase: SupabaseClient) => ({
   fetchStudentHistory: async (studentId: string): Promise<PhysicalAssessment[]> => {
     const { data, error } = await supabase
       .from("physical_assessments")
-      .select("*")
+      .select(PHYSICAL_ASSESSMENT_COLUMNS)
       .eq("student_id", studentId)
       .order("created_at", { ascending: false });
 
@@ -194,15 +200,55 @@ export const createStudentsService = (supabase: SupabaseClient) => ({
     if (error) throw error;
   },
 
+  /**
+   * Cria o aluno pelo BFF.
+   *
+   * Antes isto chamava a Edge Function `create-student`, que não existe no
+   * repositório — `supabase/functions/` nunca foi criado. A chamada falhava
+   * sempre, então o cadastro de aluno pelo mobile nunca funcionou.
+   *
+   * `POST /api/students` é o caminho que o web já usa e que passa por
+   * `authorizeSpecialist`. Ele deriva o especialista do token e os serviços de
+   * `specialist_services`, então `specialist_id` e `service_type` do parâmetro
+   * são ignorados de propósito: aceitar do cliente quem é o dono do vínculo
+   * deixaria um especialista cadastrar aluno no nome de outro.
+   *
+   * @example
+   * const { success, studentId } = await service.createStudent({
+   *   specialist_id: user.id,
+   *   full_name: "Ana",
+   *   email: "ana@exemplo.com",
+   *   password: "...",
+   *   service_type: "personal_training",
+   * });
+   */
   createStudent: async (
     data: CreateStudentData,
   ): Promise<{ success: boolean; studentId?: string; error?: string }> => {
-    const { data: result, error } = await supabase.functions.invoke("create-student", {
-      body: data,
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) return { success: false, error: "Usuário não autenticado" };
+
+    const response = await fetch(`${apiBaseUrl}/api/students`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        fullName: data.full_name,
+        email: data.email,
+        password: data.password,
+      }),
     });
 
-    if (error) return { success: false, error: error.message };
-    return { success: true, studentId: result?.student_id };
+    const result = await response.json();
+    if (!response.ok) {
+      return { success: false, error: result.error ?? "Não foi possível criar o aluno" };
+    }
+
+    return { success: true, studentId: result.student_id };
   },
 });
 

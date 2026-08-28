@@ -21,10 +21,21 @@ import type {
 export const createWorkoutsService = (supabase: SupabaseClient) => ({
   // ── Exercises ──────────────────────────────────────────────────────────────
 
+  /**
+   * Catálogo de exercícios, sem as linhas-placeholder.
+   *
+   * O filtro estava só no hook do web: o mobile listava "Adicionar exercício"
+   * como se fosse exercício de verdade, porque cada plataforma tinha o próprio
+   * `useExercises`. Aqui ele vale para as duas.
+   */
   fetchExercises: async (): Promise<Exercise[]> => {
     const { data, error } = await supabase.from("exercises").select("*").order("name");
     if (error) throw error;
-    return (data || []) as Exercise[];
+
+    return ((data || []) as Exercise[]).filter((exercicio) => {
+      const nome = exercicio.name?.trim().toLowerCase() ?? "";
+      return nome !== "" && !nome.startsWith("adicionar exerc");
+    });
   },
 
   createExercise: async (input: CreateExerciseInput): Promise<Exercise> => {
@@ -36,6 +47,17 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
         description: input.description ?? null,
         video_url: input.video_url ?? null,
       })
+      .select()
+      .single();
+    if (error) throw error;
+    return data as Exercise;
+  },
+
+  updateExercise: async (id: string, input: Partial<CreateExerciseInput>): Promise<Exercise> => {
+    const { data, error } = await supabase
+      .from("exercises")
+      .update(input)
+      .eq("id", id)
       .select()
       .single();
     if (error) throw error;
@@ -226,8 +248,8 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
         student_id: input.student_id,
         name: input.name,
         objective: input.objective ?? null,
-        start_date: input.start_date ?? null,
-        end_date: input.end_date ?? null,
+        start_date: input.start_date,
+        end_date: input.end_date,
         status: "planned",
       })
       .select()
@@ -333,8 +355,8 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
       .insert({
         periodization_id: input.periodization_id,
         name: input.name,
-        start_date: input.start_date ?? null,
-        end_date: input.end_date ?? null,
+        start_date: input.start_date,
+        end_date: input.end_date,
         order_index: input.order_index ?? 0,
         status: "planned",
       })

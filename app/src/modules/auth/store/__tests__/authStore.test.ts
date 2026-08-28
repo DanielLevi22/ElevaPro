@@ -1,5 +1,5 @@
 // Mock modules before any imports
-jest.mock('../../../../lib/supabase', () => ({
+jest.mock('@elevapro/supabase', () => ({
   supabase: {
     auth: {
       signOut: jest.fn().mockResolvedValue({ error: null }),
@@ -11,6 +11,12 @@ jest.mock('../../../../lib/supabase', () => ({
     eq: jest.fn().mockReturnThis(),
     single: jest.fn().mockResolvedValue({ data: null, error: null }),
   },
+  // O store lê o contexto por aqui. Antes o mock cobria `@/lib/supabase`, um
+  // reexport que só trazia o cliente, e esta função vinha do módulo real; com o
+  // reexport removido, o mock passou a substituir o pacote inteiro e precisa
+  // declará-la.
+  getUserContextJWT: jest.fn(),
+  defineAbilitiesFor: jest.fn(() => ({ can: () => true, cannot: () => false })),
 }));
 
 const mockStudentReset = jest.fn();

@@ -1,4 +1,5 @@
 import type { PhysicalAssessment } from '@elevapro/shared';
+import { PHYSICAL_ASSESSMENT_COLUMNS } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 
 /**
@@ -18,7 +19,7 @@ export const PhysicalAssessmentService = {
   async getLatest(studentId: string): Promise<PhysicalAssessment | null> {
     const { data, error } = await supabase
       .from('physical_assessments')
-      .select('*')
+      .select(PHYSICAL_ASSESSMENT_COLUMNS)
       .eq('student_id', studentId)
       .order('assessed_at', { ascending: false })
       .limit(1)

@@ -37,7 +37,13 @@ export function StudentWorkoutDetailPage({ workoutId }: Props) {
           href="/dashboard/student/workouts"
           className="w-9 h-9 flex items-center justify-center rounded-xl bg-surface-highlight border border-overlay-08 text-muted-foreground hover:text-foreground transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            aria-hidden="true"
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"

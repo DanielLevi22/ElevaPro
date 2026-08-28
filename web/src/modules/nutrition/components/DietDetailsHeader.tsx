@@ -29,27 +29,22 @@ export function DietDetailsHeader({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
 
-  const statuses = [
-    {
-      id: "draft",
-      label: "Rascunho",
-      color: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
-      dot: "bg-zinc-600",
-      isActive: false,
-    },
+  // Só os dois valores que `diet_plan_status` aceita. O menu oferecia também
+  // "Rascunho" (`draft`) e "Concluído" (`completed`), que o enum recusa com
+  // 22P02: as duas opções apareciam e nunca salvavam.
+  const statuses: {
+    id: DietPlan["status"];
+    label: string;
+    color: string;
+    dot: string;
+    isActive: boolean;
+  }[] = [
     {
       id: "active",
       label: "Ativo",
       color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
       dot: "bg-emerald-500",
       isActive: true,
-    },
-    {
-      id: "completed",
-      label: "Concluído",
-      color: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-      dot: "bg-blue-500",
-      isActive: false,
     },
     {
       id: "finished",
@@ -60,11 +55,11 @@ export function DietDetailsHeader({
     },
   ];
 
-  const handleUpdateStatus = async (status: string, isActive: boolean) => {
+  const handleUpdateStatus = async (status: DietPlan["status"], isActive: boolean) => {
     try {
       await updateStatusMutation.mutateAsync({
         planId: dietPlan.id,
-        status: status as any,
+        status,
         isActive,
       });
       toast.success(`Status atualizado para ${status.toUpperCase()}!`);
@@ -95,7 +90,13 @@ export function DietDetailsHeader({
             onClick={onBack}
             className="text-sm text-muted-foreground hover:text-foreground mb-2 flex items-center gap-1 transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              aria-hidden="true"
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -109,6 +110,7 @@ export function DietDetailsHeader({
           <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground relative">
             <div className="relative">
               <button
+                type="button"
                 onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
                 disabled={updateStatusMutation.isPending}
                 className={`px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 flex items-center gap-2 ${currentStatus.color}`}
@@ -118,6 +120,7 @@ export function DietDetailsHeader({
                 />
                 {currentStatus.label}
                 <svg
+                  aria-hidden="true"
                   className={`w-3 h-3 transition-transform ${isStatusMenuOpen ? "rotate-180" : ""}`}
                   fill="none"
                   stroke="currentColor"
@@ -135,8 +138,10 @@ export function DietDetailsHeader({
               <AnimatePresence>
                 {isStatusMenuOpen && (
                   <>
-                    <div
-                      className="fixed inset-0 z-40"
+                    <button
+                      type="button"
+                      aria-label="Fechar menu de status"
+                      className="fixed inset-0 z-40 cursor-default"
                       onClick={() => setIsStatusMenuOpen(false)}
                     />
                     <motion.div
@@ -147,6 +152,7 @@ export function DietDetailsHeader({
                     >
                       {statuses.map((s) => (
                         <button
+                          type="button"
                           key={s.id}
                           onClick={() => handleUpdateStatus(s.id, s.isActive)}
                           className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors ${
@@ -197,7 +203,12 @@ export function DietDetailsHeader({
                 color="#10b981"
                 size="md"
                 icon={
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    aria-hidden="true"
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path d="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z" />
                   </svg>
                 }
@@ -209,7 +220,12 @@ export function DietDetailsHeader({
                 color="#3b82f6"
                 size="md"
                 icon={
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    aria-hidden="true"
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path d="M12,6V9L16,5L12,1V4A8,8 0 0,0 4,12C4,14.21 4.9,16.21 6.34,17.65L7.75,16.24C6.67,15.16 6,13.66 6,12A6,6 0 0,1 12,6M16.25,7.76L17.66,6.35C19.1,7.79 20,9.79 20,12A8,8 0 0,1 12,20V17L8,21L12,25V22A10,10 0 0,0 22,12C22,9.24 20.9,6.74 19.1,5.05L16.25,7.76Z" />
                   </svg>
                 }
@@ -221,7 +237,12 @@ export function DietDetailsHeader({
                 color="#eab308"
                 size="md"
                 icon={
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    aria-hidden="true"
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path d="M14.26,8.91C12.72,8.47 11.23,8.7 9.87,9.37l-0.2,0.1 0.1,0.2c0.41,0.85 0.54,1.82 0.44,2.83 -0.19,2.15 -1.24,4.11 -2.71,5.65L7.33,18.32 7.5,18.52c1.17,1.4 2.82,2.37 4.6,2.71l0.3,0.06 0.05,-0.3c0.11,-0.6 0.28,-1.19 0.51,-1.76l0.29,-0.74 0.77,0.24c0.14,0.04 0.28,0.08 0.42,0.12l0.28,0.08 0.06,-0.28c0.12,-0.6 0.16,-1.2 0.14,-1.82 -0.01,-0.2 -0.02,-0.4 -0.04,-0.6 -0.15,-1.72 -1.04,-3.21 -2.33,-4.2l-0.53,-0.4 0.45,-0.49c0.42,-0.46 0.94,-0.83 1.5,-1.11C14.77,9.8,15.75,9.74,16.63,10c0.31,0.09 0.6,0.22 0.88,0.4" />
                   </svg>
                 }
@@ -236,7 +257,13 @@ export function DietDetailsHeader({
             onClick={onExportPDF}
             className="flex items-center gap-2 px-4 py-2 bg-surface border border-white/10 rounded-lg hover:bg-white/5 transition-colors"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              aria-hidden="true"
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -253,7 +280,13 @@ export function DietDetailsHeader({
               onClick={onDayOptions}
               className="flex items-center gap-2 px-4 py-2 bg-surface border border-white/10 rounded-lg hover:bg-white/5 transition-colors text-sm font-medium"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                aria-hidden="true"
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -271,7 +304,13 @@ export function DietDetailsHeader({
             className="flex items-center justify-center p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 hover:bg-red-500/20 transition-all hover:scale-105 active:scale-95"
             title="Excluir Plano"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              aria-hidden="true"
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"

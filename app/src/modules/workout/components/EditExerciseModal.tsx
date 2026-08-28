@@ -154,7 +154,7 @@ export function EditExerciseModal({ visible, item, onClose, onSave }: EditExerci
           <View className="w-full bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden max-w-md">
             {/* Header */}
             <LinearGradient
-              colors={['#FF6B35', '#FF2E63']}
+              colors={['#CCFF00', '#A3CC00']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               className="p-6"
@@ -290,7 +290,7 @@ export function EditExerciseModal({ visible, item, onClose, onSave }: EditExerci
 
                 <TouchableOpacity onPress={handleSave} className="flex-1" disabled={isSaving}>
                   <LinearGradient
-                    colors={isSaving ? ['#52525b', '#52525b'] : ['#FF6B35', '#FF2E63']}
+                    colors={isSaving ? ['#52525b', '#52525b'] : ['#CCFF00', '#A3CC00']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     className="py-4 rounded-2xl"

@@ -5,7 +5,8 @@ import { FlatList, Modal, Text, TextInput, TouchableOpacity, View } from 'react-
 
 interface Student {
   id: string;
-  full_name: string;
+  // Nulável no banco: o perfil nasce no signup antes de o nome ser informado.
+  full_name: string | null;
   avatar_url?: string;
 }
 
@@ -29,7 +30,9 @@ export function StudentPickerModal({
   const filteredStudents = useMemo(() => {
     if (!searchQuery) return students;
     const lowerQuery = searchQuery.toLowerCase();
-    return students.filter((student) => student.full_name.toLowerCase().includes(lowerQuery));
+    return students.filter((student) =>
+      (student.full_name ?? '').toLowerCase().includes(lowerQuery)
+    );
   }, [students, searchQuery]);
 
   return (
@@ -91,7 +94,7 @@ export function StudentPickerModal({
                 ) : (
                   <View className="h-10 w-10 rounded-full bg-zinc-700 items-center justify-center mr-4">
                     <Text className="text-white font-bold text-sm">
-                      {item.full_name.charAt(0).toUpperCase()}
+                      {(item.full_name ?? '?').charAt(0).toUpperCase()}
                     </Text>
                   </View>
                 )}
@@ -101,7 +104,7 @@ export function StudentPickerModal({
                       selectedStudentId === item.id ? 'text-emerald-400' : 'text-white'
                     }`}
                   >
-                    {item.full_name}
+                    {item.full_name ?? 'Sem nome'}
                   </Text>
                 </View>
                 {selectedStudentId === item.id && (

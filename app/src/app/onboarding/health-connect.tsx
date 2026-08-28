@@ -184,18 +184,18 @@ export default function HealthConnectScreen() {
               {isIOS ? (
                 <>
                   <LinearGradient
-                    colors={['#FF2E63', '#ff6b8b']}
+                    colors={['#A3CC00', '#ff6b8b']}
                     className="absolute w-full h-full opacity-10"
                   />
-                  <Ionicons name="heart" size={48} color="#FF2E63" />
+                  <Ionicons name="heart" size={48} color="#A3CC00" />
                 </>
               ) : (
                 <>
                   <LinearGradient
-                    colors={['#00D9FF', '#4facfe']}
+                    colors={['#00F0FF', '#4facfe']}
                     className="absolute w-full h-full opacity-10"
                   />
-                  <Ionicons name="fitness" size={48} color="#00D9FF" />
+                  <Ionicons name="fitness" size={48} color="#00F0FF" />
                 </>
               )}
             </View>

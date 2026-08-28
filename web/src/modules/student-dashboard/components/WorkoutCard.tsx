@@ -25,7 +25,13 @@ export function WorkoutCard({ workout }: Props) {
           )}
         </div>
         <div className="shrink-0 w-8 h-8 rounded-xl bg-surface-highlight border border-overlay-08 flex items-center justify-center text-muted-foreground group-hover:border-primary/20 group-hover:text-primary transition-all">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            aria-hidden="true"
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </div>

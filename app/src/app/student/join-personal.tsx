@@ -76,7 +76,7 @@ export default function JoinPersonalScreen() {
                     end={{ x: 1, y: 1 }}
                     className="p-6 rounded-full mb-6"
                   >
-                    <Ionicons name="link" size={64} color="#FF6B35" />
+                    <Ionicons name="link" size={64} color="#CCFF00" />
                   </LinearGradient>
 
                   <Text className="text-3xl font-bold text-white mb-3 text-center">
@@ -110,7 +110,7 @@ export default function JoinPersonalScreen() {
                   className={loading || code.length < 6 ? 'opacity-50' : 'opacity-100'}
                 >
                   <LinearGradient
-                    colors={['#FF6B35', '#E85A2A']}
+                    colors={['#CCFF00', '#E85A2A']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     className="rounded-2xl py-4 items-center justify-center"

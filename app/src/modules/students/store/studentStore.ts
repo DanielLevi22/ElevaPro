@@ -1,7 +1,12 @@
-import { createStudentsService, type PhysicalAssessment, type ServiceType } from '@elevapro/shared';
+import {
+  createStudentsService,
+  PHYSICAL_ASSESSMENT_COLUMNS,
+  type PhysicalAssessment,
+  type ServiceType,
+} from '@elevapro/shared';
+import { supabase } from '@elevapro/supabase';
 import { Alert } from 'react-native';
 import { create } from 'zustand';
-import { supabase } from '../../../lib/supabase';
 
 export type { PhysicalAssessment };
 
@@ -78,7 +83,9 @@ const initialState = {
   isLoading: false,
 };
 
-const service = createStudentsService(supabase);
+// O BFF precisa da URL absoluta: no mobile não existe origem relativa para
+// resolver `/api/students`.
+const service = createStudentsService(supabase, process.env.EXPO_PUBLIC_API_URL ?? '');
 
 export const useStudentStore = create<StudentState>((set, get) => ({
   ...initialState,
@@ -97,7 +104,7 @@ export const useStudentStore = create<StudentState>((set, get) => ({
       if (studentIds.length > 0) {
         const { data: assessments } = await supabase
           .from('physical_assessments')
-          .select('*')
+          .select(PHYSICAL_ASSESSMENT_COLUMNS)
           .in('student_id', studentIds)
           .order('created_at', { ascending: false });
 

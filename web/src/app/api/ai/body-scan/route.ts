@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createBodyScanService, createHealthService } from "@elevapro/shared";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
+import { authorizeStudent } from "@/lib/api-auth";
 
 // Na Vercel uma rota sem isto morre no default de poucos segundos. Uma conversa
 // com uso de ferramenta passa disso com folga, e localmente não existe teto —
@@ -88,20 +89,25 @@ async function loadScale(
  * dado mais sensível do sistema e não há motivo para essa rota ver mais do que
  * o próprio dono veria.
  */
-async function authenticateStudent(
-  request: NextRequest,
-): Promise<{ userId: string; client: SupabaseClient } | null> {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
-  const token = authHeader.slice(7);
-  const client = createClient(
+/**
+ * Cliente do Supabase falando pelo próprio titular, sob RLS.
+ *
+ * A identidade e o papel vêm de `authorizeStudent`, não daqui: a versão
+ * anterior chamava `client.auth.getUser(token)` descartando o erro e devolvia
+ * só "existe um usuário" — nunca *qual papel ele tem*.
+ *
+ * O cliente sob RLS continua existindo porque a checagem de consentimento roda
+ * com a identidade do titular, não com `service_role`. Foto de corpo é o dado
+ * mais sensível do sistema e não há motivo para esta rota enxergar mais do que
+ * o próprio dono enxergaria.
+ */
+function clienteDoTitular(request: NextRequest): SupabaseClient {
+  const authHeader = request.headers.get("Authorization") ?? "";
+  return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
     { global: { headers: { Authorization: authHeader } } },
   );
-  const { data } = await client.auth.getUser(token);
-  if (!data.user?.id) return null;
-  return { userId: data.user.id, client };
 }
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -145,17 +151,18 @@ Nunca retorne "height" nem "weight" — eles já são conhecidos. Nunca retorne 
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await authenticateStudent(request);
-  if (!auth) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await authorizeStudent(request);
+  if (!auth.ok) return auth.response;
+
+  const client = clienteDoTitular(request);
+  const userId = auth.caller.id;
 
   // Antes de ler o corpo da requisição, de propósito: sem consentimento a
   // imagem não deve nem ser desserializada aqui, muito menos sair para os EUA.
   // Pendência da seção 10 do LGPD_COMPLIANCE — Art. 11, I.
   let hasConsent: boolean;
   try {
-    hasConsent = await createHealthService(auth.client).hasCollectionConsent(auth.userId);
+    hasConsent = await createHealthService(client).hasCollectionConsent(userId);
   } catch {
     return NextResponse.json({ error: "consent_check_failed" }, { status: 503 });
   }
@@ -194,7 +201,7 @@ export async function POST(request: NextRequest) {
   // digitada de memória.
   let scale: { heightCm: number; weightKg: number | null } | null;
   try {
-    scale = await loadScale(auth.client, auth.userId);
+    scale = await loadScale(client, userId);
   } catch {
     return NextResponse.json({ error: "scale_lookup_failed" }, { status: 503 });
   }
@@ -298,7 +305,7 @@ export async function POST(request: NextRequest) {
   // A imagem não é gravada — só o derivado (ADR-010).
   const segments = modelResult.segments ?? {};
   try {
-    await createBodyScanService(auth.client).save(auth.userId, {
+    await createBodyScanService(client).save(userId, {
       height_cm: scale.heightCm,
       weight_kg: scale.weightKg,
       body_fat_pct: modelResult.metrics.bodyFat ?? null,

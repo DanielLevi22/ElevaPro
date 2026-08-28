@@ -54,8 +54,14 @@ export const trainingPeriodizations = pgTable("training_periodizations", {
   name: text("name").notNull(),
   objective: text("objective"),
   status: trainingStatusEnum("status").notNull().default("planned"),
-  start_date: date("start_date"),
-  end_date: date("end_date"),
+  // NOT NULL desde a `0024`. Estavam nuláveis aqui: o tipo aceitava um insert
+  // sem data que o banco recusava — e foi assim que salvar o plano do coach de
+  // IA e criar ficha de treino ficaram quebrados sem sintoma no compilador.
+  start_date: date("start_date").notNull(),
+  end_date: date("end_date").notNull(),
+  // Vieram na `0004` e nunca entraram neste schema (dívida #40).
+  level: text("level"),
+  duration_weeks: integer("duration_weeks"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -68,9 +74,13 @@ export const trainingPlans = pgTable("training_plans", {
     .references(() => trainingPeriodizations.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   status: trainingStatusEnum("status").notNull().default("planned"),
-  start_date: date("start_date"),
-  end_date: date("end_date"),
+  // NOT NULL desde a `0024`, como em training_periodizations.
+  start_date: date("start_date").notNull(),
+  end_date: date("end_date").notNull(),
   order_index: integer("order_index").notNull().default(0),
+  // Vieram na `0004` e nunca entraram neste schema (dívida #40).
+  duration_weeks: integer("duration_weeks"),
+  focus: text("focus"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

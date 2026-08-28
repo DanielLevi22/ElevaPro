@@ -52,7 +52,7 @@ export default function CreateWorkoutScreen() {
       Alert.alert('Sucesso', 'Treino criado com sucesso!', [
         {
           text: 'OK',
-          onPress: () => router.replace(`/(tabs)/workouts/${result.data?.id}` as never),
+          onPress: () => router.replace(`/(tabs)/workouts/${result.data?.id}`),
         },
       ]);
     } else {
@@ -63,7 +63,7 @@ export default function CreateWorkoutScreen() {
   const difficultyOptions = [
     { value: 'beginner', label: 'Iniciante', color: '#00C9A7' },
     { value: 'intermediate', label: 'Intermediário', color: '#FFB800' },
-    { value: 'advanced', label: 'Avançado', color: '#FF2E63' },
+    { value: 'advanced', label: 'Avançado', color: '#A3CC00' },
   ];
 
   const muscleOptions = [
@@ -192,7 +192,7 @@ export default function CreateWorkoutScreen() {
 
           <TouchableOpacity onPress={handleCreate} disabled={isLoading} activeOpacity={0.8}>
             <LinearGradient
-              colors={['#FF6B35', '#FF2E63']}
+              colors={['#CCFF00', '#A3CC00']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               className="rounded-2xl py-4 items-center justify-center shadow-lg shadow-orange-500/20"

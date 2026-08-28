@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { createClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
+import { authorizeUser } from "@/lib/api-auth";
 
 // Na Vercel uma rota sem isto morre no default de poucos segundos. Uma conversa
 // com uso de ferramenta passa disso com folga, e localmente não existe teto —
@@ -13,18 +13,6 @@ type PromptType = "recipes" | "analysis" | "tips" | "meal_prep" | "cooking_guide
 interface ShoppingCategory {
   category: string;
   items: { name: string; quantity: string }[];
-}
-
-async function getAuthenticatedUserId(request: NextRequest): Promise<string | null> {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
-  const token = authHeader.slice(7);
-  const client = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-  );
-  const { data } = await client.auth.getUser(token);
-  return data.user?.id ?? null;
 }
 
 const PROMPTS: Record<PromptType, string> = {
@@ -42,10 +30,13 @@ const PROMPTS: Record<PromptType, string> = {
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export async function POST(request: NextRequest) {
-  const userId = await getAuthenticatedUserId(request);
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  // Antes: `getAuthenticatedUserId`, uma cópia local que fazia
+  // `const { data } = await client.auth.getUser(token)` — descartando o erro — e
+  // devolvia só "existe um usuário". Nunca dizia qual papel ele tem, e o
+  // `check-api-auth.js` não pegava porque a rota não toca `supabaseAdmin`.
+  // `authorizeUser` lê o `account_type` de `profiles`, não de `user_metadata`.
+  const auth = await authorizeUser(request);
+  if (!auth.ok) return auth.response;
 
   const body = (await request.json()) as {
     categories: ShoppingCategory[];

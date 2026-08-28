@@ -39,7 +39,7 @@ export function MacroRing({
     <div className="flex flex-col items-center gap-2 group">
       <div className={`relative ${container} flex items-center justify-center`}>
         {/* Track */}
-        <svg className="w-full h-full -rotate-90">
+        <svg aria-hidden="true" className="w-full h-full -rotate-90">
           <circle
             cx={center}
             cy={center}

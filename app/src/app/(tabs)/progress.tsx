@@ -11,8 +11,8 @@ import { ConsistencyHeatmap } from '@/components/gamification/ConsistencyHeatmap
 import { DailyMacroCard } from '@/components/nutrition/DailyMacroCard';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { WorkoutAnalytics } from '@/components/workout/WorkoutAnalytics';
+import { useGamificationStore } from '@/modules/gamification/store/gamificationStore';
 import { useNutritionStore } from '@/modules/nutrition/store/nutritionStore';
-import { useGamificationStore } from '@/store/gamificationStore';
 
 // Helper Component for Nutrition Tab to isolate hooks
 const NutritionTabContent = () => {
@@ -127,7 +127,7 @@ export default function ProgressScreen() {
               fetchDailyData(today);
               fetchHistory(120);
             }}
-            tintColor="#FF6B35"
+            tintColor="#CCFF00"
           />
         }
         showsVerticalScrollIndicator={false}
@@ -176,7 +176,7 @@ export default function ProgressScreen() {
             {/* Hero Streak Card */}
             <Animated.View entering={FadeInDown.delay(200).springify()} className="mb-8">
               <LinearGradient
-                colors={['#FF6B35', '#F97316']}
+                colors={['#CCFF00', '#F97316']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 className="rounded-3xl p-6 relative overflow-hidden"

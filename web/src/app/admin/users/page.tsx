@@ -1,6 +1,6 @@
 "use client";
 
-import { supabase } from "@elevapro/supabase";
+import { type AccountStatus, supabase } from "@elevapro/supabase";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { AccountTypeBadge } from "@/shared";
@@ -47,7 +47,7 @@ export default function UsersPage() {
     loadUsers();
   }, [loadUsers]);
 
-  async function updateStatus(userId: string, newStatus: string) {
+  async function updateStatus(userId: string, newStatus: AccountStatus) {
     try {
       const { error } = await supabase
         .from("profiles")
@@ -82,14 +82,16 @@ export default function UsersPage() {
 
   const getStatusBadge = (status: string | null) => {
     const s = status || "active";
+    // O enum `account_status` do banco tem exatamente três valores. As chaves
+    // "pending", "rejected" e "suspended" que existiam aqui nunca casavam:
+    // todo usuário caía no fallback e era exibido como "Ativo".
     const badges = {
       active: { label: "Ativo", color: "bg-green-500/10 text-green-400 border-green-500/20" },
-      pending: {
-        label: "Pendente",
+      invited: {
+        label: "Convidado",
         color: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
       },
-      rejected: { label: "Rejeitado", color: "bg-red-500/10 text-red-400 border-red-500/20" },
-      suspended: { label: "Suspenso", color: "bg-red-500/10 text-red-400 border-red-500/20" },
+      inactive: { label: "Inativo", color: "bg-red-500/10 text-red-400 border-red-500/20" },
     };
 
     const badge = badges[s as keyof typeof badges] || badges.active;
@@ -153,9 +155,8 @@ export default function UsersPage() {
             >
               <option value="all">Todos os Status</option>
               <option value="active">Ativo</option>
-              <option value="pending">Pendente</option>
-              <option value="rejected">Rejeitado</option>
-              <option value="suspended">Suspenso</option>
+              <option value="invited">Convidado</option>
+              <option value="inactive">Inativo</option>
             </select>
           </div>
 
@@ -207,18 +208,15 @@ export default function UsersPage() {
             </thead>
             <tbody className="divide-y divide-border">
               {filteredUsers.map((user) => (
+                // A linha inteira navegava com `role="link"` e `tabIndex`, mas
+                // `<tr>` não vira link: para o leitor de tela isso anunciava um
+                // controle que o HTML não entrega. O clique fica como atalho de
+                // mouse, e quem navega por teclado usa o botão "Ver" da própria
+                // linha — que é um controle de verdade.
                 <tr
                   key={user.id}
                   className="hover:bg-muted/50 transition-colors cursor-pointer"
                   onClick={() => router.push(`/admin/users/${user.id}`)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      router.push(`/admin/users/${user.id}`);
-                    }
-                  }}
-                  tabIndex={0}
-                  role="link"
-                  aria-label={`Ver detalhes de ${user.full_name || user.email}`}
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">

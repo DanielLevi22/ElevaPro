@@ -37,7 +37,7 @@ export function MuscleFilterCarousel({
           <Ionicons
             name="grid-outline"
             size={18}
-            color={!selectedMuscle ? '#FF6B35' : '#71717A'}
+            color={!selectedMuscle ? '#CCFF00' : '#71717A'}
             style={{ marginRight: 8 }}
           />
           <Text className={`font-bold ${!selectedMuscle ? 'text-white' : 'text-zinc-500'}`}>
@@ -54,7 +54,7 @@ export function MuscleFilterCarousel({
             <Ionicons
               name={m.icon as keyof typeof Ionicons.glyphMap}
               size={18}
-              color={selectedMuscle === m.name ? '#FF6B35' : '#71717A'}
+              color={selectedMuscle === m.name ? '#CCFF00' : '#71717A'}
               style={{ marginRight: 8 }}
             />
             <Text

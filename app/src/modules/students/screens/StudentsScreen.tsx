@@ -103,7 +103,7 @@ export default function StudentsScreen() {
   };
 
   const handleEnterStudent = (student: import('../store/studentStore').Student) => {
-    router.push(`/(tabs)/students/${student.id}` as never);
+    router.push(`/(tabs)/students/${student.id}`);
   };
 
   const handleSaveEdit = async (_data: Record<string, unknown>) => {
@@ -185,7 +185,7 @@ export default function StudentsScreen() {
               onPress={() => handleEdit(item)}
               className={`p-2 rounded-xl ${expired ? 'bg-zinc-900' : 'bg-zinc-800'}`}
             >
-              <Ionicons name="pencil" size={20} color={expired ? '#52525B' : '#FF6B35'} />
+              <Ionicons name="pencil" size={20} color={expired ? '#52525B' : '#CCFF00'} />
             </TouchableOpacity>
 
             {/* Remove Button */}
@@ -218,7 +218,7 @@ export default function StudentsScreen() {
           <Link href={'/(tabs)/students/create' as never} asChild>
             <TouchableOpacity activeOpacity={0.8}>
               <LinearGradient
-                colors={['#FF6B35', '#FF2E63']}
+                colors={['#CCFF00', '#A3CC00']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 className="h-14 w-14 rounded-full items-center justify-center shadow-lg shadow-orange-500/20"
@@ -250,7 +250,7 @@ export default function StudentsScreen() {
             <Ionicons
               name={sortOrder === 'asc' ? 'arrow-up' : 'arrow-down'}
               size={18}
-              color="#FF6B35"
+              color="#CCFF00"
             />
           </TouchableOpacity>
         </View>
@@ -295,7 +295,7 @@ export default function StudentsScreen() {
           <Link href={'/(tabs)/students/create' as never} asChild>
             <TouchableOpacity activeOpacity={0.8}>
               <LinearGradient
-                colors={['#FF6B35', '#FF2E63']}
+                colors={['#CCFF00', '#A3CC00']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 className="rounded-2xl py-4 px-8 shadow-lg shadow-orange-500/20"
@@ -316,7 +316,7 @@ export default function StudentsScreen() {
           ListFooterComponent={() =>
             isLoading && students.length > 0 ? (
               <View className="py-4">
-                <ActivityIndicator color="#FF6B35" />
+                <ActivityIndicator color="#CCFF00" />
               </View>
             ) : null
           }
@@ -333,7 +333,7 @@ export default function StudentsScreen() {
                   append: false,
                 })
               }
-              tintColor="#FF6B35"
+              tintColor="#CCFF00"
             />
           }
           showsVerticalScrollIndicator={false}

@@ -46,7 +46,7 @@ export default function StudentWorkoutsScreen() {
   }) => (
     <TouchableOpacity
       activeOpacity={0.8}
-      onPress={() => router.push(`/(tabs)/students/${studentId}/workouts/${item.id}` as never)}
+      onPress={() => router.push(`/(tabs)/students/${studentId}/workouts/${item.id}`)}
       className="mb-4"
     >
       <View className="bg-zinc-900 rounded-2xl p-5 border border-zinc-800">
@@ -77,7 +77,7 @@ export default function StudentWorkoutsScreen() {
             <Ionicons
               name="calendar-outline"
               size={16}
-              color="#FF6B35"
+              color="#CCFF00"
               style={{ marginRight: 6 }}
             />
             <Text className="text-zinc-300 text-xs font-bold">
@@ -112,7 +112,7 @@ export default function StudentWorkoutsScreen() {
         >
           <TouchableOpacity activeOpacity={0.8}>
             <LinearGradient
-              colors={['#FF6B35', '#FF2E63']}
+              colors={['#CCFF00', '#A3CC00']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               className="h-12 w-12 rounded-full items-center justify-center shadow-lg shadow-orange-500/20"
@@ -133,7 +133,7 @@ export default function StudentWorkoutsScreen() {
           <RefreshControl
             refreshing={isLoading}
             onRefresh={() => user?.id && fetchPeriodizations(user.id)}
-            tintColor="#FF6B35"
+            tintColor="#CCFF00"
           />
         }
         showsVerticalScrollIndicator={false}
@@ -156,7 +156,7 @@ export default function StudentWorkoutsScreen() {
               >
                 <TouchableOpacity activeOpacity={0.8}>
                   <LinearGradient
-                    colors={['#FF6B35', '#FF2E63']}
+                    colors={['#CCFF00', '#A3CC00']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     className="rounded-2xl py-3 px-6 shadow-lg shadow-orange-500/20"
@@ -170,7 +170,7 @@ export default function StudentWorkoutsScreen() {
             </View>
           ) : (
             <View className="py-20">
-              <ActivityIndicator size="large" color="#FF6B35" />
+              <ActivityIndicator size="large" color="#CCFF00" />
             </View>
           )
         }

@@ -62,8 +62,11 @@ export interface TrainingPlan {
   periodization_id: string;
   name: string;
   status: TrainingStatus;
-  start_date: string | null;
-  end_date: string | null;
+  // NOT NULL no banco desde a `0024`/`0025`. Enquanto eram nuláveis aqui, o
+  // código tratava ausência de data como caso normal e mandava `null` no
+  // insert — que o banco recusa.
+  start_date: string;
+  end_date: string;
   order_index: number;
   created_at: string;
   workouts_count?: number;
@@ -76,8 +79,11 @@ export interface Periodization {
   name: string;
   objective: string | null;
   status: TrainingStatus;
-  start_date: string | null;
-  end_date: string | null;
+  // NOT NULL no banco desde a `0024`/`0025`. Enquanto eram nuláveis aqui, o
+  // código tratava ausência de data como caso normal e mandava `null` no
+  // insert — que o banco recusa.
+  start_date: string;
+  end_date: string;
   created_at: string;
   updated_at: string;
   student?: { id: string; full_name: string | null; email: string };
@@ -168,8 +174,14 @@ export interface CreatePeriodizationInput {
   student_id: string;
   name: string;
   objective?: string;
-  start_date?: string;
-  end_date?: string;
+  /**
+   * Obrigatórias: `training_periodizations.start_date` e `end_date` são NOT
+   * NULL desde a migration `0024`. Enquanto eram opcionais aqui, o serviço
+   * mandava `null` e o banco recusava o insert — criar periodização sem data
+   * falhava sempre, e o tipo dizia que estava tudo bem.
+   */
+  start_date: string;
+  end_date: string;
 }
 
 export interface UpdatePeriodizationInput {
@@ -183,8 +195,9 @@ export interface UpdatePeriodizationInput {
 export interface CreateTrainingPlanInput {
   periodization_id: string;
   name: string;
-  start_date?: string;
-  end_date?: string;
+  /** Obrigatórias pelo mesmo motivo de `CreatePeriodizationInput`. */
+  start_date: string;
+  end_date: string;
   order_index?: number;
 }
 

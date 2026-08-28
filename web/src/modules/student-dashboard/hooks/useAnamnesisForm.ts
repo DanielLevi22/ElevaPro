@@ -1,6 +1,6 @@
 "use client";
 
-import { supabase } from "@elevapro/supabase";
+import { type Database, supabase } from "@elevapro/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { AnamnesisResponseValue } from "@/modules/students/hooks/useStudentAnamnesis";
 
@@ -24,7 +24,13 @@ export function useAnamnesisForm() {
 
   return useMutation({
     mutationFn: async ({ studentId, responses, completed }: SaveAnamnesisInput) => {
-      const payload: Record<string, unknown> = { student_id: studentId, responses };
+      // Tipado pela linha de Insert da tabela: com `Record<string, unknown>` o
+      // upsert aceitava qualquer chave, e foi assim que colunas inexistentes
+      // chegaram ao PostgREST em outros pontos do código.
+      const payload: Database["public"]["Tables"]["student_anamnesis"]["Insert"] = {
+        student_id: studentId,
+        responses,
+      };
       if (completed) payload.completed_at = new Date().toISOString();
 
       const { error } = await supabase

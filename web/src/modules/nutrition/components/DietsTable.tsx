@@ -8,7 +8,8 @@ import { formatDateRange } from "@/shared/utils/formatDate";
 
 /** O service anexa o perfil do aluno ao plano — ver nutrition.service.fetchDietPlans. */
 export type DietPlanWithStudent = DietPlan & {
-  student?: { id: string; full_name: string };
+  // `profiles.full_name` é nulável no banco.
+  student?: { id: string; full_name: string | null };
 };
 
 interface DietsTableProps {

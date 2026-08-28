@@ -45,6 +45,7 @@ export function CustomTimePicker({ value, onChange }: CustomTimePickerProps) {
       >
         <span className="text-foreground font-semibold text-lg">{value}</span>
         <svg
+          aria-hidden="true"
           className={`w-5 h-5 text-muted-foreground transition-transform duration-300 ${
             isOpen ? "rotate-180" : ""
           }`}

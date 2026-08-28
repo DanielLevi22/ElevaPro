@@ -30,8 +30,8 @@ import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { StatusModal } from '@/components/ui/StatusModal';
 import { colors as brandColors } from '@/constants/colors';
 import { useDietMeals, useDietPlan } from '@/hooks/useNutrition';
-import { DayActionsModal } from '@/modules/nutrition/components/DayActionsModal';
 import { FoodSearchModal } from '../components';
+import { DayActionsModal } from '../components/DayActionsModal';
 import { type FoodItem } from '../screens/FoodSearchScreen';
 import { useNutritionStore } from '../store/nutritionStore';
 
@@ -471,10 +471,15 @@ export default function DietDetailsScreen() {
 
           {/* Navigation Row */}
           <View className="flex-row items-center justify-between w-full mb-2 z-20 h-11">
-            <IconButton icon="arrow-back" onPress={() => router.back()} />
+            <IconButton
+              accessibilityLabel="Voltar"
+              icon="arrow-back"
+              onPress={() => router.back()}
+            />
 
             <View className="flex-row gap-2">
               <IconButton
+                accessibilityLabel="Editar"
                 icon="pencil"
                 onPress={() =>
                   setStatusModal({

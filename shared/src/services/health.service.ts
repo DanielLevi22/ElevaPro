@@ -84,7 +84,10 @@ export const createHealthService = (supabase: SupabaseClient) => ({
   ): Promise<HealthDailyMetric[]> => {
     const { data, error } = await supabase
       .from("health_daily_metrics")
-      .select("*")
+      // Campos nomeados, não `*`: tabela sensível pela `LGPD_COMPLIANCE.md`.
+      // `select("*")` faz dado de saúde sair do banco para camadas que não
+      // pediram por ele — e passa a carregar coluna nova sozinho.
+      .select("id, student_id, date, steps, active_calories, synced_at")
       .eq("student_id", studentId)
       .gte("date", startDate)
       .lte("date", endDate)
@@ -97,7 +100,7 @@ export const createHealthService = (supabase: SupabaseClient) => ({
   getDay: async (studentId: string, date: string): Promise<HealthDailyMetric | null> => {
     const { data, error } = await supabase
       .from("health_daily_metrics")
-      .select("*")
+      .select("id, student_id, date, steps, active_calories, synced_at")
       .eq("student_id", studentId)
       .eq("date", date)
       .maybeSingle();

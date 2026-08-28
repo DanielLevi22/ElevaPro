@@ -170,7 +170,7 @@ export const LoadEvolutionChart = ({ studentId }: { studentId: string }) => {
       {/* Main Content */}
       {isLoading ? (
         <View className="h-[180px] justify-center items-center">
-          <ActivityIndicator color="#FF6B35" />
+          <ActivityIndicator color="#CCFF00" />
         </View>
       ) : selectedExercise ? (
         <Animated.View entering={FadeInDown}>
@@ -226,7 +226,7 @@ export const LoadEvolutionChart = ({ studentId }: { studentId: string }) => {
                     {ex.name}
                   </Text>
                   {selectedExercise?.id === ex.id && (
-                    <Ionicons name="checkmark" size={20} color="#FF6B35" />
+                    <Ionicons name="checkmark" size={20} color="#CCFF00" />
                   )}
                 </TouchableOpacity>
               ))}

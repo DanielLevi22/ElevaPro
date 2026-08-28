@@ -256,6 +256,7 @@ export default function StudentAnamnesisPage() {
         <div className="text-center py-16 bg-surface border border-white/10 rounded-2xl">
           <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg
+              aria-hidden="true"
               className="w-7 h-7 text-muted-foreground"
               fill="none"
               stroke="currentColor"

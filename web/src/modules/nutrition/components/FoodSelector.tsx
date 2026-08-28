@@ -1,5 +1,5 @@
 import type { Food } from "@elevapro/shared";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFoods } from "@/shared/hooks/useNutrition";
 
 const CALC_ONBOARDING_KEY = "nutrition_calc_onboarding_seen";
@@ -61,43 +61,49 @@ export function FoodSelector({ onSelect }: FoodSelectorProps) {
     setTargets((prev) => ({ ...prev, [macro]: value }));
   };
 
-  const calculateMatch = (food: Food) => {
-    if (activeMacros.length === 0) return null;
+  // Sem `useCallback` a função nascia nova a cada render, e o `useMemo` que a
+  // tem como dependência recalculava a ordenação da lista inteira em todo
+  // render — justamente o trabalho que o memo existe para evitar.
+  const calculateMatch = useCallback(
+    (food: Food) => {
+      if (activeMacros.length === 0) return null;
 
-    const quantities: number[] = [];
-    let validTargets = 0;
+      const quantities: number[] = [];
+      let validTargets = 0;
 
-    for (const macro of activeMacros) {
-      const targetVal = parseFloat(targets[macro] || "0");
-      if (targetVal > 0) {
-        const foodVal = food[macro as keyof Food] as number;
-        if (foodVal > 0) {
-          quantities.push((targetVal / foodVal) * food.serving_size);
-          validTargets++;
-        } else {
-          quantities.push(Infinity);
-          validTargets++;
+      for (const macro of activeMacros) {
+        const targetVal = parseFloat(targets[macro] || "0");
+        if (targetVal > 0) {
+          const foodVal = food[macro as keyof Food] as number;
+          if (foodVal > 0) {
+            quantities.push((targetVal / foodVal) * food.serving_size);
+            validTargets++;
+          } else {
+            quantities.push(Infinity);
+            validTargets++;
+          }
         }
       }
-    }
 
-    if (validTargets === 0) return null;
+      if (validTargets === 0) return null;
 
-    if (quantities.some((q) => q === Infinity)) {
-      return { quantity: 0, score: 0, isMatch: false };
-    }
+      if (quantities.some((q) => q === Infinity)) {
+        return { quantity: 0, score: 0, isMatch: false };
+      }
 
-    const avgQuantity = quantities.reduce((a, b) => a + b, 0) / quantities.length;
-    const variance =
-      quantities.reduce((acc, q) => acc + (q - avgQuantity) ** 2, 0) / quantities.length;
-    const score = 100 / (1 + variance / 1000);
+      const avgQuantity = quantities.reduce((a, b) => a + b, 0) / quantities.length;
+      const variance =
+        quantities.reduce((acc, q) => acc + (q - avgQuantity) ** 2, 0) / quantities.length;
+      const score = 100 / (1 + variance / 1000);
 
-    return {
-      quantity: avgQuantity,
-      score,
-      isMatch: true,
-    };
-  };
+      return {
+        quantity: avgQuantity,
+        score,
+        isMatch: true,
+      };
+    },
+    [activeMacros, targets],
+  );
 
   const sortedFoods = useMemo(() => {
     if (activeMacros.length === 0) return foods;
@@ -125,6 +131,7 @@ export function FoodSelector({ onSelect }: FoodSelectorProps) {
           className="w-full bg-background border border-white/10 rounded-lg px-4 py-3 pl-10 text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
         />
         <svg
+          aria-hidden="true"
           className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground"
           fill="none"
           stroke="currentColor"
@@ -147,6 +154,7 @@ export function FoodSelector({ onSelect }: FoodSelectorProps) {
           </p>
           {!showCalcOnboarding && (
             <button
+              type="button"
               onClick={() => setShowCalcOnboarding(true)}
               className="text-[10px] text-muted-foreground hover:text-primary transition-colors"
             >
@@ -162,10 +170,17 @@ export function FoodSelector({ onSelect }: FoodSelectorProps) {
                 Como funciona a Calculadora Reversa
               </p>
               <button
+                type="button"
                 onClick={dismissCalcOnboarding}
                 className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  aria-hidden="true"
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -208,6 +223,7 @@ export function FoodSelector({ onSelect }: FoodSelectorProps) {
               ))}
             </div>
             <button
+              type="button"
               onClick={dismissCalcOnboarding}
               className="text-[11px] font-bold text-primary hover:underline"
             >
@@ -227,6 +243,7 @@ export function FoodSelector({ onSelect }: FoodSelectorProps) {
               }`}
             >
               <button
+                type="button"
                 onClick={() => toggleMacro(macro)}
                 className={`px-3 py-2 text-xs font-medium transition-colors ${
                   activeMacros.includes(macro)
@@ -274,6 +291,7 @@ export function FoodSelector({ onSelect }: FoodSelectorProps) {
 
             return (
               <button
+                type="button"
                 key={food.id}
                 onClick={() => onSelect(food, match?.isMatch ? match.quantity : undefined)}
                 className="w-full text-left p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all group relative overflow-hidden"

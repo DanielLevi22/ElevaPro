@@ -6,8 +6,7 @@ import PeriodizationDetailsPage from "@/modules/workouts/pages/PeriodizationDeta
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createServerSupabaseClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const workoutsService = createWorkoutsService(supabase as any);
+  const workoutsService = createWorkoutsService(supabase);
 
   const [periodization, plans] = await Promise.all([
     workoutsService.fetchPeriodizationById(id),

@@ -15,8 +15,8 @@ import {
 import { useAuthStore } from '@/auth';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { colors as brandColors } from '@/constants/colors';
-import { useNutritionStore } from '@/modules/nutrition/routes';
-import { type ChatMessage, NutriBotService } from '@/modules/nutrition/services/NutriBotService';
+import { useNutritionStore } from '../routes';
+import { type ChatMessage, NutriBotService } from '../services/NutriBotService';
 
 export default function NutriBotScreen() {
   const router = useRouter();

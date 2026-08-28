@@ -8,13 +8,14 @@ import { Button } from "@/shared/components/ui/Button";
 export default function CreateExercisePage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  // Só colunas que `exercises` tem. "category", "equipment", "difficulty",
+  // "instructions" e "status" nunca existiram na tabela: o INSERT levava as
+  // cinco e era recusado inteiro com 42703 — criar exercício nunca funcionou.
   const [formData, setFormData] = useState({
     name: "",
-    category: "strength",
     muscle_group: "",
-    equipment: "none",
-    difficulty: "beginner",
-    instructions: "",
+    description: "",
+    video_url: "",
   });
 
   async function handleSubmit(e: React.FormEvent) {
@@ -23,11 +24,8 @@ export default function CreateExercisePage() {
 
     try {
       const { error } = await supabase.from("exercises").insert([
-        {
-          ...formData,
-          status: "approved", // Admins create approved exercises by default
-          is_verified: true,
-        },
+        // Exercício criado pelo admin nasce verificado.
+        { ...formData, is_verified: true },
       ]);
 
       if (error) throw error;
@@ -45,6 +43,7 @@ export default function CreateExercisePage() {
     <div className="p-8 max-w-2xl mx-auto">
       <div className="mb-8">
         <button
+          type="button"
           onClick={() => router.back()}
           className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-2"
         >
@@ -72,44 +71,6 @@ export default function CreateExercisePage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="category" className="block text-sm font-medium text-foreground mb-1">
-                Categoria
-              </label>
-              <select
-                id="category"
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="strength">Força</option>
-                <option value="cardio">Cardio</option>
-                <option value="flexibility">Flexibilidade</option>
-                <option value="plyometrics">Pliometria</option>
-              </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="difficulty"
-                className="block text-sm font-medium text-foreground mb-1"
-              >
-                Dificuldade
-              </label>
-              <select
-                id="difficulty"
-                value={formData.difficulty}
-                onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
-                className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="beginner">Iniciante</option>
-                <option value="intermediate">Intermediário</option>
-                <option value="advanced">Avançado</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
               <label
                 htmlFor="muscle_group"
                 className="block text-sm font-medium text-foreground mb-1"
@@ -128,35 +89,31 @@ export default function CreateExercisePage() {
             </div>
 
             <div>
-              <label htmlFor="equipment" className="block text-sm font-medium text-foreground mb-1">
-                Equipamento
+              <label htmlFor="video_url" className="block text-sm font-medium text-foreground mb-1">
+                Vídeo (URL)
               </label>
               <input
-                id="equipment"
-                type="text"
-                required
-                value={formData.equipment}
-                onChange={(e) => setFormData({ ...formData, equipment: e.target.value })}
+                id="video_url"
+                type="url"
+                value={formData.video_url}
+                onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
                 className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="ex: Barra"
+                placeholder="https://..."
               />
             </div>
           </div>
 
           <div>
-            <label
-              htmlFor="instructions"
-              className="block text-sm font-medium text-foreground mb-1"
-            >
-              Instruções
+            <label htmlFor="description" className="block text-sm font-medium text-foreground mb-1">
+              Descrição
             </label>
             <textarea
-              id="instructions"
+              id="description"
               rows={4}
-              value={formData.instructions}
-              onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-              placeholder="Instruções passo a passo..."
+              placeholder="Execução, cuidados, observações..."
             />
           </div>
         </div>

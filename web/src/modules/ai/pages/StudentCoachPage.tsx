@@ -7,7 +7,13 @@ export function StudentCoachPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-xl bg-primary/10 text-primary">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            aria-hidden="true"
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"

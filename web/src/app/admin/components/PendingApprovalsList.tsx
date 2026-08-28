@@ -6,10 +6,10 @@ import { Button } from "@/shared/components/ui/Button";
 
 interface PendingProfile {
   id: string;
-  full_name: string;
+  full_name: string | null;
   email: string;
   created_at: string;
-  account_status: "pending";
+  account_status: "invited";
 }
 
 export function PendingApprovalsList() {
@@ -18,10 +18,17 @@ export function PendingApprovalsList() {
   const { data: pendingProfiles = [], isLoading } = useQuery({
     queryKey: ["pending_approvals"],
     queryFn: async () => {
+      // "pending" não existe no enum `account_status` (`active | inactive |
+      // invited`): este filtro nunca casava, a lista vinha sempre vazia e o
+      // painel exibia "Tudo em dia!" mesmo com especialistas aguardando.
+      // Quem espera aprovação está em "invited".
+      //
+      // `select("*")` traz a tabela inteira, incluindo `admin_notes`; aqui só
+      // se usa quatro campos.
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
-        .eq("account_status", "pending")
+        .select("id, full_name, email, created_at, account_status")
+        .eq("account_status", "invited")
         .eq("account_type", "specialist")
         .order("created_at", { ascending: false });
 
@@ -31,7 +38,8 @@ export function PendingApprovalsList() {
   });
 
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: "active" | "rejected" }) => {
+    // "rejected" também não existe: recusar é deixar a conta "inactive".
+    mutationFn: async ({ id, status }: { id: string; status: "active" | "inactive" }) => {
       const { error } = await supabase
         .from("profiles")
         .update({ account_status: status })
@@ -92,7 +100,7 @@ export function PendingApprovalsList() {
           >
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 bg-yellow-500/10 rounded-full flex items-center justify-center text-yellow-500 font-bold text-lg">
-                {profile.full_name.charAt(0).toUpperCase()}
+                {(profile.full_name ?? "?").charAt(0).toUpperCase()}
               </div>
               <div>
                 <h3 className="text-lg font-bold text-foreground">{profile.full_name}</h3>
@@ -120,7 +128,7 @@ export function PendingApprovalsList() {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => updateStatus.mutate({ id: profile.id, status: "rejected" })}
+                onClick={() => updateStatus.mutate({ id: profile.id, status: "inactive" })}
                 disabled={updateStatus.isPending}
                 className="px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
               >

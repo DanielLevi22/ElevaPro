@@ -1,3 +1,4 @@
+import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -5,7 +6,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
-import { supabase } from '@/lib/supabase';
 
 export function PendingApprovalScreen() {
   const router = useRouter();
@@ -36,14 +36,16 @@ export function PendingApprovalScreen() {
   const handleLogout = useCallback(async () => {
     setIsLoggingOut(true);
     await supabase.auth.signOut();
-    router.replace('/(auth)/login' as never);
+    router.replace('/(auth)/login');
   }, [router]);
 
   // Redirect if approved or rejected
   useEffect(() => {
     if (profile?.account_status === 'active') {
-      router.replace('/(tabs)' as never);
-    } else if (profile?.account_status === 'rejected') {
+      router.replace('/(tabs)');
+      // 'rejected' não existe no enum — o ramo nunca executava. Recusa e
+      // desativação são o mesmo estado no banco: 'inactive'.
+    } else if (profile?.account_status === 'inactive') {
       handleLogout();
     }
   }, [profile, router, handleLogout]);
@@ -164,7 +166,7 @@ export function PendingApprovalScreen() {
             Dúvidas? Entre em contato:
           </Text>
           <Text className="text-xs text-primary text-center mt-1 font-sans">
-            suporte@meupersonal.app
+            suporte@elevapro.app
           </Text>
         </View>
       </ScrollView>

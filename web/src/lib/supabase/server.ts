@@ -1,10 +1,14 @@
+import type { Database } from "@elevapro/shared";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 export async function createServerSupabaseClient() {
   const cookieStore = await cookies();
 
-  return createServerClient(
+  // Com o genérico, o serviço compartilhado recebe um cliente do mesmo tipo que
+  // já recebe no browser — era a falta dele que obrigava o `as any` em quem
+  // chamava `createWorkoutsService(supabase)`.
+  return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
     {

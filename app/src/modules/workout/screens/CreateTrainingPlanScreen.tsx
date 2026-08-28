@@ -21,7 +21,7 @@ import { ScreenLayout } from '@/components/ui/ScreenLayout';
 type Workout = {
   id: string;
   title: string;
-  description?: string;
+  description: string | null;
 };
 
 export default function CreateTrainingPlanScreen() {
@@ -77,13 +77,28 @@ export default function CreateTrainingPlanScreen() {
     setLoading(true);
 
     try {
+      // A ficha herda o intervalo da periodização a que pertence:
+      // `training_plans.start_date` e `end_date` são NOT NULL desde a migration
+      // `0024`, e este insert não mandava nenhuma das duas — criar ficha falhava
+      // sempre. O campo de texto livre também ia como `description`, coluna que
+      // a tabela não tem; o nome real é `focus`.
+      const { data: periodizacao, error: periodizacaoError } = await supabase
+        .from('training_periodizations')
+        .select('start_date, end_date')
+        .eq('id', periodizationId)
+        .single();
+
+      if (periodizacaoError) throw periodizacaoError;
+
       // Create training plan
       const { data: planData, error: planError } = await supabase
         .from('training_plans')
         .insert({
           name,
-          description: description || null,
+          focus: description || null,
           periodization_id: periodizationId,
+          start_date: periodizacao.start_date,
+          end_date: periodizacao.end_date,
         })
         .select()
         .single();
@@ -126,7 +141,11 @@ export default function CreateTrainingPlanScreen() {
         {/* Header */}
         <View className="flex-row items-center px-6 py-4">
           <View className="mr-4">
-            <IconButton icon="arrow-back" onPress={() => router.back()} />
+            <IconButton
+              accessibilityLabel="Voltar"
+              icon="arrow-back"
+              onPress={() => router.back()}
+            />
           </View>
           <Text className="text-2xl font-bold text-foreground font-display">
             Nova Ficha de Treino
@@ -175,8 +194,8 @@ export default function CreateTrainingPlanScreen() {
                     className="flex-row items-center justify-between mb-2 last:mb-0"
                   >
                     <View className="flex-1 flex-row items-center">
-                      <View className="bg-primary-500/10 p-2 rounded-lg mr-3">
-                        <Ionicons name="barbell" size={16} color="#FF6B35" />
+                      <View className="bg-primary/10 p-2 rounded-lg mr-3">
+                        <Ionicons name="barbell" size={16} color="#CCFF00" />
                       </View>
                       <View className="flex-1">
                         <Text className="text-foreground font-semibold font-sans">
@@ -202,10 +221,10 @@ export default function CreateTrainingPlanScreen() {
           {/* Add Workouts Button */}
           <TouchableOpacity
             onPress={() => setShowWorkoutPicker(!showWorkoutPicker)}
-            className="bg-secondary-500/10 border-2 border-secondary-500 rounded-xl p-4 mb-4 flex-row items-center justify-center"
+            className="bg-secondary/10 border-2 border-secondary rounded-xl p-4 mb-4 flex-row items-center justify-center"
           >
-            <Ionicons name="add-circle" size={20} color="#00D9FF" />
-            <Text className="text-secondary-400 font-bold ml-2 font-display">
+            <Ionicons name="add-circle" size={20} color="#00F0FF" />
+            <Text className="text-secondary font-bold ml-2 font-display">
               {showWorkoutPicker ? 'Fechar Lista' : 'Adicionar Treinos'}
             </Text>
           </TouchableOpacity>

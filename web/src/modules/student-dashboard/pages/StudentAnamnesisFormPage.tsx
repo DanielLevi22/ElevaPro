@@ -178,6 +178,7 @@ export function StudentAnamnesisFormPage() {
       <div className="flex flex-col items-center justify-center py-24 text-center gap-6">
         <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
           <svg
+            aria-hidden="true"
             className="w-8 h-8 text-emerald-400"
             fill="none"
             stroke="currentColor"
@@ -195,6 +196,7 @@ export function StudentAnamnesisFormPage() {
           </p>
         </div>
         <button
+          type="button"
           onClick={() => router.push("/dashboard/student")}
           className="px-6 py-2.5 bg-foreground text-background font-bold text-sm rounded-xl hover:bg-foreground/90 transition-colors"
         >
@@ -235,10 +237,13 @@ export function StudentAnamnesisFormPage() {
       <div className="bg-surface/40 border border-overlay-08 rounded-2xl p-6 flex flex-col gap-6">
         {visibleQuestions.map((question) => (
           <div key={question.id} className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-muted-foreground">
+            <span
+              id={`pergunta-${question.id}`}
+              className="text-sm font-medium text-muted-foreground"
+            >
               {question.text}
               {question.required && <span className="text-muted-foreground ml-1">*</span>}
-            </label>
+            </span>
             <QuestionField
               question={question}
               value={responses[question.id]}
@@ -252,6 +257,7 @@ export function StudentAnamnesisFormPage() {
       <div className="flex gap-1.5 justify-center">
         {GENERAL_ANAMNESIS.map((_, i) => (
           <button
+            // biome-ignore lint/suspicious/noArrayIndexKey: chave composta nome-índice em lista só de leitura, que nunca reordena nem sofre insercao no meio; o indice so desempata nomes repetidos
             key={i}
             type="button"
             onClick={() => setStep(i)}

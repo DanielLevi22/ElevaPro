@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type CreatePeriodizationInput,
   createWorkoutsService,
   type TrainingStatus,
   type UpdatePeriodizationInput,
@@ -13,14 +14,11 @@ export type { UpdatePeriodizationInput };
 
 const workoutsService = createWorkoutsService(supabase);
 
-export interface CreatePeriodizationInput {
-  student_id: string;
-  name: string;
-  objective?: string;
-  start_date?: string;
-  end_date?: string;
-  notes?: string;
-}
+// O tipo vem de `@elevapro/shared`. Havia uma cópia aqui declarando
+// `start_date` e `end_date` como opcionais — e era ela que deixava a tela
+// chamar a criação sem data, num par de colunas que o banco exige desde a
+// migration `0024`.
+export type { CreatePeriodizationInput };
 
 export function useCreatePeriodization() {
   const queryClient = useQueryClient();

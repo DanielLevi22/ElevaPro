@@ -381,7 +381,11 @@ export default function PhaseDetailsScreen() {
     <ScreenLayout>
       <View className="px-6 pt-4 pb-4">
         <View className="flex-row items-center justify-between mb-8">
-          <IconButton icon="chevron-back" onPress={() => router.back()} />
+          <IconButton
+            accessibilityLabel="Voltar"
+            icon="chevron-back"
+            onPress={() => router.back()}
+          />
 
           <View className="items-center">
             <Text className="text-white text-2xl font-extrabold font-display tracking-tight">
@@ -395,6 +399,7 @@ export default function PhaseDetailsScreen() {
           {!isStudentView ? (
             <View className="flex-row gap-2">
               <IconButton
+                accessibilityLabel="Alterar status da fase"
                 icon={
                   phase.status === 'planned'
                     ? 'document-text-outline'
@@ -413,6 +418,7 @@ export default function PhaseDetailsScreen() {
                 size={20}
               />
               <IconButton
+                accessibilityLabel="Excluir"
                 icon="trash-outline"
                 variant="danger"
                 onPress={handleDeletePhase}
@@ -454,7 +460,7 @@ export default function PhaseDetailsScreen() {
                 <Text className="text-white font-extrabold text-xl mr-2 uppercase">
                   {phase.name || '--'}
                 </Text>
-                {!isStudentView && <Ionicons name="chevron-down" size={16} color="#FF6B35" />}
+                {!isStudentView && <Ionicons name="chevron-down" size={16} color="#CCFF00" />}
               </TouchableOpacity>
             </View>
 
@@ -670,7 +676,7 @@ export default function PhaseDetailsScreen() {
                 className="flex-row items-center bg-orange-500/10 px-3 py-1.5 rounded-xl border border-orange-500/20"
                 style={{ borderColor: `${colors.primary.start}33` }}
               >
-                <Ionicons name="sparkles" size={14} color="#FF6B35" style={{ marginRight: 6 }} />
+                <Ionicons name="sparkles" size={14} color="#CCFF00" style={{ marginRight: 6 }} />
                 <Text className="text-orange-500 font-bold text-xs uppercase">CO-PILOT</Text>
               </TouchableOpacity>
 
@@ -839,7 +845,7 @@ export default function PhaseDetailsScreen() {
 
               {isGenerating ? (
                 <View className="py-8 items-center">
-                  <ActivityIndicator size="large" color="#FF6B35" />
+                  <ActivityIndicator size="large" color="#CCFF00" />
                   <Text className="text-zinc-400 text-sm mt-4 text-center">
                     Gerando treinos para a divisão...
                   </Text>
@@ -929,7 +935,7 @@ export default function PhaseDetailsScreen() {
             <View className="bg-zinc-900 w-full rounded-[24px] p-6 border border-zinc-800 items-center shadow-2xl">
               {/* Header Icon - Slightly smaller container for better proportion */}
               <View className="w-16 h-16 rounded-full bg-orange-500/10 items-center justify-center border border-orange-500/20 mb-5">
-                <Ionicons name="options" size={32} color="#FF6B35" />
+                <Ionicons name="options" size={32} color="#CCFF00" />
               </View>
 
               <Text className="text-white text-xl font-extrabold mb-2 text-center font-display">
@@ -974,7 +980,7 @@ export default function PhaseDetailsScreen() {
                   className="w-full"
                 >
                   <LinearGradient
-                    colors={['#FF6B35', '#FF2E63']}
+                    colors={['#CCFF00', '#A3CC00']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     className="py-4 rounded-xl items-center justify-center shadow-lg"
@@ -1145,7 +1151,7 @@ export default function PhaseDetailsScreen() {
                   <Ionicons
                     name="document-text"
                     size={20}
-                    color={phase.status === 'planned' ? '#FF6B35' : '#71717A'}
+                    color={phase.status === 'planned' ? '#CCFF00' : '#71717A'}
                   />
                 </View>
                 <View className="flex-1">
@@ -1159,7 +1165,7 @@ export default function PhaseDetailsScreen() {
                   </Text>
                 </View>
                 {phase.status === 'planned' && (
-                  <Ionicons name="checkmark-circle" size={20} color="#FF6B35" />
+                  <Ionicons name="checkmark-circle" size={20} color="#CCFF00" />
                 )}
               </TouchableOpacity>
 

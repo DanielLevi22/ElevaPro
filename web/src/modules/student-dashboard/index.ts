@@ -1,6 +1,5 @@
 export { DayOverviewCard } from "./components/DayOverviewCard";
 export { EmptyPlanState } from "./components/EmptyPlanState";
-export { Field } from "./components/Field";
 export { GamificationBar } from "./components/GamificationBar";
 export { SpecialistLinkSection } from "./components/SpecialistLinkSection";
 export { WorkoutCard } from "./components/WorkoutCard";

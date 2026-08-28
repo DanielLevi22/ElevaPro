@@ -59,7 +59,8 @@ async function fetchStudentHistory(
       type: 'diet',
       title: d.name ?? 'Plano alimentar',
       date: d.created_at,
-      subtitle: d.status === 'active' ? 'Ativo' : d.status === 'inactive' ? 'Inativo' : undefined,
+      // `diet_plan_status` é `active | finished`; 'inactive' nunca casava.
+      subtitle: d.status === 'active' ? 'Ativo' : d.status === 'finished' ? 'Concluído' : undefined,
     });
   }
 
@@ -122,7 +123,7 @@ export default function StudentHistoryScreen() {
   if (studentsLoading || !student) {
     return (
       <ScreenLayout className="justify-center items-center">
-        <ActivityIndicator size="large" color="#FF6B35" />
+        <ActivityIndicator size="large" color="#CCFF00" />
       </ScreenLayout>
     );
   }
@@ -174,7 +175,7 @@ export default function StudentHistoryScreen() {
 
       {historyLoading && (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="small" color="#FF6B35" />
+          <ActivityIndicator size="small" color="#CCFF00" />
         </View>
       )}
 

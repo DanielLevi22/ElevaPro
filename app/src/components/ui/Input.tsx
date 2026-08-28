@@ -27,7 +27,7 @@ export function Input({ label, error, className, style, ...props }: InputProps) 
         }}
         className={cn(
           'bg-zinc-900/80 border-2 rounded-2xl px-4 py-4 text-base h-14',
-          isFocused && !error && 'border-secondary-500',
+          isFocused && !error && 'border-secondary',
           !isFocused && !error && 'border-zinc-700',
           error && 'border-red-400',
           !props.editable && props.editable !== undefined && 'opacity-60'

@@ -70,6 +70,7 @@ export function SelectExercisesModal({
                 const isSelected = selectedIds.includes(exercise.id);
                 return (
                   <button
+                    type="button"
                     key={exercise.id}
                     onClick={() => onSelectExercise(exercise)}
                     className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
@@ -90,6 +91,7 @@ export function SelectExercisesModal({
                       {isSelected && (
                         <div className="ml-3">
                           <svg
+                            aria-hidden="true"
                             className="w-5 h-5 text-primary"
                             fill="currentColor"
                             viewBox="0 0 20 20"

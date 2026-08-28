@@ -49,28 +49,25 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         Object.assign(numeric, { [key]: val !== null && val !== "" ? Number(val) : null });
       }
 
-      const { data: latest, error: lookupError } = await supabaseAdmin
-        .from("physical_assessments")
-        .select("id")
-        .eq("student_id", studentId)
-        .eq("specialist_id", caller.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (lookupError) throw lookupError;
-
       // Sem `as unknown as AssessmentInsert`. O cast existia para calar o tipo
       // gerado do schema — que teria acusado, um a um, os catorze nomes de
       // coluna que não existiam. Com ele fora, o compilador volta a ser a
       // guarda que impede esta rota de gravar em campo inventado.
-      const { error: writeError } = latest
-        ? await supabaseAdmin.from("physical_assessments").update(numeric).eq("id", latest.id)
-        : await supabaseAdmin.from("physical_assessments").insert({
-            student_id: studentId,
-            specialist_id: caller.id,
-            ...numeric,
-          });
+      // Sempre INSERT, nunca UPDATE.
+      //
+      // A avaliação física é imutável por política — `LGPD_COMPLIANCE.md`
+      // seção 12 e a RLS da migration `0017`, que concede ao especialista
+      // apenas INSERT. Esta rota fazia UPDATE pelo `service_role`, que ignora
+      // RLS: o que a política proibia ao cliente, o servidor fazia assim mesmo.
+      //
+      // O motivo da regra é de dado, não de burocracia: corrigir uma medida
+      // antiga reescreve o histórico clínico do aluno. Medida errada se corrige
+      // com avaliação nova — e é essa sequência que a evolução mostra.
+      const { error: writeError } = await supabaseAdmin.from("physical_assessments").insert({
+        student_id: studentId,
+        specialist_id: caller.id,
+        ...numeric,
+      });
 
       // O resultado do insert e do update era descartado: a gravação falhava e
       // a rota respondia `success: true`.

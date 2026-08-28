@@ -51,7 +51,7 @@ export function Button({
 
   // Non-gradient variant styles
   const solidVariantStyles = {
-    outline: 'border-2 border-primary-400 bg-transparent active:bg-primary-400/10',
+    outline: 'border-2 border-primary bg-transparent active:bg-primary/10',
     ghost: 'bg-transparent active:bg-zinc-800/50',
     destructive: 'bg-red-500 active:bg-red-600',
   };
@@ -60,7 +60,7 @@ export function Button({
     variant === 'primary' || variant === 'secondary' || variant === 'destructive'
       ? 'text-black'
       : variant === 'outline'
-        ? 'text-primary-400'
+        ? 'text-primary'
         : 'text-foreground';
 
   const ButtonContent = () => (
@@ -85,6 +85,12 @@ export function Button({
       <TouchableOpacity
         onPress={onPress}
         disabled={disabled || isLoading}
+        // O rótulo acessível sai do `label` que o botão já exibe: não há por que
+        // pedir a mesma informação duas vezes ao call site. `busy` faz o leitor
+        // anunciar o carregamento em vez de ler um botão que não responde.
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityState={{ disabled: disabled || isLoading, busy: isLoading }}
         className={cn(baseStyles, sizeStyles[size], disabledStyles, className)}
         activeOpacity={0.8}
       >
@@ -105,6 +111,9 @@ export function Button({
     <TouchableOpacity
       onPress={onPress}
       disabled={disabled || isLoading}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: disabled || isLoading, busy: isLoading }}
       className={cn(
         baseStyles,
         solidVariantStyles[variant],

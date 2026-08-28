@@ -59,6 +59,7 @@ function DataTableSkeleton({ columnCount, rows }: { columnCount: number; rows: n
     <div className={SHELL} aria-hidden="true">
       {Array.from({ length: rows }, (_, index) => (
         <div
+          // biome-ignore lint/suspicious/noArrayIndexKey: esqueleto de carregamento: os itens não têm identidade e a lista não reordena
           key={`skeleton-${index}`}
           className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-b-0"
         >
@@ -68,6 +69,7 @@ function DataTableSkeleton({ columnCount, rows }: { columnCount: number; rows: n
           </span>
           {Array.from({ length: Math.max(0, columnCount - 1) }, (_, cell) => (
             <span
+              // biome-ignore lint/suspicious/noArrayIndexKey: esqueleto de carregamento: os itens não têm identidade e a lista não reordena
               key={`skeleton-${index}-${cell}`}
               className="hidden md:block w-24 h-3 rounded bg-overlay-05 animate-pulse"
             />

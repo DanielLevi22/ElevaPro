@@ -1,6 +1,6 @@
 "use client";
 
-import { supabase } from "@elevapro/supabase";
+import { type AccountStatus, type AccountType, supabase } from "@elevapro/supabase";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { AccountTypeBadge } from "@/shared";
@@ -99,7 +99,7 @@ export default function UserDetailsPage() {
     }
   };
 
-  async function changeAccountType(newType: string) {
+  async function changeAccountType(newType: AccountType) {
     openConfirmation(
       "Mudar Tipo de Conta",
       `Tem certeza que deseja mudar o tipo de conta para "${newType}"?`,
@@ -117,7 +117,7 @@ export default function UserDetailsPage() {
     );
   }
 
-  async function updateStatus(newStatus: "active" | "rejected" | "suspended" | "pending") {
+  async function updateStatus(newStatus: AccountStatus) {
     const actionMap: Record<
       string,
       { label: string; variant: "success" | "danger" | "warning" | "info" }
@@ -148,20 +148,23 @@ export default function UserDetailsPage() {
   }
 
   const getStatusBadge = (status: string | null) => {
-    // Treat null status as 'pending' for professionals, 'active' for others (legacy)
+    // Especialista sem status é conta que ainda espera aprovação; os demais
+    // legados contam como ativos.
     let s = status;
     if (!s) {
-      s = user?.account_type === "specialist" ? "pending" : "active";
+      s = user?.account_type === "specialist" ? "invited" : "active";
     }
 
+    // Só três chaves porque o enum `account_status` só tem três valores. As
+    // antigas ("pending", "rejected", "suspended") nunca casavam e todo usuário
+    // aparecia como "Ativo".
     const badges = {
       active: { label: "Ativo", color: "bg-green-500/10 text-green-400 border-green-500/20" },
-      pending: {
-        label: "Pendente",
+      invited: {
+        label: "Aguardando aprovação",
         color: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
       },
-      rejected: { label: "Rejeitado", color: "bg-red-500/10 text-red-400 border-red-500/20" },
-      suspended: { label: "Suspenso", color: "bg-red-500/10 text-red-400 border-red-500/20" },
+      inactive: { label: "Inativo", color: "bg-red-500/10 text-red-400 border-red-500/20" },
     };
 
     const badge = badges[s as keyof typeof badges] || badges.active;
@@ -252,7 +255,7 @@ export default function UserDetailsPage() {
               <div className="flex gap-3 w-full md:w-auto">
                 <button
                   type="button"
-                  onClick={() => updateStatus("rejected")}
+                  onClick={() => updateStatus("inactive")}
                   className="flex-1 md:flex-none px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/50 rounded-lg hover:bg-red-500/30 font-medium transition-colors"
                 >
                   Rejeitar
@@ -271,41 +274,46 @@ export default function UserDetailsPage() {
           {/* Basic Information */}
           <div className="bg-surface border border-border rounded-xl p-6">
             <h2 className="text-xl font-bold text-foreground mb-4">Informações Básicas</h2>
-            <div className="space-y-4">
+            {/* `<dl>` e não `<label>`: isto exibe pares rótulo-valor, não
+                formulário. `<label>` sem controle associado faz o leitor de
+                tela prometer um campo que não existe. */}
+            <dl className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-muted-foreground">ID do Usuário</label>
-                <p className="text-foreground font-mono text-sm mt-1">{user.id}</p>
+                <dt className="text-sm font-medium text-muted-foreground">ID do Usuário</dt>
+                <dd className="text-foreground font-mono text-sm mt-1">{user.id}</dd>
               </div>
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Email</label>
-                <p className="text-foreground mt-1">{user.email}</p>
+                <dt className="text-sm font-medium text-muted-foreground">Email</dt>
+                <dd className="text-foreground mt-1">{user.email}</dd>
               </div>
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Nome Completo</label>
-                <p className="text-foreground mt-1">{user.full_name || "Não definido"}</p>
+                <dt className="text-sm font-medium text-muted-foreground">Nome Completo</dt>
+                <dd className="text-foreground mt-1">{user.full_name || "Não definido"}</dd>
               </div>
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Tipo de Conta</label>
-                <div className="mt-2">
+                <dt className="text-sm font-medium text-muted-foreground">Tipo de Conta</dt>
+                <dd className="mt-2">
                   <AccountTypeBadge accountType={user.account_type} size="md" />
-                </div>
+                </dd>
               </div>
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Status da Conta</label>
-                <div className="mt-2">{getStatusBadge(user.account_status)}</div>
+                <dt className="text-sm font-medium text-muted-foreground">Status da Conta</dt>
+                <dd className="mt-2">{getStatusBadge(user.account_status)}</dd>
               </div>
-            </div>
+            </dl>
           </div>
 
           {/* Activity */}
           <div className="bg-surface border border-border rounded-xl p-6">
             <h2 className="text-xl font-bold text-foreground mb-4">Atividade</h2>
-            <div className="space-y-4">
+            <dl className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Criado em</label>
-                <p className="text-foreground mt-1">{new Date(user.created_at).toLocaleString()}</p>
+                <dt className="text-sm font-medium text-muted-foreground">Criado em</dt>
+                <dd className="text-foreground mt-1">
+                  {new Date(user.created_at).toLocaleString()}
+                </dd>
               </div>
-            </div>
+            </dl>
           </div>
 
           {/* Admin Notes */}
@@ -371,22 +379,16 @@ export default function UserDetailsPage() {
                   Ativar Conta
                 </button>
               )}
-              {user.account_status !== "suspended" && (
+              {/* "Suspender" e "Rejeitar" gravavam "suspended"/"rejected", que o
+                  enum do banco recusa com 22P02 — os dois botões falhavam. E são
+                  o mesmo estado: sem acesso. Viraram um só. */}
+              {user.account_status !== "inactive" && (
                 <button
                   type="button"
-                  onClick={() => updateStatus("suspended")}
-                  className="w-full px-4 py-2 bg-orange-500/20 text-orange-400 border border-orange-500/50 rounded-lg hover:bg-orange-500/30 font-medium transition-colors"
-                >
-                  Suspender Conta
-                </button>
-              )}
-              {user.account_status !== "rejected" && (
-                <button
-                  type="button"
-                  onClick={() => updateStatus("rejected")}
+                  onClick={() => updateStatus("inactive")}
                   className="w-full px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/50 rounded-lg hover:bg-red-500/30 font-medium transition-colors"
                 >
-                  Rejeitar Conta
+                  Desativar Conta
                 </button>
               )}
             </div>
@@ -396,7 +398,7 @@ export default function UserDetailsPage() {
           <div className="bg-surface border border-border rounded-xl p-6">
             <h3 className="text-lg font-bold text-foreground mb-4">Mudar Tipo de Conta</h3>
             <div className="space-y-2">
-              {["admin", "specialist", "student", "member"].map((type) => (
+              {(["admin", "specialist", "student", "member"] as const).map((type) => (
                 <button
                   type="button"
                   key={type}

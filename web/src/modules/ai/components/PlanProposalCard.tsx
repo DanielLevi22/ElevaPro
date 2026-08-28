@@ -44,6 +44,7 @@ export function PlanProposalCard({ data, loading, onApprove, onReject }: Props) 
           <div className="space-y-1.5">
             {workout.days.map((day, i) => (
               <div
+                // biome-ignore lint/suspicious/noArrayIndexKey: chave composta nome-índice em lista só de leitura, que nunca reordena nem sofre insercao no meio; o indice so desempata nomes repetidos
                 key={`${day.day_label}-${i}`}
                 className="flex items-center gap-3 bg-white/5 rounded-lg px-3 py-2"
               >

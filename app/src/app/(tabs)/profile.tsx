@@ -164,7 +164,7 @@ export default function ProfileScreen() {
 
           {/* Health Connect Button */}
           <TouchableOpacity
-            onPress={() => router.push('/onboarding/health-connect' as never)}
+            onPress={() => router.push('/onboarding/health-connect')}
             activeOpacity={0.8}
             className="mb-8 h-[100px] rounded-[32px] overflow-hidden border border-zinc-800 relative bg-zinc-900"
           >

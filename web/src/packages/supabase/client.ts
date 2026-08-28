@@ -1,3 +1,4 @@
+import type { Database } from "@elevapro/shared";
 import { createBrowserClient } from "@supabase/ssr";
 
 const supabaseUrl =
@@ -11,10 +12,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
   }
 }
 
-export const supabase = createBrowserClient(
+// O genérico `Database` é o que faz `.from().select()` ser verificado. Sem ele
+// toda consulta feita pelo cliente do browser devolvia `any` — o mesmo defeito
+// que o mobile tinha, e a razão de coluna inexistente só aparecer como 42703 em
+// runtime. `supabase-admin.ts` (service_role) já era tipado; este não era.
+export const supabase = createBrowserClient<Database>(
   supabaseUrl || "https://placeholder.supabase.co",
   supabaseAnonKey || "placeholder",
 );
-
-// Types export (will be populated later)
-export type Database = Record<string, unknown>;

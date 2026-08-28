@@ -10,8 +10,8 @@ import {
 import { supabase } from '@elevapro/supabase';
 import { create } from 'zustand';
 import { useAuthStore } from '@/auth';
+import { useGamificationStore } from '@/modules/gamification/store/gamificationStore';
 import { cancelPlanNotifications } from '@/services/notificationService';
-import { useGamificationStore } from '@/store/gamificationStore';
 import type { StrategyResult } from '../utils/dietStrategies';
 
 export type { Food };
@@ -28,7 +28,7 @@ interface NutritionStore {
 
   // Diet Plans
   currentDietPlan: DietPlan | null;
-  dietPlans: (DietPlan & { student?: { id: string; full_name: string } })[];
+  dietPlans: (DietPlan & { student?: { id: string; full_name: string | null } })[];
   dietPlanHistory: DietPlan[];
   fetchDietPlans: (specialistId: string) => Promise<void>;
   fetchDietPlan: (studentId: string) => Promise<void>;

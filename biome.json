@@ -55,24 +55,24 @@
       }
     },
     {
-      "includes": ["web/**/*"],
+      "includes": [
+        "web/src/modules/students/components/muscle-map/**",
+        "web/src/app/dashboard/muscle-map-debug/**"
+      ],
       "linter": {
         "rules": {
           "a11y": {
-            "noSvgWithoutTitle": "off",
-            "useButtonType": "off",
-            "noLabelWithoutControl": "off",
-            "useKeyWithClickEvents": "off",
-            "noStaticElementInteractions": "off",
-            "useSemanticElements": "off"
-          },
+            "noStaticElementInteractions": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["web/**/*"],
+      "linter": {
+        "rules": {
           "suspicious": {
-            "noUnknownAtRules": "off",
-            "noExplicitAny": "off",
-            "noArrayIndexKey": "off"
-          },
-          "correctness": {
-            "useExhaustiveDependencies": "off"
+            "noUnknownAtRules": "off"
           }
         },
         "domains": {

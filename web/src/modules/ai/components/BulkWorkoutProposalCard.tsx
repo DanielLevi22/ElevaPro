@@ -86,6 +86,7 @@ export function BulkWorkoutProposalCard({
             const isSaved = savedTitles.includes(workout.title);
             return (
               <div
+                // biome-ignore lint/suspicious/noArrayIndexKey: chave composta nome-índice em lista só de leitura, que nunca reordena nem sofre insercao no meio; o indice so desempata nomes repetidos
                 key={`${workout.title}-${i}`}
                 className="flex items-center gap-3 bg-white/5 rounded-lg px-3 py-2"
               >
@@ -111,6 +112,7 @@ export function BulkWorkoutProposalCard({
                     <ul className="mt-2 space-y-1">
                       {workout.exercises.map((ex, j) => (
                         <li
+                          // biome-ignore lint/suspicious/noArrayIndexKey: chave composta nome-índice em lista só de leitura, que nunca reordena nem sofre insercao no meio; o indice so desempata nomes repetidos
                           key={`${ex.exercise_name}-${j}`}
                           className="flex items-baseline justify-between gap-2 text-xs"
                         >

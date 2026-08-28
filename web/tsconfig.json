@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
+    // Sem `baseUrl`: depreciado no TypeScript 6 e removido no 7. Os `paths`
+    // abaixo já são relativos a este arquivo, que é como o tsconfig do app
+    // (também em TS 6) sempre funcionou.
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
@@ -31,9 +33,9 @@
       "@/workout": ["./src/modules/workouts"],
       "@/workouts": ["./src/modules/workouts"],
       "@/training-plans": ["./src/modules/training-plans"],
-      "@elevapro/core": ["./src/packages/core"],
       "@elevapro/supabase": ["./src/packages/supabase"],
       "@elevapro/shared": ["../shared/src"],
+      "@casl/ability": ["./node_modules/@casl/ability"],
       "@supabase/supabase-js": ["./node_modules/@supabase/supabase-js"],
       "zustand": ["./node_modules/zustand"],
       "zustand/*": ["./node_modules/zustand/*"]

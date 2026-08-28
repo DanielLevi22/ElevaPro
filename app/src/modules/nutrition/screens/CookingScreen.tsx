@@ -135,7 +135,7 @@ export default function CookingScreen() {
       <ScreenLayout>
         <View className="flex-1 items-center justify-center p-6">
           <View className="bg-orange-500/10 p-8 rounded-full mb-8 animate-pulse">
-            <Ionicons name="restaurant" size={64} color="#FF6B35" />
+            <Ionicons name="restaurant" size={64} color="#CCFF00" />
           </View>
           <Text className="text-white text-2xl font-bold font-display text-center mb-2">
             Preparando Cozinha...
@@ -143,7 +143,7 @@ export default function CookingScreen() {
           <Text className="text-zinc-400 text-center mb-8">
             A IA está organizando o passo a passo para {mealName || 'sua refeição'}.
           </Text>
-          <ActivityIndicator size="large" color="#FF6B35" />
+          <ActivityIndicator size="large" color="#CCFF00" />
         </View>
       </ScreenLayout>
     );
@@ -203,7 +203,7 @@ export default function CookingScreen() {
             </Text>
 
             <View className="bg-orange-500/20 p-4 rounded-full mb-6">
-              <Ionicons name="flame" size={32} color="#FF6B35" />
+              <Ionicons name="flame" size={32} color="#CCFF00" />
             </View>
 
             <View className="flex-row items-center justify-center gap-3 mb-8">

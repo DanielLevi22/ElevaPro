@@ -4,10 +4,10 @@ import {
   type AppAbility,
   defineAbilitiesFor,
   getUserContextJWT,
+  supabase,
 } from '@elevapro/supabase';
 import type { Session, User } from '@supabase/supabase-js';
 import { create } from 'zustand';
-import { supabase } from '../../../lib/supabase';
 import { useNutritionStore } from '../../nutrition/store/nutritionStore';
 import { useStudentStore } from '../../students/store/studentStore';
 import { useWorkoutStore } from '../../workout/store/workoutStore';

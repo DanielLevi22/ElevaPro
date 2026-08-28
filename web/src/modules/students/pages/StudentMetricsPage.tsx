@@ -248,6 +248,7 @@ function WorkoutMetricsTab({ studentId }: { studentId: string }) {
       <div className="flex gap-2">
         {([90, 180, 365] as const).map((d) => (
           <button
+            type="button"
             key={d}
             onClick={() => setDays(d)}
             className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
@@ -451,6 +452,7 @@ export default function StudentMetricsPage() {
       <div className="flex gap-1 bg-surface border border-white/10 rounded-xl p-1 w-fit">
         {tabs.map((tab) => (
           <button
+            type="button"
             key={tab.id}
             onClick={() => !tab.soon && setActiveTab(tab.id)}
             disabled={tab.soon}

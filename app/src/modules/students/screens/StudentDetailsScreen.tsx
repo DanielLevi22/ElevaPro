@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
@@ -36,7 +36,7 @@ export default function StudentDetailsScreen() {
   if (isLoading && !student) {
     return (
       <ScreenLayout className="justify-center items-center">
-        <ActivityIndicator size="large" color="#FF6B35" />
+        <ActivityIndicator size="large" color="#CCFF00" />
       </ScreenLayout>
     );
   }
@@ -69,21 +69,32 @@ export default function StudentDetailsScreen() {
     );
   }
 
-  const menuItems = [
+  // `route: Href` em vez de `string`: sem a anotação o array vira `string`
+  // largo, o `typedRoutes` recusa o navigate e o `as never` voltava a esconder
+  // destino inexistente.
+  const menuItems: {
+    title: string;
+    subtitle: string;
+    icon: string;
+    color: string;
+    gradient: string[];
+    route: Href;
+    disabled?: boolean;
+  }[] = [
     {
       title: 'Treinos',
       subtitle: 'Gerenciar fichas',
       icon: 'barbell-outline',
-      color: '#FF6B35',
-      gradient: ['#FF6B35', '#FF2E63'],
+      color: '#CCFF00',
+      gradient: ['#CCFF00', '#A3CC00'],
       route: ROUTES.STUDENTS.WORKOUTS(id as string),
     },
     {
       title: 'Dieta',
       subtitle: 'Plano alimentar',
       icon: 'restaurant-outline',
-      color: '#00D9FF',
-      gradient: ['#00D9FF', '#00B8D9'],
+      color: '#00F0FF',
+      gradient: ['#00F0FF', '#00C0CC'],
       route: ROUTES.STUDENTS.NUTRITION(id as string),
     },
     {
@@ -127,7 +138,7 @@ export default function StudentDetailsScreen() {
           </TouchableOpacity>
 
           <View className="w-24 h-24 rounded-full bg-cyan-400/10 items-center justify-center mb-4 border-2 border-cyan-400/20">
-            <Ionicons name="person" size={48} color="#00D9FF" />
+            <Ionicons name="person" size={48} color="#00F0FF" />
           </View>
 
           <Text className="text-2xl font-extrabold text-white mb-1 font-display text-center">
@@ -173,10 +184,10 @@ export default function StudentDetailsScreen() {
               });
               // Small delay to ensure state propagates before navigation
               setTimeout(() => {
-                router.replace(ROUTES.TABS.ROOT as never);
+                router.replace(ROUTES.TABS.ROOT);
               }, 100);
             }}
-            onEvolution={() => router.navigate(ROUTES.STUDENTS.ANALYTICS(id as string) as never)}
+            onEvolution={() => router.navigate(ROUTES.STUDENTS.ANALYTICS(id as string))}
           />
         </View>
 
@@ -192,7 +203,7 @@ export default function StudentDetailsScreen() {
                 <TouchableOpacity
                   key={item.title}
                   className={`w-[47%] h-40 rounded-3xl p-4 justify-between border ${item.disabled ? 'bg-zinc-900/50 border-zinc-800' : 'bg-zinc-900 border-zinc-800'}`}
-                  onPress={() => !item.disabled && router.navigate(item.route as never)}
+                  onPress={() => !item.disabled && router.navigate(item.route)}
                   activeOpacity={item.disabled ? 1 : 0.7}
                 >
                   <View
