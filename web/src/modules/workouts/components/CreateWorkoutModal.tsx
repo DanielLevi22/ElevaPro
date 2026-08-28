@@ -1,7 +1,7 @@
 "use client";
 
 import { supabase } from "@elevapro/supabase";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
 import type { Exercise } from "@/shared/hooks/useExercises";
 import { useCreateWorkout, useUpdateWorkout } from "@/shared/hooks/useWorkoutMutations";
@@ -31,6 +31,11 @@ export function CreateWorkoutModal({
   memberStudentId,
   onSuccess,
 }: CreateWorkoutModalProps) {
+  const nivelId = useId();
+  const descricaoOpcionalId = useId();
+  const duracaoMinId = useId();
+  const identificadorId = useId();
+  const nomeDoTreinoId = useId();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [identifier, setIdentifier] = useState("");
@@ -123,7 +128,10 @@ export function CreateWorkoutModal({
             exercise_id: ex.id,
             order_index: index,
             sets: ex.sets,
-            reps: ex.reps,
+            // `workout_exercises.reps` é text no banco — guarda coisas como
+            // "8-12" e "AMRAP", não só número. O modal edita um número, então a
+            // conversão acontece aqui, na fronteira com o banco.
+            reps: String(ex.reps),
             rest_seconds: ex.rest_seconds,
             weight: ex.weight || null,
             notes: null,
@@ -203,10 +211,17 @@ export function CreateWorkoutModal({
           {isEditing ? "Editar Treino" : "Novo Treino"}
         </h2>
         <button
+          type="button"
           onClick={onClose}
           className="text-muted-foreground hover:text-foreground transition-colors"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            aria-hidden="true"
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -228,10 +243,14 @@ export function CreateWorkoutModal({
               {/* Nome — hidden when hideExercises (identifier-based naming) */}
               {!hideExercises && (
                 <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-1">
+                  <label
+                    htmlFor={nomeDoTreinoId}
+                    className="block text-sm font-medium text-muted-foreground mb-1"
+                  >
                     Nome do Treino
                   </label>
                   <input
+                    id={nomeDoTreinoId}
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
@@ -245,10 +264,14 @@ export function CreateWorkoutModal({
               {trainingPlanId && (
                 <div className={hideExercises ? "space-y-4" : "grid grid-cols-2 gap-4"}>
                   <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-1">
+                    <label
+                      htmlFor={identificadorId}
+                      className="block text-sm font-medium text-muted-foreground mb-1"
+                    >
                       Identificador <span className="text-destructive">*</span>
                     </label>
                     <input
+                      id={identificadorId}
                       type="text"
                       value={identifier}
                       onChange={(e) => setIdentifier(e.target.value.toUpperCase())}
@@ -265,10 +288,14 @@ export function CreateWorkoutModal({
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-1">
+                    <label
+                      htmlFor={duracaoMinId}
+                      className="block text-sm font-medium text-muted-foreground mb-1"
+                    >
                       Duração (min)
                     </label>
                     <input
+                      id={duracaoMinId}
                       type="number"
                       value={estimatedDuration}
                       onChange={(e) => setEstimatedDuration(e.target.value)}
@@ -280,10 +307,14 @@ export function CreateWorkoutModal({
               )}
 
               <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1">
+                <label
+                  htmlFor={descricaoOpcionalId}
+                  className="block text-sm font-medium text-muted-foreground mb-1"
+                >
                   Descrição (Opcional)
                 </label>
                 <textarea
+                  id={descricaoOpcionalId}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full px-4 py-2 bg-background border border-overlay-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground/50 min-h-[100px]"
@@ -293,10 +324,13 @@ export function CreateWorkoutModal({
 
               {trainingPlanId && (
                 <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-1">
+                  <span
+                    id={nivelId}
+                    className="block text-sm font-medium text-muted-foreground mb-1"
+                  >
                     Nível de Dificuldade
-                  </label>
-                  <div className="flex gap-2">
+                  </span>
+                  <fieldset className="flex gap-2" aria-labelledby={nivelId}>
                     {(["beginner", "intermediate", "advanced"] as const).map((level) => (
                       <button
                         key={level}
@@ -313,7 +347,7 @@ export function CreateWorkoutModal({
                         {level === "advanced" && "Avançado"}
                       </button>
                     ))}
-                  </div>
+                  </fieldset>
                 </div>
               )}
             </div>
@@ -322,15 +356,21 @@ export function CreateWorkoutModal({
             {!isEditing && !hideExercises && (
               <div className="flex flex-col h-full min-h-125">
                 <div className="flex items-center justify-between mb-4">
-                  <label className="block text-sm font-medium text-muted-foreground">
+                  <h3 className="block text-sm font-medium text-muted-foreground">
                     Exercícios ({selectedExercises.length})
-                  </label>
+                  </h3>
                   <button
                     type="button"
                     onClick={() => setShowSelectModal(true)}
                     className="text-sm text-secondary hover:text-secondary/80 font-medium flex items-center gap-1"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg
+                      aria-hidden="true"
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -347,6 +387,7 @@ export function CreateWorkoutModal({
                     <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
                       <div className="w-16 h-16 bg-overlay-05 rounded-full flex items-center justify-center mb-4">
                         <svg
+                          aria-hidden="true"
                           className="w-8 h-8 opacity-50"
                           fill="none"
                           stroke="currentColor"
@@ -376,6 +417,7 @@ export function CreateWorkoutModal({
                     <div className="overflow-y-auto absolute inset-0 p-3 space-y-2">
                       {selectedExercises.map((item, index) => (
                         <ExerciseListItem
+                          // biome-ignore lint/suspicious/noArrayIndexKey: chave composta nome-índice em lista só de leitura, que nunca reordena nem sofre insercao no meio; o indice so desempata nomes repetidos
                           key={`${item.id}-${index}`}
                           exercise={item}
                           index={index}

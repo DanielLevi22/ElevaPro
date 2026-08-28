@@ -110,7 +110,7 @@ export function WorkoutFeedbackModal({ visible, onClose, onSubmit }: WorkoutFeed
           {/* Submit Button */}
           <TouchableOpacity
             onPress={handleSubmit}
-            className="bg-[#FF6B35] p-4 rounded-xl items-center mb-4"
+            className="bg-[#CCFF00] p-4 rounded-xl items-center mb-4"
             activeOpacity={0.8}
           >
             <Text className="text-white font-bold text-lg font-display">Salvar e Finalizar</Text>

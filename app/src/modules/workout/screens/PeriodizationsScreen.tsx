@@ -86,7 +86,7 @@ export default function PeriodizationsScreen() {
               : `${item.objective || 'Geral'} • ${phaseCount} ${phaseCount === 1 ? 'Fase' : 'Fases'}`
           }
           image={PERIODIZATION_IMAGES[item.objective as string] || PERIODIZATION_IMAGES.default}
-          onPress={() => router.push(`/(tabs)/workouts/periodizations/${item.id}` as never)}
+          onPress={() => router.push(`/(tabs)/workouts/periodizations/${item.id}`)}
           badge={<StatusBadge status={item.status} />}
           containerStyle={{ marginBottom: 24 }}
         >
@@ -107,7 +107,7 @@ export default function PeriodizationsScreen() {
             {accountType === 'member' ? (
               <View className="flex-row gap-2">
                 <TouchableOpacity
-                  onPress={() => router.push(`/(tabs)/workouts/periodizations/${item.id}` as never)}
+                  onPress={() => router.push(`/(tabs)/workouts/periodizations/${item.id}`)}
                   className="flex-1 py-2.5 rounded-xl border border-zinc-600 items-center"
                 >
                   <Text className="text-zinc-300 text-[10px] font-black uppercase tracking-widest">
@@ -178,7 +178,7 @@ export default function PeriodizationsScreen() {
               <Link href="/(tabs)/workouts/create-periodization" asChild>
                 <TouchableOpacity activeOpacity={0.8}>
                   <LinearGradient
-                    colors={['#FF6B35', '#FF2E63']}
+                    colors={['#CCFF00', '#A3CC00']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     className="h-12 w-12 rounded-full items-center justify-center shadow-lg shadow-orange-500/20"
@@ -206,7 +206,7 @@ export default function PeriodizationsScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={onRefresh} tintColor="#FF6B35" />
+          <RefreshControl refreshing={isLoading} onRefresh={onRefresh} tintColor="#CCFF00" />
         }
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
@@ -230,7 +230,7 @@ export default function PeriodizationsScreen() {
                 <Link href="/(tabs)/workouts/create-periodization" asChild>
                   <TouchableOpacity activeOpacity={0.8}>
                     <LinearGradient
-                      colors={['#FF6B35', '#FF2E63']}
+                      colors={['#CCFF00', '#A3CC00']}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 1 }}
                       className="rounded-2xl py-3 px-6 shadow-lg shadow-orange-500/20"
@@ -245,7 +245,7 @@ export default function PeriodizationsScreen() {
             </View>
           ) : (
             <View className="py-20">
-              <ActivityIndicator size="large" color="#FF6B35" />
+              <ActivityIndicator size="large" color="#CCFF00" />
             </View>
           )
         }

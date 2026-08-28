@@ -1,0 +1,171 @@
+import { describe, expect, it, vi } from "vitest";
+import { createAuthService } from "../auth.service";
+import { criarSupabaseFake } from "./supabaseFake";
+
+/** Sessão de mentira suficiente para o serviço decidir o que fazer. */
+function sessaoDe(userId: string | null) {
+  return {
+    data: { user: userId ? { id: userId, email: "a@b.com" } : null },
+    error: null,
+  };
+}
+
+describe("authService — login com verificação de status", () => {
+  // Este é o caminho que decide quem entra. A conta `inactive` é a que perdeu
+  // acesso — recusada na aprovação ou desativada depois. Deixá-la entrar é
+  // exatamente o defeito que o mobile tinha: comparava com "rejected" e
+  // "suspended", valores que o enum nunca teve, e o ramo nunca executava.
+  it("recusa conta inativa e encerra a sessão que acabou de abrir", async () => {
+    const signOut = vi.fn(async () => ({ error: null }));
+    const { supabase } = criarSupabaseFake(
+      { data: { account_status: "inactive" } },
+      {
+        auth: {
+          signInWithPassword: async () => sessaoDe("u1"),
+          signOut,
+        },
+      },
+    );
+
+    const resultado = await createAuthService(supabase).signInWithStatusCheck("a@b.com", "senha");
+
+    expect(resultado).toEqual({ success: false, error: "account_inactive" });
+    // Recusar sem deslogar deixaria a sessão válida no dispositivo: a tela
+    // barraria e a próxima chamada ao banco passaria.
+    expect(signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("deixa entrar quem está ativo", async () => {
+    const signOut = vi.fn(async () => ({ error: null }));
+    const { supabase } = criarSupabaseFake(
+      { data: { account_status: "active" } },
+      { auth: { signInWithPassword: async () => sessaoDe("u1"), signOut } },
+    );
+
+    expect(await createAuthService(supabase).signInWithStatusCheck("a@b.com", "senha")).toEqual({
+      success: true,
+    });
+    expect(signOut).not.toHaveBeenCalled();
+  });
+
+  // Quem espera aprovação precisa passar pelo login para chegar à tela de
+  // pendência — barrar aqui deixaria o especialista novo sem caminho nenhum.
+  it("deixa entrar quem está aguardando aprovação, para cair na tela de pendência", async () => {
+    const { supabase } = criarSupabaseFake(
+      { data: { account_status: "invited" } },
+      { auth: { signInWithPassword: async () => sessaoDe("u1") } },
+    );
+
+    expect(await createAuthService(supabase).signInWithStatusCheck("a@b.com", "senha")).toEqual({
+      success: true,
+    });
+  });
+
+  it("devolve a mensagem do erro de credencial sem consultar o perfil", async () => {
+    const { supabase, chamadas } = criarSupabaseFake(
+      {},
+      {
+        auth: {
+          signInWithPassword: async () => ({
+            data: { user: null },
+            error: { message: "Invalid login credentials" },
+          }),
+        },
+      },
+    );
+
+    expect(await createAuthService(supabase).signInWithStatusCheck("a@b.com", "x")).toEqual({
+      success: false,
+      error: "Invalid login credentials",
+    });
+    expect(chamadas).toHaveLength(0);
+  });
+
+  // Perfil ausente não bloqueia: o trigger `handle_new_user` cria o registro no
+  // insert em `auth.users`, e há uma janela em que ele ainda não foi lido.
+  it("não bloqueia quando o perfil ainda não foi encontrado", async () => {
+    const { supabase } = criarSupabaseFake(
+      { data: null },
+      { auth: { signInWithPassword: async () => sessaoDe("u1") } },
+    );
+
+    expect(await createAuthService(supabase).signInWithStatusCheck("a@b.com", "senha")).toEqual({
+      success: true,
+    });
+  });
+
+  it("consulta o status do usuário que acabou de autenticar", async () => {
+    const { supabase, chamadas } = criarSupabaseFake(
+      { data: { account_status: "active" } },
+      { auth: { signInWithPassword: async () => sessaoDe("u-42") } },
+    );
+
+    await createAuthService(supabase).signInWithStatusCheck("a@b.com", "senha");
+
+    expect(chamadas[0].tabela).toBe("profiles");
+    expect(chamadas[0].select).toBe("account_status");
+    expect(chamadas[0].filtros).toEqual({ id: "u-42" });
+  });
+});
+
+describe("authService — perfil", () => {
+  // O `account_type` sai de `profiles`, nunca de `user_metadata`: metadado de
+  // auth é escrito pelo próprio usuário com `updateUser`, então confiar nele
+  // deixa o chamador escolher o próprio papel (dívida #28).
+  it("lê o perfil da tabela, não do metadado de autenticação", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({
+      data: { id: "u1", account_type: "specialist" },
+    });
+
+    await createAuthService(supabase).getProfile("u1");
+
+    expect(chamadas[0].tabela).toBe("profiles");
+    expect(chamadas[0].filtros).toEqual({ id: "u1" });
+  });
+
+  it("devolve null quando o perfil não existe, em vez de lançar", async () => {
+    const { supabase } = criarSupabaseFake({ error: { message: "PGRST116" } });
+    expect(await createAuthService(supabase).getProfile("u1")).toBeNull();
+  });
+
+  it("traz os serviços contratados junto do perfil do especialista", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({
+      data: { id: "u1", account_type: "specialist", specialist_services: [] },
+    });
+
+    await createAuthService(supabase).getProfileWithServices("u1");
+    expect(chamadas[0].select).toContain("specialist_services");
+  });
+});
+
+describe("authService — definir tipo de conta", () => {
+  it("grava o tipo escolhido no onboarding", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({});
+
+    await createAuthService(supabase).setAccountType({
+      userId: "u1",
+      email: "a@b.com",
+      accountType: "student",
+      fullName: "Ana",
+    });
+
+    expect(chamadas[0].tabela).toBe("profiles");
+    expect(chamadas[0].payload).toEqual({
+      id: "u1",
+      email: "a@b.com",
+      account_type: "student",
+      full_name: "Ana",
+    });
+  });
+
+  it("propaga erro em vez de seguir como se tivesse gravado", async () => {
+    const { supabase } = criarSupabaseFake({ error: { message: "42501" } });
+    await expect(
+      createAuthService(supabase).setAccountType({
+        userId: "u1",
+        email: "a@b.com",
+        accountType: "member",
+      }),
+    ).rejects.toEqual({ message: "42501" });
+  });
+});

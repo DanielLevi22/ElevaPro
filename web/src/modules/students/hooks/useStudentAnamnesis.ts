@@ -26,8 +26,9 @@ export function useStudentAnamnesis(studentId: string | null) {
       if (!studentId) return null;
 
       const { data, error } = await supabase
+        // Campos nomeados: tabela sensível pela LGPD_COMPLIANCE.md.
         .from("student_anamnesis")
-        .select("*")
+        .select("id, student_id, responses, completed_at, created_at, updated_at")
         .eq("student_id", studentId)
         .maybeSingle();
 

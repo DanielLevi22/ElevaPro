@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import autoTable, { type CellInput, type RowInput } from "jspdf-autotable";
 
 // Extend jsPDF type
 declare module "jspdf" {
@@ -115,13 +115,13 @@ export async function exportDietToPDF(
   doc.setFontSize(26);
   doc.setTextColor(COLORS.primary[0], COLORS.primary[1], COLORS.primary[2]);
   doc.setFont("helvetica", "bold");
-  doc.text("MEU", 15, 18);
+  doc.text("ELEVA", 15, 18);
 
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(22);
-  const brandX = 15 + doc.getTextWidth("MEU") + 2;
-  doc.text("PERSONAL", brandX, 18, { charSpace: 1.5 });
+  const brandX = 15 + doc.getTextWidth("ELEVA") + 2;
+  doc.text("PRO", brandX, 18, { charSpace: 1.5 });
 
   doc.setFontSize(8.5);
   doc.setTextColor(180, 180, 180);
@@ -169,7 +169,7 @@ export async function exportDietToPDF(
   if (isCyclic) {
     const maxMealsInADay = Math.max(...Object.values(mealsByDay).map((d) => d.length), 0);
 
-    const tableHead: any[] = [
+    const tableHead: RowInput = [
       { content: "SEQUÊNCIA DO PROTOCOLO", styles: { halign: "left" as const } },
       "SEG",
       "TER",
@@ -209,7 +209,7 @@ export async function exportDietToPDF(
       const mWithTime = rowMeals.find((m) => m.meal_time);
       if (mWithTime) rowTime = `\n[ ${mWithTime.meal_time} ]`;
 
-      const row: any[] = [
+      const row: CellInput[] = [
         {
           content: `${rowLabel.toUpperCase()}${rowTime}`,
           styles: { fontStyle: "bold" as const, textColor: [40, 40, 40] },
@@ -224,9 +224,9 @@ export async function exportDietToPDF(
           const foodsText = meal.meal_foods
             .map((f) => `${f.food.name} (${f.quantity}${f.unit})`)
             .join("\n");
-          row.push({ content: foodsText, styles: { textColor: [40, 40, 40] } } as any);
+          row.push({ content: foodsText, styles: { textColor: [40, 40, 40] } });
         } else {
-          row.push({ content: "---", styles: { textColor: [200, 200, 200] } } as any);
+          row.push({ content: "---", styles: { textColor: [200, 200, 200] } });
         }
       }
       return row;
@@ -289,7 +289,7 @@ export async function exportDietToPDF(
     autoTable(doc, {
       startY: yPosition,
       head: [["ORDEM / HORÁRIO", "PRESCRIÇÃO NUTRICIONAL", "VALOR ENERGÉTICO", "MACRONUTRIENTES"]],
-      body: tableBody as any,
+      body: tableBody as RowInput[],
       theme: "grid",
       styles: {
         fontSize: 9,
@@ -315,7 +315,7 @@ export async function exportDietToPDF(
     doc.setPage(i);
     doc.setFontSize(6);
     doc.setTextColor(150, 150, 150);
-    const footerText = `PROTOCOLO OFICIAL // AUTENTICADO POR MEUPERSONAL ENGINE // ${format(new Date(), "PPpp", { locale: ptBR })} // PÁGINA ${i} DE ${pageCount}`;
+    const footerText = `PROTOCOLO OFICIAL // AUTENTICADO POR ELEVA PRO // ${format(new Date(), "PPpp", { locale: ptBR })} // PÁGINA ${i} DE ${pageCount}`;
     doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: "center" });
   }
 

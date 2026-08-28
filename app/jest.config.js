@@ -10,6 +10,9 @@ module.exports = {
     '^@elevapro/core(.*)$': '<rootDir>/src/packages/core$1',
     '^@elevapro/supabase(.*)$': '<rootDir>/src/packages/supabase$1',
     '^@elevapro/shared(.*)$': '<rootDir>/../shared/src$1',
+    // `shared/` não tem node_modules próprio; sem isto o import de runtime de
+    // `abilities.ts` não resolve a partir de lá.
+    '^@casl/ability$': '<rootDir>/node_modules/@casl/ability',
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   // Permite que arquivos em shared/ resolvam node_modules de app/
@@ -25,4 +28,16 @@ module.exports = {
   ],
   collectCoverage: true,
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts', '!src/**/__tests__/**'],
+  // Degrau, não a meta. O número que entra é o que já se sustenta hoje — um
+  // threshold que falha no dia em que entra não é guarda, é bloqueio. Sobe a
+  // cada PR que traz teste (alvo do PRD: 30%).
+  //
+  // Antes não havia limite nenhum: a cobertura era coletada, publicada como
+  // artefato do CI e ignorada. Dava para zerar a suíte sem quebrar o build.
+  coverageThreshold: {
+    global: {
+      statements: 9,
+      lines: 8,
+    },
+  },
 };

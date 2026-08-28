@@ -25,7 +25,31 @@ const path = require("node:path");
 
 const ROOT = path.resolve(__dirname, "..");
 const SCHEMA_DIR = path.join(ROOT, "shared", "src", "database", "schema");
-const FONTES = [path.join(ROOT, "web", "src"), path.join(ROOT, "app", "src")];
+const FONTES = [
+  path.join(ROOT, "web", "src"),
+  path.join(ROOT, "app", "src"),
+  path.join(ROOT, "shared", "src"),
+];
+
+/**
+ * Tabelas classificadas como sensíveis pela `LGPD_COMPLIANCE.md` — anamnese,
+ * avaliação física, sessões de treino, registro alimentar, métricas diárias e
+ * fotos corporais.
+ *
+ * Nelas `select("*")` é recusado. Não por tráfego: com `*`, a coluna criada
+ * amanhã passa a sair do banco no dia em que nasce, para toda camada que já
+ * consultava a tabela — sem ninguém decidir que ela deveria sair. Nomear os
+ * campos faz expor um dado novo custar uma linha escrita de propósito.
+ */
+const TABELAS_SENSIVEIS = new Set([
+  "physical_assessments",
+  "student_anamnesis",
+  "workout_sessions",
+  "diet_logs",
+  "meal_logs",
+  "health_daily_metrics",
+  "body_scans",
+]);
 
 /** Nome da tabela → colunas, lido do `pgTable(...)` do Drizzle. */
 function lerSchema() {
@@ -69,6 +93,7 @@ if (tabelas.size === 0) {
 }
 
 const problemas = [];
+const selectsAbertos = [];
 
 for (const raiz of FONTES) {
   if (!fs.existsSync(raiz)) continue;
@@ -80,6 +105,11 @@ for (const raiz of FONTES) {
       /\.from\(\s*["']([a-z_]+)["']\s*\)[\s\S]{0,300}?\.select\(\s*[`"']([^`"']+)[`"']/g,
     )) {
       const [, tabela, lista] = uso;
+
+      if (TABELAS_SENSIVEIS.has(tabela) && lista.trim() === "*") {
+        selectsAbertos.push({ arquivo: path.relative(ROOT, arquivo), tabela });
+      }
+
       const colunas = tabelas.get(tabela);
       if (!colunas) continue;
 
@@ -113,7 +143,10 @@ for (const raiz of FONTES) {
       if (!colunas) continue;
 
       for (const filtro of corpo.matchAll(
-        /\.(?:eq|neq|gt|gte|lt|lte|like|ilike|is|in|contains|order)\(\s*["']([a-z_]+)["']/g,
+        // `(?![^)]*foreignTable)` deixa passar o `.order("x", { foreignTable })`,
+        // que ordena por coluna da tabela EMBUTIDA, não da tabela de fora —
+        // `workout_exercises.order_index` num select de `workouts`, por exemplo.
+        /\.(?:eq|neq|gt|gte|lt|lte|like|ilike|is|in|contains|order)\(\s*["']([a-z_]+)["'](?![^)]*foreignTable)/g,
       )) {
         const nome = filtro[1];
         if (!colunas.has(nome)) {
@@ -137,4 +170,22 @@ if (problemas.length > 0) {
   process.exit(1);
 }
 
-console.log(`✓ Nenhuma coluna inexistente em consultas (${tabelas.size} tabelas no schema).`);
+if (selectsAbertos.length > 0) {
+  console.error('\n✗ `select("*")` em tabela sensível:\n');
+  for (const { arquivo, tabela } of selectsAbertos) {
+    console.error(`    ${tabela}`);
+    console.error(`      ${arquivo}\n`);
+  }
+  console.error(
+    "  Estas tabelas guardam dado de saúde (LGPD_COMPLIANCE.md). Com `*`, a\n" +
+      "  coluna criada amanhã sai do banco no dia em que nasce, para toda\n" +
+      "  camada que já consultava — sem ninguém decidir que ela deveria sair.\n\n" +
+      "  Nomeie os campos. Para `physical_assessments` existe a constante\n" +
+      "  PHYSICAL_ASSESSMENT_COLUMNS em @elevapro/shared.\n",
+  );
+  process.exit(1);
+}
+
+console.log(
+  `✓ Nenhuma coluna inexistente em consultas, e nenhum select("*") em tabela sensível (${tabelas.size} tabelas).`,
+);

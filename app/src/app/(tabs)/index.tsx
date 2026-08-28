@@ -24,10 +24,10 @@ import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { colors as brandColors } from '@/constants/colors';
 import { useHealthData } from '@/hooks/useHealthData';
 import { useAssessmentStore } from '@/modules/assessment/store/assessmentStore';
+import { useGamificationStore } from '@/modules/gamification/store/gamificationStore';
 import { useStudentStore } from '@/modules/students';
 import { useWorkoutStore } from '@/modules/workout';
 import { ROUTES } from '@/navigation/types';
-import { useGamificationStore } from '@/store/gamificationStore';
 import { getLocalDateISOString } from '@/utils/dateUtils';
 
 const MUSCLE_IMAGES: Record<string, ImageSourcePropType> = {
@@ -40,10 +40,12 @@ const MUSCLE_IMAGES: Record<string, ImageSourcePropType> = {
   Geral: require('../../../assets/workouts/chest.jpg'),
 };
 
+// Colunas de `profiles` são nuláveis no banco, não `undefined`: o perfil nasce
+// no signup com quase tudo em branco.
 interface ProfileData {
   id?: string;
-  full_name?: string;
-  avatar_url?: string;
+  full_name?: string | null;
+  avatar_url?: string | null;
   [key: string]: unknown;
 }
 
@@ -124,7 +126,7 @@ export default function DashboardScreen() {
 
   const renderHeaderAvatar = () => (
     <TouchableOpacity
-      onPress={() => router.push(ROUTES.TABS.PROFILE as never)}
+      onPress={() => router.push(ROUTES.TABS.PROFILE)}
       activeOpacity={0.8}
       className="items-center justify-center p-0.5"
     >
@@ -206,7 +208,7 @@ export default function DashboardScreen() {
             <View className="flex-row gap-4">
               {/* Students Card - Clean Dark */}
               <TouchableOpacity
-                onPress={() => router.push(ROUTES.TABS.STUDENTS as never)}
+                onPress={() => router.push(ROUTES.TABS.STUDENTS)}
                 activeOpacity={0.8}
                 className="flex-1"
               >
@@ -230,7 +232,7 @@ export default function DashboardScreen() {
 
               {/* Workouts Card - Clean Dark */}
               <TouchableOpacity
-                onPress={() => router.push(ROUTES.TABS.WORKOUTS as never)}
+                onPress={() => router.push(ROUTES.TABS.WORKOUTS)}
                 activeOpacity={0.8}
                 className="flex-1"
               >
@@ -254,10 +256,7 @@ export default function DashboardScreen() {
             </View>
 
             {/* Ranking Card - Full Width */}
-            <TouchableOpacity
-              onPress={() => router.push(ROUTES.TABS.RANKING as never)}
-              activeOpacity={0.8}
-            >
+            <TouchableOpacity onPress={() => router.push(ROUTES.TABS.RANKING)} activeOpacity={0.8}>
               <View
                 className="rounded-[24px] p-5 flex-row items-center justify-between border bg-zinc-900"
                 style={{ borderColor: brandColors.border.default }}
@@ -281,7 +280,7 @@ export default function DashboardScreen() {
 
             {/* Quick Action - Premium Solid Button */}
             <TouchableOpacity
-              onPress={() => router.push(ROUTES.STUDENTS.CREATE as never)}
+              onPress={() => router.push(ROUTES.STUDENTS.CREATE)}
               activeOpacity={0.8}
               className="mt-2 text-center"
             >
@@ -366,7 +365,7 @@ export default function DashboardScreen() {
               title={suggestedWorkout.title}
               subtitle={`${suggestedWorkout.muscle_group || 'Geral'} • Meta de Hoje`}
               image={MUSCLE_IMAGES[suggestedWorkout.muscle_group || 'Geral']}
-              onPress={() => router.push(ROUTES.WORKOUTS.DETAILS(suggestedWorkout.id) as never)}
+              onPress={() => router.push(ROUTES.WORKOUTS.DETAILS(suggestedWorkout.id))}
               containerStyle={{ marginBottom: 16 }}
               badge={
                 <View className="bg-orange-500/20 px-3 py-1 rounded-full border border-orange-500/20">
@@ -426,7 +425,7 @@ export default function DashboardScreen() {
 
           {/* Cardio Entry */}
           <TouchableOpacity
-            onPress={() => router.push(ROUTES.TABS.CARDIO as never)}
+            onPress={() => router.push(ROUTES.TABS.CARDIO)}
             activeOpacity={0.8}
             className="mt-4 mb-0"
           >
@@ -453,7 +452,7 @@ export default function DashboardScreen() {
 
           {/* Ranking Entry for Students */}
           <TouchableOpacity
-            onPress={() => router.push(ROUTES.TABS.RANKING as never)}
+            onPress={() => router.push(ROUTES.TABS.RANKING)}
             activeOpacity={0.8}
             className="mt-4"
           >
@@ -480,7 +479,7 @@ export default function DashboardScreen() {
 
           {/* Anamnesis Entry */}
           <TouchableOpacity
-            onPress={() => router.push('/student/anamnesis' as never)}
+            onPress={() => router.push('/student/anamnesis')}
             activeOpacity={0.8}
             className="mt-4"
           >
@@ -544,7 +543,7 @@ export default function DashboardScreen() {
 
           {/* Body Scan Entry - AI Powered */}
           <TouchableOpacity
-            onPress={() => router.push(ROUTES.ASSESSMENT.BODY_SCAN as never)}
+            onPress={() => router.push(ROUTES.ASSESSMENT.BODY_SCAN)}
             activeOpacity={0.8}
             className="mt-4"
           >
@@ -581,7 +580,7 @@ export default function DashboardScreen() {
               de conectado tirava do aluno a única porta de volta. O subtítulo
               carrega o estado. */}
           <TouchableOpacity
-            onPress={() => router.push(ROUTES.ONBOARDING.HEALTH_CONNECT as never)}
+            onPress={() => router.push(ROUTES.ONBOARDING.HEALTH_CONNECT)}
             activeOpacity={0.8}
             className="mt-4"
           >

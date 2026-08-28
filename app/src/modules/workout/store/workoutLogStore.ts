@@ -1,12 +1,22 @@
 import { supabase } from '@elevapro/supabase';
 import { create } from 'zustand';
 
+/**
+ * Uma linha de `workout_sessions` — o store consulta essa tabela, não uma
+ * `workout_logs` (que não existe).
+ *
+ * O campo se chama `notes` no banco; a interface declarava `feedback`, nome que
+ * a tabela nunca teve. Como ninguém lia `log.feedback`, o erro ficou invisível:
+ * o insert já gravava `notes` corretamente.
+ */
 export interface WorkoutLog {
   id: string;
   student_id: string;
-  workout_id: string;
-  completed_at: string;
-  feedback: string | null;
+  workout_id: string | null;
+  started_at: string;
+  completed_at: string | null;
+  intensity: number | null;
+  notes: string | null;
   created_at: string;
 }
 
@@ -47,8 +57,11 @@ export const useWorkoutLogStore = create<WorkoutLogState>((set, get) => ({
     set({ loading: true });
     try {
       const { data, error } = await supabase
+        // Campos nomeados: tabela sensível pela LGPD_COMPLIANCE.md.
         .from('workout_sessions')
-        .select('*')
+        .select(
+          'id, student_id, workout_id, started_at, completed_at, intensity, notes, created_at'
+        )
         .eq('student_id', studentId)
         .order('completed_at', { ascending: false });
 

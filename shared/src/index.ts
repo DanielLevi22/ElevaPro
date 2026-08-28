@@ -1,3 +1,11 @@
+// Tipos gerados do banco pelo Supabase CLI (`npm run db:types`). Vivem em
+// shared/ porque são a fonte única das duas plataformas: enquanto existiam só
+// no web, o cliente do mobile era construído sem genérico e toda consulta de lá
+// devolvia `any` — foi assim que as dívidas #7, #10, #40 e #44 nasceram.
+
+// Tabela de permissões do CASL — fonte única das duas plataformas.
+export * from "./auth/abilities";
+export type { Database, Json } from "./database/database.types";
 export * from "./services/auth.service";
 export * from "./services/bodyScan.service";
 export * from "./services/briefing.service";

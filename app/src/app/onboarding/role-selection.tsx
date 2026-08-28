@@ -41,9 +41,9 @@ export default function RoleSelectionScreen() {
 
       // Navigate based on role
       if (selectedRole === 'specialist') {
-        router.replace('/(professional)' as never);
+        router.replace('/(professional)');
       } else {
-        router.push('/onboarding/health-connect' as never);
+        router.push('/onboarding/health-connect');
       }
     } catch (error: unknown) {
       if (error instanceof Error) {

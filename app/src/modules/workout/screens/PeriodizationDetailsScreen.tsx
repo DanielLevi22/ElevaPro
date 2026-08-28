@@ -131,7 +131,7 @@ export default function PeriodizationDetailsScreen() {
   if (isLoading) {
     return (
       <ScreenLayout className="justify-center items-center">
-        <ActivityIndicator size="large" color="#00D9FF" />
+        <ActivityIndicator size="large" color="#00F0FF" />
       </ScreenLayout>
     );
   }
@@ -164,9 +164,9 @@ export default function PeriodizationDetailsScreen() {
       case 'hypertrophy':
         return '#FFB800'; // Gold
       case 'strength':
-        return '#FF2E63'; // Red
+        return '#A3CC00'; // Red
       default:
-        return '#00D9FF'; // Cyan
+        return '#00F0FF'; // Cyan
     }
   };
 

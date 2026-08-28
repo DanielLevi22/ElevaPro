@@ -129,6 +129,7 @@ export function DietMealsProposalCard({ data, saved, loading, onApprove, onAdjus
 
         <div className="space-y-2">
           {data.meals.map((meal, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: chave composta nome-índice em lista só de leitura, que nunca reordena nem sofre insercao no meio; o indice so desempata nomes repetidos
             <div key={`${meal.name}-${i}`} className="rounded-lg bg-white/5 px-3 py-2.5">
               <div className="flex items-baseline justify-between gap-2">
                 <p className="text-sm font-medium text-foreground">{meal.name}</p>
@@ -142,6 +143,7 @@ export function DietMealsProposalCard({ data, saved, loading, onApprove, onAdjus
               <ul className="mt-1.5 space-y-1">
                 {meal.items.map((item, j) => (
                   <li
+                    // biome-ignore lint/suspicious/noArrayIndexKey: chave composta nome-índice em lista só de leitura, que nunca reordena nem sofre insercao no meio; o indice so desempata nomes repetidos
                     key={`${item.food_name}-${j}`}
                     className="flex items-baseline justify-between gap-2 text-xs"
                   >

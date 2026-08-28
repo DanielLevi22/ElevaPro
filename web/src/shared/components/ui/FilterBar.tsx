@@ -66,7 +66,7 @@ export function FilterBar<T extends string>({
       {children}
 
       {tabs && tabs.length > 0 && (
-        <div className="flex gap-1.5" role="group" aria-label={tabsLabel}>
+        <fieldset className="flex gap-1.5" aria-label={tabsLabel}>
           {tabs.map((tab) => {
             const isSelected = activeTab === tab.value;
             return (
@@ -85,7 +85,7 @@ export function FilterBar<T extends string>({
               </button>
             );
           })}
-        </div>
+        </fieldset>
       )}
     </div>
   );

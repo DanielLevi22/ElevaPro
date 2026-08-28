@@ -89,7 +89,7 @@ const TabItem = memo(
     }));
 
     let iconName: React.ComponentProps<typeof MaterialCommunityIcons>['name'] = 'help';
-    const iconColor = isFocused ? '#FF6B35' : 'rgba(255, 255, 255, 0.5)';
+    const iconColor = isFocused ? '#CCFF00' : 'rgba(255, 255, 255, 0.5)';
 
     switch (route.name) {
       case 'index':
@@ -293,7 +293,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const baseOpacity = withSpring(isDragging.value === 1 ? 1 : 0, { damping: 20 });
     return {
       opacity: isActive ? 1 : baseOpacity,
-      backgroundColor: withSpring(isActive ? '#FF6B35' : 'rgba(30, 30, 30, 0.9)'),
+      backgroundColor: withSpring(isActive ? '#CCFF00' : 'rgba(30, 30, 30, 0.9)'),
       transform: [
         { scale: isActive ? withSpring(1.6) : withSpring(1.0) },
         { translateX: isActive ? -10 : 0 },
@@ -319,7 +319,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const baseOpacity = withSpring(isDragging.value === 1 ? 1 : 0, { damping: 20 });
     return {
       opacity: isActive ? 1 : baseOpacity,
-      backgroundColor: withSpring(isActive ? '#9D4EDD' : 'rgba(30, 30, 30, 0.9)'), // Purple for Menu
+      backgroundColor: withSpring(isActive ? '#FF0099' : 'rgba(30, 30, 30, 0.9)'), // Purple for Menu
       transform: [
         { scale: isActive ? withSpring(1.6) : withSpring(1.0) },
         { translateX: isActive ? 10 : 0 },
@@ -345,7 +345,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const baseOpacity = withSpring(isDragging.value === 1 ? 1 : 0, { damping: 20 });
     return {
       opacity: isActive ? 1 : baseOpacity,
-      backgroundColor: withSpring(isActive ? '#FF2E63' : 'rgba(30, 30, 30, 0.9)'),
+      backgroundColor: withSpring(isActive ? '#A3CC00' : 'rgba(30, 30, 30, 0.9)'),
       transform: [
         { scale: isActive ? withSpring(1.6) : withSpring(1.0) },
         { translateX: isActive ? -15 : 0 },
@@ -370,7 +370,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const baseOpacity = withSpring(isDragging.value === 1 ? 1 : 0, { damping: 20 });
     return {
       opacity: isActive ? 1 : baseOpacity,
-      backgroundColor: withSpring(isActive ? '#00D9FF' : 'rgba(30, 30, 30, 0.9)'),
+      backgroundColor: withSpring(isActive ? '#00F0FF' : 'rgba(30, 30, 30, 0.9)'),
       transform: [
         { scale: isActive ? withSpring(1.6) : withSpring(1.0) },
         { translateX: isActive ? 15 : 0 },

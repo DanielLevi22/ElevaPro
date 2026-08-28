@@ -17,7 +17,7 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 interface DatePickerProps {
   value: string; // ISO format
@@ -41,6 +41,7 @@ const MONTHS = [
 ];
 
 export function DatePicker({ value, onChange, label }: DatePickerProps) {
+  const rotuloId = useId();
   const [isOpen, setIsOpen] = useState(false);
   // parseISO, não `new Date`: o valor é só a data ("2026-08-01") e o construtor
   // a interpreta como UTC — em fuso negativo o calendário marcava o dia anterior.
@@ -67,7 +68,13 @@ export function DatePicker({ value, onChange, label }: DatePickerProps) {
           onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
           className="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-highlight text-muted-foreground hover:bg-overlay-10 hover:text-foreground transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            aria-hidden="true"
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -84,7 +91,13 @@ export function DatePicker({ value, onChange, label }: DatePickerProps) {
           onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
           className="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-highlight text-muted-foreground hover:bg-overlay-10 hover:text-foreground transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            aria-hidden="true"
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>
@@ -127,15 +140,24 @@ export function DatePicker({ value, onChange, label }: DatePickerProps) {
         const isCurrentMonth = isSameMonth(day, monthStart);
 
         days.push(
-          <div
+          // `<button>` e não `<div onClick>`: cada dia é um controle. Enquanto
+          // eram divs, escolher data pelo teclado era impossível — sem foco,
+          // sem Enter, sem leitor de tela anunciando o quê. `disabled` no lugar
+          // de `pointer-events-none` tira o dia de fora do mês da navegação por
+          // Tab, em vez de deixá-lo focável e inerte.
+          <button
+            type="button"
             key={day.toString()}
+            disabled={!isCurrentMonth}
+            aria-pressed={isSelected === true}
+            aria-label={format(cloneDay, "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
             onClick={() => {
               onChange(format(cloneDay, "yyyy-MM-dd"));
               setIsOpen(false);
             }}
             className={`
               relative h-9 rounded-xl flex items-center justify-center cursor-pointer text-xs font-bold transition-all
-              ${!isCurrentMonth ? "text-muted-foreground/40 pointer-events-none" : isSelected ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-110 z-10" : "text-muted-foreground hover:bg-overlay-08 hover:text-foreground"}
+              ${!isCurrentMonth ? "text-muted-foreground/40" : isSelected ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-110 z-10" : "text-muted-foreground hover:bg-overlay-08 hover:text-foreground"}
             `}
           >
             {formattedDate}
@@ -146,7 +168,7 @@ export function DatePicker({ value, onChange, label }: DatePickerProps) {
                 transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
               />
             )}
-          </div>,
+          </button>,
         );
         day = addDays(day, 1);
       }
@@ -163,13 +185,17 @@ export function DatePicker({ value, onChange, label }: DatePickerProps) {
   return (
     <div className="relative" ref={containerRef}>
       {label && (
-        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1 mb-2 block">
+        <span
+          id={rotuloId}
+          className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1 mb-2 block"
+        >
           {label}
-        </label>
+        </span>
       )}
 
       <button
         type="button"
+        aria-labelledby={label ? rotuloId : undefined}
         onClick={() => setIsOpen(!isOpen)}
         className="w-full bg-background border border-border rounded-[20px] px-4 py-4 flex items-center justify-between hover:border-overlay-15 transition-all text-foreground font-bold focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
       >
@@ -179,6 +205,7 @@ export function DatePicker({ value, onChange, label }: DatePickerProps) {
             : "Selecionar data"}
         </span>
         <svg
+          aria-hidden="true"
           className={`w-5 h-5 text-muted-foreground transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"

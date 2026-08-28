@@ -57,6 +57,7 @@ export function ProfileConfirmationCard({
           <div className="grid grid-cols-2 gap-2">
             {(["express", "analytical"] as const).map((mode) => (
               <button
+                type="button"
                 key={mode}
                 onClick={() => onChangeMode(mode)}
                 className={`py-2.5 rounded-xl text-sm font-medium transition-colors border ${

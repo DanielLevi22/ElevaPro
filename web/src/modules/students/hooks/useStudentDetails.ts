@@ -1,5 +1,6 @@
 "use client";
 
+import { PHYSICAL_ASSESSMENT_COLUMNS } from "@elevapro/shared";
 import { supabase } from "@elevapro/supabase";
 import { useQuery } from "@tanstack/react-query";
 
@@ -54,9 +55,11 @@ export function useStudentDetails(studentId: string | null) {
           .single(),
         supabase
           .from("physical_assessments")
-          // Nomes reais do schema. A lista anterior pedia 21 colunas que não
-          // existem, e o PostgREST recusava a consulta inteira com 42703.
-          .select("*")
+          // Nomes reais do schema, vindos da constante compartilhada. A lista
+          // anterior pedia 21 colunas que não existem, e o PostgREST recusava a
+          // consulta inteira com 42703; depois virou `*`, que resolvia o erro e
+          // trocava por outro problema — coluna nova saindo do banco sozinha.
+          .select(PHYSICAL_ASSESSMENT_COLUMNS)
           .eq("student_id", studentId)
           .order("assessed_at", { ascending: false })
           .limit(1)

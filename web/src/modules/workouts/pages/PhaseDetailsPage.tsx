@@ -57,6 +57,7 @@ function WorkoutCard({ workout, onDelete }: { workout: Workout; onDelete: (w: Wo
           </p>
         </div>
         <svg
+          aria-hidden="true"
           className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0"
           fill="none"
           stroke="currentColor"
@@ -71,7 +72,13 @@ function WorkoutCard({ workout, onDelete }: { workout: Workout; onDelete: (w: Wo
         className="p-3 mr-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors shrink-0"
         title="Remover treino"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          aria-hidden="true"
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -184,6 +191,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-muted-foreground">
         <button
+          type="button"
           onClick={() => router.push("/dashboard/workouts")}
           className="hover:text-foreground transition-colors"
         >
@@ -191,6 +199,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
         </button>
         <span>/</span>
         <button
+          type="button"
           onClick={() => router.push(`/dashboard/workouts/periodizations/${periodizationId}`)}
           className="hover:text-foreground transition-colors"
         >
@@ -207,11 +216,18 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
           {/* Status menu */}
           <div className="relative">
             <button
+              type="button"
               onClick={() => setShowStatusMenu((v) => !v)}
               className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${statusCfg.className} hover:opacity-80`}
             >
               {statusCfg.label}
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                aria-hidden="true"
+                className="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -226,6 +242,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
                   const cfg = PLAN_STATUS_CONFIG[s];
                   return (
                     <button
+                      type="button"
                       key={s}
                       onClick={() => {
                         handleUpdateStatus(s);
@@ -245,12 +262,19 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
           </div>
           {/* Delete */}
           <button
+            type="button"
             onClick={handleDeletePhase}
             disabled={isPending}
             className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
             title="Excluir fase"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              aria-hidden="true"
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -271,6 +295,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
           </p>
           <div className="relative">
             <button
+              type="button"
               onClick={() => setShowSplitPicker((v) => !v)}
               disabled={changingSplit}
               className="flex items-center gap-2 bg-overlay-05 border border-overlay-10 px-4 py-2.5 rounded-xl hover:bg-overlay-10 transition-colors disabled:opacity-50"
@@ -279,6 +304,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
                 {workouts.map((w) => w.title.charAt(0)).join("") || "--"}
               </span>
               <svg
+                aria-hidden="true"
                 className="w-4 h-4 text-primary"
                 fill="none"
                 stroke="currentColor"
@@ -297,6 +323,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
               <div className="absolute left-0 top-full mt-1 bg-surface border border-overlay-10 rounded-xl shadow-xl z-20 p-2 flex flex-col gap-1 min-w-40">
                 {SPLITS.map((s) => (
                   <button
+                    type="button"
                     key={s}
                     onClick={() => {
                       setShowSplitPicker(false);
@@ -378,10 +405,17 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
           </h2>
           <div className="flex items-center gap-3">
             <button
+              type="button"
               onClick={() => setShowAddWorkout(true)}
               className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                aria-hidden="true"
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -392,10 +426,17 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
               Novo Treino
             </button>
             <button
+              type="button"
               onClick={() => setShowLibrary(true)}
               className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                aria-hidden="true"
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -412,6 +453,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
         {muscleGroups.length > 0 && (
           <div className="flex gap-2 flex-wrap">
             <button
+              type="button"
               onClick={() => setSelectedMuscle(null)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 !selectedMuscle
@@ -423,6 +465,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
             </button>
             {muscleGroups.map((m) => (
               <button
+                type="button"
                 key={m}
                 onClick={() => setSelectedMuscle(m === selectedMuscle ? null : m)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
@@ -456,6 +499,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
               <>
                 <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
                   <svg
+                    aria-hidden="true"
                     className="w-6 h-6 text-primary"
                     fill="none"
                     stroke="currentColor"

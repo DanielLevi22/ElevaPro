@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/shared/components/ui/Button";
 import { Dialog } from "@/shared/components/ui/Dialog";
@@ -12,6 +12,9 @@ interface ImportDietModalProps {
 }
 
 export function ImportDietModal({ isOpen, onClose, targetStudentId }: ImportDietModalProps) {
+  const alunoDeDestinoId = useId();
+  const alunoDeOrigemId = useId();
+  const planoDeDietaId = useId();
   const [selectedSourceStudent, setSelectedSourceStudent] = useState("");
   const [selectedDietPlan, setSelectedDietPlan] = useState("");
   const [selectedTargetStudent, setSelectedTargetStudent] = useState(targetStudentId || "");
@@ -41,9 +44,9 @@ export function ImportDietModal({ isOpen, onClose, targetStudentId }: ImportDiet
       onClose();
 
       toast.success("Dieta importada com sucesso!");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error importing diet:", error);
-      toast.error(error.message || "Erro ao importar dieta");
+      toast.error(error instanceof Error ? error.message : "Erro ao importar dieta");
     }
   };
 
@@ -52,8 +55,11 @@ export function ImportDietModal({ isOpen, onClose, targetStudentId }: ImportDiet
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Aluno de Origem</label>
+            <label htmlFor={alunoDeOrigemId} className="text-sm font-medium text-muted-foreground">
+              Aluno de Origem
+            </label>
             <select
+              id={alunoDeOrigemId}
               value={selectedSourceStudent}
               onChange={(e) => {
                 setSelectedSourceStudent(e.target.value);
@@ -73,8 +79,11 @@ export function ImportDietModal({ isOpen, onClose, targetStudentId }: ImportDiet
 
           {selectedSourceStudent && (
             <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Plano de Dieta</label>
+              <label htmlFor={planoDeDietaId} className="text-sm font-medium text-muted-foreground">
+                Plano de Dieta
+              </label>
               <select
+                id={planoDeDietaId}
                 value={selectedDietPlan}
                 onChange={(e) => setSelectedDietPlan(e.target.value)}
                 className="w-full bg-background border border-white/10 rounded-lg px-4 py-3 text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -92,8 +101,14 @@ export function ImportDietModal({ isOpen, onClose, targetStudentId }: ImportDiet
 
           {!targetStudentId && (
             <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Aluno de Destino</label>
+              <label
+                htmlFor={alunoDeDestinoId}
+                className="text-sm font-medium text-muted-foreground"
+              >
+                Aluno de Destino
+              </label>
               <select
+                id={alunoDeDestinoId}
                 value={selectedTargetStudent}
                 onChange={(e) => setSelectedTargetStudent(e.target.value)}
                 className="w-full bg-background border border-white/10 rounded-lg px-4 py-3 text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"

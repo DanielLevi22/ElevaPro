@@ -8,6 +8,9 @@ export default function MenuScreen() {
   const router = useRouter();
   const { user, signOut } = useAuthStore();
 
+  // `as const` preserva cada rota como literal: sem isso `route` vira `string`
+  // largo e o `typedRoutes` recusa o push — que era exatamente o que o
+  // `as never` daqui escondia.
   const menuItems = [
     {
       label: 'Perfil',
@@ -27,13 +30,7 @@ export default function MenuScreen() {
       route: '/help/voice-commands',
       color: '#FFFFFF',
     },
-    {
-      label: 'Configurações',
-      icon: 'settings-outline',
-      route: '/settings',
-      color: '#FFFFFF',
-    },
-  ];
+  ] as const;
 
   return (
     <ScreenLayout>
@@ -56,7 +53,7 @@ export default function MenuScreen() {
           {menuItems.map((item) => (
             <TouchableOpacity
               key={item.label}
-              onPress={() => item.route && router.push(item.route as never)}
+              onPress={() => item.route && router.push(item.route)}
               className="flex-row items-center bg-zinc-900/50 p-4 rounded-xl border border-zinc-800"
             >
               <View className="bg-zinc-800 p-2 rounded-lg mr-4">

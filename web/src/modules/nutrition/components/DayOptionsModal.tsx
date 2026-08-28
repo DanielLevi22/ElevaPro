@@ -36,6 +36,7 @@ export function DayOptionsModal({
         <div className="space-y-4">
           <div className="space-y-2">
             <button
+              type="button"
               onClick={onCopy}
               disabled={isCopying || isPasting || isClearing}
               className="w-full flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 hover:border-primary/50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
@@ -45,6 +46,7 @@ export function DayOptionsModal({
                   <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <svg
+                    aria-hidden="true"
                     className="w-5 h-5 text-primary"
                     fill="none"
                     stroke="currentColor"
@@ -68,6 +70,7 @@ export function DayOptionsModal({
             </button>
 
             <button
+              type="button"
               onClick={onPaste}
               disabled={!canPaste || isCopying || isPasting || isClearing}
               className="w-full flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 hover:border-primary/50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
@@ -77,6 +80,7 @@ export function DayOptionsModal({
                   <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <svg
+                    aria-hidden="true"
                     className="w-5 h-5 text-blue-400"
                     fill="none"
                     stroke="currentColor"
@@ -106,6 +110,7 @@ export function DayOptionsModal({
             </button>
 
             <button
+              type="button"
               onClick={() => setIsConfirmClearOpen(true)}
               disabled={isCopying || isPasting || isClearing}
               className="w-full flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-red-500/10 border border-white/5 hover:border-red-500/50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
@@ -115,6 +120,7 @@ export function DayOptionsModal({
                   <div className="w-5 h-5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <svg
+                    aria-hidden="true"
                     className="w-5 h-5 text-red-400"
                     fill="none"
                     stroke="currentColor"

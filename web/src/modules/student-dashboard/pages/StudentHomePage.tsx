@@ -61,6 +61,7 @@ function AnamnesisProgressBanner({ studentId }: { studentId: string | null }) {
         </p>
       </div>
       <svg
+        aria-hidden="true"
         className="w-4 h-4 text-muted-foreground group-hover:text-muted-foreground transition-colors shrink-0"
         fill="none"
         stroke="currentColor"

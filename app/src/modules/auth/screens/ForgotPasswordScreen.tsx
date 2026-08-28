@@ -23,7 +23,10 @@ export function ForgotPasswordScreen() {
     setLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'meupersonal://reset-password',
+        // O esquema é declarado em app.json como `elevapro`. Enquanto isto
+        // apontava para `meupersonal://`, o link do e-mail não voltava para o
+        // app — a recuperação de senha terminava em lugar nenhum.
+        redirectTo: 'elevapro://reset-password',
       });
 
       if (error) throw error;

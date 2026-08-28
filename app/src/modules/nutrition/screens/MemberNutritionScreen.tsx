@@ -47,11 +47,11 @@ export function MemberNutritionScreen() {
             Crie seu primeiro plano alimentar personalizado.
           </Text>
           <TouchableOpacity
-            onPress={() => router.push('/(tabs)/nutrition/create' as never)}
+            onPress={() => router.push('/(tabs)/nutrition/create')}
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={['#FF6B35', '#FF2E63']}
+              colors={['#CCFF00', '#A3CC00']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               className="rounded-2xl py-3 px-6 shadow-lg shadow-orange-500/20"
@@ -108,7 +108,7 @@ export function MemberNutritionScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  onPress={() => router.push('/(tabs)/nutrition/follow' as never)}
+                  onPress={() => router.push('/(tabs)/nutrition/follow')}
                   className="flex-1 py-2.5 rounded-xl items-center flex-row justify-center gap-1"
                   style={{ backgroundColor: colors.primary.start }}
                 >
@@ -122,7 +122,7 @@ export function MemberNutritionScreen() {
           ))}
 
           <TouchableOpacity
-            onPress={() => router.push('/(tabs)/nutrition/create' as never)}
+            onPress={() => router.push('/(tabs)/nutrition/create')}
             className="flex-row items-center justify-center py-4 rounded-2xl border border-dashed border-zinc-700 mt-2"
           >
             <Ionicons name="add" size={18} color="#71717A" style={{ marginRight: 6 }} />

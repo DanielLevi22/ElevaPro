@@ -411,8 +411,11 @@ export function useStudentNutritionStats(studentId: string) {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const { data: logs, error: logsError } = await supabase
+        // Campos nomeados: tabela sensível pela LGPD_COMPLIANCE.md.
         .from("meal_logs")
-        .select("*")
+        .select(
+          "id, student_id, diet_plan_id, diet_meal_id, logged_date, completed, actual_items, notes, photo_url, created_at",
+        )
         .eq("student_id", studentId)
         .gte("logged_date", thirtyDaysAgo.toISOString().split("T")[0]);
       if (logsError) throw logsError;

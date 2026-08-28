@@ -38,10 +38,17 @@ export function MealCard({
           <div className="flex-1">
             <h3 className="font-bold text-foreground">{meal.name}</h3>
             <button
+              type="button"
               onClick={() => onEditTime(meal)}
               className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 mt-1"
             >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                aria-hidden="true"
+                className="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -54,6 +61,7 @@ export function MealCard({
           </div>
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={() => onAddFood(meal.id)}
               className="text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-bold"
             >
@@ -61,11 +69,18 @@ export function MealCard({
             </button>
             {onDeleteMeal && (
               <button
+                type="button"
                 onClick={onDeleteMeal}
                 className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                 title="Excluir refeição"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  aria-hidden="true"
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -135,11 +150,13 @@ export function MealCard({
                   </div>
                   <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
+                      type="button"
                       onClick={() => onEditItem(item)}
                       className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                       title="Editar quantidade"
                     >
                       <svg
+                        aria-hidden="true"
                         className="w-4 h-4"
                         fill="none"
                         stroke="currentColor"
@@ -154,11 +171,13 @@ export function MealCard({
                       </svg>
                     </button>
                     <button
+                      type="button"
                       onClick={() => onRemoveItem(item.id)}
                       className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                       title="Remover alimento"
                     >
                       <svg
+                        aria-hidden="true"
                         className="w-4 h-4"
                         fill="none"
                         stroke="currentColor"

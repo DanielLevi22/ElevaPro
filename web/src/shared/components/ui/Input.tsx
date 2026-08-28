@@ -1,7 +1,7 @@
 "use client";
 
 import { tv } from "tailwind-variants";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/utils/cn";
 
 const input = tv({
   base: "w-full rounded-lg border bg-white/5 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50",

@@ -183,7 +183,7 @@ export default function DietaCompletaScreen() {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FF6B35" />
+        <ActivityIndicator size="large" color="#CCFF00" />
         <Text style={styles.loadingText}>Carregando dieta...</Text>
       </View>
     );
@@ -197,10 +197,10 @@ export default function DietaCompletaScreen() {
         <Text style={styles.emptyText}>Crie um plano de dieta para começar</Text>
         <TouchableOpacity
           style={styles.createButton}
-          onPress={() => router.push(`/(tabs)/students/${studentId}/nutrition/create` as never)}
+          onPress={() => router.push(`/(tabs)/students/${studentId}/nutrition/create`)}
         >
           <LinearGradient
-            colors={['#FF6B35', '#FF2E63']}
+            colors={['#CCFF00', '#A3CC00']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.createButtonGradient}
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
   },
   dayButtonActive: {
     backgroundColor: 'rgba(255, 107, 53, 0.1)', // Orange tint
-    borderColor: '#FF6B35', // Orange
+    borderColor: '#CCFF00', // Orange
   },
   dayButtonText: {
     fontSize: 14,
@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
     fontFamily: 'GeneralSans-Semibold',
   },
   dayButtonTextActive: {
-    color: '#FF6B35', // Orange
+    color: '#CCFF00', // Orange
   },
   dayTotals: {
     backgroundColor: '#18181B', // Zinc 900
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
   addMealText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#FF6B35',
+    color: '#CCFF00',
     marginLeft: 8,
     fontFamily: 'GeneralSans-Semibold',
   },

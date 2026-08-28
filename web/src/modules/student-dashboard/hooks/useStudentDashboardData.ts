@@ -60,11 +60,14 @@ export function useStudentPersonaTrack(studentId: string | null) {
     queryKey: ["student-persona-track", studentId],
     queryFn: async (): Promise<string | null> => {
       if (!studentId) return null;
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select("persona_track")
         .eq("id", studentId)
         .maybeSingle();
+      // Sem propagar, coluna inexistente ou RLS negando viravam "sem trilha" —
+      // indistinguível de um aluno que de fato não escolheu nenhuma.
+      if (error) throw error;
       return data?.persona_track ?? null;
     },
     enabled: !!studentId,

@@ -1,31 +1,20 @@
+import { type CreateExerciseInput, createWorkoutsService } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Alert } from 'react-native';
-import type { Exercise } from './useExercises';
 
-export interface CreateExerciseInput {
-  name: string;
-  muscle_group: string;
-  video_url?: string;
-}
+// As consultas desceram para `workouts.service`: eram escritas em `exercises`
+// duplicadas aqui e no web, cada uma com o próprio formato de payload. O
+// `Alert` continua aqui porque é a única parte genuinamente do mobile.
+export type { CreateExerciseInput } from '@elevapro/shared';
+
+const workoutsService = createWorkoutsService(supabase);
 
 export function useCreateExercise() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (exercise: CreateExerciseInput) => {
-      const { data, error } = await supabase
-        .from('exercises')
-        .insert({
-          name: exercise.name,
-          muscle_group: exercise.muscle_group,
-          video_url: exercise.video_url || null,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return data as Exercise;
-    },
+    mutationFn: (exercise: CreateExerciseInput) => workoutsService.createExercise(exercise),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
     },
@@ -39,16 +28,8 @@ export function useUpdateExercise() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<Exercise> }) => {
-      const { data: updated, error } = await supabase
-        .from('exercises')
-        .update(data)
-        .eq('id', id)
-        .select()
-        .single();
-      if (error) throw error;
-      return updated as Exercise;
-    },
+    mutationFn: ({ id, data }: { id: string; data: Partial<CreateExerciseInput> }) =>
+      workoutsService.updateExercise(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
     },

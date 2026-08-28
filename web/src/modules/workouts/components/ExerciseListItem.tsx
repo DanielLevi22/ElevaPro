@@ -19,7 +19,7 @@ export function ExerciseListItem({ exercise, index, onEdit, onRemove }: Exercise
         </div>
 
         <div className="flex-1 min-w-0">
-          <button onClick={onEdit} className="text-left w-full group">
+          <button type="button" onClick={onEdit} className="text-left w-full group">
             <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
               {exercise.name}
             </h4>
@@ -30,11 +30,13 @@ export function ExerciseListItem({ exercise, index, onEdit, onRemove }: Exercise
         </div>
 
         <button
+          type="button"
           onClick={onRemove}
           className="p-1.5 hover:bg-destructive/10 rounded-lg transition-colors flex-shrink-0"
           title="Remover exercício"
         >
           <svg
+            aria-hidden="true"
             className="w-5 h-5 text-muted-foreground hover:text-destructive"
             fill="none"
             stroke="currentColor"

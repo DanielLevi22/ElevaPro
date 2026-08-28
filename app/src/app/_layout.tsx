@@ -118,15 +118,15 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
 
     if (!session && !inAuthGroup) {
       // Redirect to login if not authenticated
-      router.replace('/(auth)/login' as never);
+      router.replace('/(auth)/login');
     } else if (session && inAuthGroup) {
       // Redirect based on role and status
       if (accountType === 'specialist' && accountStatus === 'invited') {
-        router.replace('/(auth)/pending-approval' as never);
+        router.replace('/(auth)/pending-approval');
       } else if (accountType === 'specialist') {
-        router.replace('/(tabs)' as never);
+        router.replace('/(tabs)');
       } else {
-        router.replace('/(tabs)' as never);
+        router.replace('/(tabs)');
       }
     }
   }, [session, segments, isLoading, accountType, accountStatus, router]);

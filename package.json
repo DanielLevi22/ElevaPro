@@ -13,22 +13,28 @@
     "db:check-refs": "node scripts/check-schema-refs.js",
     "db:check-rls": "node scripts/check-rls.js",
     "db:check-columns": "node scripts/check-column-refs.js",
+    "db:types": "supabase gen types typescript --local --schema public > shared/src/database/database.types.ts && biome format --write shared/src/database/database.types.ts",
+    "db:check-types": "node scripts/check-db-types.js",
     "db:test-rls": "node scripts/test-rls-isolation.mjs",
     "api:check-auth": "node scripts/check-api-auth.js",
+    "db:check-errors": "node scripts/check-discarded-errors.js",
+    "app:check-nav": "node scripts/check-navigation-casts.js",
+    "app:check-modules": "node scripts/check-module-boundaries.js",
+    "check:file-size": "node scripts/check-file-size.js",
     "api:test-auth": "node scripts/test-api-auth.mjs",
     "env:sync": "node scripts/sync-env.js",
     "env:sync:preview": "node scripts/sync-env.js preview",
     "env:sync:production": "node scripts/sync-env.js production"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.11",
+    "@biomejs/biome": "2.4.10",
     "@commitlint/cli": "^20.4.2",
     "@commitlint/config-conventional": "^20.4.2",
     "@supabase/supabase-js": "^2.103.3",
     "drizzle-kit": "^0.31.7",
     "drizzle-orm": "^0.45.2",
     "husky": "^9.1.7",
-    "typescript": "~5.9.2"
+    "typescript": "~6.0.3"
   },
   "engines": {
     "node": ">=18.0.0"

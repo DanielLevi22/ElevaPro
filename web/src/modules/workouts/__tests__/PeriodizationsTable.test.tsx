@@ -82,10 +82,13 @@ describe("PeriodizationsTable", () => {
     expect(screen.getByText("Ciclo valido")).toBeInTheDocument();
   });
 
-  it("periodo incompleto nao vira Invalid Date", () => {
+  // A fixture era `null`, que o banco não permite mais (NOT NULL desde a
+  // `0024`). O caso real é outro e continua de pé: a dívida #18 registra 10
+  // periodizações gravadas com data corrompida — ano de cinco dígitos.
+  it("data corrompida nao vira Invalid Date", () => {
     render(
       <PeriodizationsTable
-        periodizations={[makePeriodization({ start_date: null, end_date: null })]}
+        periodizations={[makePeriodization({ start_date: "12312-12-23", end_date: "12312-12-30" })]}
         isMember={false}
       />,
     );

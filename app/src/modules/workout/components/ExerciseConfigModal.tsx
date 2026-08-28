@@ -262,7 +262,7 @@ export const ExerciseConfigModal: React.FC<Props> = ({
                       ? ['#10b981', '#059669']
                       : saving
                         ? ['#52525b', '#52525b']
-                        : ['#FF6B35', '#E85A2A']
+                        : ['#CCFF00', '#E85A2A']
                   }
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}

@@ -472,7 +472,7 @@ modelo. Fechado pelo PRD
 | `student_anamnesis UNIQUE(student_id)` | Evitar duplicação de dados sensíveis |
 | RLS bloqueia especialistas desvinculados | Segurança |
 | `student_link_codes expires_at` | Segurança — tempo de vida limitado |
-| `physical_assessments` imutável (nunca UPDATE) | Qualidade dos dados — histórico preservado |
+| `physical_assessments` imutável (nunca UPDATE) | Qualidade dos dados — histórico preservado. Aplicado no código em 2026-08-28: `/api/students/[id]` fazia UPDATE pelo `service_role`, contornando a RLS que concede só INSERT; agora sempre insere nova avaliação |
 
 **Decisões tomadas nesta revisão:**
 

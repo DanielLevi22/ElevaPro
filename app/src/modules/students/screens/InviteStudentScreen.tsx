@@ -25,7 +25,7 @@ export default function InviteStudentScreen() {
     <ScreenLayout>
       <View className="flex-1 px-6 justify-center items-center">
         <View className="w-24 h-24 rounded-full bg-orange-500/15 items-center justify-center mb-6 border-2 border-orange-500/20">
-          <Ionicons name="checkmark" size={48} color="#FF6B35" />
+          <Ionicons name="checkmark" size={48} color="#CCFF00" />
         </View>
 
         <Text className="text-3xl font-extrabold text-white mb-2 text-center font-display">
@@ -46,7 +46,7 @@ export default function InviteStudentScreen() {
         </View>
 
         <View className="flex-row items-center bg-orange-500/10 px-4 py-2 rounded-lg mb-8 border border-orange-500/20">
-          <Ionicons name="time-outline" size={16} color="#FF6B35" />
+          <Ionicons name="time-outline" size={16} color="#CCFF00" />
           <Text className="text-orange-500 text-xs font-bold ml-2">O código expira em 7 dias</Text>
         </View>
 
@@ -57,7 +57,7 @@ export default function InviteStudentScreen() {
           className="w-full mb-4"
         >
           <LinearGradient
-            colors={['#FF6B35', '#FF2E63']}
+            colors={['#CCFF00', '#A3CC00']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             className="rounded-2xl py-4 flex-row items-center justify-center shadow-lg shadow-orange-500/20"

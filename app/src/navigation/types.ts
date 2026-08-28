@@ -14,6 +14,11 @@ export const ROUTES = {
   // Assessment Flows
   ASSESSMENT: {
     BODY_SCAN: '/assessment/body-scan',
+    // A anamnese do aluno mora em `student/`, não em `assessment/`. Havia um
+    // `router.push('/assessment/anamnesis')` apontando para uma rota
+    // que nunca existiu — o `as never` transformou o erro de compilação em
+    // botão morto.
+    ANAMNESIS: '/student/anamnesis',
   },
 
   // Onboarding
@@ -26,12 +31,16 @@ export const ROUTES = {
   STUDENTS: {
     ROOT: '/(tabs)/students',
     CREATE: '/(tabs)/students/create',
-    DETAILS: (id: string) => `/(tabs)/students/${id}`,
-    WORKOUTS: (id: string) => `/(tabs)/students/${id}/workouts`,
-    NUTRITION: (id: string) => `/(tabs)/students/${id}/nutrition`,
-    HISTORY: (id: string) => `/(tabs)/students/${id}/history`,
-    ASSESSMENT: (id: string) => `/(tabs)/students/${id}/assessment`,
-    ANALYTICS: (id: string) => `/(tabs)/students/${id}/analytics`,
+    DETAILS: (id: string): `/(tabs)/students/${string}` => `/(tabs)/students/${id}`,
+    WORKOUTS: (id: string): `/(tabs)/students/${string}/workouts` =>
+      `/(tabs)/students/${id}/workouts`,
+    NUTRITION: (id: string): `/(tabs)/students/${string}/nutrition` =>
+      `/(tabs)/students/${id}/nutrition`,
+    HISTORY: (id: string): `/(tabs)/students/${string}/history` => `/(tabs)/students/${id}/history`,
+    ASSESSMENT: (id: string): `/(tabs)/students/${string}/assessment` =>
+      `/(tabs)/students/${id}/assessment`,
+    ANALYTICS: (id: string): `/(tabs)/students/${string}/analytics` =>
+      `/(tabs)/students/${id}/analytics`,
     POSTURE_ANALYSIS: `/(tabs)/students/posture-analysis`,
   },
 
@@ -39,8 +48,7 @@ export const ROUTES = {
   WORKOUTS: {
     ROOT: '/(tabs)/workouts',
     CREATE_PERIODIZATION: '/(tabs)/workouts/create-periodization',
-    DETAILS: (id: string) => `/(tabs)/workouts/${id}`,
-    ASSIGNMENTS: (id: string) => `/workouts/${id}/assignments`,
+    DETAILS: (id: string): `/(tabs)/workouts/${string}` => `/(tabs)/workouts/${id}`,
     SELECT_EXERCISES: '/workouts/select-exercises',
   },
 } as const;

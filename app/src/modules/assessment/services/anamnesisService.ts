@@ -59,15 +59,22 @@ export const AnamnesisService = {
   },
 
   async savePersonaTrack(studentId: string, track: string): Promise<void> {
-    await supabase.from('profiles').update({ persona_track: track }).eq('id', studentId);
+    // O update não devolvia nada e o erro sumia: gravar a trilha podia falhar
+    // em silêncio e a tela seguia como se tivesse salvo.
+    const { error } = await supabase
+      .from('profiles')
+      .update({ persona_track: track })
+      .eq('id', studentId);
+    if (error) throw error;
   },
 
   async getPersonaTrack(studentId: string): Promise<string | null> {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .select('persona_track')
       .eq('id', studentId)
       .maybeSingle();
+    if (error) throw error;
     return data?.persona_track ?? null;
   },
 
@@ -79,7 +86,10 @@ export const AnamnesisService = {
     try {
       const { data, error } = await supabase
         .from('student_anamnesis')
-        .select('*')
+        // Só o que o chamador consome. A anamnese é o dado mais sensível do
+        // aluno depois das fotos — `select('*')` a entregava inteira para quem
+        // precisava de três campos.
+        .select('student_id, responses, completed_at')
         .eq('student_id', studentId)
         .single();
 

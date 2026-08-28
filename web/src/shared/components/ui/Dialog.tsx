@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/utils/cn";
 
 export interface DialogProps {
   open: boolean;
@@ -51,6 +51,8 @@ export function Dialog({
   if (!open) return null;
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: o fundo não é o controle — quem fecha pelo teclado é o listener de Escape declarado acima
+    // biome-ignore lint/a11y/useKeyWithClickEvents: idem; o clique no fundo é conveniência de mouse, e o Escape já cobre o teclado
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-background/70 backdrop-blur-sm p-4"
       onClick={(e) => {

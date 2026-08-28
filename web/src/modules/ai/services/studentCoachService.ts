@@ -1,4 +1,4 @@
-import type { Json } from "@/lib/database.types";
+import type { Json } from "@elevapro/shared";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { NutritionProposal, WorkoutProposal } from "../tools/studentCoachTools";
 
@@ -65,11 +65,27 @@ export async function saveCoachMode(
   await supabaseAdmin.from("profiles").update({ coach_mode: mode }).eq("id", studentId);
 }
 
+/**
+ * Data ISO (só o dia) somando semanas a partir de hoje.
+ *
+ * `training_periodizations` e `training_plans` têm `start_date` e `end_date`
+ * NOT NULL desde a migration `0024`. Este serviço não mandava nenhuma das duas:
+ * o INSERT era recusado pelo banco e salvar o plano do coach nunca funcionou.
+ */
+function isoDatePlusWeeks(weeks: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + weeks * 7);
+  return date.toISOString().split("T")[0];
+}
+
 export async function saveStudentCoachPlan(
   studentId: string,
   workout: WorkoutProposal,
   nutrition: NutritionProposal,
 ): Promise<string> {
+  const startDate = isoDatePlusWeeks(0);
+  const endDate = isoDatePlusWeeks(workout.duration_weeks);
+
   const { data: period, error: periodError } = await supabaseAdmin
     .from("training_periodizations")
     .insert({
@@ -80,6 +96,8 @@ export async function saveStudentCoachPlan(
       duration_weeks: workout.duration_weeks,
       level: workout.level,
       status: "active",
+      start_date: startDate,
+      end_date: endDate,
     })
     .select("id")
     .single();
@@ -90,11 +108,16 @@ export async function saveStudentCoachPlan(
     );
   }
 
-  const phaseRows = workout.days.map((day) => ({
+  // Os "dias" do split rodam ao longo de toda a periodização, não em sequência
+  // — por isso todos compartilham o intervalo dela.
+  const phaseRows = workout.days.map((day, index) => ({
     periodization_id: period.id,
     name: day.day_label,
-    duration_weeks: 1,
+    duration_weeks: workout.duration_weeks,
     focus: day.muscle_groups.join(", "),
+    order_index: index,
+    start_date: startDate,
+    end_date: endDate,
   }));
 
   const { error: phaseError } = await supabaseAdmin.from("training_plans").insert(phaseRows);

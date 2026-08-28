@@ -80,8 +80,11 @@ export const createBodyScanService = (supabase: SupabaseClient) => ({
    */
   list: async (studentId: string, limit = 10): Promise<BodyScanRecord[]> => {
     const { data, error } = await supabase
+      // Campos nomeados: tabela sensível pela LGPD_COMPLIANCE.md.
       .from("body_scans")
-      .select("*")
+      .select(
+        "id, student_id, scanned_at, height_cm, weight_kg, body_fat_pct, muscle_mass_kg, bmi, circ_chest, circ_waist, circ_hips, circ_arms, circ_thighs, circ_calves, circ_neck, circ_shoulders, posture_symmetry_score, posture_muscle_score, posture_overall_score, posture_feedback, recommendations, framing_mark_top, framing_mark_bottom, framing_pitch, framing_roll, framing_level_sensor, framing_camera, created_at",
+      )
       .eq("student_id", studentId)
       .order("scanned_at", { ascending: false })
       .limit(limit);
@@ -104,8 +107,11 @@ export const createBodyScanService = (supabase: SupabaseClient) => ({
     deltas: BodyScanDelta[];
   }> => {
     const { data, error } = await supabase
+      // Campos nomeados: tabela sensível pela LGPD_COMPLIANCE.md.
       .from("body_scans")
-      .select("*")
+      .select(
+        "id, student_id, scanned_at, height_cm, weight_kg, body_fat_pct, muscle_mass_kg, bmi, circ_chest, circ_waist, circ_hips, circ_arms, circ_thighs, circ_calves, circ_neck, circ_shoulders, posture_symmetry_score, posture_muscle_score, posture_overall_score, posture_feedback, recommendations, framing_mark_top, framing_mark_bottom, framing_pitch, framing_roll, framing_level_sensor, framing_camera, created_at",
+      )
       .eq("student_id", studentId)
       .order("scanned_at", { ascending: false })
       .limit(2);

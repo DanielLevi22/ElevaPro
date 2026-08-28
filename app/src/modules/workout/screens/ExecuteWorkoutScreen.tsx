@@ -10,7 +10,7 @@ import { ShareWorkoutModal } from '@/components/workout/ShareWorkoutModal';
 import { WorkoutFeedbackModal } from '@/components/workout/WorkoutFeedbackModal';
 import { useVoiceCoach } from '@/hooks/useVoiceCoach';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
-import { useGamificationStore } from '@/store/gamificationStore';
+import { useGamificationStore } from '@/modules/gamification/store/gamificationStore';
 import { getLocalDateISOString } from '@/utils/dateUtils';
 import { EditExerciseModal } from '../components/EditExerciseModal';
 import { ProgressionSummaryModal } from '../components/ProgressionSummaryModal';
@@ -496,7 +496,7 @@ export default function ExecuteWorkoutScreen() {
   if (isLoading || !workout) {
     return (
       <ScreenLayout className="justify-center items-center">
-        <ActivityIndicator size="large" color="#FF6B35" />
+        <ActivityIndicator size="large" color="#CCFF00" />
       </ScreenLayout>
     );
   }
@@ -522,7 +522,7 @@ export default function ExecuteWorkoutScreen() {
           <Ionicons
             name={isMuted ? 'volume-mute' : 'volume-high'}
             size={20}
-            color={isMuted ? '#71717A' : '#FF6B35'}
+            color={isMuted ? '#71717A' : '#CCFF00'}
           />
         </TouchableOpacity>
       </View>
@@ -530,7 +530,7 @@ export default function ExecuteWorkoutScreen() {
       {!isWorkoutStarted ? (
         <View className="flex-1 justify-center items-center p-8 bg-black">
           <View className="w-32 h-32 rounded-[40px] bg-orange-500/10 items-center justify-center mb-10 border border-orange-500/20 rotate-12">
-            <Ionicons name="barbell" size={64} color="#FF6B35" />
+            <Ionicons name="barbell" size={64} color="#CCFF00" />
           </View>
 
           <Text className="text-4xl font-black text-white text-center mb-2 font-display uppercase tracking-tight">
@@ -557,7 +557,7 @@ export default function ExecuteWorkoutScreen() {
             className="w-full"
           >
             <LinearGradient
-              colors={['#FF6B35', '#FF2E63']}
+              colors={['#CCFF00', '#A3CC00']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               className="rounded-3xl py-6 items-center justify-center shadow-2xl shadow-orange-500/40"
@@ -569,7 +569,12 @@ export default function ExecuteWorkoutScreen() {
           </TouchableOpacity>
 
           <View className="mt-8">
-            <IconButton icon="arrow-back" onPress={() => handleExit()} variant="ghost" />
+            <IconButton
+              accessibilityLabel="Voltar"
+              icon="arrow-back"
+              onPress={() => handleExit()}
+              variant="ghost"
+            />
           </View>
         </View>
       ) : (

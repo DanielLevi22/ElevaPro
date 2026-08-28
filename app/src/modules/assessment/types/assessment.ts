@@ -112,13 +112,18 @@ export interface AnamnesisSection {
   questions: AnamnesisQuestion[];
 }
 
-export interface AnamnesisResponse {
+// `type` e não `interface` de propósito: a coluna `student_anamnesis.responses`
+// é jsonb, e o tipo `Json` do schema gerado exige assinatura de índice. Uma
+// interface não a recebe implicitamente, então gravar exigiria um cast — que é
+// exatamente o que escondia o desalinhamento desta tabela antes.
+export type AnamnesisResponse = {
   questionId: string;
   value: string | number | string[] | boolean;
-}
+};
 
-export interface StudentAnamnesis {
+export type StudentAnamnesis = {
   studentId: string;
-  completedAt: string;
+  // Nulável: a anamnese é salva em rascunho antes de ser concluída.
+  completedAt: string | null;
   responses: Record<string, AnamnesisResponse>; // Map questionId -> Response
-}
+};

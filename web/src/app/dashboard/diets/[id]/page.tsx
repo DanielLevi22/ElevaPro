@@ -1,5 +1,6 @@
 "use client";
 
+import type { DietMeal } from "@elevapro/shared";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -43,7 +44,7 @@ export default function DietDetailsPage() {
 
   const [selectedDay, setSelectedDay] = useState(1); // Default to Monday
   const [isDayOptionsOpen, setIsDayOptionsOpen] = useState(false);
-  const [copiedDay, setCopiedDay] = useState<{ meals: any[]; dayOfWeek: number } | null>(null);
+  const [copiedDay, setCopiedDay] = useState<{ meals: DietMeal[]; dayOfWeek: number } | null>(null);
 
   const copyDayMutation = useCopyDay();
   const pasteDayMutation = usePasteDay();

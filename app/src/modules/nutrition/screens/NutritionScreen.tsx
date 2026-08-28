@@ -32,7 +32,7 @@ export default function NutritionScreen() {
 
   const handlePressPlan = (studentId: string, planId: string) => {
     Haptics.selectionAsync();
-    router.push(`/(tabs)/students/${studentId}/nutrition/${planId}` as never);
+    router.push(`/(tabs)/students/${studentId}/nutrition/${planId}`);
   };
 
   const handleCreatePress = () => {
@@ -43,7 +43,7 @@ export default function NutritionScreen() {
     item,
     index,
   }: {
-    item: DietPlan & { student?: { full_name?: string; avatar_url?: string } };
+    item: DietPlan & { student?: { full_name: string | null } };
     index: number;
   }) => (
     <Animated.View entering={FadeInDown.delay(index * 100).springify()} layout={Layout.springify()}>

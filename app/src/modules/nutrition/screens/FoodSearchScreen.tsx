@@ -14,8 +14,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Input } from '@/components/ui/Input';
-import { colors as brandColors, tailwindColors } from '@/constants/colors';
-import { useNutritionStore } from '@/modules/nutrition/store/nutritionStore';
+import { colors as brandColors } from '@/constants/colors';
+import { useNutritionStore } from '../store/nutritionStore';
 
 export interface FoodItem {
   id: string;
@@ -448,7 +448,7 @@ export default function FoodSearchScreen({
                       elevation: 2,
                     }}
                   >
-                    <Text className="text-primary-400 font-mono text-xl font-bold tracking-[4px]">
+                    <Text className="text-primary font-mono text-xl font-bold tracking-[4px]">
                       {mealTime || '00:00'}
                     </Text>
                   </TouchableOpacity>
@@ -458,7 +458,7 @@ export default function FoodSearchScreen({
             <TouchableOpacity
               onPress={handleSavePress}
               disabled={isSaving}
-              className="bg-primary-400 px-4 py-2 rounded-full"
+              className="bg-primary px-4 py-2 rounded-full"
             >
               {isSaving ? (
                 <ActivityIndicator size="small" color="#000" />
@@ -544,11 +544,7 @@ export default function FoodSearchScreen({
             className="flex-row items-center justify-between bg-background-primary p-3 rounded-xl border border-zinc-800"
           >
             <View className="flex-row items-center gap-2">
-              <Ionicons
-                name="calculator-outline"
-                size={20}
-                color={tailwindColors.secondary.DEFAULT}
-              />
+              <Ionicons name="calculator-outline" size={20} color={brandColors.secondary.main} />
               <Text className="text-zinc-300 font-bold text-sm">Calculadora Reversa</Text>
             </View>
             <Ionicons

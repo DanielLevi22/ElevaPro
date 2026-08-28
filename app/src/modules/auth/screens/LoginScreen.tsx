@@ -1,3 +1,4 @@
+import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -5,7 +6,6 @@ import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
-import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '../store/authStore';
 
 export function LoginScreen() {
@@ -36,13 +36,14 @@ export function LoginScreen() {
           .single();
 
         if (profile?.account_status === 'invited') {
-          router.replace('/(auth)/pending-approval' as never);
+          router.replace('/(auth)/pending-approval');
           setLoading(false);
           return;
-        } else if (
-          profile?.account_status === 'rejected' ||
-          profile?.account_status === 'suspended'
-        ) {
+          // O enum `account_status` do banco é `active | inactive | invited`.
+          // Aqui se comparava com 'rejected' e 'suspended', que nunca
+          // existiram: o ramo jamais executava e conta desativada entrava
+          // normalmente. 'inactive' é o estado real de quem perdeu o acesso.
+        } else if (profile?.account_status === 'inactive') {
           await supabase.auth.signOut();
           Alert.alert(
             'Acesso Negado',

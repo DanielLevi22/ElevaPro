@@ -20,7 +20,7 @@ export function WorkoutShareCard({
   return (
     <View className="w-[350px] aspect-[9/16] bg-black rounded-3xl overflow-hidden shadow-2xl">
       <LinearGradient
-        colors={['#FF6B35', '#FF2E63', '#0A0A0A']}
+        colors={['#CCFF00', '#A3CC00', '#0A0A0A']}
         locations={[0, 0.4, 0.8]}
         className="flex-1 p-8 justify-between"
       >
@@ -29,7 +29,7 @@ export function WorkoutShareCard({
           <View className="flex-row items-center space-x-2 mb-2">
             <Ionicons name="flame" size={32} color="white" />
             <Text className="text-white font-bold text-xl font-display tracking-wider">
-              MEU PERSONAL
+              ELEVA PRO
             </Text>
           </View>
           <Text className="text-white/80 font-sans text-sm uppercase tracking-widest">{date}</Text>
@@ -50,13 +50,13 @@ export function WorkoutShareCard({
         {/* Detailed Stats */}
         <View className="flex-row justify-between bg-black/30 p-6 rounded-2xl backdrop-blur-md border border-white/10">
           <View className="items-center flex-1 border-r border-white/10">
-            <Ionicons name="time-outline" size={32} color="#FF6B35" className="mb-2" />
+            <Ionicons name="time-outline" size={32} color="#CCFF00" className="mb-2" />
             <Text className="text-white font-bold text-2xl font-display">{duration}</Text>
             <Text className="text-zinc-400 text-xs uppercase font-bold">Duração</Text>
           </View>
 
           <View className="items-center flex-1">
-            <Ionicons name="bonfire-outline" size={32} color="#FF2E63" className="mb-2" />
+            <Ionicons name="bonfire-outline" size={32} color="#A3CC00" className="mb-2" />
             <Text className="text-white font-bold text-2xl font-display">{calories}</Text>
             <Text className="text-zinc-400 text-xs uppercase font-bold">Calorias</Text>
           </View>

@@ -2,7 +2,7 @@
 
 import { supabase } from "@elevapro/supabase";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
 
 export default function EditExercisePage() {
@@ -12,33 +12,35 @@ export default function EditExercisePage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  // A tabela `exercises` tem name, description, muscle_group, video_url e
+  // is_verified. O formulário editava "category", "equipment", "difficulty" e
+  // "instructions", que nunca existiram: o UPDATE mandava as quatro e o
+  // PostgREST recusava a escrita inteira com 42703 — salvar nunca funcionou.
   const [formData, setFormData] = useState({
     name: "",
-    category: "strength",
     muscle_group: "",
-    equipment: "none",
-    difficulty: "beginner",
-    instructions: "",
+    description: "",
+    video_url: "",
   });
 
-  useEffect(() => {
-    loadExercise();
-  }, [loadExercise]);
-
-  async function loadExercise() {
+  // Sem `useCallback`, a função nascia nova a cada render e o efeito que a
+  // tem como dependência disparava em todo render — uma consulta por render.
+  const loadExercise = useCallback(async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase.from("exercises").select("*").eq("id", id).single();
+      const { data, error } = await supabase
+        .from("exercises")
+        .select("name, muscle_group, description, video_url")
+        .eq("id", id)
+        .single();
 
       if (error) throw error;
 
       setFormData({
         name: data.name,
-        category: data.category,
-        muscle_group: data.muscle_group,
-        equipment: data.equipment,
-        difficulty: data.difficulty,
-        instructions: data.instructions || "",
+        muscle_group: data.muscle_group ?? "",
+        description: data.description ?? "",
+        video_url: data.video_url ?? "",
       });
     } catch (error) {
       console.error("Error loading exercise:", error);
@@ -47,7 +49,11 @@ export default function EditExercisePage() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [id, router]);
+
+  useEffect(() => {
+    loadExercise();
+  }, [loadExercise]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -100,6 +106,7 @@ export default function EditExercisePage() {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <button
+            type="button"
             onClick={() => router.back()}
             className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-2"
           >
@@ -108,6 +115,7 @@ export default function EditExercisePage() {
           <h1 className="text-3xl font-bold text-foreground">Editar Exercício</h1>
         </div>
         <button
+          type="button"
           onClick={handleDelete}
           className="px-4 py-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 font-medium"
         >
@@ -133,44 +141,6 @@ export default function EditExercisePage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="category" className="block text-sm font-medium text-foreground mb-1">
-                Categoria
-              </label>
-              <select
-                id="category"
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="strength">Força</option>
-                <option value="cardio">Cardio</option>
-                <option value="flexibility">Flexibilidade</option>
-                <option value="plyometrics">Pliometria</option>
-              </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="difficulty"
-                className="block text-sm font-medium text-foreground mb-1"
-              >
-                Dificuldade
-              </label>
-              <select
-                id="difficulty"
-                value={formData.difficulty}
-                onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
-                className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="beginner">Iniciante</option>
-                <option value="intermediate">Intermediário</option>
-                <option value="advanced">Avançado</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
               <label
                 htmlFor="muscle_group"
                 className="block text-sm font-medium text-foreground mb-1"
@@ -188,32 +158,28 @@ export default function EditExercisePage() {
             </div>
 
             <div>
-              <label htmlFor="equipment" className="block text-sm font-medium text-foreground mb-1">
-                Equipamento
+              <label htmlFor="video_url" className="block text-sm font-medium text-foreground mb-1">
+                Vídeo (URL)
               </label>
               <input
-                id="equipment"
-                type="text"
-                required
-                value={formData.equipment}
-                onChange={(e) => setFormData({ ...formData, equipment: e.target.value })}
+                id="video_url"
+                type="url"
+                value={formData.video_url}
+                onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
                 className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
 
           <div>
-            <label
-              htmlFor="instructions"
-              className="block text-sm font-medium text-foreground mb-1"
-            >
-              Instruções
+            <label htmlFor="description" className="block text-sm font-medium text-foreground mb-1">
+              Descrição
             </label>
             <textarea
-              id="instructions"
+              id="description"
               rows={4}
-              value={formData.instructions}
-              onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             />
           </div>

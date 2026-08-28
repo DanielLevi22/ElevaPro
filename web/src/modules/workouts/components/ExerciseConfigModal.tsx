@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
 import { Dialog } from "@/shared/components/ui/Dialog";
 
@@ -35,6 +35,10 @@ export function ExerciseConfigModal({
   initialData,
   onSave,
 }: ExerciseConfigModalProps) {
+  const cargaKgOpcionalId = useId();
+  const descansoSegundosId = useId();
+  const repeticoesId = useId();
+  const seriesId = useId();
   const [sets, setSets] = useState(initialData?.sets || 3);
   const [reps, setReps] = useState(initialData?.reps || 12);
   const [weight, setWeight] = useState(initialData?.weight || "");
@@ -69,8 +73,11 @@ export function ExerciseConfigModal({
         )}
         {/* Sets */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Séries</label>
+          <label htmlFor={seriesId} className="block text-sm font-medium text-foreground mb-2">
+            Séries
+          </label>
           <input
+            id={seriesId}
             type="number"
             value={sets}
             onChange={(e) => setSets(parseInt(e.target.value, 10) || 0)}
@@ -81,8 +88,11 @@ export function ExerciseConfigModal({
 
         {/* Reps */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Repetições</label>
+          <label htmlFor={repeticoesId} className="block text-sm font-medium text-foreground mb-2">
+            Repetições
+          </label>
           <input
+            id={repeticoesId}
             type="number"
             value={reps}
             onChange={(e) => setReps(parseInt(e.target.value, 10) || 0)}
@@ -93,10 +103,14 @@ export function ExerciseConfigModal({
 
         {/* Weight */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <label
+            htmlFor={cargaKgOpcionalId}
+            className="block text-sm font-medium text-foreground mb-2"
+          >
             Carga (kg) - Opcional
           </label>
           <input
+            id={cargaKgOpcionalId}
             type="number"
             min="0"
             step="0.5"
@@ -109,10 +123,14 @@ export function ExerciseConfigModal({
 
         {/* Rest */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <label
+            htmlFor={descansoSegundosId}
+            className="block text-sm font-medium text-foreground mb-2"
+          >
             Descanso (segundos)
           </label>
           <input
+            id={descansoSegundosId}
             type="number"
             value={restSeconds}
             onChange={(e) => setRestSeconds(parseInt(e.target.value, 10) || 0)}

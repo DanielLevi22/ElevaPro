@@ -20,7 +20,7 @@ import { IconButton } from '@/components/ui/IconButton';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { StatusModal } from '@/components/ui/StatusModal';
 import { ExerciseConfigModal } from '../components/ExerciseConfigModal';
-import { useWorkoutStore } from '../store/workoutStore';
+import { type SelectedExercise, useWorkoutStore } from '../store/workoutStore';
 
 // biome-ignore lint/correctness/noUnusedVariables: auto-suppressed during final sweep
 const { width } = Dimensions.get('window');
@@ -124,7 +124,10 @@ export default function WorkoutDetailsScreen() {
   );
 
   const handleSaveExercise = useCallback(
-    async (updatedExercise: Record<string, unknown> & { reps?: string | number }) => {
+    // O modal entrega um `SelectedExercise`. O tipo anterior era
+    // `Record<string, unknown>`, então `sets`, `weight` e `rest_seconds`
+    // chegavam como `unknown` e iam direto para o update sem verificação.
+    async (updatedExercise: SelectedExercise) => {
       if (!editingItem?.exercise) return;
 
       console.log('🎬 === SAVE EXERCISE START ===');
@@ -247,7 +250,7 @@ export default function WorkoutDetailsScreen() {
                       <Ionicons
                         name="repeat-outline"
                         size={14}
-                        color="#FF6B35"
+                        color="#CCFF00"
                         style={{ marginRight: 4 }}
                       />
                       <Text className="text-zinc-200 text-xs font-bold">
@@ -259,7 +262,7 @@ export default function WorkoutDetailsScreen() {
                       <Ionicons
                         name="timer-outline"
                         size={14}
-                        color="#FF6B35"
+                        color="#CCFF00"
                         style={{ marginRight: 4 }}
                       />
                       <Text className="text-zinc-200 text-xs font-bold">{item.rest_seconds}s</Text>
@@ -270,7 +273,7 @@ export default function WorkoutDetailsScreen() {
                         <Ionicons
                           name="barbell-outline"
                           size={14}
-                          color="#FF6B35"
+                          color="#CCFF00"
                           style={{ marginRight: 4 }}
                         />
                         <Text className="text-zinc-200 text-xs font-bold">{item.weight}kg</Text>
@@ -310,7 +313,7 @@ export default function WorkoutDetailsScreen() {
   if (!workout && isLoading) {
     return (
       <ScreenLayout className="justify-center items-center">
-        <ActivityIndicator size="large" color="#FF6B35" />
+        <ActivityIndicator size="large" color="#CCFF00" />
       </ScreenLayout>
     );
   }
@@ -335,11 +338,16 @@ export default function WorkoutDetailsScreen() {
           >
             {/* Header Controls */}
             <View className="flex-row items-center justify-between pt-8">
-              <IconButton icon="arrow-back" onPress={() => router.back()} />
+              <IconButton
+                accessibilityLabel="Voltar"
+                icon="arrow-back"
+                onPress={() => router.back()}
+              />
 
               <View className="flex-row gap-2">
                 {canManage && (
                   <IconButton
+                    accessibilityLabel="Adicionar"
                     icon="add"
                     variant="solid"
                     onPress={() =>
@@ -430,12 +438,12 @@ export default function WorkoutDetailsScreen() {
       {/* Iniciar Treino */}
       {!canManage && workout.exercises && workout.exercises.length > 0 && (
         <TouchableOpacity
-          onPress={() => router.push(`/(tabs)/workouts/execute/${workout.id}` as never)}
+          onPress={() => router.push(`/(tabs)/workouts/execute/${workout.id}`)}
           activeOpacity={0.9}
           className="absolute bottom-8 left-6 right-6 h-14 rounded-2xl overflow-hidden shadow-2xl z-50"
         >
           <LinearGradient
-            colors={['#FF6B35', '#FF2E63']}
+            colors={['#CCFF00', '#A3CC00']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             className="w-full h-full flex-row items-center justify-center gap-3"
@@ -479,11 +487,7 @@ export default function WorkoutDetailsScreen() {
             rest_seconds: editingItem.rest_seconds ?? 60,
             video_url: editingItem.exercise?.video_url || undefined,
           }}
-          onSave={(data) =>
-            handleSaveExercise(
-              data as unknown as Record<string, unknown> & { reps?: string | number }
-            )
-          }
+          onSave={handleSaveExercise}
         />
       )}
 

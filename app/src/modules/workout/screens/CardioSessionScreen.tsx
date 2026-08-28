@@ -1,3 +1,4 @@
+import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
@@ -11,8 +12,7 @@ import { useAuthStore } from '@/auth';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { ShareWorkoutModal } from '@/components/workout/ShareWorkoutModal';
 import { WorkoutFeedbackModal } from '@/components/workout/WorkoutFeedbackModal';
-import { supabase } from '@/lib/supabase';
-import { useGamificationStore } from '@/store/gamificationStore';
+import { useGamificationStore } from '@/modules/gamification/store/gamificationStore';
 import { getLocalDateISOString } from '@/utils/dateUtils';
 import { useWorkoutStore } from '../store/workoutStore';
 
@@ -231,7 +231,7 @@ export default function CardioSessionScreen() {
             foregroundService: {
               notificationTitle: 'Treino em Andamento 🏃',
               notificationBody: 'Seu cardio está sendo monitorado.',
-              notificationColor: '#FF6B35',
+              notificationColor: '#CCFF00',
             },
           });
         }
@@ -458,7 +458,7 @@ export default function CardioSessionScreen() {
           {!isActive && seconds === 0 ? (
             <TouchableOpacity onPress={handleStart} activeOpacity={0.8}>
               <LinearGradient
-                colors={['#FF6B35', '#FF2E63']}
+                colors={['#CCFF00', '#A3CC00']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 className="rounded-xl py-4 items-center justify-center"

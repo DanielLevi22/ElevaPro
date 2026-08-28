@@ -1,22 +1,18 @@
+import { createWorkoutsService } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { useQuery } from '@tanstack/react-query';
 
-export interface Exercise {
-  id: string;
-  name: string;
-  muscle_group: string | null;
-  description: string | null;
-  video_url: string | null;
-  created_at?: string;
-}
+// O tipo e a consulta vinham duplicados aqui: `Exercise` era uma interface
+// própria e a busca falava direto com o Supabase, sem o filtro de linhas
+// -placeholder que o web aplicava. As duas coisas agora vêm do serviço.
+export type { Exercise } from '@elevapro/shared';
+
+const workoutsService = createWorkoutsService(supabase);
 
 export function useExercises() {
   return useQuery({
     queryKey: ['exercises'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('exercises').select('*').order('name');
-      if (error) throw error;
-      return (data || []) as Exercise[];
-    },
+    queryFn: () => workoutsService.fetchExercises(),
+    staleTime: 1000 * 60 * 10,
   });
 }

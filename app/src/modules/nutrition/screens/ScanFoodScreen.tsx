@@ -152,7 +152,7 @@ export default function ScanFoodScreen() {
 
               {analyzing ? (
                 <View className="items-center py-8">
-                  <ActivityIndicator size="large" color="#FF6B35" />
+                  <ActivityIndicator size="large" color="#CCFF00" />
                   <Text className="text-white mt-4 font-bold text-lg">Analisando Alimento...</Text>
                   <Text className="text-zinc-500 text-sm">Identificando componentes e porções</Text>
                 </View>

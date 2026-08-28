@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
 import { DateField } from "@/shared/components/ui/DateField";
 import { Dialog } from "@/shared/components/ui/Dialog";
@@ -48,6 +48,9 @@ export function CreatePeriodizationModal({
   initialData,
   memberStudentId,
 }: Props) {
+  const objetivoId = useId();
+  const alunoId = useId();
+  const nomeId = useId();
   const isEditing = !!periodizationId;
   const isMemberMode = !!memberStudentId;
 
@@ -56,7 +59,6 @@ export function CreatePeriodizationModal({
   const [studentId, setStudentId] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [notes, setNotes] = useState("");
 
   useEffect(() => {
     if (isOpen) {
@@ -99,7 +101,6 @@ export function CreatePeriodizationModal({
         student_id: studentId,
         start_date: startDate,
         end_date: endDate,
-        notes: notes || undefined,
       };
       await createMutation.mutateAsync(input);
     }
@@ -114,7 +115,6 @@ export function CreatePeriodizationModal({
     setStudentId("");
     setStartDate("");
     setEndDate("");
-    setNotes("");
     onClose();
   };
 
@@ -128,10 +128,11 @@ export function CreatePeriodizationModal({
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Nome */}
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">
+          <label htmlFor={nomeId} className="block text-sm font-medium text-muted-foreground mb-1">
             Nome <span className="text-destructive">*</span>
           </label>
           <input
+            id={nomeId}
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -144,10 +145,14 @@ export function CreatePeriodizationModal({
         {/* Aluno — oculto para membros (sempre são eles mesmos) */}
         {!isMemberMode && (
           <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1">
+            <label
+              htmlFor={alunoId}
+              className="block text-sm font-medium text-muted-foreground mb-1"
+            >
               Aluno <span className="text-destructive">*</span>
             </label>
             <select
+              id={alunoId}
               value={studentId}
               onChange={(e) => setStudentId(e.target.value)}
               required
@@ -165,10 +170,10 @@ export function CreatePeriodizationModal({
 
         {/* Objetivo */}
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-2">
+          <span id={objetivoId} className="block text-sm font-medium text-muted-foreground mb-2">
             Objetivo <span className="text-destructive">*</span>
-          </label>
-          <div className="grid grid-cols-3 gap-2">
+          </span>
+          <fieldset className="grid grid-cols-3 gap-2" aria-labelledby={objetivoId}>
             {OBJECTIVES.map((obj) => (
               <button
                 key={obj.value}
@@ -183,7 +188,7 @@ export function CreatePeriodizationModal({
                 {obj.label}
               </button>
             ))}
-          </div>
+          </fieldset>
         </div>
 
         {/* Datas — o fim nao pode anteceder o inicio, e DateField ja limita a faixa */}
@@ -195,20 +200,6 @@ export function CreatePeriodizationModal({
             onChange={setEndDate}
             min={startDate || undefined}
             required
-          />
-        </div>
-
-        {/* Observações */}
-        <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">
-            Observações
-          </label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Informações adicionais..."
-            rows={2}
-            className="w-full px-3 py-2 bg-background border border-overlay-10 rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
           />
         </div>
 

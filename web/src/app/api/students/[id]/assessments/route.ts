@@ -1,6 +1,7 @@
+import type { Database } from "@elevapro/shared";
+import { PHYSICAL_ASSESSMENT_COLUMNS } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeLinkedSpecialist } from "@/lib/api-auth";
-import type { Database } from "@/lib/database.types";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 type AssessmentInsert = Database["public"]["Tables"]["physical_assessments"]["Insert"];
@@ -81,7 +82,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const { data, error } = await supabaseAdmin
       .from("physical_assessments")
-      .select("*")
+      .select(PHYSICAL_ASSESSMENT_COLUMNS)
       .eq("student_id", studentId)
       .order("created_at", { ascending: false });
 

@@ -12,6 +12,7 @@ export function DietsEmptyState({ hasFilter, onCreateClick }: DietsEmptyStatePro
     <div className="text-center py-16">
       <div className="w-24 h-24 bg-surface rounded-full flex items-center justify-center mx-auto mb-6">
         <svg
+          aria-hidden="true"
           className="w-12 h-12 text-muted-foreground"
           fill="none"
           stroke="currentColor"

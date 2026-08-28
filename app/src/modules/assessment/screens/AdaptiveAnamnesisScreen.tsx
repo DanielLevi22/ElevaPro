@@ -425,7 +425,7 @@ export default function AdaptiveAnamnesisScreen() {
       <SafeAreaView className="flex-1 bg-black">
         <CompletionScreen
           score={precision}
-          onStartCoach={() => router.replace('/(tabs)' as never)}
+          onStartCoach={() => router.replace('/(tabs)')}
           onRetake={handleRetake}
         />
       </SafeAreaView>

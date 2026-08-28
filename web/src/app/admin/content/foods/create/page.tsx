@@ -24,13 +24,13 @@ export default function CreateFoodPage() {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.from("foods").insert([
-        {
-          ...formData,
-          status: "approved",
-          is_verified: true,
-        },
-      ]);
+      // "status" e "is_verified" não existem em `foods`: mandá-los fazia o
+      // PostgREST recusar o INSERT inteiro com 42703 — criar alimento pelo
+      // admin nunca funcionou. A tabela distingue origem por `is_custom`, e
+      // alimento cadastrado pelo admin é catálogo, não custom.
+      const { error } = await supabase
+        .from("foods")
+        .insert([{ ...formData, is_custom: false, source: "admin" }]);
 
       if (error) throw error;
 
@@ -47,6 +47,7 @@ export default function CreateFoodPage() {
     <div className="p-8 max-w-2xl mx-auto">
       <div className="mb-8">
         <button
+          type="button"
           onClick={() => router.back()}
           className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-2"
         >

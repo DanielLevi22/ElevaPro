@@ -2,7 +2,7 @@
 
 import { supabase } from "@elevapro/supabase";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
 
 export default function EditFoodPage() {
@@ -23,26 +23,31 @@ export default function EditFoodPage() {
     fat: 0,
   });
 
-  useEffect(() => {
-    loadFood();
-  }, [loadFood]);
-
-  async function loadFood() {
+  // Sem `useCallback`, a função nascia nova a cada render e o efeito que a
+  // tem como dependência disparava em todo render — uma consulta por render.
+  const loadFood = useCallback(async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase.from("foods").select("*").eq("id", id).single();
+      const { data, error } = await supabase
+        .from("foods")
+        .select("name, category, serving_size, serving_unit, calories, protein, carbs, fat")
+        .eq("id", id)
+        .single();
 
       if (error) throw error;
 
+      // Toda coluna de macro é nulável no banco — 44 alimentos do catálogo têm
+      // `category` NULL (dívida #41). O formulário precisa de valor definido
+      // para o input ser controlado.
       setFormData({
         name: data.name,
-        category: data.category,
-        serving_size: data.serving_size,
-        serving_unit: data.serving_unit,
-        calories: data.calories,
-        protein: data.protein,
-        carbs: data.carbs,
-        fat: data.fat,
+        category: data.category ?? "",
+        serving_size: data.serving_size ?? 0,
+        serving_unit: data.serving_unit ?? "g",
+        calories: data.calories ?? 0,
+        protein: data.protein ?? 0,
+        carbs: data.carbs ?? 0,
+        fat: data.fat ?? 0,
       });
     } catch (error) {
       console.error("Error loading food:", error);
@@ -51,7 +56,11 @@ export default function EditFoodPage() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [id, router]);
+
+  useEffect(() => {
+    loadFood();
+  }, [loadFood]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -104,6 +113,7 @@ export default function EditFoodPage() {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <button
+            type="button"
             onClick={() => router.back()}
             className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-2"
           >
@@ -112,6 +122,7 @@ export default function EditFoodPage() {
           <h1 className="text-3xl font-bold text-foreground">Editar Alimento</h1>
         </div>
         <button
+          type="button"
           onClick={handleDelete}
           className="px-4 py-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 font-medium"
         >

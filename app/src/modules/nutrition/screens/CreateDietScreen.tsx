@@ -49,7 +49,9 @@ export default function CreateDietScreen() {
   const [targetCalories, setTargetCalories] = useState('2000'); // Base calories for strategy
 
   const [loading, setLoading] = useState(false);
-  const [students, setStudents] = useState<{ id: string; full_name: string }[]>([]);
+  // `profiles.full_name` é nulável: o perfil nasce no signup antes de o nome
+  // ser informado.
+  const [students, setStudents] = useState<{ id: string; full_name: string | null }[]>([]);
   const [showStudentPicker, setShowStudentPicker] = useState(false);
   const [statusModal, setStatusModal] = useState<{
     visible: boolean;
@@ -127,24 +129,21 @@ export default function CreateDietScreen() {
         .eq('status', 'active');
 
       // 2. Fetch pending students
+      // 'pending' não existe no enum `account_status` — este filtro nunca
+      // casava e a lista de alunos convidados vinha sempre vazia. Aluno criado
+      // pelo especialista nasce 'invited' (ver POST /api/students).
       const { data: pendingData, error: pendingError } = await supabase
         .from('profiles')
         .select('id, full_name')
         .eq('account_type', 'student')
-        .eq('account_status', 'pending');
+        .eq('account_status', 'invited');
       // .not('invite_code', 'is', null);
 
       if (!activeError && !pendingError) {
         const activeList =
           activeData
-            ?.flatMap(
-              (item: {
-                student:
-                  | { id: string; full_name: string }[]
-                  | { id: string; full_name: string }
-                  | null;
-              }) =>
-                Array.isArray(item.student) ? item.student : item.student ? [item.student] : []
+            ?.flatMap((item) =>
+              Array.isArray(item.student) ? item.student : item.student ? [item.student] : []
             )
             .filter(Boolean) || [];
         const pendingList = pendingData || [];
@@ -464,7 +463,7 @@ export default function CreateDietScreen() {
               onPress={() => setShowStartPicker(true)}
               className="bg-zinc-900/80 border-2 border-zinc-700 rounded-2xl px-4 py-4 flex-row items-center justify-between"
             >
-              <Ionicons name="calendar-outline" size={20} color="#00D9FF" />
+              <Ionicons name="calendar-outline" size={20} color="#00F0FF" />
               <Text className="text-foreground text-base flex-1 ml-3">
                 {startDate.toLocaleDateString('pt-BR')}
               </Text>

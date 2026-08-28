@@ -80,6 +80,7 @@ export function NutritionCoachChat({
     };
   }, [studentId, session?.access_token, sessionId, onSessionResolved]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: as dependências são o gatilho da rolagem, não insumo do corpo do efeito — rolar para o fim quando qualquer uma muda é o comportamento desejado
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, planProposal, mealsProposal, activity]);

@@ -1,5 +1,3 @@
-export type Database = any;
-
 export type AccountType = "admin" | "specialist" | "student" | "member";
 
 export type AccountStatus = "active" | "inactive" | "invited";

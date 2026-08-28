@@ -1,6 +1,3 @@
-// biome-ignore lint/suspicious/noExplicitAny: placeholder until Supabase CLI generates the type
-export type Database = any;
-
 export type AccountType = 'admin' | 'specialist' | 'student' | 'member';
 
 export type AccountStatus = 'active' | 'inactive' | 'invited';

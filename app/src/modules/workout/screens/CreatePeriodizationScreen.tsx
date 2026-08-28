@@ -47,7 +47,9 @@ export default function CreatePeriodizationScreen() {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const [students, setStudents] = useState<{ id: string; full_name: string }[]>([]);
+  // `profiles.full_name` é nulável: o perfil nasce no signup antes de o nome
+  // ser informado.
+  const [students, setStudents] = useState<{ id: string; full_name: string | null }[]>([]);
   const [showStudentPicker, setShowStudentPicker] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showObjectivePicker, setShowObjectivePicker] = useState(false);
@@ -78,11 +80,7 @@ export default function CreatePeriodizationScreen() {
 
       if (!studentsError && studentsData) {
         const studentsList = studentsData
-          .map(
-            (item: {
-              student: { id: string; full_name: string } | { id: string; full_name: string }[];
-            }) => (Array.isArray(item.student) ? item.student[0] : item.student)
-          )
+          .map((item) => (Array.isArray(item.student) ? item.student[0] : item.student))
           .filter(Boolean);
 
         console.log('✅ Total students available:', studentsList.length, studentsList);
@@ -200,7 +198,7 @@ export default function CreatePeriodizationScreen() {
             onPress={() => router.back()}
             className="bg-zinc-800/50 p-2.5 rounded-xl mr-4 border border-zinc-700"
           >
-            <Ionicons name="arrow-back" size={24} color="#FF6B35" />
+            <Ionicons name="arrow-back" size={24} color="#CCFF00" />
           </TouchableOpacity>
           <Text className="text-2xl font-bold text-foreground font-display">Nova Periodização</Text>
         </View>
@@ -318,7 +316,7 @@ export default function CreatePeriodizationScreen() {
                 onPress={() => setShowStartPicker(true)}
                 className="bg-zinc-900/80 border-2 border-zinc-700 rounded-2xl px-4 py-4 flex-row items-center justify-between"
               >
-                <Ionicons name="calendar-outline" size={20} color="#FF6B35" />
+                <Ionicons name="calendar-outline" size={20} color="#CCFF00" />
                 <Text className="text-foreground text-base flex-1 ml-3">
                   {startDate.toLocaleDateString('pt-BR')}
                 </Text>
@@ -348,7 +346,7 @@ export default function CreatePeriodizationScreen() {
                 onPress={() => setShowEndPicker(true)}
                 className="bg-zinc-900/80 border-2 border-zinc-700 rounded-2xl px-4 py-4 flex-row items-center justify-between"
               >
-                <Ionicons name="calendar-outline" size={20} color="#FF6B35" />
+                <Ionicons name="calendar-outline" size={20} color="#CCFF00" />
                 <Text className="text-foreground text-base flex-1 ml-3">
                   {endDate.toLocaleDateString('pt-BR')}
                 </Text>

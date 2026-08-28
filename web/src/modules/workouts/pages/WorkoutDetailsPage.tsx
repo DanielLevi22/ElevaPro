@@ -137,7 +137,11 @@ export default function WorkoutDetailsPage() {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">Treino não encontrado.</p>
-        <button onClick={() => router.back()} className="mt-4 text-primary hover:underline text-sm">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="mt-4 text-primary hover:underline text-sm"
+        >
           Voltar
         </button>
       </div>
@@ -151,13 +155,18 @@ export default function WorkoutDetailsPage() {
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
         <button
+          type="button"
           onClick={() => router.push("/dashboard/workouts")}
           className="hover:text-foreground transition-colors"
         >
           Periodizações
         </button>
         <span>/</span>
-        <button onClick={() => router.back()} className="hover:text-foreground transition-colors">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="hover:text-foreground transition-colors"
+        >
           Fase
         </button>
         <span>/</span>
@@ -186,6 +195,7 @@ export default function WorkoutDetailsPage() {
             </div>
           </div>
           <button
+            type="button"
             onClick={() => setEditWorkoutOpen(true)}
             className="px-4 py-2 bg-overlay-05 border border-overlay-10 text-muted-foreground rounded-lg text-sm hover:bg-overlay-10 transition-colors self-start shrink-0"
           >
@@ -208,6 +218,7 @@ export default function WorkoutDetailsPage() {
           <div className="bg-surface border border-overlay-10 rounded-2xl p-8 text-center">
             <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
               <svg
+                aria-hidden="true"
                 className="w-6 h-6 text-primary"
                 fill="none"
                 stroke="currentColor"
@@ -280,7 +291,13 @@ export default function WorkoutDetailsPage() {
                     className="p-1.5 rounded-lg hover:bg-overlay-10 text-muted-foreground hover:text-foreground transition-colors"
                     title="Editar"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg
+                      aria-hidden="true"
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -296,7 +313,13 @@ export default function WorkoutDetailsPage() {
                     className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
                     title="Remover"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg
+                      aria-hidden="true"
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
