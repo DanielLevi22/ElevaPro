@@ -418,7 +418,7 @@ export const createNutritionService = (supabase: SupabaseClient) => ({
       // Campos nomeados: tabela sensível pela LGPD_COMPLIANCE.md.
       .from("meal_logs")
       .select(
-        "id, student_id, diet_plan_id, diet_meal_id, logged_date, completed, actual_items, notes, photo_url, created_at",
+        "id, student_id, diet_plan_id, diet_meal_id, logged_date, completed, actual_items, created_at",
       )
       .eq("student_id", studentId)
       .eq("logged_date", date);
@@ -435,7 +435,7 @@ export const createNutritionService = (supabase: SupabaseClient) => ({
       // Campos nomeados: tabela sensível pela LGPD_COMPLIANCE.md.
       .from("meal_logs")
       .select(
-        "id, student_id, diet_plan_id, diet_meal_id, logged_date, completed, actual_items, notes, photo_url, created_at",
+        "id, student_id, diet_plan_id, diet_meal_id, logged_date, completed, actual_items, created_at",
       )
       .eq("student_id", studentId)
       .gte("logged_date", startDate)

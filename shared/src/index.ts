@@ -6,6 +6,7 @@
 // Tabela de permissões do CASL — fonte única das duas plataformas.
 export * from "./auth/abilities";
 export type { Database, Json } from "./database/database.types";
+export * from "./services/activity.service";
 export * from "./services/auth.service";
 export * from "./services/bodyScan.service";
 export * from "./services/briefing.service";
@@ -14,6 +15,7 @@ export * from "./services/health.service";
 export * from "./services/nutrition.service";
 export * from "./services/students.service";
 export * from "./services/workouts.service";
+export * from "./types/activity.types";
 export * from "./types/auth.types";
 export * from "./types/bodyScan.types";
 export * from "./types/briefing.types";
@@ -23,3 +25,4 @@ export * from "./types/nutrition.types";
 export * from "./types/physicalAssessment.types";
 export * from "./types/students.types";
 export * from "./types/workouts.types";
+export * from "./utils/rpe";

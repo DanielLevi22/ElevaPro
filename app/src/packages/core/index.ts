@@ -69,6 +69,4 @@ export interface DailyLog {
   logged_date: string;
   completed: boolean;
   actual_items?: unknown[];
-  notes?: string;
-  photo_url?: string;
 }

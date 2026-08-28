@@ -1,4 +1,5 @@
-﻿import { useWorkoutStore } from '../workoutStore';
+﻿import { POLICY_VERSION } from '@elevapro/shared';
+import { useWorkoutStore } from '../workoutStore';
 
 // Use global mocks defined in jest.setup.ts
 // biome-ignore lint/correctness/noUnusedVariables: auto-suppressed during final sweep
@@ -640,26 +641,108 @@ describe('workoutStore', () => {
     expect(mockSupabase.from).toHaveBeenCalledWith('workout_exercises');
   });
 
-  it('should save cardio session', async () => {
-    const mockQuery = {
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: { id: 'cardio-w' }, error: null }),
-      insert: jest.fn().mockReturnThis(),
-    };
+  /**
+   * Monta um Supabase falso que registra o payload do insert em
+   * `workout_sessions` e responde ao consentimento com o valor pedido.
+   */
+  function mockCardio({ consentiu }: { consentiu: boolean }) {
+    const inserts: Record<string, unknown>[] = [];
+    const tabelas: string[] = [];
 
-    mockSupabase.from.mockImplementation(() => mockQuery);
+    mockSupabase.from.mockImplementation((tabela: string) => {
+      tabelas.push(tabela);
 
-    await useWorkoutStore.getState().saveCardioSession({
-      studentId: 's1',
-      exerciseName: 'Running',
-      durationSeconds: 1800,
-      calories: 300,
-      startedAt: new Date().toISOString(),
-      completedAt: new Date().toISOString(),
+      if (tabela === 'student_consents') {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({
+            data: consentiu
+              ? {
+                  given_at: '2026-08-01T00:00:00Z',
+                  revoked_at: null,
+                  policy_version: POLICY_VERSION,
+                }
+              : null,
+            error: null,
+          }),
+        };
+      }
+
+      return {
+        insert: jest.fn((payload: Record<string, unknown>) => {
+          inserts.push(payload);
+          return {
+            select: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: { id: 'sessao-1' }, error: null }),
+          };
+        }),
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: null, error: null }),
+      };
     });
 
-    expect(mockSupabase.from).toHaveBeenCalledWith('workout_sessions');
+    return { inserts, tabelas };
+  }
+
+  const cardioBase = {
+    studentId: 's1',
+    exerciseName: 'Corrida',
+    durationSeconds: 1800,
+    calories: 300.4,
+    startedAt: new Date().toISOString(),
+    completedAt: new Date().toISOString(),
+  };
+
+  // D1/D3: antes da `0035` esta função procurava (ou criava) uma linha em
+  // `workouts` com `title = 'Treino Cardio Livre'` e `specialist_id` recebendo o
+  // id do ALUNO. A prescrição órfã resultante tornava impossível qualquer sessão
+  // de cardio aparecer nas telas que filtram por dono do treino.
+  it('grava cardio sem tocar em `workouts` e sem prescrição', async () => {
+    const { inserts, tabelas } = mockCardio({ consentiu: true });
+
+    await useWorkoutStore.getState().saveCardioSession(cardioBase);
+
+    expect(tabelas).not.toContain('workouts');
+    expect(inserts[0]).toMatchObject({
+      workout_id: null,
+      session_type: 'cardio',
+      activity_name: 'Corrida',
+      duration_seconds: 1800,
+      active_calories: 300,
+    });
+  });
+
+  // D2: `notes || <resumo gerado>` significava que os dois nunca coexistiam —
+  // qualquer coisa que o aluno escrevesse apagava duração e calorias para
+  // sempre, e exibir `notes` como "observações do aluno" era mentira em parte
+  // das linhas.
+  it('guarda em `notes` só o que o aluno digitou, nunca o resumo gerado', async () => {
+    const { inserts } = mockCardio({ consentiu: true });
+
+    await useWorkoutStore
+      .getState()
+      .saveCardioSession({ ...cardioBase, notes: 'senti dor no joelho' });
+
+    expect(inserts[0].notes).toBe('senti dor no joelho');
+    expect(inserts[0].duration_seconds).toBe(1800);
+  });
+
+  // O texto livre é dado sensível (Art. 11) e só pode ser persistido com
+  // consentimento vigente. Sem esta asserção, o "Agora não" do
+  // `HealthDataConsentGate` seria um botão que não muda nada.
+  it('descarta as observações quando não há consentimento vigente', async () => {
+    const { inserts } = mockCardio({ consentiu: false });
+
+    await useWorkoutStore
+      .getState()
+      .saveCardioSession({ ...cardioBase, notes: 'voltei da cirurgia' });
+
+    expect(inserts[0].notes).toBeNull();
+    // A sessão em si é execução de contrato e continua sendo gravada.
+    expect(inserts[0].session_type).toBe('cardio');
+    expect(inserts[0].duration_seconds).toBe(1800);
   });
 
   it('should fetch exercises and update state', async () => {

@@ -9,7 +9,7 @@ import type {
   WorkoutExercise,
   WorkoutSession,
 } from '@elevapro/shared';
-import { createWorkoutsService } from '@elevapro/shared';
+import { createHealthService, createWorkoutsService } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { create } from 'zustand';
 import { useAuthStore } from '@/modules/auth/store/authStore';
@@ -25,6 +25,32 @@ export type {
 };
 
 const workoutsService = createWorkoutsService(supabase);
+const healthService = createHealthService(supabase);
+
+/**
+ * Devolve as observações do aluno só quando há consentimento vigente para dado
+ * de saúde; caso contrário, `undefined` — a sessão é gravada sem elas.
+ *
+ * Séries, cargas, datas e RPE são execução de contrato e não dependem de
+ * consentimento. O texto livre é o que exige Art. 11: é onde o aluno escreve
+ * "senti dor no ombro". Gravar os dois sob a mesma decisão trataria uma medida
+ * de carga como relato clínico, ou o contrário.
+ *
+ * É isto que dá sentido ao "Agora não" do `HealthDataConsentGate`: sem esta
+ * verificação, recusar seria um botão que não muda nada.
+ */
+async function notasSeConsentido(
+  studentId: string,
+  notas: string | undefined
+): Promise<string | undefined> {
+  if (!notas?.trim()) return undefined;
+  try {
+    return (await healthService.hasCollectionConsent(studentId)) ? notas : undefined;
+  } catch {
+    // Falha de rede não autoriza: na dúvida, a sessão é gravada sem o texto.
+    return undefined;
+  }
+}
 
 export interface SelectedExercise {
   id: string;
@@ -554,7 +580,9 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
   saveWorkoutSession: async (sessionData) => {
     try {
       if (useAuthStore.getState().isMasquerading) {
-        console.log('🎭 Masquerade Mode: Fake saving workout session', sessionData);
+        // Sem o objeto: `sessionData.notes` é o texto do aluno sobre a própria
+        // saúde, e log de desenvolvimento vaza para onde ninguém controla.
+        console.log('🎭 Masquerade Mode: sessão de treino não gravada');
         return `masquerade-session-id-${Date.now()}`;
       }
 
@@ -564,7 +592,8 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         started_at: sessionData.startedAt,
         completed_at: sessionData.completedAt,
         intensity: sessionData.intensity,
-        notes: sessionData.notes,
+        notes: await notasSeConsentido(sessionData.studentId, sessionData.notes),
+        session_type: 'strength',
       });
 
       if (sessionData.items.length > 0) {
@@ -579,7 +608,8 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
 
       return session.id;
     } catch (error) {
-      console.error('Error saving workout session:', error);
+      // Sem o objeto de erro: o do PostgREST pode carregar o payload da linha.
+      console.error('[workoutStore] falha ao salvar sessão de treino');
       throw error;
     }
   },
@@ -587,45 +617,34 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
   saveCardioSession: async (sessionData) => {
     try {
       if (useAuthStore.getState().isMasquerading) {
-        console.log('🎭 Masquerade Mode: Fake saving cardio session', sessionData);
+        console.log('🎭 Masquerade Mode: sessão de cardio não gravada');
         return;
       }
 
-      let { data: cardioWorkout } = await supabase
-        .from('workouts')
-        .select('id')
-        .eq('title', 'Treino Cardio Livre')
-        .eq('specialist_id', sessionData.studentId)
-        .single();
-
-      if (!cardioWorkout) {
-        const { data: newWorkout, error: createError } = await supabase
-          .from('workouts')
-          .insert({
-            title: 'Treino Cardio Livre',
-            specialist_id: sessionData.studentId,
-            description: 'Sessões de cardio avulsas',
-          })
-          .select()
-          .single();
-        if (createError) throw createError;
-        cardioWorkout = newWorkout;
-      }
-
-      if (!cardioWorkout) throw new Error('Failed to find or create cardio workout');
-
+      // Sem prescrição: cardio livre não vem de treino nenhum. Até a `0035` esta
+      // função criava uma linha sintética em `workouts` só para ter um id aqui —
+      // com `specialist_id` recebendo o id do **aluno**, o que produzia uma
+      // prescrição órfã por aluno e tornava impossível qualquer sessão de cardio
+      // aparecer nas telas que filtram por dono do treino.
       await workoutsService.createWorkoutSession({
-        workout_id: cardioWorkout.id,
+        workout_id: null,
         student_id: sessionData.studentId,
         started_at: sessionData.startedAt,
         completed_at: sessionData.completedAt,
         intensity: sessionData.intensity,
-        notes:
-          sessionData.notes ||
-          `${sessionData.exerciseName} - ${Math.floor(sessionData.durationSeconds / 60)}min - ${Math.round(sessionData.calories)}kcal`,
+        // Só o que o aluno digitou. A duração e as calorias moravam aqui dentro,
+        // numa string gerada, e sumiam no instante em que ele escrevia qualquer
+        // coisa — `notes || <resumo>` significa que os dois nunca coexistiram.
+        notes: await notasSeConsentido(sessionData.studentId, sessionData.notes),
+        session_type: 'cardio',
+        duration_seconds: sessionData.durationSeconds,
+        active_calories: Math.round(sessionData.calories),
+        activity_name: sessionData.exerciseName,
       });
     } catch (error) {
-      console.error('Error saving cardio session:', error);
+      // Sem o objeto de erro: o do PostgREST pode carregar o payload da linha,
+      // e `notes` é dado sensível de saúde.
+      console.error('[workoutStore] falha ao salvar sessão de cardio');
       throw error;
     }
   },

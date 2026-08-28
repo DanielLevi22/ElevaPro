@@ -1,3 +1,4 @@
+import { rpeLabelComEmoji } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -12,14 +13,9 @@ export function WorkoutFeedbackModal({ visible, onClose, onSubmit }: WorkoutFeed
   const [intensity, setIntensity] = useState(5);
   const [notes, setNotes] = useState('');
 
-  const getIntensityLabel = (value: number) => {
-    if (value <= 2) return 'Muito Fácil 😴';
-    if (value <= 4) return 'Fácil 🙂';
-    if (value <= 6) return 'Moderado 😅';
-    if (value <= 8) return 'Difícil 🥵';
-    return 'Muito Difícil 💀';
-  };
-
+  // A tabela de rótulos saiu daqui para `@elevapro/shared` em 2026-08-28: o
+  // especialista passou a ler a mesma escala no feed de atividades, e duas
+  // tabelas divergiriam na primeira vez que alguém mexesse numa delas.
   const getIntensityColor = (value: number) => {
     if (value <= 2) return 'bg-blue-500';
     if (value <= 4) return 'bg-green-500';
@@ -64,7 +60,7 @@ export function WorkoutFeedbackModal({ visible, onClose, onSubmit }: WorkoutFeed
                 <Text className="text-4xl font-bold text-white font-display mb-1">{intensity}</Text>
                 <View className={`px-3 py-1 rounded-full ${getIntensityColor(intensity)}`}>
                   <Text className="text-white text-xs font-bold uppercase">
-                    {getIntensityLabel(intensity)}
+                    {rpeLabelComEmoji(intensity)}
                   </Text>
                 </View>
               </View>
@@ -105,15 +101,28 @@ export function WorkoutFeedbackModal({ visible, onClose, onSubmit }: WorkoutFeed
               value={notes}
               onChangeText={setNotes}
             />
+            {/*
+              Toda vez, não uma. O consentimento é dado uma única vez e some da
+              memória; o que muda o que a pessoa escreve é saber, na hora de
+              escrever, quem vai ler. Sem esta linha o aluno relata dor sem
+              perceber que está falando com o profissional — e a transparência
+              do Art. 6°, VI é sobre o momento da coleta.
+            */}
+            <View className="flex-row items-center gap-2 mt-2.5">
+              <Ionicons name="eye-outline" size={14} color="#71717A" />
+              <Text className="text-zinc-500 text-xs flex-1">Seu personal vê este feedback.</Text>
+            </View>
           </View>
 
           {/* Submit Button */}
           <TouchableOpacity
             onPress={handleSubmit}
-            className="bg-[#FF6B35] p-4 rounded-xl items-center mb-4"
+            className="bg-primary p-4 rounded-xl items-center mb-4"
             activeOpacity={0.8}
           >
-            <Text className="text-white font-bold text-lg font-display">Salvar e Finalizar</Text>
+            <Text className="text-primary-foreground font-bold text-lg font-display">
+              Salvar e Finalizar
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

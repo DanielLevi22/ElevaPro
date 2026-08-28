@@ -175,6 +175,76 @@ BEGIN
   RAISE NOTICE 'ok  isolamento entre alunos e por vínculo, e escalonamento recusado';
 END $$;
 
+-- ── Feedback de treino e observação de refeição ──────────────────────────────
+-- `workout_sessions.notes` é o campo aberto do fim do treino, onde o aluno
+-- escreve sobre dor e cirurgia: dado sensível pelo Art. 11, e não pela mesma
+-- base do resto da tabela. Séries e datas já eram cobertas pelo caso acima; o
+-- que este prova é que as colunas da `0035` herdaram a política — ela é por
+-- linha, mas "deveria herdar" e "herdou" são coisas diferentes, e foi essa
+-- distância que a auditoria de 2026-08-11 encontrou em `workout_sessions`,
+-- que tinha decisão documentada e nenhuma RLS.
+
+DO $$
+DECLARE
+  aluno_a uuid := gen_random_uuid();
+  aluno_b uuid := gen_random_uuid();
+  espec   uuid := gen_random_uuid();
+  visiveis int;
+  vazou    int;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (aluno_a, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-fa@elevapro.local', '{"full_name":"A","account_type":"student"}'::jsonb),
+    (aluno_b, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-fb@elevapro.local', '{"full_name":"B","account_type":"student"}'::jsonb),
+    (espec,   '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-fe@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb);
+
+  -- Sessão com texto livre para os DOIS alunos: assim "zero linhas" significa
+  -- bloqueio e não tabela vazia.
+  INSERT INTO public.workout_sessions
+    (student_id, started_at, completed_at, intensity, notes, session_type,
+     duration_seconds, active_calories, activity_name)
+  VALUES
+    (aluno_a, now(), now(), 8, 'senti dor no ombro', 'cardio', 1920, 280, 'Corrida'),
+    (aluno_b, now(), now(), 7, 'tontura no aquecimento', 'strength', NULL, NULL, NULL);
+
+  INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
+  VALUES (aluno_a, espec, 'personal_training', 'active');
+
+  SET LOCAL ROLE authenticated;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+
+  SELECT count(*) INTO visiveis
+    FROM public.workout_sessions
+   WHERE student_id = aluno_a AND notes IS NOT NULL AND session_type = 'cardio'
+     AND duration_seconds IS NOT NULL AND active_calories IS NOT NULL;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'especialista vinculado não lê feedback/colunas novas do aluno A (viu %)', visiveis;
+  END IF;
+
+  SELECT count(*) INTO vazou
+    FROM public.workout_sessions WHERE student_id = aluno_b;
+  IF vazou <> 0 THEN
+    RAISE EXCEPTION 'VAZAMENTO: especialista lê % sessão(ões) do aluno B, sem vínculo', vazou;
+  END IF;
+
+  -- O aluno não lê o feedback do outro aluno.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', aluno_b, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO vazou
+    FROM public.workout_sessions WHERE student_id = aluno_a;
+  IF vazou <> 0 THEN
+    RAISE EXCEPTION 'VAZAMENTO: aluno B lê % sessão(ões) do aluno A', vazou;
+  END IF;
+
+  RESET ROLE;
+  RAISE NOTICE 'ok  feedback de treino isolado por vínculo, colunas da 0035 incluídas';
+END $$;
+
 ROLLBACK;
 
 \echo ''

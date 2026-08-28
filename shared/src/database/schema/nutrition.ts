@@ -96,8 +96,10 @@ export const mealLogs = pgTable(
     logged_date: date("logged_date").notNull(),
     completed: boolean("completed").notNull().default(false),
     actual_items: jsonb("actual_items"),
-    notes: text("notes"),
-    photo_url: text("photo_url"),
+    // `notes` e `photo_url` saíram na `0035`: nasceram com a tabela e nunca
+    // tiveram caminho de escrita — nenhuma tela pedia o texto, nenhum serviço o
+    // gravava, e não havia bucket para a foto. Ver seção 2.3 de
+    // docs/LGPD_COMPLIANCE.md.
     created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [unique().on(table.student_id, table.diet_meal_id, table.logged_date)],

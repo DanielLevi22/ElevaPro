@@ -1,18 +1,50 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { HealthDailyMetric, HealthMetricInput } from "../types/health.types";
 
-const CONSENT_HEALTH_COLLECTION = "health_data_collection";
+export const CONSENT_HEALTH_COLLECTION = "health_data_collection";
 
-/** Mantém paridade com web/src/shared/hooks/useHealthDataConsent.ts. */
-const POLICY_VERSION = "1.0";
+/**
+ * Versão vigente da política de dados de saúde.
+ *
+ * Fonte única das duas plataformas. Até 2026-08-28 este valor existia duas
+ * vezes — aqui e em `web/src/shared/hooks/useHealthDataConsent.ts` — com um
+ * comentário pedindo que fossem mantidos em paridade à mão. Não é o tipo de
+ * coisa que sobrevive a uma versão nova: quem sobe uma metade não tem como
+ * saber da outra.
+ *
+ * **Subir esta constante pede reconsentimento de toda a base.** Só suba junto
+ * com o texto novo da política, e só quando a cláusula que mudou for material
+ * para o titular — reconsentimento pedido à toa é o que ensina a aceitar sem
+ * ler.
+ *
+ * - `1.0` — coleta de passos e calorias para acompanhamento.
+ * - `1.1` (2026-08-28) — acrescenta que **o especialista vinculado lê o que o
+ *   aluno escreve no feedback de fim de treino**. A leitura pelo profissional
+ *   não é uso secundário, é o uso: é ela que dá a base de tutela da saúde do
+ *   Art. 11, II, f. O que faltava não era autorização, era o aluno saber disso
+ *   na hora de escrever.
+ */
+export const POLICY_VERSION = "1.1";
 
 export const createHealthService = (supabase: SupabaseClient) => ({
   /**
-   * Verifica o consentimento de coleta de dados de saúde do aluno.
+   * Verifica o consentimento de coleta de dados de saúde do aluno **na versão
+   * vigente da política**.
    *
    * Sem consentimento registrado o dado pode ser exibido na tela, mas nunca
    * persistido — a base legal do Art. 11 exige consentimento além da tutela
    * da saúde.
+   *
+   * A comparação com `POLICY_VERSION` é o que torna o versionamento real. Até
+   * 2026-08-28 esta consulta lia só `given_at` e `revoked_at`, então subir a
+   * constante não pedia reconsentimento de ninguém: quem aceitou a `1.0`
+   * seguia lendo como consentido para sempre, sob um texto que já não descrevia
+   * o tratamento. Consentimento informado (Art. 9°) é sobre o texto que a
+   * pessoa leu, não sobre o clique.
+   *
+   * Igualdade estrita, e não ordenação: quem está numa versão **posterior** à
+   * que este build conhece também cai fora, e é o comportamento certo — o
+   * cliente desatualizado não tem como afirmar o que a política nova diz.
    *
    * @example
    * if (await health.hasCollectionConsent(userId)) await health.upsertDaily(userId, metric);
@@ -20,20 +52,26 @@ export const createHealthService = (supabase: SupabaseClient) => ({
   hasCollectionConsent: async (studentId: string): Promise<boolean> => {
     const { data, error } = await supabase
       .from("student_consents")
-      .select("given_at, revoked_at")
+      .select("given_at, revoked_at, policy_version")
       .eq("student_id", studentId)
       .eq("consent_type", CONSENT_HEALTH_COLLECTION)
       .maybeSingle();
 
     if (error) throw error;
     if (!data) return false;
+    if (data.policy_version !== POLICY_VERSION) return false;
     return Boolean(data.given_at) && !data.revoked_at;
   },
 
   /**
-   * Registra o consentimento de coleta. Reativa um consentimento revogado
-   * limpando `revoked_at` — o histórico anterior permanece, porque revogação
-   * aqui é prospectiva e não apaga o que já foi coletado.
+   * Registra o consentimento de coleta na versão vigente. Reativa um
+   * consentimento revogado limpando `revoked_at` — o histórico anterior
+   * permanece, porque revogação aqui é prospectiva e não apaga o que já foi
+   * coletado.
+   *
+   * O mesmo `upsert` serve ao primeiro consentimento e ao reconsentimento de
+   * quem estava numa versão antiga: `onConflict` no par
+   * `(student_id, consent_type)` sobrescreve `policy_version` e `given_at`.
    */
   grantCollectionConsent: async (studentId: string): Promise<void> => {
     const { error } = await supabase.from("student_consents").upsert(
