@@ -35,6 +35,17 @@ const path = require("node:path");
 const ROOT = path.resolve(__dirname, "..");
 const TYPES_FILE = path.join(ROOT, "shared/src/database/database.types.ts");
 
+/**
+ * O binário do próprio projeto, nunca `npx biome`.
+ *
+ * `npx` cai no registro quando não acha o pacote instalado e baixa a versão
+ * *latest* — e foi exatamente isso que quebrou esta guarda no CI: o job não
+ * rodava `npm ci`, então os dois lados eram formatados por versões diferentes
+ * do Biome. Duas versões produzem bytes diferentes do mesmo schema, e a guarda
+ * acusava divergência que não existia.
+ */
+const BIOME = path.join(ROOT, "node_modules", "@biomejs", "biome", "bin", "biome");
+
 function temDocker() {
   try {
     execSync("docker info", { stdio: "ignore" });
@@ -53,20 +64,25 @@ function gerarTipos() {
 }
 
 /**
- * O arquivo commitado passa pelo formatador do Biome; o gerado, não. Comparar
- * texto cru acusaria diferença a cada execução, então os dois lados passam pelo
- * mesmo formatador antes da comparação.
+ * Passa os dois lados pelo mesmo formatador antes de comparar.
+ *
+ * O arquivo commitado é formatado pelo Biome e o recém-gerado não, e a
+ * diferença não é só de espaço: o Biome acrescenta ponto e vírgula e remove o
+ * pipe inicial das uniões. Comparar ignorando espaço em branco, portanto, não
+ * resolve — o fluxo de tokens muda de verdade.
  */
 function formatar(conteudo) {
   const tmp = path.join(os.tmpdir(), `elevapro-db-types-${process.pid}.ts`);
   fs.writeFileSync(tmp, conteudo);
   try {
-    execFileSync("npx", ["biome", "format", "--write", tmp], {
+    // `node <entrypoint>` em vez do atalho de `.bin`: no Windows o atalho é um
+    // `.cmd`, e o Node 20 recusa spawná-lo sem shell. Chamar o JS direto evita
+    // o shell e vale igual nos três sistemas.
+    execFileSync(process.execPath, [BIOME, "format", "--write", tmp], {
       cwd: ROOT,
       stdio: "ignore",
-      shell: true,
     });
-    return fs.readFileSync(tmp, "utf8");
+    return fs.readFileSync(tmp, "utf8").trim();
   } finally {
     fs.rmSync(tmp, { force: true });
   }
@@ -84,6 +100,15 @@ function main() {
     return;
   }
 
+  // Sem o Biome do projeto não dá para comparar de forma determinística. Falhar
+  // aqui é melhor que formatar com uma versão qualquer e acusar divergência
+  // inexistente — que foi como esta guarda quebrou no CI da primeira vez.
+  if (!fs.existsSync(BIOME)) {
+    console.error("\n✗ Biome do projeto não encontrado em node_modules/.bin.");
+    console.error("   Rode `npm ci` na raiz antes desta verificação.\n");
+    process.exit(1);
+  }
+
   let gerado;
   try {
     gerado = gerarTipos();
@@ -96,7 +121,7 @@ function main() {
   }
 
   const atual = fs.readFileSync(TYPES_FILE, "utf8");
-  if (formatar(gerado).trim() === formatar(atual).trim()) {
+  if (formatar(gerado) === formatar(atual)) {
     console.log("✓ Tipos do banco em dia com as migrations.");
     return;
   }
