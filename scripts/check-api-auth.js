@@ -2,8 +2,7 @@
 /**
  * check-api-auth.js
  *
- * Falha quando uma rota do BFF importa `supabase-admin` sem importar
- * `@/lib/api-auth`.
+ * Falha quando uma rota do BFF não importa `@/lib/api-auth`.
  *
  * `service_role` ignora RLS por definição: numa rota que o usa, a RLS não
  * participa e a única barreira é a checagem do próprio código. A auditoria de
@@ -12,6 +11,13 @@
  * lia a rota de IA via um nome conhecido e assumia a garantia que ele dava nos
  * outros arquivos. Resultado: qualquer conta autenticada lia a anamnese de
  * qualquer aluno.
+ *
+ * O escopo começou nas rotas que usam `service_role` e passou a valer para
+ * TODA rota sob `/api/`. O corte antigo deixava um buraco do tamanho do
+ * problema: seis rotas de IA reimplantavam a checagem à mão, cinco delas com
+ * `const { data } = await client.auth.getUser(token)` — erro descartado —, e
+ * nenhuma era vista por esta guarda, porque não tocavam `supabaseAdmin`. Elas
+ * provavam que existe um usuário, nunca qual papel ele tem.
  *
  * A limitação é a mesma do `check-rls.js` e está assumida: isto prova que a
  * autorização foi CHAMADA, nunca que ela está CORRETA. Quem prova comportamento
@@ -57,20 +63,25 @@ function main() {
     if (PUBLIC_ROUTES.has(relativa)) continue;
 
     const source = fs.readFileSync(file, "utf8");
-    if (ADMIN_IMPORT.test(source) && !AUTH_IMPORT.test(source)) {
-      desprotegidas.push(relativa);
+    if (!AUTH_IMPORT.test(source)) {
+      desprotegidas.push({ rota: relativa, usaAdmin: ADMIN_IMPORT.test(source) });
     }
   }
 
   if (desprotegidas.length === 0) {
-    console.log("✓ Toda rota que usa service_role passa por @/lib/api-auth.");
+    console.log("✓ Toda rota sob /api/ passa por @/lib/api-auth.");
     return;
   }
 
-  console.error(`\n✗ ${desprotegidas.length} rota(s) usam service_role sem autorização:\n`);
-  for (const r of desprotegidas) console.error(`   api/${r}`);
+  console.error(`\n✗ ${desprotegidas.length} rota(s) sem autorização:\n`);
+  for (const r of desprotegidas) {
+    console.error(`   api/${r.rota}${r.usaAdmin ? "   (usa service_role)" : ""}`);
+  }
   console.error(
-    "\n   service_role ignora RLS. Importe de @/lib/api-auth e use a função\n" +
+    "\n   Checagem à mão não vale: a versão que este script substituiu fazia\n" +
+      "   `const { data } = await client.auth.getUser(token)`, descartava o erro\n" +
+      "   e provava apenas que existe um usuário. E service_role ignora RLS.\n\n" +
+      "   Importe de @/lib/api-auth e use a função\n" +
       "   cujo nome descreve a garantia necessária:\n\n" +
       "     authorizeUser(request)                        — token válido\n" +
       "     authorizeSpecialist(request)                  — + conta de especialista\n" +
