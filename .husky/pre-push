@@ -1,3 +1,8 @@
+# Falha na primeira linha que falhar. Sem isto, o hook devolvia o código de
+# saída apenas do ÚLTIMO comando: um teste do mobile quebrado passava
+# despercebido desde que a suíte do web passasse depois dele.
+set -e
+
 branch=$(git symbolic-ref --short HEAD)
 if [ "$branch" = "main" ]; then
   echo "❌ Push direto em 'main' é proibido."
@@ -5,5 +10,15 @@ if [ "$branch" = "main" ]; then
   exit 1
 fi
 
-cd app && npx jest --passWithNoTests --runInBand --no-coverage --forceExit
-cd ../web && npx vitest run --passWithNoTests
+# Os mesmos comandos que o CI roda (`ci.yml`, jobs "Unit Tests"): `test:coverage`
+# nas duas pontas, e não `--no-coverage`.
+#
+# Enquanto o hook rodava sem cobertura, ele provava "os testes passam" e o CI
+# provava "os testes passam E a cobertura não caiu" — duas perguntas diferentes,
+# e só a segunda falhava. Foi assim que o PR #118 passou no push e quebrou no CI
+# com 18.67% contra o piso de 19%: o código novo tinha teste, mas não o
+# suficiente para o piso, e nada local disse isso.
+#
+# O custo é alguns segundos por push. O custo do contrário é descobrir depois.
+cd app && npx jest --coverage --passWithNoTests --runInBand --forceExit
+cd ../web && npx vitest run --coverage --passWithNoTests
