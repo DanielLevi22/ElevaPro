@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createHealthService } from "../health.service";
+import { createHealthService, POLICY_VERSION } from "../health.service";
 import { criarSupabaseFake } from "./supabaseFake";
 
 describe("healthService — consentimento", () => {
@@ -11,24 +11,55 @@ describe("healthService — consentimento", () => {
     expect(await createHealthService(supabase).hasCollectionConsent("aluno-1")).toBe(false);
   });
 
-  it("concede quando foi dado e não revogado", async () => {
+  it("concede quando foi dado, não revogado e na versão vigente", async () => {
     const { supabase } = criarSupabaseFake({
-      data: { given_at: "2026-08-01T10:00:00Z", revoked_at: null },
+      data: {
+        given_at: "2026-08-01T10:00:00Z",
+        revoked_at: null,
+        policy_version: POLICY_VERSION,
+      },
     });
     expect(await createHealthService(supabase).hasCollectionConsent("aluno-1")).toBe(true);
+  });
+
+  // O reconsentimento inteiro depende desta asserção. Enquanto a consulta lia
+  // só `given_at` e `revoked_at`, subir POLICY_VERSION não alcançava ninguém:
+  // quem aceitou a 1.0 seguia como consentido para sempre, sob um texto que já
+  // não descrevia o tratamento. Consentimento informado (Art. 9°) é sobre o
+  // texto que a pessoa leu.
+  it("nega quando o consentimento é de uma versão anterior da política", async () => {
+    const { supabase } = criarSupabaseFake({
+      data: { given_at: "2026-08-01T10:00:00Z", revoked_at: null, policy_version: "1.0" },
+    });
+    expect(await createHealthService(supabase).hasCollectionConsent("aluno-1")).toBe(false);
+  });
+
+  // Cliente desatualizado não tem como afirmar o que a política nova diz, então
+  // versão posterior também não vale — a comparação é de igualdade, não de ordem.
+  it("nega quando o consentimento é de uma versão posterior à conhecida", async () => {
+    const { supabase } = criarSupabaseFake({
+      data: { given_at: "2026-08-01T10:00:00Z", revoked_at: null, policy_version: "99.0" },
+    });
+    expect(await createHealthService(supabase).hasCollectionConsent("aluno-1")).toBe(false);
   });
 
   // Revogar é prospectivo: interrompe a coleta sem apagar o histórico. Se esta
   // asserção cair, o app volta a coletar de quem pediu para parar.
   it("nega depois de revogado, mesmo tendo sido dado antes", async () => {
     const { supabase } = criarSupabaseFake({
-      data: { given_at: "2026-08-01T10:00:00Z", revoked_at: "2026-08-20T10:00:00Z" },
+      data: {
+        given_at: "2026-08-01T10:00:00Z",
+        revoked_at: "2026-08-20T10:00:00Z",
+        policy_version: POLICY_VERSION,
+      },
     });
     expect(await createHealthService(supabase).hasCollectionConsent("aluno-1")).toBe(false);
   });
 
   it("nega quando o registro existe sem `given_at`", async () => {
-    const { supabase } = criarSupabaseFake({ data: { given_at: null, revoked_at: null } });
+    const { supabase } = criarSupabaseFake({
+      data: { given_at: null, revoked_at: null, policy_version: POLICY_VERSION },
+    });
     expect(await createHealthService(supabase).hasCollectionConsent("aluno-1")).toBe(false);
   });
 
@@ -62,6 +93,9 @@ describe("healthService — consentimento", () => {
     const payload = chamadas[0].payload as Record<string, unknown>;
     expect(payload.revoked_at).toBeNull();
     expect(payload.given_at).toEqual(expect.any(String));
+    // Grava a versão vigente, e não a que o aluno tinha antes: é isso que
+    // encerra o pedido de reconsentimento em vez de repeti-lo a cada abertura.
+    expect(payload.policy_version).toBe(POLICY_VERSION);
     expect(chamadas[0].metodos.find((m) => m.nome === "upsert")?.args[1]).toEqual({
       onConflict: "student_id,consent_type",
     });

@@ -19,6 +19,12 @@ export const workoutDifficultyEnum = pgEnum("workout_difficulty", [
   "advanced",
 ]);
 
+/**
+ * Discrimina a sessão executada. `strength` é o padrão porque toda linha
+ * anterior à `0035` é musculação — o cardio veio depois e é a exceção.
+ */
+export const workoutSessionTypeEnum = pgEnum("workout_session_type", ["strength", "cardio"]);
+
 export const dayOfWeekEnum = pgEnum("day_of_week", [
   "monday",
   "tuesday",
@@ -131,8 +137,24 @@ export const workoutSessions = pgTable("workout_sessions", {
   workout_id: uuid("workout_id").references(() => workouts.id, { onDelete: "set null" }),
   started_at: timestamp("started_at", { withTimezone: true }).notNull(),
   completed_at: timestamp("completed_at", { withTimezone: true }),
+  // Escala de esforço percebido (RPE), 1 a 10. Execução de contrato — é medida
+  // de carga, não relato clínico. Não confundir com o `intensity` do
+  // acelerômetro na tela de cardio, que é outra coisa e nunca é gravado.
   intensity: integer("intensity"),
+  // Texto livre do aluno. Dado sensível de saúde (Art. 11) — ver seção 2.2 de
+  // docs/LGPD_COMPLIANCE.md. Nunca recebe texto gerado pelo app.
   notes: text("notes"),
+  // Cardio e musculação são a mesma linha da mesma tabela. Até a `0035` a única
+  // forma de distinguir era comparar o título do treino com a string
+  // 'Treino Cardio Livre'.
+  session_type: workoutSessionTypeEnum("session_type").notNull().default("strength"),
+  // Só o cardio preenche. Na musculação a duração sai de started_at/completed_at
+  // e o gasto não é medido.
+  duration_seconds: integer("duration_seconds"),
+  active_calories: integer("active_calories"),
+  // Modalidade do cardio ("Corrida", "Bike"). Na musculação o nome vem da
+  // prescrição; aqui não há prescrição para vir.
+  activity_name: text("activity_name"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

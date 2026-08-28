@@ -586,8 +586,6 @@ export type Database = {
           diet_plan_id: string | null;
           id: string;
           logged_date: string;
-          notes: string | null;
-          photo_url: string | null;
           student_id: string;
         };
         Insert: {
@@ -598,8 +596,6 @@ export type Database = {
           diet_plan_id?: string | null;
           id?: string;
           logged_date: string;
-          notes?: string | null;
-          photo_url?: string | null;
           student_id: string;
         };
         Update: {
@@ -610,8 +606,6 @@ export type Database = {
           diet_plan_id?: string | null;
           id?: string;
           logged_date?: string;
-          notes?: string | null;
-          photo_url?: string | null;
           student_id?: string;
         };
         Relationships: [
@@ -1283,31 +1277,43 @@ export type Database = {
       };
       workout_sessions: {
         Row: {
+          active_calories: number | null;
+          activity_name: string | null;
           completed_at: string | null;
           created_at: string;
+          duration_seconds: number | null;
           id: string;
           intensity: number | null;
           notes: string | null;
+          session_type: Database["public"]["Enums"]["workout_session_type"];
           started_at: string;
           student_id: string;
           workout_id: string | null;
         };
         Insert: {
+          active_calories?: number | null;
+          activity_name?: string | null;
           completed_at?: string | null;
           created_at?: string;
+          duration_seconds?: number | null;
           id?: string;
           intensity?: number | null;
           notes?: string | null;
+          session_type?: Database["public"]["Enums"]["workout_session_type"];
           started_at: string;
           student_id: string;
           workout_id?: string | null;
         };
         Update: {
+          active_calories?: number | null;
+          activity_name?: string | null;
           completed_at?: string | null;
           created_at?: string;
+          duration_seconds?: number | null;
           id?: string;
           intensity?: number | null;
           notes?: string | null;
+          session_type?: Database["public"]["Enums"]["workout_session_type"];
           started_at?: string;
           student_id?: string;
           workout_id?: string | null;
@@ -1418,6 +1424,7 @@ export type Database = {
       service_type: "personal_training" | "nutrition_consulting";
       training_status: "planned" | "active" | "completed";
       workout_difficulty: "beginner" | "intermediate" | "advanced";
+      workout_session_type: "strength" | "cardio";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -1553,6 +1560,7 @@ export const Constants = {
       service_type: ["personal_training", "nutrition_consulting"],
       training_status: ["planned", "active", "completed"],
       workout_difficulty: ["beginner", "intermediate", "advanced"],
+      workout_session_type: ["strength", "cardio"],
     },
   },
 } as const;

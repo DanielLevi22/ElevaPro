@@ -58,7 +58,9 @@ export function DietCreatorPage() {
   const [showConsentModal, setShowConsentModal] = useState(false);
 
   const { data: consent } = useHealthDataConsent();
-  const hasConsent = !!consent && !consent.revoked_at;
+  // `isCurrent` já resolve versão da política e revogação: consentimento dado
+  // sob um texto anterior não autoriza o tratamento que o texto novo descreve.
+  const hasConsent = consent?.isCurrent === true;
 
   const { data: students = [] } = useStudents();
   const createMutation = useCreateDietPlanWithStrategy();

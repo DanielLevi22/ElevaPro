@@ -69,8 +69,8 @@ export interface MealLog {
   logged_date: string;
   completed: boolean;
   actual_items: unknown | null;
-  notes: string | null;
-  photo_url: string | null;
+  // `notes` e `photo_url` saíram na `0035`: nenhuma das duas tinha caminho de
+  // escrita. Ver seção 2.3 de docs/LGPD_COMPLIANCE.md.
   created_at: string;
 }
 

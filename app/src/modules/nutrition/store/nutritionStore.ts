@@ -134,8 +134,6 @@ export const useNutritionStore = create<NutritionStore>((set, get) => ({
           logged_date: date,
           completed: isCompleted,
           actual_items: existingLog?.actual_items ?? null,
-          notes: existingLog?.notes ?? null,
-          photo_url: existingLog?.photo_url ?? null,
           created_at: existingLog?.created_at ?? '',
         } satisfies MealLog,
       },

@@ -1,9 +1,33 @@
 # PRD: student-activity-feed
 
 **Data de criação:** 2026-08-28
-**Status:** draft
+**Status:** approved
+**Aprovado em:** 2026-08-28
 **Branch:** feature/student-activity-feed
 **Autor:** Daniel Levi
+
+> **Três correções à leitura original, achadas ao ler o código antes de escrever
+> o primeiro commit.** Elas mudam o trabalho e estão registradas aqui porque o
+> PRD é o que se lê depois, não a conversa.
+>
+> 1. **`meal_logs.notes` é coluna morta.** Nenhum caminho escreve nela —
+>    `toggleMealLog` grava `completed`, `updateMealLogItems` grava
+>    `actual_items`, e não existe tela onde o aluno escreva sobre a refeição. O
+>    bloqueador que mandava reclassificá-la como Art. 11 não tem dado a proteger,
+>    e o lembrete "seu personal vê isto" não tem onde morar. Ela **sai junto com
+>    `photo_url`**, pelo mesmo raciocínio do D5. Sobra um único campo de texto
+>    livre a reclassificar: `workout_sessions.notes`.
+> 2. **O reconsentimento não funcionava como descrito.** `hasCollectionConsent` e
+>    `useHealthDataConsent` nunca leram `policy_version` — subir a constante para
+>    1.1 não pediria reconsentimento de ninguém. E o único registro de
+>    consentimento no mobile era efeito colateral de conectar o HealthKit no
+>    onboarding: quem pulou nunca consentiu. A fase 0 passa a construir o gate
+>    versionado de verdade, com componente próprio no mobile.
+> 3. **A linha sintética de cardio é apagada, não consertada.**
+>    `createWorkoutSession` já aceita `workout_id` nulo e a FK é
+>    `ON DELETE SET NULL`. Com `session_type` na sessão, a linha sintética não
+>    tem mais função — corrigir o dono manteria, por aluno, uma linha que existe
+>    só para satisfazer um join. Resolve D1 e D3 de uma vez.
 
 > Substitui o rascunho `session-feedback-visibility`, que tratava só do feedback
 > de fim de treino. O problema real é maior: o especialista não tem uma tela que

@@ -444,6 +444,10 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
         completed_at: input.completed_at ?? null,
         intensity: input.intensity ?? null,
         notes: input.notes ?? null,
+        session_type: input.session_type ?? "strength",
+        duration_seconds: input.duration_seconds ?? null,
+        active_calories: input.active_calories ?? null,
+        activity_name: input.activity_name ?? null,
       })
       .select()
       .single();

@@ -15,6 +15,7 @@ import '../global.css';
 
 import { supabase } from '@elevapro/supabase';
 import { useAuthStore } from '@/auth';
+import { HealthDataConsentGate } from '@/components/consent/HealthDataConsentGate';
 import { AppAlertHost } from '@/components/ui/appAlert';
 import { useColorScheme } from '@/components/useColorScheme';
 import { queryClient } from '@/lib/query-client';
@@ -146,6 +147,17 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
           </Stack>
           {/* Fora do Stack: o aviso sobrevive à troca de tela que o disparou. */}
           <AppAlertHost />
+          {/*
+            Também fora do Stack, e pelo mesmo motivo: o pedido de consentimento
+            é sobre a conta, não sobre a tela em que o aluno estava quando o app
+            abriu. Aqui ele é feito uma vez por sessão, na porta — e não em cada
+            caminho que grava dado de saúde, que é o desenho que já deixou
+            passar `toggleMealCompletion`.
+          */}
+          <HealthDataConsentGate
+            studentId={session?.user?.id ?? null}
+            isStudent={accountType === 'student' || accountType === 'member'}
+          />
         </ThemeProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

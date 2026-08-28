@@ -31,7 +31,13 @@ export function HealthDataConsentModal({ onAccept, onDecline }: HealthDataConsen
             <li>Metas calóricas e de macronutrientes</li>
             <li>Refeições e alimentos do plano</li>
             <li>Registros de refeições realizadas</li>
+            <li>Suas observações no feedback de fim de treino</li>
           </ul>
+          <p className="font-semibold text-foreground mt-2">Quem tem acesso:</p>
+          <p>
+            O especialista vinculado a você lê estes registros, incluindo o que você escrever no
+            feedback de fim de treino. É para esse acompanhamento que eles existem.
+          </p>
           <p className="mt-2 text-xs">
             Base legal: Tutela da Saúde (Art. 11, II, f) + Consentimento (Art. 11, I) — LGPD. Você
             pode revogar este consentimento a qualquer momento nas configurações de privacidade.

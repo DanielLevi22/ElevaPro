@@ -67,7 +67,9 @@ Dados referentes à saúde exigem **base legal específica** e proteção refor�
 | Dobras cutâneas (7 pontos) | `physical_assessments` | Tutela da saúde + Consentimento | Protocolo Jackson-Pollock para composição corporal |
 | Circunferências corporais | `physical_assessments` | Tutela da saúde + Consentimento | Acompanhamento de medidas |
 | Histórico de saúde (anamnese) | `student_anamnesis.responses` | Consentimento explícito (Art. 11, I) | Informar o especialista sobre limitações, lesões, medicamentos |
-| Dados de treino executado | `workout_sessions` | Execução de contrato | Acompanhamento de desempenho |
+| Dados de treino executado (séries, cargas, datas, `intensity`) | `workout_sessions` | Execução de contrato | Acompanhamento de desempenho |
+| **Observações do aluno sobre a própria sessão** | `workout_sessions.notes` | **Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I)** | Ajuste de prescrição a partir do que o aluno relata |
+| Tipo, duração e calorias da sessão | `workout_sessions.session_type`, `.duration_seconds`, `.active_calories` | Execução de contrato | Distinguir cardio de musculação e medir a sessão |
 | Plano alimentar (metas calóricas e macros) | `diet_plans` | Tutela da saúde + Consentimento (Art. 11, II, f + I) | Prescrição nutricional — especialista ou autogerenciado pelo member |
 | Refeições e alimentos do plano | `diet_meals`, `diet_meal_items` | Tutela da saúde + Consentimento | Composição do plano alimentar |
 | Registro de refeições realizadas e substituições | `meal_logs` | Tutela da saúde + Consentimento | Acompanhamento de aderência nutricional |
@@ -84,6 +86,21 @@ Dados referentes à saúde exigem **base legal específica** e proteção refor�
 > essa resposta é persistida. Vale a mesma base legal da anamnese, e o
 > `ON DELETE CASCADE` a partir de `profiles` garante a eliminação junto com a
 > conta.
+>
+> **`workout_sessions.notes` é o segundo desses locais.** É o campo aberto do
+> `WorkoutFeedbackModal`, onde o aluno escreve com as próprias palavras no fim
+> de cada sessão — "senti dor no ombro", "tive tontura", "voltei da cirurgia do
+> joelho". Séries, cargas e datas da mesma tabela são execução de contrato;
+> este campo não é, e por isso foi separado da linha genérica em 2026-08-28. A
+> escala de esforço (`intensity`, 1 a 10) continua como execução de contrato —
+> é medida de carga, não relato clínico.
+>
+> A distinção tem consequência prática, e é por ela que a separação importa:
+> texto do titular e dado gerado pelo sistema têm tratamento diferente no
+> direito de acesso e na eliminação. Enquanto o app escrevia resumo gerado
+> dentro de `notes` (o defeito D2 do PRD `student-activity-feed`), não havia
+> como saber qual dos dois uma linha continha. Desde a `0035`, `notes` guarda
+> só o que o aluno digitou.
 
 | Registro de consentimento | `student_consents` | Consentimento explícito (Art. 11, I) | Provar que o aluno autorizou coleta de dados de saúde |
 
@@ -98,6 +115,19 @@ Dados que foram explicitamente rejeitados do schema por violar o princípio da n
 - `phone` — nunca utilizado funcionalmente
 - `cref` / `crn` — credenciais removidas do fluxo de cadastro
 - `is_super_admin` — redundante com `account_type`
+- **Foto de refeição** (`meal_logs.photo_url`, apagada na `0035`) — foto de prato
+  é dado pessoal com rosto, casa e companhia no enquadramento, para uma
+  informação que o registro de refeição já dá em texto. Guardar exigiria bucket
+  com política, URL assinada, retenção e eliminação: custo de conformidade sem
+  contrapartida. A coluna existia sem bucket nenhum — e coluna que nunca deve
+  ser preenchida não é neutra, é convite, o mesmo raciocínio da `0026` com
+  `body_scans`. Não confundir com a foto da avaliação física, que tem bucket com
+  política desde a `0021` e parecer próprio
+- **Observação do aluno sobre a refeição** (`meal_logs.notes`, apagada na
+  `0035`) — nasceu junto com a tabela e nunca teve caminho de escrita: nenhuma
+  tela pedia o texto e nenhum serviço o gravava. Mesma decisão, mesma razão. Se
+  vier a ser necessário, nasce com base legal do Art. 11 e lembrete de leitura
+  desde o primeiro commit, como `workout_sessions.notes` tem agora
 
 ---
 
@@ -498,6 +528,17 @@ modelo. Fechado pelo PRD
 | CASCADE DELETE em student_id de workout_sessions | Exclusão de conta do aluno elimina todo o histórico de sessões |
 | Dados de performance não são dados sensíveis (Art. 5°, II) | Base legal: execução de contrato (Art. 7°, V) — sem necessidade de consentimento explícito |
 | Briefing lê `workout_sessions.completed_at` e nada mais — nem carga, nem repetição, nem intensidade | Necessidade (Art. 6°, III): o sinal é "não treina há N dias", não o treino |
+| `workout_sessions.notes` reclassificado como dado sensível (Art. 11) e separado da linha genérica de performance | Base legal adequada — é texto livre onde o aluno relata dor, tontura e cirurgia |
+| `notes` guarda só o que o aluno digitou; duração e calorias do cardio em colunas próprias | Qualidade (Art. 6°, V) e direito de acesso: texto do titular e texto do sistema não podem ocupar o mesmo campo |
+| O bloco recente do briefing atravessa a fronteira já resumido — nunca a linha de sessão | Necessidade + Segurança: dado de saúde cru não vai para o HTML da página |
+| Erro de gravação de sessão logado sem corpo | Prevenção (Art. 6°, VIII): o erro do PostgREST pode carregar o payload, inclusive `notes` |
+
+> **Revisão de 2026-08-28 — `student-activity-feed`.** O módulo passou a ser lido
+> pela primeira vez: até aqui o app coletava RPE e observação a cada sessão e
+> nenhuma query do web tocava as duas colunas. Coletar sem usar é violação de
+> finalidade pelo avesso (Art. 6°, I), e a correção — exibir — foi o que obrigou
+> a reclassificar `notes`. Expor o campo sob a base antiga, de execução de
+> contrato, seria a infração grave.
 
 > **Revisão de 2026-08-11 — reprovou em RLS.** As decisões acima falavam em "RLS
 > bloqueia" desde a revisão do módulo, mas a auditoria foi ao banco e encontrou
@@ -518,12 +559,19 @@ modelo. Fechado pelo PRD
 | Consentimento explícito obrigatório antes do primeiro INSERT em `diet_plans` por member (`student_consents`, tipo `health_data_collection`) | Base legal Art. 11, I |
 | `meal_logs.actual_items` (JSONB com substituições) nunca deve ser logado em texto claro | Prevenção (Art. 6°, VIII) |
 | `foods` públicos legíveis por todos os autenticados; customizados protegidos por `created_by = auth.uid()` | Necessidade + Segurança |
+| `meal_logs.photo_url` e `meal_logs.notes` apagadas na `0035` — nenhuma das duas tinha caminho de escrita | Necessidade (Art. 6°, III): coluna que nunca é preenchida é convite, não neutralidade |
+
+> **Revisão de 2026-08-28 — `student-activity-feed`.** As duas colunas foram
+> achadas ao mapear o que o feed de atividades poderia exibir: `photo_url` não
+> tinha bucket em migration nenhuma, e `notes` não tinha tela nem serviço que a
+> gravasse. O feed mostra refeição como evento — `completed` e `logged_date` —,
+> sem texto e sem imagem.
 
 **Decisões pendentes de implementação:**
 
 | Item | Ação necessária |
 |------|----------------|
-| Consentimento no app mobile antes de `toggleMealCompletion` e `substituteFood` | Verificar `student_consents` no `nutritionStore.ts` antes de gravar `meal_logs` |
+| ~~Consentimento no app mobile antes de `toggleMealCompletion` e `substituteFood`~~ | **Coberto em 2026-08-28.** O gate deixou de ser por chamada e passou a ser de abertura: `HealthDataConsentGate` bloqueia o app do aluno enquanto `student_consents` não estiver na `POLICY_VERSION` corrente, então nenhum caminho de escrita de `meal_logs` é alcançável sem consentimento vigente. Gate na porta cobre os caminhos que ainda não existem; verificação por chamada só cobre as duas que alguém lembrou de instrumentar |
 | NutriBotService e ScanFoodService (BFF API routes) sem verificação de consentimento | Adicionar middleware de consentimento nas routes `/api/ai/student/nutribot` e `/api/ai/student/scan-food` |
 
 ---

@@ -23,3 +23,4 @@ export * from "./types/nutrition.types";
 export * from "./types/physicalAssessment.types";
 export * from "./types/students.types";
 export * from "./types/workouts.types";
+export * from "./utils/rpe";

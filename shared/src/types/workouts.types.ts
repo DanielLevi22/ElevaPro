@@ -96,8 +96,16 @@ export interface WorkoutSession {
   workout_id: string | null;
   started_at: string;
   completed_at: string | null;
+  /** RPE de 1 a 10. Use `rpeLabel`/`formatRpe` para exibir — a escala é única. */
   intensity: number | null;
+  /** Texto do aluno, e só dele. Dado sensível de saúde (Art. 11). */
   notes: string | null;
+  session_type: WorkoutSessionType;
+  /** Nulos na musculação e em todo cardio anterior à `0035`. */
+  duration_seconds: number | null;
+  active_calories: number | null;
+  /** Modalidade do cardio. Na musculação o nome vem da prescrição. */
+  activity_name: string | null;
   created_at: string;
 }
 
@@ -209,13 +217,32 @@ export interface UpdateTrainingPlanInput {
   order_index?: number;
 }
 
+/** Cardio e musculação são a mesma linha de `workout_sessions`. Ver migration 0035. */
+export type WorkoutSessionType = "strength" | "cardio";
+
 export interface CreateWorkoutSessionInput {
   student_id: string;
+  /**
+   * Nulo no cardio: a sessão avulsa não tem prescrição. Até a `0035` ela
+   * apontava para uma linha sintética de `workouts` criada só para dar um
+   * título ao join.
+   */
   workout_id?: string | null;
   started_at: string;
   completed_at?: string | null;
+  /** RPE de 1 a 10, como o aluno respondeu no fim da sessão. */
   intensity?: number;
+  /**
+   * Só o que o aluno digitou. Dado sensível (Art. 11) — quem chama é
+   * responsável por não gravar sem consentimento vigente.
+   */
   notes?: string;
+  session_type?: WorkoutSessionType;
+  /** Cardio apenas: medidos durante a sessão, não derivados do relógio. */
+  duration_seconds?: number | null;
+  active_calories?: number | null;
+  /** Cardio apenas: a modalidade que o aluno escolheu. */
+  activity_name?: string | null;
 }
 
 /** Uma série como a tela de execução a conhece. */
