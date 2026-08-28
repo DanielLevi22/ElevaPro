@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Share, Text, TouchableOpacity, View } from 'react-native';
+import { Share, Text, TouchableOpacity, View } from 'react-native';
+import { showAlert } from '@/components/ui/appAlert';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 
 export default function InviteStudentScreen() {
@@ -17,7 +18,7 @@ export default function InviteStudentScreen() {
         message: `Olá ${name}! 💪\n\nJá cadastrei seu perfil no Eleva Pro.\nUse o código *${code}* para acessar seus treinos!\n\nEste código expira em 7 dias.\n\nBaixe o app agora!`,
       });
     } catch (_error) {
-      Alert.alert('Erro', 'Não foi possível compartilhar.');
+      showAlert({ title: 'Erro', message: 'Não foi possível compartilhar.', type: 'error' });
     }
   };
 
@@ -25,7 +26,7 @@ export default function InviteStudentScreen() {
     <ScreenLayout>
       <View className="flex-1 px-6 justify-center items-center">
         <View className="w-24 h-24 rounded-full bg-orange-500/15 items-center justify-center mb-6 border-2 border-orange-500/20">
-          <Ionicons name="checkmark" size={48} color="#CCFF00" />
+          <Ionicons name="checkmark" size={48} color="#FF6B35" />
         </View>
 
         <Text className="text-3xl font-extrabold text-white mb-2 text-center font-display">
@@ -46,7 +47,7 @@ export default function InviteStudentScreen() {
         </View>
 
         <View className="flex-row items-center bg-orange-500/10 px-4 py-2 rounded-lg mb-8 border border-orange-500/20">
-          <Ionicons name="time-outline" size={16} color="#CCFF00" />
+          <Ionicons name="time-outline" size={16} color="#FF6B35" />
           <Text className="text-orange-500 text-xs font-bold ml-2">O código expira em 7 dias</Text>
         </View>
 
@@ -57,7 +58,7 @@ export default function InviteStudentScreen() {
           className="w-full mb-4"
         >
           <LinearGradient
-            colors={['#CCFF00', '#A3CC00']}
+            colors={['#FF6B35', '#FF2E63']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             className="rounded-2xl py-4 flex-row items-center justify-center shadow-lg shadow-orange-500/20"

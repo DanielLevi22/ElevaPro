@@ -17,8 +17,8 @@ export function MacroProgressBar({ label, consumed, target, unit, color }: Macro
   // Map simple color names to brand gradients if needed, or use the passed color
   const getGradient = () => {
     if (color === '#34C759' || color === '#00C9A7') return brandColors.gradients.success;
-    if (color === '#CCFF00' || color === '#FFB800') return brandColors.gradients.primary;
-    if (color === '#A3CC00' || color === '#FF3B30') return brandColors.gradients.primaryReverse;
+    if (color === '#FF6B35' || color === '#FFB800') return brandColors.gradients.primary;
+    if (color === '#FF2E63' || color === '#FF3B30') return brandColors.gradients.primaryReverse;
     return [color, color];
   };
 

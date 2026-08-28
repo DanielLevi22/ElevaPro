@@ -15,6 +15,7 @@ import '../global.css';
 
 import { supabase } from '@elevapro/supabase';
 import { useAuthStore } from '@/auth';
+import { AppAlertHost } from '@/components/ui/appAlert';
 import { useColorScheme } from '@/components/useColorScheme';
 import { queryClient } from '@/lib/query-client';
 import { registerHealthSyncAsync } from '@/services/backgroundHealthTask';
@@ -143,6 +144,8 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="onboarding" />
           </Stack>
+          {/* Fora do Stack: o aviso sobrevive à troca de tela que o disparou. */}
+          <AppAlertHost />
         </ThemeProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

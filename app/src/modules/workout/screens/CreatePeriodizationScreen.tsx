@@ -4,7 +4,6 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -16,11 +15,11 @@ import {
 } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { StudentPickerModal } from '@/components/StudentPickerModal';
+import { showAlert } from '@/components/ui/appAlert';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { StatusModal } from '@/components/ui/StatusModal';
-
 import { useWorkoutStore } from '../store/workoutStore';
 
 const OBJECTIVE_OPTIONS = [
@@ -104,19 +103,23 @@ export default function CreatePeriodizationScreen() {
 
     if (!name.trim()) {
       console.log('❌ Validation failed: Name is empty');
-      Alert.alert('Erro', 'O nome da periodização é obrigatório.');
+      showAlert({ title: 'Erro', message: 'O nome da periodização é obrigatório.', type: 'error' });
       return;
     }
 
     if (!objective.trim()) {
       console.log('❌ Validation failed: Objective is empty');
-      Alert.alert('Erro', 'O objetivo da periodização é obrigatório.');
+      showAlert({
+        title: 'Erro',
+        message: 'O objetivo da periodização é obrigatório.',
+        type: 'error',
+      });
       return;
     }
 
     if (!isMember && !studentId) {
       console.log('❌ Validation failed: No student selected');
-      Alert.alert('Erro', 'Selecione um aluno.');
+      showAlert({ title: 'Erro', message: 'Selecione um aluno.', type: 'error' });
       return;
     }
 
@@ -166,7 +169,11 @@ export default function CreatePeriodizationScreen() {
     } catch (error) {
       console.error('❌ ERROR CREATING PERIODIZATION:', error);
       console.error('Error details:', JSON.stringify(error, null, 2));
-      Alert.alert('Erro', 'Não foi possível criar a periodização.');
+      showAlert({
+        title: 'Erro',
+        message: 'Não foi possível criar a periodização.',
+        type: 'error',
+      });
     } finally {
       setLoading(false);
       console.log('=== PERIODIZATION CREATION FLOW ENDED ===\n');
@@ -198,7 +205,7 @@ export default function CreatePeriodizationScreen() {
             onPress={() => router.back()}
             className="bg-zinc-800/50 p-2.5 rounded-xl mr-4 border border-zinc-700"
           >
-            <Ionicons name="arrow-back" size={24} color="#CCFF00" />
+            <Ionicons name="arrow-back" size={24} color="#FF6B35" />
           </TouchableOpacity>
           <Text className="text-2xl font-bold text-foreground font-display">Nova Periodização</Text>
         </View>
@@ -316,7 +323,7 @@ export default function CreatePeriodizationScreen() {
                 onPress={() => setShowStartPicker(true)}
                 className="bg-zinc-900/80 border-2 border-zinc-700 rounded-2xl px-4 py-4 flex-row items-center justify-between"
               >
-                <Ionicons name="calendar-outline" size={20} color="#CCFF00" />
+                <Ionicons name="calendar-outline" size={20} color="#FF6B35" />
                 <Text className="text-foreground text-base flex-1 ml-3">
                   {startDate.toLocaleDateString('pt-BR')}
                 </Text>
@@ -346,7 +353,7 @@ export default function CreatePeriodizationScreen() {
                 onPress={() => setShowEndPicker(true)}
                 className="bg-zinc-900/80 border-2 border-zinc-700 rounded-2xl px-4 py-4 flex-row items-center justify-between"
               >
-                <Ionicons name="calendar-outline" size={20} color="#CCFF00" />
+                <Ionicons name="calendar-outline" size={20} color="#FF6B35" />
                 <Text className="text-foreground text-base flex-1 ml-3">
                   {endDate.toLocaleDateString('pt-BR')}
                 </Text>

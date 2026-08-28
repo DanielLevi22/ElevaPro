@@ -4,7 +4,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -15,6 +14,7 @@ import {
   View,
 } from 'react-native';
 import { useAuthStore } from '@/auth';
+import { showAlert } from '@/components/ui/appAlert';
 import { VideoPlayer } from '@/components/VideoPlayer';
 import type { WorkoutItem } from '../types';
 
@@ -66,19 +66,27 @@ export function EditExerciseModal({ visible, item, onClose, onSave }: EditExerci
     const restNum = parseInt(restTime, 10);
 
     if (!sets || setsNum <= 0) {
-      Alert.alert('Erro', 'Séries deve ser um número maior que zero');
+      showAlert({
+        title: 'Erro',
+        message: 'Séries deve ser um número maior que zero',
+        type: 'error',
+      });
       setIsSaving(false);
       return;
     }
 
     if (!reps.trim()) {
-      Alert.alert('Erro', 'Repetições não pode estar vazio');
+      showAlert({ title: 'Erro', message: 'Repetições não pode estar vazio', type: 'error' });
       setIsSaving(false);
       return;
     }
 
     if (!restTime || restNum < 0) {
-      Alert.alert('Erro', 'Tempo de descanso deve ser um número positivo');
+      showAlert({
+        title: 'Erro',
+        message: 'Tempo de descanso deve ser um número positivo',
+        type: 'error',
+      });
       setIsSaving(false);
       return;
     }
@@ -112,7 +120,11 @@ export function EditExerciseModal({ visible, item, onClose, onSave }: EditExerci
 
         if (videoError) {
           console.error('❌ Error updating video URL:', videoError);
-          Alert.alert('Erro', `Não foi possível atualizar a URL do vídeo: ${videoError.message}`);
+          showAlert({
+            title: 'Erro',
+            message: `Não foi possível atualizar a URL do vídeo: ${videoError.message}`,
+            type: 'error',
+          });
           setIsSaving(false);
           return;
         }
@@ -154,7 +166,7 @@ export function EditExerciseModal({ visible, item, onClose, onSave }: EditExerci
           <View className="w-full bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden max-w-md">
             {/* Header */}
             <LinearGradient
-              colors={['#CCFF00', '#A3CC00']}
+              colors={['#FF6B35', '#FF2E63']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               className="p-6"
@@ -290,7 +302,7 @@ export function EditExerciseModal({ visible, item, onClose, onSave }: EditExerci
 
                 <TouchableOpacity onPress={handleSave} className="flex-1" disabled={isSaving}>
                   <LinearGradient
-                    colors={isSaving ? ['#52525b', '#52525b'] : ['#CCFF00', '#A3CC00']}
+                    colors={isSaving ? ['#52525b', '#52525b'] : ['#FF6B35', '#FF2E63']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     className="py-4 rounded-2xl"

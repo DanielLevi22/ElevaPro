@@ -1,150 +1,157 @@
 /**
- * Paleta do Eleva Pro no mobile — derivada do projeto Claude Design.
+ * Energy Gradient Color System
+ * Mobile-only color palette for Eleva Pro
  *
- * ## Por que este arquivo mudou de cor
- *
- * Até 2026-08-28 ele declarava a "Energy Gradient": laranja `#FF6B35` → rosa
- * `#FF2E63`, com sólido coral `#FF4D5A`. Isso contradizia `app/src/global.css`,
- * que sempre declarou o lime `#CCFF00` — e como `tailwind.config.js`
- * sobrescrevia os tokens com os valores daqui, `className="bg-primary"` e
- * `var(--color-primary)` devolviam cores diferentes na mesma tela. Com
- * `--primary-foreground` sendo preto (desenhado para o lime), o resultado
- * visível era texto preto sobre botão coral.
- *
- * O PRD `design-system-unification.md` decidiu em 2026-08-09: **lime, não
- * coral** — o produto tem uma marca só. O web já foi migrado; o mobile ficou
- * para depois e é isto aqui.
- *
- * ## A fonte da verdade
- *
- * Os valores abaixo espelham `design/tokens/colors.css`, cópia versionada do
- * projeto Claude Design. Mudou lá, muda aqui — e em `app/src/global.css`, que
- * declara os mesmos tokens em HSL para o NativeWind.
- *
- * | Papel | Design | Hex |
- * |---|---|---|
- * | primary | `--lime` | `#CCFF00` |
- * | secondary | `--cyber-blue` | `#00F0FF` |
- * | accent | `--hot-pink` | `#FF0099` |
- *
- * ## Sobre os gradientes
- *
- * O Claude Design **não tem gradiente de marca**: a linguagem dele é cor chapada
- * com *glow* neon (`--glow-primary` e irmãos). Os gradientes que sobraram aqui
- * são de mesmo matiz — do tom para uma variação mais escura dele —, para as 25
- * chamadas de `LinearGradient` que existem no app continuarem funcionando sem
- * inventar um segundo matiz que o design não define. Trocá-los por cor chapada
- * mais glow é redesenho de tela, e está registrado no PRD.
+ * Design Philosophy:
+ * - Vibrant orange-to-pink gradients for energy and motivation
+ * - Electric blue for secondary actions and info
+ * - Vibrant purple for accents and highlights
+ * - Deep blacks for premium dark mode experience
  */
-
-/** Lime `#CCFF00` — `--lime` no design. */
-const LIME = '#CCFF00';
-/** Cyber blue `#00F0FF` — `--cyber-blue` no design. */
-const CYBER_BLUE = '#00F0FF';
-/** Hot pink `#FF0099` — `--hot-pink` no design. */
-const HOT_PINK = '#FF0099';
 
 export const colors = {
+  // Primary Gradient (Orange → Pink)
   primary: {
-    start: LIME,
-    end: '#A3CC00', // lime escurecido, para o gradiente de mesmo matiz
-    solid: LIME,
-    light: '#E0FF66',
-    dark: '#A3CC00',
+    start: '#FF6B35', // Vibrant Orange
+    end: '#FF2E63', // Hot Pink
+    solid: '#FF4D5A', // Mid-point for solid usage
+    light: '#FF8A65', // Lighter variant
+    dark: '#E63946', // Darker variant
   },
 
+  // Secondary (Electric Blue)
   secondary: {
-    main: CYBER_BLUE,
-    light: '#66F6FF',
-    dark: '#00C0CC',
+    main: '#00D9FF', // Electric Blue
+    light: '#33E3FF', // Light Blue
+    dark: '#00B8D9', // Dark Blue
   },
 
+  // Accent (Vibrant Purple)
   accent: {
-    main: HOT_PINK,
-    light: '#FF66C2',
-    dark: '#CC007A',
+    main: '#9D4EDD', // Vibrant Purple
+    light: '#B565F0', // Light Purple
+    dark: '#8338C9', // Dark Purple
   },
 
-  // Zinc, como o design: `--background` é zinc-950 e as superfícies sobem daí.
+  // Backgrounds
   background: {
-    primary: '#09090B', // zinc-950
-    secondary: '#18181B', // zinc-900
-    surface: '#18181B', // zinc-900 — `--surface`
-    elevated: '#27272A', // zinc-800 — `--surface-highlight`
+    primary: '#0A0A0A', // Deep Black
+    secondary: '#1A1A1A', // Dark Gray
+    surface: '#242424', // Card/Surface
+    elevated: '#2E2E2E', // Elevated Surface
   },
 
+  // Text
   text: {
-    primary: '#FAFAFA', // zinc-50 — `--foreground`
-    secondary: '#A1A1AA', // zinc-400
-    muted: '#71717A', // zinc-500
-    disabled: '#52525B', // zinc-600
+    primary: '#FFFFFF', // White
+    secondary: '#A1A1AA', // Light Gray
+    muted: '#71717A', // Muted Gray
+    disabled: '#52525B', // Disabled Gray
   },
 
+  // Status Colors
   status: {
-    success: '#10B981', // emerald-500 — `--success`
-    warning: '#F59E0B', // amber-500 — `--warning`
-    error: '#EF4444', // red-500 — `--destructive`
-    info: CYBER_BLUE,
+    success: '#00C9A7', // Emerald Green
+    warning: '#FFB800', // Gold Yellow
+    error: '#FF3B30', // Red
+    info: '#00D9FF', // Electric Blue
   },
 
+  // Borders
   border: {
-    default: '#27272A', // zinc-800 — `--border`
-    light: '#3F3F46', // zinc-700
-    dark: '#18181B', // zinc-900
+    default: '#3F3F46', // Zinc-700
+    light: '#52525B', // Zinc-600
+    dark: '#27272A', // Zinc-800
   },
 
-  // Macros: papéis de dado, não de marca. Mantidos distinguíveis entre si e
-  // fora do matiz da primária, para um gráfico não parecer "tudo primário".
+  // Macros
   macro: {
-    protein: '#10B981', // emerald
-    carbs: HOT_PINK,
-    fat: '#F59E0B', // amber
-    calories: '#FAFAFA',
+    protein: '#00C9A7', // Emerald Green
+    carbs: '#9D4EDD', // Vibrant Purple
+    fat: '#FFB800', // Gold Yellow
+    calories: '#FFFFFF', // White
   },
 
-  // Tuplas de propósito: `LinearGradient` do expo exige tuple, não array.
+  // Gradients (for LinearGradient usage - using tuples for type safety)
   gradients: {
-    primary: [LIME, '#A3CC00'] as const,
-    primaryReverse: ['#A3CC00', LIME] as const,
-    secondary: [CYBER_BLUE, '#00C0CC'] as const,
-    accent: [HOT_PINK, '#CC007A'] as const,
-    success: ['#10B981', '#059669'] as const,
-    dark: ['#18181B', '#09090B'] as const,
+    primary: ['#FF6B35', '#FF2E63'] as const, // Orange to Pink
+    primaryReverse: ['#FF2E63', '#FF6B35'] as const, // Pink to Orange
+    secondary: ['#00D9FF', '#00B8D9'] as const, // Blue gradient
+    accent: ['#9D4EDD', '#8338C9'] as const, // Purple gradient
+    success: ['#00C9A7', '#00A88E'] as const, // Green gradient
+    dark: ['#1A1A1A', '#0A0A0A'] as const, // Dark gradient
   },
 };
 
-/**
- * Sombra do *glow* neon, o efeito que substitui o gradiente na linguagem do
- * design (`--glow-primary` e irmãos em `design/tokens/effects.css`).
- */
-export const glows = {
-  primary: 'rgba(204, 255, 0, 0.5)',
-  secondary: 'rgba(0, 240, 255, 0.4)',
-  accent: 'rgba(255, 0, 153, 0.4)',
+// Tailwind-compatible color object
+export const tailwindColors = {
+  primary: {
+    DEFAULT: colors.primary.solid,
+    50: '#FFE8E0',
+    100: '#FFD1C1',
+    200: '#FFA38A',
+    300: '#FF8A65',
+    400: '#FF6B35',
+    500: colors.primary.solid,
+    600: '#E63946',
+    700: '#CC2936',
+    800: '#B31B28',
+    900: '#99101C',
+  },
+  secondary: {
+    DEFAULT: colors.secondary.main,
+    50: '#E0F7FF',
+    100: '#B3EDFF',
+    200: '#80E3FF',
+    300: '#4DD9FF',
+    400: '#26D4FF',
+    500: colors.secondary.main,
+    600: '#00B8D9',
+    700: '#0097B3',
+    800: '#00768C',
+    900: '#005566',
+  },
+  accent: {
+    DEFAULT: colors.accent.main,
+    50: '#F3E8FF',
+    100: '#E4C7FF',
+    200: '#D4A5FF',
+    300: '#C483FF',
+    400: '#B565F0',
+    500: colors.accent.main,
+    600: '#8338C9',
+    700: '#6B2BA3',
+    800: '#531F7D',
+    900: '#3B1357',
+  },
+  background: {
+    DEFAULT: colors.background.primary,
+    primary: colors.background.primary,
+    secondary: colors.background.secondary,
+    surface: colors.background.surface,
+    elevated: colors.background.elevated,
+  },
 };
 
-/**
- * Forma antiga que `components/Themed.tsx` consome (`Colors.light` /
- * `Colors.dark`). Sobra do template do Expo; os valores agora saem da paleta
- * acima em vez de serem cravados.
- */
+// Legacy theme structure for backward compatibility with Themed.tsx
 const legacyTheme = {
   light: {
-    text: '#09090B', // zinc-950
-    background: '#FAFAFA', // zinc-50
+    text: '#000000',
+    background: '#FFFFFF',
     tint: colors.primary.solid,
-    tabIconDefault: colors.text.muted,
+    tabIconDefault: '#CCCCCC',
     tabIconSelected: colors.primary.solid,
   },
   dark: {
     text: colors.text.primary,
     background: colors.background.primary,
     tint: colors.primary.solid,
-    tabIconDefault: colors.text.muted,
+    tabIconDefault: '#CCCCCC',
     tabIconSelected: colors.primary.solid,
   },
 };
 
+// Default export includes both new structure and legacy theme
 export default {
   ...colors,
   ...legacyTheme,

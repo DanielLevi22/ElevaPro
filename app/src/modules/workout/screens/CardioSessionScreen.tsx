@@ -7,8 +7,9 @@ import { Accelerometer } from 'expo-sensors';
 import * as Speech from 'expo-speech';
 import * as TaskManager from 'expo-task-manager';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, AppState, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { AppState, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
+import { showAlert, showConfirm } from '@/components/ui/appAlert';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { ShareWorkoutModal } from '@/components/workout/ShareWorkoutModal';
 import { WorkoutFeedbackModal } from '@/components/workout/WorkoutFeedbackModal';
@@ -231,7 +232,7 @@ export default function CardioSessionScreen() {
             foregroundService: {
               notificationTitle: 'Treino em Andamento 🏃',
               notificationBody: 'Seu cardio está sendo monitorado.',
-              notificationColor: '#CCFF00',
+              notificationColor: '#FF6B35',
             },
           });
         }
@@ -312,29 +313,27 @@ export default function CardioSessionScreen() {
         const today = getLocalDateISOString();
         await incrementWorkoutProgress(today);
 
-        Alert.alert('Treino Salvo! 🎉', `Tempo: ${finalTime}\nCalorias: ${finalCalories} kcal`, [
-          {
-            text: 'Sair',
-            style: 'cancel',
-            onPress: () => router.navigate('/(tabs)/cardio'),
+        showConfirm({
+          title: 'Treino Salvo! 🎉',
+          message: `Tempo: ${finalTime}\nCalorias: ${finalCalories} kcal`,
+          type: 'success',
+          confirmText: 'Compartilhar 📸',
+          cancelText: 'Sair',
+          onConfirm: () => {
+            setShareStats({
+              title: 'Cardio Finalizado',
+              duration: finalTime,
+              calories: `${finalCalories} kcal`,
+              date: new Date().toLocaleDateString('pt-BR'),
+              exerciseName: finalExerciseName,
+            });
+            setShowShareModal(true);
           },
-          {
-            text: 'Compartilhar 📸',
-            onPress: () => {
-              setShareStats({
-                title: 'Cardio Finalizado',
-                duration: finalTime,
-                calories: `${finalCalories} kcal`,
-                date: new Date().toLocaleDateString('pt-BR'),
-                exerciseName: finalExerciseName,
-              });
-              setShowShareModal(true);
-            },
-          },
-        ]);
+          onCancel: () => router.navigate('/(tabs)/cardio'),
+        });
       } catch (error) {
         console.error(error);
-        Alert.alert('Erro', 'Erro ao salvar treino.');
+        showAlert({ title: 'Erro', message: 'Erro ao salvar treino.', type: 'error' });
       }
     },
     [
@@ -458,7 +457,7 @@ export default function CardioSessionScreen() {
           {!isActive && seconds === 0 ? (
             <TouchableOpacity onPress={handleStart} activeOpacity={0.8}>
               <LinearGradient
-                colors={['#CCFF00', '#A3CC00']}
+                colors={['#FF6B35', '#FF2E63']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 className="rounded-xl py-4 items-center justify-center"

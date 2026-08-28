@@ -15,7 +15,7 @@ export default function WorkoutDetailsRoute() {
           alignItems: 'center',
         }}
       >
-        <ActivityIndicator size="large" color="#CCFF00" />
+        <ActivityIndicator size="large" color="#FF6B35" />
       </View>
     );
   }

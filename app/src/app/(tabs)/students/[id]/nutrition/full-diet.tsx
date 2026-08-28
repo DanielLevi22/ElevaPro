@@ -4,7 +4,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   ScrollView,
   StyleSheet,
@@ -13,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { showAlert, showConfirm } from '@/components/ui/appAlert';
 import { MealCard } from '@/modules/nutrition/components/MealCard';
 import FoodSearchScreen, { type FoodItem } from '@/modules/nutrition/screens/FoodSearchScreen';
 import { useNutritionStore } from '@/modules/nutrition/store/nutritionStore';
@@ -91,7 +91,11 @@ export default function DietaCompletaScreen() {
 
   const handleAddMeal = async (mealType: string, order: number) => {
     if (!currentDietPlan) {
-      Alert.alert('Erro', 'Nenhum plano de dieta ativo encontrado.');
+      showAlert({
+        title: 'Erro',
+        message: 'Nenhum plano de dieta ativo encontrado.',
+        type: 'error',
+      });
       return;
     }
 
@@ -105,7 +109,11 @@ export default function DietaCompletaScreen() {
         meal_order: order,
       });
     } catch (_error) {
-      Alert.alert('Erro', 'Não foi possível adicionar a refeição.');
+      showAlert({
+        title: 'Erro',
+        message: 'Não foi possível adicionar a refeição.',
+        type: 'error',
+      });
     }
   };
 
@@ -113,7 +121,7 @@ export default function DietaCompletaScreen() {
     try {
       await updateMeal(mealId, { meal_time: mealTime });
     } catch (_error) {
-      Alert.alert('Erro', 'Não foi possível atualizar o horário.');
+      showAlert({ title: 'Erro', message: 'Não foi possível atualizar o horário.', type: 'error' });
     }
   };
 
@@ -130,7 +138,11 @@ export default function DietaCompletaScreen() {
       addFoodToMeal(selectedMealId, food.id, 100, 'g');
       setSelectedMealId(null);
     } catch (_error) {
-      Alert.alert('Erro', 'Não foi possível adicionar o alimento.');
+      showAlert({
+        title: 'Erro',
+        message: 'Não foi possível adicionar o alimento.',
+        type: 'error',
+      });
     }
   };
 
@@ -138,25 +150,33 @@ export default function DietaCompletaScreen() {
     try {
       await updateMealItem(itemId, { quantity });
     } catch (_error) {
-      Alert.alert('Erro', 'Não foi possível atualizar o alimento.');
+      showAlert({
+        title: 'Erro',
+        message: 'Não foi possível atualizar o alimento.',
+        type: 'error',
+      });
     }
   };
 
   const handleRemoveFood = async (itemId: string) => {
-    Alert.alert('Remover Alimento', 'Tem certeza que deseja remover este alimento?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Remover',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await removeFoodFromMeal(itemId);
-          } catch (_error) {
-            Alert.alert('Erro', 'Não foi possível remover o alimento.');
-          }
-        },
+    showConfirm({
+      title: 'Remover Alimento',
+      message: 'Tem certeza que deseja remover este alimento?',
+      type: 'danger',
+      confirmText: 'Remover',
+      cancelText: 'Cancelar',
+      onConfirm: async () => {
+        try {
+          await removeFoodFromMeal(itemId);
+        } catch (_error) {
+          showAlert({
+            title: 'Erro',
+            message: 'Não foi possível remover o alimento.',
+            type: 'error',
+          });
+        }
       },
-    ]);
+    });
   };
 
   // Filter meals for selected day
@@ -183,7 +203,7 @@ export default function DietaCompletaScreen() {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#CCFF00" />
+        <ActivityIndicator size="large" color="#FF6B35" />
         <Text style={styles.loadingText}>Carregando dieta...</Text>
       </View>
     );
@@ -200,7 +220,7 @@ export default function DietaCompletaScreen() {
           onPress={() => router.push(`/(tabs)/students/${studentId}/nutrition/create`)}
         >
           <LinearGradient
-            colors={['#CCFF00', '#A3CC00']}
+            colors={['#FF6B35', '#FF2E63']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.createButtonGradient}
@@ -444,7 +464,7 @@ const styles = StyleSheet.create({
   },
   dayButtonActive: {
     backgroundColor: 'rgba(255, 107, 53, 0.1)', // Orange tint
-    borderColor: '#CCFF00', // Orange
+    borderColor: '#FF6B35', // Orange
   },
   dayButtonText: {
     fontSize: 14,
@@ -453,7 +473,7 @@ const styles = StyleSheet.create({
     fontFamily: 'GeneralSans-Semibold',
   },
   dayButtonTextActive: {
-    color: '#CCFF00', // Orange
+    color: '#FF6B35', // Orange
   },
   dayTotals: {
     backgroundColor: '#18181B', // Zinc 900
@@ -513,7 +533,7 @@ const styles = StyleSheet.create({
   addMealText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#CCFF00',
+    color: '#FF6B35',
     marginLeft: 8,
     fontFamily: 'GeneralSans-Semibold',
   },

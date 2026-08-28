@@ -44,7 +44,7 @@ export function DayActionsModal({
               }}
             >
               <View className="w-10 h-10 rounded-full bg-cyan-500/10 items-center justify-center mr-4">
-                <Ionicons name="restaurant-outline" size={20} color="#00F0FF" />
+                <Ionicons name="restaurant-outline" size={20} color="#00D9FF" />
               </View>
               <View>
                 <Text className="text-white font-bold text-base">Gerar Refeições Padrão</Text>

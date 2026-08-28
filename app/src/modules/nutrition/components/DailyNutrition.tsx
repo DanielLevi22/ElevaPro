@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useEffect, useMemo } from 'react';
-import { ActivityIndicator, Alert, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
+import { showAlert } from '@/components/ui/appAlert';
 import { useNutritionStore } from '../store/nutritionStore';
 
 export function DailyNutrition() {
@@ -171,10 +172,11 @@ export function DailyNutrition() {
                 className={`bg-card p-4 rounded-2xl border border-border ${isCompleted ? 'opacity-60 border-primary bg-primary/5' : ''}`}
                 onPress={() => {
                   if (isMasquerading) {
-                    Alert.alert(
-                      'Modo Leitura',
-                      'Você está visualizando como aluno. Não é possível alterar dados.'
-                    );
+                    showAlert({
+                      title: 'Modo Leitura',
+                      message: 'Você está visualizando como aluno. Não é possível alterar dados.',
+                      type: 'info',
+                    });
                     return;
                   }
                   toggleMealCompletion(meal.id, today, !isCompleted);

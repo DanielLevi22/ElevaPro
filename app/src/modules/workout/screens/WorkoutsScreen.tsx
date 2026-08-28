@@ -161,7 +161,7 @@ export default function WorkoutsScreen() {
         <Link href={'/(tabs)/workouts/create' as never} asChild>
           <TouchableOpacity activeOpacity={0.8}>
             <LinearGradient
-              colors={['#CCFF00', '#A3CC00']}
+              colors={['#FF6B35', '#FF2E63']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               className="h-14 w-14 rounded-full items-center justify-center shadow-lg shadow-orange-500/20"
@@ -188,7 +188,7 @@ export default function WorkoutsScreen() {
           <RefreshControl
             refreshing={isLoading}
             onRefresh={() => user?.id && fetchWorkouts(user.id)}
-            tintColor="#CCFF00"
+            tintColor="#FF6B35"
           />
         }
         showsVerticalScrollIndicator={false}
@@ -208,7 +208,7 @@ export default function WorkoutsScreen() {
               <Link href={'/(tabs)/workouts/create' as never} asChild>
                 <TouchableOpacity activeOpacity={0.8}>
                   <LinearGradient
-                    colors={['#CCFF00', '#A3CC00']}
+                    colors={['#FF6B35', '#FF2E63']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     className="rounded-2xl py-3 px-6 shadow-lg shadow-orange-500/20"
@@ -222,7 +222,7 @@ export default function WorkoutsScreen() {
             </View>
           ) : (
             <View className="py-20">
-              <ActivityIndicator size="large" color="#CCFF00" />
+              <ActivityIndicator size="large" color="#FF6B35" />
             </View>
           )
         }

@@ -180,7 +180,7 @@ export function StudentEditModal({ visible, onClose, onSave, student }: StudentE
                     onPress={onClose}
                     className="bg-zinc-900 p-2 rounded-full border border-zinc-800"
                   >
-                    <Ionicons name="clipboard-outline" size={20} color="#CCFF00" />
+                    <Ionicons name="clipboard-outline" size={20} color="#FF6B35" />
                   </TouchableOpacity>
                 </Link>
               )}
@@ -333,7 +333,7 @@ export function StudentEditModal({ visible, onClose, onSave, student }: StudentE
               className="mt-6 mb-10"
             >
               <LinearGradient
-                colors={['#CCFF00', '#A3CC00']}
+                colors={['#FF6B35', '#FF2E63']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 className="rounded-2xl py-4 items-center justify-center shadow-lg shadow-orange-500/20"

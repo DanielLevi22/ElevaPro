@@ -4,7 +4,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   Platform,
   ScrollView,
@@ -25,6 +24,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useAuthStore } from '@/auth';
 import AddFoodQuantityModal from '@/components/AddFoodQuantityModal';
+import { showAlert, showConfirm } from '@/components/ui/appAlert';
 import { IconButton } from '@/components/ui/IconButton';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { StatusModal } from '@/components/ui/StatusModal';
@@ -180,7 +180,11 @@ export default function DietDetailsScreen() {
     if (!mealName.trim() || !plan) return;
 
     if (!mealTime.trim()) {
-      Alert.alert('Erro', 'Por favor, informe o horário da refeição.');
+      showAlert({
+        title: 'Erro',
+        message: 'Por favor, informe o horário da refeição.',
+        type: 'error',
+      });
       return;
     }
 
@@ -210,12 +214,18 @@ export default function DietDetailsScreen() {
     } catch (error) {
       const err = error as { code?: string; details?: string; message?: string };
       if (err?.code === '23503' && err?.details?.includes('daily_goals')) {
-        Alert.alert(
-          'Erro de Cadastro',
-          'O aluno não possui um perfil completo. Por favor, peça ao administrador para verificar o cadastro do aluno ou execute o script de correção de perfis.'
-        );
+        showAlert({
+          title: 'Erro de Cadastro',
+          message:
+            'O aluno não possui um perfil completo. Por favor, peça ao administrador para verificar o cadastro do aluno ou execute o script de correção de perfis.',
+          type: 'error',
+        });
       } else {
-        Alert.alert('Erro', err.message || 'Falha ao salvar a refeição.');
+        showAlert({
+          title: 'Erro',
+          message: err.message || 'Falha ao salvar a refeição.',
+          type: 'error',
+        });
       }
     }
   };
@@ -282,54 +292,60 @@ export default function DietDetailsScreen() {
 
   const handlePasteDay = async () => {
     if (!plan) return;
-    Alert.alert('Colar Dia', 'Isso substituirá todas as refeições deste dia. Continuar?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Colar',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await pasteDay(selectedDay, plan.id);
-            refetchMeals();
-          } catch (error) {
-            const err = error as { code?: string; details?: string; message?: string };
-            if (
-              err?.code === '23503' &&
-              (err?.details?.includes('daily_goals') ||
-                err?.details?.includes('leaderboard') ||
-                err?.details?.includes('streak') ||
-                err?.details?.includes('achievement'))
-            ) {
-              Alert.alert(
-                'Erro de Cadastro',
-                'O aluno não possui um perfil completo. Por favor, peça ao administrador para verificar o cadastro do aluno ou execute o script de correção de perfis.'
-              );
-            } else {
-              Alert.alert('Erro', `Falha ao colar dia: ${err.message || JSON.stringify(err)}`);
-            }
+    showConfirm({
+      title: 'Colar Dia',
+      message: 'Isso substituirá todas as refeições deste dia. Continuar?',
+      type: 'danger',
+      confirmText: 'Colar',
+      cancelText: 'Cancelar',
+      onConfirm: async () => {
+        try {
+          await pasteDay(selectedDay, plan.id);
+          refetchMeals();
+        } catch (error) {
+          const err = error as { code?: string; details?: string; message?: string };
+          if (
+            err?.code === '23503' &&
+            (err?.details?.includes('daily_goals') ||
+              err?.details?.includes('leaderboard') ||
+              err?.details?.includes('streak') ||
+              err?.details?.includes('achievement'))
+          ) {
+            showAlert({
+              title: 'Erro de Cadastro',
+              message:
+                'O aluno não possui um perfil completo. Por favor, peça ao administrador para verificar o cadastro do aluno ou execute o script de correção de perfis.',
+              type: 'error',
+            });
+          } else {
+            showAlert({
+              title: 'Erro',
+              message: `Falha ao colar dia: ${err.message || JSON.stringify(err)}`,
+              type: 'error',
+            });
           }
-        },
+        }
       },
-    ]);
+    });
   };
 
   const handleClearDay = () => {
     if (!plan) return;
-    Alert.alert('Limpar Dia', 'Tem certeza que deseja remover todas as refeições deste dia?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Limpar',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await clearDay(selectedDay, plan.id);
-            refetchMeals();
-          } catch (_error) {
-            Alert.alert('Erro', 'Falha ao limpar dia.');
-          }
-        },
+    showConfirm({
+      title: 'Limpar Dia',
+      message: 'Tem certeza que deseja remover todas as refeições deste dia?',
+      type: 'danger',
+      confirmText: 'Limpar',
+      cancelText: 'Cancelar',
+      onConfirm: async () => {
+        try {
+          await clearDay(selectedDay, plan.id);
+          refetchMeals();
+        } catch (_error) {
+          showAlert({ title: 'Erro', message: 'Falha ao limpar dia.', type: 'error' });
+        }
       },
-    ]);
+    });
   };
 
   // --- Food Management ---
@@ -356,7 +372,9 @@ export default function DietDetailsScreen() {
       if (selectedMealId) {
         addFoodToMeal(selectedMealId, food.id, quantity, food.serving_unit)
           .then(() => refetchMeals())
-          .catch(() => Alert.alert('Erro', 'Falha ao adicionar alimento'));
+          .catch(() =>
+            showAlert({ title: 'Erro', message: 'Falha ao adicionar alimento', type: 'error' })
+          );
       }
       setShowFoodSearch(false);
     } else {
@@ -385,33 +403,37 @@ export default function DietDetailsScreen() {
       setSelectedItemToEdit(null);
       refetchMeals();
     } catch (_error) {
-      Alert.alert('Erro', 'Não foi possível salvar o alimento.');
+      showAlert({ title: 'Erro', message: 'Não foi possível salvar o alimento.', type: 'error' });
     }
   };
 
   const handleRemoveItem = (itemId: string, _mealId: string) => {
-    Alert.alert('Remover Alimento', 'Tem certeza que deseja remover este alimento?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Remover',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await removeFoodFromMeal(itemId);
-            refetchMeals();
-          } catch (_error) {
-            Alert.alert('Erro', 'Não foi possível remover o alimento.');
-          }
-        },
+    showConfirm({
+      title: 'Remover Alimento',
+      message: 'Tem certeza que deseja remover este alimento?',
+      type: 'danger',
+      confirmText: 'Remover',
+      cancelText: 'Cancelar',
+      onConfirm: async () => {
+        try {
+          await removeFoodFromMeal(itemId);
+          refetchMeals();
+        } catch (_error) {
+          showAlert({
+            title: 'Erro',
+            message: 'Não foi possível remover o alimento.',
+            type: 'error',
+          });
+        }
       },
-    ]);
+    });
   };
 
   const _handleUpdateMealTime = async (mealId: string, time: string) => {
     try {
       await updateMeal(mealId, { meal_time: time });
     } catch (_error) {
-      Alert.alert('Erro', 'Falha ao atualizar horário');
+      showAlert({ title: 'Erro', message: 'Falha ao atualizar horário', type: 'error' });
     }
   };
 
@@ -946,15 +968,18 @@ export default function DietDetailsScreen() {
             } catch (error: unknown) {
               const err = error as Error & { code?: string; details?: string };
               if (err.code === '23503' && err.details?.includes('daily_goals')) {
-                Alert.alert(
-                  'Erro de Cadastro',
-                  'O aluno não possui um perfil completo. Por favor, peça ao administrador para verificar o cadastro do aluno ou execute o script de correção de perfis.'
-                );
+                showAlert({
+                  title: 'Erro de Cadastro',
+                  message:
+                    'O aluno não possui um perfil completo. Por favor, peça ao administrador para verificar o cadastro do aluno ou execute o script de correção de perfis.',
+                  type: 'error',
+                });
               } else {
-                Alert.alert(
-                  'Erro',
-                  `Falha ao salvar refeição: ${err.message || JSON.stringify(err)}`
-                );
+                showAlert({
+                  title: 'Erro',
+                  message: `Falha ao salvar refeição: ${err.message || JSON.stringify(err)}`,
+                  type: 'error',
+                });
               }
               throw error; // Re-throw to keep modal open or handle in child
             }

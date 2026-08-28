@@ -3,7 +3,8 @@ import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { showAlert } from '@/components/ui/appAlert';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
@@ -41,7 +42,11 @@ export function RegisterScreen() {
 
   const handleServicesNext = () => {
     if (selectedServices.length === 0) {
-      Alert.alert('Atenção', 'Selecione pelo menos um serviço que você oferece');
+      showAlert({
+        title: 'Atenção',
+        message: 'Selecione pelo menos um serviço que você oferece',
+        type: 'warning',
+      });
       return;
     }
     setStep('personal_data');
@@ -49,15 +54,19 @@ export function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!fullName.trim() || fullName.trim().length < 2) {
-      Alert.alert('Erro', 'Digite seu nome completo');
+      showAlert({ title: 'Erro', message: 'Digite seu nome completo', type: 'error' });
       return;
     }
     if (password.length < 8) {
-      Alert.alert('Erro', 'A senha deve ter no mínimo 8 caracteres');
+      showAlert({
+        title: 'Erro',
+        message: 'A senha deve ter no mínimo 8 caracteres',
+        type: 'error',
+      });
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert('Erro', 'As senhas não coincidem');
+      showAlert({ title: 'Erro', message: 'As senhas não coincidem', type: 'error' });
       return;
     }
 
@@ -95,9 +104,13 @@ export function RegisterScreen() {
       const message =
         error instanceof Error ? error.message : 'Erro desconhecido. Tente novamente.';
       if (message.toLowerCase().includes('already registered')) {
-        Alert.alert('E-mail já cadastrado', 'Este e-mail já possui uma conta. Faça login.');
+        showAlert({
+          title: 'E-mail já cadastrado',
+          message: 'Este e-mail já possui uma conta. Faça login.',
+          type: 'warning',
+        });
       } else {
-        Alert.alert('Erro no Cadastro', message);
+        showAlert({ title: 'Erro no Cadastro', message: message, type: 'error' });
       }
     } finally {
       setLoading(false);

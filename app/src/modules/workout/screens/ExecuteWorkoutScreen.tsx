@@ -2,8 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
+import { showAlert, showConfirm } from '@/components/ui/appAlert';
 import { IconButton } from '@/components/ui/IconButton';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { ShareWorkoutModal } from '@/components/workout/ShareWorkoutModal';
@@ -113,7 +114,11 @@ export default function ExecuteWorkoutScreen() {
   const handleLogSet = useCallback(
     (item: WorkoutItem) => {
       if (isResting) {
-        Alert.alert('Descanso', 'Aguarde o tempo de descanso terminar ou pule o descanso.');
+        showAlert({
+          title: 'Descanso',
+          message: 'Aguarde o tempo de descanso terminar ou pule o descanso.',
+          type: 'warning',
+        });
         return;
       }
 
@@ -167,14 +172,14 @@ export default function ExecuteWorkoutScreen() {
     const completedTotal = Object.values(completedSets).reduce((acc, val) => acc + val, 0);
 
     if (completedTotal < totalSets) {
-      Alert.alert(
-        'Treino Incompleto',
-        `Você completou ${completedTotal} de ${totalSets} séries. Deseja finalizar mesmo assim?`,
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Finalizar', style: 'destructive', onPress: () => setShowFeedbackModal(true) },
-        ]
-      );
+      showConfirm({
+        title: 'Treino Incompleto',
+        message: `Você completou ${completedTotal} de ${totalSets} séries. Deseja finalizar mesmo assim?`,
+        type: 'warning',
+        confirmText: 'Finalizar',
+        cancelText: 'Cancelar',
+        onConfirm: () => setShowFeedbackModal(true),
+      });
     } else {
       setShowFeedbackModal(true);
     }
@@ -302,7 +307,11 @@ export default function ExecuteWorkoutScreen() {
     });
 
     // Show success feedback
-    Alert.alert('✅ Salvo', 'Exercício atualizado com sucesso!');
+    showAlert({
+      title: 'Salvo',
+      message: 'Exercício atualizado com sucesso!',
+      type: 'success',
+    });
   }, []);
 
   const getProgressionSummaryData = useMemo(() => {
@@ -409,32 +418,38 @@ export default function ExecuteWorkoutScreen() {
           setShowProgressionSummary(true);
         } else {
           announceFinish();
-          Alert.alert('Parabéns! 🎉', 'Treino concluído e salvo com sucesso!', [
-            { text: 'Sair', onPress: () => handleExit() },
-            {
-              text: 'Compartilhar 📸',
-              onPress: () => {
-                const durationSeconds = (endTime.getTime() - startTime.getTime()) / 1000;
-                const durationFormatted = formatTime(Math.floor(durationSeconds));
-                const estimatedCalories = Math.round(
-                  MIN_CALORIES_PER_HOUR * DEFAULT_BODY_WEIGHT * (durationSeconds / 3600)
-                );
+          showConfirm({
+            title: 'Parabéns! 🎉',
+            message: 'Treino concluído e salvo com sucesso!',
+            type: 'success',
+            confirmText: 'Compartilhar 📸',
+            cancelText: 'Sair',
+            onConfirm: () => {
+              const durationSeconds = (endTime.getTime() - startTime.getTime()) / 1000;
+              const durationFormatted = formatTime(Math.floor(durationSeconds));
+              const estimatedCalories = Math.round(
+                MIN_CALORIES_PER_HOUR * DEFAULT_BODY_WEIGHT * (durationSeconds / 3600)
+              );
 
-                setShareStats({
-                  title: 'Treino Concluído',
-                  duration: durationFormatted,
-                  calories: `${estimatedCalories} kcal`,
-                  date: new Date().toLocaleDateString('pt-BR'),
-                  // biome-ignore lint/style/noNonNullAssertion: auto-suppressed during final sweep
-                  exerciseName: workout!.title,
-                });
-                setShowShareModal(true);
-              },
+              setShareStats({
+                title: 'Treino Concluído',
+                duration: durationFormatted,
+                calories: `${estimatedCalories} kcal`,
+                date: new Date().toLocaleDateString('pt-BR'),
+                // biome-ignore lint/style/noNonNullAssertion: auto-suppressed during final sweep
+                exerciseName: workout!.title,
+              });
+              setShowShareModal(true);
             },
-          ]);
+            onCancel: () => handleExit(),
+          });
         }
       } catch (_error) {
-        Alert.alert('Erro', 'Não foi possível salvar o treino. Tente novamente.');
+        showAlert({
+          title: 'Erro',
+          message: 'Não foi possível salvar o treino. Tente novamente.',
+          type: 'error',
+        });
       }
     },
     [
@@ -496,7 +511,7 @@ export default function ExecuteWorkoutScreen() {
   if (isLoading || !workout) {
     return (
       <ScreenLayout className="justify-center items-center">
-        <ActivityIndicator size="large" color="#CCFF00" />
+        <ActivityIndicator size="large" color="#FF6B35" />
       </ScreenLayout>
     );
   }
@@ -522,7 +537,7 @@ export default function ExecuteWorkoutScreen() {
           <Ionicons
             name={isMuted ? 'volume-mute' : 'volume-high'}
             size={20}
-            color={isMuted ? '#71717A' : '#CCFF00'}
+            color={isMuted ? '#71717A' : '#FF6B35'}
           />
         </TouchableOpacity>
       </View>
@@ -530,7 +545,7 @@ export default function ExecuteWorkoutScreen() {
       {!isWorkoutStarted ? (
         <View className="flex-1 justify-center items-center p-8 bg-black">
           <View className="w-32 h-32 rounded-[40px] bg-orange-500/10 items-center justify-center mb-10 border border-orange-500/20 rotate-12">
-            <Ionicons name="barbell" size={64} color="#CCFF00" />
+            <Ionicons name="barbell" size={64} color="#FF6B35" />
           </View>
 
           <Text className="text-4xl font-black text-white text-center mb-2 font-display uppercase tracking-tight">
@@ -557,7 +572,7 @@ export default function ExecuteWorkoutScreen() {
             className="w-full"
           >
             <LinearGradient
-              colors={['#CCFF00', '#A3CC00']}
+              colors={['#FF6B35', '#FF2E63']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               className="rounded-3xl py-6 items-center justify-center shadow-2xl shadow-orange-500/40"

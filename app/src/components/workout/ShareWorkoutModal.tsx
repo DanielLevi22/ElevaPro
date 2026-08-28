@@ -79,7 +79,7 @@ export function ShareWorkoutModal({ visible, onClose, stats }: ShareWorkoutModal
             <TouchableOpacity
               onPress={handleShare}
               disabled={isSharing}
-              className="bg-[#CCFF00] px-6 py-4 rounded-xl flex-1 items-center flex-row justify-center space-x-2"
+              className="bg-[#FF6B35] px-6 py-4 rounded-xl flex-1 items-center flex-row justify-center space-x-2"
             >
               {isSharing ? (
                 <ActivityIndicator color="white" />

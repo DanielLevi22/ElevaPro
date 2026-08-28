@@ -4,8 +4,9 @@ import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
+import { showAlert } from '@/components/ui/appAlert';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
@@ -23,7 +24,11 @@ export default function RoleSelectionScreen() {
 
     // Prevent manual admin role selection
     if (selectedRole === 'admin') {
-      Alert.alert('Acesso Restrito', 'Contas de administrador são criadas apenas por convite.');
+      showAlert({
+        title: 'Acesso Restrito',
+        message: 'Contas de administrador são criadas apenas por convite.',
+        type: 'error',
+      });
       return;
     }
 
@@ -47,9 +52,9 @@ export default function RoleSelectionScreen() {
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
-        Alert.alert('Erro', error.message);
+        showAlert({ title: 'Erro', message: error.message, type: 'error' });
       } else {
-        Alert.alert('Erro', String(error));
+        showAlert({ title: 'Erro', message: String(error), type: 'error' });
       }
     } finally {
       setLoading(false);

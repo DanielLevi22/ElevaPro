@@ -4,7 +4,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   ScrollView,
   Text,
@@ -13,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { showAlert } from '@/components/ui/appAlert';
 import { Input } from '@/components/ui/Input';
 import { colors as brandColors } from '@/constants/colors';
 import { useNutritionStore } from '../store/nutritionStore';
@@ -221,10 +221,11 @@ export default function FoodSearchScreen({
 
     // Validate Time
     if (onTimeChange && !mealTime) {
-      Alert.alert(
-        'Horário Obrigatório',
-        'Por favor, defina o horário da refeição antes de concluir.'
-      );
+      showAlert({
+        title: 'Horário Obrigatório',
+        message: 'Por favor, defina o horário da refeição antes de concluir.',
+        type: 'warning',
+      });
       return;
     }
 
@@ -238,7 +239,7 @@ export default function FoodSearchScreen({
       onClose();
     } catch (error) {
       console.error('Error saving meal:', error);
-      Alert.alert('Erro', 'Falha ao salvar refeição');
+      showAlert({ title: 'Erro', message: 'Falha ao salvar refeição', type: 'error' });
     } finally {
       setIsSaving(false);
     }

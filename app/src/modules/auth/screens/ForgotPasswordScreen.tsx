@@ -2,7 +2,8 @@ import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { showAlert } from '@/components/ui/appAlert';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -16,7 +17,7 @@ export function ForgotPasswordScreen() {
 
   const handleResetPassword = async () => {
     if (!email.trim()) {
-      Alert.alert('Erro', 'Por favor, insira seu e-mail.');
+      showAlert({ title: 'Erro', message: 'Por favor, insira seu e-mail.', type: 'error' });
       return;
     }
 
@@ -32,11 +33,19 @@ export function ForgotPasswordScreen() {
       if (error) throw error;
 
       setSent(true);
-      Alert.alert('E-mail enviado!', 'Verifique sua caixa de entrada para redefinir sua senha.', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
+      showAlert({
+        title: 'E-mail enviado!',
+        message: 'Verifique sua caixa de entrada para redefinir sua senha.',
+        type: 'success',
+        buttonText: 'OK',
+        onDismiss: () => router.back(),
+      });
     } catch (error: unknown) {
-      Alert.alert('Erro', error instanceof Error ? error.message : 'Erro desconhecido');
+      showAlert({
+        title: 'Erro',
+        message: error instanceof Error ? error.message : 'Erro desconhecido',
+        type: 'error',
+      });
     } finally {
       setLoading(false);
     }

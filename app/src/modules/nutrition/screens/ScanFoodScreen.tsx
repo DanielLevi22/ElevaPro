@@ -5,8 +5,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
+import { showAlert } from '@/components/ui/appAlert';
 import { Button } from '@/components/ui/Button';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { colors as brandColors } from '@/constants/colors';
@@ -28,10 +29,11 @@ export default function ScanFoodScreen() {
       if (useCamera) {
         const permission = await ImagePicker.requestCameraPermissionsAsync();
         if (!permission.granted) {
-          Alert.alert(
-            'Permissão necessária',
-            'Precisamos de acesso à câmera para escanear sua comida.'
-          );
+          showAlert({
+            title: 'Permissão necessária',
+            message: 'Precisamos de acesso à câmera para escanear sua comida.',
+            type: 'warning',
+          });
           return;
         }
         result = await ImagePicker.launchCameraAsync({
@@ -60,7 +62,7 @@ export default function ScanFoodScreen() {
         analyze(manipResult.uri);
       }
     } catch (_e) {
-      Alert.alert('Erro', 'Não foi possível carregar a imagem.');
+      showAlert({ title: 'Erro', message: 'Não foi possível carregar a imagem.', type: 'error' });
     }
   };
 
@@ -74,7 +76,7 @@ export default function ScanFoodScreen() {
       );
       setResult(analysis);
     } catch (_e) {
-      Alert.alert('Erro', 'Falha na análise da imagem.');
+      showAlert({ title: 'Erro', message: 'Falha na análise da imagem.', type: 'error' });
     } finally {
       setAnalyzing(false);
     }
@@ -152,7 +154,7 @@ export default function ScanFoodScreen() {
 
               {analyzing ? (
                 <View className="items-center py-8">
-                  <ActivityIndicator size="large" color="#CCFF00" />
+                  <ActivityIndicator size="large" color="#FF6B35" />
                   <Text className="text-white mt-4 font-bold text-lg">Analisando Alimento...</Text>
                   <Text className="text-zinc-500 text-sm">Identificando componentes e porções</Text>
                 </View>
@@ -235,7 +237,11 @@ export default function ScanFoodScreen() {
                     variant="primary"
                     label="ADICIONAR À DIETA"
                     onPress={() => {
-                      Alert.alert('Sucesso', 'Alimento adicionado à sua dieta! (Simulação)');
+                      showAlert({
+                        title: 'Sucesso',
+                        message: 'Alimento adicionado à sua dieta! (Simulação)',
+                        type: 'success',
+                      });
                       router.back();
                     }}
                   />

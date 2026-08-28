@@ -49,7 +49,7 @@ export function QuickActions({ onDownload, onStudentView, onEvolution }: QuickAc
               <Ionicons
                 name={action.icon as keyof typeof Ionicons.glyphMap}
                 size={26}
-                color="#00F0FF"
+                color="#00D9FF"
               />
             </View>
           </View>

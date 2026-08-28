@@ -67,6 +67,7 @@ Três armadilhas que já custaram tempo:
 
 | PRD | Feature | Status | Branch |
 |-----|---------|--------|--------|
+| [student-activity-feed](PRDs/student-activity-feed.md) | Aba Atividades: acompanhamento diario do aluno com feedback, treino, cardio e refeicoes | draft | `feature/student-activity-feed` |
 | [student-web-dashboard](PRDs/student-web-dashboard.md) | Dashboard web do aluno (student + member) | ✅ done | `feature/student-web-dashboard` |
 | [ci-and-vercel-optimization](PRDs/ci-and-vercel-optimization.md) | CI path filters + Vercel ignoreCommand | ✅ done | `feature/ci-and-vercel-optimization` |
 | [vercel-pipeline-deploy](PRDs/vercel-pipeline-deploy.md) | Deploy via GitHub Actions + Vercel CLI | ✅ done | `feature/ci-and-vercel-optimization` |

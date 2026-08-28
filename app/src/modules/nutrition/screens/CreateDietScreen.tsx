@@ -463,7 +463,7 @@ export default function CreateDietScreen() {
               onPress={() => setShowStartPicker(true)}
               className="bg-zinc-900/80 border-2 border-zinc-700 rounded-2xl px-4 py-4 flex-row items-center justify-between"
             >
-              <Ionicons name="calendar-outline" size={20} color="#00F0FF" />
+              <Ionicons name="calendar-outline" size={20} color="#00D9FF" />
               <Text className="text-foreground text-base flex-1 ml-3">
                 {startDate.toLocaleDateString('pt-BR')}
               </Text>

@@ -5,7 +5,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Dimensions,
   FlatList,
   ImageBackground,
@@ -16,6 +15,7 @@ import {
 } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useAuthStore } from '@/auth';
+import { showAlert } from '@/components/ui/appAlert';
 import { IconButton } from '@/components/ui/IconButton';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { StatusModal } from '@/components/ui/StatusModal';
@@ -203,7 +203,11 @@ export default function WorkoutDetailsScreen() {
         setShowSuccessModal(true);
       } catch (e: unknown) {
         console.error('❌ Error saving exercise:', e);
-        Alert.alert('Erro', (e as Error).message || 'Não foi possível salvar as alterações.');
+        showAlert({
+          title: 'Erro',
+          message: (e as Error).message || 'Não foi possível salvar as alterações.',
+          type: 'error',
+        });
       }
     },
     [editingItem, fetchWorkoutById, targetId]
@@ -250,7 +254,7 @@ export default function WorkoutDetailsScreen() {
                       <Ionicons
                         name="repeat-outline"
                         size={14}
-                        color="#CCFF00"
+                        color="#FF6B35"
                         style={{ marginRight: 4 }}
                       />
                       <Text className="text-zinc-200 text-xs font-bold">
@@ -262,7 +266,7 @@ export default function WorkoutDetailsScreen() {
                       <Ionicons
                         name="timer-outline"
                         size={14}
-                        color="#CCFF00"
+                        color="#FF6B35"
                         style={{ marginRight: 4 }}
                       />
                       <Text className="text-zinc-200 text-xs font-bold">{item.rest_seconds}s</Text>
@@ -273,7 +277,7 @@ export default function WorkoutDetailsScreen() {
                         <Ionicons
                           name="barbell-outline"
                           size={14}
-                          color="#CCFF00"
+                          color="#FF6B35"
                           style={{ marginRight: 4 }}
                         />
                         <Text className="text-zinc-200 text-xs font-bold">{item.weight}kg</Text>
@@ -313,7 +317,7 @@ export default function WorkoutDetailsScreen() {
   if (!workout && isLoading) {
     return (
       <ScreenLayout className="justify-center items-center">
-        <ActivityIndicator size="large" color="#CCFF00" />
+        <ActivityIndicator size="large" color="#FF6B35" />
       </ScreenLayout>
     );
   }
@@ -443,7 +447,7 @@ export default function WorkoutDetailsScreen() {
           className="absolute bottom-8 left-6 right-6 h-14 rounded-2xl overflow-hidden shadow-2xl z-50"
         >
           <LinearGradient
-            colors={['#CCFF00', '#A3CC00']}
+            colors={['#FF6B35', '#FF2E63']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             className="w-full h-full flex-row items-center justify-center gap-3"

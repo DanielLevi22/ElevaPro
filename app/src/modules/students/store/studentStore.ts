@@ -5,8 +5,8 @@ import {
   type ServiceType,
 } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
-import { Alert } from 'react-native';
 import { create } from 'zustand';
+import { showAlert } from '@/components/ui/appAlert';
 
 export type { PhysicalAssessment };
 
@@ -158,7 +158,11 @@ export const useStudentStore = create<StudentState>((set, get) => ({
       }));
     } catch (error) {
       console.error('Error removing student:', error);
-      Alert.alert('Erro', 'Não foi possível remover o aluno. Tente novamente.');
+      showAlert({
+        title: 'Erro',
+        message: 'Não foi possível remover o aluno. Tente novamente.',
+        type: 'error',
+      });
     }
   },
 

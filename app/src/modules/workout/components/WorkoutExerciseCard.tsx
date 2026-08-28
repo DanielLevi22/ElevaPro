@@ -96,7 +96,7 @@ export const WorkoutExerciseCard = React.memo(function WorkoutExerciseCard({
               <Ionicons
                 name="repeat-outline"
                 size={14}
-                color="#CCFF00"
+                color="#FF6B35"
                 style={{ marginRight: 6 }}
               />
               <Text className={`text-xs font-bold ${isEdited ? 'text-blue-400' : 'text-zinc-200'}`}>
@@ -105,7 +105,7 @@ export const WorkoutExerciseCard = React.memo(function WorkoutExerciseCard({
             </View>
 
             <View className="flex-row items-center bg-white/10 px-3 py-2 rounded-lg border border-white/5">
-              <Ionicons name="timer-outline" size={14} color="#CCFF00" style={{ marginRight: 6 }} />
+              <Ionicons name="timer-outline" size={14} color="#FF6B35" style={{ marginRight: 6 }} />
               <Text className={`text-xs font-bold ${isEdited ? 'text-blue-400' : 'text-zinc-200'}`}>
                 {effectiveItem.rest_seconds}s
               </Text>
@@ -116,7 +116,7 @@ export const WorkoutExerciseCard = React.memo(function WorkoutExerciseCard({
                 <Ionicons
                   name="barbell-outline"
                   size={14}
-                  color="#CCFF00"
+                  color="#FF6B35"
                   style={{ marginRight: 6 }}
                 />
                 <Text
@@ -166,7 +166,7 @@ export const WorkoutExerciseCard = React.memo(function WorkoutExerciseCard({
                 disabled={isResting}
               >
                 <LinearGradient
-                  colors={isResting ? ['#27272A', '#18181B'] : ['#CCFF00', '#A3CC00']}
+                  colors={isResting ? ['#27272A', '#18181B'] : ['#FF6B35', '#FF2E63']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   className={`h-12 px-6 rounded-xl flex-row items-center justify-center ${isResting ? 'opacity-50' : 'shadow-lg shadow-orange-500/30'}`}

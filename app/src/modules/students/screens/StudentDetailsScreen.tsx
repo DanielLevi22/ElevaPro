@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
+import { showAlert } from '@/components/ui/appAlert';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { QuickActions } from '@/components/workout/QuickActions';
 import { ROUTES } from '@/navigation/types';
@@ -36,7 +37,7 @@ export default function StudentDetailsScreen() {
   if (isLoading && !student) {
     return (
       <ScreenLayout className="justify-center items-center">
-        <ActivityIndicator size="large" color="#CCFF00" />
+        <ActivityIndicator size="large" color="#FF6B35" />
       </ScreenLayout>
     );
   }
@@ -85,16 +86,16 @@ export default function StudentDetailsScreen() {
       title: 'Treinos',
       subtitle: 'Gerenciar fichas',
       icon: 'barbell-outline',
-      color: '#CCFF00',
-      gradient: ['#CCFF00', '#A3CC00'],
+      color: '#FF6B35',
+      gradient: ['#FF6B35', '#FF2E63'],
       route: ROUTES.STUDENTS.WORKOUTS(id as string),
     },
     {
       title: 'Dieta',
       subtitle: 'Plano alimentar',
       icon: 'restaurant-outline',
-      color: '#00F0FF',
-      gradient: ['#00F0FF', '#00C0CC'],
+      color: '#00D9FF',
+      gradient: ['#00D9FF', '#00B8D9'],
       route: ROUTES.STUDENTS.NUTRITION(id as string),
     },
     {
@@ -138,7 +139,7 @@ export default function StudentDetailsScreen() {
           </TouchableOpacity>
 
           <View className="w-24 h-24 rounded-full bg-cyan-400/10 items-center justify-center mb-4 border-2 border-cyan-400/20">
-            <Ionicons name="person" size={48} color="#00F0FF" />
+            <Ionicons name="person" size={48} color="#00D9FF" />
           </View>
 
           <Text className="text-2xl font-extrabold text-white mb-1 font-display text-center">
@@ -174,7 +175,13 @@ export default function StudentDetailsScreen() {
         {/* Quick Actions Row */}
         <View className="mt-6 mb-2">
           <QuickActions
-            onDownload={() => Alert.alert('Em breve', 'Geração de PDF da ficha completa')}
+            onDownload={() =>
+              showAlert({
+                title: 'Em breve',
+                message: 'Geração de PDF da ficha completa',
+                type: 'info',
+              })
+            }
             onStudentView={async () => {
               const { enterStudentView } = useAuthStore.getState();
               await enterStudentView({
@@ -242,7 +249,11 @@ export default function StudentDetailsScreen() {
           <TouchableOpacity
             className="flex-row items-center justify-center p-4 rounded-2xl border border-red-500/20 bg-red-500/5"
             onPress={() => {
-              Alert.alert('Em breve', 'Funcionalidade de arquivar aluno em desenvolvimento');
+              showAlert({
+                title: 'Em breve',
+                message: 'Funcionalidade de arquivar aluno em desenvolvimento',
+                type: 'info',
+              });
             }}
           >
             <Ionicons name="archive-outline" size={20} color="#FF4444" />
