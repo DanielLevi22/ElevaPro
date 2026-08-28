@@ -3,8 +3,9 @@ import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Alert, Platform, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { showAlert } from '@/components/ui/appAlert';
 import { colors } from '@/constants/colors';
 
 /**
@@ -48,10 +49,12 @@ export default function HealthConnectScreen() {
         });
 
         if (!granted) {
-          Alert.alert(
-            'Permissão não concedida',
-            'Sem acesso ao HealthKit não dá para ler seus passos. Toque em Conectar para tentar de novo.'
-          );
+          showAlert({
+            title: 'Permissão não concedida',
+            message:
+              'Sem acesso ao HealthKit não dá para ler seus passos. Toque em Conectar para tentar de novo.',
+            type: 'warning',
+          });
           return;
         }
 
@@ -66,10 +69,12 @@ export default function HealthConnectScreen() {
           // visível — indistinguível de o app ter travado. A causa mais comum
           // é o Health Connect não estar instalado no aparelho.
           console.log('[HealthConnectScreen] Health Connect not initialized');
-          Alert.alert(
-            'Health Connect indisponível',
-            'Não consegui falar com o Health Connect. Verifique se ele está instalado e atualizado na Play Store.'
-          );
+          showAlert({
+            title: 'Health Connect indisponível',
+            message:
+              'Não consegui falar com o Health Connect. Verifique se ele está instalado e atualizado na Play Store.',
+            type: 'info',
+          });
           return;
         }
 
@@ -97,10 +102,12 @@ export default function HealthConnectScreen() {
           // Fica na tela em vez de mandar para as tabs: o botão "Conectar" é a
           // ação que resolve, e tirar o aluno daqui o obriga a redescobrir o
           // caminho para tentar de novo.
-          Alert.alert(
-            'Permissão não concedida',
-            'Sem acesso ao Health Connect não dá para ler seus passos. Toque em Conectar para tentar de novo.'
-          );
+          showAlert({
+            title: 'Permissão não concedida',
+            message:
+              'Sem acesso ao Health Connect não dá para ler seus passos. Toque em Conectar para tentar de novo.',
+            type: 'warning',
+          });
           return;
         }
 
@@ -184,18 +191,18 @@ export default function HealthConnectScreen() {
               {isIOS ? (
                 <>
                   <LinearGradient
-                    colors={['#A3CC00', '#ff6b8b']}
+                    colors={['#FF2E63', '#ff6b8b']}
                     className="absolute w-full h-full opacity-10"
                   />
-                  <Ionicons name="heart" size={48} color="#A3CC00" />
+                  <Ionicons name="heart" size={48} color="#FF2E63" />
                 </>
               ) : (
                 <>
                   <LinearGradient
-                    colors={['#00F0FF', '#4facfe']}
+                    colors={['#00D9FF', '#4facfe']}
                     className="absolute w-full h-full opacity-10"
                   />
-                  <Ionicons name="fitness" size={48} color="#00F0FF" />
+                  <Ionicons name="fitness" size={48} color="#00D9FF" />
                 </>
               )}
             </View>

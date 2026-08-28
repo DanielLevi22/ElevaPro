@@ -2,7 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 // O expo-router publica o compat como `expo-router/react-navigation`, mas sem
 // shim para os subpacotes — o de bottom-tabs só resolve pelo caminho de build.
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { colors } from '../../constants/colors';
 import { useAuthStore } from '../../modules/auth/store/authStore';
+import { isImmersiveRoute } from './immersiveRoutes';
 
 type Route = BottomTabBarProps['state']['routes'][number];
 type NavState = BottomTabBarProps['state'];
@@ -89,7 +90,7 @@ const TabItem = memo(
     }));
 
     let iconName: React.ComponentProps<typeof MaterialCommunityIcons>['name'] = 'help';
-    const iconColor = isFocused ? '#CCFF00' : 'rgba(255, 255, 255, 0.5)';
+    const iconColor = isFocused ? '#FF6B35' : 'rgba(255, 255, 255, 0.5)';
 
     switch (route.name) {
       case 'index':
@@ -133,6 +134,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const { accountType, isMasquerading } = useAuthStore();
   const _router = useRouter();
+  const pathname = usePathname();
 
   const focusedRoute = state.routes[state.index];
   const focusedOptions = descriptors[focusedRoute.key].options;
@@ -293,7 +295,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const baseOpacity = withSpring(isDragging.value === 1 ? 1 : 0, { damping: 20 });
     return {
       opacity: isActive ? 1 : baseOpacity,
-      backgroundColor: withSpring(isActive ? '#CCFF00' : 'rgba(30, 30, 30, 0.9)'),
+      backgroundColor: withSpring(isActive ? '#FF6B35' : 'rgba(30, 30, 30, 0.9)'),
       transform: [
         { scale: isActive ? withSpring(1.6) : withSpring(1.0) },
         { translateX: isActive ? -10 : 0 },
@@ -319,7 +321,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const baseOpacity = withSpring(isDragging.value === 1 ? 1 : 0, { damping: 20 });
     return {
       opacity: isActive ? 1 : baseOpacity,
-      backgroundColor: withSpring(isActive ? '#FF0099' : 'rgba(30, 30, 30, 0.9)'), // Purple for Menu
+      backgroundColor: withSpring(isActive ? '#9D4EDD' : 'rgba(30, 30, 30, 0.9)'), // Purple for Menu
       transform: [
         { scale: isActive ? withSpring(1.6) : withSpring(1.0) },
         { translateX: isActive ? 10 : 0 },
@@ -345,7 +347,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const baseOpacity = withSpring(isDragging.value === 1 ? 1 : 0, { damping: 20 });
     return {
       opacity: isActive ? 1 : baseOpacity,
-      backgroundColor: withSpring(isActive ? '#A3CC00' : 'rgba(30, 30, 30, 0.9)'),
+      backgroundColor: withSpring(isActive ? '#FF2E63' : 'rgba(30, 30, 30, 0.9)'),
       transform: [
         { scale: isActive ? withSpring(1.6) : withSpring(1.0) },
         { translateX: isActive ? -15 : 0 },
@@ -370,7 +372,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const baseOpacity = withSpring(isDragging.value === 1 ? 1 : 0, { damping: 20 });
     return {
       opacity: isActive ? 1 : baseOpacity,
-      backgroundColor: withSpring(isActive ? '#00F0FF' : 'rgba(30, 30, 30, 0.9)'),
+      backgroundColor: withSpring(isActive ? '#00D9FF' : 'rgba(30, 30, 30, 0.9)'),
       transform: [
         { scale: isActive ? withSpring(1.6) : withSpring(1.0) },
         { translateX: isActive ? 15 : 0 },
@@ -448,15 +450,24 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     return null;
   }
 
+  if (isImmersiveRoute(pathname)) {
+    return null;
+  }
+
   return (
+    // O container ocupa a largura toda e ~114px de altura, mas a barra visível
+    // é só os 92% centrais. Sem `box-none` ele captura o toque em toda essa
+    // faixa: um botão flutuante no rodapé da tela fica visível e inerte.
     <View
+      pointerEvents="box-none"
       style={[
         styles.container,
         { paddingBottom: Platform.OS === 'ios' ? insets.bottom : insets.bottom + 10 },
       ]}
     >
       {/* Background layer */}
-      <View style={styles.backgroundContainer}>
+      {/* Camada decorativa: blur e SVG não recebem toque. */}
+      <View style={styles.backgroundContainer} pointerEvents="none">
         {Platform.OS === 'ios' ? (
           <BlurView
             intensity={45}

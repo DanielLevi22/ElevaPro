@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { type CameraType, CameraView, useCameraPermissions } from 'expo-camera';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Text, TouchableOpacity, Vibration, View } from 'react-native';
+import { Text, TouchableOpacity, Vibration, View } from 'react-native';
+import { showAlert } from '@/components/ui/appAlert';
 import { useDeviceLevel } from '../hooks/useDeviceLevel';
 import { useAssessmentStore } from '../store/assessmentStore';
 
@@ -75,7 +76,11 @@ export default function BodyScanCamera() {
     // Revalidado no disparo, não no toque: com o temporizador o aparelho fica
     // apoiado em algum lugar e pode ter escorregado nesses 10 segundos.
     if (!cameraRef.current || !nivelado) {
-      Alert.alert('Fora de nível', 'Ajuste o aparelho e tente de novo.');
+      showAlert({
+        title: 'Fora de nível',
+        message: 'Ajuste o aparelho e tente de novo.',
+        type: 'warning',
+      });
       return;
     }
 
@@ -98,7 +103,7 @@ export default function BodyScanCamera() {
         const { setCapturedImage, setCaptureFraming } = useAssessmentStore.getState();
 
         if (!target) {
-          Alert.alert('Erro', 'Modo de captura inválido');
+          showAlert({ title: 'Erro', message: 'Modo de captura inválido', type: 'error' });
           router.back();
           return;
         }
@@ -122,7 +127,7 @@ export default function BodyScanCamera() {
       }
     } catch (e) {
       console.error('ERROR:', e);
-      Alert.alert('Erro', 'Tente novamente');
+      showAlert({ title: 'Erro', message: 'Tente novamente', type: 'error' });
     }
   };
 

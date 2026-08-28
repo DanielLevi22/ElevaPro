@@ -4,7 +4,6 @@ import { Link, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   RefreshControl,
   Text,
@@ -13,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { useAuthStore } from '@/auth';
+import { showAlert, showConfirm } from '@/components/ui/appAlert';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { StudentEditModal } from '../components/StudentEditModal';
 import { useStudentStore } from '../store/studentStore';
@@ -77,20 +77,20 @@ export default function StudentsScreen() {
       ? `Tem certeza que deseja cancelar o convite para ${item.full_name || 'este aluno'}?`
       : `Tem certeza que deseja remover ${item.full_name || 'este aluno'}? Ele perderá o acesso aos treinos.`;
 
-    Alert.alert(title, message, [
-      { text: 'Voltar', style: 'cancel' },
-      {
-        text: isInvite ? 'Cancelar Convite' : 'Remover',
-        style: 'destructive',
-        onPress: async () => {
-          if (user?.id && item?.id) {
-            await removeStudent(user.id, item.id, item.service_type);
-          } else {
-            Alert.alert('Erro', 'ID do aluno não encontrado.');
-          }
-        },
+    showConfirm({
+      title: title,
+      message: message,
+      type: 'danger',
+      confirmText: isInvite ? 'Cancelar Convite' : 'Remover',
+      cancelText: 'Voltar',
+      onConfirm: async () => {
+        if (user?.id && item?.id) {
+          await removeStudent(user.id, item.id, item.service_type);
+        } else {
+          showAlert({ title: 'Erro', message: 'ID do aluno não encontrado.', type: 'error' });
+        }
       },
-    ]);
+    });
   };
 
   const handleEdit = (student: import('../store/studentStore').Student) => {
@@ -185,7 +185,7 @@ export default function StudentsScreen() {
               onPress={() => handleEdit(item)}
               className={`p-2 rounded-xl ${expired ? 'bg-zinc-900' : 'bg-zinc-800'}`}
             >
-              <Ionicons name="pencil" size={20} color={expired ? '#52525B' : '#CCFF00'} />
+              <Ionicons name="pencil" size={20} color={expired ? '#52525B' : '#FF6B35'} />
             </TouchableOpacity>
 
             {/* Remove Button */}
@@ -218,7 +218,7 @@ export default function StudentsScreen() {
           <Link href={'/(tabs)/students/create' as never} asChild>
             <TouchableOpacity activeOpacity={0.8}>
               <LinearGradient
-                colors={['#CCFF00', '#A3CC00']}
+                colors={['#FF6B35', '#FF2E63']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 className="h-14 w-14 rounded-full items-center justify-center shadow-lg shadow-orange-500/20"
@@ -250,7 +250,7 @@ export default function StudentsScreen() {
             <Ionicons
               name={sortOrder === 'asc' ? 'arrow-up' : 'arrow-down'}
               size={18}
-              color="#CCFF00"
+              color="#FF6B35"
             />
           </TouchableOpacity>
         </View>
@@ -295,7 +295,7 @@ export default function StudentsScreen() {
           <Link href={'/(tabs)/students/create' as never} asChild>
             <TouchableOpacity activeOpacity={0.8}>
               <LinearGradient
-                colors={['#CCFF00', '#A3CC00']}
+                colors={['#FF6B35', '#FF2E63']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 className="rounded-2xl py-4 px-8 shadow-lg shadow-orange-500/20"
@@ -316,7 +316,7 @@ export default function StudentsScreen() {
           ListFooterComponent={() =>
             isLoading && students.length > 0 ? (
               <View className="py-4">
-                <ActivityIndicator color="#CCFF00" />
+                <ActivityIndicator color="#FF6B35" />
               </View>
             ) : null
           }
@@ -333,7 +333,7 @@ export default function StudentsScreen() {
                   append: false,
                 })
               }
-              tintColor="#CCFF00"
+              tintColor="#FF6B35"
             />
           }
           showsVerticalScrollIndicator={false}

@@ -52,7 +52,7 @@ export function DayOptionsModal({
                 <Ionicons
                   name="clipboard-outline"
                   size={24}
-                  color={canPaste ? '#00F0FF' : '#52525B'}
+                  color={canPaste ? '#00D9FF' : '#52525B'}
                 />
               </View>
               <View style={styles.textContainer}>
@@ -70,10 +70,10 @@ export function DayOptionsModal({
 
             <TouchableOpacity style={styles.optionButton} onPress={onClear}>
               <View style={styles.iconContainer}>
-                <Ionicons name="trash-outline" size={24} color="#CCFF00" />
+                <Ionicons name="trash-outline" size={24} color="#FF6B35" />
               </View>
               <View style={styles.textContainer}>
-                <Text style={[styles.optionTitle, { color: '#CCFF00' }]}>Limpar Dia</Text>
+                <Text style={[styles.optionTitle, { color: '#FF6B35' }]}>Limpar Dia</Text>
                 <Text style={styles.optionDescription}>Remover todas as refeições deste dia</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#52525B" />

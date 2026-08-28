@@ -4,7 +4,6 @@ import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   ScrollView,
   Text,
@@ -13,8 +12,8 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { showAlert } from '@/components/ui/appAlert';
 import { VideoPlayer } from '@/components/VideoPlayer';
-
 import type { Exercise, SelectedExercise } from '../store/workoutStore';
 
 interface Props {
@@ -73,7 +72,7 @@ export const ExerciseConfigModal: React.FC<Props> = ({
     const repsNum = parseInt(reps, 10) || 12;
     const restNum = parseInt(restSeconds, 10) || 60;
     if (setsNum < 1 || repsNum < 1 || restNum < 0) {
-      Alert.alert('Erro', 'Por favor, insira valores válidos.');
+      showAlert({ title: 'Erro', message: 'Por favor, insira valores válidos.', type: 'error' });
       return;
     }
     setSaving(true);
@@ -98,7 +97,11 @@ export const ExerciseConfigModal: React.FC<Props> = ({
         onClose();
       }, 800); // Show success for 800ms
     } catch (_e) {
-      Alert.alert('Erro', 'Não foi possível salvar as alterações.');
+      showAlert({
+        title: 'Erro',
+        message: 'Não foi possível salvar as alterações.',
+        type: 'error',
+      });
       setSaving(false);
     }
   }, [sets, reps, restSeconds, weight, videoUrl, exercise, onSave, onClose]);
@@ -262,7 +265,7 @@ export const ExerciseConfigModal: React.FC<Props> = ({
                       ? ['#10b981', '#059669']
                       : saving
                         ? ['#52525b', '#52525b']
-                        : ['#CCFF00', '#E85A2A']
+                        : ['#FF6B35', '#E85A2A']
                   }
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}

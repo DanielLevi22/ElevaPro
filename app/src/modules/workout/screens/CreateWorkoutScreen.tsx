@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   Text,
   TextInput,
@@ -12,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { useAuthStore } from '@/auth';
+import { showAlert } from '@/components/ui/appAlert';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { useWorkoutStore } from '../store/workoutStore';
 
@@ -27,12 +27,16 @@ export default function CreateWorkoutScreen() {
 
   const handleCreate = async () => {
     if (!title.trim()) {
-      Alert.alert('Erro', 'Por favor, informe um título para o treino');
+      showAlert({
+        title: 'Erro',
+        message: 'Por favor, informe um título para o treino',
+        type: 'error',
+      });
       return;
     }
 
     if (!user?.id) {
-      Alert.alert('Erro', 'Usuário não autenticado');
+      showAlert({ title: 'Erro', message: 'Usuário não autenticado', type: 'error' });
       return;
     }
 
@@ -49,21 +53,22 @@ export default function CreateWorkoutScreen() {
     });
 
     if (result.success) {
-      Alert.alert('Sucesso', 'Treino criado com sucesso!', [
-        {
-          text: 'OK',
-          onPress: () => router.replace(`/(tabs)/workouts/${result.data?.id}`),
-        },
-      ]);
+      showAlert({
+        title: 'Sucesso',
+        message: 'Treino criado com sucesso!',
+        type: 'success',
+        buttonText: 'OK',
+        onDismiss: () => router.replace(`/(tabs)/workouts/${result.data?.id}`),
+      });
     } else {
-      Alert.alert('Erro', result.error || 'Falha ao criar treino');
+      showAlert({ title: 'Erro', message: result.error || 'Falha ao criar treino', type: 'error' });
     }
   };
 
   const difficultyOptions = [
     { value: 'beginner', label: 'Iniciante', color: '#00C9A7' },
     { value: 'intermediate', label: 'Intermediário', color: '#FFB800' },
-    { value: 'advanced', label: 'Avançado', color: '#A3CC00' },
+    { value: 'advanced', label: 'Avançado', color: '#FF2E63' },
   ];
 
   const muscleOptions = [
@@ -192,7 +197,7 @@ export default function CreateWorkoutScreen() {
 
           <TouchableOpacity onPress={handleCreate} disabled={isLoading} activeOpacity={0.8}>
             <LinearGradient
-              colors={['#CCFF00', '#A3CC00']}
+              colors={['#FF6B35', '#FF2E63']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               className="rounded-2xl py-4 items-center justify-center shadow-lg shadow-orange-500/20"

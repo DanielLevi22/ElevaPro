@@ -149,6 +149,12 @@ jobs:
       - name: Verificar fronteiras entre módulos
         run: npm run app:check-modules
 
+      # O diálogo do sistema aparecia no meio de telas pretas com gradiente como
+      # um pedaço de outro aplicativo, e não deixa escolher ícone nem cor de ação
+      # destrutiva. Eram 111 chamadas em 37 arquivos antes desta guarda.
+      - name: Verificar Alert nativo no mobile
+        run: npm run app:check-alerts
+
       # Aviso, não bloqueio: são 24 arquivos e ~14 mil linhas, e reescrever tudo
       # com 9% de cobertura no mobile trocaria dívida conhecida por regressão
       # desconhecida. A regra que vale é "tocou, sai abaixo de 500".

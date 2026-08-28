@@ -4,8 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
+import { showConfirm } from '@/components/ui/appAlert';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { colors as brandColors } from '@/constants/colors';
 
@@ -47,10 +48,14 @@ export default function ProfileScreen() {
   }, [fetchProfile]);
 
   const handleSignOut = () => {
-    Alert.alert('Sair', 'Tem certeza que deseja sair?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', style: 'destructive', onPress: signOut },
-    ]);
+    showConfirm({
+      title: 'Sair',
+      message: 'Tem certeza que deseja sair?',
+      type: 'danger',
+      confirmText: 'Sair',
+      cancelText: 'Cancelar',
+      onConfirm: signOut,
+    });
   };
 
   return (

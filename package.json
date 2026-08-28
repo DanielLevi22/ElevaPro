@@ -20,6 +20,7 @@
     "db:check-errors": "node scripts/check-discarded-errors.js",
     "app:check-nav": "node scripts/check-navigation-casts.js",
     "app:check-modules": "node scripts/check-module-boundaries.js",
+    "app:check-alerts": "node scripts/check-native-alerts.js",
     "check:file-size": "node scripts/check-file-size.js",
     "api:test-auth": "node scripts/test-api-auth.mjs",
     "env:sync": "node scripts/sync-env.js",

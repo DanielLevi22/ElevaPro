@@ -123,7 +123,7 @@ export default function StudentHistoryScreen() {
   if (studentsLoading || !student) {
     return (
       <ScreenLayout className="justify-center items-center">
-        <ActivityIndicator size="large" color="#CCFF00" />
+        <ActivityIndicator size="large" color="#FF6B35" />
       </ScreenLayout>
     );
   }
@@ -175,7 +175,7 @@ export default function StudentHistoryScreen() {
 
       {historyLoading && (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="small" color="#CCFF00" />
+          <ActivityIndicator size="small" color="#FF6B35" />
         </View>
       )}
 

@@ -3,8 +3,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Dimensions, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { showAlert } from '@/components/ui/appAlert';
 import { ImageSourceModal } from '@/components/ui/ImageSourceModal';
 import { colors } from '@/constants/colors';
 import { useAssessmentStore } from '../store/assessmentStore';
@@ -47,11 +48,13 @@ export default function BodyScanGrid() {
     console.log('🔍 BodyScanGrid | Store ID:', studentId, 'Param ID:', paramId);
 
     if (!effectiveId) {
-      Alert.alert(
-        'Erro de Identificação',
-        'Não conseguimos identificar o aluno. Por favor, volte e tente novamente.',
-        [{ text: 'Voltar', onPress: () => router.back() }]
-      );
+      showAlert({
+        title: 'Erro de Identificação',
+        message: 'Não conseguimos identificar o aluno. Por favor, volte e tente novamente.',
+        type: 'error',
+        buttonText: 'Voltar',
+        onDismiss: () => router.back(),
+      });
     } else if (paramId && !studentId) {
       // Sync store if missing
       useAssessmentStore.getState().setStudentId(paramId);
@@ -80,7 +83,11 @@ export default function BodyScanGrid() {
     try {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permissionResult.status === 'denied') {
-        Alert.alert('Permissão Necessária', 'Precisamos de acesso à galeria para carregar fotos.');
+        showAlert({
+          title: 'Permissão Necessária',
+          message: 'Precisamos de acesso à galeria para carregar fotos.',
+          type: 'warning',
+        });
         return;
       }
 
@@ -95,7 +102,7 @@ export default function BodyScanGrid() {
       }
     } catch (e) {
       console.error('Gallery failed', e);
-      Alert.alert('Erro', 'Falha ao abrir galeria.');
+      showAlert({ title: 'Erro', message: 'Falha ao abrir galeria.', type: 'error' });
     }
   };
 

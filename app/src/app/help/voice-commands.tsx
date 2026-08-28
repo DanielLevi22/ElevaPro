@@ -63,7 +63,7 @@ export default function VoiceCommandsHelpScreen() {
 
           <View className="bg-zinc-800/50 p-4 rounded-xl border border-zinc-700 mb-4">
             <View className="flex-row items-center mb-2">
-              <Ionicons name="mic" size={20} color="#CCFF00" style={{ marginRight: 8 }} />
+              <Ionicons name="mic" size={20} color="#FF6B35" style={{ marginRight: 8 }} />
               <Text className="text-white font-bold text-lg">Como Usar</Text>
             </View>
             <Text className="text-zinc-400 leading-5">

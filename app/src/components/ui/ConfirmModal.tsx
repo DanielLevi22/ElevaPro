@@ -11,19 +11,28 @@ import Animated, {
 
 interface ConfirmModalProps {
   visible: boolean;
+  /** Chamado sempre que o modal sai de cena — pelos dois botões. */
   onClose: () => void;
   onConfirm: () => void;
+  /**
+   * Ação do botão secundário. Sem ela o secundário apenas fecha, que é o caso
+   * comum de "Cancelar". Existe para quando o secundário é uma escolha de
+   * verdade — "Sair" contra "Compartilhar" ao fim do treino —, porque aí não dá
+   * para inferir a intenção a partir de `onClose`.
+   */
+  onCancel?: () => void;
   title: string;
   message: string;
   confirmText?: string;
   cancelText?: string;
-  type?: 'danger' | 'warning' | 'info';
+  type?: 'danger' | 'warning' | 'info' | 'success';
 }
 
 export function ConfirmModal({
   visible,
   onClose,
   onConfirm,
+  onCancel,
   title,
   message,
   confirmText = 'Confirmar',
@@ -60,6 +69,14 @@ export function ConfirmModal({
           gradient: ['#DC2626', '#EF4444'] as const,
           bg: 'bg-red-500/10',
           border: 'border-red-500/30',
+        };
+      case 'success':
+        return {
+          icon: 'trophy' as const,
+          color: '#34D399', // Emerald 400
+          gradient: ['#059669', '#34D399'] as const,
+          bg: 'bg-emerald-500/10',
+          border: 'border-emerald-500/30',
         };
       case 'warning':
         return {
@@ -131,7 +148,10 @@ export function ConfirmModal({
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={onClose}
+                onPress={() => {
+                  onCancel?.();
+                  onClose();
+                }}
                 activeOpacity={0.7}
                 className="w-full py-4 rounded-2xl bg-zinc-900 border border-white/5 items-center justify-center"
               >

@@ -127,7 +127,7 @@ export default function ProgressScreen() {
               fetchDailyData(today);
               fetchHistory(120);
             }}
-            tintColor="#CCFF00"
+            tintColor="#FF6B35"
           />
         }
         showsVerticalScrollIndicator={false}
@@ -176,7 +176,7 @@ export default function ProgressScreen() {
             {/* Hero Streak Card */}
             <Animated.View entering={FadeInDown.delay(200).springify()} className="mb-8">
               <LinearGradient
-                colors={['#CCFF00', '#F97316']}
+                colors={['#FF6B35', '#F97316']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 className="rounded-3xl p-6 relative overflow-hidden"

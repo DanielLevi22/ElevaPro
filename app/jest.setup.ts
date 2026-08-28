@@ -28,6 +28,7 @@ jest.mock('expo-router', () => ({
   }),
   useLocalSearchParams: () => ({}),
   useSegments: () => [],
+  usePathname: () => '/',
 }));
 
 // Safe area context is mocked at the end of the file

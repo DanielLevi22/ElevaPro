@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -16,6 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/auth';
+import { showAlert } from '@/components/ui/appAlert';
 import { useStudentStore } from '@/students';
 
 export default function JoinPersonalScreen() {
@@ -27,7 +27,7 @@ export default function JoinPersonalScreen() {
 
   const handleJoin = async () => {
     if (!code.trim()) {
-      Alert.alert('Erro', 'Por favor, digite o código.');
+      showAlert({ title: 'Erro', message: 'Por favor, digite o código.', type: 'error' });
       return;
     }
 
@@ -38,14 +38,22 @@ export default function JoinPersonalScreen() {
       const result = await linkStudent(user.id, code.trim());
 
       if (result.success) {
-        Alert.alert('Sucesso', 'Você foi vinculado ao seu personal!', [
-          { text: 'OK', onPress: () => router.replace('/(tabs)') },
-        ]);
+        showAlert({
+          title: 'Sucesso',
+          message: 'Você foi vinculado ao seu personal!',
+          type: 'success',
+          buttonText: 'OK',
+          onDismiss: () => router.replace('/(tabs)'),
+        });
       } else {
-        Alert.alert('Erro', result.error || 'Não foi possível vincular.');
+        showAlert({
+          title: 'Erro',
+          message: result.error || 'Não foi possível vincular.',
+          type: 'error',
+        });
       }
     } catch (_error) {
-      Alert.alert('Erro', 'Ocorreu um erro inesperado.');
+      showAlert({ title: 'Erro', message: 'Ocorreu um erro inesperado.', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -76,7 +84,7 @@ export default function JoinPersonalScreen() {
                     end={{ x: 1, y: 1 }}
                     className="p-6 rounded-full mb-6"
                   >
-                    <Ionicons name="link" size={64} color="#CCFF00" />
+                    <Ionicons name="link" size={64} color="#FF6B35" />
                   </LinearGradient>
 
                   <Text className="text-3xl font-bold text-white mb-3 text-center">
@@ -110,7 +118,7 @@ export default function JoinPersonalScreen() {
                   className={loading || code.length < 6 ? 'opacity-50' : 'opacity-100'}
                 >
                   <LinearGradient
-                    colors={['#CCFF00', '#E85A2A']}
+                    colors={['#FF6B35', '#E85A2A']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     className="rounded-2xl py-4 items-center justify-center"

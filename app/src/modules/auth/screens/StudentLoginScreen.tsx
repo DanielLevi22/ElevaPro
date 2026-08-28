@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -15,6 +14,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { showAlert } from '@/components/ui/appAlert';
 import { useAuthStore } from '../store/authStore';
 
 export function StudentLoginScreen() {
@@ -25,7 +25,11 @@ export function StudentLoginScreen() {
 
   const handleLogin = async () => {
     if (!code.trim()) {
-      Alert.alert('Erro', 'Por favor, digite o código de convite.');
+      showAlert({
+        title: 'Erro',
+        message: 'Por favor, digite o código de convite.',
+        type: 'error',
+      });
       return;
     }
 
@@ -36,10 +40,14 @@ export function StudentLoginScreen() {
       if (result.success) {
         router.replace('/(tabs)');
       } else {
-        Alert.alert('Erro', result.error || 'Código inválido ou não encontrado.');
+        showAlert({
+          title: 'Erro',
+          message: result.error || 'Código inválido ou não encontrado.',
+          type: 'error',
+        });
       }
     } catch (error) {
-      Alert.alert('Erro', 'Ocorreu um erro inesperado.');
+      showAlert({ title: 'Erro', message: 'Ocorreu um erro inesperado.', type: 'error' });
       console.error(error);
     } finally {
       setLoading(false);

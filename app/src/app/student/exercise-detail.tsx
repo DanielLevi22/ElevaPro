@@ -5,13 +5,13 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { showAlert, showConfirm } from '@/components/ui/appAlert';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
@@ -114,7 +114,11 @@ export default function ExerciseDetailScreen() {
       }
     } catch (err: unknown) {
       console.error('Error fetching exercise:', err);
-      Alert.alert('Erro', 'Não foi possível carregar o exercício.');
+      showAlert({
+        title: 'Erro',
+        message: 'Não foi possível carregar o exercício.',
+        type: 'error',
+      });
     } finally {
       setLoading(false);
     }
@@ -130,7 +134,11 @@ export default function ExerciseDetailScreen() {
 
   const completeSet = (index: number) => {
     if (isRestingAfterSet) {
-      Alert.alert('Aguarde', 'Complete o descanso antes de marcar a próxima série.');
+      showAlert({
+        title: 'Aguarde',
+        message: 'Complete o descanso antes de marcar a próxima série.',
+        type: 'warning',
+      });
       return;
     }
 
@@ -165,20 +173,17 @@ export default function ExerciseDetailScreen() {
 
   const handleMarkComplete = () => {
     if (!allDone) {
-      Alert.alert(
-        'Exercício Incompleto',
-        `${completedCount} de ${sets.length} séries feitas. Finalizar mesmo assim?`,
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          {
-            text: 'Finalizar',
-            onPress: () => {
-              persistToStore(sets);
-              router.back();
-            },
-          },
-        ]
-      );
+      showConfirm({
+        title: 'Exercício Incompleto',
+        message: `${completedCount} de ${sets.length} séries feitas. Finalizar mesmo assim?`,
+        type: 'warning',
+        confirmText: 'Finalizar',
+        cancelText: 'Cancelar',
+        onConfirm: () => {
+          persistToStore(sets);
+          router.back();
+        },
+      });
       return;
     }
     persistToStore(sets);

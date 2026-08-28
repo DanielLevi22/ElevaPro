@@ -5,7 +5,6 @@ import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   ImageBackground,
   ImageSourcePropType,
@@ -17,12 +16,11 @@ import {
   View,
 } from 'react-native';
 import { useAuthStore } from '@/auth';
-import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { showAlert, showConfirm } from '@/components/ui/appAlert';
 import { IconButton } from '@/components/ui/IconButton';
 import { PremiumCard } from '@/components/ui/PremiumCard';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { StatusModal } from '@/components/ui/StatusModal';
 import { MuscleFilterCarousel } from '@/components/workout/MuscleFilterCarousel';
 import { colors } from '@/constants/colors';
 import { AIWorkoutNegotiationModal } from '../components/AIWorkoutNegotiationModal';
@@ -79,53 +77,6 @@ export default function PhaseDetailsScreen() {
   const [selectedLibraryMuscle, setSelectedLibraryMuscle] = useState<string | null>(null);
   const [showStatusModalMenu, setShowStatusModalMenu] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
-
-  const [statusModal, setStatusModal] = useState<{
-    visible: boolean;
-    title: string;
-    message: string;
-    type: 'success' | 'error' | 'warning' | 'info';
-  }>({
-    visible: false,
-    title: '',
-    message: '',
-    type: 'info',
-  });
-
-  const [confirmModal, setConfirmModal] = useState<{
-    visible: boolean;
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    type: 'danger' | 'warning' | 'info';
-    confirmText?: string;
-  }>({
-    visible: false,
-    title: '',
-    message: '',
-    onConfirm: () => {},
-    type: 'info',
-  });
-
-  const showAlert = useCallback(
-    (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
-      setStatusModal({ visible: true, title, message, type });
-    },
-    []
-  );
-
-  const showConfirm = useCallback(
-    (
-      title: string,
-      message: string,
-      onConfirm: () => void,
-      type: 'danger' | 'warning' | 'info' = 'info',
-      confirmText?: string
-    ) => {
-      setConfirmModal({ visible: true, title, message, onConfirm, type, confirmText });
-    },
-    []
-  );
 
   const { fetchWorkouts } = useWorkoutStore();
 
@@ -202,7 +153,7 @@ export default function PhaseDetailsScreen() {
           [type === 'start' ? 'start_date' : 'end_date']: date.toISOString().split('T')[0],
         });
       } catch (_error: unknown) {
-        Alert.alert('Erro', 'Não foi possível atualizar a data.');
+        showAlert({ title: 'Erro', message: 'Não foi possível atualizar a data.', type: 'error' });
       }
     },
     [phase, updateTrainingPlan]
@@ -215,13 +166,21 @@ export default function PhaseDetailsScreen() {
       const finalSplit = split || customSplit.toUpperCase().trim();
 
       if (!finalSplit) {
-        showAlert('Atenção', 'Digite uma divisão de treino válida.', 'warning');
+        showAlert({
+          title: 'Atenção',
+          message: 'Digite uma divisão de treino válida.',
+          type: 'warning',
+        });
         return;
       }
 
       // Validate that split only contains letters
       if (!/^[A-Z]+$/.test(finalSplit)) {
-        showAlert('Erro', 'A divisão deve conter apenas letras (A-Z).', 'error');
+        showAlert({
+          title: 'Erro',
+          message: 'A divisão deve conter apenas letras (A-Z).',
+          type: 'error',
+        });
         return;
       }
 
@@ -231,7 +190,7 @@ export default function PhaseDetailsScreen() {
       setShowWarningModal(true);
       if (showSplitModal) setShowSplitModal(false);
     },
-    [phase, user?.id, customSplit, showAlert, showSplitModal]
+    [phase, user?.id, customSplit, showSplitModal]
   );
 
   const executeSplitChange = useCallback(
@@ -262,18 +221,18 @@ export default function PhaseDetailsScreen() {
         await fetchWorkoutsForPhase(phase.id);
         setShowSplitModal(false);
         setCustomSplit('');
-        showAlert(
-          'Sucesso! 🏋️',
-          `Treinos vazios criados para divisão ${finalSplit}. Adicione exercícios manualmente ou use o Co-Pilot.`,
-          'success'
-        );
+        showAlert({
+          title: 'Sucesso! 🏋️',
+          message: `Treinos vazios criados para divisão ${finalSplit}. Adicione exercícios manualmente ou use o Co-Pilot.`,
+          type: 'success',
+        });
       } catch (_error: unknown) {
-        showAlert('Erro', 'Não foi possível criar os treinos.', 'error');
+        showAlert({ title: 'Erro', message: 'Não foi possível criar os treinos.', type: 'error' });
       } finally {
         setIsGenerating(false);
       }
     },
-    [phase, user?.id, createWorkout, fetchWorkoutsForPhase, showAlert]
+    [phase, user?.id, createWorkout, fetchWorkoutsForPhase]
   );
 
   const handleAIAssist = useCallback(
@@ -283,7 +242,11 @@ export default function PhaseDetailsScreen() {
       const finalSplit = split || customSplit.toUpperCase().trim();
 
       if (!finalSplit) {
-        showAlert('Atenção', 'Selecione ou digite uma divisão primeiro.', 'warning');
+        showAlert({
+          title: 'Atenção',
+          message: 'Selecione ou digite uma divisão primeiro.',
+          type: 'warning',
+        });
         return;
       }
 
@@ -291,7 +254,7 @@ export default function PhaseDetailsScreen() {
       setCustomSplit('');
       setShowAIModal(true);
     },
-    [phase, customSplit, showAlert]
+    [phase, customSplit]
   );
 
   const _handleToggleStatus = useCallback(() => {
@@ -310,40 +273,52 @@ export default function PhaseDetailsScreen() {
       try {
         await updateTrainingPlan(phase.id, { status: newStatus });
         setShowStatusModalMenu(false);
-        showAlert('Sucesso! ✨', `O status da fase foi alterado para ${statusLabel}.`, 'success');
+        showAlert({
+          title: 'Sucesso! ✨',
+          message: `O status da fase foi alterado para ${statusLabel}.`,
+          type: 'success',
+        });
       } catch (_error: unknown) {
-        showAlert('Erro', 'Houve um problema ao atualizar o status.', 'error');
+        showAlert({
+          title: 'Erro',
+          message: 'Houve um problema ao atualizar o status.',
+          type: 'error',
+        });
       }
     },
-    [phase, updateTrainingPlan, showAlert]
+    [phase, updateTrainingPlan]
   );
 
   const handleDeletePhase = useCallback(async () => {
     if (!phase) return;
 
-    showConfirm(
-      'Excluir Fase',
-      `Tem certeza que deseja excluir a fase "${phase.name}"? Todos os treinos desta fase serão perdidos permanentemente.`,
-      async () => {
+    showConfirm({
+      title: 'Excluir Fase',
+      message: `Tem certeza que deseja excluir a fase "${phase.name}"? Todos os treinos desta fase serão perdidos permanentemente.`,
+      type: 'danger',
+      confirmText: 'Excluir',
+      onConfirm: async () => {
         try {
           await deleteTrainingPlan(phase.id);
           // Small delay for the confirm modal to disappear
           setTimeout(() => {
-            showAlert(
-              'Fase Excluída',
-              'A fase e seus treinos foram removidos com sucesso.',
-              'success'
-            );
+            showAlert({
+              title: 'Fase Excluída',
+              message: 'A fase e seus treinos foram removidos com sucesso.',
+              type: 'success',
+            });
             router.back();
           }, 500);
         } catch (_error: unknown) {
-          showAlert('Erro', 'Não foi possível excluir a fase no momento.', 'error');
+          showAlert({
+            title: 'Erro',
+            message: 'Não foi possível excluir a fase no momento.',
+            type: 'error',
+          });
         }
       },
-      'danger',
-      'Excluir'
-    );
-  }, [phase, showConfirm, deleteTrainingPlan, showAlert, router]);
+    });
+  }, [phase, deleteTrainingPlan, router]);
 
   const handleCreateWorkout = useCallback(async () => {
     if (!phase || !user?.id) return;
@@ -354,11 +329,15 @@ export default function PhaseDetailsScreen() {
         description: '',
         specialist_id: user.id,
       });
-      showAlert('Treino Criado 🏋️', 'Novo treino adicionado com sucesso à sua fase.', 'success');
+      showAlert({
+        title: 'Treino Criado 🏋️',
+        message: 'Novo treino adicionado com sucesso à sua fase.',
+        type: 'success',
+      });
     } catch (_error: unknown) {
-      showAlert('Erro', 'Ocorreu um erro ao criar o treino.', 'error');
+      showAlert({ title: 'Erro', message: 'Ocorreu um erro ao criar o treino.', type: 'error' });
     }
-  }, [phase, user?.id, createWorkout, showAlert]);
+  }, [phase, user?.id, createWorkout]);
 
   if (!phase) {
     return (
@@ -460,7 +439,7 @@ export default function PhaseDetailsScreen() {
                 <Text className="text-white font-extrabold text-xl mr-2 uppercase">
                   {phase.name || '--'}
                 </Text>
-                {!isStudentView && <Ionicons name="chevron-down" size={16} color="#CCFF00" />}
+                {!isStudentView && <Ionicons name="chevron-down" size={16} color="#FF6B35" />}
               </TouchableOpacity>
             </View>
 
@@ -566,10 +545,11 @@ export default function PhaseDetailsScreen() {
                       };
 
                       if (isWorkoutDoneToday) {
-                        Alert.alert(
-                          'Meta Atingida! 🏆',
-                          'Você já treinou hoje. Descanse para voltar mais forte amanhã!'
-                        );
+                        showAlert({
+                          title: 'Meta Atingida! 🏆',
+                          message: 'Você já treinou hoje. Descanse para voltar mais forte amanhã!',
+                          type: 'info',
+                        });
                         return;
                       }
 
@@ -613,10 +593,12 @@ export default function PhaseDetailsScreen() {
                         };
 
                         if (isWorkoutDoneToday) {
-                          Alert.alert(
-                            'Meta Atingida! 🏆',
-                            'Você já treinou hoje. Descanse para voltar mais forte amanhã!'
-                          );
+                          showAlert({
+                            title: 'Meta Atingida! 🏆',
+                            message:
+                              'Você já treinou hoje. Descanse para voltar mais forte amanhã!',
+                            type: 'info',
+                          });
                           return;
                         }
                         proceedToWorkout();
@@ -676,7 +658,7 @@ export default function PhaseDetailsScreen() {
                 className="flex-row items-center bg-orange-500/10 px-3 py-1.5 rounded-xl border border-orange-500/20"
                 style={{ borderColor: `${colors.primary.start}33` }}
               >
-                <Ionicons name="sparkles" size={14} color="#CCFF00" style={{ marginRight: 6 }} />
+                <Ionicons name="sparkles" size={14} color="#FF6B35" style={{ marginRight: 6 }} />
                 <Text className="text-orange-500 font-bold text-xs uppercase">CO-PILOT</Text>
               </TouchableOpacity>
 
@@ -748,14 +730,14 @@ export default function PhaseDetailsScreen() {
               };
 
               if (isStudentView && isWorkoutDoneToday) {
-                Alert.alert(
-                  'Treino Realizado',
-                  'Você já registrou um treino hoje. Deseja realizar outro treino?',
-                  [
-                    { text: 'Cancelar', style: 'cancel' },
-                    { text: 'Sim, Treinar', onPress: proceedToWorkout },
-                  ]
-                );
+                showConfirm({
+                  title: 'Treino Realizado',
+                  message: 'Você já registrou um treino hoje. Deseja realizar outro treino?',
+                  type: 'warning',
+                  confirmText: 'Sim, Treinar',
+                  cancelText: 'Cancelar',
+                  onConfirm: proceedToWorkout,
+                });
                 return;
               }
 
@@ -845,7 +827,7 @@ export default function PhaseDetailsScreen() {
 
               {isGenerating ? (
                 <View className="py-8 items-center">
-                  <ActivityIndicator size="large" color="#CCFF00" />
+                  <ActivityIndicator size="large" color="#FF6B35" />
                   <Text className="text-zinc-400 text-sm mt-4 text-center">
                     Gerando treinos para a divisão...
                   </Text>
@@ -935,7 +917,7 @@ export default function PhaseDetailsScreen() {
             <View className="bg-zinc-900 w-full rounded-[24px] p-6 border border-zinc-800 items-center shadow-2xl">
               {/* Header Icon - Slightly smaller container for better proportion */}
               <View className="w-16 h-16 rounded-full bg-orange-500/10 items-center justify-center border border-orange-500/20 mb-5">
-                <Ionicons name="options" size={32} color="#CCFF00" />
+                <Ionicons name="options" size={32} color="#FF6B35" />
               </View>
 
               <Text className="text-white text-xl font-extrabold mb-2 text-center font-display">
@@ -966,7 +948,11 @@ export default function PhaseDetailsScreen() {
                           await fetchWorkoutsForPhase(phase.id);
                         } catch (_error) {
                           setIsGenerating(false);
-                          showAlert('Erro', 'Falha ao limpar treinos antigos.', 'error');
+                          showAlert({
+                            title: 'Erro',
+                            message: 'Falha ao limpar treinos antigos.',
+                            type: 'error',
+                          });
                           return;
                         } finally {
                           setIsGenerating(false);
@@ -980,7 +966,7 @@ export default function PhaseDetailsScreen() {
                   className="w-full"
                 >
                   <LinearGradient
-                    colors={['#CCFF00', '#A3CC00']}
+                    colors={['#FF6B35', '#FF2E63']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     className="py-4 rounded-xl items-center justify-center shadow-lg"
@@ -1083,13 +1069,17 @@ export default function PhaseDetailsScreen() {
                   try {
                     await useWorkoutStore.getState().duplicateWorkout(item.id, phaseId as string);
                     setShowLibraryModal(false);
-                    showAlert(
-                      'Sucesso! 🚀',
-                      'Treino importado com sucesso para esta fase.',
-                      'success'
-                    );
+                    showAlert({
+                      title: 'Sucesso! 🚀',
+                      message: 'Treino importado com sucesso para esta fase.',
+                      type: 'success',
+                    });
                   } catch (_e) {
-                    showAlert('Erro', 'Não foi possível importar o treino selecionado.', 'error');
+                    showAlert({
+                      title: 'Erro',
+                      message: 'Não foi possível importar o treino selecionado.',
+                      type: 'error',
+                    });
                   }
                 }}
                 className="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 mb-4 flex-row items-center"
@@ -1151,7 +1141,7 @@ export default function PhaseDetailsScreen() {
                   <Ionicons
                     name="document-text"
                     size={20}
-                    color={phase.status === 'planned' ? '#CCFF00' : '#71717A'}
+                    color={phase.status === 'planned' ? '#FF6B35' : '#71717A'}
                   />
                 </View>
                 <View className="flex-1">
@@ -1165,7 +1155,7 @@ export default function PhaseDetailsScreen() {
                   </Text>
                 </View>
                 {phase.status === 'planned' && (
-                  <Ionicons name="checkmark-circle" size={20} color="#CCFF00" />
+                  <Ionicons name="checkmark-circle" size={20} color="#FF6B35" />
                 )}
               </TouchableOpacity>
 
@@ -1235,26 +1225,6 @@ export default function PhaseDetailsScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
-
-      {/* Global Status Alert Modal */}
-      <StatusModal
-        visible={statusModal.visible}
-        onClose={() => setStatusModal((prev) => ({ ...prev, visible: false }))}
-        title={statusModal.title}
-        message={statusModal.message}
-        type={statusModal.type}
-      />
-
-      {/* Global Confirmation Modal */}
-      <ConfirmModal
-        visible={confirmModal.visible}
-        onClose={() => setConfirmModal((prev) => ({ ...prev, visible: false }))}
-        onConfirm={confirmModal.onConfirm}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        type={confirmModal.type}
-        confirmText={confirmModal.confirmText}
-      />
     </ScreenLayout>
   );
 }

@@ -2,16 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { showAlert } from '@/components/ui/appAlert';
 import { useCreateExercise } from '@/hooks/useExerciseMutations';
 import { useExercises } from '@/hooks/useExercises';
 import { ExerciseConfigModal } from '../components/ExerciseConfigModal';
@@ -161,7 +154,11 @@ export default function SelectExercisesScreen() {
 
   const handleConfirm = useCallback(async () => {
     if (selectedExercises.length === 0) {
-      Alert.alert('Atenção', 'Selecione pelo menos um exercício.');
+      showAlert({
+        title: 'Atenção',
+        message: 'Selecione pelo menos um exercício.',
+        type: 'warning',
+      });
       return;
     }
 
@@ -194,7 +191,11 @@ export default function SelectExercisesScreen() {
         }, 800);
       } catch (error) {
         console.error('Error adding exercises:', error);
-        Alert.alert('Erro', 'Não foi possível adicionar os exercícios.');
+        showAlert({
+          title: 'Erro',
+          message: 'Não foi possível adicionar os exercícios.',
+          type: 'error',
+        });
         setIsAdding(false);
       }
     } else {
@@ -212,7 +213,7 @@ export default function SelectExercisesScreen() {
 
   const handleCreateExercise = useCallback(async () => {
     if (!newExerciseName.trim() || !newExerciseMuscle.trim()) {
-      Alert.alert('Erro', 'Preencha o nome e o grupo muscular.');
+      showAlert({ title: 'Erro', message: 'Preencha o nome e o grupo muscular.', type: 'error' });
       return;
     }
 

@@ -3,7 +3,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { useAuthStore } from '@/auth';
+import { showAlert } from '@/components/ui/appAlert';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
 import { Input } from '@/components/ui/Input';
@@ -68,7 +68,7 @@ export default function CreateTrainingPlanScreen() {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert('Erro', 'O nome da ficha é obrigatório.');
+      showAlert({ title: 'Erro', message: 'O nome da ficha é obrigatório.', type: 'error' });
       return;
     }
 
@@ -116,15 +116,16 @@ export default function CreateTrainingPlanScreen() {
         if (linkError) throw linkError;
       }
 
-      Alert.alert('Sucesso', 'Ficha criada com sucesso!', [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
-        },
-      ]);
+      showAlert({
+        title: 'Sucesso',
+        message: 'Ficha criada com sucesso!',
+        type: 'success',
+        buttonText: 'OK',
+        onDismiss: () => router.back(),
+      });
     } catch (error) {
       console.error('Error creating training plan:', error);
-      Alert.alert('Erro', 'Não foi possível criar a ficha.');
+      showAlert({ title: 'Erro', message: 'Não foi possível criar a ficha.', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -195,7 +196,7 @@ export default function CreateTrainingPlanScreen() {
                   >
                     <View className="flex-1 flex-row items-center">
                       <View className="bg-primary/10 p-2 rounded-lg mr-3">
-                        <Ionicons name="barbell" size={16} color="#CCFF00" />
+                        <Ionicons name="barbell" size={16} color="#FF6B35" />
                       </View>
                       <View className="flex-1">
                         <Text className="text-foreground font-semibold font-sans">
@@ -223,7 +224,7 @@ export default function CreateTrainingPlanScreen() {
             onPress={() => setShowWorkoutPicker(!showWorkoutPicker)}
             className="bg-secondary/10 border-2 border-secondary rounded-xl p-4 mb-4 flex-row items-center justify-center"
           >
-            <Ionicons name="add-circle" size={20} color="#00F0FF" />
+            <Ionicons name="add-circle" size={20} color="#00D9FF" />
             <Text className="text-secondary font-bold ml-2 font-display">
               {showWorkoutPicker ? 'Fechar Lista' : 'Adicionar Treinos'}
             </Text>

@@ -51,7 +51,7 @@ export function MemberNutritionScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={['#CCFF00', '#A3CC00']}
+              colors={['#FF6B35', '#FF2E63']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               className="rounded-2xl py-3 px-6 shadow-lg shadow-orange-500/20"

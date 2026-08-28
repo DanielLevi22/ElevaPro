@@ -100,7 +100,7 @@ export function MealCard({
           </Text>
           {isEditable && (
             <TouchableOpacity onPress={_onAddFood} className="bg-zinc-800 p-1.5 rounded-lg">
-              <Ionicons name="add" size={16} color="#00F0FF" />
+              <Ionicons name="add" size={16} color="#00D9FF" />
             </TouchableOpacity>
           )}
         </View>

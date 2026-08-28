@@ -4,7 +4,6 @@ import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ImageBackground,
   ImageSourcePropType,
   ScrollView,
@@ -13,10 +12,9 @@ import {
   View,
 } from 'react-native';
 import { useAuthStore } from '@/auth';
-import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { showAlert, showConfirm } from '@/components/ui/appAlert';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { StatusModal } from '@/components/ui/StatusModal';
 import { colors } from '@/constants/colors';
 import { useWorkoutStore } from '../store/workoutStore';
 
@@ -52,51 +50,6 @@ export default function PeriodizationDetailsScreen() {
     ReturnType<typeof useWorkoutStore.getState>['periodizations'][0] | null
   >(null);
 
-  const [statusModal, setStatusModal] = useState<{
-    visible: boolean;
-    title: string;
-    message: string;
-    type: 'success' | 'error' | 'warning' | 'info';
-  }>({
-    visible: false,
-    title: '',
-    message: '',
-    type: 'info',
-  });
-
-  const [confirmModal, setConfirmModal] = useState<{
-    visible: boolean;
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    type: 'danger' | 'warning' | 'info';
-    confirmText?: string;
-  }>({
-    visible: false,
-    title: '',
-    message: '',
-    onConfirm: () => {},
-    type: 'info',
-  });
-
-  const showAlert = (
-    title: string,
-    message: string,
-    type: 'success' | 'error' | 'warning' | 'info' = 'info'
-  ) => {
-    setStatusModal({ visible: true, title, message, type });
-  };
-
-  const showConfirm = (
-    title: string,
-    message: string,
-    onConfirm: () => void,
-    type: 'danger' | 'warning' | 'info' = 'info',
-    confirmText?: string
-  ) => {
-    setConfirmModal({ visible: true, title, message, onConfirm, type, confirmText });
-  };
-
   // Handle both route patterns:
   // 1. /students/[id]/workouts/[periodizationId] -> id is student, periodizationId is periodization
   // 2. /workouts/periodizations/[id] -> id is periodization
@@ -131,7 +84,7 @@ export default function PeriodizationDetailsScreen() {
   if (isLoading) {
     return (
       <ScreenLayout className="justify-center items-center">
-        <ActivityIndicator size="large" color="#00F0FF" />
+        <ActivityIndicator size="large" color="#00D9FF" />
       </ScreenLayout>
     );
   }
@@ -164,9 +117,9 @@ export default function PeriodizationDetailsScreen() {
       case 'hypertrophy':
         return '#FFB800'; // Gold
       case 'strength':
-        return '#A3CC00'; // Red
+        return '#FF2E63'; // Red
       default:
-        return '#00F0FF'; // Cyan
+        return '#00D9FF'; // Cyan
     }
   };
 
@@ -184,405 +137,408 @@ export default function PeriodizationDetailsScreen() {
   };
 
   return (
-    <>
-      <ScreenLayout>
-        <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-          {/* Premium Header */}
-          <ImageBackground
-            source={
-              PERIODIZATION_IMAGES[periodization.objective || 'default'] ||
-              PERIODIZATION_IMAGES.default
-            }
-            className="h-96 w-full relative"
-            resizeMode="cover"
+    <ScreenLayout>
+      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+        {/* Premium Header */}
+        <ImageBackground
+          source={
+            PERIODIZATION_IMAGES[periodization.objective || 'default'] ||
+            PERIODIZATION_IMAGES.default
+          }
+          className="h-96 w-full relative"
+          resizeMode="cover"
+        >
+          <LinearGradient
+            colors={['rgba(0,0,0,0.6)', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,1)']}
+            className="absolute inset-0 flex-1 px-6 pb-10 justify-between"
           >
-            <LinearGradient
-              colors={['rgba(0,0,0,0.6)', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,1)']}
-              className="absolute inset-0 flex-1 px-6 pb-10 justify-between"
-            >
-              {/* Header Icons */}
-              <View className="flex-row items-center justify-between pt-8">
+            {/* Header Icons */}
+            <View className="flex-row items-center justify-between pt-8">
+              <TouchableOpacity
+                onPress={() => router.back()}
+                className="bg-black/40 p-2.5 rounded-xl border border-white/10"
+              >
+                <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+
+              {!isStudentView && (
                 <TouchableOpacity
-                  onPress={() => router.back()}
+                  onPress={() =>
+                    showAlert({
+                      title: 'Em breve',
+                      message: 'Edição em desenvolvimento',
+                      type: 'info',
+                    })
+                  }
                   className="bg-black/40 p-2.5 rounded-xl border border-white/10"
                 >
-                  <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+                  <Ionicons name="pencil" size={20} color="#FFFFFF" />
                 </TouchableOpacity>
+              )}
+            </View>
 
-                {!isStudentView && (
-                  <TouchableOpacity
-                    onPress={() => Alert.alert('Em breve', 'Edição em desenvolvimento')}
-                    className="bg-black/40 p-2.5 rounded-xl border border-white/10"
+            <View>
+              <View className="flex-row items-center mb-3">
+                <View
+                  className="px-3 py-1 rounded-full border"
+                  style={{
+                    backgroundColor: `${colors.primary.start}20`,
+                    borderColor: `${colors.primary.start}30`,
+                  }}
+                >
+                  <Text
+                    className="text-[10px] font-bold uppercase tracking-widest"
+                    style={{ color: colors.primary.start }}
                   >
-                    <Ionicons name="pencil" size={20} color="#FFFFFF" />
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              <View>
-                <View className="flex-row items-center mb-3">
-                  <View
-                    className="px-3 py-1 rounded-full border"
-                    style={{
-                      backgroundColor: `${colors.primary.start}20`,
-                      borderColor: `${colors.primary.start}30`,
-                    }}
-                  >
-                    <Text
-                      className="text-[10px] font-bold uppercase tracking-widest"
-                      style={{ color: colors.primary.start }}
-                    >
-                      {periodization.objective || 'Planejamento'}
-                    </Text>
-                  </View>
-                  <View className="ml-2">
-                    <StatusBadge status={periodization.status} />
-                  </View>
+                    {periodization.objective || 'Planejamento'}
+                  </Text>
                 </View>
-
-                <Text className="text-4xl font-extrabold text-white mb-2 font-display leading-[42px] drop-shadow-lg">
-                  {periodization.name}
-                </Text>
-
-                <Text className="text-zinc-300 font-sans text-base mb-6 max-w-[85%]">
-                  {(periodization as unknown as { description?: string }).description ||
-                    'Transforme seu corpo com este planejamento exclusivo.'}
-                </Text>
-
-                <View className="flex-row gap-4">
-                  <View className="flex-row items-center bg-white/10 px-3 py-2 rounded-xl border border-white/5">
-                    <Ionicons
-                      name="calendar-outline"
-                      size={14}
-                      color={colors.primary.start}
-                      style={{ marginRight: 8 }}
-                    />
-                    <Text className="text-white font-bold text-xs">
-                      {periodization.start_date
-                        ? new Date(periodization.start_date).toLocaleDateString('pt-BR', {
-                            day: '2-digit',
-                            month: '2-digit',
-                          })
-                        : '—'}
-                    </Text>
-                  </View>
-                  <View className="flex-row items-center bg-white/10 px-3 py-2 rounded-xl border border-white/5">
-                    <Ionicons
-                      name="flag-outline"
-                      size={14}
-                      color={colors.primary.start}
-                      style={{ marginRight: 8 }}
-                    />
-                    <Text className="text-white font-bold text-xs">
-                      {periodization.end_date
-                        ? new Date(periodization.end_date).toLocaleDateString('pt-BR', {
-                            day: '2-digit',
-                            month: '2-digit',
-                          })
-                        : '—'}
-                    </Text>
-                  </View>
+                <View className="ml-2">
+                  <StatusBadge status={periodization.status} />
                 </View>
               </View>
-            </LinearGradient>
-          </ImageBackground>
-          <View className="px-6 -mt-6">
-            {!isStudentView && periodization.status === 'planned' && (
-              <TouchableOpacity
-                onPress={() => {
-                  showConfirm(
-                    'Ativar Periodização',
+
+              <Text className="text-4xl font-extrabold text-white mb-2 font-display leading-[42px] drop-shadow-lg">
+                {periodization.name}
+              </Text>
+
+              <Text className="text-zinc-300 font-sans text-base mb-6 max-w-[85%]">
+                {(periodization as unknown as { description?: string }).description ||
+                  'Transforme seu corpo com este planejamento exclusivo.'}
+              </Text>
+
+              <View className="flex-row gap-4">
+                <View className="flex-row items-center bg-white/10 px-3 py-2 rounded-xl border border-white/5">
+                  <Ionicons
+                    name="calendar-outline"
+                    size={14}
+                    color={colors.primary.start}
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text className="text-white font-bold text-xs">
+                    {periodization.start_date
+                      ? new Date(periodization.start_date).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                        })
+                      : '—'}
+                  </Text>
+                </View>
+                <View className="flex-row items-center bg-white/10 px-3 py-2 rounded-xl border border-white/5">
+                  <Ionicons
+                    name="flag-outline"
+                    size={14}
+                    color={colors.primary.start}
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text className="text-white font-bold text-xs">
+                    {periodization.end_date
+                      ? new Date(periodization.end_date).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                        })
+                      : '—'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </LinearGradient>
+        </ImageBackground>
+        <View className="px-6 -mt-6">
+          {!isStudentView && periodization.status === 'planned' && (
+            <TouchableOpacity
+              onPress={() => {
+                showConfirm({
+                  title: 'Ativar Periodização',
+                  message:
                     'Deseja ativar esta periodização? Outras periodizações ativas deste aluno serão concluídas.',
-                    async () => {
-                      try {
-                        await activatePeriodization(periodization.id);
-                        showAlert('Sucesso! 🚀', 'Periodização ativada com sucesso.', 'success');
-                      } catch (_error) {
-                        showAlert('Erro', 'Não foi possível ativar a periodização.', 'error');
+                  type: 'warning',
+                  confirmText: 'Ativar',
+                  onConfirm: async () => {
+                    try {
+                      await activatePeriodization(periodization.id);
+                      showAlert({
+                        title: 'Sucesso! 🚀',
+                        message: 'Periodização ativada com sucesso.',
+                        type: 'success',
+                      });
+                    } catch (_error) {
+                      showAlert({
+                        title: 'Erro',
+                        message: 'Não foi possível ativar a periodização.',
+                        type: 'error',
+                      });
+                    }
+                  },
+                });
+              }}
+              className="bg-orange-500 px-6 py-4 rounded-2xl w-full items-center shadow-lg shadow-orange-500/30"
+              style={{ backgroundColor: colors.primary.start }}
+            >
+              <Text className="text-white font-bold font-display uppercase tracking-widest text-sm">
+                ATIVAR PERIODIZAÇÃO
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {!isStudentView && periodization.status === 'active' && (
+            <TouchableOpacity
+              onPress={() => {
+                showConfirm({
+                  title: 'Encerrar Periodização',
+                  message: 'Deseja encerrar esta periodização? Esta ação não pode ser desfeita.',
+                  type: 'danger',
+                  confirmText: 'Encerrar',
+                  onConfirm: async () => {
+                    try {
+                      await useWorkoutStore
+                        .getState()
+                        .updatePeriodization(periodization.id, { status: 'completed' });
+                      showAlert({
+                        title: 'Sucesso! ✓',
+                        message: 'Periodização encerrada com sucesso.',
+                        type: 'success',
+                      });
+                      if (user?.id) {
+                        fetchPeriodizations(user.id);
                       }
-                    },
-                    'warning',
-                    'Ativar'
-                  );
-                }}
-                className="bg-orange-500 px-6 py-4 rounded-2xl w-full items-center shadow-lg shadow-orange-500/30"
-                style={{ backgroundColor: colors.primary.start }}
-              >
-                <Text className="text-white font-bold font-display uppercase tracking-widest text-sm">
-                  ATIVAR PERIODIZAÇÃO
-                </Text>
-              </TouchableOpacity>
-            )}
+                    } catch (_error) {
+                      showAlert({
+                        title: 'Erro',
+                        message: 'Não foi possível encerrar a periodização.',
+                        type: 'error',
+                      });
+                    }
+                  },
+                });
+              }}
+              className="bg-red-500 px-6 py-4 rounded-2xl w-full items-center shadow-lg shadow-red-500/30"
+              style={{ backgroundColor: colors.status.error }}
+            >
+              <Text className="text-white font-bold font-display uppercase tracking-widest text-sm">
+                ENCERRAR PERIODIZAÇÃO
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
-            {!isStudentView && periodization.status === 'active' && (
-              <TouchableOpacity
-                onPress={() => {
-                  showConfirm(
-                    'Encerrar Periodização',
-                    'Deseja encerrar esta periodização? Esta ação não pode ser desfeita.',
-                    async () => {
-                      try {
-                        await useWorkoutStore
-                          .getState()
-                          .updatePeriodization(periodization.id, { status: 'completed' });
-                        showAlert('Sucesso! ✓', 'Periodização encerrada com sucesso.', 'success');
-                        if (user?.id) {
-                          fetchPeriodizations(user.id);
-                        }
-                      } catch (_error) {
-                        showAlert('Erro', 'Não foi possível encerrar a periodização.', 'error');
-                      }
-                    },
-                    'danger',
-                    'Encerrar'
-                  );
-                }}
-                className="bg-red-500 px-6 py-4 rounded-2xl w-full items-center shadow-lg shadow-red-500/30"
-                style={{ backgroundColor: colors.status.error }}
-              >
-                <Text className="text-white font-bold font-display uppercase tracking-widest text-sm">
-                  ENCERRAR PERIODIZAÇÃO
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
+        {/* Phases List */}
+        <View className="p-6">
+          <Text className="text-white text-lg font-bold mb-4 font-display tracking-wide">
+            FASES DO TREINAMENTO
+          </Text>
 
-          {/* Phases List */}
-          <View className="p-6">
-            <Text className="text-white text-lg font-bold mb-4 font-display tracking-wide">
-              FASES DO TREINAMENTO
-            </Text>
+          <View className="gap-4">
+            {currentPeriodizationPhases
+              .filter(
+                (phase) => !isStudentView || phase.status === 'active' || phase.status === 'planned'
+              )
+              .map((phase, index) => {
+                const phaseIsActive = phase.status === 'active';
+                const isLast = index === currentPeriodizationPhases.length - 1;
 
-            <View className="gap-4">
-              {currentPeriodizationPhases
-                .filter(
-                  (phase) =>
-                    !isStudentView || phase.status === 'active' || phase.status === 'planned'
-                )
-                .map((phase, index) => {
-                  const phaseIsActive = phase.status === 'active';
-                  const isLast = index === currentPeriodizationPhases.length - 1;
-
-                  return (
-                    <View key={phase.id} className="flex-row">
-                      {/* Timeline Tracker */}
-                      <View className="items-center mr-4">
-                        <View
-                          className={`w-8 h-8 rounded-full items-center justify-center border-2 ${
-                            phaseIsActive
-                              ? 'bg-orange-500 border-orange-400'
-                              : 'bg-zinc-900 border-zinc-800'
-                          }`}
-                          style={
-                            phaseIsActive
-                              ? {
-                                  backgroundColor: colors.primary.start,
-                                  borderColor: colors.primary.light,
-                                }
-                              : {}
-                          }
-                        >
-                          {phase.status === 'completed' ? (
-                            <Ionicons name="checkmark" size={16} color="white" />
-                          ) : (
-                            <Text
-                              className={`text-xs font-bold ${phaseIsActive ? 'text-white' : 'text-zinc-500'}`}
-                            >
-                              {index + 1}
-                            </Text>
-                          )}
-                        </View>
-                        {!isLast && <View className="w-[2px] flex-1 bg-zinc-800 my-2" />}
-                      </View>
-
-                      {/* Phase Card */}
-                      <TouchableOpacity
-                        className={`flex-1 mb-8 rounded-2xl overflow-hidden border ${
-                          phaseIsActive ? 'bg-zinc-900' : 'bg-zinc-900/50'
+                return (
+                  <View key={phase.id} className="flex-row">
+                    {/* Timeline Tracker */}
+                    <View className="items-center mr-4">
+                      <View
+                        className={`w-8 h-8 rounded-full items-center justify-center border-2 ${
+                          phaseIsActive
+                            ? 'bg-orange-500 border-orange-400'
+                            : 'bg-zinc-900 border-zinc-800'
                         }`}
-                        style={{
-                          borderColor: phaseIsActive ? colors.primary.start : colors.border.dark,
-                          shadowColor: colors.primary.start,
-                          shadowOffset: { width: 0, height: 10 },
-                          shadowOpacity: phaseIsActive ? 0.1 : 0,
-                          shadowRadius: 20,
-                          elevation: phaseIsActive ? 5 : 0,
-                        }}
-                        onPress={() => {
-                          const targetStudentId = params.id || periodization?.student_id;
-                          if (params.id && params.periodizationId) {
-                            router.push(
-                              `/(tabs)/students/${targetStudentId}/workouts/${periodizationId}/phases/${phase.id}` as never
-                            );
-                          } else {
-                            router.push({
-                              pathname:
-                                `/(tabs)/workouts/periodizations/${periodizationId}/phases/${phase.id}` as never,
-                              params: mode === 'execute' ? { mode: 'execute' } : {},
-                            });
-                          }
-                        }}
+                        style={
+                          phaseIsActive
+                            ? {
+                                backgroundColor: colors.primary.start,
+                                borderColor: colors.primary.light,
+                              }
+                            : {}
+                        }
                       >
-                        <View className="p-4">
-                          <View className="flex-row justify-between items-start mb-2">
-                            <View className="flex-1">
+                        {phase.status === 'completed' ? (
+                          <Ionicons name="checkmark" size={16} color="white" />
+                        ) : (
+                          <Text
+                            className={`text-xs font-bold ${phaseIsActive ? 'text-white' : 'text-zinc-500'}`}
+                          >
+                            {index + 1}
+                          </Text>
+                        )}
+                      </View>
+                      {!isLast && <View className="w-[2px] flex-1 bg-zinc-800 my-2" />}
+                    </View>
+
+                    {/* Phase Card */}
+                    <TouchableOpacity
+                      className={`flex-1 mb-8 rounded-2xl overflow-hidden border ${
+                        phaseIsActive ? 'bg-zinc-900' : 'bg-zinc-900/50'
+                      }`}
+                      style={{
+                        borderColor: phaseIsActive ? colors.primary.start : colors.border.dark,
+                        shadowColor: colors.primary.start,
+                        shadowOffset: { width: 0, height: 10 },
+                        shadowOpacity: phaseIsActive ? 0.1 : 0,
+                        shadowRadius: 20,
+                        elevation: phaseIsActive ? 5 : 0,
+                      }}
+                      onPress={() => {
+                        const targetStudentId = params.id || periodization?.student_id;
+                        if (params.id && params.periodizationId) {
+                          router.push(
+                            `/(tabs)/students/${targetStudentId}/workouts/${periodizationId}/phases/${phase.id}` as never
+                          );
+                        } else {
+                          router.push({
+                            pathname:
+                              `/(tabs)/workouts/periodizations/${periodizationId}/phases/${phase.id}` as never,
+                            params: mode === 'execute' ? { mode: 'execute' } : {},
+                          });
+                        }
+                      }}
+                    >
+                      <View className="p-4">
+                        <View className="flex-row justify-between items-start mb-2">
+                          <View className="flex-1">
+                            <Text
+                              className={`text-lg font-bold font-display ${phaseIsActive ? 'text-white' : 'text-zinc-400'}`}
+                            >
+                              {phase.name}
+                            </Text>
+                            <View className="flex-row items-center mt-1">
+                              <Ionicons
+                                name="barbell-outline"
+                                size={12}
+                                color={phaseIsActive ? colors.primary.start : colors.text.muted}
+                              />
                               <Text
-                                className={`text-lg font-bold font-display ${phaseIsActive ? 'text-white' : 'text-zinc-400'}`}
+                                className="text-zinc-500 text-[10px] font-bold ml-1 uppercase"
+                                style={{ color: colors.text.muted }}
                               >
                                 {phase.name}
                               </Text>
-                              <View className="flex-row items-center mt-1">
-                                <Ionicons
-                                  name="barbell-outline"
-                                  size={12}
-                                  color={phaseIsActive ? colors.primary.start : colors.text.muted}
-                                />
-                                <Text
-                                  className="text-zinc-500 text-[10px] font-bold ml-1 uppercase"
-                                  style={{ color: colors.text.muted }}
-                                >
-                                  {phase.name}
-                                </Text>
-                              </View>
-                            </View>
-
-                            <View
-                              className={`px-2 py-1 rounded-lg ${
-                                phase.status === 'active'
-                                  ? 'bg-orange-500/10'
-                                  : phase.status === 'completed'
-                                    ? 'bg-emerald-500/10'
-                                    : 'bg-zinc-800'
-                              }`}
-                            >
-                              <Text
-                                className={`text-[9px] font-bold uppercase tracking-wider ${
-                                  phase.status === 'active'
-                                    ? 'text-orange-500'
-                                    : phase.status === 'completed'
-                                      ? 'text-emerald-500'
-                                      : 'text-zinc-500'
-                                }`}
-                                style={
-                                  phase.status === 'active'
-                                    ? { color: colors.primary.start }
-                                    : phase.status === 'completed'
-                                      ? { color: '#10b981' }
-                                      : {}
-                                }
-                              >
-                                {phase.status === 'active'
-                                  ? 'ATIVO'
-                                  : phase.status === 'completed'
-                                    ? 'CONCLUÍDO'
-                                    : 'RASCUNHO'}
-                              </Text>
                             </View>
                           </View>
 
-                          <View className="flex-row items-center border-t border-zinc-800/50 pt-3 mt-1">
-                            <View className="flex-row items-center bg-zinc-800/40 px-2.5 py-1.5 rounded-lg border border-white/5">
-                              <Ionicons name="time-outline" size={12} color={colors.text.muted} />
-                              <Text
-                                className="text-zinc-400 text-[10px] font-bold ml-2"
-                                style={{ color: colors.text.secondary }}
-                              >
-                                {phase.start_date
-                                  ? new Date(phase.start_date).toLocaleDateString('pt-BR', {
-                                      month: 'short',
-                                    })
-                                  : '—'}{' '}
-                                -{' '}
-                                {phase.end_date
-                                  ? new Date(phase.end_date).toLocaleDateString('pt-BR', {
-                                      month: 'short',
-                                    })
-                                  : '—'}
-                              </Text>
-                            </View>
-
-                            <View className="flex-1" />
-
-                            <View className="flex-row items-center">
-                              <Text
-                                className="text-orange-500 text-[10px] font-bold mr-1"
-                                style={{ color: colors.primary.start }}
-                              >
-                                ACESSAR
-                              </Text>
-                              <Ionicons
-                                name="chevron-forward"
-                                size={12}
-                                color={colors.primary.start}
-                              />
-                            </View>
+                          <View
+                            className={`px-2 py-1 rounded-lg ${
+                              phase.status === 'active'
+                                ? 'bg-orange-500/10'
+                                : phase.status === 'completed'
+                                  ? 'bg-emerald-500/10'
+                                  : 'bg-zinc-800'
+                            }`}
+                          >
+                            <Text
+                              className={`text-[9px] font-bold uppercase tracking-wider ${
+                                phase.status === 'active'
+                                  ? 'text-orange-500'
+                                  : phase.status === 'completed'
+                                    ? 'text-emerald-500'
+                                    : 'text-zinc-500'
+                              }`}
+                              style={
+                                phase.status === 'active'
+                                  ? { color: colors.primary.start }
+                                  : phase.status === 'completed'
+                                    ? { color: '#10b981' }
+                                    : {}
+                              }
+                            >
+                              {phase.status === 'active'
+                                ? 'ATIVO'
+                                : phase.status === 'completed'
+                                  ? 'CONCLUÍDO'
+                                  : 'RASCUNHO'}
+                            </Text>
                           </View>
                         </View>
-                      </TouchableOpacity>
-                    </View>
-                  );
-                })}
-            </View>
 
-            {!isStudentView && (
-              <TouchableOpacity
-                className="mt-6 border-2 border-dashed border-zinc-700 rounded-2xl p-4 items-center justify-center"
-                onPress={() => {
-                  Alert.alert('Nova Fase', 'Criar uma nova fase de treino?', [
-                    { text: 'Cancelar', style: 'cancel' },
-                    {
-                      text: 'Criar',
-                      onPress: async () => {
-                        if (!periodization) return;
-                        try {
-                          await createTrainingPlan({
-                            periodization_id: periodization.id,
-                            name: `Fase ${currentPeriodizationPhases.length + 1}`,
-                            start_date: new Date().toISOString().split('T')[0],
-                            end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-                              .toISOString()
-                              .split('T')[0],
-                            status: 'planned',
-                            order_index: currentPeriodizationPhases.length,
-                          });
-                          Alert.alert('Sucesso', 'Fase criada!');
-                        } catch (_error) {
-                          Alert.alert('Erro', 'Não foi possível criar a fase.');
-                        }
-                      },
-                    },
-                  ]);
-                }}
-              >
-                <Ionicons name="add-circle-outline" size={24} color="#71717A" />
-                <Text className="text-zinc-500 font-bold mt-2">Adicionar Fase</Text>
-              </TouchableOpacity>
-            )}
+                        <View className="flex-row items-center border-t border-zinc-800/50 pt-3 mt-1">
+                          <View className="flex-row items-center bg-zinc-800/40 px-2.5 py-1.5 rounded-lg border border-white/5">
+                            <Ionicons name="time-outline" size={12} color={colors.text.muted} />
+                            <Text
+                              className="text-zinc-400 text-[10px] font-bold ml-2"
+                              style={{ color: colors.text.secondary }}
+                            >
+                              {phase.start_date
+                                ? new Date(phase.start_date).toLocaleDateString('pt-BR', {
+                                    month: 'short',
+                                  })
+                                : '—'}{' '}
+                              -{' '}
+                              {phase.end_date
+                                ? new Date(phase.end_date).toLocaleDateString('pt-BR', {
+                                    month: 'short',
+                                  })
+                                : '—'}
+                            </Text>
+                          </View>
+
+                          <View className="flex-1" />
+
+                          <View className="flex-row items-center">
+                            <Text
+                              className="text-orange-500 text-[10px] font-bold mr-1"
+                              style={{ color: colors.primary.start }}
+                            >
+                              ACESSAR
+                            </Text>
+                            <Ionicons
+                              name="chevron-forward"
+                              size={12}
+                              color={colors.primary.start}
+                            />
+                          </View>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
           </View>
-        </ScrollView>
-      </ScreenLayout>
 
-      {/* Standardized Modals */}
-      <StatusModal
-        visible={statusModal.visible}
-        onClose={() => setStatusModal({ ...statusModal, visible: false })}
-        title={statusModal.title}
-        message={statusModal.message}
-        type={statusModal.type}
-      />
-
-      <ConfirmModal
-        visible={confirmModal.visible}
-        onClose={() => setConfirmModal({ ...confirmModal, visible: false })}
-        onConfirm={() => {
-          setConfirmModal({ ...confirmModal, visible: false });
-          confirmModal.onConfirm();
-        }}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        type={confirmModal.type}
-        confirmText={confirmModal.confirmText}
-      />
-    </>
+          {!isStudentView && (
+            <TouchableOpacity
+              className="mt-6 border-2 border-dashed border-zinc-700 rounded-2xl p-4 items-center justify-center"
+              onPress={() => {
+                showConfirm({
+                  title: 'Nova Fase',
+                  message: 'Criar uma nova fase de treino?',
+                  type: 'info',
+                  confirmText: 'Criar',
+                  cancelText: 'Cancelar',
+                  onConfirm: async () => {
+                    if (!periodization) return;
+                    try {
+                      await createTrainingPlan({
+                        periodization_id: periodization.id,
+                        name: `Fase ${currentPeriodizationPhases.length + 1}`,
+                        start_date: new Date().toISOString().split('T')[0],
+                        end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                          .toISOString()
+                          .split('T')[0],
+                        status: 'planned',
+                        order_index: currentPeriodizationPhases.length,
+                      });
+                      showAlert({ title: 'Sucesso', message: 'Fase criada!', type: 'success' });
+                    } catch (_error) {
+                      showAlert({
+                        title: 'Erro',
+                        message: 'Não foi possível criar a fase.',
+                        type: 'error',
+                      });
+                    }
+                  },
+                });
+              }}
+            >
+              <Ionicons name="add-circle-outline" size={24} color="#71717A" />
+              <Text className="text-zinc-500 font-bold mt-2">Adicionar Fase</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </ScrollView>
+    </ScreenLayout>
   );
 }

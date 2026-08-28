@@ -3,7 +3,8 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { showAlert } from '@/components/ui/appAlert';
 import { Button } from '@/components/ui/Button';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { useAuthStore } from '@/modules/auth/store/authStore';
@@ -56,7 +57,7 @@ export default function CookingScreen() {
       const result = await ShoppingListService.generateCookingSteps(mealName, ingredients);
       setSteps(result);
     } catch (_error) {
-      Alert.alert('Erro', 'Não foi possível carregar o guia.');
+      showAlert({ title: 'Erro', message: 'Não foi possível carregar o guia.', type: 'error' });
       router.back();
     } finally {
       setLoading(false);
@@ -100,9 +101,13 @@ export default function CookingScreen() {
         await toggleMealCompletion(mealId, today, true);
       }
 
-      Alert.alert('Parabéns!', 'Refeição pronta! Bom apetite.', [
-        { text: 'Concluir', onPress: () => router.back() },
-      ]);
+      showAlert({
+        title: 'Parabéns!',
+        message: 'Refeição pronta! Bom apetite.',
+        type: 'success',
+        buttonText: 'Concluir',
+        onDismiss: () => router.back(),
+      });
     }
   };
 
@@ -135,7 +140,7 @@ export default function CookingScreen() {
       <ScreenLayout>
         <View className="flex-1 items-center justify-center p-6">
           <View className="bg-orange-500/10 p-8 rounded-full mb-8 animate-pulse">
-            <Ionicons name="restaurant" size={64} color="#CCFF00" />
+            <Ionicons name="restaurant" size={64} color="#FF6B35" />
           </View>
           <Text className="text-white text-2xl font-bold font-display text-center mb-2">
             Preparando Cozinha...
@@ -143,7 +148,7 @@ export default function CookingScreen() {
           <Text className="text-zinc-400 text-center mb-8">
             A IA está organizando o passo a passo para {mealName || 'sua refeição'}.
           </Text>
-          <ActivityIndicator size="large" color="#CCFF00" />
+          <ActivityIndicator size="large" color="#FF6B35" />
         </View>
       </ScreenLayout>
     );
@@ -203,7 +208,7 @@ export default function CookingScreen() {
             </Text>
 
             <View className="bg-orange-500/20 p-4 rounded-full mb-6">
-              <Ionicons name="flame" size={32} color="#CCFF00" />
+              <Ionicons name="flame" size={32} color="#FF6B35" />
             </View>
 
             <View className="flex-row items-center justify-center gap-3 mb-8">

@@ -5,7 +5,6 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   Text,
   TextInput,
@@ -14,6 +13,7 @@ import {
 } from 'react-native';
 import Animated, { FadeInDown, FadeInRight, Layout } from 'react-native-reanimated';
 import { useAuthStore } from '@/auth';
+import { showAlert } from '@/components/ui/appAlert';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { useStudentStore } from '../store/studentStore';
 
@@ -64,22 +64,34 @@ export default function CreateStudentScreen() {
 
   const handleCreate = async () => {
     if (!fullName.trim()) {
-      Alert.alert('Erro', 'Por favor, informe o nome do aluno na aba "Dados".');
+      showAlert({
+        title: 'Erro',
+        message: 'Por favor, informe o nome do aluno na aba "Dados".',
+        type: 'error',
+      });
       return;
     }
 
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Erro', 'Por favor, informe e-mail e senha para o aluno.');
+      showAlert({
+        title: 'Erro',
+        message: 'Por favor, informe e-mail e senha para o aluno.',
+        type: 'error',
+      });
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres.');
+      showAlert({
+        title: 'Erro',
+        message: 'A senha deve ter pelo menos 6 caracteres.',
+        type: 'error',
+      });
       return;
     }
 
     if (!user?.id) {
-      Alert.alert('Erro', 'Usuário não autenticado');
+      showAlert({ title: 'Erro', message: 'Usuário não autenticado', type: 'error' });
       return;
     }
 
@@ -146,7 +158,11 @@ export default function CreateStudentScreen() {
       });
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Erro', result.error || 'Falha ao cadastrar aluno');
+      showAlert({
+        title: 'Erro',
+        message: result.error || 'Falha ao cadastrar aluno',
+        type: 'error',
+      });
     }
   };
 
@@ -364,7 +380,7 @@ export default function CreateStudentScreen() {
               className="mt-6 mb-10"
             >
               <LinearGradient
-                colors={['#CCFF00', '#A3CC00']}
+                colors={['#FF6B35', '#FF2E63']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 className="rounded-2xl py-4 items-center justify-center shadow-lg shadow-orange-500/20"

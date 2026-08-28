@@ -360,7 +360,7 @@ export default function ShoppingListScreen() {
           <View className="mt-8">
             <View className="items-center mb-10">
               <View className="bg-orange-500/10 p-6 rounded-full mb-6 border-4 border-orange-500/20 shadow-xl shadow-orange-500/10">
-                <Ionicons name="cart" size={48} color="#CCFF00" />
+                <Ionicons name="cart" size={48} color="#FF6B35" />
               </View>
               <Text className="text-white text-2xl font-bold font-display text-center mb-2">
                 Planejar Compras

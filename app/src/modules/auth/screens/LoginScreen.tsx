@@ -2,7 +2,8 @@ import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { showAlert } from '@/components/ui/appAlert';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
@@ -20,7 +21,11 @@ export function LoginScreen() {
     const result = await signIn(email, password);
 
     if (!result.success) {
-      Alert.alert('Erro no Login', result.error || 'Erro desconhecido');
+      showAlert({
+        title: 'Erro no Login',
+        message: result.error || 'Erro desconhecido',
+        type: 'error',
+      });
     } else {
       // Get current user
       const {
@@ -45,10 +50,11 @@ export function LoginScreen() {
           // normalmente. 'inactive' é o estado real de quem perdeu o acesso.
         } else if (profile?.account_status === 'inactive') {
           await supabase.auth.signOut();
-          Alert.alert(
-            'Acesso Negado',
-            'Sua conta foi suspensa ou rejeitada. Entre em contato com o suporte.'
-          );
+          showAlert({
+            title: 'Acesso Negado',
+            message: 'Sua conta foi suspensa ou rejeitada. Entre em contato com o suporte.',
+            type: 'error',
+          });
         }
       }
     }

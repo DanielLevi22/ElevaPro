@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -13,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import Animated, { SlideInDown } from 'react-native-reanimated';
+import { showAlert } from '@/components/ui/appAlert';
 import { AIWorkoutResponse, WorkoutAIService } from '../services/WorkoutAIService';
 import { useWorkoutStore } from '../store/workoutStore';
 
@@ -81,7 +81,11 @@ export function AIWorkoutNegotiationModal({
       setCurrentPlan(response.plan);
     } catch (error) {
       console.error('AI Error:', error);
-      Alert.alert('Erro', 'Falha ao gerar treino. Tente novamente.');
+      showAlert({
+        title: 'Erro',
+        message: 'Falha ao gerar treino. Tente novamente.',
+        type: 'error',
+      });
       onClose();
     } finally {
       setLoading(false);
@@ -127,7 +131,7 @@ export function AIWorkoutNegotiationModal({
       setMessages((prev) => [...prev, aiMsg]);
       setCurrentPlan(response.plan);
     } catch (_error) {
-      Alert.alert('Erro', 'Falha ao atualizar treino.');
+      showAlert({ title: 'Erro', message: 'Falha ao atualizar treino.', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -142,7 +146,7 @@ export function AIWorkoutNegotiationModal({
     // Since generateWorkoutsForPhase is monolithic, we might need a `saveAIWorkout(planId, aiPlan)` method in store.
     // Or we can just modify generateWorkoutsForPhase to accept a plan?
     // Actually, let's notify user this part is next.
-    Alert.alert('Sucesso', 'Treino importado! (Simulação)');
+    showAlert({ title: 'Sucesso', message: 'Treino importado! (Simulação)', type: 'success' });
     onClose();
   };
 

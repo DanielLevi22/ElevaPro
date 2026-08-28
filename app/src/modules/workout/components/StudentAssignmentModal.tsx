@@ -129,13 +129,13 @@ export function StudentAssignmentModal({
                   flex: 1,
                   backgroundColor: 'rgba(0, 217, 255, 0.1)',
                   borderWidth: 1,
-                  borderColor: '#00F0FF',
+                  borderColor: '#00D9FF',
                   borderRadius: 8,
                   paddingVertical: 8,
                   alignItems: 'center',
                 }}
               >
-                <Text style={{ color: '#00F0FF', fontSize: 13, fontWeight: '600' }}>
+                <Text style={{ color: '#00D9FF', fontSize: 13, fontWeight: '600' }}>
                   Selecionar Todos
                 </Text>
               </TouchableOpacity>
@@ -192,8 +192,8 @@ export function StudentAssignmentModal({
                         height: 24,
                         borderRadius: 6,
                         borderWidth: 2,
-                        borderColor: isSelected ? '#00F0FF' : '#52525B',
-                        backgroundColor: isSelected ? '#00F0FF' : 'transparent',
+                        borderColor: isSelected ? '#00D9FF' : '#52525B',
+                        backgroundColor: isSelected ? '#00D9FF' : 'transparent',
                         alignItems: 'center',
                         justifyContent: 'center',
                         marginRight: 12,
@@ -231,7 +231,7 @@ export function StudentAssignmentModal({
             <TouchableOpacity
               onPress={handleConfirm}
               style={{
-                backgroundColor: '#00F0FF',
+                backgroundColor: '#00D9FF',
                 borderRadius: 12,
                 paddingVertical: 14,
                 alignItems: 'center',

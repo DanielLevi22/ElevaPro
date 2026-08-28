@@ -1,7 +1,7 @@
 import { type CreateExerciseInput, createWorkoutsService } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Alert } from 'react-native';
+import { showAlert } from '@/components/ui/appAlert';
 
 // As consultas desceram para `workouts.service`: eram escritas em `exercises`
 // duplicadas aqui e no web, cada uma com o próprio formato de payload. O
@@ -19,7 +19,11 @@ export function useCreateExercise() {
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
     },
     onError: (error: Error) => {
-      Alert.alert('Erro', error.message || 'Não foi possível criar o exercício.');
+      showAlert({
+        title: 'Erro',
+        message: error.message || 'Não foi possível criar o exercício.',
+        type: 'error',
+      });
     },
   });
 }
@@ -34,7 +38,11 @@ export function useUpdateExercise() {
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
     },
     onError: (error: Error) => {
-      Alert.alert('Erro', error.message || 'Não foi possível atualizar o exercício.');
+      showAlert({
+        title: 'Erro',
+        message: error.message || 'Não foi possível atualizar o exercício.',
+        type: 'error',
+      });
     },
   });
 }

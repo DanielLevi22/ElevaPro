@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { showConfirm } from '@/components/ui/appAlert';
 
 interface WorkoutHeaderProps {
   title: string;
@@ -9,10 +10,14 @@ interface WorkoutHeaderProps {
 
 export function WorkoutHeader({ title, itemCount, onExit }: WorkoutHeaderProps) {
   const handleExit = () => {
-    Alert.alert('Sair do Treino', 'Deseja realmente sair? O progresso não salvo será perdido.', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', style: 'destructive', onPress: onExit },
-    ]);
+    showConfirm({
+      title: 'Sair do Treino',
+      message: 'Deseja realmente sair? O progresso não salvo será perdido.',
+      type: 'danger',
+      confirmText: 'Sair',
+      cancelText: 'Cancelar',
+      onConfirm: onExit,
+    });
   };
 
   return (

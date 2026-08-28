@@ -117,8 +117,8 @@ export default function StudentDietPlansScreen() {
 
           <View className="flex-row justify-between items-center pt-4 border-t border-zinc-800/50">
             <View className="flex-row items-center bg-orange-500/10 px-2 py-1 rounded-lg">
-              <Ionicons name="flame" size={14} color="#CCFF00" style={{ marginRight: 4 }} />
-              <Text className="text-[#CCFF00] font-bold text-xs">{item.target_calories} kcal</Text>
+              <Ionicons name="flame" size={14} color="#FF6B35" style={{ marginRight: 4 }} />
+              <Text className="text-[#FF6B35] font-bold text-xs">{item.target_calories} kcal</Text>
             </View>
             <View className="flex-row items-center">
               <Text className="text-zinc-500 text-xs mr-1 font-medium">
@@ -150,7 +150,7 @@ export default function StudentDietPlansScreen() {
         <Link href={`/nutrition/create?preselectedStudentId=${studentId}` as never} asChild>
           <TouchableOpacity activeOpacity={0.8}>
             <LinearGradient
-              colors={['#CCFF00', '#A3CC00']}
+              colors={['#FF6B35', '#FF2E63']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               className="h-12 w-12 rounded-full items-center justify-center shadow-lg shadow-orange-500/20"
@@ -171,7 +171,7 @@ export default function StudentDietPlansScreen() {
           <RefreshControl
             refreshing={isLoading}
             onRefresh={() => user?.id && fetchDietPlans(user.id)}
-            tintColor="#CCFF00"
+            tintColor="#FF6B35"
           />
         }
         showsVerticalScrollIndicator={false}
@@ -191,7 +191,7 @@ export default function StudentDietPlansScreen() {
               <Link href={`/nutrition/create?preselectedStudentId=${studentId}` as never} asChild>
                 <TouchableOpacity activeOpacity={0.8}>
                   <LinearGradient
-                    colors={['#CCFF00', '#A3CC00']}
+                    colors={['#FF6B35', '#FF2E63']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     className="rounded-2xl py-3 px-6 shadow-lg shadow-orange-500/20"
@@ -203,7 +203,7 @@ export default function StudentDietPlansScreen() {
             </View>
           ) : (
             <View className="py-20">
-              <ActivityIndicator size="large" color="#CCFF00" />
+              <ActivityIndicator size="large" color="#FF6B35" />
             </View>
           )
         }

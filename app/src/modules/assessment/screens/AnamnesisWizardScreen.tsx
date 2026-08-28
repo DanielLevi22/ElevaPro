@@ -4,7 +4,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  Alert,
   LayoutAnimation,
   Platform,
   SafeAreaView,
@@ -21,9 +20,9 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
+import { showAlert } from '@/components/ui/appAlert';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { StatusModal, StatusModalType } from '@/components/ui/StatusModal';
-
 import { QuestionInput } from '../components/QuestionInput';
 import { GENERAL_ANAMNESIS } from '../data/anamnesisQuestions';
 import { useAssessmentStore } from '../store/assessmentStore';
@@ -91,7 +90,7 @@ export default function AnamnesisWizardScreen() {
           // await syncAnamnesis(session.user.id);
         }
       } else {
-        Alert.alert('Erro', 'Usuário não autenticado.');
+        showAlert({ title: 'Erro', message: 'Usuário não autenticado.', type: 'error' });
         router.back();
       }
     };
