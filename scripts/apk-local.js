@@ -5,15 +5,25 @@
  * Gera um APK de release na sua máquina apontando para um ambiente do EAS.
  *
  * Uso:
- *   node scripts/apk-local.js            → preview (padrão)
- *   node scripts/apk-local.js production
+ *   npm run apk:preview
+ *   npm run apk:production
+ *   node scripts/apk-local.js preview
+ *
+ * ── Por que não usa `.env.local` ─────────────────────────────────────────────
+ *
+ * O caminho óbvio seria `eas env:pull`, que escreve `.env.local`. Mas esse
+ * arquivo **sobrevive ao build** e tem precedência sobre todos os outros do
+ * Expo: o build seguinte — inclusive um que você queira apontar para outro
+ * ambiente — continuaria lendo dali, sem avisar.
+ *
+ * Aqui as variáveis vão direto para o ambiente do processo do Gradle, e o
+ * arquivo temporário é apagado no fim. Um build, um ambiente, nenhum resíduo.
  *
  * ── Por que um script, e não três comandos no README ─────────────────────────
  *
  * Os três comandos existiam e mesmo assim o primeiro APK saiu sem falar com o
- * servidor. O que faltava não era o passo, era a CONFERÊNCIA entre os passos:
- * ninguém olha dentro do bundle para ver se o valor entrou, e o sintoma só
- * aparece com o app na mão, longe da causa.
+ * servidor. O que faltava não era o passo, era a CONFERÊNCIA entre eles: o
+ * sintoma só aparece com o app na mão, longe da causa.
  *
  * Duas verificações, em ordem de força:
  *
@@ -21,23 +31,21 @@
  *    `process.env[VAR]`, a leitura por chave dinâmica que não é inlinada.
  * 2. A URL dentro do bundle, DEPOIS. Necessária, não suficiente — o APK que
  *    motivou este script continha a URL e mesmo assim reclamava, porque quem a
- *    inlinou foi outro arquivo. Serve para pegar ambiente vazio, não leitura
- *    errada.
+ *    inlinou foi outro arquivo. Pega ambiente vazio, não leitura errada.
  *
  * ── O que ele NÃO faz ────────────────────────────────────────────────────────
  *
  * Não assina para distribuição: o `build.gradle` usa a keystore de debug no
- * `release`. Serve para testar no seu aparelho. Binário distribuível continua
- * saindo do EAS.
+ * `release`. Serve para testar no seu aparelho. Binário distribuível sai do EAS.
  */
 
 const { execFileSync } = require("node:child_process");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 
 const RAIZ = path.resolve(__dirname, "..");
 const APP = path.join(RAIZ, "app");
-const ENV_LOCAL = path.join(APP, ".env.local");
 const APK = path.join(
   APP,
   "android",
@@ -70,51 +78,84 @@ function passo(titulo, comando, args, opcoes = {}) {
 }
 
 // ── 1. variáveis do ambiente escolhido ───────────────────────────────────────
-// `env:pull` escreve `.env.local`, que tem precedência sobre todos os outros
-// arquivos do Expo. É a mesma fonte que o build do EAS usa, então o APK local
-// e o da nuvem inlinam os mesmos valores.
+// Fora do repositório de propósito: o arquivo é insumo deste build, não estado
+// do projeto. Mesma fonte que o build do EAS usa, então o APK local e o da
+// nuvem inlinam os mesmos valores.
+const temporario = path.join(
+  fs.mkdtempSync(path.join(os.tmpdir(), "apk-local-")),
+  `.env.${ambiente}`,
+);
+
 passo(
   `Puxando variáveis do ambiente "${ambiente}" do EAS`,
   "npx",
-  ["eas-cli", "env:pull", "--environment", ambiente],
+  ["eas-cli", "env:pull", "--environment", ambiente, "--path", `"${temporario}"`],
   { cwd: APP },
 );
 
-if (!fs.existsSync(ENV_LOCAL)) {
-  console.error(`\n❌  ${ENV_LOCAL} não foi criado. Você está logado? \`npx eas-cli login\`\n`);
+if (!fs.existsSync(temporario)) {
+  console.error(`\n❌  Nada foi baixado. Você está logado? \`npx eas-cli login\`\n`);
   process.exit(1);
 }
 
-const env = Object.fromEntries(
+const variaveis = Object.fromEntries(
   fs
-    .readFileSync(ENV_LOCAL, "utf8")
+    .readFileSync(temporario, "utf8")
     .split("\n")
     .filter((l) => l.includes("=") && !l.trimStart().startsWith("#"))
     .map((l) => {
       const i = l.indexOf("=");
-      return [l.slice(0, i).trim(), l.slice(i + 1).trim()];
+      return [
+        l.slice(0, i).trim(),
+        l
+          .slice(i + 1)
+          .trim()
+          .replace(/^["']|["']$/g, ""),
+      ];
     }),
 );
 
-const apiUrl = env.EXPO_PUBLIC_API_URL;
+// O arquivo já cumpriu o papel. Some antes de qualquer coisa poder falhar e
+// deixá-lo para trás.
+fs.rmSync(path.dirname(temporario), { recursive: true, force: true });
+
+const apiUrl = variaveis.EXPO_PUBLIC_API_URL;
 if (!apiUrl) {
-  console.error(`\n❌  EXPO_PUBLIC_API_URL não veio do ambiente "${ambiente}".\n`);
+  console.error(`\n❌  EXPO_PUBLIC_API_URL não existe no ambiente "${ambiente}" do EAS.\n`);
   process.exit(1);
 }
-console.log(`   BFF: ${apiUrl}`);
+
+console.log(`   ${Object.keys(variaveis).length} variáveis · BFF: ${apiUrl}`);
 
 // ── 2. a causa, antes de gastar o build ──────────────────────────────────────
 // Chave dinâmica não é inlinada, e o APK sai reclamando de configuração com o
-// arquivo de ambiente certo no lugar. Barrar aqui custa segundos; descobrir
-// depois custa um build e um teste no aparelho.
+// ambiente certo no lugar. Barrar aqui custa segundos; descobrir depois custa
+// um build e um teste no aparelho.
 passo("Verificando como as variáveis são lidas", "node", [
   path.join("scripts", "check-env-access.js"),
 ]);
 
-// ── 3. compilar ──────────────────────────────────────────────────────────────
-const gradlew = process.platform === "win32" ? "gradlew.bat" : "./gradlew";
-passo("Compilando o APK de release", gradlew, ["assembleRelease", "--console=plain"], {
-  cwd: path.join(APP, "android"),
+// ── 3. compilar, com o ambiente no processo ──────────────────────────────────
+// `env` em vez de arquivo: o Metro e o Babel leem `process.env` do processo que
+// os hospeda, então isto alcança o bundle sem deixar nada no disco.
+if (fs.existsSync(path.join(APP, ".env.local"))) {
+  console.warn(
+    `\n⚠️  Existe um app/.env.local no disco. Ele tem precedência sobre o que este\n` +
+      `    script injeta e pode apontar o build para outro lugar. Apague antes:\n` +
+      `      Remove-Item app/.env.local\n`,
+  );
+  process.exit(1);
+}
+
+// Caminho absoluto: com `shell: true` o Windows não resolve `gradlew.bat` a
+// partir do `cwd`, e o erro que sai — "is not recognized as an internal or
+// external command" — não diz que o problema é o caminho.
+const ANDROID = path.join(APP, "android");
+const gradlew = path.join(ANDROID, process.platform === "win32" ? "gradlew.bat" : "gradlew");
+
+passo("Compilando o APK de release", `"${gradlew}"`, ["assembleRelease", "--console=plain"], {
+  cwd: ANDROID,
+  env: { ...process.env, ...variaveis },
 });
 
 if (!fs.existsSync(APK)) {
@@ -161,6 +202,6 @@ console.log(`
 ⚠️  Assinado com a keystore de DEBUG — serve para testar no seu aparelho, não
     para distribuir. Binário distribuível sai do EAS.
 
-⚠️  \`app/.env.local\` continua no disco e vence em qualquer build seguinte.
-    Apague quando terminar:  Remove-Item app/.env.local
+   Nenhum arquivo de ambiente ficou no repositório: as variáveis foram só para
+   o processo deste build.
 `);
