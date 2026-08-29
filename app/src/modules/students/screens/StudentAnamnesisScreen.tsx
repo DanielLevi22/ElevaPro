@@ -1,4 +1,5 @@
-import { achatarRespostas, GENERAL_ANAMNESIS } from '@elevapro/shared';
+import { GENERAL_ANAMNESIS } from '@elevapro/shared/data/anamnesisQuestions';
+import { achatarRespostas } from '@elevapro/shared/utils/anamnese';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';

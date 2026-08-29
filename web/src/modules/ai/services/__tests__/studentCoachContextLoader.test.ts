@@ -32,7 +32,7 @@ vi.mock("@/lib/supabase-admin", () => ({
   supabaseAdmin: { from: (table: string) => mockFrom(table) },
 }));
 
-const { formatStudentCoachContext, loadStudentCoachContext } = await import(
+const { buildProfileSummary, formatStudentCoachContext, loadStudentCoachContext } = await import(
   "../studentCoachContextLoader"
 );
 
@@ -83,5 +83,73 @@ describe("contexto do coach do aluno", () => {
 
     expect(prompt).not.toContain("[object Object]");
     expect(prompt).toContain(LESAO);
+  });
+});
+
+describe("duração do treino nas duas anamneses", () => {
+  const base = {
+    studentId: "aluno-1",
+    name: "Aluno",
+    coachMode: "express" as const,
+    personaTrack: "beginner" as const,
+    lastAssessment: null,
+    activePlan: null,
+  };
+
+  // A anamnese geral pergunta "Tempo médio por treino (minutos)" e guarda um
+  // número; a adaptativa oferece faixas e guarda "45–60 min". O resumo colava
+  // " min" nos dois, e quem veio pela adaptativa aparecia como "45–60 min min".
+  it("não duplica a unidade quando a resposta já a traz", () => {
+    const resumo = buildProfileSummary({
+      ...base,
+      anamnesis: { training_days: 4, training_duration: "45–60 min" },
+    });
+
+    expect(resumo.frequencia).toBe("4x/semana · 45–60 min");
+  });
+
+  it("acrescenta a unidade quando a resposta é um número", () => {
+    const resumo = buildProfileSummary({
+      ...base,
+      anamnesis: { training_days: 4, training_duration: 60 },
+    });
+
+    expect(resumo.frequencia).toBe("4x/semana · 60 min");
+  });
+});
+
+describe("tempo de treino não se confunde com tempo antes da pausa", () => {
+  const base = {
+    studentId: "aluno-1",
+    name: "Aluno",
+    coachMode: "express" as const,
+    personaTrack: "returning" as const,
+    lastAssessment: null,
+    activePlan: null,
+  };
+
+  // As duas anamneses usavam a chave `training_time` para perguntas opostas: a
+  // geral pergunta há quanto tempo o aluno TREINA, a adaptativa pergunta quanto
+  // tempo ele treinou ANTES DE PARAR. O resumo lia as duas como "experiência" —
+  // e "2 anos" querendo dizer "parei há tempo" virava "treina há 2 anos", que é
+  // o sinal invertido para quem monta a prescrição.
+  it("não apresenta o tempo antes da pausa como experiência atual", () => {
+    const resumo = buildProfileSummary({
+      ...base,
+      anamnesis: { training_time_before_break: "2 anos" },
+    });
+
+    expect(resumo.experiencia).toBeNull();
+  });
+
+  // A informação não se perde: ela vale para a prescrição de quem está
+  // voltando, só não é a mesma coisa que experiência corrente.
+  it("leva o tempo antes da pausa ao prompt, nomeado pelo que é", () => {
+    const prompt = formatStudentCoachContext({
+      ...base,
+      anamnesis: { training_time_before_break: "2 anos" },
+    });
+
+    expect(prompt).toContain("antes da pausa: 2 anos");
   });
 });

@@ -1,11 +1,15 @@
-import type { AdaptiveQuestion, PersonaTrack, UnlockCard } from '@elevapro/shared';
+import type {
+  AdaptiveQuestion,
+  PersonaTrack,
+  UnlockCard,
+} from '@elevapro/shared/data/anamnesisAdaptive';
 import {
   getPrecisionScore,
   getQuestionPrecisionDelta,
   getTrackQuestions,
   PERSONA_OPTIONS,
   UNLOCK_CARDS,
-} from '@elevapro/shared';
+} from '@elevapro/shared/data/anamnesisAdaptive';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';

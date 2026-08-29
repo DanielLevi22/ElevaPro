@@ -1,4 +1,4 @@
-import { GENERAL_ANAMNESIS } from '@elevapro/shared';
+import { GENERAL_ANAMNESIS } from '@elevapro/shared/data/anamnesisQuestions';
 import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';

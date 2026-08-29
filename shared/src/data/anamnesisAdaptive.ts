@@ -202,7 +202,12 @@ const BASE_QUESTIONS: AdaptiveQuestion[] = [
 
 const RETURNING_EXTRA: AdaptiveQuestion[] = [
   {
-    id: "training_time",
+    // `training_time` na anamnese geral pergunta há quanto tempo o aluno TREINA;
+    // aqui a pergunta é quanto tempo ele treinou ANTES DE PARAR. Enquanto as
+    // duas dividiam a chave, "2 anos" chegava ao modelo como experiência atual
+    // de quem está justamente voltando de uma pausa — sinal invertido para
+    // quem monta a prescrição.
+    id: "training_time_before_break",
     text: "Quanto tempo você treinou antes de parar?",
     type: "text",
     placeholder: "Ex: 2 anos",

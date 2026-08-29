@@ -1,4 +1,4 @@
-import { AnamnesisQuestion } from '@elevapro/shared';
+import type { AnamnesisQuestion } from '@elevapro/shared/data/anamnesisQuestions';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useState } from 'react';
