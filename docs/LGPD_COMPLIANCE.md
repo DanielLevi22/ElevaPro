@@ -65,11 +65,13 @@ Dados referentes à saúde exigem **base legal específica** e proteção refor�
 
 | Dado | Tabela | Base legal | Finalidade |
 |------|--------|------------|------------|
-| Peso, altura | `physical_assessments` | Tutela da saúde (Art. 11, II, f) + Consentimento | Avaliação física, cálculo de composição corporal |
+| Peso, altura | `physical_assessments` | Tutela da saúde (Art. 11, II, f) + Consentimento | Avaliação física, cálculo de composição corporal, e **Escala** que calibra o Body scan. Obrigatórios desde a `0037` |
 | % gordura, massa muscular | `physical_assessments` | Tutela da saúde + Consentimento | Acompanhamento de evolução física |
 | Dobras cutâneas (7 pontos) | `physical_assessments` | Tutela da saúde + Consentimento | Protocolo Jackson-Pollock para composição corporal |
 | Circunferências corporais | `physical_assessments` | Tutela da saúde + Consentimento | Acompanhamento de medidas |
 | Histórico de saúde (anamnese) | `student_anamnesis.responses` | Consentimento explícito (Art. 11, I) | Informar o especialista sobre limitações, lesões, medicamentos |
+| Altura e peso declarados | `student_anamnesis.responses` (campos `height`, `weight`) | Tutela da saúde (Art. 11, II, f) + Consentimento | **Origem secundária da Escala**: calibram o Body scan quando não há avaliação física. Lidos por campo nomeado no banco, nunca `responses` inteiro |
+| Origem da Escala | `body_scans.scale_source` | Tutela da saúde + Consentimento | Registrar se a altura que calibrou o scan foi medida com fita ou declarada pelo aluno — o especialista precisa saber se pondera ou confia no número |
 | Dados de treino executado (séries, cargas, datas, `intensity`) | `workout_sessions` | Execução de contrato | Acompanhamento de desempenho |
 | **Observações do aluno sobre a própria sessão** | `workout_sessions.notes` | **Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I)** | Ajuste de prescrição a partir do que o aluno relata |
 | Tipo, duração e calorias da sessão | `workout_sessions.session_type`, `.duration_seconds`, `.active_calories` | Execução de contrato | Distinguir cardio de musculação e medir a sessão |
@@ -507,7 +509,7 @@ modelo. Fechado pelo PRD
 | `student_anamnesis UNIQUE(student_id)` | Evitar duplicação de dados sensíveis |
 | RLS bloqueia especialistas desvinculados | Segurança |
 | `student_link_codes expires_at` | Segurança — tempo de vida limitado |
-| `physical_assessments` imutável (nunca UPDATE) | Qualidade dos dados — histórico preservado. Aplicado no código em 2026-08-28: `/api/students/[id]` fazia UPDATE pelo `service_role`, contornando a RLS que concede só INSERT; agora sempre insere nova avaliação |
+| `physical_assessments` imutável (nunca UPDATE) | Qualidade dos dados — histórico preservado. Aplicado no código em 2026-08-28: `/api/students/[id]` fazia UPDATE pelo `service_role`, contornando a RLS que concede só INSERT; agora sempre insere nova avaliação. **Exceção registrada em 2026-08-29 (migration `0037`)**: a migration roda como owner e apagou as linhas sem altura ou peso antes de tornar as duas colunas `NOT NULL`. DELETE e não backfill — preencher uma medida que ninguém fez violaria o Art. 6º, V, que é o mesmo princípio que esta linha protege. Autorizado pelo mantenedor: ambiente de teste, sem nada em produção |
 
 **Decisões tomadas nesta revisão:**
 

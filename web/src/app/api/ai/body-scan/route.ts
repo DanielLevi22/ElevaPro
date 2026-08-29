@@ -3,6 +3,8 @@ import { createBodyScanService, createHealthService } from "@elevapro/shared";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeStudent } from "@/lib/api-auth";
+import { clienteDoTitular } from "@/lib/supabase-titular";
+import { type FonteDaEscala, resolverEscala } from "@/modules/ai/services/escala";
 
 // Na Vercel uma rota sem isto morre no default de poucos segundos. Uma conversa
 // com uso de ferramenta passa disso com folga, e localmente não existe teto —
@@ -51,74 +53,13 @@ interface BodyScanPayload extends ModelPayload {
     bmi: number;
   };
   /** De onde vieram altura e peso. A tela precisa poder dizer isso ao aluno. */
-  scaleSource: "assessment" | "informed";
+  scaleSource: FonteDaEscala;
   /** Falso quando a análise deu certo mas a gravação falhou — estados distintos. */
   persisted?: boolean;
 }
 
-/** Última avaliação física com altura registrada — a régua da imagem. */
-async function loadScale(
-  client: SupabaseClient,
-  studentId: string,
-): Promise<{ heightCm: number; weightKg: number | null } | null> {
-  const { data, error } = await client
-    .from("physical_assessments")
-    .select("height_cm, weight_kg")
-    .eq("student_id", studentId)
-    .not("height_cm", "is", null)
-    .order("assessed_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  // Erro não é ausência: engolir aqui faria "falhou a consulta" virar "não tem
-  // avaliação", e o aluno digitaria de novo um dado que já existe.
-  if (error) throw error;
-  if (!data?.height_cm) return null;
-
-  return {
-    heightCm: Number(data.height_cm),
-    weightKg: data.weight_kg === null ? null : Number(data.weight_kg),
-  };
-}
-
-/**
- * Autentica pelo token do aluno e devolve o cliente já ligado a ele.
- *
- * O cliente volta junto de propósito: a checagem de consentimento roda com a
- * identidade do titular, sob RLS, em vez de `service_role`. Foto de corpo é o
- * dado mais sensível do sistema e não há motivo para essa rota ver mais do que
- * o próprio dono veria.
- */
-/**
- * Cliente do Supabase falando pelo próprio titular, sob RLS.
- *
- * A identidade e o papel vêm de `authorizeStudent`, não daqui: a versão
- * anterior chamava `client.auth.getUser(token)` descartando o erro e devolvia
- * só "existe um usuário" — nunca *qual papel ele tem*.
- *
- * O cliente sob RLS continua existindo porque a checagem de consentimento roda
- * com a identidade do titular, não com `service_role`. Foto de corpo é o dado
- * mais sensível do sistema e não há motivo para esta rota enxergar mais do que
- * o próprio dono enxergaria.
- */
-function clienteDoTitular(request: NextRequest): SupabaseClient {
-  const authHeader = request.headers.get("Authorization") ?? "";
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-    { global: { headers: { Authorization: authHeader } } },
-  );
-}
-
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-/**
- * Monta o prompt com a altura real como escala.
- *
- * A altura é a régua: sabendo que o corpo mede N cm e quantos pixels ele ocupa,
- * qualquer largura na imagem converte para centímetro. Sem ela o modelo só
- * poderia chutar — que é o que a versão anterior deste prompt mandava fazer.
- */
 function buildSystemPrompt(heightCm: number, weightKg: number | null): string {
   const peso = weightKg === null ? "não informado" : `${weightKg} kg`;
 
@@ -179,9 +120,6 @@ export async function POST(request: NextRequest) {
       back?: string;
       side?: string;
     };
-    /** Digitados pelo aluno quando ainda não há avaliação física. */
-    heightCm?: number;
-    weightKg?: number;
     /** Como a foto foi enquadrada — base para comparar escaneamentos. */
     framing?: {
       markTop: number;
@@ -197,28 +135,50 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "At least one image is required" }, { status: 400 });
   }
 
-  // A avaliação física vence o que veio no corpo: é medida com fita, não
-  // digitada de memória.
-  let scale: { heightCm: number; weightKg: number | null } | null;
-  try {
-    scale = await loadScale(client, userId);
-  } catch {
+  // A mesma função que o portão de elegibilidade usa. Com a precedência escrita
+  // em dois lugares, o portão libera e esta rota recusa — que é exatamente o
+  // beco que a issue fecha, com outro nome.
+  const [avaliacaoRes, anamneseRes] = await Promise.all([
+    client
+      .from("physical_assessments")
+      .select("height_cm, weight_kg")
+      .eq("student_id", userId)
+      .order("assessed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    // Os dois campos extraídos no banco: `responses` inteiro traria lesão e
+    // medicação junto, para ler altura (Art. 6º, III).
+    client
+      .from("student_anamnesis")
+      .select("responses->height, responses->weight")
+      .eq("student_id", userId)
+      .maybeSingle(),
+  ]);
+
+  // Erro não é ausência: engolir aqui faria "falhou a consulta" virar "não tem
+  // avaliação", e o aluno seria mandado preencher o que já preencheu.
+  if (avaliacaoRes.error || anamneseRes.error) {
     return NextResponse.json({ error: "scale_lookup_failed" }, { status: 503 });
   }
 
-  let scaleSource: BodyScanPayload["scaleSource"] = "assessment";
+  const escala = resolverEscala({
+    avaliacao: avaliacaoRes.data
+      ? {
+          height_cm: Number(avaliacaoRes.data.height_cm),
+          weight_kg: Number(avaliacaoRes.data.weight_kg),
+        }
+      : null,
+    anamnese: anamneseRes.data as Record<string, unknown> | null,
+  });
 
-  if (!scale && typeof body.heightCm === "number") {
-    scale = { heightCm: body.heightCm, weightKg: body.weightKg ?? null };
-    scaleSource = "informed";
+  // Sem Escala o modelo voltaria a chutar. Recusar é a única saída honesta — e
+  // o portão da entrada já deveria ter evitado o aluno chegar até aqui.
+  if (!escala.ok) {
+    return NextResponse.json({ error: "height_required", motivo: escala.motivo }, { status: 422 });
   }
 
-  // Sem altura não há régua, e sem régua o modelo voltaria a chutar. Recusar é
-  // a única saída honesta — a tela pede o dado em vez de mostrar um número
-  // inventado.
-  if (!scale) {
-    return NextResponse.json({ error: "height_required" }, { status: 422 });
-  }
+  const scale = { heightCm: escala.heightCm, weightKg: escala.weightKg };
+  const scaleSource = escala.fonte;
 
   const imageContent: Anthropic.MessageParam["content"] = [];
 
@@ -286,15 +246,14 @@ export async function POST(request: NextRequest) {
   // O IMC é calculado aqui, sobre a altura e o peso reais. Antes vinha do
   // modelo, calculado sobre dois valores que ele mesmo tinha inventado.
   const heightM = scale.heightCm / 100;
-  const bmi =
-    scale.weightKg === null ? 0 : Number((scale.weightKg / (heightM * heightM)).toFixed(1));
+  const bmi = Number((scale.weightKg / (heightM * heightM)).toFixed(1));
 
   const result: BodyScanPayload = {
     ...modelResult,
     metrics: {
       ...modelResult.metrics,
       height: scale.heightCm,
-      weight: scale.weightKg ?? 0,
+      weight: scale.weightKg,
       bmi,
     },
     scaleSource,
@@ -308,9 +267,10 @@ export async function POST(request: NextRequest) {
     await createBodyScanService(client).save(userId, {
       height_cm: scale.heightCm,
       weight_kg: scale.weightKg,
+      scale_source: scaleSource,
       body_fat_pct: modelResult.metrics.bodyFat ?? null,
       muscle_mass_kg: modelResult.metrics.muscleMass ?? null,
-      bmi: scale.weightKg === null ? null : bmi,
+      bmi,
       circ_chest: segments.chest ?? null,
       circ_waist: segments.waist ?? null,
       circ_hips: segments.hips ?? null,

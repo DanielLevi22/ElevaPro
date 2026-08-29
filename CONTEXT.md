@@ -103,10 +103,27 @@ Um exercício dentro de uma WorkoutSession, com a carga e as repetições reais.
 
 **Assessment**:
 Avaliação física de um aluno numa data: peso, medidas e composição corporal.
-_Avoid_: medição, anamnese
+Medida pelo especialista, com fita.
+_Avoid_: medição
+
+**Anamnese**:
+Questionário respondido pelo próprio aluno sobre histórico, rotina e objetivo.
+É declaração, não medição.
+_Avoid_: avaliação, questionário
 
 **Body scan**:
-Estimativa de composição corporal a partir de foto, sempre calibrada pela altura
-declarada do aluno. O valor está na diferença entre dois scans, não no número
-absoluto de um só. A imagem nunca é guardada — só o resultado derivado.
+Estimativa de composição corporal a partir de foto, sempre calibrada por uma
+Escala. O valor está na diferença entre dois scans, não no número absoluto de um
+só. A imagem nunca é guardada — só o resultado derivado.
 _Avoid_: análise de foto, scan corporal
+
+**Escala**:
+A altura e o peso que calibram um Body scan — sem eles a estimativa seria chute.
+Vem da Assessment quando existe; da Anamnese quando não. O scan registra qual
+das duas usou.
+_Avoid_: régua, referência, calibração
+
+**Enquadramento**:
+As marcas na tela que fixam a posição do aluno na foto, para que dois scans sejam
+comparáveis.
+_Avoid_: silhueta, guia, moldura

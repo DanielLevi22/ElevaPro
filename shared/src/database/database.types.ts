@@ -157,6 +157,7 @@ export type Database = {
           posture_overall_score: number | null;
           posture_symmetry_score: number | null;
           recommendations: string | null;
+          scale_source: Database["public"]["Enums"]["scale_source"] | null;
           scanned_at: string;
           student_id: string;
           weight_kg: number | null;
@@ -187,6 +188,7 @@ export type Database = {
           posture_overall_score?: number | null;
           posture_symmetry_score?: number | null;
           recommendations?: string | null;
+          scale_source?: Database["public"]["Enums"]["scale_source"] | null;
           scanned_at?: string;
           student_id: string;
           weight_kg?: number | null;
@@ -217,6 +219,7 @@ export type Database = {
           posture_overall_score?: number | null;
           posture_symmetry_score?: number | null;
           recommendations?: string | null;
+          scale_source?: Database["public"]["Enums"]["scale_source"] | null;
           scanned_at?: string;
           student_id?: string;
           weight_kg?: number | null;
@@ -651,7 +654,7 @@ export type Database = {
           circ_shoulder: number | null;
           circ_waist: number | null;
           created_at: string;
-          height_cm: number | null;
+          height_cm: number;
           id: string;
           muscle_mass_kg: number | null;
           notes: string | null;
@@ -664,7 +667,7 @@ export type Database = {
           skinfold_tricep: number | null;
           specialist_id: string | null;
           student_id: string;
-          weight_kg: number | null;
+          weight_kg: number;
         };
         Insert: {
           assessed_at?: string;
@@ -684,7 +687,7 @@ export type Database = {
           circ_shoulder?: number | null;
           circ_waist?: number | null;
           created_at?: string;
-          height_cm?: number | null;
+          height_cm: number;
           id?: string;
           muscle_mass_kg?: number | null;
           notes?: string | null;
@@ -697,7 +700,7 @@ export type Database = {
           skinfold_tricep?: number | null;
           specialist_id?: string | null;
           student_id: string;
-          weight_kg?: number | null;
+          weight_kg: number;
         };
         Update: {
           assessed_at?: string;
@@ -717,7 +720,7 @@ export type Database = {
           circ_shoulder?: number | null;
           circ_waist?: number | null;
           created_at?: string;
-          height_cm?: number | null;
+          height_cm?: number;
           id?: string;
           muscle_mass_kg?: number | null;
           notes?: string | null;
@@ -730,7 +733,7 @@ export type Database = {
           skinfold_tricep?: number | null;
           specialist_id?: string | null;
           student_id?: string;
-          weight_kg?: number | null;
+          weight_kg?: number;
         };
         Relationships: [
           {
@@ -1424,6 +1427,7 @@ export type Database = {
       diet_plan_status: "active" | "finished";
       diet_plan_type: "unique" | "cyclic";
       link_status: "active" | "inactive";
+      scale_source: "assessment" | "anamnese";
       service_type: "personal_training" | "nutrition_consulting";
       training_status: "planned" | "active" | "completed";
       workout_difficulty: "beginner" | "intermediate" | "advanced";
@@ -1560,6 +1564,7 @@ export const Constants = {
       diet_plan_status: ["active", "finished"],
       diet_plan_type: ["unique", "cyclic"],
       link_status: ["active", "inactive"],
+      scale_source: ["assessment", "anamnese"],
       service_type: ["personal_training", "nutrition_consulting"],
       training_status: ["planned", "active", "completed"],
       workout_difficulty: ["beginner", "intermediate", "advanced"],

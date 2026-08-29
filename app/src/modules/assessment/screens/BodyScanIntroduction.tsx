@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Dimensions, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
   Easing,
@@ -15,6 +15,11 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
 import { useAuthStore } from '@/modules/auth/store/authStore';
+import {
+  avisoDoPortao,
+  consultarElegibilidade,
+  type Elegibilidade,
+} from '../services/elegibilidade';
 import { useAssessmentStore } from '../store/assessmentStore';
 
 // Import local image using require to ensure resolution
@@ -127,8 +132,36 @@ export default function BodyScanIntroduction({ hideHeader = false }: { hideHeade
   const { studentId, id } = useLocalSearchParams<{ studentId?: string; id?: string }>();
   const { startScan, setStudentId } = useAssessmentStore();
   const authUserId = useAuthStore((s) => s.session?.user?.id ?? null);
+  const token = useAuthStore((s) => s.session?.access_token ?? null);
+  // Perguntado na ENTRADA, e não depois das três fotos. É a inversão que esta
+  // tela existe para fazer: o aluno descobre que falta algo antes de gastar a
+  // captura, não numa mensagem de erro no fim.
+  const [portao, setPortao] = useState<Elegibilidade | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+    let vivo = true;
+    consultarElegibilidade(token)
+      .then((r) => vivo && setPortao(r))
+      // Falha de rede não fecha o portão: barrar o aluno porque a checagem caiu
+      // seria trocar um beco por outro. A análise tem a própria guarda.
+      .catch(() => vivo && setPortao({ podeEscanear: true }));
+    return () => {
+      vivo = false;
+    };
+  }, [token]);
+
+  const aviso =
+    portao && !portao.podeEscanear && portao.motivo ? avisoDoPortao(portao.motivo) : null;
 
   const handleStart = async () => {
+    // O portão vem antes da câmera. `null` é a consulta ainda em voo: deixar
+    // passar aqui devolveria o aluno ao caminho antigo.
+    if (aviso) {
+      if (aviso.destino) router.push(aviso.destino);
+      return;
+    }
+
     // params > auth user (member doing their own scan)
     const targetId = studentId || id || authUserId || undefined;
 
@@ -285,6 +318,13 @@ export default function BodyScanIntroduction({ hideHeader = false }: { hideHeade
 
           {/* CTA Button */}
           <View className="px-6 mt-8 z-20">
+            {aviso && (
+              <View className="mb-4 bg-amber-500/10 border border-amber-500/30 px-4 py-4 rounded-2xl">
+                <Text className="text-amber-400 font-black text-base mb-1">{aviso.titulo}</Text>
+                <Text className="text-amber-100/80 text-sm leading-5">{aviso.texto}</Text>
+              </View>
+            )}
+
             <TouchableOpacity onPress={handleStart} activeOpacity={0.8}>
               <LinearGradient
                 colors={
@@ -295,7 +335,7 @@ export default function BodyScanIntroduction({ hideHeader = false }: { hideHeade
                 className="py-4 rounded-2xl items-center shadow-lg shadow-primary-solid/20"
               >
                 <Text className="text-white font-black text-lg uppercase tracking-widest">
-                  Avançar
+                  {aviso ? aviso.rotulo : 'Avançar'}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>

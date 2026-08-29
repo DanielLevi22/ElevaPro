@@ -6,6 +6,7 @@ export {
   BffUnreachableError,
   bffUrl,
   fetchBff,
+  getBff,
   lerRespostaBff,
   postBff,
 } from './client';

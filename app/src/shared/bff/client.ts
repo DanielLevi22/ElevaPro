@@ -424,3 +424,50 @@ export async function postBff<T>(
 export function assertBffConfigured(): void {
   bffOrigin();
 }
+
+/**
+ * GET numa rota do BFF, com as três defesas aplicadas e o JSON já parseado.
+ *
+ * Existe porque o portão de elegibilidade é uma pergunta, não uma submissão —
+ * e uma pergunta escrita com o `fetch` global voltaria a seguir redirect e a
+ * receber a tela de login da plataforma como 200 com HTML, que é exatamente o
+ * defeito que este arquivo existe para fechar. Método diferente não muda o
+ * perímetro.
+ *
+ * @example
+ * const r = await getBff<{ podeEscanear: boolean }>('/api/ai/body-scan/eligibility', { token });
+ */
+export async function getBff<T>(
+  path: string,
+  { token, timeoutMs = TIMEOUT_PADRAO_MS }: PostBffOptions = {}
+): Promise<T> {
+  const url = bffUrl(path);
+  const host = hostDe(url);
+  const abort = new AbortController();
+  const timer = setTimeout(() => abort.abort(), timeoutMs);
+
+  let response: Response;
+  try {
+    response = (await expoFetch(url, {
+      method: 'GET',
+      redirect: 'manual',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...headerDeBypass(url),
+      },
+      signal: abort.signal,
+    })) as unknown as Response;
+  } catch (erro) {
+    const motivo = abort.signal.aborted
+      ? `não respondeu em ${Math.round(timeoutMs / 1000)}s`
+      : ((erro as Error)?.message ?? 'falha de rede');
+    throw new BffUnreachableError(host, motivo);
+  } finally {
+    clearTimeout(timer);
+  }
+
+  const corpo = await lerRespostaBff<T & { error?: unknown }>(response, url);
+  if (!response.ok) throw new BffHttpError(path, response.status, codigoDoErro(corpo));
+
+  return corpo;
+}

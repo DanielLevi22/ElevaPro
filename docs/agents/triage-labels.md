@@ -18,12 +18,5 @@ Edite a coluna da direita para casar com o vocabulário que você realmente usa.
 
 ## Estado no repo
 
-Dos cinco, só `wontfix` já existe no GitHub deste repo. Os outros quatro precisam ser
-criados antes do primeiro `/triage`:
-
-```bash
-gh label create needs-triage    --description "Precisa de avaliação do mantenedor"       --color d93f0b
-gh label create needs-info      --description "Esperando informação de quem reportou"    --color fbca04
-gh label create ready-for-agent --description "Especificado, pronto pra agente AFK"      --color 0e8a16
-gh label create ready-for-human --description "Exige implementação humana"               --color 1d76db
-```
+Os cinco existem no GitHub deste repo — conferido em 2026-08-29 com
+`gh label list`. Nada a criar antes de rodar `/triage`.

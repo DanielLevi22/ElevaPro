@@ -68,6 +68,16 @@ export function AssessmentModal({ studentId, onClose }: AssessmentModalProps) {
 
     const toNum = (v: string) => (v !== "" ? Number(v) : null);
 
+    // Altura e peso não são medidas entre outras: são a Escala que calibra o
+    // body scan do aluno. Avaliação sem os dois não serve de fonte, e a rota
+    // recusa com 422 desde a `0037` — barrar aqui é dizer isso enquanto o
+    // especialista ainda está com a ficha aberta, em vez de depois de salvar.
+    if (toNum(weight) === null || toNum(height) === null) {
+      setError("Peso e altura são obrigatórios: são eles que dão escala à análise do aluno.");
+      setTab("composicao");
+      return;
+    }
+
     try {
       await createAssessment.mutateAsync({
         studentId,
@@ -137,7 +147,7 @@ export function AssessmentModal({ studentId, onClose }: AssessmentModalProps) {
         {tab === "composicao" && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <FormField label="Peso (kg)" htmlFor="assess-weight" optional>
+              <FormField label="Peso (kg)" htmlFor="assess-weight">
                 <Input
                   id="assess-weight"
                   type="number"
@@ -147,7 +157,7 @@ export function AssessmentModal({ studentId, onClose }: AssessmentModalProps) {
                   onChange={(e) => setWeight(e.target.value)}
                 />
               </FormField>
-              <FormField label="Altura (cm)" htmlFor="assess-height" optional>
+              <FormField label="Altura (cm)" htmlFor="assess-height">
                 <Input
                   id="assess-height"
                   type="number"

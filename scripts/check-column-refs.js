@@ -123,7 +123,14 @@ for (const raiz of FONTES) {
         const nome = bruto.trim().split(":").pop().trim();
         if (!nome || nome === "*" || nome.includes("(") || nome.includes(")")) continue;
 
-        if (!colunas.has(nome)) {
+        // Caminho dentro de jsonb — `responses->height`, `responses->>weight`.
+        // A coluna é o que vem ANTES da seta; o resto é chave do documento, que
+        // nenhum schema declara. Sem esta linha a guarda recusaria exatamente a
+        // técnica que a revisão de LGPD exige: extrair no banco os dois campos
+        // de que a consulta precisa, em vez de carregar o jsonb inteiro — que
+        // em `student_anamnesis` significa trazer lesão e medicação junto.
+        const coluna = nome.split("->")[0].trim();
+        if (!colunas.has(coluna)) {
           problemas.push({ arquivo: path.relative(ROOT, arquivo), tabela, coluna: nome });
         }
       }
