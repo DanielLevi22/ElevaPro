@@ -4,10 +4,12 @@ import { supabase } from '@elevapro/supabase';
 import { createMMKV } from 'react-native-mmkv';
 import { create } from 'zustand';
 import { createJSONStorage, persist, StateStorage } from 'zustand/middleware';
+import { mensagemDeErroBff } from '@/shared/bff';
 import {
   AIBodyScanService,
   BodyScanAnalysisError,
   BodyScanConsentError,
+  BodyScanScaleError,
 } from '../services/aiBodyScan';
 import { AnamnesisService } from '../services/anamnesisService';
 import {
@@ -78,6 +80,33 @@ interface AssessmentState {
   reset: () => void;
 }
 
+/**
+ * O que o aluno lê quando a análise não sai.
+ *
+ * Antes, quatro causas diferentes viravam a mesma frase: o store só reconhecia
+ * consentimento e falha de análise, e substituía todo o resto pela genérica —
+ * inclusive a falta de altura, que o serviço já sabia nomear. O aluno via
+ * "tente de novo" num caminho que nunca podia funcionar.
+ *
+ * As outras cinco superfícies de IA do produto já passam pelo tradutor
+ * compartilhado desde 2026-08-28. Esta ficou de fora, e é a que este bloco
+ * finalmente liga.
+ */
+function mensagemDaFalha(error: unknown): string {
+  // Falta de escala não é falha de análise: é dado que falta, e o remédio é
+  // preencher a anamnese. "Tente de novo" aqui é um botão que não funciona.
+  if (error instanceof BodyScanScaleError) {
+    return 'Preciso da sua altura e do seu peso para calcular. Responda a anamnese e tente de novo.';
+  }
+
+  if (error instanceof BodyScanAnalysisError) return error.message;
+
+  // O tradutor compartilhado: frase curta na tela, diagnóstico no log. O
+  // detalhe do `client.ts` nomeia host e variável de ambiente — indispensável
+  // para quem conserta, e o que menos o aluno pode ver.
+  return mensagemDeErroBff(error);
+}
+
 export const useAssessmentStore = create<AssessmentState>()(
   persist(
     (set, get) => ({
@@ -137,14 +166,7 @@ export const useAssessmentStore = create<AssessmentState>()(
             set({ status: AssessmentStatus.NEEDS_CONSENT });
             return;
           }
-          set({
-            status: AssessmentStatus.ERROR,
-            errorMessage:
-              error instanceof BodyScanAnalysisError
-                ? error.message
-                : 'Não consegui completar a análise. Tente de novo.',
-          });
-          console.error('Body scan failed', error);
+          set({ status: AssessmentStatus.ERROR, errorMessage: mensagemDaFalha(error) });
         }
       },
 

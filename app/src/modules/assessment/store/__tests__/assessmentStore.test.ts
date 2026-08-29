@@ -1,3 +1,4 @@
+import { BffUnreachableError } from '@/shared/bff';
 import {
   AIBodyScanService,
   BodyScanAnalysisError,
@@ -253,5 +254,63 @@ describe('submitAnamnesis — a forma gravada', () => {
       { height: 175, injuries: 'Hérnia de disco L5-S1' },
       true
     );
+  });
+});
+
+describe('submitScan — o erro que o aluno lê', () => {
+  const GENERICA = 'Não consegui completar a análise. Tente de novo.';
+
+  beforeEach(() => {
+    useAssessmentStore.getState().reset();
+    jest.clearAllMocks();
+    useAssessmentStore.getState().setCapturedImage('front', 'uri-front');
+  });
+
+  // A tela da screenshot: o aluno sem altura cadastrada via "não consegui
+  // completar, tente de novo" e um botão que nunca podia funcionar. O serviço
+  // já produzia a mensagem certa; o store a substituía pela genérica.
+  it('falta de altura não vira a mensagem genérica', async () => {
+    (AIBodyScanService.analyzeImages as jest.Mock).mockRejectedValue(new BodyScanScaleError());
+
+    await useAssessmentStore.getState().submitScan();
+
+    expect(useAssessmentStore.getState().errorMessage).not.toBe(GENERICA);
+  });
+
+  // Quatro causas chegavam como a mesma tela muda. As outras cinco superfícies
+  // de IA do produto já passam o erro pelo tradutor compartilhado; esta ficou
+  // de fora quando ele foi criado.
+  it('falha de rede não vira a mensagem genérica', async () => {
+    (AIBodyScanService.analyzeImages as jest.Mock).mockRejectedValue(
+      new BffUnreachableError('elevapro.app', 'não respondeu em 60s')
+    );
+
+    await useAssessmentStore.getState().submitScan();
+
+    expect(useAssessmentStore.getState().errorMessage).not.toBe(GENERICA);
+  });
+
+  // TRAVA: o diagnóstico do `client.ts` nomeia host, variável de ambiente e
+  // qual proteção interceptou. Isso é indispensável para quem conserta e não
+  // pode chegar ao aluno — em release entrega topologia de graça.
+  //
+  // Medido com `__DEV__` desligado de propósito: em desenvolvimento o detalhe
+  // aparece na tela por decisão do tradutor, porque ali quem lê é quem conserta.
+  // Afirmar a ausência no modo errado provaria o oposto do que interessa.
+  it('não expõe o host da infraestrutura ao aluno em release', async () => {
+    (AIBodyScanService.analyzeImages as jest.Mock).mockRejectedValue(
+      new BffUnreachableError('elevapro-preview.vercel.app', 'respondeu 401')
+    );
+
+    const global_ = globalThis as { __DEV__?: boolean };
+    const antes = global_.__DEV__;
+    global_.__DEV__ = false;
+    try {
+      await useAssessmentStore.getState().submitScan();
+    } finally {
+      global_.__DEV__ = antes;
+    }
+
+    expect(useAssessmentStore.getState().errorMessage).not.toContain('vercel.app');
   });
 });
