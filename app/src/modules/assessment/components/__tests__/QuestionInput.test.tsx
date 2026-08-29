@@ -1,4 +1,4 @@
-import { AnamnesisQuestion } from '@elevapro/shared';
+import type { AnamnesisQuestion } from '@elevapro/shared/data/anamnesisQuestions';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { QuestionInput } from '../QuestionInput';
 

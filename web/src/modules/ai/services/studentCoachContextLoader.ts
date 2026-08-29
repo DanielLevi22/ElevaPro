@@ -115,6 +115,9 @@ export function formatStudentCoachContext(ctx: StudentCoachContext): string {
     if (a.gender) lines.push(`Sexo: ${a.gender}`);
     if (a.experience_level) lines.push(`Experiência: ${a.experience_level}`);
     if (a.training_days) lines.push(`Dias disponíveis: ${a.training_days}x/semana`);
+    if (a.training_time_before_break) {
+      lines.push(`Tempo de treino antes da pausa: ${a.training_time_before_break}`);
+    }
     if (a.training_duration) lines.push(`Tempo por sessão: ${a.training_duration} min`);
     if (a.gym_type) lines.push(`Local de treino: ${a.gym_type}`);
     if (a.dietary_restrictions) lines.push(`Restrições alimentares: ${a.dietary_restrictions}`);
@@ -139,6 +142,21 @@ export function formatStudentCoachContext(ctx: StudentCoachContext): string {
   return lines.join("\n");
 }
 
+/**
+ * A duração de um treino, com unidade sem duplicar.
+ *
+ * As duas anamneses guardam formas diferentes na mesma chave: a geral pergunta
+ * "Tempo médio por treino (minutos)" e grava um número; a adaptativa oferece
+ * faixas e grava `"45–60 min"`. Colar " min" nos dois fazia quem veio pela
+ * adaptativa chegar ao modelo como `"45–60 min min"`.
+ *
+ * A unidade é acrescentada só quando o valor não a traz — que é o que distingue
+ * um número de uma faixa já escrita.
+ */
+function duracaoPorTreino(bruto: unknown): string {
+  return typeof bruto === "number" ? `${bruto} min` : String(bruto);
+}
+
 export function buildProfileSummary(ctx: StudentCoachContext): Record<string, string | null> {
   const a = ctx.anamnesis ?? {};
   return {
@@ -149,7 +167,7 @@ export function buildProfileSummary(ctx: StudentCoachContext): Record<string, st
     experiencia: (a.experience_level as string) ?? (a.training_time as string) ?? null,
     frequencia:
       a.training_days && a.training_duration
-        ? `${a.training_days}x/semana · ${a.training_duration} min`
+        ? `${a.training_days}x/semana · ${duracaoPorTreino(a.training_duration)}`
         : null,
     local: (a.gym_type as string) ?? null,
     dieta: (a.dietary_restrictions as string) ?? "Sem restrições",

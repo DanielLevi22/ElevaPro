@@ -14,6 +14,7 @@
       "@elevapro/core": ["./src/packages/core"],
       "@elevapro/supabase": ["./src/packages/supabase"],
       "@elevapro/shared": ["../shared/src"],
+      "@elevapro/shared/*": ["../shared/src/*"],
       "@supabase/supabase-js": ["./node_modules/@supabase/supabase-js"],
       "@casl/ability": ["./node_modules/@casl/ability"],
       "zustand": ["./node_modules/zustand"],
