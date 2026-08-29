@@ -49,13 +49,20 @@ jobs:
 
       # Os fluxos falam com o projeto Supabase de preview, não com produção:
       # eles criam aluno, registram treino e gravam refeição.
+      #
+      # As variáveis vêm do environment `preview` do EAS, a mesma fonte do build
+      # de preview — antes vinham de segredos do GitHub que nunca existiram, e o
+      # APK saía apontando para lugar nenhum (ADR-0021). `env:pull` escreve
+      # `app/.env.local`, que o `expo prebuild` lê.
+      - name: Puxar variáveis do environment preview do EAS
+        run: npx eas-cli env:pull --environment preview
+        working-directory: ./app
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
       - name: Gerar APK de debug
         run: npx expo prebuild --platform android --no-install && ./gradlew assembleDebug
         working-directory: ./app
-        env:
-          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL_DEV }}
-          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY_DEV }}
-          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL_PREVIEW }}
 
       - name: Instalar Maestro
         run: |
@@ -74,6 +81,10 @@ jobs:
           script: |
             adb install -r app/android/app/build/outputs/apk/debug/app-debug.apk
             maestro test app/.maestro --format junit --output maestro-report.xml
+        # ⚠️ Estes dois segredos ainda NÃO existem no GitHub. Sem eles o login
+        # dos fluxos falha e a suíte inteira fica vermelha por configuração, não
+        # por regressão. Criar como secrets do ambiente `preview`, com uma conta
+        # de teste do Supabase de preview — nunca uma conta real.
         env:
           MAESTRO_USUARIO: ${{ secrets.MAESTRO_USUARIO_PREVIEW }}
           MAESTRO_SENHA: ${{ secrets.MAESTRO_SENHA_PREVIEW }}
