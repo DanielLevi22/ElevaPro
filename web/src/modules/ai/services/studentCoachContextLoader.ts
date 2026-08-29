@@ -1,3 +1,4 @@
+import { achatarRespostas } from "@elevapro/shared";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export interface StudentCoachContext {
@@ -72,6 +73,14 @@ export async function loadStudentCoachContext(studentId: string): Promise<Studen
 
   const rawPlan = planRes.data as { name: string; goal: string; status: string } | null;
 
+  // Achatada aqui, uma vez, e não em cada consumidor. Três leem este campo — o
+  // formatador do prompt, o resumo de perfil e o cálculo de prontidão —, e o
+  // formatador interpola direto: objeto vira "[object Object]", que não é vazio
+  // e passa pelo `if (a.injuries)` como se fosse a contraindicação do aluno.
+  // `null` preservado: anamnese ausente e anamnese vazia dizem coisas
+  // diferentes ao modelo.
+  const respostas = (anamnesisRes.data as { responses: Record<string, unknown> } | null)?.responses;
+
   return {
     studentId,
     name: profile.full_name,
@@ -79,8 +88,7 @@ export async function loadStudentCoachContext(studentId: string): Promise<Studen
     personaTrack:
       (profile.persona_track as "beginner" | "returning" | "intermediate" | "advanced") ??
       "beginner",
-    anamnesis:
-      (anamnesisRes.data as { responses: Record<string, unknown> } | null)?.responses ?? null,
+    anamnesis: respostas ? achatarRespostas(respostas) : null,
     lastAssessment,
     activePlan: rawPlan,
   };

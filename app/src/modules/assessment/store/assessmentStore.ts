@@ -1,5 +1,5 @@
 import type { BodyScanDelta, BodyScanRecord } from '@elevapro/shared';
-import { createBodyScanService } from '@elevapro/shared';
+import { achatarRespostas, createBodyScanService } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { createMMKV } from 'react-native-mmkv';
 import { create } from 'zustand';
@@ -11,7 +11,7 @@ import {
 } from '../services/aiBodyScan';
 import { AnamnesisService } from '../services/anamnesisService';
 import {
-  AnamnesisResponse,
+  AnamnesisResponseValue,
   AssessmentStatus,
   BodyScanResult,
   CaptureFraming,
@@ -43,7 +43,7 @@ interface AssessmentState {
     side?: string;
   };
   // Anamnesis State
-  anamnesisResponses: Record<string, AnamnesisResponse>;
+  anamnesisResponses: Record<string, AnamnesisResponseValue>;
   currentSectionIndex: number;
   isAnamnesisSubmitted: boolean; // Flag to track completion
 
@@ -56,7 +56,7 @@ interface AssessmentState {
   submitScan: () => Promise<void>;
 
   // Anamnesis Actions
-  setAnamnesisResponse: (questionId: string, value: string | number | string[] | boolean) => void;
+  setAnamnesisResponse: (questionId: string, value: AnamnesisResponseValue) => void;
   setSectionIndex: (index: number) => void;
   submitAnamnesis: () => Promise<void>;
   syncAnamnesis: (studentId: string) => Promise<void>;
@@ -152,7 +152,11 @@ export const useAssessmentStore = create<AssessmentState>()(
         set((state) => ({
           anamnesisResponses: {
             ...state.anamnesisResponses,
-            [questionId]: { questionId, value },
+            // Valor direto. O embrulho `{ questionId, value }` repetia a chave
+            // do próprio objeto e era produzido só por esta tela — a do aluno
+            // que tem especialista, justamente quem tem alguém lendo o contexto
+            // dele pela IA. Todos os leitores esperam a forma plana.
+            [questionId]: value,
           },
         }));
       },
@@ -168,7 +172,12 @@ export const useAssessmentStore = create<AssessmentState>()(
         if (data?.responses) {
           console.log('Found existing anamnesis data, populating store...');
           set({
-            anamnesisResponses: data.responses,
+            // Achata o que veio do banco: linha gravada antes desta correção
+            // traz o embrulho, e a tela leria `undefined` em todo campo.
+            anamnesisResponses: achatarRespostas(data.responses) as Record<
+              string,
+              AnamnesisResponseValue
+            >,
             isAnamnesisSubmitted: !!data.completedAt,
             studentId: studentId,
           });

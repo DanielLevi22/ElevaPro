@@ -4,6 +4,7 @@ import {
   BodyScanConsentError,
   BodyScanScaleError,
 } from '../../services/aiBodyScan';
+import { AnamnesisService } from '../../services/anamnesisService';
 import { AssessmentStatus } from '../../types/assessment';
 import { useAssessmentStore } from '../assessmentStore';
 
@@ -41,6 +42,10 @@ jest.mock('../../services/aiBodyScan', () => {
     BodyScanAnalysisError,
   };
 });
+
+jest.mock('../../services/anamnesisService', () => ({
+  AnamnesisService: { saveAnamnesis: jest.fn(), getAnamnesis: jest.fn() },
+}));
 
 describe('assessmentStore', () => {
   beforeEach(() => {
@@ -221,5 +226,32 @@ describe('submitScan — mensagens de falha', () => {
 
     expect(useAssessmentStore.getState().errorMessage).toBeNull();
     expect(useAssessmentStore.getState().status).toBe(AssessmentStatus.COMPLETED);
+  });
+});
+
+describe('submitAnamnesis — a forma gravada', () => {
+  beforeEach(() => {
+    useAssessmentStore.getState().reset();
+    jest.clearAllMocks();
+    (AnamnesisService.saveAnamnesis as jest.Mock).mockResolvedValue({ success: true });
+  });
+
+  // A forma plana é a canônica: é o que o web e a tela adaptativa gravam, e o
+  // que todos os leitores esperam. O embrulho `{ questionId, value }` repetia a
+  // chave do próprio objeto — e era produzido só por esta tela, justamente a do
+  // aluno que tem especialista lendo o contexto dele pela IA.
+  it('grava o valor direto, sem o embrulho', async () => {
+    const store = useAssessmentStore.getState();
+    store.setStudentId('aluno-1');
+    store.setAnamnesisResponse('height', 175);
+    store.setAnamnesisResponse('injuries', 'Hérnia de disco L5-S1');
+
+    await useAssessmentStore.getState().submitAnamnesis();
+
+    expect(AnamnesisService.saveAnamnesis).toHaveBeenCalledWith(
+      'aluno-1',
+      { height: 175, injuries: 'Hérnia de disco L5-S1' },
+      true
+    );
   });
 });

@@ -1,3 +1,4 @@
+import { lerRespostaTexto } from "@elevapro/shared";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { StudentContext, StudentHealthContext } from "../types";
 
@@ -31,10 +32,41 @@ const ANAMNESIS_FIELDS = [
   "health_conditions",
 ] as const;
 
-function text(value: unknown): string | undefined {
-  if (value === null || value === undefined) return undefined;
-  const asText = String(value).trim();
-  return asText.length > 0 ? asText : undefined;
+/**
+ * Os seis campos de saúde que vêm da anamnese.
+ *
+ * Pura e exportada de propósito: é o seam da trava que afirma que as duas
+ * formas gravadas em `responses` produzem o mesmo contexto. Enquanto a leitura
+ * vivia dentro do `loadHealth`, afirmar isso exigia subir o banco — e o defeito
+ * que ela protege é justamente o que passa despercebido.
+ *
+ * O coercer local que existia aqui fazia `String(value)`, o que transforma a
+ * resposta embrulhada pelo mobile em `"[object Object]"` — texto não vazio, que
+ * atravessa a checagem de "respondeu?" e chega ao prompt como se fosse a lesão
+ * do aluno. Quem sabe desembrulhar é o leitor compartilhado.
+ */
+export function readAnamnesis(
+  responses: Record<string, unknown>,
+): Pick<
+  StudentHealthContext,
+  | "objective"
+  | "trainingExperience"
+  | "trainingFrequency"
+  | "availableDays"
+  | "injuries"
+  | "healthConditions"
+> {
+  const ler = (campo: (typeof ANAMNESIS_FIELDS)[number]) =>
+    lerRespostaTexto(responses[campo], campo);
+
+  return {
+    objective: ler(ANAMNESIS_FIELDS[0]),
+    trainingExperience: ler(ANAMNESIS_FIELDS[1]),
+    trainingFrequency: ler(ANAMNESIS_FIELDS[2]),
+    availableDays: ler(ANAMNESIS_FIELDS[3]),
+    injuries: ler(ANAMNESIS_FIELDS[4]),
+    healthConditions: ler(ANAMNESIS_FIELDS[5]),
+  };
 }
 
 function numeric(value: unknown): number | undefined {
@@ -88,12 +120,7 @@ async function loadHealth(studentId: string): Promise<StudentHealthContext> {
   const assessment = assessmentRes.data;
 
   const health: StudentHealthContext = {
-    objective: text(responses[ANAMNESIS_FIELDS[0]]),
-    trainingExperience: text(responses[ANAMNESIS_FIELDS[1]]),
-    trainingFrequency: text(responses[ANAMNESIS_FIELDS[2]]),
-    availableDays: text(responses[ANAMNESIS_FIELDS[3]]),
-    injuries: text(responses[ANAMNESIS_FIELDS[4]]),
-    healthConditions: text(responses[ANAMNESIS_FIELDS[5]]),
+    ...readAnamnesis(responses),
     weightKg: numeric(assessment?.weight_kg),
     heightCm: numeric(assessment?.height_cm),
     bodyFatPct: numeric(assessment?.body_fat_pct),

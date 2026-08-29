@@ -39,7 +39,30 @@ const FAIXAS: Record<string, Faixa> = {
   weight: { min: 30, max: 300 },
 };
 
-export function lerRespostaNumerica(bruto: unknown, pergunta: string): RespostaNumerica {
+/**
+ * O valor por trás do embrulho do mobile.
+ *
+ * A coluna `responses` guarda duas formas na mesma chave: o web grava o valor
+ * direto (`{ height: 175 }`) e o mobile grava embrulhado
+ * (`{ height: { questionId: "height", value: 175 } }`). Quem lê sem desembrulhar
+ * recebe o objeto no lugar do valor — e `Number({...})` é NaN, então a resposta
+ * de quem preencheu pelo celular vira "não numérica".
+ */
+function desembrulhar(entrada: unknown): unknown {
+  if (
+    entrada !== null &&
+    typeof entrada === "object" &&
+    !Array.isArray(entrada) &&
+    "value" in entrada
+  ) {
+    return (entrada as { value: unknown }).value;
+  }
+  return entrada;
+}
+
+export function lerRespostaNumerica(entrada: unknown, pergunta: string): RespostaNumerica {
+  const bruto = desembrulhar(entrada);
+
   if (bruto === null || bruto === undefined || bruto === "") {
     return { ok: false, motivo: "ausente" };
   }
@@ -77,4 +100,43 @@ function emCentimetro(bruta: number, pergunta: string, faixa: Faixa | undefined)
   // Arredondado porque 1.83 * 100 é 183.00000000000003, e essa cauda chegaria
   // inteira ao prompt da análise corporal.
   return Math.round(bruta * 100);
+}
+
+/**
+ * O texto de uma resposta aberta, ou `undefined` quando não há resposta.
+ *
+ * Sem tipo de resultado, ao contrário da leitura numérica: aqui não existe
+ * "respondeu errado". Ou o aluno escreveu algo, ou não escreveu — e inventar um
+ * motivo de recusa para um campo livre seria cerimônia sem variação por trás.
+ *
+ * @example
+ * lerRespostaTexto(respostas.injuries, "injuries"); // "Hérnia de disco L5-S1"
+ */
+export function lerRespostaTexto(entrada: unknown, _pergunta: string): string | undefined {
+  const bruto = desembrulhar(entrada);
+  if (bruto === null || bruto === undefined) return undefined;
+
+  const texto = String(bruto).trim();
+  return texto.length > 0 ? texto : undefined;
+}
+
+/**
+ * O mapa de respostas achatado, venha ele embrulhado ou já plano.
+ *
+ * Existe porque as duas formas convivem na mesma coluna: quem gravou antes desta
+ * correção trouxe `{ questionId, value }` em toda chave. Achatar na carga é o
+ * que permite a tela ler o valor direto sem mostrar campo vazio a quem já
+ * respondeu.
+ *
+ * @example
+ * achatarRespostas({ height: { questionId: "height", value: 175 } }); // { height: 175 }
+ */
+export function achatarRespostas(
+  respostas: Record<string, unknown> | null | undefined,
+): Record<string, unknown> {
+  if (!respostas) return {};
+
+  return Object.fromEntries(
+    Object.entries(respostas).map(([chave, valor]) => [chave, desembrulhar(valor)]),
+  );
 }

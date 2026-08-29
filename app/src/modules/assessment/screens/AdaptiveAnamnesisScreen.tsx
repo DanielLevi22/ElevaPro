@@ -1,3 +1,11 @@
+import type { AdaptiveQuestion, PersonaTrack, UnlockCard } from '@elevapro/shared';
+import {
+  getPrecisionScore,
+  getQuestionPrecisionDelta,
+  getTrackQuestions,
+  PERSONA_OPTIONS,
+  UNLOCK_CARDS,
+} from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -12,14 +20,6 @@ import {
   View,
 } from 'react-native';
 import { useAuthStore } from '@/modules/auth/store/authStore';
-import type { AdaptiveQuestion, PersonaTrack, UnlockCard } from '../data/anamnesisAdaptive';
-import {
-  getPrecisionScore,
-  getQuestionPrecisionDelta,
-  getTrackQuestions,
-  PERSONA_OPTIONS,
-  UNLOCK_CARDS,
-} from '../data/anamnesisAdaptive';
 import { AnamnesisService } from '../services/anamnesisService';
 
 type AnamnesisValue = string | number | string[] | boolean;
