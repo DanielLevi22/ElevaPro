@@ -40,6 +40,10 @@ const appEnvMap = {
   SUPABASE_URL: "EXPO_PUBLIC_SUPABASE_URL",
   SUPABASE_ANON_KEY: "EXPO_PUBLIC_SUPABASE_ANON_KEY",
   API_URL: "EXPO_PUBLIC_API_URL", // base do BFF no web — sem ela as features de IA quebram
+  // Atravessa o Deployment Protection do preview. Sem ela, toda chamada de IA
+  // recebe 302 para o SSO da Vercel. Vazia em produção, que não é protegida.
+  // Não é segredo de verdade no mobile: EXPO_PUBLIC_* é inlinada no bundle.
+  VERCEL_BYPASS: "EXPO_PUBLIC_VERCEL_BYPASS",
   // DATABASE_URL não vai pro app — é só para migrations
   // Nenhuma chave de provedor de IA vai pro mobile: EXPO_PUBLIC_* entra no
   // bundle e é extraível. Toda IA passa pelo BFF (ADR-004).

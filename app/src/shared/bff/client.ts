@@ -41,6 +41,45 @@ import { fetch as expoFetch } from 'expo/fetch';
 const VAR_URL = 'EXPO_PUBLIC_API_URL';
 
 /**
+ * Segredo do Protection Bypass for Automation da Vercel. Opcional.
+ *
+ * ── Por que existe ───────────────────────────────────────────────────────────
+ *
+ * O `Deployment Protection` da Vercel fica na frente do deployment inteiro —
+ * páginas e rotas de API. Ele é PERÍMETRO, não autorização: só pergunta "você é
+ * da equipe Vercel?", e não sabe o que é aluno, especialista ou vínculo. O app
+ * não tem sessão da Vercel e nunca vai ter, então sem bypass nenhuma chamada de
+ * IA alcança o BFF — foi o que deixou as cinco features de IA fora do ar.
+ *
+ * ── Por que bypass em vez de desligar a proteção ─────────────────────────────
+ *
+ * `Deployment Protection` é configuração de PROJETO. Desligar não abriria só o
+ * alias de preview: abriria todo preview daquele projeto, para sempre, incluindo
+ * o de cada PR futuro. Com o bypass, o perímetro continua de pé e passa só quem
+ * tem o segredo.
+ *
+ * ── O que este segredo NÃO é ─────────────────────────────────────────────────
+ *
+ * `EXPO_PUBLIC_*` é inlinada no bundle em tempo de build. Este valor SAI do APK
+ * com um unzip, e isso é teto de app cliente, não descuido: no Expo só variável
+ * com esse prefixo chega ao runtime. É a mesma razão pela qual a
+ * `ANTHROPIC_API_KEY` nunca vai para o mobile e toda IA passa pelo BFF
+ * (`ADR-004`).
+ *
+ * Então o modelo de ameaça que ele cobre é "quem digitou a URL", não "quem tem
+ * o APK" — e o APK é `distribution: internal`. Quem protege o DADO é
+ * `authorizeStudent`/`authorizeUser` em `web/src/lib/api-auth.ts`, com a guarda
+ * `check-api-auth.js` falhando o CI se alguma rota sob `/api/` escapar. A
+ * Vercel é a tranca do prédio; o `api-auth` é a fechadura do apartamento.
+ *
+ * Ausente em produção de propósito: lá o domínio não é protegido.
+ */
+const VAR_BYPASS = 'EXPO_PUBLIC_VERCEL_BYPASS';
+
+/** Header que a Vercel lê para liberar um deployment protegido. */
+const HEADER_BYPASS = 'x-vercel-protection-bypass';
+
+/**
  * Onde o BFF está, sem barra no fim.
  *
  * Lido a cada chamada, e não uma vez no import, porque `EXPO_PUBLIC_*` é
@@ -62,6 +101,23 @@ function bffOrigin(): string {
 /** URL absoluta de uma rota do BFF. `path` começa com barra. */
 export function bffUrl(path: string): string {
   return `${bffOrigin()}${path}`;
+}
+
+/**
+ * O header de bypass, quando há segredo configurado e o destino é HTTPS.
+ *
+ * A checagem de esquema não é zelo decorativo: mandar segredo por HTTP em texto
+ * claro entrega o bypass a quem estiver no caminho, e `EXPO_PUBLIC_API_URL`
+ * aceita `http://10.0.2.2:3000` no desenvolvimento local — onde, aliás, não há
+ * proteção nenhuma para contornar. Objeto vazio quando não se aplica: o header
+ * some do request em vez de ir vazio, que a Vercel trataria como tentativa
+ * inválida.
+ */
+function headerDeBypass(url: string): Record<string, string> {
+  const segredo = process.env[VAR_BYPASS]?.trim();
+  if (!segredo || segredo === 'undefined') return {};
+  if (!url.startsWith('https://')) return {};
+  return { [HEADER_BYPASS]: segredo };
 }
 
 /**
@@ -168,9 +224,18 @@ export async function lerRespostaBff<T>(response: Response, url: string): Promis
   // Antes do `ok`: com `redirect: 'manual'` o 302 chega aqui como resposta, e
   // é o sintoma mais direto de proteção de plataforma na frente da API.
   if (response.status >= 300 && response.status < 400) {
+    // Um 302 com bypass configurado e um 302 sem bypass são problemas
+    // diferentes — segredo errado contra segredo ausente — e exigem ações
+    // diferentes. Sem esta distinção o erro volta a ser o que era: verdadeiro,
+    // inútil, e igual para causas que não se parecem.
+    const tinhaBypass = HEADER_BYPASS in headerDeBypass(url);
+    const pista = tinhaBypass
+      ? `o segredo de ${VAR_BYPASS} foi enviado e não foi aceito — confira se ele bate com o Protection Bypass for Automation do projeto na Vercel (o valor é inlinado no build: mudar o segredo exige build novo)`
+      : `${VAR_BYPASS} não está definida, e este deployment está atrás do Deployment Protection da Vercel`;
+
     throw new BffUnreachableError(
       host,
-      `respondeu ${response.status} (redirect) — numa API isso é sempre infraestrutura, nunca resposta do produto`
+      `respondeu ${response.status} (redirect) — numa API isso é sempre infraestrutura, nunca resposta do produto. ${pista}`
     );
   }
 
@@ -223,6 +288,7 @@ export async function fetchBff(
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...headerDeBypass(url),
       },
       body: JSON.stringify(body),
       signal: abort.signal,

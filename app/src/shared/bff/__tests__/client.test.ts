@@ -172,3 +172,77 @@ describe('postBff', () => {
     await expect(postBff('/api/x', {})).rejects.not.toBeInstanceOf(BffHttpError);
   });
 });
+
+/**
+ * O Protection Bypass da Vercel.
+ *
+ * O segredo existe para o app atravessar o PERÍMETRO — não para autorizar nada.
+ * Quem protege o dado é `authorizeStudent`/`authorizeUser` no BFF. Ver o
+ * cabeçalho de `VAR_BYPASS` em `client.ts` para por que ele é extraível do APK
+ * e por que isso é aceito.
+ */
+describe('Protection Bypass da Vercel', () => {
+  afterEach(() => {
+    process.env.EXPO_PUBLIC_VERCEL_BYPASS = undefined;
+    delete process.env.EXPO_PUBLIC_VERCEL_BYPASS;
+  });
+
+  it('manda o header quando o segredo está configurado', async () => {
+    process.env.EXPO_PUBLIC_VERCEL_BYPASS = 'segredo-123';
+    (global.fetch as jest.Mock).mockResolvedValueOnce(resposta({ corpo: { ok: 1 } }));
+
+    await postBff('/api/x', {}, { token: 'jwt' });
+
+    const [, init] = (global.fetch as jest.Mock).mock.calls[0];
+    expect(init.headers['x-vercel-protection-bypass']).toBe('segredo-123');
+  });
+
+  // Produção não é protegida: mandar o header lá seria vazar o segredo para um
+  // destino que não pediu nada.
+  it('não manda o header quando não há segredo', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce(resposta({ corpo: { ok: 1 } }));
+
+    await postBff('/api/x', {}, { token: 'jwt' });
+
+    const [, init] = (global.fetch as jest.Mock).mock.calls[0];
+    expect('x-vercel-protection-bypass' in init.headers).toBe(false);
+  });
+
+  /**
+   * Segredo em texto claro sobre HTTP é segredo entregue a quem estiver no
+   * caminho. `EXPO_PUBLIC_API_URL` aceita `http://10.0.2.2:3000` no
+   * desenvolvimento local — onde, aliás, não existe proteção para contornar.
+   */
+  it('nunca manda o segredo por HTTP', async () => {
+    process.env.EXPO_PUBLIC_API_URL = 'http://10.0.2.2:3000';
+    process.env.EXPO_PUBLIC_VERCEL_BYPASS = 'segredo-123';
+    (global.fetch as jest.Mock).mockResolvedValueOnce(resposta({ corpo: { ok: 1 } }));
+
+    await postBff('/api/x', {}, { token: 'jwt' });
+
+    const [, init] = (global.fetch as jest.Mock).mock.calls[0];
+    if ('x-vercel-protection-bypass' in init.headers) {
+      throw new Error(
+        'SEGREDO EM TEXTO CLARO: o bypass foi enviado por HTTP. ' +
+          'Qualquer intermediário no caminho passa a poder atravessar o Deployment Protection.'
+      );
+    }
+  });
+
+  // As três causas produziam a mesma tela muda. Um 302 com segredo e um 302 sem
+  // segredo são problemas diferentes e exigem ações diferentes.
+  it('diz que o segredo não foi aceito quando havia segredo', async () => {
+    process.env.EXPO_PUBLIC_VERCEL_BYPASS = 'segredo-errado';
+    (global.fetch as jest.Mock).mockResolvedValueOnce(resposta({ status: 302, contentType: null }));
+
+    await expect(postBff('/api/x', {})).rejects.toThrow(/foi enviado e não foi aceito/);
+  });
+
+  it('diz que a variável falta quando não havia segredo', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce(resposta({ status: 302, contentType: null }));
+
+    await expect(postBff('/api/x', {})).rejects.toThrow(
+      /EXPO_PUBLIC_VERCEL_BYPASS não está definida/
+    );
+  });
+});
