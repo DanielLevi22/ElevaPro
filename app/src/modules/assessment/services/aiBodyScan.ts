@@ -78,8 +78,6 @@ export const AIBodyScanService = {
       back?: string;
       side?: string;
     },
-    /** Só quando o aluno ainda não tem avaliação física registrada. */
-    informed?: { heightCm: number; weightKg?: number },
     /** Enquadramento usado, para o próximo escaneamento reproduzir. */
     framing?: CaptureFraming | null
   ): Promise<BodyScanResult> => {
@@ -114,8 +112,6 @@ export const AIBodyScanService = {
       ROTA,
       {
         images: base64Images,
-        heightCm: informed?.heightCm,
-        weightKg: informed?.weightKg,
         framing: framing ?? undefined,
       },
       { token }

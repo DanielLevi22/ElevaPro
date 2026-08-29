@@ -72,6 +72,9 @@ describe("AssessmentModal", () => {
   it("calls mutateAsync on submit", async () => {
     render(<AssessmentModal studentId="student-1" onClose={vi.fn()} />, { wrapper });
     await userEvent.type(screen.getByLabelText(/peso/i), "75");
+    // A altura passou a ser obrigatória junto com o peso: os dois formam a
+    // Escala do body scan, e a rota recusa com 422 sem eles.
+    await userEvent.type(screen.getByLabelText(/altura/i), "175");
     await userEvent.click(screen.getByRole("button", { name: "Salvar Avaliação" }));
     await waitFor(() =>
       expect(mockMutateAsync).toHaveBeenCalledWith(
@@ -83,6 +86,8 @@ describe("AssessmentModal", () => {
   it("shows error message on failure", async () => {
     mockMutateAsync.mockRejectedValueOnce(new Error("Erro ao salvar avaliação"));
     render(<AssessmentModal studentId="student-1" onClose={vi.fn()} />, { wrapper });
+    await userEvent.type(screen.getByLabelText(/peso/i), "75");
+    await userEvent.type(screen.getByLabelText(/altura/i), "175");
     await userEvent.click(screen.getByRole("button", { name: "Salvar Avaliação" }));
     await waitFor(() =>
       expect(screen.getByRole("alert")).toHaveTextContent("Erro ao salvar avaliação"),
@@ -94,5 +99,18 @@ describe("AssessmentModal", () => {
     render(<AssessmentModal studentId="student-1" onClose={onClose} />, { wrapper });
     await userEvent.click(screen.getByRole("button", { name: "Cancelar" }));
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  // Altura e peso são a Escala que calibra o body scan do aluno. Sem eles a
+  // avaliação não serve de fonte, e antes desta trava ela era gravada assim
+  // mesmo — o aluno descobria três telas depois, barrado na análise com um
+  // "tente de novo" que nunca podia funcionar.
+  it("não grava avaliação sem a escala, e diz por quê", async () => {
+    render(<AssessmentModal studentId="student-1" onClose={vi.fn()} />, { wrapper });
+    await userEvent.type(screen.getByLabelText(/peso/i), "75");
+    await userEvent.click(screen.getByRole("button", { name: "Salvar Avaliação" }));
+
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent(/obrigatórios/i));
+    expect(mockMutateAsync).not.toHaveBeenCalled();
   });
 });

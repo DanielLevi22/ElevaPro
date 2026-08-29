@@ -22,15 +22,20 @@ const PHOTO_ASPECT_RATIO = 4 / 3;
 const PHOTO_WIDTH = width - 48;
 const PHOTO_HEIGHT = PHOTO_WIDTH * PHOTO_ASPECT_RATIO;
 
-// Mock Coordinates for a "Slightly Scoliotic" posture
+// Figura de referência, simétrica de propósito.
+//
+// Antes as coordenadas descreviam uma postura "levemente escoliótica" — ombro
+// direito mais baixo, quadril deslocado —, desenhada igual para todo aluno. Um
+// diagrama genérico pode ser genérico; o que ele não pode é afirmar uma
+// assimetria que ninguém mediu naquele corpo.
 const JOINTS = {
   nose: { x: 0.5, y: 0.15 },
   leftShoulder: { x: 0.35, y: 0.25 },
-  rightShoulder: { x: 0.65, y: 0.28 }, // Lower right shoulder (imbalance)
+  rightShoulder: { x: 0.65, y: 0.25 },
   leftElbow: { x: 0.3, y: 0.45 },
-  rightElbow: { x: 0.7, y: 0.48 },
+  rightElbow: { x: 0.7, y: 0.45 },
   leftWrist: { x: 0.25, y: 0.65 },
-  rightWrist: { x: 0.75, y: 0.68 },
+  rightWrist: { x: 0.75, y: 0.65 },
   leftHip: { x: 0.4, y: 0.6 },
   rightHip: { x: 0.6, y: 0.6 },
   leftKnee: { x: 0.38, y: 0.8 },
@@ -40,83 +45,13 @@ const JOINTS = {
 };
 
 // Analysis Data for each view
+// Só a estrutura das abas. O `feedback` fixo que morava aqui — "Ratio de 1.618
+// (Golden Ratio)", risco, cor — era texto clínico escrito à mão e mostrado a
+// qualquer aluno. O feedback de verdade vem do resultado da análise.
 const ANALYSIS_VIEWS = [
-  {
-    id: 'front',
-    label: 'Vista Frontal',
-    description: 'Simetria e Proporções Musculares',
-    feedback: [
-      {
-        title: 'Proporção Ombro/Cintura',
-        risk: 'ÓTIMO',
-        color: 'emerald',
-        text: 'Ratio de 1.618 (Golden Ratio). Excelente proporção estética.',
-      },
-      {
-        title: 'Simetria de Peitoral',
-        risk: 'MODERADO',
-        color: 'amber',
-        text: 'Leve desproporção volumar no peitoral superior direito vs esquerdo.',
-      },
-      {
-        title: 'Nivelamento de Quadril',
-        risk: 'NORMAL',
-        color: 'emerald',
-        text: 'Cristas ilíacas niveladas, sem rotação aparente.',
-      },
-    ],
-  },
-  {
-    id: 'back',
-    label: 'Vista Posterior',
-    description: 'Cadeia Posterior e Dorsais',
-    feedback: [
-      {
-        title: 'Expansão de Dorsal',
-        risk: 'BOM',
-        color: 'emerald',
-        text: 'Boa largura de dorsais, criando aspecto em V.',
-      },
-      {
-        title: 'Alamento Escapular',
-        risk: 'BAIXO',
-        color: 'amber',
-        text: 'Escápula direita levemente alada. Sugere fortalecimento de serrátil.',
-      },
-    ],
-  },
-  {
-    id: 'side_r',
-    label: 'Lateral Direita',
-    description: 'Alinhamento e Postura',
-    feedback: [
-      {
-        title: 'Projeção de Ombro',
-        risk: 'ALTO',
-        color: 'rose',
-        text: 'Rotação interna excessiva. Desbalanço entre peitoral e manguito posterior.',
-      },
-      {
-        title: 'Curvatura Lombar',
-        risk: 'NORMAL',
-        color: 'emerald',
-        text: 'Lordose fisiológica preservada.',
-      },
-    ],
-  },
-  {
-    id: 'side_l',
-    label: 'Lateral Esquerda',
-    description: 'Simetria Contralateral',
-    feedback: [
-      {
-        title: 'Cadeia Posterior Perna',
-        risk: 'NORMAL',
-        color: 'emerald',
-        text: 'Bons volumes de glúteo e posterior de coxa.',
-      },
-    ],
-  },
+  { id: 'front', label: 'Vista Frontal', description: 'Simetria e Proporções Musculares' },
+  { id: 'back', label: 'Vista Posterior', description: 'Cadeia Posterior e Alinhamento' },
+  { id: 'side', label: 'Vista Lateral', description: 'Curvatura e Postura' },
 ];
 
 // Radar Chart Component
@@ -528,24 +463,34 @@ export default function PostureAnalysis() {
     );
   }
 
-  const isDemo = !lastResult;
+  // Sem resultado não há o que mostrar, e era aqui que a tela inventava: scores
+  // fixos, feedback fabricado e um esqueleto assimétrico desenhado como se
+  // fosse o corpo do aluno, atrás de uma tarja. Número inventado com aviso
+  // continua sendo número inventado — é a mesma regra que o `ADR-0010` impôs ao
+  // backend, aplicada à tela.
+  if (!lastResult?.postureAnalysis) {
+    return (
+      <ScreenLayout>
+        <View className="flex-1 items-center justify-center px-8">
+          <Ionicons name="body-outline" size={48} color={colors.text.muted} />
+          <Text className="text-white text-xl font-black text-center mt-4">
+            Nenhuma análise ainda
+          </Text>
+          <Text className="text-zinc-400 text-sm text-center mt-2 leading-relaxed">
+            Quando você fizer um escaneamento, o resultado aparece aqui.
+          </Text>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="mt-8 border border-white/15 px-8 py-4 rounded-2xl"
+          >
+            <Text className="text-white font-black uppercase tracking-widest text-xs">Voltar</Text>
+          </TouchableOpacity>
+        </View>
+      </ScreenLayout>
+    );
+  }
 
-  // Dynamic Data with fallback
-  const scores = lastResult?.postureAnalysis?.scores || {
-    symmetry: 85,
-    muscle: 72,
-    posture: 90,
-  };
-
-  const feedback = lastResult?.postureAnalysis?.feedback || {
-    front: ANALYSIS_VIEWS[0].feedback,
-    back: ANALYSIS_VIEWS[1].feedback,
-    side: ANALYSIS_VIEWS[2].feedback,
-  };
-
-  const recommendations =
-    lastResult?.postureAnalysis?.recommendations ||
-    'Para corrigir a assimetria peitoral e rotação de ombro, priorize exercícios unilaterais (ex: Crucifixo Unilateral) e foque no fortalecimento de rotadores externos.';
+  const { scores, feedback, recommendations } = lastResult.postureAnalysis;
 
   // Update currentView with AI feedback
   const currentFeedback = feedback[currentView.id as keyof typeof feedback] || [];
@@ -567,27 +512,17 @@ export default function PostureAnalysis() {
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-        {/* Demo mode banner — shown when AI analysis failed */}
-        {isDemo && (
-          <View className="mx-6 mt-4 flex-row items-center gap-3 bg-amber-500/10 border border-amber-500/30 px-4 py-3 rounded-xl">
-            <Ionicons name="warning-outline" size={16} color="#f59e0b" />
-            <Text className="text-amber-400 text-xs flex-1 leading-5">
-              Análise de demonstração — a IA não conseguiu processar as fotos. Tente novamente.
-            </Text>
-          </View>
-        )}
-
         {/* A comparação vem antes das fotos e dos valores absolutos: é o número
             mais confiável da tela, porque o erro da estimativa se cancela na
             diferença (ADR-0010). */}
-        {!isDemo && <ScanComparison deltas={scanDeltas} />}
+        <ScanComparison deltas={scanDeltas} />
 
         {/*
           O histórico existia no store desde a entrega do body scan e não tinha
           tela. Sem lista não há como o titular apagar uma análise sua — e a
           eliminação do Art. 18, VI era um direito sem botão.
         */}
-        {!isDemo && id && (
+        {id && (
           <ScanHistoryList
             scans={scanHistory}
             onDelete={(scanId) => {

@@ -73,6 +73,12 @@ export interface BodyScanRecord {
 export interface BodyScanInput {
   height_cm: number;
   weight_kg: number | null;
+  /**
+   * Se a Escala deste scan foi medida com fita pelo especialista ou declarada
+   * pelo aluno na anamnese. Sem isto a tela rotula toda altura como "medido",
+   * o que passa a mentir assim que a anamnese vira fonte.
+   */
+  scale_source?: "assessment" | "anamnese";
   body_fat_pct: number | null;
   muscle_mass_kg: number | null;
   bmi: number | null;

@@ -150,7 +150,6 @@ export const useAssessmentStore = create<AssessmentState>()(
 
           const result = await AIBodyScanService.analyzeImages(
             capturedImages,
-            undefined,
             get().captureFraming
           );
 
