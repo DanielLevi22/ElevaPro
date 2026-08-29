@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assertServerEnv, ServerEnvError } from "../server-env";
+import { assertServerEnv, instrucaoDeAmbiente, ServerEnvError } from "../server-env";
 
 const COMPLETO = {
   ANTHROPIC_API_KEY: "sk-ant-real",
@@ -19,13 +19,14 @@ describe("assertServerEnv", () => {
     const env = { ...COMPLETO, ANTHROPIC_API_KEY: undefined };
 
     expect(() => assertServerEnv(env)).toThrow(ServerEnvError);
-    expect(() => assertServerEnv(env)).toThrow(/rota \/api\/ai\/\* responde erro/);
+    expect(instrucaoDeAmbiente(["ANTHROPIC_API_KEY"])).toMatch(/rota \/api\/ai\/\* responde erro/);
   });
 
   it("recusa quando a service role falta — sem ela a RLS não é o controle, é o vazio", () => {
     const env = { ...COMPLETO, SUPABASE_SERVICE_ROLE_KEY: "" };
 
-    expect(() => assertServerEnv(env)).toThrow(/em silêncio/);
+    expect(() => assertServerEnv(env)).toThrow(ServerEnvError);
+    expect(instrucaoDeAmbiente(["SUPABASE_SERVICE_ROLE_KEY"])).toMatch(/em silêncio/);
   });
 
   // O `supabase-admin.ts` só reclamava de valor vazio. Um placeholder de
@@ -64,9 +65,25 @@ describe("assertServerEnv", () => {
 
   // A mensagem tem que ensinar onde a variável mora, senão o próximo a ver o
   // erro repete o caminho: põe no GitHub Secrets e acha que resolveu.
-  it("explica que variável de runtime não vem do passo de build", () => {
-    expect(() => assertServerEnv({ ...COMPLETO, ANTHROPIC_API_KEY: undefined })).toThrow(
-      /no-op\s+para o runtime/,
-    );
+  // A instrução ensina onde a variável mora, senão o próximo a ver o erro
+  // repete o caminho: põe no GitHub Secrets e acha que resolveu.
+  it("a instrução explica que variável de runtime não vem do passo de build", () => {
+    expect(instrucaoDeAmbiente(["ANTHROPIC_API_KEY"])).toMatch(/no-op para o runtime/);
+  });
+
+  // Prova negativa do vazamento: `message` é o único campo que uma página de
+  // erro renderiza sozinha, e uma rota nova que esqueça o invólucro faria
+  // exatamente isso. Nome de variável e topologia ficam fora dela.
+  it("a mensagem do erro não nomeia variável, host nem plataforma", () => {
+    try {
+      assertServerEnv({ ...COMPLETO, ANTHROPIC_API_KEY: undefined });
+      expect.unreachable("deveria ter lançado");
+    } catch (erro) {
+      const mensagem = (erro as Error).message;
+      expect(mensagem).not.toContain("ANTHROPIC");
+      expect(mensagem).not.toContain("vercel");
+      expect(mensagem).not.toContain("Vercel");
+      expect(mensagem).not.toContain("env add");
+    }
   });
 });

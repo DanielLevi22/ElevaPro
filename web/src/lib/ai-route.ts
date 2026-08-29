@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { assertServerEnv, ServerEnvError } from "./server-env";
+import { assertServerEnv, instrucaoDeAmbiente, ServerEnvError } from "./server-env";
 
 /**
  * O invólucro que impede uma rota de IA de morrer em HTML.
@@ -43,7 +43,7 @@ export function rotaDeIA<Ctx>(handler: Handler<Ctx>): Handler<Ctx> {
       if (erro instanceof ServerEnvError) {
         // O log carrega quais faltam; a resposta não — nome de variável de
         // ambiente não é informação de cliente.
-        console.error("[ia] configuração de servidor ausente", { faltando: erro.faltando });
+        console.error("[ia] configuração de servidor ausente", instrucaoDeAmbiente(erro.faltando));
         return NextResponse.json({ error: "server_misconfigured" }, { status: 503 });
       }
 

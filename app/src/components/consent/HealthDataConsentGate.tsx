@@ -3,6 +3,8 @@ import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useEffect, useState } from 'react';
 import { Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors } from '@/constants/colors';
 
 /**
  * Pede o consentimento de dados de saúde na versão vigente da política, e
@@ -40,6 +42,7 @@ const ITENS_ARMAZENADOS = [
 ];
 
 export function HealthDataConsentGate({ studentId, isStudent }: HealthDataConsentGateProps) {
+  const insets = useSafeAreaInsets();
   const [precisaConsentir, setPrecisaConsentir] = useState(false);
   const [gravando, setGravando] = useState(false);
 
@@ -92,11 +95,13 @@ export function HealthDataConsentGate({ studentId, isStudent }: HealthDataConsen
         <View className="bg-surface rounded-t-[32px] border-t border-border max-h-[88%]">
           <View className="items-center pt-7 pb-4">
             <View className="w-16 h-16 rounded-full bg-primary/10 items-center justify-center border border-primary/20">
-              <Ionicons name="shield-checkmark" size={32} color="#CCFF00" />
+              <Ionicons name="shield-checkmark" size={32} color={colors.primary.solid} />
             </View>
           </View>
 
-          <ScrollView className="px-7" contentContainerClassName="pb-2">
+          {/* `flex-1`: sem ele o ScrollView não encolhe dentro do `max-h`, o rodapé
+              é empurrado para fora da tela e a última linha do aviso some. */}
+          <ScrollView className="px-7 flex-1" contentContainerClassName="pb-2">
             <Text className="text-foreground text-2xl font-extrabold font-display text-center">
               Seus dados de saúde
             </Text>
@@ -110,7 +115,7 @@ export function HealthDataConsentGate({ studentId, isStudent }: HealthDataConsen
             </Text>
             {ITENS_ARMAZENADOS.map((item) => (
               <View key={item} className="flex-row items-start gap-2.5 mb-2">
-                <Ionicons name="ellipse" size={6} color="#71717A" style={{ marginTop: 7 }} />
+                <Ionicons name="ellipse" size={6} color={colors.text.muted} className="mt-[7px]" />
                 <Text className="text-muted-foreground font-sans flex-1 leading-relaxed">
                   {item}
                 </Text>
@@ -124,14 +129,19 @@ export function HealthDataConsentGate({ studentId, isStudent }: HealthDataConsen
               sua prescrição quando algo dói ou some.
             </Text>
 
-            <Text className="text-muted-foreground/70 font-sans text-xs mt-6 leading-relaxed">
+            {/* Opacidade cheia: com `/70` este parágrafo ficava em 4.04:1 sobre a
+                superfície, abaixo do mínimo de 4.5:1 — e é justamente o texto
+                que declara a base legal do tratamento. */}
+            <Text className="text-muted-foreground font-sans text-xs mt-6 leading-relaxed">
               Base legal: Tutela da saúde (Art. 11, II, f) e Consentimento (Art. 11, I) da LGPD.
               Você pode revogar quando quiser no seu perfil — a revogação vale daqui para frente e
               não apaga o que já foi registrado. Versão {POLICY_VERSION} da política.
             </Text>
           </ScrollView>
 
-          <View className="px-7 pt-4 pb-9 gap-3">
+          {/* `pb` do inset, não fixo: com barra de navegação por botões o
+              `pb-9` deixava o último texto atrás dela. */}
+          <View className="px-7 pt-4 gap-3" style={{ paddingBottom: insets.bottom + 24 }}>
             <TouchableOpacity
               onPress={aceitar}
               disabled={gravando}
@@ -158,7 +168,9 @@ export function HealthDataConsentGate({ studentId, isStudent }: HealthDataConsen
               </Text>
             </TouchableOpacity>
 
-            <Text className="text-muted-foreground/60 font-sans text-[11px] text-center leading-relaxed">
+            {/* Era `/60` em 11px: 3.30:1, o pior contraste da tela, e no texto que
+                explica o que se perde ao recusar. Opacidade cheia e 12px. */}
+            <Text className="text-muted-foreground font-sans text-xs text-center leading-relaxed">
               Sem o aceite o app continua funcionando, mas para de registrar treinos, refeições e
               medidas.
             </Text>
