@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import Animated, { SlideInDown } from 'react-native-reanimated';
 import { showAlert } from '@/components/ui/appAlert';
+import { mensagemDeErroBff } from '@/shared/bff';
 import { AIWorkoutResponse, WorkoutAIService } from '../services/WorkoutAIService';
 import { useWorkoutStore } from '../store/workoutStore';
 
@@ -79,11 +80,12 @@ export function AIWorkoutNegotiationModal({
 
       setMessages([aiMsg]);
       setCurrentPlan(response.plan);
-    } catch (error) {
-      console.error('AI Error:', error);
+    } catch (erro) {
+      // `console.error` não existe num APK de release: o log some com o
+      // aparelho do usuário, e a frase fixa não dizia qual das causas era.
       showAlert({
         title: 'Erro',
-        message: 'Falha ao gerar treino. Tente novamente.',
+        message: mensagemDeErroBff(erro),
         type: 'error',
       });
       onClose();
@@ -130,8 +132,8 @@ export function AIWorkoutNegotiationModal({
 
       setMessages((prev) => [...prev, aiMsg]);
       setCurrentPlan(response.plan);
-    } catch (_error) {
-      showAlert({ title: 'Erro', message: 'Falha ao atualizar treino.', type: 'error' });
+    } catch (erro) {
+      showAlert({ title: 'Erro', message: mensagemDeErroBff(erro), type: 'error' });
     } finally {
       setLoading(false);
     }
