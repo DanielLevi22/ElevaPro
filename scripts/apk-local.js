@@ -153,13 +153,25 @@ if (fs.existsSync(path.join(APP, ".env.local"))) {
 const ANDROID = path.join(APP, "android");
 const gradlew = path.join(ANDROID, process.platform === "win32" ? "gradlew.bat" : "gradlew");
 
+// O APK anterior sai da frente ANTES de compilar. Sem isso, um build que
+// terminasse sem gerar artefato deixaria o antigo no lugar, e a conferência do
+// passo 4 aprovaria um arquivo velho — dizendo "pronto e conferido" sobre o
+// binário que você já tinha. A checagem de existência depois do build só
+// significa alguma coisa se o arquivo não existia antes dele.
+if (fs.existsSync(APK)) {
+  const anterior = fs.statSync(APK).mtime.toLocaleString("pt-BR");
+  fs.rmSync(APK);
+  console.log(`\n🗑  APK anterior removido (era de ${anterior})`);
+}
+
 passo("Compilando o APK de release", `"${gradlew}"`, ["assembleRelease", "--console=plain"], {
   cwd: ANDROID,
   env: { ...process.env, ...variaveis },
 });
 
+// Agora isto prova geração, não sobrevivência.
 if (!fs.existsSync(APK)) {
-  console.error(`\n❌  O build terminou mas o APK não está em ${APK}\n`);
+  console.error(`\n❌  O build terminou mas não gerou APK em ${APK}\n`);
   process.exit(1);
 }
 
