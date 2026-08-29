@@ -17,7 +17,7 @@ SaaS para Personal Trainers. Trial → assinatura Stripe/Asaas. Target: Abril 20
 | Estilização | Tailwind CSS / NativeWind |
 | Acesso | CASL (frontend) + RLS (banco) |
 | Linting | Biome 2.4.10 (`/biome.json`) |
-| Testes | Jest + Maestro (mobile) · Vitest (web) |
+| Testes | Jest (mobile) · Vitest (web) |
 
 ---
 
