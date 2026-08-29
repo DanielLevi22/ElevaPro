@@ -149,6 +149,13 @@ jobs:
       - name: Verificar fronteiras entre módulos
         run: npm run app:check-modules
 
+      # `process.env[VAR]` não é inlinado pelo Babel: o valor entra no bundle só
+      # quando o nome está escrito literalmente. Passa em dev, porque o Metro
+      # popula `process.env`, e quebra no APK de release — o defeito aparece
+      # depois do build, com o app na mão, dizendo que falta configuração.
+      - name: Verificar leitura de variável de ambiente
+        run: npm run app:check-env
+
       # O diálogo do sistema aparecia no meio de telas pretas com gradiente como
       # um pedaço de outro aplicativo, e não deixa escolher ícone nem cor de ação
       # destrutiva. Eram 111 chamadas em 37 arquivos antes desta guarda.
