@@ -171,10 +171,18 @@ export class BffNotJsonError extends Error {
   readonly host: string;
 
   constructor(host: string, contentType: string | null, status: number) {
+    // O status decide a causa, e tratá-las como uma só foi o defeito que este
+    // arquivo existe para não cometer. Um 5xx sem JSON é a NOSSA rota
+    // estourando: a exceção não tratada faz o Next devolver a página de erro
+    // em HTML. Mandar conferir a proteção da plataforma nesse caso é o erro que
+    // mente — o perímetro já foi atravessado, senão não haveria 500.
+    const causa =
+      status >= 500
+        ? `A rota estourou uma exceção não tratada e o servidor devolveu a página de erro em vez de JSON. O motivo está no log da função na Vercel; a proteção de plataforma já foi atravessada, senão a resposta não teria chegado até a aplicação.`
+        : `Quase sempre é proteção de plataforma interceptando a rota — o deployment inteiro fica atrás de login, rotas de API incluídas.`;
+
     super(
-      `${host} respondeu ${status} com ${contentType ?? 'tipo desconhecido'} em vez de JSON. ` +
-        `Quase sempre é proteção de plataforma interceptando a rota — o deployment ` +
-        `inteiro fica atrás de login, rotas de API incluídas.`
+      `${host} respondeu ${status} com ${contentType ?? 'tipo desconhecido'} em vez de JSON. ${causa}`
     );
     this.name = 'BffNotJsonError';
     this.host = host;

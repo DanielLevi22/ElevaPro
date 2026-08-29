@@ -94,6 +94,25 @@ describe('lerRespostaBff', () => {
     ).rejects.toBeInstanceOf(BffNotJsonError);
   });
 
+  // 500 sem JSON e 200 com HTML sao causas diferentes. Tratar as duas como
+  // "protecao de plataforma" manda conferir a Vercel quando o perimetro ja foi
+  // atravessado — o erro que mente, exatamente o que este arquivo evita.
+  it('nao culpa a plataforma quando o proprio BFF quebrou', async () => {
+    const r = resposta({ status: 500, contentType: null });
+
+    await expect(lerRespostaBff(r as unknown as Response, `${HOST}/x`)).rejects.toThrow(
+      /exceção não tratada/
+    );
+  });
+
+  it('culpa a plataforma quando a resposta chegou HTML com 200', async () => {
+    const r = resposta({ status: 200, contentType: 'text/html' });
+
+    await expect(lerRespostaBff(r as unknown as Response, `${HOST}/x`)).rejects.toThrow(
+      /proteção de plataforma/
+    );
+  });
+
   it('nomeia o host tentado no erro — nenhuma das três causas deixava rastro', async () => {
     const html = resposta({ contentType: 'text/html' });
     await expect(
