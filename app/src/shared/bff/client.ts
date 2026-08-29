@@ -37,7 +37,13 @@
 
 import { fetch as expoFetch } from 'expo/fetch';
 
-/** Nome da variável em um lugar só: ela aparece em três mensagens diferentes. */
+/**
+ * Nome da variável para as MENSAGENS, não para a leitura.
+ *
+ * Ler por esta constante (`process.env[VAR_URL]`) foi o que quebrou o APK de
+ * release: chave dinâmica não é inlinada pelo Babel. A leitura é estática nas
+ * funções abaixo; isto aqui existe porque o nome aparece em três mensagens.
+ */
 const VAR_URL = 'EXPO_PUBLIC_API_URL';
 
 /**
@@ -88,7 +94,16 @@ const HEADER_BYPASS = 'x-vercel-protection-bypass';
  * `assertBffConfigured`, chamado no boot.
  */
 function bffOrigin(): string {
-  const bruto = process.env[VAR_URL]?.trim();
+  // Acesso ESTÁTICO, e não `process.env[VAR_URL]`. O Babel do Expo substitui
+  // `process.env.EXPO_PUBLIC_X` pelo valor em tempo de build, e só consegue
+  // fazer isso quando o nome está escrito literalmente: com chave em variável
+  // ele não tem como saber qual é, nada é inlinado, e em release `process.env`
+  // não existe em runtime — o valor chega `undefined` e o app diz que não está
+  // configurado.
+  //
+  // Passava no emulador porque o Metro popula `process.env` em modo dev. Só o
+  // bundle de release expõe a diferença, que é o pior lugar para descobrir.
+  const bruto = process.env.EXPO_PUBLIC_API_URL?.trim();
   // A string literal "undefined" conta como ausente. Não é defensividade
   // gratuita: é exatamente o sintoma que este arquivo existe para matar — o
   // `${process.env.EXPO_PUBLIC_API_URL}` dos serviços antigos interpolava a
@@ -114,7 +129,10 @@ export function bffUrl(path: string): string {
  * inválida.
  */
 function headerDeBypass(url: string): Record<string, string> {
-  const segredo = process.env[VAR_BYPASS]?.trim();
+  // Estático pelo mesmo motivo do `bffOrigin`. Aqui a falha seria ainda mais
+  // silenciosa: sem o header, a Vercel recusa e o erro vira "proteção de
+  // plataforma", mandando conferir um segredo que estava certo o tempo todo.
+  const segredo = process.env.EXPO_PUBLIC_VERCEL_BYPASS?.trim();
   if (!segredo || segredo === 'undefined') return {};
   if (!url.startsWith('https://')) return {};
   return { [HEADER_BYPASS]: segredo };

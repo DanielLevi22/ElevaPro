@@ -69,6 +69,12 @@ npm run db:check-rls
 # barreira é o `if` do próprio código — que já divergiu em duas cópias.
 npm run api:check-auth
 
+# -- Leitura de variavel de ambiente -----------------------------------------
+# `process.env[VAR]` nao e inlinado pelo Babel. Passa em dev, onde o Metro
+# popula `process.env`, e o APK de release le `undefined` -- dizendo ao usuario
+# que o app nao esta configurado, com o arquivo de ambiente certo no lugar.
+npm run app:check-env
+
 # ── Lint e TypeCheck ──────────────────────────────────────────────────────────
 # O lint da raiz cobre app/, web/, shared/ e scripts/ com o mesmo biome.json.
 # Antes só app/ e web/ eram verificados, então shared/ passava direto.
