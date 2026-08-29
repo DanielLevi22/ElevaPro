@@ -9,3 +9,4 @@ export {
   lerRespostaBff,
   postBff,
 } from './client';
+export { mensagemDeErroBff } from './mensagem';

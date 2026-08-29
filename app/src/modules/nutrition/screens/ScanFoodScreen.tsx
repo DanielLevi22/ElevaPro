@@ -11,6 +11,7 @@ import { showAlert } from '@/components/ui/appAlert';
 import { Button } from '@/components/ui/Button';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { colors as brandColors } from '@/constants/colors';
+import { mensagemDeErroBff } from '@/shared/bff';
 import {
   type FoodAnalysisResult,
   FoodRecognitionService,
@@ -75,8 +76,8 @@ export default function ScanFoodScreen() {
         session?.access_token ?? ''
       );
       setResult(analysis);
-    } catch (_e) {
-      showAlert({ title: 'Erro', message: 'Falha na análise da imagem.', type: 'error' });
+    } catch (erro) {
+      showAlert({ title: 'Erro', message: mensagemDeErroBff(erro), type: 'error' });
     } finally {
       setAnalyzing(false);
     }

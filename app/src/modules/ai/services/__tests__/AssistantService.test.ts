@@ -49,17 +49,16 @@ describe('AssistantService', () => {
       );
     });
 
-    it('should return null on fetch failure', async () => {
+    // Prova negativa: se o serviço voltar a engolir, este teste falha nomeando
+    // o dano. O `null` que ele devolvia era indistinguível de "a IA respondeu
+    // que não dá", e apagava a causa que o `client.ts` acabara de nomear —
+    // o aluno via "indisponível" e ninguém sabia qual das três causas era.
+    it('propaga a falha em vez de devolver null, preservando a causa', async () => {
       (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
 
-      const result = await AssistantService.negotiateWorkout(
-        'A',
-        'Hipertrofia',
-        'Intermediário',
-        mockExercises
-      );
-
-      expect(result).toBeNull();
+      await expect(
+        AssistantService.negotiateWorkout('A', 'Hipertrofia', 'Intermediário', mockExercises)
+      ).rejects.toThrow(/elevapro-preview|localhost|Network error/);
     });
   });
 
@@ -95,18 +94,20 @@ describe('AssistantService', () => {
       );
     });
 
-    it('should return empty object on failure', async () => {
+    // Objeto vazio é pior que `null`: o chamador itera zero fases e conclui que
+    // a IA não tinha nada a dizer.
+    it('propaga a falha em vez de devolver objeto vazio', async () => {
       (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('fail'));
 
-      const result = await AssistantService.generateBatchWorkoutPlan(
-        [],
-        'A',
-        'Hipertrofia',
-        'Iniciante',
-        mockExercises
-      );
-
-      expect(result).toEqual({});
+      await expect(
+        AssistantService.generateBatchWorkoutPlan(
+          [],
+          'A',
+          'Hipertrofia',
+          'Iniciante',
+          mockExercises
+        )
+      ).rejects.toThrow();
     });
   });
 
@@ -132,16 +133,19 @@ describe('AssistantService', () => {
       );
     });
 
-    it('should return fallback text on failure', async () => {
+    // O texto fixo daqui chegava à tela como se fosse a análise: o especialista
+    // lia "não foi possível gerar" sem saber se era rede, plataforma ou plano
+    // vazio, e não havia o que fazer com a frase.
+    it('propaga a falha em vez de devolver texto fixo', async () => {
       (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('fail'));
 
-      const result = await AssistantService.analyzeNutritionAdherence(
-        'Daniel',
-        { totalMeals: 10, completedMeals: 5, logs: [] },
-        'Plano X'
-      );
-
-      expect(result).toContain('Não foi possível');
+      await expect(
+        AssistantService.analyzeNutritionAdherence(
+          'Daniel',
+          { totalMeals: 10, completedMeals: 5, logs: [] },
+          'Plano X'
+        )
+      ).rejects.toThrow();
     });
   });
 });

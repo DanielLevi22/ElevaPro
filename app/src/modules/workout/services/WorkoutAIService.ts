@@ -4,6 +4,7 @@ import {
   AIWorkoutResponse,
   AssistantService,
 } from '@/modules/ai/services/AssistantService';
+import { mensagemDeErroBff } from '@/shared/bff';
 import { Exercise } from '../types';
 
 // Re-export types for compatibility
@@ -20,19 +21,22 @@ export const WorkoutAIService = {
     availableExercises: Exercise[],
     userContext?: string // 'Has knee pain', etc.
   ): Promise<AIWorkoutResponse> => {
-    const response = await AssistantService.negotiateWorkout(
-      split,
-      goal,
-      studentLevel,
-      availableExercises,
-      userContext
-    );
-
-    if (response) {
-      return response;
+    try {
+      return await AssistantService.negotiateWorkout(
+        split,
+        goal,
+        studentLevel,
+        availableExercises,
+        userContext
+      );
+    } catch (erro) {
+      // O fallback continua — um template vazio é melhor que uma tela morta —
+      // mas agora ele carrega A CAUSA. Antes o `AssistantService` devolvia
+      // `null` e o texto era sempre "não foi possível conectar", igual para
+      // segredo de bypass recusado, variável ausente e timeout. O especialista
+      // via a mesma frase nos três casos e não tinha o que fazer com ela.
+      return mockFallback(split, mensagemDeErroBff(erro));
     }
-
-    return mockFallback(split);
   },
 
   generateBatchWorkoutPlan: async (
@@ -55,10 +59,9 @@ export const WorkoutAIService = {
 };
 
 // Fallback if AI fails or no key (returns empty structure for safety)
-const mockFallback = (split: string): AIWorkoutResponse => {
+const mockFallback = (split: string, motivo: string): AIWorkoutResponse => {
   return {
-    explanation:
-      'Não foi possível conectar à I.A. um template básico foi gerado (Modo Offline/Fallback).',
+    explanation: `Não foi possível conectar à I.A. — um template básico foi gerado. ${motivo}`,
     plan: split.split('').map((letter) => ({
       letter,
       focus: 'Geral',

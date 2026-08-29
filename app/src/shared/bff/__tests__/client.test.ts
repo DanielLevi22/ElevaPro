@@ -94,6 +94,25 @@ describe('lerRespostaBff', () => {
     ).rejects.toBeInstanceOf(BffNotJsonError);
   });
 
+  // 500 sem JSON e 200 com HTML sao causas diferentes. Tratar as duas como
+  // "protecao de plataforma" manda conferir a Vercel quando o perimetro ja foi
+  // atravessado — o erro que mente, exatamente o que este arquivo evita.
+  it('nao culpa a plataforma quando o proprio BFF quebrou', async () => {
+    const r = resposta({ status: 500, contentType: null });
+
+    await expect(lerRespostaBff(r as unknown as Response, `${HOST}/x`)).rejects.toThrow(
+      /exceção não tratada/
+    );
+  });
+
+  it('culpa a plataforma quando a resposta chegou HTML com 200', async () => {
+    const r = resposta({ status: 200, contentType: 'text/html' });
+
+    await expect(lerRespostaBff(r as unknown as Response, `${HOST}/x`)).rejects.toThrow(
+      /proteção de plataforma/
+    );
+  });
+
   it('nomeia o host tentado no erro — nenhuma das três causas deixava rastro', async () => {
     const html = resposta({ contentType: 'text/html' });
     await expect(
@@ -124,6 +143,48 @@ describe('lerRespostaBff', () => {
     const corpo = await lerRespostaBff<{ error: string }>(r as unknown as Response, `${HOST}/x`);
     expect(corpo.error).toBe('ai_unavailable');
   });
+
+  // A Vercel MUDOU a forma de recusar. O helper foi escrito contra
+  // `302 -> vercel.com/sso-api`; hoje ela devolve 401 com
+  // `application/json`, que passa pelas duas defesas anteriores: nao e
+  // redirect e nao e HTML. Verificado ao vivo em 2026-08-29 contra o preview.
+  it('reconhece o 401 em JSON da protecao da Vercel', async () => {
+    const r = resposta({
+      status: 401,
+      corpo: {
+        error: { code: '401', message: 'Protected deployment' },
+        protection: { vercel_auth_enabled: true, password_enabled: false },
+      },
+    });
+
+    await expect(lerRespostaBff(r as unknown as Response, `${HOST}/x`)).rejects.toBeInstanceOf(
+      BffUnreachableError
+    );
+  });
+
+  // Prova negativa: sem a distincao, o erro volta a ser o que era — um 401
+  // que parece falha de login do aluno quando e a plataforma barrando.
+  it('diz que a protecao da plataforma barrou, nao o login do aluno', async () => {
+    const r = resposta({
+      status: 401,
+      corpo: {
+        error: { code: '401', message: 'Protected deployment' },
+        protection: { vercel_auth_enabled: true },
+      },
+    });
+
+    await expect(lerRespostaBff(r as unknown as Response, `${HOST}/x`)).rejects.toThrow(
+      /EXPO_PUBLIC_VERCEL_BYPASS não está definida|não foi aceito/
+    );
+  });
+
+  // Um 401 nosso continua sendo nosso: `authorizeStudent` sem token responde
+  // assim, e confundir os dois manda o usuario conferir a Vercel a toa.
+  it('nao confunde o 401 da aplicacao com o da plataforma', async () => {
+    const r = resposta({ status: 401, corpo: { error: 'Token ausente.' } });
+    const corpo = await lerRespostaBff<{ error: string }>(r as unknown as Response, `${HOST}/x`);
+    expect(corpo.error).toBe('Token ausente.');
+  });
 });
 
 describe('postBff', () => {
@@ -150,6 +211,16 @@ describe('postBff', () => {
       code: 'ai_unavailable',
       status: 503,
     });
+  });
+
+  // O corpo da protecao da Vercel traz `error` como OBJETO `{code, message}`.
+  // Interpolar objeto em string produz "[object Object]" na tela.
+  it('extrai o codigo quando o erro do corpo e objeto, nao string', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce(
+      resposta({ status: 503, corpo: { error: { code: 'ai_unavailable', message: 'x' } } })
+    );
+
+    await expect(postBff('/api/x', {})).rejects.toMatchObject({ code: 'ai_unavailable' });
   });
 
   it('cai em http_<status> quando o erro não traz código', async () => {
