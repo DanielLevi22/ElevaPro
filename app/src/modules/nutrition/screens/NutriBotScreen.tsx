@@ -15,6 +15,7 @@ import {
 import { useAuthStore } from '@/auth';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { colors as brandColors } from '@/constants/colors';
+import { mensagemDeErroBff } from '@/shared/bff';
 import { useNutritionStore } from '../routes';
 import { type ChatMessage, NutriBotService } from '../services/NutriBotService';
 
@@ -88,8 +89,20 @@ export default function NutriBotScreen() {
         // Wait a slightly random bit for realism (10ms - 30ms)
         await new Promise((r) => setTimeout(r, 15));
       }
-    } catch (_error) {
+    } catch (erro) {
+      // O `catch` vazio que morava aqui só parava o spinner: a tela ficava com
+      // a pergunta do aluno e nenhuma resposta, e a causa — que o `client.ts`
+      // já sabia nomear — morria aqui. Agora ela vira uma mensagem no chat.
       setLoading(false);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 2).toString(),
+          role: 'assistant',
+          content: mensagemDeErroBff(erro),
+          createdAt: Date.now(),
+        },
+      ]);
     }
   };
 

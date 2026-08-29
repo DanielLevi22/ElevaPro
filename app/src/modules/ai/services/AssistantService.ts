@@ -1,6 +1,6 @@
 import { useAuthStore } from '@/modules/auth/store/authStore';
 import { Exercise } from '@/modules/workout/types';
-import { fetchBff, lerRespostaBff, postBff as postBffCompartilhado } from '@/shared/bff';
+import { postBff as postBffCompartilhado } from '@/shared/bff';
 
 // Re-exporting types for consumers
 export interface AIWorkoutItem {
@@ -50,22 +50,22 @@ export const AssistantService = {
     studentLevel: string,
     availableExercises: Exercise[],
     userContext?: string
-  ): Promise<AIWorkoutResponse | null> => {
+  ): Promise<AIWorkoutResponse> => {
     const exercisesList = availableExercises
       .map((e) => `- ${e.name} (${e.muscle_group})`)
       .join('\n');
 
-    try {
-      return await postBff<AIWorkoutResponse>('/api/ai/workout/negotiate', {
-        split,
-        goal,
-        studentLevel,
-        exercisesList,
-        userContext,
-      });
-    } catch {
-      return null;
-    }
+    // Sem `try`: o `catch` que morava aqui devolvia `null`, indistinguível de
+    // "a IA respondeu que não dá", e apagava a causa que o `client.ts` acabara
+    // de nomear. Quem decide o que fazer com a falha é o `WorkoutAIService`,
+    // que tem o fallback — e agora ele sabe o motivo para escrever na tela.
+    return postBff<AIWorkoutResponse>('/api/ai/workout/negotiate', {
+      split,
+      goal,
+      studentLevel,
+      exercisesList,
+      userContext,
+    });
   },
 
   /**
@@ -83,25 +83,14 @@ export const AssistantService = {
       .map((e) => `- ${e.name} (${e.muscle_group})`)
       .join('\n');
 
-    try {
-      return await postBff<Record<number, AIWorkoutResponse>>('/api/ai/workout/batch', {
-        phases,
-        split,
-        goal,
-        studentLevel,
-        exercisesList,
-        userContext,
-      });
-    } catch {
-      return {};
-    }
-  },
-
-  /**
-   * Future: General App Assistance
-   */
-  answerQuestion: async (_question: string): Promise<string> => {
-    return 'Funcionalidade em desenvolvimento.';
+    return postBff<Record<number, AIWorkoutResponse>>('/api/ai/workout/batch', {
+      phases,
+      split,
+      goal,
+      studentLevel,
+      exercisesList,
+      userContext,
+    });
   },
 
   /**
@@ -116,60 +105,10 @@ export const AssistantService = {
     },
     planName: string
   ): Promise<string> => {
-    try {
-      const result = await postBff<{ summary: string }>('/api/ai/nutrition/adherence', {
-        planName,
-        adherenceData,
-      });
-      return result.summary;
-    } catch {
-      return 'Não foi possível gerar a análise no momento.';
-    }
-  },
-
-  /**
-   * Chat with the AI Co-Pilot about a specific student.
-   * @deprecated Use the web BFF /api/ai/chat/[studentId] directly for full-featured chat with SSE streaming.
-   */
-  chatWithStudentContext: async (
-    history: { role: 'user' | 'model'; parts: { text: string }[] }[],
-    _studentContext: string
-  ): Promise<{
-    type: 'text' | 'function_call';
-    text?: string;
-    functionCall?: Record<string, unknown>;
-  }> => {
-    // Full-featured chat is handled by the web BFF with SSE streaming.
-    // This stub preserves backwards compatibility with any existing callers.
-    const lastMessage = history[history.length - 1]?.parts[0]?.text ?? '';
-    try {
-      const token = getToken();
-      const { response, url } = await fetchBff(
-        '/api/ai/chat/stub',
-        { message: lastMessage },
-        { token }
-      );
-      const data = await lerRespostaBff<{ text?: string }>(response, url);
-      if (!response.ok) throw new Error(`BFF chat error ${response.status}`);
-      return { type: 'text', text: data.text ?? 'Não consegui processar.' };
-    } catch {
-      return { type: 'text', text: 'Não consegui processar a resposta.' };
-    }
-  },
-
-  /**
-   * @deprecated Use the web BFF /api/ai/chat/[studentId] with SSE streaming instead.
-   */
-  streamChatWithStudentContext: async (
-    history: { role: 'user' | 'model'; parts: { text: string }[] }[],
-    studentContext: string,
-    onToken: (text: string) => void
-  ): Promise<{
-    type: 'text' | 'function_call';
-    functionCall?: Record<string, unknown>;
-  }> => {
-    const result = await AssistantService.chatWithStudentContext(history, studentContext);
-    if (result.text) onToken(result.text);
-    return { type: 'text' };
+    const result = await postBff<{ summary: string }>('/api/ai/nutrition/adherence', {
+      planName,
+      adherenceData,
+    });
+    return result.summary;
   },
 };

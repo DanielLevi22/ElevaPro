@@ -175,19 +175,17 @@ export const ShoppingListService = {
     categories: ShoppingCategory[],
     promptType: 'recipes' | 'analysis' | 'tips' | 'meal_prep' | 'cooking_guide'
   ): Promise<string> => {
-    try {
-      const { response, url } = await fetchBff(
-        '/api/ai/nutrition/assistant',
-        { categories, promptType },
-        { token: getToken() }
-      );
+    const { response, url } = await fetchBff(
+      '/api/ai/nutrition/assistant',
+      { categories, promptType },
+      { token: getToken() }
+    );
 
-      if (!response.ok) return 'Não consegui gerar uma resposta no momento. Tente novamente.';
-
-      const data = await lerRespostaBff<{ response?: string }>(response, url);
-      return data.response ?? 'Não consegui gerar uma resposta no momento.';
-    } catch {
-      return 'Ocorreu um erro ao consultar a IA.';
-    }
+    // Sem `catch`: a frase fixa que morava aqui era a mesma para segredo de
+    // bypass recusado, variável ausente, timeout e recusa da rota. Quem mostra
+    // decide; quem busca não inventa desculpa.
+    const data = await lerRespostaBff<{ response?: string }>(response, url);
+    if (!response.ok) throw new Error('A IA recusou a chamada.');
+    return data.response ?? 'Não consegui gerar uma resposta no momento.';
   },
 };

@@ -8,6 +8,7 @@ import { showAlert } from '@/components/ui/appAlert';
 import { Button } from '@/components/ui/Button';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { useAuthStore } from '@/modules/auth/store/authStore';
+import { mensagemDeErroBff } from '@/shared/bff';
 import { type CookingStep, ShoppingListService } from '../services/ShoppingListService';
 import { useNutritionStore } from '../store/nutritionStore';
 
@@ -56,8 +57,8 @@ export default function CookingScreen() {
     try {
       const result = await ShoppingListService.generateCookingSteps(mealName, ingredients);
       setSteps(result);
-    } catch (_error) {
-      showAlert({ title: 'Erro', message: 'Não foi possível carregar o guia.', type: 'error' });
+    } catch (erro) {
+      showAlert({ title: 'Erro', message: mensagemDeErroBff(erro), type: 'error' });
       router.back();
     } finally {
       setLoading(false);

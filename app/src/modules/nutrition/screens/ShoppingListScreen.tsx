@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/Button';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { StatusModal } from '@/components/ui/StatusModal';
 import { colors as brandColors } from '@/constants/colors';
+import { mensagemDeErroBff } from '@/shared/bff';
 import { useNutritionStore } from '../routes';
 import { type ShoppingCategory, ShoppingListService } from '../services/ShoppingListService';
 
@@ -65,8 +66,8 @@ export default function ShoppingListScreen() {
     try {
       const result = await ShoppingListService.askAssistant(categories, type);
       setAssistantResult(result);
-    } catch (_error) {
-      setAssistantResult('Desculpe, não consegui processar seu pedido.');
+    } catch (erro) {
+      setAssistantResult(mensagemDeErroBff(erro));
     } finally {
       setAssistantLoading(false);
     }

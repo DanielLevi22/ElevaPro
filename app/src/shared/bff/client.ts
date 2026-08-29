@@ -218,24 +218,49 @@ function hostDe(url: string): string {
  * @example
  * const dados = await lerRespostaBff<{ text: string }>(resposta, url);
  */
+/**
+ * O que fazer, quando a plataforma barra.
+ *
+ * Segredo enviado e recusado é um problema; segredo ausente é outro, e a ação é
+ * diferente em cada caso. Sem esta distinção o erro volta a ser o que era:
+ * verdadeiro, inútil, e igual para causas que não se parecem.
+ */
+function pistaDeBypass(url: string): string {
+  const tinhaBypass = HEADER_BYPASS in headerDeBypass(url);
+  return tinhaBypass
+    ? `o segredo de ${VAR_BYPASS} foi enviado e não foi aceito — confira se ele bate com o Protection Bypass for Automation do projeto na Vercel (o valor é inlinado no build: mudar o segredo exige build novo)`
+    : `${VAR_BYPASS} não está definida, e este deployment está atrás do Deployment Protection da Vercel`;
+}
+
+/**
+ * A resposta é a recusa da proteção da Vercel, e não da nossa aplicação?
+ *
+ * A Vercel mudou a forma de recusar. Este arquivo nasceu contra
+ * `302 → vercel.com/sso-api`; em 2026-08-29, verificado ao vivo contra o
+ * preview, ela passou a devolver **401 com `application/json`** — que atravessa
+ * as duas defesas anteriores, porque não é redirect e não é HTML.
+ *
+ * A assinatura é a chave `protection`: nenhuma rota nossa devolve isso, e ela
+ * vem justamente com `vercel_auth_enabled`. Distinguir importa porque o 401 da
+ * nossa aplicação (`authorizeStudent` sem token) é um problema do usuário, e o
+ * 401 da plataforma é de configuração — mandar conferir a Vercel por um login
+ * expirado é o erro que mente.
+ */
+function ehRecusaDaPlataforma(corpo: unknown): boolean {
+  if (typeof corpo !== 'object' || corpo === null) return false;
+  const protecao = (corpo as { protection?: unknown }).protection;
+  return typeof protecao === 'object' && protecao !== null;
+}
+
 export async function lerRespostaBff<T>(response: Response, url: string): Promise<T> {
   const host = hostDe(url);
 
   // Antes do `ok`: com `redirect: 'manual'` o 302 chega aqui como resposta, e
   // é o sintoma mais direto de proteção de plataforma na frente da API.
   if (response.status >= 300 && response.status < 400) {
-    // Um 302 com bypass configurado e um 302 sem bypass são problemas
-    // diferentes — segredo errado contra segredo ausente — e exigem ações
-    // diferentes. Sem esta distinção o erro volta a ser o que era: verdadeiro,
-    // inútil, e igual para causas que não se parecem.
-    const tinhaBypass = HEADER_BYPASS in headerDeBypass(url);
-    const pista = tinhaBypass
-      ? `o segredo de ${VAR_BYPASS} foi enviado e não foi aceito — confira se ele bate com o Protection Bypass for Automation do projeto na Vercel (o valor é inlinado no build: mudar o segredo exige build novo)`
-      : `${VAR_BYPASS} não está definida, e este deployment está atrás do Deployment Protection da Vercel`;
-
     throw new BffUnreachableError(
       host,
-      `respondeu ${response.status} (redirect) — numa API isso é sempre infraestrutura, nunca resposta do produto. ${pista}`
+      `respondeu ${response.status} (redirect) — numa API isso é sempre infraestrutura, nunca resposta do produto. ${pistaDeBypass(url)}`
     );
   }
 
@@ -244,9 +269,20 @@ export async function lerRespostaBff<T>(response: Response, url: string): Promis
     throw new BffNotJsonError(host, contentType, response.status);
   }
 
+  const corpo = (await response.json()) as T;
+
+  // Depois do parse porque a assinatura está no corpo — e o corpo é JSON
+  // legítimo, então nenhuma das defesas anteriores o alcança.
+  if (ehRecusaDaPlataforma(corpo)) {
+    throw new BffUnreachableError(
+      host,
+      `respondeu ${response.status} com a recusa do Deployment Protection da Vercel, não da aplicação. ${pistaDeBypass(url)}`
+    );
+  }
+
   // Só agora o status importa: o corpo é JSON e o serviço consegue ler o código
   // de erro que a rota devolveu.
-  return (await response.json()) as T;
+  return corpo;
 }
 
 interface PostBffOptions {
@@ -317,18 +353,35 @@ export async function fetchBff(
  * @example
  * const r = await postBff<{ text: string }>('/api/ai/student/nutribot', { message }, { token });
  */
+/**
+ * O código de erro que a rota devolveu, venha ele como string ou como objeto.
+ *
+ * `{ error: 'ai_unavailable' }` é a forma das nossas rotas. Mas há corpo de erro
+ * com `error` OBJETO — `{ code, message }` —, e interpolar objeto em string
+ * produz `"[object Object]"` na tela do usuário.
+ */
+function codigoDoErro(corpo: { error?: unknown } | null): string | undefined {
+  const erro = corpo?.error;
+  if (typeof erro === 'string') return erro;
+  if (typeof erro === 'object' && erro !== null) {
+    const code = (erro as { code?: unknown }).code;
+    if (typeof code === 'string') return code;
+  }
+  return undefined;
+}
+
 export async function postBff<T>(
   path: string,
   body: unknown,
   options: PostBffOptions = {}
 ): Promise<T> {
   const { response, url } = await fetchBff(path, body, options);
-  const corpo = await lerRespostaBff<T & { error?: string }>(response, url);
+  const corpo = await lerRespostaBff<T & { error?: unknown }>(response, url);
 
   // Depois do parse, e não antes: o código de erro que a rota devolveu está no
   // corpo, e é ele que vira mensagem para o aluno. Checar `ok` primeiro jogaria
   // essa informação fora.
-  if (!response.ok) throw new BffHttpError(path, response.status, corpo?.error);
+  if (!response.ok) throw new BffHttpError(path, response.status, codigoDoErro(corpo));
 
   return corpo;
 }
