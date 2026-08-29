@@ -4,6 +4,7 @@ import {
   BffNotJsonError,
   BffUnreachableError,
   bffUrl,
+  getBff,
   lerRespostaBff,
   postBff,
 } from '../client';
@@ -314,6 +315,41 @@ describe('Protection Bypass da Vercel', () => {
 
     await expect(postBff('/api/x', {})).rejects.toThrow(
       /EXPO_PUBLIC_VERCEL_BYPASS não está definida/
+    );
+  });
+});
+
+describe('getBff', () => {
+  // O portão de elegibilidade é uma pergunta, não uma submissão — e precisa das
+  // mesmas três defesas do POST. Um GET escrito com o `fetch` global voltaria a
+  // seguir redirect e a receber a tela de login da plataforma como 200 com
+  // HTML, que é o defeito que este arquivo inteiro existe para fechar.
+  it('pergunta com GET, sem corpo, e mantém as defesas', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce(
+      resposta({ corpo: { podeEscanear: true, fonte: 'assessment' } })
+    );
+
+    const corpo = await getBff<{ podeEscanear: boolean }>('/api/ai/x/eligibility', {
+      token: 'jwt',
+    });
+
+    expect(corpo.podeEscanear).toBe(true);
+
+    const [url, init] = (global.fetch as jest.Mock).mock.calls[0];
+    expect(url).toBe(`${HOST}/api/ai/x/eligibility`);
+    expect(init.method).toBe('GET');
+    expect(init.redirect).toBe('manual');
+    expect(init.body).toBeUndefined();
+    expect(init.headers.Authorization).toBe('Bearer jwt');
+  });
+
+  it('recusa quem responde HTML no lugar de JSON', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce(
+      resposta({ status: 200, contentType: 'text/html' })
+    );
+
+    await expect(getBff('/api/ai/x/eligibility', { token: 'jwt' })).rejects.toBeInstanceOf(
+      BffNotJsonError
     );
   });
 });
