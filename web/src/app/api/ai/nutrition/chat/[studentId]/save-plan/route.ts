@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { rotaDeIA } from "@/lib/ai-route";
 import { authorizeLinkedSpecialist } from "@/lib/api-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import {
@@ -27,10 +28,10 @@ function somaSemanas(isoDate: string, weeks: number): string {
  * Salva a cópia guardada, não o que o modelo reemitir — é o que garante que o
  * gravado é idêntico ao que o especialista aprovou olhando o cartão.
  */
-export async function POST(
+const handler = async (
   request: NextRequest,
   { params }: { params: Promise<{ studentId: string }> },
-) {
+) => {
   const { studentId } = await params;
 
   const auth = await authorizeLinkedSpecialist(request, studentId);
@@ -85,4 +86,6 @@ export async function POST(
   );
 
   return NextResponse.json({ id: data.id, name: plan.name });
-}
+};
+
+export const POST = rotaDeIA(handler);

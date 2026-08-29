@@ -88,15 +88,22 @@ jobs:
       - name: Pull Vercel project config
         run: npx vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
 
+      # Sem `env:`. O `vercel pull` acima já baixou as Environment Variables do
+      # projeto para este ambiente, e o `vercel build` as lê de lá — inclusive
+      # as `NEXT_PUBLIC_*`, que ele inlina no bundle.
+      #
+      # Uma fonte só, e é a Vercel. Cópia no GitHub Secrets significaria dois
+      # valores para a mesma variável, livres para divergir sem aviso — e cada
+      # ambiente fala com um Supabase diferente, então divergir aqui é apontar
+      # o preview para o banco errado.
+      #
+      # Segredo de servidor (`ANTHROPIC_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`)
+      # nunca entra num passo de build: o `deploy --prebuilt` sobe o output já
+      # compilado e a função lê `process.env` do ambiente da Vercel. Passá-lo
+      # aqui é no-op que PARECE resolver, e foi assim que a IA do preview ficou
+      # fora do ar sem ninguém notar (ADR-0021).
       - name: Build (Preview)
         run: npx vercel build --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PREVIEW }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PREVIEW }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          # Sem ela todas as rotas /api/ai/* respondem erro — e como o mobile
-          # consome a IA via BFF, as features de IA do app param junto.
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
       # `vercel deploy` pelo CLI gera um domínio novo com hash a cada execução —
       # a integração Git do Vercel é quem cria o alias de branch, e ela não está
@@ -118,6 +125,67 @@ jobs:
           echo "- Deployment: ${{ steps.deploy.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"
         env:
           PREVIEW_DOMAIN: ${{ vars.VERCEL_PREVIEW_DOMAIN || 'elevapro-preview.vercel.app' }}
+
+      # A guarda que faltava. Sete guardas de CÓDIGO existiam e nenhuma de
+      # CONFIGURAÇÃO — e foi configuração que derrubou a IA por dias, com o
+      # aluno vendo "indisponível" e ninguém sabendo por quê.
+      #
+      # A sonda não autentica de propósito: sem token, a rota responde
+      # `401 {"error":"Token ausente."}` ANTES de tocar no modelo. Isso já prova
+      # três coisas de uma vez — o deployment está no ar, o bypass da proteção
+      # funciona, e o ambiente de servidor está completo, porque `rotaDeIA`
+      # devolveria `503 server_misconfigured` antes do 401 se faltasse variável.
+      # Autenticar exigiria um usuário de teste com dado de saúde real só para
+      # medir configuração.
+      - name: Smoke test do preview
+        env:
+          PREVIEW_DOMAIN: ${{ vars.VERCEL_PREVIEW_DOMAIN || 'elevapro-preview.vercel.app' }}
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${BYPASS:-}" ]; then
+            echo "::error::Falta o secret VERCEL_AUTOMATION_BYPASS_SECRET. Sem ele a sonda não atravessa o Deployment Protection e não prova nada."
+            echo "::error::Pegue em Vercel → projeto → Settings → Deployment Protection → Protection Bypass for Automation."
+            exit 1
+          fi
+
+          url="https://$PREVIEW_DOMAIN/api/ai/student/nutribot"
+          corpo=$(curl -sS -X POST "$url" \
+            -H 'Content-Type: application/json' \
+            ${BYPASS:+-H "x-vercel-protection-bypass: $BYPASS"} \
+            -d '{"message":"smoke"}' --max-time 30 -w '\n%{http_code}')
+          status=$(echo "$corpo" | tail -1)
+          json=$(echo "$corpo" | sed '$d')
+          echo "status=$status corpo=$json"
+
+          if echo "$json" | grep -q 'server_misconfigured'; then
+            echo "::error::A rota respondeu server_misconfigured: falta variável de servidor no ambiente de preview da Vercel."
+            echo "::error::Confira com 'vercel env ls' e adicione com 'vercel env add <NOME> preview'. Depois redeploy."
+            exit 1
+          fi
+
+          if [ "$status" -ge 500 ]; then
+            echo "::error::A rota de IA respondeu $status. O deployment subiu mas o BFF quebra em execução."
+            exit 1
+          fi
+
+          # A proteção da Vercel TAMBÉM responde 401. Sem distinguir, a sonda
+          # passaria sem nunca ter falado com a aplicação — guarda que aprova
+          # por engano é pior que guarda nenhuma, porque cria confiança falsa.
+          # A assinatura da recusa dela é a chave `protection` no corpo.
+          if echo "$json" | grep -q '"protection"'; then
+            echo "::error::Quem respondeu foi o Deployment Protection da Vercel, não a aplicação."
+            echo "::error::Confira o secret VERCEL_AUTOMATION_BYPASS_SECRET e o Protection Bypass for Automation do projeto."
+            exit 1
+          fi
+
+          if [ "$status" != "401" ]; then
+            echo "::error::Esperado 401 'Token ausente.' e veio $status."
+            exit 1
+          fi
+
+          echo "✓ preview no ar, bypass funcionando e ambiente de servidor completo"
 
   # ─────────────────────────────────────────
   # 4. DEPLOY PRODUCTION (push em main ou tag)
@@ -147,16 +215,71 @@ jobs:
       - name: Pull Vercel project config
         run: npx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
+      # Antes de construir, e não depois de publicar. Em preview o smoke test
+      # pós-deploy basta: o pior caso é um preview quebrado. Em produção o pior
+      # caso é o aluno, então a falha tem que acontecer enquanto ainda dá para
+      # não publicar.
+      #
+      # A checagem é de PRESENÇA, não de validade — chave revogada passa por
+      # aqui e só o smoke test alcança. Ver ADR-0021.
+      - name: Conferir ambiente de produção na Vercel
+        run: |
+          set -euo pipefail
+          lista=$(npx vercel env ls production --token=${{ secrets.VERCEL_TOKEN }})
+          faltando=""
+          for nome in NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY \
+                      ANTHROPIC_API_KEY SUPABASE_SERVICE_ROLE_KEY; do
+            echo "$lista" | grep -q "$nome" || faltando="$faltando $nome"
+          done
+
+          if [ -n "$faltando" ]; then
+            echo "::error::Ambiente Production da Vercel incompleto. Faltando:$faltando"
+            echo "::error::Adicione com 'vercel env add <NOME> production'."
+            echo "::error::A service role e as chaves do Supabase têm que ser as do projeto de PRODUÇÃO — reaproveitar as de preview é o que o ADR-0021 proíbe."
+            exit 1
+          fi
+          echo "✓ ambiente Production completo"
+
+      # Tudo vem do `vercel pull` acima. Ver ADR-0021.
       - name: Build (Production)
         run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PROD }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PROD }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
       - name: Deploy to Vercel (Production)
         run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      # O mesmo que o preview faz, sem bypass: produção não fica atrás do
+      # Deployment Protection. Sem token a rota responde 401 'Token ausente.' —
+      # e responderia 503 antes disso se faltasse variável de servidor.
+      - name: Smoke test de produção
+        env:
+          PRODUCTION_DOMAIN: ${{ vars.VERCEL_PRODUCTION_DOMAIN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${PRODUCTION_DOMAIN:-}" ]; then
+            echo "::error::Falta a variável de repositório VERCEL_PRODUCTION_DOMAIN."
+            echo "::error::Defina em Settings → Secrets and variables → Actions → Variables com o domínio de produção."
+            exit 1
+          fi
+
+          corpo=$(curl -sS -X POST "https://$PRODUCTION_DOMAIN/api/ai/student/nutribot" \
+            -H 'Content-Type: application/json' \
+            -d '{"message":"smoke"}' --max-time 30 -w '\n%{http_code}')
+          status=$(echo "$corpo" | tail -1)
+          json=$(echo "$corpo" | sed '$d')
+          echo "status=$status corpo=$json"
+
+          if echo "$json" | grep -q 'server_misconfigured'; then
+            echo "::error::A rota respondeu server_misconfigured: falta variável de servidor no ambiente Production."
+            exit 1
+          fi
+
+          if [ "$status" != "401" ]; then
+            echo "::error::Esperado 401 'Token ausente.' e veio $status."
+            exit 1
+          fi
+
+          echo "✓ produção no ar e com o ambiente de servidor completo"
 
   # ─────────────────────────────────────────
   # 4. GITHUB RELEASE (apenas tags)

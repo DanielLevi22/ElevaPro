@@ -225,8 +225,8 @@ jobs:
       run:
         working-directory: ./app
     env:
-      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL_DEV }}
-      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY_DEV }}
+      EXPO_PUBLIC_SUPABASE_URL: https://exemplo.supabase.co
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: chave-de-teste
     steps:
       - uses: actions/checkout@v7
 
@@ -329,8 +329,8 @@ jobs:
       - name: Run tests
         run: npm run test:coverage -- --passWithNoTests
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_DEV }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_DEV }}
+          NEXT_PUBLIC_SUPABASE_URL: https://exemplo.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: chave-de-teste
 
       - uses: actions/upload-artifact@v7
         if: always()
@@ -370,8 +370,8 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_DEV }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_DEV }}
+          NEXT_PUBLIC_SUPABASE_URL: https://exemplo.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: chave-de-teste
 
   # ─────────────────────────────────────────
   # CI GATE — job final que agrupa tudo

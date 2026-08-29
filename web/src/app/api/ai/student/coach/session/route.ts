@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { rotaDeIA } from "@/lib/ai-route";
 import { authorizeStudent } from "@/lib/api-auth";
 import { getAiReadinessScore } from "@/modules/ai/services/aiReadiness";
 import {
@@ -16,7 +17,7 @@ import {
 // plano Hobby; no Pro dá para subir até 300.
 export const maxDuration = 60;
 
-export async function GET(request: NextRequest) {
+const handler = async (request: NextRequest) => {
   const auth = await authorizeStudent(request);
   if (!auth.ok) return auth.response;
   const studentId = auth.caller.id;
@@ -41,4 +42,6 @@ export async function GET(request: NextRequest) {
     messages,
     activePlan: ctx.activePlan,
   });
-}
+};
+
+export const GET = rotaDeIA(handler);

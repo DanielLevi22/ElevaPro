@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { type NextRequest, NextResponse } from "next/server";
+import { rotaDeIA } from "@/lib/ai-route";
 import { authorizeUser } from "@/lib/api-auth";
 
 // Na Vercel uma rota sem isto morre no default de poucos segundos. Uma conversa
@@ -10,7 +11,7 @@ export const maxDuration = 60;
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-export async function POST(request: NextRequest) {
+const handler = async (request: NextRequest) => {
   // Antes: `getAuthenticatedUserId`, uma cópia local que fazia
   // `const { data } = await client.auth.getUser(token)` — descartando o erro — e
   // devolvia só "existe um usuário". Nunca dizia qual papel ele tem, e o
@@ -58,4 +59,6 @@ Tom: Profissional, direto e útil. Idioma: Português (Brasil).`;
   const summary = response.content[0].type === "text" ? response.content[0].text : "";
 
   return NextResponse.json({ summary: summary || "Sem dados suficientes para análise." });
-}
+};
+
+export const POST = rotaDeIA(handler);

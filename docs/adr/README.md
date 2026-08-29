@@ -39,6 +39,7 @@
 | [ADR-0014](0014-rls-helpers-security-definer.md) | Helpers de RLS `SECURITY DEFINER` no schema `private` | accepted |
 | [ADR-0015](0015-autorizacao-do-bff-devolve-resultado.md) | A autorização do BFF devolve resultado, não exceção | accepted |
 | [ADR-0018](0018-metrica-de-saude-so-agregada-por-dia.md) | Métrica de saúde entra agregada por dia, nunca a série bruta | accepted |
+| [ADR-0021](0021-onde-cada-segredo-vive.md) | Cada variável mora onde é lida; credencial por ambiente | accepted |
 
 ### Avaliação física
 

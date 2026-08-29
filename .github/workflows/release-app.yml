@@ -54,8 +54,11 @@ jobs:
         run: npm run test:coverage -- --ci
         env:
           CI: true
-          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL_DEV }}
-          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY_DEV }}
+          # Valores explícitos, não segredos: o teste não fala com Supabase de
+          # verdade — o duplo do cliente responde por ele. Segredo fantasma aqui
+          # chegava vazio e parecia configuração (ADR-0021).
+          EXPO_PUBLIC_SUPABASE_URL: https://exemplo.supabase.co
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: chave-de-teste
 
   # ─────────────────────────────────────────
   # 2. BUILD PREVIEW (push em develop)
@@ -63,8 +66,8 @@ jobs:
   build-preview:
     name: 📦 EAS Preview Build (Staging)
     runs-on: ubuntu-latest
-    # Sem `environment` o GitHub não expõe os secrets do ambiente — as
-    # EXPO_PUBLIC_*_PREVIEW existiam e chegavam vazias no build.
+    # `environment: preview` fica pelo EXPO_TOKEN, que é secret de ambiente.
+    # As variáveis do app vêm do environment do EAS, não daqui (ADR-0021).
     environment: preview
     needs: validate
     if: github.ref == 'refs/heads/development'
@@ -93,13 +96,15 @@ jobs:
 
       - name: EAS Build → preview
         run: eas build --platform android --profile preview --non-interactive
-        env:
-          EXPO_PUBLIC_SUPABASE_URL_PREVIEW: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL_PREVIEW }}
-          EXPO_PUBLIC_SUPABASE_ANON_KEY_PREVIEW: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY_PREVIEW }}
-          # Base do BFF. Sem ela o binário sai sem IA: AssistantService,
-          # FoodRecognitionService, NutriBotService e aiBodyScan chamam
-          # `${EXPO_PUBLIC_API_URL}/api/...` e resolveriam para caminho relativo.
-          EXPO_PUBLIC_API_URL_PREVIEW: ${{ secrets.EXPO_PUBLIC_API_URL_PREVIEW }}
+        # Sem `env:` de propósito. O `eas.json` declara `environment: preview` no
+        # perfil, e o EAS injeta as variáveis daquele environment — confira com
+        # `eas env:list --environment preview`.
+        #
+        # As linhas que moravam aqui passavam nomes com sufixo
+        # (`EXPO_PUBLIC_SUPABASE_URL_PREVIEW`) que o código nunca leu: ele lê
+        # `EXPO_PUBLIC_SUPABASE_URL`, sem sufixo. Nunca tiveram efeito, e o
+        # comentário ao lado jurava que sem elas o binário saía sem IA. Ver
+        # ADR-0021.
 
   # ─────────────────────────────────────────
   # 3. BUILD PRODUCTION (push em main OU tag)
@@ -133,12 +138,38 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Antes de gastar um build de produção, e antes de um APK errado chegar a
+      # alguém. `EXPO_PUBLIC_*` é inlinada no bundle: variável faltando ou
+      # apontando para preview vira binário publicado com o banco errado, e não
+      # se conserta sem build novo (ADR-0021).
+      - name: Conferir o environment production do EAS
+        run: |
+          set -euo pipefail
+          lista=$(eas env:list --environment production --format short 2>/dev/null || eas env:list --environment production)
+          faltando=""
+          for nome in EXPO_PUBLIC_SUPABASE_URL EXPO_PUBLIC_SUPABASE_ANON_KEY EXPO_PUBLIC_API_URL; do
+            echo "$lista" | grep -q "$nome" || faltando="$faltando $nome"
+          done
+
+          if [ -n "$faltando" ]; then
+            echo "::error::Environment 'production' do EAS incompleto. Faltando:$faltando"
+            echo "::error::Adicione com 'eas env:create --environment production --name <NOME> --value <VALOR>'."
+            echo "::error::Devem apontar para o Supabase e o domínio de PRODUÇÃO — nunca os de preview."
+            exit 1
+          fi
+
+          if echo "$lista" | grep -q 'elevapro-preview'; then
+            echo "::error::O environment 'production' aponta para o domínio de preview."
+            exit 1
+          fi
+          echo "✓ environment production completo"
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      # Sem `env:`: o perfil `production` do eas.json declara
+      # `environment: production`, e o EAS injeta as variáveis de lá.
       - name: EAS Build → production
         run: eas build --platform android --profile production --non-interactive
-        env:
-          EXPO_PUBLIC_SUPABASE_URL_PROD: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL_PROD }}
-          EXPO_PUBLIC_SUPABASE_ANON_KEY_PROD: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY_PROD }}
-          EXPO_PUBLIC_API_URL_PROD: ${{ secrets.EXPO_PUBLIC_API_URL_PROD }}
 
   # ─────────────────────────────────────────
   # 4. SUBMIT TO GOOGLE PLAY (apenas tags)

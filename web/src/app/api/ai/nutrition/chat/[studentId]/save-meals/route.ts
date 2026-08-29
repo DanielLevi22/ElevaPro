@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { rotaDeIA } from "@/lib/ai-route";
 import { authorizeLinkedSpecialist } from "@/lib/api-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import {
@@ -24,10 +25,10 @@ export const maxDuration = 60;
  * refeição pela metade é pior que refeição nenhuma, porque o especialista não
  * tem como saber o que ficou de fora.
  */
-export async function POST(
+const handler = async (
   request: NextRequest,
   { params }: { params: Promise<{ studentId: string }> },
-) {
+) => {
   const { studentId } = await params;
 
   const auth = await authorizeLinkedSpecialist(request, studentId);
@@ -106,4 +107,6 @@ export async function POST(
   );
 
   return NextResponse.json({ saved: salvas });
-}
+};
+
+export const POST = rotaDeIA(handler);
