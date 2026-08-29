@@ -204,7 +204,7 @@ export const useAssessmentStore = create<AssessmentState>()(
        *
        * Antes o resultado vivia só no Zustand e o `partialize` guardava apenas
        * a anamnese — fechar o app apagava tudo. Sem histórico não existe delta,
-       * e o delta é onde está o valor da feature (ADR-010).
+       * e o delta é onde está o valor da feature (ADR-0010).
        */
       loadHistory: async (studentId: string) => {
         const service = createBodyScanService(supabase);

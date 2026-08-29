@@ -1,7 +1,7 @@
 # Schema — Módulo Students
 
-> **Status:** ✅ Aprovado
-> Parte do [DATABASE_SCHEMA.md](../DATABASE_SCHEMA.md) — fonte da verdade para geração das migrations.
+> Registra **por que** o schema deste módulo é assim, e o que foi rejeitado.
+> A fonte da verdade do DDL é `shared/src/database/schema/*.ts` ([ADR-0009](../adr/0009-migration-strategy.md)).
 
 ---
 
@@ -61,25 +61,7 @@ account_status: active | inactive | invited
 
 ## Tabela `student_specialists`
 
-```
-student_specialists
-├── id              uuid         PK
-├── student_id      uuid         NOT NULL FK → profiles.id CASCADE DELETE
-├── specialist_id   uuid         NOT NULL FK → profiles.id CASCADE DELETE
-├── service_type    service_type  NOT NULL — enum: personal_training | nutrition_consulting
-├── status          link_status   NOT NULL DEFAULT 'active' — enum: active | inactive
-├── ended_by        uuid         NULL FK → profiles.id SET NULL
-├── ended_at        timestamptz  NULL
-└── created_at      timestamptz  NOT NULL DEFAULT now()
-
-UNIQUE(student_id, service_type) WHERE status = 'active'
-```
-
 ### Enum `link_status`
-
-```sql
-CREATE TYPE link_status AS ENUM ('active', 'inactive');
-```
 
 Usado em `student_specialists.status`. Enum no banco — impede inserção de qualquer valor fora de `active` ou `inactive` sem depender de validação na aplicação.
 
@@ -99,14 +81,6 @@ Quando `profiles.account_status` de um specialist muda para `inactive`, uma trig
 
 Usada exclusivamente no Fluxo B — aluno cria a própria conta e quer se vincular.
 
-```
-student_link_codes
-├── id          uuid        PK
-├── student_id  uuid        NOT NULL FK → profiles.id CASCADE DELETE
-├── code        text        NOT NULL UNIQUE — 6 caracteres alfanuméricos
-└── expires_at  timestamptz NOT NULL — criado com NOW() + 24h
-```
-
 **Código de 6 caracteres alfanuméricos**: curto o suficiente para o aluno passar verbalmente ou por mensagem. `UNIQUE` garante que não existe código duplicado ativo.
 
 **Sem campo `used`**: o código é deletado imediatamente após o uso — não há razão para manter um registro com finalidade encerrada. Um código ou existe (válido) ou não existe (foi usado, substituído ou expirou). Estado binário pela presença ou ausência da linha.
@@ -124,21 +98,7 @@ Segurança mínima — se o código vazar, tem tempo limitado de vida. O aluno p
 
 Rastreia o consentimento explícito do aluno para coleta de dados de saúde. Obrigatório pela LGPD — Art. 11, I (consentimento explícito para dados sensíveis).
 
-```
-student_consents
-├── id             uuid         PK
-├── student_id     uuid         NOT NULL FK → profiles.id CASCADE DELETE
-├── consent_type   consent_type NOT NULL — enum: health_data_collection
-├── given_at       timestamptz  NOT NULL DEFAULT now()
-├── revoked_at     timestamptz  NULL — NULL = consentimento ativo
-└── policy_version text         NOT NULL — ex: '1.0'
-```
-
 ### Enum `consent_type`
-
-```sql
-CREATE TYPE consent_type AS ENUM ('health_data_collection');
-```
 
 **`consent_type`**: único valor no MVP — `'health_data_collection'`. Cobre `physical_assessments` e `student_anamnesis` com uma única ação de consentimento no onboarding. Novos tipos podem ser adicionados no futuro sem alterar o schema.
 
@@ -154,27 +114,6 @@ CREATE TYPE consent_type AS ENUM ('health_data_collection');
 
 **Por que tabela separada e não campo em `profiles`?**
 Permite histórico de revogação e re-consentimento, múltiplos tipos de consentimento no futuro, e versionamento da política — tudo sem alterar o schema.
-
----
-
-## Relações do módulo Students
-
-```
-profiles (Auth)
-    │
-    ├── student_specialists (N:N entre student e specialist)
-    │       ├── student_id    → profiles.id
-    │       ├── specialist_id → profiles.id
-    │       └── ended_by      → profiles.id (quem encerrou)
-    │
-    ├── student_link_codes (1:N) — só para account_type = 'student'
-    │       └── deletado ao usar, ao substituir ou ao expirar
-    │
-    └── student_consents (1:N) — só para account_type = 'student'
-            └── consultado pelo RLS do módulo Assessment
-```
-
-> Dados de saúde (`physical_assessments`, `student_anamnesis`, `body_scans`) vivem em Assessment — ver [schema/assessment.md](assessment.md).
 
 ---
 
@@ -194,72 +133,11 @@ profiles (Auth)
 
 ---
 
-## Compliance LGPD — revisão `/lgpd-check`
+## Compliance LGPD
 
-### Bloco A — Necessidade e Finalidade ✅
-
-| Tabela | Campo | Necessário? | Justificativa |
-|--------|-------|------------|---------------|
-| `student_specialists` | todos | Sim | Vínculo é o núcleo do serviço |
-| `student_link_codes` | `code`, `expires_at` | Sim | Mínimo necessário para o fluxo B funcionar |
-| `student_consents` | todos | Sim | Obrigação legal LGPD — rastreio de consentimento explícito |
-
-### Bloco B — Bases Legais ✅
-
-| Dado | Base legal | Artigo |
-|------|------------|--------|
-| `student_specialists` | Execução de contrato | Art. 7°, V |
-| `student_link_codes` | Execução de contrato | Art. 7°, V |
-| `student_consents` | Obrigação legal | Art. 7°, II |
-
-> Dados de saúde (`physical_assessments`, `student_anamnesis`, `body_scans`) e suas bases legais estão documentados em [schema/assessment.md](assessment.md).
+Base legal, finalidade, retenção e direitos dos titulares deste módulo estão em
+[`docs/LGPD_COMPLIANCE.md`](../LGPD_COMPLIANCE.md), que é o registro canônico.
+As políticas de RLS vivem nas migrations (`supabase/migrations/`), não aqui — ver
+[ADR-0014](../adr/0014-rls-helpers-security-definer.md).
 
 ### Bloco C — Segurança e RLS
-
-```sql
--- student_specialists
--- SELECT: specialist vê seus vínculos; student vê os próprios vínculos
--- INSERT: specialist pode criar (Fluxo A) ou via RPC autenticada (Fluxo B)
--- UPDATE: apenas status — specialist pode inativar
-
--- student_link_codes
--- SELECT: apenas o student dono do código
--- INSERT: apenas student para si mesmo
-
--- student_consents
--- SELECT: apenas o próprio student
--- INSERT: apenas o próprio student
--- UPDATE: apenas revoked_at (revogação)
-```
-
-### Bloco D — Direitos dos Titulares
-
-Quando o aluno solicita exclusão de conta (tabelas deste módulo):
-1. `student_specialists` → deletar
-2. `student_link_codes` → deletar (CASCADE DELETE por FK)
-3. `student_consents` → deletar (CASCADE DELETE por FK)
-4. Profile: anonimizar — ver módulo Auth
-
-> Dados de saúde: tratados no módulo Assessment.
-
-### Bloco E — Prevenção e Transparência
-
-- `student_link_codes.code` — não deve aparecer em logs após uso
-
----
-
-## Diagrama de relações (módulo Students)
-
-```
-profiles (Auth)
-    │
-    ├── student_specialists (N:N entre student e specialist)
-    │       ├── student_id    → profiles.id
-    │       ├── specialist_id → profiles.id
-    │       └── ended_by      → profiles.id (quem encerrou)
-    │
-    ├── student_link_codes (1:N) — só para account_type = 'student'
-    │
-    └── student_consents (1:N) — só para account_type = 'student'
-            └── consultado pelo RLS do módulo Assessment
-```

@@ -12,7 +12,7 @@ import { useAssessmentStore } from '../store/assessmentStore';
  *
  * São as marcas que tornam duas capturas comparáveis: encaixando o corpo entre
  * elas, a distância até a câmera é a mesma nas duas vezes, para a mesma pessoa
- * e a mesma lente. É disso que o delta depende (`ADR-010`).
+ * e a mesma lente. É disso que o delta depende (`ADR-0010`).
  */
 const MARCA_TOPO = 0.1;
 const MARCA_BASE = 0.9;

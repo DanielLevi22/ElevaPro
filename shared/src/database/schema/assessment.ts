@@ -65,7 +65,7 @@ export const bodyScans = pgTable("body_scans", {
     .references(() => profiles.id, { onDelete: "cascade" }),
   scanned_at: timestamp("scanned_at", { withTimezone: true }).notNull().defaultNow(),
   // Sem coluna de foto, de propósito: a imagem não é persistida — só o
-  // resultado derivado (`ADR-010`). As quatro `photo_*_url` saíram na 0026.
+  // resultado derivado (`ADR-0010`). As quatro `photo_*_url` saíram na 0026.
   // Métricas derivadas pela IA
   height_cm: numeric("height_cm", { precision: 5, scale: 2 }),
   weight_kg: numeric("weight_kg", { precision: 5, scale: 2 }),
@@ -87,7 +87,7 @@ export const bodyScans = pgTable("body_scans", {
   posture_overall_score: numeric("posture_overall_score", { precision: 4, scale: 2 }),
   // Análise textual da IA
   // Como a foto foi enquadrada — o que permite dizer se dois escaneamentos são
-  // comparáveis. Nulável: capturas anteriores à 0027 não têm (`ADR-010`).
+  // comparáveis. Nulável: capturas anteriores à 0027 não têm (`ADR-0010`).
   framing_mark_top: numeric("framing_mark_top", { precision: 4, scale: 3 }),
   framing_mark_bottom: numeric("framing_mark_bottom", { precision: 4, scale: 3 }),
   framing_pitch: numeric("framing_pitch", { precision: 5, scale: 2 }),

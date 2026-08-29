@@ -1,7 +1,7 @@
 # Schema — Módulo Gamification
 
-> **Status:** ✅ Aprovado
-> Parte do [DATABASE_SCHEMA.md](../DATABASE_SCHEMA.md) — fonte da verdade para geração das migrations.
+> Registra **por que** o schema deste módulo é assim, e o que foi rejeitado.
+> A fonte da verdade do DDL é `shared/src/database/schema/*.ts` ([ADR-0009](../adr/0009-migration-strategy.md)).
 
 ---
 
@@ -33,28 +33,6 @@ A atualização acontece em cascata na camada de aplicação, sempre que o aluno
 ---
 
 ## Tabela `daily_goals` — metas diárias
-
-```
-daily_goals
-├── id                    uuid        PK
-├── student_id            uuid        NOT NULL FK → profiles.id CASCADE DELETE
-├── date                  date        NOT NULL
-│
-├── — Dieta —
-├── meals_target          integer     NOT NULL DEFAULT 0
-├── meals_completed       integer     NOT NULL DEFAULT 0
-│
-├── — Treino —
-├── workout_target        integer     NOT NULL DEFAULT 0
-├── workout_completed     integer     NOT NULL DEFAULT 0
-│
-├── completed             boolean     NOT NULL DEFAULT false
-├── completion_percentage integer     NOT NULL DEFAULT 0  — 0 a 100
-│
-└── created_at            timestamptz NOT NULL DEFAULT now()
-
-UNIQUE(student_id, date)
-```
 
 ### Como `meals_target` é calculado
 
@@ -115,18 +93,6 @@ Um registro por aluno por dia. A RPC faz upsert — cria se não existe, atualiz
 
 ## Tabela `student_streaks` — sequência de dias
 
-```
-student_streaks
-├── id                  uuid        PK
-├── student_id          uuid        NOT NULL UNIQUE FK → profiles.id CASCADE DELETE
-├── current_streak      integer     NOT NULL DEFAULT 0
-├── longest_streak      integer     NOT NULL DEFAULT 0
-├── last_activity_date  date        NULL
-├── freeze_available    integer     NOT NULL DEFAULT 0
-├── last_freeze_date    date        NULL
-└── updated_at          timestamptz NOT NULL DEFAULT now()
-```
-
 ### Como o streak é atualizado
 
 Disparado quando `daily_goals.completed` muda para `true`:
@@ -177,18 +143,6 @@ Impede usar dois freezes em dias consecutivos — o freeze protege um único dia
 
 ## Tabela `achievements` — conquistas desbloqueadas
 
-```
-achievements
-├── id          uuid        PK
-├── student_id  uuid        NOT NULL FK → profiles.id CASCADE DELETE
-├── type        text        NOT NULL — 'streak' | 'milestone' | 'challenge'
-├── title       text        NOT NULL
-├── description text        NULL
-├── icon        text        NULL — emoji ou nome do ícone
-├── earned_at   timestamptz NOT NULL DEFAULT now()
-└── points      integer     NOT NULL DEFAULT 0
-```
-
 ### Conquistas pré-definidas
 
 Verificadas automaticamente após cada atualização de streak ou daily_goals:
@@ -236,24 +190,6 @@ No MVP, o catálogo de conquistas é código — está nas regras de verificaç�
 
 ---
 
-## Relações do módulo Gamification
-
-```
-profiles (Auth)
-    │
-    ├── daily_goals (1:N) — um por dia por aluno
-    │       ├── targets derivados de diet_plans (Nutrition)
-    │       └── targets derivados de training_plans (Workouts)
-    │
-    ├── student_streaks (1:1) — um por aluno
-    │       └── atualizado quando daily_goals.completed = true
-    │
-    └── achievements (1:N) — log permanente de conquistas
-            └── verificados após atualização de streak ou daily_goals
-```
-
----
-
 ## O que foi explicitamente rejeitado
 
 | Decisão rejeitada | Motivo |
@@ -270,6 +206,11 @@ profiles (Auth)
 
 ## Compliance LGPD
 
+Base legal, finalidade, retenção e direitos dos titulares deste módulo estão em
+[`docs/LGPD_COMPLIANCE.md`](../LGPD_COMPLIANCE.md), que é o registro canônico.
+As políticas de RLS vivem nas migrations (`supabase/migrations/`), não aqui — ver
+[ADR-0014](../adr/0014-rls-helpers-security-definer.md).
+
 Dados comportamentais revelam padrão de atividade física e alimentar — dados de saúde indireta.
 
 | Tabela | Base legal | Artigo |
@@ -277,24 +218,3 @@ Dados comportamentais revelam padrão de atividade física e alimentar — dados
 | `daily_goals` | Tutela da saúde + Consentimento | Art. 11, II, f + I |
 | `student_streaks` | Tutela da saúde + Consentimento | Art. 11, II, f + I |
 | `achievements` | Legítimo interesse (engajamento do serviço) | Art. 7°, IX |
-
-### RLS — políticas mínimas
-
-```sql
--- daily_goals
--- SELECT: apenas o próprio student + specialist com vínculo active
--- INSERT/UPDATE: via RPC calculate_daily_goals (service role)
-
--- student_streaks
--- SELECT: student proprietário + specialist com vínculo active
--- INSERT/UPDATE: via RPC de atualização de streak (service role)
-
--- achievements
--- SELECT: student proprietário + specialist com vínculo active
--- INSERT: via RPC de verificação de conquistas (service role)
--- DELETE: proibido — conquistas são permanentes
-```
-
-### Exclusão de conta
-
-Todos os registros deletados por CASCADE DELETE em `student_id`.

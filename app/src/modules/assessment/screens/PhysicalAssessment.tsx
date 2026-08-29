@@ -56,7 +56,7 @@ export default function PhysicalAssessment() {
     if (!studentId) return;
     // A avaliação física não guarda foto: as colunas `photo_*` nunca existiram
     // no banco, e a imagem da análise por IA também não é persistida
-    // (`ADR-010`). O carregamento de URLs assinadas foi removido.
+    // (`ADR-0010`). O carregamento de URLs assinadas foi removido.
     PhysicalAssessmentService.getLatest(studentId)
       .then(setAssessment)
       .catch((error) => {

@@ -53,4 +53,4 @@ O `globals.css` precisa continuar assim, porque o `@custom-variant dark` do
 Tailwind depende dessa estrutura. Ao portar, o que atravessa é o **valor**,
 nunca o seletor.
 
-Ver [`docs/PRDs/design-system-unification.md`](../docs/PRDs/design-system-unification.md).
+Ver a issue [#131](https://github.com/DanielLevi22/ElevaPro/issues/131).

@@ -1,7 +1,7 @@
 # Schema — Módulo Auth
 
-> **Status:** ✅ Aprovado
-> Parte do [DATABASE_SCHEMA.md](../DATABASE_SCHEMA.md) — fonte da verdade para geração das migrations.
+> Registra **por que** o schema deste módulo é assim, e o que foi rejeitado.
+> A fonte da verdade do DDL é `shared/src/database/schema/*.ts` ([ADR-0009](../adr/0009-migration-strategy.md)).
 
 ---
 
@@ -42,23 +42,7 @@ Anteriormente chamado de `autonomous_student`. É o usuário independente — n�
 
 ## Tabela `profiles`
 
-```
-profiles
-├── id            uuid           PK — espelho de auth.users.id (não autoincremento)
-├── email         text           NOT NULL — espelho de auth.users.email
-├── full_name     text           NULL — preenchido no cadastro
-├── avatar_url    text           NULL — foto de perfil, armazenada no Supabase Storage
-├── account_type  account_type   NOT NULL — enum: admin | specialist | student | member
-├── account_status account_status NOT NULL DEFAULT 'active' — enum: active | inactive | invited
-├── created_at    timestamptz    NOT NULL DEFAULT now()
-└── updated_at    timestamptz    NOT NULL DEFAULT now()
-```
-
 ### Enum `account_type`
-
-```sql
-CREATE TYPE account_type AS ENUM ('admin', 'specialist', 'student', 'member');
-```
 
 | Valor | Descrição |
 |-------|-----------|
@@ -70,10 +54,6 @@ CREATE TYPE account_type AS ENUM ('admin', 'specialist', 'student', 'member');
 Renomeações em relação ao schema anterior: `professional → specialist`, `managed_student → student`, `autonomous_student → member`. Os nomes antigos estão registrados aqui para rastreabilidade na migração.
 
 ### Enum `account_status`
-
-```sql
-CREATE TYPE account_status AS ENUM ('active', 'inactive', 'invited');
-```
 
 | Valor | Descrição |
 |-------|-----------|
@@ -104,16 +84,6 @@ Anteriormente chamada de `professional_services`. Renomeada para consistência c
 
 Um especialista pode oferecer um ou dois tipos de serviço. Essa tabela registra quais. A separação em tabela própria (em vez de colunas booleanas em `profiles`) permite adicionar novos tipos de serviço no futuro sem alterar o schema de `profiles`.
 
-```
-specialist_services
-├── id             uuid          PK
-├── specialist_id  uuid          NOT NULL FK → profiles.id CASCADE DELETE
-├── service_type   service_type  NOT NULL — personal_training | nutrition_consulting
-└── created_at     timestamptz   NOT NULL DEFAULT now()
-
-UNIQUE(specialist_id, service_type)
-```
-
 **`service_type`: `personal_training | nutrition_consulting`**
 
 **`UNIQUE(specialist_id, service_type)`**: um especialista não pode ter dois registros do mesmo tipo de serviço.
@@ -123,90 +93,15 @@ O schema anterior tinha `is_active boolean`. Foi removido porque: se o especiali
 
 ---
 
-## Relações do módulo Auth
+## Compliance LGPD
 
-```
-auth.users (Supabase)
-    │
-    └── profiles (1:1)
-            │
-            └── specialist_services (1:N) — só para account_type = 'specialist'
-```
-
-O `profiles.id` é idêntico ao `auth.users.id` — não é gerado pelo banco, é recebido do Supabase Auth via trigger. Isso garante que autenticação e dados de perfil estão sempre sincronizados sem joins desnecessários.
-
----
-
-## Compliance LGPD — revisão `/lgpd-check`
-
-### Bloco A — Necessidade e Finalidade ✅
-
-Todos os campos passam no critério de necessidade:
-
-| Campo | Necessário? | Justificativa |
-|-------|------------|---------------|
-| `email` | Sim | Autenticação e comunicação — o serviço não funciona sem |
-| `full_name` | Sim | Identificação do usuário nas telas — obrigatório no cadastro |
-| `avatar_url` | Opcional | Personalização — o sistema funciona sem. Campo deve ser opcional no formulário |
-| `account_type` | Sim | Controla fluxo de UI, permissões e RLS |
-| `account_status` | Sim | Ciclo de vida da conta |
-| `service_type` | Sim | Define quais funcionalidades o especialista acessa |
-
-Campos rejeitados do schema anterior que teriam violado a Necessidade: `birth_date`, `gender`, `phone`, `cref/crn`, `is_super_admin`, `professional_bio`, `xp/level` — todos corretos.
-
-### Bloco B — Bases Legais ✅
-
-| Dado | Base legal | Artigo |
-|------|------------|--------|
-| `profiles` (todos os campos) | Execução de contrato | Art. 7°, V |
-| `specialist_services` | Execução de contrato | Art. 7°, V |
-| `avatar_url` (opcional) | Consentimento | Art. 7°, I |
+Base legal, finalidade, retenção e direitos dos titulares deste módulo estão em
+[`docs/LGPD_COMPLIANCE.md`](../LGPD_COMPLIANCE.md), que é o registro canônico.
+As políticas de RLS vivem nas migrations (`supabase/migrations/`), não aqui — ver
+[ADR-0014](../adr/0014-rls-helpers-security-definer.md).
 
 ### Bloco C — Segurança e RLS ⚠️
 
 RLS obrigatório para `profiles` e `specialist_services`. Políticas mínimas necessárias:
 
-```sql
--- profiles: usuário vê e edita apenas o próprio perfil
--- admin vê todos (necessidade operacional documentada)
--- specialist NÃO acessa profile de outro specialist diretamente
--- specialist acessa profiles de seus alunos via student_specialists
-
--- specialist_services: specialist gerencia apenas os próprios serviços
--- outros usuários podem ler (necessário para o aluno saber o tipo de serviço ao se vincular)
-```
-
 **Decisão pendente para implementação:** definir se specialist pode ver `profiles` de outros specialists ou apenas de seus alunos.
-
-### Bloco D — Direitos dos Titulares ❌
-
-**Problema identificado — Exclusão vs. Soft Delete:**
-
-O schema usa `account_status = 'inactive'` para desativar contas. Pela LGPD, isso **não é eliminação**. Quando um usuário solicita exclusão da conta:
-
-- `profiles.email` e `profiles.full_name` devem ser eliminados ou anonimizados
-- `profiles.avatar_url` (arquivo no Storage) deve ser deletado
-- `specialist_services` pode ser deletado (não há histórico necessário aqui)
-
-**Decisão tomada:** o fluxo de exclusão de conta deve:
-1. Anonimizar `profiles`: `email → deleted_{uuid}@deleted.meupersonal`, `full_name → 'Usuário removido'`, `avatar_url → NULL`
-2. Deletar `specialist_services` do usuário
-3. Manter `profiles.id` e `account_status = 'inactive'` para preservar integridade referencial com dados de outros módulos (treinos, avaliações pertencentes a alunos do specialist)
-4. Dados de saúde de alunos: ver decisão no módulo Students
-
-**Problema identificado — Contas `invited` sem ativação:**
-
-O status `invited` (adicionado pelo módulo Students) cria perfis com `email` e `full_name` de alunos que podem nunca ativar a conta. Isso representa dado pessoal coletado sem que o titular tenha ação direta.
-
-**Base legal:** o especialista cria a conta como parte da execução do contrato de serviço (Art. 7°, V). O aluno dará consentimento no momento da ativação.
-
-**Política de retenção para contas `invited`:** se o aluno não ativar em **90 dias**, o perfil deve ser anonimizado (`email → expired_{uuid}@deleted.meupersonal`, `full_name → NULL`) e o status vai para `inactive`. O especialista recebe notificação para reenviar o convite se ainda necessário.
-
-> Decisão pendente: implementar job de limpeza automática de contas `invited` expiradas (90 dias).
-
-### Bloco E — Prevenção e Transparência ✅
-
-- Senhas nunca armazenadas — gerenciadas pelo Supabase Auth
-- `email` não deve aparecer em logs de aplicação
-- `avatar_url` é uma referência ao Storage, não dado em si — ok logar a URL pública
-- Onboarding informa quais dados são coletados no cadastro

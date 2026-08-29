@@ -30,7 +30,7 @@ export async function formatBodyScanIndex(studentId: string): Promise<string> {
  *
  * A comparação vem antes das medidas porque é o número confiável: o erro
  * sistemático da estimativa se repete entre dois escaneamentos e se cancela na
- * diferença (`ADR-010`).
+ * diferença (`ADR-0010`).
  */
 export async function queryBodyScan(studentId: string): Promise<string> {
   const { latest, previous, deltas } =

@@ -72,7 +72,7 @@ interface BodyScanHistoryProps {
  * A comparação vem primeiro e as medidas absolutas depois, de propósito: o
  * erro sistemático da estimativa se repete entre dois escaneamentos e se
  * cancela na diferença, então o delta é o número mais confiável da tela
- * (`ADR-010`). Invertida, a ordem faz o especialista anotar o valor absoluto.
+ * (`ADR-0010`). Invertida, a ordem faz o especialista anotar o valor absoluto.
  */
 export function BodyScanHistory({ scans, deltas }: BodyScanHistoryProps) {
   if (scans.length === 0) {
@@ -157,7 +157,7 @@ export function BodyScanHistory({ scans, deltas }: BodyScanHistoryProps) {
 
         {/* Peso e altura vêm da avaliação física, não da imagem; gordura e massa
             magra são estimativas do modelo. A origem fica escrita para o
-            especialista não misturar as duas coisas (ADR-010). */}
+            especialista não misturar as duas coisas (ADR-0010). */}
         <div className="grid grid-cols-4 gap-4 mt-4">
           {[
             { label: "Peso", value: latest.weight_kg, unidade: "kg", origem: "medido" },
@@ -188,7 +188,7 @@ export function BodyScanHistory({ scans, deltas }: BodyScanHistoryProps) {
       </section>
 
       {/* O que a análise viu em cada ângulo.
-          A imagem não é guardada (ADR-010), então isto é tudo o que resta do
+          A imagem não é guardada (ADR-0010), então isto é tudo o que resta do
           que foi observado — é o que substitui olhar a foto. */}
       {VISTAS.some(({ chave }) => (latest.posture_feedback?.[chave] ?? []).length > 0) && (
         <section>

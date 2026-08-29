@@ -12,7 +12,7 @@ on:
 # Só docs mudaram → nenhum job roda
 #
 # shared/ entra nos dois porque o código dele é compilado dentro de ambos.
-# Antes o filtro apontava para packages/**, pasta que o ADR-002 planejou mas
+# Antes o filtro apontava para packages/**, pasta que o ADR-0002 planejou mas
 # nunca foi criada — na prática mudanças em shared/ não disparavam CI nenhum.
 
 jobs:

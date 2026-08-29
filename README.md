@@ -93,11 +93,10 @@ em [`supabase/config.toml`](supabase/config.toml) — não as default `543xx`.
 
 | Documento | O que encontrar |
 |---|---|
-| [`docs/README.md`](docs/README.md) | Visão geral do sistema com diagramas de arquitetura |
-| [`docs/modules/ai/`](docs/modules/ai/README.md) | Como o módulo de IA funciona (C4 Nível 3) |
-| [`docs/PRDs/README.md`](docs/PRDs/README.md) | Todas as features planejadas e em andamento |
-| [`docs/decisions/README.md`](docs/decisions/README.md) | Por que cada decisão de arquitetura foi tomada |
-| [`docs/SYSTEM_MAPPING.md`](docs/SYSTEM_MAPPING.md) | Schema canônico do banco e anti-padrões |
+| [`CONTEXT.md`](CONTEXT.md) | Linguagem ubíqua — o que cada termo do domínio significa |
+| [GitHub Issues](https://github.com/DanielLevi22/ElevaPro/issues) | Todas as features planejadas e em andamento |
+| [`docs/adr/README.md`](docs/adr/README.md) | Por que cada decisão de arquitetura foi tomada |
+| [`docs/schema/`](docs/schema/) | Por que o schema de cada módulo é assim |
 | [`docs/HOW_WE_WORK.md`](docs/HOW_WE_WORK.md) | Fluxo de desenvolvimento e convenções |
 | [`CLAUDE.md`](CLAUDE.md) | Guia para o agente de IA (stack, regras, padrões) |
 
@@ -126,7 +125,7 @@ Veja o protocolo completo em [`docs/HOW_WE_WORK.md`](docs/HOW_WE_WORK.md).
 ### Migrations
 
 Schema é definido em Drizzle e aplicado pelo pipeline — nunca à mão. Detalhes e
-motivo em [`ADR-009`](docs/decisions/009-migration-strategy.md).
+motivo em [`ADR-0009`](docs/adr/0009-migration-strategy.md).
 
 ```bash
 # 1. editar shared/src/database/schema/*.ts
@@ -178,4 +177,4 @@ Para trocar o domínio de preview, defina a variável de repositório
 | Billing | 📋 Planejado |
 | Marketplace | 📋 Planejado |
 
-Status detalhado: [`docs/STATUS.md`](docs/STATUS.md)
+Estado atual e o que está em curso: [GitHub Issues](https://github.com/DanielLevi22/ElevaPro/issues)

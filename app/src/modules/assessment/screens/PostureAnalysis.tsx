@@ -579,7 +579,7 @@ export default function PostureAnalysis() {
 
         {/* A comparação vem antes das fotos e dos valores absolutos: é o número
             mais confiável da tela, porque o erro da estimativa se cancela na
-            diferença (ADR-010). */}
+            diferença (ADR-0010). */}
         {!isDemo && <ScanComparison deltas={scanDeltas} />}
 
         {/*
@@ -775,7 +775,7 @@ export default function PostureAnalysis() {
                   existiam. Era gravação duplicada: a análise já é persistida em
                   `body_scans` pelo próprio BFF, no momento em que acontece.
                   Mantê-lo faria estimativa e medição virarem a mesma coisa na
-                  ficha do aluno (`ADR-010`). */}
+                  ficha do aluno (`ADR-0010`). */}
             </View>
           </Animated.View>
         </View>

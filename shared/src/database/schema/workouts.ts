@@ -189,7 +189,7 @@ export const workoutSessionExercises = pgTable("workout_session_exercises", {
  *
  * Convive com `workout_session_exercises.sets_data`, que guarda o mesmo dado em
  * JSONB. São duas representações concorrentes; consolidar é dívida registrada
- * no STATUS.md, não decisão deste arquivo.
+ * na issue #143, não decisão deste arquivo.
  */
 export const workoutSessionSets = pgTable("workout_session_sets", {
   id: uuid("id").primaryKey().defaultRandom(),

@@ -3,7 +3,7 @@
  *
  * Guardado com o escaneamento para o próximo reproduzir a mesma distância: é o
  * que torna dois escaneamentos comparáveis, e a comparação é onde está o valor
- * da feature (`ADR-010`).
+ * da feature (`ADR-0010`).
  */
 export interface CaptureFraming {
   /** Fração da altura da tela onde ficava a marca do topo da cabeça. */
@@ -55,7 +55,7 @@ export interface BodyScanResult {
   };
   imageUrl: string;
   /**
-   * De onde vieram altura e peso — nunca do modelo (`ADR-010`). A tela usa isto
+   * De onde vieram altura e peso — nunca do modelo (`ADR-0010`). A tela usa isto
    * para dizer se a régua é medida ou informada, o que muda a confiança nas
    * circunferências derivadas dela.
    */

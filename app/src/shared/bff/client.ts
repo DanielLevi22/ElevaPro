@@ -64,7 +64,7 @@ const VAR_URL = 'EXPO_PUBLIC_API_URL';
  * com um unzip, e isso é teto de app cliente, não descuido: no Expo só variável
  * com esse prefixo chega ao runtime. É a mesma razão pela qual a
  * `ANTHROPIC_API_KEY` nunca vai para o mobile e toda IA passa pelo BFF
- * (`ADR-004`).
+ * (`ADR-0004`).
  *
  * Então o modelo de ameaça que ele cobre é "quem digitou a URL", não "quem tem
  * o APK" — e o APK é `distribution: internal`. Quem protege o DADO é

@@ -24,7 +24,7 @@ export class BodyScanConsentError extends Error {
  * Falta a altura, que é a régua da imagem.
  *
  * Sem ela não há como converter pixel em centímetro, e a alternativa seria o
- * modelo chutar — que é exatamente o que este PRD removeu (`ADR-010`).
+ * modelo chutar — que é exatamente o que este PRD removeu (`ADR-0010`).
  */
 export class BodyScanScaleError extends Error {
   constructor() {

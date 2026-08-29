@@ -1,7 +1,7 @@
 # Schema — Módulo Nutrition
 
-> **Status:** ✅ Aprovado
-> Parte do [DATABASE_SCHEMA.md](../DATABASE_SCHEMA.md) — fonte da verdade para geração das migrations.
+> Registra **por que** o schema deste módulo é assim, e o que foi rejeitado.
+> A fonte da verdade do DDL é `shared/src/database/schema/*.ts` ([ADR-0009](../adr/0009-migration-strategy.md)).
 
 ---
 
@@ -32,11 +32,6 @@ O aluno registra o dia a dia em `meal_logs` — um log por refeição por dia, c
 
 ## Enums
 
-```sql
-CREATE TYPE diet_plan_status AS ENUM ('active', 'finished');
-CREATE TYPE diet_plan_type   AS ENUM ('unique', 'cyclic');
-```
-
 | Enum | Valores | Usado em |
 |---|---|---|
 | `diet_plan_status` | `active \| finished` | `diet_plans.status` |
@@ -56,62 +51,17 @@ Não existe `completed` separado de `finished` — a distinção "manual vs expi
 
 ## Tabela `foods` — catálogo global
 
-```
-foods
-├── id            uuid        PK
-├── name          text        NOT NULL
-├── category      text        NULL — ex: 'Proteína', 'Carboidrato', 'Gordura', 'Vegetal'
-├── serving_size  numeric(7,2) NOT NULL DEFAULT 100
-├── serving_unit  text        NOT NULL DEFAULT 'g' — g, ml, unidade
-│
-├── — Macros por porção —
-├── calories      numeric(7,2) NULL
-├── protein       numeric(7,2) NULL
-├── carbs         numeric(7,2) NULL
-├── fat           numeric(7,2) NULL
-├── fiber         numeric(7,2) NULL
-│
-├── source        text        NULL — 'TBCA', 'USDA', 'Manual'
-├── is_custom     boolean     NOT NULL DEFAULT false
-├── created_by    uuid        NULL FK → profiles.id SET NULL
-├── search_vector tsvector    NULL — atualizado por trigger para busca full-text
-└── created_at    timestamptz NOT NULL DEFAULT now()
-```
-
 **`is_custom + created_by`**: alimentos públicos têm `is_custom = false, created_by = NULL`. Alimentos criados por especialistas têm `is_custom = true, created_by = specialist_id`. O RLS permite que cada especialista veja os alimentos públicos mais os seus próprios customizados.
 
 **`created_by SET NULL`**: se o especialista sair da plataforma, seus alimentos customizados são preservados — evita quebrar planos que os referenciam. O alimento fica "órfão" mas funcional.
 
-**`search_vector`**: coluna `tsvector` atualizada por trigger a cada INSERT/UPDATE em `name`. Permite busca full-text eficiente sem depender de `ILIKE` em tabelas grandes (3500+ alimentos TBCA).
+**`search_vector`**: coluna `tsvector` atualizada por trigger a cada INSERT/UPDATE em `name`. Permite busca full-text eficiente sem depender de `ILIKE` conforme o catálogo cresce. O seed traz uma amostra da TACO, não a tabela inteira.
 
 **`category` como text**: categorias de alimentos variam por contexto ("Proteína" vs "Carne Vermelha" vs "Carne"). Flexibilidade necessária — não vale enum.
 
 ---
 
 ## Tabela `diet_plans` — plano alimentar
-
-```
-diet_plans
-├── id               uuid              PK
-├── student_id       uuid              NOT NULL FK → profiles.id CASCADE DELETE
-├── specialist_id    uuid              NULL FK → profiles.id SET NULL
-├── name             text              NULL — ex: "Cutting Janeiro 2026"
-├── plan_type        diet_plan_type    NOT NULL DEFAULT 'cyclic'
-├── status           diet_plan_status  NOT NULL DEFAULT 'active'
-├── version          integer           NOT NULL DEFAULT 1
-│
-├── start_date       date              NULL
-├── end_date         date              NULL
-│
-├── — Metas do plano —
-├── target_calories  numeric(7,2)      NULL
-├── target_protein   numeric(7,2)      NULL
-├── target_carbs     numeric(7,2)      NULL
-├── target_fat       numeric(7,2)      NULL
-│
-├── notes            text              NULL
-└── created_at       timestamptz       NOT NULL DEFAULT now()
-```
 
 **`specialist_id NULL`**: o especialista pode ser desvinculado após criar o plano. `SET NULL` preserva o plano — o aluno não perde o histórico.
 
@@ -125,19 +75,6 @@ diet_plans
 
 ## Tabela `diet_meals` — refeições do plano
 
-```
-diet_meals
-├── id               uuid        PK
-├── diet_plan_id     uuid        NOT NULL FK → diet_plans.id CASCADE DELETE
-├── name             text        NOT NULL — ex: 'Almoço', 'Pré-treino'
-├── meal_type        text        NULL — categoria livre: 'main', 'snack', etc.
-├── meal_order       integer     NOT NULL DEFAULT 0 — ordenação dentro do dia
-├── day_of_week      integer     NULL — 0=Dom, 1=Seg … 6=Sáb. NULL = dieta única
-├── meal_time        text        NULL — ex: '12:30' — horário sugerido
-├── target_calories  numeric(7,2) NULL
-└── created_at       timestamptz NOT NULL DEFAULT now()
-```
-
 **`day_of_week NULL` para dieta única**: quando `diet_plans.plan_type = 'unique'`, todas as refeições têm `day_of_week = NULL` — as mesmas refeições valem para todos os dias. Quando `plan_type = 'cyclic'`, `day_of_week` é obrigatório (0–6). Mais limpo que usar `-1` como sentinela.
 
 **`name` livre**: o especialista nomeia a refeição como quiser — "Café da manhã", "Pré-treino", "Ceia fit". Não é enum para não limitar a criatividade do especialista.
@@ -148,17 +85,6 @@ diet_meals
 
 ## Tabela `diet_meal_items` — alimentos da refeição
 
-```
-diet_meal_items
-├── id            uuid        PK
-├── diet_meal_id  uuid        NOT NULL FK → diet_meals.id CASCADE DELETE
-├── food_id       uuid        NOT NULL FK → foods.id RESTRICT
-├── quantity      numeric(7,2) NOT NULL
-├── unit          text        NOT NULL — 'g', 'ml', 'unidade', 'colher de sopa'
-├── order_index   integer     NOT NULL DEFAULT 0
-└── created_at    timestamptz NOT NULL DEFAULT now()
-```
-
 **`food_id RESTRICT`**: não permite deletar um alimento que está sendo usado em alguma refeição prescrita. Diferente de `CASCADE` (que destruiria silenciosamente a prescrição) ou `SET NULL` (que deixaria item sem alimento). O especialista precisa remover o item primeiro.
 
 **`unit` como text**: unidades de medida são muito variadas no contexto de nutrição — "colher de sopa", "xícara", "fatia", "unidade pequena". Enum seria restritivo demais.
@@ -166,23 +92,6 @@ diet_meal_items
 ---
 
 ## Tabela `meal_logs` — registro diário do aluno
-
-```
-meal_logs
-├── id             uuid        PK
-├── student_id     uuid        NOT NULL FK → profiles.id CASCADE DELETE
-├── diet_plan_id   uuid        NULL FK → diet_plans.id SET NULL
-├── diet_meal_id   uuid        NULL FK → diet_meals.id SET NULL
-├── logged_date    date        NOT NULL
-├── completed      boolean     NOT NULL DEFAULT false
-├── actual_items   jsonb       NULL
-│   — [{id, food_id, quantity, unit, is_substitution, food: {id,name,calories,protein,carbs,fat}}]
-├── notes          text        NULL
-├── photo_url      text        NULL — foto do prato (futuro)
-└── created_at     timestamptz NOT NULL DEFAULT now()
-
-UNIQUE(student_id, diet_meal_id, logged_date)
-```
 
 **Uma tabela, dois propósitos**: `completed` registra o check-in da refeição. `actual_items` registra substituições — o aluno trocou um alimento por outro. Os dois acontecem no mesmo contexto (o aluno registrando o dia) e compartilham a mesma linha.
 
@@ -192,29 +101,6 @@ Substituições são sempre lidas como bloco junto com o log — nunca consultam
 **`diet_plan_id SET NULL` e `diet_meal_id SET NULL`**: o log pertence ao aluno — se o plano ou a refeição for deletado, o histórico do aluno é preservado com os campos zerados. O aluno ainda tem a data e o `completed` como referência.
 
 **`UNIQUE(student_id, diet_meal_id, logged_date)`**: garante que existe no máximo um log por refeição por dia por aluno. Um check-in é atualizado (UPDATE), não duplicado.
-
----
-
-## Relações do módulo Nutrition
-
-```
-profiles (Auth)
-    │
-    ├── diet_plans (1:N por aluno)
-    │       ├── student_id    → profiles.id
-    │       ├── specialist_id → profiles.id (SET NULL)
-    │       └── diet_meals (1:N)
-    │               └── diet_meal_items (1:N)
-    │                       └── food_id → foods.id (RESTRICT)
-    │
-    └── meal_logs (1:N por aluno)
-            ├── student_id   → profiles.id
-            ├── diet_plan_id → diet_plans.id (SET NULL)
-            └── diet_meal_id → diet_meals.id (SET NULL)
-
-foods (catálogo global)
-    └── created_by → profiles.id (SET NULL) — apenas para is_custom = true
-```
 
 ---
 
@@ -236,46 +122,7 @@ foods (catálogo global)
 
 ## Compliance LGPD
 
-### Dados deste módulo
-
-`diet_plans`, `diet_meals` e `diet_meal_items` são dados de saúde indireta — a dieta prescrita revela condições de saúde e objetivos corporais do aluno.
-
-`meal_logs` é dado de comportamento alimentar — quando o aluno comeu, o que comeu, substituições. Dado sensível pelo contexto.
-
-### Bases legais
-
-| Tabela | Base legal | Artigo |
-|---|---|---|
-| `diet_plans`, `diet_meals`, `diet_meal_items` | Tutela da saúde + Consentimento | Art. 11, II, f + I |
-| `meal_logs` | Tutela da saúde + Consentimento | Art. 11, II, f + I |
-| `foods` | Legítimo interesse / contrato | Art. 7°, IX — catálogo público sem dado pessoal |
-
-### RLS — políticas mínimas
-
-```sql
--- diet_plans
--- SELECT: student proprietário + specialist com vínculo active (nutrition_consulting)
--- INSERT: specialist com vínculo active (nutrition_consulting)
--- UPDATE: specialist com vínculo active
--- DELETE: proibido — finalizar via status = 'finished'
-
--- diet_meals / diet_meal_items
--- SELECT: herda acesso do diet_plan
--- INSERT/UPDATE/DELETE: specialist com vínculo active
-
--- meal_logs
--- SELECT: student proprietário + specialist com vínculo active
--- INSERT/UPDATE: apenas o próprio student
--- DELETE: apenas via fluxo de exclusão de conta
-
--- foods
--- SELECT: todos os autenticados (públicos) + created_by = auth.uid() (customizados)
--- INSERT: qualquer specialist (para is_custom = true)
--- UPDATE/DELETE: apenas created_by = auth.uid()
-```
-
-### Exclusão de conta do aluno
-
-1. `meal_logs` → deletar (CASCADE DELETE por student_id)
-2. `diet_plans` → deletar (CASCADE DELETE por student_id) — leva junto `diet_meals` e `diet_meal_items`
-3. Alimentos customizados criados pelo aluno não existem (alunos não criam foods)
+Base legal, finalidade, retenção e direitos dos titulares deste módulo estão em
+[`docs/LGPD_COMPLIANCE.md`](../LGPD_COMPLIANCE.md), que é o registro canônico.
+As políticas de RLS vivem nas migrations (`supabase/migrations/`), não aqui — ver
+[ADR-0014](../adr/0014-rls-helpers-security-definer.md).

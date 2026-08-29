@@ -36,7 +36,7 @@ interface ScanComparisonProps {
  *
  * Vem antes do valor absoluto de propósito. Uma foto isolada dá um número
  * discutível; duas na mesma pose dão uma diferença confiável, porque o erro
- * sistemático da estimativa se repete nas duas e se cancela (`ADR-010`).
+ * sistemático da estimativa se repete nas duas e se cancela (`ADR-0010`).
  *
  * Não pinta variação de verde ou vermelho: se perder cintura é bom ou ruim
  * depende do objetivo, e quem sabe isso é o especialista, não este componente.
