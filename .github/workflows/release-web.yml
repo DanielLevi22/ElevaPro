@@ -103,7 +103,36 @@ jobs:
       # aqui é no-op que PARECE resolver, e foi assim que a IA do preview ficou
       # fora do ar sem ninguém notar (ADR-0021).
       - name: Build (Preview)
-        run: npx vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # O `vercel pull` acima baixa as Environment Variables do projeto para
+          # `.vercel/.env.preview.local`. Carregá-las aqui é o que faz o
+          # `vercel build` enxergá-las: rodando FORA da Vercel ele não recebe o
+          # ambiente do projeto sozinho — "Build not running on Vercel. System
+          # environment variables will not be available." é o aviso dele mesmo.
+          arquivo=$(ls .vercel/.env.*.local 2>/dev/null | head -1 || true)
+          if [ -n "$arquivo" ]; then
+            echo "carregando $arquivo"
+            set -a; . "$arquivo"; set +a
+          fi
+
+          # `NEXT_PUBLIC_*` é inlinada no bundle: valor errado aqui vira um site
+          # publicado apontando para o lugar errado, e nenhuma variável de
+          # runtime conserta isso depois. Por isso a checagem é de FORMA, não só
+          # de presença — foi um valor não-vazio e inválido que derrubou este
+          # build, não a ausência (ADR-0021).
+          case "${NEXT_PUBLIC_SUPABASE_URL:-}" in
+            https://*.supabase.co|https://*.supabase.in) : ;;
+            *)
+              echo "::error::NEXT_PUBLIC_SUPABASE_URL inválida ou ausente no build: '${NEXT_PUBLIC_SUPABASE_URL:-<vazia>}'"
+              echo "::error::Ela precisa existir no ambiente preview da Vercel e ser uma URL https de projeto Supabase."
+              echo "::error::Sem ela o bundle sai apontando para um placeholder e o site publicado não fala com o banco."
+              exit 1
+              ;;
+          esac
+
+          npx vercel build --token=${{ secrets.VERCEL_TOKEN }}
 
       # `vercel deploy` pelo CLI gera um domínio novo com hash a cada execução —
       # a integração Git do Vercel é quem cria o alias de branch, e ela não está
@@ -242,7 +271,36 @@ jobs:
 
       # Tudo vem do `vercel pull` acima. Ver ADR-0021.
       - name: Build (Production)
-        run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # O `vercel pull` acima baixa as Environment Variables do projeto para
+          # `.vercel/.env.production.local`. Carregá-las aqui é o que faz o
+          # `vercel build` enxergá-las: rodando FORA da Vercel ele não recebe o
+          # ambiente do projeto sozinho — "Build not running on Vercel. System
+          # environment variables will not be available." é o aviso dele mesmo.
+          arquivo=$(ls .vercel/.env.*.local 2>/dev/null | head -1 || true)
+          if [ -n "$arquivo" ]; then
+            echo "carregando $arquivo"
+            set -a; . "$arquivo"; set +a
+          fi
+
+          # `NEXT_PUBLIC_*` é inlinada no bundle: valor errado aqui vira um site
+          # publicado apontando para o lugar errado, e nenhuma variável de
+          # runtime conserta isso depois. Por isso a checagem é de FORMA, não só
+          # de presença — foi um valor não-vazio e inválido que derrubou este
+          # build, não a ausência (ADR-0021).
+          case "${NEXT_PUBLIC_SUPABASE_URL:-}" in
+            https://*.supabase.co|https://*.supabase.in) : ;;
+            *)
+              echo "::error::NEXT_PUBLIC_SUPABASE_URL inválida ou ausente no build: '${NEXT_PUBLIC_SUPABASE_URL:-<vazia>}'"
+              echo "::error::Ela precisa existir no ambiente production da Vercel e ser uma URL https de projeto Supabase."
+              echo "::error::Sem ela o bundle sai apontando para um placeholder e o site publicado não fala com o banco."
+              exit 1
+              ;;
+          esac
+
+          npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy to Vercel (Production)
         run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
