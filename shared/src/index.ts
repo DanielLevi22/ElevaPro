@@ -5,6 +5,8 @@
 
 // Tabela de permissões do CASL — fonte única das duas plataformas.
 export * from "./auth/abilities";
+export * from "./data/anamnesisAdaptive";
+export * from "./data/anamnesisQuestions";
 export type { Database, Json } from "./database/database.types";
 export * from "./services/activity.service";
 export * from "./services/auth.service";

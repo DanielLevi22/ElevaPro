@@ -1,9 +1,9 @@
+import { AnamnesisQuestion } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useState } from 'react';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { colors } from '@/constants/colors';
-import { AnamnesisQuestion } from '../types/assessment';
 
 interface Props {
   question: AnamnesisQuestion;

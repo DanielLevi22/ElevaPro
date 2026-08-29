@@ -1,3 +1,4 @@
+import { GENERAL_ANAMNESIS } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,7 +25,6 @@ import { showAlert } from '@/components/ui/appAlert';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { StatusModal, StatusModalType } from '@/components/ui/StatusModal';
 import { QuestionInput } from '../components/QuestionInput';
-import { GENERAL_ANAMNESIS } from '../data/anamnesisQuestions';
 import { useAssessmentStore } from '../store/assessmentStore';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {

@@ -1,9 +1,31 @@
+/**
+ * As perguntas da Anamnese — uma definição só, para as duas plataformas.
+ *
+ * Existiam duas cópias, uma em cada lado, com os mesmos ids. Elas já tinham
+ * divergido na apresentação (caixa dos títulos) e nada acusava — foi essa
+ * ausência de fonte única que deixou as duas telas do mobile gravarem formas
+ * diferentes na mesma coluna sem ninguém notar.
+ *
+ * Os títulos ficam em Title Case; o mobile aplica `uppercase` na renderização,
+ * então a caixa daqui não decide o que aparece na tela.
+ */
+
+export type QuestionType =
+  | "text"
+  | "number"
+  | "boolean"
+  | "single_choice"
+  | "multiple_choice"
+  | "date";
+
 export interface AnamnesisQuestion {
   id: string;
   text: string;
-  type: "text" | "number" | "boolean" | "single_choice" | "multiple_choice" | "date";
+  type: QuestionType;
   options?: string[];
   required?: boolean;
+  /** Texto de apoio dentro do campo. Só o mobile usa hoje. */
+  placeholder?: string;
   condition?: { questionId: string; expectedValue: unknown };
 }
 

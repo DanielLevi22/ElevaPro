@@ -85,32 +85,9 @@ export enum AssessmentStatus {
   NEEDS_CONSENT = 'needs_consent',
 }
 
-export type QuestionType =
-  | 'text'
-  | 'number'
-  | 'single_choice'
-  | 'multiple_choice'
-  | 'boolean'
-  | 'date';
-
-export interface AnamnesisQuestion {
-  id: string;
-  text: string;
-  type: QuestionType;
-  options?: string[]; // For single/multiple choice
-  required?: boolean;
-  placeholder?: string;
-  condition?: {
-    questionId: string;
-    expectedValue: unknown;
-  };
-}
-
-export interface AnamnesisSection {
-  id: string;
-  title: string;
-  questions: AnamnesisQuestion[];
-}
+// A forma da pergunta vive junto com as perguntas, em `@elevapro/shared`. Havia
+// uma cópia deste tipo aqui e outra dentro do arquivo de dados do web — e tipo
+// duplicado é o que deixa duas definições divergirem sem o compilador acusar.
 
 // `type` e não `interface` de propósito: a coluna `student_anamnesis.responses`
 // é jsonb, e o tipo `Json` do schema gerado exige assinatura de índice. Uma

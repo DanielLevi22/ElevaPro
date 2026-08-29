@@ -1,6 +1,14 @@
 "use client";
 
-import { achatarRespostas } from "@elevapro/shared";
+import type { AdaptiveQuestion, PersonaTrack, UnlockCard } from "@elevapro/shared";
+import {
+  achatarRespostas,
+  getPrecisionScore,
+  getQuestionPrecisionDelta,
+  getTrackQuestions,
+  PERSONA_OPTIONS,
+  UNLOCK_CARDS,
+} from "@elevapro/shared";
 import {
   ArrowRight,
   CheckCircle2,
@@ -18,18 +26,6 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import type {
-  AdaptiveQuestion,
-  PersonaTrack,
-  UnlockCard,
-} from "@/modules/students/data/anamnesisAdaptive";
-import {
-  getPrecisionScore,
-  getQuestionPrecisionDelta,
-  getTrackQuestions,
-  PERSONA_OPTIONS,
-  UNLOCK_CARDS,
-} from "@/modules/students/data/anamnesisAdaptive";
 import type { AnamnesisResponseValue } from "@/modules/students/hooks/useStudentAnamnesis";
 import { useStudentAnamnesis } from "@/modules/students/hooks/useStudentAnamnesis";
 import { useAnamnesisForm, useSavePersonaTrack } from "../hooks/useAnamnesisForm";

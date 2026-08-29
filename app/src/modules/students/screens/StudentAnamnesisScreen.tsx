@@ -1,11 +1,11 @@
-import { achatarRespostas } from '@elevapro/shared';
+import { achatarRespostas, GENERAL_ANAMNESIS } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { colors } from '@/constants/colors';
-import { GENERAL_ANAMNESIS } from '@/modules/assessment/data/anamnesisQuestions';
+
 import { AnamnesisService } from '@/modules/assessment/services/anamnesisService';
 import { AnamnesisResponseValue } from '@/modules/assessment/types/assessment';
 
