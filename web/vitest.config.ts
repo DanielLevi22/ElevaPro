@@ -28,8 +28,16 @@ export default defineConfig({
       // com zero arquivo e passaria sempre — guarda que parece existir e não
       // existe. Medir `shared/` exige runner próprio para ele; está anotado nas
       // pendências do PRD.
+      //
+      // Caiu de 19 para 17 quando as perguntas da anamnese saíram de `web/src`
+      // para `shared/src` (issue #182). Nenhum teste foi perdido: os dois
+      // arquivos que saíram eram bem cobertos e enchiam o numerador de uma
+      // conta que só olha `web/src`. Medido: 20,24% antes, 17,19% depois.
+      // O degrau novo é o que `web/src` sustenta sozinho, sem dado emprestado —
+      // e volta a subir quando `shared/` ganhar runner próprio, porque aí o que
+      // saiu daqui volta a ser medido em algum lugar.
       thresholds: {
-        statements: 19,
+        statements: 17,
       },
     },
   },
