@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { type NextRequest, NextResponse } from "next/server";
+import { rotaDeIA } from "@/lib/ai-route";
 import { authorizeStudent } from "@/lib/api-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
@@ -55,7 +56,7 @@ async function loadDietContext(studentId: string): Promise<string> {
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-export async function POST(request: NextRequest) {
+const handler = async (request: NextRequest) => {
   const auth = await authorizeStudent(request);
   if (!auth.ok) return auth.response;
   const studentId = auth.caller.id;
@@ -86,4 +87,6 @@ ${dietContext}`,
 
   const reply = response.content[0].type === "text" ? response.content[0].text : "";
   return NextResponse.json({ reply });
-}
+};
+
+export const POST = rotaDeIA(handler);

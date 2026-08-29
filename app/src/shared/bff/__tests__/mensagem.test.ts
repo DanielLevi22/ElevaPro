@@ -33,10 +33,27 @@ describe('mensagemDeErroBff', () => {
     expect(mensagemDeErroBff(erro)).toContain('consentimento');
   });
 
-  it('nomeia o código quando a rota recusou por outro motivo', () => {
-    const erro = new BffHttpError('/api/x', 503, 'ai_unavailable');
+  // Configuração do servidor não é problema do aluno: mandá-lo tentar de novo
+  // o faz repetir o que não tem como funcionar.
+  it('diz que é do servidor, e não manda o aluno tentar de novo', () => {
+    const erro = new BffHttpError('/api/ai/student/nutribot', 503, 'server_misconfigured');
 
-    expect(mensagemDeErroBff(erro)).toContain('ai_unavailable');
+    const mensagem = mensagemDeErroBff(erro);
+
+    expect(mensagem).toContain('configuração do servidor');
+    expect(mensagem).not.toMatch(/tente de novo em instantes/i);
+  });
+
+  it('convida a tentar de novo quando foi o modelo que falhou', () => {
+    const erro = new BffHttpError('/api/ai/student/nutribot', 503, 'ai_unavailable');
+
+    expect(mensagemDeErroBff(erro)).toMatch(/tente de novo/i);
+  });
+
+  it('nomeia o código quando a rota recusou por um motivo sem tradução', () => {
+    const erro = new BffHttpError('/api/x', 502, 'response_truncated');
+
+    expect(mensagemDeErroBff(erro)).toContain('response_truncated');
   });
 
   it('cai na frase genérica só quando nem Error era', () => {

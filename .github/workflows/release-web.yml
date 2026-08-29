@@ -88,15 +88,22 @@ jobs:
       - name: Pull Vercel project config
         run: npx vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
 
+      # Só `NEXT_PUBLIC_*` entra aqui. Elas são inlinadas no bundle em tempo de
+      # build, então precisam existir NESTE passo.
+      #
+      # Segredo de servidor NÃO vai aqui. O `vercel deploy --prebuilt` sobe o
+      # output já compilado, e a função lê `process.env` das Environment
+      # Variables do PROJETO na Vercel, escopadas por ambiente — o shell deste
+      # runner não atravessa. Passar `ANTHROPIC_API_KEY` ou
+      # `SUPABASE_SERVICE_ROLE_KEY` neste passo é no-op que PARECE resolver, e
+      # foi assim que a IA do preview ficou fora do ar sem ninguém notar
+      # (ADR-0021). Elas vivem em `vercel env`, e o smoke test abaixo falha o
+      # deploy se faltarem.
       - name: Build (Preview)
         run: npx vercel build --token=${{ secrets.VERCEL_TOKEN }}
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PREVIEW }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PREVIEW }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          # Sem ela todas as rotas /api/ai/* respondem erro — e como o mobile
-          # consome a IA via BFF, as features de IA do app param junto.
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
       # `vercel deploy` pelo CLI gera um domínio novo com hash a cada execução —
       # a integração Git do Vercel é quem cria o alias de branch, e ela não está
@@ -118,6 +125,50 @@ jobs:
           echo "- Deployment: ${{ steps.deploy.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"
         env:
           PREVIEW_DOMAIN: ${{ vars.VERCEL_PREVIEW_DOMAIN || 'elevapro-preview.vercel.app' }}
+
+      # A guarda que faltava. Sete guardas de CÓDIGO existiam e nenhuma de
+      # CONFIGURAÇÃO — e foi configuração que derrubou a IA por dias, com o
+      # aluno vendo "indisponível" e ninguém sabendo por quê.
+      #
+      # A sonda não autentica de propósito: sem token, a rota responde
+      # `401 {"error":"Token ausente."}` ANTES de tocar no modelo. Isso já prova
+      # três coisas de uma vez — o deployment está no ar, o bypass da proteção
+      # funciona, e o ambiente de servidor está completo, porque `rotaDeIA`
+      # devolveria `503 server_misconfigured` antes do 401 se faltasse variável.
+      # Autenticar exigiria um usuário de teste com dado de saúde real só para
+      # medir configuração.
+      - name: Smoke test do preview
+        env:
+          PREVIEW_DOMAIN: ${{ vars.VERCEL_PREVIEW_DOMAIN || 'elevapro-preview.vercel.app' }}
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: |
+          set -euo pipefail
+          url="https://$PREVIEW_DOMAIN/api/ai/student/nutribot"
+          corpo=$(curl -sS -X POST "$url" \
+            -H 'Content-Type: application/json' \
+            ${BYPASS:+-H "x-vercel-protection-bypass: $BYPASS"} \
+            -d '{"message":"smoke"}' --max-time 30 -w '\n%{http_code}')
+          status=$(echo "$corpo" | tail -1)
+          json=$(echo "$corpo" | sed '$d')
+          echo "status=$status corpo=$json"
+
+          if echo "$json" | grep -q 'server_misconfigured'; then
+            echo "::error::A rota respondeu server_misconfigured: falta variável de servidor no ambiente de preview da Vercel."
+            echo "::error::Confira com 'vercel env ls' e adicione com 'vercel env add <NOME> preview'. Depois redeploy."
+            exit 1
+          fi
+
+          if [ "$status" -ge 500 ]; then
+            echo "::error::A rota de IA respondeu $status. O deployment subiu mas o BFF quebra em execução."
+            exit 1
+          fi
+
+          if [ "$status" != "401" ]; then
+            echo "::error::Esperado 401 (sem token) e veio $status. Se for 3xx ou HTML, a proteção da Vercel está barrando a rota."
+            exit 1
+          fi
+
+          echo "✓ preview no ar, bypass funcionando e ambiente de servidor completo"
 
   # ─────────────────────────────────────────
   # 4. DEPLOY PRODUCTION (push em main ou tag)
@@ -147,13 +198,12 @@ jobs:
       - name: Pull Vercel project config
         run: npx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
+      # Mesma regra do preview: só o que é inlinado. Ver ADR-0021.
       - name: Build (Production)
         run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PROD }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PROD }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
       - name: Deploy to Vercel (Production)
         run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}

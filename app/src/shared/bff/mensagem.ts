@@ -51,6 +51,15 @@ export function mensagemDeErroBff(erro: unknown): string {
     if (erro.code === 'consent_required') {
       return 'Preciso do seu consentimento para usar seus dados de saúde antes de responder.';
     }
+    // O BFF respondeu que falta variável de servidor no ambiente dele. Não é
+    // nada que o aluno possa resolver, e a frase precisa dizer isso — mandá-lo
+    // "tentar de novo" o faria repetir o que não tem como funcionar.
+    if (erro.code === 'server_misconfigured') {
+      return 'A IA está indisponível por configuração do servidor. Já sabemos — não adianta tentar de novo agora.';
+    }
+    if (erro.code === 'ai_unavailable') {
+      return 'A IA não respondeu desta vez. Tente de novo em instantes.';
+    }
     return `A IA recusou a chamada (${erro.code}).`;
   }
 
