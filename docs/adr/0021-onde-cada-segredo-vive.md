@@ -30,9 +30,15 @@ falhou — meia aplicação de pé, e a metade que caiu era muda.
 2. **Credencial por ambiente, sem exceção.** Preview comprometido não pode dar acesso a
    produção.
 3. **O que entra em bundle é público, e isso é escolha.** `EXPO_PUBLIC_*` sai do APK com
-   um `unzip`. A anon key ali é correta — foi desenhada para isso, e a RLS é o controle.
-   O bypass da Vercel é exceção deliberada. Nunca entram: service role,
-   `ANTHROPIC_API_KEY`, `DATABASE_URL`.
+   um `unzip`, e `NEXT_PUBLIC_*` vai inteira para o JavaScript do navegador. A anon key
+   ali é correta — foi desenhada para isso, e a RLS é o controle. O bypass da Vercel é
+   exceção deliberada. Nunca entram: service role, `ANTHROPIC_API_KEY`, `DATABASE_URL`.
+
+   **Corolário prático:** não marque `NEXT_PUBLIC_*` como *Sensitive* na Vercel. Variável
+   sensível não pode ser lida de volta — o `vercel pull` escreve `[SENSITIVE]` no lugar do
+   valor, e o build inlina essa string no bundle. Marcá-las não esconde nada de ninguém
+   (elas já estão na página) e quebra o build. Sensitive é para o que o build nunca lê:
+   `ANTHROPIC_API_KEY` e `SUPABASE_SERVICE_ROLE_KEY`.
 4. **Falhar alto, no limite.** Segredo ausente derruba na entrada da rota com JSON
    tipado, nunca 500 em HTML três camadas abaixo da causa.
 

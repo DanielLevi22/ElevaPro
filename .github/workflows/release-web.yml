@@ -124,6 +124,13 @@ jobs:
           # build, não a ausência (ADR-0021).
           case "${NEXT_PUBLIC_SUPABASE_URL:-}" in
             https://*.supabase.co|https://*.supabase.in) : ;;
+            "[SENSITIVE]")
+              echo "::error::NEXT_PUBLIC_SUPABASE_URL está marcada como Sensitive no ambiente preview da Vercel."
+              echo "::error::Variável sensível não pode ser lida de volta: o 'vercel pull' escreve [SENSITIVE] no lugar do valor, e o build inlina isso no bundle."
+              echo "::error::Desmarque 'Sensitive' nela e em NEXT_PUBLIC_SUPABASE_ANON_KEY. As duas são públicas por construção — vão inteiras para o JavaScript do navegador, e a RLS é o controle (ADR-0021)."
+              echo "::error::Mantenha Sensitive em ANTHROPIC_API_KEY e SUPABASE_SERVICE_ROLE_KEY: essas o build nunca precisa ler."
+              exit 1
+              ;;
             *)
               echo "::error::NEXT_PUBLIC_SUPABASE_URL inválida ou ausente no build: '${NEXT_PUBLIC_SUPABASE_URL:-<vazia>}'"
               echo "::error::Ela precisa existir no ambiente preview da Vercel e ser uma URL https de projeto Supabase."
@@ -292,6 +299,13 @@ jobs:
           # build, não a ausência (ADR-0021).
           case "${NEXT_PUBLIC_SUPABASE_URL:-}" in
             https://*.supabase.co|https://*.supabase.in) : ;;
+            "[SENSITIVE]")
+              echo "::error::NEXT_PUBLIC_SUPABASE_URL está marcada como Sensitive no ambiente production da Vercel."
+              echo "::error::Variável sensível não pode ser lida de volta: o 'vercel pull' escreve [SENSITIVE] no lugar do valor, e o build inlina isso no bundle."
+              echo "::error::Desmarque 'Sensitive' nela e em NEXT_PUBLIC_SUPABASE_ANON_KEY. As duas são públicas por construção — vão inteiras para o JavaScript do navegador, e a RLS é o controle (ADR-0021)."
+              echo "::error::Mantenha Sensitive em ANTHROPIC_API_KEY e SUPABASE_SERVICE_ROLE_KEY: essas o build nunca precisa ler."
+              exit 1
+              ;;
             *)
               echo "::error::NEXT_PUBLIC_SUPABASE_URL inválida ou ausente no build: '${NEXT_PUBLIC_SUPABASE_URL:-<vazia>}'"
               echo "::error::Ela precisa existir no ambiente production da Vercel e ser uma URL https de projeto Supabase."
