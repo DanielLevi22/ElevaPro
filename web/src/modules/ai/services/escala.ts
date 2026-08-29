@@ -67,3 +67,33 @@ export function resolverEscala({ avaliacao, anamnese }: EntradaDaEscala): Escala
 
   return { ok: true, heightCm: altura.valor, weightKg: peso.valor, fonte: "anamnese" };
 }
+
+/** O que o portão responde ao app. Nunca carrega o valor da medida. */
+export type Elegibilidade =
+  | { podeEscanear: true; fonte: FonteDaEscala }
+  | { podeEscanear: false; motivo: "consentimento" | MotivoSemEscala };
+
+/**
+ * Se o aluno pode escanear, e de onde viria a Escala.
+ *
+ * Responde **se** e **de onde**, nunca **quanto**: o app não precisa da medida
+ * para abrir a câmera, e mandá-la seria dado de saúde atravessando a fronteira
+ * sem finalidade (Art. 6º, III).
+ *
+ * Existe para o aluno descobrir na entrada, e não depois de tirar três fotos,
+ * que falta alguma coisa — que é o beco que esta issue inteira fecha.
+ */
+export function decidirElegibilidade({
+  temConsentimento,
+  avaliacao,
+  anamnese,
+}: EntradaDaEscala & { temConsentimento: boolean }): Elegibilidade {
+  // Antes da escala, de propósito: sem base legal o dado de saúde não deve nem
+  // ser lido para decidir se o aluno pode escanear (Art. 11, I).
+  if (!temConsentimento) return { podeEscanear: false, motivo: "consentimento" };
+
+  const escala = resolverEscala({ avaliacao, anamnese });
+  if (!escala.ok) return { podeEscanear: false, motivo: escala.motivo };
+
+  return { podeEscanear: true, fonte: escala.fonte };
+}

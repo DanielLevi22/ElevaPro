@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolverEscala } from "../escala";
+import { decidirElegibilidade, resolverEscala } from "../escala";
 
 const AVALIACAO = { height_cm: 178, weight_kg: 82.5 };
 
@@ -76,5 +76,45 @@ describe("recusa da Escala", () => {
       ok: false,
       motivo: "altura_invalida",
     });
+  });
+});
+
+describe("decisão do portão de elegibilidade", () => {
+  const anamnese = { height: 170, weight: 70 };
+
+  // Consentimento antes de escala: sem base legal o dado de saúde não deve nem
+  // ser lido para decidir se o aluno pode escanear (Art. 11, I).
+  it("recusa por consentimento sem sequer olhar a escala", () => {
+    expect(
+      decidirElegibilidade({ temConsentimento: false, avaliacao: AVALIACAO, anamnese }),
+    ).toEqual({ podeEscanear: false, motivo: "consentimento" });
+  });
+
+  it("libera quando há consentimento e escala, dizendo a fonte", () => {
+    expect(
+      decidirElegibilidade({ temConsentimento: true, avaliacao: AVALIACAO, anamnese }),
+    ).toEqual({ podeEscanear: true, fonte: "assessment" });
+  });
+
+  it("repassa o motivo da escala quando ela recusa", () => {
+    expect(
+      decidirElegibilidade({ temConsentimento: true, avaliacao: null, anamnese: null }),
+    ).toEqual({ podeEscanear: false, motivo: "sem_anamnese" });
+  });
+
+  // TRAVA LGPD (Art. 6º, III): o app precisa saber SE pode escanear e DE ONDE
+  // viria a escala. O valor da medida não tem uso nenhum na decisão de abrir a
+  // câmera, e mandá-lo seria dado de saúde atravessando a fronteira à toa.
+  it("nunca devolve altura nem peso no payload", () => {
+    const liberado = decidirElegibilidade({
+      temConsentimento: true,
+      avaliacao: AVALIACAO,
+      anamnese,
+    });
+
+    const serializado = JSON.stringify(liberado);
+    expect(serializado).not.toContain("178");
+    expect(serializado).not.toContain("82.5");
+    expect(Object.keys(liberado)).toEqual(["podeEscanear", "fonte"]);
   });
 });

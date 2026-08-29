@@ -3,6 +3,7 @@ import { createBodyScanService, createHealthService } from "@elevapro/shared";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeStudent } from "@/lib/api-auth";
+import { clienteDoTitular } from "@/lib/supabase-titular";
 
 // Na Vercel uma rota sem isto morre no default de poucos segundos. Uma conversa
 // com uso de ferramenta passa disso com folga, e localmente não existe teto —
@@ -101,15 +102,6 @@ async function loadScale(
  * mais sensível do sistema e não há motivo para esta rota enxergar mais do que
  * o próprio dono enxergaria.
  */
-function clienteDoTitular(request: NextRequest): SupabaseClient {
-  const authHeader = request.headers.get("Authorization") ?? "";
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-    { global: { headers: { Authorization: authHeader } } },
-  );
-}
-
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 /**
