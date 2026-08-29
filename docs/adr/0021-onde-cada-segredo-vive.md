@@ -9,7 +9,7 @@ leitura, e a exigir credencial própria por ambiente.
 
 | Onde vive | Lido quando | O que pertence ali |
 |---|---|---|
-| **GitHub Secrets** | durante o job de CI | só o que o job usa: `VERCEL_TOKEN`, `EXPO_TOKEN`, `SUPABASE_DB_URL`, e os `NEXT_PUBLIC_*`/`EXPO_PUBLIC_*` que o build inlina |
+| **GitHub Secrets** | durante o job de CI | só o que o job usa: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `EXPO_TOKEN`, `SUPABASE_DB_URL`, `VERCEL_AUTOMATION_BYPASS_SECRET` |
 | **Vercel Project Env**, por ambiente | a cada request na função | `ANTHROPIC_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL` |
 | **EAS Environment** | durante o build do bundle | só `EXPO_PUBLIC_*` — tudo ali é **publicado** |
 
@@ -38,8 +38,11 @@ falhou — meia aplicação de pé, e a metade que caiu era muda.
 
 ## Por que a assimetria de hoje é o risco maior
 
-`NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` são segregadas por ambiente
-(`_PREVIEW` / `_PROD`). `SUPABASE_SERVICE_ROLE_KEY` é **uma só**, usada nos dois builds.
+Antes desta decisão, `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` viviam
+no GitHub segregadas por ambiente (`_PREVIEW` / `_PROD`), enquanto
+`SUPABASE_SERVICE_ROLE_KEY` era **uma só**, usada nos dois builds. As duas primeiras
+saíram do GitHub — vêm do `vercel pull`, uma fonte por ambiente. A terceira continua
+única até alguém dividi-la no painel.
 
 Segregamos a credencial pública por desenho e compartilhamos a que **ignora a RLS
 inteira** — com ela se lê anamnese, avaliação física e histórico de treino de todos os
@@ -60,6 +63,11 @@ consulta é descartado.
 - As seis rotas de IA que não tinham `try/catch` passaram a devolver JSON tipado. Um
   invólucro, não seis cópias — cópia do tratamento foi como o ponto cego ficou uniforme
   da primeira vez.
+- Os workflows passaram a referenciar exatamente seis segredos, e as quinze referências
+  a segredos inexistentes saíram. Referência vazia não falha: chega como string vazia e
+  o passo segue, então o defeito vira comportamento errado adiante em vez de erro no CI.
+  Entre elas, seis linhas do build do app passavam nomes **com sufixo**
+  (`EXPO_PUBLIC_SUPABASE_URL_PREVIEW`) que o código nunca leu.
 - O `release-web.yml` deixou de passar segredo de servidor no build, e ganhou **smoke
   test pós-deploy**: uma chamada sem token deve responder `401`. Isso prova de uma vez
   que o deployment está no ar, que o bypass funciona e que o ambiente está completo —
@@ -67,9 +75,19 @@ consulta é descartado.
 - A guarda **não** valida se a chave é aceita pelo provedor. Chave revogada passa; só o
   smoke test, que faz chamada real, alcançaria isso — e ele para no 401 de propósito,
   para não exigir usuário de teste com dado de saúde real só para medir configuração.
-- **Fica pendente**, porque exige acesso ao painel: segregar
-  `SUPABASE_SERVICE_ROLE_KEY` em `_PREVIEW` / `_PROD`, depois de confirmar por
-  `vercel env ls` a qual projeto a atual pertence.
+- **Produção falha antes de publicar, não depois.** O deploy de produção confere
+  a presença das quatro variáveis no ambiente Production da Vercel *antes* do
+  build, e o build de produção do app confere as três do environment `production`
+  do EAS — recusando também um valor que aponte para o domínio de preview. Em
+  preview o smoke test pós-deploy basta, porque o pior caso é um preview
+  quebrado; em produção o pior caso é o aluno, e a falha precisa acontecer
+  enquanto ainda dá para não publicar. `EXPO_PUBLIC_*` reforça isso: é inlinada
+  no bundle, então APK publicado com o banco errado não se conserta sem build
+  novo.
+- **Fica pendente**, porque exige acesso ao painel: criar os ambientes de
+  produção (Supabase, Vercel Production, EAS `production`) e segregar
+  `SUPABASE_SERVICE_ROLE_KEY` por ambiente. As guardas acima recusam o deploy até
+  lá — de propósito: publicar produção sem configuração é pior que não publicar.
 
 ## O que este ADR não decide
 

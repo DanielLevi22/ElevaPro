@@ -215,19 +215,71 @@ jobs:
       - name: Pull Vercel project config
         run: npx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
-      # Mesma regra do preview: tudo vem do `vercel pull` acima. Ver ADR-0021.
+      # Antes de construir, e não depois de publicar. Em preview o smoke test
+      # pós-deploy basta: o pior caso é um preview quebrado. Em produção o pior
+      # caso é o aluno, então a falha tem que acontecer enquanto ainda dá para
+      # não publicar.
       #
-      # ⚠️ O ambiente Production da Vercel ainda NÃO foi configurado. Antes do
-      # primeiro deploy, criar nele NEXT_PUBLIC_SUPABASE_URL,
-      # NEXT_PUBLIC_SUPABASE_ANON_KEY, ANTHROPIC_API_KEY e
-      # SUPABASE_SERVICE_ROLE_KEY apontando para o Supabase de PRODUÇÃO — a
-      # service role de preview não vale lá, e usar a mesma nos dois é
-      # justamente o que o ADR-0021 proíbe.
+      # A checagem é de PRESENÇA, não de validade — chave revogada passa por
+      # aqui e só o smoke test alcança. Ver ADR-0021.
+      - name: Conferir ambiente de produção na Vercel
+        run: |
+          set -euo pipefail
+          lista=$(npx vercel env ls production --token=${{ secrets.VERCEL_TOKEN }})
+          faltando=""
+          for nome in NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY \
+                      ANTHROPIC_API_KEY SUPABASE_SERVICE_ROLE_KEY; do
+            echo "$lista" | grep -q "$nome" || faltando="$faltando $nome"
+          done
+
+          if [ -n "$faltando" ]; then
+            echo "::error::Ambiente Production da Vercel incompleto. Faltando:$faltando"
+            echo "::error::Adicione com 'vercel env add <NOME> production'."
+            echo "::error::A service role e as chaves do Supabase têm que ser as do projeto de PRODUÇÃO — reaproveitar as de preview é o que o ADR-0021 proíbe."
+            exit 1
+          fi
+          echo "✓ ambiente Production completo"
+
+      # Tudo vem do `vercel pull` acima. Ver ADR-0021.
       - name: Build (Production)
         run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy to Vercel (Production)
         run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      # O mesmo que o preview faz, sem bypass: produção não fica atrás do
+      # Deployment Protection. Sem token a rota responde 401 'Token ausente.' —
+      # e responderia 503 antes disso se faltasse variável de servidor.
+      - name: Smoke test de produção
+        env:
+          PRODUCTION_DOMAIN: ${{ vars.VERCEL_PRODUCTION_DOMAIN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${PRODUCTION_DOMAIN:-}" ]; then
+            echo "::error::Falta a variável de repositório VERCEL_PRODUCTION_DOMAIN."
+            echo "::error::Defina em Settings → Secrets and variables → Actions → Variables com o domínio de produção."
+            exit 1
+          fi
+
+          corpo=$(curl -sS -X POST "https://$PRODUCTION_DOMAIN/api/ai/student/nutribot" \
+            -H 'Content-Type: application/json' \
+            -d '{"message":"smoke"}' --max-time 30 -w '\n%{http_code}')
+          status=$(echo "$corpo" | tail -1)
+          json=$(echo "$corpo" | sed '$d')
+          echo "status=$status corpo=$json"
+
+          if echo "$json" | grep -q 'server_misconfigured'; then
+            echo "::error::A rota respondeu server_misconfigured: falta variável de servidor no ambiente Production."
+            exit 1
+          fi
+
+          if [ "$status" != "401" ]; then
+            echo "::error::Esperado 401 'Token ausente.' e veio $status."
+            exit 1
+          fi
+
+          echo "✓ produção no ar e com o ambiente de servidor completo"
 
   # ─────────────────────────────────────────
   # 4. GITHUB RELEASE (apenas tags)

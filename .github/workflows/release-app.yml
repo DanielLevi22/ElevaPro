@@ -138,15 +138,38 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Antes de gastar um build de produção, e antes de um APK errado chegar a
+      # alguém. `EXPO_PUBLIC_*` é inlinada no bundle: variável faltando ou
+      # apontando para preview vira binário publicado com o banco errado, e não
+      # se conserta sem build novo (ADR-0021).
+      - name: Conferir o environment production do EAS
+        run: |
+          set -euo pipefail
+          lista=$(eas env:list --environment production --format short 2>/dev/null || eas env:list --environment production)
+          faltando=""
+          for nome in EXPO_PUBLIC_SUPABASE_URL EXPO_PUBLIC_SUPABASE_ANON_KEY EXPO_PUBLIC_API_URL; do
+            echo "$lista" | grep -q "$nome" || faltando="$faltando $nome"
+          done
+
+          if [ -n "$faltando" ]; then
+            echo "::error::Environment 'production' do EAS incompleto. Faltando:$faltando"
+            echo "::error::Adicione com 'eas env:create --environment production --name <NOME> --value <VALOR>'."
+            echo "::error::Devem apontar para o Supabase e o domínio de PRODUÇÃO — nunca os de preview."
+            exit 1
+          fi
+
+          if echo "$lista" | grep -q 'elevapro-preview'; then
+            echo "::error::O environment 'production' aponta para o domínio de preview."
+            exit 1
+          fi
+          echo "✓ environment production completo"
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      # Sem `env:`: o perfil `production` do eas.json declara
+      # `environment: production`, e o EAS injeta as variáveis de lá.
       - name: EAS Build → production
         run: eas build --platform android --profile production --non-interactive
-        # Sem `env:`: o perfil `production` do eas.json declara
-        # `environment: production`, e o EAS injeta as variáveis de lá.
-        #
-        # ⚠️ O environment `production` do EAS ainda NÃO foi configurado. Antes
-        # do primeiro build de produção, criar nele EXPO_PUBLIC_SUPABASE_URL,
-        # EXPO_PUBLIC_SUPABASE_ANON_KEY e EXPO_PUBLIC_API_URL apontando para o
-        # Supabase e o domínio de PRODUÇÃO — nunca os de preview.
 
   # ─────────────────────────────────────────
   # 4. SUBMIT TO GOOGLE PLAY (apenas tags)
