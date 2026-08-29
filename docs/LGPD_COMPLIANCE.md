@@ -55,6 +55,7 @@ Qualquer dado que identifica ou pode identificar uma pessoa.
 | Status da conta | `profiles.account_status` | Execução de contrato | Gestão de ciclo de vida do usuário |
 | Anotação administrativa | `profiles.admin_notes` | Legítimo interesse (Art. 7°, IX) | Registro do suporte sobre a conta — por que foi suspensa, o que ficou combinado. Escrita pelo admin, não coletada do titular. **Não é dado de saúde.** Entra no direito de acesso (Art. 18, II): é dado pessoal do titular, ainda que escrito por terceiro |
 | Tipo de serviço | `specialist_services.service_type` | Execução de contrato | Definir quais funcionalidades o especialista acessa |
+| Marca de correção do feedback | `workout_sessions.feedback_edited_at` | Execução de contrato (Art. 7°, V) | Carimbo de tempo, não conteúdo: informa ao especialista que a declaração do aluno foi corrigida e quando. Sem ele a correção seria indistinguível de o aluno ter escrito aquilo desde o começo. **Não guarda a versão anterior** — a versão errada é o dado inexato que o Art. 6°, V manda corrigir, e preservá-la contraria o próprio direito exercido |
 
 ### 2.2 Dados pessoais sensíveis (Art. 5°, II)
 
@@ -278,8 +279,8 @@ A LGPD garante direitos aos titulares que o sistema precisa implementar. Abaixo 
 | Direito | Onde implementar | Status |
 |---------|-----------------|--------|
 | Acesso aos dados | Tela "Meus Dados" (mobile + web) | Pendente |
-| Correção | Tela de perfil editável | Parcialmente implementado |
-| Exclusão | Fluxo "Excluir minha conta" com confirmação | Pendente |
+| Correção (Art. 18, III) | Perfil · anamnese (reabre o questionário) · adesão à refeição (alterna e substitui) · **feedback de sessão** (`intensity` e `notes`, no histórico do mobile — desde 2026-08-28) | **Coberto para o que o titular declarou.** Fora: medida do evento — datas, séries, duração, calorias, `body_scans` e `physical_assessments`. O remédio para medida inexata é medir de novo, não digitar outro número (Art. 6°, V). Pendente: tela "Meus Dados" reunindo os caminhos num lugar só |
+| Exclusão (Art. 18, VI) | Por item: **observação da sessão** (apaga o texto, a sessão fica) · **análise corporal** (`body_scans`, apaga a análise) — desde 2026-08-28 | **Parcial, por item.** A sessão de treino em si não é apagável: é execução de contrato (Art. 7°, V) e o inciso VI alcança o que foi tratado com consentimento. Pendente: fluxo "Excluir minha conta", que elimina tudo por `ON DELETE CASCADE` |
 | Portabilidade | Exportar dados em JSON/PDF | Pendente |
 | Revogação do consentimento | Tela de configurações de privacidade | Pendente |
 | Oposição ao tratamento | Configurações granulares de privacidade | Pendente |
@@ -524,7 +525,11 @@ modelo. Fechado pelo PRD
 | `workout_session_exercises.workout_exercise_id SET NULL` | Mesma garantia — sets_data jamais deletado por cascade do specialist |
 | RLS bloqueia INSERT de sessões por specialists | Specialist não pode inserir histórico falso em nome do aluno |
 | RLS bloqueia specialist após desvínculo | Specialist desvinculado perde acesso ao histórico de sessões do aluno |
-| DELETE proibido via RLS em sessions | Histórico é imutável — só deletado quando o próprio aluno exclui a conta |
+| DELETE em `workout_sessions` fechado para todos os papéis do cliente — **desde a migration `0036` (2026-08-28)** | Histórico é imutável. **Até a `0036` esta linha descrevia um controle que o banco não tinha:** a `sessions_own` da `0017` era `FOR ALL`, o que inclui DELETE, e o aluno podia apagar a própria sessão. Verificado no banco em 2026-08-28. Agora são políticas por comando e não existe política de DELETE — provado em `scripts/verify-rls.sql` |
+| UPDATE em `workout_sessions` restrito a `intensity`, `notes` e `feedback_edited_at` por privilégio de coluna (`0036`) | Qualidade (Art. 6°, V) + Direito de correção (Art. 18, III): o titular corrige o que **declarou** e não reescreve o que **aconteceu**. Antes, a mesma `FOR ALL` deixava o aluno mudar a data de uma sessão ou transformar cardio em musculação, sem rastro. Privilégio e não trigger porque aparece em `information_schema.role_column_grants` — verificável por guarda |
+| Correção carimba `feedback_edited_at`; a versão anterior **não** é guardada | Prestação de contas (Art. 6°, X) precisa do fato da correção, não do conteúdo antigo. Guardar a versão errada para sempre conserva exatamente o que o Art. 6°, V manda remover |
+| O especialista nunca escreve em `workout_sessions` — só SELECT com vínculo ativo | Terceiro editando declaração alheia não é correção, é falsificação. Provado em `verify-rls.sql` |
+| Erro da mutação de correção logado sem corpo | Prevenção (Art. 6°, VIII): o erro do PostgREST carrega o payload, e o payload aqui é `notes` |
 | CASCADE DELETE em student_id de workout_sessions | Exclusão de conta do aluno elimina todo o histórico de sessões |
 | Dados de performance não são dados sensíveis (Art. 5°, II) | Base legal: execução de contrato (Art. 7°, V) — sem necessidade de consentimento explícito |
 | Briefing lê `workout_sessions.completed_at` e nada mais — nem carga, nem repetição, nem intensidade | Necessidade (Art. 6°, III): o sinal é "não treina há N dias", não o treino |
@@ -532,6 +537,30 @@ modelo. Fechado pelo PRD
 | `notes` guarda só o que o aluno digitou; duração e calorias do cardio em colunas próprias | Qualidade (Art. 6°, V) e direito de acesso: texto do titular e texto do sistema não podem ocupar o mesmo campo |
 | O bloco recente do briefing atravessa a fronteira já resumido — nunca a linha de sessão | Necessidade + Segurança: dado de saúde cru não vai para o HTML da página |
 | Erro de gravação de sessão logado sem corpo | Prevenção (Art. 6°, VIII): o erro do PostgREST pode carregar o payload, inclusive `notes` |
+
+> **Revisão de 2026-08-28 — `session-feedback-correction`.** A lição da abertura
+> desta seção valeu de novo, na mesma tabela: **decisão documentada não é
+> controle implementado.** A linha "DELETE proibido via RLS em sessions" existia
+> desde a revisão do módulo e o banco concedia DELETE ao aluno — a `sessions_own`
+> da `0017` era `FOR ALL`, e `FOR ALL` inclui UPDATE e DELETE. Ninguém decidiu
+> conceder; ninguém percebeu que estava concedido.
+>
+> Duas coisas mudaram para que isto não volte por baixo. A primeira: o controle
+> passou a ser **verificável por guarda** — privilégio de coluna aparece em
+> `information_schema.role_column_grants`, e a ausência de política de DELETE
+> aparece em `pg_policies`. A auditoria de 2026-08-11 teria encontrado o furo
+> sozinha se o controle tivesse essa forma. A segunda: `scripts/verify-rls.sql`
+> passou a **afirmar as quatro proibições contra o banco**, com prova negativa
+> feita — o estado pré-`0036` foi restaurado numa transação e a guarda falhou,
+> como tem de falhar.
+>
+> E o direito que faltava passou a existir: o Art. 18, III não tinha caminho
+> nenhum para o feedback de sessão. O aluno apertava "Salvar e Finalizar" e o
+> texto ficava como estava para sempre. Ficou grave quando o especialista passou
+> a ler `notes` no feed de atividades — quem escreveu "senti dor no ombro
+> direito" quando era o esquerdo não tinha como consertar antes de a prescrição
+> ser ajustada para o lado errado.
+
 
 > **Revisão de 2026-08-28 — `student-activity-feed`.** O módulo passou a ser lido
 > pela primeira vez: até aqui o app coletava RPE e observação a cada sessão e

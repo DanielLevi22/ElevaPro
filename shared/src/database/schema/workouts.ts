@@ -144,6 +144,12 @@ export const workoutSessions = pgTable("workout_sessions", {
   // Texto livre do aluno. Dado sensível de saúde (Art. 11) — ver seção 2.2 de
   // docs/LGPD_COMPLIANCE.md. Nunca recebe texto gerado pelo app.
   notes: text("notes"),
+  // Quando o aluno corrigiu o próprio feedback (Art. 18, III). Metadado, não
+  // conteúdo: guardamos QUE mudou e QUANDO, nunca o texto anterior — a versão
+  // antiga é o dado inexato que o Art. 6°, V manda corrigir. Só `intensity`,
+  // `notes` e esta coluna são atualizáveis pelo aluno; a `0036` fecha o resto
+  // por privilégio de coluna.
+  feedback_edited_at: timestamp("feedback_edited_at", { withTimezone: true }),
   // Cardio e musculação são a mesma linha da mesma tabela. Até a `0035` a única
   // forma de distinguir era comparar o título do treino com a string
   // 'Treino Cardio Livre'.

@@ -1,17 +1,51 @@
 import { rpeLabelComEmoji } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 interface WorkoutFeedbackModalProps {
   visible: boolean;
   onClose: () => void;
   onSubmit: (intensity: number, notes: string) => void;
+  /**
+   * `correcao` carrega os valores já gravados e troca os textos.
+   *
+   * O modo existe porque o Art. 18, III dá ao titular o direito de corrigir o
+   * que ele mesmo declarou, e até a `0036` não havia caminho nenhum: o aluno
+   * apertava "Salvar e Finalizar" e o texto ficava como estava para sempre.
+   */
+  mode?: 'registro' | 'correcao';
+  /** Valores atuais da sessão, no modo correção. */
+  initialIntensity?: number | null;
+  initialNotes?: string | null;
+  /** Só no modo correção: apaga a observação e mantém a sessão. */
+  onDeleteNotes?: () => void;
 }
 
-export function WorkoutFeedbackModal({ visible, onClose, onSubmit }: WorkoutFeedbackModalProps) {
-  const [intensity, setIntensity] = useState(5);
-  const [notes, setNotes] = useState('');
+const RPE_PADRAO = 5;
+
+export function WorkoutFeedbackModal({
+  visible,
+  onClose,
+  onSubmit,
+  mode = 'registro',
+  initialIntensity,
+  initialNotes,
+  onDeleteNotes,
+}: WorkoutFeedbackModalProps) {
+  const corrigindo = mode === 'correcao';
+  const [intensity, setIntensity] = useState(initialIntensity ?? RPE_PADRAO);
+  const [notes, setNotes] = useState(initialNotes ?? '');
+
+  // Os valores chegam depois do primeiro render: a lista abre o modal e o item
+  // selecionado só existe a partir daí. Sem isto, corrigir a segunda sessão
+  // mostraria o texto da primeira — e o aluno salvaria a declaração errada
+  // achando que corrigiu a certa.
+  useEffect(() => {
+    if (!visible) return;
+    setIntensity(initialIntensity ?? RPE_PADRAO);
+    setNotes(initialNotes ?? '');
+  }, [visible, initialIntensity, initialNotes]);
 
   // A tabela de rótulos saiu daqui para `@elevapro/shared` em 2026-08-28: o
   // especialista passou a ler a mesma escala no feed de atividades, e duas
@@ -27,7 +61,7 @@ export function WorkoutFeedbackModal({ visible, onClose, onSubmit }: WorkoutFeed
   const handleSubmit = () => {
     onSubmit(intensity, notes);
     // Reset state for next time
-    setIntensity(5);
+    setIntensity(RPE_PADRAO);
     setNotes('');
   };
 
@@ -36,7 +70,9 @@ export function WorkoutFeedbackModal({ visible, onClose, onSubmit }: WorkoutFeed
       <View className="flex-1 justify-end bg-black/80">
         <View className="bg-zinc-900 rounded-t-3xl p-6 border-t border-zinc-800">
           <View className="flex-row justify-between items-center mb-6">
-            <Text className="text-white text-xl font-bold font-display">Como foi o treino?</Text>
+            <Text className="text-white text-xl font-bold font-display">
+              {corrigindo ? 'Corrigir feedback' : 'Como foi o treino?'}
+            </Text>
             <TouchableOpacity onPress={onClose}>
               <Ionicons name="close" size={24} color="#71717A" />
             </TouchableOpacity>
@@ -108,9 +144,20 @@ export function WorkoutFeedbackModal({ visible, onClose, onSubmit }: WorkoutFeed
               perceber que está falando com o profissional — e a transparência
               do Art. 6°, VI é sobre o momento da coleta.
             */}
-            <View className="flex-row items-center gap-2 mt-2.5">
-              <Ionicons name="eye-outline" size={14} color="#71717A" />
-              <Text className="text-zinc-500 text-xs flex-1">Seu personal vê este feedback.</Text>
+            {/*
+              No modo correção o tempo verbal muda, e a mudança é o ponto.
+              Dizer que o feedback JÁ FOI LIDO impede a impressão falsa de que a
+              versão anterior nunca existiu na cabeça do profissional — a
+              transparência do Art. 6°, VI é sobre o momento em que a pessoa
+              age, não sobre o termo que ela aceitou uma vez.
+            */}
+            <View className="flex-row items-start gap-2 mt-2.5">
+              <Ionicons name="eye-outline" size={14} color="#71717A" style={{ marginTop: 2 }} />
+              <Text className="text-zinc-500 text-xs flex-1">
+                {corrigindo
+                  ? 'Seu personal já leu este feedback. A correção aparece marcada para ele.'
+                  : 'Seu personal vê este feedback.'}
+              </Text>
             </View>
           </View>
 
@@ -121,9 +168,26 @@ export function WorkoutFeedbackModal({ visible, onClose, onSubmit }: WorkoutFeed
             activeOpacity={0.8}
           >
             <Text className="text-primary-foreground font-bold text-lg font-display">
-              Salvar e Finalizar
+              {corrigindo ? 'Salvar correção' : 'Salvar e Finalizar'}
             </Text>
           </TouchableOpacity>
+
+          {/*
+            Só aparece quando há texto para apagar. Um botão de apagar sobre um
+            campo vazio é um botão que não faz nada — e o aluno que o aperta fica
+            sem saber se apagou ou se falhou.
+          */}
+          {corrigindo && onDeleteNotes && notes.trim().length > 0 && (
+            <TouchableOpacity
+              onPress={onDeleteNotes}
+              className="p-4 rounded-xl items-center mb-4 border border-zinc-700"
+              activeOpacity={0.8}
+            >
+              <Text className="text-red-400 font-bold text-base font-display">
+                Apagar observação
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </Modal>

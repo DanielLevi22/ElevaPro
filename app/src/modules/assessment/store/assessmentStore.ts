@@ -64,6 +64,14 @@ interface AssessmentState {
   /** Histórico e comparação vindos do banco — antes só existiam em memória. */
   loadHistory: (studentId: string) => Promise<void>;
   scanHistory: BodyScanRecord[];
+  /**
+   * Apaga uma análise do próprio aluno — Art. 18, VI.
+   *
+   * Aqui não há "corrigir": `body_scans` é medida derivada por IA, e o remédio
+   * para uma medida inexata é medir de novo. O botão de nova análise já existe
+   * ao lado; o que faltava era o direito de eliminar.
+   */
+  deleteScan: (scanId: string, studentId: string) => Promise<void>;
   /** Texto pronto para a tela. Null quando não houve falha. */
   errorMessage: string | null;
   scanDeltas: BodyScanDelta[];
@@ -205,6 +213,15 @@ export const useAssessmentStore = create<AssessmentState>()(
           service.latestWithComparison(studentId),
         ]);
         set({ scanHistory: scans, scanDeltas: comparison.deltas });
+      },
+
+      deleteScan: async (scanId: string, studentId: string) => {
+        const service = createBodyScanService(supabase);
+        await service.deleteOwn(scanId);
+        // Recarrega em vez de filtrar em memória: apagar a análise mais recente
+        // muda a comparação, e um `scanDeltas` que sobreviva ao seu scan mostra
+        // ao aluno uma variação contra uma medida que não existe mais.
+        await get().loadHistory(studentId);
       },
 
       reset: () => {

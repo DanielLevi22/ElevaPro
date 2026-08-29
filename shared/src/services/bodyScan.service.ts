@@ -94,6 +94,26 @@ export const createBodyScanService = (supabase: SupabaseClient) => ({
   },
 
   /**
+   * Apaga uma análise do próprio aluno — Art. 18, VI.
+   *
+   * Aqui não existe "corrigir": `body_scans` é medida derivada por IA, e o
+   * remédio para uma medida inexata é medir de novo. O que o titular tem é o
+   * direito de eliminar, e é este o caminho.
+   *
+   * Sem filtro de dono no `.eq()` de propósito: `body_scans_own` (migration
+   * `0017`) já restringe à própria linha, e repetir a regra no cliente é onde
+   * as duas cópias divergem. Um id de outro aluno simplesmente não casa com
+   * nenhuma linha visível — apaga zero e não vaza a existência dela.
+   *
+   * @example
+   * await bodyScanService.deleteOwn(scanId);
+   */
+  deleteOwn: async (scanId: string): Promise<void> => {
+    const { error } = await supabase.from("body_scans").delete().eq("id", scanId);
+    if (error) throw error;
+  },
+
+  /**
    * Último escaneamento e a comparação com o anterior, quando existe.
    *
    * `deltas` vem vazio no primeiro escaneamento — que é a resposta honesta:

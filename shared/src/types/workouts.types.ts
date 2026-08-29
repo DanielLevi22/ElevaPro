@@ -106,7 +106,32 @@ export interface WorkoutSession {
   active_calories: number | null;
   /** Modalidade do cardio. Na musculação o nome vem da prescrição. */
   activity_name: string | null;
+  /**
+   * Quando o aluno corrigiu o próprio feedback (Art. 18, III). Nulo enquanto
+   * nunca foi corrigido. Não existe versão anterior guardada, de propósito.
+   */
+  feedback_edited_at: string | null;
   created_at: string;
+}
+
+/**
+ * O que o aluno pode reescrever da própria sessão: a declaração, nunca a
+ * medida.
+ *
+ * O tipo é a mesma fronteira que a `0036` desenha no banco por privilégio de
+ * coluna. Não é redundância: sem ele, `updateSessionFeedback` aceitaria
+ * `completed_at` em tempo de compilação e só o Postgres reclamaria, com um
+ * 42501 em runtime que ninguém lê.
+ */
+export interface UpdateSessionFeedbackInput {
+  /** RPE de 1 a 10. `null` remove a avaliação. */
+  intensity?: number | null;
+  /**
+   * `null` ou string vazia apagam a observação e mantêm a sessão — é o Art. 18,
+   * VI aplicado só à parte consentida. Quem chama é responsável por não gravar
+   * texto sem consentimento vigente.
+   */
+  notes?: string | null;
 }
 
 export interface WorkoutSessionExercise {

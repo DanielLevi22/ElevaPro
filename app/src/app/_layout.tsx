@@ -22,6 +22,7 @@ import { queryClient } from '@/lib/query-client';
 import { registerHealthSyncAsync } from '@/services/backgroundHealthTask';
 import { registerBackgroundFetchAsync } from '@/services/backgroundTask';
 import { requestNotificationPermissions } from '@/services/notificationService';
+import { assertBffConfigured } from '@/shared/bff';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -54,6 +55,20 @@ export default function RootLayout() {
     // tratada e derrubava a arvore inteira.
     if (error) console.error('[fontes] falha ao carregar', error);
   }, [error]);
+
+  useEffect(() => {
+    // Loga, nao lanca: sem EXPO_PUBLIC_API_URL so a IA para, e derrubar o app
+    // inteiro por isso seria pior que o defeito. O que importa e o nome da
+    // variavel aparecer UMA vez no boot -- antes, a ausencia dela so se
+    // manifestava como "erro de rede" dentro de cinco telas diferentes, e a
+    // string `"undefined/api/ai/body-scan"` nunca chegava a lugar nenhum.
+    // Quem chamar o BFF recebe `BffConfigError`, com o mesmo texto.
+    try {
+      assertBffConfigured();
+    } catch (erro) {
+      console.error('[boot]', (erro as Error).message);
+    }
+  }, []);
 
   // Move splash hiding to Nav component which knows about Auth state
   // useEffect(() => {

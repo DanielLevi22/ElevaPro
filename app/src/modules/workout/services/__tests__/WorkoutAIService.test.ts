@@ -34,6 +34,8 @@ describe('WorkoutAIService', () => {
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
+      status: 200,
+      headers: { get: () => 'application/json' },
       json: async () => mockResponse,
     });
 
@@ -70,7 +72,12 @@ describe('WorkoutAIService', () => {
   });
 
   it('should return fallback when BFF returns 4xx', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 401 });
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      headers: { get: () => 'application/json' },
+      json: async () => ({}),
+    });
 
     const result = await WorkoutAIService.generateWorkoutStructure(
       'A',

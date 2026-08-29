@@ -2,6 +2,8 @@ module.exports = {
   preset: 'jest-expo',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   moduleNameMapper: {
+    // `expo/fetch` delega ao `global.fetch`, que e o que as suites mockam.
+    '^expo/fetch$': '<rootDir>/__mocks__/expo-fetch.ts',
     '^@/nutrition$': '<rootDir>/src/modules/nutrition',
     '^@/workout$': '<rootDir>/src/modules/workout',
     '^@/students$': '<rootDir>/src/modules/students',

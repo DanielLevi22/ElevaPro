@@ -1,5 +1,6 @@
 import type { DietMeal, DietMealItem } from '@elevapro/shared';
 import { useAuthStore } from '@/modules/auth/store/authStore';
+import { fetchBff, lerRespostaBff } from '@/shared/bff';
 
 export interface ShoppingListItem {
   name: string;
@@ -89,8 +90,6 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
   Suplementos: ['creatina', 'multivitamínico', 'omega', 'pre-treino', 'beta'],
 };
 
-const bffBase = () => process.env.EXPO_PUBLIC_API_URL ?? '';
-
 function getToken(): string {
   const token = useAuthStore.getState().session?.access_token;
   if (!token) throw new Error('Authentication required');
@@ -148,14 +147,11 @@ export const ShoppingListService = {
   },
 
   generateCookingSteps: async (mealName: string, ingredients: string[]): Promise<CookingStep[]> => {
-    const response = await fetch(`${bffBase()}/api/ai/nutrition/recipe`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${getToken()}`,
-      },
-      body: JSON.stringify({ mealName, ingredients }),
-    });
+    const { response, url } = await fetchBff(
+      '/api/ai/nutrition/recipe',
+      { mealName, ingredients },
+      { token: getToken() }
+    );
 
     if (!response.ok) {
       return [
@@ -172,7 +168,7 @@ export const ShoppingListService = {
       ];
     }
 
-    return response.json() as Promise<CookingStep[]>;
+    return lerRespostaBff<CookingStep[]>(response, url);
   },
 
   askAssistant: async (
@@ -180,18 +176,15 @@ export const ShoppingListService = {
     promptType: 'recipes' | 'analysis' | 'tips' | 'meal_prep' | 'cooking_guide'
   ): Promise<string> => {
     try {
-      const response = await fetch(`${bffBase()}/api/ai/nutrition/assistant`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${getToken()}`,
-        },
-        body: JSON.stringify({ categories, promptType }),
-      });
+      const { response, url } = await fetchBff(
+        '/api/ai/nutrition/assistant',
+        { categories, promptType },
+        { token: getToken() }
+      );
 
       if (!response.ok) return 'Não consegui gerar uma resposta no momento. Tente novamente.';
 
-      const data = (await response.json()) as { response?: string };
+      const data = await lerRespostaBff<{ response?: string }>(response, url);
       return data.response ?? 'Não consegui gerar uma resposta no momento.';
     } catch {
       return 'Ocorreu um erro ao consultar a IA.';

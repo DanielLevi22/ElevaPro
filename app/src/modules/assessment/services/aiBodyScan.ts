@@ -2,9 +2,10 @@ import { createHealthService } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useAuthStore } from '@/modules/auth/store/authStore';
+import { fetchBff, lerRespostaBff } from '@/shared/bff';
 import { BodyScanResult, CaptureFraming } from '../types/assessment';
 
-const bffUrl = () => `${process.env.EXPO_PUBLIC_API_URL}/api/ai/body-scan`;
+const ROTA = '/api/ai/body-scan';
 
 /**
  * Falta de consentimento, separada de falha.
@@ -105,19 +106,29 @@ export const AIBodyScanService = {
       throw new Error('No valid images to analyze');
     }
 
-    const response = await fetch(bffUrl(), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
+    // `fetchBff` e não `fetch`: o `fetch` global segue redirect e faz a tela de
+    // login da Vercel chegar aqui como 200 com HTML. Todo o tratamento por
+    // código de erro abaixo ficava inalcançável — o desvio acontecia antes,
+    // no `json()`, e virava a mensagem genérica de falha.
+    const { response, url } = await fetchBff(
+      ROTA,
+      {
         images: base64Images,
         heightCm: informed?.heightCm,
         weightKg: informed?.weightKg,
         framing: framing ?? undefined,
-      }),
-    });
+      },
+      { token }
+    );
+
+    // A verificação de origem vem ANTES da leitura do status, de propósito. Um
+    // 403 com HTML é proteção de plataforma barrando a rota, não o aluno sem
+    // consentimento — e ler o status primeiro faria as duas virarem a mesma
+    // tela, que é o defeito que este caminho inteiro existe para desfazer.
+    // Toda resposta desta rota é JSON, inclusive os erros (ver route.ts).
+    const corpo = await lerRespostaBff<
+      Partial<Omit<BodyScanResult, 'id' | 'date' | 'imageUrl'>> & { error?: string }
+    >(response, url);
 
     // 403 do BFF é sempre falta de consentimento nesta rota: o aluno analisa a
     // si mesmo, então não há outro motivo para ele ser barrado.
@@ -132,15 +143,10 @@ export const AIBodyScanService = {
     if (!response.ok) {
       // O código do BFF vira mensagem aqui, e não na tela, para as duas rotas
       // de erro (rede e resposta ruim) chegarem no mesmo formato.
-      const code = await response
-        .json()
-        .then((b) => (b as { error?: string }).error)
-        .catch(() => undefined);
-
-      throw new BodyScanAnalysisError(code ?? `http_${response.status}`);
+      throw new BodyScanAnalysisError(corpo.error ?? `http_${response.status}`);
     }
 
-    const data = (await response.json()) as Omit<BodyScanResult, 'id' | 'date' | 'imageUrl'>;
+    const data = corpo as Omit<BodyScanResult, 'id' | 'date' | 'imageUrl'>;
 
     if (!data?.metrics) {
       throw new Error('Invalid response from body-scan BFF');

@@ -82,13 +82,71 @@ Apresentar o resultado em formato estruturado:
 ### Bloqueadores (não implementar sem resolver)
 - ❌ [descrição] → [ação obrigatória]
 
+### Testes de trava LGPD (obrigatório — ver passo 5)
+- [ ] `arquivo:teste` — [a proibição] — [artigo]
+- [ ] Prova negativa feita: [como o controle foi revertido e qual teste falhou]
+
 ### Atualizações necessárias em docs/LGPD_COMPLIANCE.md
 - [ ] Adicionar [campo/tabela] ao mapa de dados (Seção 2.x)
 - [ ] Documentar base legal para [tratamento]
 - [ ] Atualizar checklist pré-lançamento se necessário
 ```
 
-### 5. Atualizar o mapa de dados
+### 5. Escrever os testes de trava LGPD — obrigatório
+
+**Todo `/lgpd-check` que aprova uma feature produz teste de trava.** Sem isso a
+revisão vira parecer arquivado: a decisão fica no documento e o controle fica no
+código, e a distância entre os dois é como nasce "controle documentado que o
+banco não tem" — foi exatamente o que a auditoria de 2026-08-11 encontrou em
+`workout_sessions` (decisão dizia "RLS bloqueia", tabela estava sem RLS nenhuma)
+e o que o PRD `session-feedback-correction` reencontrou em 2026-08-28.
+
+Um teste de trava não verifica que a feature funciona. Ele verifica **que ela
+continua restrita**, e existe para falhar na cara de quem tentar afrouxar a
+restrição sem saber que ela é jurídica.
+
+**A regra das três partes.** Todo teste de trava tem:
+
+1. **Nome que diz a proibição**, não o mecanismo.
+   `'aluno não altera a data da sessão'`, nunca `'testa privilégio de coluna'`.
+2. **Comentário com o artigo e o porquê**, imediatamente acima. É o que a pessoa
+   lê às 2h da manhã quando o teste barra o atalho dela. Precisa responder "por
+   que não posso simplesmente mudar isto?" sem abrir outro arquivo.
+3. **Mensagem de falha que nomeia o dano**, não o valor esperado.
+   `'HISTÓRICO REESCRITO: UPDATE de completed_at foi aceito'` diz o que
+   aconteceu de errado; `expected 0 to be 1` manda a pessoa procurar sozinha.
+
+**Onde cada trava mora**, conforme o que ela protege:
+
+| O que a revisão decidiu | Onde o teste vai |
+|---|---|
+| Quem lê e escreve cada linha, quais colunas | `scripts/verify-rls.sql` — roda contra o banco real |
+| Consentimento antes de gravar dado sensível | teste do store/service que grava |
+| Campo que não pode ser logado nem retornado | teste do service, afirmando ausência |
+| Dado que não atravessa fronteira para o cliente | teste do service, sobre o payload |
+| Retenção, eliminação, cascata | `verify-rls.sql` ou teste de migration |
+
+**Prova negativa obrigatória.** Teste que passa sem poder falhar não é trava, é
+decoração — e é pior que nada, porque dá confiança falsa. Antes de dar a revisão
+por concluída, reverta o controle num escopo descartável (transação com
+`ROLLBACK`, mock invertido) e confirme que o teste **falha**. Registre no PRD que
+a prova negativa foi feita.
+
+**Afirme a ausência, não só a presença.** "O especialista lê o aluno vinculado"
+passa com uma política que deixa todo mundo ler tudo. O teste que vale é o par:
+lê o vinculado **e** não lê o não-vinculado. Para dado sensível, sempre semeie
+linhas dos DOIS lados — assim "zero linhas" significa bloqueio, e não tabela
+vazia.
+
+**No output da revisão**, listar as travas escritas em uma seção própria:
+
+```
+### Testes de trava LGPD
+- [ ] `arquivo:teste` — [a proibição, em uma linha] — [artigo]
+- [ ] Prova negativa: [como o controle foi revertido e qual teste falhou]
+```
+
+### 6. Atualizar o mapa de dados
 
 Se novos dados foram identificados como conformes, atualizar `docs/LGPD_COMPLIANCE.md`:
 - Seção 2.1 (dados comuns) ou 2.2 (dados sensíveis) com o novo campo

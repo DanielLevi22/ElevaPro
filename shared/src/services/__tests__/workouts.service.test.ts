@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createBodyScanService } from "../bodyScan.service";
 import { createWorkoutsService } from "../workouts.service";
 import { criarSupabaseFake } from "./supabaseFake";
 
@@ -183,5 +184,129 @@ describe("workoutsService — exercícios do treino", () => {
     expect(linha.reps).toBeNull();
     expect(linha.weight).toBeNull();
     expect(linha.notes).toBeNull();
+  });
+});
+
+/**
+ * ── TRAVAS LGPD — correção do feedback (migration 0036) ──────────────────────
+ *
+ * Estes testes NÃO verificam que a correção funciona. Verificam que ela
+ * continua restrita ao que o titular DECLAROU. Se um deles barrar você, o
+ * caminho não é ajustar o teste: é reler o parecer em
+ * `docs/PRDs/session-feedback-correction.md` e a seção 10 do
+ * `docs/LGPD_COMPLIANCE.md`.
+ *
+ * A prova de banco correspondente está em `scripts/verify-rls.sql` — lá o
+ * privilégio de coluna é afirmado contra o Postgres de verdade. Aqui a trava é
+ * sobre o payload que sai do serviço.
+ */
+describe("workoutsService — TRAVA LGPD: correção do feedback (Art. 18, III)", () => {
+  it("corrige a declaração do titular e carimba a data da correção", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({
+      data: { id: "s1", intensity: 7, notes: "era o esquerdo" },
+    });
+
+    await createWorkoutsService(supabase).updateSessionFeedback("s1", {
+      intensity: 7,
+      notes: "era o esquerdo",
+    });
+
+    const payload = chamadas[0].payload as Record<string, unknown>;
+    expect(chamadas[0].tabela).toBe("workout_sessions");
+    expect(payload.intensity).toBe(7);
+    expect(payload.notes).toBe("era o esquerdo");
+    // Sem o carimbo, a correção é indistinguível de o aluno ter escrito aquilo
+    // desde o começo — e o especialista, que já leu a versão anterior, não teria
+    // como saber que a frase mudou.
+    expect(typeof payload.feedback_edited_at).toBe("string");
+  });
+
+  /**
+   * Art. 18, III + Art. 6°, V — o titular corrige o que DECLAROU, nunca o que
+   * foi MEDIDO. Digitar outro número não devolve exatidão a uma medida: cria um
+   * dado falso que o profissional usa para prescrever.
+   *
+   * A `0036` fecha isso no banco com `REVOKE UPDATE` + `GRANT UPDATE (intensity,
+   * notes, feedback_edited_at)`. Este teste existe porque o erro do banco seria
+   * um 42501 em runtime, longe de quem escreveu o caminho.
+   */
+  it("nunca manda coluna de medida no UPDATE, mesmo recebendo uma", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({ data: { id: "s1" } });
+
+    await createWorkoutsService(supabase).updateSessionFeedback("s1", {
+      intensity: 7,
+      notes: "ok",
+      // O tipo recusa isto; o `as never` força o caso de quem contornar o tipo.
+      completed_at: "2020-01-01T00:00:00Z",
+      session_type: "cardio",
+      duration_seconds: 9999,
+      student_id: "outro-aluno",
+    } as never);
+
+    const payload = chamadas[0].payload as Record<string, unknown>;
+    const proibidas = [
+      "started_at",
+      "completed_at",
+      "session_type",
+      "duration_seconds",
+      "active_calories",
+      "student_id",
+      "workout_id",
+    ];
+    const vazadas = proibidas.filter((coluna) => coluna in payload);
+
+    if (vazadas.length > 0) {
+      throw new Error(
+        `HISTÓRICO REESCRITO: updateSessionFeedback enviou coluna de medida (${vazadas.join(", ")}). ` +
+          "Só intensity, notes e feedback_edited_at podem sair daqui — Art. 18, III. " +
+          "Ver a migration 0036 e o bloco de prova em scripts/verify-rls.sql",
+      );
+    }
+  });
+
+  /**
+   * Art. 18, VI — apagar a observação elimina a parte consentida e mantém a
+   * sessão. É o desenho inteiro do PRD numa linha: a execução é execução de
+   * contrato (Art. 7°, V) e continua no histórico.
+   */
+  it("apaga só a observação, gravando null e não string vazia", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({ data: { id: "s1" } });
+
+    await createWorkoutsService(supabase).updateSessionFeedback("s1", { notes: "   " });
+
+    const payload = chamadas[0].payload as Record<string, unknown>;
+    // String em branco no banco é um texto que existe e não diz nada: o feed
+    // renderizaria aspas vazias, e a coluna deixaria de distinguir "não escreveu"
+    // de "apagou".
+    expect(payload.notes).toBeNull();
+    expect("intensity" in payload).toBe(false);
+  });
+
+  it("não toca em intensity quando só a observação é corrigida", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({ data: { id: "s1" } });
+    await createWorkoutsService(supabase).updateSessionFeedback("s1", { notes: "novo texto" });
+    expect("intensity" in (chamadas[0].payload as Record<string, unknown>)).toBe(false);
+  });
+});
+
+describe("bodyScanService — TRAVA LGPD: eliminação (Art. 18, VI)", () => {
+  it("apaga a análise sem repetir o filtro de dono que a RLS já aplica", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({ data: null });
+
+    await createBodyScanService(supabase).deleteOwn("scan-1");
+
+    expect(chamadas[0].tabela).toBe("body_scans");
+    expect(chamadas[0].filtros).toEqual({ id: "scan-1" });
+    // Sem `student_id` no filtro de propósito: `body_scans_own` (migration 0017)
+    // já restringe à própria linha. Duplicar a regra no cliente é onde as duas
+    // cópias divergem — e a do cliente é a que ninguém audita.
+    expect("student_id" in chamadas[0].filtros).toBe(false);
+  });
+
+  it("propaga o erro em vez de fingir que apagou", async () => {
+    const { supabase } = criarSupabaseFake({ error: { message: "42501" } });
+    await expect(createBodyScanService(supabase).deleteOwn("scan-1")).rejects.toEqual({
+      message: "42501",
+    });
   });
 });

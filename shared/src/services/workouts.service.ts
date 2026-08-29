@@ -11,6 +11,7 @@ import type {
   SaveSessionExerciseInput,
   TrainingPlan,
   UpdatePeriodizationInput,
+  UpdateSessionFeedbackInput,
   UpdateTrainingPlanInput,
   UpdateWorkoutInput,
   Workout,
@@ -451,6 +452,49 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
       })
       .select()
       .single();
+    if (error) throw error;
+    return data as WorkoutSession;
+  },
+
+  /**
+   * Corrige o feedback que o aluno escreveu sobre a própria sessão.
+   *
+   * Só `intensity` e `notes` — é o Art. 18, III aplicado ao que o titular
+   * DECLAROU. Data, séries, duração e calorias são medida do evento: o remédio
+   * para uma medida inexata é medir de novo, não digitar outro número. A `0036`
+   * impõe a mesma fronteira no banco por privilégio de coluna, então um
+   * caminho que tentasse burlar isto receberia 42501.
+   *
+   * `feedback_edited_at` é carimbado aqui, e não por trigger, porque é a mesma
+   * decisão que a coluna registra: o especialista precisa saber que a frase que
+   * leu ontem pode não ser a de hoje. Não guardamos o texto anterior — a versão
+   * antiga é justamente o dado inexato que o Art. 6°, V manda corrigir.
+   *
+   * @example
+   * // corrigir os dois
+   * await updateSessionFeedback(id, { intensity: 7, notes: "era o ombro esquerdo" });
+   * // apagar só a observação; a sessão continua no histórico
+   * await updateSessionFeedback(id, { notes: null });
+   */
+  updateSessionFeedback: async (
+    sessionId: string,
+    input: UpdateSessionFeedbackInput,
+  ): Promise<WorkoutSession> => {
+    const patch: Record<string, unknown> = { feedback_edited_at: new Date().toISOString() };
+    if (input.intensity !== undefined) patch.intensity = input.intensity;
+    // Texto em branco é o pedido de apagar, não um texto de um espaço.
+    if (input.notes !== undefined) patch.notes = input.notes?.trim() || null;
+
+    const { data, error } = await supabase
+      .from("workout_sessions")
+      .update(patch)
+      .eq("id", sessionId)
+      .select()
+      .single();
+
+    // Sem repassar o objeto do PostgREST para log: o erro dele carrega o
+    // payload, e o payload aqui é `notes` — dado sensível de saúde. Mesma
+    // regra já aplicada em `saveWorkoutSession` e `saveCardioSession`.
     if (error) throw error;
     return data as WorkoutSession;
   },

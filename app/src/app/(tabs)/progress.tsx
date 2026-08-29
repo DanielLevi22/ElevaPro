@@ -2,7 +2,7 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -13,6 +13,7 @@ import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { WorkoutAnalytics } from '@/components/workout/WorkoutAnalytics';
 import { useGamificationStore } from '@/modules/gamification/store/gamificationStore';
 import { useNutritionStore } from '@/modules/nutrition/store/nutritionStore';
+import { ROUTES } from '@/navigation/types';
 
 // Helper Component for Nutrition Tab to isolate hooks
 const NutritionTabContent = () => {
@@ -89,6 +90,7 @@ const NutritionTabContent = () => {
 };
 
 export default function ProgressScreen() {
+  const router = useRouter();
   const { user } = useAuthStore();
   const { weeklyGoals, history, fetchDailyData, fetchHistory, isLoading } = useGamificationStore();
   const [activeTab, setActiveTab] = useState<'GERAL' | 'NUTRICAO' | 'TREINO'>('GERAL');
@@ -286,6 +288,27 @@ export default function ProgressScreen() {
           <>
             {/* Workout Analytics (Full Size) */}
             <WorkoutAnalytics />
+
+            {/*
+              O gráfico mostra a tendência; esta porta leva à sessão. É o único
+              caminho do aluno para o que ele escreveu — e, desde a `0036`, para
+              corrigir (Art. 18, III). Sem ela o direito existe no banco e não
+              existe no produto.
+            */}
+            <TouchableOpacity
+              onPress={() => router.push(ROUTES.STUDENT.SESSION_HISTORY)}
+              accessibilityRole="button"
+              className="flex-row items-center justify-between bg-zinc-900 border border-zinc-800 rounded-2xl p-4 mt-4"
+              activeOpacity={0.8}
+            >
+              <View className="flex-1 pr-3">
+                <Text className="text-white font-bold font-display">Meus treinos</Text>
+                <Text className="text-zinc-500 text-xs mt-0.5">
+                  Ver o histórico e corrigir o que você escreveu
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#71717A" />
+            </TouchableOpacity>
           </>
         )}
       </ScrollView>

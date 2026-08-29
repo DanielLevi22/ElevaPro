@@ -15,6 +15,7 @@ import Svg, { Circle, Line, Polygon, Text as SvgText } from 'react-native-svg';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { colors } from '@/constants/colors';
 import { ScanComparison } from '../components/ScanComparison';
+import { ScanHistoryList } from '../components/ScanHistoryList';
 
 const { width } = Dimensions.get('window');
 const PHOTO_ASPECT_RATIO = 4 / 3;
@@ -247,7 +248,9 @@ export default function PostureAnalysis() {
     lastResult,
     studentId: storeStudentId,
     scanDeltas,
+    scanHistory,
     loadHistory,
+    deleteScan,
   } = useAssessmentStore();
 
   // Prioritize Store ID, then Params (check both 'studentId' and 'id' for compatibility)
@@ -578,6 +581,24 @@ export default function PostureAnalysis() {
             mais confiável da tela, porque o erro da estimativa se cancela na
             diferença (ADR-010). */}
         {!isDemo && <ScanComparison deltas={scanDeltas} />}
+
+        {/*
+          O histórico existia no store desde a entrega do body scan e não tinha
+          tela. Sem lista não há como o titular apagar uma análise sua — e a
+          eliminação do Art. 18, VI era um direito sem botão.
+        */}
+        {!isDemo && id && (
+          <ScanHistoryList
+            scans={scanHistory}
+            onDelete={(scanId) => {
+              deleteScan(scanId, id).catch((error) => {
+                // Sem o objeto: o erro do PostgREST carrega o payload da linha,
+                // e `body_scans` é o dado mais sensível do schema.
+                console.log('[PostureAnalysis] falha ao apagar análise:', String(error));
+              });
+            }}
+          />
+        )}
 
         {/* Photo Container with Navigation */}
         <View className="items-center mt-6 relative">
