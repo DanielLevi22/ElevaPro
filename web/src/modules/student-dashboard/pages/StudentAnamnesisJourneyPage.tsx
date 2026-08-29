@@ -1,5 +1,14 @@
 "use client";
 
+import type { AdaptiveQuestion, PersonaTrack, UnlockCard } from "@elevapro/shared";
+import {
+  achatarRespostas,
+  getPrecisionScore,
+  getQuestionPrecisionDelta,
+  getTrackQuestions,
+  PERSONA_OPTIONS,
+  UNLOCK_CARDS,
+} from "@elevapro/shared";
 import {
   ArrowRight,
   CheckCircle2,
@@ -17,18 +26,6 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import type {
-  AdaptiveQuestion,
-  PersonaTrack,
-  UnlockCard,
-} from "@/modules/students/data/anamnesisAdaptive";
-import {
-  getPrecisionScore,
-  getQuestionPrecisionDelta,
-  getTrackQuestions,
-  PERSONA_OPTIONS,
-  UNLOCK_CARDS,
-} from "@/modules/students/data/anamnesisAdaptive";
 import type { AnamnesisResponseValue } from "@/modules/students/hooks/useStudentAnamnesis";
 import { useStudentAnamnesis } from "@/modules/students/hooks/useStudentAnamnesis";
 import { useAnamnesisForm, useSavePersonaTrack } from "../hooks/useAnamnesisForm";
@@ -349,15 +346,14 @@ export function StudentAnamnesisJourneyPage() {
       return;
     }
 
-    const raw = existing.responses as Record<string, unknown>;
-    const normalized: Record<string, AnamnesisResponseValue> = Object.fromEntries(
-      Object.entries(raw).map(([k, v]) => {
-        if (v !== null && typeof v === "object" && !Array.isArray(v) && "value" in v) {
-          return [k, (v as { value: AnamnesisResponseValue }).value];
-        }
-        return [k, v as AnamnesisResponseValue];
-      }),
-    );
+    // Terceira cópia desta lógica antes desta correção: uma aqui, uma na página
+    // de formulário que ninguém renderizava, e nenhuma que os carregadores de
+    // contexto da IA conhecessem — foi assim que o `[object Object]` chegou ao
+    // prompt sem ninguém notar que o achatamento já existia duas vezes.
+    const normalized = achatarRespostas(existing.responses as Record<string, unknown>) as Record<
+      string,
+      AnamnesisResponseValue
+    >;
     setResponses(normalized);
     setTrack(t);
 

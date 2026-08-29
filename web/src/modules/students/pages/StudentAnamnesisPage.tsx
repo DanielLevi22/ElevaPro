@@ -1,10 +1,9 @@
 "use client";
 
+import type { AnamnesisQuestion, AnamnesisSection } from "@elevapro/shared";
+import { GENERAL_ANAMNESIS, getPrecisionScore, getTrackQuestions } from "@elevapro/shared";
 import { useParams } from "next/navigation";
-import { getPrecisionScore, getTrackQuestions } from "@/modules/students/data/anamnesisAdaptive";
 import { useStudents } from "@/shared/hooks/useStudents";
-import type { AnamnesisQuestion, AnamnesisSection } from "../data/anamnesisQuestions";
-import { GENERAL_ANAMNESIS } from "../data/anamnesisQuestions";
 import type { AnamnesisResponseValue } from "../hooks/useStudentAnamnesis";
 import { useStudentAnamnesis } from "../hooks/useStudentAnamnesis";
 import { useStudentProfile } from "../hooks/useStudentProfile";

@@ -1,5 +1,5 @@
+import { AnamnesisQuestion } from '@elevapro/shared';
 import { fireEvent, render, screen } from '@testing-library/react-native';
-import { AnamnesisQuestion } from '../../types/assessment';
 import { QuestionInput } from '../QuestionInput';
 
 const altura: AnamnesisQuestion = { id: 'height', text: 'Altura (cm)', type: 'number' };

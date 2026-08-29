@@ -1,5 +1,5 @@
 import { supabase } from '@elevapro/supabase';
-import { AnamnesisResponse, StudentAnamnesis } from '../types/assessment';
+import { AnamnesisResponseValue, StudentAnamnesis } from '../types/assessment';
 
 export const AnamnesisService = {
   /**
@@ -10,7 +10,7 @@ export const AnamnesisService = {
    */
   async saveAnamnesis(
     studentId: string,
-    responses: Record<string, AnamnesisResponse>,
+    responses: Record<string, AnamnesisResponseValue>,
     isComplete: boolean = false
   ): Promise<{ success: boolean; error?: string }> {
     try {

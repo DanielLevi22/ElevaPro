@@ -1,8 +1,8 @@
 "use client";
 
+import { getPrecisionScore, getTrackQuestions } from "@elevapro/shared";
 import Link from "next/link";
 import { useAuthStore } from "@/modules/auth";
-import { getPrecisionScore, getTrackQuestions } from "@/modules/students/data/anamnesisAdaptive";
 import { useStudentAnamnesis } from "@/modules/students/hooks/useStudentAnamnesis";
 import { DayOverviewCard } from "../components/DayOverviewCard";
 import { GamificationBar } from "../components/GamificationBar";
