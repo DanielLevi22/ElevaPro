@@ -14,11 +14,58 @@ interface Props {
 export const QuestionInput = ({ question, value, onChange }: Props) => {
   const [isFocused, setIsFocused] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
+  // O que está na tela enquanto o aluno digita, que não é o que o store guardou.
+  // O store recebe o número já convertido; se o campo lesse de lá, a vírgula
+  // sumiria no instante em que fosse digitada e o decimal ficaria impossível.
+  const [digitado, setDigitado] = useState<string | null>(null);
   const containerStyle = 'mb-8';
   const labelStyle = 'text-zinc-300 text-sm font-bold mb-2 uppercase tracking-wider font-sans ml-1';
 
-  // Text & Number Input
-  if (question.type === 'text' || question.type === 'number') {
+  // Ramo próprio, e não o de texto com `keyboardType` trocado. O teclado
+  // numérico é dica, não restrição — ele nem impede a vírgula —, e o campo
+  // devolvia a string crua de qualquer jeito. O web já converte antes de
+  // gravar; enquanto isto não convertia, a mesma pergunta virava número lá e
+  // texto aqui, na mesma coluna jsonb.
+  if (question.type === 'number') {
+    return (
+      <View className={containerStyle}>
+        <Text className={labelStyle}>{question.text}</Text>
+        <View
+          className={`bg-zinc-900 border rounded-xl overflow-hidden shadow-sm ${
+            isFocused ? 'border-orange-500 bg-zinc-900/80 shadow-orange-500/10' : 'border-zinc-800'
+          }`}
+        >
+          <TextInput
+            value={digitado ?? (value === undefined || value === null ? '' : String(value))}
+            onChangeText={(texto) => {
+              setDigitado(texto);
+              // Campo vazio é resposta retirada, não zero. `Number("")` é 0, e
+              // uma altura de 0 cm atravessa qualquer checagem de "respondeu?"
+              // e chega ao consumidor como medida.
+              if (texto.trim() === '') {
+                onChange(undefined);
+                return;
+              }
+              // A conversão aqui é só vírgula → ponto. O leitor normalizador do
+              // `shared` NÃO serve nesta borda: ele aplica a faixa da pergunta,
+              // e no meio da digitação de "175" o campo vale "1" — que a regra
+              // do metro transformaria em 100 cm enquanto o aluno ainda digita.
+              const numero = Number(texto.replace(',', '.'));
+              if (Number.isFinite(numero)) onChange(numero);
+            }}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            placeholder={question.placeholder || 'Digite sua resposta...'}
+            placeholderTextColor="#52525B"
+            keyboardType="numeric"
+            className="p-4 text-white text-base font-sans"
+          />
+        </View>
+      </View>
+    );
+  }
+
+  if (question.type === 'text') {
     return (
       <View className={containerStyle}>
         <Text className={labelStyle}>{question.text}</Text>
@@ -34,10 +81,9 @@ export const QuestionInput = ({ question, value, onChange }: Props) => {
             onBlur={() => setIsFocused(false)}
             placeholder={question.placeholder || 'Digite sua resposta...'}
             placeholderTextColor="#52525B"
-            keyboardType={question.type === 'number' ? 'numeric' : 'default'}
             className="p-4 text-white text-base font-sans"
-            multiline={question.type === 'text'}
-            style={question.type === 'text' ? { minHeight: 120, textAlignVertical: 'top' } : {}}
+            multiline
+            style={{ minHeight: 120, textAlignVertical: 'top' }}
           />
         </View>
       </View>
