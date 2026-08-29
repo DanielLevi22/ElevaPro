@@ -58,7 +58,7 @@ export async function definirTituloProvisorio(sessionId: string, mensagem: strin
  * Roda **depois** do stream terminar: somar uma chamada à resposta que a pessoa
  * está esperando trocaria um problema de organização por um de latência.
  *
- * Usa o modelo rápido porque o `SYSTEM_MAPPING` fixa isso para tarefa
+ * Usa o modelo rápido porque o `ADR-0005` fixa isso para tarefa
  * estruturada de baixa latência — "10x mais barato, nunca usar Sonnet aqui".
  *
  * Falha em silêncio de propósito: o provisório continua valendo, e título é

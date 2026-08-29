@@ -15,7 +15,7 @@ export const maxDuration = 60;
  *
  * `height` e `weight` **não** estão aqui: peso é massa e nenhuma câmera mede
  * massa; altura exige referência de escala no enquadramento. Os dois entram
- * como parâmetro e a rota os recoloca na resposta final — ver `ADR-010`.
+ * como parâmetro e a rota os recoloca na resposta final — ver `ADR-0010`.
  */
 interface ModelPayload {
   metrics: {
@@ -302,7 +302,7 @@ export async function POST(request: NextRequest) {
 
   // Gravar é o que dá sentido à feature: sem histórico não existe delta, e o
   // delta é onde está o valor. O `student_id` vem do token, nunca do corpo.
-  // A imagem não é gravada — só o derivado (ADR-010).
+  // A imagem não é gravada — só o derivado (ADR-0010).
   const segments = modelResult.segments ?? {};
   try {
     await createBodyScanService(client).save(userId, {

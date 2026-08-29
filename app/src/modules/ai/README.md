@@ -5,7 +5,7 @@
 O mobile **não chama provedor de IA diretamente**. Toda inteligência vive no BFF
 do web (`web/src/app/api/ai/*`), e este módulo é apenas o cliente HTTP dessas
 rotas. A decisão está registrada em
-[ADR-004](../../../../docs/decisions/004-ai-bff-pattern.md).
+[ADR-0004](../../../../docs/adr/0004-ai-bff-pattern.md).
 
 O motivo é simples: chave de provedor embarcada no bundle do app é chave
 vazada. `EXPO_PUBLIC_*` vai para o binário e qualquer um extrai.

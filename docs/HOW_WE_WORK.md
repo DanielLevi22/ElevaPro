@@ -1,22 +1,23 @@
-# Como Trabalhamos — MeuPersonal
+# Como Trabalhamos — Eleva Pro
 
-> Documento único de referência do fluxo de desenvolvimento.
-> Se tiver dúvida sobre "qual é o próximo passo", a resposta está aqui.
-> Última atualização: 2026-04-12
+> O fluxo de desenvolvimento, do "tive uma ideia" ao merge.
+> As regras de código estão no [`CLAUDE.md`](../CLAUDE.md); aqui está a ordem das coisas.
+> Última atualização: 2026-08-29
 
 ---
 
 ## Visão geral do ciclo
 
 ```
-IDEIA → PRD → CÓDIGO → REVISÃO → MERGE → DOCUMENTADO
+IDEIA → GRELHA → ISSUE → SEAMS → CÓDIGO → REVISÃO → MERGE → DECISÃO REGISTRADA
 ```
 
-Nenhuma etapa é pulada. O sistema tem travas automáticas (git hooks) para garantir isso.
+Nenhuma etapa é pulada. Os git hooks travam as que dá pra travar — e quando travam,
+dizem o que fazer. Este documento não repete o que eles falam.
 
 ---
 
-## Passo 1 — Ter uma ideia ou tarefa
+## 1. Ter uma ideia ou tarefa
 
 Antes de qualquer coisa, responda mentalmente:
 
@@ -28,244 +29,185 @@ Se não conseguir responder as 3, a tarefa ainda não está madura. Não começa
 
 ---
 
-## Passo 2 — Criar a branch e o PRD juntos
+## 2. Ser grelhado antes de escrever a spec
 
-**Nunca crie uma branch manualmente.** Use o script:
+A spec preenchida sozinha é a spec que ninguém contestou. As 3 perguntas
+respondidas de cabeça costumam esconder decisão não tomada, e isso só aparece
+depois, no código.
+
+```
+/mattpocock-skills:grill-me
+```
+
+O agente monta uma **árvore de decisão** e trabalha por rodadas. Em cada rodada
+ele pergunta tudo que já dá pra perguntar — cada pergunta numerada, com a
+resposta que ele recomenda — e espera. Suas respostas empurram a fronteira e
+abrem a rodada seguinte. Acaba quando a fronteira esvazia: nenhum galho ficou
+suposto em silêncio.
+
+Regra da grelha: **fato é trabalho do agente, decisão é sua.** Se a pergunta
+depende de algo que dá pra descobrir no repo, ele descobre; não pergunta a você.
+
+Com a grelha fechada:
+
+```
+/mattpocock-skills:to-spec
+```
+
+Isso publica a spec como **issue no GitHub** com o label `ready-for-agent` —
+problema, solução, user stories, decisões de implementação, decisões de teste e
+o que ficou fora. Não vira arquivo em `docs/` ([ADR-0013](adr/0013-specs-vivem-no-issue-tracker.md)).
+
+> Vale para mudança pequena também. Uma rodada curta de grelha custa menos que
+> um PR refeito.
+
+**A spec não carrega caminho de arquivo nem trecho de código.** Os dois
+envelhecem antes de a issue fechar. O que ela carrega é decisão.
+
+---
+
+## 3. Abrir a branch a partir da issue
+
+**Nunca crie uma branch manualmente.** Use o script, passando o número da issue:
 
 ```bash
-node scripts/new-feature.js <nome-da-feature>
+node scripts/new-feature.js 126
 ```
 
-**O que o script faz automaticamente:**
-1. Atualiza `development` com `git pull`
-2. Cria a branch `feature/<nome>`
-3. Cria `docs/PRDs/<nome>.md` a partir do template
-4. Adiciona o PRD na tabela de "PRDs ativos" do `docs/STATUS.md`
+Ele recusa issue que não esteja `ready-for-agent`, atualiza `development`, cria
+`feature/<numero>-<slug>` e atribui a issue a você.
 
-**Convenção de nomes** (sem espaço, só hífens, minúsculas):
-```
-nutrition-ai-agent
-flat-monorepo-migration
-student-profile-web
-workout-session-logger
-```
+O número na frente da branch não é enfeite: é por ele que o pre-commit reencontra
+a issue a cada commit.
 
 ---
 
-## Passo 3 — Preencher o PRD
+## 4. Implementar
 
-Abrir `docs/PRDs/<nome>.md` e preencher **antes de codar**:
-
-```
-Status: draft → approved   ← só muda quando as 3 perguntas estiverem respondidas
-```
-
-**As 3 perguntas obrigatórias:**
-
-| Pergunta | O que escrever |
-|---|---|
-| **O quê?** | 1-2 frases descrevendo o que será construído |
-| **Por quê?** | Qual problema do usuário resolve. Qual o valor de negócio |
-| **Como saberemos que está pronto?** | Lista de critérios verificáveis (checkboxes) |
-
-**Também preencher:**
-- Escopo (o que está incluído e o que está explicitamente fora)
-- Fluxo de dados (quem chama quem, quais tabelas)
-- Impacto em outros módulos
-
-> ⛔ O hook pre-commit bloqueia qualquer commit enquanto o PRD estiver como `draft`.
+- Nenhuma adição de escopo não acordada na issue. Se surgir algo novo → pausar,
+  comentar na issue, retomar.
+- **Teste primeiro, nos seams da issue.** Red → green, uma fatia vertical por vez:
+  um teste que falha → o mínimo de código pra passar → próxima fatia. Nunca a
+  bateria toda antes da implementação — teste em massa verifica comportamento
+  *imaginado*. Refatorar não faz parte do loop; é revisão.
+- Nenhum teste em seam que não esteja na issue.
+- Ao desenhar módulo novo: interface pequena, muito comportamento atrás dela. O
+  **teste da deleção** decide se ele se paga — se apagar o módulo faz a
+  complexidade sumir, ele era só passagem; se ela reaparece espalhada nos
+  chamadores, ele estava ganhando o salário.
+- Commits frequentes e pequenos.
 
 ---
 
-## Passo 4 — Implementar
-
-Com PRD aprovado, codar normalmente seguindo as convenções do `CLAUDE.md`.
-
-**Regras durante a implementação:**
-- Nenhuma adição de escopo não acordada no PRD
-- Se surgir algo novo → pausar, amendar o PRD, retomar
-- Commits frequentes e pequenos (não acumular dias de trabalho sem commitar)
-- Cada commit passa no pre-commit hook (lint + typecheck + PRD check)
-
-**Quando usar comentário no código:**
-```ts
-// ✅ Explica o PORQUÊ — motivo não-óbvio da decisão
-// Filtramos aqui porque o Supabase retorna refeições vazias em LEFT JOIN.
-const activeMeals = meals.filter(m => m.meal_foods?.length > 0);
-
-// ❌ Explica o QUÊ — desnecessário, o código já diz isso
-// Filtra as refeições ativas
-const activeMeals = meals.filter(m => m.meal_foods?.length > 0);
-```
-
----
-
-## Passo 5 — Commitar
+## 5. Commitar e abrir o PR
 
 ```bash
-git add <arquivos específicos>
 git commit -m "tipo(escopo): descrição em minúsculas"
+git push -u origin feature/<numero>-<slug>
 ```
 
-**Tipos válidos:**
+Os tipos aceitos estão no `commitlint.config.js`, e o hook `commit-msg` recusa o
+que não estiver lá. O PR vai de `feature/*` para `development`, com título no
+mesmo formato e uma descrição que diga o que foi feito e como testar.
 
-| Tipo | Quando usar |
-|---|---|
-| `feat` | Nova funcionalidade |
-| `fix` | Correção de bug |
-| `chore` | Infra, deps, configuração |
-| `refactor` | Refatoração sem mudar comportamento |
-| `test` | Adicionar ou corrigir testes |
-| `docs` | Documentação |
-
-**O hook pre-commit verifica automaticamente:**
-- ✅ Biome lint passa (mobile + web)
-- ✅ TypeScript sem erros (mobile + web)
-- ✅ PRD existe para a branch atual
-- ✅ PRD está como `approved` (não `draft`)
-- ✅ Se PRD está `done`, spec técnica em `docs/features/` existe
-
-Se qualquer verificação falhar, o commit é bloqueado com instrução do que fazer.
+`--no-verify` é proibido. Se um hook barrou, ele achou algo — a saída dele diz o quê.
 
 ---
 
-## Passo 6 — Abrir Pull Request
+## 6. Revisar em dois eixos
 
-Ao finalizar a feature (antes de mergear):
-
-```bash
-git push -u origin feature/<nome>
-# Abrir PR no GitHub: feature/<nome> → development
-```
-
-**O PR deve conter:**
-- Título seguindo conventional commits: `feat(nutrition): adicionar agente de ia`
-- Descrição com: o que foi feito, como testar, screenshots se for UI
-
-**O pre-push hook verifica automaticamente:**
-- ✅ Testes Jest passam (mobile)
-- ✅ Testes Vitest passam (web)
-
-Se os testes falharem, o push é bloqueado.
-
----
-
-## Passo 7 — Documentar (obrigatório para fechar a feature)
-
-Após o PR ser aprovado e antes de mergear, criar ou atualizar:
-
-### 7a. Spec técnica da feature
-
-```bash
-cp docs/features/_template.md docs/features/<nome>.md
-# Preencher o arquivo com o que foi implementado
-```
-
-O que a spec deve ter:
-- O que é e por que existe
-- Fluxo de dados real (como foi implementado)
-- Tabelas do banco envolvidas
-- Regras de negócio
-- Divergências web ↔ mobile (idealmente: nenhuma)
-- Decisões técnicas não-óbvias
-
-### 7b. Atualizar STATUS.md
+Antes de pedir aprovação. Roda dois sub-agentes em paralelo, justamente para um
+não contaminar o outro:
 
 ```
-docs/STATUS.md → atualizar linha do módulo afetado
+/mattpocock-skills:code-review
 ```
 
-### 7c. Fechar o PRD
-
-```
-docs/PRDs/<nome>.md → mudar Status: in-progress → done
-```
-
-> ⛔ O hook pre-commit bloqueia commit com PRD `done` se `docs/features/<nome>.md` não existir.
-
----
-
-## Passo 8 — Mergear
-
-Com os 4 critérios de done cumpridos:
-
-- [x] Código passou em lint + typecheck + testes
-- [x] PR aprovado
-- [x] `docs/features/<nome>.md` criado/atualizado
-- [x] `docs/STATUS.md` atualizado
-
-Mergear `feature/<nome>` → `development` no GitHub.
-
----
-
-## Para decisões estruturais (fora do fluxo normal)
-
-Quando a decisão afeta arquitetura, stack ou padrões do projeto:
-
-```bash
-# Criar um ADR (Architecture Decision Record)
-cp docs/decisions/_template.md docs/decisions/00X-titulo-da-decisao.md
-```
-
-Exemplos do que merece um ADR:
-- Trocar ou adicionar uma biblioteca principal
-- Mudar estrutura de pastas
-- Decidir sobre uma abordagem arquitetural (ex: flat monorepo, BFF)
-- Qualquer coisa que, se revertida no futuro, teria custo alto
-
----
-
-## Documentos que existem e para que servem
-
-| Documento | Para que serve | Frequência de leitura |
+| Eixo | Pergunta | Fonte da verdade |
 |---|---|---|
-| `docs/HOW_WE_WORK.md` | **Este arquivo** — fluxo completo passo a passo | Quando tiver dúvida sobre o processo |
-| `docs/STATUS.md` | Estado atual de todos os módulos | Início de toda sessão |
-| `docs/GLOSSARY.md` | Termos canônicos do domínio | Ao nomear qualquer coisa nova |
-| `docs/PRDs/<feature>.md` | Contrato da feature em andamento | Durante toda a implementação |
-| `docs/features/<feature>.md` | Spec técnica do que foi construído | Ao trabalhar num módulo existente |
-| `docs/decisions/ADR-XXX.md` | Por que decisões estruturais foram tomadas | Ao questionar uma decisão de stack/arquitetura |
-| `CLAUDE.md` | Regras de código, convenções, arquitetura | Referência durante implementação |
-| `docs/archive/` | Documentação antiga — não usar como referência | Nunca (a não ser para recuperar contexto histórico) |
+| **Standards** | O código segue as convenções do projeto? | `CLAUDE.md` + `CONTEXT.md` |
+| **Spec** | O que foi construído é o que foi decidido? | A issue da branch |
+
+O eixo Spec é o que pega o desvio silencioso — a feature que funciona mas não é a
+que foi acordada na grelha. É por isso que as decisões resolvidas ficam escritas
+na issue.
+
+> ⚠️ Use o nome completo com prefixo. `/code-review` sem prefixo é o comando
+> nativo do Claude Code, que faz outra coisa (procura bug no diff). Os dois
+> servem; não são o mesmo.
 
 ---
 
-## Fluxo resumido em uma linha
+## 7. Registrar o que o código não conta
 
-```
-node scripts/new-feature.js → preencher PRD → codar → commitar → PR → spec → STATUS → merge
-```
+Depois do PR aprovado, antes de mergear. Pergunte as três, e **só escreva se as
+três forem sim**:
 
----
+1. **Difícil de reverter** — mudar de ideia depois custa caro?
+2. **Surpreendente sem contexto** — quem ler o código vai perguntar "por que assim?"
+3. **Trade-off real** — havia alternativa e você escolheu uma por um motivo?
 
-## O que os hooks fazem automaticamente
+Se sim, `docs/adr/NNNN-titulo.md` no formato do `_template.md`: um parágrafo basta.
+Se não, **não escreva nada** — armadilha local vira comentário no código, onde quem
+for mexer vai encontrar. Documento que ninguém precisa é documento que vai mentir
+depois.
 
-### pre-commit (antes de cada commit)
-```
-1. Bloqueia commit direto em main ou development
-2. Verifica se PRD existe para a branch feature/
-3. Verifica se PRD não está como "draft"
-4. Verifica se spec existe quando PRD está "done"
-5. Roda biome lint (mobile + web)
-6. Roda tsc --noEmit (mobile + web)
-```
+Termo de domínio novo entra no `CONTEXT.md` na hora, não no fim.
 
-### pre-push (antes de cada push)
-```
-1. Bloqueia push direto em main
-2. Roda Jest (mobile)
-3. Roda Vitest (web)
+Então feche a issue:
+
+```bash
+gh issue close <numero> --comment "Entregue em <PR>"
 ```
 
 ---
 
-## Papéis no processo
+## 8. Mergear
+
+- [x] Lint, typecheck e testes limpos
+- [x] PR aprovado
+- [x] ADR escrito, se houve decisão difícil de reverter
+- [x] Issue fechada
+
+---
+
+## Qual skill em qual passo
+
+As skills do plugin `mattpocock-skills` são invocadas por você, digitando; o
+agente não as dispara sozinho.
+
+| Passo | Comando | O que faz |
+|---|---|---|
+| 2 | `/mattpocock-skills:grill-me` | Entrevista em rodadas até fechar a árvore de decisão |
+| 2 | `/mattpocock-skills:to-spec` | Converte a conversa em issue, sem entrevistar de novo |
+| 4 | `/mattpocock-skills:implement` | Executa a issue dirigindo o loop red→green nos seams |
+| 6 | `/mattpocock-skills:code-review` | Revisão Standards + Spec em paralelo |
+| — | `/mattpocock-skills:grill-with-docs` | Igual ao `grill-me`, mas atualiza `CONTEXT.md` e ADR durante a conversa |
+| — | `/mattpocock-skills:triage` | Passa as issues pelo estado de triagem — é o que transforma backlog em fila |
+| — | `/mattpocock-skills:improve-codebase-architecture` | Varre o codebase atrás de módulos rasos. Ritual periódico, não de feature |
+| — | `/mattpocock-skills:ask-matt` | Não sabe qual usar? Pergunta aqui |
+
+Estas o agente alcança sozinho quando a tarefa pede, sem você digitar:
+`tdd`, `codebase-design`, `domain-modeling`, `diagnosing-bugs`,
+`resolving-merge-conflicts`, `research`, `prototype`.
+
+**Continuam mandando sobre elas:** `/lgpd-check` antes de campo ou tabela nova, e
+`vercel-react-best-practices` em qualquer componente React. Skill de fora não
+revoga bloqueador do projeto.
+
+---
+
+## Papéis
 
 | Quem | Responsabilidade |
 |---|---|
-| **Daniel** | Define prioridade, aprova PRD, aprova PR, decide sobre escopo |
-| **Agente (Claude)** | Propõe abordagem técnica, implementa, recusa implementação sem PRD aprovado |
-| **Ambos** | Seguem este fluxo sem exceção |
+| **Daniel** | Define prioridade, faz a triagem das issues, aprova PR, decide sobre escopo |
+| **Agente (Claude)** | Propõe abordagem técnica, implementa, recusa implementação sem issue `ready-for-agent` |
 
-> O agente não começa a codar se o PRD estiver em `draft` ou não existir.
-> Se isso acontecer, o agente faz as 3 perguntas e aguarda o PRD ser aprovado.
+O agente não começa a codar sem issue `ready-for-agent`. Se não houver, ele faz as
+3 perguntas e aguarda a issue ser criada e triada.
+
+Na grelha a divisão é mais fina: **fato é do agente, decisão é do Daniel.** Se
+responder a pergunta depende de algo que dá pra descobrir no repo, no banco ou na
+doc, o agente descobre — perguntar isso é empurrar trabalho pra cima de você. O que
+sobe pra você é só o que exige julgamento de produto.

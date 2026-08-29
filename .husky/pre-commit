@@ -9,55 +9,43 @@ if [ "$branch" = "main" ] || [ "$branch" = "development" ]; then
   exit 1
 fi
 
-# ── Enforcer de PRD — obrigatório em feature branches ────────────────────────
+# -- Enforcer de issue -- obrigatorio em feature branches --------------------
+# O contrato de inicio e uma issue `ready-for-agent`, nao um arquivo (ADR-0013).
+# Convencao de branch: feature/<numero-da-issue>-<slug>.
 if echo "$branch" | grep -q "^feature/"; then
-  feature_name="${branch#feature/}"
-  prd_file="docs/PRDs/${feature_name}.md"
+  # `|| true`: o husky roda este arquivo com `sh -e`, e o grep sai 1 quando a
+  # branch nao tem numero. Sem isso o hook morre aqui, mudo, antes de checar nada.
+  issue=$(echo "${branch#feature/}" | grep -o "^[0-9]\+" || true)
 
-  # 1. PRD deve existir
-  if [ ! -f "$prd_file" ]; then
+  if [ -z "$issue" ]; then
     echo ""
-    echo "❌  PRD obrigatório não encontrado para esta branch."
+    echo "!!  Branch sem numero de issue: $branch"
+    echo "    A convencao e feature/<numero>-<slug> -- ver ADR-0013."
+    echo "    Branch anterior a mudanca: seguindo, mas renomeie quando puder."
     echo ""
-    echo "    Branch  : $branch"
-    echo "    Esperado: $prd_file"
-    echo ""
-    echo "    Execute para criar a branch e o PRD corretamente:"
-    echo "    → node scripts/new-feature.js ${feature_name}"
-    echo ""
-    echo "    Ou crie o PRD manualmente a partir do template:"
-    echo "    → cp docs/PRDs/_template.md $prd_file"
-    echo ""
-    exit 1
-  fi
+  elif ! command -v gh >/dev/null 2>&1; then
+    echo "!!  gh nao encontrado -- checagem da issue #$issue pulada."
+  else
+    estado=$(gh issue view "$issue" --json state,labels 2>/dev/null || true)
 
-  # 2. PRD não pode estar em rascunho
-  if grep -q "^**Status:** draft" "$prd_file" || grep -q "Status: draft" "$prd_file"; then
-    echo ""
-    echo "❌  PRD ainda em rascunho. Nenhum commit permitido."
-    echo ""
-    echo "    Arquivo : $prd_file"
-    echo ""
-    echo "    Antes de codar:"
-    echo "    1. Preencha as 3 perguntas obrigatórias no PRD"
-    echo "    2. Mude o Status de 'draft' para 'approved'"
-    echo "    3. Só então faça o commit"
-    echo ""
-    exit 1
-  fi
+    if [ -z "$estado" ]; then
+      echo ""
+      echo "XX  Issue #$issue nao encontrada."
+      echo "    Branch : $branch"
+      echo "    Toda feature comeca por uma issue -- ver ADR-0013."
+      echo "    Crie com: node scripts/new-feature.js <numero-da-issue>"
+      echo ""
+      exit 1
+    fi
 
-  # 3. Aviso se PRD estiver como 'done' mas spec de feature não existir
-  feature_spec="docs/features/${feature_name}.md"
-  if grep -q "Status: done" "$prd_file" && [ ! -f "$feature_spec" ]; then
-    echo ""
-    echo "⚠️   PRD marcado como 'done' mas spec técnica não encontrada."
-    echo ""
-    echo "    Crie a spec antes de fechar a feature:"
-    echo "    → cp docs/features/_template.md $feature_spec"
-    echo ""
-    echo "    Commit bloqueado até a spec existir."
-    echo ""
-    exit 1
+    if ! echo "$estado" | grep -q "ready-for-agent"; then
+      echo ""
+      echo "XX  Issue #$issue nao esta ready-for-agent."
+      echo "    Passe /triage nela ou aplique o label antes de commitar."
+      echo "    gh issue edit $issue --add-label ready-for-agent"
+      echo ""
+      exit 1
+    fi
   fi
 fi
 

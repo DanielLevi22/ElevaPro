@@ -9,7 +9,7 @@ import type { ToolDefinition } from "../providers/types";
  * payload de saúde que atravessa a fronteira (Art. 6°, III).
  *
  * O contexto só anuncia que existem N análises e quando foi a última — índice
- * no contexto, detalhe por ferramenta (`ADR-010`).
+ * no contexto, detalhe por ferramenta (`ADR-0010`).
  */
 export const BODY_SCAN_TOOL: ToolDefinition = {
   name: "query_body_scan",

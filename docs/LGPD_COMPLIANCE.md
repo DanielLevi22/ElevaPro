@@ -1,13 +1,15 @@
-# LGPD — Obrigações e Requisitos do MeuPersonal
+# LGPD — Obrigações e Requisitos do Eleva Pro
 
-> Documento operacional. Traduz a Lei Geral de Proteção de Dados (Lei nº 13.709/2018) em obrigações concretas para o MeuPersonal.
+> Documento operacional. Traduz a Lei Geral de Proteção de Dados (Lei nº 13.709/2018) em obrigações concretas para o Eleva Pro.
 > Toda decisão de schema, feature e arquitetura que envolva dados pessoais deve ser verificada contra este documento.
+> **Auditado em 2026-08-29** contra o schema, as migrations e as rotas — as divergências
+> encontradas estão corrigidas aqui, e as lacunas reais viraram issue.
 
 ---
 
 ## 1. Papéis e responsabilidades
 
-### MeuPersonal — Controlador (Art. 5°, VI)
+### Eleva Pro — Controlador (Art. 5°, VI)
 
 Daniel é o **controlador**: decide quais dados são coletados, por quê, como e por quanto tempo. É quem responde perante a ANPD em caso de infração.
 
@@ -59,7 +61,7 @@ Qualquer dado que identifica ou pode identificar uma pessoa.
 
 ### 2.2 Dados pessoais sensíveis (Art. 5°, II)
 
-Dados referentes à saúde exigem **base legal específica** e proteção reforçada. O MeuPersonal trata dados de saúde — isso é o núcleo do produto.
+Dados referentes à saúde exigem **base legal específica** e proteção reforçada. O Eleva Pro trata dados de saúde — isso é o núcleo do produto.
 
 | Dado | Tabela | Base legal | Finalidade |
 |------|--------|------------|------------|
@@ -294,7 +296,7 @@ A LGPD distingue **eliminar** de **esconder**:
 - **Soft delete** (`account_status = 'inactive'`): dado permanece no banco — **isso não é eliminação** para fins da LGPD
 - **Eliminação real**: dado apagado ou anonimizado irreversivelmente
 
-**Posição do MeuPersonal:**
+**Posição do Eleva Pro:**
 
 Quando um usuário solicita exclusão da conta:
 1. Dados de identificação (`email`, `full_name`, `avatar_url`) devem ser eliminados ou anonimizados
@@ -308,7 +310,7 @@ Quando um usuário solicita exclusão da conta:
 
 ## 6. Dados sensíveis de saúde — proteção reforçada (Art. 11)
 
-O MeuPersonal é, na prática, uma plataforma de saúde. Dados de avaliação física e anamnese são **dados sensíveis** pela LGPD. Isso implica:
+O Eleva Pro é, na prática, uma plataforma de saúde. Dados de avaliação física e anamnese são **dados sensíveis** pela LGPD. Isso implica:
 
 **No banco de dados:**
 - RLS para dados de saúde deve ser mais restritivo: apenas o próprio aluno e especialistas com vínculo `active` acessam
@@ -360,7 +362,7 @@ A LGPD exige que dados sejam eliminados quando deixam de ser necessários (Art. 
 | Histórico de dietas | Enquanto a conta estiver ativa | Histórico de evolução |
 | Passos e calorias diários | Enquanto a conta estiver ativa | Comparação de longo prazo é a finalidade; `ON DELETE CASCADE` elimina junto com a conta |
 | Conversa com o coach de IA (`ai_chat_sessions`, `ai_chat_messages`) | Enquanto a conta do aluno estiver ativa | É o registro da prescrição assistida. `ON DELETE CASCADE` a partir de `profiles` elimina junto com a conta |
-| Análise corporal por imagem (`body_scans`) | Enquanto a conta estiver ativa | A comparação entre escaneamentos é a finalidade, e ela precisa do histórico. **A imagem não é guardada** — as colunas de URL de foto foram removidas na `0026`, para que ninguém as preencha por engano — só o resultado derivado, que é a maior minimização possível para um dado biométrico (`ADR-010`). `ON DELETE CASCADE` a partir de `profiles` elimina junto com a conta |
+| Análise corporal por imagem (`body_scans`) | Enquanto a conta estiver ativa | A comparação entre escaneamentos é a finalidade, e ela precisa do histórico. **A imagem não é guardada** — as colunas de URL de foto foram removidas na `0026`, para que ninguém as preencha por engano — só o resultado derivado, que é a maior minimização possível para um dado biométrico (`ADR-0010`). `ON DELETE CASCADE` a partir de `profiles` elimina junto com a conta |
 | Logs de autenticação | 90 dias | Segurança — detecção de acessos suspeitos |
 | Dados após exclusão de conta | 0 dias (eliminar ou anonimizar) | Princípio da necessidade |
 
@@ -430,7 +432,7 @@ eram legíveis por qualquer conta autenticada falando direto com o PostgREST —
 falha do **controlador**, na definição da seção 1 deste documento.
 
 Corrigido pelas migrations `0016`–`0020` (PRD
-[rls-security-hardening](PRDs/rls-security-hardening.md)).
+[rls-security-hardening](https://github.com/DanielLevi22/ElevaPro/issues/136)).
 
 | Módulo | Tabelas | RLS | Migration |
 |---|---|---|---|
@@ -458,12 +460,14 @@ enxerga o quê — incluindo o especialista desvinculado perdendo acesso na mesm
 consulta, sem job de limpeza. `scripts/check-rls.js` roda no pre-commit e no CI
 e falha se uma tabela nova nascer sem RLS.
 
-**O que a RLS não cobre — 1: o Storage.** `body_scans` guarda a URL da foto, não
-o binário. A RLS protege a linha; o arquivo precisa de política própria. O
-bucket `assessments`, para onde o mobile envia as fotos de análise postural,
-**não existia** em ambiente nenhum até a migration `0021`, que o cria privado e
-com política de dono + especialista vinculado. O bucket das fotos de
-`body_scans` segue pendente.
+**O que a RLS não cobre — 1: o Storage.** A RLS protege a linha; arquivo em
+bucket precisa de política própria. O bucket `assessments`, para onde o mobile
+envia as fotos de análise postural, **não existia** em ambiente nenhum até a
+migration `0021`, que o cria privado e com política de dono + especialista
+vinculado. **`body_scans` não tem bucket pendente:** as quatro colunas
+`photo_*_url` saíram na `0026` e a imagem nunca é persistida — guarda-se só o
+resultado derivado (`ADR-0018`, `ADR-0010`). Esta seção afirmou o contrário até
+2026-08-29, contradizendo a seção 7 do próprio documento.
 
 **O que a RLS não cobre — 2: as rotas com `service_role`.** As rotas do BFF em
 `web/src/app/api/` usam a chave de serviço, que ignora RLS por definição. Ali a
@@ -471,7 +475,7 @@ com política de dono + especialista vinculado. O bucket das fotos de
 recebiam o `studentId` pela URL e não checavam vínculo: um token de aluno
 qualquer obtinha `HTTP 200` e a anamnese de qualquer outro aluno no contexto do
 modelo. Fechado pelo PRD
-[api-security-hardening](PRDs/api-security-hardening.md), com helper único
+[api-security-hardening](https://github.com/DanielLevi22/ElevaPro/issues/126), com helper único
 (`web/src/lib/api-auth.ts`), guarda no CI e teste com quatro usuários reais.
 
 ---
@@ -652,7 +656,11 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 | `/api/ai/nutrition/chat/[studentId]` | Os mesmos campos do coach de treino: objetivo, experiência, **lesões**, **condições de saúde**, peso, altura, % gordura. **Sem o nome do titular** | Anthropic | ✅ Sim (Art. 11) | Consentimento explícito — verificado na rota |
 | `/api/ai/chat/[studentId]` | Objetivo, experiência, frequência, dias, **lesões**, **condições de saúde**, peso, altura, % gordura, periodizações. **Sem o nome do titular** | Anthropic | ✅ Sim (Art. 11) | Consentimento explícito — verificado na rota desde 2026-08-12 |
 | `/api/ai/body-scan` | Fotos corporais (base64, 3 imagens) + métricas estimadas | Anthropic | ✅ Sim (Art. 5°, II) | Consentimento explícito (Art. 11, I) — **verificado na rota**. A imagem não é persistida: guarda-se só o resultado |
-| `/api/ai/nutrition/adherence` | `diet_logs` anonimizados + nome do plano | Anthropic | ✅ Sim | Consentimento explícito |
+| `/api/ai/nutrition/adherence` | `diet_logs` anonimizados + nome do plano | Anthropic | ✅ Sim | Consentimento explícito — **não verificado na rota** |
+| `/api/ai/student/coach/message` | Anamnese, peso, altura, % de gordura e plano do aluno | Anthropic | ✅ Sim (Art. 11) | **Só autenticação** (`authorizeStudent`) — sem checagem de `student_consents` |
+| `/api/ai/student/coach/session` | Idem — abre a sessão do coach do aluno | Anthropic | ✅ Sim (Art. 11) | **Só autenticação** — sem checagem de `student_consents` |
+| `/api/ai/student/nutribot` | Contexto nutricional do aluno | Anthropic | ✅ Sim | **Só autenticação** — sem checagem de `student_consents` |
+| `/api/ai/student/scan-food` | Foto de alimento enviada pelo aluno | Anthropic | ⚠️ Imagem do titular | **Só autenticação** — sem checagem de `student_consents` |
 | `/api/ai/voice-command` | Removido — rota e serviço eliminados | — | — | — |
 | `/api/ai/workout/negotiate` | Nível do aluno, objetivo, lista de exercícios | Anthropic | ❌ Não sensível | Execução de contrato |
 | `/api/ai/workout/batch` | Idem | Anthropic | ❌ Não sensível | Execução de contrato |
@@ -681,8 +689,8 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 |------|----------------|-------------|
 | ~~Consentimento da tela de Body Scan deve mencionar envio de fotos a serviço de IA externo~~ | ✅ Resolvido — `BodyScanIntroduction.tsx` diz que a imagem vai para a Anthropic nos EUA e que nenhuma foto é guardada. A promessa de "método extremamente preciso" saiu (Art. 6°, VI) | — |
 | Anthropic e Google devem ser listados como sub-processadores na Política de Privacidade | Atualizar política de privacidade | Legal |
-| ~~Rota `/api/ai/body-scan` deve verificar `student_consents` antes de processar~~ | ✅ Resolvido — a rota checa `hasCollectionConsent` sob a identidade do titular antes de desserializar o corpo, e devolve `403 consent_required`. O app checa antes de ler a foto do aparelho e oferece o fluxo (`ADR-010`) | — |
-| `loadStudentContext` manda a anamnese inteira (`select("*")`) para o prompt da Anthropic | Recortar os campos que o modelo realmente usa para montar treino — Necessidade (Art. 6°, III) | Dev |
+| ~~Rota `/api/ai/body-scan` deve verificar `student_consents` antes de processar~~ | ✅ Resolvido — a rota checa `hasCollectionConsent` sob a identidade do titular antes de desserializar o corpo, e devolve `403 consent_required`. O app checa antes de ler a foto do aparelho e oferece o fluxo (`ADR-0010`) | — |
+| ~~`loadStudentContext` manda a anamnese inteira (`select("*")`)~~ | ✅ Resolvido — `specialistContextLoader.ts` lê seis campos nomeados, e `check-column-refs.js` recusa `select("*")` em tabela sensível no pre-commit | — |
 | Rota `/api/ai/nutrition/adherence` deve verificar `student_consents` antes de processar | Idem | Dev |
 | ~~Verificar DPA Google (Gemini) para dado biométrico de voz~~ | Eliminado — voice command removido do escopo | — |
 

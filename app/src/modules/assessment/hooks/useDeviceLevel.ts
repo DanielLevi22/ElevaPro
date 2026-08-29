@@ -23,7 +23,7 @@ const INICIAL: DeviceLevel = { pitch: 0, roll: 0, nivelado: false, disponivel: f
  *
  * A silhueta antiga desenhava um contorno e aceitava a foto de qualquer jeito.
  * Guia que não valida é decoração — e pior, promete uma conferência que não
- * acontece (`ADR-010`).
+ * acontece (`ADR-0010`).
  *
  * Um aparelho inclinado encurta o corpo na imagem por perspectiva. Como a
  * Fase 7 usa a altura em pixels como régua, inclinação vira erro de escala em

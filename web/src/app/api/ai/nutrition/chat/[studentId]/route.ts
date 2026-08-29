@@ -98,7 +98,7 @@ export async function POST(
 
         // Só o índice, não o conteúdo: o contexto vai em todo turno, e a
         // análise inteira encareceria a conversa por um dado que a maioria dos
-        // turnos não usa. O detalhe vem por `query_body_scan` (ADR-010).
+        // turnos não usa. O detalhe vem por `query_body_scan` (ADR-0010).
         // Falha aqui não derruba o chat — o coach só deixa de saber que existe.
         const bodyScanIndex = await formatBodyScanIndex(studentId).catch(() => "");
 

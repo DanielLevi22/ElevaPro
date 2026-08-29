@@ -79,7 +79,7 @@ describe("nomearConversa", () => {
 
     await nomearConversa("sess-1", "pergunta", "resposta");
 
-    // `aiProviders.fast` é o Haiku que o SYSTEM_MAPPING fixa para tarefa
+    // `aiProviders.fast` é o Haiku que o ADR-0005 fixa para tarefa
     // estruturada — "10x mais barato, nunca usar Sonnet aqui". O mock só expõe
     // `fast`, então chamar o outro quebraria aqui.
     expect(stream).toHaveBeenCalledTimes(1);

@@ -27,7 +27,7 @@ const COMPARABLE_FIELDS: ComparableField[] = [
  * É o número que a feature deve mostrar primeiro. Uma foto isolada dá uma
  * estimativa discutível; duas na mesma pose dão uma comparação confiável,
  * porque o erro sistemático se repete nas duas e se cancela na diferença
- * (`ADR-010`).
+ * (`ADR-0010`).
  *
  * Campo nulo em qualquer um dos lados sai do resultado — "não medido" não é
  * zero, e tratá-lo como zero inventaria uma variação que não houve.

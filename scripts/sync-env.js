@@ -46,7 +46,7 @@ const appEnvMap = {
   VERCEL_BYPASS: "EXPO_PUBLIC_VERCEL_BYPASS",
   // DATABASE_URL não vai pro app — é só para migrations
   // Nenhuma chave de provedor de IA vai pro mobile: EXPO_PUBLIC_* entra no
-  // bundle e é extraível. Toda IA passa pelo BFF (ADR-004).
+  // bundle e é extraível. Toda IA passa pelo BFF (ADR-0004).
 };
 
 const webEnvMap = {

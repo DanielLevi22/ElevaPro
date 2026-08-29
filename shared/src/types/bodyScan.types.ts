@@ -22,7 +22,7 @@ export interface PostureFinding {
  *
  * É o conteúdo que substitui a foto na tela do especialista: em vez de olhar a
  * imagem, ele lê o que a análise encontrou em cada ângulo. A imagem não é
- * persistida (`ADR-010`), então isto é tudo o que sobra do que foi visto.
+ * persistida (`ADR-0010`), então isto é tudo o que sobra do que foi visto.
  */
 export interface PostureFeedback {
   front?: PostureFinding[];
@@ -34,7 +34,7 @@ export interface PostureFeedback {
  * Uma análise corporal gravada.
  *
  * As colunas `photo_*_url` existem na tabela mas ficam sempre nulas: a decisão
- * do `ADR-010` é guardar o resultado derivado e nunca a imagem — é a maior
+ * do `ADR-0010` é guardar o resultado derivado e nunca a imagem — é a maior
  * minimização possível para um dado biométrico.
  */
 export interface BodyScanRecord {

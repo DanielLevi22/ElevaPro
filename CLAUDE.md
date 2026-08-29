@@ -61,6 +61,17 @@ components/  hooks/  services/  store/  screens/  types.ts  index.ts
 - Docstrings em funções públicas: intenção + exemplo de uso.
 - Logging: JSON estruturado para observabilidade; texto simples para CLI.
 - Formatador: Biome. Testes: todo serviço crítico ganha teste; bug fix ganha regressão.
+- **Profundidade > tamanho.** Módulo bom é muito comportamento atrás de interface
+  pequena. `< 500 linhas` não salva um módulo raso — 15 métodos que só repassam
+  chamada continuam sendo dívida. Ao desenhar, perguntar: dá pra tirar um método?
+  simplificar um parâmetro? esconder mais complexidade lá dentro?
+- **Teste da deleção.** Apagar o módulo faz a complexidade sumir? Era passagem.
+  Faz ela reaparecer em N chamadores? Estava se pagando.
+- **Seam só existe quando algo varia.** Um adapter é seam hipotético; dois
+  adapters é seam real. Não abstrair antes do segundo.
+- **Testes batem na interface, nunca no interno.** Nada de mockar colaborador
+  privado nem de conferir pelo banco o que a interface já expõe. O seam sob teste
+  é acordado no PRD antes de codar — teste fora dele não entra.
 
 ---
 
@@ -76,6 +87,13 @@ components/  hooks/  services/  store/  screens/  types.ts  index.ts
 - Toda query passa pelo service do módulo — nunca Supabase inline em componente.
 - TanStack Query (client) só para mutations, polling ou estado otimista.
 - Fetches independentes: `Promise.all()`.
+- UI compartilhada mora só em `web/src/shared/components/ui/`. **Procurar lá antes de
+  criar componente** — já nasceram três tabelas duplicadas por não olhar primeiro.
+- Classe do Tailwind precisa aparecer literal no fonte. Montar `text-${tom}` ou
+  `${bp}:${w}` em runtime produz classe que não existe no CSS.
+- Data sempre pelo utilitário de `shared/utils/formatDate.ts`, nunca `format` do
+  date-fns direto: ele lança com data inválida, e `new Date("2026-08-01")` é lido
+  como UTC e volta um dia em fuso negativo.
 
 **Acesso:** toda ação protegida precisa de CASL (UI) + RLS (banco). Roles: `admin`, `specialist`, `student`, `member` — enum `account_type`, fonte da verdade em `shared/src/types/auth.types.ts`.
 
@@ -83,11 +101,14 @@ components/  hooks/  services/  store/  screens/  types.ts  index.ts
 
 ## Bloqueadores
 
-- **PRD:** nenhuma feature começa sem `docs/PRDs/<nome>.md` com `Status: approved`. Rodar `node scripts/new-feature.js <nome>` para criar.
+- **Issue:** nenhuma feature começa sem uma issue `ready-for-agent` no GitHub. Rodar
+  `node scripts/new-feature.js <numero-da-issue>` para abrir a branch. Spec vira issue
+  pelo `/to-spec`, nunca arquivo em `docs/` (ADR-0013).
 - **LGPD:** parar e invocar `/lgpd-check` antes de qualquer novo campo, nova tabela ou acesso a dados de saúde. Tabelas sensíveis: `physical_assessments`, `student_anamnesis`, `workout_sessions`, `diet_logs`.
 - **Nova tabela Supabase:** RLS + políticas + tipos TS + CASL + LGPD antes de qualquer dado entrar.
 - **Commits:** `--no-verify` proibido. Pre-commit: Biome + tsc. Pre-push: testes.
-- **Feature done:** lint + testes limpos · PR mergeado · `docs/features/<nome>.md` criado · `docs/STATUS.md` atualizado.
+- **Feature done:** lint + testes limpos · PR mergeado · issue fechada · ADR em `docs/adr/`
+  se houve decisão difícil de reverter que o código não explica — e nada, se não houve.
 
 ---
 
@@ -95,12 +116,10 @@ components/  hooks/  services/  store/  screens/  types.ts  index.ts
 
 | Documento | Propósito |
 |---|---|
-| `docs/STATUS.md` | Estado atual dos módulos — ler toda sessão |
-| `docs/GLOSSARY.md` | Termos canônicos — consultar ao nomear |
-| `docs/PRDs/<feature>.md` | PRD da feature em andamento |
-| `docs/features/<feature>.md` | Spec pós-implementação |
+| `CONTEXT.md` | Linguagem ubíqua — consultar ao nomear |
+| Issues do GitHub | O que está sendo construído — `gh issue list` |
 | `docs/LGPD_COMPLIANCE.md` | Mapa de dados e base legal |
-| `docs/decisions/ADR-XXX.md` | Decisões estruturais |
+| `docs/adr/NNNN-*.md` | Decisões estruturais (ADRs) |
 
 ---
 
@@ -111,3 +130,29 @@ components/  hooks/  services/  store/  screens/  types.ts  index.ts
 | `vercel-react-best-practices` | Qualquer componente React / página Next.js. **Crítico.** |
 | `web-design-guidelines` | Revisão de UI. |
 | `lgpd-check` | Novo schema, dados de saúde, onboarding, exclusão/exportação. |
+| `supabase-postgres-best-practices` | Schema, migration, RLS, índice, query lenta. |
+| `mattpocock-skills:grill-me` → `:to-spec` | Antes de preencher qualquer PRD. Passo 2.5 do `HOW_WE_WORK.md`. |
+| `mattpocock-skills:code-review` | Antes de pedir aprovação no PR. Standards + Spec. |
+| `mattpocock-skills:tdd` | Loop red→green nos seams do PRD. Alcançável pelo agente. |
+| `mattpocock-skills:codebase-design` | Ao desenhar ou redesenhar interface de módulo. |
+| `mattpocock-skills:diagnosing-bugs` | Bug difícil ou regressão de performance. |
+
+Skill de terceiro **não revoga bloqueador do projeto**: PRD `approved`, `/lgpd-check`
+e RLS continuam valendo por cima de qualquer uma delas.
+
+### Issue tracker
+
+Issues vivem como GitHub issues em `DanielLevi22/ElevaPro`, via CLI `gh`. Não substitui
+o PRD `approved`. Ver `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Os cinco papéis canônicos com os nomes padrão: `needs-triage`, `needs-info`,
+`ready-for-agent`, `ready-for-human`, `wontfix`. Ver `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context, no padrão das skills: `CONTEXT.md` na raiz e ADRs em `docs/adr/`
+numerados `0001-*`. Ver `docs/agents/domain.md`.
+
+O fluxo completo, passo a passo, está em [`docs/HOW_WE_WORK.md`](docs/HOW_WE_WORK.md).

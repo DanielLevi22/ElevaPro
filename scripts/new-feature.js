@@ -2,59 +2,78 @@
 /**
  * new-feature.js
  *
- * Cria branch + PRD de forma atômica.
- * Uso: node scripts/new-feature.js <nome-da-feature>
+ * Abre a branch de uma issue já triada.
+ * Uso: node scripts/new-feature.js <numero-da-issue>
  *
- * Exemplo: node scripts/new-feature.js nutrition-ai-agent
+ * Exemplo: node scripts/new-feature.js 126
  *
  * O que faz:
- *   1. Garante que está em `development` e atualizado
- *   2. Cria a branch `feature/<nome>`
- *   3. Cria `docs/PRDs/<nome>.md` a partir do template
- *   4. Instrui o próximo passo
+ *   1. Lê a issue no GitHub e exige o label `ready-for-agent`
+ *   2. Garante que está em `development` e atualizado
+ *   3. Cria a branch `feature/<numero>-<slug-do-titulo>`
  *
- * Regra: nenhum commit é aceito em feature branches sem PRD aprovado.
- * O hook pre-commit verifica isso automaticamente.
+ * Regra: nenhuma feature começa sem issue `ready-for-agent` (ADR-0013). O hook
+ * pre-commit refaz essa checagem a cada commit, pela numeração da branch.
  */
 
 const { execSync } = require("node:child_process");
-const fs = require("node:fs");
-const path = require("node:path");
 
-// ── Validação de entrada ─────────────────────────────────────────────────────
+const issueNumber = process.argv[2];
 
-const featureName = process.argv[2];
-
-if (!featureName) {
-  console.error("\n❌  Nome da feature obrigatório.");
-  console.error("    Uso: node scripts/new-feature.js <nome-da-feature>");
-  console.error("    Exemplo: node scripts/new-feature.js nutrition-ai-agent\n");
+if (!issueNumber || !/^[0-9]+$/.test(issueNumber)) {
+  console.error("\n❌  Número da issue obrigatório.");
+  console.error("    Uso: node scripts/new-feature.js <numero-da-issue>");
+  console.error("    Exemplo: node scripts/new-feature.js 126");
+  console.error("\n    Não tem issue ainda? Crie a spec com /to-spec, ou:");
+  console.error("    gh issue create --label ready-for-agent\n");
   process.exit(1);
 }
 
-if (!/^[a-z0-9-]+$/.test(featureName)) {
-  console.error("\n❌  Nome inválido. Use apenas letras minúsculas, números e hífens.");
-  console.error(`    Recebido: "${featureName}"\n`);
+/** Título vira slug de branch: minúsculas, sem acento, hífen entre palavras. */
+function toSlug(title) {
+  return title
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 48)
+    .replace(/-$/, "");
+}
+
+// ── Ler a issue ──────────────────────────────────────────────────────────────
+
+let issue;
+try {
+  const raw = execSync(`gh issue view ${issueNumber} --json title,state,labels`, {
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+  issue = JSON.parse(raw.toString());
+} catch {
+  console.error(`\n❌  Issue #${issueNumber} não encontrada, ou o gh não está autenticado.`);
+  console.error("    gh auth status\n");
   process.exit(1);
 }
 
-const branchName = `feature/${featureName}`;
-const prdPath = path.join(__dirname, `../docs/PRDs/${featureName}.md`);
-const templatePath = path.join(__dirname, "../docs/PRDs/_template.md");
-const statusPath = path.join(__dirname, "../docs/STATUS.md");
-
-// ── Verificações ─────────────────────────────────────────────────────────────
-
-if (!fs.existsSync(templatePath)) {
-  console.error(`\n❌  Template não encontrado: ${templatePath}\n`);
+if (issue.state !== "OPEN") {
+  console.error(
+    `\n❌  Issue #${issueNumber} está ${issue.state}. Reabra antes de trabalhar nela.\n`,
+  );
   process.exit(1);
 }
 
-if (fs.existsSync(prdPath)) {
-  console.error(`\n❌  PRD já existe: ${prdPath}`);
-  console.error("    Delete o arquivo existente se quiser recriar.\n");
+const labels = issue.labels.map((l) => l.name);
+
+if (!labels.includes("ready-for-agent")) {
+  console.error(`\n❌  Issue #${issueNumber} não está pronta para implementação.`);
+  console.error(`    Título : ${issue.title}`);
+  console.error(`    Labels : ${labels.join(", ") || "(nenhum)"}`);
+  console.error("\n    Passe /triage nela primeiro, ou aplique o label à mão:");
+  console.error(`    gh issue edit ${issueNumber} --add-label ready-for-agent\n`);
   process.exit(1);
 }
+
+const branchName = `feature/${issueNumber}-${toSlug(issue.title)}`;
 
 // ── Criar branch ─────────────────────────────────────────────────────────────
 
@@ -75,48 +94,25 @@ try {
   process.exit(1);
 }
 
-// ── Criar PRD ────────────────────────────────────────────────────────────────
-
-const today = new Date().toISOString().split("T")[0];
-let template = fs.readFileSync(templatePath, "utf-8");
-template = template.replace(/\{\{FEATURE_NAME\}\}/g, featureName).replace(/\{\{DATE\}\}/g, today);
-
-fs.writeFileSync(prdPath, template, "utf-8");
-
-// ── Atualizar STATUS.md com linha na tabela de PRDs ativos ──────────────────
-
-const statusContent = fs.readFileSync(statusPath, "utf-8");
-const prdTableMarker = "| — | — | — | — |";
-const newPrdRow = `| [${featureName}](PRDs/${featureName}.md) | — | draft | \`${branchName}\` |`;
-
-if (statusContent.includes(prdTableMarker)) {
-  const updated = statusContent.replace(prdTableMarker, newPrdRow);
-  fs.writeFileSync(statusPath, updated, "utf-8");
+try {
+  execSync(`gh issue edit ${issueNumber} --add-assignee @me`, { stdio: "pipe" });
+} catch {
+  console.log("⚠️   Não consegui te atribuir à issue — siga assim mesmo.");
 }
-
-// ── Resultado ────────────────────────────────────────────────────────────────
 
 console.log(`
 ✅  Tudo pronto!
 
-   Branch criada : ${branchName}
-   PRD criado    : docs/PRDs/${featureName}.md
-   STATUS.md     : atualizado com o novo PRD
+   Issue  : #${issueNumber} — ${issue.title}
+   Branch : ${branchName}
 
-⏭   Próximos passos obrigatórios (nesta ordem):
+⏭   Próximos passos:
 
-   1. Abra e preencha o PRD:
-      docs/PRDs/${featureName}.md
+   1. Leia a issue inteira:
+      gh issue view ${issueNumber} --comments
 
-   2. Responda as 3 perguntas no PRD:
-      - O quê?
-      - Por quê?
-      - Como saberemos que está pronto?
+   2. Acorde os seams de teste na issue antes de codar.
 
-   3. Mude o Status de "draft" para "approved"
-
-   4. Só então comece a codar.
-
-⛔  O hook pre-commit vai bloquear qualquer commit enquanto
-    o PRD estiver como "draft" ou não existir.
+   3. Ao terminar: se houve decisão difícil de reverter que o código não
+      explica, registre um ADR em docs/adr/. Se não houve, não escreva nada.
 `);
