@@ -1,5 +1,23 @@
-import { boolean, jsonb, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  jsonb,
+  numeric,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { profiles } from "./auth";
+
+/**
+ * De onde veio a Escala de um Body scan.
+ *
+ * `assessment` é medida com fita pelo especialista; `anamnese` é declarada pelo
+ * aluno. O especialista precisa saber qual das duas calibrou o número que ele
+ * está lendo — é a diferença entre confiar e ponderar.
+ */
+export const scaleSourceEnum = pgEnum("scale_source", ["assessment", "anamnese"]);
 
 export const studentAnamnesis = pgTable("student_anamnesis", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -23,8 +41,11 @@ export const physicalAssessments = pgTable("physical_assessments", {
   specialist_id: uuid("specialist_id").references(() => profiles.id, { onDelete: "set null" }),
   assessed_at: timestamp("assessed_at", { withTimezone: true }).notNull().defaultNow(),
   // Básico
-  weight_kg: numeric("weight_kg", { precision: 5, scale: 2 }),
-  height_cm: numeric("height_cm", { precision: 5, scale: 2 }),
+  // Obrigatórios: os dois formam a Escala que calibra o Body scan, e avaliação
+  // sem eles não serve de fonte. Antes eram opcionais, e uma avaliação com só
+  // circunferências deixava o aluno sem poder escanear sem nada explicar.
+  weight_kg: numeric("weight_kg", { precision: 5, scale: 2 }).notNull(),
+  height_cm: numeric("height_cm", { precision: 5, scale: 2 }).notNull(),
   // Composição corporal
   body_fat_pct: numeric("body_fat_pct", { precision: 5, scale: 2 }),
   muscle_mass_kg: numeric("muscle_mass_kg", { precision: 5, scale: 2 }),
@@ -69,6 +90,11 @@ export const bodyScans = pgTable("body_scans", {
   // Métricas derivadas pela IA
   height_cm: numeric("height_cm", { precision: 5, scale: 2 }),
   weight_kg: numeric("weight_kg", { precision: 5, scale: 2 }),
+  // Qual fonte calibrou ESTE scan. Sem isto o web rotula toda altura como
+  // "medido", o que passa a mentir no momento em que a Anamnese vira fonte —
+  // e derivar na leitura erraria assim que o especialista cadastrasse uma
+  // avaliação depois do scan, reescrevendo o passado.
+  scale_source: scaleSourceEnum("scale_source"),
   body_fat_pct: numeric("body_fat_pct", { precision: 5, scale: 2 }),
   muscle_mass_kg: numeric("muscle_mass_kg", { precision: 5, scale: 2 }),
   bmi: numeric("bmi", { precision: 5, scale: 2 }),

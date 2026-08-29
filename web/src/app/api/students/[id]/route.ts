@@ -63,10 +63,25 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       // O motivo da regra é de dado, não de burocracia: corrigir uma medida
       // antiga reescreve o histórico clínico do aluno. Medida errada se corrige
       // com avaliação nova — e é essa sequência que a evolução mostra.
+      // Altura e peso não são medidas entre outras: são a Escala que calibra o
+      // Body scan do aluno (`0037`). Avaliação sem os dois não serve de fonte, e
+      // aceitar em silêncio devolvia o problema ao aluno três telas depois —
+      // barrado na análise, com um "tente de novo" que nunca podia funcionar.
+      const alturaCm = Number(numeric.height_cm);
+      const pesoKg = Number(numeric.weight_kg);
+
+      if (!Number.isFinite(alturaCm) || !Number.isFinite(pesoKg)) {
+        return NextResponse.json({ error: "height_and_weight_required" }, { status: 422 });
+      }
+
       const { error: writeError } = await supabaseAdmin.from("physical_assessments").insert({
         student_id: studentId,
         specialist_id: caller.id,
         ...numeric,
+        // Depois do spread: o `numeric` carrega os dois como opcionais, e sem
+        // esta ordem o tipo gerado do schema não sabe que eles chegaram.
+        height_cm: alturaCm,
+        weight_kg: pesoKg,
       });
 
       // O resultado do insert e do update era descartado: a gravação falhava e

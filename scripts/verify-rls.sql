@@ -424,3 +424,45 @@ ROLLBACK;
 
 \echo ''
 \echo 'RLS verificada neste banco. Nada foi gravado.'
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Escala: nenhuma avaliação física sem altura ou peso — Art. 6º, V
+--
+-- Os dois formam a Escala que calibra o Body scan. Avaliação sem eles não serve
+-- de fonte, e antes da `0037` ela existia: o aluno era barrado na análise sem
+-- que nada explicasse por quê, num botão de "tentar de novo" que nunca podia
+-- funcionar.
+--
+-- A trava é sobre o dado, não sobre o privilégio: o `NOT NULL` da `0037` é o
+-- controle, e este bloco afirma que ele produz o efeito. Um constraint criado
+-- numa tabela e revertido por engano em outra migration não acusa sozinho.
+--
+-- Por que não é redundante com o constraint: uma migration futura que rode
+-- `DROP NOT NULL` para "destravar um caso" passaria despercebida, e o sintoma
+-- reapareceria três meses depois como "a análise não completou".
+DO $$
+DECLARE
+  incompletas int;
+BEGIN
+  SELECT count(*) INTO incompletas
+  FROM physical_assessments
+  WHERE height_cm IS NULL OR weight_kg IS NULL;
+
+  IF incompletas > 0 THEN
+    RAISE EXCEPTION 'ESCALA QUEBRADA: % avaliação(ões) sem altura ou peso — o aluno não consegue escanear e a tela não sabe dizer por quê', incompletas;
+  END IF;
+
+  -- Afirma a ausência E a presença: um `NOT NULL` que sumiu não seria pego só
+  -- pela contagem acima quando a tabela está vazia, que é o caso do ambiente
+  -- limpo. Aqui a pergunta é sobre o constraint, não sobre as linhas.
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'physical_assessments'
+      AND column_name IN ('height_cm', 'weight_kg')
+      AND is_nullable = 'YES'
+  ) THEN
+    RAISE EXCEPTION 'ESCALA QUEBRADA: altura ou peso voltou a aceitar NULL em physical_assessments';
+  END IF;
+
+  RAISE NOTICE 'ok  escala: toda avaliação física carrega altura e peso';
+END $$;
