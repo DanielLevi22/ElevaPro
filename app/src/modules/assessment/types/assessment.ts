@@ -116,9 +116,19 @@ export interface AnamnesisSection {
 // é jsonb, e o tipo `Json` do schema gerado exige assinatura de índice. Uma
 // interface não a recebe implicitamente, então gravar exigiria um cast — que é
 // exatamente o que escondia o desalinhamento desta tabela antes.
+/**
+ * O valor de uma resposta, como ele é gravado.
+ *
+ * Plano, sem embrulho. O `{ questionId, value }` que esta tela usava repetia a
+ * chave do próprio objeto e existia só aqui — o web e a tela adaptativa sempre
+ * gravaram o valor direto, e todos os leitores esperam isso.
+ */
+export type AnamnesisResponseValue = string | number | string[] | boolean;
+
+/** @deprecated Forma embrulhada, só para ler linha antiga. Não gravar. */
 export type AnamnesisResponse = {
   questionId: string;
-  value: string | number | string[] | boolean;
+  value: AnamnesisResponseValue;
 };
 
 export type StudentAnamnesis = {

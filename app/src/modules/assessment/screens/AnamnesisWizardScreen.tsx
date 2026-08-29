@@ -124,11 +124,11 @@ export default function AnamnesisWizardScreen() {
 
       // Check condition (skip if condition not met)
       if (q.condition) {
-        const dependentAnswer = anamnesisResponses[q.condition.questionId]?.value;
+        const dependentAnswer = anamnesisResponses[q.condition.questionId];
         if (dependentAnswer !== q.condition.expectedValue) return false;
       }
 
-      const answer = anamnesisResponses[q.id]?.value;
+      const answer = anamnesisResponses[q.id];
       return (
         answer === undefined || answer === '' || (Array.isArray(answer) && answer.length === 0)
       );
@@ -216,7 +216,7 @@ export default function AnamnesisWizardScreen() {
             {currentSection.questions.map((question) => {
               // Check visibility condition
               if (question.condition) {
-                const dependentAnswer = anamnesisResponses[question.condition.questionId]?.value;
+                const dependentAnswer = anamnesisResponses[question.condition.questionId];
                 if (dependentAnswer !== question.condition.expectedValue) return null;
               }
 
@@ -224,7 +224,7 @@ export default function AnamnesisWizardScreen() {
                 <QuestionInput
                   key={question.id}
                   question={question}
-                  value={anamnesisResponses[question.id]?.value}
+                  value={anamnesisResponses[question.id]}
                   onChange={(val) =>
                     setAnamnesisResponse(question.id, val as string | number | boolean | string[])
                   }

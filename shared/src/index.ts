@@ -25,4 +25,5 @@ export * from "./types/nutrition.types";
 export * from "./types/physicalAssessment.types";
 export * from "./types/students.types";
 export * from "./types/workouts.types";
+export * from "./utils/anamnese";
 export * from "./utils/rpe";

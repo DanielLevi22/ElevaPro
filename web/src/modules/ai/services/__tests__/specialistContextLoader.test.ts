@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { readAnamnesis } from "../specialistContextLoader";
 
 /**
  * O contexto que vai para a Anthropic.
@@ -177,5 +178,39 @@ describe("formatContextForPrompt", () => {
 
     expect(texto).toContain("Anamnese ainda não preenchida");
     expect(texto).not.toContain("INDISPONÍVEL");
+  });
+});
+
+describe("as duas formas gravadas em responses", () => {
+  const LESAO = "Hérnia de disco L5-S1 — proibido agachamento livre";
+
+  /** O que o web e a tela adaptativa do mobile gravam. */
+  const PLANA = {
+    objective: "Hipertrofia",
+    injuries: LESAO,
+    health_conditions: "Hipertensão controlada",
+  };
+
+  /** O que o assistente do mobile grava — a tela do aluno COM especialista. */
+  const EMBRULHADA = {
+    objective: { questionId: "objective", value: "Hipertrofia" },
+    injuries: { questionId: "injuries", value: LESAO },
+    health_conditions: { questionId: "health_conditions", value: "Hipertensão controlada" },
+  };
+
+  // As duas formas descrevem o mesmo aluno. Se o contexto que chega ao modelo
+  // depender de qual tela ele usou, a prescrição também depende — e ninguém
+  // percebe, porque o texto corrompido não é vazio e atravessa a checagem de
+  // "respondeu?".
+  it("produzem o mesmo contexto de saúde", () => {
+    expect(readAnamnesis(EMBRULHADA)).toEqual(readAnamnesis(PLANA));
+  });
+
+  // REGRESSÃO CLÍNICA: é a terceira vez que este carregador erra a lesão. Antes
+  // o campo sumia (lido fora de `responses`, coluna inexistente). Aqui ele
+  // chegava como "[object Object]" — pior, porque parece resposta, e o prompt
+  // manda o modelo usar exatamente este campo para decidir a carga.
+  it("não entregam [object Object] no lugar da lesão do aluno", () => {
+    expect(readAnamnesis(EMBRULHADA).injuries).toBe(LESAO);
   });
 });
