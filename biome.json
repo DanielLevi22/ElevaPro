@@ -37,6 +37,12 @@
       "formatter": { "enabled": false }
     },
     {
+      "includes": ["docs/**/*.html"],
+      "linter": { "enabled": false },
+      "formatter": { "enabled": false },
+      "assist": { "enabled": false }
+    },
+    {
       "includes": ["app/**/*"],
       "linter": {
         "rules": {

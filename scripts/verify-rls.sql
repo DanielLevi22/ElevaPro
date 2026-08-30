@@ -422,6 +422,79 @@ END $$;
 
 ROLLBACK;
 
+-- ── Análise corporal ─────────────────────────────────────────────────────────
+-- `body_scans` é chamada de "o dado mais sensível do schema" pela própria 0017,
+-- e até aqui nunca teve teste de comportamento: só a checagem estrutural de que
+-- a RLS está ligada. Ligada e correta são coisas diferentes — é a mesma
+-- distância que a auditoria de 2026-08-11 encontrou em `workout_sessions`.
+--
+-- Art. 11, II, f + Art. 11, I: dado de saúde só é lido pelo titular e pelo
+-- especialista com vínculo ativo. Desvinculou, perde o acesso; nunca houve
+-- vínculo, nunca vê.
+--
+-- As linhas são semeadas para os DOIS alunos de propósito: sem isso "zero
+-- linhas" significaria tabela vazia, e o teste passaria com uma política que
+-- deixa todo mundo ler tudo.
+
+BEGIN;
+
+DO $$
+DECLARE
+  aluno_a  uuid := gen_random_uuid();
+  aluno_b  uuid := gen_random_uuid();
+  espec    uuid := gen_random_uuid();
+  visiveis int;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (aluno_a, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-scan-a@elevapro.local', '{"full_name":"A","account_type":"student"}'::jsonb),
+    (aluno_b, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-scan-b@elevapro.local', '{"full_name":"B","account_type":"student"}'::jsonb),
+    (espec,   '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-scan-e@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb);
+
+  INSERT INTO public.body_scans (student_id, circ_waist)
+  VALUES (aluno_a, 82), (aluno_b, 91);
+
+  INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
+  VALUES (aluno_a, espec, 'personal_training', 'active');
+
+  SET LOCAL ROLE authenticated;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', aluno_a, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO visiveis FROM public.body_scans WHERE student_id = aluno_a;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'aluno A não lê a própria análise corporal (viu %)', visiveis;
+  END IF;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', aluno_b, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO visiveis FROM public.body_scans WHERE student_id = aluno_a;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'VAZAMENTO BIOMÉTRICO: aluno B lê % análise(s) corporal(is) do aluno A', visiveis;
+  END IF;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO visiveis FROM public.body_scans WHERE student_id = aluno_a;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'especialista vinculado não lê a análise do aluno A (viu %)', visiveis;
+  END IF;
+
+  SELECT count(*) INTO visiveis FROM public.body_scans WHERE student_id = aluno_b;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION
+      'VAZAMENTO BIOMÉTRICO: especialista lê % análise(s) do aluno B, sem vínculo', visiveis;
+  END IF;
+
+  RESET ROLE;
+  RAISE NOTICE 'ok  análise corporal: isolamento entre alunos e por vínculo ativo';
+END $$;
+
+ROLLBACK;
+
 \echo ''
 \echo 'RLS verificada neste banco. Nada foi gravado.'
 
