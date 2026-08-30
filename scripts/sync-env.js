@@ -115,6 +115,40 @@ if (loopbackLeak.length > 0) {
   process.exit(1);
 }
 
+// A guarda simétrica: ambiente de desenvolvimento falando com a nuvem.
+//
+// O `sync-env` recusa loopback vazando para o emulador; faltava recusar o
+// contrário. Em 2026-08-29 `app/.env.development` apareceu com os valores
+// locais comentados e os de preview escritos por baixo -- assinatura de um
+// `eas env:pull` apontado para esse caminho. O efeito: `expo run:android` roda
+// em NODE_ENV=development, lê esse arquivo, e o app fala com o preview enquanto
+// quem desenvolve acredita estar no local.
+//
+// O sintoma é caro justamente porque não parece erro: o banco local fica vazio,
+// a feature "não funciona", e a investigação acontece no ambiente errado. Quem
+// deve apontar para o preview é só o script de APK.
+if (env === "development") {
+  const nuvem = appContent
+    .split("\n")
+    .filter((line) =>
+      /^EXPO_PUBLIC_\w+=https?:\/\/(?!10\.0\.2\.2|127\.0\.0\.1|localhost|192\.168\.|10\.0\.|172\.(1[6-9]|2\d|3[01])\.)/.test(
+        line,
+      ),
+    );
+
+  if (nuvem.length > 0) {
+    console.error(`\n✗ ${path.relative(ROOT, appFile)} aponta para host remoto:`);
+    for (const line of nuvem) console.error(`    ${line}`);
+    console.error(
+      `\n  Isto é o ambiente de DESENVOLVIMENTO: ele fala com a sua máquina, não` +
+        `\n  com a nuvem. Quem aponta para preview é \`npm run apk:preview\`.` +
+        `\n\n  Se o arquivo foi sobrescrito por \`eas env:pull\`, rode \`npm run env:sync\`` +
+        `\n  para regenerá-lo a partir de .env.development na raiz.\n`,
+    );
+    process.exit(1);
+  }
+}
+
 console.log(`✓ ${path.relative(ROOT, appFile)}`);
 
 // web/.env.local — precedência maior que .env no Next. Escrever em .env deixaria
