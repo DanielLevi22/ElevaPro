@@ -64,7 +64,15 @@ export const GENERAL_ANAMNESIS: AnamnesisSection[] = [
     id: "training_history",
     title: "Histórico de Treinamento",
     questions: [
-      { id: "training_time", text: "Há quanto tempo treina?", type: "text", required: true },
+      {
+        id: "training_time",
+        // A unidade vai no enunciado porque o campo é numérico: sem ela o aluno
+        // que treina há oito meses digita "8" e vira oito anos na prescrição.
+        text: "Há quanto tempo treina? (em anos)",
+        type: "number",
+        placeholder: "Ex: 3 — use vírgula para meses, como 0,5",
+        required: true,
+      },
       {
         id: "experience_level",
         text: "Como você considera seu nível de experiência?",
@@ -86,8 +94,9 @@ export const GENERAL_ANAMNESIS: AnamnesisSection[] = [
       },
       {
         id: "weekly_frequency",
-        text: "Frequência atual de treino semanal",
-        type: "text",
+        text: "Frequência atual de treino semanal (dias por semana)",
+        type: "number",
+        placeholder: "Ex: 4",
         required: true,
       },
       {
