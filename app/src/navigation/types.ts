@@ -57,6 +57,8 @@ export const ROUTES = {
     ANAMNESIS: '/student/anamnesis',
     /** Histórico das próprias sessões, com o caminho de correção (Art. 18, III). */
     SESSION_HISTORY: '/student/session-history',
+    /** A própria análise corporal. A gêmea em (tabs)/students/ é do especialista. */
+    POSTURE_ANALYSIS: '/student/posture-analysis',
   },
 } as const;
 
