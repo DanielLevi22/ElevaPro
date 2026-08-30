@@ -208,9 +208,9 @@ const RETURNING_EXTRA: AdaptiveQuestion[] = [
     // de quem está justamente voltando de uma pausa — sinal invertido para
     // quem monta a prescrição.
     id: "training_time_before_break",
-    text: "Quanto tempo você treinou antes de parar?",
-    type: "text",
-    placeholder: "Ex: 2 anos",
+    text: "Quanto tempo você treinou antes de parar? (em anos)",
+    type: "number",
+    placeholder: "Ex: 2 — use vírgula para meses, como 0,5",
     weight: 3,
     whyWeAsk: "Quanto mais longa a base anterior, mais rápida é a recuperação muscular.",
   },

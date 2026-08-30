@@ -1,6 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createBodyScanService, createHealthService } from "@elevapro/shared";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeStudent } from "@/lib/api-auth";
 import { clienteDoTitular } from "@/lib/supabase-titular";

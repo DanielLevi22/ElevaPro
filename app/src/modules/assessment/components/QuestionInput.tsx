@@ -1,4 +1,5 @@
 import type { AnamnesisQuestion } from '@elevapro/shared/data/anamnesisQuestions';
+import { filtrarEntradaNumerica } from '@elevapro/shared/utils/anamnese';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useState } from 'react';
@@ -37,12 +38,16 @@ export const QuestionInput = ({ question, value, onChange }: Props) => {
         >
           <TextInput
             value={digitado ?? (value === undefined || value === null ? '' : String(value))}
-            onChangeText={(texto) => {
+            onChangeText={(bruto) => {
+              // Filtra antes de guardar: `keyboardType` e dica de teclado, nao
+              // restricao, e sem isto "uns 3 anos" era gravado inteiro numa
+              // pergunta numerica.
+              const texto = filtrarEntradaNumerica(bruto);
               setDigitado(texto);
               // Campo vazio é resposta retirada, não zero. `Number("")` é 0, e
               // uma altura de 0 cm atravessa qualquer checagem de "respondeu?"
               // e chega ao consumidor como medida.
-              if (texto.trim() === '') {
+              if (texto === '') {
                 onChange(undefined);
                 return;
               }
@@ -149,9 +154,24 @@ export const QuestionInput = ({ question, value, onChange }: Props) => {
               key={option ? 'sim' : 'nao'}
               activeOpacity={0.8}
               onPress={() => onChange(option)}
-              className={`flex-1 p-5 rounded-xl border-2 transition-all ${
+              // `shadow-sm` fica na BASE, nao no galho selecionado.
+              //
+              // No NativeWind toda classe `shadow-*` declara variavel CSS
+              // (`--tw-shadow`). O css-interop exige que a variavel exista ja
+              // no render inicial: quando ela so aparece depois -- que era o
+              // caso aqui, porque a sombra vinha junto com a selecao --, a
+              // biblioteca emite um aviso, e para imprimi-lo serializa as props
+              // com `Object.entries`, que dispara getters. Um deles e a
+              // armadilha do NavigationStateContext, e o aviso virava crash com
+              // a mensagem "Couldn't find a navigation context" -- que nao tem
+              // relacao nenhuma com navegacao, e por isso custou caro achar.
+              //
+              // Os ramos `number` e `text` deste mesmo arquivo ja faziam certo,
+              // com `shadow-sm` na base; so o booleano estava fora do padrao, e
+              // era o unico que quebrava, sempre ao selecionar a resposta.
+              className={`flex-1 p-5 rounded-xl border-2 shadow-sm transition-all ${
                 value === option
-                  ? 'bg-orange-500/10 border-orange-500 shadow-sm shadow-orange-500/20'
+                  ? 'bg-orange-500/10 border-orange-500 shadow-orange-500/20'
                   : 'bg-zinc-900 border-zinc-800'
               } items-center justify-center`}
             >

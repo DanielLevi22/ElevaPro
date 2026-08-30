@@ -140,3 +140,38 @@ export function achatarRespostas(
     Object.entries(respostas).map(([chave, valor]) => [chave, desembrulhar(valor)]),
   );
 }
+
+/**
+ * O que sobra de uma digitação depois de tirar o que não é número.
+ *
+ * `keyboardType="numeric"` é dica, não restrição: o teclado do Android continua
+ * oferecendo letras por atalho, e colar, autocompletar e teclado físico entram
+ * por fora dele. Sem este filtro, "há quanto tempo treina" aceitava "uns 3
+ * anos" — que chega ao banco como texto numa pergunta numérica, ou como `NaN`
+ * na tela que convertia direto com `Number()`.
+ *
+ * Preserva o separador que o aluno escolheu: quem digitou ponto continua vendo
+ * ponto. A troca por ponto é da leitura (`lerRespostaNumerica`), não daqui —
+ * este é o texto que fica na tela enquanto ele ainda digita, e reescrevê-lo
+ * embaixo do dedo empurra o cursor para o fim.
+ *
+ * Sinal negativo não passa de propósito: nenhuma pergunta da anamnese tem
+ * resposta negativa, e deixá-lo entrar só abriria caminho para peso -70.
+ *
+ * @example
+ * filtrarEntradaNumerica("uns 3 anos"); // "3"
+ * filtrarEntradaNumerica("1,7,5");      // "1,75"
+ */
+export function filtrarEntradaNumerica(bruto: string): string {
+  const semRuido = bruto.replace(/[^\d.,]/g, "");
+  const primeiro = semRuido.search(/[.,]/);
+  if (primeiro === -1) return semRuido;
+
+  // Só o primeiro separador sobrevive. Os seguintes são descartados em vez de
+  // truncarem a digitação: quem erra a tecla e escreve "1,7,5" quis 1,75, e
+  // parar no primeiro erro devolveria 1,7 sem ele perceber.
+  const inteiro = semRuido.slice(0, primeiro);
+  const separador = semRuido[primeiro];
+  const decimal = semRuido.slice(primeiro + 1).replace(/[.,]/g, "");
+  return `${inteiro}${separador}${decimal}`;
+}

@@ -84,7 +84,7 @@ npm run env:sync:production   # a partir de .env.production
 Os arquivos gerados são sobrescritos a cada sync — edite sempre a fonte na raiz.
 
 Para apontar ao Supabase local (Docker), rode `supabase start` e pegue os
-valores com `supabase status -o env`. As portas são `57321`/`57322`, definidas
+valores com `supabase status -o env`. As portas são `47321`/`47322`, definidas
 em [`supabase/config.toml`](supabase/config.toml) — não as default `543xx`.
 
 ---

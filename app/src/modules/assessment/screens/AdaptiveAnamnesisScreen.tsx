@@ -10,6 +10,7 @@ import {
   PERSONA_OPTIONS,
   UNLOCK_CARDS,
 } from '@elevapro/shared/data/anamnesisAdaptive';
+import { filtrarEntradaNumerica } from '@elevapro/shared/utils/anamnese';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -55,6 +56,11 @@ function QuestionField({
   value: AnamnesisValue | undefined;
   onChange: (v: AnamnesisValue) => void;
 }) {
+  // O que esta na tela enquanto o aluno digita, que nao e o que o pai guardou.
+  // O pai recebe o numero ja convertido; se o campo lesse de la, a virgula
+  // sumiria no instante em que fosse digitada e o decimal ficaria impossivel.
+  const [digitado, setDigitado] = useState<string | null>(null);
+
   if (question.type === 'text') {
     return (
       <TextInput
@@ -74,8 +80,19 @@ function QuestionField({
       <View className="relative">
         <TextInput
           className="bg-zinc-800/60 border border-white/10 rounded-xl text-white text-sm px-4 py-3 pr-16"
-          value={value !== undefined && value !== '' ? String(value) : ''}
-          onChangeText={(t) => onChange(Number(t))}
+          value={digitado ?? (value !== undefined && value !== '' ? String(value) : '')}
+          onChangeText={(bruto) => {
+            // Antes era `onChange(Number(t))` cru: qualquer letra virava `NaN`
+            // e ia parar no banco como resposta da pergunta.
+            const texto = filtrarEntradaNumerica(bruto);
+            setDigitado(texto);
+            if (texto === '') {
+              onChange('');
+              return;
+            }
+            const numero = Number(texto.replace(',', '.'));
+            if (Number.isFinite(numero)) onChange(numero);
+          }}
           placeholder={question.placeholder ?? '0'}
           placeholderTextColor="#52525b"
           keyboardType="numeric"

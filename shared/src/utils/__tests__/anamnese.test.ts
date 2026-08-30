@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { achatarRespostas, lerRespostaNumerica, lerRespostaTexto } from "../anamnese";
+import {
+  achatarRespostas,
+  filtrarEntradaNumerica,
+  lerRespostaNumerica,
+  lerRespostaTexto,
+} from "../anamnese";
 
 describe("leitura de resposta numérica da anamnese", () => {
   // A mesma pergunta produz formas diferentes no banco conforme a plataforma em
@@ -129,5 +134,36 @@ describe("achatamento do mapa de respostas", () => {
 
   it("aceita ausência de respostas", () => {
     expect(achatarRespostas(null)).toEqual({});
+  });
+});
+
+describe("filtro da digitação em campo numérico", () => {
+  // `keyboardType="numeric"` não impede letra nenhuma: é dica de teclado. O
+  // campo de "há quanto tempo treina" aceitava "uns 3 anos" e gravava a frase
+  // inteira numa pergunta numérica.
+  it("descarta a letra e fica com o número", () => {
+    expect(filtrarEntradaNumerica("uns 3 anos")).toBe("3");
+  });
+
+  it("devolve vazio quando não sobrou número nenhum", () => {
+    expect(filtrarEntradaNumerica("abc")).toBe("");
+  });
+
+  // Quem erra a tecla e escreve "1,7,5" quis 1,75. Truncar no primeiro erro
+  // devolveria 1,7 — um valor plausível e errado, que ninguém revisa.
+  it("mantém só o primeiro separador e junta o resto do decimal", () => {
+    expect(filtrarEntradaNumerica("1,7,5")).toBe("1,75");
+  });
+
+  // O separador é o que o aluno digitou, não o que a leitura prefere: trocá-lo
+  // embaixo do dedo empurra o cursor para o fim do campo.
+  it("preserva o separador escolhido por quem digita", () => {
+    expect(filtrarEntradaNumerica("1.5")).toBe("1.5");
+    expect(filtrarEntradaNumerica("1,5")).toBe("1,5");
+  });
+
+  // Nenhuma pergunta da anamnese tem resposta negativa.
+  it("não deixa passar sinal negativo", () => {
+    expect(filtrarEntradaNumerica("-70")).toBe("70");
   });
 });

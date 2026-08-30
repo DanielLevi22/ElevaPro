@@ -48,7 +48,15 @@ export function StatusBadge({ status, showDot = true }: StatusBadgeProps) {
     <View className="flex-row items-center">
       {showDot && (
         <View
-          className={`w-2 h-2 rounded-full mr-2 ${isAtivo ? 'shadow-lg shadow-green-500/50' : ''}`}
+          // `shadow-lg` na base, e so a COR muda com o estado. Classe
+          // `shadow-*` declara variavel CSS, e o css-interop exige que ela
+          // exista ja no render inicial -- surgindo depois, ele emite um aviso
+          // cuja serializacao de props estoura no getter do
+          // NavigationStateContext e derruba a tela com um erro que fala de
+          // navegacao. Mesmo defeito que quebrava a anamnese ao responder.
+          className={`w-2 h-2 rounded-full mr-2 shadow-lg ${
+            isAtivo ? 'shadow-green-500/50' : 'shadow-transparent'
+          }`}
           style={{ backgroundColor: config.dotColor }}
         />
       )}
