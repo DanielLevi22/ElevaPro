@@ -169,7 +169,13 @@ export const WorkoutExerciseCard = React.memo(function WorkoutExerciseCard({
                   colors={isResting ? ['#27272A', '#18181B'] : ['#FF6B35', '#FF2E63']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
-                  className={`h-12 px-6 rounded-xl flex-row items-center justify-center ${isResting ? 'opacity-50' : 'shadow-lg shadow-orange-500/30'}`}
+                  // `shadow-lg` na base pelo mesmo motivo do StatusBadge: a
+                  // sombra so aparecia fora do descanso, e nascer depois do
+                  // render inicial e o que dispara o aviso do css-interop que
+                  // vira crash.
+                  className={`h-12 px-6 rounded-xl flex-row items-center justify-center shadow-lg ${
+                    isResting ? 'opacity-50 shadow-transparent' : 'shadow-orange-500/30'
+                  }`}
                 >
                   <Text className="text-white font-black text-xs uppercase tracking-widest">
                     {isResting ? 'Aguarde' : 'Check'}

@@ -55,3 +55,7 @@ yarn-error.*
 
 # Estado temporario do Supabase CLI
 supabase/.temp/
+
+# Stub que o eas-cli deixa na raiz quando roda fora de app/. O projeto Expo de
+# verdade e app/app.json; este aqui e vazio, confunde o Biome e o proprio eas.
+/app.json
