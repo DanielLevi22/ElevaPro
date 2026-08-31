@@ -107,11 +107,16 @@ const FOLGA_DEPOIS_DE_ABRIR = 1.5;
 /**
  * Torção e inclinação máximas, separadas porque custam coisas diferentes.
  *
- * Roll gira a imagem inteira e entra 1:1 na inclinação de ombro e quadril —
- * com o sinal real na casa de 1° a 2°, folga aqui apaga o achado. Pitch só
- * encurta o corpo por perspectiva: a 12° são 2% na régua altura→pixel.
+ * Roll gira a imagem inteira e entra 1:1 na inclinação de ombro e quadril. Com
+ * o sinal real entre 0,6° e 2,3°, folga aqui não muda só o valor: muda o LADO
+ * reportado. 1,5° é apertado e alcançável — o aparelho apoiado sem cuidado
+ * mediu 1,10°.
+ *
+ * Pitch é o oposto: só encurta o corpo por perspectiva, 2% na régua a 12°, e um
+ * celular apoiado fica naturalmente perto de 12°. Exigir dele o que se exige do
+ * roll trancaria o aluno numa tolerância que a física do apoio não permite.
  */
-const ROLL_MAXIMO = 3;
+const ROLL_MAXIMO = 1.5;
 const PITCH_MAXIMO = 12;
 
 const LUMA_ESCURA = 0.12;
