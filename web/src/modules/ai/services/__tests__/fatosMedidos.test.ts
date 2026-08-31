@@ -26,7 +26,6 @@ function fotoDe900px(sobrescreve: Partial<MedidaDaFoto> = {}): MedidaDaFoto {
     inclinacaoQuadrilGraus: null,
     desvioDoEixoPx: null,
     rotacaoDoTronco: null,
-    anguloCraniovertebralGraus: null,
     prumoOmbroPx: null,
     prumoQuadrilPx: null,
     prumoJoelhoPx: null,
@@ -87,13 +86,10 @@ describe("os fatos medidos que vão para o prompt", () => {
   });
 
   it("descreve a postura sagital da lateral", () => {
-    const medidas: MedidasPorPose = {
-      side: fotoDe900px({ anguloCraniovertebralGraus: 14.2, prumoOmbroPx: 25 }),
-    };
+    const medidas: MedidasPorPose = { side: fotoDe900px({ prumoOmbroPx: 25 }) };
 
     const texto = descreverFatosMedidos(medidas, ALTURA);
 
-    expect(texto).toContain("ângulo craniovertebral: 14.2°");
     expect(texto).toContain("ombro à frente do prumo do tornozelo: 5.0 cm");
   });
 
@@ -177,13 +173,13 @@ describe("as medidas que vão para a coluna", () => {
     const gravado = medidasParaOScan(
       {
         back: fotoDe900px({ desnivelOmbrosPx: 40 }),
-        side: fotoDe900px({ anguloCraniovertebralGraus: 48.3 }),
+        side: fotoDe900px({ prumoOmbroPx: 25 }),
         front: fotoDe900px({ desnivelOmbrosPx: 9 }),
       },
       ALTURA,
     );
 
     expect(gravado.shoulder_drop_cm).toBe(1.8);
-    expect(gravado.craniovertebral_angle_deg).toBe(48.3);
+    expect(gravado.plumb_shoulder_cm).toBe(5);
   });
 });

@@ -35,7 +35,6 @@ export const MEDIDAS_DO_SCAN: CampoMedido[] = [
   },
   { campo: "hip_tilt_deg", rotulo: "Inclinação do quadril", unidade: "°" },
   { campo: "axis_deviation_cm", rotulo: "Desvio do eixo cabeça-tornozelos", unidade: "cm" },
-  { campo: "craniovertebral_angle_deg", rotulo: "Ângulo craniovertebral", unidade: "°" },
   { campo: "plumb_shoulder_cm", rotulo: "Ombro à frente do prumo", unidade: "cm" },
   { campo: "plumb_hip_cm", rotulo: "Quadril à frente do prumo", unidade: "cm" },
   { campo: "plumb_knee_cm", rotulo: "Joelho à frente do prumo", unidade: "cm" },

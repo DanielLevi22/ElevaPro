@@ -15,7 +15,6 @@ const LABELS: Record<ComparableField, string> = {
   circ_neck: 'Pescoço',
   circ_shoulders: 'Ombro',
   shoulder_drop_cm: 'Desnível de ombro',
-  craniovertebral_angle_deg: 'Ângulo craniovertebral',
 };
 
 const UNITS: Partial<Record<ComparableField, string>> = {
@@ -23,7 +22,6 @@ const UNITS: Partial<Record<ComparableField, string>> = {
   body_fat_pct: '%',
   lean_mass_kg: 'kg',
   bmi: '',
-  craniovertebral_angle_deg: '°',
 };
 
 function unitFor(field: ComparableField): string {

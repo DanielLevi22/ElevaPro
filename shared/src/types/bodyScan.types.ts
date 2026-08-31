@@ -61,8 +61,6 @@ export interface MedidasGeometricas {
   axis_deviation_cm: number | null;
   /** Veredito, não a razão bruta: com true, assimetria pode ser perspectiva. */
   trunk_rotated: boolean | null;
-  /** Postura sagital da lateral. Anteriorização de cabeça só existe em ângulo. */
-  craniovertebral_angle_deg: number | null;
   plumb_shoulder_cm: number | null;
   plumb_hip_cm: number | null;
   plumb_knee_cm: number | null;
@@ -180,8 +178,7 @@ export type ComparableField =
   | "circ_calves"
   | "circ_neck"
   | "circ_shoulders"
-  | "shoulder_drop_cm"
-  | "craniovertebral_angle_deg";
+  | "shoulder_drop_cm";
 
 export interface BodyScanDelta {
   field: ComparableField;

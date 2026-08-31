@@ -140,7 +140,6 @@ export const bodyScans = pgTable("body_scans", {
   /** Veredito, não a razão bruta: com true, assimetria pode ser perspectiva. */
   trunk_rotated: boolean("trunk_rotated"),
   // Postura sagital da lateral. Anteriorização de cabeça só existe em ângulo.
-  craniovertebral_angle_deg: numeric("craniovertebral_angle_deg", { precision: 5, scale: 2 }),
   plumb_shoulder_cm: numeric("plumb_shoulder_cm", { precision: 5, scale: 2 }),
   plumb_hip_cm: numeric("plumb_hip_cm", { precision: 5, scale: 2 }),
   plumb_knee_cm: numeric("plumb_knee_cm", { precision: 5, scale: 2 }),

@@ -23,7 +23,6 @@ import kotlin.math.atan2
 
 /** Índices do BlazePose usados aqui. Os 33 estão documentados pela Google. */
 private const val NARIZ = 0
-private const val ORELHA_ESQ = 7
 private const val OMBRO_ESQ = 11
 private const val OMBRO_DIR = 12
 private const val QUADRIL_ESQ = 23
@@ -72,13 +71,6 @@ data class MedidaDaFoto(
    * entra na análise como assimetria corporal.
    */
   @Field val rotacaoDoTronco: Float? = null,
-  /**
-   * Ângulo craniovertebral: orelha e ombro contra a vertical, em graus.
-   *
-   * Quantifica anteriorização de cabeça, que hoje o modelo julga no olho. Só na
-   * lateral — de frente os dois pontos se sobrepõem e o ângulo não significa nada.
-   */
-  @Field val anguloCraniovertebralGraus: Float? = null,
   /** Desvio de ombro, quadril e joelho contra a linha de prumo do tornozelo. */
   @Field val prumoOmbroPx: Float? = null,
   @Field val prumoQuadrilPx: Float? = null,
@@ -101,15 +93,6 @@ private fun NormalizedLandmark.visivel(): Float = visibility().orElse(0f)
  */
 private fun grausContraHorizontal(dx: Float, dy: Float): Float =
   Math.toDegrees(atan2(dy.toDouble(), abs(dx).toDouble())).toFloat()
-
-/**
- * Desvio de um segmento em relação à vertical, em graus, entre 0 e 90.
- *
- * Mesmo defeito da horizontal: sem o `abs` nos dois lados, um segmento quase
- * vertical devolvia ~166° — que é 180 menos os 13.4° de desvio real.
- */
-private fun grausContraVertical(dx: Float, dy: Float): Float =
-  Math.toDegrees(atan2(abs(dx).toDouble(), abs(dy).toDouble())).toFloat()
 
 /**
  * Larguras da silhueta nos níveis anatômicos.
@@ -220,7 +203,6 @@ fun medirFoto(
       },
     desvioDoEixoPx = if (frontal) desvioDoEixo(marcos, bitmap) else null,
     rotacaoDoTronco = if (frontal) ombroEsq.z() - ombroDir.z() else null,
-    anguloCraniovertebralGraus = if (dePerfil) craniovertebral(marcos) else null,
     prumoOmbroPx = if (dePerfil) prumo(marcos, OMBRO_ESQ, bitmap) else null,
     prumoQuadrilPx = if (dePerfil) prumo(marcos, QUADRIL_ESQ, bitmap) else null,
     prumoJoelhoPx = if (dePerfil) prumo(marcos, JOELHO_ESQ, bitmap) else null,
@@ -234,14 +216,6 @@ private fun desvioDoEixo(marcos: List<NormalizedLandmark>, bitmap: Bitmap): Floa
   return (marcos[NARIZ].x() - meioDosTornozelos) * bitmap.width
 }
 
-/** Orelha e ombro contra a vertical. Cresce com a cabeça anteriorizada. */
-private fun craniovertebral(marcos: List<NormalizedLandmark>): Float? {
-  val orelha = marcos[ORELHA_ESQ]
-  val ombro = marcos[OMBRO_ESQ]
-  if (minOf(orelha.visivel(), ombro.visivel()) < 0.4f) return null
-
-  return grausContraVertical(orelha.x() - ombro.x(), orelha.y() - ombro.y())
-}
 
 /** Distância horizontal de um ponto até a vertical que sobe do tornozelo. */
 private fun prumo(marcos: List<NormalizedLandmark>, indice: Int, bitmap: Bitmap): Float? {

@@ -12,7 +12,6 @@ function scan(sobrescreve: Partial<BodyScanRecord> = {}): BodyScanRecord {
     hip_drop_cm: null,
     hip_tilt_deg: null,
     axis_deviation_cm: null,
-    craniovertebral_angle_deg: null,
     plumb_shoulder_cm: null,
     plumb_hip_cm: null,
     plumb_knee_cm: null,

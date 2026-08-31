@@ -31,7 +31,6 @@ export interface MedidaDaFoto {
   inclinacaoQuadrilGraus: number | null;
   desvioDoEixoPx: number | null;
   rotacaoDoTronco: number | null;
-  anguloCraniovertebralGraus: number | null;
   prumoOmbroPx: number | null;
   prumoQuadrilPx: number | null;
   prumoJoelhoPx: number | null;
@@ -131,10 +130,6 @@ function assimetrias(medida: MedidaDaFoto, escala: number): string[] {
 
 function postura(medida: MedidaDaFoto, escala: number): string[] {
   const linhas: string[] = [];
-
-  if (medida.anguloCraniovertebralGraus !== null) {
-    linhas.push(`  - ângulo craniovertebral: ${graus(medida.anguloCraniovertebralGraus)}`);
-  }
 
   const prumos: Array<[string, number | null]> = [
     ["ombro", medida.prumoOmbroPx],
@@ -242,7 +237,6 @@ export function medidasParaOScan(medidas: MedidasPorPose, alturaCm: number): Med
       frente?.rotacaoDoTronco === null || frente?.rotacaoDoTronco === undefined
         ? null
         : Math.abs(frente.rotacaoDoTronco) > ROTACAO_QUE_IMPORTA,
-    craniovertebral_angle_deg: arredondar(lateral?.anguloCraniovertebralGraus),
     plumb_shoulder_cm: emCm(lateral?.prumoOmbroPx, escalas.side),
     plumb_hip_cm: emCm(lateral?.prumoQuadrilPx, escalas.side),
     plumb_knee_cm: emCm(lateral?.prumoJoelhoPx, escalas.side),

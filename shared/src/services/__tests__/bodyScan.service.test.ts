@@ -20,7 +20,6 @@ function scan(overrides: Partial<BodyScanRecord>): BodyScanRecord {
     hip_tilt_deg: null,
     axis_deviation_cm: null,
     trunk_rotated: null,
-    craniovertebral_angle_deg: null,
     plumb_shoulder_cm: null,
     plumb_hip_cm: null,
     plumb_knee_cm: null,

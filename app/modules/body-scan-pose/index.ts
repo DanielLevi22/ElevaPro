@@ -101,7 +101,6 @@ export interface MedidaDaFoto {
   /** Diferença de profundidade entre os ombros: diz se a frontal era frontal. */
   rotacaoDoTronco: number | null;
   /** Anteriorização de cabeça em graus. Só na lateral. */
-  anguloCraniovertebralGraus: number | null;
   prumoOmbroPx: number | null;
   prumoQuadrilPx: number | null;
   prumoJoelhoPx: number | null;

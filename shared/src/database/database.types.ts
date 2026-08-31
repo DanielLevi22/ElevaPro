@@ -143,7 +143,6 @@ export type Database = {
           circ_shoulders: number | null;
           circ_thighs: number | null;
           circ_waist: number | null;
-          craniovertebral_angle_deg: number | null;
           created_at: string;
           framing_camera: string | null;
           framing_confirmed: boolean | null;
@@ -191,7 +190,6 @@ export type Database = {
           circ_shoulders?: number | null;
           circ_thighs?: number | null;
           circ_waist?: number | null;
-          craniovertebral_angle_deg?: number | null;
           created_at?: string;
           framing_camera?: string | null;
           framing_confirmed?: boolean | null;
@@ -239,7 +237,6 @@ export type Database = {
           circ_shoulders?: number | null;
           circ_thighs?: number | null;
           circ_waist?: number | null;
-          craniovertebral_angle_deg?: number | null;
           created_at?: string;
           framing_camera?: string | null;
           framing_confirmed?: boolean | null;
