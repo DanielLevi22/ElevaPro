@@ -54,7 +54,7 @@ describe('o portão de captura', () => {
       ['muito longe', 'aproxime-muito', { coroaY: 0.3, chaoY: 0.7 }],
       ['um pouco longe', 'aproxime', { coroaY: 0.2, chaoY: 0.82 }],
       ['perto demais', 'afaste', { coroaY: 0.02, chaoY: 0.97 }],
-      ['fora de nível', 'nivel', { pitch: 9 }],
+      ['fora de nível', 'nivel', { roll: 9 }],
     ])('com %s a instrução é %s', (_nome, esperado, piora) => {
       const { instrucao } = avaliarPortao(frameBom(piora as Partial<FatosDaCaptura>));
 
@@ -63,7 +63,7 @@ describe('o portão de captura', () => {
 
     it('com dois problemas juntos, fala só o mais grave', () => {
       const { instrucao } = avaliarPortao(
-        frameBom({ visibilidadeMinima: 0.2, cobertura: 0, coroaY: null, pitch: 9 })
+        frameBom({ visibilidadeMinima: 0.2, cobertura: 0, coroaY: null, roll: 9 })
       );
 
       expect(instrucao?.id).toBe('sem-corpo');
@@ -265,7 +265,7 @@ describe('o portão de captura', () => {
       ['muito longe', 'longe', { coroaY: 0.3, chaoY: 0.7 }],
       ['um passo à frente', 'quase', { coroaY: 0.2, chaoY: 0.82 }],
       ['fora do centro', 'quase', { centroX: 0.2 }],
-      ['fora de nível', 'quase', { pitch: 9 }],
+      ['fora de nível', 'quase', { roll: 9 }],
     ])('%s é %s', (_nome, esperado, piora) => {
       expect(avaliarPortao(frameBom(piora as Partial<FatosDaCaptura>)).proximidade).toBe(esperado);
     });
@@ -366,7 +366,7 @@ describe('o portão de captura', () => {
   // cada dois segundos vira ruído, e ruído ensina o aluno a ignorar.
   describe('a voz só fala quando tem o que dizer de novo', () => {
     it('cala quando a instrução não mudou', () => {
-      const fatos = frameBom({ pitch: 9 });
+      const fatos = frameBom({ roll: 9 });
 
       expect(avaliarPortao(fatos).deveFalar).toBe(true);
       expect(avaliarPortao(fatos, { ultimaFalada: 'nivel' }).deveFalar).toBe(false);
@@ -375,7 +375,7 @@ describe('o portão de captura', () => {
     // Silêncio significa "está certo". Sem este limite, quem ficasse preso no
     // mesmo problema ouviria o mesmo silêncio e esperaria uma foto que não vem.
     it('volta a falar quando o problema persiste', () => {
-      const preso = avaliarPortao(frameBom({ pitch: 9 }), {
+      const preso = avaliarPortao(frameBom({ roll: 9 }), {
         ultimaFalada: 'nivel',
         msDesdeAFala: 9000,
       });
@@ -407,7 +407,7 @@ describe('o portão de captura', () => {
       { centroX: 0.2 },
       { coroaY: 0.3, chaoY: 0.7 },
       { coroaY: 0.02, chaoY: 0.97 },
-      { pitch: 9 },
+      { roll: 9 },
     ];
 
     for (const piora of piores) {

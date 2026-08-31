@@ -104,7 +104,15 @@ const COBERTURA_COM_ALGUEM = 0.02;
 const FOLGA_DEPOIS_DE_ABRIR = 1.5;
 
 /** Graus de inclinação a partir dos quais a foto sai torta o bastante. */
-const INCLINACAO_MAXIMA = 6;
+/**
+ * Torção e inclinação máximas, separadas porque custam coisas diferentes.
+ *
+ * Roll gira a imagem inteira e entra 1:1 na inclinação de ombro e quadril —
+ * com o sinal real na casa de 1° a 2°, folga aqui apaga o achado. Pitch só
+ * encurta o corpo por perspectiva: a 12° são 2% na régua altura→pixel.
+ */
+const ROLL_MAXIMO = 3;
+const PITCH_MAXIMO = 12;
 
 const LUMA_ESCURA = 0.12;
 const LUMA_ESTOURADA = 0.92;
@@ -390,7 +398,7 @@ function alinhamentoVertical(fatos: FatosDaCaptura, folga: number): IdDaInstruca
 function foraDeNivel(fatos: FatosDaCaptura): boolean {
   if (!fatos.nivelDisponivel) return false;
 
-  return Math.abs(fatos.pitch) > INCLINACAO_MAXIMA || Math.abs(fatos.roll) > INCLINACAO_MAXIMA;
+  return Math.abs(fatos.pitch) > PITCH_MAXIMO || Math.abs(fatos.roll) > ROLL_MAXIMO;
 }
 
 /**

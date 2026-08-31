@@ -1,8 +1,28 @@
 import { Accelerometer } from 'expo-sensors';
 import { useEffect, useState } from 'react';
 
-/** Quanto o aparelho pode desviar da vertical e ainda valer, em graus. */
-const TOLERANCIA_GRAUS = 6;
+/**
+ * Torção máxima no eixo da lente. Apertado de propósito.
+ *
+ * Roll entra 1:1 na inclinação de ombro e quadril: a imagem inteira gira junto
+ * com o aparelho, então 3° de torção viram 3° de desnível aparente. E o sinal
+ * que medimos é dessa ordem — 0,7° a 2,3° nos scans reais. Folga aqui apaga o
+ * achado embaixo do próprio erro.
+ */
+const ROLL_MAXIMO = 3;
+
+/**
+ * Inclinação máxima para frente ou para trás.
+ *
+ * Mais folgada que o roll porque custa outra coisa: pitch encurta o corpo por
+ * perspectiva, e a 12° o erro na régua altura→pixel é de 2%. Não gira o
+ * horizonte, então não contamina ângulo nenhum.
+ *
+ * 12° e não 6° porque 6° não é alcançável na prática: um celular apoiado fica
+ * naturalmente perto de 9° para trás — medido no aparelho de teste, que ficava
+ * barrado por uma tolerância escolhida quando a trava nunca chegava a rodar.
+ */
+const PITCH_MAXIMO = 12;
 
 const RAD_PARA_GRAUS = 180 / Math.PI;
 
@@ -73,13 +93,19 @@ export function useDeviceLevel(): DeviceLevel {
         // Com o aparelho em pé e a tela voltada para o aluno, a gravidade fica
         // em -y. Torcer o aparelho no eixo da lente joga gravidade para x;
         // deitá-lo para frente ou para trás joga para z.
-        const roll = Math.atan2(g.x, -g.y) * RAD_PARA_GRAUS;
+        // `+y` é para CIMA, e é isto que a versão anterior errava. Um
+        // acelerômetro em repouso não mede a gravidade: mede a força normal
+        // que a segura, que aponta ao contrário. Com o aparelho em pé ele lê
+        // `y ≈ +9.8` — conferido no aparelho: (0.17, 9.18, 1.49). Usar `-y`
+        // como referência dava roll de 179° com o celular reto, e o portão
+        // barrava o disparo para sempre.
+        const roll = Math.atan2(-g.x, g.y) * RAD_PARA_GRAUS;
         const pitch = Math.atan2(g.z, Math.hypot(g.x, g.y)) * RAD_PARA_GRAUS;
 
         setLevel({
           pitch: Number(pitch.toFixed(1)),
           roll: Number(roll.toFixed(1)),
-          nivelado: Math.abs(pitch) <= TOLERANCIA_GRAUS && Math.abs(roll) <= TOLERANCIA_GRAUS,
+          nivelado: Math.abs(pitch) <= PITCH_MAXIMO && Math.abs(roll) <= ROLL_MAXIMO,
           disponivel: true,
         });
       });

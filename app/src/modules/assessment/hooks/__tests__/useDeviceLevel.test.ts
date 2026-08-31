@@ -25,9 +25,13 @@ function gravidade(rollGraus: number, pitchGraus: number) {
   const pitch = (pitchGraus * Math.PI) / 180;
   const noPlano = G * Math.cos(pitch);
 
+  // `y` POSITIVO com o aparelho em pé. O acelerômetro em repouso não mede a
+  // gravidade: mede a força normal que segura o aparelho, que aponta para
+  // cima. A versão anterior desta fixture tinha `-y`, e por isso o teste
+  // aprovou uma conta que dava 179° de roll com o celular reto.
   return {
-    x: noPlano * Math.sin(roll),
-    y: -noPlano * Math.cos(roll),
+    x: -noPlano * Math.sin(roll),
+    y: noPlano * Math.cos(roll),
     z: G * Math.sin(pitch),
   };
 }
@@ -107,5 +111,23 @@ describe('useDeviceLevel', () => {
 
     await waitFor(() => expect(result.current.disponivel).toBe(true));
     expect(result.current.roll).toBe(3);
+  });
+
+  // A leitura real do aparelho de teste, apoiado e pronto para escanear. Serve
+  // de âncora: qualquer conta que devolva 179° para este vetor está errada,
+  // por mais que o resto dos casos passe.
+  it('lê o aparelho apoiado como quase reto, e não de cabeça para baixo', async () => {
+    const { result } = renderHook(() => useDeviceLevel());
+    await waitFor(() => expect(Accelerometer.addListener).toHaveBeenCalled());
+
+    const listener = (Accelerometer.addListener as jest.Mock).mock.calls[0][0];
+    listener({ x: 0.17, y: 9.18, z: 1.49 });
+
+    await waitFor(() => expect(result.current.disponivel).toBe(true));
+    expect(Math.abs(result.current.roll)).toBeLessThan(2);
+    // Apoiado, ele fica naturalmente perto de 9° para trás — dentro da
+    // tolerância de pitch, que é folgada justamente por isso.
+    expect(result.current.pitch).toBeCloseTo(9.2, 0);
+    expect(result.current.nivelado).toBe(true);
   });
 });
