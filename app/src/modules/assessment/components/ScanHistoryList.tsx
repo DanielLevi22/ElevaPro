@@ -16,10 +16,22 @@ function dataCurta(iso: string): string {
     : `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
 }
 
+/**
+ * A linha de resumo, com cada número dizendo de onde veio.
+ *
+ * Os dois valores tinham a mesma cara: `94 kg · 24% gordura`. Mas o peso é
+ * conhecido — veio da Escala, medido com fita pelo especialista ou informado
+ * pelo aluno — e a gordura é o modelo estimando a partir de uma foto. Lidos com
+ * o mesmo peso tipográfico, o segundo herdava a autoridade do primeiro.
+ *
+ * O `est.` é curto porque a linha é pequena, e a análise inteira já explica que
+ * percentual de gordura é estimativa. O que não podia continuar era o número
+ * aparecer sem nenhuma marca.
+ */
 function resumo(scan: BodyScanRecord): string {
   const partes: string[] = [];
   if (scan.weight_kg !== null) partes.push(`${scan.weight_kg} kg`);
-  if (scan.body_fat_pct !== null) partes.push(`${scan.body_fat_pct}% gordura`);
+  if (scan.body_fat_pct !== null) partes.push(`~${scan.body_fat_pct}% gordura (est.)`);
   // Sem "—" e sem zero inventado: análise sem métrica mostra só a data, que é o
   // que ela de fato tem.
   return partes.join(' · ');

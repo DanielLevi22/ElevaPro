@@ -1,9 +1,10 @@
 import type { BodyScanDelta, BodyScanRecord, ComparableField } from "@elevapro/shared";
+import { MedidasDoScan } from "./MedidasDoScan";
 
 const LABELS: Record<ComparableField, string> = {
   weight_kg: "Peso",
   body_fat_pct: "Gordura",
-  muscle_mass_kg: "Massa magra",
+  lean_mass_kg: "Massa magra",
   bmi: "IMC",
   circ_chest: "Peito",
   circ_waist: "Cintura",
@@ -13,12 +14,13 @@ const LABELS: Record<ComparableField, string> = {
   circ_calves: "Panturrilha",
   circ_neck: "Pescoço",
   circ_shoulders: "Ombro",
+  shoulder_drop_cm: "Desnível de ombro",
 };
 
 const UNITS: Partial<Record<ComparableField, string>> = {
   weight_kg: "kg",
   body_fat_pct: "%",
-  muscle_mass_kg: "kg",
+  lean_mass_kg: "kg",
   bmi: "",
 };
 
@@ -128,6 +130,11 @@ export function BodyScanHistory({ scans, deltas }: BodyScanHistoryProps) {
           </div>
         )}
       </section>
+
+      {/* Medida antes de interpretação, pela mesma razão que o delta vem antes
+          do absoluto: o número medido sustenta o que o modelo escreve, e lido
+          depois vira confirmação do que já se leu. */}
+      <MedidasDoScan scan={latest} />
 
       <section>
         <h2 className="text-sm font-black uppercase tracking-[0.2em] text-foreground">

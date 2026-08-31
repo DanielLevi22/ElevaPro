@@ -1,0 +1,1310 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  Versão navegável do ADR-0022. O MARKDOWN AO LADO É O CANÔNICO e está à frente
+  desta página: ele tem o parecer de LGPD, o veredito do aparelho e a seção do
+  exercício futuro. Mudou lá, muda aqui.
+-->
+<title>O Aparelho Mede, o Modelo Interpreta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+
+<style>
+  /* Paleta e tipografia vêm de design/tokens/ — "Cyber Fitness", unificada em 2026-08-09.
+     O produto ships dark-only; o claro existe aqui porque o artifact pode ser lido nos dois. */
+  :root {
+    --paper:          #F4F4F5;
+    --card:           #FFFFFF;
+    --card-2:         #FAFAFA;
+    --line:           #E4E4E7;
+    --line-soft:      #EFEFF1;
+    --fg:             #18181B;
+    --fg-muted:       #52525B;
+    --fg-faint:       #71717A;
+    --lime:           #4D7C0F;
+    --blue:           #0E7490;
+    --pink:           #BE185D;
+    --amber:          #B45309;
+    --emerald:        #047857;
+    --red:            #B91C1C;
+
+    --font-display: "Outfit", system-ui, -apple-system, sans-serif;
+    --font-body:    "Inter", system-ui, -apple-system, sans-serif;
+    --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+    --measure: 70ch;
+    --page: 1180px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:      #09090B;
+      --card:       #131316;
+      --card-2:     #18181B;
+      --line:       #27272A;
+      --line-soft:  #1F1F23;
+      --fg:         #FAFAFA;
+      --fg-muted:   #A1A1AA;
+      --fg-faint:   #71717A;
+      --lime:       #CCFF00;
+      --blue:       #00F0FF;
+      --pink:       #FF0099;
+      --amber:      #FBBF24;
+      --emerald:    #34D399;
+      --red:        #F87171;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:      #09090B;
+    --card:       #131316;
+    --card-2:     #18181B;
+    --line:       #27272A;
+    --line-soft:  #1F1F23;
+    --fg:         #FAFAFA;
+    --fg-muted:   #A1A1AA;
+    --fg-faint:   #71717A;
+    --lime:       #CCFF00;
+    --blue:       #00F0FF;
+    --pink:       #FF0099;
+    --amber:      #FBBF24;
+    --emerald:    #34D399;
+    --red:        #F87171;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: var(--page); margin: 0 auto; padding: 0 28px 120px; }
+  .prose { max-width: var(--measure); }
+
+  /* ── Cabeçalho ─────────────────────────────────────────────── */
+
+  header.doc {
+    border-bottom: 1px solid var(--line);
+    padding: 64px 0 40px;
+    margin-bottom: 56px;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--fg-faint);
+    margin: 0 0 20px;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(36px, 5.6vw, 58px);
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+    margin: 0 0 20px;
+    text-wrap: balance;
+    max-width: 18ch;
+  }
+
+  .standfirst {
+    font-size: 19px; line-height: 1.55;
+    color: var(--fg-muted);
+    max-width: 62ch;
+    margin: 0 0 36px;
+  }
+  .standfirst strong { color: var(--fg); font-weight: 600; }
+
+  .meta {
+    display: flex; flex-wrap: wrap;
+    gap: 10px 28px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--fg-faint);
+  }
+  .meta b { color: var(--fg-muted); font-weight: 600; }
+
+  .status {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 4px 12px 4px 10px;
+    border: 1px solid var(--line); border-radius: 999px;
+    background: var(--card); color: var(--fg-muted);
+  }
+  .status::before {
+    content: ""; width: 6px; height: 6px;
+    border-radius: 999px; background: var(--emerald);
+  }
+
+  /* ── Seções ────────────────────────────────────────────────── */
+
+  section { margin-bottom: 72px; }
+
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 700; font-size: 30px;
+    letter-spacing: -0.02em; line-height: 1.15;
+    margin: 0 0 8px; text-wrap: balance;
+  }
+
+  h2 .num {
+    font-family: var(--font-mono);
+    font-size: 13px; font-weight: 600;
+    color: var(--lime); letter-spacing: 0.1em;
+    display: block; margin-bottom: 10px;
+  }
+
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 600; font-size: 19px;
+    letter-spacing: -0.01em;
+    margin: 40px 0 10px; text-wrap: balance;
+  }
+
+  p { margin: 0 0 16px; }
+  .prose > p:last-child { margin-bottom: 0; }
+
+  a { color: var(--fg); text-decoration-color: var(--fg-faint); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--lime); }
+  a:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; border-radius: 2px; }
+
+  code {
+    font-family: var(--font-mono); font-size: 0.86em;
+    background: var(--card-2); border: 1px solid var(--line-soft);
+    border-radius: 4px; padding: 1px 5px;
+  }
+
+  strong { font-weight: 600; }
+  blockquote {
+    margin: 20px 0; padding: 0 0 0 20px;
+    border-left: 2px solid var(--line);
+    color: var(--fg-muted); font-style: italic;
+    max-width: var(--measure);
+  }
+
+  ul, ol { margin: 0 0 16px; padding-left: 22px; }
+  li { margin-bottom: 7px; }
+  li::marker { color: var(--fg-faint); }
+
+  /* ── Figuras ───────────────────────────────────────────────── */
+
+  figure {
+    margin: 32px 0 0;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    background: #0B0B0E;
+  }
+
+  .mermaid-well { overflow-x: auto; padding: 28px 24px 20px; }
+  figure .mermaid { margin: 0; min-width: 640px; display: flex; justify-content: center; }
+
+  figcaption {
+    border-top: 1px solid #232328;
+    padding: 14px 20px;
+    font-size: 13.5px; line-height: 1.5;
+    color: #A1A1AA; background: #0F0F12;
+  }
+  figcaption b {
+    color: #FAFAFA; font-family: var(--font-mono);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    display: block; margin-bottom: 5px;
+  }
+  figcaption code {
+    background: #1C1C21; border-color: #2A2A30; color: #E4E4E7;
+  }
+
+  /* ── Painéis ───────────────────────────────────────────────── */
+
+  .panel {
+    border: 1px solid var(--line); border-radius: 14px;
+    background: var(--card); padding: 24px 26px; margin: 28px 0 0;
+  }
+  .panel.tight { padding: 18px 22px; }
+  .panel h3 { margin-top: 0; }
+  .panel > *:last-child { margin-bottom: 0; }
+
+  .panel-label {
+    font-family: var(--font-mono);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--fg-faint); margin: 0 0 12px;
+  }
+
+  .flag {
+    border-left: 3px solid var(--amber);
+    background: var(--card);
+    border-radius: 0 12px 12px 0;
+    padding: 18px 22px; margin: 28px 0 0;
+  }
+  .flag .panel-label { color: var(--amber); }
+  .flag.good { border-left-color: var(--emerald); }
+  .flag.good .panel-label { color: var(--emerald); }
+  .flag.bad { border-left-color: var(--red); }
+  .flag.bad .panel-label { color: var(--red); }
+  .flag > *:last-child { margin-bottom: 0; }
+
+  /* ── Opções consideradas ───────────────────────────────────── */
+
+  .options { display: grid; gap: 14px; margin-top: 28px; }
+
+  .option {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--card);
+    padding: 22px 24px;
+  }
+
+  .option.chosen {
+    border-color: color-mix(in srgb, var(--lime) 55%, var(--line));
+    background: color-mix(in srgb, var(--lime) 5%, var(--card));
+  }
+
+  .option-head {
+    display: flex; flex-wrap: wrap; align-items: baseline;
+    gap: 12px; margin-bottom: 14px;
+  }
+
+  .option-letter {
+    font-family: var(--font-mono);
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--fg-faint);
+  }
+  .option.chosen .option-letter { color: var(--lime); }
+
+  .option-title {
+    font-family: var(--font-display);
+    font-weight: 600; font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+
+  .chosen-mark {
+    font-family: var(--font-mono);
+    font-size: 10.5px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lime);
+    border: 1px solid color-mix(in srgb, var(--lime) 40%, transparent);
+    border-radius: 5px; padding: 3px 8px;
+  }
+
+  .pc { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .pc h4 {
+    font-family: var(--font-mono);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    margin: 0 0 8px; color: var(--fg-faint);
+  }
+  .pc .pros h4 { color: var(--emerald); }
+  .pc .cons h4 { color: var(--red); }
+  .pc p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--fg-muted); }
+
+  @media (max-width: 640px) { .pc { grid-template-columns: 1fr; gap: 16px; } }
+
+  /* ── Tabelas ───────────────────────────────────────────────── */
+
+  .table-scroll { overflow-x: auto; margin: 28px 0 0; }
+
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 14.5px; min-width: 620px;
+  }
+
+  th {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--fg-faint);
+    padding: 0 16px 10px 0;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 13px 16px 13px 0;
+    border-bottom: 1px solid var(--line-soft);
+    vertical-align: top; line-height: 1.5;
+  }
+  tr:last-child td { border-bottom: none; }
+  td.mono { font-family: var(--font-mono); font-size: 13px; }
+
+  .tag {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 10.5px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 5px;
+    white-space: nowrap; border: 1px solid;
+  }
+  .tag.mede   { color: var(--lime); border-color: color-mix(in srgb, var(--lime) 40%, transparent); }
+  .tag.estima { color: var(--pink); border-color: color-mix(in srgb, var(--pink) 40%, transparent); }
+
+  /* ── Consequências ─────────────────────────────────────────── */
+
+  .conseq { display: grid; gap: 14px; margin-top: 28px; }
+
+  .conseq-block {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--card);
+    padding: 20px 24px;
+  }
+  .conseq-block h3 { margin: 0 0 12px; font-size: 17px; }
+  .conseq-block ul { margin: 0; }
+  .conseq-block li { color: var(--fg-muted); }
+  .conseq-block li strong { color: var(--fg); }
+
+  .conseq-block.easier h3 { color: var(--emerald); }
+  .conseq-block.harder h3 { color: var(--amber); }
+  .conseq-block.blocks h3 { color: var(--blue); }
+
+  /* ── Decisões travadas ─────────────────────────────────────── */
+
+  .decisions { margin-top: 28px; border-top: 1px solid var(--line); }
+
+  .decision {
+    display: grid;
+    grid-template-columns: minmax(180px, 250px) 1fr;
+    gap: 24px; padding: 15px 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .decision dt { font-weight: 600; font-size: 15px; line-height: 1.45; }
+  .decision dd { margin: 0; color: var(--fg-muted); font-size: 15px; line-height: 1.55; }
+  .decision dd em {
+    font-style: normal; color: var(--fg-faint);
+    font-family: var(--font-mono); font-size: 12.5px;
+    display: block; margin-top: 5px;
+  }
+
+  @media (max-width: 720px) {
+    .decision { grid-template-columns: 1fr; gap: 6px; }
+    h2 { font-size: 25px; }
+    .wrap { padding: 0 20px 90px; }
+    header.doc { padding-top: 44px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+<style>
+  html { color-scheme: light dark; }
+  body { margin: 0; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<header class="doc">
+  <p class="eyebrow">ADR-0022 · Eleva Pro · Avaliação física</p>
+  <h1>O aparelho mede, o modelo interpreta</h1>
+  <p class="standfirst">
+    O MediaPipe entra no body scan para <strong>enriquecer</strong> a análise, não para
+    substituí-la. Ele posiciona o aluno e mede o que a imagem contém; o Claude continua sendo quem
+    interpreta — agora sobre fatos, não sobre uma régua que ele estimava no olho a cada chamada.
+  </p>
+  <div class="meta">
+    <span><b>Fonte canônica</b> docs/adr/0022-…md</span>
+    <span class="status">proposed — a Fase 0 promove para accepted</span>
+    <span><b>Data</b> 30/08/2026</span>
+    <span><b>Supersede em parte</b> ADR-0010</span>
+    <span><b>Plataforma</b> Android · iOS adiado</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="num">01</span>Contexto</h2>
+  <div class="prose">
+    <p>O <strong>ADR-0010</strong> afirma que a análise corporal é calibrada por regra de três:</p>
+    <blockquote>
+      Se o aluno tem 175 cm e ocupa 900 px da cabeça ao pé, o frame tem 5,14 px/cm, e qualquer
+      largura na imagem converte para centímetro por regra de três.
+    </blockquote>
+    <p>
+      <strong>Esse cálculo nunca existiu no código.</strong> Não há <code>px_por_cm</code> em
+      nenhum lugar do repositório. O que existe é uma instrução no prompt do BFF mandando o modelo
+      converter as larguras "a partir dessa proporção" — ou seja, quem localiza a cabeça e os pés
+      em pixels é o próprio Claude, no olho, a cada chamada.
+    </p>
+    <p>
+      As marcas fixas em <code>BodyScanCamera</code> são a única coisa segurando a escala, e só
+      funcionam se o aluno encostar exatamente nelas. Ninguém verifica se ele encostou. Quatro
+      centímetros abaixo da marca e a régua erra ~2%, com todas as circunferências saindo
+      deslocadas juntas — com aparência de número legítimo.
+    </p>
+  </div>
+
+  <div class="flag bad">
+    <p class="panel-label">Dois agravantes encontrados junto</p>
+    <p>
+      A rota <code>api/ai/body-scan</code> <strong>não define <code>temperature</code></strong>,
+      então roda no padrão 1.0: a mesma foto enviada duas vezes devolve cintura diferente. O
+      ADR-0010 apoia a confiabilidade do delta em erro sistemático que se cancela — e amostragem
+      aleatória não se cancela.
+    </p>
+    <p>
+      E <code>muscle_mass_kg</code> é massa em quilos vinda de uma foto. O ADR-0010 apagou a
+      estimativa de peso com a frase <em>"peso é massa, e nenhuma câmera mede massa"</em> — e
+      deixou este campo em pé, na mesma unidade, saindo do mesmo lugar.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">02</span>Opções consideradas</h2>
+
+  <div class="options">
+    <div class="option chosen">
+      <div class="option-head">
+        <span class="option-letter">OPÇÃO A</span>
+        <span class="option-title">MediaPipe mede a geometria; o modelo interpreta</span>
+        <span class="chosen-mark">escolhida</span>
+      </div>
+      <div class="pc">
+        <div class="pros">
+          <h4>Prós</h4>
+          <p>
+            A régua vira medida em vez de suposição. O que é geométrico fica determinístico e
+            testável com imagens de fixture. O modelo segue fazendo aquilo em que é bom, agora
+            sobre fatos. Processamento biométrico acontece no aparelho e nada novo atravessa a
+            fronteira.
+          </p>
+        </div>
+        <div class="cons">
+          <h4>Contras</h4>
+          <p>
+            Dependência nativa, com iOS bloqueado até o primeiro build existir. Superfície nativa
+            própria para manter a cada upgrade de SDK. E a máscara mede o tecido, não o corpo.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="option">
+      <div class="option-head">
+        <span class="option-letter">OPÇÃO B</span>
+        <span class="option-title">Só melhorar o enquadramento, sem modelo local</span>
+      </div>
+      <div class="pc">
+        <div class="pros">
+          <h4>Prós</h4>
+          <p>Nenhuma dependência nativa, entrega em dias, e o iOS acompanha.</p>
+        </div>
+        <div class="cons">
+          <h4>Contras</h4>
+          <p>
+            Silhueta desenhada na tela não verifica nada — é a solução que já está lá e que falhou.
+            Sem detectar a pessoa não há como saber se ela encostou nas marcas, e a régua continua
+            inexistente. Melhora a foto que entra num passo que continua chutando.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="option">
+      <div class="option-head">
+        <span class="option-letter">OPÇÃO C</span>
+        <span class="option-title">Mover tudo para o aparelho; o modelo faz só o qualitativo</span>
+      </div>
+      <div class="pc">
+        <div class="pros">
+          <h4>Prós</h4>
+          <p>Determinismo total nos números, e chamada de IA menor e mais barata.</p>
+        </div>
+        <div class="cons">
+          <h4>Contras</h4>
+          <p>
+            Landmark é centro de articulação e máscara é contorno de roupa — nenhum dos dois
+            entrega composição corporal. Gordura viraria fórmula encadeada sobre estimativa, e o
+            especialista perderia leitura clínica que hoje o modelo faz bem.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="option">
+      <div class="option-head">
+        <span class="option-letter">OPÇÃO D</span>
+        <span class="option-title">API comercial de medidas corporais</span>
+      </div>
+      <div class="pc">
+        <div class="pros">
+          <h4>Prós</h4>
+          <p>O problema inteiro resolvido por quem só faz isso, com dado de validação próprio.</p>
+        </div>
+        <div class="cons">
+          <h4>Contras</h4>
+          <p>
+            Pago por scan, imagem sai do país, lock-in. Troca a melhor posição de LGPD da lista
+            pela pior, para resolver a parte do problema que é a menos crítica.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">03</span>Decisão</h2>
+  <div class="prose">
+    <p>
+      <strong>Escolhemos a A, com a fronteira desenhada pela natureza da grandeza.</strong>
+    </p>
+    <ul>
+      <li>
+        <strong>Geometria — o aparelho mede.</strong> Distância, largura, ângulo, razão. São
+        coisas que a imagem contém e que uma conta extrai. Não há julgamento envolvido, e o
+        resultado é reprodutível.
+      </li>
+      <li>
+        <strong>Composição e julgamento clínico — o modelo estima e interpreta.</strong>
+        Percentual de gordura, risco postural, feedback por vista, recomendações. Exigem leitura,
+        e é onde o modelo é bom <em>quando tem fatos</em>.
+      </li>
+    </ul>
+    <p>
+      O fator decisivo é que <strong>as duas coisas falham por motivos opostos</strong>. Um modelo
+      de linguagem localizando bordas em pixels erra sem saber que errou, e erra diferente a cada
+      chamada. Uma conta sobre landmarks não interpreta nada, mas também não inventa. Cada um
+      fazendo o que não sabe fazer era a origem de todos os números frágeis desta feature.
+    </p>
+    <p>
+      Os fatos medidos entram no prompt <strong>dentro do bloco que já existe</strong> para altura
+      e peso — <code>MEDIDAS CONHECIDAS DO ALUNO (não estime nenhuma delas)</code> — só que muito
+      maior. O modelo é enriquecido, não substituído.
+    </p>
+  </div>
+
+  <figure>
+    <div class="mermaid-well">
+      <pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'background':'#0B0B0E','primaryColor':'#18181B','primaryTextColor':'#FAFAFA','primaryBorderColor':'#3F3F46','lineColor':'#71717A','secondaryColor':'#131316','tertiaryColor':'#131316','fontFamily':'Inter, system-ui, sans-serif','fontSize':'14px','clusterBkg':'#101013','clusterBorder':'#2A2A30','edgeLabelBackground':'#0B0B0E','titleColor':'#FAFAFA'}}}%%
+flowchart LR
+    subgraph MP["MediaPipe — mede no aparelho"]
+        direction TB
+        A1["régua<br/>px por cm"]
+        A2["larguras da silhueta<br/>pescoço · cintura · quadril"]
+        A3["assimetrias<br/>cm e graus"]
+        A4["postura sagital<br/>ângulos"]
+        A5["qualidade da captura<br/>luz · nível · corte"]
+    end
+
+    subgraph PR["Prompt do BFF"]
+        direction TB
+        B1["bloco MEDIDAS CONHECIDAS<br/>não estime nenhuma delas"]
+    end
+
+    subgraph CL["Claude — interpreta"]
+        direction TB
+        C1["gordura corporal"]
+        C2["risco postural"]
+        C3["feedback por vista"]
+        C4["recomendações"]
+    end
+
+    subgraph DBX["body_scans"]
+        direction TB
+        D1["circunferências<br/>medidas"]
+        D2["análise<br/>do modelo"]
+    end
+
+    A1 --> A2
+    A2 --> B1
+    A3 --> B1
+    A4 --> B1
+    A5 --> B1
+    B1 --> C1
+    B1 --> C2
+    B1 --> C3
+    B1 --> C4
+    A2 -.->|"direto, sem passar pelo modelo"| D1
+    C1 --> D2
+    C2 --> D2
+    C3 --> D2
+    C4 --> D2
+
+    classDef mede fill:#14200A,stroke:#5C7A1E,color:#D9F99D
+    classDef estima fill:#20101B,stroke:#7A2E58,color:#FBCFE8
+    class A1,A2,A3,A4,A5,D1 mede
+    class C1,C2,C3,C4,D2 estima
+      </pre>
+    </div>
+    <figcaption>
+      <b>Figura 1 — de onde vem cada número</b>
+      Verde é medido no aparelho, rosa é estimado pelo modelo. Todo fato medido atravessa o prompt
+      para enriquecer a interpretação; só as circunferências têm caminho direto ao banco, porque
+      duas fontes para a mesma grandeza não têm critério de desempate.
+    </figcaption>
+  </figure>
+
+  <div class="panel">
+    <p class="panel-label">Sub-decisão — o módulo é próprio, e não VisionCamera</p>
+    <p>
+      Frame processors do VisionCamera exigem <code>react-native-worklets-core</code>. O app tem
+      <code>react-native-worklets</code> 0.10.1, que o Reanimated 4.5.1 traz. Os dois no mesmo
+      projeto colidem no Android com <code>WorkletsPackage</code> duplicado.
+    </p>
+    <p>
+      Um Expo Module próprio, dono da própria preview, não passa por worklets nenhum: amostra
+      nativamente e emite para o JS um objeto pequeno a cada dois segundos.
+      <strong>Nenhum frame cruza a ponte.</strong>
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">04</span>Como o processo funciona</h2>
+
+  <figure>
+    <div class="mermaid-well">
+      <pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'background':'#0B0B0E','primaryColor':'#18181B','primaryTextColor':'#FAFAFA','primaryBorderColor':'#3F3F46','lineColor':'#71717A','secondaryColor':'#131316','tertiaryColor':'#131316','fontFamily':'Inter, system-ui, sans-serif','fontSize':'13px','actorBkg':'#18181B','actorBorder':'#4D4D57','actorTextColor':'#FAFAFA','actorLineColor':'#3F3F46','signalColor':'#A1A1AA','signalTextColor':'#E4E4E7','labelBoxBkg':'#1A2410','labelBoxBorderColor':'#5C7A1E','labelTextColor':'#D9F99D','loopTextColor':'#D9F99D','noteBkgColor':'#101820','noteBorderColor':'#0E7490','noteTextColor':'#A5F3FC','sequenceNumberColor':'#09090B','activationBkgColor':'#3F3F46'}}}%%
+sequenceDiagram
+    autonumber
+    actor Aluno
+    participant App as App · tela do scan
+    participant Nat as Módulo nativo · MediaPipe
+    participant Voz as expo-speech
+    participant BFF as BFF · Next.js
+    participant IA as Claude Sonnet
+    participant DB as Supabase
+
+    Aluno->>App: abre o body scan
+    App->>BFF: GET body-scan/eligibility
+    BFF-->>App: pode escanear + fonte da escala
+    App-->>Aluno: tutorial, só na primeira vez
+
+    loop para cada pose — frente, costas, lateral
+        App->>Nat: iniciar preview
+        loop a cada 2s, até o portão liberar
+            Nat->>Nat: pose + máscara no frame amostrado
+            Nat-->>App: fatos de enquadramento e luz
+            App->>App: avaliarPortao
+            alt fora de posição
+                App->>Voz: instrução de maior prioridade
+                Voz-->>Aluno: dê um passo para trás
+            else tudo verde
+                App->>Voz: três, dois, um
+                App->>Nat: capturar em alta qualidade
+            end
+        end
+        Nat->>Nat: medir o still — régua, larguras, ângulos
+        alt mediu
+            Nat-->>App: fact sheet da pose
+            App->>App: guarda no store MMKV
+        else sem coroa ou sem contato com o chão
+            Nat-->>App: falha de medida
+            App-->>Aluno: refazer esta pose
+        end
+    end
+
+    App->>BFF: POST ai/body-scan — 3 imagens + fact sheet
+    BFF->>BFF: resolverEscala — altura e peso conhecidos
+    Note over BFF,IA: fatos medidos entram como<br/>MEDIDAS CONHECIDAS, temperature 0
+    BFF->>IA: prompt + imagens
+    IA-->>BFF: gordura, postura, feedback, recomendações
+    BFF->>DB: grava circunferências medidas + análise
+    DB-->>BFF: ok
+    BFF-->>App: resultado
+    App-->>Aluno: laudo + comparação com o scan anterior
+      </pre>
+    </div>
+    <figcaption>
+      <b>Figura 2 — captura, análise e persistência</b>
+      As três fotos continuam saindo para o serviço externo, porque a análise postural depende
+      delas. O que muda é que agora viajam acompanhadas de fatos medidos — e a imagem segue sem ser
+      persistida.
+    </figcaption>
+  </figure>
+
+  <h3>O portão</h3>
+  <div class="prose">
+    <p>
+      A ordem das checagens não é arbitrária: vai da que invalida a foto inteira para a que apenas
+      degrada. A primeira que falhar produz a instrução, e nada mais é dito — uma correção por vez,
+      e silêncio significa que está bom.
+    </p>
+    <p>
+      <strong>Geometria trava. Luz não trava.</strong> Um aluno às dez da noite no quarto pode não
+      ter como resolver o contraluz, e scan marcado vale mais que scan que não aconteceu. O
+      precedente é da migration 0027: <code>framing_level_sensor: false</code> já significa "este
+      sinal não conta para este scan".
+    </p>
+  </div>
+
+  <figure>
+    <div class="mermaid-well">
+      <pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'background':'#0B0B0E','primaryColor':'#18181B','primaryTextColor':'#FAFAFA','primaryBorderColor':'#3F3F46','lineColor':'#71717A','secondaryColor':'#131316','tertiaryColor':'#131316','fontFamily':'Inter, system-ui, sans-serif','fontSize':'13px','edgeLabelBackground':'#0B0B0E'}}}%%
+flowchart TD
+    F["frame amostrado<br/>a cada 2s"] --> P["pose + máscara"]
+    P --> Q{"33 landmarks<br/>com visibilidade boa?"}
+    Q -->|não| I1["corpo cortado<br/>centralize ou afaste-se"]
+    Q -->|sim| V{"vista bate com<br/>a pose pedida?"}
+    V -->|não| I2["vire para a posição pedida"]
+    V -->|sim| E{"coroa e pés dentro<br/>da faixa de enquadramento?"}
+    E -->|não| I3["aproxime-se ou afaste-se"]
+    E -->|sim| N{"aparelho nivelado?"}
+    N -->|não| I4["ajuste a inclinação"]
+    N -->|sim| L["mede luz<br/>média e contraluz"]
+    L --> OK["libera o disparo"]
+    L -.->|"não bloqueia"| W["registra luz ruim no scan<br/>vira aviso após a captura"]
+
+    I1 --> S
+    I2 --> S
+    I3 --> S
+    I4 --> S
+    S["fala só a de maior prioridade<br/>e só se mudou desde a última"] --> F
+
+    classDef trava fill:#14200A,stroke:#5C7A1E,color:#D9F99D
+    classDef marca fill:#231A08,stroke:#8A6516,color:#FDE68A
+    classDef instr fill:#131316,stroke:#3F3F46,color:#D4D4D8
+    class OK trava
+    class W,L marca
+    class I1,I2,I3,I4,S instr
+      </pre>
+    </div>
+    <figcaption>
+      <b>Figura 3 — a cascata de decisão</b>
+      Verde libera, âmbar registra sem bloquear. A linha tracejada é a única saída que não
+      interrompe o fluxo: luz ruim marca o scan e deixa passar.
+    </figcaption>
+  </figure>
+
+  <figure>
+    <div class="mermaid-well">
+      <pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'background':'#0B0B0E','primaryColor':'#18181B','primaryTextColor':'#FAFAFA','primaryBorderColor':'#3F3F46','lineColor':'#71717A','secondaryColor':'#131316','tertiaryColor':'#131316','fontFamily':'Inter, system-ui, sans-serif','fontSize':'13px','labelColor':'#FAFAFA'}}}%%
+stateDiagram-v2
+    [*] --> Tutorial
+    Tutorial --> Preparando: visto, ou pulado
+    Preparando --> Corrigindo: fato fora do portão
+    Corrigindo --> Corrigindo: nova instrução
+    Corrigindo --> Preparando: correção aceita
+    Preparando --> Contando: portão liberado
+    Contando --> Corrigindo: saiu de posição
+    Contando --> Capturando: chegou a zero
+    Capturando --> Medindo
+    Medindo --> Refazer: sem coroa ou sem chão
+    Refazer --> Preparando
+    Medindo --> ProximaPose: fact sheet completo
+    ProximaPose --> Preparando: ainda faltam poses
+    ProximaPose --> Analisando: três poses prontas
+    Analisando --> Resultado
+    Resultado --> [*]
+      </pre>
+    </div>
+    <figcaption>
+      <b>Figura 4 — estados de uma sessão de captura</b>
+      <code>Contando → Corrigindo</code> é a transição que o desenho atual não tem: hoje o
+      temporizador dispara mesmo que o aluno tenha saído do lugar nos dez segundos.
+    </figcaption>
+  </figure>
+
+  <h3>O fact sheet</h3>
+  <div class="prose">
+    <p>
+      O Pose Landmarker entrega 33 landmarks com <code>x</code> e <code>y</code> normalizados,
+      <code>z</code> relativo ao quadril, <code>visibility</code> e <code>presence</code> por
+      ponto, world landmarks — cuja escala é estimada pelo modelo e <strong>não serve como
+      centímetro</strong> — e a máscara de segmentação opcional. Disso saem os fatos abaixo, que
+      são o que entra no prompt.
+    </p>
+  </div>
+
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr><th>Fato</th><th>Como sai</th><th>Por que enriquece</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Régua</strong> <span class="tag mede">mede</span></td>
+          <td class="mono">topo da máscara → contato com o chão, dividido pela altura conhecida</td>
+          <td>É a base de tudo. Substitui a localização visual que o modelo refaz a cada chamada.</td>
+        </tr>
+        <tr>
+          <td><strong>Larguras</strong> <span class="tag mede">mede</span></td>
+          <td class="mono">silhueta em cada altura: pescoço, peito, cintura no ponto mais estreito, quadril no mais largo, coxa, braço, panturrilha</td>
+          <td>Circunferência por elipse, cruzando frente e lateral — os dois eixos que a captura já produz.</td>
+        </tr>
+        <tr>
+          <td><strong>Razões</strong> <span class="tag mede">mede</span></td>
+          <td class="mono">cintura/quadril, cintura/altura, ombro/quadril</td>
+          <td>Cintura/altura é indicador melhor que o IMC e sai de graça daqui.</td>
+        </tr>
+        <tr>
+          <td><strong>Assimetria</strong> <span class="tag mede">mede</span></td>
+          <td class="mono">desnível de ombro e quadril em cm, inclinação das linhas em graus, desvio do eixo nariz→tornozelos</td>
+          <td>Hoje o laudo diz "ombro direito elevado". Passa a dizer 1,8 cm e 2,3°.</td>
+        </tr>
+        <tr>
+          <td><strong>Rotação do tronco</strong> <span class="tag mede">mede</span></td>
+          <td class="mono">diferença de profundidade entre os ombros</td>
+          <td>Diz se a foto "frontal" era mesmo frontal. Ninguém verifica isso hoje.</td>
+        </tr>
+        <tr>
+          <td><strong>Postura sagital</strong> <span class="tag mede">mede</span></td>
+          <td class="mono">ângulo craniovertebral, desvio de orelha/ombro/quadril/joelho/tornozelo contra o prumo, ângulo de joelho</td>
+          <td>Anteriorização de cabeça e hiperextensão viram graus em vez de impressão.</td>
+        </tr>
+        <tr>
+          <td><strong>Qualidade</strong> <span class="tag mede">mede</span></td>
+          <td class="mono">pitch, roll, luma média, luma dentro vs fora da máscara, visibilidade mínima, jitter entre frames</td>
+          <td>Deixa o modelo saber quanto confiar na imagem, e vira o aviso pós-captura do aluno.</td>
+        </tr>
+        <tr>
+          <td><strong>Gordura corporal</strong> <span class="tag estima">estima</span></td>
+          <td class="mono">Claude, sobre o fact sheet</td>
+          <td>Composição não é geometria. Continua com o modelo.</td>
+        </tr>
+        <tr>
+          <td><strong>Risco e feedback</strong> <span class="tag estima">estima</span></td>
+          <td class="mono">Claude, por vista</td>
+          <td>Julgamento clínico. É o que o modelo faz bem quando tem números.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flag good">
+    <p class="panel-label">Decidido — muscle_mass_kg vira lean_mass_kg</p>
+    <p>
+      O nome mente hoje. O valor sai de <code>peso × (1 − gordura)</code>, e essa conta devolve
+      <strong>massa magra</strong> — que inclui osso, órgão e água. Chamar isso de massa muscular
+      afirma uma discriminação de tecido que nenhum dos dois lados do cálculo faz.
+    </p>
+    <p>
+      A interface já sabia antes do banco: <code>ScanComparison</code> no mobile e
+      <code>BodyScanHistory</code> no web já rotulam o campo como "Massa magra". Quem estava
+      desalinhado era o schema. Junto com o nome muda a origem — o valor deixa de ser número livre
+      do modelo e passa a ser derivado, determinístico, com a conta explícita.
+    </p>
+    <p style="margin-bottom:0">
+      <strong>A coluna homônima de <code>physical_assessments</code> não é renomeada:</strong> lá a
+      massa vem do protocolo Jackson-Pollock de 7 dobras, medido com adipômetro pelo especialista.
+      Renomear as duas por simetria apagaria justamente a diferença que importa.
+    </p>
+  </div>
+
+  <h3>O consentimento</h3>
+  <div class="prose">
+    <p>
+      O texto atual promete: <em>"As imagens vão para um serviço de inteligência artificial
+      externo e não são guardadas — só o resultado fica salvo."</em> Isso descreve <strong>três
+      fotos que o aluno tira</strong>. A partir daqui o aparelho passa a olhar sozinho, a cada
+      dois segundos, enquanto a tela está aberta.
+    </p>
+    <p>
+      Não armazenar não é não tratar — o Art. 5°, X inclui coleta, acesso e processamento. O texto
+      é reescrito separando o que roda no aparelho e morre lá do que sai para fora, e
+      <code>POLICY_VERSION</code> sobe de <code>1.1</code> para <code>1.2</code>. O mecanismo já
+      existe: <code>hasCollectionConsent</code> devolve <code>false</code> quando a versão não
+      bate, e o reconsentimento acontece sozinho.
+    </p>
+  </div>
+
+  <div class="flag">
+    <p class="panel-label">Minimização — a alternativa recusada, registrada</p>
+    <p>
+      Amostrar só dentro da contagem regressiva entregaria o mesmo portão tratando estritamente
+      menos imagem, com começo e fim claros. Escolhemos a amostragem contínua para a correção
+      chegar <strong>enquanto o aluno se posiciona</strong>, e não só depois de ele iniciar a
+      contagem — que é quando ele ainda está longe da tela e mais precisa da voz. O custo é uma
+      janela de tratamento maior, pago de olhos abertos, com o consentimento dizendo isso.
+    </p>
+  </div>
+
+  <div class="flag bad">
+    <p class="panel-label">Quando a medida falha</p>
+    <p>
+      A máscara vai falhar às vezes — pé cortado no rodapé, camisa branca contra parede branca,
+      cabelo volumoso. <strong>A foto é recusada, e nunca há queda para o método antigo.</strong>
+      O fallback reintroduziria dois métodos na mesma série, invisivelmente e para sempre,
+      decidido por acaso de iluminação. Recusar é barato porque o portão é ao vivo: o aluno está em
+      pé no lugar, a dois passos da pose certa.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">05</span>O que faltava para o laudo acertar</h2>
+  <div class="prose">
+    <p>
+      Medir bem resolve metade do problema. A outra metade estava em dois lugares que o desenho
+      original não olhava: a <strong>comparabilidade entre as três fotos</strong> e o
+      <strong>contexto que o prompt nunca recebia</strong>.
+    </p>
+  </div>
+
+  <div class="panel">
+    <p class="panel-label">A mesma escala nas três fotos</p>
+    <p>
+      Cada foto converte pixel em centímetro pela <b>sua própria</b> régua, e dentro de uma foto
+      isso está certo. O problema aparece quando a análise cruza duas: a largura de cintura da
+      frente e a da lateral só descrevem o mesmo corpo se saíram da mesma distância. O aluno
+      parando a <code>0.70</code> de ocupação na frente e a <code>0.88</code> na lateral produz um
+      par de números que o modelo lê como mudança de seção transversal &mdash; e que é mudança de
+      distância.
+    </p>
+    <p>
+      A primeira pose liberada grava quanto do quadro o corpo ocupou. As seguintes têm de voltar a
+      esse valor dentro de <code>&plusmn;0.035</code> &mdash; não basta caber nas marcas, é preciso
+      <b>repetir</b>.
+    </p>
+  </div>
+
+  <figure>
+    <div class="mermaid-well">
+      <pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'background':'#0B0B0E','primaryColor':'#18181B','primaryTextColor':'#FAFAFA','primaryBorderColor':'#3F3F46','lineColor':'#71717A','secondaryColor':'#131316','tertiaryColor':'#131316','fontFamily':'Inter, system-ui, sans-serif','fontSize':'13px','edgeLabelBackground':'#0B0B0E'}}}%%
+flowchart TD
+    A["primeira pose libera"] --> B["grava ocupacaoDeReferencia<br/>fração do quadro ocupada"]
+    B --> C["pose seguinte"]
+    C --> D{"ocupação dentro de<br/>0.035 da referência?"}
+    D -->|menor| E["voz: aproxime"]
+    D -->|maior| F["voz: afaste"]
+    E --> C
+    F --> C
+    D -->|sim| G["portão libera<br/>contagem de 5s"]
+    G --> H["três fotos na mesma escala"]
+      </pre>
+    </div>
+    <figcaption>
+      <b>Figura 5 &mdash; a trava de escala</b>
+      A tolerância aqui é três vezes mais apertada que a do enquadramento inicial. A primeira foto
+      só precisa caber; as outras duas precisam repetir a primeira.
+    </figcaption>
+  </figure>
+
+  <div class="flag">
+    <p class="panel-label">Contido nas marcas, e não só centrado</p>
+    <p>
+      O retângulo na tela promete <i>"seu corpo cabe aqui dentro"</i>. O portão verificava outra
+      coisa: se o <b>centro</b> do corpo estava perto do centro das marcas. Com a tolerância de
+      altura em <code>0.12</code>, um corpo ocupando <code>0.92</code> do quadro passava &mdash; e o
+      retângulo tem <code>0.80</code>. Os dois números eram aritmeticamente incompatíveis: existia
+      corpo aceito pelo portão que não cabia no desenho, e o aluno via os próprios pés do lado de
+      fora enquanto a borda ficava verde.
+    </p>
+    <p>
+      A verificação passa a ser <b>por borda</b>, e a tolerância de distância deixa de ser
+      simétrica: quando o alvo são as marcas, não há folga para cima. Corpo maior que o retângulo
+      não cabe nele, e aceitar isso era desenhar uma promessa falsa na tela.
+    </p>
+  </div>
+
+  <div class="prose">
+    <h3>O contexto que a análise recebe</h3>
+    <p>
+      A rota via <b>três imagens e uma altura</b>, e mais nada. Duas ausências pesavam mais que
+      todo o resto.
+    </p>
+    <p>
+      <b>O scan anterior.</b> O ADR-0010 afirma que <i>"o valor está na diferença entre dois scans,
+      não no número absoluto de um só"</i> &mdash; e o modelo nunca via essa diferença. O produto
+      prometia um filme e o prompt entregava um retrato. Os valores anteriores entram como passado,
+      nunca como alvo: quem interpreta a variação é o modelo, e dizer para onde ela deveria ir seria
+      induzir o achado.
+    </p>
+    <p>
+      <b>A limitação física.</b> Recomendação postural para quem tem manguito operado deveria ser
+      outra, e era a mesma. Entram seis campos &mdash; lesões, cirurgias, limitações de mobilidade,
+      dor atual &mdash; com a instrução explícita de não atribuir achado postural à lesão sem que a
+      imagem sustente.
+    </p>
+  </div>
+
+  <figure>
+    <div class="mermaid-well">
+      <pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'background':'#0B0B0E','primaryColor':'#18181B','primaryTextColor':'#FAFAFA','primaryBorderColor':'#3F3F46','lineColor':'#71717A','secondaryColor':'#131316','tertiaryColor':'#131316','fontFamily':'Inter, system-ui, sans-serif','fontSize':'13px','edgeLabelBackground':'#0B0B0E'}}}%%
+flowchart LR
+    subgraph ap["No aparelho"]
+        M["fact sheet<br/>pixels e graus"]
+    end
+    subgraph db["Supabase - cliente do titular, sob RLS"]
+        S["body_scans<br/>último scan"]
+        A["student_anamnesis<br/>6 campos nomeados"]
+        T["training_periodizations<br/>objetivo do plano ativo"]
+    end
+    subgraph bf["No BFF"]
+        E["resolverEscala<br/>altura e peso"]
+        F["descreverFatosMedidos<br/>px / altura = cm"]
+        C["carregarContextoDoScan"]
+        P["prompt único<br/>temperature 0"]
+    end
+    M --> F
+    E --> F
+    S --> C
+    A --> C
+    T --> C
+    F --> P
+    C --> P
+    P --> IA["Claude Sonnet"]
+    IA --> L["o que mudou desde o último scan,<br/>lido contra o que o corpo aguenta"]
+      </pre>
+    </div>
+    <figcaption>
+      <b>Figura 6 &mdash; o que entra no prompt</b>
+      A anamnese entra por campo nomeado no próprio <code>select</code>, nunca pelo objeto inteiro:
+      pedir <code>responses</code> para filtrar depois traria medicação, renda e histórico familiar
+      até a borda do processo sem finalidade nenhuma <b>(Art. 6&deg;, III)</b>. O contexto é
+      enriquecimento, não pré-requisito &mdash; se a consulta falha, o laudo sai sem a comparação em
+      vez de não sair.
+    </figcaption>
+  </figure>
+
+  <div class="panel">
+    <p class="panel-label">Um agente por tópico &mdash; recusado</p>
+    <p>
+      A alternativa levantada foi especializar: um agente de treino, um de postura, um de
+      composição, com um orquestrador juntando as respostas. Não entra, pela razão que decidiu
+      quase tudo neste documento &mdash; <b>profundidade, não superfície</b>. Três agentes olhando a
+      mesma foto produzem três leituras que precisam ser reconciliadas por um quarto, e nenhum
+      deles sabe o que os outros viram.
+    </p>
+    <p>
+      A imprecisão do laudo não vinha de faltar especialista: vinha de faltar <b>medida</b> e
+      faltar <b>contexto</b>, e as duas foram atacadas direto. Um segundo modelo entra quando
+      houver um seam real &mdash; quando a análise de exercício existir e tiver pergunta própria
+      &mdash;, não antes.
+    </p>
+    <p>
+      <b>Dívida registrada:</b> esta rota fala com o SDK da Anthropic direto, e o ADR-0011 exige
+      que todo orquestrador passe pelo <code>AIProvider</code>. Levá-la para lá é trabalho
+      conhecido e fora do escopo desta issue.
+    </p>
+  </div>
+
+  <div class="flag good">
+    <p class="panel-label">O laudo não elogia</p>
+    <p>
+      <code>temperature: 0</code> e uma seção de estilo que proíbe elogio, encorajamento e consolo.
+      Corpo sem alteração relevante recebe <i>"nada a apontar"</i>, não um parágrafo simpático;
+      achado não é suavizado para poupar o aluno nem inventado para o texto parecer útil; e nada de
+      julgamento estético &mdash; o texto descreve postura e proporção, nunca aparência. A régua:
+      escreve-se para quem vai <b>agir</b> sobre o corpo, não para quem quer se sentir bem sobre
+      ele.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">06</span>Decisões travadas</h2>
+  <div class="prose">
+    <p>Saíram da sessão de grilling que originou este ADR. Cada uma fechou um ramo do desenho.</p>
+  </div>
+
+  <dl class="decisions">
+    <div class="decision">
+      <dt>Plataforma</dt>
+      <dd>Android apenas. iOS fica para quando o primeiro build existir.<em>não há app/ios/ no repositório</em></dd>
+    </div>
+    <div class="decision">
+      <dt>Amostragem</dt>
+      <dd>Contínua enquanto a câmera está aberta, a cada dois segundos.<em>cadência casada com a duração de uma frase falada</em></dd>
+    </div>
+    <div class="decision">
+      <dt>Dono da câmera</dt>
+      <dd>O módulo nativo. O <code>expo-camera</code> sai do body scan e segue no resto do app.<em>a alternativa gravaria dezenas de JPEGs de corpo inteiro em disco</em></dd>
+    </div>
+    <div class="decision">
+      <dt>Voz</dt>
+      <dd>Tela primária, voz como toggle. O portão funciona inteiro no mudo.<em>mute vira preferência no assessmentStore, que já persiste em MMKV</em></dd>
+    </div>
+    <div class="decision">
+      <dt>Travar ou marcar</dt>
+      <dd>Geometria trava. Luz marca e avisa depois da captura.<em>precedente: framing_level_sensor já significa "este sinal não conta"</em></dd>
+    </div>
+    <div class="decision">
+      <dt>Vista lateral</dt>
+      <dd>Portão relaxado: régua, luz e nível, sem as checagens de simetria.<em>em perfil metade dos landmarks se auto-oclui</em></dd>
+    </div>
+    <div class="decision">
+      <dt>Série antiga</dt>
+      <dd>Sem marcador de método. O método antigo sai do código e os scans de teste vão junto.<em>nada em produção — custa zero hoje e caro em seis meses</em></dd>
+    </div>
+    <div class="decision">
+      <dt>Tutorial</dt>
+      <dd>Tela própria, obrigatória na primeira vez, pulável depois, com "ver de novo" na intro.<em>ensina só o que o aluno controla: descalço, roupa justa, cômodo claro</em></dd>
+    </div>
+    <div class="decision">
+      <dt>Consentimento</dt>
+      <dd>Texto reescrito separando o que é processado no aparelho e morre lá do que sai para o serviço externo.<em>sujeito ao parecer do /lgpd-check</em></dd>
+    </div>
+    <div class="decision">
+      <dt>Escrita na análise</dt>
+      <dd><code>body_scans_own</code> deixa de ser <code>FOR ALL</code>: vira INSERT/SELECT/DELETE.<em>com o número virando medida, adulterar passa a ter consequência</em></dd>
+    </div>
+    <div class="decision">
+      <dt>Consentimento</dt>
+      <dd>Texto reescrito e <code>POLICY_VERSION</code> em <code>1.2</code> — todo aluno consente de novo.<em>mesmo motivo da 1.1: não faltava autorização, faltava o aluno saber</em></dd>
+    </div>
+    <div class="decision">
+      <dt>Temperatura</dt>
+      <dd><code>temperature: 0</code> na rota. Reduz muito a variação entre chamadas — não elimina.<em>uma linha, custo zero</em></dd>
+    </div>
+  </dl>
+</section>
+
+<section>
+  <h2><span class="num">07</span>O que o /lgpd-check exigiu</h2>
+  <div class="prose">
+    <p>
+      O parecer rodou em 30/08/2026 e mudou o escopo em quatro pontos. Os dois primeiros viram
+      código; os dois últimos viram regra de revisão.
+    </p>
+  </div>
+
+  <div class="panel">
+    <p class="panel-label">Vira código</p>
+    <p>
+      <strong><code>body_scans_own</code> deixa de ser <code>FOR ALL</code>.</strong> Hoje o aluno
+      pode dar UPDATE na própria análise. Era tolerável enquanto os números eram estimativa do
+      modelo; com eles virando <em>medida</em>, adulterar passa a ter consequência — e a tabela
+      deixa. É a mesma falha que a <code>0036</code> corrigiu em <code>workout_sessions</code>, onde
+      a doc dizia que o histórico era imutável e o banco discordava. Vira INSERT/SELECT/DELETE: o
+      DELETE fica, porque o direito de exclusão por item depende dele.
+    </p>
+    <p style="margin-bottom:0">
+      <strong>Os campos novos aparecem para o aluno</strong>, não só para o especialista. Régua,
+      larguras e ângulos são dados sobre o corpo dele (Art. 18, II). Coluna que só o profissional
+      lê é tratamento sem livre acesso.
+    </p>
+  </div>
+
+  <div class="flag">
+    <p class="panel-label">Vira regra de revisão</p>
+    <p style="margin-bottom:0">
+      <strong>O fact sheet nunca entra em log.</strong> "Desnível de ombro de 1,8 cm" é inferência
+      sobre saúde de titular identificado — a mesma regra que já vale para o sinal de inatividade
+      do briefing.
+    </p>
+  </div>
+
+  <div class="flag bad">
+    <p class="panel-label">Achado colateral, já corrigido</p>
+    <p>
+      <code>body_scans</code> — que a <code>0017</code> chama de <em>"o dado mais sensível do
+      schema"</em> — não tinha <strong>nenhum</strong> teste comportamental de RLS. Só a checagem
+      estrutural de que a política existe. Ligada e correta são coisas diferentes.
+    </p>
+    <p style="margin-bottom:0">
+      A trava foi escrita e <strong>provada negativamente</strong>: afrouxando a política num
+      escopo descartável, o aluno B passou a ler a análise do aluno A, e o teste acusa.
+    </p>
+  </div>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Trava</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>verify-rls.sql</code> — aluno não lê análise de outro aluno; especialista sem vínculo não lê nenhuma</td>
+          <td class="mono">escrita, passando, prova negativa feita</td>
+        </tr>
+        <tr>
+          <td><code>aiBodyScan</code> — a imagem não é codificada sem consentimento <span class="mono">Art. 11, I</span></td>
+          <td class="mono">nasce com a feature</td>
+        </tr>
+        <tr>
+          <td><code>route</code> — a circunferência gravada é a do payload medido, nunca a do modelo <span class="mono">Art. 6°, V</span></td>
+          <td class="mono">nasce com a feature</td>
+        </tr>
+        <tr>
+          <td><code>route</code> — nenhum valor do fact sheet aparece em log <span class="mono">Art. 6°, VIII</span></td>
+          <td class="mono">nasce com a feature</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">08</span>Consequências</h2>
+
+  <div class="conseq">
+    <div class="conseq-block easier">
+      <h3>Fica mais fácil</h3>
+      <ul>
+        <li><strong>Defender o número:</strong> a régua vira medida com erro caracterizável, no lugar de uma localização visual que muda a cada chamada.</li>
+        <li><strong>Testar:</strong> <code>analisarCaptura</code> e <code>avaliarPortao</code> rodam sobre imagens de fixture, sem câmera, sem device, sem rede. Hoje não há nada testável nesse caminho.</li>
+        <li><strong>Escrever o laudo:</strong> "ombro direito 1,8 cm acima do esquerdo, linha a 2,3° da horizontal" no lugar de "ombro direito elevado".</li>
+        <li><strong>Instruir o aluno:</strong> o app passa a dizer <em>o que</em> corrigir, por voz, enquanto ele está longe da tela.</li>
+      </ul>
+    </div>
+
+    <div class="conseq-block harder">
+      <h3>Fica mais difícil</h3>
+      <ul>
+        <li>Toda subida de Expo SDK passa a poder exigir rebuild do módulo nativo. É dívida permanente.</li>
+        <li>O iOS fica sem body scan até o primeiro build existir.</li>
+        <li><strong>Todo aluno consente de novo.</strong> A <code>POLICY_VERSION</code> sobe para <code>1.2</code>, e quem já autorizou é perguntado outra vez antes do próximo scan. É o preço de o texto passar a ser verdade.</li>
+        <li><strong>Roupa larga passa a produzir número preciso e errado</strong> — pior que impreciso e errado, porque parece confiável. A mitigação é o tutorial, não o código. E vale registrar que isso atinge o modelo do mesmo jeito: ele também só vê o tecido.</li>
+      </ul>
+    </div>
+
+    <div class="conseq-block blocks">
+      <h3>O que isto bloqueia</h3>
+      <ul>
+        <li><strong>Circunferência medida substituir a do modelo</strong> depende de validação contra as fitas já gravadas em <code>physical_assessments</code>: 5 pessoas, tolerância ±3 cm em cintura e quadril. Reprovando, essa parte não entra e o resto segue valendo.</li>
+        <li><strong>Rastreio de exercício</strong> usa a mesma engine e não entra aqui. A interface do módulo é desenhada só para o body scan; o segundo consumidor paga o seam.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="panel-label">Consequência administrativa</p>
+    <p>
+      Como não há nada em produção, o método antigo <strong>sai do código junto</strong> — sem
+      coluna de método, sem <code>compareScans</code> checando procedência, sem rótulo na tela. Um
+      marcador para distinguir de um método recém-apagado seria seam hipotético. Os scans de teste
+      vão junto, no molde da migration 0037: avaliação incompleta se apaga, não se completa.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">09</span>Como reverter</h2>
+  <div class="prose">
+    <p>
+      Se o módulo nativo se mostrar insustentável — build quebrando a cada SDK, ou desempenho
+      abaixo do que o laço de voz exige —, o caminho de volta é a <strong>Opção B</strong>: o
+      módulo sai, o <code>expo-camera</code> volta a desenhar a preview, e o prompt volta a pedir a
+      proporção. Custa reescrever <code>BodyScanCamera</code> e perder a régua.
+    </p>
+  </div>
+
+  <div class="flag good">
+    <p class="panel-label">O que não se reverte</p>
+    <p>
+      <code>temperature: 0</code> e a saída de <code>muscle_mass_kg</code> como massa em quilos
+      estimada por foto. Essas duas não são trade-off; são defeito.
+    </p>
+  </div>
+</section>
+
+</div>
+
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, securityLevel: "loose" });
+</script>
+</body>
+</html>

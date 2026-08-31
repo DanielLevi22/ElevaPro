@@ -12,6 +12,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const LESAO = "Hérnia de disco L5-S1 — proibido agachamento livre";
 
 let tables: Record<string, { data: unknown; error: unknown }>;
+/** Colunas pedidas por tabela — é como afirmamos que a consulta existe. */
+let selected: Record<string, string>;
 
 const mockFrom = vi.fn((table: string) => {
   const builder: Record<string, unknown> = {};
@@ -19,7 +21,10 @@ const mockFrom = vi.fn((table: string) => {
   builder.eq = vi.fn(chain);
   builder.order = vi.fn(chain);
   builder.limit = vi.fn(chain);
-  builder.select = vi.fn(chain);
+  builder.select = vi.fn((columns: string) => {
+    selected[table] = columns;
+    return builder;
+  });
   builder.single = vi.fn(async () => tables[table] ?? { data: null, error: null });
   builder.maybeSingle = vi.fn(async () => tables[table] ?? { data: null, error: null });
   // biome-ignore lint/suspicious/noThenProperty: o builder do PostgREST é thenable
@@ -57,6 +62,7 @@ const ANAMNESE_EMBRULHADA = {
 describe("contexto do coach do aluno", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    selected = {};
     tables = {
       profiles: PERFIL,
       student_anamnesis: ANAMNESE_EMBRULHADA,
@@ -151,5 +157,55 @@ describe("tempo de treino não se confunde com tempo antes da pausa", () => {
     });
 
     expect(prompt).toContain("antes da pausa: 2 anos");
+  });
+});
+
+/**
+ * Duas consultas deste arquivo pediam colunas que nunca existiram, e o erro era
+ * descartado: o aluno com avaliação e plano ativo via o coach afirmar que ele
+ * não tinha nem um nem outro. Sobreviveram escondidas atrás do `as never`, que
+ * impede o `check-column-refs` de enxergar a consulta.
+ */
+describe("as colunas que este loader pede", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    selected = {};
+    tables = { profiles: PERFIL };
+  });
+
+  it("pede as colunas que a avaliação física realmente tem", async () => {
+    await loadStudentCoachContext("aluno-1");
+
+    expect(selected.physical_assessments).toBe("weight_kg, height_cm, body_fat_pct, assessed_at");
+    expect(selected.physical_assessments).not.toContain("body_fat_percentage");
+  });
+
+  it("pede `objective`, que é como a coluna da periodização se chama", async () => {
+    await loadStudentCoachContext("aluno-1");
+
+    expect(selected.training_periodizations).toBe("name, objective, status");
+  });
+
+  it("entrega o plano ativo com o objetivo dentro", async () => {
+    tables.training_periodizations = {
+      data: { name: "Base de força", objective: "Hipertrofia", status: "active" },
+      error: null,
+    };
+
+    const ctx = await loadStudentCoachContext("aluno-1");
+
+    expect(ctx.activePlan).toEqual({
+      name: "Base de força",
+      goal: "Hipertrofia",
+      status: "active",
+    });
+  });
+
+  // "A consulta quebrou" chegava ao prompt como "o aluno não tem" — a forma
+  // mais cara de um bug se esconder.
+  it("não deixa erro de consulta virar ausência de dado", async () => {
+    tables.training_periodizations = { data: null, error: { code: "42703" } };
+
+    await expect(loadStudentCoachContext("aluno-1")).rejects.toMatchObject({ code: "42703" });
   });
 });

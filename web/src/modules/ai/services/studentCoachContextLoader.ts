@@ -19,13 +19,13 @@ export interface StudentCoachContext {
 export async function loadStudentCoachContext(studentId: string): Promise<StudentCoachContext> {
   const [profileRes, anamnesisRes, assessmentRes, planRes] = await Promise.all([
     supabaseAdmin
-      .from("profiles" as never)
+      .from("profiles")
       .select("full_name, coach_mode, persona_track")
       .eq("id", studentId)
       .single(),
 
     supabaseAdmin
-      .from("student_anamnesis" as never)
+      .from("student_anamnesis")
       .select("responses, completed_at")
       .eq("student_id", studentId)
       .order("created_at", { ascending: false })
@@ -33,16 +33,25 @@ export async function loadStudentCoachContext(studentId: string): Promise<Studen
       .maybeSingle(),
 
     supabaseAdmin
-      .from("physical_assessments" as never)
-      .select("weight, height, body_fat_percentage, created_at")
+      .from("physical_assessments")
+      // `weight_kg, height_cm, body_fat_pct, assessed_at`, não
+      // `weight, height, body_fat_percentage, created_at`: as quatro nunca
+      // existiram. O PostgREST recusava o `select` inteiro com 42703 e o erro
+      // era descartado, então o coach do aluno dizia "sem avaliação" para quem
+      // tinha uma. É o mesmo defeito que o `specialistContextLoader` já
+      // corrigiu — aqui ele sobreviveu escondido pelo `as never`, que impede o
+      // `check-column-refs` de enxergar a consulta.
+      .select("weight_kg, height_cm, body_fat_pct, assessed_at")
       .eq("student_id", studentId)
-      .order("created_at", { ascending: false })
+      .order("assessed_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
 
     supabaseAdmin
-      .from("training_periodizations" as never)
-      .select("name, goal, status")
+      .from("training_periodizations")
+      // `objective`, não `goal`. Mesmo 42703, mesmo erro descartado: o aluno
+      // com plano ativo via o coach afirmar que ele não tinha nenhum.
+      .select("name, objective, status")
       .eq("student_id", studentId)
       .eq("status", "active")
       .limit(1)
@@ -55,23 +64,31 @@ export async function loadStudentCoachContext(studentId: string): Promise<Studen
     persona_track: string | null;
   } | null) ?? { full_name: "Aluno", coach_mode: null, persona_track: null };
 
+  // Erro não é ausência. As duas consultas acima falhavam em silêncio porque
+  // ninguém olhava o `error`, e "a consulta quebrou" chegava ao prompt como
+  // "o aluno não tem" — que é a forma mais cara de um bug se esconder.
+  for (const resultado of [anamnesisRes, assessmentRes, planRes]) {
+    if (resultado.error) throw resultado.error;
+  }
+
   const rawAssessment = assessmentRes.data as {
-    weight?: number;
-    height?: number;
-    body_fat_percentage?: number;
-    created_at?: string;
+    weight_kg?: number;
+    height_cm?: number;
+    body_fat_pct?: number;
+    assessed_at?: string;
   } | null;
 
   const lastAssessment = rawAssessment
     ? {
-        weight_kg: rawAssessment.weight,
-        height_cm: rawAssessment.height,
-        body_fat_pct: rawAssessment.body_fat_percentage,
-        date: rawAssessment.created_at,
+        weight_kg: rawAssessment.weight_kg,
+        height_cm: rawAssessment.height_cm,
+        body_fat_pct: rawAssessment.body_fat_pct,
+        date: rawAssessment.assessed_at,
       }
     : null;
 
-  const rawPlan = planRes.data as { name: string; goal: string; status: string } | null;
+  const bruto = planRes.data as { name: string; objective: string; status: string } | null;
+  const rawPlan = bruto ? { name: bruto.name, goal: bruto.objective, status: bruto.status } : null;
 
   // Achatada aqui, uma vez, e não em cada consumidor. Três leem este campo — o
   // formatador do prompt, o resumo de perfil e o cálculo de prontidão —, e o

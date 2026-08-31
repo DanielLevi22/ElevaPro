@@ -1,3 +1,4 @@
+import type { MedidasGeometricas, VereditosDaCaptura } from '@elevapro/shared';
 /**
  * Como a foto foi enquadrada.
  *
@@ -40,7 +41,8 @@ export interface BodyScanResult {
     height: number;
     weight: number;
     bodyFat: number;
-    muscleMass: number;
+    /** Massa magra: `peso × (1 − gordura)`. Inclui osso, órgão e água. */
+    leanMass: number | null;
     bmi: number;
   };
   segments: {
@@ -56,10 +58,20 @@ export interface BodyScanResult {
   imageUrl: string;
   /**
    * De onde vieram altura e peso — nunca do modelo (`ADR-0010`). A tela usa isto
-   * para dizer se a régua é medida ou informada, o que muda a confiança nas
+   * para dizer se a Escala foi medida ou informada, o que muda a confiança nas
    * circunferências derivadas dela.
    */
   scaleSource?: 'assessment' | 'informed';
+  /**
+   * O que o aparelho mediu, já em centímetro e grau.
+   *
+   * Volta para a tela porque medida que só o especialista lê é tratamento sem
+   * livre acesso (Art. 18, II). Opcional: análise feita quando a máscara não
+   * mediu nada chega sem isto, e a tela omite a seção em vez de mostrar traços.
+   */
+  measured?: MedidasGeometricas;
+  /** O que o portão concluiu sobre a captura. Alimenta o selo de confiança. */
+  quality?: VereditosDaCaptura;
   postureAnalysis?: {
     scores: {
       symmetry: number;

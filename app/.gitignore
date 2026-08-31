@@ -12,5 +12,14 @@ coverage
 # Projeto nativo — gerado por `expo prebuild` a partir do app.json (CNG).
 # Versionar android/ faz o EAS ignorar plugins, permissoes e icones do app.json:
 # a pasta commitada vence, e mudancas de config sao descartadas em silencio.
-android/
-ios/
+#
+# Com barra inicial de proposito: `android/` solto casa QUALQUER pasta com esse
+# nome em qualquer profundidade, e engolia o codigo nativo de todo Expo Module
+# local em modules/*/android/. O alvo aqui e so o prebuild da raiz.
+/android/
+/ios/
+
+# Saida de build dos Expo Modules locais. O `android/` solto de antes cobria
+# isto por acidente; com a regra ancorada, precisa ser dita.
+modules/*/android/build/
+modules/*/android/.gradle/

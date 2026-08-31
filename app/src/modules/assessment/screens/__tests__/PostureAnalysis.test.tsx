@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { useAssessmentStore } from '../../store/assessmentStore';
 import PostureAnalysis from '../PostureAnalysis';
 
@@ -116,15 +116,44 @@ describe('PostureAnalysis', () => {
     expect(screen.getByText(/nenhuma análise ainda/i)).toBeTruthy();
   });
 
-  it('mostra o score geral calculado a partir da análise', () => {
+  // Este teste mudou de lado de propósito. Antes afirmava o "Athletic Score":
+  // a média de 62, 74 e 88 — 75 —, no maior destaque da tela, com um selo
+  // EXCELENTE/REGULAR sempre verde. Nada ali era medido: ninguém avaliou
+  // performance atlética, e somar simetria com postura não produz uma quarta
+  // grandeza. Agora a tela não pode mostrar índice inventado nenhum.
+  it('não inventa um índice a partir das notas da análise', () => {
     comStore({ lastResult: RESULTADO });
     render(<PostureAnalysis />);
 
     passarOCarregamento();
 
-    // 75 é a média de 62, 74 e 88 — o número grande do topo. Os três valores
-    // individuais só aparecem dentro do radar, em SVG, que este teste stuba.
-    expect(screen.getByText('75')).toBeTruthy();
+    expect(screen.queryByText('75')).toBeNull();
+    expect(screen.queryByText(/athletic score/i)).toBeNull();
+    expect(screen.queryByText(/excelente|regular/i)).toBeNull();
+  });
+
+  // A tela produz número sobre o corpo de alguém e texto que parece prescrição
+  // ("Recomendação de Treino"). Sem dizer o que ela não é, o aluno decide treino
+  // e dieta em cima de estimativa de foto.
+  it('diz que não substitui avaliação profissional', () => {
+    comStore({ lastResult: RESULTADO });
+    render(<PostureAnalysis />);
+
+    passarOCarregamento();
+
+    expect(screen.getByText(/não substitui avaliação física presencial/i)).toBeTruthy();
+    expect(screen.getByText(/não é diagnóstico/i)).toBeTruthy();
+  });
+
+  // As três notas continuam: são o que a análise devolveu de fato. O que muda é
+  // o rótulo dizer que são estimativa, e não medida.
+  it('diz que as notas são estimativa da análise, não medida', () => {
+    comStore({ lastResult: RESULTADO });
+    render(<PostureAnalysis />);
+
+    passarOCarregamento();
+
+    expect(screen.getByText(/não são medidas/i)).toBeTruthy();
   });
 
   it('mostra a recomendação da análise, e não um texto fixo', () => {
@@ -143,5 +172,46 @@ describe('PostureAnalysis', () => {
     passarOCarregamento();
 
     expect(screen.getByText(/leve elevação à direita/i)).toBeTruthy();
+  });
+
+  // Regressão. A lista de vistas passou a ter uma lateral só, com id `side`,
+  // mas a busca da foto continuou tratando `side_r` e `side_l` — os ids de
+  // quando havia duas. Caía no default e a tela mostrava o holograma de
+  // placeholder no lugar do corpo do aluno, só na lateral. Passava despercebido
+  // porque as outras duas vistas funcionavam.
+  it('mostra a foto do aluno em todas as três vistas, inclusive a lateral', () => {
+    comStore({
+      lastResult: RESULTADO,
+      capturedImages: {
+        front: 'file:///frente.jpg',
+        back: 'file:///costas.jpg',
+        side: 'file:///lado.jpg',
+      },
+    });
+    render(<PostureAnalysis />);
+
+    passarOCarregamento();
+
+    for (const rotulo of ['Vista Frontal', 'Vista Posterior', 'Vista Lateral']) {
+      // Aparece duas vezes: subtítulo do cabeçalho e badge sobre a foto.
+      expect(screen.getAllByText(rotulo).length).toBeGreaterThan(0);
+      expect(screen.getByTestId('foto-da-vista')).toBeTruthy();
+      expect(screen.queryByTestId('sem-foto-da-vista')).toBeNull();
+
+      if (rotulo !== 'Vista Lateral') {
+        fireEvent.press(screen.getByLabelText('Próxima vista'));
+      }
+    }
+  });
+
+  // O placeholder continua existindo para quem chega sem foto no store.
+  it('cai no placeholder quando não há foto daquela vista', () => {
+    comStore({ lastResult: RESULTADO, capturedImages: {} });
+    render(<PostureAnalysis />);
+
+    passarOCarregamento();
+
+    expect(screen.getByTestId('sem-foto-da-vista')).toBeTruthy();
+    expect(screen.queryByTestId('foto-da-vista')).toBeNull();
   });
 });

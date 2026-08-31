@@ -1,48 +1,72 @@
 import { renderHook, waitFor } from '@testing-library/react-native';
-import { DeviceMotion } from 'expo-sensors';
+import { Accelerometer } from 'expo-sensors';
 import { useDeviceLevel } from '../useDeviceLevel';
 
 jest.mock('expo-sensors', () => ({
-  DeviceMotion: {
+  Accelerometer: {
     isAvailableAsync: jest.fn(),
     setUpdateInterval: jest.fn(),
     addListener: jest.fn(),
   },
 }));
 
-/** Grau → radiano, para escrever os casos em graus e ler o teste. */
-const rad = (graus: number) => (graus * Math.PI) / 180;
+const G = 9.81;
+
+/**
+ * A gravidade que um aparelho em pé sente, torcido e inclinado nos ângulos
+ * dados.
+ *
+ * Escrever o caso em graus e converter aqui é o que torna o teste legível: o
+ * hook lê o vetor, e é o vetor que o sensor entrega — sem giroscópio, sem
+ * ângulos de Euler.
+ */
+function gravidade(rollGraus: number, pitchGraus: number) {
+  const roll = (rollGraus * Math.PI) / 180;
+  const pitch = (pitchGraus * Math.PI) / 180;
+  const noPlano = G * Math.cos(pitch);
+
+  // `y` POSITIVO com o aparelho em pé. O acelerômetro em repouso não mede a
+  // gravidade: mede a força normal que segura o aparelho, que aponta para
+  // cima. A versão anterior desta fixture tinha `-y`, e por isso o teste
+  // aprovou uma conta que dava 179° de roll com o celular reto.
+  return {
+    x: -noPlano * Math.sin(roll),
+    y: noPlano * Math.cos(roll),
+    z: G * Math.sin(pitch),
+  };
+}
 
 /** Dispara uma leitura de sensor no listener registrado. */
-function emitir(beta: number, gamma: number) {
-  const listener = (DeviceMotion.addListener as jest.Mock).mock.calls[0][0];
-  listener({ rotation: { alpha: 0, beta, gamma } });
+function emitir(rollGraus: number, pitchGraus: number) {
+  const listener = (Accelerometer.addListener as jest.Mock).mock.calls[0][0];
+  listener(gravidade(rollGraus, pitchGraus));
 }
 
 describe('useDeviceLevel', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (DeviceMotion.isAvailableAsync as jest.Mock).mockResolvedValue(true);
-    (DeviceMotion.addListener as jest.Mock).mockReturnValue({ remove: jest.fn() });
+    (Accelerometer.isAvailableAsync as jest.Mock).mockResolvedValue(true);
+    (Accelerometer.addListener as jest.Mock).mockReturnValue({ remove: jest.fn() });
   });
 
   it('considera nivelado o aparelho em pé', async () => {
     const { result } = renderHook(() => useDeviceLevel());
-    await waitFor(() => expect(DeviceMotion.addListener).toHaveBeenCalled());
+    await waitFor(() => expect(Accelerometer.addListener).toHaveBeenCalled());
 
-    emitir(rad(90), rad(0));
+    emitir(0, 0);
 
     await waitFor(() => expect(result.current.nivelado).toBe(true));
     expect(result.current.pitch).toBe(0);
+    expect(result.current.roll).toBe(0);
   });
 
   it('recusa inclinação além da tolerância', async () => {
     const { result } = renderHook(() => useDeviceLevel());
-    await waitFor(() => expect(DeviceMotion.addListener).toHaveBeenCalled());
+    await waitFor(() => expect(Accelerometer.addListener).toHaveBeenCalled());
 
     // 20° para trás encurta o corpo na imagem por perspectiva, e a altura em
     // pixels é a régua de todas as medidas derivadas.
-    emitir(rad(70), rad(0));
+    emitir(0, -20);
 
     // Esperar por `nivelado === false` passaria de imediato: é o estado
     // inicial. O pitch só chega pelo listener, então é ele que prova a leitura.
@@ -52,16 +76,16 @@ describe('useDeviceLevel', () => {
 
   it('recusa torção lateral além da tolerância', async () => {
     const { result } = renderHook(() => useDeviceLevel());
-    await waitFor(() => expect(DeviceMotion.addListener).toHaveBeenCalled());
+    await waitFor(() => expect(Accelerometer.addListener).toHaveBeenCalled());
 
-    emitir(rad(90), rad(15));
+    emitir(15, 0);
 
     await waitFor(() => expect(result.current.roll).toBe(15));
     expect(result.current.nivelado).toBe(false);
   });
 
   it('sem sensor, libera o disparo em vez de prender o aluno', async () => {
-    (DeviceMotion.isAvailableAsync as jest.Mock).mockResolvedValue(false);
+    (Accelerometer.isAvailableAsync as jest.Mock).mockResolvedValue(false);
 
     const { result } = renderHook(() => useDeviceLevel());
 
@@ -70,6 +94,40 @@ describe('useDeviceLevel', () => {
     // Só o ramo sem sensor produz `nivelado: true`, então é ele que se espera.
     await waitFor(() => expect(result.current.nivelado).toBe(true));
     expect(result.current.disponivel).toBe(false);
-    expect(DeviceMotion.addListener).not.toHaveBeenCalled();
+    expect(Accelerometer.addListener).not.toHaveBeenCalled();
+  });
+
+  // O aparelho de teste não tem giroscópio, e o `rotation` do DeviceMotion só
+  // existe com ele. O listener caía fora, `disponivel` ficava `false` para
+  // sempre, e a checagem de nível do portão era pulada em todo scan — trava
+  // inerte desde que nasceu. A gravidade vem do acelerômetro, que todo
+  // aparelho tem.
+  it('lê o nível pelo acelerômetro, sem depender de giroscópio', async () => {
+    const { result } = renderHook(() => useDeviceLevel());
+    await waitFor(() => expect(Accelerometer.addListener).toHaveBeenCalled());
+
+    const listener = (Accelerometer.addListener as jest.Mock).mock.calls[0][0];
+    listener(gravidade(3, 0));
+
+    await waitFor(() => expect(result.current.disponivel).toBe(true));
+    expect(result.current.roll).toBe(3);
+  });
+
+  // A leitura real do aparelho de teste, apoiado e pronto para escanear. Serve
+  // de âncora: qualquer conta que devolva 179° para este vetor está errada,
+  // por mais que o resto dos casos passe.
+  it('lê o aparelho apoiado como quase reto, e não de cabeça para baixo', async () => {
+    const { result } = renderHook(() => useDeviceLevel());
+    await waitFor(() => expect(Accelerometer.addListener).toHaveBeenCalled());
+
+    const listener = (Accelerometer.addListener as jest.Mock).mock.calls[0][0];
+    listener({ x: 0.17, y: 9.18, z: 1.49 });
+
+    await waitFor(() => expect(result.current.disponivel).toBe(true));
+    expect(Math.abs(result.current.roll)).toBeLessThan(2);
+    // Apoiado, ele fica naturalmente perto de 9° para trás — dentro da
+    // tolerância de pitch, que é folgada justamente por isso.
+    expect(result.current.pitch).toBeCloseTo(9.2, 0);
+    expect(result.current.nivelado).toBe(true);
   });
 });

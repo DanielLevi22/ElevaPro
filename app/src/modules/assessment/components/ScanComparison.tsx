@@ -4,7 +4,7 @@ import { Text, View } from 'react-native';
 const LABELS: Record<ComparableField, string> = {
   weight_kg: 'Peso',
   body_fat_pct: 'Gordura',
-  muscle_mass_kg: 'Massa magra',
+  lean_mass_kg: 'Massa magra',
   bmi: 'IMC',
   circ_chest: 'Peito',
   circ_waist: 'Cintura',
@@ -14,12 +14,13 @@ const LABELS: Record<ComparableField, string> = {
   circ_calves: 'Panturrilha',
   circ_neck: 'Pescoço',
   circ_shoulders: 'Ombro',
+  shoulder_drop_cm: 'Desnível de ombro',
 };
 
 const UNITS: Partial<Record<ComparableField, string>> = {
   weight_kg: 'kg',
   body_fat_pct: '%',
-  muscle_mass_kg: 'kg',
+  lean_mass_kg: 'kg',
   bmi: '',
 };
 

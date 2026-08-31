@@ -1,4 +1,4 @@
-import { createHealthService } from '@elevapro/shared';
+import { createHealthService, type EtapaDaAnalise } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -11,9 +11,43 @@ import { ROUTES } from '@/navigation/types';
 import { useAssessmentStore } from '../store/assessmentStore';
 import { AssessmentStatus } from '../types/assessment';
 
+/**
+ * A frase do aluno e o diagnóstico de quem conserta, com pesos diferentes.
+ *
+ * `mensagemDeErroBff` devolve as duas no mesmo texto, separadas por linha em
+ * branco. Renderizadas juntas e com o mesmo estilo, o aluno lia
+ * "java.io.IOException: unexpected end of stream" como se fosse instrução do
+ * que ele deveria fazer — e a frase que realmente diz o que fazer se perdia no
+ * meio. O bloco `[dev]` só existe em desenvolvimento.
+ */
+function MensagemDaFalha({ texto }: { texto: string | null }) {
+  const [mensagem, ...diagnostico] = (
+    texto ?? 'Não consegui completar a análise. Tente de novo.'
+  ).split('\n\n');
+
+  return (
+    <>
+      <Text className="text-zinc-200 text-base text-center mt-4 leading-6">{mensagem}</Text>
+      {diagnostico.length > 0 && (
+        <View className="mt-4 w-full rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-3">
+          <Text className="text-zinc-400 text-xs leading-5">{diagnostico.join('\n\n')}</Text>
+        </View>
+      )}
+    </>
+  );
+}
+
+/** O que cada etapa do fluxo significa para quem está esperando. */
+const TEXTO_DA_ETAPA: Record<EtapaDaAnalise, string> = {
+  lendo: 'Lendo as suas três fotos.',
+  proporcoes: 'Calculando as proporções do seu corpo.',
+  postura: 'Analisando a sua postura.',
+  recomendacoes: 'Escrevendo as recomendações.',
+};
+
 export default function BodyScanProcessing() {
   const router = useRouter();
-  const { capturedImages, submitScan, status, errorMessage } = useAssessmentStore();
+  const { capturedImages, submitScan, status, errorMessage, etapaDaAnalise } = useAssessmentStore();
   const [granting, setGranting] = useState(false);
 
   useEffect(() => {
@@ -107,12 +141,10 @@ export default function BodyScanProcessing() {
           <Text className="text-white text-2xl font-black text-center">
             A análise não completou
           </Text>
-          <Text className="text-zinc-400 text-sm text-center mt-4 leading-relaxed">
-            {errorMessage ?? 'Não consegui completar a análise. Tente de novo.'}
-          </Text>
+          <MensagemDaFalha texto={errorMessage} />
           {/* As fotos continuam no store: repetir a captura depois de esperar
               a análise é o que fazia o aluno desistir. */}
-          <Text className="text-zinc-500 text-xs text-center mt-3">
+          <Text className="text-zinc-400 text-sm text-center mt-4">
             Suas fotos foram mantidas — não precisa tirar de novo.
           </Text>
 
@@ -188,8 +220,15 @@ export default function BodyScanProcessing() {
         </View>
 
         <Text className="text-white text-2xl font-black font-display mb-2">Analisando...</Text>
-        <Text className="text-zinc-400 text-center px-10">
-          Nossa IA está construindo seu modelo 3D e calculando suas métricas.
+        {/* A etapa vem do fluxo do BFF: é a seção que o modelo acabou de
+            escrever. Antes esta linha dizia "construindo seu modelo 3D",
+            que não existe — e não mudava nunca, então trinta segundos de
+            espera eram indistinguíveis de tela travada. */}
+        <Text className="text-zinc-300 text-center px-10 text-base">
+          {TEXTO_DA_ETAPA[etapaDaAnalise ?? 'lendo']}
+        </Text>
+        <Text className="text-zinc-500 text-center px-10 text-xs mt-2">
+          Costuma levar cerca de meio minuto.
         </Text>
       </Animated.View>
 

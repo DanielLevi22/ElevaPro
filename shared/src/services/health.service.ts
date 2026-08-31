@@ -23,8 +23,15 @@ export const CONSENT_HEALTH_COLLECTION = "health_data_collection";
  *   não é uso secundário, é o uso: é ela que dá a base de tutela da saúde do
  *   Art. 11, II, f. O que faltava não era autorização, era o aluno saber disso
  *   na hora de escrever.
+ * - `1.2` (2026-08-31) — acrescenta que **a câmera analisa continuamente no
+ *   aparelho enquanto a tela do Body scan está aberta**. O texto da `1.1`
+ *   descrevia três fotos que o aluno tira; a partir do portão de captura o
+ *   aparelho olha sozinho, a cada dois segundos, para poder corrigir a posição
+ *   por voz. Não armazenar não é não tratar — o Art. 5º, X inclui coleta,
+ *   acesso e processamento —, e o mesmo motivo da `1.1` vale aqui: não faltava
+ *   autorização, faltava o aluno saber (`ADR-0022`).
  */
-export const POLICY_VERSION = "1.1";
+export const POLICY_VERSION = "1.2";
 
 export const createHealthService = (supabase: SupabaseClient) => ({
   /**

@@ -72,6 +72,9 @@ Dados referentes à saúde exigem **base legal específica** e proteção refor�
 | Histórico de saúde (anamnese) | `student_anamnesis.responses` | Consentimento explícito (Art. 11, I) | Informar o especialista sobre limitações, lesões, medicamentos |
 | Altura e peso declarados | `student_anamnesis.responses` (campos `height`, `weight`) | Tutela da saúde (Art. 11, II, f) + Consentimento | **Origem secundária da Escala**: calibram o Body scan quando não há avaliação física. Lidos por campo nomeado no banco, nunca `responses` inteiro |
 | Origem da Escala | `body_scans.scale_source` | Tutela da saúde + Consentimento | Registrar se a altura que calibrou o scan foi medida com fita ou declarada pelo aluno — o especialista precisa saber se pondera ou confia no número |
+| **Geometria medida no aparelho** — régua px/cm, larguras de silhueta, ângulos de assimetria e postura | `body_scans` (colunas do ADR-0022) | Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I) | Substituir a estimativa visual do modelo por medida reprodutível. A régua fica gravada porque sem ela não há como saber se dois escaneamentos são comparáveis — mesma razão de `framing_camera` |
+| **Qualidade da captura** — contraluz, luminância, visibilidade mínima | `body_scans` (colunas do ADR-0022) | Mesma base do scan | Dizer ao especialista quanto confiar naquele número (Art. 6°, V). Guarda-se o **veredito**, nunca o histograma ou o recorte de imagem |
+| **Imagem do corpo processada ao vivo no aparelho** | *não persiste em lugar nenhum* | Tutela da saúde + **Consentimento informado sobre o processamento local** | Posicionar o aluno e medir. É tratamento pelo Art. 5°, X mesmo sem armazenamento — e por isso precisa estar no texto de consentimento, o que exige `POLICY_VERSION` nova |
 | Dados de treino executado (séries, cargas, datas, `intensity`) | `workout_sessions` | Execução de contrato | Acompanhamento de desempenho |
 | **Observações do aluno sobre a própria sessão** | `workout_sessions.notes` | **Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I)** | Ajuste de prescrição a partir do que o aluno relata |
 | Tipo, duração e calorias da sessão | `workout_sessions.session_type`, `.duration_seconds`, `.active_calories` | Execução de contrato | Distinguir cardio de musculação e medir a sessão |
@@ -154,6 +157,27 @@ Para cada tipo de tratamento, deve existir uma base legal documentada. Não exis
 | Histórico de mensagens | Execução de contrato | Art. 7°, V |
 | Member cria plano alimentar próprio (sem especialista) | Consentimento explícito | Art. 11, I |
 | Sinal derivado de inatividade para o especialista vinculado (briefing) | Mesma base do dado de origem — Execução de contrato para `workout_sessions`, Consentimento explícito para a data de conclusão da anamnese | Art. 7°, V + Art. 11, I |
+| **Processamento local contínuo da imagem do corpo durante a captura** (ADR-0022) | Tutela da saúde + Consentimento explícito | Art. 11, II, f + I |
+
+**Sobre o processamento local.** Não armazenar não é não tratar: o Art. 5°, X
+inclui coleta, acesso e processamento. Enquanto a tela de captura está aberta, o
+aparelho amostra a imagem do corpo a cada dois segundos e roda o MediaPipe
+localmente. Nenhum frame é gravado, nenhum frame sai do aparelho — o que sobe
+para o JavaScript é um objeto com booleanos e números, e o que atravessa a
+fronteira continuam sendo as três fotos que o aluno tira.
+
+O que muda em relação ao fluxo anterior não é o destino, é o **volume e a
+iniciativa**: antes o app só olhava quando o aluno apertava o botão. Isso precisa
+estar dito no consentimento, e é o que obriga uma `POLICY_VERSION` nova — pela
+mesma razão da `1.1`: não faltava autorização, faltava o aluno saber.
+
+**Feito em 2026-08-31: `POLICY_VERSION` = `1.2`.** O texto passou a ter duas
+metades explícitas, porque "as imagens" tinha virado uma palavra para duas
+coisas diferentes: *no seu aparelho*, a análise a cada dois segundos que não é
+gravada nem enviada; *fora do seu aparelho*, as três fotos que vão ao serviço
+externo. Todo aluno que já tinha autorizado é perguntado de novo antes do
+próximo scan — `hasCollectionConsent` devolve `false` quando a versão não bate,
+e o reconsentimento acontece sozinho.
 
 **Sobre o sinal derivado.** O briefing não é tratamento novo: agrega dado que o
 especialista vinculado já pode ler, para a mesma finalidade — acompanhar o
@@ -283,7 +307,7 @@ A LGPD garante direitos aos titulares que o sistema precisa implementar. Abaixo 
 | Direito | Onde implementar | Status |
 |---------|-----------------|--------|
 | Acesso aos dados | Tela "Meus Dados" (mobile + web) | Pendente |
-| Correção (Art. 18, III) | Perfil · anamnese (reabre o questionário) · adesão à refeição (alterna e substitui) · **feedback de sessão** (`intensity` e `notes`, no histórico do mobile — desde 2026-08-28) | **Coberto para o que o titular declarou.** Fora: medida do evento — datas, séries, duração, calorias, `body_scans` e `physical_assessments`. O remédio para medida inexata é medir de novo, não digitar outro número (Art. 6°, V). Pendente: tela "Meus Dados" reunindo os caminhos num lugar só |
+| Correção (Art. 18, III) | Perfil · anamnese (reabre o questionário) · adesão à refeição (alterna e substitui) · **feedback de sessão** (`intensity` e `notes`, no histórico do mobile — desde 2026-08-28) | **Coberto para o que o titular declarou.** Fora: medida do evento — datas, séries, duração, calorias, `body_scans` e `physical_assessments`. O remédio para medida inexata é medir de novo, não digitar outro número (Art. 6°, V). Desde a `0038` isso deixou de ser só política e virou schema: `body_scans` não tem política de UPDATE para nenhum papel do cliente, e a `verify-rls.sql` conta as linhas afetadas para provar. Pendente: tela "Meus Dados" reunindo os caminhos num lugar só |
 | Exclusão (Art. 18, VI) | Por item: **observação da sessão** (apaga o texto, a sessão fica) · **análise corporal** (`body_scans`, apaga a análise) — desde 2026-08-28 | **Parcial, por item.** A sessão de treino em si não é apagável: é execução de contrato (Art. 7°, V) e o inciso VI alcança o que foi tratado com consentimento. Pendente: fluxo "Excluir minha conta", que elimina tudo por `ON DELETE CASCADE` |
 | Portabilidade | Exportar dados em JSON/PDF | Pendente |
 | Revogação do consentimento | Tela de configurações de privacidade | Pendente |

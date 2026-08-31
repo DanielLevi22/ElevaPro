@@ -1,0 +1,43 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.elevapro.bodyscanpose'
+version = '0.1.0'
+
+android {
+  namespace "com.elevapro.bodyscanpose"
+  defaultConfig {
+    minSdkVersion 26
+    // O `expo-module-gradle-plugin` exige os dois: sem eles a configuração do
+    // projeto `:expo` falha antes de compilar uma linha.
+    versionCode 1
+    versionName "0.1.0"
+  }
+}
+
+// O plugin gradle do React Native puxa o Guava completo, que força
+// listenablefuture para `9999.0-empty` — um jar vazio de propósito. Sem esta
+// linha o CameraX não compila. O próprio `expo-camera` documenta a mesma
+// armadilha no build.gradle dele.
+configurations.configureEach {
+  resolutionStrategy.force "com.google.guava:listenablefuture:1.0"
+}
+
+dependencies {
+  def camerax_version = "1.6.0"
+
+  implementation "androidx.camera:camera-core:${camerax_version}"
+  implementation "androidx.camera:camera-camera2:${camerax_version}"
+  implementation "androidx.camera:camera-lifecycle:${camerax_version}"
+  implementation "androidx.camera:camera-view:${camerax_version}"
+
+  // A foto salva carrega a rotação na EXIF; decodificar sem ler isso mede um
+  // corpo deitado.
+  implementation "androidx.exifinterface:exifinterface:1.4.2"
+
+  // Fixado: a 0.10.14 não publica `x86_64`, o que a torna impossível de rodar
+  // em emulador moderno. Nas versões novas os binários vêm do `tasks-core`.
+  implementation "com.google.mediapipe:tasks-vision:0.10.35"
+}
