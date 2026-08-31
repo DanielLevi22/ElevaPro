@@ -320,9 +320,23 @@ export default function BodyScanIntroduction({ hideHeader = false }: { hideHeade
           {/* CTA Button */}
           <View className="px-6 mt-8 z-20">
             {aviso && (
-              <View className="mb-4 bg-amber-500/10 border border-amber-500/30 px-4 py-4 rounded-2xl">
-                <Text className="text-amber-400 font-black text-base mb-1">{aviso.titulo}</Text>
-                <Text className="text-amber-100/80 text-sm leading-5">{aviso.texto}</Text>
+              <View className="mb-4 bg-amber-500/10 border border-amber-500/40 px-5 py-5 rounded-2xl">
+                <Text className="text-amber-400 font-black text-base mb-2">{aviso.titulo}</Text>
+                {/* Parágrafo por parágrafo, em branco cheio. O texto do
+                    consentimento tem três blocos e precisa ser lido de fato:
+                    autorização dada sobre texto que ninguém consegue ler é o
+                    mesmo problema que a `POLICY_VERSION` nova existe para
+                    resolver. O âmbar a 80% servia para aviso de uma linha. */}
+                {aviso.texto.split('\n\n').map((paragrafo, indice, todos) => (
+                  <Text
+                    className={`text-white text-[15px] leading-6 ${
+                      indice === todos.length - 1 ? '' : 'mb-3'
+                    }`}
+                    key={paragrafo}
+                  >
+                    {paragrafo}
+                  </Text>
+                ))}
               </View>
             )}
 

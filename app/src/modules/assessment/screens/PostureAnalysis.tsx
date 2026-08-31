@@ -1,22 +1,17 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import {
-  Dimensions,
-  Image,
-  Animated as RNAnimated,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Dimensions, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, ZoomIn } from 'react-native-reanimated';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { colors } from '@/constants/colors';
-import { BodyDiagram } from '../components/BodyDiagram';
+import { MedidasDoScan } from '../components/MedidasDoScan';
 import { RadarChart } from '../components/RadarChart';
 import { ScanComparison } from '../components/ScanComparison';
 import { ScanHistoryList } from '../components/ScanHistoryList';
+import { SeloDeConfianca } from '../components/SeloDeConfianca';
+import { avaliarConfianca } from '../services/confiancaDoScan';
+import type { Vista } from '../services/portao';
 import { useAssessmentStore } from '../store/assessmentStore';
 
 const { width } = Dimensions.get('window');
@@ -27,7 +22,7 @@ const PHOTO_HEIGHT = PHOTO_WIDTH * PHOTO_ASPECT_RATIO;
 // Só a estrutura das abas. O `feedback` fixo que morava aqui — "Ratio de 1.618
 // (Golden Ratio)", risco, cor — era texto clínico escrito à mão e mostrado a
 // qualquer aluno. O feedback de verdade vem do resultado da análise.
-const ANALYSIS_VIEWS = [
+const ANALYSIS_VIEWS: Array<{ id: Vista; label: string; description: string }> = [
   { id: 'front', label: 'Vista Frontal', description: 'Simetria e Proporções Musculares' },
   { id: 'back', label: 'Vista Posterior', description: 'Cadeia Posterior e Alinhamento' },
   { id: 'side', label: 'Vista Lateral', description: 'Curvatura e Postura' },
@@ -72,7 +67,6 @@ export default function PostureAnalysis() {
   }, [id]);
   const [analyzing, setAnalyzing] = useState(true);
   const [currentViewIndex, setCurrentViewIndex] = useState(0);
-  const [scanPosition] = useState(new RNAnimated.Value(0));
 
   const currentView = ANALYSIS_VIEWS[currentViewIndex];
 
@@ -84,23 +78,12 @@ export default function PostureAnalysis() {
     if (currentViewIndex > 0) setCurrentViewIndex((prev) => prev - 1);
   };
 
-  const getCurrentImageUri = () => {
-    switch (currentView.id) {
-      case 'front':
-        return capturedImages.front;
-      case 'back':
-        return capturedImages.back;
-      case 'side_r':
-      case 'side_l':
-        // As duas vistas laterais viraram uma só na captura: davam a mesma
-        // informação e dobravam o incômodo de se fotografar.
-        return capturedImages.side;
-      default:
-        return null;
-    }
-  };
-
-  const currentImageUri = getCurrentImageUri();
+  // Busca direta pela vista. Antes era um `switch` que tratava `side_r` e
+  // `side_l` — ids de quando havia duas laterais. A lista virou uma só, `side`,
+  // e o `switch` caía no default: a tela mostrava o holograma de placeholder no
+  // lugar da foto do aluno, na lateral, desde então. O tipo `Vista` no
+  // `ANALYSIS_VIEWS` é o que impede a próxima divergência.
+  const currentImageUri = capturedImages[currentView.id];
 
   useEffect(() => {
     // Simulate AI Processing time
@@ -109,24 +92,6 @@ export default function PostureAnalysis() {
     }, 2500); // Slightly faster
     return () => clearTimeout(timer);
   }, []);
-
-  useEffect(() => {
-    // Continuous Scanning Animation
-    RNAnimated.loop(
-      RNAnimated.sequence([
-        RNAnimated.timing(scanPosition, {
-          toValue: 1,
-          duration: 3000,
-          useNativeDriver: false, // height interpolation often needs false or layout animation
-        }),
-        RNAnimated.timing(scanPosition, {
-          toValue: 0,
-          duration: 3000,
-          useNativeDriver: false,
-        }),
-      ])
-    ).start();
-  }, [scanPosition]);
 
   const getRiskColor = (risk: string) => {
     switch (risk) {
@@ -143,27 +108,6 @@ export default function PostureAnalysis() {
         return 'zinc';
     }
   };
-
-  const ScannerLine = () => (
-    <RNAnimated.View
-      style={{
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        height: 2,
-        backgroundColor: 'rgba(16, 185, 129, 0.8)', // Primary/Emerald color
-        shadowColor: '#10b981',
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 1,
-        shadowRadius: 10,
-        opacity: 0.8,
-        top: scanPosition.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, PHOTO_HEIGHT],
-        }),
-      }}
-    />
-  );
 
   const _ScoreBar = ({ label, score, color }: { label: string; score: number; color: string }) => (
     <View className="mb-3">
@@ -227,12 +171,14 @@ export default function PostureAnalysis() {
   const { scores, feedback, recommendations } = lastResult.postureAnalysis;
 
   // Update currentView with AI feedback
-  const currentFeedback = feedback[currentView.id as keyof typeof feedback] || [];
+  const currentFeedback = feedback[currentView.id] || [];
 
   return (
     <ScreenLayout className="bg-black">
       <View className="px-6 pt-4 pb-2 flex-row items-center justify-between z-10">
         <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Fechar análise"
           onPress={() => router.back()}
           className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 items-center justify-center"
         >
@@ -273,6 +219,7 @@ export default function PostureAnalysis() {
         <View className="items-center mt-6 relative">
           {/* View Switcher Controls (Overlay left/right) */}
           <TouchableOpacity
+            accessibilityLabel="Vista anterior"
             onPress={handlePrev}
             disabled={currentViewIndex === 0}
             className={`absolute left-4 top-1/2 -translate-y-6 z-30 w-10 h-10 rounded-full bg-black/60 items-center justify-center border border-white/10 ${currentViewIndex === 0 ? 'opacity-0' : 'opacity-100'}`}
@@ -281,6 +228,7 @@ export default function PostureAnalysis() {
           </TouchableOpacity>
 
           <TouchableOpacity
+            accessibilityLabel="Próxima vista"
             onPress={handleNext}
             disabled={currentViewIndex === ANALYSIS_VIEWS.length - 1}
             className={`absolute right-4 top-1/2 -translate-y-6 z-30 w-10 h-10 rounded-full bg-black/60 items-center justify-center border border-white/10 ${currentViewIndex === ANALYSIS_VIEWS.length - 1 ? 'opacity-0' : 'opacity-100'}`}
@@ -297,20 +245,19 @@ export default function PostureAnalysis() {
             {/* Results Image Display */}
             {currentImageUri ? (
               <Image
+                testID="foto-da-vista"
                 source={{ uri: currentImageUri }}
                 style={{ width: '100%', height: '100%' }}
                 resizeMode="cover"
               />
             ) : (
               <Image
+                testID="sem-foto-da-vista"
                 source={require('@/assets/images/body-scan-hologram-v3.png')}
                 style={{ width: '100%', height: '100%', opacity: 0.5 }}
                 resizeMode="cover"
               />
             )}
-
-            <BodyDiagram vista={currentView.id} />
-            <ScannerLine />
 
             {/* View Label Badge */}
             <View className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
@@ -339,36 +286,27 @@ export default function PostureAnalysis() {
               {/* Background Glow */}
               <View className="absolute right-0 top-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-y-10 translate-x-10" />
 
-              <View className="flex-row items-center justify-between mb-2">
-                <View className="flex-row items-center gap-3">
-                  <View className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-700 items-center justify-center shadow-lg">
-                    <MaterialCommunityIcons
-                      name="trophy-variant-outline"
-                      size={18}
-                      color="#FFD700"
-                    />
-                  </View>
-                  <View>
-                    <Text className="text-white text-base font-bold font-display">
-                      Athletic Score
-                    </Text>
-                    <Text className="text-zinc-500 text-xs">Performance Geral</Text>
-                  </View>
+              {/* Aqui morava um "Athletic Score / Performance Geral": a média das
+                  três notas abaixo, no maior destaque da tela, com um selo
+                  EXCELENTE/REGULAR que era sempre verde — resultado ruim ganhava
+                  cor de bom. Nada disso era medido. Ninguém avaliou performance
+                  atlética, e somar simetria com postura não produz uma quarta
+                  grandeza; produz um número com aparência de índice.
+                  As três notas ficam, porque são o que a análise realmente
+                  devolveu, e o cabeçalho passa a dizer o que elas são. O número
+                  confiável desta tela é o delta, que já aparece acima em
+                  `ScanComparison` (`ADR-0010`). */}
+              <View className="flex-row items-center gap-3 mb-2">
+                <View className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-700 items-center justify-center">
+                  <MaterialCommunityIcons name="eye-outline" size={18} color="#a1a1aa" />
                 </View>
-                <View className="items-end">
-                  <Text
-                    className="text-3xl font-black italic text-white"
-                    style={{ fontStyle: 'italic' }}
-                  >
-                    {Math.round((scores.symmetry + scores.muscle + scores.posture) / 3)}
+                <View className="flex-1">
+                  <Text className="text-white text-base font-bold font-display">
+                    Leitura das fotos
                   </Text>
-                  <View className="bg-emerald-500/20 px-2 py-0.5 rounded">
-                    <Text className="text-emerald-400 text-[10px] font-bold">
-                      {(scores.symmetry + scores.muscle + scores.posture) / 3 > 80
-                        ? 'EXCELENTE'
-                        : 'REGULAR'}
-                    </Text>
-                  </View>
+                  <Text className="text-zinc-500 text-xs">
+                    Notas estimadas pela análise — não são medidas
+                  </Text>
                 </View>
               </View>
 
@@ -428,6 +366,21 @@ export default function PostureAnalysis() {
               </View>
               <Text className="text-zinc-400 text-sm leading-6">{recommendations}</Text>
             </View>
+
+            {/* O que o aparelho mediu — separado do que o modelo interpretou, e
+                obrigatório: medida que só o especialista lê é tratamento sem
+                livre acesso (Art. 18, II). */}
+            {/* O selo antes das medidas: ressalva lida depois do número já
+                chegou tarde. */}
+            <SeloDeConfianca
+              confianca={avaliarConfianca({
+                vereditos: lastResult.quality ?? null,
+                troncoRotacionado: lastResult.measured?.trunk_rotated ?? null,
+                escala: lastResult.scaleSource ?? null,
+              })}
+            />
+
+            {lastResult.measured ? <MedidasDoScan medidas={lastResult.measured} /> : null}
 
             {/* Actions Footer */}
             <View className="mt-8 flex-row gap-4 mb-8">

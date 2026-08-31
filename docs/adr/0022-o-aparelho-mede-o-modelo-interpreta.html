@@ -943,7 +943,170 @@ stateDiagram-v2
 </section>
 
 <section>
-  <h2><span class="num">05</span>Decisões travadas</h2>
+  <h2><span class="num">05</span>O que faltava para o laudo acertar</h2>
+  <div class="prose">
+    <p>
+      Medir bem resolve metade do problema. A outra metade estava em dois lugares que o desenho
+      original não olhava: a <strong>comparabilidade entre as três fotos</strong> e o
+      <strong>contexto que o prompt nunca recebia</strong>.
+    </p>
+  </div>
+
+  <div class="panel">
+    <p class="panel-label">A mesma escala nas três fotos</p>
+    <p>
+      Cada foto converte pixel em centímetro pela <b>sua própria</b> régua, e dentro de uma foto
+      isso está certo. O problema aparece quando a análise cruza duas: a largura de cintura da
+      frente e a da lateral só descrevem o mesmo corpo se saíram da mesma distância. O aluno
+      parando a <code>0.70</code> de ocupação na frente e a <code>0.88</code> na lateral produz um
+      par de números que o modelo lê como mudança de seção transversal &mdash; e que é mudança de
+      distância.
+    </p>
+    <p>
+      A primeira pose liberada grava quanto do quadro o corpo ocupou. As seguintes têm de voltar a
+      esse valor dentro de <code>&plusmn;0.035</code> &mdash; não basta caber nas marcas, é preciso
+      <b>repetir</b>.
+    </p>
+  </div>
+
+  <figure>
+    <div class="mermaid-well">
+      <pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'background':'#0B0B0E','primaryColor':'#18181B','primaryTextColor':'#FAFAFA','primaryBorderColor':'#3F3F46','lineColor':'#71717A','secondaryColor':'#131316','tertiaryColor':'#131316','fontFamily':'Inter, system-ui, sans-serif','fontSize':'13px','edgeLabelBackground':'#0B0B0E'}}}%%
+flowchart TD
+    A["primeira pose libera"] --> B["grava ocupacaoDeReferencia<br/>fração do quadro ocupada"]
+    B --> C["pose seguinte"]
+    C --> D{"ocupação dentro de<br/>0.035 da referência?"}
+    D -->|menor| E["voz: aproxime"]
+    D -->|maior| F["voz: afaste"]
+    E --> C
+    F --> C
+    D -->|sim| G["portão libera<br/>contagem de 5s"]
+    G --> H["três fotos na mesma escala"]
+      </pre>
+    </div>
+    <figcaption>
+      <b>Figura 5 &mdash; a trava de escala</b>
+      A tolerância aqui é três vezes mais apertada que a do enquadramento inicial. A primeira foto
+      só precisa caber; as outras duas precisam repetir a primeira.
+    </figcaption>
+  </figure>
+
+  <div class="flag">
+    <p class="panel-label">Contido nas marcas, e não só centrado</p>
+    <p>
+      O retângulo na tela promete <i>"seu corpo cabe aqui dentro"</i>. O portão verificava outra
+      coisa: se o <b>centro</b> do corpo estava perto do centro das marcas. Com a tolerância de
+      altura em <code>0.12</code>, um corpo ocupando <code>0.92</code> do quadro passava &mdash; e o
+      retângulo tem <code>0.80</code>. Os dois números eram aritmeticamente incompatíveis: existia
+      corpo aceito pelo portão que não cabia no desenho, e o aluno via os próprios pés do lado de
+      fora enquanto a borda ficava verde.
+    </p>
+    <p>
+      A verificação passa a ser <b>por borda</b>, e a tolerância de distância deixa de ser
+      simétrica: quando o alvo são as marcas, não há folga para cima. Corpo maior que o retângulo
+      não cabe nele, e aceitar isso era desenhar uma promessa falsa na tela.
+    </p>
+  </div>
+
+  <div class="prose">
+    <h3>O contexto que a análise recebe</h3>
+    <p>
+      A rota via <b>três imagens e uma altura</b>, e mais nada. Duas ausências pesavam mais que
+      todo o resto.
+    </p>
+    <p>
+      <b>O scan anterior.</b> O ADR-0010 afirma que <i>"o valor está na diferença entre dois scans,
+      não no número absoluto de um só"</i> &mdash; e o modelo nunca via essa diferença. O produto
+      prometia um filme e o prompt entregava um retrato. Os valores anteriores entram como passado,
+      nunca como alvo: quem interpreta a variação é o modelo, e dizer para onde ela deveria ir seria
+      induzir o achado.
+    </p>
+    <p>
+      <b>A limitação física.</b> Recomendação postural para quem tem manguito operado deveria ser
+      outra, e era a mesma. Entram seis campos &mdash; lesões, cirurgias, limitações de mobilidade,
+      dor atual &mdash; com a instrução explícita de não atribuir achado postural à lesão sem que a
+      imagem sustente.
+    </p>
+  </div>
+
+  <figure>
+    <div class="mermaid-well">
+      <pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'background':'#0B0B0E','primaryColor':'#18181B','primaryTextColor':'#FAFAFA','primaryBorderColor':'#3F3F46','lineColor':'#71717A','secondaryColor':'#131316','tertiaryColor':'#131316','fontFamily':'Inter, system-ui, sans-serif','fontSize':'13px','edgeLabelBackground':'#0B0B0E'}}}%%
+flowchart LR
+    subgraph ap["No aparelho"]
+        M["fact sheet<br/>pixels e graus"]
+    end
+    subgraph db["Supabase - cliente do titular, sob RLS"]
+        S["body_scans<br/>último scan"]
+        A["student_anamnesis<br/>6 campos nomeados"]
+        T["training_periodizations<br/>objetivo do plano ativo"]
+    end
+    subgraph bf["No BFF"]
+        E["resolverEscala<br/>altura e peso"]
+        F["descreverFatosMedidos<br/>px / altura = cm"]
+        C["carregarContextoDoScan"]
+        P["prompt único<br/>temperature 0"]
+    end
+    M --> F
+    E --> F
+    S --> C
+    A --> C
+    T --> C
+    F --> P
+    C --> P
+    P --> IA["Claude Sonnet"]
+    IA --> L["o que mudou desde o último scan,<br/>lido contra o que o corpo aguenta"]
+      </pre>
+    </div>
+    <figcaption>
+      <b>Figura 6 &mdash; o que entra no prompt</b>
+      A anamnese entra por campo nomeado no próprio <code>select</code>, nunca pelo objeto inteiro:
+      pedir <code>responses</code> para filtrar depois traria medicação, renda e histórico familiar
+      até a borda do processo sem finalidade nenhuma <b>(Art. 6&deg;, III)</b>. O contexto é
+      enriquecimento, não pré-requisito &mdash; se a consulta falha, o laudo sai sem a comparação em
+      vez de não sair.
+    </figcaption>
+  </figure>
+
+  <div class="panel">
+    <p class="panel-label">Um agente por tópico &mdash; recusado</p>
+    <p>
+      A alternativa levantada foi especializar: um agente de treino, um de postura, um de
+      composição, com um orquestrador juntando as respostas. Não entra, pela razão que decidiu
+      quase tudo neste documento &mdash; <b>profundidade, não superfície</b>. Três agentes olhando a
+      mesma foto produzem três leituras que precisam ser reconciliadas por um quarto, e nenhum
+      deles sabe o que os outros viram.
+    </p>
+    <p>
+      A imprecisão do laudo não vinha de faltar especialista: vinha de faltar <b>medida</b> e
+      faltar <b>contexto</b>, e as duas foram atacadas direto. Um segundo modelo entra quando
+      houver um seam real &mdash; quando a análise de exercício existir e tiver pergunta própria
+      &mdash;, não antes.
+    </p>
+    <p>
+      <b>Dívida registrada:</b> esta rota fala com o SDK da Anthropic direto, e o ADR-0011 exige
+      que todo orquestrador passe pelo <code>AIProvider</code>. Levá-la para lá é trabalho
+      conhecido e fora do escopo desta issue.
+    </p>
+  </div>
+
+  <div class="flag good">
+    <p class="panel-label">O laudo não elogia</p>
+    <p>
+      <code>temperature: 0</code> e uma seção de estilo que proíbe elogio, encorajamento e consolo.
+      Corpo sem alteração relevante recebe <i>"nada a apontar"</i>, não um parágrafo simpático;
+      achado não é suavizado para poupar o aluno nem inventado para o texto parecer útil; e nada de
+      julgamento estético &mdash; o texto descreve postura e proporção, nunca aparência. A régua:
+      escreve-se para quem vai <b>agir</b> sobre o corpo, não para quem quer se sentir bem sobre
+      ele.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">06</span>Decisões travadas</h2>
   <div class="prose">
     <p>Saíram da sessão de grilling que originou este ADR. Cada uma fechou um ramo do desenho.</p>
   </div>
@@ -1001,7 +1164,7 @@ stateDiagram-v2
 </section>
 
 <section>
-  <h2><span class="num">06</span>O que o /lgpd-check exigiu</h2>
+  <h2><span class="num">07</span>O que o /lgpd-check exigiu</h2>
   <div class="prose">
     <p>
       O parecer rodou em 30/08/2026 e mudou o escopo em quatro pontos. Os dois primeiros viram
@@ -1074,7 +1237,7 @@ stateDiagram-v2
 </section>
 
 <section>
-  <h2><span class="num">07</span>Consequências</h2>
+  <h2><span class="num">08</span>Consequências</h2>
 
   <div class="conseq">
     <div class="conseq-block easier">
@@ -1118,7 +1281,7 @@ stateDiagram-v2
 </section>
 
 <section>
-  <h2><span class="num">08</span>Como reverter</h2>
+  <h2><span class="num">09</span>Como reverter</h2>
   <div class="prose">
     <p>
       Se o módulo nativo se mostrar insustentável — build quebrando a cada SDK, ou desempenho

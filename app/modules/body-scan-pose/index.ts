@@ -71,9 +71,53 @@ export interface EstadoDaPreview {
  * A captura é a única operação: a preview e a medida acontecem sozinhas, e não
  * há nada para configurar depois de montada.
  */
+/**
+ * A medida de uma foto, em pixels e graus — nunca em centímetro.
+ *
+ * A conversão exige a altura do aluno, e o aparelho não a conhece de propósito:
+ * o portão de elegibilidade responde se ele pode escanear e de onde viria a
+ * Escala, nunca quanto. Quem divide é o BFF (`ADR-0022`).
+ *
+ * Campo nulo significa "não dá para medir nesta vista" — na lateral metade do
+ * corpo se auto-oclui, e zero fingiria uma medida que não existe.
+ */
+export interface MedidaDaFoto {
+  /** Altura do corpo em pixels, da coroa ao contato com o chão. A régua. */
+  alturaPx: number;
+  larguraPescocoPx: number | null;
+  larguraPeitoPx: number | null;
+  larguraCinturaPx: number | null;
+  larguraQuadrilPx: number | null;
+  larguraCoxaPx: number | null;
+  larguraPanturrilhaPx: number | null;
+  larguraOmbrosPx: number | null;
+  /** Quanto um ombro está mais alto que o outro. Positivo: o direito do aluno. */
+  desnivelOmbrosPx: number | null;
+  desnivelQuadrilPx: number | null;
+  inclinacaoOmbrosGraus: number | null;
+  inclinacaoQuadrilGraus: number | null;
+  /** Desvio do eixo nariz→tornozelos contra a vertical. */
+  desvioDoEixoPx: number | null;
+  /** Diferença de profundidade entre os ombros: diz se a frontal era frontal. */
+  rotacaoDoTronco: number | null;
+  /** Anteriorização de cabeça em graus. Só na lateral. */
+  anguloCraniovertebralGraus: number | null;
+  prumoOmbroPx: number | null;
+  prumoQuadrilPx: number | null;
+  prumoJoelhoPx: number | null;
+}
+
 export interface BodyScanPoseRef {
   /** Tira a foto em alta qualidade e devolve o `file://` dela no cache. */
   capturar(): Promise<string>;
+  /**
+   * Mede uma foto já tirada.
+   *
+   * Separado da captura de propósito: tirar e medir são trabalhos diferentes, e
+   * juntá-los faria a foto depender de a medida dar certo. Falhando a medida, a
+   * foto continua válida — a análise só perde a geometria.
+   */
+  medir(caminho: string, dePerfil: boolean): Promise<MedidaDaFoto>;
 }
 
 export interface BodyScanPoseViewProps extends ViewProps {

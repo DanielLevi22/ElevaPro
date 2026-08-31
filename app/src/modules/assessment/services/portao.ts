@@ -20,6 +20,14 @@ const MARCA_BASE = 0.9;
 const ALTURA_ALVO = MARCA_BASE - MARCA_TOPO;
 
 /**
+ * Tolerância quando já existe uma foto de referência neste scan.
+ *
+ * Muito mais apertada que a de entrada, e pode ser: o aluno já esteve nessa
+ * distância há segundos, então voltar a ela é ajuste fino, não busca.
+ */
+const TOLERANCIA_CONTRA_REFERENCIA = 0.035;
+
+/**
  * Quanto o corpo pode ocupar a mais ou a menos sem virar instrução.
  *
  * Medido em aparelho (2026-08-31): um passo a dois ou três metros muda a
@@ -194,11 +202,23 @@ export interface ContextoDoPortao {
   estavaLiberado?: boolean;
   /** Há quanto tempo a voz falou. Passado o limite, repete mesmo sem mudar. */
   msDesdeAFala?: number;
+  /**
+   * Quanto do quadro o corpo ocupou na primeira foto deste scan.
+   *
+   * A partir da segunda pose o alvo deixa de ser a faixa larga e passa a ser
+   * **este número**, com tolerância apertada: as três fotos precisam sair da
+   * mesma distância. Escala igual entre elas é o que faz a largura da frente e
+   * a da lateral descreverem o mesmo corpo, e não dois pontos de vista
+   * diferentes (`ADR-0022`).
+   */
+  ocupacaoAlvo?: number | null;
 }
 
 export interface Portao {
   liberado: boolean;
   proximidade: Proximidade;
+  /** Quanto do quadro o corpo ocupa. Vira a referência das poses seguintes. */
+  ocupacao: number | null;
   /** A instrução de maior prioridade, ou `null` quando está tudo certo. */
   instrucao: Instrucao | null;
   /** Falso quando a instrução é a mesma da última falada — silêncio é informação. */
@@ -313,37 +333,58 @@ function alturaOcupada(fatos: FatosDaCaptura): number | null {
  * A fração que o corpo ocupa é inversa à distância, então a razão entre alvo e
  * ocupado diz não só para que lado andar, mas quanto.
  */
-function distancia(fatos: FatosDaCaptura, folga: number): IdDaInstrucao | null {
+function distancia(
+  fatos: FatosDaCaptura,
+  folga: number,
+  ocupacaoAlvo: number | null
+): IdDaInstrucao | null {
   const ocupada = alturaOcupada(fatos);
   if (ocupada === null || ocupada <= 0) return null;
 
-  const razao = ALTURA_ALVO / ocupada;
-  const margem = (TOLERANCIA_ALTURA * folga) / ALTURA_ALVO;
+  const alvo = ocupacaoAlvo ?? ALTURA_ALVO;
+  const tolerancia = ocupacaoAlvo === null ? TOLERANCIA_ALTURA : TOLERANCIA_CONTRA_REFERENCIA;
+
+  const razao = alvo / ocupada;
+  const margem = (tolerancia * folga) / alvo;
 
   if (razao >= MUITO_LONGE) return 'aproxime-muito';
   if (razao > 1 + margem) return 'aproxime';
-  if (razao < 1 - margem) return 'afaste';
+
+  // Sem folga para cima quando o alvo são as marcas: o corpo maior que o
+  // retângulo não cabe nele, e aceitar isso era desenhar uma promessa falsa.
+  // Contra uma foto de referência a folga vale nos dois sentidos — ali o alvo é
+  // uma distância que já aconteceu, não uma moldura.
+  const folgaParaCima = ocupacaoAlvo === null ? 0 : margem;
+  if (razao < 1 - folgaParaCima) return 'afaste';
 
   return null;
 }
 
 /**
- * O corpo está dentro das marcas, e não só do tamanho certo.
+ * O corpo cabe dentro das marcas — cada borda, não só o centro.
  *
- * O deslocamento vertical não se corrige andando — depende de para onde o
- * aparelho aponta —, então a instrução fala do celular, não do aluno.
+ * Olhar só o centro deixava o corpo transbordar pelas duas pontas com o centro
+ * parado no lugar: pé abaixo da linha e portão verde. Um retângulo que não
+ * precisa ser respeitado é um retângulo que mente, e o aluno perde a confiança
+ * no único guia visual que ele tem.
+ *
+ * O transbordo não se corrige andando — depende de para onde o aparelho aponta
+ * —, então a instrução fala do celular e não do aluno. Sair pelas DUAS pontas
+ * ao mesmo tempo é outro problema: o corpo está grande demais, e aí quem
+ * responde é a distância.
  */
 function alinhamentoVertical(fatos: FatosDaCaptura, folga: number): IdDaInstrucao | null {
   if (fatos.coroaY === null || fatos.chaoY === null) return null;
 
   const limite = TOLERANCIA_CENTRO * folga;
-  const centroDoCorpo = (fatos.coroaY + fatos.chaoY) / 2;
-  const centroDasMarcas = (MARCA_TOPO + MARCA_BASE) / 2;
-  const desvio = centroDoCorpo - centroDasMarcas;
+  const acimaDoTopo = MARCA_TOPO - fatos.coroaY;
+  const abaixoDaBase = fatos.chaoY - MARCA_BASE;
 
-  if (Math.abs(desvio) <= limite) return null;
+  if (acimaDoTopo > limite && abaixoDaBase > limite) return null;
+  if (acimaDoTopo > limite) return 'suba-o-celular';
+  if (abaixoDaBase > limite) return 'baixe-o-celular';
 
-  return desvio < 0 ? 'suba-o-celular' : 'baixe-o-celular';
+  return null;
 }
 
 function foraDeNivel(fatos: FatosDaCaptura): boolean {
@@ -359,7 +400,11 @@ function foraDeNivel(fatos: FatosDaCaptura): boolean {
  * degrau devolve uma ação única: some primeiro o que impede de medir, depois o
  * que desloca a medida, por último o que só a piora.
  */
-function primeiraFalha(fatos: FatosDaCaptura, estavaLiberado: boolean): IdDaInstrucao | null {
+function primeiraFalha(
+  fatos: FatosDaCaptura,
+  estavaLiberado: boolean,
+  ocupacaoAlvo: number | null
+): IdDaInstrucao | null {
   if (semCorpo(fatos)) return 'sem-corpo';
   if (vistaErrada(fatos)) return 'vista-errada';
 
@@ -373,7 +418,7 @@ function primeiraFalha(fatos: FatosDaCaptura, estavaLiberado: boolean): IdDaInst
   const lado = ladoParaAndar(fatos, folga);
   if (lado !== null) return lado;
 
-  const passo = distancia(fatos, folga);
+  const passo = distancia(fatos, folga, ocupacaoAlvo);
   if (passo !== null) return passo;
 
   // Tamanho certo não é lugar certo. Sem esta checagem, quem tivesse a altura
@@ -422,17 +467,31 @@ function montarInstrucao(id: IdDaInstrucao, fatos: FatosDaCaptura): Instrucao {
  * if (deveFalar && instrucao) voz.speak(instrucao.texto);
  */
 export function avaliarPortao(fatos: FatosDaCaptura, contexto: ContextoDoPortao = {}): Portao {
-  const { ultimaFalada = null, estavaLiberado = false, msDesdeAFala = 0 } = contexto;
-  const falha = primeiraFalha(fatos, estavaLiberado);
+  const {
+    ultimaFalada = null,
+    estavaLiberado = false,
+    msDesdeAFala = 0,
+    ocupacaoAlvo = null,
+  } = contexto;
+  const falha = primeiraFalha(fatos, estavaLiberado, ocupacaoAlvo);
   const avisos = avisosDeQualidade(fatos);
+  const ocupacao = alturaOcupada(fatos);
 
   if (falha === null) {
-    return { liberado: true, proximidade: 'pronto', instrucao: null, deveFalar: false, avisos };
+    return {
+      liberado: true,
+      proximidade: 'pronto',
+      ocupacao,
+      instrucao: null,
+      deveFalar: false,
+      avisos,
+    };
   }
 
   return {
     liberado: false,
     proximidade: LONGE.has(falha) ? 'longe' : 'quase',
+    ocupacao,
     instrucao: montarInstrucao(falha, fatos),
     deveFalar: falha !== ultimaFalada || msDesdeAFala >= REPETIR_APOS_MS,
     avisos,

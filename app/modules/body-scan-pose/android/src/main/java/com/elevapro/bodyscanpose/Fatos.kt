@@ -35,7 +35,7 @@ private const val QUADRIL_DIR = 24
 private const val RAZAO_PERFIL = 0.45f
 
 /** Confiança a partir da qual um pixel da máscara conta como corpo. */
-private const val LIMIAR_MASCARA = 0.5f
+internal const val LIMIAR_MASCARA = 0.5f
 
 /**
  * Fração mínima da largura que uma linha precisa ter de corpo para contar.
@@ -145,7 +145,7 @@ private fun viradoParaDireita(marcos: List<NormalizedLandmark>): Boolean? {
 }
 
 /** A máscara como float por pixel, ou `null` quando o formato não é o esperado. */
-private fun lerMascara(mascara: MPImage): FloatArray? {
+internal fun lerMascara(mascara: MPImage): FloatArray? {
   val buffer: ByteBuffer = ByteBufferExtractor.extract(mascara).order(ByteOrder.nativeOrder())
   val pixels = mascara.width * mascara.height
   if (pixels <= 0) return null
@@ -160,7 +160,10 @@ private fun lerMascara(mascara: MPImage): FloatArray? {
 }
 
 /** O que uma única varredura da máscara devolve. */
-private data class Silhueta(
+internal data class Silhueta(
+  /** Primeira e última linha com corpo, em índice. A medida da foto precisa delas. */
+  val coroaLinha: Int,
+  val chaoLinha: Int,
   val coroaY: Float,
   val chaoY: Float,
   val centroX: Float,
@@ -181,7 +184,7 @@ private data class Silhueta(
  * Uma linha só conta como corpo se tiver uma faixa mínima: um pixel solto não é
  * cabeça, e com a regra de "qualquer pixel" o ruído definia coroa e chão.
  */
-private fun lerSilhueta(mascara: FloatArray, largura: Int, altura: Int): Silhueta? {
+internal fun lerSilhueta(mascara: FloatArray, largura: Int, altura: Int): Silhueta? {
   val minimoPorLinha = maxOf(1, (largura * COBERTURA_MINIMA_DA_LINHA).toInt())
   var primeira = -1
   var ultima = -1
@@ -218,6 +221,8 @@ private fun lerSilhueta(mascara: FloatArray, largura: Int, altura: Int): Silhuet
   val linhaQuadril = primeira + (alturaCorpo * 0.55f).toInt()
 
   return Silhueta(
+    coroaLinha = primeira,
+    chaoLinha = ultima,
     coroaY = primeira.toFloat() / altura,
     chaoY = (ultima + 1).toFloat() / altura,
     centroX = (somaColunas.toFloat() / total) / largura,

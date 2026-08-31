@@ -199,6 +199,62 @@ describe('o portão de captura', () => {
     });
   });
 
+  // As três fotos precisam sair da mesma distância: escala igual entre elas é o
+  // que faz a largura da frente e a da lateral descreverem o mesmo corpo, e não
+  // dois pontos de vista diferentes.
+  describe('a primeira foto vira a referência das outras', () => {
+    // 0.78 de ocupação: dentro da faixa larga de entrada, longe da referência.
+    const naFaixaMasLongeDaReferencia = { coroaY: 0.11, chaoY: 0.89 };
+
+    it('sem referência, a faixa larga vale', () => {
+      expect(avaliarPortao(frameBom(naFaixaMasLongeDaReferencia)).liberado).toBe(true);
+    });
+
+    it('com referência, exige voltar à mesma distância', () => {
+      const comReferencia = avaliarPortao(frameBom(naFaixaMasLongeDaReferencia), {
+        ocupacaoAlvo: 0.7,
+      });
+
+      expect(comReferencia.liberado).toBe(false);
+      expect(comReferencia.instrucao?.id).toBe('afaste');
+    });
+
+    it('libera quem voltou à distância da primeira foto', () => {
+      const mesmaDistancia = avaliarPortao(frameBom({ coroaY: 0.15, chaoY: 0.85 }), {
+        ocupacaoAlvo: 0.7,
+      });
+
+      expect(mesmaDistancia.liberado).toBe(true);
+    });
+
+    it('devolve a ocupação para virar referência da próxima pose', () => {
+      expect(avaliarPortao(frameBom({ coroaY: 0.15, chaoY: 0.85 })).ocupacao).toBeCloseTo(0.7, 2);
+    });
+  });
+
+  // Olhar só o centro deixava o corpo transbordar pelas duas pontas com o
+  // centro parado: pé abaixo da linha e portão verde. O aluno vê o retângulo e
+  // conclui, com razão, que ele não vale nada.
+  describe('o corpo cabe dentro das marcas, borda a borda', () => {
+    it('reprova pé abaixo da linha de baixo, mesmo com o centro no lugar', () => {
+      // Centro em 0.53, quase no das marcas — mas o pé passa de 0.9.
+      const peFora = avaliarPortao(frameBom({ coroaY: 0.09, chaoY: 0.97 }));
+
+      expect(peFora.liberado).toBe(false);
+    });
+
+    it('reprova cabeça acima da linha de cima', () => {
+      const cabecaFora = avaliarPortao(frameBom({ coroaY: 0.02, chaoY: 0.8 }));
+
+      expect(cabecaFora.liberado).toBe(false);
+      expect(cabecaFora.instrucao?.id).toBe('suba-o-celular');
+    });
+
+    it('libera quem está inteiro entre as marcas', () => {
+      expect(avaliarPortao(frameBom({ coroaY: 0.12, chaoY: 0.88 })).liberado).toBe(true);
+    });
+  });
+
   // Três estados e não dois porque a cor é o único canal que atravessa três
   // metros. "Quase" precisa ser distinguível de "longe" para o aluno saber se
   // ajusta ou se recomeça.

@@ -489,8 +489,45 @@ BEGIN
       'VAZAMENTO BIOMÉTRICO: especialista lê % análise(s) do aluno B, sem vínculo', visiveis;
   END IF;
 
+  -- Ninguém edita medida gravada — nem o dono dela (Art. 6º, V).
+  --
+  -- Com os números virando medida do aparelho e não estimativa do modelo,
+  -- adulterar passa a ter consequência: o histórico é a feature, e um valor
+  -- reescrito faz a diferença entre dois scans descrever uma mudança que não
+  -- aconteceu. A `0038` tirou o UPDATE de `body_scans_own`.
+  --
+  -- Contado e não presumido: sem RLS o UPDATE afetaria 1 linha e não levantaria
+  -- erro nenhum, então "não deu erro" não é prova de nada aqui.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', aluno_a, 'role', 'authenticated')::text, true);
+  UPDATE public.body_scans SET circ_waist = 60 WHERE student_id = aluno_a;
+  GET DIAGNOSTICS visiveis = ROW_COUNT;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION
+      'HISTÓRICO MUTÁVEL: aluno A reescreveu % medida(s) da própria análise', visiveis;
+  END IF;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+  UPDATE public.body_scans SET circ_waist = 60 WHERE student_id = aluno_a;
+  GET DIAGNOSTICS visiveis = ROW_COUNT;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION
+      'HISTÓRICO MUTÁVEL: especialista reescreveu % medida(s) do aluno A', visiveis;
+  END IF;
+
+  -- O DELETE continua de pé: o direito de exclusão por item (Art. 18, VI)
+  -- depende dele, e estreitar a política não pode ter levado ele junto.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', aluno_a, 'role', 'authenticated')::text, true);
+  DELETE FROM public.body_scans WHERE student_id = aluno_a;
+  GET DIAGNOSTICS visiveis = ROW_COUNT;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'aluno A não consegue apagar a própria análise (apagou %)', visiveis;
+  END IF;
+
   RESET ROLE;
-  RAISE NOTICE 'ok  análise corporal: isolamento entre alunos e por vínculo ativo';
+  RAISE NOTICE 'ok  análise corporal: isolamento, imutabilidade e exclusão pelo titular';
 END $$;
 
 ROLLBACK;

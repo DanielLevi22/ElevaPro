@@ -6,10 +6,22 @@ import type {
   ComparableField,
 } from "../types/bodyScan.types";
 
+/**
+ * As colunas lidas em toda leitura de scan.
+ *
+ * Constante porque a lista aparecia literal em `list` e em
+ * `latestWithComparison`: com 45 colunas, uma coluna nova entrando só numa das
+ * duas produz um campo que existe numa tela e é `undefined` na outra, sem erro
+ * de tipo — o `select` do Supabase é string. Mesmo motivo de
+ * `PHYSICAL_ASSESSMENT_COLUMNS`.
+ */
+const BODY_SCAN_COLUMNS =
+  "id, student_id, scanned_at, height_cm, weight_kg, body_fat_pct, lean_mass_kg, bmi, circ_chest, circ_waist, circ_hips, circ_arms, circ_thighs, circ_calves, circ_neck, circ_shoulders, posture_symmetry_score, posture_muscle_score, posture_overall_score, posture_feedback, recommendations, framing_mark_top, framing_mark_bottom, framing_pitch, framing_roll, framing_level_sensor, framing_camera, px_per_cm_front, px_per_cm_back, px_per_cm_side, shoulder_drop_cm, shoulder_tilt_deg, hip_drop_cm, hip_tilt_deg, axis_deviation_cm, trunk_rotated, craniovertebral_angle_deg, plumb_shoulder_cm, plumb_hip_cm, plumb_knee_cm, quality_backlit, quality_low_light, quality_blown_out, framing_confirmed, created_at" as const;
+
 const COMPARABLE_FIELDS: ComparableField[] = [
   "weight_kg",
   "body_fat_pct",
-  "muscle_mass_kg",
+  "lean_mass_kg",
   "bmi",
   "circ_chest",
   "circ_waist",
@@ -19,6 +31,8 @@ const COMPARABLE_FIELDS: ComparableField[] = [
   "circ_calves",
   "circ_neck",
   "circ_shoulders",
+  "shoulder_drop_cm",
+  "craniovertebral_angle_deg",
 ];
 
 /**
@@ -30,7 +44,10 @@ const COMPARABLE_FIELDS: ComparableField[] = [
  * (`ADR-0010`).
  *
  * Campo nulo em qualquer um dos lados sai do resultado — "não medido" não é
- * zero, e tratá-lo como zero inventaria uma variação que não houve.
+ * zero, e tratá-lo como zero inventaria uma variação que não houve. `undefined`
+ * conta como nulo pelo mesmo motivo: uma leitura com `select` mais estreito que
+ * `BODY_SCAN_COLUMNS` produzia `NaN` em vez de sumir do resultado, e `NaN`
+ * chega à tela parecendo uma medida.
  *
  * @example
  * const deltas = compareScans(scans[0], scans[1]);
@@ -42,7 +59,7 @@ export function compareScans(current: BodyScanRecord, previous: BodyScanRecord):
   for (const field of COMPARABLE_FIELDS) {
     const now = current[field];
     const before = previous[field];
-    if (now === null || before === null) continue;
+    if (now == null || before == null) continue;
 
     deltas.push({
       field,
@@ -82,9 +99,7 @@ export const createBodyScanService = (supabase: SupabaseClient) => ({
     const { data, error } = await supabase
       // Campos nomeados: tabela sensível pela LGPD_COMPLIANCE.md.
       .from("body_scans")
-      .select(
-        "id, student_id, scanned_at, height_cm, weight_kg, body_fat_pct, muscle_mass_kg, bmi, circ_chest, circ_waist, circ_hips, circ_arms, circ_thighs, circ_calves, circ_neck, circ_shoulders, posture_symmetry_score, posture_muscle_score, posture_overall_score, posture_feedback, recommendations, framing_mark_top, framing_mark_bottom, framing_pitch, framing_roll, framing_level_sensor, framing_camera, created_at",
-      )
+      .select(BODY_SCAN_COLUMNS)
       .eq("student_id", studentId)
       .order("scanned_at", { ascending: false })
       .limit(limit);
@@ -129,9 +144,7 @@ export const createBodyScanService = (supabase: SupabaseClient) => ({
     const { data, error } = await supabase
       // Campos nomeados: tabela sensível pela LGPD_COMPLIANCE.md.
       .from("body_scans")
-      .select(
-        "id, student_id, scanned_at, height_cm, weight_kg, body_fat_pct, muscle_mass_kg, bmi, circ_chest, circ_waist, circ_hips, circ_arms, circ_thighs, circ_calves, circ_neck, circ_shoulders, posture_symmetry_score, posture_muscle_score, posture_overall_score, posture_feedback, recommendations, framing_mark_top, framing_mark_bottom, framing_pitch, framing_roll, framing_level_sensor, framing_camera, created_at",
-      )
+      .select(BODY_SCAN_COLUMNS)
       .eq("student_id", studentId)
       .order("scanned_at", { ascending: false })
       .limit(2);

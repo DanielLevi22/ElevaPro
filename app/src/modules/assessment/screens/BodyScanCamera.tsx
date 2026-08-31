@@ -69,6 +69,7 @@ export default function BodyScanCamera() {
   const vozMuda = useAssessmentStore((s) => s.vozMuda);
   const setVozMuda = useAssessmentStore((s) => s.setVozMuda);
   const lenteFrontal = useAssessmentStore((s) => s.lenteFrontal);
+  const ocupacaoDeReferencia = useAssessmentStore((s) => s.ocupacaoDeReferencia);
   const setLenteFrontal = useAssessmentStore((s) => s.setLenteFrontal);
 
   const [portao, setPortao] = useState<Portao | null>(null);
@@ -132,6 +133,7 @@ export default function BodyScanCamera() {
           ultimaFalada: ultimaFalada.current,
           estavaLiberado: estavaLiberado.current,
           msDesdeAFala: Date.now() - instanteDaFala.current,
+          ocupacaoAlvo: ocupacaoDeReferencia,
         }
       );
 
@@ -156,7 +158,7 @@ export default function BodyScanCamera() {
       }
       ultimaFalada.current = resultado.instrucao.id;
     },
-    [target, vozMuda]
+    [target, vozMuda, ocupacaoDeReferencia]
   );
 
   const disparar = useCallback(
@@ -166,8 +168,47 @@ export default function BodyScanCamera() {
         const uri = await camera.current?.capturar();
         if (!uri) return;
 
-        const { setCapturedImage, setCaptureFraming } = useAssessmentStore.getState();
+        // Medir vem antes de guardar. Tirar e medir são trabalhos separados —
+        // a foto já está no disco e não depende da medida —, mas sem geometria
+        // a pose não serve: o `ADR-0022` recusa a foto em vez de deixar a
+        // análise cair no método antigo, que reintroduziria dois métodos na
+        // mesma série. Guardar primeiro deixaria a foto num meio-estado, válida
+        // no store e inútil para a análise.
+        const medida = await camera.current?.medir(uri, target === 'side').catch(() => null);
+
+        // Exceção à regra, e deliberada: quem chegou aqui pela saída manual já
+        // passou 45s sem conseguir encaixar. Recusar de novo por falta de
+        // medida é o beco sem saída que a saída manual existe para evitar. A
+        // foto entra sem geometria, e `framing_confirmed: false` registra isso.
+        if (!medida && !semEnquadramento) {
+          showAlert({
+            title: 'Não consegui medir esta foto',
+            message:
+              'Não achei seu contorno da cabeça aos pés. Confira se está descalço, com o corpo inteiro no quadro, e vamos repetir só esta pose.',
+            type: 'warning',
+          });
+          return;
+        }
+
+        const {
+          setCapturedImage,
+          setCaptureFraming,
+          registrarQualidade,
+          setMedida,
+          setOcupacaoDeReferencia,
+        } = useAssessmentStore.getState();
         setCapturedImage(target, uri);
+        if (medida) setMedida(target, medida);
+        registrarQualidade(portao?.avisos ?? [], !semEnquadramento);
+
+        // A primeira pose do scan fixa a distância, e as duas seguintes têm de
+        // repeti-la. Sem isto a frente pode sair a 0.70 de ocupação e a lateral
+        // a 0.88, e aí as duas larguras descrevem pontos de vista diferentes em
+        // vez do mesmo corpo — que é o que torna a cintura da frente e a da
+        // lateral comparáveis entre si (`ADR-0022`).
+        if (ocupacaoDeReferencia === null && portao?.ocupacao != null) {
+          setOcupacaoDeReferencia(portao.ocupacao);
+        }
         setCaptureFraming({
           markTop: MARCA_TOPO,
           markBottom: MARCA_BASE,
@@ -177,9 +218,9 @@ export default function BodyScanCamera() {
           camera: lenteFrontal ? 'front' : 'back',
         });
 
-        // Foto sem o portão confirmar é foto com ressalva, e o aluno precisa
-        // saber disso na hora — o registro da ressalva no scan depende das
-        // colunas da Fase 2 e ainda não existe.
+        // Foto sem o portão confirmar é foto com ressalva: o aluno é avisado
+        // na hora, e `framing_confirmed` leva a mesma informação para quem for
+        // ler o scan depois.
         if (semEnquadramento) {
           showAlert({
             title: 'Foto sem enquadramento confirmado',
@@ -209,7 +250,7 @@ export default function BodyScanCamera() {
         showAlert({ title: 'Erro', message: 'Não consegui tirar a foto', type: 'error' });
       }
     },
-    [target, portao, router, lenteFrontal]
+    [target, portao, router, lenteFrontal, ocupacaoDeReferencia]
   );
 
   /**

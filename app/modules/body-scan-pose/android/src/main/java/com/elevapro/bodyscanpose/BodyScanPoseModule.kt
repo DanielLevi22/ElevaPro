@@ -26,6 +26,15 @@ class BodyScanPoseModule : Module() {
       AsyncFunction("capturar") { view: BodyScanPoseView, promessa: Promise ->
         view.capturar(promessa)
       }
+
+      AsyncFunction("medir") {
+        view: BodyScanPoseView,
+        caminho: String,
+        dePerfil: Boolean,
+        promessa: Promise,
+        ->
+        view.medir(caminho, dePerfil, promessa)
+      }
     }
   }
 }

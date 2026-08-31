@@ -3,6 +3,7 @@ import { supabase } from '@elevapro/supabase';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useAuthStore } from '@/modules/auth/store/authStore';
 import { fetchBff, lerRespostaBff } from '@/shared/bff';
+import type { MedidaDaFoto } from '../../../../modules/body-scan-pose';
 import { BodyScanResult, CaptureFraming } from '../types/assessment';
 
 const ROTA = '/api/ai/body-scan';
@@ -79,7 +80,27 @@ export const AIBodyScanService = {
       side?: string;
     },
     /** Enquadramento usado, para o próximo escaneamento reproduzir. */
-    framing?: CaptureFraming | null
+    framing?: CaptureFraming | null,
+    /**
+     * O que o aparelho mediu em cada foto, em pixels e graus.
+     *
+     * Vai em pixel porque o app não conhece a altura do aluno — o portão de
+     * elegibilidade responde se e de onde, nunca quanto. Quem converte para
+     * centímetro é o BFF, onde a Escala já foi resolvida (`ADR-0022`).
+     */
+    medidas?: Partial<Record<'front' | 'back' | 'side', MedidaDaFoto>>,
+    /**
+     * Os vereditos do portão sobre a captura.
+     *
+     * Veredito e nunca o histograma: o que o especialista precisa é saber se
+     * pondera o número, não reprocessar uma foto que não é guardada.
+     */
+    qualidade?: {
+      backlit: boolean;
+      lowLight: boolean;
+      blownOut: boolean;
+      framingConfirmed: boolean;
+    }
   ): Promise<BodyScanResult> => {
     const session = useAuthStore.getState().session;
     const token = session?.access_token;
@@ -113,6 +134,8 @@ export const AIBodyScanService = {
       {
         images: base64Images,
         framing: framing ?? undefined,
+        medidas,
+        qualidade,
       },
       { token }
     );

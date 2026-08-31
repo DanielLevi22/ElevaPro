@@ -89,7 +89,7 @@ describe('assessmentStore', () => {
   it('should handle successful submitScan', async () => {
     const mockResult = {
       id: 'result-1',
-      metrics: { height: 180, weight: 80, bodyFat: 15, muscleMass: 65, bmi: 24.7 },
+      metrics: { height: 180, weight: 80, bodyFat: 15, leanMass: 65, bmi: 24.7 },
       segments: { chest: 100, waist: 80, hips: 95, arms: 35, thighs: 55 },
       imageUrl: 'test-url',
       date: new Date().toISOString(),
@@ -219,7 +219,7 @@ describe('submitScan — mensagens de falha', () => {
     (AIBodyScanService.analyzeImages as jest.Mock).mockResolvedValue({
       id: '1',
       date: '2026-08-12',
-      metrics: { height: 175, weight: 70, bodyFat: 18, muscleMass: 35, bmi: 22.9 },
+      metrics: { height: 175, weight: 70, bodyFat: 18, leanMass: 35, bmi: 22.9 },
       segments: { chest: 100, waist: 82, hips: 95, arms: 38, thighs: 55 },
       imageUrl: '',
     });

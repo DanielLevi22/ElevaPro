@@ -135,6 +135,19 @@ flowchart LR
     C4 --> D2
 ```
 
+### O aparelho mede em pixels; o BFF aplica a Escala
+
+A divisão `pixels ÷ altura` acontece no **BFF**, não no aparelho — e não por
+conveniência: o endpoint de elegibilidade responde **se** o aluno pode escanear
+e **de onde** viria a Escala, nunca **quanto**, porque mandar a medida seria
+dado de saúde atravessando a fronteira sem finalidade (Art. 6º, III). O
+aparelho não conhece a altura e não deve conhecer.
+
+Isso não enfraquece a decisão. O que a torna verdadeira é a medida ser
+**determinística e feita sobre a imagem**, não a unidade em que ela sai. O
+aparelho mede em pixels, o BFF converte com a Escala que já resolve, e o modelo
+continua sem estimar geometria nenhuma.
+
 Só as circunferências têm caminho direto ao banco. O motivo é que duas fontes para a mesma grandeza
 não têm critério de desempate: se o modelo devolvesse circunferência tendo o número medido no
 prompt, o que iria para o banco seria o amostrado, com o medido servindo de sugestão ignorável.
@@ -254,6 +267,119 @@ dois métodos na mesma série, invisivelmente e para sempre, decidido por acaso 
 Recusar é barato porque o portão é ao vivo: o aluno está em pé no lugar, a dois passos da pose
 certa.
 
+### A mesma escala nas três fotos
+
+Cada foto converte pixel em centímetro pela **sua própria** régua, e dentro de uma foto isso está
+certo. O problema aparece quando a análise cruza duas: a largura de cintura da frente e a da
+lateral só descrevem o mesmo corpo se as duas saíram da mesma distância. O aluno parando a 0.70 de
+ocupação na frente e a 0.88 na lateral produz um par de números que o modelo lê como mudança de
+seção transversal — e que é mudança de distância.
+
+A primeira pose liberada do scan grava quanto do quadro o corpo ocupou. As seguintes têm de voltar
+a esse valor dentro de **±0.035**, e não apenas caber nas marcas.
+
+```mermaid
+flowchart TD
+    A["primeira pose libera"] --> B["grava ocupacaoDeReferencia<br/>fração do quadro ocupada"]
+    B --> C["pose seguinte"]
+    C --> D{"ocupação dentro de<br/>±0.035 da referência?"}
+    D -- menor --> E["voz: aproxime"]
+    D -- maior --> F["voz: afaste"]
+    E --> C
+    F --> C
+    D -- sim --> G["portão libera<br/>contagem de 5s"]
+    G --> H["três fotos na mesma escala"]
+```
+
+O `±0.035` é mais apertado que a tolerância de enquadramento da primeira foto (`±0.12`) de
+propósito: a primeira só precisa caber, as outras precisam **repetir**. Folga larga aqui devolveria
+exatamente o erro que a trava existe para evitar, com o portão dizendo que estava tudo verde.
+
+### Contido nas marcas, e não só centrado
+
+O retângulo na tela promete *"seu corpo cabe aqui dentro"*. O portão, até aqui, verificava outra
+coisa: se o **centro** do corpo estava perto do centro das marcas. Com `TOLERANCIA_ALTURA` em
+`0.12`, um corpo ocupando `0.92` do quadro passava — e o retângulo tem `0.80` de altura. Os dois
+números eram aritmeticamente incompatíveis: existia um corpo aceito pelo portão que não cabia no
+desenho, e o aluno via os próprios pés do lado de fora enquanto a borda ficava verde.
+
+A verificação passa a ser **por borda** — a coroa não pode passar do topo e o chão não pode passar
+da base, cada uma no seu limite — e a tolerância de distância deixa de ser simétrica: quando o alvo
+são as marcas, não há folga para cima, porque corpo maior que o retângulo não cabe nele. Aceitar
+isso era desenhar uma promessa falsa na tela.
+
+## O contexto que a análise recebe
+
+Medir melhor resolve metade do problema. A outra metade era o prompt: a rota via **três imagens e
+uma altura**, e mais nada. Duas ausências pesavam mais que todo o resto.
+
+**O scan anterior.** O `ADR-0010` afirma que *"o valor está na diferença entre dois scans, não no
+número absoluto de um só"* — e o modelo nunca via essa diferença. O produto prometia um filme e o
+prompt entregava um retrato. Os valores do scan anterior entram como passado, nunca como alvo:
+quem interpreta a variação é o modelo, e dizer para onde ela deveria ir seria induzir o achado.
+
+**A limitação física.** Recomendação postural para quem tem manguito operado deveria ser outra, e
+era a mesma. Entram seis campos — lesões, cirurgias, limitações de mobilidade, dor atual — com a
+instrução explícita de **não atribuir achado postural à lesão sem que a imagem sustente**.
+
+```mermaid
+flowchart LR
+    subgraph ap["No aparelho"]
+        M["fact sheet<br/>pixels e graus"]
+    end
+    subgraph db["Supabase · cliente do titular, sob RLS"]
+        S["body_scans<br/>último scan"]
+        A["student_anamnesis<br/>6 campos nomeados"]
+        T["training_periodizations<br/>objetivo do plano ativo"]
+    end
+    subgraph bf["No BFF"]
+        E["resolverEscala<br/>altura e peso"]
+        F["descreverFatosMedidos<br/>px ÷ altura → cm"]
+        C["carregarContextoDoScan"]
+        P["prompt único<br/>temperature 0"]
+    end
+    M --> F
+    E --> F
+    S --> C
+    A --> C
+    T --> C
+    F --> P
+    C --> P
+    P --> IA["Claude Sonnet"]
+    IA --> L["o que mudou desde o último scan,<br/>lido contra o que o corpo aguenta"]
+```
+
+**A anamnese entra por campo nomeado no `select`, nunca pelo objeto inteiro.** O recorte acontece
+na consulta e não em memória: pedir `responses` para filtrar depois traria medicação, renda e
+histórico familiar até a borda do processo sem finalidade nenhuma (Art. 6°, III). É a mesma
+disciplina que a leitura de altura desta rota já praticava — e que o loader novo passou a seguir
+depois de nascer errado.
+
+O contexto é **enriquecimento, não pré-requisito**: se a consulta falha, o laudo sai sem a
+comparação em vez de não sair.
+
+### Um agente por tópico — recusado
+
+A alternativa levantada foi especializar: um agente de treino, um de postura, um de composição,
+com um orquestrador juntando as respostas. Não entra, e a razão é a mesma que decidiu quase tudo
+neste documento — **profundidade, não superfície**. Três agentes olhando a mesma foto produzem três
+leituras que precisam ser reconciliadas por um quarto, e nenhum deles sabe o que os outros viram.
+A imprecisão do laudo não vinha de faltar especialista: vinha de faltar **medida** e faltar
+**contexto**, e as duas foram atacadas direto. Um segundo modelo entra quando houver um seam real
+— quando a análise de exercício existir e tiver pergunta própria —, não antes.
+
+**Dívida registrada:** esta rota fala com o SDK da Anthropic direto, e o `ADR-0011` diz que *"todos
+os orquestradores usam apenas essa interface — nunca o SDK do Anthropic/OpenAI diretamente"*.
+Levá-la para o `AIProvider` é trabalho conhecido e fora do escopo desta issue.
+
+### O laudo não elogia
+
+`temperature: 0` e uma seção de estilo que proíbe elogio, encorajamento e consolo. Corpo sem
+alteração relevante recebe *"nada a apontar"*, não um parágrafo simpático; achado não é suavizado
+para poupar o aluno nem inventado para o texto parecer útil; e nada de julgamento estético — o
+texto descreve postura e proporção, nunca aparência. A régua: escreve-se para quem vai **agir**
+sobre o corpo, não para quem quer se sentir bem sobre ele.
+
 ## O que o `/lgpd-check` exigiu
 
 O parecer rodou em 2026-08-30 e mudou o escopo em quatro pontos. Os dois primeiros viram código,
@@ -282,9 +408,12 @@ descartável, o aluno B passou a ler a análise do aluno A, e o teste acusa.
 | Trava | Estado |
 |---|---|
 | `verify-rls.sql` — aluno não lê análise de outro aluno; especialista sem vínculo não lê nenhuma | ✅ escrita, passando, prova negativa feita |
-| `aiBodyScan` — a imagem não é codificada sem consentimento (Art. 11, I) | nasce com a feature |
-| `route` — a circunferência gravada é a do payload medido, nunca a que o modelo devolveu (Art. 6°, V) | nasce com a feature |
-| `route` — nenhum valor do fact sheet aparece em log (Art. 6°, VIII) | nasce com a feature |
+| `verify-rls.sql` — ninguém dá UPDATE em medida gravada, nem o titular (Art. 6°, V) | ✅ escrita — conta linhas afetadas, porque sem RLS o UPDATE passaria sem erro |
+| `verify-rls.sql` — o titular continua apagando a própria análise (Art. 18, VI) | ✅ escrita — estreitar a política não podia levar o DELETE junto |
+| `aiBodyScan` — a imagem não é codificada sem consentimento (Art. 11, I) | ✅ o consentimento é checado antes de a foto ser lida do disco |
+| `fatosMedidos` — a mesma conta escreve o prompt e a coluna | ✅ 13 testes, incluindo o limiar de rotação compartilhado |
+| `route` — a circunferência gravada é a do payload medido, nunca a que o modelo devolveu (Art. 6°, V) | ⬜ depende da Fase 3, que é condicionada à validação contra fita |
+| `route` — nenhum valor do fact sheet aparece em log (Art. 6°, VIII) | ✅ nada do payload medido é logado |
 
 ## O que o aparelho respondeu
 

@@ -96,7 +96,8 @@ export const bodyScans = pgTable("body_scans", {
   // avaliação depois do scan, reescrevendo o passado.
   scale_source: scaleSourceEnum("scale_source"),
   body_fat_pct: numeric("body_fat_pct", { precision: 5, scale: 2 }),
-  muscle_mass_kg: numeric("muscle_mass_kg", { precision: 5, scale: 2 }),
+  /** Massa magra derivada de `peso × (1 − gordura)` — osso e água inclusos (0038). */
+  lean_mass_kg: numeric("lean_mass_kg", { precision: 5, scale: 2 }),
   bmi: numeric("bmi", { precision: 5, scale: 2 }),
   // Segmentos (cm)
   circ_chest: numeric("circ_chest", { precision: 5, scale: 2 }),
@@ -123,5 +124,31 @@ export const bodyScans = pgTable("body_scans", {
   framing_camera: text("framing_camera"),
   posture_feedback: jsonb("posture_feedback"),
   recommendations: text("recommendations"),
+  // O que o aparelho mediu (0038). Uma conversão px/cm por pose: o aluno não
+  // para na mesma distância nas três, e ler uma foto com a régua de outra
+  // deslocaria as larguras sem ninguém perceber.
+  px_per_cm_front: numeric("px_per_cm_front", { precision: 7, scale: 3 }),
+  px_per_cm_back: numeric("px_per_cm_back", { precision: 7, scale: 3 }),
+  px_per_cm_side: numeric("px_per_cm_side", { precision: 7, scale: 3 }),
+  // Assimetrias da frontal, em cm e em grau: o cm diz o quanto, o grau diz o
+  // quanto disso é inclinação e não distância entre ombros largos.
+  shoulder_drop_cm: numeric("shoulder_drop_cm", { precision: 5, scale: 2 }),
+  shoulder_tilt_deg: numeric("shoulder_tilt_deg", { precision: 5, scale: 2 }),
+  hip_drop_cm: numeric("hip_drop_cm", { precision: 5, scale: 2 }),
+  hip_tilt_deg: numeric("hip_tilt_deg", { precision: 5, scale: 2 }),
+  axis_deviation_cm: numeric("axis_deviation_cm", { precision: 5, scale: 2 }),
+  /** Veredito, não a razão bruta: com true, assimetria pode ser perspectiva. */
+  trunk_rotated: boolean("trunk_rotated"),
+  // Postura sagital da lateral. Anteriorização de cabeça só existe em ângulo.
+  craniovertebral_angle_deg: numeric("craniovertebral_angle_deg", { precision: 5, scale: 2 }),
+  plumb_shoulder_cm: numeric("plumb_shoulder_cm", { precision: 5, scale: 2 }),
+  plumb_hip_cm: numeric("plumb_hip_cm", { precision: 5, scale: 2 }),
+  plumb_knee_cm: numeric("plumb_knee_cm", { precision: 5, scale: 2 }),
+  // Luz não trava a captura, marca o scan — precedente do framing_level_sensor.
+  quality_backlit: boolean("quality_backlit"),
+  quality_low_light: boolean("quality_low_light"),
+  quality_blown_out: boolean("quality_blown_out"),
+  /** false quando o aluno usou a saída manual: enquadramento não confirmado. */
+  framing_confirmed: boolean("framing_confirmed"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

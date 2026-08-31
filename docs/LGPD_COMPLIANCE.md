@@ -171,6 +171,14 @@ iniciativa**: antes o app só olhava quando o aluno apertava o botão. Isso prec
 estar dito no consentimento, e é o que obriga uma `POLICY_VERSION` nova — pela
 mesma razão da `1.1`: não faltava autorização, faltava o aluno saber.
 
+**Feito em 2026-08-31: `POLICY_VERSION` = `1.2`.** O texto passou a ter duas
+metades explícitas, porque "as imagens" tinha virado uma palavra para duas
+coisas diferentes: *no seu aparelho*, a análise a cada dois segundos que não é
+gravada nem enviada; *fora do seu aparelho*, as três fotos que vão ao serviço
+externo. Todo aluno que já tinha autorizado é perguntado de novo antes do
+próximo scan — `hasCollectionConsent` devolve `false` quando a versão não bate,
+e o reconsentimento acontece sozinho.
+
 **Sobre o sinal derivado.** O briefing não é tratamento novo: agrega dado que o
 especialista vinculado já pode ler, para a mesma finalidade — acompanhar o
 aluno. O que o mantém dentro da minimização é o **recorte**: lê
@@ -299,7 +307,7 @@ A LGPD garante direitos aos titulares que o sistema precisa implementar. Abaixo 
 | Direito | Onde implementar | Status |
 |---------|-----------------|--------|
 | Acesso aos dados | Tela "Meus Dados" (mobile + web) | Pendente |
-| Correção (Art. 18, III) | Perfil · anamnese (reabre o questionário) · adesão à refeição (alterna e substitui) · **feedback de sessão** (`intensity` e `notes`, no histórico do mobile — desde 2026-08-28) | **Coberto para o que o titular declarou.** Fora: medida do evento — datas, séries, duração, calorias, `body_scans` e `physical_assessments`. O remédio para medida inexata é medir de novo, não digitar outro número (Art. 6°, V). Pendente: tela "Meus Dados" reunindo os caminhos num lugar só |
+| Correção (Art. 18, III) | Perfil · anamnese (reabre o questionário) · adesão à refeição (alterna e substitui) · **feedback de sessão** (`intensity` e `notes`, no histórico do mobile — desde 2026-08-28) | **Coberto para o que o titular declarou.** Fora: medida do evento — datas, séries, duração, calorias, `body_scans` e `physical_assessments`. O remédio para medida inexata é medir de novo, não digitar outro número (Art. 6°, V). Desde a `0038` isso deixou de ser só política e virou schema: `body_scans` não tem política de UPDATE para nenhum papel do cliente, e a `verify-rls.sql` conta as linhas afetadas para provar. Pendente: tela "Meus Dados" reunindo os caminhos num lugar só |
 | Exclusão (Art. 18, VI) | Por item: **observação da sessão** (apaga o texto, a sessão fica) · **análise corporal** (`body_scans`, apaga a análise) — desde 2026-08-28 | **Parcial, por item.** A sessão de treino em si não é apagável: é execução de contrato (Art. 7°, V) e o inciso VI alcança o que foi tratado com consentimento. Pendente: fluxo "Excluir minha conta", que elimina tudo por `ON DELETE CASCADE` |
 | Portabilidade | Exportar dados em JSON/PDF | Pendente |
 | Revogação do consentimento | Tela de configurações de privacidade | Pendente |

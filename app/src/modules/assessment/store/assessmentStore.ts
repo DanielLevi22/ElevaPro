@@ -5,6 +5,7 @@ import { createMMKV } from 'react-native-mmkv';
 import { create } from 'zustand';
 import { createJSONStorage, persist, StateStorage } from 'zustand/middleware';
 import { mensagemDeErroBff } from '@/shared/bff';
+import type { MedidaDaFoto } from '../../../../modules/body-scan-pose';
 import {
   AIBodyScanService,
   BodyScanAnalysisError,
@@ -12,6 +13,7 @@ import {
   BodyScanScaleError,
 } from '../services/aiBodyScan';
 import { AnamnesisService } from '../services/anamnesisService';
+import type { AvisoDeQualidade } from '../services/portao';
 import {
   AnamnesisResponseValue,
   AssessmentStatus,
@@ -34,6 +36,21 @@ const clientStorage: StateStorage = {
   },
 };
 
+interface QualidadeDaCaptura {
+  backlit: boolean;
+  lowLight: boolean;
+  blownOut: boolean;
+  framingConfirmed: boolean;
+}
+
+/** Nada de ressalva até alguma captura acontecer — e enquadramento presumido bom. */
+const QUALIDADE_LIMPA: QualidadeDaCaptura = {
+  backlit: false,
+  lowLight: false,
+  blownOut: false,
+  framingConfirmed: true,
+};
+
 interface AssessmentState {
   status: AssessmentStatus;
   studentId: string | null;
@@ -52,6 +69,33 @@ interface AssessmentState {
   setStudentId: (id: string) => void;
   startScan: () => Promise<void>;
   setCapturedImage: (type: 'front' | 'back' | 'side', uri: string) => void;
+  /**
+   * O que o aparelho mediu em cada foto, em pixels e graus.
+   *
+   * Fora do `partialize` de propósito: é derivado de dado de saúde e vive só o
+   * tempo do scan. O que persiste é o resultado, depois da análise.
+   */
+  medidas: Partial<Record<'front' | 'back' | 'side', MedidaDaFoto>>;
+  setMedida: (type: 'front' | 'back' | 'side', medida: MedidaDaFoto) => void;
+  /**
+   * Quanto do quadro o corpo ocupou na primeira foto deste scan.
+   *
+   * A partir da segunda pose o portão exige voltar a esta distância. Sem isso a
+   * frente pode sair a 0.70 de ocupação e a lateral a 0.88, e aí as duas
+   * larguras descrevem pontos de vista diferentes em vez do mesmo corpo.
+   */
+  ocupacaoDeReferencia: number | null;
+  setOcupacaoDeReferencia: (ocupacao: number) => void;
+  /**
+   * Os vereditos do portão, somados nas três poses.
+   *
+   * Somados e não por pose porque o scan é uma linha só: se a lateral saiu em
+   * contraluz, é o scan inteiro que carrega a ressalva. `enquadramentoConfirmado`
+   * é o inverso — basta uma pose pela saída manual para o conjunto deixar de
+   * ser confiável.
+   */
+  qualidade: QualidadeDaCaptura;
+  registrarQualidade: (avisos: AvisoDeQualidade[], enquadramentoConfirmado: boolean) => void;
   /** Parâmetros do enquadramento da última captura — base da comparação. */
   captureFraming: CaptureFraming | null;
   setCaptureFraming: (framing: CaptureFraming) => void;
@@ -146,7 +190,16 @@ export const useAssessmentStore = create<AssessmentState>()(
       setStudentId: (id: string) => set({ studentId: id }),
 
       startScan: async () => {
-        set({ status: AssessmentStatus.SCANNING, capturedImages: {} }); // Keep studentId
+        // Zera medidas, escala de referência e ressalvas: sem isto o scan novo
+        // herdaria o contraluz do anterior e mediria contra uma distância que
+        // o aluno não repetiu.
+        set({
+          status: AssessmentStatus.SCANNING,
+          capturedImages: {},
+          medidas: {},
+          ocupacaoDeReferencia: null,
+          qualidade: QUALIDADE_LIMPA,
+        }); // Keep studentId
       },
 
       setCapturedImage: (type: 'front' | 'back' | 'side', uri: string) => {
@@ -160,6 +213,24 @@ export const useAssessmentStore = create<AssessmentState>()(
 
       setCaptureFraming: (framing: CaptureFraming) => set({ captureFraming: framing }),
 
+      qualidade: QUALIDADE_LIMPA,
+      registrarQualidade: (avisos, enquadramentoConfirmado) =>
+        set((state) => ({
+          qualidade: {
+            backlit: state.qualidade.backlit || avisos.includes('contraluz'),
+            lowLight: state.qualidade.lowLight || avisos.includes('luz-fraca'),
+            blownOut: state.qualidade.blownOut || avisos.includes('luz-estourada'),
+            framingConfirmed: state.qualidade.framingConfirmed && enquadramentoConfirmado,
+          },
+        })),
+
+      medidas: {},
+      setMedida: (type, medida) =>
+        set((state) => ({ medidas: { ...state.medidas, [type]: medida } })),
+
+      ocupacaoDeReferencia: null,
+      setOcupacaoDeReferencia: (ocupacao) => set({ ocupacaoDeReferencia: ocupacao }),
+
       vozMuda: false,
       setVozMuda: (muda: boolean) => set({ vozMuda: muda }),
 
@@ -171,12 +242,11 @@ export const useAssessmentStore = create<AssessmentState>()(
         // faz o retry parecer que falhou de novo antes mesmo de terminar.
         set({ status: AssessmentStatus.ANALYZING, errorMessage: null });
         try {
-          const capturedImages = get().capturedImages;
-          console.log('Starting AI Analysis with images:', Object.keys(capturedImages));
-
           const result = await AIBodyScanService.analyzeImages(
-            capturedImages,
-            get().captureFraming
+            get().capturedImages,
+            get().captureFraming,
+            get().medidas,
+            get().qualidade
           );
 
           set((state) => ({

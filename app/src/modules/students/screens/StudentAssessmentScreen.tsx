@@ -209,8 +209,10 @@ export default function StudentAssessmentScreen() {
                       color={colors.status.warning}
                     />
                     <MetricCard
-                      label="Massa Muscular"
-                      value={`${result.metrics.muscleMass} kg`}
+                      label="Massa magra"
+                      value={
+                        result.metrics.leanMass === null ? '—' : `${result.metrics.leanMass} kg`
+                      }
                       icon="barbell-outline"
                       color={colors.status.success}
                     />

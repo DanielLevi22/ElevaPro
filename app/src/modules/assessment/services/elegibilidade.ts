@@ -52,8 +52,16 @@ export function avisoDoPortao(motivo: MotivoDoPortao): AvisoDoPortao {
     case 'consentimento':
       return {
         titulo: 'Falta a sua autorização',
-        texto:
-          'Para analisar suas fotos preciso da sua autorização para tratar dados de saúde. As imagens vão para um serviço de inteligência artificial externo e não são guardadas — só o resultado fica salvo.',
+        // As duas metades são separadas de propósito. O texto da `1.1` falava
+        // só de "as imagens", e a partir do portão de captura isso passou a
+        // cobrir duas coisas muito diferentes: o que é analisado no aparelho e
+        // morre lá, e o que sai para um terceiro. Não armazenar não é não
+        // tratar (Art. 5º, X), e o aluno autoriza sabendo qual é qual.
+        texto: [
+          'Para analisar suas fotos preciso da sua autorização para tratar dados de saúde.',
+          'No seu aparelho: enquanto a tela da câmera fica aberta, ela analisa a imagem a cada dois segundos para te dizer como se posicionar. Essas imagens não são gravadas nem enviadas — existem só naquele instante, dentro do celular.',
+          'Fora do seu aparelho: as três fotos que você tira vão para um serviço de inteligência artificial externo e não são guardadas — só o resultado e as medidas ficam salvos.',
+        ].join('\n\n'),
         rotulo: 'Autorizar',
         // Resolve aqui mesmo: o aluno autoriza e segue sem sair da tela.
         destino: null,

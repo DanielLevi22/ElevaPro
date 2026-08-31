@@ -2,6 +2,7 @@ package com.elevapro.bodyscanpose
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.os.Handler
 import android.os.Looper
@@ -14,6 +15,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
+import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.LifecycleOwner
 import com.google.mediapipe.framework.image.BitmapImageBuilder
 import com.google.mediapipe.tasks.core.BaseOptions
@@ -63,6 +65,15 @@ class BodyScanPoseView(context: Context, appContext: AppContext) : ExpoView(cont
   private val analise = Executors.newSingleThreadExecutor()
 
   private var landmarker: PoseLandmarker? = null
+
+  /**
+   * Um segundo landmarker, em modo imagem.
+   *
+   * O de LIVE_STREAM devolve resultado por callback e não serve para medir uma
+   * foto sob demanda. São modos de execução diferentes do mesmo modelo, e o
+   * MediaPipe não deixa uma instância alternar entre eles.
+   */
+  private var medidor: PoseLandmarker? = null
   private var captura: ImageCapture? = null
   private var ultimaAmostra = 0L
 
@@ -120,6 +131,20 @@ class BodyScanPoseView(context: Context, appContext: AppContext) : ExpoView(cont
           .build()
 
       landmarker = PoseLandmarker.createFromOptions(context, opcoes)
+
+      val bufferDaMedida = ByteBuffer.allocateDirect(bytes.size).put(bytes)
+      bufferDaMedida.rewind()
+      medidor =
+        PoseLandmarker.createFromOptions(
+          context,
+          PoseLandmarker.PoseLandmarkerOptions.builder()
+            .setBaseOptions(BaseOptions.builder().setModelAssetBuffer(bufferDaMedida).build())
+            .setRunningMode(RunningMode.IMAGE)
+            .setOutputSegmentationMasks(true)
+            .setNumPoses(1)
+            .build(),
+        )
+
       principal.post { abrirCamera() }
     } catch (e: Exception) {
       estado("falhou: ${e.message}")
@@ -281,6 +306,65 @@ class BodyScanPoseView(context: Context, appContext: AppContext) : ExpoView(cont
     }
   }
 
+  /**
+   * Mede a foto já capturada.
+   *
+   * Separado de `capturar` de propósito: tirar e medir são trabalhos
+   * diferentes, e juntá-los faria a foto depender de a medida dar certo. Se a
+   * medida falhar, a foto continua válida — a análise só perde a geometria.
+   */
+  fun medir(caminho: String, dePerfil: Boolean, promessa: Promise) {
+    val motor = medidor
+    if (motor == null) {
+      promessa.reject("SEM_MEDIDOR", "O modelo ainda não está pronto", null)
+      return
+    }
+
+    trabalho.execute {
+      try {
+        val bitmap = lerFotoNaOrientacaoCerta(caminho)
+        if (bitmap == null) {
+          promessa.reject("SEM_FOTO", "Não consegui abrir a foto para medir", null)
+          return@execute
+        }
+
+        val medida = medirFoto(motor.detect(BitmapImageBuilder(bitmap).build()), bitmap, dePerfil)
+        if (medida == null) {
+          promessa.reject("SEM_CORPO", "Não achei um corpo inteiro nesta foto", null)
+          return@execute
+        }
+
+        promessa.resolve(medida)
+      } catch (e: Exception) {
+        promessa.reject("FALHA_MEDIDA", e.message ?: "Não consegui medir a foto", e)
+      }
+    }
+  }
+
+  /**
+   * Abre o JPEG já rotacionado.
+   *
+   * A câmera grava a orientação na EXIF em vez de girar os pixels; decodificar
+   * sem ler isso mede um corpo deitado, e toda altura sai trocada com largura.
+   */
+  private fun lerFotoNaOrientacaoCerta(caminho: String): Bitmap? {
+    val arquivo = caminho.removePrefix("file://")
+    val bitmap = BitmapFactory.decodeFile(arquivo) ?: return null
+
+    val graus =
+      when (
+        ExifInterface(arquivo)
+          .getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+      ) {
+        ExifInterface.ORIENTATION_ROTATE_90 -> 90
+        ExifInterface.ORIENTATION_ROTATE_180 -> 180
+        ExifInterface.ORIENTATION_ROTATE_270 -> 270
+        else -> 0
+      }
+
+    return girar(bitmap, graus)
+  }
+
   private fun girar(bitmap: Bitmap, graus: Int): Bitmap {
     if (graus == 0) return bitmap
     val m = Matrix().apply { postRotate(graus.toFloat()) }
@@ -299,6 +383,8 @@ class BodyScanPoseView(context: Context, appContext: AppContext) : ExpoView(cont
     super.onDetachedFromWindow()
     landmarker?.close()
     landmarker = null
+    medidor?.close()
+    medidor = null
     captura = null
     emVoo.clear()
     trabalho.shutdown()

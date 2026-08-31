@@ -37,14 +37,74 @@ export interface PostureFeedback {
  * do `ADR-0010` é guardar o resultado derivado e nunca a imagem — é a maior
  * minimização possível para um dado biométrico.
  */
-export interface BodyScanRecord {
+/**
+ * O que o aparelho mediu na captura, já convertido para centímetro e grau.
+ *
+ * O MediaPipe mede em **pixels**, porque o aparelho não conhece a altura do
+ * aluno — o portão de elegibilidade responde se ele pode escanear e de onde
+ * viria a Escala, nunca quanto. A divisão acontece no BFF, onde a Escala já foi
+ * resolvida (`ADR-0022`).
+ *
+ * Tudo anulável: a máscara falha às vezes, e a lateral não produz assimetria
+ * frontal. Null aqui significa "não medido nesta captura", nunca zero.
+ */
+export interface MedidasGeometricas {
+  /** Uma conversão por pose — o aluno não para na mesma distância nas três. */
+  px_per_cm_front: number | null;
+  px_per_cm_back: number | null;
+  px_per_cm_side: number | null;
+  /** Assimetrias da frontal. Sinal positivo é o lado direito mais alto. */
+  shoulder_drop_cm: number | null;
+  shoulder_tilt_deg: number | null;
+  hip_drop_cm: number | null;
+  hip_tilt_deg: number | null;
+  axis_deviation_cm: number | null;
+  /** Veredito, não a razão bruta: com true, assimetria pode ser perspectiva. */
+  trunk_rotated: boolean | null;
+  /** Postura sagital da lateral. Anteriorização de cabeça só existe em ângulo. */
+  craniovertebral_angle_deg: number | null;
+  plumb_shoulder_cm: number | null;
+  plumb_hip_cm: number | null;
+  plumb_knee_cm: number | null;
+}
+
+/**
+ * A geometria mais os vereditos do portão — a linha inteira que o scan grava.
+ *
+ * Separado de `MedidasGeometricas` porque as duas metades vêm de lugares
+ * diferentes: a geometria é conta sobre pixels, feita no BFF; o veredito é
+ * decisão do portão, tomada no aparelho. Só a geometria volta para a tela do
+ * aluno — o aviso de luz ele já recebeu na hora da captura.
+ */
+export interface MedidasDoAparelho extends MedidasGeometricas, VereditosDaCaptura {}
+
+/**
+ * O que o portão concluiu sobre a captura, sem olhar o corpo.
+ *
+ * Tipo próprio porque tem consumidor próprio: o selo de confiança lê só esta
+ * metade, e passar `MedidasDoAparelho` inteiro para ele levaria junto o
+ * desnível de ombro — medida de saúde que aquele componente não tem por que
+ * conhecer.
+ *
+ * Null significa "capturado antes de este sinal existir", nunca "estava bom".
+ */
+export interface VereditosDaCaptura {
+  /** Luz não trava a captura, marca o scan — precedente do `framing_level_sensor`. */
+  quality_backlit: boolean | null;
+  quality_low_light: boolean | null;
+  quality_blown_out: boolean | null;
+  /** false quando o aluno usou a saída manual do portão sem confirmar o encaixe. */
+  framing_confirmed: boolean | null;
+}
+
+export interface BodyScanRecord extends MedidasDoAparelho {
   id: string;
   student_id: string;
   scanned_at: string;
   height_cm: number | null;
   weight_kg: number | null;
   body_fat_pct: number | null;
-  muscle_mass_kg: number | null;
+  lean_mass_kg: number | null;
   bmi: number | null;
   circ_chest: number | null;
   circ_waist: number | null;
@@ -70,7 +130,7 @@ export interface BodyScanRecord {
   recommendations: string | null;
 }
 
-export interface BodyScanInput {
+export interface BodyScanInput extends MedidasDoAparelho {
   height_cm: number;
   weight_kg: number | null;
   /**
@@ -80,7 +140,7 @@ export interface BodyScanInput {
    */
   scale_source?: "assessment" | "anamnese";
   body_fat_pct: number | null;
-  muscle_mass_kg: number | null;
+  lean_mass_kg: number | null;
   bmi: number | null;
   circ_chest: number | null;
   circ_waist: number | null;
@@ -110,7 +170,7 @@ export interface BodyScanInput {
 export type ComparableField =
   | "weight_kg"
   | "body_fat_pct"
-  | "muscle_mass_kg"
+  | "lean_mass_kg"
   | "bmi"
   | "circ_chest"
   | "circ_waist"
@@ -119,7 +179,9 @@ export type ComparableField =
   | "circ_thighs"
   | "circ_calves"
   | "circ_neck"
-  | "circ_shoulders";
+  | "circ_shoulders"
+  | "shoulder_drop_cm"
+  | "craniovertebral_angle_deg";
 
 export interface BodyScanDelta {
   field: ComparableField;

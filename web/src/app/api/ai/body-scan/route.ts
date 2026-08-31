@@ -1,9 +1,20 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { createBodyScanService, createHealthService } from "@elevapro/shared";
+import {
+  createBodyScanService,
+  createHealthService,
+  type MedidasGeometricas,
+  type VereditosDaCaptura,
+} from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeStudent } from "@/lib/api-auth";
 import { clienteDoTitular } from "@/lib/supabase-titular";
+import { carregarContextoDoScan } from "@/modules/ai/services/contextoDoScan";
 import { type FonteDaEscala, resolverEscala } from "@/modules/ai/services/escala";
+import {
+  descreverFatosMedidos,
+  type MedidasPorPose,
+  medidasParaOScan,
+} from "@/modules/ai/services/fatosMedidos";
 
 // Na Vercel uma rota sem isto morre no default de poucos segundos. Uma conversa
 // com uso de ferramenta passa disso com folga, e localmente não existe teto —
@@ -21,7 +32,6 @@ export const maxDuration = 60;
 interface ModelPayload {
   metrics: {
     bodyFat: number;
-    muscleMass: number;
   };
   segments: {
     chest: number;
@@ -44,23 +54,60 @@ interface ModelPayload {
   };
 }
 
-/** A resposta ao app: o que o modelo estimou mais a régua que veio de fora. */
+/** A resposta ao app: o que o modelo estimou mais a Escala que veio de fora. */
 interface BodyScanPayload extends ModelPayload {
   metrics: ModelPayload["metrics"] & {
     height: number;
     weight: number;
+    /** Derivada de `peso × (1 − gordura)`. Null quando a gordura não saiu. */
+    leanMass: number | null;
     bmi: number;
   };
   /** De onde vieram altura e peso. A tela precisa poder dizer isso ao aluno. */
   scaleSource: FonteDaEscala;
+  /** O que o aparelho mediu, em cm e grau. É o que a tela mostra ao aluno. */
+  measured: MedidasGeometricas;
+  /** O que o portão concluiu sobre a captura. Alimenta o selo de confiança. */
+  quality: VereditosDaCaptura;
   /** Falso quando a análise deu certo mas a gravação falhou — estados distintos. */
   persisted?: boolean;
 }
 
+/**
+ * O que pode ir para o log de uma falha desta rota.
+ *
+ * Diagnóstico sem carga: nenhum caminho de erro daqui pode carregar valor
+ * medido, e o objeto de erro do Postgrest carrega — `details` ecoa a linha
+ * recusada, que aqui é o fact sheet inteiro.
+ */
+function motivoDaFalha(error: unknown): { code?: string; message: string } {
+  if (typeof error === "object" && error !== null && "code" in error) {
+    const erro = error as { code?: unknown; message?: unknown };
+
+    return {
+      code: typeof erro.code === "string" ? erro.code : undefined,
+      message: typeof erro.message === "string" ? erro.message : "erro sem mensagem",
+    };
+  }
+
+  return { message: error instanceof Error ? error.message : "erro desconhecido" };
+}
+
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-function buildSystemPrompt(heightCm: number, weightKg: number | null): string {
+function buildSystemPrompt(
+  heightCm: number,
+  weightKg: number | null,
+  fatosMedidos: string | null,
+  contexto: string | null,
+): string {
   const peso = weightKg === null ? "não informado" : `${weightKg} kg`;
+
+  // Sem fatos medidos o prompt volta a pedir a proporção — é o caminho de quando
+  // o aparelho não conseguiu medir, e a análise degrada em vez de falhar.
+  const escala =
+    fatosMedidos ??
+    `Use a altura como escala da imagem: o corpo inteiro, da cabeça aos pés, mede ${heightCm} cm. Converta as larguras que você observa para centímetro a partir dessa proporção.`;
 
   return `Você é um especialista em avaliação física e análise postural.
 
@@ -68,13 +115,26 @@ MEDIDAS CONHECIDAS DO ALUNO (não estime nenhuma delas):
 - Altura: ${heightCm} cm
 - Peso: ${peso}
 
-Use a altura como escala da imagem: o corpo inteiro, da cabeça aos pés, mede ${heightCm} cm. Converta as larguras que você observa para centímetro a partir dessa proporção.
+${escala}
 
-As circunferências que você devolver são ESTIMATIVAS derivadas dessa escala, não medições. Prefira errar para o conservador a inventar precisão.
+As circunferências que você devolver são ESTIMATIVAS, não medições. Prefira errar para o conservador a inventar precisão.
+
+${
+  contexto
+    ? `${contexto}
+`
+    : ""
+}
+COMO ESCREVER:
+- Relate o que a imagem e as medidas mostram. Nada de elogio, encorajamento ou consolo.
+- Não suavize achado para poupar o aluno, e não invente achado para parecer útil.
+- Corpo sem alteração relevante recebe "nada a apontar", não um parágrafo elogioso.
+- Sem julgamento estético: o texto descreve postura e proporção, nunca aparência.
+- Escreva para quem vai agir sobre o corpo, não para quem quer se sentir bem.
 
 Retorne APENAS JSON válido com esta estrutura exata:
 {
-  "metrics": { "bodyFat": number (%), "muscleMass": number (kg) },
+  "metrics": { "bodyFat": number (%) },
   "segments": { "chest": number (cm), "waist": number (cm), "hips": number (cm), "arms": number (cm), "thighs": number (cm), "calves": number, "neck": number, "shoulders": number },
   "postureAnalysis": {
     "scores": { "symmetry": number (0-100), "muscle": number (0-100), "posture": number (0-100) },
@@ -128,6 +188,26 @@ export async function POST(request: NextRequest) {
       levelSensor: boolean;
       camera: "front" | "back";
     };
+    /**
+     * O que o portão viu na captura, já decidido no aparelho.
+     *
+     * Veredito, nunca o histograma: o especialista precisa saber se pondera o
+     * número, não reprocessar uma foto que não existe mais.
+     */
+    qualidade?: {
+      backlit: boolean;
+      lowLight: boolean;
+      blownOut: boolean;
+      /** false quando o aluno usou a saída manual sem confirmar o encaixe. */
+      framingConfirmed: boolean;
+    };
+    /**
+     * O que o aparelho mediu em cada foto, em pixels e graus.
+     *
+     * Chega em pixel porque o aparelho não conhece a altura — a conversão para
+     * centímetro é feita aqui, onde a Escala já foi resolvida (`ADR-0022`).
+     */
+    medidas?: MedidasPorPose;
   };
 
   if (!body?.images || !Object.values(body.images).some(Boolean)) {
@@ -205,6 +285,10 @@ export async function POST(request: NextRequest) {
     text: "Analise estas imagens corporais e retorne o JSON de avaliação física.",
   });
 
+  // Contexto é enriquecimento: se falhar, a análise sai sem ele em vez de não
+  // sair. O aluno perde a comparação, não o laudo.
+  const contexto = await carregarContextoDoScan(client, userId, new Date()).catch(() => null);
+
   let response: Anthropic.Message;
   try {
     response = await anthropic.messages.create({
@@ -215,11 +299,21 @@ export async function POST(request: NextRequest) {
       // pouco mais — e a resposta cortada virava "502 falha ao interpretar",
       // indistinguível de o modelo ter errado.
       max_tokens: 4096,
-      system: buildSystemPrompt(scale.heightCm, scale.weightKg),
+      // Zero, e não o padrão 1.0. A mesma foto enviada duas vezes devolvia
+      // cintura diferente, e o ADR-0010 apoia a confiabilidade do delta em erro
+      // sistemático que se cancela — amostragem aleatória não cancela. Reduz
+      // muito a variação; não elimina.
+      temperature: 0,
+      system: buildSystemPrompt(
+        scale.heightCm,
+        scale.weightKg,
+        descreverFatosMedidos(body.medidas ?? {}, scale.heightCm),
+        contexto,
+      ),
       messages: [{ role: "user", content: imageContent }],
     });
   } catch (error) {
-    console.error("[body-scan] chamada ao modelo falhou", error);
+    console.error("[body-scan] chamada ao modelo falhou", motivoDaFalha(error));
     return NextResponse.json({ error: "ai_unavailable" }, { status: 503 });
   }
 
@@ -247,15 +341,41 @@ export async function POST(request: NextRequest) {
   const heightM = scale.heightCm / 100;
   const bmi = Number((scale.weightKg / (heightM * heightM)).toFixed(1));
 
+  // Massa magra deixa de ser número livre do modelo e vira conta explícita
+  // sobre o peso conhecido e a gordura estimada. É por isso que a coluna deixou
+  // de se chamar `muscle_mass_kg`: esta conta inclui osso, órgão e água, e
+  // nenhum dos dois lados dela discrimina tecido (`ADR-0022`).
+  const gordura = modelResult.metrics.bodyFat;
+  const leanMassKg =
+    typeof gordura === "number" ? Number((scale.weightKg * (1 - gordura / 100)).toFixed(1)) : null;
+
+  // O aluno tem direito de acesso ao que foi tratado sobre o corpo dele
+  // (Art. 18, II), e medida que só o especialista lê é tratamento sem livre
+  // acesso. A mesma conta alimenta a coluna e a tela.
+  const medidas = medidasParaOScan(body.medidas ?? {}, scale.heightCm);
+
+  // Os mesmos vereditos que vão para as colunas voltam para a tela: o aluno
+  // precisa saber o quanto confiar no número que está lendo, e essa informação
+  // existia só para o especialista.
+  const vereditos: VereditosDaCaptura = {
+    quality_backlit: body.qualidade?.backlit ?? null,
+    quality_low_light: body.qualidade?.lowLight ?? null,
+    quality_blown_out: body.qualidade?.blownOut ?? null,
+    framing_confirmed: body.qualidade?.framingConfirmed ?? null,
+  };
+
   const result: BodyScanPayload = {
     ...modelResult,
     metrics: {
       ...modelResult.metrics,
       height: scale.heightCm,
       weight: scale.weightKg,
+      leanMass: leanMassKg,
       bmi,
     },
     scaleSource,
+    measured: medidas,
+    quality: vereditos,
   };
 
   // Gravar é o que dá sentido à feature: sem histórico não existe delta, e o
@@ -268,7 +388,7 @@ export async function POST(request: NextRequest) {
       weight_kg: scale.weightKg,
       scale_source: scaleSource,
       body_fat_pct: modelResult.metrics.bodyFat ?? null,
-      muscle_mass_kg: modelResult.metrics.muscleMass ?? null,
+      lean_mass_kg: leanMassKg,
       bmi,
       circ_chest: segments.chest ?? null,
       circ_waist: segments.waist ?? null,
@@ -291,12 +411,21 @@ export async function POST(request: NextRequest) {
       framing_roll: body.framing?.roll ?? null,
       framing_level_sensor: body.framing?.levelSensor ?? null,
       framing_camera: body.framing?.camera ?? null,
+      // As medidas do aparelho, convertidas pela mesma conta que escreveu o
+      // prompt. Null onde a máscara não mediu — nunca zero, que pareceria uma
+      // medição válida de um corpo sem desnível.
+      ...medidas,
+      ...vereditos,
     });
   } catch (error) {
     // Falha de gravação não pode virar falha da análise: a foto já foi enviada
     // e o aluno já pagou a espera. Mas também não some — devolvemos o
     // resultado marcado como não persistido, para a tela poder avisar.
-    console.error("[body-scan] falha ao gravar em body_scans", error);
+    // Só código e mensagem: `details` de violação de constraint ecoa a linha
+    // que falhou, e a linha inteira é o fact sheet — "desnível de ombro de
+    // 1,8 cm" num log é inferência sobre saúde de titular identificado
+    // (Art. 6°, VIII). Quem conserta precisa de qual constraint, não de quanto.
+    console.error("[body-scan] falha ao gravar em body_scans", motivoDaFalha(error));
     return NextResponse.json({ ...result, persisted: false });
   }
 
