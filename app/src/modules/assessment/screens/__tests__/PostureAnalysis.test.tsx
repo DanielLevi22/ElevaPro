@@ -132,6 +132,19 @@ describe('PostureAnalysis', () => {
     expect(screen.queryByText(/excelente|regular/i)).toBeNull();
   });
 
+  // A tela produz número sobre o corpo de alguém e texto que parece prescrição
+  // ("Recomendação de Treino"). Sem dizer o que ela não é, o aluno decide treino
+  // e dieta em cima de estimativa de foto.
+  it('diz que não substitui avaliação profissional', () => {
+    comStore({ lastResult: RESULTADO });
+    render(<PostureAnalysis />);
+
+    passarOCarregamento();
+
+    expect(screen.getByText(/não substitui avaliação física presencial/i)).toBeTruthy();
+    expect(screen.getByText(/não é diagnóstico/i)).toBeTruthy();
+  });
+
   // As três notas continuam: são o que a análise devolveu de fato. O que muda é
   // o rótulo dizer que são estimativa, e não medida.
   it('diz que as notas são estimativa da análise, não medida', () => {

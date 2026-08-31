@@ -382,6 +382,31 @@ export default function PostureAnalysis() {
 
             {lastResult.measured ? <MedidasDoScan medidas={lastResult.measured} /> : null}
 
+            {/* Fica junto do selo de confiança de propósito: os dois respondem
+                a mesma pergunta — o quanto dá para apoiar decisão nisto. E fica
+                depois dos números, não antes, porque aviso lido antes de haver
+                o que avaliar vira ruído que o aluno aprende a pular. */}
+            <View className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+              <View className="mb-2 flex-row items-center gap-2">
+                <Ionicons
+                  color={colors.text.secondary}
+                  name="information-circle-outline"
+                  size={18}
+                />
+                <Text className="font-bold text-sm text-zinc-200">O que isto é, e o que não é</Text>
+              </View>
+              <Text className="text-sm text-zinc-400 leading-6">
+                Esta análise sai de fotos e serve para te dar direção e acompanhar mudança ao longo
+                do tempo. Ela não substitui avaliação física presencial nem a orientação de um
+                profissional — e não é diagnóstico.
+              </Text>
+              <Text className="mt-3 text-sm text-zinc-400 leading-6">
+                Antes de mudar treino ou alimentação, e sempre que houver dor, lesão ou condição de
+                saúde, fale com seu personal ou com um nutricionista. Leve estes números para a
+                conversa: eles ajudam quem vai te avaliar de perto.
+              </Text>
+            </View>
+
             {/* Actions Footer */}
             <View className="mt-8 flex-row gap-4 mb-8">
               <TouchableOpacity
