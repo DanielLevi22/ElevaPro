@@ -1,4 +1,4 @@
-import { createHealthService } from '@elevapro/shared';
+import { createHealthService, type EtapaDaAnalise } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -37,9 +37,17 @@ function MensagemDaFalha({ texto }: { texto: string | null }) {
   );
 }
 
+/** O que cada etapa do fluxo significa para quem está esperando. */
+const TEXTO_DA_ETAPA: Record<EtapaDaAnalise, string> = {
+  lendo: 'Lendo as suas três fotos.',
+  proporcoes: 'Calculando as proporções do seu corpo.',
+  postura: 'Analisando a sua postura.',
+  recomendacoes: 'Escrevendo as recomendações.',
+};
+
 export default function BodyScanProcessing() {
   const router = useRouter();
-  const { capturedImages, submitScan, status, errorMessage } = useAssessmentStore();
+  const { capturedImages, submitScan, status, errorMessage, etapaDaAnalise } = useAssessmentStore();
   const [granting, setGranting] = useState(false);
 
   useEffect(() => {
@@ -212,8 +220,15 @@ export default function BodyScanProcessing() {
         </View>
 
         <Text className="text-white text-2xl font-black font-display mb-2">Analisando...</Text>
-        <Text className="text-zinc-400 text-center px-10">
-          Nossa IA está construindo seu modelo 3D e calculando suas métricas.
+        {/* A etapa vem do fluxo do BFF: é a seção que o modelo acabou de
+            escrever. Antes esta linha dizia "construindo seu modelo 3D",
+            que não existe — e não mudava nunca, então trinta segundos de
+            espera eram indistinguíveis de tela travada. */}
+        <Text className="text-zinc-300 text-center px-10 text-base">
+          {TEXTO_DA_ETAPA[etapaDaAnalise ?? 'lendo']}
+        </Text>
+        <Text className="text-zinc-500 text-center px-10 text-xs mt-2">
+          Costuma levar cerca de meio minuto.
         </Text>
       </Animated.View>
 

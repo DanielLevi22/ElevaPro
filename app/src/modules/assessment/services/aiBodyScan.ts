@@ -1,4 +1,4 @@
-import { createHealthService } from '@elevapro/shared';
+import { createHealthService, type EtapaDaAnalise, separarLinhas } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useAuthStore } from '@/modules/auth/store/authStore';
@@ -72,6 +72,54 @@ async function resizeToBase64(uri: string): Promise<string | null> {
   }
 }
 
+/**
+ * Lê o NDJSON da análise, avisando a cada etapa.
+ *
+ * O fluxo existe porque a geração leva ~30s e tela parada é indistinguível de
+ * travada. Aqui ele vira duas coisas: a etapa, que a tela mostra, e a última
+ * linha, que é o resultado.
+ *
+ * Etapa que não avança é sinal legítimo — significa que o modelo parou de
+ * escrever. Não há relógio nenhum inventando movimento.
+ */
+async function lerFluxo(
+  response: Response,
+  aoProgredir?: (etapa: EtapaDaAnalise) => void
+): Promise<Omit<BodyScanResult, 'id' | 'date' | 'imageUrl'>> {
+  const leitor = response.body?.getReader();
+  if (!leitor) throw new BodyScanAnalysisError('sem_fluxo');
+
+  const decodificador = new TextDecoder();
+  let resto = '';
+  let resultado: Omit<BodyScanResult, 'id' | 'date' | 'imageUrl'> | null = null;
+
+  while (true) {
+    const { done, value } = await leitor.read();
+    if (done) break;
+
+    // `stream: true` porque um caractere multibyte pode chegar partido entre
+    // dois pedaços — sem isso, um acento no laudo vira lixo.
+    const { linhas, resto: sobra } = separarLinhas(
+      resto + decodificador.decode(value, { stream: true })
+    );
+    resto = sobra;
+
+    for (const linha of linhas) {
+      if (linha.t === 'etapa') aoProgredir?.(linha.etapa);
+      if (linha.t === 'erro') throw new BodyScanAnalysisError(linha.codigo);
+      if (linha.t === 'ok') {
+        resultado = linha.payload as Omit<BodyScanResult, 'id' | 'date' | 'imageUrl'>;
+      }
+    }
+  }
+
+  // Fluxo que fecha sem resultado nem erro é conexão cortada no meio — não é o
+  // modelo tendo errado, e a mensagem não pode dizer que foi.
+  if (!resultado) throw new BodyScanAnalysisError('fluxo_interrompido');
+
+  return resultado;
+}
+
 export const AIBodyScanService = {
   analyzeImages: async (
     images: {
@@ -100,7 +148,9 @@ export const AIBodyScanService = {
       lowLight: boolean;
       blownOut: boolean;
       framingConfirmed: boolean;
-    }
+    },
+    /** Chamado a cada etapa do fluxo, para a tela deixar de parecer travada. */
+    aoProgredir?: (etapa: EtapaDaAnalise) => void
   ): Promise<BodyScanResult> => {
     const session = useAuthStore.getState().session;
     const token = session?.access_token;
@@ -148,32 +198,36 @@ export const AIBodyScanService = {
       { token }
     );
 
+    // Erro chega como JSON com código de status, e não pelo fluxo: tudo que
+    // pode dar errado antes de o modelo começar — consentimento, Escala,
+    // payload — acontece antes de o cabeçalho sair. Só o 200 é NDJSON.
+    //
     // A verificação de origem vem ANTES da leitura do status, de propósito. Um
     // 403 com HTML é proteção de plataforma barrando a rota, não o aluno sem
     // consentimento — e ler o status primeiro faria as duas virarem a mesma
     // tela, que é o defeito que este caminho inteiro existe para desfazer.
-    // Toda resposta desta rota é JSON, inclusive os erros (ver route.ts).
-    const corpo = await lerRespostaBff<
-      Partial<Omit<BodyScanResult, 'id' | 'date' | 'imageUrl'>> & { error?: string }
-    >(response, url);
-
-    // 403 do BFF é sempre falta de consentimento nesta rota: o aluno analisa a
-    // si mesmo, então não há outro motivo para ele ser barrado.
-    if (response.status === 403) {
-      throw new BodyScanConsentError();
-    }
-
-    if (response.status === 422) {
-      throw new BodyScanScaleError();
-    }
-
     if (!response.ok) {
+      const corpo = await lerRespostaBff<{ error?: string }>(response, url);
+
+      // 403 do BFF é sempre falta de consentimento nesta rota: o aluno analisa
+      // a si mesmo, então não há outro motivo para ele ser barrado.
+      if (response.status === 403) throw new BodyScanConsentError();
+      if (response.status === 422) throw new BodyScanScaleError();
+
       // O código do BFF vira mensagem aqui, e não na tela, para as duas rotas
       // de erro (rede e resposta ruim) chegarem no mesmo formato.
       throw new BodyScanAnalysisError(corpo.error ?? `http_${response.status}`);
     }
 
-    const data = corpo as Omit<BodyScanResult, 'id' | 'date' | 'imageUrl'>;
+    // 200 que não é NDJSON é interceptação de plataforma servindo HTML. Passa
+    // pelo leitor comum só para estourar com o diagnóstico certo — host e
+    // variável de ambiente — em vez de morrer num parse silencioso.
+    if (!(response.headers.get('content-type') ?? '').includes('application/x-ndjson')) {
+      await lerRespostaBff(response, url);
+      throw new BodyScanAnalysisError('resposta_inesperada');
+    }
+
+    const data = await lerFluxo(response, aoProgredir);
 
     if (!data?.metrics) {
       throw new Error('Invalid response from body-scan BFF');

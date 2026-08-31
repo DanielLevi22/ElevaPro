@@ -13,6 +13,7 @@ export * from "./services/auth.service";
 export * from "./services/bodyScan.service";
 export * from "./services/bodyScanDescricao";
 export * from "./services/briefing.service";
+export * from "./services/fluxoDoBodyScan";
 export * from "./services/gamification.service";
 export * from "./services/health.service";
 export * from "./services/nutrition.service";

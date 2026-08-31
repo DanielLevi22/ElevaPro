@@ -1,4 +1,4 @@
-import type { BodyScanDelta, BodyScanRecord } from '@elevapro/shared';
+import type { BodyScanDelta, BodyScanRecord, EtapaDaAnalise } from '@elevapro/shared';
 import { achatarRespostas, createBodyScanService } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { createMMKV } from 'react-native-mmkv';
@@ -119,6 +119,14 @@ interface AssessmentState {
    */
   lenteFrontal: boolean;
   setLenteFrontal: (frontal: boolean) => void;
+  /**
+   * Em que ponto a análise está, vindo do fluxo do BFF.
+   *
+   * Null fora de uma análise. Só avança quando o modelo emite a seção — etapa
+   * parada significa geração parada, e é essa a informação que a tela precisa
+   * dar em vez de um spinner que gira para sempre.
+   */
+  etapaDaAnalise: EtapaDaAnalise | null;
   submitScan: () => Promise<void>;
 
   // Anamnesis Actions
@@ -231,6 +239,8 @@ export const useAssessmentStore = create<AssessmentState>()(
       ocupacaoDeReferencia: null,
       setOcupacaoDeReferencia: (ocupacao) => set({ ocupacaoDeReferencia: ocupacao }),
 
+      etapaDaAnalise: null,
+
       vozMuda: false,
       setVozMuda: (muda: boolean) => set({ vozMuda: muda }),
 
@@ -240,13 +250,14 @@ export const useAssessmentStore = create<AssessmentState>()(
       submitScan: async () => {
         // Limpa a falha anterior: tentar de novo com a mensagem antiga na tela
         // faz o retry parecer que falhou de novo antes mesmo de terminar.
-        set({ status: AssessmentStatus.ANALYZING, errorMessage: null });
+        set({ status: AssessmentStatus.ANALYZING, errorMessage: null, etapaDaAnalise: null });
         try {
           const result = await AIBodyScanService.analyzeImages(
             get().capturedImages,
             get().captureFraming,
             get().medidas,
-            get().qualidade
+            get().qualidade,
+            (etapa) => set({ etapaDaAnalise: etapa })
           );
 
           set((state) => ({

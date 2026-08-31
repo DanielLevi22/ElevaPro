@@ -2,6 +2,10 @@ import Anthropic from "@anthropic-ai/sdk";
 import {
   createBodyScanService,
   createHealthService,
+  type EtapaDaAnalise,
+  etapaDoTexto,
+  type LinhaDoFluxo,
+  linhaDoFluxo,
   type MedidasGeometricas,
   type VereditosDaCaptura,
 } from "@elevapro/shared";
@@ -289,145 +293,212 @@ export async function POST(request: NextRequest) {
   // sair. O aluno perde a comparação, não o laudo.
   const contexto = await carregarContextoDoScan(client, userId, new Date()).catch(() => null);
 
-  let response: Anthropic.Message;
-  try {
-    response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      // O JSON pedido tem 2 métricas, 8 segmentos, 3 notas, 3 arrays de
-      // feedback com título, risco e texto, e as recomendações. Com 1024 isso
-      // ficava na fronteira e passava dela sempre que o modelo escrevia um
-      // pouco mais — e a resposta cortada virava "502 falha ao interpretar",
-      // indistinguível de o modelo ter errado.
-      max_tokens: 4096,
-      // Zero, e não o padrão 1.0. A mesma foto enviada duas vezes devolvia
-      // cintura diferente, e o ADR-0010 apoia a confiabilidade do delta em erro
-      // sistemático que se cancela — amostragem aleatória não cancela. Reduz
-      // muito a variação; não elimina.
-      temperature: 0,
-      system: buildSystemPrompt(
-        scale.heightCm,
-        scale.weightKg,
-        descreverFatosMedidos(body.medidas ?? {}, scale.heightCm),
-        contexto,
-      ),
-      messages: [{ role: "user", content: imageContent }],
-    });
-  } catch (error) {
-    console.error("[body-scan] chamada ao modelo falhou", motivoDaFalha(error));
-    return NextResponse.json({ error: "ai_unavailable" }, { status: 503 });
-  }
+  const parametros = {
+    model: "claude-sonnet-4-6",
+    // O JSON pedido tem 2 métricas, 8 segmentos, 3 notas, 3 arrays de
+    // feedback com título, risco e texto, e as recomendações. Com 1024 isso
+    // ficava na fronteira e passava dela sempre que o modelo escrevia um
+    // pouco mais — e a resposta cortada virava "502 falha ao interpretar",
+    // indistinguível de o modelo ter errado.
+    max_tokens: 4096,
+    // Zero, e não o padrão 1.0. A mesma foto enviada duas vezes devolvia
+    // cintura diferente, e o ADR-0010 apoia a confiabilidade do delta em erro
+    // sistemático que se cancela — amostragem aleatória não cancela. Reduz
+    // muito a variação; não elimina.
+    temperature: 0,
+    system: buildSystemPrompt(
+      scale.heightCm,
+      scale.weightKg,
+      descreverFatosMedidos(body.medidas ?? {}, scale.heightCm),
+      contexto,
+    ),
+    messages: [{ role: "user", content: imageContent }],
+  } satisfies Anthropic.MessageCreateParamsNonStreaming;
 
-  // Truncada não é inválida: uma diz "peça de novo", a outra diz "o modelo
-  // errou". Somadas no mesmo 502, ninguém sabia qual era.
-  if (response.stop_reason === "max_tokens") {
-    return NextResponse.json({ error: "response_truncated" }, { status: 502 });
-  }
+  /**
+   * O que acontece depois de o modelo terminar: derivar, gravar e montar o
+   * resultado.
+   *
+   * Closure e não função de topo porque depende de sete coisas já resolvidas
+   * aqui — Escala, fonte da Escala, medidas, vereditos, corpo do pedido,
+   * cliente e titular. Passar todas por parâmetro seria uma assinatura que
+   * ninguém lê para esconder que o trabalho é o mesmo.
+   */
+  const finalizar = async (modelResult: ModelPayload) => {
+    // O IMC é calculado aqui, sobre a altura e o peso reais. Antes vinha do
+    // modelo, calculado sobre dois valores que ele mesmo tinha inventado.
+    const heightM = scale.heightCm / 100;
+    const bmi = Number((scale.weightKg / (heightM * heightM)).toFixed(1));
 
-  const text = response.content[0]?.type === "text" ? response.content[0].text : "";
+    // Massa magra deixa de ser número livre do modelo e vira conta explícita
+    // sobre o peso conhecido e a gordura estimada. É por isso que a coluna deixou
+    // de se chamar `muscle_mass_kg`: esta conta inclui osso, órgão e água, e
+    // nenhum dos dois lados dela discrimina tecido (`ADR-0022`).
+    const gordura = modelResult.metrics.bodyFat;
+    const leanMassKg =
+      typeof gordura === "number"
+        ? Number((scale.weightKg * (1 - gordura / 100)).toFixed(1))
+        : null;
 
-  let modelResult: ModelPayload;
-  try {
-    modelResult = JSON.parse(text.replace(/```json|```/g, "").trim()) as ModelPayload;
-  } catch {
-    return NextResponse.json({ error: "invalid_ai_response" }, { status: 502 });
-  }
+    // O aluno tem direito de acesso ao que foi tratado sobre o corpo dele
+    // (Art. 18, II), e medida que só o especialista lê é tratamento sem livre
+    // acesso. A mesma conta alimenta a coluna e a tela.
+    const medidas = medidasParaOScan(body.medidas ?? {}, scale.heightCm);
 
-  if (!modelResult?.metrics) {
-    return NextResponse.json({ error: "invalid_ai_response" }, { status: 502 });
-  }
+    // Os mesmos vereditos que vão para as colunas voltam para a tela: o aluno
+    // precisa saber o quanto confiar no número que está lendo, e essa informação
+    // existia só para o especialista.
+    const vereditos: VereditosDaCaptura = {
+      quality_backlit: body.qualidade?.backlit ?? null,
+      quality_low_light: body.qualidade?.lowLight ?? null,
+      quality_blown_out: body.qualidade?.blownOut ?? null,
+      framing_confirmed: body.qualidade?.framingConfirmed ?? null,
+    };
 
-  // O IMC é calculado aqui, sobre a altura e o peso reais. Antes vinha do
-  // modelo, calculado sobre dois valores que ele mesmo tinha inventado.
-  const heightM = scale.heightCm / 100;
-  const bmi = Number((scale.weightKg / (heightM * heightM)).toFixed(1));
+    const result: BodyScanPayload = {
+      ...modelResult,
+      metrics: {
+        ...modelResult.metrics,
+        height: scale.heightCm,
+        weight: scale.weightKg,
+        leanMass: leanMassKg,
+        bmi,
+      },
+      scaleSource,
+      measured: medidas,
+      quality: vereditos,
+    };
 
-  // Massa magra deixa de ser número livre do modelo e vira conta explícita
-  // sobre o peso conhecido e a gordura estimada. É por isso que a coluna deixou
-  // de se chamar `muscle_mass_kg`: esta conta inclui osso, órgão e água, e
-  // nenhum dos dois lados dela discrimina tecido (`ADR-0022`).
-  const gordura = modelResult.metrics.bodyFat;
-  const leanMassKg =
-    typeof gordura === "number" ? Number((scale.weightKg * (1 - gordura / 100)).toFixed(1)) : null;
+    // Gravar é o que dá sentido à feature: sem histórico não existe delta, e o
+    // delta é onde está o valor. O `student_id` vem do token, nunca do corpo.
+    // A imagem não é gravada — só o derivado (ADR-0010).
+    const segments = modelResult.segments ?? {};
+    try {
+      await createBodyScanService(client).save(userId, {
+        height_cm: scale.heightCm,
+        weight_kg: scale.weightKg,
+        scale_source: scaleSource,
+        body_fat_pct: modelResult.metrics.bodyFat ?? null,
+        lean_mass_kg: leanMassKg,
+        bmi,
+        circ_chest: segments.chest ?? null,
+        circ_waist: segments.waist ?? null,
+        circ_hips: segments.hips ?? null,
+        circ_arms: segments.arms ?? null,
+        circ_thighs: segments.thighs ?? null,
+        circ_calves: segments.calves ?? null,
+        circ_neck: segments.neck ?? null,
+        circ_shoulders: segments.shoulders ?? null,
+        posture_symmetry_score: modelResult.postureAnalysis?.scores?.symmetry ?? null,
+        posture_muscle_score: modelResult.postureAnalysis?.scores?.muscle ?? null,
+        posture_overall_score: modelResult.postureAnalysis?.scores?.posture ?? null,
+        posture_feedback: modelResult.postureAnalysis?.feedback ?? null,
+        recommendations: modelResult.postureAnalysis?.recommendations ?? null,
+        // Null quando o app não mandou: captura de versão antiga não vira
+        // "enquadramento zerado", que pareceria uma medição válida.
+        framing_mark_top: body.framing?.markTop ?? null,
+        framing_mark_bottom: body.framing?.markBottom ?? null,
+        framing_pitch: body.framing?.pitch ?? null,
+        framing_roll: body.framing?.roll ?? null,
+        framing_level_sensor: body.framing?.levelSensor ?? null,
+        framing_camera: body.framing?.camera ?? null,
+        // As medidas do aparelho, convertidas pela mesma conta que escreveu o
+        // prompt. Null onde a máscara não mediu — nunca zero, que pareceria uma
+        // medição válida de um corpo sem desnível.
+        ...medidas,
+        ...vereditos,
+      });
+    } catch (error) {
+      // Falha de gravação não pode virar falha da análise: a foto já foi enviada
+      // e o aluno já pagou a espera. Mas também não some — devolvemos o
+      // resultado marcado como não persistido, para a tela poder avisar.
+      // Só código e mensagem: `details` de violação de constraint ecoa a linha
+      // que falhou, e a linha inteira é o fact sheet — "desnível de ombro de
+      // 1,8 cm" num log é inferência sobre saúde de titular identificado
+      // (Art. 6°, VIII). Quem conserta precisa de qual constraint, não de quanto.
+      console.error("[body-scan] falha ao gravar em body_scans", motivoDaFalha(error));
+      return { ...result, persisted: false };
+    }
 
-  // O aluno tem direito de acesso ao que foi tratado sobre o corpo dele
-  // (Art. 18, II), e medida que só o especialista lê é tratamento sem livre
-  // acesso. A mesma conta alimenta a coluna e a tela.
-  const medidas = medidasParaOScan(body.medidas ?? {}, scale.heightCm);
-
-  // Os mesmos vereditos que vão para as colunas voltam para a tela: o aluno
-  // precisa saber o quanto confiar no número que está lendo, e essa informação
-  // existia só para o especialista.
-  const vereditos: VereditosDaCaptura = {
-    quality_backlit: body.qualidade?.backlit ?? null,
-    quality_low_light: body.qualidade?.lowLight ?? null,
-    quality_blown_out: body.qualidade?.blownOut ?? null,
-    framing_confirmed: body.qualidade?.framingConfirmed ?? null,
+    return { ...result, persisted: true };
   };
 
-  const result: BodyScanPayload = {
-    ...modelResult,
-    metrics: {
-      ...modelResult.metrics,
-      height: scale.heightCm,
-      weight: scale.weightKg,
-      leanMass: leanMassKg,
-      bmi,
+  // Daqui em diante a resposta é um fluxo NDJSON, e não mais um JSON único.
+  //
+  // A geração leva ~30s, e trinta segundos de tela parada são indistinguíveis
+  // de travado. As linhas de etapa carregam a seção que o modelo ACABOU de
+  // emitir — se ele parar, a etapa para junto, que é a informação que faltava.
+  //
+  // Erro depois daqui viaja DENTRO do fluxo, com status 200: o cabeçalho já
+  // foi enviado e não há como voltar atrás. Tudo que acontece antes continua
+  // respondendo por código HTTP, como sempre respondeu.
+  const fluxo = new ReadableStream({
+    async start(controller) {
+      const codificador = new TextEncoder();
+      const emitir = (linha: LinhaDoFluxo) =>
+        controller.enqueue(codificador.encode(linhaDoFluxo(linha)));
+
+      try {
+        emitir({ t: "etapa", etapa: "lendo" });
+
+        const conversa = anthropic.messages.stream(parametros);
+        let acumulado = "";
+        let etapa: EtapaDaAnalise = "lendo";
+
+        for await (const evento of conversa) {
+          if (evento.type !== "content_block_delta" || evento.delta.type !== "text_delta") {
+            continue;
+          }
+
+          acumulado += evento.delta.text;
+          const atual = etapaDoTexto(acumulado);
+          if (atual !== etapa) {
+            etapa = atual;
+            emitir({ t: "etapa", etapa });
+          }
+        }
+
+        const resposta = await conversa.finalMessage();
+
+        // Truncada não é inválida: uma diz "peça de novo", a outra diz "o
+        // modelo errou". Somadas no mesmo código, ninguém sabia qual era.
+        if (resposta.stop_reason === "max_tokens") {
+          emitir({ t: "erro", codigo: "response_truncated" });
+          return;
+        }
+
+        const bruto = resposta.content[0]?.type === "text" ? resposta.content[0].text : "";
+
+        let modelResult: ModelPayload;
+        try {
+          modelResult = JSON.parse(bruto.replace(/```json|```/g, "").trim()) as ModelPayload;
+        } catch {
+          emitir({ t: "erro", codigo: "invalid_ai_response" });
+          return;
+        }
+
+        if (!modelResult?.metrics) {
+          emitir({ t: "erro", codigo: "invalid_ai_response" });
+          return;
+        }
+
+        emitir({ t: "ok", payload: await finalizar(modelResult) });
+      } catch (error) {
+        console.error("[body-scan] chamada ao modelo falhou", motivoDaFalha(error));
+        emitir({ t: "erro", codigo: "ai_unavailable" });
+      } finally {
+        controller.close();
+      }
     },
-    scaleSource,
-    measured: medidas,
-    quality: vereditos,
-  };
+  });
 
-  // Gravar é o que dá sentido à feature: sem histórico não existe delta, e o
-  // delta é onde está o valor. O `student_id` vem do token, nunca do corpo.
-  // A imagem não é gravada — só o derivado (ADR-0010).
-  const segments = modelResult.segments ?? {};
-  try {
-    await createBodyScanService(client).save(userId, {
-      height_cm: scale.heightCm,
-      weight_kg: scale.weightKg,
-      scale_source: scaleSource,
-      body_fat_pct: modelResult.metrics.bodyFat ?? null,
-      lean_mass_kg: leanMassKg,
-      bmi,
-      circ_chest: segments.chest ?? null,
-      circ_waist: segments.waist ?? null,
-      circ_hips: segments.hips ?? null,
-      circ_arms: segments.arms ?? null,
-      circ_thighs: segments.thighs ?? null,
-      circ_calves: segments.calves ?? null,
-      circ_neck: segments.neck ?? null,
-      circ_shoulders: segments.shoulders ?? null,
-      posture_symmetry_score: modelResult.postureAnalysis?.scores?.symmetry ?? null,
-      posture_muscle_score: modelResult.postureAnalysis?.scores?.muscle ?? null,
-      posture_overall_score: modelResult.postureAnalysis?.scores?.posture ?? null,
-      posture_feedback: modelResult.postureAnalysis?.feedback ?? null,
-      recommendations: modelResult.postureAnalysis?.recommendations ?? null,
-      // Null quando o app não mandou: captura de versão antiga não vira
-      // "enquadramento zerado", que pareceria uma medição válida.
-      framing_mark_top: body.framing?.markTop ?? null,
-      framing_mark_bottom: body.framing?.markBottom ?? null,
-      framing_pitch: body.framing?.pitch ?? null,
-      framing_roll: body.framing?.roll ?? null,
-      framing_level_sensor: body.framing?.levelSensor ?? null,
-      framing_camera: body.framing?.camera ?? null,
-      // As medidas do aparelho, convertidas pela mesma conta que escreveu o
-      // prompt. Null onde a máscara não mediu — nunca zero, que pareceria uma
-      // medição válida de um corpo sem desnível.
-      ...medidas,
-      ...vereditos,
-    });
-  } catch (error) {
-    // Falha de gravação não pode virar falha da análise: a foto já foi enviada
-    // e o aluno já pagou a espera. Mas também não some — devolvemos o
-    // resultado marcado como não persistido, para a tela poder avisar.
-    // Só código e mensagem: `details` de violação de constraint ecoa a linha
-    // que falhou, e a linha inteira é o fact sheet — "desnível de ombro de
-    // 1,8 cm" num log é inferência sobre saúde de titular identificado
-    // (Art. 6°, VIII). Quem conserta precisa de qual constraint, não de quanto.
-    console.error("[body-scan] falha ao gravar em body_scans", motivoDaFalha(error));
-    return NextResponse.json({ ...result, persisted: false });
-  }
-
-  return NextResponse.json({ ...result, persisted: true });
+  return new Response(fluxo, {
+    headers: {
+      "Content-Type": "application/x-ndjson; charset=utf-8",
+      "Cache-Control": "no-store",
+      // Sem isto um proxy pode segurar o fluxo inteiro e entregar tudo no fim —
+      // que é exatamente a tela parada que este trabalho existe para remover.
+      "X-Accel-Buffering": "no",
+    },
+  });
 }
