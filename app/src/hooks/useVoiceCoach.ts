@@ -6,8 +6,18 @@ export const useVoiceCoach = () => {
 
   const [lastInstruction, setLastInstruction] = useState<string>('');
 
-  const speak = (text: string, priority = false) => {
-    if (isMuted) return;
+  /**
+   * @param aoTerminar chamado quando a fala acaba, ou na hora quando está mudo.
+   *
+   * Existe porque `Speech.speak` retorna assim que enfileira: quem precisa agir
+   * DEPOIS da frase — uma contagem que não pode correr por cima dela — não
+   * tinha como saber. Um `speak` sem fim é meia operação.
+   */
+  const speak = (text: string, priority = false, aoTerminar?: () => void) => {
+    if (isMuted) {
+      aoTerminar?.();
+      return;
+    }
 
     if (priority) {
       Speech.stop();
@@ -18,6 +28,9 @@ export const useVoiceCoach = () => {
       language: 'pt-BR',
       pitch: 1.0,
       rate: 0.9,
+      onDone: aoTerminar,
+      onStopped: aoTerminar,
+      onError: aoTerminar,
     });
   };
 

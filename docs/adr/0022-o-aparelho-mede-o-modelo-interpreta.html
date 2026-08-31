@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--
-  Versão navegável do ADR-0022. O MARKDOWN AO LADO É O CANÔNICO:
-  0022-o-aparelho-mede-o-modelo-interpreta.md — é ele que o README indexa e o que
-  o git compara linha a linha. Mudou lá, muda aqui.
+  Versão navegável do ADR-0022. O MARKDOWN AO LADO É O CANÔNICO e está à frente
+  desta página: ele tem o parecer de LGPD, o veredito do aparelho e a seção do
+  exercício futuro. Mudou lá, muda aqui.
 -->
 <title>O Aparelho Mede, o Modelo Interpreta</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -143,7 +143,7 @@
   }
   .status::before {
     content: ""; width: 6px; height: 6px;
-    border-radius: 999px; background: var(--amber);
+    border-radius: 999px; background: var(--emerald);
   }
 
   /* ── Seções ────────────────────────────────────────────────── */
@@ -400,7 +400,6 @@
   }
 </style>
 <style>
-  /* Reset — no artifact isto vem do host; aqui o arquivo é aberto direto. */
   html { color-scheme: light dark; }
   body { margin: 0; }
   img { max-width: 100%; }
@@ -420,6 +419,7 @@
     interpreta — agora sobre fatos, não sobre uma régua que ele estimava no olho a cada chamada.
   </p>
   <div class="meta">
+    <span><b>Fonte canônica</b> docs/adr/0022-…md</span>
     <span class="status">proposed — a Fase 0 promove para accepted</span>
     <span><b>Data</b> 30/08/2026</span>
     <span><b>Supersede em parte</b> ADR-0010</span>
@@ -1140,10 +1140,8 @@ stateDiagram-v2
 </div>
 
 <script type="module">
-  // Os diagramas trazem o próprio %%{init}%% com a paleta Cyber Fitness,
-  // então aqui só é preciso ligar o motor.
-  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
-  mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, securityLevel: "loose" });
 </script>
 </body>
 </html>

@@ -3,7 +3,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ROUTES } from '@/navigation/types';
-import { useAssessmentStore } from '../store/assessmentStore';
 
 /**
  * O que preparar antes da câmera abrir.
@@ -53,18 +52,7 @@ export default function BodyScanTutorial() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { studentId } = useLocalSearchParams<{ studentId?: string }>();
-  const marcarTutorialVisto = useAssessmentStore((s) => s.marcarTutorialVisto);
-  const tutorialVisto = useAssessmentStore((s) => s.tutorialVisto);
-
   const seguir = () => {
-    marcarTutorialVisto();
-
-    // Revisita sai pela porta que entrou; primeira vez segue para a captura.
-    if (tutorialVisto) {
-      router.back();
-      return;
-    }
-
     router.replace({ pathname: ROUTES.ASSESSMENT.GRID, params: { studentId } });
   };
 
@@ -103,8 +91,8 @@ export default function BodyScanTutorial() {
 
         <View className="mt-6 bg-white/5 border border-white/10 rounded-2xl p-4">
           <Text className="text-zinc-300 text-[13px] leading-relaxed">
-            São três fotos — frente, costas e lateral. A câmera só dispara quando você estiver no
-            lugar certo, e a contagem espera se você sair.
+            São três fotos — frente, costas e lateral. Você não aperta nada: quando estiver na
+            posição certa, o app avisa, conta cinco segundos e fotografa sozinho.
           </Text>
         </View>
       </ScrollView>
@@ -116,7 +104,7 @@ export default function BodyScanTutorial() {
           accessibilityRole="button"
         >
           <Text className="text-black font-black text-base uppercase tracking-widest">
-            {tutorialVisto ? 'Voltar' : 'Entendi, vamos lá'}
+            Entendi, vamos lá
           </Text>
         </TouchableOpacity>
       </View>

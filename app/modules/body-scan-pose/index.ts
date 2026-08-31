@@ -31,6 +31,29 @@ export interface FatosDeVisao {
    * o portão trata "não sei" como "não reprovo".
    */
   vistaDetectada: 'front' | 'back' | 'side' | null;
+  /** Centro horizontal do corpo, em fração da largura; `null` sem silhueta. */
+  centroX: number | null;
+  /**
+   * Fração da máscara que é corpo.
+   *
+   * Separa "não tem ninguém" de "tem alguém mal enquadrado": perto demais, a
+   * visibilidade dos landmarks despenca porque cabeça e pés saem do quadro, e
+   * sem este número o portão diria "não estou te vendo" para quem ocupa dois
+   * terços da tela.
+   */
+  cobertura: number;
+  /** Largura do corpo na altura dos ombros, em fração da largura do quadro. */
+  larguraOmbros: number | null;
+  /** Largura na altura do quadril, mesma escala. */
+  larguraQuadril: number | null;
+  /**
+   * O aluno olha para a direita da imagem? `null` quando não dá para dizer.
+   *
+   * Só significa algo de perfil, e é o que traduz deslocamento horizontal em
+   * "à frente" ou "para trás": de lado, o eixo horizontal do quadro é o eixo
+   * frente-costas do corpo.
+   */
+  viradoParaDireita: boolean | null;
   /** Luminância média do frame, de 0 a 1. */
   lumaMedia: number;
   /** Luma do corpo dividida pela do fundo; `null` sem silhueta. Abaixo de 1 é contraluz. */

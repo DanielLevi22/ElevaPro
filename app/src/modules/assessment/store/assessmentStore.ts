@@ -65,14 +65,16 @@ interface AssessmentState {
   vozMuda: boolean;
   setVozMuda: (muda: boolean) => void;
   /**
-   * O aluno já viu o tutorial de captura?
+   * A lente escolhida para o scan inteiro.
    *
-   * Obrigatório na primeira vez e nunca mais: scan é coisa recorrente, e uma
-   * tela de instruções antes de toda captura irrita a partir da segunda. Quem
-   * quiser rever tem o atalho na tela de entrada (`ADR-0022`).
+   * Mora aqui e não na tela da câmera porque a tela remonta a cada pose: com o
+   * estado lá, dava para fotografar a frente com uma lente e a lateral com
+   * outra, dentro do mesmo scan. Frontal e traseira têm distância focal
+   * diferente — o corpo ocupando a mesma fração do quadro não significa a mesma
+   * distância —, e é por isso que `framing_camera` existe (`ADR-0010`).
    */
-  tutorialVisto: boolean;
-  marcarTutorialVisto: () => void;
+  lenteFrontal: boolean;
+  setLenteFrontal: (frontal: boolean) => void;
   submitScan: () => Promise<void>;
 
   // Anamnesis Actions
@@ -161,8 +163,8 @@ export const useAssessmentStore = create<AssessmentState>()(
       vozMuda: false,
       setVozMuda: (muda: boolean) => set({ vozMuda: muda }),
 
-      tutorialVisto: false,
-      marcarTutorialVisto: () => set({ tutorialVisto: true }),
+      lenteFrontal: false,
+      setLenteFrontal: (frontal: boolean) => set({ lenteFrontal: frontal }),
 
       submitScan: async () => {
         // Limpa a falha anterior: tentar de novo com a mensagem antiga na tela
@@ -302,7 +304,7 @@ export const useAssessmentStore = create<AssessmentState>()(
         currentSectionIndex: state.currentSectionIndex,
         isAnamnesisSubmitted: state.isAnamnesisSubmitted,
         vozMuda: state.vozMuda,
-        tutorialVisto: state.tutorialVisto,
+        lenteFrontal: state.lenteFrontal,
       }),
     }
   )

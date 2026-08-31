@@ -9,6 +9,7 @@ import BodyScanPoseView, {
   type BodyScanPoseRef,
   type FatosDeVisao,
 } from '../../../../modules/body-scan-pose';
+import { MarcasDoEnquadramento } from '../components/MarcasDoEnquadramento';
 import { useDeviceLevel } from '../hooks/useDeviceLevel';
 import {
   type AvisoDeQualidade,
@@ -28,10 +29,27 @@ import { useAssessmentStore } from '../store/assessmentStore';
 const MARCA_TOPO = 0.1;
 const MARCA_BASE = 0.9;
 
-/** Segundos da contagem. Tempo de o aluno largar o aparelho e chegar na marca. */
-const CONTAGEM_SEGUNDOS = 10;
+/**
+ * Segundos entre o portão abrir e o disparo.
+ *
+ * Curto de propósito: o aluno já está na posição quando a contagem começa — ela
+ * não é tempo para caminhar, é tempo para parar de se mexer.
+ */
+const CONTAGEM_SEGUNDOS = 5;
 
 const TITULOS: Record<Vista, string> = { front: 'Frente', back: 'Costas', side: 'Lateral' };
+
+/**
+ * Quanto tempo preso antes de oferecer a saída manual.
+ *
+ * O grilling decidiu liberar depois de tentativas reprovadas, e sem isso um
+ * cômodo ruim vira beco sem saída — o mesmo beco que o portão de elegibilidade
+ * existe para eliminar, reaparecendo dois passos adiante.
+ *
+ * A saída é botão e não disparo automático: fotografar um enquadramento ruim
+ * sem o aluno saber seria pior que travar.
+ */
+const ESPERA_ATE_LIBERAR_MS = 45_000;
 
 const TEXTO_DO_AVISO: Record<AvisoDeQualidade, string> = {
   contraluz: 'Você está contra a luz — a análise fica menos precisa.',
@@ -50,10 +68,20 @@ export default function BodyScanCamera() {
   const { speak } = useVoiceCoach();
   const vozMuda = useAssessmentStore((s) => s.vozMuda);
   const setVozMuda = useAssessmentStore((s) => s.setVozMuda);
+  const lenteFrontal = useAssessmentStore((s) => s.lenteFrontal);
+  const setLenteFrontal = useAssessmentStore((s) => s.setLenteFrontal);
 
   const [portao, setPortao] = useState<Portao | null>(null);
   const [estado, setEstado] = useState('preparando');
   const [contagem, setContagem] = useState<number | null>(null);
+
+  /**
+   * Já avisei que ia fotografar nesta entrada no portão?
+   *
+   * Sem isto, um portão que pisca reabriria a contagem a cada frame e a voz
+   * viraria metralhadora.
+   */
+  const jaAnunciou = useRef(false);
 
   /**
    * O nível num ref porque `onFatos` é um callback nativo: lido do estado, ele
@@ -65,6 +93,28 @@ export default function BodyScanCamera() {
 
   /** A última instrução dita. É por ela que a voz não repete a mesma frase. */
   const ultimaFalada = useRef<IdDaInstrucao | null>(null);
+
+  /** O portão estava aberto? Entra na avaliação para dar histerese a ele. */
+  const estavaLiberado = useRef(false);
+
+  /** Quando a voz falou pela última vez. Instrução presa volta a ser dita. */
+  const instanteDaFala = useRef(0);
+
+  /** Desde quando o portão está fechado sem parar. Zera ao abrir. */
+  const fechadoDesde = useRef(Date.now());
+  const [ofereceSaida, setOfereceSaida] = useState(false);
+
+  /**
+   * `speak` e `disparar` por ref, não por dependência.
+   *
+   * `speak` chama `setLastInstruction` lá dentro: falar re-renderiza, o
+   * re-render cria uma identidade nova da função, e um efeito que dependa dela
+   * reroda — cancelando o `setTimeout` da contagem antes de ele completar e
+   * falando de novo. Na prática a contagem engasgava no 3, que é o primeiro
+   * número que ela pronuncia.
+   */
+  const falarRef = useRef(speak);
+  falarRef.current = speak;
 
   const aoFatos = useCallback(
     (evento: { nativeEvent: FatosDeVisao }) => {
@@ -78,76 +128,140 @@ export default function BodyScanCamera() {
           roll,
           nivelDisponivel: disponivel,
         },
-        ultimaFalada.current
+        {
+          ultimaFalada: ultimaFalada.current,
+          estavaLiberado: estavaLiberado.current,
+          msDesdeAFala: Date.now() - instanteDaFala.current,
+        }
       );
 
+      estavaLiberado.current = resultado.liberado;
       setPortao(resultado);
+
+      if (resultado.liberado) {
+        fechadoDesde.current = Date.now();
+        setOfereceSaida(false);
+      } else if (Date.now() - fechadoDesde.current >= ESPERA_ATE_LIBERAR_MS) {
+        setOfereceSaida(true);
+      }
 
       if (resultado.instrucao === null) {
         ultimaFalada.current = null;
         return;
       }
 
-      if (resultado.deveFalar && !vozMuda) speak(resultado.instrucao.texto);
+      if (resultado.deveFalar && !vozMuda) {
+        falarRef.current(resultado.instrucao.texto);
+        instanteDaFala.current = Date.now();
+      }
       ultimaFalada.current = resultado.instrucao.id;
     },
-    [target, vozMuda, speak]
+    [target, vozMuda]
   );
 
-  const disparar = useCallback(async () => {
-    try {
-      Vibration.vibrate(50);
-      const uri = await camera.current?.capturar();
-      if (!uri) return;
+  const disparar = useCallback(
+    async (semEnquadramento = false) => {
+      try {
+        Vibration.vibrate(50);
+        const uri = await camera.current?.capturar();
+        if (!uri) return;
 
-      const { setCapturedImage, setCaptureFraming } = useAssessmentStore.getState();
-      setCapturedImage(target, uri);
-      setCaptureFraming({
-        markTop: MARCA_TOPO,
-        markBottom: MARCA_BASE,
-        pitch: nivelRef.current.pitch,
-        roll: nivelRef.current.roll,
-        levelSensor: nivelRef.current.disponivel,
-        camera: 'back',
-      });
+        const { setCapturedImage, setCaptureFraming } = useAssessmentStore.getState();
+        setCapturedImage(target, uri);
+        setCaptureFraming({
+          markTop: MARCA_TOPO,
+          markBottom: MARCA_BASE,
+          pitch: nivelRef.current.pitch,
+          roll: nivelRef.current.roll,
+          levelSensor: nivelRef.current.disponivel,
+          camera: lenteFrontal ? 'front' : 'back',
+        });
 
-      const avisos = portao?.avisos ?? [];
-      if (avisos.length > 0) {
+        // Foto sem o portão confirmar é foto com ressalva, e o aluno precisa
+        // saber disso na hora — o registro da ressalva no scan depende das
+        // colunas da Fase 2 e ainda não existe.
+        if (semEnquadramento) {
+          showAlert({
+            title: 'Foto sem enquadramento confirmado',
+            message: 'Não consegui verificar sua posição, então a medida pode sair menos precisa.',
+            type: 'warning',
+            onDismiss: () => router.back(),
+          });
+          return;
+        }
+
+        const avisos = portao?.avisos ?? [];
+        if (avisos.length === 0) {
+          router.back();
+          return;
+        }
+
+        // Sai só quando o aluno fecha o aviso. Antes o `router.back()` corria por
+        // baixo do alerta, e a tela ficava aberta com a foto já tirada — parecia
+        // que o disparo tinha falhado quando tinha dado certo.
         showAlert({
           title: 'Foto registrada, com ressalva',
           message: TEXTO_DO_AVISO[avisos[0]],
           type: 'warning',
+          onDismiss: () => router.back(),
         });
+      } catch {
+        showAlert({ title: 'Erro', message: 'Não consegui tirar a foto', type: 'error' });
       }
-
-      router.back();
-    } catch {
-      showAlert({ title: 'Erro', message: 'Não consegui tirar a foto', type: 'error' });
-    }
-  }, [target, portao, router]);
+    },
+    [target, portao, router, lenteFrontal]
+  );
 
   /**
-   * A contagem só anda com o portão aberto.
+   * O portão abriu: avisa, pede imobilidade e começa a contar.
    *
-   * É a transição que o desenho antigo não tinha: antes o temporizador
-   * disparava mesmo que o aluno tivesse saído do lugar nos dez segundos.
+   * Ninguém aperta botão. O aparelho está a metros de distância — foi por isso
+   * que o temporizador existiu desde o início, e disparar sozinho resolve a
+   * causa em vez do sintoma.
    */
   useEffect(() => {
+    if (!portao?.liberado) {
+      // Saiu da posição: a contagem morre em vez de congelar. "Fique parado" é
+      // promessa sobre não se mexer — retomar de onde parou seria mentira.
+      jaAnunciou.current = false;
+      setContagem(null);
+      return;
+    }
+
+    if (jaAnunciou.current) return;
+
+    jaAnunciou.current = true;
+
+    // A contagem só começa quando a frase acaba. Correndo por cima dela, o
+    // aluno ouvia "cinco segundos" com dois já gastos.
+    if (vozMuda) {
+      setContagem(CONTAGEM_SEGUNDOS);
+      return;
+    }
+
+    falarRef.current('Perfeito. Fique parado.', true, () => setContagem(CONTAGEM_SEGUNDOS));
+  }, [portao?.liberado, vozMuda]);
+
+  /** Mesma razão do `falarRef`: `disparar` muda de identidade a cada render. */
+  const dispararRef = useRef(disparar);
+  dispararRef.current = disparar;
+
+  /** Um segundo por vez. Sair da posição zera pelo efeito acima. */
+  useEffect(() => {
     if (contagem === null) return;
-    if (!portao?.liberado) return;
 
     if (contagem <= 0) {
       setContagem(null);
-      disparar();
+      dispararRef.current();
       return;
     }
 
     Vibration.vibrate(30);
-    if (!vozMuda && contagem <= 3) speak(String(contagem));
+    if (!vozMuda && contagem <= 3) falarRef.current(String(contagem));
 
     const id = setTimeout(() => setContagem((n) => (n === null ? null : n - 1)), 1000);
     return () => clearTimeout(id);
-  }, [contagem, portao?.liberado, vozMuda, speak, disparar]);
+  }, [contagem, vozMuda]);
 
   if (!permissao) return <View className="flex-1 bg-black" />;
 
@@ -168,34 +282,26 @@ export default function BodyScanCamera() {
     );
   }
 
-  const liberado = portao?.liberado ?? false;
   const instrucao = portao?.instrucao ?? null;
 
   return (
     <View className="flex-1 bg-black">
       <BodyScanPoseView
         ref={camera}
+        // `key` força a remontagem: trocar de lente exige religar o CameraX no
+        // outro sensor, e a view guarda o `ImageCapture` da vinculação atual.
+        key={lenteFrontal ? 'frontal' : 'traseira'}
+        lenteFrontal={lenteFrontal}
         style={{ flex: 1 }}
         onFatos={aoFatos}
         onEstado={(e) => setEstado(e.nativeEvent.estado)}
       />
 
-      {/* As marcas seguem desenhadas: elas dizem ao aluno para onde ir. O que
-          mudou é que agora alguém confere se ele chegou. */}
-      <View
-        pointerEvents="none"
-        className="absolute left-0 right-0"
-        style={{ top: `${MARCA_TOPO * 100}%` }}
-      >
-        <View className={`h-[2px] ${liberado ? 'bg-emerald-400/80' : 'bg-primary/70'}`} />
-      </View>
-      <View
-        pointerEvents="none"
-        className="absolute left-0 right-0"
-        style={{ top: `${MARCA_BASE * 100}%` }}
-      >
-        <View className={`h-[2px] ${liberado ? 'bg-emerald-400/80' : 'bg-primary/70'}`} />
-      </View>
+      <MarcasDoEnquadramento
+        topo={MARCA_TOPO}
+        base={MARCA_BASE}
+        proximidade={portao?.proximidade ?? 'longe'}
+      />
 
       <View className="absolute top-12 left-0 right-0 items-center px-6">
         <View className="bg-black/50 px-6 py-3 rounded-full border border-white/20">
@@ -215,40 +321,50 @@ export default function BodyScanCamera() {
         )}
       </View>
 
-      <TouchableOpacity
-        onPress={() => setVozMuda(!vozMuda)}
-        className="absolute top-12 right-5 w-12 h-12 rounded-full bg-black/50 border border-white/20 items-center justify-center"
-        accessibilityRole="button"
-        accessibilityLabel={vozMuda ? 'Ligar a voz' : 'Desligar a voz'}
-      >
-        <Ionicons
-          name={vozMuda ? 'volume-mute-outline' : 'volume-high-outline'}
-          size={22}
-          color="white"
-        />
-      </TouchableOpacity>
+      <View className="absolute top-12 right-5 gap-3">
+        <TouchableOpacity
+          onPress={() => setVozMuda(!vozMuda)}
+          className="w-12 h-12 rounded-full bg-black/50 border border-white/20 items-center justify-center"
+          accessibilityRole="button"
+          accessibilityLabel={vozMuda ? 'Ligar a voz' : 'Desligar a voz'}
+        >
+          <Ionicons
+            name={vozMuda ? 'volume-mute-outline' : 'volume-high-outline'}
+            size={22}
+            color="white"
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setLenteFrontal(!lenteFrontal)}
+          disabled={contagem !== null}
+          className="w-12 h-12 rounded-full bg-black/50 border border-white/20 items-center justify-center"
+          accessibilityRole="button"
+          accessibilityLabel={lenteFrontal ? 'Usar câmera traseira' : 'Usar câmera frontal'}
+        >
+          <Ionicons name="camera-reverse-outline" size={22} color="white" />
+        </TouchableOpacity>
+      </View>
 
       {contagem !== null && (
         <View pointerEvents="none" className="absolute inset-0 items-center justify-center">
           <Text className="text-white text-[120px] font-black">{contagem}</Text>
-          {!liberado && (
-            <Text className="text-amber-300 text-sm font-bold">a contagem espera você</Text>
-          )}
+          <Text className="text-emerald-300 text-base font-bold">fique parado</Text>
         </View>
       )}
 
       <View className="absolute bottom-12 w-full items-center">
-        <TouchableOpacity
-          onPress={() => setContagem(CONTAGEM_SEGUNDOS)}
-          disabled={contagem !== null}
-          className={`w-20 h-20 rounded-full border-4 items-center justify-center ${
-            liberado ? 'bg-white border-emerald-400' : 'bg-white/30 border-white/30'
-          }`}
-          accessibilityRole="button"
-          accessibilityLabel="Iniciar a contagem"
-        >
-          <View className="w-16 h-16 rounded-full border-2 bg-white border-black" />
-        </TouchableOpacity>
+        {/* A saída de emergência só aparece depois de a espera se provar longa.
+            Antes disso ela seria um convite a pular o portão. */}
+        {ofereceSaida && contagem === null && (
+          <TouchableOpacity
+            onPress={() => disparar(true)}
+            className="bg-amber-500/25 border border-amber-500/50 px-6 py-3 rounded-full"
+            accessibilityRole="button"
+          >
+            <Text className="text-amber-200 font-bold">Tirar assim mesmo</Text>
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity
           className="mt-6 bg-black/50 px-6 py-3 rounded-full"

@@ -1,7 +1,7 @@
 # O aparelho mede, o modelo interpreta
 
 **Data:** 2026-08-30
-**Status:** proposed — a Fase 0 promove para `accepted`
+**Status:** accepted — validado em aparelho em 2026-08-31 (Redmi Note 14 Pro, Android 16, arm64)
 **Versão navegável:** [`0022-o-aparelho-mede-o-modelo-interpreta.html`](0022-o-aparelho-mede-o-modelo-interpreta.html) — mesmos diagramas, renderizados. Este arquivo é o canônico.
 
 ---
@@ -285,6 +285,81 @@ descartável, o aluno B passou a ler a análise do aluno A, e o teste acusa.
 | `aiBodyScan` — a imagem não é codificada sem consentimento (Art. 11, I) | nasce com a feature |
 | `route` — a circunferência gravada é a do payload medido, nunca a que o modelo devolveu (Art. 6°, V) | nasce com a feature |
 | `route` — nenhum valor do fact sheet aparece em log (Art. 6°, VIII) | nasce com a feature |
+
+## O que o aparelho respondeu
+
+Medido no Redmi Note 14 Pro, Android 16, arm64, em 2026-08-31, com pessoa real.
+
+**A pergunta que segurava este ADR — quanto custa um passe — está respondida a
+favor.** As emissões chegam a cada 2s cravados, a extração fica entre 210 e 250
+ms, e a inferência cabe por cima com folga. A cadência casada com a duração de
+uma frase falada se sustenta.
+
+**Os limiares saíram de medida, não de palpite.** Os primeiros chutes barravam
+captura boa:
+
+| Limiar | Chute inicial | Medido | Por quê |
+|---|---|---|---|
+| Visibilidade (frontal) | 0.6 sobre os 33 landmarks | 0.35 sobre os extremos | mínimo entre 33 zera com uma orelha ocluída; e visibilidade baixa é mau enquadramento, não ausência |
+| Faixa de enquadramento | ±0.06 | ±0.12 | um passo a três metros muda a ocupação em muito mais que 0.06 — o aluno pulava de "aproxime" para "afaste" sem acertar o meio |
+| Deslocamento vertical | reaproveitava a de tamanho | ±0.06 própria | posição se enxerga mais que tamanho |
+| Contraste corpo/fundo | 0.5 | faixa saudável medida: 0.5–1.1 | 0.5 ficava no piso do normal e acusava contraluz falso |
+
+**Dez defeitos que só o aparelho revelaria**, nenhum deles alcançável por
+emulador ou teste automatizado:
+
+1. `PreviewView` com `SurfaceView` não compõe na hierarquia do React Native — tela preta com a câmera aberta.
+2. Filho nativo não recebe layout do RN: `onLayout` e `requestLayout` precisam ser manuais.
+3. Bitmap RGBA do CameraX vem com padding de linha, e o MediaPipe lê assumindo empacotamento justo — **crash nativo** em `nativeCreateRgbaImage`.
+4. `getPixel` pixel a pixel dominava o custo do passe: 230 ms viraram 16 ms com leitura em bloco.
+5. Um pixel de ruído definia coroa e chão da silhueta; passou a exigir faixa mínima por linha.
+6. Visibilidade baixa por mau enquadramento virava "não estou te vendo" para quem ocupava dois terços da tela.
+7. A anti-repetição criava silêncio ambíguo: calar significava tanto "está certo" quanto "você travou e eu desisti".
+8. Falar re-renderiza — `speak` altera estado —, e a contagem regressiva reiniciava a cada número, engasgando no 3.
+9. Frente e costas pela visibilidade do rosto era palpite; pela **ordem dos ombros** é geometria.
+10. `ImageCapture.Builder.setMirrorMode` lança `UnsupportedOperationException`: espelhamento de foto se controla em `Metadata.isReversedHorizontal`.
+
+E dois erros de aritmética que os **testes** pegaram sozinhos, sem aparelho:
+`afaste-muito` e depois `afaste` ficaram inalcançáveis por limiar impossível —
+o corpo não ocupa mais que o quadro, então a razão nunca desce de `ALTURA_ALVO`.
+
+**A lição que atravessa quase todos:** eu estava descrevendo o mundo do ponto de
+vista da imagem, e a instrução precisa sair do ponto de vista de quem a obedece.
+"Dê um passo à frente" só significa "aproxime-se" para quem olha para a câmera;
+de costas, afasta. A mesma correção geométrica tem três nomes conforme a pose, e
+uma frase só acerta em uma delas.
+
+## Como o exercício entra sem derrubar o Body scan
+
+O rastreio de exercício usa a mesma engine e vai chegar. A proteção do que já
+funciona **não é abstração — é não encostar**: ele ganha view própria, e o
+`body-scan-pose` fica intocado. Módulo que ninguém mexe não regride.
+
+O caminho perigoso é o oposto, e é o tentador: tornar o módulo atual genérico,
+com parâmetro de cadência, de máscara ligada ou desligada, de quais fatos emitir.
+Cada parâmetro novo é uma chance de mudar o comportamento do primeiro consumidor
+sem ninguém perceber.
+
+E a configuração diverge de verdade, o que reforça a separação:
+
+| | Body scan | Exercício |
+|---|---|---|
+| Cadência | 2s, casada com a duração de uma frase falada | ~30fps |
+| Máscara de segmentação | ligada — é metade do custo do passe | desnecessária |
+| O que emite | coroa, chão, larguras, luz | ângulos articulares |
+| Duração da sessão | segundos | minutos, com térmico e bateria |
+
+Só `LIVE_STREAM` e o modelo `lite` coincidem.
+
+O que vale compartilhar quando houver dois é o **encanamento**: baixar o `.task`,
+criar o landmarker, vincular o CameraX. Aí a duplicação dói, e aí o segundo
+consumidor paga o seam — que é a regra do `CLAUDE.md` aplicada no momento certo,
+nem antes nem depois.
+
+**O que torna isso obrigatório e não preferência:** o lado nativo não tem teste
+automatizado. Os testes cobrem o portão em JS; uma regressão dentro do Kotlin
+não seria pega por ninguém até alguém escanear e reparar num número estranho.
+Com o nativo sem rede de proteção, "não mexer" é a única defesa que existe.
 
 ## Consequências
 

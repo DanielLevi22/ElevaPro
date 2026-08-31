@@ -46,7 +46,7 @@
 | ADR | Decisão | Status |
 |---|---|---|
 | [ADR-0010](0010-body-scan-calibrado.md) | Análise corporal calibrada pela altura do aluno | accepted |
-| [ADR-0022](0022-o-aparelho-mede-o-modelo-interpreta.md) | O aparelho mede a geometria; o modelo interpreta | proposed |
+| [ADR-0022](0022-o-aparelho-mede-o-modelo-interpreta.md) | O aparelho mede a geometria; o modelo interpreta | accepted |
 
 ### Inteligência Artificial
 

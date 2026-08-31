@@ -74,6 +74,11 @@ class BodyScanPoseView(context: Context, appContext: AppContext) : ExpoView(cont
   init {
     previewView.layoutParams =
       ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+    // COMPATIBLE usa TextureView em vez de SurfaceView. A SurfaceView tem
+    // janela própria e não compõe com a hierarquia do React Native: o
+    // `Preview` fica sem superfície, a sessão não configura e o
+    // `ImageAnalysis` para junto — tela preta E nenhuma medida.
+    previewView.implementationMode = PreviewView.ImplementationMode.COMPATIBLE
     addView(previewView)
     estado("preparando")
     trabalho.execute { prepararModelo() }
@@ -176,7 +181,18 @@ class BodyScanPoseView(context: Context, appContext: AppContext) : ExpoView(cont
       if (agora - ultimaAmostra < INTERVALO_MS) return
 
       ultimaAmostra = agora
-      val bitmap = girar(proxy.toBitmap(), proxy.imageInfo.rotationDegrees)
+
+      // Cópia densa antes de entregar ao MediaPipe.
+      //
+      // Com OUTPUT_IMAGE_FORMAT_RGBA_8888 o bitmap do CameraX pode vir com
+      // padding de linha — `rowStride` maior que largura × 4. O MediaPipe lê
+      // assumindo empacotamento justo e estoura em `nativeCreateRgbaImage`,
+      // com crash nativo e sem exceção Java. `copy` garante ARGB_8888 sem
+      // padding, e de quebra desacopla o tempo de vida do buffer da câmera.
+      val bitmap =
+        girar(proxy.toBitmap(), proxy.imageInfo.rotationDegrees)
+          .copy(Bitmap.Config.ARGB_8888, false) ?: return
+
       emVoo[agora] = bitmap
       landmarker?.detectAsync(BitmapImageBuilder(bitmap).build(), agora)
     } catch (e: Exception) {
@@ -200,7 +216,18 @@ class BodyScanPoseView(context: Context, appContext: AppContext) : ExpoView(cont
     }
 
     val arquivo = File(context.cacheDir, "body-scan-${System.currentTimeMillis()}.jpg")
-    val destino = ImageCapture.OutputFileOptions.Builder(arquivo).build()
+
+    // NUNCA espelhar, e dito explicitamente em vez de confiar no padrão.
+    //
+    // Espelhar troca esquerda com direita, e o laudo reporta lado — "ombro
+    // direito elevado". Numa foto espelhada ele apontaria o ombro errado e
+    // pareceria correto, que é o pior tipo de defeito. A lente frontal é onde
+    // isso morde, porque espelhar a própria imagem é convenção dela.
+    //
+    // Vai nos metadados e não no builder: `ImageCapture.Builder.setMirrorMode`
+    // lança `UnsupportedOperationException` — só `VideoCapture` aceita lá.
+    val metadados = ImageCapture.Metadata().apply { isReversedHorizontal = false }
+    val destino = ImageCapture.OutputFileOptions.Builder(arquivo).setMetadata(metadados).build()
 
     fotografo.takePicture(
       destino,
@@ -215,6 +242,43 @@ class BodyScanPoseView(context: Context, appContext: AppContext) : ExpoView(cont
         }
       },
     )
+  }
+
+  /**
+   * Posiciona a preview à mão.
+   *
+   * O React Native faz o próprio passe de layout pelo Yoga e **não mede filhos
+   * nativos anexados por código** — sem isto o `PreviewView` fica com tamanho
+   * zero e a tela sai preta, mesmo com a câmera aberta e medindo.
+   */
+  override fun onLayout(mudou: Boolean, esq: Int, topo: Int, dir: Int, base: Int) {
+    super.onLayout(mudou, esq, topo, dir, base)
+    val largura = dir - esq
+    val altura = base - topo
+
+    previewView.measure(
+      MeasureSpec.makeMeasureSpec(largura, MeasureSpec.EXACTLY),
+      MeasureSpec.makeMeasureSpec(altura, MeasureSpec.EXACTLY),
+    )
+    previewView.layout(0, 0, largura, altura)
+  }
+
+  /**
+   * Repassa o pedido de layout que o React Native engole.
+   *
+   * `requestLayout` vindo de um filho nativo morre aqui dentro: o RN faz o
+   * próprio passe pelo Yoga e não reage. Sem este empurrão, o `PreviewView`
+   * fica no tamanho que tinha na primeira medida — geralmente zero.
+   */
+  override fun requestLayout() {
+    super.requestLayout()
+    post {
+      measure(
+        MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
+        MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY),
+      )
+      layout(left, top, right, bottom)
+    }
   }
 
   private fun girar(bitmap: Bitmap, graus: Int): Bitmap {

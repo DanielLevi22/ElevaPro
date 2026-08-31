@@ -138,7 +138,6 @@ export default function BodyScanIntroduction({ hideHeader = false }: { hideHeade
   // tela existe para fazer: o aluno descobre que falta algo antes de gastar a
   // captura, não numa mensagem de erro no fim.
   const [portao, setPortao] = useState<Elegibilidade | null>(null);
-  const tutorialVisto = useAssessmentStore((s) => s.tutorialVisto);
 
   useEffect(() => {
     if (!token) return;
@@ -173,11 +172,10 @@ export default function BodyScanIntroduction({ hideHeader = false }: { hideHeade
 
     await startScan();
 
-    // O tutorial vem antes da câmera na primeira vez: descobrir que a roupa
-    // estava larga depois das três fotos é tarde demais (`ADR-0022`).
-    const destino = tutorialVisto ? ROUTES.ASSESSMENT.GRID : ROUTES.ASSESSMENT.TUTORIAL;
-
-    router.push({ pathname: destino, params: { studentId: targetId } });
+    // O tutorial vem SEMPRE antes da câmera. Descobrir que a roupa estava larga
+    // depois das três fotos é tarde demais, e o preparo muda a cada sessão: o
+    // cômodo de hoje não é o de duas semanas atrás (`ADR-0022`).
+    router.push({ pathname: ROUTES.ASSESSMENT.TUTORIAL, params: { studentId: targetId } });
   };
 
   return (
@@ -342,18 +340,6 @@ export default function BodyScanIntroduction({ hideHeader = false }: { hideHeade
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
-
-            {/* Só aparece depois da primeira vez: antes disso o tutorial é
-                obrigatório e vem sozinho, e o atalho seria ruído. */}
-            {tutorialVisto && !aviso && (
-              <TouchableOpacity
-                onPress={() => router.push(ROUTES.ASSESSMENT.TUTORIAL)}
-                className="mt-4 py-3 items-center"
-                accessibilityRole="button"
-              >
-                <Text className="text-zinc-400 text-sm font-semibold">Rever como se preparar</Text>
-              </TouchableOpacity>
-            )}
           </View>
         </ScrollView>
       </View>
