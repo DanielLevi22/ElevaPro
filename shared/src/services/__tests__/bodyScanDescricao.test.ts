@@ -41,11 +41,11 @@ describe("a descrição de um scan corporal", () => {
   // O laudo nomeia lado. Perder o sinal aqui apontaria o ombro errado com toda
   // a aparência de estar certo.
   it("traduz o sinal em lado e mostra o valor sem sinal", () => {
-    expect(linhasMedidas(scan({ shoulder_drop_cm: -1.8 }))[0]).toMatchObject({
-      valor: 1.8,
-      lado: "esquerdo mais alto",
-    });
-    expect(linhasMedidas(scan({ shoulder_drop_cm: 1.8 }))[0].lado).toBe("direito mais alto");
+    const esquerdo = scan({ shoulder_drop_cm: -1.8, shoulder_tilt_deg: -2.3 });
+    const direito = scan({ shoulder_drop_cm: 1.8, shoulder_tilt_deg: 2.3 });
+
+    expect(linhasMedidas(esquerdo)[0]).toMatchObject({ valor: 1.8, lado: "esquerdo mais alto" });
+    expect(linhasMedidas(direito)[0].lado).toBe("direito mais alto");
   });
 
   it("não inventa lado onde a medida não tem", () => {
@@ -77,5 +77,42 @@ describe("a descrição de um scan corporal", () => {
       2,
     );
     expect(ressalvasDoScan(scan())).toEqual([]);
+  });
+
+  /**
+   * O roll tolerado pelo portão entra 1:1 na inclinação medida, então abaixo
+   * dele a medida não sabe de que lado o desnível cai. Nomear lado ali seria
+   * afirmar uma certeza que a torção do aparelho consome inteira — dois scans
+   * seguidos com roll de sinais opostos trocaram o lado reportado sem o corpo
+   * mudar.
+   */
+  it("não nomeia lado quando a inclinação está abaixo da resolução", () => {
+    const linha = linhasMedidas(scan({ shoulder_drop_cm: 0.6, shoulder_tilt_deg: 0.7 }))[0];
+
+    expect(linha.valor).toBe(0.6);
+    expect(linha.lado).toBeNull();
+    expect(linha.nota).toContain("método resolva");
+  });
+
+  it("nomeia o lado assim que a inclinação passa da resolução", () => {
+    const linha = linhasMedidas(scan({ shoulder_drop_cm: 1.2, shoulder_tilt_deg: 1.5 }))[0];
+
+    expect(linha.lado).toBe("direito mais alto");
+    expect(linha.nota).toBeNull();
+  });
+
+  // Sem o ângulo não dá para afirmar que o desnível é resolvível, e presumir
+  // que sim devolveria justamente o lado que não se sabe.
+  it("não nomeia lado quando o ângulo companheiro não foi medido", () => {
+    expect(linhasMedidas(scan({ shoulder_drop_cm: 1.8 }))[0].lado).toBeNull();
+  });
+
+  // A regra é só para desnível: prumo e desvio de eixo não afirmam lado nenhum,
+  // e não podem herdar a supressão.
+  it("não mexe nas medidas que nunca tiveram lado", () => {
+    const linha = linhasMedidas(scan({ plumb_shoulder_cm: 5 }))[0];
+
+    expect(linha.rotulo).toBe("Ombro à frente do prumo");
+    expect(linha.nota).toBeNull();
   });
 });

@@ -27,14 +27,17 @@ function resultado(latest: BodyScanRecord | null) {
 
 describe("o body scan que chega a quem prescreve", () => {
   it("entrega a medida do aparelho, com lado", () => {
-    const json = resultado(scan({ shoulder_drop_cm: -1.8, plumb_shoulder_cm: 5 }));
+    const json = resultado(
+      scan({ shoulder_drop_cm: -1.8, shoulder_tilt_deg: -2.3, plumb_shoulder_cm: 5 }),
+    );
 
-    expect(json.medido_no_aparelho).toContainEqual({
-      medida: "Desnível dos ombros",
-      valor: 1.8,
-      unidade: "cm",
-      lado: "esquerdo mais alto",
-    });
+    expect(json.medido_no_aparelho).toContainEqual(
+      expect.objectContaining({
+        medida: "Desnível dos ombros",
+        valor: 1.8,
+        lado: "esquerdo mais alto",
+      }),
+    );
     expect(json.medido_no_aparelho).toContainEqual(
       expect.objectContaining({ medida: "Ombro à frente do prumo", valor: 5 }),
     );

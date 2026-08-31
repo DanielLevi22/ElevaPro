@@ -57,10 +57,14 @@ export function MedidasDoScan({ scan }: { scan: BodyScanRecord }) {
             ),
           },
           {
+            // O lado some quando o desnível é menor que a incerteza do método,
+            // e a nota entra no lugar dizendo por quê. Nomear lado abaixo disso
+            // afirmaria uma certeza que a torção tolerada do aparelho consome.
             key: "lado",
             header: "Lado",
             width: "md:w-44",
-            render: (l) => l.lado ?? "—",
+            render: (l) =>
+              l.lado ?? (l.nota ? <span className="text-muted-foreground">{l.nota}</span> : "—"),
           },
         ]}
         rowKey={(l) => l.campo}

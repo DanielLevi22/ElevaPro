@@ -1,4 +1,4 @@
-import type { MedidasGeometricas } from '@elevapro/shared';
+import { type LinhaMedida, linhasMedidas, type MedidasGeometricas } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
 
@@ -15,65 +15,20 @@ import { Text, View } from 'react-native';
  * "ombro direito 1,8 cm mais alto", nunca "assimetria preocupante".
  */
 
-/** Nome e unidade de cada medida. A ordem é a de leitura, de cima para baixo. */
-const LINHAS: Array<{
-  campo: keyof MedidasGeometricas;
-  rotulo: string;
-  unidade: string;
-  /** Medidas com lado: o sinal vira palavra, e o número perde o sinal. */
-  lados?: [string, string];
-}> = [
-  {
-    campo: 'shoulder_drop_cm',
-    rotulo: 'Desnível dos ombros',
-    unidade: 'cm',
-    lados: ['direito mais alto', 'esquerdo mais alto'],
-  },
-  { campo: 'shoulder_tilt_deg', rotulo: 'Inclinação dos ombros', unidade: '°' },
-  {
-    campo: 'hip_drop_cm',
-    rotulo: 'Desnível do quadril',
-    unidade: 'cm',
-    lados: ['direito mais alto', 'esquerdo mais alto'],
-  },
-  { campo: 'hip_tilt_deg', rotulo: 'Inclinação do quadril', unidade: '°' },
-  { campo: 'axis_deviation_cm', rotulo: 'Desvio do eixo do corpo', unidade: 'cm' },
-  { campo: 'plumb_shoulder_cm', rotulo: 'Ombro à frente do tornozelo', unidade: 'cm' },
-  { campo: 'plumb_hip_cm', rotulo: 'Quadril à frente do tornozelo', unidade: 'cm' },
-  { campo: 'plumb_knee_cm', rotulo: 'Joelho à frente do tornozelo', unidade: 'cm' },
-];
-
-function valorDe(medidas: MedidasGeometricas, campo: keyof MedidasGeometricas): number | null {
-  const bruto = medidas[campo];
-
-  return typeof bruto === 'number' ? bruto : null;
-}
-
-/** Quantas medidas saíram. Zero significa que a máscara não mediu nada. */
-export function quantasMedidas(medidas: MedidasGeometricas): number {
-  return LINHAS.filter((linha) => valorDe(medidas, linha.campo) !== null).length;
-}
-
-function Linha({
-  medidas,
-  linha,
-}: {
-  medidas: MedidasGeometricas;
-  linha: (typeof LINHAS)[number];
-}) {
-  const valor = valorDe(medidas, linha.campo);
-  if (valor === null) return null;
-
-  const lado = linha.lados ? (valor > 0 ? linha.lados[0] : linha.lados[1]) : null;
+function Linha({ linha }: { linha: LinhaMedida }) {
+  // O `lado` some quando o desnível é menor que a incerteza do método, e a
+  // `nota` diz isso no lugar. Nomear lado com 0,7° afirmaria uma certeza que a
+  // torção tolerada do aparelho já consome inteira.
+  const detalhe = linha.lado ?? linha.nota;
 
   return (
     <View className="flex-row items-baseline justify-between border-zinc-800 border-b py-3">
       <View className="flex-1 pr-3">
         <Text className="text-sm text-zinc-300">{linha.rotulo}</Text>
-        {lado ? <Text className="mt-0.5 text-xs text-zinc-500">{lado}</Text> : null}
+        {detalhe ? <Text className="mt-0.5 text-xs text-zinc-500">{detalhe}</Text> : null}
       </View>
       <Text className="font-bold text-base text-white">
-        {Math.abs(valor).toFixed(1)}
+        {linha.valor.toFixed(1)}
         <Text className="text-sm text-zinc-500"> {linha.unidade}</Text>
       </Text>
     </View>
@@ -81,9 +36,11 @@ function Linha({
 }
 
 export function MedidasDoScan({ medidas }: { medidas: MedidasGeometricas }) {
+  const linhas = linhasMedidas(medidas);
+
   // Sem nada medido a seção some. Um cabeçalho com nove traços afirmaria que
   // houve medição e que ela deu zero — que é um achado, não uma ausência.
-  if (quantasMedidas(medidas) === 0) return null;
+  if (linhas.length === 0) return null;
 
   return (
     <View className="mt-6 rounded-2xl bg-zinc-900 p-5">
@@ -96,8 +53,8 @@ export function MedidasDoScan({ medidas }: { medidas: MedidasGeometricas }) {
         scans é mais confiável que o valor isolado de um.
       </Text>
 
-      {LINHAS.map((linha) => (
-        <Linha key={linha.campo} linha={linha} medidas={medidas} />
+      {linhas.map((linha) => (
+        <Linha key={linha.campo} linha={linha} />
       ))}
 
       {medidas.trunk_rotated ? (

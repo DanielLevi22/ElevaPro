@@ -33,7 +33,9 @@ describe('as medidas na tela do aluno', () => {
   // O sinal carrega o lado. Perder isso apontaria o ombro errado para o aluno
   // com toda a aparência de estar certo.
   it('traduz o sinal em lado, e mostra o número sem sinal', () => {
-    render(<MedidasDoScan medidas={medidas({ shoulder_drop_cm: -1.8 })} />);
+    render(
+      <MedidasDoScan medidas={medidas({ shoulder_drop_cm: -1.8, shoulder_tilt_deg: -2.3 })} />
+    );
 
     expect(screen.getByText('esquerdo mais alto')).toBeTruthy();
     expect(screen.queryByText(/-1\.8/)).toBeNull();
@@ -64,5 +66,16 @@ describe('as medidas na tela do aluno', () => {
     render(<MedidasDoScan medidas={medidas({ shoulder_drop_cm: 1.8, trunk_rotated: false })} />);
 
     expect(screen.queryByText(/tronco estava um pouco virado/)).toBeNull();
+  });
+
+  // A torção que o portão tolera entra 1:1 na inclinação medida, então abaixo
+  // dela a medida não sabe de que lado o desnível cai. Nomear lado ali afirma
+  // uma certeza que o aparelho consome inteira.
+  it('não nomeia lado quando o desnível está abaixo da resolução', () => {
+    render(<MedidasDoScan medidas={medidas({ shoulder_drop_cm: 0.6, shoulder_tilt_deg: 0.7 })} />);
+
+    expect(screen.getByText(/0\.6\s*cm/)).toBeTruthy();
+    expect(screen.queryByText(/mais alto/)).toBeNull();
+    expect(screen.getByText(/método resolva/)).toBeTruthy();
   });
 });
