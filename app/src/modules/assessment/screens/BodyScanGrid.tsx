@@ -1,12 +1,10 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Dimensions, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { showAlert } from '@/components/ui/appAlert';
-import { ImageSourceModal } from '@/components/ui/ImageSourceModal';
 import { colors } from '@/constants/colors';
 import { ROUTES } from '@/navigation/types';
 import { useAssessmentStore } from '../store/assessmentStore';
@@ -36,11 +34,9 @@ const POSES: PoseConfig[] = [
 export default function BodyScanGrid() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { capturedImages, setCapturedImage, studentId } = useAssessmentStore();
+  const { capturedImages, studentId } = useAssessmentStore();
 
   const { studentId: paramIdRaw } = useLocalSearchParams();
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedPose, setSelectedPose] = useState<PoseType | null>(null);
 
   useEffect(() => {
     const paramId = Array.isArray(paramIdRaw) ? paramIdRaw[0] : paramIdRaw;
@@ -60,46 +56,16 @@ export default function BodyScanGrid() {
     }
   }, [studentId, paramIdRaw, router]);
 
+  /**
+   * Cada pose vai direto para a câmera.
+   *
+   * A galeria saiu: foto escolhida do rolo não passa pelo portão, não tem
+   * enquadramento registrado e não terá conversão px/cm — e ficaria
+   * indistinguível de uma que passou. É o mesmo fallback invisível que o
+   * `ADR-0022` recusou para a falha de medida, só que pela porta da frente.
+   */
   const handlePosePress = (pose: PoseType) => {
-    setSelectedPose(pose);
-    setModalVisible(true);
-  };
-
-  const onSelectCamera = () => {
-    setModalVisible(false);
-    if (selectedPose) {
-      router.push({ pathname: ROUTES.ASSESSMENT.CAMERA, params: { target: selectedPose } });
-    }
-  };
-
-  const onSelectGallery = async () => {
-    setModalVisible(false);
-    if (!selectedPose) return;
-
-    try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (permissionResult.status === 'denied') {
-        showAlert({
-          title: 'Permissão Necessária',
-          message: 'Precisamos de acesso à galeria para carregar fotos.',
-          type: 'warning',
-        });
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false,
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        setCapturedImage(selectedPose, result.assets[0].uri);
-      }
-    } catch (e) {
-      console.error('Gallery failed', e);
-      showAlert({ title: 'Erro', message: 'Falha ao abrir galeria.', type: 'error' });
-    }
+    router.push({ pathname: ROUTES.ASSESSMENT.CAMERA, params: { target: pose } });
   };
 
   const allCaptured = POSES.every((p) => !!capturedImages[p.id]);
@@ -113,13 +79,6 @@ export default function BodyScanGrid() {
 
   return (
     <View className="flex-1 bg-black">
-      <ImageSourceModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onSelectCamera={onSelectCamera}
-        onSelectGallery={onSelectGallery}
-      />
-
       <View style={{ paddingTop: insets.top }} className="flex-1">
         {/* Header */}
         <View className="flex-row items-center justify-between px-6 py-4">
@@ -134,40 +93,6 @@ export default function BodyScanGrid() {
         </View>
 
         <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 120 }}>
-          {/* Instructions (Moved from Intro) */}
-          <View className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-sm mb-8">
-            <Text className="text-white font-bold text-lg mb-4 text-center">
-              Instruções Importantes
-            </Text>
-            <View className="gap-4">
-              <View className="flex-row items-center gap-4">
-                <View className="w-8 h-8 rounded-full bg-primary/10 items-center justify-center border border-primary/20">
-                  <Ionicons name="sunny-outline" size={16} color={colors.primary.solid} />
-                </View>
-                <Text className="text-zinc-300 flex-1 text-sm">
-                  Realize o exame em um{' '}
-                  <Text className="text-white font-bold">ambiente iluminado</Text>.
-                </Text>
-              </View>
-              <View className="flex-row items-center gap-4">
-                <View className="w-8 h-8 rounded-full bg-secondary/10 items-center justify-center border border-secondary/20">
-                  <Ionicons name="shirt-outline" size={16} color={colors.secondary.main} />
-                </View>
-                <Text className="text-zinc-300 flex-1 text-sm">
-                  Use roupas <Text className="text-white font-bold">justas</Text> ou roupa de banho.
-                </Text>
-              </View>
-              <View className="flex-row items-center gap-4">
-                <View className="w-8 h-8 rounded-full bg-orange-500/10 items-center justify-center border border-orange-500/20">
-                  <Ionicons name="phone-portrait-outline" size={16} color={colors.primary.start} />
-                </View>
-                <Text className="text-zinc-300 flex-1 text-sm">
-                  Apoie o celular na <Text className="text-white font-bold">vertical</Text>.
-                </Text>
-              </View>
-            </View>
-          </View>
-
           <Text className="text-zinc-400 text-center mb-6 text-sm">
             Clique nos quadros para capturar cada ângulo:
           </Text>
