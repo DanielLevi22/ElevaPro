@@ -1,6 +1,7 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeUser } from "@/lib/api-auth";
+import { aiProviders } from "@/modules/ai/ai.config";
+import { responderEmUmTurno } from "@/modules/ai/providers/turnoUnico";
 
 // Na Vercel uma rota sem isto morre no default de poucos segundos. Uma conversa
 // com uso de ferramenta passa disso com folga, e localmente não existe teto —
@@ -28,8 +29,6 @@ interface AIWorkoutResponse {
   explanation: string;
   plan: AIWorkoutDay[];
 }
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export async function POST(request: NextRequest) {
   // Antes: `getAuthenticatedUserId`, uma cópia local que fazia
@@ -90,17 +89,16 @@ Responda APENAS com JSON válido onde a chave é o ÍNDICE da fase (0, 1, 2...) 
   "1": { "explanation": "...", "plan": [...] }
 }`;
 
-  const response = await anthropic.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 4096,
+  const { texto } = await responderEmUmTurno(aiProviders.fast, {
+    systemBlocks: [],
     messages: [{ role: "user", content: prompt }],
+    tools: [],
+    maxTokens: 4096,
   });
-
-  const text = response.content[0].type === "text" ? response.content[0].text : "";
 
   let result: Record<string, AIWorkoutResponse>;
   try {
-    result = JSON.parse(text.replace(/```json|```/g, "").trim()) as Record<
+    result = JSON.parse(texto.replace(/```json|```/g, "").trim()) as Record<
       string,
       AIWorkoutResponse
     >;

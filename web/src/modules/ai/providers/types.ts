@@ -7,6 +7,15 @@ export interface ToolDefinition {
 
 export type ContentBlock =
   | { type: "text"; text: string }
+  /**
+   * Imagem em base64.
+   *
+   * Faltava, e é o que impedia as rotas de visão — body scan e scan-food — de
+   * usar esta interface: elas mandam foto, e o contrato só conhecia texto e
+   * ferramenta. Sem isto, "todo mundo passa pelo provider" não era alcançável,
+   * só recomendável.
+   */
+  | { type: "image"; source: { type: "base64"; media_type: string; data: string } }
   | { type: "tool_use"; id: string; name: string; input: unknown }
   | { type: "tool_result"; tool_use_id: string; content: string; is_error?: boolean };
 
@@ -25,6 +34,14 @@ export interface ProviderTurnOptions {
   messages: LLMMessage[];
   tools: readonly ToolDefinition[];
   maxTokens?: number;
+  /**
+   * Ausente deixa o padrão do provedor, que na Anthropic é 1.0.
+   *
+   * O body scan fixa em 0: a mesma foto enviada duas vezes devolvia cintura
+   * diferente, e o `ADR-0010` apoia a confiabilidade do delta em erro
+   * sistemático que se cancela — amostragem aleatória não cancela.
+   */
+  temperature?: number;
 }
 
 export type ProviderStreamEvent =
