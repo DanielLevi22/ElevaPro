@@ -55,6 +55,15 @@ interface AssessmentState {
   /** Parâmetros do enquadramento da última captura — base da comparação. */
   captureFraming: CaptureFraming | null;
   setCaptureFraming: (framing: CaptureFraming) => void;
+  /**
+   * A voz do portão de captura está muda?
+   *
+   * Mora aqui, e não no hook de voz, porque o `isMuted` do `useVoiceCoach` é
+   * estado local por instância: o aluno mutava, saía da tela e a voz voltava na
+   * pose seguinte. Persistido, a escolha vale para o scan inteiro (`ADR-0022`).
+   */
+  vozMuda: boolean;
+  setVozMuda: (muda: boolean) => void;
   submitScan: () => Promise<void>;
 
   // Anamnesis Actions
@@ -139,6 +148,9 @@ export const useAssessmentStore = create<AssessmentState>()(
       },
 
       setCaptureFraming: (framing: CaptureFraming) => set({ captureFraming: framing }),
+
+      vozMuda: false,
+      setVozMuda: (muda: boolean) => set({ vozMuda: muda }),
 
       submitScan: async () => {
         // Limpa a falha anterior: tentar de novo com a mensagem antiga na tela
@@ -277,6 +289,7 @@ export const useAssessmentStore = create<AssessmentState>()(
         anamnesisResponses: state.anamnesisResponses,
         currentSectionIndex: state.currentSectionIndex,
         isAnamnesisSubmitted: state.isAnamnesisSubmitted,
+        vozMuda: state.vozMuda,
       }),
     }
   )
