@@ -35,6 +35,28 @@ const COMPARABLE_FIELDS: ComparableField[] = [
 ];
 
 /**
+ * Os dois scans saíram da mesma lente?
+ *
+ * Frontal e traseira têm distância focal diferente: o corpo ocupando a mesma
+ * fração do quadro não significa a mesma distância, e a conversão px/cm muda
+ * junto. O tipo já dizia que "escaneamentos de lentes diferentes não são
+ * comparáveis" — a conta nunca conferiu, e a diferença entre duas lentes saía
+ * como se fosse mudança no corpo, no número que a tela chama de mais confiável.
+ *
+ * Lente desconhecida também não passa. Não dá para afirmar que duas capturas
+ * são comparáveis sem saber de onde vieram, e inventar essa afirmação é o que
+ * produz o delta errado que ninguém consegue perceber.
+ */
+function mesmaLente(current: BodyScanRecord, previous: BodyScanRecord): boolean {
+  // `== null` e não `=== null`: leitura com `select` mais estreito devolve
+  // `undefined`, e comparar dois `undefined` daria "mesma lente" para duas
+  // capturas das quais não sabemos nada.
+  if (current.framing_camera == null || previous.framing_camera == null) return false;
+
+  return current.framing_camera === previous.framing_camera;
+}
+
+/**
  * Diferença entre dois escaneamentos, campo a campo.
  *
  * É o número que a feature deve mostrar primeiro. Uma foto isolada dá uma
@@ -53,6 +75,8 @@ const COMPARABLE_FIELDS: ComparableField[] = [
  * // [{ field: 'circ_waist', current: 82, previous: 85, change: -3 }]
  */
 export function compareScans(current: BodyScanRecord, previous: BodyScanRecord): BodyScanDelta[] {
+  if (!mesmaLente(current, previous)) return [];
+
   const deltas: BodyScanDelta[] = [];
 
   for (const field of COMPARABLE_FIELDS) {

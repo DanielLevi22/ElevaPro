@@ -7,6 +7,7 @@ function scan(overrides: Partial<BodyScanRecord>): BodyScanRecord {
     id: "scan-1",
     student_id: "student-1",
     scanned_at: "2026-08-12T10:00:00Z",
+    framing_camera: "back",
     height_cm: 175,
     weight_kg: null,
     body_fat_pct: null,
@@ -81,5 +82,40 @@ describe("compareScans", () => {
 
   it("devolve vazio quando não há nenhum campo comparável", () => {
     expect(compareScans(scan({}), scan({}))).toEqual([]);
+  });
+});
+
+/**
+ * Frontal e traseira têm distância focal diferente: o corpo ocupando a mesma
+ * fração do quadro não está à mesma distância, e a conversão px/cm muda junto.
+ * O tipo já declarava que as duas não são comparáveis; a conta não conferia, e
+ * a diferença entre lentes saía como se fosse mudança no corpo.
+ */
+describe("compareScans e a lente", () => {
+  it("não compara scan de lentes diferentes", () => {
+    const deltas = compareScans(
+      scan({ circ_waist: 82, framing_camera: "front" }),
+      scan({ circ_waist: 85, framing_camera: "back" }),
+    );
+
+    expect(deltas).toEqual([]);
+  });
+
+  it("compara normalmente quando a lente é a mesma", () => {
+    const deltas = compareScans(
+      scan({ circ_waist: 82, framing_camera: "front" }),
+      scan({ circ_waist: 85, framing_camera: "front" }),
+    );
+
+    expect(deltas).toHaveLength(1);
+  });
+
+  // Não dá para afirmar que duas capturas são comparáveis sem saber de onde
+  // vieram — e inventar essa afirmação produz o delta errado que ninguém vê.
+  it("não compara quando a lente é desconhecida", () => {
+    const semLente = scan({ circ_waist: 82, framing_camera: null });
+
+    expect(compareScans(semLente, scan({ circ_waist: 85 }))).toEqual([]);
+    expect(compareScans(semLente, semLente)).toEqual([]);
   });
 });
