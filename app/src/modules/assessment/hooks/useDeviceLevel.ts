@@ -9,7 +9,13 @@ const RAD_PARA_GRAUS = 180 / Math.PI;
 export interface DeviceLevel {
   /** Inclinação frente/trás em graus. 0 é perfeitamente vertical. */
   pitch: number;
-  /** Rotação lateral em graus. 0 é sem torção. */
+  /**
+   * Torção no eixo da lente, em graus. 0 é o horizonte da imagem na horizontal.
+   *
+   * É o que contamina a inclinação de ombro e quadril: a imagem inteira gira
+   * junto com o aparelho, então uma linha de ombros nivelada aparece torta pelo
+   * mesmo tanto.
+   */
   roll: number;
   nivelado: boolean;
   /** Falso quando o aparelho não tem o sensor — aí o guia não pode barrar nada. */
@@ -52,14 +58,26 @@ export function useDeviceLevel(): DeviceLevel {
       }
 
       DeviceMotion.setUpdateInterval(200);
-      subscription = DeviceMotion.addListener(({ rotation }) => {
-        if (!rotation) return;
+      subscription = DeviceMotion.addListener(({ accelerationIncludingGravity }) => {
+        const g = accelerationIncludingGravity;
+        if (!g) return;
 
-        // `beta` é a rotação no eixo X. Com o aparelho em pé, ela fica perto de
-        // ±π/2 — subtrair leva o "vertical" para zero e torna a comparação
-        // com a tolerância direta.
-        const pitch = Math.abs(rotation.beta * RAD_PARA_GRAUS) - 90;
-        const roll = rotation.gamma * RAD_PARA_GRAUS;
+        // O `rotation` do DeviceMotion — usado antes — só existe em aparelho
+        // com GIROSCÓPIO. Sem ele o listener caía fora e `disponivel` ficava
+        // `false` para sempre: a checagem de nível do portão era pulada e
+        // `framing_level_sensor` gravava `false` em todo scan. O aparelho de
+        // teste não tem giroscópio, e a trava esteve inerte desde que nasceu.
+        //
+        // A gravidade resolve com o acelerômetro, que todo aparelho tem. E é o
+        // vetor certo para esta pergunta: o que interessa não é a atitude do
+        // aparelho no mundo, é para onde aponta o "para baixo" DENTRO da
+        // imagem — que é exatamente a direção da gravidade projetada na tela.
+        //
+        // Com o aparelho em pé e a tela voltada para o aluno, a gravidade fica
+        // em -y. Torcer o aparelho no eixo da lente joga gravidade para x;
+        // deitá-lo para frente ou para trás joga para z.
+        const roll = Math.atan2(g.x, -g.y) * RAD_PARA_GRAUS;
+        const pitch = Math.atan2(g.z, Math.hypot(g.x, g.y)) * RAD_PARA_GRAUS;
 
         setLevel({
           pitch: Number(pitch.toFixed(1)),
