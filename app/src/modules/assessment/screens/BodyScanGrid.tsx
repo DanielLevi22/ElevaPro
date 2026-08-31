@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { showAlert } from '@/components/ui/appAlert';
 import { ImageSourceModal } from '@/components/ui/ImageSourceModal';
 import { colors } from '@/constants/colors';
+import { ROUTES } from '@/navigation/types';
 import { useAssessmentStore } from '../store/assessmentStore';
 
 const { width } = Dimensions.get('window');
@@ -45,8 +46,6 @@ export default function BodyScanGrid() {
     const paramId = Array.isArray(paramIdRaw) ? paramIdRaw[0] : paramIdRaw;
     const effectiveId = studentId || paramId;
 
-    console.log('🔍 BodyScanGrid | Store ID:', studentId, 'Param ID:', paramId);
-
     if (!effectiveId) {
       showAlert({
         title: 'Erro de Identificação',
@@ -69,10 +68,7 @@ export default function BodyScanGrid() {
   const onSelectCamera = () => {
     setModalVisible(false);
     if (selectedPose) {
-      router.push({
-        pathname: '/assessment/camera',
-        params: { target: selectedPose },
-      } as never);
+      router.push({ pathname: ROUTES.ASSESSMENT.CAMERA, params: { target: selectedPose } });
     }
   };
 
@@ -110,12 +106,8 @@ export default function BodyScanGrid() {
 
   const handleFinish = () => {
     if (allCaptured) {
-      // Pass studentId to ensure it survives navigation
-      console.log('Navigating to processing with StudentID:', studentId);
-      router.push({
-        pathname: '/assessment/processing',
-        params: { studentId: studentId },
-      } as never);
+      // O id viaja por parâmetro para sobreviver à navegação.
+      router.push({ pathname: ROUTES.ASSESSMENT.PROCESSING, params: { studentId } });
     }
   };
 
