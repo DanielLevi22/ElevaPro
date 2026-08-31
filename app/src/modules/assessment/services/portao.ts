@@ -208,6 +208,16 @@ export interface ContextoDoPortao {
    * quem já está parado no lugar não perder a foto por oscilar.
    */
   estavaLiberado?: boolean;
+  /**
+   * A contagem regressiva está rodando?
+   *
+   * Enquanto ela roda, a folga da histerese sai. As duas existem para coisas
+   * opostas: a folga evita que o portão pisque enquanto o aluno se acomoda, e
+   * a contagem é a promessa de que ele vai ficar parado. Somadas, o aluno saía
+   * de posição e a foto saía mesmo assim — a tolerância ficava 50% mais larga
+   * justo no momento em que devia estar mais estreita.
+   */
+  contando?: boolean;
   /** Há quanto tempo a voz falou. Passado o limite, repete mesmo sem mudar. */
   msDesdeAFala?: number;
   /**
@@ -411,12 +421,13 @@ function foraDeNivel(fatos: FatosDaCaptura): boolean {
 function primeiraFalha(
   fatos: FatosDaCaptura,
   estavaLiberado: boolean,
+  contando: boolean,
   ocupacaoAlvo: number | null
 ): IdDaInstrucao | null {
   if (semCorpo(fatos)) return 'sem-corpo';
   if (vistaErrada(fatos)) return 'vista-errada';
 
-  const folga = estavaLiberado ? FOLGA_DEPOIS_DE_ABRIR : 1;
+  const folga = estavaLiberado && !contando ? FOLGA_DEPOIS_DE_ABRIR : 1;
 
   // Borda cortada vem antes da distância porque a causa é a mesma — estar perto
   // demais — mas a frase é mais concreta: o aluno sabe olhar para os próprios pés.
@@ -478,10 +489,11 @@ export function avaliarPortao(fatos: FatosDaCaptura, contexto: ContextoDoPortao 
   const {
     ultimaFalada = null,
     estavaLiberado = false,
+    contando = false,
     msDesdeAFala = 0,
     ocupacaoAlvo = null,
   } = contexto;
-  const falha = primeiraFalha(fatos, estavaLiberado, ocupacaoAlvo);
+  const falha = primeiraFalha(fatos, estavaLiberado, contando, ocupacaoAlvo);
   const avisos = avisosDeQualidade(fatos);
   const ocupacao = alturaOcupada(fatos);
 

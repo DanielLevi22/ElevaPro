@@ -415,3 +415,34 @@ describe('o portão de captura', () => {
     }
   });
 });
+
+/**
+ * A folga da histerese e a contagem regressiva existem para coisas opostas: a
+ * primeira evita que o portão pisque enquanto o aluno se acomoda; a segunda é a
+ * promessa de que ele vai ficar parado. Somadas, a tolerância ficava 50% mais
+ * larga justo no momento em que devia estar mais estreita — o aluno saía de
+ * posição durante os cinco segundos e a foto saía assim mesmo.
+ */
+describe('a contagem regressiva tira a folga da histerese', () => {
+  /** Fora do enquadramento por mais que a tolerância normal, e menos que 1.5x. */
+  const saiuDePosicao = frameBom({ coroaY: 0.02, chaoY: 0.82 });
+
+  it('mantém aberto para quem só oscilou, fora da contagem', () => {
+    const portao = avaliarPortao(saiuDePosicao, { estavaLiberado: true });
+
+    expect(portao.liberado).toBe(true);
+  });
+
+  it('fecha para o mesmo desvio quando a contagem está rodando', () => {
+    const portao = avaliarPortao(saiuDePosicao, { estavaLiberado: true, contando: true });
+
+    expect(portao.liberado).toBe(false);
+    expect(portao.instrucao).not.toBeNull();
+  });
+
+  it('não estorva quem continua encaixado durante a contagem', () => {
+    const portao = avaliarPortao(frameBom(), { estavaLiberado: true, contando: true });
+
+    expect(portao.liberado).toBe(true);
+  });
+});

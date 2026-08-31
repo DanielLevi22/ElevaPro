@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useCameraPermissions } from 'expo-camera';
+import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Text, TouchableOpacity, Vibration, View } from 'react-native';
@@ -72,6 +73,14 @@ export default function BodyScanCamera() {
   const ocupacaoDeReferencia = useAssessmentStore((s) => s.ocupacaoDeReferencia);
   const setLenteFrontal = useAssessmentStore((s) => s.setLenteFrontal);
 
+  /**
+   * A foto já saiu e a medição está rodando.
+   *
+   * Medir o still leva algum tempo, e antes esse tempo era morto: a tela ficava
+   * como estava, sem som, sem aviso, e só fechava depois. Parecia travamento
+   * bem no instante em que o aluno mais espera resposta.
+   */
+  const [medindo, setMedindo] = useState(false);
   const [portao, setPortao] = useState<Portao | null>(null);
   const [estado, setEstado] = useState('preparando');
   const [contagem, setContagem] = useState<number | null>(null);
@@ -101,6 +110,14 @@ export default function BodyScanCamera() {
   /** Quando a voz falou pela última vez. Instrução presa volta a ser dita. */
   const instanteDaFala = useRef(0);
 
+  /**
+   * A contagem por ref, e não pelo estado.
+   *
+   * `onFatos` é callback nativo: lido do estado, ele enxergaria a contagem de
+   * quando a tela montou — sempre `null` — e a folga da histerese nunca sairia.
+   */
+  const contandoRef = useRef(false);
+
   /** Desde quando o portão está fechado sem parar. Zera ao abrir. */
   const fechadoDesde = useRef(Date.now());
   const [ofereceSaida, setOfereceSaida] = useState(false);
@@ -116,6 +133,8 @@ export default function BodyScanCamera() {
    */
   const falarRef = useRef(speak);
   falarRef.current = speak;
+
+  contandoRef.current = contagem !== null;
 
   const aoFatos = useCallback(
     (evento: { nativeEvent: FatosDeVisao }) => {
@@ -134,6 +153,7 @@ export default function BodyScanCamera() {
           estavaLiberado: estavaLiberado.current,
           msDesdeAFala: Date.now() - instanteDaFala.current,
           ocupacaoAlvo: ocupacaoDeReferencia,
+          contando: contandoRef.current,
         }
       );
 
@@ -164,9 +184,14 @@ export default function BodyScanCamera() {
   const disparar = useCallback(
     async (semEnquadramento = false) => {
       try {
-        Vibration.vibrate(50);
+        // Impacto forte no disparo: é o substituto tátil do clique do
+        // obturador, e o aluno está a metros da tela — o retorno precisa ser
+        // sentido, não visto.
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
         const uri = await camera.current?.capturar();
         if (!uri) return;
+
+        setMedindo(true);
 
         // Medir vem antes de guardar. Tirar e medir são trabalhos separados —
         // a foto já está no disco e não depende da medida —, mas sem geometria
@@ -175,6 +200,13 @@ export default function BodyScanCamera() {
         // mesma série. Guardar primeiro deixaria a foto num meio-estado, válida
         // no store e inútil para a análise.
         const medida = await camera.current?.medir(uri, target === 'side').catch(() => null);
+        setMedindo(false);
+
+        Haptics.notificationAsync(
+          medida
+            ? Haptics.NotificationFeedbackType.Success
+            : Haptics.NotificationFeedbackType.Warning
+        );
 
         // Exceção à regra, e deliberada: quem chegou aqui pela saída manual já
         // passou 45s sem conseguir encaixar. Recusar de novo por falta de
@@ -247,6 +279,7 @@ export default function BodyScanCamera() {
           onDismiss: () => router.back(),
         });
       } catch {
+        setMedindo(false);
         showAlert({ title: 'Erro', message: 'Não consegui tirar a foto', type: 'error' });
       }
     },
@@ -343,6 +376,13 @@ export default function BodyScanCamera() {
         base={MARCA_BASE}
         proximidade={portao?.proximidade ?? 'longe'}
       />
+
+      {medindo && (
+        <View className="absolute inset-0 items-center justify-center bg-black/70">
+          <Text className="text-white text-2xl font-black">Foto tirada</Text>
+          <Text className="text-zinc-300 text-base mt-2">Medindo…</Text>
+        </View>
+      )}
 
       <View className="absolute top-12 left-0 right-0 items-center px-6">
         <View className="bg-black/50 px-6 py-3 rounded-full border border-white/20">
