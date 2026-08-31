@@ -172,6 +172,7 @@ fun medirFoto(
   val quadrilDir = marcos[QUADRIL_DIR]
 
   val frontal = !dePerfil && minOf(ombroEsq.visivel(), ombroDir.visivel()) > 0.5f
+  val ladoDaLateral = if (dePerfil) ladoVisivel(marcos) else 0
 
   return MedidaDaFoto(
     alturaPx = alturaPx,
@@ -203,9 +204,11 @@ fun medirFoto(
       },
     desvioDoEixoPx = if (frontal) desvioDoEixo(marcos, bitmap) else null,
     rotacaoDoTronco = if (frontal) ombroEsq.z() - ombroDir.z() else null,
-    prumoOmbroPx = if (dePerfil) prumo(marcos, OMBRO_ESQ, bitmap) else null,
-    prumoQuadrilPx = if (dePerfil) prumo(marcos, QUADRIL_ESQ, bitmap) else null,
-    prumoJoelhoPx = if (dePerfil) prumo(marcos, JOELHO_ESQ, bitmap) else null,
+    // Sempre pelo lado que a câmera enxerga: do outro, os pontos são inferidos
+    // por profundidade e o prumo compara duas adivinhações.
+    prumoOmbroPx = if (dePerfil) prumo(marcos, OMBRO_ESQ, ladoDaLateral, bitmap) else null,
+    prumoQuadrilPx = if (dePerfil) prumo(marcos, QUADRIL_ESQ, ladoDaLateral, bitmap) else null,
+    prumoJoelhoPx = if (dePerfil) prumo(marcos, JOELHO_ESQ, ladoDaLateral, bitmap) else null,
   )
 }
 
@@ -217,10 +220,38 @@ private fun desvioDoEixo(marcos: List<NormalizedLandmark>, bitmap: Bitmap): Floa
 }
 
 
+/**
+ * Qual metade do corpo está de frente para a câmera, como deslocamento de
+ * índice: 0 para a esquerda do aluno, 1 para a direita.
+ *
+ * Nos landmarks do MediaPipe o lado direito é sempre o índice seguinte ao
+ * esquerdo — 11/12, 23/24, 25/26, 27/28 —, então um deslocamento resolve os
+ * quatro pares.
+ *
+ * Existe porque na lateral metade do corpo se auto-oclui, e os pontos do lado
+ * escondido não são vistos: são inferidos por profundidade, com precisão muito
+ * menor. Medir o prumo sempre pelo lado esquerdo fazia a conta usar os pontos
+ * adivinhados sempre que o aluno virava o lado direito para a câmera — e o
+ * número saía com a mesma cara de sempre.
+ */
+private fun ladoVisivel(marcos: List<NormalizedLandmark>): Int {
+  val esquerda =
+    marcos[OMBRO_ESQ].visivel() + marcos[QUADRIL_ESQ].visivel() + marcos[TORNOZELO_ESQ].visivel()
+  val direita =
+    marcos[OMBRO_DIR].visivel() + marcos[QUADRIL_DIR].visivel() + marcos[TORNOZELO_DIR].visivel()
+
+  return if (esquerda >= direita) 0 else 1
+}
+
 /** Distância horizontal de um ponto até a vertical que sobe do tornozelo. */
-private fun prumo(marcos: List<NormalizedLandmark>, indice: Int, bitmap: Bitmap): Float? {
-  val ponto = marcos[indice]
-  val tornozelo = marcos[TORNOZELO_ESQ]
+private fun prumo(
+  marcos: List<NormalizedLandmark>,
+  indice: Int,
+  lado: Int,
+  bitmap: Bitmap,
+): Float? {
+  val ponto = marcos[indice + lado]
+  val tornozelo = marcos[TORNOZELO_ESQ + lado]
   if (minOf(ponto.visivel(), tornozelo.visivel()) < 0.4f) return null
 
   return (ponto.x() - tornozelo.x()) * bitmap.width
