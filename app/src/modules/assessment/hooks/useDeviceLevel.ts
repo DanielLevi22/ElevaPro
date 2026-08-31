@@ -1,4 +1,4 @@
-import { DeviceMotion } from 'expo-sensors';
+import { Accelerometer } from 'expo-sensors';
 import { useEffect, useState } from 'react';
 
 /** Quanto o aparelho pode desviar da vertical e ainda valer, em graus. */
@@ -47,7 +47,7 @@ export function useDeviceLevel(): DeviceLevel {
     let cancelado = false;
 
     const iniciar = async () => {
-      const disponivel = await DeviceMotion.isAvailableAsync();
+      const disponivel = await Accelerometer.isAvailableAsync();
       if (cancelado) return;
 
       if (!disponivel) {
@@ -57,21 +57,18 @@ export function useDeviceLevel(): DeviceLevel {
         return;
       }
 
-      DeviceMotion.setUpdateInterval(200);
-      subscription = DeviceMotion.addListener(({ accelerationIncludingGravity }) => {
-        const g = accelerationIncludingGravity;
-        if (!g) return;
-
-        // O `rotation` do DeviceMotion — usado antes — só existe em aparelho
-        // com GIROSCÓPIO. Sem ele o listener caía fora e `disponivel` ficava
-        // `false` para sempre: a checagem de nível do portão era pulada e
-        // `framing_level_sensor` gravava `false` em todo scan. O aparelho de
-        // teste não tem giroscópio, e a trava esteve inerte desde que nasceu.
+      Accelerometer.setUpdateInterval(200);
+      subscription = Accelerometer.addListener((g) => {
+        // `Accelerometer`, e não `DeviceMotion`. O DeviceMotion depende do
+        // vetor de rotação, que exige GIROSCÓPIO: no aparelho de teste o
+        // `isAvailableAsync` devolvia false, o hook saía antes de assinar e
+        // `framing_level_sensor` gravava `false` em todo scan — a checagem de
+        // nível do portão esteve inerte desde que nasceu. Acelerômetro todo
+        // aparelho tem.
         //
-        // A gravidade resolve com o acelerômetro, que todo aparelho tem. E é o
-        // vetor certo para esta pergunta: o que interessa não é a atitude do
-        // aparelho no mundo, é para onde aponta o "para baixo" DENTRO da
-        // imagem — que é exatamente a direção da gravidade projetada na tela.
+        // E a gravidade é o vetor certo para esta pergunta: o que interessa
+        // não é a atitude do aparelho no mundo, é para onde aponta o "para
+        // baixo" DENTRO da imagem — a gravidade projetada na tela.
         //
         // Com o aparelho em pé e a tela voltada para o aluno, a gravidade fica
         // em -y. Torcer o aparelho no eixo da lente joga gravidade para x;

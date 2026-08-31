@@ -281,7 +281,7 @@ export default function PostureAnalysis() {
             {lastResult.measured ? <MedidasDoScan medidas={lastResult.measured} /> : null}
 
             {/* Score Dashboard Card (New Radar Design) */}
-            <View className="bg-zinc-900/50 border border-zinc-800 p-5 rounded-3xl mb-6 relative overflow-hidden">
+            <View className="bg-zinc-900/50 border border-zinc-800 p-5 rounded-3xl mt-6 mb-6 relative overflow-hidden">
               {/* Background Glow */}
               <View className="absolute right-0 top-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-y-10 translate-x-10" />
 

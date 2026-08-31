@@ -1,9 +1,9 @@
 import { renderHook, waitFor } from '@testing-library/react-native';
-import { DeviceMotion } from 'expo-sensors';
+import { Accelerometer } from 'expo-sensors';
 import { useDeviceLevel } from '../useDeviceLevel';
 
 jest.mock('expo-sensors', () => ({
-  DeviceMotion: {
+  Accelerometer: {
     isAvailableAsync: jest.fn(),
     setUpdateInterval: jest.fn(),
     addListener: jest.fn(),
@@ -34,20 +34,20 @@ function gravidade(rollGraus: number, pitchGraus: number) {
 
 /** Dispara uma leitura de sensor no listener registrado. */
 function emitir(rollGraus: number, pitchGraus: number) {
-  const listener = (DeviceMotion.addListener as jest.Mock).mock.calls[0][0];
-  listener({ accelerationIncludingGravity: gravidade(rollGraus, pitchGraus) });
+  const listener = (Accelerometer.addListener as jest.Mock).mock.calls[0][0];
+  listener(gravidade(rollGraus, pitchGraus));
 }
 
 describe('useDeviceLevel', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (DeviceMotion.isAvailableAsync as jest.Mock).mockResolvedValue(true);
-    (DeviceMotion.addListener as jest.Mock).mockReturnValue({ remove: jest.fn() });
+    (Accelerometer.isAvailableAsync as jest.Mock).mockResolvedValue(true);
+    (Accelerometer.addListener as jest.Mock).mockReturnValue({ remove: jest.fn() });
   });
 
   it('considera nivelado o aparelho em pé', async () => {
     const { result } = renderHook(() => useDeviceLevel());
-    await waitFor(() => expect(DeviceMotion.addListener).toHaveBeenCalled());
+    await waitFor(() => expect(Accelerometer.addListener).toHaveBeenCalled());
 
     emitir(0, 0);
 
@@ -58,7 +58,7 @@ describe('useDeviceLevel', () => {
 
   it('recusa inclinação além da tolerância', async () => {
     const { result } = renderHook(() => useDeviceLevel());
-    await waitFor(() => expect(DeviceMotion.addListener).toHaveBeenCalled());
+    await waitFor(() => expect(Accelerometer.addListener).toHaveBeenCalled());
 
     // 20° para trás encurta o corpo na imagem por perspectiva, e a altura em
     // pixels é a régua de todas as medidas derivadas.
@@ -72,7 +72,7 @@ describe('useDeviceLevel', () => {
 
   it('recusa torção lateral além da tolerância', async () => {
     const { result } = renderHook(() => useDeviceLevel());
-    await waitFor(() => expect(DeviceMotion.addListener).toHaveBeenCalled());
+    await waitFor(() => expect(Accelerometer.addListener).toHaveBeenCalled());
 
     emitir(15, 0);
 
@@ -81,7 +81,7 @@ describe('useDeviceLevel', () => {
   });
 
   it('sem sensor, libera o disparo em vez de prender o aluno', async () => {
-    (DeviceMotion.isAvailableAsync as jest.Mock).mockResolvedValue(false);
+    (Accelerometer.isAvailableAsync as jest.Mock).mockResolvedValue(false);
 
     const { result } = renderHook(() => useDeviceLevel());
 
@@ -90,7 +90,7 @@ describe('useDeviceLevel', () => {
     // Só o ramo sem sensor produz `nivelado: true`, então é ele que se espera.
     await waitFor(() => expect(result.current.nivelado).toBe(true));
     expect(result.current.disponivel).toBe(false);
-    expect(DeviceMotion.addListener).not.toHaveBeenCalled();
+    expect(Accelerometer.addListener).not.toHaveBeenCalled();
   });
 
   // O aparelho de teste não tem giroscópio, e o `rotation` do DeviceMotion só
@@ -98,12 +98,12 @@ describe('useDeviceLevel', () => {
   // sempre, e a checagem de nível do portão era pulada em todo scan — trava
   // inerte desde que nasceu. A gravidade vem do acelerômetro, que todo
   // aparelho tem.
-  it('lê o nível sem giroscópio, só com a gravidade', async () => {
+  it('lê o nível pelo acelerômetro, sem depender de giroscópio', async () => {
     const { result } = renderHook(() => useDeviceLevel());
-    await waitFor(() => expect(DeviceMotion.addListener).toHaveBeenCalled());
+    await waitFor(() => expect(Accelerometer.addListener).toHaveBeenCalled());
 
-    const listener = (DeviceMotion.addListener as jest.Mock).mock.calls[0][0];
-    listener({ accelerationIncludingGravity: gravidade(3, 0), rotation: undefined });
+    const listener = (Accelerometer.addListener as jest.Mock).mock.calls[0][0];
+    listener(gravidade(3, 0));
 
     await waitFor(() => expect(result.current.disponivel).toBe(true));
     expect(result.current.roll).toBe(3);
