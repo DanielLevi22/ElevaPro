@@ -87,13 +87,29 @@ data class MedidaDaFoto(
 
 private fun NormalizedLandmark.visivel(): Float = visibility().orElse(0f)
 
-/** Ângulo de um segmento contra a horizontal, em graus. */
+/**
+ * Desvio de um segmento em relação à horizontal, em graus, entre -90 e 90.
+ *
+ * O `abs` no dx é o que faz a conta responder "quanto foge da horizontal" em
+ * vez de "para onde a reta aponta". Sem ele, `atan2` devolvia o ângulo absoluto
+ * da direção: uma linha de ombros quase perfeita, apontando para a esquerda da
+ * imagem, saía como 179.7° — e o prompt, que diz "da horizontal", lia isso
+ * como inclinação severa. O desvio real ali era 0.3°.
+ *
+ * O sinal acompanha o de `dy`, e quem chama passa `esq.y - dir.y` para que
+ * positivo signifique o lado direito do aluno mais alto.
+ */
 private fun grausContraHorizontal(dx: Float, dy: Float): Float =
-  Math.toDegrees(atan2(dy.toDouble(), dx.toDouble())).toFloat()
+  Math.toDegrees(atan2(dy.toDouble(), abs(dx).toDouble())).toFloat()
 
-/** Ângulo de um segmento contra a vertical, em graus. Sempre positivo. */
+/**
+ * Desvio de um segmento em relação à vertical, em graus, entre 0 e 90.
+ *
+ * Mesmo defeito da horizontal: sem o `abs` nos dois lados, um segmento quase
+ * vertical devolvia ~166° — que é 180 menos os 13.4° de desvio real.
+ */
 private fun grausContraVertical(dx: Float, dy: Float): Float =
-  abs(Math.toDegrees(atan2(dx.toDouble(), dy.toDouble())).toFloat())
+  Math.toDegrees(atan2(abs(dx).toDouble(), abs(dy).toDouble())).toFloat()
 
 /**
  * Larguras da silhueta nos níveis anatômicos.
@@ -184,17 +200,21 @@ fun medirFoto(
     larguraPanturrilhaPx = emPixels(NIVEL_PANTURRILHA),
     larguraOmbrosPx =
       if (frontal) abs(ombroEsq.x() - ombroDir.x()) * bitmap.width else null,
-    desnivelOmbrosPx = if (frontal) (ombroDir.y() - ombroEsq.y()) * bitmap.height else null,
-    desnivelQuadrilPx = if (frontal) (quadrilDir.y() - quadrilEsq.y()) * bitmap.height else null,
+    // `esq - dir`, e não o contrário: em coordenada de imagem o y cresce para
+    // BAIXO, então o ombro mais alto tem o y menor. Invertido, o contrato de
+    // `index.ts` — "positivo: o direito do aluno" — passava a nomear o lado
+    // errado no laudo, com toda a aparência de estar certo.
+    desnivelOmbrosPx = if (frontal) (ombroEsq.y() - ombroDir.y()) * bitmap.height else null,
+    desnivelQuadrilPx = if (frontal) (quadrilEsq.y() - quadrilDir.y()) * bitmap.height else null,
     inclinacaoOmbrosGraus =
       if (frontal) {
-        grausContraHorizontal(ombroDir.x() - ombroEsq.x(), ombroDir.y() - ombroEsq.y())
+        grausContraHorizontal(ombroDir.x() - ombroEsq.x(), ombroEsq.y() - ombroDir.y())
       } else {
         null
       },
     inclinacaoQuadrilGraus =
       if (frontal) {
-        grausContraHorizontal(quadrilDir.x() - quadrilEsq.x(), quadrilDir.y() - quadrilEsq.y())
+        grausContraHorizontal(quadrilDir.x() - quadrilEsq.x(), quadrilEsq.y() - quadrilDir.y())
       } else {
         null
       },
