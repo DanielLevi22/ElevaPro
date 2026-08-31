@@ -1,7 +1,8 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { type NextRequest, NextResponse } from "next/server";
 import { rotaDeIA } from "@/lib/ai-route";
 import { authorizeUser } from "@/lib/api-auth";
+import { aiProviders } from "@/modules/ai/ai.config";
+import { responderEmUmTurno } from "@/modules/ai/providers/turnoUnico";
 
 // Na Vercel uma rota sem isto morre no default de poucos segundos. Uma conversa
 // com uso de ferramenta passa disso com folga, e localmente não existe teto —
@@ -27,8 +28,6 @@ const PROMPTS: Record<PromptType, string> = {
   cooking_guide:
     "Você é um instrutor culinário. Escolha os componentes principais da refeição desta lista e ensine passo-a-passo como cozinhá-los perfeitamente. Foque na técnica. Responda em Português do Brasil.",
 };
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const handler = async (request: NextRequest) => {
   // Antes: `getAuthenticatedUserId`, uma cópia local que fazia
@@ -59,16 +58,14 @@ const handler = async (request: NextRequest) => {
     .map((cat) => `${cat.category}: ${cat.items.map((i) => i.name).join(", ")}`)
     .join("\n");
 
-  const response = await anthropic.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 1024,
-    system: systemPrompt,
+  const { texto } = await responderEmUmTurno(aiProviders.fast, {
+    systemBlocks: [{ text: systemPrompt }],
     messages: [{ role: "user", content: `Lista de Compras:\n${itemsList}` }],
+    tools: [],
+    maxTokens: 1024,
   });
 
-  const text = response.content[0].type === "text" ? response.content[0].text : "";
-
-  return NextResponse.json({ response: text || "Não consegui gerar uma resposta." });
+  return NextResponse.json({ response: texto || "Não consegui gerar uma resposta." });
 };
 
 export const POST = rotaDeIA(handler);

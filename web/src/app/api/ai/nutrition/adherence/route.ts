@@ -1,15 +1,14 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { type NextRequest, NextResponse } from "next/server";
 import { rotaDeIA } from "@/lib/ai-route";
 import { authorizeUser } from "@/lib/api-auth";
+import { aiProviders } from "@/modules/ai/ai.config";
+import { responderEmUmTurno } from "@/modules/ai/providers/turnoUnico";
 
 // Na Vercel uma rota sem isto morre no default de poucos segundos. Uma conversa
 // com uso de ferramenta passa disso com folga, e localmente não existe teto —
 // por isso o chat funcionava na máquina e não no preview. 60s é o máximo do
 // plano Hobby; no Pro dá para subir até 300.
 export const maxDuration = 60;
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const handler = async (request: NextRequest) => {
   // Antes: `getAuthenticatedUserId`, uma cópia local que fazia
@@ -50,15 +49,14 @@ Foque em padrões (ex: "Consistente dias de semana mas errou no fds").
 Se houver poucos dados, mencione que o aluno precisa registrar mais.
 Tom: Profissional, direto e útil. Idioma: Português (Brasil).`;
 
-  const response = await anthropic.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 512,
+  const { texto } = await responderEmUmTurno(aiProviders.fast, {
+    systemBlocks: [],
     messages: [{ role: "user", content: prompt }],
+    tools: [],
+    maxTokens: 512,
   });
 
-  const summary = response.content[0].type === "text" ? response.content[0].text : "";
-
-  return NextResponse.json({ summary: summary || "Sem dados suficientes para análise." });
+  return NextResponse.json({ summary: texto || "Sem dados suficientes para análise." });
 };
 
 export const POST = rotaDeIA(handler);

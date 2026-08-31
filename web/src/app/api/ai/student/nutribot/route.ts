@@ -1,8 +1,9 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { type NextRequest, NextResponse } from "next/server";
 import { rotaDeIA } from "@/lib/ai-route";
 import { authorizeStudent } from "@/lib/api-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { aiProviders } from "@/modules/ai/ai.config";
+import { responderEmUmTurno } from "@/modules/ai/providers/turnoUnico";
 
 // Na Vercel uma rota sem isto morre no default de poucos segundos. Uma conversa
 // com uso de ferramenta passa disso com folga, e localmente não existe teto —
@@ -54,8 +55,6 @@ async function loadDietContext(studentId: string): Promise<string> {
   return `Plano: "${plans.name}" | ${plans.target_calories}kcal | P:${plans.target_protein}g C:${plans.target_carbs}g G:${plans.target_fat}g\n\n${mealSummaries.join("\n\n")}`;
 }
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
 const handler = async (request: NextRequest) => {
   const auth = await authorizeStudent(request);
   if (!auth.ok) return auth.response;
@@ -70,23 +69,26 @@ const handler = async (request: NextRequest) => {
 
   const dietContext = await loadDietContext(studentId);
 
-  const response = await anthropic.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 512,
-    system: `Você é o NutriBot, assistente nutricional do app Eleva Pro. Responda em Português do Brasil.
+  const { texto } = await responderEmUmTurno(aiProviders.fast, {
+    systemBlocks: [
+      {
+        text: `Você é o NutriBot, assistente nutricional do app Eleva Pro. Responda em Português do Brasil.
 Seja amigável, motivador e conciso. Evite conselhos médicos.
 Use o plano do aluno como referência para sugestões de substituições e receitas.
 
 PLANO ALIMENTAR DO ALUNO:
 ${dietContext}`,
+      },
+    ],
     messages: [
       ...history.slice(-6).map((m) => ({ role: m.role, content: m.content })),
       { role: "user", content: message },
     ],
+    tools: [],
+    maxTokens: 512,
   });
 
-  const reply = response.content[0].type === "text" ? response.content[0].text : "";
-  return NextResponse.json({ reply });
+  return NextResponse.json({ reply: texto });
 };
 
 export const POST = rotaDeIA(handler);

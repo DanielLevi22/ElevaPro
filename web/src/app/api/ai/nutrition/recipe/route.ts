@@ -1,6 +1,7 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeUser } from "@/lib/api-auth";
+import { aiProviders } from "@/modules/ai/ai.config";
+import { responderEmUmTurno } from "@/modules/ai/providers/turnoUnico";
 
 // Na Vercel uma rota sem isto morre no default de poucos segundos. Uma conversa
 // com uso de ferramenta passa disso com folga, e localmente não existe teto —
@@ -13,8 +14,6 @@ interface CookingStep {
   instruction: string;
   timerSeconds?: number | null;
 }
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export async function POST(request: NextRequest) {
   // Antes: `getAuthenticatedUserId`, uma cópia local que fazia
@@ -43,17 +42,19 @@ Retorne APENAS um array JSON onde cada objeto tem:
 - "timerSeconds": número ou null (apenas se um tempo específico for mencionado)
 Exemplo: [{"step": 1, "instruction": "Pique a cebola.", "timerSeconds": null}]`;
 
-  const response = await anthropic.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 1024,
+  // `aiProviders.fast` no lugar do literal `claude-haiku-4-5-20251001`: com o
+  // modelo escolhido aqui dentro, o `ai.config.ts` tinha deixado de ser o lugar
+  // onde essa decisão mora, que é o que o `ADR-0011` prometia.
+  const { texto } = await responderEmUmTurno(aiProviders.fast, {
+    systemBlocks: [],
     messages: [{ role: "user", content: prompt }],
+    tools: [],
+    maxTokens: 1024,
   });
-
-  const text = response.content[0].type === "text" ? response.content[0].text : "";
 
   let steps: CookingStep[];
   try {
-    steps = JSON.parse(text.replace(/```json|```/g, "").trim()) as CookingStep[];
+    steps = JSON.parse(texto.replace(/```json|```/g, "").trim()) as CookingStep[];
   } catch {
     return NextResponse.json({ error: "Failed to parse AI response" }, { status: 502 });
   }

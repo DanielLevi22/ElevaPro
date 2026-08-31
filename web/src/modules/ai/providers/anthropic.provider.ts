@@ -21,9 +21,13 @@ export class AnthropicProvider implements AIProvider {
     const apiStream = this.client.messages.stream({
       model: this.model,
       max_tokens: options.maxTokens ?? 2048,
-      system,
+      // Omitido quando vazio: as rotas de tiro único mandam o prompt como
+      // mensagem do usuário e não têm bloco de sistema, e `system: []` é um
+      // campo presente afirmando que não há nada — melhor não afirmar.
+      ...(system.length > 0 ? { system } : {}),
       messages: options.messages as Anthropic.MessageParam[],
       tools: options.tools as Anthropic.Tool[],
+      ...(options.temperature === undefined ? {} : { temperature: options.temperature }),
     });
 
     for await (const event of apiStream) {

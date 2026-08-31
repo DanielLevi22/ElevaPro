@@ -1,4 +1,3 @@
-import Anthropic from "@anthropic-ai/sdk";
 import {
   createBodyScanService,
   createHealthService,
@@ -12,6 +11,8 @@ import {
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeStudent } from "@/lib/api-auth";
 import { clienteDoTitular } from "@/lib/supabase-titular";
+import { aiProviders } from "@/modules/ai/ai.config";
+import type { ContentBlock, ProviderTurnOptions } from "@/modules/ai/providers/types";
 import { carregarContextoDoScan } from "@/modules/ai/services/contextoDoScan";
 import { type FonteDaEscala, resolverEscala } from "@/modules/ai/services/escala";
 import {
@@ -96,8 +97,6 @@ function motivoDaFalha(error: unknown): { code?: string; message: string } {
 
   return { message: error instanceof Error ? error.message : "erro desconhecido" };
 }
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 function buildSystemPrompt(
   heightCm: number,
@@ -263,7 +262,7 @@ export async function POST(request: NextRequest) {
   const scale = { heightCm: escala.heightCm, weightKg: escala.weightKg };
   const scaleSource = escala.fonte;
 
-  const imageContent: Anthropic.MessageParam["content"] = [];
+  const imageContent: ContentBlock[] = [];
 
   const labels: Record<string, string> = {
     front: "Vista Frontal",
@@ -293,27 +292,31 @@ export async function POST(request: NextRequest) {
   // sair. O aluno perde a comparação, não o laudo.
   const contexto = await carregarContextoDoScan(client, userId, new Date()).catch(() => null);
 
-  const parametros = {
-    model: "claude-sonnet-4-6",
+  const parametros: ProviderTurnOptions = {
     // O JSON pedido tem 2 métricas, 8 segmentos, 3 notas, 3 arrays de
     // feedback com título, risco e texto, e as recomendações. Com 1024 isso
     // ficava na fronteira e passava dela sempre que o modelo escrevia um
     // pouco mais — e a resposta cortada virava "502 falha ao interpretar",
     // indistinguível de o modelo ter errado.
-    max_tokens: 4096,
+    maxTokens: 4096,
     // Zero, e não o padrão 1.0. A mesma foto enviada duas vezes devolvia
     // cintura diferente, e o ADR-0010 apoia a confiabilidade do delta em erro
     // sistemático que se cancela — amostragem aleatória não cancela. Reduz
     // muito a variação; não elimina.
     temperature: 0,
-    system: buildSystemPrompt(
-      scale.heightCm,
-      scale.weightKg,
-      descreverFatosMedidos(body.medidas ?? {}, scale.heightCm),
-      contexto,
-    ),
+    systemBlocks: [
+      {
+        text: buildSystemPrompt(
+          scale.heightCm,
+          scale.weightKg,
+          descreverFatosMedidos(body.medidas ?? {}, scale.heightCm),
+          contexto,
+        ),
+      },
+    ],
     messages: [{ role: "user", content: imageContent }],
-  } satisfies Anthropic.MessageCreateParamsNonStreaming;
+    tools: [],
+  };
 
   /**
    * O que acontece depois de o modelo terminar: derivar, gravar e montar o
@@ -441,33 +444,39 @@ export async function POST(request: NextRequest) {
       try {
         emitir({ t: "etapa", etapa: "lendo" });
 
-        const conversa = anthropic.messages.stream(parametros);
         let acumulado = "";
         let etapa: EtapaDaAnalise = "lendo";
+        let stopReason = "end_turn";
+        let bruto = "";
 
-        for await (const evento of conversa) {
-          if (evento.type !== "content_block_delta" || evento.delta.type !== "text_delta") {
+        // Os eventos do provider já vêm normalizados: `text_delta` e
+        // `turn_end`, sem `content_block_delta` nem `finalMessage()`. Trocar o
+        // SDK pela interface encurtou este laço em vez de complicá-lo.
+        for await (const evento of aiProviders.reasoning.stream(parametros)) {
+          if (evento.type === "text_delta") {
+            acumulado += evento.content;
+            const atual = etapaDoTexto(acumulado);
+            if (atual !== etapa) {
+              etapa = atual;
+              emitir({ t: "etapa", etapa });
+            }
             continue;
           }
 
-          acumulado += evento.delta.text;
-          const atual = etapaDoTexto(acumulado);
-          if (atual !== etapa) {
-            etapa = atual;
-            emitir({ t: "etapa", etapa });
+          if (evento.type === "turn_end") {
+            stopReason = evento.stopReason;
+            for (const bloco of evento.fullContent) {
+              if (bloco.type === "text") bruto += bloco.text;
+            }
           }
         }
 
-        const resposta = await conversa.finalMessage();
-
         // Truncada não é inválida: uma diz "peça de novo", a outra diz "o
         // modelo errou". Somadas no mesmo código, ninguém sabia qual era.
-        if (resposta.stop_reason === "max_tokens") {
+        if (stopReason === "max_tokens") {
           emitir({ t: "erro", codigo: "response_truncated" });
           return;
         }
-
-        const bruto = resposta.content[0]?.type === "text" ? resposta.content[0].text : "";
 
         let modelResult: ModelPayload;
         try {
