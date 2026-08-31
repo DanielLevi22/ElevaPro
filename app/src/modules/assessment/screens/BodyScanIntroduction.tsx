@@ -15,6 +15,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
 import { useAuthStore } from '@/modules/auth/store/authStore';
+import { ROUTES } from '@/navigation/types';
 import {
   avisoDoPortao,
   consultarElegibilidade,
@@ -137,6 +138,7 @@ export default function BodyScanIntroduction({ hideHeader = false }: { hideHeade
   // tela existe para fazer: o aluno descobre que falta algo antes de gastar a
   // captura, não numa mensagem de erro no fim.
   const [portao, setPortao] = useState<Elegibilidade | null>(null);
+  const tutorialVisto = useAssessmentStore((s) => s.tutorialVisto);
 
   useEffect(() => {
     if (!token) return;
@@ -171,10 +173,11 @@ export default function BodyScanIntroduction({ hideHeader = false }: { hideHeade
 
     await startScan();
 
-    router.push({
-      pathname: '/(professional)/assessment/grid',
-      params: { studentId: targetId },
-    } as never);
+    // O tutorial vem antes da câmera na primeira vez: descobrir que a roupa
+    // estava larga depois das três fotos é tarde demais (`ADR-0022`).
+    const destino = tutorialVisto ? ROUTES.ASSESSMENT.GRID : ROUTES.ASSESSMENT.TUTORIAL;
+
+    router.push({ pathname: destino, params: { studentId: targetId } });
   };
 
   return (
@@ -339,6 +342,18 @@ export default function BodyScanIntroduction({ hideHeader = false }: { hideHeade
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
+
+            {/* Só aparece depois da primeira vez: antes disso o tutorial é
+                obrigatório e vem sozinho, e o atalho seria ruído. */}
+            {tutorialVisto && !aviso && (
+              <TouchableOpacity
+                onPress={() => router.push(ROUTES.ASSESSMENT.TUTORIAL)}
+                className="mt-4 py-3 items-center"
+                accessibilityRole="button"
+              >
+                <Text className="text-zinc-400 text-sm font-semibold">Rever como se preparar</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </ScrollView>
       </View>

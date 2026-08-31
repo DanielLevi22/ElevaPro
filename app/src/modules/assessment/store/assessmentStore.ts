@@ -64,6 +64,15 @@ interface AssessmentState {
    */
   vozMuda: boolean;
   setVozMuda: (muda: boolean) => void;
+  /**
+   * O aluno já viu o tutorial de captura?
+   *
+   * Obrigatório na primeira vez e nunca mais: scan é coisa recorrente, e uma
+   * tela de instruções antes de toda captura irrita a partir da segunda. Quem
+   * quiser rever tem o atalho na tela de entrada (`ADR-0022`).
+   */
+  tutorialVisto: boolean;
+  marcarTutorialVisto: () => void;
   submitScan: () => Promise<void>;
 
   // Anamnesis Actions
@@ -151,6 +160,9 @@ export const useAssessmentStore = create<AssessmentState>()(
 
       vozMuda: false,
       setVozMuda: (muda: boolean) => set({ vozMuda: muda }),
+
+      tutorialVisto: false,
+      marcarTutorialVisto: () => set({ tutorialVisto: true }),
 
       submitScan: async () => {
         // Limpa a falha anterior: tentar de novo com a mensagem antiga na tela
@@ -290,6 +302,7 @@ export const useAssessmentStore = create<AssessmentState>()(
         currentSectionIndex: state.currentSectionIndex,
         isAnamnesisSubmitted: state.isAnamnesisSubmitted,
         vozMuda: state.vozMuda,
+        tutorialVisto: state.tutorialVisto,
       }),
     }
   )

@@ -14,6 +14,8 @@ export const ROUTES = {
   // Assessment Flows
   ASSESSMENT: {
     BODY_SCAN: '/assessment/body-scan',
+    TUTORIAL: '/assessment/tutorial',
+    GRID: '/assessment/grid',
     // A anamnese do aluno mora em `student/`, não em `assessment/`. Havia um
     // `router.push('/assessment/anamnesis')` apontando para uma rota
     // que nunca existiu — o `as never` transformou o erro de compilação em
