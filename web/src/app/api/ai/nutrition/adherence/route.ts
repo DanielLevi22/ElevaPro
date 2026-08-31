@@ -56,7 +56,7 @@ Tom: Profissional, direto e útil. Idioma: Português (Brasil).`;
     maxTokens: 512,
   });
 
-  return NextResponse.json({ texto: texto || "Sem dados suficientes para análise." });
+  return NextResponse.json({ summary: texto || "Sem dados suficientes para análise." });
 };
 
 export const POST = rotaDeIA(handler);
