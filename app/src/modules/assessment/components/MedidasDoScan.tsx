@@ -1,6 +1,7 @@
 import { type LinhaMedida, linhasMedidas, type MedidasGeometricas } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, View } from 'react-native';
+import { useState } from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 /**
  * O que o aparelho mediu sobre o corpo do aluno, na tela dele.
@@ -8,6 +9,13 @@ import { Text, View } from 'react-native';
  * Existe por obrigação, não por enfeite: medida gravada que só o especialista
  * lê é tratamento sem livre acesso (Art. 18, II). O parecer do `/lgpd-check`
  * exigiu que os campos novos aparecessem para o titular.
+ *
+ * **Recolhido por padrão, e a distinção é essa:** o Art. 18 garante ACESSO ao
+ * que foi tratado, não exibição no meio do resultado. "Desvio do eixo do corpo:
+ * 1,4 cm" não tem faixa de referência que o aluno conheça — número sem régua ou
+ * não comunica nada, ou comunica ansiedade. Aberto, ocupava o lugar das três
+ * coisas que ele consegue usar: o selo de confiança, o delta e a recomendação.
+ * Na tela do especialista continua aberto, porque lá alguém sabe ler.
  *
  * É a única parte da tela que não vem do modelo. Por isso o cabeçalho separa as
  * duas coisas — aqui é o que foi medido, o resto da tela é o que foi
@@ -37,6 +45,7 @@ function Linha({ linha }: { linha: LinhaMedida }) {
 
 export function MedidasDoScan({ medidas }: { medidas: MedidasGeometricas }) {
   const linhas = linhasMedidas(medidas);
+  const [aberto, setAberto] = useState(false);
 
   // Sem nada medido a seção some. Um cabeçalho com nove traços afirmaria que
   // houve medição e que ela deu zero — que é um achado, não uma ausência.
@@ -44,18 +53,36 @@ export function MedidasDoScan({ medidas }: { medidas: MedidasGeometricas }) {
 
   return (
     <View className="mt-6 rounded-2xl bg-zinc-900 p-5">
-      <View className="mb-1 flex-row items-center gap-2">
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityState={{ expanded: aberto }}
+        activeOpacity={0.7}
+        className="flex-row items-center gap-2"
+        onPress={() => setAberto((estava) => !estava)}
+      >
         <Ionicons name="resize-outline" color="#a1a1aa" size={18} />
-        <Text className="font-bold text-lg text-white">Medido no seu aparelho</Text>
-      </View>
-      <Text className="mb-3 text-xs text-zinc-500 leading-5">
-        Estes números saem da geometria da foto, não da estimativa da análise. O que muda entre dois
-        scans é mais confiável que o valor isolado de um.
-      </Text>
+        <Text className="flex-1 font-bold text-lg text-white">Medido no seu aparelho</Text>
+        <Ionicons name={aberto ? 'chevron-up' : 'chevron-down'} color="#a1a1aa" size={20} />
+      </TouchableOpacity>
 
-      {linhas.map((linha) => (
-        <Linha key={linha.campo} linha={linha} />
-      ))}
+      {!aberto && (
+        <Text className="mt-1 text-xs text-zinc-500 leading-5">
+          {linhas.length} medidas da geometria das suas fotos. Toque para ver.
+        </Text>
+      )}
+
+      {!aberto ? null : (
+        <>
+          <Text className="mt-1 mb-3 text-xs text-zinc-500 leading-5">
+            Estes números saem da geometria da foto, não da estimativa da análise. O que muda entre
+            dois scans é mais confiável que o valor isolado de um.
+          </Text>
+
+          {linhas.map((linha) => (
+            <Linha key={linha.campo} linha={linha} />
+          ))}
+        </>
+      )}
 
       {medidas.trunk_rotated ? (
         <View className="mt-4 flex-row gap-2 rounded-xl bg-amber-500/10 p-3">

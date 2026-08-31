@@ -1,5 +1,5 @@
 import type { MedidasGeometricas } from '@elevapro/shared';
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import { MedidasDoScan } from '../MedidasDoScan';
 
 function medidas(sobrescreve: Partial<MedidasGeometricas> = {}): MedidasGeometricas {
@@ -20,11 +20,30 @@ function medidas(sobrescreve: Partial<MedidasGeometricas> = {}): MedidasGeometri
   };
 }
 
+/**
+ * Renderiza já aberto.
+ *
+ * O bloco nasce recolhido: o Art. 18 garante acesso ao que foi tratado, não
+ * exibição no meio do resultado — e "desvio do eixo 1,4 cm" sem faixa de
+ * referência não comunica nada ao aluno, ou comunica ansiedade.
+ */
+function abrir(medidas: MedidasGeometricas) {
+  render(<MedidasDoScan medidas={medidas} />);
+  fireEvent.press(screen.getByText('Medido no seu aparelho'));
+}
+
 describe('as medidas na tela do aluno', () => {
+  it('começa recolhido, mostrando só quantas medidas existem', () => {
+    render(<MedidasDoScan medidas={medidas({ shoulder_drop_cm: 1.8 })} />);
+
+    expect(screen.getByText(/1 medidas/)).toBeTruthy();
+    expect(screen.queryByText('Desnível dos ombros')).toBeNull();
+  });
+
   // Art. 18, II: medida gravada que só o especialista lê é tratamento sem livre
   // acesso. Esta seção é o acesso.
   it('mostra o que foi medido, com unidade', () => {
-    render(<MedidasDoScan medidas={medidas({ shoulder_drop_cm: 1.8 })} />);
+    abrir(medidas({ shoulder_drop_cm: 1.8 }));
 
     expect(screen.getByText('Desnível dos ombros')).toBeTruthy();
     expect(screen.getByText(/1\.8\s*cm/)).toBeTruthy();
@@ -33,16 +52,14 @@ describe('as medidas na tela do aluno', () => {
   // O sinal carrega o lado. Perder isso apontaria o ombro errado para o aluno
   // com toda a aparência de estar certo.
   it('traduz o sinal em lado, e mostra o número sem sinal', () => {
-    render(
-      <MedidasDoScan medidas={medidas({ shoulder_drop_cm: -1.8, shoulder_tilt_deg: -2.3 })} />
-    );
+    abrir(medidas({ shoulder_drop_cm: -1.8, shoulder_tilt_deg: -2.3 }));
 
     expect(screen.getByText('esquerdo mais alto')).toBeTruthy();
     expect(screen.queryByText(/-1\.8/)).toBeNull();
   });
 
   it('omite a linha que não foi medida, em vez de mostrar zero', () => {
-    render(<MedidasDoScan medidas={medidas({ shoulder_drop_cm: 1.8 })} />);
+    abrir(medidas({ shoulder_drop_cm: 1.8 }));
 
     expect(screen.queryByText('Desnível do quadril')).toBeNull();
   });
@@ -58,12 +75,12 @@ describe('as medidas na tela do aluno', () => {
   // Sem esta ressalva o aluno lê perspectiva como assimetria — o mesmo erro que
   // o prompt do BFF é instruído a não cometer.
   it('avisa quando o tronco estava virado na foto de frente', () => {
-    render(<MedidasDoScan medidas={medidas({ shoulder_drop_cm: 1.8, trunk_rotated: true })} />);
+    abrir(medidas({ shoulder_drop_cm: 1.8, trunk_rotated: true }));
 
     expect(screen.getByText(/tronco estava um pouco virado/)).toBeTruthy();
 
     screen.unmount();
-    render(<MedidasDoScan medidas={medidas({ shoulder_drop_cm: 1.8, trunk_rotated: false })} />);
+    abrir(medidas({ shoulder_drop_cm: 1.8, trunk_rotated: false }));
 
     expect(screen.queryByText(/tronco estava um pouco virado/)).toBeNull();
   });
@@ -72,7 +89,7 @@ describe('as medidas na tela do aluno', () => {
   // dela a medida não sabe de que lado o desnível cai. Nomear lado ali afirma
   // uma certeza que o aparelho consome inteira.
   it('não nomeia lado quando o desnível está abaixo da resolução', () => {
-    render(<MedidasDoScan medidas={medidas({ shoulder_drop_cm: 0.6, shoulder_tilt_deg: 0.7 })} />);
+    abrir(medidas({ shoulder_drop_cm: 0.6, shoulder_tilt_deg: 0.7 }));
 
     expect(screen.getByText(/0\.6\s*cm/)).toBeTruthy();
     expect(screen.queryByText(/mais alto/)).toBeNull();
