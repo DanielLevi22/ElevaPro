@@ -2,7 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Dimensions, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, ZoomIn } from 'react-native-reanimated';
+import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { colors } from '@/constants/colors';
 import { MedidasDoScan } from '../components/MedidasDoScan';
@@ -65,7 +65,6 @@ export default function PostureAnalysis() {
       console.log('✅ PostureAnalysis loaded with Student ID:', id);
     }
   }, [id]);
-  const [analyzing, setAnalyzing] = useState(true);
   const [currentViewIndex, setCurrentViewIndex] = useState(0);
 
   const currentView = ANALYSIS_VIEWS[currentViewIndex];
@@ -84,14 +83,6 @@ export default function PostureAnalysis() {
   // lugar da foto do aluno, na lateral, desde então. O tipo `Vista` no
   // `ANALYSIS_VIEWS` é o que impede a próxima divergência.
   const currentImageUri = capturedImages[currentView.id];
-
-  useEffect(() => {
-    // Simulate AI Processing time
-    const timer = setTimeout(() => {
-      setAnalyzing(false);
-    }, 2500); // Slightly faster
-    return () => clearTimeout(timer);
-  }, []);
 
   const getRiskColor = (risk: string) => {
     switch (risk) {
@@ -124,22 +115,12 @@ export default function PostureAnalysis() {
     </View>
   );
 
-  if (analyzing) {
-    return (
-      <ScreenLayout className="bg-black justify-center items-center">
-        <Animated.View entering={FadeIn} className="items-center">
-          <View className="w-24 h-24 mb-6 rounded-full bg-primary/10 items-center justify-center relative">
-            <View className="absolute w-full h-full rounded-full border-4 border-t-primary border-r-transparent border-b-primary border-l-transparent animate-spin" />
-            <MaterialCommunityIcons name="scan-helper" size={40} color={colors.primary.solid} />
-          </View>
-          <Text className="text-white text-xl font-bold mb-2 font-display">
-            Analisando Biometria...
-          </Text>
-          <Text className="text-zinc-400 text-sm">Calculando proporções e simetria</Text>
-        </Animated.View>
-      </ScreenLayout>
-    );
-  }
+  // Aqui morava um `setTimeout(2500)` com o comentário "Simulate AI Processing
+  // time": a tela mostrava "Analisando Biometria..." por dois segundos e meio
+  // sobre um resultado que já estava no store quando ela montou. Era espera
+  // fabricada para parecer cálculo — o mesmo defeito do "Athletic Score", em
+  // forma de interação. Quem espera de verdade é a tela de processamento, que
+  // acompanha a chamada real ao BFF.
 
   // Sem resultado não há o que mostrar, e era aqui que a tela inventava: scores
   // fixos, feedback fabricado e um esqueleto assimétrico desenhado como se
@@ -281,6 +262,24 @@ export default function PostureAnalysis() {
         {/* Results Report Dynamic */}
         <View className="px-6 mt-6">
           <Animated.View entering={FadeInDown.delay(300)} key={currentViewIndex}>
+            {/* A ordem da tela é a da confiança, e não a do impacto visual. Primeiro
+                o quanto dá para confiar nesta captura, depois o que foi medido,
+                e só então o que a análise estimou por cima disso. Antes era o
+                inverso: o radar de notas do modelo abria o relatório com o maior
+                peso da tela, e a medida ficava no rodapé — o `ADR-0010` diz que
+                o número confiável é o outro. */}
+            {/* O selo antes das medidas: ressalva lida depois do número já
+                chegou tarde. */}
+            <SeloDeConfianca
+              confianca={avaliarConfianca({
+                vereditos: lastResult.quality ?? null,
+                troncoRotacionado: lastResult.measured?.trunk_rotated ?? null,
+                escala: lastResult.scaleSource ?? null,
+              })}
+            />
+
+            {lastResult.measured ? <MedidasDoScan medidas={lastResult.measured} /> : null}
+
             {/* Score Dashboard Card (New Radar Design) */}
             <View className="bg-zinc-900/50 border border-zinc-800 p-5 rounded-3xl mb-6 relative overflow-hidden">
               {/* Background Glow */}
@@ -370,18 +369,6 @@ export default function PostureAnalysis() {
             {/* O que o aparelho mediu — separado do que o modelo interpretou, e
                 obrigatório: medida que só o especialista lê é tratamento sem
                 livre acesso (Art. 18, II). */}
-            {/* O selo antes das medidas: ressalva lida depois do número já
-                chegou tarde. */}
-            <SeloDeConfianca
-              confianca={avaliarConfianca({
-                vereditos: lastResult.quality ?? null,
-                troncoRotacionado: lastResult.measured?.trunk_rotated ?? null,
-                escala: lastResult.scaleSource ?? null,
-              })}
-            />
-
-            {lastResult.measured ? <MedidasDoScan medidas={lastResult.measured} /> : null}
-
             {/* Fica junto do selo de confiança de propósito: os dois respondem
                 a mesma pergunta — o quanto dá para apoiar decisão nisto. E fica
                 depois dos números, não antes, porque aviso lido antes de haver

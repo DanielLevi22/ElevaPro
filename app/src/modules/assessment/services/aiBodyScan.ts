@@ -113,12 +113,20 @@ export const AIBodyScanService = {
       throw new BodyScanConsentError();
     }
 
+    // As três em paralelo. Redimensionar e codificar é trabalho de CPU e disco
+    // que não depende de ordem — em série, o aluno esperava a soma das três
+    // antes de a requisição sequer começar.
+    const codificadas = await Promise.all(
+      (['front', 'back', 'side'] as const).map(async (key) => {
+        const uri = images[key];
+
+        return uri ? ([key, await resizeToBase64(uri)] as const) : null;
+      })
+    );
+
     const base64Images: Record<string, string> = {};
-    for (const key of ['front', 'back', 'side'] as const) {
-      const uri = images[key];
-      if (!uri) continue;
-      const b64 = await resizeToBase64(uri);
-      if (b64) base64Images[key] = b64;
+    for (const par of codificadas) {
+      if (par?.[1]) base64Images[par[0]] = par[1];
     }
 
     if (Object.keys(base64Images).length === 0) {
