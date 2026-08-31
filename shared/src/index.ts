@@ -11,6 +11,7 @@ export type { Database, Json } from "./database/database.types";
 export * from "./services/activity.service";
 export * from "./services/auth.service";
 export * from "./services/bodyScan.service";
+export * from "./services/bodyScanDescricao";
 export * from "./services/briefing.service";
 export * from "./services/gamification.service";
 export * from "./services/health.service";

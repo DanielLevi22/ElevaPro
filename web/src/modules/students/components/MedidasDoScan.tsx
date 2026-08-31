@@ -1,4 +1,4 @@
-import type { BodyScanRecord } from "@elevapro/shared";
+import { type BodyScanRecord, linhasMedidas, ressalvasDoScan } from "@elevapro/shared";
 import { DataTable } from "@/shared/components/ui/DataTable";
 
 /**
@@ -14,81 +14,6 @@ import { DataTable } from "@/shared/components/ui/DataTable";
  * essa procedência que os torna acompanháveis ao longo do tempo — "ombro
  * direito elevado" não dá para comparar com nada.
  */
-
-interface Linha {
-  campo: string;
-  rotulo: string;
-  valor: number;
-  unidade: string;
-  /** O sinal vira palavra, e o número perde o sinal. */
-  lado: string | null;
-}
-
-const MEDIDAS: Array<{
-  campo: keyof BodyScanRecord;
-  rotulo: string;
-  unidade: string;
-  lados?: [string, string];
-}> = [
-  {
-    campo: "shoulder_drop_cm",
-    rotulo: "Desnível dos ombros",
-    unidade: "cm",
-    lados: ["direito mais alto", "esquerdo mais alto"],
-  },
-  { campo: "shoulder_tilt_deg", rotulo: "Inclinação dos ombros", unidade: "°" },
-  {
-    campo: "hip_drop_cm",
-    rotulo: "Desnível do quadril",
-    unidade: "cm",
-    lados: ["direito mais alto", "esquerdo mais alto"],
-  },
-  { campo: "hip_tilt_deg", rotulo: "Inclinação do quadril", unidade: "°" },
-  { campo: "axis_deviation_cm", rotulo: "Desvio do eixo cabeça-tornozelos", unidade: "cm" },
-  { campo: "craniovertebral_angle_deg", rotulo: "Ângulo craniovertebral", unidade: "°" },
-  { campo: "plumb_shoulder_cm", rotulo: "Ombro à frente do prumo", unidade: "cm" },
-  { campo: "plumb_hip_cm", rotulo: "Quadril à frente do prumo", unidade: "cm" },
-  { campo: "plumb_knee_cm", rotulo: "Joelho à frente do prumo", unidade: "cm" },
-];
-
-/** As linhas que têm valor. Campo não medido some, em vez de virar zero. */
-export function linhasMedidas(scan: BodyScanRecord): Linha[] {
-  return MEDIDAS.flatMap((medida) => {
-    const bruto = scan[medida.campo];
-    if (typeof bruto !== "number") return [];
-
-    return [
-      {
-        campo: medida.campo,
-        rotulo: medida.rotulo,
-        valor: Math.abs(bruto),
-        unidade: medida.unidade,
-        lado: medida.lados ? (bruto > 0 ? medida.lados[0] : medida.lados[1]) : null,
-      },
-    ];
-  });
-}
-
-/** As ressalvas daquela captura, na ordem em que mudam a leitura. */
-export function ressalvasDoScan(scan: BodyScanRecord): string[] {
-  const ressalvas: string[] = [];
-
-  if (scan.trunk_rotated) {
-    ressalvas.push(
-      "O tronco estava rotacionado na foto frontal — assimetria aqui pode ser perspectiva.",
-    );
-  }
-  if (scan.framing_confirmed === false) {
-    ressalvas.push(
-      "O enquadramento não foi confirmado: o aluno capturou pela saída manual, e a escala pode estar deslocada.",
-    );
-  }
-  if (scan.quality_backlit) ressalvas.push("Contraluz na captura.");
-  if (scan.quality_low_light) ressalvas.push("Cômodo escuro na captura.");
-  if (scan.quality_blown_out) ressalvas.push("Luz estourada na captura.");
-
-  return ressalvas;
-}
 
 export function MedidasDoScan({ scan }: { scan: BodyScanRecord }) {
   const linhas = linhasMedidas(scan);

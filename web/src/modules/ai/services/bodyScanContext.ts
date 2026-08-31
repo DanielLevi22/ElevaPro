@@ -1,4 +1,10 @@
-import { createBodyScanService } from "@elevapro/shared";
+import {
+  type BodyScanDelta,
+  type BodyScanRecord,
+  createBodyScanService,
+  linhasMedidas,
+  ressalvasDoScan,
+} from "@elevapro/shared";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 /**
@@ -32,10 +38,19 @@ export async function formatBodyScanIndex(studentId: string): Promise<string> {
  * sistemático da estimativa se repete entre dois escaneamentos e se cancela na
  * diferença (`ADR-0010`).
  */
-export async function queryBodyScan(studentId: string): Promise<string> {
-  const { latest, previous, deltas } =
-    await createBodyScanService(supabaseAdmin).latestWithComparison(studentId);
-
+/**
+ * O corpo da resposta, montado a partir do que já foi lido.
+ *
+ * Puro e separado da consulta de propósito: é a decisão de domínio — o que
+ * quem prescreve vê, e com que ressalva —, e o projeto já trata esse tipo de
+ * seam assim (`escala.ts`). Testar isto não exige banco, e é o que garante que
+ * medida e estimativa não se misturem.
+ */
+export function descreverScanParaFerramenta(
+  latest: BodyScanRecord | null,
+  previous: BodyScanRecord | null,
+  deltas: BodyScanDelta[],
+): string {
   if (!latest) {
     return JSON.stringify({ erro: "Nenhuma análise corporal registrada para este aluno." });
   }
@@ -61,5 +76,34 @@ export async function queryBodyScan(studentId: string): Promise<string> {
       coxa: latest.circ_thighs,
       gordura_pct: latest.body_fat_pct,
     },
+    // Bloco separado das estimativas de propósito: estas saem de geometria da
+    // foto, não de leitura do modelo, e são o que muda decisão de trabalho
+    // unilateral e mobilidade. Misturadas com as circunferências, herdariam o
+    // aviso de erro de 5 a 10% que não se aplica a elas.
+    medido_no_aparelho: linhasMedidas(latest).map((linha) => ({
+      medida: linha.rotulo,
+      valor: linha.valor,
+      unidade: linha.unidade,
+      lado: linha.lado,
+    })),
+    // Vão junto, nunca depois: medida sem a ressalva faz quem prescreve decidir
+    // em cima dela achando que está firme.
+    ressalvas_da_captura: ressalvasDoScan(latest),
+    como_usar:
+      "Achado postural orienta unilateral e mobilidade. Não diagnostique a partir dele, e não atribua queixa do aluno a um achado sem ele relatar.",
   });
+}
+
+/**
+ * O corpo do resultado, para a ferramenta devolver.
+ *
+ * A comparação vem antes das medidas porque é o número confiável: o erro
+ * sistemático da estimativa se repete entre dois escaneamentos e se cancela na
+ * diferença (`ADR-0010`).
+ */
+export async function queryBodyScan(studentId: string): Promise<string> {
+  const { latest, previous, deltas } =
+    await createBodyScanService(supabaseAdmin).latestWithComparison(studentId);
+
+  return descreverScanParaFerramenta(latest, previous, deltas);
 }

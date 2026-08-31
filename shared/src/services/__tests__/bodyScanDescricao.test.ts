@@ -1,6 +1,6 @@
-import type { BodyScanRecord } from "@elevapro/shared";
 import { describe, expect, it } from "vitest";
-import { linhasMedidas, ressalvasDoScan } from "../MedidasDoScan";
+import type { BodyScanRecord } from "../../types/bodyScan.types";
+import { linhasMedidas, ressalvasDoScan } from "../bodyScanDescricao";
 
 function scan(sobrescreve: Partial<BodyScanRecord> = {}): BodyScanRecord {
   return {
@@ -25,13 +25,16 @@ function scan(sobrescreve: Partial<BodyScanRecord> = {}): BodyScanRecord {
   } as BodyScanRecord;
 }
 
-describe("as medidas na tela do especialista", () => {
+describe("a descrição de um scan corporal", () => {
   // "Ombro direito elevado" não dá para comparar com nada. Estas linhas existem
   // para virar evidência acompanhável entre dois scans.
   it("lista só o que foi medido, com unidade", () => {
     const linhas = linhasMedidas(scan({ shoulder_drop_cm: 1.8, hip_tilt_deg: 2.3 }));
 
-    expect(linhas.map((l) => l.rotulo)).toEqual(["Desnível dos ombros", "Inclinação do quadril"]);
+    expect(linhas.map((linha) => linha.rotulo)).toEqual([
+      "Desnível dos ombros",
+      "Inclinação do quadril",
+    ]);
     expect(linhas[0].unidade).toBe("cm");
     expect(linhas[1].unidade).toBe("°");
   });
