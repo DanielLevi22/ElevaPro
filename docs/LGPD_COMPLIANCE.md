@@ -75,6 +75,8 @@ Dados referentes à saúde exigem **base legal específica** e proteção refor�
 | **Geometria medida no aparelho** — régua px/cm, larguras de silhueta, ângulos de assimetria e postura | `body_scans` (colunas do ADR-0022) | Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I) | Substituir a estimativa visual do modelo por medida reprodutível. A régua fica gravada porque sem ela não há como saber se dois escaneamentos são comparáveis — mesma razão de `framing_camera` |
 | **Qualidade da captura** — contraluz, luminância, visibilidade mínima | `body_scans` (colunas do ADR-0022) | Mesma base do scan | Dizer ao especialista quanto confiar naquele número (Art. 6°, V). Guarda-se o **veredito**, nunca o histograma ou o recorte de imagem |
 | **Imagem do corpo processada ao vivo no aparelho** | *não persiste em lugar nenhum* | Tutela da saúde + **Consentimento informado sobre o processamento local** | Posicionar o aluno e medir. É tratamento pelo Art. 5°, X mesmo sem armazenamento — e por isso precisa estar no texto de consentimento, o que exige `POLICY_VERSION` nova |
+| **Imagem do corpo processada ao vivo durante o exercício** (Análise de Técnica) | *não persiste em lugar nenhum* | Tutela da saúde (Art. 11, II, f) + **Consentimento explícito** (Art. 11, I) | Contar repetições e julgar a profundidade do agachamento. Mesma doutrina do Body scan: não armazenar não é não tratar (Art. 5°, X). **Finalidade nova**, então não é coberta pela `POLICY_VERSION` 1.2 — exige a 1.3 antes de qualquer aluno alcançar a tela |
+| **Vídeo de calibração processado no browser** (painel `/admin/tecnica`) | *não persiste em lugar nenhum* — nem banco, nem bucket, nem disco | Consentimento explícito (Art. 11, I) dos dois profissionais filmados, por termo escrito | Calibrar o limiar do Critério. O vídeo morre ao fechar a aba; o que se exporta são os 33 landmarks por quadro — boneco de palito, sem imagem e sem rosto — como fixture versionada no repositório |
 | Dados de treino executado (séries, cargas, datas, `intensity`) | `workout_sessions` | Execução de contrato | Acompanhamento de desempenho |
 | **Observações do aluno sobre a própria sessão** | `workout_sessions.notes` | **Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I)** | Ajuste de prescrição a partir do que o aluno relata |
 | Tipo, duração e calorias da sessão | `workout_sessions.session_type`, `.duration_seconds`, `.active_calories` | Execução de contrato | Distinguir cardio de musculação e medir a sessão |
@@ -719,6 +721,34 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 | ~~`loadStudentContext` manda a anamnese inteira (`select("*")`)~~ | ✅ Resolvido — `specialistContextLoader.ts` lê seis campos nomeados, e `check-column-refs.js` recusa `select("*")` em tabela sensível no pre-commit | — |
 | Rota `/api/ai/nutrition/adherence` deve verificar `student_consents` antes de processar | Idem | Dev |
 | ~~Verificar DPA Google (Gemini) para dado biométrico de voz~~ | Eliminado — voice command removido do escopo | — |
+
+---
+
+### Módulo Technique ⚠️ Revisado — pendências antes de alcançar aluno
+
+Revisado em 2026-09-01. A Análise de Técnica lê a imagem do corpo continuamente
+para contar repetições e julgar profundidade. **Nada é persistido:** nenhuma
+tabela, nenhum campo, nenhum bucket, nenhum frame ou landmark saindo do
+aparelho. O julgador é função pura em `shared/src/technique/`.
+
+| Decisão | Princípio |
+|---------|-----------|
+| Nenhuma tabela, coluna ou bucket criado — a minimização é total, não parcial | Necessidade (Art. 6°, III) |
+| A tela do app vive atrás de `__DEV__` e não tem rota nem card na Home: enquanto não houver caminho, nenhum aluno chega | Prevenção (Art. 6°, VIII) |
+| O painel de calibração processa vídeo **no browser** e não o envia a lugar nenhum; o que sai é o boneco de palito | Necessidade + Segurança |
+| A gravação guarda os 33 landmarks e não o recorte do agachamento — o que permite calibrar outro Critério sem regravar, em vez de acumular corpus de uso único | Necessidade (Art. 6°, III) |
+| A voz fala só sobre o movimento — "fundo", "faltou" —, nunca inferência sobre a pessoa: o aparelho fala em voz alta numa academia | Segurança (Art. 6°, VII) |
+| `@mediapipe/tasks-vision` fixado na mesma versão do AAR do Android, e o modelo vem da mesma URL — o limiar calibrado responde pelo runtime que julga | Qualidade dos dados (Art. 6°, V) |
+
+**Pendências obrigatórias antes de a tela sair do `__DEV__`:**
+
+| Item | Ação necessária | Responsável |
+|------|----------------|-------------|
+| `POLICY_VERSION` 1.3 | Análise de Técnica é finalidade nova, e o Art. 8° exige consentimento específico por finalidade. O texto da 1.2 é escopado ao Body scan | Dev |
+| `hasCollectionConsent` antes de a câmera abrir | No padrão de `aiBodyScan.ts` — hoje não existe checagem nenhuma, porque não existe aluno alcançando a tela | Dev |
+| Tela de introdução | Equivalente ao `BodyScanIntroduction.tsx`: que a câmera analisa continuamente, que nada é gravado, que nada sai do aparelho. Sem prometer precisão (Art. 6°, VI) | Dev |
+| Travas com prova negativa | `producao.test.ts` (a tela não é alcançável em produção), `consentimento.test.ts`, `fronteira.test.ts`, `log.test.ts` | Dev |
+| Termo escrito entre os profissionais filmados na calibração, com prazo de retenção dos JSONs | Documento assinado, fora do código | Legal |
 
 ---
 
