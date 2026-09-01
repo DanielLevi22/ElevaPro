@@ -1,0 +1,35 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.elevapro.techniquespike'
+version = '0.1.0'
+
+android {
+  namespace "com.elevapro.techniquespike"
+  defaultConfig {
+    minSdkVersion 26
+    versionCode 1
+    versionName "0.1.0"
+  }
+}
+
+// Mesma armadilha do `body-scan-pose`: o plugin gradle do React Native puxa o
+// Guava completo, que força listenablefuture para o jar vazio `9999.0-empty` e
+// impede o CameraX de compilar.
+configurations.configureEach {
+  resolutionStrategy.force "com.google.guava:listenablefuture:1.0"
+}
+
+dependencies {
+  def camerax_version = "1.6.0"
+
+  implementation "androidx.camera:camera-core:${camerax_version}"
+  implementation "androidx.camera:camera-camera2:${camerax_version}"
+  implementation "androidx.camera:camera-lifecycle:${camerax_version}"
+  implementation "androidx.camera:camera-view:${camerax_version}"
+
+  // Mesma versão do `body-scan-pose`: medir contra outra seria medir outra coisa.
+  implementation "com.google.mediapipe:tasks-vision:0.10.35"
+}
