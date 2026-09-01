@@ -15,7 +15,7 @@ import {
   serializarGravacao,
 } from "@elevapro/shared";
 import type { NormalizedLandmark } from "@mediapipe/tasks-vision";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePoseLandmarker } from "../hooks/usePoseLandmarker";
 import { desenharEsqueleto, processarQuadro } from "../services/passe";
 import { QuadroDeVideo } from "./QuadroDeVideo";
@@ -157,6 +157,7 @@ export function AnaliseDeArquivo() {
   // Estado, e não `ref`: é a chegada das leituras que precisa reatar os
   // ouvintes da barra do vídeo, e um `ref` deixaria o React cego para isso.
   const [leituras, setLeituras] = useState<Leitura[]>([]);
+  const [truncada, setTruncada] = useState(false);
 
   const escolherArquivo = useCallback((arquivo: File | undefined) => {
     const video = videoRef.current;
@@ -166,6 +167,7 @@ export function AnaliseDeArquivo() {
     setProgresso(0);
     setLeitura(null);
     setLeituras([]);
+    setTruncada(false);
     setNomeDoArquivo(arquivo.name);
     video.src = URL.createObjectURL(arquivo);
     video.currentTime = 0;
@@ -177,6 +179,10 @@ export function AnaliseDeArquivo() {
 
     setAnalisando(true);
     setGravacao(null);
+    // Solta o ouvinte da barra antes de comecar: com ele atado, o redesenho do
+    // quadro guardado briga com o desenho ao vivo e o esqueleto para de seguir.
+    setLeituras([]);
+    setLeitura(null);
 
     const quadros: LandmarkNormalizado[][] = [];
     const lidas: Leitura[] = [];
@@ -221,6 +227,12 @@ export function AnaliseDeArquivo() {
       requestAnimationFrame(laco);
     });
 
+    // O laco encerra quando o video pausa, e pausar no meio produz resultado
+    // parcial. Sem este aviso, uma analise interrompida se apresenta como
+    // completa -- e foi assim que uma serie de cinco repeticoes virou uma.
+    const chegouAoFim = video.duration > 0 && video.currentTime >= video.duration - 0.5;
+    setTruncada(!chegouAoFim);
+
     setLeituras(lidas);
     setLeitura(lidas[0] ?? null);
 
@@ -233,6 +245,10 @@ export function AnaliseDeArquivo() {
     });
     setAnalisando(false);
   }, [landmarker, rotulo]);
+
+  // O calculo varre todas as leituras; sem memo ele rodaria a cada `timeupdate`,
+  // varias vezes por segundo sobre milhares de quadros.
+  const fundos = useMemo(() => fundosPorRepeticao(leituras), [leituras]);
 
   const irPara = useCallback((tempo: number) => {
     const video = videoRef.current;
@@ -261,7 +277,10 @@ export function AnaliseDeArquivo() {
   // continuaria vendo o primeiro quadro.
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || leituras.length === 0) return;
+    // `analisando` na guarda, e nao so o `setLeituras([])` do inicio da analise:
+    // aquele estado chega assincrono, e o ouvinte poderia sobreviver aos
+    // primeiros quadros e brigar com o desenho ao vivo.
+    if (!video || analisando || leituras.length === 0) return;
 
     const acompanhar = () => {
       const atual = leituraEm(leituras, video.currentTime);
@@ -278,7 +297,7 @@ export function AnaliseDeArquivo() {
       video.removeEventListener("timeupdate", acompanhar);
       video.removeEventListener("seeked", acompanhar);
     };
-  }, [leituras]);
+  }, [leituras, analisando]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -344,13 +363,19 @@ export function AnaliseDeArquivo() {
         dataset morrer na segunda semana.
       </p>
 
-      <QuadroDeVideo canvasRef={canvasRef} controles videoRef={videoRef} />
+      <QuadroDeVideo canvasRef={canvasRef} controles={!analisando} videoRef={videoRef} />
+
+      {truncada && (
+        <p className="rounded-lg bg-amber-100 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+          <strong>A análise parou antes do fim do vídeo.</strong> Ela encerra quando o vídeo pausa —
+          então não use os controles do player enquanto ela roda. Os números abaixo cobrem só o
+          trecho analisado. Clique em analisar de novo e deixe rodar até o fim.
+        </p>
+      )}
 
       {leitura && <LeituraDoQuadro leitura={leitura} />}
 
-      {leituras.length > 0 && (
-        <FundoDasRepeticoes fundos={fundosPorRepeticao(leituras)} onIr={irPara} />
-      )}
+      {fundos.length > 0 && <FundoDasRepeticoes fundos={fundos} onIr={irPara} />}
 
       {gravacao && <Resultado gravacao={gravacao} onBaixar={baixar} />}
     </div>
