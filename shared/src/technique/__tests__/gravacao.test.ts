@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { conferir, type Gravacao, type RotuloDaSerie, reproduzir } from "../gravacao";
+import {
+  conferir,
+  type Gravacao,
+  type RotuloDaSerie,
+  reproduzir,
+  serializarGravacao,
+} from "../gravacao";
 import { umaRepeticaoAte } from "./corpo";
 
 function gravacaoDe(rotulo: RotuloDaSerie, fundos: number[]): Gravacao {
@@ -72,5 +78,44 @@ describe("conferir", () => {
     const gravacao: Gravacao = { ...gravacaoDe("fundo", []), quadros: [] };
 
     expect(conferir(gravacao)).toEqual({ acertos: 0, erros: 0, total: 0 });
+  });
+});
+
+describe("serializarGravacao", () => {
+  it("corta a precisão que o modelo não tem", () => {
+    const gravacao: Gravacao = {
+      exercicio: "agachamento",
+      rotulo: "fundo",
+      versaoDoModelo: "0.10.35",
+      gravadoEm: "2026-09-01T00:00:00.000Z",
+      quadros: [[{ x: 0.512345678901, y: 0.712345678901, visibility: 0.987654321 }]],
+    };
+
+    const lido = JSON.parse(serializarGravacao(gravacao)) as Gravacao;
+
+    expect(lido.quadros[0][0]).toEqual({ x: 0.5123, y: 0.7123, visibility: 0.9877 });
+  });
+
+  it("não inventa visibilidade para fonte que não reporta", () => {
+    const gravacao: Gravacao = {
+      exercicio: "agachamento",
+      rotulo: "fundo",
+      versaoDoModelo: "0.10.35",
+      gravadoEm: "2026-09-01T00:00:00.000Z",
+      quadros: [[{ x: 0.5, y: 0.5 }]],
+    };
+
+    const lido = JSON.parse(serializarGravacao(gravacao)) as Gravacao;
+
+    expect(lido.quadros[0][0]).toEqual({ x: 0.5, y: 0.5 });
+  });
+
+  it("sobrevive a uma ida e volta pelo JSON sem mudar o veredito", () => {
+    // A serialização é lossy de propósito. O teste que importa não é que os
+    // números sobrevivam — é que o julgamento sobreviva.
+    const gravacao = gravacaoDe("fundo", [0.2, -0.3, 0.4]);
+    const lido = JSON.parse(serializarGravacao(gravacao)) as Gravacao;
+
+    expect(reproduzir(lido.quadros).vereditos).toEqual(reproduzir(gravacao.quadros).vereditos);
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import type { Gravacao, LandmarkNormalizado, Movimento, RotuloDaSerie } from "@elevapro/shared";
-import { conferir, diagnosticar, motivoDominante } from "@elevapro/shared";
+import { conferir, diagnosticar, motivoDominante, serializarGravacao } from "@elevapro/shared";
 import { useCallback, useRef, useState } from "react";
 import { usePoseLandmarker } from "../hooks/usePoseLandmarker";
 import { processarQuadro } from "../services/passe";
@@ -122,7 +122,7 @@ export function AnaliseDeArquivo() {
   const baixar = useCallback(() => {
     if (!gravacao) return;
 
-    const blob = new Blob([JSON.stringify(gravacao, null, 2)], { type: "application/json" });
+    const blob = new Blob([serializarGravacao(gravacao)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
 

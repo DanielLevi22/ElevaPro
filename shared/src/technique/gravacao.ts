@@ -62,6 +62,43 @@ export interface Gravacao {
   quadros: LandmarkNormalizado[][];
 }
 
+/**
+ * Quantas casas decimais sobrevivem na exportacao.
+ *
+ * Coordenada normalizada com 4 casas resolve 0,0001 do quadro -- a 1920px de
+ * largura, menos de um quinto de pixel. O tremor do proprio modelo entre
+ * quadros vizinhos e ordens de grandeza maior que isso, entao as casas
+ * seguintes nao carregam informacao: carregam bytes.
+ *
+ * Uma serie de 2700 quadros tem ~89 mil landmarks. Com a precisao cheia do
+ * `double` e indentacao, o arquivo passa de varios MB e um corpus de vinte
+ * series deixa de caber num repositorio.
+ */
+const CASAS = 4;
+
+function arredondar(valor: number): number {
+  return Number(valor.toFixed(CASAS));
+}
+
+/**
+ * O JSON da gravacao, no formato que entra no repositorio como fixture.
+ *
+ * Existe aqui, junto do tipo, para que o painel que escreve e a suite que le
+ * nunca discordem sobre o formato.
+ */
+export function serializarGravacao(gravacao: Gravacao): string {
+  return JSON.stringify({
+    ...gravacao,
+    quadros: gravacao.quadros.map((pontos) =>
+      pontos.map((ponto) => ({
+        x: arredondar(ponto.x),
+        y: arredondar(ponto.y),
+        ...(ponto.visibility === undefined ? {} : { visibility: arredondar(ponto.visibility) }),
+      })),
+    ),
+  });
+}
+
 export interface Reproducao {
   repeticoes: number;
   vereditos: IdDoVeredito[];
