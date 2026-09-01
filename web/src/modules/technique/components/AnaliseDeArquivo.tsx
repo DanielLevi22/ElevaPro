@@ -406,6 +406,14 @@ function Resultado({ gravacao, onBaixar }: { gravacao: Gravacao; onBaixar: () =>
         </div>
       </div>
 
+      {total > 0 && acertos === 0 && (
+        <p className="rounded-lg bg-amber-100 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+          <strong>Todas as {total} repetições discordaram do rótulo.</strong> Antes de concluir que
+          o julgador errou, confira o seletor: discordância total é o resultado esperado de uma
+          série rotulada ao contrário.
+        </p>
+      )}
+
       <QualidadeDaLeitura gravacao={gravacao} semRepeticao={total === 0} />
 
       <button
