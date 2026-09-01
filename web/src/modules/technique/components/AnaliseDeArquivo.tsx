@@ -406,7 +406,7 @@ function Resultado({ gravacao, onBaixar }: { gravacao: Gravacao; onBaixar: () =>
         </div>
       </div>
 
-      {total === 0 && <PorQueNadaFoiDetectado gravacao={gravacao} />}
+      <QualidadeDaLeitura gravacao={gravacao} semRepeticao={total === 0} />
 
       <button
         className="self-start rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700"
@@ -426,15 +426,39 @@ function Resultado({ gravacao, onBaixar }: { gravacao: Gravacao; onBaixar: () =>
  * quem cortou os pés do quadro liam a mesma frase. O diagnóstico conta os
  * quadros por motivo e transforma o aviso em instrução.
  */
-function PorQueNadaFoiDetectado({ gravacao }: { gravacao: Gravacao }) {
+function QualidadeDaLeitura({
+  gravacao,
+  semRepeticao,
+}: {
+  gravacao: Gravacao;
+  semRepeticao: boolean;
+}) {
   const diagnostico = diagnosticar(gravacao.quadros);
   const motivo = motivoDominante(diagnostico);
   const pctDe = (n: number) =>
     diagnostico.quadros === 0 ? "0%" : `${Math.round((n / diagnostico.quadros) * 100)}%`;
 
+  // A contagem por motivo aparece SEMPRE, e nao so quando nada foi detectado.
+  // Escondida no caso intermediario, ela faltava justamente no diagnostico mais
+  // dificil: aquele em que o julgador leu parte do video e perdeu o resto.
+  const legivel = diagnostico.aptos / Math.max(1, diagnostico.quadros);
+  const tudoBem = !semRepeticao && legivel >= 0.8;
+
+  if (tudoBem) {
+    return (
+      <p className="text-xs text-neutral-500">
+        {diagnostico.quadros} quadros, {pctDe(diagnostico.aptos)} legíveis.
+      </p>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-2 rounded-lg bg-amber-100 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
-      <p className="font-semibold">Nenhuma repetição detectada</p>
+      <p className="font-semibold">
+        {semRepeticao
+          ? "Nenhuma repetição detectada"
+          : `O corpo só foi legível em ${pctDe(diagnostico.aptos)} dos quadros`}
+      </p>
 
       {motivo === "de-frente" && (
         <p>
