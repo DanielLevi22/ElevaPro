@@ -133,10 +133,16 @@ export function AnaliseDeArquivo() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
+        {/*
+          `defaultValue` e nao `value`: com um exercicio selecionavel so, este
+          campo e read-only de verdade, e um `value` sem `onChange` faz o React
+          avisar exatamente isso. Vira estado controlado quando o segundo
+          exercicio entrar -- que e tambem quando havera o que escolher.
+        */}
         <select
           className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          defaultValue="agachamento"
           disabled={analisando}
-          value="agachamento"
         >
           {EXERCICIOS.map((exercicio) => (
             <option disabled={!exercicio.disponivel} key={exercicio.valor} value={exercicio.valor}>
