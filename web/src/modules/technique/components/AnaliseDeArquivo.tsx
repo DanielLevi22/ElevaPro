@@ -1,10 +1,11 @@
 "use client";
 
 import type { Gravacao, LandmarkNormalizado, Movimento, RotuloDaSerie } from "@elevapro/shared";
-import { conferir } from "@elevapro/shared";
+import { conferir, diagnosticar, motivoDominante } from "@elevapro/shared";
 import { useCallback, useRef, useState } from "react";
 import { usePoseLandmarker } from "../hooks/usePoseLandmarker";
 import { processarQuadro } from "../services/passe";
+import { QuadroDeVideo } from "./QuadroDeVideo";
 
 /**
  * Analisa um vídeo já gravado e exporta a série rotulada.
@@ -53,6 +54,7 @@ export function AnaliseDeArquivo() {
   const [analisando, setAnalisando] = useState(false);
   const [gravacao, setGravacao] = useState<Gravacao | null>(null);
   const [progresso, setProgresso] = useState(0);
+  const [nomeDoArquivo, setNomeDoArquivo] = useState<string | null>(null);
 
   const escolherArquivo = useCallback((arquivo: File | undefined) => {
     const video = videoRef.current;
@@ -60,6 +62,7 @@ export function AnaliseDeArquivo() {
 
     setGravacao(null);
     setProgresso(0);
+    setNomeDoArquivo(arquivo.name);
     video.src = URL.createObjectURL(arquivo);
     video.currentTime = 0;
   }, []);
@@ -152,13 +155,18 @@ export function AnaliseDeArquivo() {
           ))}
         </select>
 
-        <input
-          accept="video/*"
-          className="text-sm"
-          disabled={analisando}
-          onChange={(e) => escolherArquivo(e.target.files?.[0])}
-          type="file"
-        />
+        <label className="cursor-pointer rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-800">
+          {nomeDoArquivo ?? "Escolher vídeo…"}
+          {/* O input nativo fica escondido, e nao removido: e ele que abre o
+              seletor de arquivo e carrega a acessibilidade do `label`. */}
+          <input
+            accept="video/*"
+            className="sr-only"
+            disabled={analisando}
+            onChange={(e) => escolherArquivo(e.target.files?.[0])}
+            type="file"
+          />
+        </label>
 
         <select
           className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
@@ -189,10 +197,7 @@ export function AnaliseDeArquivo() {
         dataset morrer na segunda semana.
       </p>
 
-      <div className="relative overflow-hidden rounded-xl bg-black">
-        <video className="w-full" controls muted playsInline ref={videoRef} />
-        <canvas className="pointer-events-none absolute inset-0 h-full w-full" ref={canvasRef} />
-      </div>
+      <QuadroDeVideo canvasRef={canvasRef} controles videoRef={videoRef} />
 
       {gravacao && <Resultado gravacao={gravacao} onBaixar={baixar} />}
     </div>
@@ -223,12 +228,7 @@ function Resultado({ gravacao, onBaixar }: { gravacao: Gravacao; onBaixar: () =>
         </div>
       </div>
 
-      {total === 0 && (
-        <p className="rounded-lg bg-amber-100 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
-          Nenhuma repetição detectada. Isso não é acerto — é o julgador não tendo enxergado o
-          movimento. Confira se a pessoa está de perfil e com o corpo inteiro no quadro.
-        </p>
-      )}
+      {total === 0 && <PorQueNadaFoiDetectado gravacao={gravacao} />}
 
       <button
         className="self-start rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700"
@@ -237,6 +237,58 @@ function Resultado({ gravacao, onBaixar }: { gravacao: Gravacao; onBaixar: () =>
       >
         Baixar fixture (.json)
       </button>
+    </div>
+  );
+}
+
+/**
+ * Por que a gravação não rendeu repetição.
+ *
+ * "Nenhuma repetição detectada" é verdade e não ajuda: quem filmou de frente e
+ * quem cortou os pés do quadro liam a mesma frase. O diagnóstico conta os
+ * quadros por motivo e transforma o aviso em instrução.
+ */
+function PorQueNadaFoiDetectado({ gravacao }: { gravacao: Gravacao }) {
+  const diagnostico = diagnosticar(gravacao.quadros);
+  const motivo = motivoDominante(diagnostico);
+  const pctDe = (n: number) =>
+    diagnostico.quadros === 0 ? "0%" : `${Math.round((n / diagnostico.quadros) * 100)}%`;
+
+  return (
+    <div className="flex flex-col gap-2 rounded-lg bg-amber-100 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+      <p className="font-semibold">Nenhuma repetição detectada</p>
+
+      {motivo === "de-frente" && (
+        <p>
+          Em {pctDe(diagnostico.deFrente)} dos quadros a pessoa estava{" "}
+          <strong>de frente ou de costas</strong> para a câmera. Precisa ser{" "}
+          <strong>de lado</strong>: um ombro apontando para a câmera, o olhar para uma parede a 90°
+          dela. De frente, a coxa aponta para a lente e some na projeção — o cálculo de profundidade
+          devolveria um número plausível e errado, então o julgador prefere calar.
+        </p>
+      )}
+
+      {motivo === "sem-articulacao" && (
+        <p>
+          Em {pctDe(diagnostico.semArticulacao)} dos quadros faltou{" "}
+          <strong>quadril, joelho ou tornozelo</strong> no enquadramento. Afaste a câmera até o
+          corpo inteiro caber, da cabeça aos pés, durante todo o movimento — inclusive no ponto mais
+          fundo.
+        </p>
+      )}
+
+      {motivo === null && (
+        <p>
+          O enquadramento estava legível em {pctDe(diagnostico.aptos)} dos quadros, então o problema
+          não é a câmera. O mais provável é que o movimento não tenha completado o ciclo: o julgador
+          só fecha uma repetição quando a pessoa desce e volta a estender por completo.
+        </p>
+      )}
+
+      <p className="text-xs opacity-80">
+        {diagnostico.quadros} quadros — {diagnostico.aptos} legíveis, {diagnostico.deFrente} de
+        frente, {diagnostico.semArticulacao} com articulação fora do quadro.
+      </p>
     </div>
   );
 }

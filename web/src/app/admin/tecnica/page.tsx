@@ -74,10 +74,27 @@ export default function CalibracaoDaTecnica() {
       </div>
 
       <Passo numero={1} titulo="Grave os vídeos">
+        <div className="flex flex-col gap-2 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+          <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+            De lado, não de frente
+          </h3>
+          <Nota>
+            A câmera precisa ver a pessoa <strong>de lado</strong> — um ombro apontando para a
+            lente, o olhar para uma parede a 90° dela. É a vista de perfil, como numa foto 3x4 de
+            lado. Filmar de frente é o erro mais comum, e faz a análise não detectar nada.
+          </Nota>
+          <Nota>
+            O motivo é geométrico: o critério mede a altura do quadril contra a do joelho. De lado,
+            a coxa aparece inteira e a medida é real. De frente, ela aponta para a lente e some na
+            projeção — o cálculo devolveria um número plausível e errado, então o julgador prefere
+            calar a chutar.
+          </Nota>
+        </div>
         <Nota>
-          Filme alguém agachando <strong>de perfil</strong>, com o corpo inteiro no quadro — da
-          cabeça aos pés. Use o celular que vai rodar o app: mesma lente e mesmo sensor que a
-          produção, o que elimina uma fonte de diferença entre calibrar aqui e julgar lá.
+          Enquadre o <strong>corpo inteiro</strong>, da cabeça aos pés, e confira que ele continua
+          dentro do quadro no ponto mais fundo do agachamento. Use o celular que vai rodar o app:
+          mesma lente e mesmo sensor que a produção, o que elimina uma fonte de diferença entre
+          calibrar aqui e julgar lá.
         </Nota>
         <Nota>
           Grave <strong>séries homogêneas</strong>: um vídeo com cinco repetições todas fundas,

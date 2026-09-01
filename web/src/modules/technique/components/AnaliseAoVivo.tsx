@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useCameras } from "../hooks/useCameras";
 import { usePoseLandmarker } from "../hooks/usePoseLandmarker";
 import { processarQuadro } from "../services/passe";
+import { QuadroDeVideo } from "./QuadroDeVideo";
 
 /**
  * A análise rodando ao vivo sobre a câmera.
@@ -173,10 +174,7 @@ export function AnaliseAoVivo() {
         )}
       </div>
 
-      <div className="relative overflow-hidden rounded-xl bg-black">
-        <video className="w-full" muted playsInline ref={videoRef} />
-        <canvas className="absolute inset-0 h-full w-full" ref={canvasRef} />
-      </div>
+      <QuadroDeVideo canvasRef={canvasRef} videoRef={videoRef} />
 
       <Painel movimento={movimento} />
     </div>

@@ -20,6 +20,7 @@ export * from "./services/nutrition.service";
 export * from "./services/students.service";
 export * from "./services/workouts.service";
 export * from "./technique/agachamento";
+export * from "./technique/diagnostico";
 export * from "./technique/fatos";
 export * from "./technique/gravacao";
 export * from "./technique/varredura";
