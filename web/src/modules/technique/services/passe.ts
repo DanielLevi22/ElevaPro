@@ -2,10 +2,9 @@ import {
   avaliarAgachamento,
   type FatosDoMovimento,
   fatosDeLandmarks,
-  type LandmarkNormalizado,
   type Movimento,
 } from "@elevapro/shared";
-import { DrawingUtils, PoseLandmarker } from "@mediapipe/tasks-vision";
+import { DrawingUtils, type NormalizedLandmark, PoseLandmarker } from "@mediapipe/tasks-vision";
 
 /**
  * O trabalho de um quadro, igual para câmera e para arquivo.
@@ -20,7 +19,7 @@ interface Passe {
   movimento: Movimento;
   fatos: FatosDoMovimento;
   /** Os 33 landmarks crus. É o que a gravação guarda — o observado, não o derivado. */
-  pontos: LandmarkNormalizado[];
+  pontos: NormalizedLandmark[];
 }
 
 export function processarQuadro(
@@ -44,7 +43,7 @@ export function processarQuadro(
 export function desenharEsqueleto(
   canvas: HTMLCanvasElement,
   video: HTMLVideoElement,
-  pontos: { x: number; y: number; z: number; visibility: number }[],
+  pontos: NormalizedLandmark[],
 ) {
   if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
     canvas.width = video.videoWidth;

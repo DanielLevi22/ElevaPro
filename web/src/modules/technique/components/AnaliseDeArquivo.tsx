@@ -1,10 +1,17 @@
 "use client";
 
-import type { Gravacao, LandmarkNormalizado, Movimento, RotuloDaSerie } from "@elevapro/shared";
+import type {
+  Fase,
+  Gravacao,
+  LandmarkNormalizado,
+  Movimento,
+  RotuloDaSerie,
+} from "@elevapro/shared";
 import { conferir, diagnosticar, motivoDominante, serializarGravacao } from "@elevapro/shared";
-import { useCallback, useRef, useState } from "react";
+import type { NormalizedLandmark } from "@mediapipe/tasks-vision";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePoseLandmarker } from "../hooks/usePoseLandmarker";
-import { processarQuadro } from "../services/passe";
+import { desenharEsqueleto, processarQuadro } from "../services/passe";
 import { QuadroDeVideo } from "./QuadroDeVideo";
 
 /**
@@ -44,6 +51,48 @@ const EXERCICIOS = [
   { valor: "afundo", texto: "Afundo", disponivel: false },
 ];
 
+/**
+ * O que o julgador viu num instante do vídeo.
+ *
+ * Guardado por quadro para que arrastar a barra do vídeo mostre a leitura
+ * daquele ponto. Sem isto, a única forma de conferir se a medida faz sentido
+ * seria com câmera ao vivo — o que exige uma câmera bem posicionada, e é
+ * exatamente o que não se tem quando se está diagnosticando enquadramento.
+ */
+interface Leitura {
+  tempo: number;
+  profundidade: number | null;
+  fase: Fase;
+  repeticoes: number;
+  pontos: NormalizedLandmark[];
+}
+
+/**
+ * A leitura mais próxima de um instante, por busca binária.
+ *
+ * Linear seria O(n) a cada `timeupdate`, que dispara várias vezes por segundo
+ * sobre um vetor de milhares de quadros.
+ */
+function leituraEm(leituras: Leitura[], tempo: number): Leitura | null {
+  if (leituras.length === 0) return null;
+
+  let inicio = 0;
+  let fim = leituras.length - 1;
+
+  while (inicio < fim) {
+    const meio = Math.floor((inicio + fim) / 2);
+    if (leituras[meio].tempo < tempo) inicio = meio + 1;
+    else fim = meio;
+  }
+
+  const candidato = leituras[inicio];
+  const anterior = leituras[Math.max(0, inicio - 1)];
+
+  return Math.abs(anterior.tempo - tempo) < Math.abs(candidato.tempo - tempo)
+    ? anterior
+    : candidato;
+}
+
 export function AnaliseDeArquivo() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -55,6 +104,10 @@ export function AnaliseDeArquivo() {
   const [gravacao, setGravacao] = useState<Gravacao | null>(null);
   const [progresso, setProgresso] = useState(0);
   const [nomeDoArquivo, setNomeDoArquivo] = useState<string | null>(null);
+  const [leitura, setLeitura] = useState<Leitura | null>(null);
+  // Estado, e não `ref`: é a chegada das leituras que precisa reatar os
+  // ouvintes da barra do vídeo, e um `ref` deixaria o React cego para isso.
+  const [leituras, setLeituras] = useState<Leitura[]>([]);
 
   const escolherArquivo = useCallback((arquivo: File | undefined) => {
     const video = videoRef.current;
@@ -62,6 +115,8 @@ export function AnaliseDeArquivo() {
 
     setGravacao(null);
     setProgresso(0);
+    setLeitura(null);
+    setLeituras([]);
     setNomeDoArquivo(arquivo.name);
     video.src = URL.createObjectURL(arquivo);
     video.currentTime = 0;
@@ -75,6 +130,7 @@ export function AnaliseDeArquivo() {
     setGravacao(null);
 
     const quadros: LandmarkNormalizado[][] = [];
+    const lidas: Leitura[] = [];
     let movimento: Movimento | null = null;
     let ultimoTempo = -1;
 
@@ -97,6 +153,13 @@ export function AnaliseDeArquivo() {
           const passe = processarQuadro(landmarker, video, canvasRef.current, movimento);
           movimento = passe.movimento;
           quadros.push(passe.pontos);
+          lidas.push({
+            tempo: video.currentTime,
+            profundidade: passe.movimento.profundidade,
+            fase: passe.movimento.fase,
+            repeticoes: passe.movimento.repeticoes,
+            pontos: passe.pontos,
+          });
 
           if (video.duration > 0) {
             setProgresso(Math.min(1, video.currentTime / video.duration));
@@ -108,6 +171,9 @@ export function AnaliseDeArquivo() {
 
       requestAnimationFrame(laco);
     });
+
+    setLeituras(lidas);
+    setLeitura(lidas[0] ?? null);
 
     setGravacao({
       exercicio: "agachamento",
@@ -132,6 +198,30 @@ export function AnaliseDeArquivo() {
 
     URL.revokeObjectURL(url);
   }, [gravacao]);
+
+  // Arrastar a barra do vídeo mostra a leitura daquele instante e redesenha o
+  // esqueleto. `seeked` sozinho não basta: quem só dá play sem arrastar
+  // continuaria vendo o primeiro quadro.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || leituras.length === 0) return;
+
+    const acompanhar = () => {
+      const atual = leituraEm(leituras, video.currentTime);
+      if (!atual) return;
+
+      setLeitura(atual);
+      if (canvasRef.current) desenharEsqueleto(canvasRef.current, video, atual.pontos);
+    };
+
+    video.addEventListener("timeupdate", acompanhar);
+    video.addEventListener("seeked", acompanhar);
+
+    return () => {
+      video.removeEventListener("timeupdate", acompanhar);
+      video.removeEventListener("seeked", acompanhar);
+    };
+  }, [leituras]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -198,6 +288,8 @@ export function AnaliseDeArquivo() {
       </p>
 
       <QuadroDeVideo canvasRef={canvasRef} controles videoRef={videoRef} />
+
+      {leitura && <LeituraDoQuadro leitura={leitura} />}
 
       {gravacao && <Resultado gravacao={gravacao} onBaixar={baixar} />}
     </div>
@@ -288,6 +380,50 @@ function PorQueNadaFoiDetectado({ gravacao }: { gravacao: Gravacao }) {
       <p className="text-xs opacity-80">
         {diagnostico.quadros} quadros — {diagnostico.aptos} legíveis, {diagnostico.deFrente} de
         frente, {diagnostico.semArticulacao} com articulação fora do quadro.
+      </p>
+    </div>
+  );
+}
+
+/**
+ * A leitura do quadro em que o vídeo está parado.
+ *
+ * Existe para responder "a medida faz sentido?" sem precisar de câmera ao vivo:
+ * arraste até a pessoa em pé e a profundidade tem que estar perto de −1; até a
+ * coxa paralela ao chão, perto de 0; abaixo disso, positiva. Se em pé não der
+ * perto de −1, o problema não é o limiar — é o cálculo.
+ */
+function LeituraDoQuadro({ leitura }: { leitura: Leitura }) {
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+      <p className="text-xs text-neutral-500">
+        Arraste a barra do vídeo para ler qualquer instante.
+      </p>
+
+      <div className="flex flex-wrap gap-6">
+        <div className="flex flex-col">
+          <span className="text-xs text-neutral-500">profundidade</span>
+          <span className="font-mono text-2xl tabular-nums text-neutral-900 dark:text-neutral-100">
+            {leitura.profundidade === null ? "—" : leitura.profundidade.toFixed(2)}
+          </span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs text-neutral-500">fase</span>
+          <span className="font-mono text-sm">{leitura.fase}</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs text-neutral-500">repetições até aqui</span>
+          <span className="font-mono text-sm">{leitura.repeticoes}</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs text-neutral-500">tempo</span>
+          <span className="font-mono text-sm">{leitura.tempo.toFixed(2)}s</span>
+        </div>
+      </div>
+
+      <p className="text-xs text-neutral-500">
+        −1 em pé · 0 com a coxa paralela ao chão · positivo abaixo da paralela. Se em pé não der
+        perto de −1, o problema é o cálculo e não o limiar.
       </p>
     </div>
   );
