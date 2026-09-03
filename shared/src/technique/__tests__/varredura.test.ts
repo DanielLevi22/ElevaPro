@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { Gravacao, RotuloDaSerie } from "../gravacao";
-import { avaliarLimiar, sugerirLimiar, varrer } from "../varredura";
+import {
+  avaliarLimiar,
+  conferirCorpus,
+  MINIMO_DE_SERIES,
+  sugerirLimiar,
+  varrer,
+} from "../varredura";
 import { umaRepeticaoAte } from "./corpo";
 
 function gravacaoDe(rotulo: RotuloDaSerie, fundos: number[]): Gravacao {
@@ -102,5 +108,39 @@ describe("sugerirLimiar", () => {
 
   it("devolve nulo para varredura vazia", () => {
     expect(sugerirLimiar([])).toBeNull();
+  });
+});
+
+describe("conferirCorpus", () => {
+  it("acusa corpus de um rótulo só, em que qualquer limiar constante acerta tudo", () => {
+    const saude = conferirCorpus([gravacaoDe("fundo", [0.2]), gravacaoDe("fundo", [0.3])]);
+
+    expect(saude).toMatchObject({ series: 2, fundas: 2, rasas: 0, rotuloUnico: true });
+  });
+
+  it("acusa corpus pequeno demais para o platô da tabela significar algo", () => {
+    const poucas = Array.from({ length: MINIMO_DE_SERIES - 1 }, (_, i) =>
+      gravacaoDe(i % 2 === 0 ? "fundo" : "faltou", [i % 2 === 0 ? 0.2 : -0.2]),
+    );
+
+    expect(conferirCorpus(poucas)).toMatchObject({ pequeno: true, rotuloUnico: false });
+  });
+
+  it("não acusa nada quando o corpus é grande e balanceado", () => {
+    const bastantes = Array.from({ length: MINIMO_DE_SERIES }, (_, i) =>
+      gravacaoDe(i % 2 === 0 ? "fundo" : "faltou", [i % 2 === 0 ? 0.2 : -0.2]),
+    );
+
+    expect(conferirCorpus(bastantes)).toMatchObject({ pequeno: false, rotuloUnico: false });
+  });
+
+  // Sem isto, os dois avisos apareceriam na tela antes de alguém escolher
+  // arquivo — a página abriria reclamando de um corpus que ninguém carregou.
+  it("cala com corpus vazio, que não é corpus ruim e sim ausência de corpus", () => {
+    expect(conferirCorpus([])).toMatchObject({
+      series: 0,
+      rotuloUnico: false,
+      pequeno: false,
+    });
   });
 });
