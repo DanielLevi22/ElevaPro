@@ -2,6 +2,23 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { HealthDailyMetric, HealthMetricInput } from "../types/health.types";
 
 export const CONSENT_HEALTH_COLLECTION = "health_data_collection";
+export const CONSENT_TECHNIQUE_ANALYSIS = "technique_analysis";
+
+/**
+ * Uma finalidade de tratamento e a versão do texto que a descreve.
+ *
+ * O par anda junto porque separá-los foi o defeito de 2026-08-28: a consulta
+ * lia só `given_at`, então subir a versão não alcançava ninguém e quem aceitou
+ * a `1.0` seguia consentido sob um texto que já não descrevia o tratamento.
+ *
+ * Cada finalidade tem a **sua** versão. Uma constante global voltaria a
+ * amarrá-las: mudar o texto da Análise de Técnica pediria reconsentimento do
+ * body scan, e reconsentimento pedido à toa é o que ensina a aceitar sem ler.
+ */
+export interface Finalidade {
+  tipo: string;
+  versao: string;
+}
 
 /**
  * Versão vigente da política de dados de saúde.
@@ -33,6 +50,19 @@ export const CONSENT_HEALTH_COLLECTION = "health_data_collection";
  */
 export const POLICY_VERSION = "1.2";
 
+/** Coleta de dados de saúde: avaliação, anamnese, métricas diárias, body scan. */
+export const SAUDE: Finalidade = { tipo: CONSENT_HEALTH_COLLECTION, versao: POLICY_VERSION };
+
+/**
+ * Análise de Técnica: a câmera lendo o corpo durante a série.
+ *
+ * Finalidade separada da `SAUDE`, e não um parágrafo novo dentro dela, porque
+ * o Art. 8°, §4° anula autorização genérica e porque empacotá-las faria a
+ * recusa de uma custar a outra — ver a migration 0041. Começa em `1.0`: é
+ * texto novo, não revisão de texto existente.
+ */
+export const TECNICA: Finalidade = { tipo: CONSENT_TECHNIQUE_ANALYSIS, versao: "1.0" };
+
 export const createHealthService = (supabase: SupabaseClient) => ({
   /**
    * Verifica o consentimento de coleta de dados de saúde do aluno **na versão
@@ -56,17 +86,20 @@ export const createHealthService = (supabase: SupabaseClient) => ({
    * @example
    * if (await health.hasCollectionConsent(userId)) await health.upsertDaily(userId, metric);
    */
-  hasCollectionConsent: async (studentId: string): Promise<boolean> => {
+  hasCollectionConsent: async (
+    studentId: string,
+    finalidade: Finalidade = SAUDE,
+  ): Promise<boolean> => {
     const { data, error } = await supabase
       .from("student_consents")
       .select("given_at, revoked_at, policy_version")
       .eq("student_id", studentId)
-      .eq("consent_type", CONSENT_HEALTH_COLLECTION)
+      .eq("consent_type", finalidade.tipo)
       .maybeSingle();
 
     if (error) throw error;
     if (!data) return false;
-    if (data.policy_version !== POLICY_VERSION) return false;
+    if (data.policy_version !== finalidade.versao) return false;
     return Boolean(data.given_at) && !data.revoked_at;
   },
 
@@ -80,14 +113,17 @@ export const createHealthService = (supabase: SupabaseClient) => ({
    * quem estava numa versão antiga: `onConflict` no par
    * `(student_id, consent_type)` sobrescreve `policy_version` e `given_at`.
    */
-  grantCollectionConsent: async (studentId: string): Promise<void> => {
+  grantCollectionConsent: async (
+    studentId: string,
+    finalidade: Finalidade = SAUDE,
+  ): Promise<void> => {
     const { error } = await supabase.from("student_consents").upsert(
       {
         student_id: studentId,
-        consent_type: CONSENT_HEALTH_COLLECTION,
+        consent_type: finalidade.tipo,
         given_at: new Date().toISOString(),
         revoked_at: null,
-        policy_version: POLICY_VERSION,
+        policy_version: finalidade.versao,
       },
       { onConflict: "student_id,consent_type" },
     );
@@ -95,12 +131,15 @@ export const createHealthService = (supabase: SupabaseClient) => ({
   },
 
   /** Interrompe a coleta. Não apaga o histórico — ver docs/LGPD_COMPLIANCE.md. */
-  revokeCollectionConsent: async (studentId: string): Promise<void> => {
+  revokeCollectionConsent: async (
+    studentId: string,
+    finalidade: Finalidade = SAUDE,
+  ): Promise<void> => {
     const { error } = await supabase
       .from("student_consents")
       .update({ revoked_at: new Date().toISOString() })
       .eq("student_id", studentId)
-      .eq("consent_type", CONSENT_HEALTH_COLLECTION);
+      .eq("consent_type", finalidade.tipo);
     if (error) throw error;
   },
 

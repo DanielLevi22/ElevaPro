@@ -10,6 +10,7 @@
       "@/workout": ["./src/modules/workout"],
       "@/students": ["./src/modules/students"],
       "@/auth": ["./src/modules/auth"],
+      "@/technique": ["./src/modules/technique"],
       "@/assessment": ["./src/modules/assessment"],
       "@elevapro/core": ["./src/packages/core"],
       "@elevapro/supabase": ["./src/packages/supabase"],

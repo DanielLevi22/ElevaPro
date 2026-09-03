@@ -25,6 +25,11 @@ export const ROUTES = {
     ANAMNESIS: '/student/anamnesis',
   },
 
+  // Análise de Técnica (issue #194)
+  TECHNIQUE: {
+    ANALYSIS: '/analise-tecnica',
+  },
+
   // Onboarding
   ONBOARDING: {
     ROLE_SELECTION: '/onboarding/role-selection',

@@ -2,17 +2,18 @@ import { render } from '@testing-library/react-native';
 import SpikeTecnica from '../spike-tecnica';
 
 /**
- * TRAVA: a tela de Análise de Técnica não é alcançável em build de produção.
+ * TRAVA: a tela do **spike de medida** não é alcançável em build de produção.
  *
- * É esta trava que permite às fases 2 e 3 da issue #194 serem trabalho em vez
- * de portão. Enquanto ela vale, nenhum aluno chega à câmera — então o
- * consentimento da `POLICY_VERSION` 1.3, que ainda não existe, não está sendo
- * contornado por ninguém. No dia em que ela cair sem que a fase 2 esteja
- * verde, o app passa a processar a imagem do corpo de alguém sem base legal.
+ * Cuidado para não confundir com a tela do aluno. A Análise de Técnica saiu do
+ * `__DEV__` quando a fase 2 da #194 entregou o consentimento próprio da
+ * finalidade — quem barra lá é `consentimento.test.tsx`, que é a barreira
+ * certa. Esta aqui protege outra coisa: o spike, que abre a câmera sem
+ * consentimento nenhum porque existe só para medir fps e percentis, e por isso
+ * **nunca** pode chegar a um aparelho de aluno.
  *
  * Processar imagem do corpo já é tratamento pelo Art. 5°, X — não guardar não
- * é não tratar. Foi esse raciocínio que obrigou a `POLICY_VERSION` 1.2 quando
- * o body scan passou a amostrar a cada dois segundos.
+ * é não tratar. O spike não tem base legal para isso, e o `__DEV__` é o que
+ * garante que ele não precise ter.
  *
  * **Provas negativas, as duas verificadas em 2026-09-03:**
  *
