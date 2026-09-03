@@ -17,6 +17,6 @@ class TechniqueSpikeModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("TechniqueSpike")
 
-    View(TechniqueSpikeView::class) { Events("onMedida", "onEstado") }
+    View(TechniqueSpikeView::class) { Events("onMedida", "onPose", "onEstado") }
   }
 }
