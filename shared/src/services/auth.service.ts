@@ -35,7 +35,7 @@ export const createAuthService = (supabase: SupabaseClient) => ({
     accountType: string,
     metadata: Record<string, unknown> = {},
   ): Promise<{ success: boolean; error?: string }> => {
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { account_type: accountType, ...metadata } },
@@ -43,18 +43,10 @@ export const createAuthService = (supabase: SupabaseClient) => ({
 
     if (error) return { success: false, error: error.message };
 
-    if (data.user) {
-      const { error: profileError } = await supabase.from("profiles").upsert({
-        id: data.user.id,
-        email,
-        account_type: accountType,
-        full_name: metadata.full_name,
-        ...metadata,
-      });
-
-      if (profileError) return { success: false, error: profileError.message };
-    }
-
+    // O perfil nasce pelo trigger `handle_new_user`, que lê o mesmo metadata
+    // enviado acima. O upsert que existia aqui era redundante com ele e, pior,
+    // gravava o `account_type` escolhido pelo cliente — o caminho que a
+    // migration 0040 fechou no banco.
     return { success: true };
   },
 
@@ -114,25 +106,29 @@ export const createAuthService = (supabase: SupabaseClient) => ({
   },
 
   /**
-   * Define o tipo de conta no onboarding, criando o profile se ainda não existir.
+   * Define o tipo de conta no onboarding.
    *
    * `admin` é recusado de propósito: contas administrativas nascem por convite,
-   * nunca por escolha do usuário numa tela de onboarding.
+   * nunca por escolha do usuário numa tela de onboarding. A recusa mora no
+   * servidor (`set_own_account_type`, migration 0040) — aqui o tipo só a anuncia.
+   *
+   * Quem é o usuário sai de `auth.uid()` no banco, e não de um parâmetro: com o
+   * id vindo de fora, quem chamasse escolheria de quem é o perfil que muda.
    *
    * @example
-   * await authService.setAccountType({ userId, email, accountType: "student", fullName });
+   * await authService.setAccountType({ accountType: "student", fullName });
    */
   setAccountType: async (params: {
-    userId: string;
-    email: string;
     accountType: Exclude<AccountType, "admin">;
     fullName?: string;
   }): Promise<void> => {
-    const { error } = await supabase.from("profiles").upsert({
-      id: params.userId,
-      email: params.email,
-      account_type: params.accountType,
-      full_name: params.fullName ?? "",
+    // Pela RPC, e não por UPDATE direto: desde a migration 0040 o papel não é
+    // coluna que o dono da linha escreve. O `Exclude<..., "admin">` continua
+    // aqui como documentação, mas quem recusa admin de verdade é o servidor —
+    // tipo do TypeScript não alcança quem chama o PostgREST na mão.
+    const { error } = await supabase.rpc("set_own_account_type", {
+      p_account_type: params.accountType,
+      p_full_name: params.fullName ?? null,
     });
     if (error) throw error;
   },

@@ -1459,6 +1459,13 @@ export type Database = {
     };
     Functions: {
       link_student_by_code: { Args: { p_code: string }; Returns: Json };
+      set_own_account_type: {
+        Args: {
+          p_account_type: Database["public"]["Enums"]["account_type"];
+          p_full_name?: string;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       account_status: "active" | "inactive" | "invited";

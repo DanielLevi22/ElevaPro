@@ -35,8 +35,6 @@ export default function RoleSelectionScreen() {
     setLoading(true);
     try {
       await authService.setAccountType({
-        userId: session.user.id,
-        email: session.user.email ?? '',
         accountType: selectedRole,
         fullName: session.user.user_metadata?.full_name,
       });
