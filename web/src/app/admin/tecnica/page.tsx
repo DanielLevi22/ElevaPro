@@ -1,3 +1,4 @@
+import { exigirPainelAdmin } from "@/lib/page-auth";
 import { AnaliseAoVivo, AnaliseDeArquivo, Varredura } from "@/modules/technique";
 import { PageHeader } from "@/shared/components/ui/PageHeader";
 
@@ -9,6 +10,10 @@ import { PageHeader } from "@/shared/components/ui/PageHeader";
  *
  * **Nenhum quadro é gravado e nada é persistido.** O vídeo morre quando a aba
  * fecha; o que esta página produz é o limiar, e o limiar viaja no código.
+ *
+ * A checagem de admin é feita aqui, e não só pelo `admin/layout.tsx`: o layout
+ * é cliente, então o payload desta página seria montado e enviado antes de ele
+ * decidir redirecionar.
  */
 
 function Passo({
@@ -42,7 +47,9 @@ function Nota({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function CalibracaoDaTecnica() {
+export default async function CalibracaoDaTecnica() {
+  await exigirPainelAdmin();
+
   return (
     <div className="flex max-w-4xl flex-col gap-12 p-6">
       <PageHeader
