@@ -46,6 +46,16 @@ export interface ProviderTurnOptions {
 
 export type ProviderStreamEvent =
   | { type: "text_delta"; content: string }
+  /**
+   * O modelo COMEÇOU a montar uma chamada de ferramenta.
+   *
+   * Chega antes do JSON, que para uma proposta de três treinos leva de 15 a 20
+   * segundos gerando `input_json_delta` — tokens que não são texto e por isso
+   * não viram evento nenhum. Sem este sinal, a tela fica muda exatamente no
+   * trecho mais longo do turno, e o aviso só apareceria quando não há mais
+   * nada para avisar.
+   */
+  | { type: "tool_building"; name: string }
   | { type: "tool_use"; id: string; name: string; input: unknown }
   | { type: "turn_end"; fullContent: ContentBlock[]; stopReason: string };
 

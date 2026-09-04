@@ -10,26 +10,41 @@ import type { SseEvent } from "../../types";
 import { BaseOrchestrator } from "../base.orchestrator";
 
 /**
- * Quando a tela avisa que algo está acontecendo.
+ * Quando a tela avisa que o coach está trabalhando.
  *
- * O aviso ficava o turno inteiro e, depois, em toda ferramenta — inclusive
- * consulta. Na tela isso vira um segundo balão ao lado da resposta dizendo
- * "preparando" enquanto o modelo apenas redige, sem nada ter ido ao servidor.
- * Agora só gravação se anuncia, e o corte mora aqui: consulta não emite evento,
- * então a tela não precisa de uma lista de exceções.
+ * O corte não é entre ler e gravar — é entre trabalhar e escrever. E o momento
+ * importa mais que a lista: gerar o JSON de uma proposta de três treinos leva
+ * de 15 a 20 segundos, tudo dentro do bloco da ferramenta. Avisar só na
+ * execução é avisar quando não há mais o que esperar.
  */
 
-function providerQueAciona(ferramentas: string[]): AIProvider {
+/** Marca deixada por `onToolCall` na linha do tempo, para provar a ordem. */
+interface Execucao {
+  type: "executou";
+  tool: string;
+}
+
+type Linha = SseEvent | Execucao;
+
+/**
+ * Provider falso que imita o real: nomeia a ferramenta ao começar a montá-la
+ * (`content_block_start`) e só depois entrega a chamada pronta.
+ */
+function providerFalso(ferramentas: string[], textos: string[] = []): AIProvider {
   let turnos = 0;
   return {
     async *stream(): AsyncGenerator<ProviderStreamEvent> {
-      turnos++;
-      // Segundo turno: o modelo já viu o resultado e responde em texto.
-      if (turnos > 1) {
-        yield { type: "text_delta", content: "Pronto." };
+      const turno = turnos++;
+
+      for (const pedaco of textos[turno] ? [textos[turno]] : []) {
+        yield { type: "text_delta", content: pedaco };
+      }
+
+      // Turno seguinte ao das ferramentas: fecha em texto.
+      if (turno > 0 || ferramentas.length === 0) {
         yield {
           type: "turn_end",
-          fullContent: [{ type: "text", text: "Pronto." }] as ContentBlock[],
+          fullContent: [{ type: "text", text: textos[turno] ?? "" }] as ContentBlock[],
           stopReason: "end_turn",
         };
         return;
@@ -41,6 +56,8 @@ function providerQueAciona(ferramentas: string[]): AIProvider {
         name,
         input: {},
       }));
+
+      for (const bloco of blocos) yield { type: "tool_building", name: bloco.name };
       for (const bloco of blocos) {
         yield { type: "tool_use", id: bloco.id, name: bloco.name, input: bloco.input };
       }
@@ -62,59 +79,86 @@ class OrquestradorDeTeste extends BaseOrchestrator {
   }
 }
 
-async function eventosDe(ferramentas: string[]): Promise<SseEvent[]> {
-  const orquestrador = new OrquestradorDeTeste(providerQueAciona(ferramentas));
-  const eventos: SseEvent[] = [];
+async function linhaDoTempo(ferramentas: string[], textos: string[] = []): Promise<Linha[]> {
+  const linha: Linha[] = [];
+  const orquestrador = new OrquestradorDeTeste(providerFalso(ferramentas, textos));
+
   for await (const evento of orquestrador.run({
     userMessage: "vai",
     history: [],
     contextText: "",
-    onToolCall: async () => "{}",
+    onToolCall: async (name) => {
+      linha.push({ type: "executou", tool: name });
+      return "{}";
+    },
   })) {
-    eventos.push(evento);
+    linha.push(evento);
   }
-  return eventos;
+  return linha;
 }
 
-const avisos = (eventos: SseEvent[]) =>
-  eventos.filter((e) => e.type === "tool_start" || e.type === "tool_end");
+const avisos = (linha: Linha[]) => linha.filter((e) => e.type === "tool_start");
 
 describe("aviso de progresso", () => {
   it.each([
-    ["save_periodization", "Salvando a periodização"],
     ["propose_workouts", "Montando a proposta de treinos"],
-    ["propose_diet_plan", "Calculando as metas do plano"],
-    ["propose_meals", "Montando as refeições"],
-  ])("anuncia %s, que grava", async (ferramenta, rotulo) => {
-    const eventos = await eventosDe([ferramenta]);
+    ["save_periodization", "Salvando a periodização"],
+    ["query_exercises", "Consultando o catálogo de exercícios"],
+    ["propose_periodization", "Montando a proposta de periodização"],
+  ])("anuncia %s com o rótulo da ferramenta", async (ferramenta, rotulo) => {
+    const linha = await linhaDoTempo([ferramenta]);
 
-    expect(eventos).toContainEqual({ type: "tool_start", tool: ferramenta, label: rotulo });
-    expect(eventos).toContainEqual({ type: "tool_end", tool: ferramenta });
+    expect(linha).toContainEqual({ type: "tool_start", tool: ferramenta, label: rotulo });
+    expect(linha).toContainEqual({ type: "tool_end", tool: ferramenta });
   });
 
-  // Consulta volta antes de a pessoa terminar de ler a frase anterior. Anunciar
-  // isso é o balão sobrando ao lado da bolha de texto.
-  it.each([
-    "query_exercises",
-    "query_foods",
-    "query_body_scan",
-    "propose_periodization",
-  ])("não anuncia %s, que não grava", async (ferramenta) => {
-    expect(avisos(await eventosDe([ferramenta]))).toEqual([]);
+  // O ponto do conserto: o aviso cobre a geração do JSON, que é a espera longa.
+  // Anunciar na execução seria anunciar quando já não há o que esperar.
+  it("avisa antes de executar, não depois", async () => {
+    const linha = await linhaDoTempo(["propose_workouts"]);
+
+    const anuncio = linha.findIndex((e) => e.type === "tool_start");
+    const execucao = linha.findIndex((e) => e.type === "executou");
+
+    expect(anuncio).toBeGreaterThanOrEqual(0);
+    expect(anuncio).toBeLessThan(execucao);
   });
 
-  it("no mesmo turno, anuncia só a que grava", async () => {
-    const eventos = await eventosDe(["query_exercises", "propose_workouts"]);
-
-    expect(avisos(eventos).map((e) => e.tool)).toEqual(["propose_workouts", "propose_workouts"]);
+  it("ferramenta sem rótulo não anuncia nada", async () => {
+    expect(avisos(await linhaDoTempo(["ferramenta_desconhecida"]))).toEqual([]);
   });
 
-  // O resultado da consulta continua indo ao modelo: o que sumiu é o aviso na
-  // tela, não a chamada.
-  it("a ferramenta silenciosa continua rodando e respondendo ao modelo", async () => {
-    const eventos = await eventosDe(["query_exercises"]);
+  it("anuncia cada ferramenta do turno, na ordem em que são montadas", async () => {
+    const linha = await linhaDoTempo(["query_exercises", "propose_workouts"]);
 
-    expect(eventos.at(-1)).toEqual({ type: "done" });
-    expect(eventos.some((e) => e.type === "text")).toBe(true);
+    expect(avisos(linha).map((e) => (e as SseEvent & { tool: string }).tool)).toEqual([
+      "query_exercises",
+      "propose_workouts",
+    ]);
+  });
+});
+
+describe("texto entre turnos", () => {
+  const texto = (linha: Linha[]) =>
+    linha
+      .filter((e): e is Extract<SseEvent, { type: "text" }> => e.type === "text")
+      .map((e) => e.content)
+      .join("");
+
+  // "vou montar a proposta agora!Proposta pronta!" — duas frases de momentos
+  // diferentes lidas como uma, porque o turno seguinte continua a mesma bolha.
+  it("separa o texto do turno seguinte em parágrafo próprio", async () => {
+    const linha = await linhaDoTempo(
+      ["propose_workouts"],
+      ["Vou montar a proposta agora!", "Proposta pronta! Revise no cartão."],
+    );
+
+    expect(texto(linha)).toBe("Vou montar a proposta agora!\n\nProposta pronta! Revise no cartão.");
+  });
+
+  it("não abre a conversa com uma quebra", async () => {
+    const linha = await linhaDoTempo([], ["Olá!"]);
+
+    expect(texto(linha)).toBe("Olá!");
   });
 });
