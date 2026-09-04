@@ -159,18 +159,26 @@ function subMusculo(grupo, centro) {
     return y > 3.5 ? "Extensores_do_antebraço" : "Flexores_do_antebraço";
   }
 
+  // O braço se divide em **camadas de profundidade**, não por dentro e fora. As
+  // oito ilhas do braço ficam todas em cima da linha central dele — o desvio
+  // máximo é 0.47 —, então distância do eixo não separa nada. O que separa é
+  // `y`, em quatro camadas: 2.9 anterior superficial, 3.6 anterior profundo,
+  // 3.9 posterior, 4.5 posterior profundo.
   if (grupo === "Bíceps") {
-    // Duas ilhas por lado: a curta corre por dentro e à frente, a longa por
-    // fora e um pouco atrás.
-    return y > 3.2 ? "Cabeça_longa_do_bíceps" : "Cabeça_curta_do_bíceps";
+    // **Não são as duas cabeças do bíceps.** Na superfície elas formam um
+    // ventre só, e o écorché não as aparta. A camada de trás é o braquial, que
+    // corre por baixo do bíceps — anatomia de verdade, e o que o modelo sabe
+    // acender. Prometer "cabeça longa" e "cabeça curta" era oferecer uma
+    // seleção que devolvia uma tira fina e o resto do braço.
+    return y > 3.2 ? "Braquial" : "Bíceps";
   }
 
   if (grupo === "Tríceps") {
-    // **Duas cabeças, não três.** O écorché traz duas ilhas por lado, então a
-    // cabeça medial — que fica embaixo das outras duas — não existe como peça
-    // separada aqui. Prometer três na tela seria oferecer uma seleção que o
-    // modelo não sabe acender.
-    return lateral > 9.15 ? "Cabeça_lateral_do_tríceps" : "Cabeça_longa_do_tríceps";
+    // **Duas cabeças, não três.** A medial fica embaixo das outras duas e não
+    // existe como peça separada. Aqui a profundidade separa melhor que a
+    // largura: a cabeça longa é a mais posterior (y≈4.5), a lateral fica à
+    // frente dela (y≈3.9).
+    return y > 4.25 ? "Cabeça_longa_do_tríceps" : "Cabeça_lateral_do_tríceps";
   }
 
   return grupo;

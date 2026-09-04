@@ -54,7 +54,9 @@ export type GrupoMuscular = (typeof GRUPOS_MUSCULARES)[number];
 export const SUBMUSCULOS: Record<GrupoMuscular, readonly string[]> = {
   Abdômen: ["Reto_abdominal", "Oblíquos"],
   Antebraço: ["Flexores_do_antebraço", "Extensores_do_antebraço"],
-  Bíceps: ["Cabeça_longa_do_bíceps", "Cabeça_curta_do_bíceps"],
+  // Não são as duas cabeças do bíceps: na superfície elas formam um ventre só,
+  // e o écorché não as aparta. A segunda peça é o braquial, que corre por baixo.
+  Bíceps: ["Bíceps", "Braquial"],
   Costas: ["Trapézio", "Dorsal", "Lombar"],
   Glúteos: ["Glúteo_máximo", "Glúteo_médio"],
   Isquiotibiais: ["Bíceps_femoral", "Semitendinoso", "Semimembranoso"],
