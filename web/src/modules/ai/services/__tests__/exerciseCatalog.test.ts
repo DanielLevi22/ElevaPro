@@ -8,7 +8,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * que grupo desconhecido responde "não conheço" em vez de "não existe nada".
  */
 
-let rows: { name: string; muscle_group: string | null }[];
+let rows: {
+  name: string;
+  muscle_group: string | null;
+  venue?: string | null;
+  category?: string | null;
+}[];
 let queryError: unknown;
 
 const mockFrom = vi.fn(() => {
@@ -24,9 +29,14 @@ vi.mock("@/lib/supabase-admin", () => ({
   supabaseAdmin: { from: () => mockFrom() },
 }));
 
-const { MUSCLE_GROUPS, queryExercises, resolveMuscleGroups, unknownExerciseNames } = await import(
-  "../exerciseCatalog"
-);
+const {
+  CATEGORIES,
+  MUSCLE_GROUPS,
+  VENUES,
+  queryExercises,
+  resolveMuscleGroups,
+  unknownExerciseNames,
+} = await import("../exerciseCatalog");
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -60,8 +70,21 @@ describe("resolveMuscleGroups", () => {
   });
 
   it("não inventa grupo para termo desconhecido", () => {
-    expect(resolveMuscleGroups("panturrilha")).toEqual([]);
+    expect(resolveMuscleGroups("pescoço")).toEqual([]);
     expect(resolveMuscleGroups("")).toEqual([]);
+  });
+
+  // Os exercícios existem, sob `pernas` e `ombro`. Antes o especialista pedia
+  // panturrilha ou manguito rotador e ouvia "não conheço esse grupo".
+  it.each([
+    ["panturrilha", "pernas"],
+    ["isquiotibiais", "pernas"],
+    ["manguito", "ombro"],
+    ["rotador", "ombro"],
+    ["lombar", "costas"],
+    ["abdutores", "gluteos"],
+  ])("resolve %s para %s", (termo, esperado) => {
+    expect(resolveMuscleGroups(termo)).toEqual([esperado]);
   });
 
   it("cobre os nove grupos que existem", () => {
@@ -118,10 +141,10 @@ describe("queryExercises", () => {
 
   // Era isto que fazia o coach afirmar que o catálogo estava vazio.
   it("responde 'grupo desconhecido' com a lista do que existe", async () => {
-    const resultado = await queryExercises({ muscle_groups: ["panturrilha"] });
+    const resultado = await queryExercises({ muscle_groups: ["pescoço"] });
 
     expect(resultado.unknownGroup).toEqual({
-      requested: ["panturrilha"],
+      requested: ["pescoço"],
       available: MUSCLE_GROUPS,
     });
     expect(mockFrom).not.toHaveBeenCalled();
@@ -182,6 +205,108 @@ describe("queryExercises", () => {
     const resultado = await queryExercises({ muscle_groups: ["peito"], search_term: "rosca" });
 
     expect(resultado.total).toBe(0);
+  });
+});
+
+describe("queryExercises — onde e que tipo", () => {
+  const nomes = (r: { exercises: { name: string }[] }) => r.exercises.map((e) => e.name);
+
+  beforeEach(() => {
+    rows = [
+      { name: "Leg press 45°", muscle_group: "pernas", venue: "academia", category: "forca" },
+      {
+        name: "Agachamento livre sem peso",
+        muscle_group: "pernas",
+        venue: "casa",
+        category: "forca",
+      },
+      { name: "Flexão de braço", muscle_group: "peito", venue: "ambos", category: "forca" },
+      {
+        name: "Rotação externa com elástico",
+        muscle_group: "ombro",
+        venue: "ambos",
+        category: "estabilizacao",
+      },
+      {
+        name: "Alongamento de quadríceps em pé",
+        muscle_group: "pernas",
+        venue: "ambos",
+        category: "alongamento",
+      },
+    ];
+  });
+
+  // Flexão e prancha estão marcadas `ambos`. Comparar por igualdade exata
+  // esvaziaria o treino de quem não tem academia.
+  it("quem treina em casa também recebe o que serve nos dois lugares", async () => {
+    expect(nomes(await queryExercises({ venue: "casa" }))).toEqual([
+      "Agachamento livre sem peso",
+      "Alongamento de quadríceps em pé",
+      "Flexão de braço",
+      "Rotação externa com elástico",
+    ]);
+  });
+
+  it("quem treina na academia não perde o que serve nos dois", async () => {
+    const resultado = await queryExercises({ venue: "academia" });
+
+    expect(nomes(resultado)).toContain("Leg press 45°");
+    expect(nomes(resultado)).toContain("Flexão de braço");
+    expect(nomes(resultado)).not.toContain("Agachamento livre sem peso");
+  });
+
+  it("filtra por tipo de trabalho", async () => {
+    expect(nomes(await queryExercises({ category: "alongamento" }))).toEqual([
+      "Alongamento de quadríceps em pé",
+    ]);
+  });
+
+  // "core" é como o especialista fala; o banco guarda `estabilizacao`.
+  it("aceita o sinônimo que a pessoa usa", async () => {
+    expect(nomes(await queryExercises({ category: "core" }))).toEqual([
+      "Rotação externa com elástico",
+    ]);
+    expect(await queryExercises({ venue: "home" })).toMatchObject({ total: 4 });
+  });
+
+  it("cruza grupo, lugar e tipo", async () => {
+    const resultado = await queryExercises({
+      muscle_groups: ["pernas"],
+      venue: "casa",
+      category: "forca",
+    });
+
+    expect(nomes(resultado)).toEqual(["Agachamento livre sem peso"]);
+  });
+
+  // Mesma regra do grupo desconhecido: dizer o que existe, não sumir.
+  it("responde o que existe quando o filtro não é do vocabulário", async () => {
+    const lugar = await queryExercises({ venue: "parque" });
+    expect(lugar.unknownFilter).toEqual({
+      field: "venue",
+      requested: "parque",
+      available: VENUES,
+    });
+
+    const tipo = await queryExercises({ category: "pilates" });
+    expect(tipo.unknownFilter).toEqual({
+      field: "category",
+      requested: "pilates",
+      available: CATEGORIES,
+    });
+
+    expect(mockFrom).not.toHaveBeenCalled();
+  });
+
+  it("devolve a classificação junto do nome, para o coach poder dizer", async () => {
+    const resultado = await queryExercises({ search_term: "Rotação externa" });
+
+    expect(resultado.exercises[0]).toEqual({
+      name: "Rotação externa com elástico",
+      muscle_group: "ombro",
+      venue: "ambos",
+      category: "estabilizacao",
+    });
   });
 });
 

@@ -16,10 +16,50 @@ export type PeriodizationObjective =
   | "conditioning"
   | "general_fitness";
 
+/**
+ * O vocabulário do catálogo de exercícios, em um lugar só.
+ *
+ * Estava espalhado: o banco tinha os valores no CHECK, o coach tinha a lista
+ * dentro do serviço de IA, e o painel de admin tinha um campo de texto livre
+ * com placeholder "ex: Peito" — que gravava `Peito` e nunca mais era achado
+ * pela busca do coach, que procurava `peito`. Vocabulário fechado só fecha se
+ * quem escreve e quem lê usarem a mesma lista.
+ */
+export const EXERCISE_MUSCLE_GROUPS = [
+  "peito",
+  "costas",
+  "ombro",
+  "biceps",
+  "triceps",
+  "pernas",
+  "gluteos",
+  "abdomen",
+  "cardio",
+] as const;
+
+/** Onde o exercício dá para ser executado. Fechado por CHECK na 0042. */
+export const EXERCISE_VENUES = ["academia", "casa", "ambos"] as const;
+
+/** Que trabalho o exercício é — `muscle_group` continua dizendo onde no corpo. */
+export const EXERCISE_CATEGORIES = [
+  "forca",
+  "cardio",
+  "alongamento",
+  "mobilidade",
+  "postural",
+  "estabilizacao",
+] as const;
+
+export type ExerciseMuscleGroup = (typeof EXERCISE_MUSCLE_GROUPS)[number];
+export type ExerciseVenue = (typeof EXERCISE_VENUES)[number];
+export type ExerciseCategory = (typeof EXERCISE_CATEGORIES)[number];
+
 export interface Exercise {
   id: string;
   name: string;
   muscle_group: string | null;
+  venue: ExerciseVenue;
+  category: ExerciseCategory;
   description: string | null;
   video_url: string | null;
   is_verified: boolean;

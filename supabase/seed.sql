@@ -69,84 +69,13 @@ from (values
 ) as v(name, calories, protein, carbs, fat, fiber, serving_size)
 where not exists (select 1 from foods t where t.name = v.name);
 
--- Seed: exercícios básicos por grupo muscular
-
-insert into exercises (name, muscle_group, is_verified)
-select v.name, v.muscle_group, v.is_verified
-from (values
--- Peito
-('Supino reto com barra',          'peito',   true),
-('Supino inclinado com halteres',  'peito',   true),
-('Crucifixo com halteres',         'peito',   true),
-('Flexão de braço',                'peito',   true),
-('Crossover no cabo',              'peito',   true),
-('Supino declinado',               'peito',   true),
-
--- Costas
-('Puxada frontal',                 'costas',  true),
-('Remada curvada com barra',       'costas',  true),
-('Remada unilateral com halter',   'costas',  true),
-('Levantamento terra',             'costas',  true),
-('Pull-up (barra fixa)',           'costas',  true),
-('Remada no cabo sentado',         'costas',  true),
-('Pullover com halter',            'costas',  true),
-
--- Ombros
-('Desenvolvimento com barra',      'ombro',   true),
-('Elevação lateral com halteres',  'ombro',   true),
-('Elevação frontal',               'ombro',   true),
-('Desenvolvimento Arnold',         'ombro',   true),
-('Encolhimento de ombros',         'ombro',   true),
-('Face pull no cabo',              'ombro',   true),
-
--- Bíceps
-('Rosca direta com barra',         'biceps',  true),
-('Rosca alternada com halteres',   'biceps',  true),
-('Rosca martelo',                  'biceps',  true),
-('Rosca concentrada',              'biceps',  true),
-('Rosca no cabo',                  'biceps',  true),
-
--- Tríceps
-('Tríceps testa com barra W',      'triceps', true),
-('Tríceps pulley corda',           'triceps', true),
-('Tríceps coice com halter',       'triceps', true),
-('Mergulho entre bancos',          'triceps', true),
-('Tríceps francês',                'triceps', true),
-
--- Pernas
-('Agachamento livre',              'pernas',  true),
-('Leg press 45°',                  'pernas',  true),
-('Cadeira extensora',              'pernas',  true),
-('Mesa flexora',                   'pernas',  true),
-('Agachamento búlgaro',            'pernas',  true),
-('Afundo com halteres',            'pernas',  true),
-('Stiff com barra',                'pernas',  true),
-('Cadeira abdutora',               'pernas',  true),
-('Cadeira adutora',                'pernas',  true),
-('Panturrilha em pé',              'pernas',  true),
-('Panturrilha sentado',            'pernas',  true),
-('Hack squat',                     'pernas',  true),
-
--- Glúteos
-('Hip thrust com barra',           'gluteos', true),
-('Elevação pélvica',               'gluteos', true),
-('Glúteo no cabo',                 'gluteos', true),
-('Agachamento sumô',               'gluteos', true),
-
--- Abdômen
-('Abdominal crunch',               'abdomen', true),
-('Prancha',                        'abdomen', true),
-('Elevação de pernas',             'abdomen', true),
-('Abdominal bicicleta',            'abdomen', true),
-('Crunch no cabo',                 'abdomen', true),
-('Abdominal oblíquo',              'abdomen', true),
-
--- Cardio / Funcional
-('Esteira',                        'cardio',  true),
-('Bike ergométrica',               'cardio',  true),
-('Elíptico',                       'cardio',  true),
-('Corda naval',                    'cardio',  true),
-('Burpee',                         'cardio',  true),
-('Polichinelo',                    'cardio',  true)
-) as v(name, muscle_group, is_verified)
-where not exists (select 1 from exercises t where t.name = v.name);
+-- Exercícios: não estão aqui, de propósito.
+--
+-- O catálogo inteiro — 181 linhas, com `venue` e `category` — vive na migration
+-- 0042. Seed só roda em `supabase db reset` local: enquanto os exercícios
+-- moravam aqui, preview e produção nasciam com a tabela vazia, o coach buscava
+-- e não achava nada, e nenhum treino era salvo. Duas listas com o mesmo dado
+-- divergem; esta é a que foi embora.
+--
+-- `db reset` aplica as migrations antes deste arquivo, então o banco local
+-- continua ganhando o catálogo completo.

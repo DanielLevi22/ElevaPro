@@ -489,6 +489,7 @@ export type Database = {
       };
       exercises: {
         Row: {
+          category: string;
           created_at: string;
           created_by: string | null;
           description: string | null;
@@ -496,9 +497,11 @@ export type Database = {
           is_verified: boolean;
           muscle_group: string | null;
           name: string;
+          venue: string;
           video_url: string | null;
         };
         Insert: {
+          category?: string;
           created_at?: string;
           created_by?: string | null;
           description?: string | null;
@@ -506,9 +509,11 @@ export type Database = {
           is_verified?: boolean;
           muscle_group?: string | null;
           name: string;
+          venue?: string;
           video_url?: string | null;
         };
         Update: {
+          category?: string;
           created_at?: string;
           created_by?: string | null;
           description?: string | null;
@@ -516,6 +521,7 @@ export type Database = {
           is_verified?: boolean;
           muscle_group?: string | null;
           name?: string;
+          venue?: string;
           video_url?: string | null;
         };
         Relationships: [

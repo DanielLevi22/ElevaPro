@@ -29,11 +29,16 @@ const SECTION_SEPARATOR = `
 export const maxDuration = 60;
 
 async function handleQueryExercises(input: Record<string, unknown>): Promise<string> {
+  const texto = (campo: unknown): string | undefined =>
+    typeof campo === "string" ? campo : undefined;
+
   const result = await queryExercises({
     muscle_groups: Array.isArray(input.muscle_groups)
       ? (input.muscle_groups as string[])
       : undefined,
-    search_term: typeof input.search_term === "string" ? input.search_term : undefined,
+    search_term: texto(input.search_term),
+    venue: texto(input.venue),
+    category: texto(input.category),
   });
 
   if (result.unknownGroup) {
@@ -41,6 +46,14 @@ async function handleQueryExercises(input: Record<string, unknown>): Promise<str
       exercises: [],
       erro: `Não conheço: ${result.unknownGroup.requested.join(", ")}.`,
       grupos_disponiveis: result.unknownGroup.available,
+    });
+  }
+
+  if (result.unknownFilter) {
+    return JSON.stringify({
+      exercises: [],
+      erro: `Não conheço ${result.unknownFilter.field} "${result.unknownFilter.requested}".`,
+      valores_disponiveis: result.unknownFilter.available,
     });
   }
 

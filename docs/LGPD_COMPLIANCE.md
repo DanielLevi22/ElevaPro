@@ -138,6 +138,17 @@ Dados que foram explicitamente rejeitados do schema por violar o princípio da n
   tela pedia o texto e nenhum serviço o gravava. Mesma decisão, mesma razão. Se
   vier a ser necessário, nasce com base legal do Art. 11 e lembrete de leitura
   desde o primeiro commit, como `workout_sessions.notes` tem agora
+- **Condição indicada no catálogo de exercícios** (`exercises.indicated_for`,
+  proposta e recusada na `0042`) — o catálogo ganhou `venue` e `category` para
+  servir treino em casa e alongamento, e a tentação seguinte era rotular a linha
+  com a condição que ela trata: "hérnia de disco", "impacto do ombro",
+  "lombalgia". O rótulo em si é dado de produto, mas ele só é útil sendo
+  cruzado: o coach diria ao especialista que sugeriu aquele exercício **porque**
+  o aluno tem a condição, e a frase na tela passa a ser inferência sobre saúde
+  de titular identificado (Art. 11). O que o produto precisa já existe sem isso —
+  a anamnese diz a restrição, e `category` diz que tipo de trabalho o exercício
+  é. Se voltar, volta como coluna de `student_anamnesis`, do lado onde já há
+  base legal e RLS, nunca no catálogo compartilhado
 
 ---
 
