@@ -37,11 +37,34 @@ describe("escalaDeCor", () => {
       { muscle: "Bíceps", volume: 800 },
     ]);
 
-    const biceps = cores.get("Bíceps") ?? "";
-    const canais = biceps.match(/\d+/g)?.map(Number) ?? [];
+    const vermelho = (m: string) => Number(cores.get(m)?.match(/\d+/g)?.[0] ?? 0);
 
-    // Vermelho bem acima do frio (63) prova que o bíceps saiu do fundo da escala.
-    expect(canais[0]).toBeGreaterThan(150);
+    // Saiu do fundo da escala, mas continua claramente abaixo do topo.
+    expect(vermelho("Bíceps")).toBeGreaterThan(90);
+    expect(vermelho("Bíceps")).toBeLessThan(vermelho("Quadríceps") - 60);
+  });
+
+  // Regressão do defeito que o log tinha: num corpus real os seis músculos
+  // saíam quase da mesma cor, e o mapa deixava de responder à pergunta que
+  // existe para responder — qual sofreu mais.
+  it("mantém distância visível entre o maior e o menor de um corpus real", () => {
+    const cores = escalaDeCor([
+      { muscle: "Quadríceps", volume: 24000 },
+      { muscle: "Glúteos", volume: 18000 },
+      { muscle: "Isquiotibiais", volume: 15000 },
+      { muscle: "Panturrilha", volume: 6000 },
+      { muscle: "Costas", volume: 4000 },
+      { muscle: "Abdômen", volume: 2200 },
+    ]);
+
+    const vermelho = (m: string) => Number(cores.get(m)?.match(/\d+/g)?.[0] ?? 0);
+    const distancia = vermelho("Quadríceps") - vermelho("Abdômen");
+
+    if (distancia < 100) {
+      throw new Error(
+        `ESCALA ACHATADA: o maior e o menor volume do corpus ficaram a ${distancia} de distância no vermelho — com onze vezes de diferença entre eles, o mapa não separa e não informa`,
+      );
+    }
   });
 
   it("não quebra com corpus vazio", () => {

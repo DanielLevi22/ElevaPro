@@ -7,9 +7,15 @@
  * diferença entre o primeiro e o segundo colocado — que era justamente o que a
  * faixa achatava.
  *
- * Logarítmica pelo mesmo motivo que a versão 3D: tonelagem de perna é uma ordem
- * de grandeza acima da de bíceps, e em escala linear o braço nunca sai do tom
- * mínimo, esteja ele descansado ou destruído.
+ * **Raiz quadrada, e não logaritmo.** O log foi a primeira tentativa e repetia
+ * o defeito do mapa 3D: num corpus real — Quadríceps 24.000 contra Abdômen
+ * 2.200, onze vezes menos — o menor já caía em 76% da rampa, e os seis músculos
+ * saíam praticamente da mesma cor. Escala que não separa não informa nada.
+ *
+ * A raiz espalha o mesmo conjunto entre 0.30 e 1.00 e ainda comprime o
+ * suficiente para a tonelagem de perna, que é uma ordem de grandeza acima da de
+ * braço, não empurrar o bíceps para o fundo da escala esteja ele descansado ou
+ * destruído. Linear faria isso; log fazia o oposto.
  */
 
 /** O tom de quem não tem série registrada no período. */
@@ -45,7 +51,7 @@ export function escalaDeCor(
   const maximo = Math.max(...comVolume.map((m) => m.volume));
 
   for (const { muscle, volume } of comVolume) {
-    const t = maximo > 0 ? Math.log1p(volume) / Math.log1p(maximo) : 0;
+    const t = maximo > 0 ? Math.sqrt(volume / maximo) : 0;
     cores.set(muscle, misturar(t));
   }
 
