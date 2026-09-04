@@ -68,6 +68,11 @@ export function AiCoachChat({
         if (cancelado) return;
         if (data.sessionId) onSessionResolved(data.sessionId);
         setContexto(data.availability ?? []);
+        // A proposta que o servidor guardou continua esperando decisão. Sem
+        // esta linha, sair da tela e voltar apagava o cartão — e o botão de
+        // aprovar com ele — com a proposta viva no banco.
+        setWorkoutProposal(data.workoutProposal ?? null);
+        setSavedWorkoutTitles([]);
         setMessages(
           data.messages?.length
             ? data.messages

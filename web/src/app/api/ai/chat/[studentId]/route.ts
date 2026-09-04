@@ -4,6 +4,7 @@ import { formatBodyScanIndex, queryBodyScan } from "@/modules/ai/services/bodySc
 import {
   getOrCreateSession,
   getSessionMessages,
+  getSessionState,
   phaseOwnedBy,
   saveMessage,
   savePeriodization,
@@ -336,7 +337,7 @@ export async function GET(
   // tela precisa das duas coisas para abrir, e duas idas ao servidor mostrariam
   // a conversa antes de dizer o que ela sabe. Falha aqui não derruba o
   // histórico — a tira some, o chat abre.
-  const [messages, contexto] = await Promise.all([
+  const [messages, contexto, estado] = await Promise.all([
     getSessionMessages(sessionId),
     Promise.all([
       loadStudentContext(studentId, auth.caller.id),
@@ -344,7 +345,18 @@ export async function GET(
     ])
       .then(([ctx, indice]) => resumirDisponibilidade(ctx, indice.length > 0))
       .catch(() => null),
+    getSessionState(sessionId),
   ]);
 
-  return NextResponse.json({ sessionId, messages, availability: contexto });
+  return NextResponse.json({
+    sessionId,
+    messages,
+    availability: contexto,
+    // A proposta guardada aqui é a mesma que a rota de aprovação salva — o
+    // cartão na tela é uma vista dela. Sem devolvê-la, recarregar a página
+    // apagava o cartão e o botão de aprovar junto, com a proposta viva no
+    // banco. Pendente é, por definição, não aprovada: a aprovação limpa este
+    // campo, então o cartão restaurado nasce sem treino marcado como salvo.
+    workoutProposal: estado.pendingWorkoutProposal ?? null,
+  });
 }
