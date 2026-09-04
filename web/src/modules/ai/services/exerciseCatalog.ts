@@ -1,3 +1,11 @@
+import {
+  EXERCISE_CATEGORIES,
+  EXERCISE_MUSCLE_GROUPS,
+  EXERCISE_VENUES,
+  type ExerciseCategory,
+  type ExerciseMuscleGroup,
+  type ExerciseVenue,
+} from "@elevapro/shared";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 /**
@@ -12,20 +20,19 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
  * cru para o `ilike`.
  */
 
-/** Os nove grupos que existem em `exercises.muscle_group`. */
-export const MUSCLE_GROUPS = [
-  "peito",
-  "costas",
-  "ombro",
-  "biceps",
-  "triceps",
-  "pernas",
-  "gluteos",
-  "abdomen",
-  "cardio",
-] as const;
+/**
+ * O vocabulário vem de `@elevapro/shared`: é o mesmo que o painel de admin
+ * oferece ao criar exercício e o mesmo que o CHECK do banco aceita. Enquanto
+ * cada um tinha a sua lista, o admin gravava "Peito" e a busca procurava
+ * "peito".
+ */
+export const MUSCLE_GROUPS = EXERCISE_MUSCLE_GROUPS;
+export const VENUES = EXERCISE_VENUES;
+export const CATEGORIES = EXERCISE_CATEGORIES;
 
-export type MuscleGroup = (typeof MUSCLE_GROUPS)[number];
+export type MuscleGroup = ExerciseMuscleGroup;
+export type Venue = ExerciseVenue;
+export type Category = ExerciseCategory;
 
 /**
  * Termos que o modelo (ou o especialista) usa e que não são o valor do banco.
@@ -48,6 +55,50 @@ const SYNONYMS: Record<string, MuscleGroup[]> = {
   abdominais: ["abdomen"],
   core: ["abdomen"],
   aerobico: ["cardio"],
+  // Sem estes, pedir "panturrilha" ou "manguito rotador" respondia "não conheço
+  // esse grupo" — com os exercícios no banco, sob `pernas` e `ombro`.
+  panturrilha: ["pernas"],
+  panturrilhas: ["pernas"],
+  isquiotibiais: ["pernas"],
+  adutores: ["pernas"],
+  abdutores: ["gluteos"],
+  manguito: ["ombro"],
+  rotador: ["ombro"],
+  escapula: ["ombro"],
+  trapezio: ["costas"],
+  lombar: ["costas"],
+  cervical: ["costas"],
+};
+
+/** Como a pessoa fala, para o valor que o banco guarda. */
+const VENUE_SYNONYMS: Record<string, Venue> = {
+  academias: "academia",
+  gym: "academia",
+  musculacao: "academia",
+  sala: "academia",
+  domicilio: "casa",
+  home: "casa",
+  residencia: "casa",
+  ambas: "ambos",
+  qualquer: "ambos",
+};
+
+const CATEGORY_SYNONYMS: Record<string, Category> = {
+  forcas: "forca",
+  hipertrofia: "forca",
+  resistencia: "forca",
+  aerobico: "cardio",
+  condicionamento: "cardio",
+  alongamentos: "alongamento",
+  flexibilidade: "alongamento",
+  mobilidades: "mobilidade",
+  mobilizacao: "mobilidade",
+  postura: "postural",
+  posturais: "postural",
+  core: "estabilizacao",
+  estabilidade: "estabilizacao",
+  estabilizadores: "estabilizacao",
+  manguito: "estabilizacao",
 };
 
 /** Marcas de acentuação que o NFD separa da letra base. */
@@ -79,18 +130,45 @@ export function resolveMuscleGroups(term: string): MuscleGroup[] {
   return partial;
 }
 
+/**
+ * Traduz o termo do modelo para o valor do banco, ou `null` se não reconhece.
+ *
+ * Mesmo contrato de `resolveMuscleGroups`: não reconhecer é resposta, não
+ * ausência — é o que deixa a ferramenta dizer "não conheço, o que existe é X"
+ * em vez de devolver lista vazia e o coach concluir que não há exercício.
+ */
+function resolveTerm<T extends string>(
+  term: string,
+  valores: readonly T[],
+  sinonimos: Record<string, T>,
+): T | null {
+  const normalized = normalize(term);
+  if (normalized.length === 0) return null;
+  return valores.find((v) => v === normalized) ?? sinonimos[normalized] ?? null;
+}
+
 export interface ExerciseQueryInput {
   /** Vários de uma vez: uma chamada por grupo custava um turno do modelo cada. */
   muscle_groups?: string[];
   search_term?: string;
+  /** `casa` para treino sem academia — traz também o que serve nos dois. */
+  venue?: string;
+  /** `alongamento`, `mobilidade`, `postural`, `estabilizacao`, `forca`, `cardio`. */
+  category?: string;
 }
 
 export interface ExerciseQueryResult {
-  exercises: { name: string; muscle_group: string }[];
+  exercises: { name: string; muscle_group: string; venue: string; category: string }[];
   /** Quantos existem no filtro — o modelo precisa saber se está vendo tudo. */
   total: number;
   /** Preenchido quando o grupo pedido não existe, com os que existem. */
   unknownGroup?: { requested: string[]; available: readonly string[] };
+  /** Mesmo papel, para `venue` e `category`: dizer o que existe, não sumir. */
+  unknownFilter?: {
+    field: "venue" | "category";
+    requested: string;
+    available: readonly string[];
+  };
   /**
    * Os valores de `muscle_group` que o banco realmente tem, listados só quando
    * o filtro não casou com nada. É o que separa "catálogo vazio" de "o catálogo
@@ -106,15 +184,19 @@ export interface ExerciseQueryResult {
  */
 const MAX_RESULTS = 80;
 
-/** A linha do catálogo que interessa aqui: nome e grupo, nada mais. */
+/** A linha do catálogo que interessa aqui: o que classifica, nada mais. */
 interface CatalogRow {
   name: string;
   muscle_group: string | null;
+  venue: string | null;
+  category: string | null;
 }
 
-/** O catálogo inteiro, em duas colunas. */
+/** O catálogo inteiro, nas quatro colunas que classificam. */
 async function readCatalog(): Promise<CatalogRow[]> {
-  const { data, error } = await supabaseAdmin.from("exercises").select("name, muscle_group");
+  const { data, error } = await supabaseAdmin
+    .from("exercises")
+    .select("name, muscle_group, venue, category");
 
   // Erro tem que subir: era indistinguível de "não achei nada", e o modelo
   // afirmava com convicção que o catálogo estava vazio.
@@ -155,6 +237,26 @@ export async function queryExercises(input: ExerciseQueryInput): Promise<Exercis
     };
   }
 
+  const venue = input.venue ? resolveTerm(input.venue, VENUES, VENUE_SYNONYMS) : null;
+  if (input.venue && !venue) {
+    return {
+      exercises: [],
+      total: 0,
+      unknownFilter: { field: "venue", requested: input.venue, available: VENUES },
+    };
+  }
+
+  const category = input.category
+    ? resolveTerm(input.category, CATEGORIES, CATEGORY_SYNONYMS)
+    : null;
+  if (input.category && !category) {
+    return {
+      exercises: [],
+      total: 0,
+      unknownFilter: { field: "category", requested: input.category, available: CATEGORIES },
+    };
+  }
+
   // O filtro acontece aqui, não num `.in()`: aquele compara byte a byte, e uma
   // linha gravada como "Peito" ou "Bíceps" — pelo painel de admin, por um seed
   // antigo, por importação — não casava com `peito` nem `biceps`. O catálogo
@@ -164,17 +266,26 @@ export async function queryExercises(input: ExerciseQueryInput): Promise<Exercis
   const termo = input.search_term ? normalize(input.search_term) : null;
 
   const encontrados = catalogo.filter((linha) => {
-    const grupoDaLinha = resolveMuscleGroups(linha.muscle_group ?? "");
-    if (groups.size > 0 && !grupoDaLinha.some((g) => groups.has(g))) return false;
+    if (groups.size > 0) {
+      const grupoDaLinha = resolveMuscleGroups(linha.muscle_group ?? "");
+      if (!grupoDaLinha.some((g) => groups.has(g))) return false;
+    }
+    if (venue && !servePara(venue, linha.venue)) return false;
+    if (category && resolveTerm(linha.category ?? "", CATEGORIES, CATEGORY_SYNONYMS) !== category) {
+      return false;
+    }
     return termo === null || normalize(linha.name).includes(termo);
   });
 
   encontrados.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 
   return {
-    exercises: encontrados
-      .slice(0, MAX_RESULTS)
-      .map((e) => ({ name: e.name, muscle_group: e.muscle_group ?? "" })),
+    exercises: encontrados.slice(0, MAX_RESULTS).map((e) => ({
+      name: e.name,
+      muscle_group: e.muscle_group ?? "",
+      venue: e.venue ?? "",
+      category: e.category ?? "",
+    })),
     total: encontrados.length,
     // Filtro que não casou com nada, num catálogo que tem linhas: é deriva de
     // dado, não catálogo vazio, e só o valor cru mostra isso.
@@ -182,4 +293,17 @@ export async function queryExercises(input: ExerciseQueryInput): Promise<Exercis
       ? { groupsInCatalog: [...new Set(catalogo.map((e) => e.muscle_group ?? "(sem grupo)"))] }
       : {}),
   };
+}
+
+/**
+ * Quem treina em casa também faz o que serve nos dois lugares.
+ *
+ * Comparar por igualdade exata esvaziaria o treino sem academia: flexão e
+ * prancha estão marcadas `ambos`, não `casa`.
+ */
+function servePara(pedido: Venue, doExercicio: string | null): boolean {
+  const marcado = resolveTerm(doExercicio ?? "", VENUES, VENUE_SYNONYMS);
+  if (!marcado) return false;
+  if (pedido === "ambos") return marcado === "ambos";
+  return marcado === pedido || marcado === "ambos";
 }

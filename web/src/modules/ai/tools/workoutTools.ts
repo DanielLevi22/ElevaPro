@@ -132,7 +132,7 @@ export const WORKOUT_TOOLS: ToolDefinition[] = [
   {
     name: "query_exercises",
     description:
-      "Busca exercícios do catálogo. Use antes de sugerir qualquer exercício ao especialista — nunca invente nome que não veio daqui. A resposta traz `total`, então você sabe se está vendo o grupo inteiro.",
+      "Busca exercícios do catálogo. Use antes de sugerir qualquer exercício ao especialista — nunca invente nome que não veio daqui. A resposta traz `total`, então você sabe se está vendo o grupo inteiro. Filtre por `venue` quando o aluno treina em casa, e por `category` para montar aquecimento, alongamento final ou trabalho de estabilização.",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -164,6 +164,20 @@ export const WORKOUT_TOOLS: ToolDefinition[] = [
         search_term: {
           type: "string",
           description: "Buscar por nome de exercício (ex: Supino, Agachamento)",
+        },
+        venue: {
+          // `casa` traz também o que serve nos dois lugares: flexão e prancha
+          // estão marcadas `ambos`, e sem elas o treino sem academia esvazia.
+          type: "string",
+          enum: ["academia", "casa", "ambos"],
+          description:
+            "Onde o aluno treina. `casa` devolve o que dispensa academia, incluindo o que serve nos dois lugares. Sem este filtro, vem tudo — e você pode acabar prescrevendo leg press para quem treina na sala de casa.",
+        },
+        category: {
+          type: "string",
+          enum: ["forca", "cardio", "alongamento", "mobilidade", "postural", "estabilizacao"],
+          description:
+            "Que trabalho o exercício é. `estabilizacao` cobre manguito rotador, core profundo e glúteo médio — é o que a restrição da anamnese costuma pedir. `muscle_group` continua dizendo onde no corpo, e os dois se cruzam.",
         },
       },
     },
