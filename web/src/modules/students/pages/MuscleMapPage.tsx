@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -12,7 +11,6 @@ import {
   SUBMUSCULOS,
   volumePorMalha,
 } from "@/modules/students/components/muscle-map/grupos";
-import { useStudents } from "@/shared/hooks/useStudents";
 import { useWorkoutMetrics } from "@/shared/hooks/useWorkoutMetrics";
 
 // Three.js requires browser APIs — disable SSR
@@ -226,8 +224,6 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
 export default function MuscleMapPage() {
   const params = useParams();
   const studentId = params.id as string;
-  const { data: students = [] } = useStudents();
-  const student = students.find((s) => s.id === studentId);
 
   const [days, setDays] = useState<90 | 180 | 365>(90);
   const [selectedMuscle, setSelectedMuscle] = useState<string | null>(null);
@@ -303,45 +299,10 @@ export default function MuscleMapPage() {
 
       {/* ── Cabeçalho flutuante ─────────────────────────────────────────── */}
       <div className="pointer-events-none absolute top-0 right-0 left-0 flex items-start justify-between gap-4 p-6">
-        {/* Some em tela cheia. O botão de voltar leva a uma página que está
-            atrás da cena, e o nome do aluno é contexto de navegação — os dois
-            pertencem ao modo em que a navegação existe. Em imersão, o que
-            precisa estar visível é a saída, e ela é o botão à direita. */}
-        {telaCheia ? (
-          <div />
-        ) : (
-          <div className="pointer-events-auto flex items-center gap-3">
-            <Link
-              className="rounded-full border border-border bg-surface/70 p-2.5 text-muted-foreground backdrop-blur-md transition-colors hover:text-foreground"
-              href={`/dashboard/students/${studentId}`}
-            >
-              <svg
-                aria-hidden="true"
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M15 19l-7-7 7-7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                />
-              </svg>
-            </Link>
-            <div>
-              <p className="font-bold text-[10px] text-primary uppercase tracking-[0.2em]">
-                Mapa Muscular
-              </p>
-              {student && (
-                <h1 className="font-bold text-foreground text-xl leading-tight">
-                  {student.full_name}
-                </h1>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Sem cabeçalho: o nome do aluno e o botão de voltar já estão nas abas
+            logo acima, e repeti-los aqui só empurrava a cena para baixo. O
+            espaçador mantém os controles à direita no `justify-between`. */}
+        <div />
 
         <div className="pointer-events-auto flex items-center gap-2">
           <button

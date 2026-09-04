@@ -103,9 +103,10 @@ function GiraCameraPara({ alvo, aoChegar }: { alvo: number | null; aoChegar: () 
       return;
     }
 
-    // 3.5 rad/s de piso: a meia-volta leva pouco menos de um segundo mesmo na
-    // parte final, onde o termo proporcional já não empurra.
-    const passo = Math.max(Math.abs(dif) * delta * 6, 3.5 * delta);
+    // 9 rad/s de piso: a meia-volta leva cerca de um terço de segundo. Rápido
+    // o bastante para não fazer esperar, e ainda contínuo — o que se quer é a
+    // noção de que o corpo girou, não um corte.
+    const passo = Math.max(Math.abs(dif) * delta * 12, 9 * delta);
     controles.setAzimuthalAngle(atual + Math.sign(dif) * Math.min(passo, Math.abs(dif)));
   });
 
