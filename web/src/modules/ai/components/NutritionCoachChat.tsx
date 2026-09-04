@@ -57,6 +57,12 @@ export function NutritionCoachChat({
       .then((data) => {
         if (cancelado) return;
         if (data.sessionId) onSessionResolved(data.sessionId);
+        // Mesmo motivo do chat de treino: proposta guardada no servidor volta
+        // para a tela ao abrir, em vez de sumir com o botão de aprovar.
+        setPlanProposal(data.planProposal ?? null);
+        setPlanSaved(false);
+        setMealsProposal(data.mealsProposal ?? null);
+        setMealsSaved(false);
         setMessages(
           data.messages?.length
             ? data.messages

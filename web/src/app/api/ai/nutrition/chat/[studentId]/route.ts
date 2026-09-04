@@ -6,6 +6,7 @@ import { formatBodyScanIndex, queryBodyScan } from "@/modules/ai/services/bodySc
 import {
   getOrCreateSession,
   getSessionMessages,
+  getSessionState,
   saveMessage,
   sessionOwnedBy,
   updateSessionState,
@@ -232,7 +233,17 @@ export async function GET(
     return NextResponse.json({ error: "conversa não encontrada" }, { status: 404 });
   }
 
-  const messages = await getSessionMessages(sessionId);
+  const [messages, estado] = await Promise.all([
+    getSessionMessages(sessionId),
+    getSessionState(sessionId),
+  ]);
 
-  return NextResponse.json({ sessionId, messages });
+  // Mesmo motivo do chat de treino: a proposta guardada é a que a aprovação
+  // salva, e sem devolvê-la recarregar a tela apagava o cartão com o botão.
+  return NextResponse.json({
+    sessionId,
+    messages,
+    planProposal: estado.pendingDietPlan ?? null,
+    mealsProposal: estado.pendingDietMeals ?? null,
+  });
 }
