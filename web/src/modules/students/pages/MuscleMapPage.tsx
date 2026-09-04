@@ -95,8 +95,10 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
   });
 
   return (
-    <div className="bg-surface border border-white/10 rounded-xl p-5 flex flex-col gap-3">
-      <h3 className="text-sm font-semibold text-foreground">Grupos musculares</h3>
+    <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/40 p-4 backdrop-blur-md">
+      <h3 className="font-bold text-[10px] text-white/40 uppercase tracking-widest">
+        Grupos musculares
+      </h3>
 
       <ol className="flex flex-col gap-1">
         {sorted.map((group) => {
@@ -116,20 +118,16 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
                   // ao clique na lateral e ao clique no boneco de uma vez.
                   if (isSelected) setAberto(null);
                 }}
-                className={`w-full text-left rounded-lg px-3 py-2 transition-colors ${
+                className={`w-full rounded-lg border px-3 py-2 text-left transition-colors ${
                   isSelected
-                    ? "bg-primary/15 border border-primary/30"
-                    : "hover:bg-white/5 border border-transparent"
+                    ? "border-primary/40 bg-primary/20"
+                    : "border-transparent hover:bg-white/5"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span
-                    className={`text-sm font-medium ${
-                      isSelected
-                        ? "text-primary"
-                        : hasData
-                          ? "text-foreground"
-                          : "text-muted-foreground"
+                    className={`font-medium text-sm ${
+                      isSelected ? "text-primary" : hasData ? "text-white" : "text-white/45"
                     }`}
                   >
                     {group}
@@ -138,10 +136,10 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
                     {/* Sem volume, nada: o traço que ficava aqui não dizia
                         mais que a ausência do número, e encostado na seta
                         parecia parte do controle de abrir. */}
-                    {hasData && <span className="text-muted-foreground text-xs">{pct}%</span>}
+                    {hasData && <span className="text-white/50 text-xs">{pct}%</span>}
                     {partes.length > 1 && (
                       <span
-                        className={`text-muted-foreground text-[10px] transition-transform ${
+                        className={`text-[10px] text-white/35 transition-transform ${
                           aberto === group ? "rotate-90" : ""
                         }`}
                       >
@@ -173,8 +171,8 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
                       <button
                         className={`w-full rounded px-2 py-1 text-left text-xs transition-colors ${
                           selectedMuscle === parte
-                            ? "bg-primary/15 text-primary"
-                            : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                            ? "bg-primary/20 text-primary"
+                            : "text-white/45 hover:bg-white/5 hover:text-white"
                         }`}
                         onClick={() => onSelect(selectedMuscle === parte ? null : parte)}
                         type="button"
@@ -194,7 +192,7 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
         <button
           type="button"
           onClick={() => onSelect(null)}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors text-left"
+          className="text-left text-white/40 text-xs transition-colors hover:text-white"
         >
           ✕ Limpar seleção
         </button>
@@ -218,47 +216,80 @@ export default function MuscleMapPage() {
   const volumeByMuscle = metrics?.volumeByMuscle ?? [];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+    /*
+     * A tela inteira é o ambiente, não um cartão dentro de uma página.
+     *
+     * O corpo ocupa a viewport e a informação **orbita** ele em vidro
+     * translúcido, em vez de dividir espaço em colunas. A diferença não é
+     * decorativa: numa grade, o olho lê da esquerda para a direita e o boneco
+     * vira mais um bloco; assim ele é o assunto e o resto flutua por cima.
+     *
+     * `fixed` e não `absolute` porque a página vive dentro do layout do
+     * dashboard, que tem seu próprio scroll — sem isso a cena herdaria a altura
+     * do conteúdo e voltaria a ser um cartão alto.
+     */
+    <div className="fixed inset-0 overflow-hidden bg-[#07070a]">
+      {/* Brilho ambiente atrás do corpo. Dá um "lugar" ao vazio: sem ele o
+          fundo é preto chapado e a cena parece um recorte. */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 60% 55% at 50% 40%, rgba(120,110,140,0.16), transparent 70%)",
+        }}
+      />
+
+      <div className="absolute inset-0">
+        <MuscleMapViewer
+          onMuscleSelect={setSelectedMuscle}
+          selectedMuscle={selectedMuscle}
+          volumeByMuscle={volumePorMalha(volumeByMuscle)}
+        />
+      </div>
+
+      {/* ── Cabeçalho flutuante ─────────────────────────────────────────── */}
+      <div className="pointer-events-none absolute top-0 right-0 left-0 flex items-start justify-between gap-4 p-6">
+        <div className="pointer-events-auto flex items-center gap-3">
           <Link
+            className="rounded-full border border-white/10 bg-black/40 p-2.5 text-white/60 backdrop-blur-md transition-colors hover:text-white"
             href={`/dashboard/students/${studentId}`}
-            className="p-2 rounded-lg hover:bg-white/5 text-muted-foreground hover:text-foreground transition-colors"
           >
             <svg
               aria-hidden="true"
-              className="w-5 h-5"
+              className="h-4 w-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path
+                d="M15 19l-7-7 7-7"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M15 19l-7-7 7-7"
               />
             </svg>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Mapa Muscular</h1>
-            {student && <p className="text-sm text-muted-foreground mt-0.5">{student.full_name}</p>}
+            <p className="font-bold text-[10px] text-primary uppercase tracking-[0.2em]">
+              Mapa Muscular
+            </p>
+            {student && (
+              <h1 className="font-bold text-white text-xl leading-tight">{student.full_name}</h1>
+            )}
           </div>
         </div>
 
-        {/* Period selector */}
-        <div className="flex items-center gap-1 bg-surface border border-white/10 rounded-lg p-1">
+        <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-white/10 bg-black/40 p-1 backdrop-blur-md">
           {PERIODS.map((p) => (
             <button
-              key={p.value}
-              type="button"
-              onClick={() => setDays(p.value as 90 | 180 | 365)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              className={`rounded-full px-3.5 py-1.5 font-medium text-xs transition-colors ${
                 days === p.value
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-white/50 hover:text-white"
               }`}
+              key={p.value}
+              onClick={() => setDays(p.value as 90 | 180 | 365)}
+              type="button"
             >
               {p.label}
             </button>
@@ -266,42 +297,39 @@ export default function MuscleMapPage() {
         </div>
       </div>
 
-      {/* Summary stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-surface border border-white/10 rounded-xl p-4">
-          <p className="text-xs text-muted-foreground mb-1">Grupos treinados</p>
-          <p className="text-2xl font-bold text-foreground">
-            {isLoading ? "—" : volumeByMuscle.length}
-          </p>
-        </div>
-        <div className="bg-surface border border-white/10 rounded-xl p-4">
-          <p className="text-xs text-muted-foreground mb-1">Volume total</p>
-          <p className="text-2xl font-bold text-foreground">
-            {isLoading ? "—" : `${(metrics?.totalVolume ?? 0).toLocaleString("pt-BR")} kg·rep`}
-          </p>
-        </div>
-        <div className="bg-surface border border-white/10 rounded-xl p-4">
-          <p className="text-xs text-muted-foreground mb-1">Músculo + treinado</p>
-          <p className="text-2xl font-bold text-primary">
-            {isLoading ? "—" : (metrics?.topMuscle ?? "—")}
-          </p>
-        </div>
+      {/* ── Números, embaixo à esquerda ─────────────────────────────────── */}
+      <div className="pointer-events-none absolute bottom-6 left-6 flex gap-6 rounded-2xl border border-white/10 bg-black/40 px-6 py-4 backdrop-blur-md">
+        {[
+          { rotulo: "Grupos treinados", valor: isLoading ? "—" : String(volumeByMuscle.length) },
+          {
+            rotulo: "Volume total",
+            valor: isLoading
+              ? "—"
+              : `${(metrics?.totalVolume ?? 0).toLocaleString("pt-BR")} kg·rep`,
+          },
+          { rotulo: "Músculo + treinado", valor: isLoading ? "—" : (metrics?.topMuscle ?? "—") },
+        ].map((n) => (
+          <div key={n.rotulo}>
+            <p className="mb-1 font-bold text-[10px] text-white/40 uppercase tracking-widest">
+              {n.rotulo}
+            </p>
+            <p className="font-bold text-lg text-white">{n.valor}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Main layout: viewer + side panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-6 items-start">
-        <MuscleMapViewer
-          volumeByMuscle={volumePorMalha(volumeByMuscle)}
-          selectedMuscle={selectedMuscle}
-          onMuscleSelect={setSelectedMuscle}
-        />
-
+      {/* ── Lista muscular, à direita ───────────────────────────────────── */}
+      <div className="absolute top-24 right-6 bottom-6 w-[268px] overflow-y-auto">
         <MuscleGroupPanel
-          volumeByMuscle={volumePorMalha(volumeByMuscle)}
-          selectedMuscle={selectedMuscle}
           onSelect={setSelectedMuscle}
+          selectedMuscle={selectedMuscle}
+          volumeByMuscle={volumePorMalha(volumeByMuscle)}
         />
       </div>
+
+      <p className="pointer-events-none absolute right-6 bottom-2 text-[10px] text-white/25">
+        arraste para girar · scroll para aproximar
+      </p>
     </div>
   );
 }

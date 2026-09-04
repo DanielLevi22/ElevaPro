@@ -1,6 +1,6 @@
 "use client";
 
-import { Html, OrbitControls, useGLTF } from "@react-three/drei";
+import { ContactShadows, Html, OrbitControls, useGLTF } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Component, type ReactNode, Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -39,6 +39,21 @@ interface CorpoProps {
   onSelect: (muscle: string | null) => void;
   selectedMuscle: string | null;
   volumeByMuscle: MuscleVolume[];
+}
+
+/**
+ * Gira devagar enquanto ninguém interage, e para no primeiro toque.
+ *
+ * É o que separa uma cena de uma foto: sem movimento nenhum o corpo parece
+ * colado no fundo. Parar de vez ao interagir é obrigatório — girar por baixo de
+ * quem está tentando mirar um músculo é pior que não girar.
+ */
+function GiroEmRepouso({ ativo, children }: { ativo: boolean; children: ReactNode }) {
+  const grupo = useRef<THREE.Group>(null);
+  useFrame((_, delta) => {
+    if (ativo && grupo.current) grupo.current.rotation.y += delta * 0.12;
+  });
+  return <group ref={grupo}>{children}</group>;
 }
 
 function Corpo({ tons, onHover, onSelect, selectedMuscle, volumeByMuscle }: CorpoProps) {
@@ -187,31 +202,62 @@ export function MuscleMapViewer({
 }: MuscleMapViewerProps) {
   const tons = useMemo(() => escalaDeCor(volumeByMuscle), [volumeByMuscle]);
   const [sobMouse, setSobMouse] = useState<MusculoSobMouse | null>(null);
+  const [emRepouso, setEmRepouso] = useState(true);
 
   return (
-    <div className="relative h-full w-full">
-      <Canvas camera={{ position: [0, 0, 95], fov: 42 }}>
-        <ambientLight intensity={0.9} />
-        <directionalLight intensity={1.4} position={[30, 40, 60]} />
-        <directionalLight intensity={0.5} position={[-40, 10, -30]} />
+    <div
+      className="relative h-full w-full"
+      onPointerDown={() => setEmRepouso(false)}
+      onWheel={() => setEmRepouso(false)}
+    >
+      <Canvas camera={{ position: [0, 0, 95], fov: 42 }} shadows>
+        {/* Três luzes com papéis distintos: a ambiente levanta as sombras, a
+            principal modela o volume, e a de trás recorta a silhueta contra o
+            fundo — é ela que faz o corpo descolar do preto. */}
+        <ambientLight intensity={0.55} />
+        <directionalLight intensity={1.5} position={[35, 45, 55]} />
+        <directionalLight color="#9fb4ff" intensity={0.9} position={[-45, 25, -55]} />
+
         <Suspense fallback={null}>
           <LimiteDeErro fallback={<CorpoDeEspera />}>
-            <Corpo
-              tons={tons}
-              onHover={setSobMouse}
-              onSelect={onMuscleSelect}
-              selectedMuscle={selectedMuscle}
-              volumeByMuscle={volumeByMuscle}
-            />
+            <GiroEmRepouso ativo={emRepouso && !selectedMuscle}>
+              <Corpo
+                tons={tons}
+                onHover={setSobMouse}
+                onSelect={onMuscleSelect}
+                selectedMuscle={selectedMuscle}
+                volumeByMuscle={volumeByMuscle}
+              />
+            </GiroEmRepouso>
           </LimiteDeErro>
         </Suspense>
-        <OrbitControls enablePan={false} maxDistance={170} minDistance={45} />
+
+        {/* A sombra de contato é o que ancora o corpo: sem ela ele parece
+            recortado e colado no fundo, não de pé num lugar. */}
+        <ContactShadows blur={2.6} far={30} opacity={0.55} position={[0, -44, 0]} scale={120} />
+
+        <OrbitControls
+          autoRotate={false}
+          enablePan={false}
+          maxDistance={190}
+          minDistance={40}
+          target={[0, -8, 0]}
+        />
       </Canvas>
 
+      {/* Vinheta: escurece as bordas e empurra o olho para o centro. Não recebe
+          ponteiro, senão engoliria o clique no corpo. */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: "radial-gradient(ellipse at 50% 45%, transparent 35%, rgba(0,0,0,0.55) 100%)",
+        }}
+      />
+
       {sobMouse && (
-        <div className="pointer-events-none absolute top-4 left-4 rounded-lg border border-white/10 bg-surface px-3 py-2">
+        <div className="pointer-events-none absolute top-6 left-6 rounded-xl border border-white/10 bg-black/50 px-4 py-3 backdrop-blur-md">
           <p className="font-bold text-sm text-white">{rotuloDaMalha(sobMouse.muscle)}</p>
-          <p className="text-muted-foreground text-xs">
+          <p className="text-white/50 text-xs">
             {sobMouse.volume.toLocaleString("pt-BR")} kg · {sobMouse.pct}% do volume
           </p>
         </div>
