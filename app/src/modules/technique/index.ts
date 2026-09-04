@@ -6,3 +6,4 @@ export {
   useConsentimentoDaTecnica,
 } from './hooks/useConsentimentoDaTecnica';
 export { AnaliseDeTecnicaScreen } from './screens/AnaliseDeTecnicaScreen';
+export { ExerciciosDaTecnicaScreen } from './screens/ExerciciosDaTecnicaScreen';

@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
+import { MinhasAutorizacoes } from '@/components/consent/MinhasAutorizacoes';
 import { showConfirm } from '@/components/ui/appAlert';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { colors as brandColors } from '@/constants/colors';
@@ -191,6 +192,11 @@ export default function ProfileScreen() {
               </View>
             </LinearGradient>
           </TouchableOpacity>
+
+          {/* O caminho de volta do consentimento (Art. 8°, §5°): gratuito e
+              facilitado, e no lugar em que a tela de introdução da Análise de
+              Técnica diz que ele está. */}
+          <MinhasAutorizacoes studentId={user?.id ?? null} />
 
           {/* Info Section */}
           <View className="mb-8">

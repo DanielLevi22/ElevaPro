@@ -318,7 +318,7 @@ export default function DashboardScreen() {
             cor="#34d399"
             icone="body"
             legenda="Agachamento — conta e julga a profundidade"
-            onPress={() => router.push(ROUTES.TECHNIQUE.ANALYSIS)}
+            onPress={() => router.push(ROUTES.TECHNIQUE.ROOT)}
             titulo="Análise de Técnica"
           />
 

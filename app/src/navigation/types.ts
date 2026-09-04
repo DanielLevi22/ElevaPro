@@ -27,7 +27,15 @@ export const ROUTES = {
 
   // Análise de Técnica (issue #194)
   TECHNIQUE: {
-    ANALYSIS: '/analise-tecnica',
+    /**
+     * A lista de exercícios. É a porta: a Home aponta para cá, não para um
+     * exercício.
+     *
+     * Com o `/index` explícito porque é assim que o typegen do Expo Router
+     * nomeia rota de índice neste projeto — mesma razão do `TABS.INDEX` acima.
+     */
+    ROOT: '/tecnica/index',
+    SQUAT: '/tecnica/agachamento',
   },
 
   // Onboarding
