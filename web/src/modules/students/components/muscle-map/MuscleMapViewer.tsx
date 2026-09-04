@@ -6,7 +6,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { Component, type ReactNode, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { MuscleVolume } from "@/shared/hooks/useWorkoutMetrics";
-import { CORPO_NEUTRO, escalaDeCor, SEM_DADO, type TomDoMusculo } from "./escalaDeCor";
+import { escalaDeCor, type TomDoMusculo } from "./escalaDeCor";
 import { MALHA_NEUTRA, rotuloDaMalha, SUBMUSCULOS } from "./grupos";
 
 /**
@@ -51,11 +51,17 @@ function Corpo({ tons, onHover, onSelect, selectedMuscle, volumeByMuscle }: Corp
 
   // Materiais isolados uma vez: o clone compartilha as instâncias, então sem
   // isto pintar um músculo pintaria todos.
+  // A cor que o modelo traz, guardada antes de qualquer pintura. É para onde o
+  // músculo volta quando o período não tem treino nenhum — sem ela, uma vez
+  // pintado o músculo nunca mais recuperava o tom anatômico.
+  const corDeRepouso = useRef(new Map<string, THREE.Color>());
+
   useEffect(() => {
     cena.traverse((obj) => {
-      if (obj instanceof THREE.Mesh) {
-        obj.material = (obj.material as THREE.Material).clone();
-      }
+      if (!(obj instanceof THREE.Mesh)) return;
+      const material = (obj.material as THREE.MeshStandardMaterial).clone();
+      obj.material = material;
+      corDeRepouso.current.set(obj.uuid, material.color.clone());
     });
   }, [cena]);
 
@@ -73,7 +79,11 @@ function Corpo({ tons, onHover, onSelect, selectedMuscle, volumeByMuscle }: Corp
       const neutra = obj.name === MALHA_NEUTRA;
       const tom = neutra ? undefined : tons.get(obj.name);
 
-      material.color = new THREE.Color(neutra ? CORPO_NEUTRO : (tom?.cor ?? SEM_DADO));
+      // Sem volume, a cor **não é tocada**: fica o tom anatômico que o écorché
+      // traz no próprio material. Repintar de cinza, como eu fazia, jogava fora
+      // a aparência de corpo que o modelo já dava de graça.
+      if (tom) material.color = new THREE.Color(tom.cor);
+      else material.color.copy(corDeRepouso.current.get(obj.uuid) ?? material.color);
 
       // O selecionado brilha em vez de mudar de cor: trocar a cor apagaria a
       // informação de volume justamente no músculo que a pessoa foi olhar.
@@ -82,8 +92,11 @@ function Corpo({ tons, onHover, onSelect, selectedMuscle, volumeByMuscle }: Corp
       // A seleção pode ser um grupo ("Costas") ou um sub-músculo ("Dorsal").
       // Grupo acende todas as malhas dele; sub-músculo acende só a sua.
       const aceso = !neutra && acesas.has(obj.name);
+      // Branco a 0.5 estourava o músculo selecionado e apagava a cor de volume
+      // junto. Um realce discreto basta: o que diz "este é o selecionado" é o
+      // contraste com os vizinhos, não a potência do brilho.
       material.emissive = new THREE.Color(aceso ? "#ffffff" : (tom?.cor ?? "#000000"));
-      material.emissiveIntensity = aceso ? 0.5 : (tom?.brilho ?? 0);
+      material.emissiveIntensity = aceso ? 0.22 : (tom?.brilho ?? 0);
       material.needsUpdate = true;
     });
   }, [cena, tons, acesas]);
@@ -126,8 +139,10 @@ function CorpoDeEspera() {
     if (grupo.current) grupo.current.rotation.y += delta * 0.3;
   });
 
+  // O mesmo avermelhado anatômico do écorché, para o fallback não destoar do
+  // corpo de verdade quando o modelo demora ou falha.
   const material = useMemo(
-    () => new THREE.MeshStandardMaterial({ color: CORPO_NEUTRO, roughness: 0.9 }),
+    () => new THREE.MeshStandardMaterial({ color: "#b68b8b", roughness: 0.9 }),
     [],
   );
 

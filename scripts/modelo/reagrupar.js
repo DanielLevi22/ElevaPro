@@ -266,7 +266,7 @@ function ilhasComTriangulos(caminho) {
 const alinhar = (n) => (4 - (n % 4)) % 4;
 
 /** Escreve o GLB: uma malha e um material por grupo. */
-function emitir(grupos, saida) {
+function emitir(grupos, saida, MATERIAL_DA_ORIGEM) {
   const bufs = [];
   let offset = 0;
   const bufferViews = [];
@@ -333,16 +333,15 @@ function emitir(grupos, saida) {
       type: "SCALAR",
     });
 
-    // Um material por grupo: compartilhado, mudar a cor de um mexeria em todos.
+    // Um material por malha: compartilhado, mudar a cor de um mexeria em todos.
+    //
+    // As propriedades saem do material do écorché, não de um cinza inventado. É
+    // o tom anatômico do original — `baseColorFactor [0.47, 0.257, 0.257]`, bem
+    // avermelhado, com roughness 0.22 — e é ele que o corpo mostra quando não
+    // há volume para pintar. Copiar em vez de escolher também deixa a troca do
+    // modelo de origem trazer a cor dela junto, sem ninguém reajustar constante.
     const mat = materials.length;
-    materials.push({
-      name: nome,
-      pbrMetallicRoughness: {
-        baseColorFactor: [0.55, 0.55, 0.58, 1],
-        metallicFactor: 0,
-        roughnessFactor: 0.85,
-      },
-    });
+    materials.push({ name: nome, pbrMetallicRoughness: { ...MATERIAL_DA_ORIGEM } });
 
     meshes.push({
       name: nome,
@@ -422,7 +421,9 @@ for (const ilha of dados.ilhas) {
 const ordem = [...porGrupo.entries()].sort((a, b) =>
   a[0] === NEUTRO ? -1 : b[0] === NEUTRO ? 1 : 0,
 );
-emitir(ordem, SAIDA);
+// O material do écorché viaja junto: é a cor anatômica do corpo em repouso.
+const { gltf: origem } = carregar(ENTRADA);
+emitir(ordem, SAIDA, origem.materials[0].pbrMetallicRoughness);
 
 const bytes = fs.statSync(SAIDA).size;
 const antes = fs.statSync(ENTRADA).size;

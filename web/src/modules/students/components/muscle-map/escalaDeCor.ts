@@ -20,23 +20,45 @@
  * aparece na cor, não só na transparência.
  */
 
-/** Interpolação em RGB, não em HSL: entre cinza e limão o caminho é direto. */
-const FRIO = { r: 82, g: 82, b: 91 };
-const QUENTE = { r: 204, g: 255, b: 0 };
-
-/** O tom de quem não tem série registrada no período. */
-export const SEM_DADO = "#52525b";
+/**
+ * O início da rampa é o **tom anatômico do próprio modelo**.
+ *
+ * O écorché traz `baseColorFactor [0.47, 0.257, 0.257]`, que em sRGB dá este
+ * avermelhado. Começar a rampa nele faz o músculo em repouso ficar exatamente
+ * da cor do corpo — sem costura visível entre "sem dado" e "pouco volume" —, e
+ * a carga aquece dali para o limão da marca.
+ *
+ * Antes isto era um cinza que eu escolhi, e ele apagava a aparência anatômica
+ * que o modelo já trazia de graça.
+ */
+const FRIO = { r: 182, g: 139, b: 139 };
 
 /**
- * O corpo onde não há grupo treinável: cabeça, mãos, pés, esqueleto.
+ * O topo da rampa: limão **amaciado**, não o `#CCFF00` cru da marca.
  *
- * Mais escuro que `SEM_DADO` de propósito — músculo em descanso e parte que
- * não se treina não podem ser a mesma coisa na tela.
+ * O limão puro é complementar do avermelhado do corpo, e lado a lado os dois
+ * vibram — o músculo carregado saltava da tela em vez de se destacar. Puxado
+ * para um verde-oliva claro ele continua sendo a cor da marca e para de brigar
+ * com a pele do écorché.
  */
-export const CORPO_NEUTRO = "#3f3f46";
+const QUENTE = { r: 198, g: 224, b: 120 };
 
-/** Quanto o músculo mais carregado brilha. Acima disto vira néon e cansa. */
-const BRILHO_MAXIMO = 0.45;
+/**
+ * Músculo sem série registrada **não é repintado**: o `null` diz à tela para
+ * deixar o material do modelo como está.
+ *
+ * É diferente de pintar com uma cor igual à do modelo. Assim, trocar o écorché
+ * por outro traz a cor nova junto, sem ninguém reajustar constante aqui.
+ */
+export const SEM_DADO = null;
+
+/**
+ * Quanto o músculo mais carregado brilha.
+ *
+ * Estava em 0.45 e o topo da escala ficava néon sobre o corpo avermelhado. O
+ * brilho aqui é reforço da cor, não a informação em si — quem informa é o tom.
+ */
+const BRILHO_MAXIMO = 0.18;
 
 export interface TomDoMusculo {
   cor: string;
