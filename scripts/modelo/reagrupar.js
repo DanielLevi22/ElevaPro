@@ -32,21 +32,46 @@ const SAIDA = "web/public/models/corpo-por-musculo.glb";
 // Faixas anatômicas medidas no próprio modelo, não tiradas de tabela: os pares
 // simétricos maiores foram identificados a olho e as fronteiras saíram do meio
 // entre eles.  X = lateral · Y = profundidade, maior é atrás · Z = altura
-const TOPO_DO_TRONCO = 16;
+// Acima disto o modelo é pescoço, crânio e vértebras cervicais. Estava em 16 e
+// deixava uma dúzia de ilhas pequenas e centrais (|x|≈0.1, 27 a 336 vértices)
+// caírem em Costas — são ossos, não músculo, e eram elas que faziam a seleção
+// de Costas subir até o pescoço. O trapézio sobrevive porque o centroide dele
+// fica em z≈12.7, mesmo com as fibras chegando a 20.
+const TOPO_DO_TRONCO = 13.5;
 const LARGURA_DO_TRONCO = 6.5;
 const ATRAS = 1.5;
 
-// O braço está em A-pose, atrás do plano do tronco: a mediana de profundidade
-// das ilhas de braço é 3.5. Com a fronteira do tronco, o Bíceps ficava zerado.
-const ATRAS_NO_BRACO = 3.5;
+// O braço está em A-pose, atrás do plano do tronco: a profundidade das ilhas de
+// braço se agrupa entre 2.9 e 4.6, não em torno de zero. Com a fronteira do
+// tronco, o Bíceps ficava zerado. Em 3.75 os oito músculos do braço se dividem
+// 4 e 4, e cada metade sai em pares simétricos — que é o sinal de que a
+// fronteira caiu no vão certo e não no meio de um músculo.
+const ATRAS_NO_BRACO = 3.75;
 
 /** O que não é grupo treinável: cabeça, pescoço, mãos, pés, esqueleto. */
 const NEUTRO = "Corpo";
 
+/**
+ * As faixas do braço, medidas ilha a ilha.
+ *
+ * O braço em A-pose é **muito mais curto em altura** do que a intuição diz: do
+ * deltoide (z≈10.5) à ponta do dedo (z≈−13.8) são 24 unidades, contra 68 de
+ * corpo inteiro. A primeira versão usou faixas de perna e errou nas duas: o
+ * Bíceps ia até z>−6 e engolia o antebraço junto, e o Antebraço, de −18 a −6,
+ * caía inteiro na mão.
+ *
+ * Onde as juntas realmente estão, pelos centroides das 40 ilhas:
+ *   ombro      z ≈ 10.5
+ *   braço      z ≈ 5.7 a 4.3
+ *   cotovelo   z ≈ 2
+ *   antebraço  z ≈ 0 a −5
+ *   punho      z ≈ −6
+ *   mão        z ≈ −8 a −14
+ */
 function noBraco(y, z) {
   if (z > 8) return "Ombros";
-  if (z > -6) return y > ATRAS_NO_BRACO ? "Tríceps" : "Bíceps";
-  if (z > -18) return "Antebraço";
+  if (z > 2) return y > ATRAS_NO_BRACO ? "Tríceps" : "Bíceps";
+  if (z > -6) return "Antebraço";
   return NEUTRO;
 }
 
@@ -324,4 +349,13 @@ for (const [nome, g] of ordem) {
       String(g.posicoes.length / 3).padStart(10) +
       String(g.indices.length / 3).padStart(12),
   );
+}
+
+// O corpo é simétrico, então quase todo músculo vem em par. Contagem ímpar não
+// é prova de erro — peça de linha média (esterno, sacro) é legitimamente única
+// —, mas é onde vale olhar primeiro quando a cor cai no lugar errado.
+const impares = ordem.filter(([nome, g]) => nome !== NEUTRO && g.ilhas % 2 === 1);
+if (impares.length > 0) {
+  console.log("");
+  console.log("nº ímpar de ilhas (conferir): " + impares.map(([n]) => n).join(", "));
 }
