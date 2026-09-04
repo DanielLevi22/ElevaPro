@@ -134,6 +134,9 @@ export function AiCoachChat({
           Authorization: `Bearer ${session.access_token}`,
           "Content-Type": "application/json",
         },
+        // Qual conversa: a proposta guardada vive no `state` desta, e sem o id
+        // o servidor aprovava contra a mais recente da lateral.
+        body: JSON.stringify({ sessionId }),
       });
       const data = await res.json();
 
@@ -171,6 +174,11 @@ export function AiCoachChat({
     if (!msg || loading || !session?.access_token) return;
 
     setInput("");
+    // O cartão sai da tela ao enviar, mas o `saved` chega no meio deste mesmo
+    // turno e precisa dele de volta para marcar "✓ Salvo". Sem guardar aqui, o
+    // handler encontrava `null`, a confirmação nunca aparecia, e o especialista
+    // que acabou de aprovar via o cartão voltar pedindo aprovação.
+    const propostaEmAprovacao = proposal?.data ?? null;
     setProposal(null);
     setWorkoutProposal(null);
     setActivity(null);
@@ -235,7 +243,12 @@ export function AiCoachChat({
               setWorkoutProposal(event.data);
               setSavedWorkoutTitles([]);
             } else if (event.type === "saved" && event.entity === "periodization") {
-              setProposal((prev) => (prev ? { ...prev, savedId: event.id } : null));
+              setProposal((prev) => {
+                if (prev) return { ...prev, savedId: event.id };
+                return propostaEmAprovacao
+                  ? { data: propostaEmAprovacao, savedId: event.id }
+                  : null;
+              });
             } else if (event.type === "error") {
               setMessages((prev) =>
                 prev.map((m) =>
@@ -304,12 +317,15 @@ export function AiCoachChat({
           </div>
         ))}
 
-        {/* Fica visível o turno inteiro, não só durante a ferramenta.
-            O JSON da proposta é gerado DENTRO do bloco `tool_use`, que só chega
-            completo — então entre a última palavra do modelo ("um momento!") e o
-            `tool_start` passam 15 a 20 segundos sem um único evento. Era aí que
-            o coach parecia ter parado de funcionar. */}
-        {loading && (
+        {/* Só enquanto uma ferramenta roda de verdade — consultar catálogo,
+            gravar periodização. Enquanto o modelo apenas escreve, quem indica
+            que ele está trabalhando são os pontinhos dentro da própria bolha,
+            e dois indicadores ao mesmo tempo pareciam defeito.
+
+            O preço: o JSON da proposta é gerado DENTRO do bloco `tool_use`, que
+            só chega completo, então entre a última palavra do modelo e o
+            `tool_start` seguem 15 a 20 segundos sem evento nenhum. */}
+        {activity && (
           <div className="flex justify-start">
             <div
               className="flex items-center gap-2.5 rounded-2xl rounded-bl-sm border border-white/10 bg-surface px-4 py-2.5 text-sm text-muted-foreground"
@@ -320,7 +336,7 @@ export function AiCoachChat({
                 <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:150ms]" />
                 <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:300ms]" />
               </span>
-              {activity ?? "Preparando"}…
+              {activity}…
             </div>
           </div>
         )}

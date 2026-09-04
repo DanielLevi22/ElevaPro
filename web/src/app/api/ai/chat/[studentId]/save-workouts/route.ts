@@ -5,6 +5,7 @@ import {
   getOrCreateSession,
   getSessionState,
   saveMessage,
+  sessionOwnedBy,
   updateSessionState,
 } from "@/modules/ai/services/chatService";
 import type { BulkWorkoutExercise, BulkWorkoutItem } from "@/modules/ai/types";
@@ -110,7 +111,22 @@ export async function POST(
   if (!auth.ok) return auth.response;
   const specialistId = auth.caller.id;
 
-  const sessionId = await getOrCreateSession(studentId, specialistId, "workout");
+  // A proposta pendente vive no `state` da conversa que a produziu. Sem o
+  // `sessionId` do cliente esta rota pegava a mais recente — e aprovar numa
+  // conversa antiga da lateral lia o estado de outra, respondendo "nenhuma
+  // proposta pendente" com a proposta na tela. O dono é validado porque o id
+  // vem do cliente e o `service_role` abaixo não consulta RLS.
+  const corpo = await request.json().catch(() => null);
+  const pedida = typeof corpo?.sessionId === "string" ? corpo.sessionId : undefined;
+
+  const sessionId = pedida
+    ? await sessionOwnedBy(pedida, studentId, specialistId)
+    : await getOrCreateSession(studentId, specialistId, "workout");
+
+  if (!sessionId) {
+    return NextResponse.json({ error: "conversa não encontrada" }, { status: 404 });
+  }
+
   const sessionState = await getSessionState(sessionId);
 
   const proposal = sessionState.pendingWorkoutProposal;

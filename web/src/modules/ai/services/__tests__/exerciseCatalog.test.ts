@@ -8,28 +8,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * que grupo desconhecido responde "não conheço" em vez de "não existe nada".
  */
 
-let rows: { name: string; muscle_group: string }[];
-let total: number;
+let rows: { name: string; muscle_group: string | null }[];
 let queryError: unknown;
-let filters: { in?: [string, string[]]; ilike?: [string, string] };
 
 const mockFrom = vi.fn(() => {
   const builder: Record<string, unknown> = {};
-  const chain = () => builder;
-  builder.select = vi.fn(chain);
-  builder.order = vi.fn(chain);
-  builder.limit = vi.fn(chain);
-  builder.in = vi.fn((column: string, values: string[]) => {
-    filters.in = [column, values];
-    return builder;
-  });
-  builder.ilike = vi.fn((column: string, value: string) => {
-    filters.ilike = [column, value];
-    return builder;
-  });
+  builder.select = vi.fn(() => builder);
   // biome-ignore lint/suspicious/noThenProperty: o builder do PostgREST é thenable
   builder.then = (resolve: (value: unknown) => unknown) =>
-    resolve({ data: queryError ? null : rows, error: queryError, count: total });
+    resolve({ data: queryError ? null : rows, error: queryError });
   return builder;
 });
 
@@ -43,10 +30,14 @@ const { MUSCLE_GROUPS, queryExercises, resolveMuscleGroups, unknownExerciseNames
 
 beforeEach(() => {
   vi.clearAllMocks();
-  rows = [{ name: "Desenvolvimento militar", muscle_group: "ombro" }];
-  total = 6;
+  rows = [
+    { name: "Desenvolvimento militar", muscle_group: "ombro" },
+    { name: "Elevação lateral com halteres", muscle_group: "ombro" },
+    { name: "Supino reto com barra", muscle_group: "peito" },
+    { name: "Rosca direta com barra", muscle_group: "biceps" },
+    { name: "Tríceps testa com barra W", muscle_group: "triceps" },
+  ];
   queryError = null;
-  filters = {};
 });
 
 describe("resolveMuscleGroups", () => {
@@ -81,25 +72,48 @@ describe("resolveMuscleGroups", () => {
 });
 
 describe("queryExercises", () => {
-  it("filtra pelos grupos resolvidos, não pelo texto cru", async () => {
-    await queryExercises({ muscle_groups: ["Ombros"] });
+  const nomes = (r: { exercises: { name: string }[] }) => r.exercises.map((e) => e.name);
 
-    expect(filters.in).toEqual(["muscle_group", ["ombro"]]);
-    expect(filters.ilike).toBeUndefined();
+  it("filtra pelos grupos resolvidos, não pelo texto cru", async () => {
+    const resultado = await queryExercises({ muscle_groups: ["Ombros"] });
+
+    expect(nomes(resultado)).toEqual(["Desenvolvimento militar", "Elevação lateral com halteres"]);
   });
 
   it("consulta os dois grupos quando o pedido é braços", async () => {
-    await queryExercises({ muscle_groups: ["braços"] });
+    const resultado = await queryExercises({ muscle_groups: ["braços"] });
 
-    expect(filters.in).toEqual(["muscle_group", ["biceps", "triceps"]]);
+    expect(nomes(resultado)).toEqual(["Rosca direta com barra", "Tríceps testa com barra W"]);
   });
 
   // Uma chamada por grupo custava um turno do modelo cada: 27 segundos para
   // montar um ABC, medidos em 2026-08-12.
   it("resolve vários grupos numa consulta só, sem repetir", async () => {
-    await queryExercises({ muscle_groups: ["peito", "Braços", "biceps"] });
+    const resultado = await queryExercises({ muscle_groups: ["peito", "Braços", "biceps"] });
 
-    expect(filters.in).toEqual(["muscle_group", ["peito", "biceps", "triceps"]]);
+    expect(nomes(resultado)).toEqual([
+      "Rosca direta com barra",
+      "Supino reto com barra",
+      "Tríceps testa com barra W",
+    ]);
+  });
+
+  // O `.in()` comparava byte a byte: linha gravada "Peito" pelo painel de admin
+  // não casava com `peito`, e o catálogo cheio voltava zero.
+  it("acha a linha gravada com caixa e acento diferentes do grupo", async () => {
+    rows = [
+      { name: "Supino inclinado", muscle_group: "Peito" },
+      { name: "Rosca concentrada", muscle_group: "Bíceps" },
+      { name: "Agachamento livre", muscle_group: "PERNAS" },
+    ];
+
+    expect(nomes(await queryExercises({ muscle_groups: ["peito"] }))).toEqual(["Supino inclinado"]);
+    expect(nomes(await queryExercises({ muscle_groups: ["biceps"] }))).toEqual([
+      "Rosca concentrada",
+    ]);
+    expect(nomes(await queryExercises({ muscle_groups: ["pernas"] }))).toEqual([
+      "Agachamento livre",
+    ]);
   });
 
   // Era isto que fazia o coach afirmar que o catálogo estava vazio.
@@ -113,11 +127,34 @@ describe("queryExercises", () => {
     expect(mockFrom).not.toHaveBeenCalled();
   });
 
+  // Catálogo cheio que não casa com o filtro é deriva de dado, não catálogo
+  // vazio — e chegavam ao modelo como a mesma lista vazia.
+  it("mostra os grupos crus do banco quando o filtro não casa com nada", async () => {
+    rows = [
+      { name: "Bench press", muscle_group: "chest" },
+      { name: "Deadlift", muscle_group: "back" },
+    ];
+
+    const resultado = await queryExercises({ muscle_groups: ["peito"] });
+
+    expect(resultado.total).toBe(0);
+    expect(resultado.groupsInCatalog).toEqual(["chest", "back"]);
+  });
+
+  it("não fala em deriva quando o catálogo está de fato vazio", async () => {
+    rows = [];
+
+    const resultado = await queryExercises({ muscle_groups: ["peito"] });
+
+    expect(resultado.total).toBe(0);
+    expect(resultado.groupsInCatalog).toBeUndefined();
+  });
+
   it("devolve o total para o modelo saber se viu tudo", async () => {
     const resultado = await queryExercises({ muscle_groups: ["ombro"] });
 
-    expect(resultado.total).toBe(6);
-    expect(resultado.exercises).toHaveLength(1);
+    expect(resultado.total).toBe(2);
+    expect(resultado.exercises).toHaveLength(2);
   });
 
   it("propaga erro em vez de devolver lista vazia", async () => {
@@ -129,10 +166,22 @@ describe("queryExercises", () => {
   });
 
   it("busca por nome sem exigir grupo", async () => {
-    await queryExercises({ search_term: "Supino" });
+    const resultado = await queryExercises({ search_term: "Supino" });
 
-    expect(filters.ilike).toEqual(["name", "%Supino%"]);
-    expect(filters.in).toBeUndefined();
+    expect(nomes(resultado)).toEqual(["Supino reto com barra"]);
+  });
+
+  // O modelo reescreve acento, e o `ilike` do PostgREST não atravessa acento.
+  it("busca por nome sem acento e sem caixa", async () => {
+    const resultado = await queryExercises({ search_term: "elevacao LATERAL" });
+
+    expect(nomes(resultado)).toEqual(["Elevação lateral com halteres"]);
+  });
+
+  it("cruza grupo e termo em vez de escolher um dos dois", async () => {
+    const resultado = await queryExercises({ muscle_groups: ["peito"], search_term: "rosca" });
+
+    expect(resultado.total).toBe(0);
   });
 });
 
