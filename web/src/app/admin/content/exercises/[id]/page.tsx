@@ -4,6 +4,7 @@ import { supabase } from "@elevapro/supabase";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
+import { ExerciseClassificationFields } from "@/shared/components/ui/ExerciseClassificationFields";
 
 export default function EditExercisePage() {
   const router = useRouter();
@@ -12,13 +13,15 @@ export default function EditExercisePage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  // A tabela `exercises` tem name, description, muscle_group, video_url e
-  // is_verified. O formulário editava "category", "equipment", "difficulty" e
-  // "instructions", que nunca existiram: o UPDATE mandava as quatro e o
-  // PostgREST recusava a escrita inteira com 42703 — salvar nunca funcionou.
+  // O formulário editava "equipment", "difficulty" e "instructions", que nunca
+  // existiram na tabela: o UPDATE mandava as três e o PostgREST recusava a
+  // escrita inteira com 42703 — salvar nunca funcionou. `category` e `venue`
+  // existem desde a 0042 e são editáveis.
   const [formData, setFormData] = useState({
     name: "",
     muscle_group: "",
+    venue: "academia",
+    category: "forca",
     description: "",
     video_url: "",
   });
@@ -30,7 +33,7 @@ export default function EditExercisePage() {
       setIsLoading(true);
       const { data, error } = await supabase
         .from("exercises")
-        .select("name, muscle_group, description, video_url")
+        .select("name, muscle_group, venue, category, description, video_url")
         .eq("id", id)
         .single();
 
@@ -39,6 +42,8 @@ export default function EditExercisePage() {
       setFormData({
         name: data.name,
         muscle_group: data.muscle_group ?? "",
+        venue: data.venue,
+        category: data.category,
         description: data.description ?? "",
         video_url: data.video_url ?? "",
       });
@@ -139,24 +144,12 @@ export default function EditExercisePage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="muscle_group"
-                className="block text-sm font-medium text-foreground mb-1"
-              >
-                Grupo Muscular
-              </label>
-              <input
-                id="muscle_group"
-                type="text"
-                required
-                value={formData.muscle_group}
-                onChange={(e) => setFormData({ ...formData, muscle_group: e.target.value })}
-                className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
+          <ExerciseClassificationFields
+            values={formData}
+            onChange={(campo, valor) => setFormData({ ...formData, [campo]: valor })}
+          />
 
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="video_url" className="block text-sm font-medium text-foreground mb-1">
                 Vídeo (URL)

@@ -4,16 +4,20 @@ import { supabase } from "@elevapro/supabase";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
+import { ExerciseClassificationFields } from "@/shared/components/ui/ExerciseClassificationFields";
 
 export default function CreateExercisePage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  // Só colunas que `exercises` tem. "category", "equipment", "difficulty",
-  // "instructions" e "status" nunca existiram na tabela: o INSERT levava as
-  // cinco e era recusado inteiro com 42703 — criar exercício nunca funcionou.
+  // Só colunas que `exercises` tem. "equipment", "difficulty", "instructions" e
+  // "status" nunca existiram na tabela: o INSERT levava as quatro e era recusado
+  // inteiro com 42703 — criar exercício nunca funcionou. `category` e `venue`
+  // passaram a existir na 0042 e entram com o default do banco.
   const [formData, setFormData] = useState({
     name: "",
     muscle_group: "",
+    venue: "academia",
+    category: "forca",
     description: "",
     video_url: "",
   });
@@ -69,25 +73,12 @@ export default function CreateExercisePage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="muscle_group"
-                className="block text-sm font-medium text-foreground mb-1"
-              >
-                Grupo Muscular
-              </label>
-              <input
-                id="muscle_group"
-                type="text"
-                required
-                value={formData.muscle_group}
-                onChange={(e) => setFormData({ ...formData, muscle_group: e.target.value })}
-                className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="ex: Peito"
-              />
-            </div>
+          <ExerciseClassificationFields
+            values={formData}
+            onChange={(campo, valor) => setFormData({ ...formData, [campo]: valor })}
+          />
 
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="video_url" className="block text-sm font-medium text-foreground mb-1">
                 Vídeo (URL)
