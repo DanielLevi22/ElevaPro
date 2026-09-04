@@ -17,20 +17,21 @@ export interface OrchestratorRunInput {
 }
 
 /**
- * O que dizer ao especialista enquanto a ferramenta roda.
+ * O que dizer enquanto a ferramenta roda — e quais ferramentas merecem dizer.
  *
- * A ida ao banco mais o segundo turno do modelo levam de 8 a 10 segundos, e até
- * aqui o stream ficava mudo o tempo todo — o chat parecia travado. Dez segundos
- * com "consultando o catálogo" são trabalho; dez segundos em silêncio são
- * defeito.
+ * Só as que **gravam** estão aqui. Consultar o catálogo é uma ida ao banco que
+ * volta antes de a pessoa terminar de ler a frase anterior; anunciar isso põe um
+ * segundo balão ao lado da bolha de texto, dizendo "preparando" enquanto o
+ * modelo apenas redige. Gravar é diferente: a periodização entra no banco, a
+ * proposta fica guardada esperando aprovação, e aí a demora precisa de nome.
+ *
+ * A ausência aqui é o corte: ferramenta sem rótulo não emite `tool_start` nem
+ * `tool_end`, e a tela não precisa carregar uma lista de exceções para saber o
+ * que ignorar.
  */
 const TOOL_LABELS: Record<string, string> = {
-  query_exercises: "Consultando o catálogo de exercícios",
-  query_body_scan: "Consultando a análise corporal",
-  propose_periodization: "Montando a proposta de periodização",
   save_periodization: "Salvando a periodização",
   propose_workouts: "Montando a proposta de treinos",
-  query_foods: "Consultando o catálogo de alimentos",
   propose_diet_plan: "Calculando as metas do plano",
   propose_meals: "Montando as refeições",
 };
@@ -81,11 +82,12 @@ export abstract class BaseOrchestrator {
       const toolResultBlocks: ContentBlock[] = [];
 
       for (const toolUse of toolUses) {
-        yield {
-          type: "tool_start",
-          tool: toolUse.name,
-          label: TOOL_LABELS[toolUse.name] ?? "Trabalhando nisso",
-        };
+        // Sem rótulo é consulta, e consulta não se anuncia: o genérico
+        // "Trabalhando nisso" que ficava aqui aparecia na tela como um segundo
+        // balão ao lado da resposta, dizendo que algo era preparado enquanto o
+        // modelo só redigia.
+        const label = TOOL_LABELS[toolUse.name];
+        if (label) yield { type: "tool_start", tool: toolUse.name, label };
 
         const { sseEvents, result } = await this.handleTool(
           toolUse.name,
@@ -93,7 +95,7 @@ export abstract class BaseOrchestrator {
           input.onToolCall,
         );
 
-        yield { type: "tool_end", tool: toolUse.name };
+        if (label) yield { type: "tool_end", tool: toolUse.name };
         for (const e of sseEvents) yield e;
         toolResultBlocks.push({
           type: "tool_result",
