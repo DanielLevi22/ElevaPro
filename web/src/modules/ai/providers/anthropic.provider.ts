@@ -33,6 +33,11 @@ export class AnthropicProvider implements AIProvider {
     for await (const event of apiStream) {
       if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
         yield { type: "text_delta", content: event.delta.text };
+      } else if (event.type === "content_block_start" && event.content_block.type === "tool_use") {
+        // A API nomeia a ferramenta aqui, antes de um único caractere do JSON.
+        // É o único instante em que dá para avisar a tela do que vem, porque
+        // depois só há `input_json_delta` até o bloco fechar.
+        yield { type: "tool_building", name: event.content_block.name };
       }
     }
 
