@@ -7,7 +7,7 @@ import { Component, type ReactNode, Suspense, useEffect, useMemo, useRef, useSta
 import * as THREE from "three";
 import type { MuscleVolume } from "@/shared/hooks/useWorkoutMetrics";
 import { CORPO_NEUTRO, escalaDeCor, SEM_DADO, type TomDoMusculo } from "./escalaDeCor";
-import { MALHA_NEUTRA, SUBMUSCULOS } from "./grupos";
+import { MALHA_NEUTRA, rotuloDaMalha, SUBMUSCULOS } from "./grupos";
 
 /**
  * O corpo 3D, pintado por nome de malha.
@@ -197,7 +197,7 @@ export function MuscleMapViewer({
 
       {sobMouse && (
         <div className="pointer-events-none absolute top-4 left-4 rounded-lg border border-white/10 bg-surface px-3 py-2">
-          <p className="font-bold text-sm text-white">{sobMouse.muscle}</p>
+          <p className="font-bold text-sm text-white">{rotuloDaMalha(sobMouse.muscle)}</p>
           <p className="text-muted-foreground text-xs">
             {sobMouse.volume.toLocaleString("pt-BR")} kg · {sobMouse.pct}% do volume
           </p>

@@ -88,6 +88,14 @@ function noTronco(y, z) {
 /**
  * Divide um grupo em sub-músculos, onde a geometria permite.
  *
+ * **Os nomes usam underscore no lugar de espaço, e isso não é estilo.** O
+ * GLTFLoader do three.js passa todo nome por `sanitizeNodeName`, que troca
+ * espaço por underscore. Um nome com espaço no arquivo chega à tela com
+ * underscore, a busca por nome falha e o músculo não acende — foi o que
+ * aconteceu com "Vasto_lateral" enquanto "Trapézio", de uma palavra só,
+ * funcionava. Gravar já sanitizado faz o nome ser o mesmo nos três lugares:
+ * arquivo, three.js e taxonomia. A tela formata para exibir.
+ *
  * Nem todo grupo divide, e a diferença não é de esforço: é de material. O
  * deltoide é **uma malha só por lado** no écorché, então anterior, lateral e
  * posterior não existem como peças — separá-los exigiria cortar a geometria por
@@ -104,13 +112,13 @@ function subMusculo(grupo, centro) {
   if (grupo === "Quadríceps") {
     // As três cabeças se distinguem pela distância da linha média: o vasto
     // lateral corre por fora, o medial por dentro, o reto femoral no meio.
-    if (lateral > 5) return "Vasto lateral";
-    if (lateral > 3.6) return "Reto femoral";
-    return "Vasto medial";
+    if (lateral > 5) return "Vasto_lateral";
+    if (lateral > 3.6) return "Reto_femoral";
+    return "Vasto_medial";
   }
 
   if (grupo === "Isquiotibiais") {
-    if (lateral > 4.5) return "Bíceps femoral";
+    if (lateral > 4.5) return "Bíceps_femoral";
     return y > 2 ? "Semitendinoso" : "Semimembranoso";
   }
 
@@ -126,12 +134,12 @@ function subMusculo(grupo, centro) {
   if (grupo === "Peitoral") {
     // O peitoral maior é o par grande e frontal; o que sobra atrás dele, na
     // lateral da caixa torácica, é serrátil.
-    return y > 0.5 ? "Serrátil" : "Peitoral maior";
+    return y > 0.5 ? "Serrátil" : "Peitoral_maior";
   }
 
   if (grupo === "Glúteos") {
     // O médio corre por fora e mais alto; o máximo é o volume posterior.
-    return lateral > 4 ? "Glúteo médio" : "Glúteo máximo";
+    return lateral > 4 ? "Glúteo_médio" : "Glúteo_máximo";
   }
 
   if (grupo === "Panturrilha") {
@@ -141,19 +149,19 @@ function subMusculo(grupo, centro) {
 
   if (grupo === "Abdômen") {
     // O reto abdominal é a faixa central; os oblíquos abrem para os lados.
-    return lateral > 3 ? "Oblíquos" : "Reto abdominal";
+    return lateral > 3 ? "Oblíquos" : "Reto_abdominal";
   }
 
   if (grupo === "Antebraço") {
     // Flexores na face anterior, extensores na posterior. O braço está em
     // A-pose, então a fronteira é a mesma deslocada do resto do membro.
-    return y > 3.5 ? "Extensores do antebraço" : "Flexores do antebraço";
+    return y > 3.5 ? "Extensores_do_antebraço" : "Flexores_do_antebraço";
   }
 
   if (grupo === "Bíceps") {
     // Duas ilhas por lado: a curta corre por dentro e à frente, a longa por
     // fora e um pouco atrás.
-    return y > 3.2 ? "Cabeça longa do bíceps" : "Cabeça curta do bíceps";
+    return y > 3.2 ? "Cabeça_longa_do_bíceps" : "Cabeça_curta_do_bíceps";
   }
 
   if (grupo === "Tríceps") {
@@ -161,7 +169,7 @@ function subMusculo(grupo, centro) {
     // cabeça medial — que fica embaixo das outras duas — não existe como peça
     // separada aqui. Prometer três na tela seria oferecer uma seleção que o
     // modelo não sabe acender.
-    return lateral > 9.15 ? "Cabeça lateral do tríceps" : "Cabeça longa do tríceps";
+    return lateral > 9.15 ? "Cabeça_lateral_do_tríceps" : "Cabeça_longa_do_tríceps";
   }
 
   return grupo;

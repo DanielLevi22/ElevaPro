@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import {
   GRUPOS_MUSCULARES,
+  rotuloDaMalha,
   SUBMUSCULOS,
   volumePorMalha,
 } from "@/modules/students/components/muscle-map/grupos";
@@ -144,7 +145,7 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
                         onClick={() => onSelect(selectedMuscle === parte ? null : parte)}
                         type="button"
                       >
-                        {parte}
+                        {rotuloDaMalha(parte)}
                       </button>
                     </li>
                   ))}

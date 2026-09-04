@@ -52,21 +52,36 @@ export type GrupoMuscular = (typeof GRUPOS_MUSCULARES)[number];
  * `exercises.muscle_group` ganhar valores finos.
  */
 export const SUBMUSCULOS: Record<GrupoMuscular, readonly string[]> = {
-  Abdômen: ["Reto abdominal", "Oblíquos"],
-  Antebraço: ["Flexores do antebraço", "Extensores do antebraço"],
-  Bíceps: ["Cabeça longa do bíceps", "Cabeça curta do bíceps"],
+  Abdômen: ["Reto_abdominal", "Oblíquos"],
+  Antebraço: ["Flexores_do_antebraço", "Extensores_do_antebraço"],
+  Bíceps: ["Cabeça_longa_do_bíceps", "Cabeça_curta_do_bíceps"],
   Costas: ["Trapézio", "Dorsal", "Lombar"],
-  Glúteos: ["Glúteo máximo", "Glúteo médio"],
-  Isquiotibiais: ["Bíceps femoral", "Semitendinoso", "Semimembranoso"],
+  Glúteos: ["Glúteo_máximo", "Glúteo_médio"],
+  Isquiotibiais: ["Bíceps_femoral", "Semitendinoso", "Semimembranoso"],
   // Uma malha só por lado no modelo — ver a nota acima.
   Ombros: ["Ombros"],
   Panturrilha: ["Gastrocnêmio", "Sóleo"],
-  Peitoral: ["Peitoral maior", "Serrátil"],
-  Quadríceps: ["Vasto lateral", "Reto femoral", "Vasto medial"],
+  Peitoral: ["Peitoral_maior", "Serrátil"],
+  Quadríceps: ["Vasto_lateral", "Reto_femoral", "Vasto_medial"],
   // Duas cabeças, não três: o écorché traz duas ilhas por lado, e a medial —
   // que fica embaixo das outras duas — não existe como peça separada.
-  Tríceps: ["Cabeça longa do tríceps", "Cabeça lateral do tríceps"],
+  Tríceps: ["Cabeça_longa_do_tríceps", "Cabeça_lateral_do_tríceps"],
 };
+
+/**
+ * O nome de uma malha, legível.
+ *
+ * Underscore vira espaço, e só. É formatação, não tradução: não existe tabela
+ * de-para entre malha e rótulo, então não há como um lado divergir do outro.
+ * O underscore no nome da malha é imposição do `sanitizeNodeName` do three.js
+ * — ver a nota em `scripts/modelo/reagrupar.js`.
+ *
+ * @example
+ * rotuloDaMalha("Vasto_lateral"); // "Vasto lateral"
+ */
+export function rotuloDaMalha(malha: string): string {
+  return malha.replace(/_/g, " ");
+}
 
 /** Todas as malhas de músculo do modelo, achatadas. */
 export const MALHAS_DE_MUSCULO = Object.values(SUBMUSCULOS).flat();

@@ -66,6 +66,21 @@ describe("taxonomia muscular e o modelo", () => {
     expect(GRUPOS_MUSCULARES.filter((g) => SUBMUSCULOS[g].length === 0)).toEqual([]);
   });
 
+  // Regressão de 2026-09-03: nome de malha com espaço não sobrevive ao
+  // carregamento. O `GLTFLoader` passa todo nome por `sanitizeNodeName`, que
+  // troca `\s` por `_`, então "Vasto lateral" no arquivo vira "Vasto_lateral"
+  // na cena — a busca por nome falha e o músculo não acende. O sintoma era
+  // cruel: "Trapézio", de uma palavra só, funcionava, e os compostos não.
+  it("nenhuma malha tem espaço no nome, que o three.js trocaria por underscore", () => {
+    const comEspaco = malhasDoModelo().filter((n) => /\s/.test(n));
+
+    if (comEspaco.length > 0) {
+      throw new Error(
+        `NOME QUE NÃO SOBREVIVE AO CARREGAMENTO: ${comEspaco.join(", ")} tem espaço, e o three.js entrega esse nome com underscore — o clique não acende e nada acusa`,
+      );
+    }
+  });
+
   it("o modelo traz a malha neutra do corpo", () => {
     expect(malhasDoModelo()).toContain(MALHA_NEUTRA);
   });
@@ -90,7 +105,7 @@ describe("o volume que vem do banco", () => {
   it("traduz a chave do banco para as malhas do grupo", () => {
     const traduzido = volumePorMalha([{ muscle: "peito", volume: 5000 }]);
 
-    expect(traduzido.map((t) => t.muscle).sort()).toEqual(["Peitoral maior", "Serrátil"]);
+    expect(traduzido.map((t) => t.muscle).sort()).toEqual(["Peitoral_maior", "Serrátil"]);
     expect(traduzido.every((t) => t.volume === 5000)).toBe(true);
   });
 
@@ -101,14 +116,14 @@ describe("o volume que vem do banco", () => {
     const traduzido = volumePorMalha([{ muscle: "pernas", volume: 9000 }]);
 
     expect(traduzido.map((t) => t.muscle).sort()).toEqual([
-      "Bíceps femoral",
+      "Bíceps_femoral",
       "Gastrocnêmio",
-      "Reto femoral",
+      "Reto_femoral",
       "Semimembranoso",
       "Semitendinoso",
       "Sóleo",
-      "Vasto lateral",
-      "Vasto medial",
+      "Vasto_lateral",
+      "Vasto_medial",
     ]);
     expect(traduzido.every((t) => t.volume === 9000)).toBe(true);
   });
