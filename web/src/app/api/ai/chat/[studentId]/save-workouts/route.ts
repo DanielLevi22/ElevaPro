@@ -147,13 +147,17 @@ export async function POST(
     }
   }
 
-  // Persist saved workouts in session state and clear the pending proposal
+  // Sai da fila de decisão e vira histórico da tela. Continuar "pendente"
+  // deixaria um segundo clique salvar os mesmos treinos outra vez; sumir de
+  // vez deixava a conversa anunciando "aprovados e salvos: A, B, C" com a tela
+  // sem nada para mostrar ao reabrir.
   await updateSessionState(sessionId, {
     savedWorkouts: [
       ...sessionState.savedWorkouts,
       ...saved.map((w) => ({ id: w.id, title: w.title, phaseId: proposal.phase_id })),
     ],
     pendingWorkoutProposal: undefined,
+    resolvedWorkoutProposal: { proposal, savedTitles: saved.map((w) => w.title) },
   });
 
   // A aprovação acontece no cartão, fora da conversa. Sem esta linha o

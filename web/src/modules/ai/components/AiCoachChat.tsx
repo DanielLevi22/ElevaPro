@@ -5,6 +5,7 @@ import { useAuthStore } from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
 import { criarAcumuladorDeTexto } from "../services/acumuladorDeTexto";
 import type { BlocoDeContexto } from "../services/disponibilidade";
+import { dispensar, foiDispensada } from "../services/propostaDispensada";
 import type { BulkWorkoutProposal, ChatMessage, PeriodizationProposal, SseEvent } from "../types";
 import { BulkWorkoutProposalCard } from "./BulkWorkoutProposalCard";
 import { ContextoDisponivel } from "./ContextoDisponivel";
@@ -68,11 +69,18 @@ export function AiCoachChat({
         if (cancelado) return;
         if (data.sessionId) onSessionResolved(data.sessionId);
         setContexto(data.availability ?? []);
-        // A proposta que o servidor guardou continua esperando decisão. Sem
-        // esta linha, sair da tela e voltar apagava o cartão — e o botão de
-        // aprovar com ele — com a proposta viva no banco.
-        setWorkoutProposal(data.workoutProposal ?? null);
-        setSavedWorkoutTitles([]);
+        // A proposta que o servidor guardou volta para a tela: pendente, se
+        // há decisão a tomar; aprovada, com os treinos que foram salvos. Sem
+        // isto, sair da tela e voltar apagava o cartão — e o botão de aprovar
+        // com ele — com a proposta viva no banco.
+        const titulos: string[] = data.savedWorkoutTitles ?? [];
+        const resolvida = titulos.length > 0;
+        setSavedWorkoutTitles(titulos);
+        setWorkoutProposal(
+          resolvida && data.sessionId && foiDispensada(data.sessionId)
+            ? null
+            : (data.workoutProposal ?? null),
+        );
         setMessages(
           data.messages?.length
             ? data.messages
@@ -361,7 +369,12 @@ export function AiCoachChat({
         <PainelDeProposta
           titulo="Proposta de treinos"
           resolvido={savedWorkoutTitles.length > 0}
-          onFechar={() => setWorkoutProposal(null)}
+          onFechar={() => {
+            // Fechar tem que fechar: sem lembrar, o cartão voltaria na próxima
+            // vez que a conversa abrisse e o botão teria mentido.
+            if (sessionId) dispensar(sessionId);
+            setWorkoutProposal(null);
+          }}
         >
           <BulkWorkoutProposalCard
             data={workoutProposal}

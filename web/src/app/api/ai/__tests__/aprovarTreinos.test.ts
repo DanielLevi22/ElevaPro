@@ -87,6 +87,20 @@ describe("aprovar treinos", () => {
     expect(estadoGravado?.sessionId).toBe("sessao-antiga");
   });
 
+  // Sair da fila de decisão sem sair da tela: continuar "pendente" deixaria um
+  // segundo clique salvar os mesmos treinos, e sumir de vez deixava a conversa
+  // anunciando "aprovados e salvos" sem nada para mostrar ao reabrir.
+  it("tira a proposta da fila e a guarda com os títulos salvos", async () => {
+    await POST(pedido({ sessionId: "sessao-antiga" }), contexto);
+
+    expect(estadoGravado?.patch).toMatchObject({
+      pendingWorkoutProposal: undefined,
+      resolvedWorkoutProposal: {
+        savedTitles: ["Treino A"],
+      },
+    });
+  });
+
   it("recusa conversa que não é deste aluno com este especialista", async () => {
     donoDaSessao = null;
 
