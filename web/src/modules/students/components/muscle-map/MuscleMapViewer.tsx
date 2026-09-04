@@ -2,7 +2,7 @@
 
 import { ContactShadows, Html, OrbitControls, useGLTF } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Component, type ReactNode, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { MuscleVolume } from "@/shared/hooks/useWorkoutMetrics";
@@ -54,6 +54,38 @@ function GiroEmRepouso({ ativo, children }: { ativo: boolean; children: ReactNod
     if (ativo && grupo.current) grupo.current.rotation.y += delta * 0.12;
   });
   return <group ref={grupo}>{children}</group>;
+}
+
+/** O pedaço do OrbitControls que a virada usa. Tipar só isto evita o `any`. */
+interface ControleOrbital {
+  getAzimuthalAngle: () => number;
+  setAzimuthalAngle: (angulo: number) => void;
+}
+
+/**
+ * Leva a câmera até um ângulo, animando.
+ *
+ * Existe porque metade do treino é cadeia posterior e, sem isto, chegar às
+ * costas exige arrastar até acertar. O giro contínuo também dá noção de que o
+ * corpo é um só — um corte seco de frente para costas parece troca de imagem.
+ *
+ * A diferença é normalizada para (−π, π] para a câmera pegar sempre o caminho
+ * curto; sem isso, virar de 170° para −170° daria uma volta quase completa.
+ */
+function GiraCameraPara({ alvo }: { alvo: number | null }) {
+  const controles = useThree((s) => s.controls) as ControleOrbital | null;
+
+  useFrame((_, delta) => {
+    if (alvo === null || !controles?.setAzimuthalAngle) return;
+
+    const atual = controles.getAzimuthalAngle();
+    const dif = ((alvo - atual + Math.PI) % (2 * Math.PI)) - Math.PI;
+    if (Math.abs(dif) < 0.005) return;
+
+    controles.setAzimuthalAngle(atual + dif * Math.min(1, delta * 4));
+  });
+
+  return null;
 }
 
 function Corpo({ tons, onHover, onSelect, selectedMuscle, volumeByMuscle }: CorpoProps) {
@@ -203,11 +235,17 @@ export function MuscleMapViewer({
   const tons = useMemo(() => escalaDeCor(volumeByMuscle), [volumeByMuscle]);
   const [sobMouse, setSobMouse] = useState<MusculoSobMouse | null>(null);
   const [emRepouso, setEmRepouso] = useState(true);
+  const [vista, setVista] = useState<"frente" | "costas" | null>("frente");
 
   return (
     <div
       className="relative h-full w-full"
-      onPointerDown={() => setEmRepouso(false)}
+      onPointerDown={() => {
+        setEmRepouso(false);
+        // Arrastar solta a câmera: continuar puxando para o ângulo do botão
+        // brigaria com a mão de quem está girando.
+        setVista(null);
+      }}
       onWheel={() => setEmRepouso(false)}
     >
       <Canvas camera={{ position: [0, 0, 95], fov: 42 }} shadows>
@@ -236,9 +274,12 @@ export function MuscleMapViewer({
             recortado e colado no fundo, não de pé num lugar. */}
         <ContactShadows blur={2.6} far={30} opacity={0.55} position={[0, -44, 0]} scale={120} />
 
+        <GiraCameraPara alvo={vista === "frente" ? 0 : vista === "costas" ? Math.PI : null} />
+
         <OrbitControls
           autoRotate={false}
           enablePan={false}
+          makeDefault
           maxDistance={190}
           minDistance={40}
           target={[0, -8, 0]}
@@ -253,6 +294,17 @@ export function MuscleMapViewer({
           background: "radial-gradient(ellipse at 50% 45%, transparent 35%, rgba(0,0,0,0.55) 100%)",
         }}
       />
+
+      <button
+        className="absolute right-6 bottom-6 rounded-full border border-border bg-surface/70 px-4 py-2 font-bold text-[11px] text-muted-foreground uppercase tracking-widest backdrop-blur-md transition-colors hover:text-foreground"
+        onClick={() => {
+          setEmRepouso(false);
+          setVista(vista === "costas" ? "frente" : "costas");
+        }}
+        type="button"
+      >
+        {vista === "costas" ? "Ver de frente" : "Ver de costas"}
+      </button>
 
       {sobMouse && (
         <div className="pointer-events-none absolute top-6 left-6 rounded-xl border border-white/10 bg-black/50 px-4 py-3 backdrop-blur-md">

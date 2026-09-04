@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   GRUPOS_MUSCULARES,
@@ -189,6 +189,21 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
         })}
       </ol>
 
+      {/*
+        O volume é do grupo, e a tela precisa dizer isso.
+        `exercises.muscle_group` tem nove valores grossos: `pernas` é um só para
+        quadríceps, isquiotibiais e panturrilha, e `ombro` é um só para as três
+        cabeças do deltoide. Sem este aviso, um personal que vê os três
+        deltoides da mesma cor conclui que o aluno treinou os três por igual —
+        e a tela terá dito isso sem ser verdade. Some quando o catálogo de
+        exercícios ganhar valores finos.
+      */}
+      <p className="border-border border-t pt-3 text-[11px] text-muted-foreground leading-relaxed">
+        A cor mostra o volume do <strong className="text-foreground">grupo</strong>. As divisões
+        abaixo de cada um são anatômicas — o registro de treino ainda não separa uma cabeça da
+        outra.
+      </p>
+
       {selectedMuscle && (
         <button
           type="button"
@@ -237,7 +252,12 @@ export default function MuscleMapPage() {
   }, [telaCheia]);
 
   const { data: metrics, isLoading } = useWorkoutMetrics(studentId, days);
-  const volumeByMuscle = metrics?.volumeByMuscle ?? [];
+  const volumeByMuscle = useMemo(() => metrics?.volumeByMuscle ?? [], [metrics]);
+
+  // Uma vez, e não duas vezes por render como estava. Cada chamada devolvia
+  // array novo, o que invalidava o `useMemo` do viewer e mandava ele repintar
+  // as 26 malhas a cada mudança de estado — inclusive ao abrir o acordeão.
+  const porMalha = useMemo(() => volumePorMalha(volumeByMuscle), [volumeByMuscle]);
 
   const cena = (
     /*
@@ -273,7 +293,7 @@ export default function MuscleMapPage() {
         <MuscleMapViewer
           onMuscleSelect={setSelectedMuscle}
           selectedMuscle={selectedMuscle}
-          volumeByMuscle={volumePorMalha(volumeByMuscle)}
+          volumeByMuscle={porMalha}
         />
       </div>
 
@@ -384,7 +404,7 @@ export default function MuscleMapPage() {
         <MuscleGroupPanel
           onSelect={setSelectedMuscle}
           selectedMuscle={selectedMuscle}
-          volumeByMuscle={volumePorMalha(volumeByMuscle)}
+          volumeByMuscle={porMalha}
         />
       </div>
 
