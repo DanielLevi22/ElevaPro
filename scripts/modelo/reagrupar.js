@@ -123,12 +123,13 @@ function subMusculo(grupo, centro) {
   }
 
   if (grupo === "Costas") {
+    // Altura, e agora ela funciona. A primeira tentativa por altura deu Lombar
+    // com 6 vértices, mas o culpado não era o eixo: dorsal e eretores chegam
+    // colados numa ilha só, e classificar a ilha inteira pelo centroide dela
+    // mandava a folha toda para um lado. Com o corte por triângulo, cada faixa
+    // cai onde deve.
     if (z > 8) return "Trapézio";
-    // Largura, não altura: os eretores da espinha são a coluna central
-    // (|x|≈0.1) e o dorsal se abre para os lados (|x| de 3.8 a 6.2). Dividir
-    // por altura deu Lombar com 6 vértices, porque o eretor é um músculo longo
-    // cujo centroide fica no meio das costas, não embaixo.
-    return lateral < 2 ? "Lombar" : "Dorsal";
+    return z < -1 ? "Lombar" : "Dorsal";
   }
 
   if (grupo === "Peitoral") {
@@ -394,16 +395,67 @@ function emitir(grupos, saida, MATERIAL_DA_ORIGEM) {
 const dados = ilhasComTriangulos(ENTRADA);
 const porGrupo = new Map();
 
-for (const ilha of dados.ilhas) {
-  const grupo = grupoDoCentro(ilha.centro);
-  const nome = grupo === NEUTRO ? NEUTRO : subMusculo(grupo, ilha.centro);
-  let g = porGrupo.get(nome);
-  if (!g) {
-    g = { posicoes: [], normais: [], indices: [], remap: new Map(), ilhas: 0 };
-    porGrupo.set(nome, g);
+/** O nome final de uma peça, a partir de um ponto qualquer dela. */
+function nomeDoPonto(centro) {
+  const grupo = grupoDoCentro(centro);
+  return grupo === NEUTRO ? NEUTRO : subMusculo(grupo, centro);
+}
+
+/**
+ * Quanto da ilha pode discordar do voto majoritário sem ela ser cortada.
+ *
+ * Abaixo disto a ilha é um músculo só que apenas encosta na fronteira vizinha,
+ * e cortá-la produziria uma lasca solta. Acima, ela cobre mesmo dois músculos.
+ */
+const DISCORDANCIA_QUE_CORTA = 0.15;
+
+const centroDoTriangulo = (tri) => {
+  const c = [0, 0, 0];
+  for (const v of tri) {
+    for (let k = 0; k < 3; k++) c[k] += dados.pos[v * 3 + k] / 3;
   }
-  g.ilhas++;
+  return c;
+};
+
+for (const ilha of dados.ilhas) {
+  // Ilha grande do écorché costuma cobrir mais de um músculo: o dorsal e os
+  // eretores, por exemplo, chegam **colados numa peça só** que vai de z=-6 a
+  // z=9 com o centroide na linha média. Classificar essa ilha pelo centroide
+  // dela mandava a folha inteira para um músculo — na tela, selecionar "Lombar"
+  // acendia as costas quase todas e "Dorsal" acendia duas lascas.
+  //
+  // Então cada triângulo vota. Se a maioria é folgada, a ilha inteira vai para
+  // o vencedor e o músculo continua com a borda que o escultor deu. Se a
+  // discordância é grande, a ilha de fato cobre dois músculos e é cortada.
+  const votos = new Map();
   for (const tri of ilha.tris) {
+    const nome = nomeDoPonto(centroDoTriangulo(tri));
+    votos.set(nome, (votos.get(nome) ?? 0) + 1);
+  }
+
+  const [vencedor, quantos] = [...votos.entries()].sort((a, c) => c[1] - a[1])[0];
+  const corta = 1 - quantos / ilha.tris.length >= DISCORDANCIA_QUE_CORTA;
+
+  atribuir(ilha, corta ? null : vencedor);
+}
+
+/** Manda os triângulos da ilha para o grupo — um nome fixo, ou um por triângulo. */
+function atribuir(ilha, nomeFixo) {
+  const vistos = new Set();
+
+  for (const tri of ilha.tris) {
+    const nome = nomeFixo ?? nomeDoPonto(centroDoTriangulo(tri));
+
+    let g = porGrupo.get(nome);
+    if (!g) {
+      g = { posicoes: [], normais: [], indices: [], remap: new Map(), ilhas: 0 };
+      porGrupo.set(nome, g);
+    }
+    if (!vistos.has(nome)) {
+      vistos.add(nome);
+      g.ilhas++;
+    }
+
     for (const v of tri) {
       let novo = g.remap.get(v);
       if (novo === undefined) {
