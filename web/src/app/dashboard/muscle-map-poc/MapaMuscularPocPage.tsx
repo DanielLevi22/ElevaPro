@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { CorpoGlb } from "@/modules/students/components/muscle-map/poc/CorpoGlb";
 import {
   CorpoSvg,
   GRUPOS,
@@ -57,6 +58,7 @@ const CENARIOS: Record<string, Record<string, number>> = {
 export function MapaMuscularPocPage() {
   const [cenario, setCenario] = useState<string>(Object.keys(CENARIOS)[0]);
   const [selecionado, setSelecionado] = useState<Grupo | null>(null);
+  const [forma, setForma] = useState<"3d" | "svg">("3d");
 
   const volumes = useMemo(
     () => GRUPOS.map((muscle) => ({ muscle, volume: CENARIOS[cenario]?.[muscle] ?? 0 })),
@@ -104,13 +106,36 @@ export function MapaMuscularPocPage() {
       </div>
 
       <div className="grid gap-8 md:grid-cols-[2fr_1fr]">
-        <div className="rounded-xl border border-neutral-200 bg-neutral-950 p-4 dark:border-neutral-800">
-          <CorpoSvg
-            corPorGrupo={cores}
-            corSemDado={SEM_DADO}
-            onSelecionar={(g) => setSelecionado(g === selecionado ? null : g)}
-            selecionado={selecionado}
-          />
+        <div className="flex flex-col gap-3">
+          <div className="flex gap-2">
+            {(["3d", "svg"] as const).map((f) => (
+              <button
+                className={
+                  forma === f
+                    ? "rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-white dark:bg-white dark:text-neutral-900"
+                    : "rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-neutral-600 dark:border-neutral-700 dark:text-neutral-400"
+                }
+                key={f}
+                onClick={() => setForma(f)}
+                type="button"
+              >
+                {f === "3d" ? "Modelo reagrupado" : "SVG provisório"}
+              </button>
+            ))}
+          </div>
+
+          <div className="rounded-xl border border-neutral-200 bg-neutral-950 p-4 dark:border-neutral-800">
+            {forma === "3d" ? (
+              <CorpoGlb corPorGrupo={cores} corSemDado={SEM_DADO} />
+            ) : (
+              <CorpoSvg
+                corPorGrupo={cores}
+                corSemDado={SEM_DADO}
+                onSelecionar={(g) => setSelecionado(g === selecionado ? null : g)}
+                selecionado={selecionado}
+              />
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col gap-3">
