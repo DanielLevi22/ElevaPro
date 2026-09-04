@@ -27,7 +27,7 @@ export function AiReadinessGate({ readiness, onProceed, onCompleteProfile }: Pro
       {/* Score */}
       <div className="bg-surface border border-white/10 rounded-2xl p-5 space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-foreground">Perfil para o Coach IA</h3>
+          <h3 className="font-semibold text-foreground">Perfil para o Assistente</h3>
           <span className={`text-2xl font-bold ${scoreColor}`}>{score}%</span>
         </div>
         <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
@@ -37,8 +37,9 @@ export function AiReadinessGate({ readiness, onProceed, onCompleteProfile }: Pro
           />
         </div>
         <p className="text-xs text-muted-foreground">
-          {level === "ready" && "Perfil completo. O coach tem tudo que precisa."}
-          {level === "warning" && "Perfil razoável. O coach pode precisar adivinhar alguns dados."}
+          {level === "ready" && "Perfil completo. O assistente tem tudo que precisa."}
+          {level === "warning" &&
+            "Perfil razoável. O assistente pode precisar adivinhar alguns dados."}
           {level === "blocked" &&
             "Perfil incompleto. Complete os campos obrigatórios antes de prosseguir."}
         </p>
@@ -82,7 +83,7 @@ export function AiReadinessGate({ readiness, onProceed, onCompleteProfile }: Pro
       <div className="flex flex-col gap-2">
         {level !== "blocked" && (
           <Button size="lg" fullWidth onClick={onProceed}>
-            {level === "ready" ? "Iniciar Coach IA" : "Continuar assim mesmo"}
+            {level === "ready" ? "Iniciar Assistente" : "Continuar assim mesmo"}
           </Button>
         )}
         <Button size="lg" fullWidth variant="secondary" onClick={onCompleteProfile}>

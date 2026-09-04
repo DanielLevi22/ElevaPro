@@ -52,7 +52,7 @@ export function ProfileConfirmationCard({
         {/* Mode selector */}
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
-            Modo do coach
+            Modo do assistente
           </p>
           <div className="grid grid-cols-2 gap-2">
             {(["express", "analytical"] as const).map((mode) => (

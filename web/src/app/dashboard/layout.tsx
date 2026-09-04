@@ -139,7 +139,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     },
     {
       href: "/dashboard/student/coach",
-      label: "Coach IA",
+      label: "Assistente",
       icon: (
         <svg
           aria-hidden="true"

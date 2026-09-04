@@ -19,7 +19,7 @@ export function ContextoDisponivel({ blocos }: Props) {
   return (
     <div className="rounded-xl border border-white/10 bg-surface/60 px-4 py-3">
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        O que o coach sabe deste aluno
+        O que o assistente sabe deste aluno
       </p>
       <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
         {blocos.map((bloco) => (

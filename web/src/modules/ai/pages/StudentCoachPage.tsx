@@ -23,7 +23,7 @@ export function StudentCoachPage() {
           </svg>
         </div>
         <div>
-          <h2 className="text-xl font-bold text-foreground">Coach IA</h2>
+          <h2 className="text-xl font-bold text-foreground">Assistente</h2>
           <p className="text-sm text-muted-foreground">
             Seu personal trainer inteligente — treino e nutrição personalizados
           </p>

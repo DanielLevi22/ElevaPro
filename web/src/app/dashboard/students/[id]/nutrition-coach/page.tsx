@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 /**
- * O coach de nutrição virou uma das conversas do AI Coach.
+ * O coach de nutrição virou uma das conversas do Assistente.
  *
  * A rota fica de pé porque pode estar em link salvo — e porque ela nunca teve
  * aba: quem chegava aqui digitou a URL, e someção silenciosa seria pior.

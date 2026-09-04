@@ -89,7 +89,7 @@ export function AiCoachChat({
                   id: "welcome",
                   role: "assistant",
                   content:
-                    "Olá! Sou o AI Coach. Vou te ajudar a criar o planejamento de treino deste aluno. Por onde quer começar?",
+                    "Olá! Sou o Assistente. Vou te ajudar a criar o planejamento de treino deste aluno. Por onde quer começar?",
                   createdAt: new Date().toISOString(),
                 },
               ],

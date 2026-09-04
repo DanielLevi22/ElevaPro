@@ -54,7 +54,7 @@ export default function PeriodizationsPage({ periodizations, isMember, memberStu
               <Button asChild variant="secondary">
                 <Link href="/dashboard/student/coach">
                   <Sparkles className="w-3.5 h-3.5" />
-                  Criar com Coach IA
+                  Criar com Assistente
                 </Link>
               </Button>
             )}
@@ -137,7 +137,7 @@ export default function PeriodizationsPage({ periodizations, isMember, memberStu
                     <Button asChild variant="secondary">
                       <Link href="/dashboard/student/coach">
                         <Sparkles className="w-3.5 h-3.5" />
-                        Criar com Coach IA
+                        Criar com Assistente
                       </Link>
                     </Button>
                   )}

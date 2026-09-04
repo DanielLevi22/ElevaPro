@@ -30,9 +30,9 @@ const NutritionCoachChat = dynamic(
 );
 
 const TITULO_DO_COACH: Record<ChatModule, string> = {
-  workout: "Coach de Treino",
-  nutrition: "Coach de Nutrição",
-  general: "Coach",
+  workout: "Assistente de Treino",
+  nutrition: "Assistente de Nutrição",
+  general: "Assistente",
 };
 
 /**
@@ -177,7 +177,7 @@ export function AiCoachWorkspace() {
       <div className="flex items-center gap-3">
         <div className="rounded-xl bg-primary/10 p-2 text-primary">
           <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <title>AI Coach</title>
+            <title>Assistente</title>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -187,7 +187,7 @@ export function AiCoachWorkspace() {
           </svg>
         </div>
         <div>
-          <h2 className="font-bold text-foreground text-xl">AI Coach</h2>
+          <h2 className="font-bold text-foreground text-xl">Assistente</h2>
           <p className="text-muted-foreground text-sm">
             {TITULO_DO_COACH[activeModule]}
             {student?.full_name ? ` · ${student.full_name}` : ""}

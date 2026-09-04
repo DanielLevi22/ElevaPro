@@ -24,7 +24,7 @@ const TABS = [
   { segment: "muscle-map", label: "Mapa Muscular" },
   { segment: "body-scan", label: "Análise Corporal" },
   { segment: "activities", label: "Atividades" },
-  { segment: "ai-coach", label: "AI Coach" },
+  { segment: "ai-coach", label: "Assistente" },
 ];
 
 const STATUS_LABEL: Record<string, string> = {
