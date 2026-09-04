@@ -410,12 +410,28 @@ function nomeDoPonto(centro) {
 }
 
 /**
- * Quanto da ilha pode discordar do voto majoritário sem ela ser cortada.
+ * O que faz uma ilha ser cortada em vez de ir inteira para o voto majoritário.
  *
- * Abaixo disto a ilha é um músculo só que apenas encosta na fronteira vizinha,
- * e cortá-la produziria uma lasca solta. Acima, ela cobre mesmo dois músculos.
+ * **Ilha é músculo, e a borda dela é a que o escultor fez.** Respeitar essa
+ * borda é o que faz a seleção parecer um músculo aceso em vez de tinta jogada
+ * por cima — e as faixas deste arquivo são fatias de coordenada, que não
+ * seguem anatomia nenhuma. Cortar por elas estraga a peça.
+ *
+ * Só uma ilha do écorché cobre mesmo dois músculos: a folha toracolombar, com
+ * 5.731 vértices, que junta dorsal e eretores num pedaço só. As demais ficam
+ * abaixo de 2.800 e são músculo único, ainda que atravessem uma fronteira.
+ *
+ * Por isso o critério é **tamanho**, não discordância. Um limiar de
+ * discordância cortava 144 das 299 ilhas — três quartos do modelo fatiado por
+ * plano de coordenada — porque quase toda ilha longa cruza alguma fronteira sem
+ * por isso deixar de ser um músculo só.
  */
-const DISCORDANCIA_QUE_CORTA = 0.15;
+const VERTICES_QUE_INDICAM_FUSAO = 3000;
+
+/** E ainda assim só corta se os triângulos de fato discordarem. */
+const DISCORDANCIA_MINIMA = 0.2;
+
+const cortadas = [];
 
 const centroDoTriangulo = (tri) => {
   const c = [0, 0, 0];
@@ -441,10 +457,20 @@ for (const ilha of dados.ilhas) {
     votos.set(nome, (votos.get(nome) ?? 0) + 1);
   }
 
-  const [vencedor, quantos] = [...votos.entries()].sort((a, c) => c[1] - a[1])[0];
-  const corta = 1 - quantos / ilha.tris.length >= DISCORDANCIA_QUE_CORTA;
+  const maioria = [...votos.values()].sort((a, c) => c - a)[0];
+  const discordancia = 1 - maioria / ilha.tris.length;
+  const corta =
+    ilha.vertices.size > VERTICES_QUE_INDICAM_FUSAO && discordancia >= DISCORDANCIA_MINIMA;
 
-  atribuir(ilha, corta ? null : vencedor);
+  if (corta) cortadas.push(ilha.vertices.size);
+
+  // Ilha inteira vai pelo **centroide dela**, não pelo voto dos triângulos. O
+  // voto parecia mais fino e era pior: numa ilha centrada em y≈3.95, com os
+  // triângulos espalhados meio ponto para cada lado, metade cai do outro lado
+  // de uma fronteira em 4.25 — e o músculo inteiro migra para o vizinho. O
+  // centroide é o que representa a peça; o voto só serve para descobrir que ela
+  // cobre dois músculos.
+  atribuir(ilha, corta ? null : nomeDoPonto(ilha.centro));
 }
 
 /** Manda os triângulos da ilha para o grupo — um nome fixo, ou um por triângulo. */
@@ -484,6 +510,11 @@ const ordem = [...porGrupo.entries()].sort((a, b) =>
 // O material do écorché viaja junto: é a cor anatômica do corpo em repouso.
 const { gltf: origem } = carregar(ENTRADA);
 emitir(ordem, SAIDA, origem.materials[0].pbrMetallicRoughness);
+
+if (cortadas.length > 0) {
+  console.log(`ilhas cortadas por cobrirem dois músculos: ${cortadas.join(", ")} vértices`);
+  console.log("");
+}
 
 const bytes = fs.statSync(SAIDA).size;
 const antes = fs.statSync(ENTRADA).size;
