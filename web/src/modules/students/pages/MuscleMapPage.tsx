@@ -303,42 +303,50 @@ export default function MuscleMapPage() {
 
       {/* ── Cabeçalho flutuante ─────────────────────────────────────────── */}
       <div className="pointer-events-none absolute top-0 right-0 left-0 flex items-start justify-between gap-4 p-6">
-        <div className="pointer-events-auto flex items-center gap-3">
-          <Link
-            className="rounded-full border border-border bg-surface/85 p-2.5 text-muted-foreground backdrop-blur-md transition-colors hover:text-foreground"
-            href={`/dashboard/students/${studentId}`}
-          >
-            <svg
-              aria-hidden="true"
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+        {/* Some em tela cheia. O botão de voltar leva a uma página que está
+            atrás da cena, e o nome do aluno é contexto de navegação — os dois
+            pertencem ao modo em que a navegação existe. Em imersão, o que
+            precisa estar visível é a saída, e ela é o botão à direita. */}
+        {telaCheia ? (
+          <div />
+        ) : (
+          <div className="pointer-events-auto flex items-center gap-3">
+            <Link
+              className="rounded-full border border-border bg-surface/70 p-2.5 text-muted-foreground backdrop-blur-md transition-colors hover:text-foreground"
+              href={`/dashboard/students/${studentId}`}
             >
-              <path
-                d="M15 19l-7-7 7-7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-              />
-            </svg>
-          </Link>
-          <div>
-            <p className="font-bold text-[10px] text-primary uppercase tracking-[0.2em]">
-              Mapa Muscular
-            </p>
-            {student && (
-              <h1 className="font-bold text-foreground text-xl leading-tight">
-                {student.full_name}
-              </h1>
-            )}
+              <svg
+                aria-hidden="true"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M15 19l-7-7 7-7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                />
+              </svg>
+            </Link>
+            <div>
+              <p className="font-bold text-[10px] text-primary uppercase tracking-[0.2em]">
+                Mapa Muscular
+              </p>
+              {student && (
+                <h1 className="font-bold text-foreground text-xl leading-tight">
+                  {student.full_name}
+                </h1>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="pointer-events-auto flex items-center gap-2">
           <button
             aria-label={telaCheia ? "Sair da tela cheia" : "Ver em tela cheia"}
-            className="rounded-full border border-border bg-surface/85 p-2.5 text-muted-foreground backdrop-blur-md transition-colors hover:text-foreground"
+            className="rounded-full border border-border bg-surface/70 p-2.5 text-muted-foreground backdrop-blur-md transition-colors hover:text-foreground"
             onClick={() => setTelaCheia((v) => !v)}
             title={telaCheia ? "Sair da tela cheia (Esc)" : "Ver em tela cheia"}
             type="button"
@@ -363,7 +371,7 @@ export default function MuscleMapPage() {
             </svg>
           </button>
 
-          <div className="flex items-center gap-1 rounded-full border border-border bg-surface/85 p-1 backdrop-blur-md">
+          <div className="flex items-center gap-1 rounded-full border border-border bg-surface/70 p-1 backdrop-blur-md">
             {PERIODS.map((p) => (
               <button
                 className={`rounded-full px-3.5 py-1.5 font-medium text-xs transition-colors ${
@@ -383,7 +391,7 @@ export default function MuscleMapPage() {
       </div>
 
       {/* ── Números, embaixo à esquerda ─────────────────────────────────── */}
-      <div className="pointer-events-none absolute bottom-6 left-6 flex gap-6 rounded-2xl border border-border bg-surface/85 px-6 py-4 backdrop-blur-md">
+      <div className="pointer-events-none absolute bottom-6 left-6 flex gap-6 rounded-2xl border border-border bg-surface/70 px-6 py-4 backdrop-blur-md">
         {[
           { rotulo: "Grupos treinados", valor: isLoading ? "—" : String(volumeByMuscle.length) },
           {

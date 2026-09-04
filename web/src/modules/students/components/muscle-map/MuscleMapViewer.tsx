@@ -62,6 +62,21 @@ interface ControleOrbital {
   setAzimuthalAngle: (angulo: number) => void;
 }
 
+const VOLTA = Math.PI * 2;
+
+/**
+ * A menor diferença entre dois ângulos, em (−π, π].
+ *
+ * O `%` do JavaScript devolve resto **com o sinal do dividendo**, então
+ * `(-0.86) % 6.28` dá `-0.86` e não `5.42`. Com a fórmula ingênua, girar de
+ * 4 rad para 0 escolhia o caminho de −4 rad em vez do de +2.28 — e às vezes
+ * um alvo fora da faixa que o controle aceita, que era a "frente" que não
+ * virava para a frente.
+ */
+function menorDiferenca(alvo: number, atual: number): number {
+  return ((((alvo - atual + Math.PI) % VOLTA) + VOLTA) % VOLTA) - Math.PI;
+}
+
 /**
  * Leva a câmera até um ângulo, animando.
  *
@@ -69,20 +84,29 @@ interface ControleOrbital {
  * costas exige arrastar até acertar. O giro contínuo também dá noção de que o
  * corpo é um só — um corte seco de frente para costas parece troca de imagem.
  *
- * A diferença é normalizada para (−π, π] para a câmera pegar sempre o caminho
- * curto; sem isso, virar de 170° para −170° daria uma volta quase completa.
+ * Interpolação com **piso de velocidade**. Só o fator proporcional aproxima
+ * assintoticamente: a meia-volta parecia rápida no começo e depois rastejava
+ * pelos últimos graus. Com um mínimo por segundo, ela termina.
  */
-function GiraCameraPara({ alvo }: { alvo: number | null }) {
+function GiraCameraPara({ alvo, aoChegar }: { alvo: number | null; aoChegar: () => void }) {
   const controles = useThree((s) => s.controls) as ControleOrbital | null;
 
   useFrame((_, delta) => {
     if (alvo === null || !controles?.setAzimuthalAngle) return;
 
     const atual = controles.getAzimuthalAngle();
-    const dif = ((alvo - atual + Math.PI) % (2 * Math.PI)) - Math.PI;
-    if (Math.abs(dif) < 0.005) return;
+    const dif = menorDiferenca(alvo, atual);
 
-    controles.setAzimuthalAngle(atual + dif * Math.min(1, delta * 4));
+    if (Math.abs(dif) < 0.01) {
+      controles.setAzimuthalAngle(alvo);
+      aoChegar();
+      return;
+    }
+
+    // 3.5 rad/s de piso: a meia-volta leva pouco menos de um segundo mesmo na
+    // parte final, onde o termo proporcional já não empurra.
+    const passo = Math.max(Math.abs(dif) * delta * 6, 3.5 * delta);
+    controles.setAzimuthalAngle(atual + Math.sign(dif) * Math.min(passo, Math.abs(dif)));
   });
 
   return null;
@@ -235,7 +259,11 @@ export function MuscleMapViewer({
   const tons = useMemo(() => escalaDeCor(volumeByMuscle), [volumeByMuscle]);
   const [sobMouse, setSobMouse] = useState<MusculoSobMouse | null>(null);
   const [emRepouso, setEmRepouso] = useState(true);
-  const [vista, setVista] = useState<"frente" | "costas" | null>("frente");
+  // `alvo` é o comando em curso; ele se solta ao chegar para o arraste ficar
+  // livre depois. `lado` é o que o botão lembra, e por isso o rótulo continua
+  // previsível mesmo depois de a pessoa girar com a mão.
+  const [alvo, setAlvo] = useState<number | null>(null);
+  const [lado, setLado] = useState<"frente" | "costas">("frente");
 
   return (
     <div
@@ -244,7 +272,7 @@ export function MuscleMapViewer({
         setEmRepouso(false);
         // Arrastar solta a câmera: continuar puxando para o ângulo do botão
         // brigaria com a mão de quem está girando.
-        setVista(null);
+        setAlvo(null);
       }}
       onWheel={() => setEmRepouso(false)}
     >
@@ -274,7 +302,7 @@ export function MuscleMapViewer({
             recortado e colado no fundo, não de pé num lugar. */}
         <ContactShadows blur={2.6} far={30} opacity={0.55} position={[0, -44, 0]} scale={120} />
 
-        <GiraCameraPara alvo={vista === "frente" ? 0 : vista === "costas" ? Math.PI : null} />
+        <GiraCameraPara alvo={alvo} aoChegar={() => setAlvo(null)} />
 
         <OrbitControls
           autoRotate={false}
@@ -300,14 +328,16 @@ export function MuscleMapViewer({
            painel de músculos, que é irmão posterior no DOM e pintava por cima.
            O `z-10` é cinto e suspensório para o caso de a lateral mudar de
            largura. */
-        className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 rounded-full border border-border bg-surface/85 px-4 py-2 font-bold text-[11px] text-foreground/80 uppercase tracking-widest backdrop-blur-md transition-colors hover:text-foreground"
+        className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 rounded-full border border-border bg-surface/70 px-4 py-2 font-bold text-[11px] text-foreground/80 uppercase tracking-widest backdrop-blur-md transition-colors hover:text-foreground"
         onClick={() => {
           setEmRepouso(false);
-          setVista(vista === "costas" ? "frente" : "costas");
+          const proximo = lado === "costas" ? "frente" : "costas";
+          setLado(proximo);
+          setAlvo(proximo === "costas" ? Math.PI : 0);
         }}
         type="button"
       >
-        {vista === "costas" ? "Ver de frente" : "Ver de costas"}
+        {lado === "costas" ? "Ver de frente" : "Ver de costas"}
       </button>
 
       {sobMouse && (
