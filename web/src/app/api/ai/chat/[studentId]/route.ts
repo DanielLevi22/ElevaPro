@@ -14,7 +14,7 @@ import { formatContextForPrompt, loadStudentContext } from "@/modules/ai/service
 import { definirTituloProvisorio, nomearConversa } from "@/modules/ai/services/conversationTitle";
 import { queryExercises, unknownExerciseNames } from "@/modules/ai/services/exerciseCatalog";
 import { runWorkoutOrchestrator } from "@/modules/ai/services/workoutOrchestrator";
-import type { BulkWorkoutItem, SseEvent } from "@/modules/ai/types";
+import type { BulkWorkoutItem, PeriodizationProposal, SseEvent } from "@/modules/ai/types";
 
 /** Linha em branco entre os blocos do contexto. */
 const SECTION_SEPARATOR = `
@@ -143,6 +143,25 @@ export async function POST(
 
         const onToolCall = async (name: string, input: unknown): Promise<string> => {
           const typedInput = input as Record<string, unknown>;
+
+          if (name === "propose_periodization") {
+            // Propor de novo depois de salvar é o cartão renascendo como
+            // "Aguardando aprovação" na tela de quem acabou de aprovar — e o
+            // botão de salvar reaparece para uma periodização que já está no
+            // banco. O turno sabe que salvou; recusar aqui é mais barato que
+            // ensinar a tela a distinguir proposta velha de proposta nova.
+            if (savedPeriodizationId) {
+              return JSON.stringify({
+                error: "Esta periodização já foi salva.",
+                instrucao: "Não proponha de novo. Siga para os treinos da fase.",
+              });
+            }
+
+            controller.enqueue(
+              sseChunk({ type: "proposal", data: input as PeriodizationProposal }),
+            );
+            return "Proposta apresentada ao especialista. Aguardando revisão e aprovação.";
+          }
 
           if (name === "save_periodization") {
             try {
