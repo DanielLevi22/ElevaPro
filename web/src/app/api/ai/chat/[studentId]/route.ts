@@ -12,6 +12,7 @@ import {
 } from "@/modules/ai/services/chatService";
 import { formatContextForPrompt, loadStudentContext } from "@/modules/ai/services/contextLoader";
 import { definirTituloProvisorio, nomearConversa } from "@/modules/ai/services/conversationTitle";
+import { resumirDisponibilidade } from "@/modules/ai/services/disponibilidade";
 import { queryExercises, unknownExerciseNames } from "@/modules/ai/services/exerciseCatalog";
 import { runWorkoutOrchestrator } from "@/modules/ai/services/workoutOrchestrator";
 import type { BulkWorkoutItem, PeriodizationProposal, SseEvent } from "@/modules/ai/types";
@@ -318,7 +319,19 @@ export async function GET(
     return NextResponse.json({ error: "conversa não encontrada" }, { status: 404 });
   }
 
-  const messages = await getSessionMessages(sessionId);
+  // Com que dados o coach está trabalhando. Vai junto do histórico porque a
+  // tela precisa das duas coisas para abrir, e duas idas ao servidor mostrariam
+  // a conversa antes de dizer o que ela sabe. Falha aqui não derruba o
+  // histórico — a tira some, o chat abre.
+  const [messages, contexto] = await Promise.all([
+    getSessionMessages(sessionId),
+    Promise.all([
+      loadStudentContext(studentId, auth.caller.id),
+      formatBodyScanIndex(studentId).catch(() => ""),
+    ])
+      .then(([ctx, indice]) => resumirDisponibilidade(ctx, indice.length > 0))
+      .catch(() => null),
+  ]);
 
-  return NextResponse.json({ sessionId, messages });
+  return NextResponse.json({ sessionId, messages, availability: contexto });
 }
