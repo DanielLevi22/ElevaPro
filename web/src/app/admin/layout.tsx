@@ -69,6 +69,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { href: "/admin/analytics", label: "Analytics", icon: "📈" },
     { href: "/admin/content/exercises", label: "Exercícios", icon: "💪" },
     { href: "/admin/content/foods", label: "Alimentos", icon: "🍎" },
+    { href: "/admin/tecnica", label: "Análise de Técnica", icon: "🏋️" },
   ];
 
   if (isLoading) {

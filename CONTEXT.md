@@ -127,3 +127,27 @@ _Avoid_: régua, referência, calibração
 As marcas na tela que fixam a posição do aluno na foto, para que dois scans sejam
 comparáveis.
 _Avoid_: silhueta, guia, moldura
+
+**Análise de Técnica**:
+Leitura da execução de um exercício ao longo do tempo, quadro a quadro, que conta
+Repetições e emite um Veredito para cada uma. Diferente do Body scan em duas
+coisas: olha movimento e não forma, e nada dela é guardado. Não usar "Execução",
+que já é a WorkoutSession.
+_Avoid_: execução, correção de exercício, análise de movimento
+
+**Repetição**:
+Um ciclo completo do movimento, do início ao retorno à posição de partida. É a
+unidade que a Análise de Técnica conta e sobre a qual o Veredito é emitido.
+_Avoid_: rep, ciclo
+
+**Veredito**:
+O julgamento de uma única Repetição contra um Critério — no agachamento, "fundo"
+ou "faltou". Sai do ponto mais extremo da Repetição, não do instante em que ela
+termina.
+_Avoid_: nota, resultado, avaliação
+
+**Critério**:
+A regra geométrica que decide o Veredito de um exercício, com o limiar que a
+separa. No agachamento: o quadril passar da linha do joelho. Cada exercício tem o
+seu, e cada um precisa do próprio limiar calibrado.
+_Avoid_: regra, métrica, parâmetro
