@@ -190,10 +190,13 @@ async function fetchWorkoutMetrics(studentId: string, since: Date): Promise<Work
 
   const weeklyFrequency = [...weekFreqMap.entries()].map(([week, s]) => ({ week, sessions: s }));
 
+  // Sem corte: o `.slice(0, 7)` que existia aqui era do tempo em que isto
+  // alimentava só um gráfico de barras. O mapa muscular pinta o corpo inteiro,
+  // e cortar em sete deixava quatro grupos cinzas para sempre — indistinguíveis
+  // de quem não treinou.
   const volumeByMuscle = Object.entries(muscleVolumeMap)
     .map(([muscle, volume]) => ({ muscle, volume: Math.round(volume) }))
-    .sort((a, b) => b.volume - a.volume)
-    .slice(0, 7);
+    .sort((a, b) => b.volume - a.volume);
 
   const stimulus: StimulusItem[] = [
     {

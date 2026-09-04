@@ -1,220 +1,255 @@
 "use client";
 
-import { Html, OrbitControls, useGLTF } from "@react-three/drei";
+import { ContactShadows, Html, OrbitControls, useGLTF } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Component, type ReactNode, Suspense, useEffect, useMemo, useRef } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Component, type ReactNode, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { MuscleVolume } from "@/shared/hooks/useWorkoutMetrics";
-import { buildColorMap, MESH_TO_MUSCLE, MUSCLE_MESH_MAP } from "./muscleMeshMap";
+import { escalaDeCor, type TomDoMusculo } from "./escalaDeCor";
+import { MALHA_NEUTRA, malhasAcesas, rotuloDaMalha } from "./grupos";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+/**
+ * O corpo 3D, pintado por nome de malha.
+ *
+ * **Não há mapeamento neste arquivo, e é essa ausência que importa.** Até
+ * 2026-09-03 existia um `MUSCLE_MESH_MAP` que ligava "Peitoral" a
+ * `object_0, object_1, object_27, object_83, object_84` — nomes escolhidos por
+ * centroide de caixa delimitadora, porque o écorché de origem exporta 87 malhas
+ * sem semântica. A medição depois mostrou por que aquilo nunca acertava: 48
+ * dessas malhas ocupam mais de metade do corpo, e a menor ocupa 21%. Pintar uma
+ * delas tingia quase o boneco inteiro.
+ *
+ * O modelo agora vem de `scripts/modelo/reagrupar.js`, que reagrupa a geometria
+ * por conectividade e emite malhas chamadas `Peitoral`, `Costas`, `Quadríceps`.
+ * A malha se chama pelo que ela é, então pintar é procurar pelo nome.
+ */
 
-interface HoveredInfo {
+const MODELO = "/models/corpo-por-musculo.glb";
+
+interface MusculoSobMouse {
   muscle: string;
   volume: number;
   pct: number;
 }
 
-interface MuscleBodyProps {
-  colorMap: Map<string, { color: THREE.Color; emissiveIntensity: number; opacity: number }>;
-  onHover: (info: HoveredInfo | null) => void;
+interface CorpoProps {
+  tons: Map<string, TomDoMusculo>;
+  onHover: (info: MusculoSobMouse | null) => void;
   onSelect: (muscle: string | null) => void;
   selectedMuscle: string | null;
   volumeByMuscle: MuscleVolume[];
 }
 
-// ── Body mesh renderer ─────────────────────────────────────────────────────────
+/**
+ * Gira devagar enquanto ninguém interage, e para no primeiro toque.
+ *
+ * É o que separa uma cena de uma foto: sem movimento nenhum o corpo parece
+ * colado no fundo. Parar de vez ao interagir é obrigatório — girar por baixo de
+ * quem está tentando mirar um músculo é pior que não girar.
+ */
+function GiroEmRepouso({ ativo, children }: { ativo: boolean; children: ReactNode }) {
+  const grupo = useRef<THREE.Group>(null);
+  useFrame((_, delta) => {
+    if (ativo && grupo.current) grupo.current.rotation.y += delta * 0.12;
+  });
+  return <group ref={grupo}>{children}</group>;
+}
 
-function MuscleBody({
-  colorMap,
-  onHover,
-  onSelect,
-  selectedMuscle,
-  volumeByMuscle,
-}: MuscleBodyProps) {
-  const { scene } = useGLTF("/models/muscle-body.glb");
-  const totalVolume = volumeByMuscle.reduce((s, m) => s + m.volume, 0);
-  const clonedScene = useMemo(() => scene.clone(true), [scene]);
+/** O pedaço do OrbitControls que a virada usa. Tipar só isto evita o `any`. */
+interface ControleOrbital {
+  getAzimuthalAngle: () => number;
+  setAzimuthalAngle: (angulo: number) => void;
+}
 
-  // One-time: isolate materials per mesh so emissive can differ per mesh
+const VOLTA = Math.PI * 2;
+
+/**
+ * A menor diferença entre dois ângulos, em (−π, π].
+ *
+ * O `%` do JavaScript devolve resto **com o sinal do dividendo**, então
+ * `(-0.86) % 6.28` dá `-0.86` e não `5.42`. Com a fórmula ingênua, girar de
+ * 4 rad para 0 escolhia o caminho de −4 rad em vez do de +2.28 — e às vezes
+ * um alvo fora da faixa que o controle aceita, que era a "frente" que não
+ * virava para a frente.
+ */
+function menorDiferenca(alvo: number, atual: number): number {
+  return ((((alvo - atual + Math.PI) % VOLTA) + VOLTA) % VOLTA) - Math.PI;
+}
+
+/**
+ * Leva a câmera até um ângulo, animando.
+ *
+ * Existe porque metade do treino é cadeia posterior e, sem isto, chegar às
+ * costas exige arrastar até acertar. O giro contínuo também dá noção de que o
+ * corpo é um só — um corte seco de frente para costas parece troca de imagem.
+ *
+ * Interpolação com **piso de velocidade**. Só o fator proporcional aproxima
+ * assintoticamente: a meia-volta parecia rápida no começo e depois rastejava
+ * pelos últimos graus. Com um mínimo por segundo, ela termina.
+ */
+function GiraCameraPara({ alvo, aoChegar }: { alvo: number | null; aoChegar: () => void }) {
+  const controles = useThree((s) => s.controls) as ControleOrbital | null;
+
+  useFrame((_, delta) => {
+    if (alvo === null || !controles?.setAzimuthalAngle) return;
+
+    const atual = controles.getAzimuthalAngle();
+    const dif = menorDiferenca(alvo, atual);
+
+    if (Math.abs(dif) < 0.01) {
+      controles.setAzimuthalAngle(alvo);
+      aoChegar();
+      return;
+    }
+
+    // 9 rad/s de piso: a meia-volta leva cerca de um terço de segundo. Rápido
+    // o bastante para não fazer esperar, e ainda contínuo — o que se quer é a
+    // noção de que o corpo girou, não um corte.
+    const passo = Math.max(Math.abs(dif) * delta * 12, 9 * delta);
+    controles.setAzimuthalAngle(atual + Math.sign(dif) * Math.min(passo, Math.abs(dif)));
+  });
+
+  return null;
+}
+
+function Corpo({ tons, onHover, onSelect, selectedMuscle, volumeByMuscle }: CorpoProps) {
+  const { scene } = useGLTF(MODELO);
+  const total = volumeByMuscle.reduce((s, m) => s + m.volume, 0);
+
+  // `useGLTF` cacheia a cena entre montagens: pintar a original vazaria a cor
+  // de um render para o próximo.
+  const cena = useMemo(() => scene.clone(true), [scene]);
+
+  // Materiais isolados uma vez: o clone compartilha as instâncias, então sem
+  // isto pintar um músculo pintaria todos.
+  // A cor que o modelo traz, guardada antes de qualquer pintura. É para onde o
+  // músculo volta quando o período não tem treino nenhum — sem ela, uma vez
+  // pintado o músculo nunca mais recuperava o tom anatômico.
+  const corDeRepouso = useRef(new Map<string, THREE.Color>());
+
   useEffect(() => {
-    clonedScene.traverse((obj) => {
+    cena.traverse((obj) => {
       if (!(obj instanceof THREE.Mesh)) return;
-      obj.material = (obj.material as THREE.Material).clone();
+      const material = (obj.material as THREE.MeshStandardMaterial).clone();
+      obj.material = material;
+      corDeRepouso.current.set(obj.uuid, material.color.clone());
     });
-  }, [clonedScene]);
+  }, [cena]);
 
-  // Apply emissive highlight based on volume data and current selection
+  const acesas = useMemo(() => malhasAcesas(selectedMuscle), [selectedMuscle]);
+
   useEffect(() => {
-    const selectedMeshes = new Set(
-      (selectedMuscle ? (MUSCLE_MESH_MAP[selectedMuscle] ?? []) : []).map((n) => n.toLowerCase()),
-    );
-
-    clonedScene.traverse((obj) => {
+    cena.traverse((obj) => {
       if (!(obj instanceof THREE.Mesh)) return;
-      const key = obj.name.toLowerCase();
-      const entry = colorMap.get(key);
-      const isSelected = selectedMeshes.has(key);
-      const mat = obj.material as THREE.MeshStandardMaterial;
-      if (!("emissive" in mat)) return;
 
-      if (isSelected) {
-        mat.emissive.set("#CCFF00");
-        mat.emissiveIntensity = 1.2;
-      } else if (entry) {
-        mat.emissive.set("#CCFF00");
-        mat.emissiveIntensity = entry.emissiveIntensity;
-      } else {
-        mat.emissive.set("#000000");
-        mat.emissiveIntensity = 0;
-      }
-      mat.needsUpdate = true;
-    });
-  }, [clonedScene, colorMap, selectedMuscle]);
+      const material = obj.material as THREE.MeshStandardMaterial;
+      const neutra = obj.name === MALHA_NEUTRA;
+      const tom = neutra ? undefined : tons.get(obj.name);
 
-  function handlePointerOver(e: ThreeEvent<PointerEvent>) {
-    e.stopPropagation();
-    const mesh = e.object as THREE.Mesh;
-    const muscle = MESH_TO_MUSCLE.get(mesh.name.toLowerCase());
-    if (!muscle) return;
-    const vol = volumeByMuscle.find((m) => m.muscle === muscle);
-    onHover({
-      muscle,
-      volume: vol?.volume ?? 0,
-      pct: totalVolume > 0 ? Math.round(((vol?.volume ?? 0) / totalVolume) * 100) : 0,
+      // Sem volume, a cor **não é tocada**: fica o tom anatômico que o écorché
+      // traz no próprio material. Repintar de cinza, como eu fazia, jogava fora
+      // a aparência de corpo que o modelo já dava de graça.
+      if (tom) material.color = new THREE.Color(tom.cor);
+      else material.color.copy(corDeRepouso.current.get(obj.uuid) ?? material.color);
+
+      // O selecionado brilha em vez de mudar de cor: trocar a cor apagaria a
+      // informação de volume justamente no músculo que a pessoa foi olhar.
+      // Fora da seleção, o brilho é o próprio volume — o mais carregado acende
+      // mais, que é o que faz o mapa ser lido de relance.
+      // A seleção pode ser um grupo ("Costas") ou um sub-músculo ("Dorsal").
+      // Grupo acende todas as malhas dele; sub-músculo acende só a sua.
+      const aceso = !neutra && acesas.has(obj.name);
+      // O selecionado clareia a **cor**, não só o brilho. Só emissivo a 0.22 era
+      // invisível num músculo pequeno visto de longe, e a 0.5 estourava a peça
+      // e apagava a informação de volume junto. Clarear a base resolve os dois:
+      // lê de relance e não queima.
+      if (aceso) material.color.lerp(new THREE.Color("#ffffff"), 0.45);
+      material.emissive = new THREE.Color(aceso ? "#ffffff" : (tom?.cor ?? "#000000"));
+      material.emissiveIntensity = aceso ? 0.25 : (tom?.brilho ?? 0);
+      material.needsUpdate = true;
     });
+  }, [cena, tons, acesas]);
+
+  function musculoDoEvento(e: ThreeEvent<PointerEvent | MouseEvent>): string | null {
+    const nome = (e.object as THREE.Mesh).name;
+    return nome && nome !== MALHA_NEUTRA ? nome : null;
   }
 
-  // Model is exported Z-up (Blender default) — rotate to Three.js Y-up
   return (
     <primitive
-      object={clonedScene}
-      rotation={[-Math.PI / 2, 0, 0]}
-      onPointerOver={handlePointerOver}
-      onPointerOut={() => onHover(null)}
+      object={cena}
       onClick={(e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();
-        const muscle = MESH_TO_MUSCLE.get((e.object as THREE.Mesh).name.toLowerCase());
-        onSelect(muscle && muscle !== selectedMuscle ? muscle : null);
+        const musculo = musculoDoEvento(e);
+        onSelect(musculo && musculo !== selectedMuscle ? musculo : null);
       }}
+      onPointerOut={() => onHover(null)}
+      onPointerOver={(e: ThreeEvent<PointerEvent>) => {
+        e.stopPropagation();
+        const musculo = musculoDoEvento(e);
+        if (!musculo) return;
+        const volume = volumeByMuscle.find((m) => m.muscle === musculo)?.volume ?? 0;
+        onHover({
+          muscle: musculo,
+          volume,
+          pct: total > 0 ? Math.round((volume / total) * 100) : 0,
+        });
+      }}
+      // O modelo é Z-up (padrão do Blender); o three.js é Y-up.
+      rotation={[-Math.PI / 2, 0, 0]}
     />
   );
 }
 
-// ── Placeholder body ───────────────────────────────────────────────────────────
-
-function PlaceholderBody() {
-  const groupRef = useRef<THREE.Group>(null);
+/** Fallback girando, para o caso de o modelo não carregar. */
+function CorpoDeEspera() {
+  const grupo = useRef<THREE.Group>(null);
   useFrame((_, delta) => {
-    if (groupRef.current) groupRef.current.rotation.y += delta * 0.3;
+    if (grupo.current) grupo.current.rotation.y += delta * 0.3;
   });
 
-  const mat = new THREE.MeshStandardMaterial({
-    color: "#27272a",
-    roughness: 0.8,
-    transparent: true,
-    opacity: 0.7,
-  });
+  // O mesmo avermelhado anatômico do écorché, para o fallback não destoar do
+  // corpo de verdade quando o modelo demora ou falha.
+  const material = useMemo(
+    () => new THREE.MeshStandardMaterial({ color: "#b68b8b", roughness: 0.9 }),
+    [],
+  );
 
   return (
-    <group ref={groupRef} position={[0, -10, 0]} scale={16}>
-      <mesh position={[0, 1.75, 0]} material={mat}>
-        <sphereGeometry args={[0.18, 16, 16]} />
+    <group ref={grupo}>
+      <mesh material={material} position={[0, 0.55, 0]}>
+        <sphereGeometry args={[0.16, 16, 16]} />
       </mesh>
-      <mesh position={[0, 1.1, 0]} material={mat}>
-        <boxGeometry args={[0.52, 0.7, 0.28]} />
+      <mesh material={material} position={[0, 0.1, 0]}>
+        <capsuleGeometry args={[0.19, 0.6, 8, 16]} />
       </mesh>
-      <mesh position={[0, 0.68, 0]} material={mat}>
-        <boxGeometry args={[0.44, 0.3, 0.25]} />
-      </mesh>
-      <mesh position={[-0.38, 1.05, 0]} rotation={[0, 0, 0.3]} material={mat}>
-        <cylinderGeometry args={[0.075, 0.065, 0.55, 12]} />
-      </mesh>
-      <mesh position={[0.38, 1.05, 0]} rotation={[0, 0, -0.3]} material={mat}>
-        <cylinderGeometry args={[0.075, 0.065, 0.55, 12]} />
-      </mesh>
-      <mesh position={[-0.14, 0.2, 0]} material={mat}>
-        <cylinderGeometry args={[0.1, 0.09, 0.5, 12]} />
-      </mesh>
-      <mesh position={[0.14, 0.2, 0]} material={mat}>
-        <cylinderGeometry args={[0.1, 0.09, 0.5, 12]} />
-      </mesh>
-      <mesh position={[-0.14, -0.28, 0]} material={mat}>
-        <cylinderGeometry args={[0.07, 0.055, 0.45, 12]} />
-      </mesh>
-      <mesh position={[0.14, -0.28, 0]} material={mat}>
-        <cylinderGeometry args={[0.07, 0.055, 0.45, 12]} />
-      </mesh>
-      <Html position={[0, -0.75, 0]} center>
-        <div className="text-xs text-muted-foreground bg-surface border border-white/10 rounded-lg px-3 py-1.5 whitespace-nowrap">
-          Adicione o modelo em <code className="text-primary">public/models/muscle-body.glb</code>
+      <Html center position={[0, -0.75, 0]}>
+        <div className="whitespace-nowrap rounded-lg border border-white/10 bg-surface px-3 py-1.5 text-muted-foreground text-xs">
+          Não consegui carregar <code className="text-primary">{MODELO}</code>
         </div>
       </Html>
     </group>
   );
 }
 
-// ── Error boundary ────────────────────────────────────────────────────────────
-
-class ModelErrorBoundary extends Component<
+class LimiteDeErro extends Component<
   { children: ReactNode; fallback: ReactNode },
-  { hasError: boolean }
+  { falhou: boolean }
 > {
-  state = { hasError: false };
+  state = { falhou: false };
   static getDerivedStateFromError() {
-    return { hasError: true };
+    return { falhou: true };
   }
   render() {
-    return this.state.hasError ? this.props.fallback : this.props.children;
+    return this.state.falhou ? this.props.fallback : this.props.children;
   }
 }
-
-function GLBBody(props: MuscleBodyProps) {
-  return (
-    <ModelErrorBoundary fallback={<PlaceholderBody />}>
-      <Suspense fallback={<PlaceholderBody />}>
-        <MuscleBody {...props} />
-      </Suspense>
-    </ModelErrorBoundary>
-  );
-}
-
-// ── Legend ────────────────────────────────────────────────────────────────────
-
-function Legend() {
-  const stops = [
-    { label: "Sem dados", color: "rgba(39,39,42,0.5)" },
-    { label: "Baixo", color: "rgba(204,255,0,0.35)" },
-    { label: "Médio", color: "rgba(204,255,0,0.65)" },
-    { label: "Alto", color: "rgba(204,255,0,0.85)" },
-    { label: "Máximo", color: "#CCFF00" },
-  ];
-
-  return (
-    <div className="flex items-center gap-3">
-      <span className="text-xs text-muted-foreground">Volume:</span>
-      <div className="flex items-center gap-1.5">
-        {stops.map((s) => (
-          <div key={s.label} className="flex flex-col items-center gap-1">
-            <div
-              className="w-5 h-5 rounded-sm border border-white/10"
-              style={{ backgroundColor: s.color }}
-            />
-            <span className="text-[9px] text-muted-foreground">{s.label}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Main exported component ───────────────────────────────────────────────────
 
 interface MuscleMapViewerProps {
   volumeByMuscle: MuscleVolume[];
   selectedMuscle: string | null;
-  onMuscleSelect?: (muscle: string | null) => void;
+  onMuscleSelect: (muscle: string | null) => void;
 }
 
 export function MuscleMapViewer({
@@ -222,70 +257,100 @@ export function MuscleMapViewer({
   selectedMuscle,
   onMuscleSelect,
 }: MuscleMapViewerProps) {
-  const colorMap = useMemo(() => buildColorMap(volumeByMuscle), [volumeByMuscle]);
-
-  // Tooltip state is hover-only — no need for screen pos, use CSS absolute pointer
-  const hoverRef = useRef<HoveredInfo | null>(null);
+  const tons = useMemo(() => escalaDeCor(volumeByMuscle), [volumeByMuscle]);
+  const [sobMouse, setSobMouse] = useState<MusculoSobMouse | null>(null);
+  const [emRepouso, setEmRepouso] = useState(true);
+  // `alvo` é o comando em curso; ele se solta ao chegar para o arraste ficar
+  // livre depois. `lado` é o que o botão lembra, e por isso o rótulo continua
+  // previsível mesmo depois de a pessoa girar com a mão.
+  const [alvo, setAlvo] = useState<number | null>(null);
+  const [lado, setLado] = useState<"frente" | "costas">("frente");
 
   return (
-    <div className="bg-surface border border-white/10 rounded-xl overflow-hidden">
-      <div className="relative h-[600px] w-full">
-        <Canvas
-          camera={{ position: [0, -10, -110], fov: 50 }}
-          gl={{ antialias: true, alpha: true }}
-          style={{ background: "transparent" }}
-        >
-          <ambientLight intensity={0.7} />
-          <directionalLight position={[30, 20, -80]} intensity={1.4} />
-          <directionalLight position={[-30, -5, -80]} intensity={0.5} />
-          <directionalLight position={[0, 20, 80]} intensity={0.3} />
-          <hemisphereLight args={["#1a1a2e", "#09090b", 0.4]} />
+    <div
+      className="relative h-full w-full"
+      onPointerDown={() => {
+        setEmRepouso(false);
+        // Arrastar solta a câmera: continuar puxando para o ângulo do botão
+        // brigaria com a mão de quem está girando.
+        setAlvo(null);
+      }}
+      onWheel={() => setEmRepouso(false)}
+    >
+      <Canvas camera={{ position: [0, 0, 95], fov: 42 }} shadows>
+        {/* Três luzes com papéis distintos: a ambiente levanta as sombras, a
+            principal modela o volume, e a de trás recorta a silhueta contra o
+            fundo — é ela que faz o corpo descolar do preto. */}
+        <ambientLight intensity={0.55} />
+        <directionalLight intensity={1.5} position={[35, 45, 55]} />
+        <directionalLight color="#9fb4ff" intensity={0.9} position={[-45, 25, -55]} />
 
-          <GLBBody
-            colorMap={colorMap}
-            onHover={(info) => {
-              hoverRef.current = info;
-            }}
-            onSelect={(muscle) => onMuscleSelect?.(muscle)}
-            selectedMuscle={selectedMuscle}
-            volumeByMuscle={volumeByMuscle}
-          />
+        <Suspense fallback={null}>
+          <LimiteDeErro fallback={<CorpoDeEspera />}>
+            <GiroEmRepouso ativo={emRepouso && !selectedMuscle}>
+              <Corpo
+                tons={tons}
+                onHover={setSobMouse}
+                onSelect={onMuscleSelect}
+                selectedMuscle={selectedMuscle}
+                volumeByMuscle={volumeByMuscle}
+              />
+            </GiroEmRepouso>
+          </LimiteDeErro>
+        </Suspense>
 
-          <OrbitControls
-            enablePan={false}
-            minDistance={20}
-            maxDistance={250}
-            target={[0, -10, 0]}
-          />
-        </Canvas>
+        {/* A sombra de contato é o que ancora o corpo: sem ela ele parece
+            recortado e colado no fundo, não de pé num lugar. */}
+        <ContactShadows blur={2.6} far={30} opacity={0.55} position={[0, -44, 0]} scale={120} />
 
-        {/* Selected muscle badge */}
-        {selectedMuscle && (
-          <div className="absolute top-4 left-4 flex items-center gap-2 bg-primary text-primary-foreground rounded-lg px-3 py-1.5 text-sm font-semibold shadow-lg">
-            <span>{selectedMuscle}</span>
-            <button
-              type="button"
-              onClick={() => onMuscleSelect?.(null)}
-              className="hover:opacity-70 transition-opacity"
-            >
-              ✕
-            </button>
-          </div>
-        )}
+        <GiraCameraPara alvo={alvo} aoChegar={() => setAlvo(null)} />
 
-        <div className="absolute bottom-4 right-4 text-xs text-muted-foreground/50 select-none">
-          Arraste para girar · Scroll para zoom
-        </div>
-      </div>
+        <OrbitControls
+          autoRotate={false}
+          enablePan={false}
+          makeDefault
+          maxDistance={190}
+          minDistance={40}
+          target={[0, -8, 0]}
+        />
+      </Canvas>
 
-      <div className="border-t border-white/10 px-6 py-3 flex items-center justify-between">
-        <Legend />
-        {selectedMuscle && (
-          <p className="text-xs text-muted-foreground">
-            Selecionado: <span className="text-primary font-semibold">{selectedMuscle}</span>
+      {/* Vinheta: escurece as bordas e empurra o olho para o centro. Não recebe
+          ponteiro, senão engoliria o clique no corpo. */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: "radial-gradient(ellipse at 50% 45%, transparent 35%, rgba(0,0,0,0.55) 100%)",
+        }}
+      />
+
+      <button
+        /* Centro-baixo, e não no canto direito: ali ele ficava debaixo do
+           painel de músculos, que é irmão posterior no DOM e pintava por cima.
+           O `z-10` é cinto e suspensório para o caso de a lateral mudar de
+           largura. */
+        className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 rounded-full border border-border bg-surface/70 px-4 py-2 font-bold text-[11px] text-foreground/80 uppercase tracking-widest backdrop-blur-md transition-colors hover:text-foreground"
+        onClick={() => {
+          setEmRepouso(false);
+          const proximo = lado === "costas" ? "frente" : "costas";
+          setLado(proximo);
+          setAlvo(proximo === "costas" ? Math.PI : 0);
+        }}
+        type="button"
+      >
+        {lado === "costas" ? "Ver de frente" : "Ver de costas"}
+      </button>
+
+      {sobMouse && (
+        <div className="pointer-events-none absolute top-6 left-6 rounded-xl border border-white/10 bg-black/50 px-4 py-3 backdrop-blur-md">
+          <p className="font-bold text-sm text-white">{rotuloDaMalha(sobMouse.muscle)}</p>
+          <p className="text-white/50 text-xs">
+            {sobMouse.volume.toLocaleString("pt-BR")} kg · {sobMouse.pct}% do volume
           </p>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
+
+useGLTF.preload(MODELO);
