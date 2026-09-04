@@ -7,7 +7,7 @@ import { Component, type ReactNode, Suspense, useEffect, useMemo, useRef, useSta
 import * as THREE from "three";
 import type { MuscleVolume } from "@/shared/hooks/useWorkoutMetrics";
 import { CORPO_NEUTRO, escalaDeCor, SEM_DADO, type TomDoMusculo } from "./escalaDeCor";
-import { MALHA_NEUTRA } from "./grupos";
+import { MALHA_NEUTRA, volumePorMalha } from "./grupos";
 
 /**
  * O corpo 3D, pintado por nome de malha.
@@ -164,7 +164,10 @@ export function MuscleMapViewer({
   selectedMuscle,
   onMuscleSelect,
 }: MuscleMapViewerProps) {
-  const tons = useMemo(() => escalaDeCor(volumeByMuscle), [volumeByMuscle]);
+  // O volume chega com a chave do banco (`peito`, `pernas`); as malhas se chamam
+  // `Peitoral`, `Quadríceps`. Sem esta tradução nada casa e o corpo fica cinza.
+  const porMalha = useMemo(() => volumePorMalha(volumeByMuscle), [volumeByMuscle]);
+  const tons = useMemo(() => escalaDeCor(porMalha), [porMalha]);
   const [sobMouse, setSobMouse] = useState<MusculoSobMouse | null>(null);
 
   return (
@@ -180,7 +183,7 @@ export function MuscleMapViewer({
               onHover={setSobMouse}
               onSelect={onMuscleSelect}
               selectedMuscle={selectedMuscle}
-              volumeByMuscle={volumeByMuscle}
+              volumeByMuscle={porMalha}
             />
           </LimiteDeErro>
         </Suspense>

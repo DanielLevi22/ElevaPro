@@ -1,7 +1,13 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { GRUPOS_MUSCULARES, MALHA_NEUTRA } from "../grupos";
+import {
+  GRUPOS_DO_BANCO,
+  GRUPOS_MUSCULARES,
+  MALHA_NEUTRA,
+  MALHAS_DO_GRUPO,
+  volumePorMalha,
+} from "../grupos";
 
 /**
  * TRAVA: a lista de grupos e as malhas do modelo não podem divergir.
@@ -67,5 +73,55 @@ describe("grupos musculares e o modelo", () => {
 
     expect(gltf.asset.copyright).toContain("martinjario");
     expect(gltf.asset.copyright).toContain("CC BY");
+  });
+
+  // O defeito que passou despercebido por meses: o volume chegava com a chave
+  // do banco e a tela procurava pelo nome da malha. "peito" nunca casou com
+  // "Peitoral", então o mapa nunca pintou dado real — e o bug das malhas
+  // produzia o mesmo sintoma, então um escondeu o outro.
+  it("traduz a chave do banco para o nome da malha", () => {
+    const traduzido = volumePorMalha([{ muscle: "peito", volume: 5000 }]);
+
+    expect(traduzido).toEqual([{ muscle: "Peitoral", volume: 5000 }]);
+  });
+
+  // O banco tem `pernas` como valor único. As três malhas recebem o mesmo
+  // número: repetir é honesto, repartir seria inventar uma divisão que o dado
+  // não tem.
+  it("espalha o valor grosso do banco pelas malhas que ele cobre", () => {
+    const traduzido = volumePorMalha([{ muscle: "pernas", volume: 9000 }]);
+
+    expect(traduzido.map((t) => t.muscle).sort()).toEqual([
+      "Isquiotibiais",
+      "Panturrilha",
+      "Quadríceps",
+    ]);
+    expect(traduzido.every((t) => t.volume === 9000)).toBe(true);
+  });
+
+  it("descarta cardio, que é modalidade e não músculo", () => {
+    expect(volumePorMalha([{ muscle: "cardio", volume: 4000 }])).toEqual([]);
+  });
+
+  // A trava que fecha o buraco: valor novo no banco que ninguém mapear some da
+  // tela sem erro, e o músculo fica cinza como se ninguém tivesse treinado.
+  it("todo valor do banco ou pinta uma malha, ou é recusado de propósito", () => {
+    const NAO_SAO_MUSCULO = new Set(["cardio"]);
+    const orfaos = GRUPOS_DO_BANCO.filter((g) => !MALHAS_DO_GRUPO[g] && !NAO_SAO_MUSCULO.has(g));
+
+    if (orfaos.length > 0) {
+      throw new Error(
+        `VOLUME QUE SOME: ${orfaos.join(", ")} existe em exercises.muscle_group e não pinta malha nenhuma — o treino entra no banco e desaparece do mapa`,
+      );
+    }
+  });
+
+  it("toda malha que o de-para cita existe no modelo", () => {
+    const malhas = new Set(malhasDoModelo());
+    const inventadas = Object.values(MALHAS_DO_GRUPO)
+      .flat()
+      .filter((m) => m !== undefined && !malhas.has(m));
+
+    expect(inventadas).toEqual([]);
   });
 });

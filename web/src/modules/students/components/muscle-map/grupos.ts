@@ -37,3 +37,79 @@ export type GrupoMuscular = (typeof GRUPOS_MUSCULARES)[number];
  * esqueleto. Ela existe no modelo para o boneco ler como corpo.
  */
 export const MALHA_NEUTRA = "Corpo";
+
+/**
+ * Os nove valores que existem em `exercises.muscle_group`, no banco.
+ *
+ * Minúsculos e sem acento, e **mais grossos que as malhas do modelo**: `pernas`
+ * é um valor só para quadríceps, isquiotibiais e panturrilha.
+ *
+ * A lista canônica mora em `modules/ai/services/exerciseCatalog.ts`, e está
+ * repetida aqui porque módulo não importa de módulo. Se um valor novo entrar no
+ * banco sem entrar neste de-para, o volume dele some da tela sem erro — é o que
+ * `__tests__/grupos.test.ts` cobre.
+ */
+export const GRUPOS_DO_BANCO = [
+  "peito",
+  "costas",
+  "ombro",
+  "biceps",
+  "triceps",
+  "pernas",
+  "gluteos",
+  "abdomen",
+  "cardio",
+] as const;
+
+/**
+ * De valor do banco para as malhas que ele pinta.
+ *
+ * Até 2026-09-03 esta tradução não existia: o `useWorkoutMetrics` entregava a
+ * string crua do banco e a tela procurava por `"Peitoral"`. `"peito"` nunca
+ * casou com `"Peitoral"`, então **o mapa nunca pintou dado real** — ficava
+ * cinza com o aluno treinando, e isso passou despercebido porque o defeito das
+ * malhas produzia o mesmo sintoma.
+ *
+ * `cardio` fica de fora de propósito: é modalidade, não músculo, e pintá-la em
+ * algum lugar seria inventar anatomia.
+ *
+ * `Antebraço` fica sem origem: nenhum exercício do banco é marcado assim, então
+ * ele aparece sempre em cinza. É a verdade — não há dado — e some quando o
+ * catálogo de exercícios ganhar o valor.
+ */
+export const MALHAS_DO_GRUPO: Partial<Record<(typeof GRUPOS_DO_BANCO)[number], GrupoMuscular[]>> = {
+  peito: ["Peitoral"],
+  costas: ["Costas"],
+  ombro: ["Ombros"],
+  biceps: ["Bíceps"],
+  triceps: ["Tríceps"],
+  gluteos: ["Glúteos"],
+  abdomen: ["Abdômen"],
+  // Três malhas para um valor: o banco não distingue coxa de panturrilha, então
+  // as três recebem o mesmo volume. Repetir o número é honesto; reparti-lo
+  // entre elas seria inventar uma divisão que o dado não tem.
+  pernas: ["Quadríceps", "Isquiotibiais", "Panturrilha"],
+};
+
+/**
+ * Traduz o volume que veio do banco para volume por malha.
+ *
+ * @example
+ * volumePorMalha([{ muscle: "pernas", volume: 9000 }]);
+ * // [{ muscle: "Quadríceps", volume: 9000 }, { muscle: "Isquiotibiais", ... }, ...]
+ */
+export function volumePorMalha(
+  volumeDoBanco: { muscle: string; volume: number }[],
+): { muscle: string; volume: number }[] {
+  const porMalha = new Map<string, number>();
+
+  for (const { muscle, volume } of volumeDoBanco) {
+    const malhas = MALHAS_DO_GRUPO[muscle as (typeof GRUPOS_DO_BANCO)[number]];
+    if (!malhas) continue;
+    for (const malha of malhas) {
+      porMalha.set(malha, (porMalha.get(malha) ?? 0) + volume);
+    }
+  }
+
+  return [...porMalha.entries()].map(([muscle, volume]) => ({ muscle, volume }));
+}
