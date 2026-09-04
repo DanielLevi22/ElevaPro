@@ -287,10 +287,10 @@ function CompletionScreen({
         </h2>
         <p className="text-sm text-muted-foreground mt-2 leading-relaxed max-w-60 mx-auto">
           {score >= 80
-            ? "Seu coach tem tudo que precisa para montar um plano personalizado."
+            ? "Seu assistente tem tudo que precisa para montar um plano personalizado."
             : score >= 60
-              ? "Dados suficientes para começar. O coach pode pedir mais detalhes durante a conversa."
-              : "Você pode continuar e responder mais no chat com o coach."}
+              ? "Dados suficientes para começar. O assistente pode pedir mais detalhes durante a conversa."
+              : "Você pode continuar e responder mais no chat com o assistente."}
         </p>
       </div>
       <div className="flex flex-col gap-2.5 w-full">

@@ -36,6 +36,27 @@ _Avoid_: root, superuser
 > [`shared/src/types/auth.types.ts`](shared/src/types/auth.types.ts) — divergência
 > aqui é bug de documentação.
 
+### Assistente
+
+**Assistente**:
+A IA que conversa com o specialist para montar periodização, treinos e plano alimentar,
+e com o student para acompanhá-lo. Uma coisa só, com duas superfícies.
+_Avoid_: AI Coach, Coach IA, coach, bot, IA
+
+> "Coach" já é o que o **specialist** é para o student — usar a mesma palavra para a
+> máquina apaga a distinção justamente onde ela importa, que é quem responde pela
+> prescrição. E "AI"/"IA" no nome descreve a tecnologia, não o que ela faz.
+>
+> Em rota e em símbolo de código o termo antigo permanece: `/dashboard/student/coach`,
+> o segmento `ai-coach`, `AiCoachChat`, o módulo `ai`. É endereço, não nome — trocar
+> rota quebra link salvo, e trocar símbolo espalha diff sem ninguém ver diferença.
+
+**Proposta**:
+O que o assistente apresenta ao specialist para aprovação — de periodização, de treinos,
+de plano alimentar. Fica guardada no servidor até ser aprovada ou substituída; o cartão
+na tela é uma vista dela, nunca a fonte.
+_Avoid_: sugestão, rascunho, preview
+
 ### Nutrição
 
 **DietPlan**:
