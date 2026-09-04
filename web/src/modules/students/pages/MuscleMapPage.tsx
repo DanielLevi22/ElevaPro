@@ -3,9 +3,10 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   GRUPOS_MUSCULARES,
+  grupoDaMalha,
   rotuloDaMalha,
   SUBMUSCULOS,
   volumePorMalha,
@@ -64,6 +65,19 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
   // passava de trinta linhas e o corpo perdia a lateral inteira de altura.
   const [aberto, setAberto] = useState<string | null>(null);
 
+  // A seleção manda no acordeão, venha ela de onde vier. Sem isto, clicar num
+  // músculo **no boneco** selecionava certo e a lateral não mostrava nada: o
+  // item ficava marcado dentro de um grupo fechado, e de fora parecia que o
+  // clique não tinha funcionado.
+  useEffect(() => {
+    if (!selectedMuscle) return;
+    setAberto(
+      SUBMUSCULOS[selectedMuscle as keyof typeof SUBMUSCULOS]
+        ? selectedMuscle
+        : grupoDaMalha(selectedMuscle),
+    );
+  }, [selectedMuscle]);
+
   // O volume de um grupo é o de qualquer sub-músculo dele: todos carregam o
   // mesmo número, porque o banco não distingue. Somar contaria o mesmo treino
   // três vezes no quadríceps.
@@ -98,9 +112,9 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
                 type="button"
                 onClick={() => {
                   onSelect(isSelected ? null : group);
-                  // Selecionar abre o grupo: quem clica em "Costas" quer ver o
-                  // corpo aceso e, logo em seguida, refinar em Dorsal ou Lombar.
-                  setAberto(partes.length > 1 && !isSelected ? group : null);
+                  // Só o fechar fica aqui; o abrir é o efeito acima, que serve
+                  // ao clique na lateral e ao clique no boneco de uma vez.
+                  if (isSelected) setAberto(null);
                 }}
                 className={`w-full text-left rounded-lg px-3 py-2 transition-colors ${
                   isSelected
