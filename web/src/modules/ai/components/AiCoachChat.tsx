@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
 import { formatDate, formatDateRange } from "@/shared/utils/formatDate";
+import { criarAcumuladorDeTexto } from "../services/acumuladorDeTexto";
 import type { BlocoDeContexto } from "../services/disponibilidade";
 import type { BulkWorkoutProposal, ChatMessage, PeriodizationProposal, SseEvent } from "../types";
 import { BulkWorkoutProposalCard } from "./BulkWorkoutProposalCard";
@@ -118,8 +119,12 @@ export function AiCoachChat({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: as dependências são o gatilho da rolagem, não insumo do corpo do efeito — rolar para o fim quando qualquer uma muda é o comportamento desejado
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, proposal, workoutProposal, activity]);
+    // Durante o streaming a rolagem não é animada: o texto chega dezenas de
+    // vezes por segundo, e cada `smooth` reinicia a animação anterior antes de
+    // ela terminar — o resultado é tremor, não suavidade. Fora do streaming a
+    // animação tem tempo de acontecer e ajuda a pessoa a acompanhar o salto.
+    bottomRef.current?.scrollIntoView({ behavior: loading ? "auto" : "smooth" });
+  }, [messages, proposal, workoutProposal, activity, loading]);
 
   /**
    * Salva a proposta guardada no servidor, não a que está na tela.
@@ -179,11 +184,6 @@ export function AiCoachChat({
     if (!msg || loading || !session?.access_token) return;
 
     setInput("");
-    // O cartão sai da tela ao enviar, mas o `saved` chega no meio deste mesmo
-    // turno e precisa dele de volta para marcar "✓ Salvo". Sem guardar aqui, o
-    // handler encontrava `null`, a confirmação nunca aparecia, e o especialista
-    // que acabou de aprovar via o cartão voltar pedindo aprovação.
-    const propostaEmAprovacao = proposal?.data ?? null;
     setProposal(null);
     setWorkoutProposal(null);
     setActivity(null);
@@ -197,6 +197,11 @@ export function AiCoachChat({
     setMessages((prev) => [...prev, userMsg]);
 
     const assistantId = crypto.randomUUID();
+    const texto = criarAcumuladorDeTexto((pedaco) =>
+      setMessages((prev) =>
+        prev.map((m) => (m.id === assistantId ? { ...m, content: m.content + pedaco } : m)),
+      ),
+    );
     setMessages((prev) => [
       ...prev,
       { id: assistantId, role: "assistant", content: "", createdAt: new Date().toISOString() },
@@ -233,11 +238,7 @@ export function AiCoachChat({
             const event: SseEvent = JSON.parse(line.slice(6));
 
             if (event.type === "text") {
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantId ? { ...m, content: m.content + event.content } : m,
-                ),
-              );
+              texto.empurrar(event.content);
             } else if (event.type === "proposal") {
               setProposal({ data: event.data });
             } else if (event.type === "tool_start") {
@@ -248,12 +249,12 @@ export function AiCoachChat({
               setWorkoutProposal(event.data);
               setSavedWorkoutTitles([]);
             } else if (event.type === "saved" && event.entity === "periodization") {
-              setProposal((prev) => {
-                if (prev) return { ...prev, savedId: event.id };
-                return propostaEmAprovacao
-                  ? { data: propostaEmAprovacao, savedId: event.id }
-                  : null;
-              });
+              // Só marca o cartão que ainda está na tela. Recriar o que saiu ao
+              // aprovar o traria de volta abaixo de texto mais novo — cartão é
+              // renderizado sempre no fim da lista —, e a leitura vira "isto
+              // voltou". A confirmação de que salvou é a frase do coach, que
+              // aparece na ordem em que aconteceu.
+              setProposal((prev) => (prev ? { ...prev, savedId: event.id } : null));
             } else if (event.type === "error") {
               setMessages((prev) =>
                 prev.map((m) =>
@@ -267,6 +268,9 @@ export function AiCoachChat({
         }
       }
     } finally {
+      // O último pedaço chega depois do último quadro: sem isto a resposta
+      // aparece truncada na tela e completa no histórico.
+      texto.liberar();
       setLoading(false);
       setActivity(null);
       inputRef.current?.focus();

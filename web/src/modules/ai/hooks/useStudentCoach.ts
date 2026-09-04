@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/modules/auth";
+import { criarAcumuladorDeTexto } from "../services/acumuladorDeTexto";
 import type { AiReadinessScore } from "../services/aiReadiness";
 import type { ChatMessage, PlanProposalData, SseEvent } from "../types";
 
@@ -58,6 +59,11 @@ export function useStudentCoach() {
       setPlanCard(null);
 
       const assistantId = crypto.randomUUID();
+      const texto = criarAcumuladorDeTexto((pedaco) =>
+        setMessages((prev) =>
+          prev.map((m) => (m.id === assistantId ? { ...m, content: m.content + pedaco } : m)),
+        ),
+      );
       setMessages((prev) => [
         ...prev,
         {
@@ -81,6 +87,9 @@ export function useStudentCoach() {
         });
         if (res.body) await readSseStream(res.body);
       } finally {
+        // O último pedaço chega depois do último quadro: sem isto a resposta
+        // aparece truncada na tela e completa no histórico.
+        texto.liberar();
         setLoading(false);
         inputRef.current?.focus();
       }
@@ -90,11 +99,7 @@ export function useStudentCoach() {
         try {
           const event: SseEvent = JSON.parse(line.slice(6));
           if (event.type === "text") {
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === assistantId ? { ...m, content: m.content + event.content } : m,
-              ),
-            );
+            texto.empurrar(event.content);
           } else if (event.type === "plan_proposal") {
             setPlanCard({ data: event.data });
           } else if (event.type === "error") {
