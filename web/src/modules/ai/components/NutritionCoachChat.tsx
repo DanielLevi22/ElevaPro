@@ -248,10 +248,14 @@ export function NutritionCoachChat({
           </div>
         ))}
 
-        {/* Visível o turno inteiro: o JSON da proposta é gerado dentro do bloco
-            de ferramenta, que só chega completo — sem isto ficam 15 a 20
-            segundos de silêncio e o chat parece morto. */}
-        {loading && (
+        {/* Só enquanto uma ferramenta que grava está rodando. Enquanto o modelo
+            apenas escreve, quem indica que ele trabalha são os pontinhos dentro
+            da própria bolha — dois indicadores ao mesmo tempo, e um deles
+            dizendo "preparando" sem nada ter ido ao servidor, pareciam defeito.
+
+            O orquestrador só emite `tool_start` para o que grava, então esta
+            condição não precisa saber quais ferramentas são quais. */}
+        {activity && (
           <div className="flex justify-start">
             <div
               className="flex items-center gap-2.5 rounded-2xl rounded-bl-sm border border-white/10 bg-surface px-4 py-2.5 text-sm text-muted-foreground"
@@ -262,7 +266,7 @@ export function NutritionCoachChat({
                 <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:150ms]" />
                 <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:300ms]" />
               </span>
-              {activity ?? "Preparando"}…
+              {activity}…
             </div>
           </div>
         )}
