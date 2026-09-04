@@ -38,7 +38,23 @@ function Linha({ rotulo, valor }: { rotulo: string; valor: string }) {
   );
 }
 
+/**
+ * O portão de produção.
+ *
+ * Fica antes de qualquer hook de propósito: com o `if` lá dentro, o
+ * `useKeepAwake` já tinha rodado quando ele decidia devolver `null` — a tela
+ * não aparecia e mesmo assim segurava a tela do aparelho acesa em release.
+ *
+ * Separar em dois componentes é o que permite a saída acontecer antes dos
+ * hooks sem quebrar as regras deles: o corpo só monta quando `__DEV__` é
+ * verdadeiro, e nada dentro dele existe em build de produção.
+ */
 export default function SpikeTecnica() {
+  if (!__DEV__) return null;
+  return <CorpoDoSpike />;
+}
+
+function CorpoDoSpike() {
   useKeepAwake();
 
   const [permissao, pedirPermissao] = useCameraPermissions();
@@ -49,8 +65,6 @@ export default function SpikeTecnica() {
     p95: 0,
     termico: 'none',
   });
-
-  if (!__DEV__) return null;
 
   if (!permissao?.granted) {
     return (

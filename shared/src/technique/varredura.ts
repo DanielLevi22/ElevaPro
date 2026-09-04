@@ -137,3 +137,55 @@ export function sugerirLimiar(pontos: PontoDaVarredura[]): PontoDaVarredura | nu
 
   return melhor;
 }
+
+/**
+ * O número mínimo de séries para a varredura dizer alguma coisa.
+ *
+ * Não é estatística, é ordem de grandeza: com menos que isto, uma única série
+ * mal rotulada move a acurácia mais do que a diferença entre dois limiares
+ * candidatos, e o "platô" que se lê na tabela é ruído.
+ */
+export const MINIMO_DE_SERIES = 10;
+
+/** O que o corpus é, antes de o número que ele produz ser levado a sério. */
+export interface SaudeDoCorpus {
+  series: number;
+  fundas: number;
+  rasas: number;
+  /** Só há séries de um rótulo — qualquer limiar que classifique tudo igual acerta 100%. */
+  rotuloUnico: boolean;
+  /** Abaixo de `MINIMO_DE_SERIES`. */
+  pequeno: boolean;
+}
+
+/**
+ * Confere o corpus antes de a varredura ser lida.
+ *
+ * A issue #195 tinha um portão de concordância entre dois profissionais, e ele
+ * saiu: o critério de profundidade é geométrico e se confere no próprio quadro,
+ * então medir concordância media a atenção de quem rotulou, não a definição do
+ * critério. O que sobrou guardando a honestidade do número é isto — tamanho e
+ * balanceamento — e por isso não pode ficar implícito na UI.
+ *
+ * Devolve o retrato, não uma decisão: quem calibra pode conscientemente olhar
+ * um corpus pequeno, e recusar a varredura esconderia dele o único diagnóstico
+ * que explica por que o número está estranho.
+ *
+ * @example
+ * const saude = conferirCorpus(gravacoes);
+ * if (saude.rotuloUnico) avisar("corpus de um rótulo só não separa nada");
+ */
+export function conferirCorpus(gravacoes: Gravacao[]): SaudeDoCorpus {
+  const fundas = gravacoes.filter((g) => g.rotulo === "fundo").length;
+  const rasas = gravacoes.length - fundas;
+
+  return {
+    series: gravacoes.length,
+    fundas,
+    rasas,
+    // Corpus vazio não é "de um rótulo só": não há nada para avisar, e o aviso
+    // apareceria antes de qualquer arquivo ser escolhido.
+    rotuloUnico: gravacoes.length > 0 && (fundas === 0 || rasas === 0),
+    pequeno: gravacoes.length > 0 && gravacoes.length < MINIMO_DE_SERIES,
+  };
+}

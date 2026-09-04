@@ -1,7 +1,7 @@
 "use client";
 
 import type { Gravacao, PontoDaVarredura } from "@elevapro/shared";
-import { sugerirLimiar, varrer } from "@elevapro/shared";
+import { conferirCorpus, MINIMO_DE_SERIES, sugerirLimiar, varrer } from "@elevapro/shared";
 import { useCallback, useMemo, useState } from "react";
 import { DataTable } from "@/shared/components/ui/DataTable";
 
@@ -55,9 +55,7 @@ export function Varredura() {
 
   const pontos = useMemo(() => (gravacoes.length === 0 ? [] : varrer(gravacoes)), [gravacoes]);
   const sugestao = useMemo(() => sugerirLimiar(pontos), [pontos]);
-
-  const fundas = gravacoes.filter((g) => g.rotulo === "fundo").length;
-  const rasas = gravacoes.length - fundas;
+  const saude = useMemo(() => conferirCorpus(gravacoes), [gravacoes]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -69,9 +67,9 @@ export function Varredura() {
           onChange={(e) => carregar(e.target.files)}
           type="file"
         />
-        {gravacoes.length > 0 && (
+        {saude.series > 0 && (
           <span className="text-sm text-neutral-500">
-            {gravacoes.length} séries — {fundas} fundas, {rasas} rasas
+            {saude.series} séries — {saude.fundas} fundas, {saude.rasas} rasas
           </span>
         )}
       </div>
@@ -82,10 +80,18 @@ export function Varredura() {
         </p>
       )}
 
-      {gravacoes.length > 0 && (fundas === 0 || rasas === 0) && (
+      {saude.rotuloUnico && (
         <p className="rounded-lg bg-amber-100 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
           O corpus só tem séries de um rótulo. Qualquer limiar que classifique tudo igual acerta
           100% — a varredura não separa nada e o número que ela sugerir não significa nada.
+        </p>
+      )}
+
+      {saude.pequeno && (
+        <p className="rounded-lg bg-amber-100 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+          {saude.series} séries é pouco — abaixo de {MINIMO_DE_SERIES}, uma única série mal rotulada
+          move a acurácia mais do que a diferença entre dois limiares vizinhos, e o platô que a
+          tabela mostra é ruído. Dá para olhar, não dá para adotar o número.
         </p>
       )}
 

@@ -139,33 +139,45 @@ describe("authService — perfil", () => {
 });
 
 describe("authService — definir tipo de conta", () => {
-  it("grava o tipo escolhido no onboarding", async () => {
-    const { supabase, chamadas } = criarSupabaseFake({});
+  it("manda o papel pela RPC do servidor", async () => {
+    const { supabase, rpcs } = criarSupabaseFake({});
 
     await createAuthService(supabase).setAccountType({
-      userId: "u1",
-      email: "a@b.com",
       accountType: "student",
       fullName: "Ana",
     });
 
-    expect(chamadas[0].tabela).toBe("profiles");
-    expect(chamadas[0].payload).toEqual({
-      id: "u1",
-      email: "a@b.com",
-      account_type: "student",
-      full_name: "Ana",
-    });
+    expect(rpcs[0].nome).toBe("set_own_account_type");
+    expect(rpcs[0].args[0]).toEqual({ p_account_type: "student", p_full_name: "Ana" });
+  });
+
+  // Regressão da escalada de privilégio de 2026-09-03. O UPDATE direto que
+  // existia aqui gravava `account_type` escolhido pelo cliente, e a política
+  // `profiles_update_own` o aceitava — RLS decide linha, não coluna. Qualquer
+  // conta logada virava admin com um PATCH. A migration 0040 fechou a coluna;
+  // este teste é o que impede a escrita direta de voltar por cima dela.
+  it("não escreve em profiles por fora da RPC", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({});
+
+    await createAuthService(supabase).setAccountType({ accountType: "member" });
+
+    expect(chamadas).toEqual([]);
+  });
+
+  // Sem id vindo de fora: quem é o usuário sai de `auth.uid()` no banco. Com o
+  // id por parâmetro, quem chamasse escolheria de quem é o perfil que muda.
+  it("não deixa o chamador dizer de quem é o perfil", async () => {
+    const { supabase, rpcs } = criarSupabaseFake({});
+
+    await createAuthService(supabase).setAccountType({ accountType: "member" });
+
+    expect(JSON.stringify(rpcs[0].args)).not.toContain("id");
   });
 
   it("propaga erro em vez de seguir como se tivesse gravado", async () => {
     const { supabase } = criarSupabaseFake({ error: { message: "42501" } });
     await expect(
-      createAuthService(supabase).setAccountType({
-        userId: "u1",
-        email: "a@b.com",
-        accountType: "member",
-      }),
+      createAuthService(supabase).setAccountType({ accountType: "member" }),
     ).rejects.toEqual({ message: "42501" });
   });
 });

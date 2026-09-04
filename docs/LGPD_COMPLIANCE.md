@@ -75,7 +75,7 @@ Dados referentes à saúde exigem **base legal específica** e proteção refor�
 | **Geometria medida no aparelho** — régua px/cm, larguras de silhueta, ângulos de assimetria e postura | `body_scans` (colunas do ADR-0022) | Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I) | Substituir a estimativa visual do modelo por medida reprodutível. A régua fica gravada porque sem ela não há como saber se dois escaneamentos são comparáveis — mesma razão de `framing_camera` |
 | **Qualidade da captura** — contraluz, luminância, visibilidade mínima | `body_scans` (colunas do ADR-0022) | Mesma base do scan | Dizer ao especialista quanto confiar naquele número (Art. 6°, V). Guarda-se o **veredito**, nunca o histograma ou o recorte de imagem |
 | **Imagem do corpo processada ao vivo no aparelho** | *não persiste em lugar nenhum* | Tutela da saúde + **Consentimento informado sobre o processamento local** | Posicionar o aluno e medir. É tratamento pelo Art. 5°, X mesmo sem armazenamento — e por isso precisa estar no texto de consentimento, o que exige `POLICY_VERSION` nova |
-| **Imagem do corpo processada ao vivo durante o exercício** (Análise de Técnica) | *não persiste em lugar nenhum* | Tutela da saúde (Art. 11, II, f) + **Consentimento explícito** (Art. 11, I) | Contar repetições e julgar a profundidade do agachamento. Mesma doutrina do Body scan: não armazenar não é não tratar (Art. 5°, X). **Finalidade nova**, então não é coberta pela `POLICY_VERSION` 1.2 — exige a 1.3 antes de qualquer aluno alcançar a tela |
+| **Imagem do corpo processada ao vivo durante o exercício** (Análise de Técnica) | *não persiste em lugar nenhum* | Tutela da saúde (Art. 11, II, f) + **Consentimento explícito** (Art. 11, I) | Contar repetições e julgar a profundidade do agachamento. Mesma doutrina do Body scan: não armazenar não é não tratar (Art. 5°, X). **Finalidade nova**, e por isso ganhou `consent_type` próprio (`technique_analysis`, migration 0041) em vez de entrar no do Body scan — ver a nota abaixo da Seção 3 |
 | **Vídeo de calibração processado no browser** (painel `/admin/tecnica`) | *não persiste em lugar nenhum* — nem banco, nem bucket, nem disco | Consentimento explícito (Art. 11, I) dos dois profissionais filmados, por termo escrito | Calibrar o limiar do Critério. O vídeo morre ao fechar a aba; o que se exporta são os 33 landmarks por quadro — boneco de palito, sem imagem e sem rosto — como fixture versionada no repositório |
 | Dados de treino executado (séries, cargas, datas, `intensity`) | `workout_sessions` | Execução de contrato | Acompanhamento de desempenho |
 | **Observações do aluno sobre a própria sessão** | `workout_sessions.notes` | **Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I)** | Ajuste de prescrição a partir do que o aluno relata |
@@ -160,6 +160,24 @@ Para cada tipo de tratamento, deve existir uma base legal documentada. Não exis
 | Member cria plano alimentar próprio (sem especialista) | Consentimento explícito | Art. 11, I |
 | Sinal derivado de inatividade para o especialista vinculado (briefing) | Mesma base do dado de origem — Execução de contrato para `workout_sessions`, Consentimento explícito para a data de conclusão da anamnese | Art. 7°, V + Art. 11, I |
 | **Processamento local contínuo da imagem do corpo durante a captura** (ADR-0022) | Tutela da saúde + Consentimento explícito | Art. 11, II, f + I |
+| **Processamento local contínuo da imagem do corpo durante o exercício** (Análise de Técnica) | Tutela da saúde + Consentimento explícito **próprio da finalidade** (`technique_analysis`) | Art. 11, II, f + I; Art. 8°, §4° |
+
+**Por que a Análise de Técnica tem consentimento separado.** A issue #194
+propunha reusar `health_data_collection` e subir a `POLICY_VERSION` para 1.3.
+A implementação divergiu, e o motivo é o Art. 8°, §4°: autorização genérica é
+nula. Empacotadas num consentimento só, as duas finalidades ficam presas uma na
+outra — quem recusar a câmera contínua durante a série perderia junto a
+avaliação física, a anamnese e o acompanhamento de passos, que nada têm a ver
+com isso. Consentimento cuja recusa cobra funcionalidade alheia não é livre
+(Art. 8°, caput), e é a liberdade que sustenta a base do Art. 11, I.
+
+São finalidades que o titular distingue: o Body scan são fotos que ele tira num
+momento que escolhe; a Análise de Técnica é a câmera aberta lendo o corpo
+durante a série inteira. É razoável querer uma e não a outra.
+
+Efeito colateral evitado: a `POLICY_VERSION` do Body scan **não sobe**, o texto
+da 1.2 continua exato para o que descreve, e ninguém reconsente o que já
+consentiu. Reconsentimento pedido à toa é o que ensina a aceitar sem ler.
 
 **Sobre o processamento local.** Não armazenar não é não tratar: o Art. 5°, X
 inclui coleta, acesso e processamento. Enquanto a tela de captura está aberta, o
@@ -744,7 +762,7 @@ aparelho. O julgador é função pura em `shared/src/technique/`.
 
 | Item | Ação necessária | Responsável |
 |------|----------------|-------------|
-| `POLICY_VERSION` 1.3 | Análise de Técnica é finalidade nova, e o Art. 8° exige consentimento específico por finalidade. O texto da 1.2 é escopado ao Body scan | Dev |
+| `consent_type` `technique_analysis` (migration 0041) | Análise de Técnica é finalidade nova, e o Art. 8°, §4° exige consentimento específico por finalidade — resolvido com tipo próprio, não com versão nova do consentimento do Body scan. Travas em `app/src/modules/technique/__tests__/`: consentimento antes da câmera, nada atravessa para o Supabase, nada de corpo no log — as três com prova negativa feita em 2026-09-03 | Feito |
 | `hasCollectionConsent` antes de a câmera abrir | No padrão de `aiBodyScan.ts` — hoje não existe checagem nenhuma, porque não existe aluno alcançando a tela | Dev |
 | Tela de introdução | Equivalente ao `BodyScanIntroduction.tsx`: que a câmera analisa continuamente, que nada é gravado, que nada sai do aparelho. Sem prometer precisão (Art. 6°, VI) | Dev |
 | Travas com prova negativa | `producao.test.ts` (a tela não é alcançável em produção), `consentimento.test.ts`, `fronteira.test.ts`, `log.test.ts` | Dev |

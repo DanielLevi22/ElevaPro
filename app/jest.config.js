@@ -8,6 +8,7 @@ module.exports = {
     '^@/workout$': '<rootDir>/src/modules/workout',
     '^@/students$': '<rootDir>/src/modules/students',
     '^@/auth$': '<rootDir>/src/modules/auth',
+    '^@/technique$': '<rootDir>/src/modules/technique',
     '^@/assessment$': '<rootDir>/src/modules/assessment',
     '^@elevapro/core(.*)$': '<rootDir>/src/packages/core$1',
     '^@elevapro/supabase(.*)$': '<rootDir>/src/packages/supabase$1',

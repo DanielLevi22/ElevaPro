@@ -79,9 +79,42 @@ class Medida : Record {
   @Field var tornozeloY: Double? = null
 }
 
+/**
+ * Um landmark do BlazePose, em coordenada normalizada de 0 a 1.
+ *
+ * O nome dos campos é o mesmo de `LandmarkNormalizado` em
+ * `shared/src/technique/fatos.ts`, de propósito: assim o que sobe do nativo
+ * entra no julgador sem tradução, e não há camada onde trocar x por y.
+ */
+class Ponto : Record {
+  @Field var x: Double = 0.0
+  @Field var y: Double = 0.0
+  @Field var visibility: Double = 0.0
+}
+
+/**
+ * Os 33 landmarks de um quadro.
+ *
+ * Sobe como lista de registros, e não como vetor achatado de 99 números, porque
+ * é a forma que o julgador já consome. Achatar economizaria serialização e
+ * criaria um passo de desempacotamento — exatamente o tipo de tradução que a
+ * `gravacao.ts` argumenta que não deve existir. Se a ponte virar gargalo, a
+ * mudança vem com o número medido junto, como manda o `ADR-0022`.
+ *
+ * `pontos` vazio é informação, não ausência de evento: significa que o passe
+ * rodou e o modelo não achou ninguém. Sem isso, "não vejo você" e "o pipeline
+ * parou" chegariam ao JS como a mesma coisa — o silêncio.
+ */
+class Pose : Record {
+  @Field var pontos: List<Ponto> = emptyList()
+  /** O mesmo carimbo do passe, para o JS descartar resultado fora de ordem. */
+  @Field var carimbo: Long = 0
+}
+
 class TechniqueSpikeView(context: Context, appContext: AppContext) : ExpoView(context, appContext) {
 
   private val onMedida by EventDispatcher<Medida>()
+  private val onPose by EventDispatcher<Pose>()
   private val onEstado by EventDispatcher()
 
   private val previewView = PreviewView(context)
@@ -256,7 +289,41 @@ class TechniqueSpikeView(context: Context, appContext: AppContext) : ExpoView(co
       ultimoTornozelo = pose[TORNOZELO_ESQ].y().toDouble()
     }
 
+    emitirPose(pose, resultado.timestampMs())
+
     if (agora - inicioDaJanela >= JANELA_MS) fecharJanela(agora)
+  }
+
+  /**
+   * Manda os landmarks do quadro para o JS, onde o julgador mora.
+   *
+   * A regra fica em `shared/` e não aqui porque o painel de calibração roda
+   * exatamente o mesmo código no browser: duas implementações da mesma regra
+   * divergem em silêncio, e o limiar calibrado contra uma passaria a valer para
+   * a outra sem nunca ter sido testado nela.
+   *
+   * Nada é gravado. O que atravessa é o boneco de palito — sem imagem, sem
+   * rosto — e ele morre no quadro seguinte.
+   */
+  private fun emitirPose(
+    landmarks: List<com.google.mediapipe.tasks.components.containers.NormalizedLandmark>?,
+    carimboDoPasse: Long,
+  ) {
+    val pose = Pose()
+    pose.carimbo = carimboDoPasse
+    pose.pontos =
+      landmarks?.map { landmark ->
+        Ponto().apply {
+          x = landmark.x().toDouble()
+          y = landmark.y().toDouble()
+          // `visibility` é Optional no AAR: ausente vira 1.0 pela mesma razão
+          // que `fatos.ts` trata ausência como visível — fonte que não reporta
+          // não é fonte sem corpo.
+          visibility = landmark.visibility().orElse(1.0f).toDouble()
+        }
+      } ?: emptyList()
+
+    principal.post { onPose(pose) }
   }
 
   @Synchronized

@@ -25,6 +25,21 @@ export const ROUTES = {
     ANAMNESIS: '/student/anamnesis',
   },
 
+  // Análise de Técnica (issue #194)
+  TECHNIQUE: {
+    /**
+     * A lista de exercícios. É a porta: a Home aponta para cá, não para um
+     * exercício.
+     *
+     * Mora em `tecnica.tsx`, e não em `tecnica/index.tsx`, porque o typegen
+     * deste projeto nomeia a segunda forma como `/tecnica/index` — endereço
+     * que o roteador não serve, e que deu "tela não encontrada" no emulador.
+     * Arquivo simples com pasta irmã é a forma que ele acerta.
+     */
+    ROOT: '/tecnica',
+    SQUAT: '/tecnica/agachamento',
+  },
+
   // Onboarding
   ONBOARDING: {
     ROLE_SELECTION: '/onboarding/role-selection',

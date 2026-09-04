@@ -1459,11 +1459,18 @@ export type Database = {
     };
     Functions: {
       link_student_by_code: { Args: { p_code: string }; Returns: Json };
+      set_own_account_type: {
+        Args: {
+          p_account_type: Database["public"]["Enums"]["account_type"];
+          p_full_name?: string;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       account_status: "active" | "inactive" | "invited";
       account_type: "admin" | "specialist" | "student" | "member";
-      consent_type: "health_data_collection";
+      consent_type: "health_data_collection" | "technique_analysis";
       day_of_week:
         | "monday"
         | "tuesday"
@@ -1607,7 +1614,7 @@ export const Constants = {
     Enums: {
       account_status: ["active", "inactive", "invited"],
       account_type: ["admin", "specialist", "student", "member"],
-      consent_type: ["health_data_collection"],
+      consent_type: ["health_data_collection", "technique_analysis"],
       day_of_week: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
       diet_plan_status: ["active", "finished"],
       diet_plan_type: ["unique", "cyclic"],
