@@ -4,7 +4,11 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import { GRUPOS_MUSCULARES } from "@/modules/students/components/muscle-map/grupos";
+import {
+  GRUPOS_MUSCULARES,
+  SUBMUSCULOS,
+  volumePorMalha,
+} from "@/modules/students/components/muscle-map/grupos";
 import { useStudents } from "@/shared/hooks/useStudents";
 import { useWorkoutMetrics } from "@/shared/hooks/useWorkoutMetrics";
 
@@ -53,13 +57,20 @@ interface MuscleGroupPanelProps {
 }
 
 function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGroupPanelProps) {
-  const total = volumeByMuscle.reduce((s, m) => s + m.volume, 0);
   const volumeMap = new Map(volumeByMuscle.map((m) => [m.muscle, m.volume]));
+
+  // O volume de um grupo é o de qualquer sub-músculo dele: todos carregam o
+  // mesmo número, porque o banco não distingue. Somar contaria o mesmo treino
+  // três vezes no quadríceps.
+  const volumeDoGrupo = (grupo: (typeof GRUPOS_MUSCULARES)[number]) =>
+    volumeMap.get(SUBMUSCULOS[grupo][0]);
+
+  const total = GRUPOS_MUSCULARES.reduce((s, g) => s + (volumeDoGrupo(g) ?? 0), 0);
 
   // Sort: groups with data first (descending volume), then the rest alphabetically
   const sorted = [...ALL_GROUPS].sort((a, b) => {
-    const va = volumeMap.get(a) ?? -1;
-    const vb = volumeMap.get(b) ?? -1;
+    const va = volumeDoGrupo(a) ?? -1;
+    const vb = volumeDoGrupo(b) ?? -1;
     if (va !== vb) return vb - va;
     return a.localeCompare(b, "pt-BR");
   });
@@ -70,7 +81,8 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
 
       <ol className="flex flex-col gap-1">
         {sorted.map((group) => {
-          const volume = volumeMap.get(group);
+          const volume = volumeDoGrupo(group);
+          const partes = SUBMUSCULOS[group];
           const pct = volume !== undefined && total > 0 ? Math.round((volume / total) * 100) : 0;
           const hasData = volume !== undefined;
           const isSelected = selectedMuscle === group;
@@ -110,6 +122,34 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
                   </div>
                 )}
               </button>
+
+              {/* Sub-músculos, só onde a geometria do modelo divide. Grupo que
+                  não divide não mostra sub-item — o deltoide é uma malha só por
+                  lado, e listar "anterior/lateral/posterior" ali prometeria uma
+                  separação que não existe.
+
+                  O percentual não se repete no sub-item de propósito: o volume
+                  é do grupo, e mostrar o mesmo número três vezes sugeriria que
+                  o dado distingue as cabeças. Ele não distingue — ainda. */}
+              {partes.length > 1 && (
+                <ul className="mt-1 ml-3 flex flex-col gap-0.5 border-white/10 border-l pl-3">
+                  {partes.map((parte) => (
+                    <li key={parte}>
+                      <button
+                        className={`w-full rounded px-2 py-1 text-left text-xs transition-colors ${
+                          selectedMuscle === parte
+                            ? "bg-primary/15 text-primary"
+                            : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                        }`}
+                        onClick={() => onSelect(selectedMuscle === parte ? null : parte)}
+                        type="button"
+                      >
+                        {parte}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           );
         })}
@@ -216,13 +256,13 @@ export default function MuscleMapPage() {
       {/* Main layout: viewer + side panel */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-6 items-start">
         <MuscleMapViewer
-          volumeByMuscle={volumeByMuscle}
+          volumeByMuscle={volumePorMalha(volumeByMuscle)}
           selectedMuscle={selectedMuscle}
           onMuscleSelect={setSelectedMuscle}
         />
 
         <MuscleGroupPanel
-          volumeByMuscle={volumeByMuscle}
+          volumeByMuscle={volumePorMalha(volumeByMuscle)}
           selectedMuscle={selectedMuscle}
           onSelect={setSelectedMuscle}
         />

@@ -7,7 +7,7 @@ import { Component, type ReactNode, Suspense, useEffect, useMemo, useRef, useSta
 import * as THREE from "three";
 import type { MuscleVolume } from "@/shared/hooks/useWorkoutMetrics";
 import { CORPO_NEUTRO, escalaDeCor, SEM_DADO, type TomDoMusculo } from "./escalaDeCor";
-import { MALHA_NEUTRA, volumePorMalha } from "./grupos";
+import { MALHA_NEUTRA, SUBMUSCULOS } from "./grupos";
 
 /**
  * O corpo 3D, pintado por nome de malha.
@@ -59,6 +59,12 @@ function Corpo({ tons, onHover, onSelect, selectedMuscle, volumeByMuscle }: Corp
     });
   }, [cena]);
 
+  const acesas = useMemo(() => {
+    if (!selectedMuscle) return new Set<string>();
+    const doGrupo = SUBMUSCULOS[selectedMuscle as keyof typeof SUBMUSCULOS];
+    return new Set(doGrupo ?? [selectedMuscle]);
+  }, [selectedMuscle]);
+
   useEffect(() => {
     cena.traverse((obj) => {
       if (!(obj instanceof THREE.Mesh)) return;
@@ -73,12 +79,14 @@ function Corpo({ tons, onHover, onSelect, selectedMuscle, volumeByMuscle }: Corp
       // informação de volume justamente no músculo que a pessoa foi olhar.
       // Fora da seleção, o brilho é o próprio volume — o mais carregado acende
       // mais, que é o que faz o mapa ser lido de relance.
-      const aceso = !neutra && obj.name === selectedMuscle;
+      // A seleção pode ser um grupo ("Costas") ou um sub-músculo ("Dorsal").
+      // Grupo acende todas as malhas dele; sub-músculo acende só a sua.
+      const aceso = !neutra && acesas.has(obj.name);
       material.emissive = new THREE.Color(aceso ? "#ffffff" : (tom?.cor ?? "#000000"));
       material.emissiveIntensity = aceso ? 0.5 : (tom?.brilho ?? 0);
       material.needsUpdate = true;
     });
-  }, [cena, tons, selectedMuscle]);
+  }, [cena, tons, acesas]);
 
   function musculoDoEvento(e: ThreeEvent<PointerEvent | MouseEvent>): string | null {
     const nome = (e.object as THREE.Mesh).name;
@@ -164,10 +172,7 @@ export function MuscleMapViewer({
   selectedMuscle,
   onMuscleSelect,
 }: MuscleMapViewerProps) {
-  // O volume chega com a chave do banco (`peito`, `pernas`); as malhas se chamam
-  // `Peitoral`, `Quadríceps`. Sem esta tradução nada casa e o corpo fica cinza.
-  const porMalha = useMemo(() => volumePorMalha(volumeByMuscle), [volumeByMuscle]);
-  const tons = useMemo(() => escalaDeCor(porMalha), [porMalha]);
+  const tons = useMemo(() => escalaDeCor(volumeByMuscle), [volumeByMuscle]);
   const [sobMouse, setSobMouse] = useState<MusculoSobMouse | null>(null);
 
   return (
@@ -183,7 +188,7 @@ export function MuscleMapViewer({
               onHover={setSobMouse}
               onSelect={onMuscleSelect}
               selectedMuscle={selectedMuscle}
-              volumeByMuscle={porMalha}
+              volumeByMuscle={volumeByMuscle}
             />
           </LimiteDeErro>
         </Suspense>

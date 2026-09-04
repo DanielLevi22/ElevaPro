@@ -33,6 +33,53 @@ export const GRUPOS_MUSCULARES = [
 export type GrupoMuscular = (typeof GRUPOS_MUSCULARES)[number];
 
 /**
+ * Os sub-músculos de cada grupo — e estes são os nomes das malhas.
+ *
+ * O grupo é conceito da tela; a malha é o que existe no modelo. Clicar em
+ * "Quadríceps" acende as três cabeças porque o grupo é o conjunto delas.
+ *
+ * **Nem todo grupo divide, e o motivo é material, não preguiça.** O deltoide é
+ * uma malha só por lado no écorché: anterior, lateral e posterior não existem
+ * como peças separadas, e separá-los exigiria cortar a geometria por ângulo em
+ * torno do ombro — outra técnica, não este pipeline. Quadríceps chega com 16
+ * ilhas e isquiotibiais com 14, então ali dividir é só ler a posição.
+ *
+ * Grupo que não divide lista o próprio nome, e a tela não mostra sub-item.
+ *
+ * **O volume ainda é do grupo.** O banco tem `pernas` como valor único, então
+ * vasto lateral, medial e reto femoral recebem a mesma cor. A divisão é
+ * anatômica, não informativa — e só passa a informar quando
+ * `exercises.muscle_group` ganhar valores finos.
+ */
+export const SUBMUSCULOS: Record<GrupoMuscular, readonly string[]> = {
+  Abdômen: ["Reto abdominal", "Oblíquos"],
+  Antebraço: ["Flexores do antebraço", "Extensores do antebraço"],
+  Bíceps: ["Cabeça longa do bíceps", "Cabeça curta do bíceps"],
+  Costas: ["Trapézio", "Dorsal", "Lombar"],
+  Glúteos: ["Glúteo máximo", "Glúteo médio"],
+  Isquiotibiais: ["Bíceps femoral", "Semitendinoso", "Semimembranoso"],
+  // Uma malha só por lado no modelo — ver a nota acima.
+  Ombros: ["Ombros"],
+  Panturrilha: ["Gastrocnêmio", "Sóleo"],
+  Peitoral: ["Peitoral maior", "Serrátil"],
+  Quadríceps: ["Vasto lateral", "Reto femoral", "Vasto medial"],
+  // Duas cabeças, não três: o écorché traz duas ilhas por lado, e a medial —
+  // que fica embaixo das outras duas — não existe como peça separada.
+  Tríceps: ["Cabeça longa do tríceps", "Cabeça lateral do tríceps"],
+};
+
+/** Todas as malhas de músculo do modelo, achatadas. */
+export const MALHAS_DE_MUSCULO = Object.values(SUBMUSCULOS).flat();
+
+/** O grupo a que uma malha pertence. */
+export function grupoDaMalha(malha: string): GrupoMuscular | null {
+  for (const [grupo, malhas] of Object.entries(SUBMUSCULOS)) {
+    if (malhas.includes(malha)) return grupo as GrupoMuscular;
+  }
+  return null;
+}
+
+/**
  * A malha do corpo que não é grupo treinável: cabeça, pescoço, mãos, pés e o
  * esqueleto. Ela existe no modelo para o boneco ler como corpo.
  */
@@ -104,10 +151,14 @@ export function volumePorMalha(
   const porMalha = new Map<string, number>();
 
   for (const { muscle, volume } of volumeDoBanco) {
-    const malhas = MALHAS_DO_GRUPO[muscle as (typeof GRUPOS_DO_BANCO)[number]];
-    if (!malhas) continue;
-    for (const malha of malhas) {
-      porMalha.set(malha, (porMalha.get(malha) ?? 0) + volume);
+    const grupos = MALHAS_DO_GRUPO[muscle as (typeof GRUPOS_DO_BANCO)[number]];
+    if (!grupos) continue;
+    // O valor do banco nomeia um grupo; quem recebe cor é cada sub-músculo
+    // dele. Todos ficam com o mesmo número, porque é o que o dado tem.
+    for (const grupo of grupos) {
+      for (const malha of SUBMUSCULOS[grupo]) {
+        porMalha.set(malha, (porMalha.get(malha) ?? 0) + volume);
+      }
     }
   }
 

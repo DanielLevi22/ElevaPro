@@ -85,6 +85,88 @@ function noTronco(y, z) {
   return NEUTRO;
 }
 
+/**
+ * Divide um grupo em sub-músculos, onde a geometria permite.
+ *
+ * Nem todo grupo divide, e a diferença não é de esforço: é de material. O
+ * deltoide é **uma malha só por lado** no écorché, então anterior, lateral e
+ * posterior não existem como peças — separá-los exigiria cortar a geometria por
+ * ângulo, que é outra técnica. Quadríceps chega com 16 ilhas e isquiotibiais
+ * com 14, então nesses a divisão é só ler a posição.
+ *
+ * Grupo que não divide devolve o próprio nome, e vira um sub-músculo de um.
+ */
+function subMusculo(grupo, centro) {
+  const lateral = Math.abs(centro[0]);
+  const y = centro[1];
+  const z = centro[2];
+
+  if (grupo === "Quadríceps") {
+    // As três cabeças se distinguem pela distância da linha média: o vasto
+    // lateral corre por fora, o medial por dentro, o reto femoral no meio.
+    if (lateral > 5) return "Vasto lateral";
+    if (lateral > 3.6) return "Reto femoral";
+    return "Vasto medial";
+  }
+
+  if (grupo === "Isquiotibiais") {
+    if (lateral > 4.5) return "Bíceps femoral";
+    return y > 2 ? "Semitendinoso" : "Semimembranoso";
+  }
+
+  if (grupo === "Costas") {
+    if (z > 8) return "Trapézio";
+    // Largura, não altura: os eretores da espinha são a coluna central
+    // (|x|≈0.1) e o dorsal se abre para os lados (|x| de 3.8 a 6.2). Dividir
+    // por altura deu Lombar com 6 vértices, porque o eretor é um músculo longo
+    // cujo centroide fica no meio das costas, não embaixo.
+    return lateral < 2 ? "Lombar" : "Dorsal";
+  }
+
+  if (grupo === "Peitoral") {
+    // O peitoral maior é o par grande e frontal; o que sobra atrás dele, na
+    // lateral da caixa torácica, é serrátil.
+    return y > 0.5 ? "Serrátil" : "Peitoral maior";
+  }
+
+  if (grupo === "Glúteos") {
+    // O médio corre por fora e mais alto; o máximo é o volume posterior.
+    return lateral > 4 ? "Glúteo médio" : "Glúteo máximo";
+  }
+
+  if (grupo === "Panturrilha") {
+    // O gastrocnêmio é superficial (y≈4.0); o sóleo fica embaixo dele (y≈2.2).
+    return y > 3.5 ? "Gastrocnêmio" : "Sóleo";
+  }
+
+  if (grupo === "Abdômen") {
+    // O reto abdominal é a faixa central; os oblíquos abrem para os lados.
+    return lateral > 3 ? "Oblíquos" : "Reto abdominal";
+  }
+
+  if (grupo === "Antebraço") {
+    // Flexores na face anterior, extensores na posterior. O braço está em
+    // A-pose, então a fronteira é a mesma deslocada do resto do membro.
+    return y > 3.5 ? "Extensores do antebraço" : "Flexores do antebraço";
+  }
+
+  if (grupo === "Bíceps") {
+    // Duas ilhas por lado: a curta corre por dentro e à frente, a longa por
+    // fora e um pouco atrás.
+    return y > 3.2 ? "Cabeça longa do bíceps" : "Cabeça curta do bíceps";
+  }
+
+  if (grupo === "Tríceps") {
+    // **Duas cabeças, não três.** O écorché traz duas ilhas por lado, então a
+    // cabeça medial — que fica embaixo das outras duas — não existe como peça
+    // separada aqui. Prometer três na tela seria oferecer uma seleção que o
+    // modelo não sabe acender.
+    return lateral > 9.15 ? "Cabeça lateral do tríceps" : "Cabeça longa do tríceps";
+  }
+
+  return grupo;
+}
+
 function grupoDoCentro(centro) {
   const x = centro[0];
   const y = centro[1];
@@ -306,7 +388,8 @@ const dados = ilhasComTriangulos(ENTRADA);
 const porGrupo = new Map();
 
 for (const ilha of dados.ilhas) {
-  const nome = grupoDoCentro(ilha.centro);
+  const grupo = grupoDoCentro(ilha.centro);
+  const nome = grupo === NEUTRO ? NEUTRO : subMusculo(grupo, ilha.centro);
   let g = porGrupo.get(nome);
   if (!g) {
     g = { posicoes: [], normais: [], indices: [], remap: new Map(), ilhas: 0 };
