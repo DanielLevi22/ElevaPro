@@ -69,13 +69,225 @@ from (values
 ) as v(name, calories, protein, carbs, fat, fiber, serving_size)
 where not exists (select 1 from foods t where t.name = v.name);
 
--- Exercícios: não estão aqui, de propósito.
+-- Seed: catálogo de exercícios
 --
--- O catálogo inteiro — 181 linhas, com `venue` e `category` — vive na migration
--- 0042. Seed só roda em `supabase db reset` local: enquanto os exercícios
--- moravam aqui, preview e produção nasciam com a tabela vazia, o coach buscava
--- e não achava nada, e nenhum treino era salvo. Duas listas com o mesmo dado
--- divergem; esta é a que foi embora.
+-- 181 exercícios, classificados em três eixos: `muscle_group` diz onde no
+-- corpo, `venue` diz onde dá para executar, `category` diz que trabalho é.
+-- As colunas nascem na migration 0042, que roda antes deste arquivo tanto no
+-- `db reset` local quanto no workflow (db push, depois este seed).
 --
--- `db reset` aplica as migrations antes deste arquivo, então o banco local
--- continua ganhando o catálogo completo.
+-- Mesmo guard `where not exists` do resto: re-executar não duplica, e uma
+-- linha que já existe não é tocada — a classificação das que vieram antes da
+-- 0042 é responsabilidade do UPDATE que mora lá.
+
+insert into exercises (name, muscle_group, venue, category, is_verified)
+select v.name, v.muscle_group, v.venue, v.category, true
+from (values
+-- Peito
+('Supino reto com barra',                  'peito',   'academia', 'forca'),
+('Supino inclinado com halteres',          'peito',   'academia', 'forca'),
+('Crucifixo com halteres',                 'peito',   'academia', 'forca'),
+('Crossover no cabo',                      'peito',   'academia', 'forca'),
+('Supino declinado',                       'peito',   'academia', 'forca'),
+('Supino reto com halteres',               'peito',   'academia', 'forca'),
+('Supino inclinado com barra',             'peito',   'academia', 'forca'),
+('Voador (peck deck)',                     'peito',   'academia', 'forca'),
+('Crossover no cabo baixo',                'peito',   'academia', 'forca'),
+('Supino na máquina articulada',           'peito',   'academia', 'forca'),
+('Flexão de braço',                        'peito',   'ambos',    'forca'),
+('Flexão de braço com joelhos apoiados',   'peito',   'casa',     'forca'),
+('Flexão de braço inclinada',              'peito',   'casa',     'forca'),
+('Flexão de braço declinada',              'peito',   'casa',     'forca'),
+('Flexão diamante',                        'peito',   'casa',     'forca'),
+('Flexão com elástico',                    'peito',   'casa',     'forca'),
+('Crucifixo com elástico em pé',           'peito',   'casa',     'forca'),
+('Supino com elástico deitado',            'peito',   'casa',     'forca'),
+
+-- Costas
+('Puxada frontal',                         'costas',  'academia', 'forca'),
+('Remada curvada com barra',               'costas',  'academia', 'forca'),
+('Remada unilateral com halter',           'costas',  'academia', 'forca'),
+('Levantamento terra',                     'costas',  'academia', 'forca'),
+('Pull-up (barra fixa)',                   'costas',  'academia', 'forca'),
+('Remada no cabo sentado',                 'costas',  'academia', 'forca'),
+('Pullover com halter',                    'costas',  'academia', 'forca'),
+('Puxada supinada',                        'costas',  'academia', 'forca'),
+('Puxada com pegada neutra',               'costas',  'academia', 'forca'),
+('Remada cavalinho',                       'costas',  'academia', 'forca'),
+('Remada na máquina',                      'costas',  'academia', 'forca'),
+('Levantamento terra romeno',              'costas',  'academia', 'forca'),
+('Pulldown com braços estendidos',         'costas',  'academia', 'forca'),
+('Barra fixa com pegada supinada',         'costas',  'academia', 'forca'),
+('Remada invertida na barra baixa',        'costas',  'ambos',    'forca'),
+('Remada curvada com elástico',            'costas',  'casa',     'forca'),
+('Remada sentada com elástico',            'costas',  'casa',     'forca'),
+('Puxada alta com elástico',               'costas',  'casa',     'forca'),
+('Remada unilateral com mochila',          'costas',  'casa',     'forca'),
+
+-- Ombro
+('Desenvolvimento com barra',              'ombro',   'academia', 'forca'),
+('Elevação lateral com halteres',          'ombro',   'academia', 'forca'),
+('Elevação frontal',                       'ombro',   'academia', 'forca'),
+('Desenvolvimento Arnold',                 'ombro',   'academia', 'forca'),
+('Encolhimento de ombros',                 'ombro',   'academia', 'forca'),
+('Face pull no cabo',                      'ombro',   'academia', 'forca'),
+('Desenvolvimento com halteres sentado',   'ombro',   'academia', 'forca'),
+('Elevação lateral no cabo',               'ombro',   'academia', 'forca'),
+('Remada alta com barra',                  'ombro',   'academia', 'forca'),
+('Crucifixo inverso na máquina',           'ombro',   'academia', 'forca'),
+('Desenvolvimento na máquina',             'ombro',   'academia', 'forca'),
+('Elevação lateral com elástico',          'ombro',   'casa',     'forca'),
+('Desenvolvimento com elástico',           'ombro',   'casa',     'forca'),
+('Flexão pique (pike push-up)',            'ombro',   'casa',     'forca'),
+
+-- Ombro — manguito rotador e estabilizadores da escápula
+('Rotação externa com elástico',           'ombro',   'ambos',    'estabilizacao'),
+('Rotação interna com elástico',           'ombro',   'ambos',    'estabilizacao'),
+('Rotação externa deitado de lado',        'ombro',   'ambos',    'estabilizacao'),
+('Elevação em Y no banco inclinado',       'ombro',   'academia', 'estabilizacao'),
+('Elevação no plano escapular',            'ombro',   'ambos',    'estabilizacao'),
+('Face pull com elástico',                 'ombro',   'ambos',    'estabilizacao'),
+('Punch do serrátil com elástico',         'ombro',   'ambos',    'estabilizacao'),
+('Deslizamento do braço na parede',        'ombro',   'casa',     'estabilizacao'),
+('Rotação com bastão acima da cabeça',     'ombro',   'ambos',    'mobilidade'),
+('Círculos de braço',                      'ombro',   'casa',     'mobilidade'),
+
+-- Bíceps
+('Rosca direta com barra',                 'biceps',  'academia', 'forca'),
+('Rosca alternada com halteres',           'biceps',  'academia', 'forca'),
+('Rosca martelo',                          'biceps',  'academia', 'forca'),
+('Rosca concentrada',                      'biceps',  'academia', 'forca'),
+('Rosca no cabo',                          'biceps',  'academia', 'forca'),
+('Rosca scott no banco',                   'biceps',  'academia', 'forca'),
+('Rosca inversa com barra',                'biceps',  'academia', 'forca'),
+('Rosca 21',                               'biceps',  'academia', 'forca'),
+('Rosca direta com elástico',              'biceps',  'casa',     'forca'),
+('Rosca martelo com elástico',             'biceps',  'casa',     'forca'),
+
+-- Tríceps
+('Tríceps testa com barra W',              'triceps', 'academia', 'forca'),
+('Tríceps pulley corda',                   'triceps', 'academia', 'forca'),
+('Tríceps coice com halter',               'triceps', 'academia', 'forca'),
+('Mergulho entre bancos',                  'triceps', 'ambos',    'forca'),
+('Tríceps francês',                        'triceps', 'academia', 'forca'),
+('Tríceps pulley barra reta',              'triceps', 'academia', 'forca'),
+('Paralelas',                              'triceps', 'academia', 'forca'),
+('Tríceps acima da cabeça com elástico',   'triceps', 'casa',     'forca'),
+('Tríceps coice com elástico',             'triceps', 'casa',     'forca'),
+
+-- Pernas
+('Agachamento livre',                      'pernas',  'academia', 'forca'),
+('Leg press 45°',                          'pernas',  'academia', 'forca'),
+('Cadeira extensora',                      'pernas',  'academia', 'forca'),
+('Mesa flexora',                           'pernas',  'academia', 'forca'),
+('Agachamento búlgaro',                    'pernas',  'ambos',    'forca'),
+('Afundo com halteres',                    'pernas',  'academia', 'forca'),
+('Stiff com barra',                        'pernas',  'academia', 'forca'),
+('Cadeira abdutora',                       'pernas',  'academia', 'forca'),
+('Cadeira adutora',                        'pernas',  'academia', 'forca'),
+('Panturrilha em pé',                      'pernas',  'academia', 'forca'),
+('Panturrilha sentado',                    'pernas',  'academia', 'forca'),
+('Hack squat',                             'pernas',  'academia', 'forca'),
+('Agachamento frontal',                    'pernas',  'academia', 'forca'),
+('Agachamento no Smith',                   'pernas',  'academia', 'forca'),
+('Levantamento terra sumô',                'pernas',  'academia', 'forca'),
+('Passada com halteres',                   'pernas',  'academia', 'forca'),
+('Panturrilha no leg press',               'pernas',  'academia', 'forca'),
+('Bom dia com barra',                      'pernas',  'academia', 'forca'),
+('Agachamento livre sem peso',             'pernas',  'casa',     'forca'),
+('Agachamento com salto',                  'pernas',  'casa',     'forca'),
+('Afundo estático sem peso',               'pernas',  'casa',     'forca'),
+('Agachamento sumô sem peso',              'pernas',  'casa',     'forca'),
+('Cadeira na parede',                      'pernas',  'casa',     'forca'),
+('Panturrilha em pé no degrau',            'pernas',  'ambos',    'forca'),
+('Stiff unilateral sem peso',              'pernas',  'casa',     'forca'),
+('Subida no banco',                        'pernas',  'ambos',    'forca'),
+('Agachamento com elástico',               'pernas',  'casa',     'forca'),
+
+-- Glúteos
+('Hip thrust com barra',                   'gluteos', 'academia', 'forca'),
+('Elevação pélvica',                       'gluteos', 'ambos',    'forca'),
+('Glúteo no cabo',                         'gluteos', 'academia', 'forca'),
+('Agachamento sumô',                       'gluteos', 'academia', 'forca'),
+('Coice de glúteo na máquina',             'gluteos', 'academia', 'forca'),
+('Abdução de quadril no cabo',             'gluteos', 'academia', 'forca'),
+('Ponte de glúteo no solo',                'gluteos', 'casa',     'forca'),
+('Ponte de glúteo unilateral',             'gluteos', 'casa',     'forca'),
+('Concha com elástico',                    'gluteos', 'ambos',    'estabilizacao'),
+('Abdução deitado de lado',                'gluteos', 'casa',     'estabilizacao'),
+('Caminhada lateral com elástico',         'gluteos', 'ambos',    'estabilizacao'),
+('Coice de glúteo em quatro apoios',       'gluteos', 'casa',     'estabilizacao'),
+('Abdução em quatro apoios',               'gluteos', 'casa',     'estabilizacao'),
+
+-- Abdômen e core
+('Abdominal crunch',                       'abdomen', 'ambos',    'forca'),
+('Prancha',                                'abdomen', 'ambos',    'estabilizacao'),
+('Elevação de pernas',                     'abdomen', 'ambos',    'forca'),
+('Abdominal bicicleta',                    'abdomen', 'ambos',    'forca'),
+('Crunch no cabo',                         'abdomen', 'academia', 'forca'),
+('Abdominal oblíquo',                      'abdomen', 'ambos',    'forca'),
+('Prancha lateral',                        'abdomen', 'ambos',    'estabilizacao'),
+('Prancha com toque no ombro',             'abdomen', 'ambos',    'estabilizacao'),
+('Inseto morto (dead bug)',                'abdomen', 'ambos',    'estabilizacao'),
+('Bird dog',                               'abdomen', 'ambos',    'estabilizacao'),
+('Pallof press com elástico',              'abdomen', 'ambos',    'estabilizacao'),
+('Hollow hold',                            'abdomen', 'ambos',    'estabilizacao'),
+('Rollout na roda abdominal',              'abdomen', 'ambos',    'estabilizacao'),
+('Prancha com elevação de perna',          'abdomen', 'ambos',    'estabilizacao'),
+('Caminhada do fazendeiro',                'abdomen', 'academia', 'estabilizacao'),
+('Escalador (mountain climber)',           'abdomen', 'casa',     'forca'),
+('Elevação de pernas na barra fixa',       'abdomen', 'academia', 'forca'),
+('Rotação russa',                          'abdomen', 'casa',     'forca'),
+
+-- Cardio
+('Esteira',                                'cardio',  'academia', 'cardio'),
+('Bike ergométrica',                       'cardio',  'academia', 'cardio'),
+('Elíptico',                               'cardio',  'academia', 'cardio'),
+('Corda naval',                            'cardio',  'academia', 'cardio'),
+('Burpee',                                 'cardio',  'ambos',    'cardio'),
+('Polichinelo',                            'cardio',  'ambos',    'cardio'),
+('Remo ergômetro',                         'cardio',  'academia', 'cardio'),
+('Escada ergométrica',                     'cardio',  'academia', 'cardio'),
+('Bicicleta de assalto',                   'cardio',  'academia', 'cardio'),
+('Pular corda',                            'cardio',  'ambos',    'cardio'),
+('Corrida no lugar',                       'cardio',  'casa',     'cardio'),
+('Salto do patinador',                     'cardio',  'casa',     'cardio'),
+
+-- Alongamento
+('Alongamento de peitoral no batente',     'peito',   'ambos',    'alongamento'),
+('Alongamento de dorsal suspenso',         'costas',  'ambos',    'alongamento'),
+('Alongamento de lombar joelhos ao peito', 'costas',  'casa',     'alongamento'),
+('Postura da criança',                     'costas',  'casa',     'alongamento'),
+('Alongamento cervical lateral',           'costas',  'casa',     'alongamento'),
+('Alongamento de deltoide cruzado',        'ombro',   'ambos',    'alongamento'),
+('Alongamento de tríceps sobre a cabeça',  'triceps', 'ambos',    'alongamento'),
+('Alongamento de bíceps na parede',        'biceps',  'ambos',    'alongamento'),
+('Alongamento de isquiotibiais sentado',   'pernas',  'casa',     'alongamento'),
+('Alongamento de quadríceps em pé',        'pernas',  'ambos',    'alongamento'),
+('Alongamento de panturrilha na parede',   'pernas',  'ambos',    'alongamento'),
+('Alongamento de adutores borboleta',      'pernas',  'casa',     'alongamento'),
+('Alongamento de flexores do quadril',     'pernas',  'casa',     'alongamento'),
+('Alongamento de glúteo figura quatro',    'gluteos', 'casa',     'alongamento'),
+('Alongamento de piriforme sentado',       'gluteos', 'casa',     'alongamento'),
+
+-- Mobilidade
+('Gato e camelo',                          'costas',  'casa',     'mobilidade'),
+('Rotação torácica deitado de lado',       'costas',  'casa',     'mobilidade'),
+('Extensão torácica no rolo',              'costas',  'ambos',    'mobilidade'),
+('Lagarta (inchworm)',                     'costas',  'casa',     'mobilidade'),
+('Mobilidade de tornozelo na parede',      'pernas',  'casa',     'mobilidade'),
+('Agachamento profundo com apoio',         'pernas',  'casa',     'mobilidade'),
+('Círculos de quadril em quatro apoios',   'gluteos', 'casa',     'mobilidade'),
+('Transição 90/90 de quadril',             'gluteos', 'casa',     'mobilidade'),
+
+-- Postural
+('Retração escapular deitado de bruços',   'costas',  'casa',     'postural'),
+('Superman no solo',                       'costas',  'casa',     'postural'),
+('Elevação em Y no solo',                  'costas',  'casa',     'postural'),
+('Elevação em T no solo',                  'costas',  'casa',     'postural'),
+('Elevação em W no solo',                  'costas',  'casa',     'postural'),
+('Retração cervical',                      'costas',  'casa',     'postural'),
+('Anjo na parede',                         'ombro',   'casa',     'postural'),
+('Ponte de glúteo com elástico',           'gluteos', 'casa',     'postural')
+) as v(name, muscle_group, venue, category)
+where not exists (select 1 from exercises t where t.name = v.name);
