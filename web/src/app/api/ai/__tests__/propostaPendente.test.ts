@@ -83,14 +83,47 @@ beforeEach(() => {
 });
 
 describe("abrir a conversa", () => {
-  it("devolve a proposta que ficou esperando decisão", async () => {
+  it("devolve a proposta que ficou esperando decisão, sem nada marcado", async () => {
     estado = { savedWorkouts: [], pendingWorkoutProposal: PROPOSTA };
 
-    expect(await abrirConversa()).toMatchObject({ workoutProposal: PROPOSTA });
+    expect(await abrirConversa()).toMatchObject({
+      workoutProposal: PROPOSTA,
+      savedWorkoutTitles: [],
+    });
   });
 
-  it("devolve null quando não há proposta pendente", async () => {
+  it("devolve null quando não há proposta nenhuma", async () => {
     expect(await abrirConversa()).toMatchObject({ workoutProposal: null });
+  });
+
+  // A aprovação limpa a pendente — e precisa limpar, senão um segundo clique
+  // salvaria os mesmos treinos. Sem guardar a resolvida, a conversa ficava
+  // dizendo "aprovados e salvos: A, B, C" com a tela sem nada para mostrar.
+  it("devolve a proposta já aprovada, com os treinos que foram salvos", async () => {
+    estado = {
+      savedWorkouts: [],
+      resolvedWorkoutProposal: { proposal: PROPOSTA, savedTitles: ["Treino A — Full Body"] },
+    };
+
+    expect(await abrirConversa()).toMatchObject({
+      workoutProposal: PROPOSTA,
+      savedWorkoutTitles: ["Treino A — Full Body"],
+    });
+  });
+
+  // Decisão pendente ganha da lembrança: é ela que precisa de ação.
+  it("prefere a pendente à resolvida quando existem as duas", async () => {
+    const outra = { ...PROPOSTA, phase_name: "Intensificação" };
+    estado = {
+      savedWorkouts: [],
+      pendingWorkoutProposal: outra,
+      resolvedWorkoutProposal: { proposal: PROPOSTA, savedTitles: ["Treino A — Full Body"] },
+    };
+
+    expect(await abrirConversa()).toMatchObject({
+      workoutProposal: outra,
+      savedWorkoutTitles: [],
+    });
   });
 
   it("continua devolvendo o histórico e a disponibilidade", async () => {

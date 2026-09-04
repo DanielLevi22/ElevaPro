@@ -148,6 +148,16 @@ export interface DietMealsProposal {
 export interface AiSessionState {
   savedWorkouts: { id: string; title: string; phaseId: string }[];
   pendingWorkoutProposal?: BulkWorkoutProposal;
+  /**
+   * A proposta que já foi aprovada, com o que dela foi salvo.
+   *
+   * `pendingWorkoutProposal` é limpo na aprovação, e precisa ser: enquanto
+   * estivesse lá, um segundo clique salvaria os mesmos treinos de novo. Mas
+   * jogar a proposta fora deixava a conversa dizendo "treinos aprovados e
+   * salvos: A, B, C" com a tela sem nada para mostrar. Aqui ela continua
+   * recuperável sem voltar para a fila de decisão.
+   */
+  resolvedWorkoutProposal?: { proposal: BulkWorkoutProposal; savedTitles: string[] };
   /** Guardadas no servidor: a aprovação salva a cópia, não o que o modelo reemitir. */
   pendingDietPlan?: DietPlanProposal;
   pendingDietMeals?: DietMealsProposal;

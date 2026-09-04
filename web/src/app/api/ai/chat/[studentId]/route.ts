@@ -355,8 +355,16 @@ export async function GET(
     // A proposta guardada aqui é a mesma que a rota de aprovação salva — o
     // cartão na tela é uma vista dela. Sem devolvê-la, recarregar a página
     // apagava o cartão e o botão de aprovar junto, com a proposta viva no
-    // banco. Pendente é, por definição, não aprovada: a aprovação limpa este
-    // campo, então o cartão restaurado nasce sem treino marcado como salvo.
-    workoutProposal: estado.pendingWorkoutProposal ?? null,
+    // banco.
+    //
+    // A pendente vem primeiro: havendo decisão a tomar, é ela que a tela
+    // precisa mostrar. Sem pendente, volta a última aprovada — com os títulos
+    // salvos, que é o que a mensagem "aprovados e salvos: A, B, C" promete.
+    // Pendente nunca traz títulos: a aprovação é que os produz.
+    workoutProposal:
+      estado.pendingWorkoutProposal ?? estado.resolvedWorkoutProposal?.proposal ?? null,
+    savedWorkoutTitles: estado.pendingWorkoutProposal
+      ? []
+      : (estado.resolvedWorkoutProposal?.savedTitles ?? []),
   });
 }
