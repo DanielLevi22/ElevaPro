@@ -28,8 +28,10 @@ export function StudentCoachChat() {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: as dependências são o gatilho da rolagem, não insumo do corpo do efeito — rolar para o fim quando qualquer uma muda é o comportamento desejado
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, planCard]);
+    // Sem animação enquanto a resposta chega: cada `smooth` reinicia o anterior
+    // antes de terminar, e o texto treme em vez de fluir.
+    bottomRef.current?.scrollIntoView({ behavior: loading ? "auto" : "smooth" });
+  }, [messages, planCard, loading]);
 
   if (initializing) {
     return (

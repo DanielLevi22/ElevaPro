@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
+import { criarAcumuladorDeTexto } from "../services/acumuladorDeTexto";
 import type { ChatMessage, DietMealsProposal, DietPlanProposal, SseEvent } from "../types";
 import { DietMealsProposalCard, DietPlanProposalCard } from "./DietProposalCards";
 
@@ -82,8 +83,10 @@ export function NutritionCoachChat({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: as dependências são o gatilho da rolagem, não insumo do corpo do efeito — rolar para o fim quando qualquer uma muda é o comportamento desejado
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, planProposal, mealsProposal, activity]);
+    // Sem animação durante o streaming: cada `smooth` reinicia o anterior e o
+    // texto treme em vez de fluir.
+    bottomRef.current?.scrollIntoView({ behavior: loading ? "auto" : "smooth" });
+  }, [messages, planProposal, mealsProposal, activity, loading]);
 
   function appendAssistant(content: string) {
     setMessages((prev) => [
@@ -138,6 +141,11 @@ export function NutritionCoachChat({
       createdAt: new Date().toISOString(),
     };
     const assistantId = crypto.randomUUID();
+    const texto = criarAcumuladorDeTexto((pedaco) =>
+      setMessages((prev) =>
+        prev.map((m) => (m.id === assistantId ? { ...m, content: m.content + pedaco } : m)),
+      ),
+    );
     setMessages((prev) => [
       ...prev,
       userMsg,
@@ -174,11 +182,7 @@ export function NutritionCoachChat({
             const event: SseEvent = JSON.parse(line.slice(6));
 
             if (event.type === "text") {
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantId ? { ...m, content: m.content + event.content } : m,
-                ),
-              );
+              texto.empurrar(event.content);
             } else if (event.type === "tool_start") {
               setActivity(event.label);
             } else if (event.type === "tool_end") {
@@ -200,6 +204,8 @@ export function NutritionCoachChat({
         }
       }
     } finally {
+      // O último pedaço chega depois do último quadro.
+      texto.liberar();
       setLoading(false);
       setActivity(null);
       inputRef.current?.focus();
