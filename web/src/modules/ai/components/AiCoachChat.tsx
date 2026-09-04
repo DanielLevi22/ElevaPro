@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
 import { formatDate, formatDateRange } from "@/shared/utils/formatDate";
+import type { BlocoDeContexto } from "../services/disponibilidade";
 import type { BulkWorkoutProposal, ChatMessage, PeriodizationProposal, SseEvent } from "../types";
 import { BulkWorkoutProposalCard } from "./BulkWorkoutProposalCard";
+import { ContextoDisponivel } from "./ContextoDisponivel";
 
 interface Props {
   studentId: string;
@@ -60,6 +62,8 @@ export function AiCoachChat({
   const [proposal, setProposal] = useState<PeriodizationCard | null>(null);
   const [workoutProposal, setWorkoutProposal] = useState<BulkWorkoutProposal | null>(null);
   const [savedWorkoutTitles, setSavedWorkoutTitles] = useState<string[]>([]);
+  /** Com que dados o coach está trabalhando — só a existência, nunca o valor. */
+  const [contexto, setContexto] = useState<BlocoDeContexto[]>([]);
   const [savingWorkouts, setSavingWorkouts] = useState(false);
   /** O que o coach está fazendo agora, enquanto a ferramenta roda. */
   const [activity, setActivity] = useState<string | null>(null);
@@ -85,6 +89,7 @@ export function AiCoachChat({
       .then((data) => {
         if (cancelado) return;
         if (data.sessionId) onSessionResolved(data.sessionId);
+        setContexto(data.availability ?? []);
         setMessages(
           data.messages?.length
             ? data.messages
@@ -289,6 +294,8 @@ export function AiCoachChat({
     <div className="flex flex-col h-[calc(100vh-280px)] min-h-[500px]">
       {/* Messages */}
       <div className="flex-1 overflow-y-auto space-y-4 pr-2 pb-4">
+        <ContextoDisponivel blocos={contexto} />
+
         {messages.map((msg) => (
           <div
             key={msg.id}
