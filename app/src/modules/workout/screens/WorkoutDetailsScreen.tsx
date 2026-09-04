@@ -472,11 +472,6 @@ export default function WorkoutDetailsScreen() {
             id: editingItem.exercise?.id || '',
             name: editingItem.exercise?.name || '',
             muscle_group: editingItem.exercise?.muscle_group || '',
-            video_url: editingItem.exercise?.video_url || null,
-            description: editingItem.exercise?.description || null,
-            is_verified: false,
-            created_by: null,
-            created_at: new Date().toISOString(),
           }}
           initialData={{
             id: editingItem.exercise?.id || '',

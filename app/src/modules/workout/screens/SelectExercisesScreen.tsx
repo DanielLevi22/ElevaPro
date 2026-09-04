@@ -597,11 +597,6 @@ export default function SelectExercisesScreen() {
             id: '',
             name: '',
             muscle_group: '',
-            video_url: null,
-            description: null,
-            is_verified: false,
-            created_by: null,
-            created_at: new Date().toISOString(),
           }
         }
         initialData={editingIndex !== null ? selectedExercises[editingIndex] : undefined}

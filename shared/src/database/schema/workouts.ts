@@ -40,6 +40,11 @@ export const exercises = pgTable("exercises", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   muscle_group: text("muscle_group"),
+  // Onde dá para executar (academia | casa | ambos) e que trabalho é
+  // (forca | cardio | alongamento | mobilidade | postural | estabilizacao).
+  // Vocabulário fechado por CHECK na 0042 — o banco recusa valor de fora.
+  venue: text("venue").notNull().default("academia"),
+  category: text("category").notNull().default("forca"),
   description: text("description"),
   video_url: text("video_url"),
   is_verified: boolean("is_verified").notNull().default(false),

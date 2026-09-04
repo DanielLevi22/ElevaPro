@@ -19,7 +19,11 @@ import type { Exercise, SelectedExercise } from '../store/workoutStore';
 interface Props {
   visible: boolean;
   onClose: () => void;
-  exercise: Exercise;
+  // Só as três colunas que a tela usa. Pedir o `Exercise` inteiro obrigava as
+  // duas telas chamadoras a montar um objeto de mentira campo a campo — e cada
+  // coluna nova em `exercises` quebrava as duas sem que nada aqui precisasse
+  // dela.
+  exercise: Pick<Exercise, 'id' | 'name' | 'muscle_group'>;
   initialData?: SelectedExercise;
   onSave: (data: SelectedExercise) => void;
 }
