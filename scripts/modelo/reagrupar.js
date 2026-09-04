@@ -24,7 +24,9 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { carregar, lerAcessor } = require("./glb.js");
 
-const ENTRADA = "web/public/models/muscle-body.glb";
+// A origem mora fora de `web/public/` de propósito: ela é insumo de build, e
+// dentro de `public/` seria baixável por qualquer cliente sem servir para nada.
+const ENTRADA = "scripts/modelo/fonte/ecorche-original.glb";
 const SAIDA = "web/public/models/corpo-por-musculo.glb";
 
 // Faixas anatômicas medidas no próprio modelo, não tiradas de tabela: os pares

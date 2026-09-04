@@ -3,218 +3,160 @@
 import { Html, OrbitControls, useGLTF } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Component, type ReactNode, Suspense, useEffect, useMemo, useRef } from "react";
+import { Component, type ReactNode, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { MuscleVolume } from "@/shared/hooks/useWorkoutMetrics";
-import { buildColorMap, MESH_TO_MUSCLE, MUSCLE_MESH_MAP } from "./muscleMeshMap";
+import { CORPO_NEUTRO, escalaDeCor, SEM_DADO, type TomDoMusculo } from "./escalaDeCor";
+import { MALHA_NEUTRA } from "./grupos";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+/**
+ * O corpo 3D, pintado por nome de malha.
+ *
+ * **Não há mapeamento neste arquivo, e é essa ausência que importa.** Até
+ * 2026-09-03 existia um `MUSCLE_MESH_MAP` que ligava "Peitoral" a
+ * `object_0, object_1, object_27, object_83, object_84` — nomes escolhidos por
+ * centroide de caixa delimitadora, porque o écorché de origem exporta 87 malhas
+ * sem semântica. A medição depois mostrou por que aquilo nunca acertava: 48
+ * dessas malhas ocupam mais de metade do corpo, e a menor ocupa 21%. Pintar uma
+ * delas tingia quase o boneco inteiro.
+ *
+ * O modelo agora vem de `scripts/modelo/reagrupar.js`, que reagrupa a geometria
+ * por conectividade e emite malhas chamadas `Peitoral`, `Costas`, `Quadríceps`.
+ * A malha se chama pelo que ela é, então pintar é procurar pelo nome.
+ */
 
-interface HoveredInfo {
+const MODELO = "/models/corpo-por-musculo.glb";
+
+interface MusculoSobMouse {
   muscle: string;
   volume: number;
   pct: number;
 }
 
-interface MuscleBodyProps {
-  colorMap: Map<string, { color: THREE.Color; emissiveIntensity: number; opacity: number }>;
-  onHover: (info: HoveredInfo | null) => void;
+interface CorpoProps {
+  tons: Map<string, TomDoMusculo>;
+  onHover: (info: MusculoSobMouse | null) => void;
   onSelect: (muscle: string | null) => void;
   selectedMuscle: string | null;
   volumeByMuscle: MuscleVolume[];
 }
 
-// ── Body mesh renderer ─────────────────────────────────────────────────────────
+function Corpo({ tons, onHover, onSelect, selectedMuscle, volumeByMuscle }: CorpoProps) {
+  const { scene } = useGLTF(MODELO);
+  const total = volumeByMuscle.reduce((s, m) => s + m.volume, 0);
 
-function MuscleBody({
-  colorMap,
-  onHover,
-  onSelect,
-  selectedMuscle,
-  volumeByMuscle,
-}: MuscleBodyProps) {
-  const { scene } = useGLTF("/models/muscle-body.glb");
-  const totalVolume = volumeByMuscle.reduce((s, m) => s + m.volume, 0);
-  const clonedScene = useMemo(() => scene.clone(true), [scene]);
+  // `useGLTF` cacheia a cena entre montagens: pintar a original vazaria a cor
+  // de um render para o próximo.
+  const cena = useMemo(() => scene.clone(true), [scene]);
 
-  // One-time: isolate materials per mesh so emissive can differ per mesh
+  // Materiais isolados uma vez: o clone compartilha as instâncias, então sem
+  // isto pintar um músculo pintaria todos.
   useEffect(() => {
-    clonedScene.traverse((obj) => {
-      if (!(obj instanceof THREE.Mesh)) return;
-      obj.material = (obj.material as THREE.Material).clone();
-    });
-  }, [clonedScene]);
-
-  // Apply emissive highlight based on volume data and current selection
-  useEffect(() => {
-    const selectedMeshes = new Set(
-      (selectedMuscle ? (MUSCLE_MESH_MAP[selectedMuscle] ?? []) : []).map((n) => n.toLowerCase()),
-    );
-
-    clonedScene.traverse((obj) => {
-      if (!(obj instanceof THREE.Mesh)) return;
-      const key = obj.name.toLowerCase();
-      const entry = colorMap.get(key);
-      const isSelected = selectedMeshes.has(key);
-      const mat = obj.material as THREE.MeshStandardMaterial;
-      if (!("emissive" in mat)) return;
-
-      if (isSelected) {
-        mat.emissive.set("#CCFF00");
-        mat.emissiveIntensity = 1.2;
-      } else if (entry) {
-        mat.emissive.set("#CCFF00");
-        mat.emissiveIntensity = entry.emissiveIntensity;
-      } else {
-        mat.emissive.set("#000000");
-        mat.emissiveIntensity = 0;
+    cena.traverse((obj) => {
+      if (obj instanceof THREE.Mesh) {
+        obj.material = (obj.material as THREE.Material).clone();
       }
-      mat.needsUpdate = true;
     });
-  }, [clonedScene, colorMap, selectedMuscle]);
+  }, [cena]);
 
-  function handlePointerOver(e: ThreeEvent<PointerEvent>) {
-    e.stopPropagation();
-    const mesh = e.object as THREE.Mesh;
-    const muscle = MESH_TO_MUSCLE.get(mesh.name.toLowerCase());
-    if (!muscle) return;
-    const vol = volumeByMuscle.find((m) => m.muscle === muscle);
-    onHover({
-      muscle,
-      volume: vol?.volume ?? 0,
-      pct: totalVolume > 0 ? Math.round(((vol?.volume ?? 0) / totalVolume) * 100) : 0,
+  useEffect(() => {
+    cena.traverse((obj) => {
+      if (!(obj instanceof THREE.Mesh)) return;
+
+      const material = obj.material as THREE.MeshStandardMaterial;
+      const neutra = obj.name === MALHA_NEUTRA;
+      const tom = neutra ? undefined : tons.get(obj.name);
+
+      material.color = new THREE.Color(neutra ? CORPO_NEUTRO : (tom?.cor ?? SEM_DADO));
+
+      // O selecionado brilha em vez de mudar de cor: trocar a cor apagaria a
+      // informação de volume justamente no músculo que a pessoa foi olhar.
+      // Fora da seleção, o brilho é o próprio volume — o mais carregado acende
+      // mais, que é o que faz o mapa ser lido de relance.
+      const aceso = !neutra && obj.name === selectedMuscle;
+      material.emissive = new THREE.Color(aceso ? "#ffffff" : (tom?.cor ?? "#000000"));
+      material.emissiveIntensity = aceso ? 0.5 : (tom?.brilho ?? 0);
+      material.needsUpdate = true;
     });
+  }, [cena, tons, selectedMuscle]);
+
+  function musculoDoEvento(e: ThreeEvent<PointerEvent | MouseEvent>): string | null {
+    const nome = (e.object as THREE.Mesh).name;
+    return nome && nome !== MALHA_NEUTRA ? nome : null;
   }
 
-  // Model is exported Z-up (Blender default) — rotate to Three.js Y-up
   return (
     <primitive
-      object={clonedScene}
-      rotation={[-Math.PI / 2, 0, 0]}
-      onPointerOver={handlePointerOver}
-      onPointerOut={() => onHover(null)}
+      object={cena}
       onClick={(e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();
-        const muscle = MESH_TO_MUSCLE.get((e.object as THREE.Mesh).name.toLowerCase());
-        onSelect(muscle && muscle !== selectedMuscle ? muscle : null);
+        const musculo = musculoDoEvento(e);
+        onSelect(musculo && musculo !== selectedMuscle ? musculo : null);
       }}
+      onPointerOut={() => onHover(null)}
+      onPointerOver={(e: ThreeEvent<PointerEvent>) => {
+        e.stopPropagation();
+        const musculo = musculoDoEvento(e);
+        if (!musculo) return;
+        const volume = volumeByMuscle.find((m) => m.muscle === musculo)?.volume ?? 0;
+        onHover({
+          muscle: musculo,
+          volume,
+          pct: total > 0 ? Math.round((volume / total) * 100) : 0,
+        });
+      }}
+      // O modelo é Z-up (padrão do Blender); o three.js é Y-up.
+      rotation={[-Math.PI / 2, 0, 0]}
     />
   );
 }
 
-// ── Placeholder body ───────────────────────────────────────────────────────────
-
-function PlaceholderBody() {
-  const groupRef = useRef<THREE.Group>(null);
+/** Fallback girando, para o caso de o modelo não carregar. */
+function CorpoDeEspera() {
+  const grupo = useRef<THREE.Group>(null);
   useFrame((_, delta) => {
-    if (groupRef.current) groupRef.current.rotation.y += delta * 0.3;
+    if (grupo.current) grupo.current.rotation.y += delta * 0.3;
   });
 
-  const mat = new THREE.MeshStandardMaterial({
-    color: "#27272a",
-    roughness: 0.8,
-    transparent: true,
-    opacity: 0.7,
-  });
+  const material = useMemo(
+    () => new THREE.MeshStandardMaterial({ color: CORPO_NEUTRO, roughness: 0.9 }),
+    [],
+  );
 
   return (
-    <group ref={groupRef} position={[0, -10, 0]} scale={16}>
-      <mesh position={[0, 1.75, 0]} material={mat}>
-        <sphereGeometry args={[0.18, 16, 16]} />
+    <group ref={grupo}>
+      <mesh material={material} position={[0, 0.55, 0]}>
+        <sphereGeometry args={[0.16, 16, 16]} />
       </mesh>
-      <mesh position={[0, 1.1, 0]} material={mat}>
-        <boxGeometry args={[0.52, 0.7, 0.28]} />
+      <mesh material={material} position={[0, 0.1, 0]}>
+        <capsuleGeometry args={[0.19, 0.6, 8, 16]} />
       </mesh>
-      <mesh position={[0, 0.68, 0]} material={mat}>
-        <boxGeometry args={[0.44, 0.3, 0.25]} />
-      </mesh>
-      <mesh position={[-0.38, 1.05, 0]} rotation={[0, 0, 0.3]} material={mat}>
-        <cylinderGeometry args={[0.075, 0.065, 0.55, 12]} />
-      </mesh>
-      <mesh position={[0.38, 1.05, 0]} rotation={[0, 0, -0.3]} material={mat}>
-        <cylinderGeometry args={[0.075, 0.065, 0.55, 12]} />
-      </mesh>
-      <mesh position={[-0.14, 0.2, 0]} material={mat}>
-        <cylinderGeometry args={[0.1, 0.09, 0.5, 12]} />
-      </mesh>
-      <mesh position={[0.14, 0.2, 0]} material={mat}>
-        <cylinderGeometry args={[0.1, 0.09, 0.5, 12]} />
-      </mesh>
-      <mesh position={[-0.14, -0.28, 0]} material={mat}>
-        <cylinderGeometry args={[0.07, 0.055, 0.45, 12]} />
-      </mesh>
-      <mesh position={[0.14, -0.28, 0]} material={mat}>
-        <cylinderGeometry args={[0.07, 0.055, 0.45, 12]} />
-      </mesh>
-      <Html position={[0, -0.75, 0]} center>
-        <div className="text-xs text-muted-foreground bg-surface border border-white/10 rounded-lg px-3 py-1.5 whitespace-nowrap">
-          Adicione o modelo em <code className="text-primary">public/models/muscle-body.glb</code>
+      <Html center position={[0, -0.75, 0]}>
+        <div className="whitespace-nowrap rounded-lg border border-white/10 bg-surface px-3 py-1.5 text-muted-foreground text-xs">
+          Não consegui carregar <code className="text-primary">{MODELO}</code>
         </div>
       </Html>
     </group>
   );
 }
 
-// ── Error boundary ────────────────────────────────────────────────────────────
-
-class ModelErrorBoundary extends Component<
+class LimiteDeErro extends Component<
   { children: ReactNode; fallback: ReactNode },
-  { hasError: boolean }
+  { falhou: boolean }
 > {
-  state = { hasError: false };
+  state = { falhou: false };
   static getDerivedStateFromError() {
-    return { hasError: true };
+    return { falhou: true };
   }
   render() {
-    return this.state.hasError ? this.props.fallback : this.props.children;
+    return this.state.falhou ? this.props.fallback : this.props.children;
   }
 }
-
-function GLBBody(props: MuscleBodyProps) {
-  return (
-    <ModelErrorBoundary fallback={<PlaceholderBody />}>
-      <Suspense fallback={<PlaceholderBody />}>
-        <MuscleBody {...props} />
-      </Suspense>
-    </ModelErrorBoundary>
-  );
-}
-
-// ── Legend ────────────────────────────────────────────────────────────────────
-
-function Legend() {
-  const stops = [
-    { label: "Sem dados", color: "rgba(39,39,42,0.5)" },
-    { label: "Baixo", color: "rgba(204,255,0,0.35)" },
-    { label: "Médio", color: "rgba(204,255,0,0.65)" },
-    { label: "Alto", color: "rgba(204,255,0,0.85)" },
-    { label: "Máximo", color: "#CCFF00" },
-  ];
-
-  return (
-    <div className="flex items-center gap-3">
-      <span className="text-xs text-muted-foreground">Volume:</span>
-      <div className="flex items-center gap-1.5">
-        {stops.map((s) => (
-          <div key={s.label} className="flex flex-col items-center gap-1">
-            <div
-              className="w-5 h-5 rounded-sm border border-white/10"
-              style={{ backgroundColor: s.color }}
-            />
-            <span className="text-[9px] text-muted-foreground">{s.label}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Main exported component ───────────────────────────────────────────────────
 
 interface MuscleMapViewerProps {
   volumeByMuscle: MuscleVolume[];
   selectedMuscle: string | null;
-  onMuscleSelect?: (muscle: string | null) => void;
+  onMuscleSelect: (muscle: string | null) => void;
 }
 
 export function MuscleMapViewer({
@@ -222,70 +164,39 @@ export function MuscleMapViewer({
   selectedMuscle,
   onMuscleSelect,
 }: MuscleMapViewerProps) {
-  const colorMap = useMemo(() => buildColorMap(volumeByMuscle), [volumeByMuscle]);
-
-  // Tooltip state is hover-only — no need for screen pos, use CSS absolute pointer
-  const hoverRef = useRef<HoveredInfo | null>(null);
+  const tons = useMemo(() => escalaDeCor(volumeByMuscle), [volumeByMuscle]);
+  const [sobMouse, setSobMouse] = useState<MusculoSobMouse | null>(null);
 
   return (
-    <div className="bg-surface border border-white/10 rounded-xl overflow-hidden">
-      <div className="relative h-[600px] w-full">
-        <Canvas
-          camera={{ position: [0, -10, -110], fov: 50 }}
-          gl={{ antialias: true, alpha: true }}
-          style={{ background: "transparent" }}
-        >
-          <ambientLight intensity={0.7} />
-          <directionalLight position={[30, 20, -80]} intensity={1.4} />
-          <directionalLight position={[-30, -5, -80]} intensity={0.5} />
-          <directionalLight position={[0, 20, 80]} intensity={0.3} />
-          <hemisphereLight args={["#1a1a2e", "#09090b", 0.4]} />
+    <div className="relative h-full w-full">
+      <Canvas camera={{ position: [0, 0, 95], fov: 42 }}>
+        <ambientLight intensity={0.9} />
+        <directionalLight intensity={1.4} position={[30, 40, 60]} />
+        <directionalLight intensity={0.5} position={[-40, 10, -30]} />
+        <Suspense fallback={null}>
+          <LimiteDeErro fallback={<CorpoDeEspera />}>
+            <Corpo
+              tons={tons}
+              onHover={setSobMouse}
+              onSelect={onMuscleSelect}
+              selectedMuscle={selectedMuscle}
+              volumeByMuscle={volumeByMuscle}
+            />
+          </LimiteDeErro>
+        </Suspense>
+        <OrbitControls enablePan={false} maxDistance={170} minDistance={45} />
+      </Canvas>
 
-          <GLBBody
-            colorMap={colorMap}
-            onHover={(info) => {
-              hoverRef.current = info;
-            }}
-            onSelect={(muscle) => onMuscleSelect?.(muscle)}
-            selectedMuscle={selectedMuscle}
-            volumeByMuscle={volumeByMuscle}
-          />
-
-          <OrbitControls
-            enablePan={false}
-            minDistance={20}
-            maxDistance={250}
-            target={[0, -10, 0]}
-          />
-        </Canvas>
-
-        {/* Selected muscle badge */}
-        {selectedMuscle && (
-          <div className="absolute top-4 left-4 flex items-center gap-2 bg-primary text-primary-foreground rounded-lg px-3 py-1.5 text-sm font-semibold shadow-lg">
-            <span>{selectedMuscle}</span>
-            <button
-              type="button"
-              onClick={() => onMuscleSelect?.(null)}
-              className="hover:opacity-70 transition-opacity"
-            >
-              ✕
-            </button>
-          </div>
-        )}
-
-        <div className="absolute bottom-4 right-4 text-xs text-muted-foreground/50 select-none">
-          Arraste para girar · Scroll para zoom
-        </div>
-      </div>
-
-      <div className="border-t border-white/10 px-6 py-3 flex items-center justify-between">
-        <Legend />
-        {selectedMuscle && (
-          <p className="text-xs text-muted-foreground">
-            Selecionado: <span className="text-primary font-semibold">{selectedMuscle}</span>
+      {sobMouse && (
+        <div className="pointer-events-none absolute top-4 left-4 rounded-lg border border-white/10 bg-surface px-3 py-2">
+          <p className="font-bold text-sm text-white">{sobMouse.muscle}</p>
+          <p className="text-muted-foreground text-xs">
+            {sobMouse.volume.toLocaleString("pt-BR")} kg · {sobMouse.pct}% do volume
           </p>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
+
+useGLTF.preload(MODELO);

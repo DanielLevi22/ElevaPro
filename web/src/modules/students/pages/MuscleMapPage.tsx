@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import { MUSCLE_MESH_MAP } from "@/modules/students/components/muscle-map/muscleMeshMap";
+import { GRUPOS_MUSCULARES } from "@/modules/students/components/muscle-map/grupos";
 import { useStudents } from "@/shared/hooks/useStudents";
 import { useWorkoutMetrics } from "@/shared/hooks/useWorkoutMetrics";
 
@@ -39,7 +39,10 @@ const PERIODS = [
 ] as const;
 
 // All muscle groups in display order
-const ALL_GROUPS = Object.keys(MUSCLE_MESH_MAP);
+// A lista sai de `grupos.ts`, que é o mesmo acordo de nome que o modelo usa.
+// Antes vinha das chaves do `MUSCLE_MESH_MAP`, então a lateral e a pintura
+// compartilhavam a mesma fonte errada.
+const ALL_GROUPS = [...GRUPOS_MUSCULARES];
 
 // ── Full muscle group side panel ──────────────────────────────────────────────
 
