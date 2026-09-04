@@ -21,7 +21,7 @@ const abrir = (props: Partial<React.ComponentProps<typeof PainelDeProposta>> = {
 
 describe("painel de proposta", () => {
   it("mostra a proposta e o título", () => {
-    abrir();
+    abrir({ resolvido: false });
 
     expect(screen.getByText("Treino A — Full Body")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Proposta de treinos" })).toBeInTheDocument();
@@ -42,6 +42,53 @@ describe("painel de proposta", () => {
     fireEvent.click(screen.getByRole("button", { name: "Fechar Proposta de treinos" }));
 
     expect(onFechar).toHaveBeenCalledOnce();
+  });
+
+  // Enquanto há decisão a tomar, ocupar espaço é o certo: é ali que mora o
+  // botão de aprovar.
+  it("proposta pendente abre expandida", () => {
+    abrir({ resolvido: false });
+
+    expect(screen.getByText("Treino A — Full Body")).toBeInTheDocument();
+  });
+
+  // Depois de salva não há o que decidir, e o painel aberto empurrava para fora
+  // justamente a mensagem que confirma o que foi salvo.
+  it("proposta já resolvida abre recolhida", () => {
+    abrir({ resolvido: true });
+
+    expect(screen.queryByText("Treino A — Full Body")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { expanded: false })).toBeInTheDocument();
+  });
+
+  it("recolhe sozinha ao deixar de haver decisão a tomar", () => {
+    const { rerender } = abrir({ resolvido: false });
+    expect(screen.getByText("Treino A — Full Body")).toBeInTheDocument();
+
+    rerender(
+      <PainelDeProposta titulo="Proposta de treinos" resolvido onFechar={vi.fn()}>
+        <p>Treino A — Full Body</p>
+      </PainelDeProposta>,
+    );
+
+    expect(screen.queryByText("Treino A — Full Body")).not.toBeInTheDocument();
+  });
+
+  // O recolhimento automático acontece na transição, uma vez. Quem abre de novo
+  // para conferir o que salvou não pode ser recolhido pelas costas.
+  it("expandir à mão depois de salvo continua expandido", () => {
+    const { rerender } = abrir({ resolvido: true });
+
+    fireEvent.click(screen.getByRole("button", { expanded: false }));
+    expect(screen.getByText("Treino A — Full Body")).toBeInTheDocument();
+
+    rerender(
+      <PainelDeProposta titulo="Proposta de treinos" resolvido onFechar={vi.fn()}>
+        <p>Treino A — Full Body</p>
+      </PainelDeProposta>,
+    );
+
+    expect(screen.getByText("Treino A — Full Body")).toBeInTheDocument();
   });
 
   it("recolhe e volta sem perder a proposta", () => {

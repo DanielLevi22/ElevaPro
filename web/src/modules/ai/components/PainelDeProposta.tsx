@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * O lugar fixo da proposta na tela: entre a conversa e o campo de digitação.
@@ -13,10 +13,6 @@ import { useState } from "react";
  *
  * Proposta pendente não é mensagem: é uma ação esperando decisão. Fica parada
  * no mesmo canto até ser resolvida.
- *
- * A altura é limitada e a rolagem é interna porque três treinos de dez
- * exercícios ocupam mais que a tela — o painel não pode comer a conversa que
- * ele serve.
  */
 interface Props {
   /** Título curto do que está pendente, visível mesmo recolhido. */
@@ -28,14 +24,27 @@ interface Props {
 }
 
 export function PainelDeProposta({ titulo, resolvido, onFechar, children }: Props) {
-  const [recolhido, setRecolhido] = useState(false);
+  // Proposta já resolvida abre recolhida: quem reabre a conversa quer ler a
+  // conversa, e o que estava decidido não precisa ocupar meia tela para isso.
+  const [recolhido, setRecolhido] = useState(resolvido);
+  const eraResolvido = useRef(resolvido);
+
+  // Recolhe ao deixar de haver decisão a tomar, e só nessa transição: quem
+  // expandir depois não é recolhido pelas costas no próximo render.
+  useEffect(() => {
+    if (resolvido && !eraResolvido.current) setRecolhido(true);
+    eraResolvido.current = resolvido;
+  }, [resolvido]);
 
   return (
     <section
       aria-label={titulo}
-      className="shrink-0 border-t border-white/10 bg-background/80 backdrop-blur"
+      // O teto é porcentagem do espaço de conversa, não da janela. Com `vh` o
+      // painel media 42% da tela inteira — em janela baixa isso é quase tudo o
+      // que sobra depois do cabeçalho, e a conversa ficava com uma linha.
+      className="flex max-h-[45%] shrink-0 flex-col border-t border-white/10 bg-background/80 backdrop-blur"
     >
-      <div className="flex items-center gap-2 px-1 py-2">
+      <div className="flex shrink-0 items-center gap-2 px-1 py-2">
         <button
           type="button"
           onClick={() => setRecolhido((r) => !r)}
@@ -46,7 +55,7 @@ export function PainelDeProposta({ titulo, resolvido, onFechar, children }: Prop
             ▸
           </span>
           {titulo}
-          {resolvido && <span className="text-emerald-400 normal-case">· salvo</span>}
+          {resolvido && <span className="normal-case text-emerald-400">· salvo</span>}
         </button>
 
         {/* Fechar só depois de resolvido: antes disso, o botão de aprovar mora
@@ -64,7 +73,7 @@ export function PainelDeProposta({ titulo, resolvido, onFechar, children }: Prop
       </div>
 
       {!recolhido && (
-        <div className="max-h-[42vh] overflow-y-auto pb-3 pr-1">
+        <div className="overflow-y-auto pb-3 pr-1">
           <div className="mx-auto max-w-lg">{children}</div>
         </div>
       )}
