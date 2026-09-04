@@ -122,6 +122,19 @@ function subMusculo(grupo, centro) {
     return y > 2 ? "Semitendinoso" : "Semimembranoso";
   }
 
+  if (grupo === "Ombros") {
+    // O deltoide é **uma peça só** no écorché, envolvendo o ombro como um capuz.
+    // As três cabeças não são ilhas separadas, então aqui a divisão é corte de
+    // verdade — a única do arquivo que não respeita borda de escultor, porque
+    // não existe borda para respeitar.
+    //
+    // O eixo é `y`, e o meio é mesmo a cabeça lateral: ela fica no ponto médio
+    // do arco que vai da frente às costas. O deltoide vai de y=0.2 a y=5.5 com
+    // vértices distribuídos por igual, então os terços saem parelhos.
+    if (y < 2) return "Deltoide_anterior";
+    return y < 3.9 ? "Deltoide_lateral" : "Deltoide_posterior";
+  }
+
   if (grupo === "Costas") {
     // Altura, e agora ela funciona. A primeira tentativa por altura deu Lombar
     // com 6 vértices, mas o culpado não era o eixo: dorsal e eretores chegam
@@ -459,8 +472,13 @@ for (const ilha of dados.ilhas) {
 
   const maioria = [...votos.values()].sort((a, c) => c - a)[0];
   const discordancia = 1 - maioria / ilha.tris.length;
+  // O deltoide é a exceção conhecida: uma peça só cobrindo três cabeças, e
+  // pequena demais para o critério de tamanho pegar. Sem isto, `Ombros` seria o
+  // único grupo sem divisão — e a razão não seria anatômica, seria o limiar.
+  const ehOmbro = grupoDoCentro(ilha.centro) === "Ombros";
   const corta =
-    ilha.vertices.size > VERTICES_QUE_INDICAM_FUSAO && discordancia >= DISCORDANCIA_MINIMA;
+    ehOmbro ||
+    (ilha.vertices.size > VERTICES_QUE_INDICAM_FUSAO && discordancia >= DISCORDANCIA_MINIMA);
 
   if (corta) cortadas.push(ilha.vertices.size);
 

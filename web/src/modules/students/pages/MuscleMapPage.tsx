@@ -60,6 +60,10 @@ interface MuscleGroupPanelProps {
 function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGroupPanelProps) {
   const volumeMap = new Map(volumeByMuscle.map((m) => [m.muscle, m.volume]));
 
+  // Acordeão: com onze grupos e até três sub-músculos cada, a lista aberta
+  // passava de trinta linhas e o corpo perdia a lateral inteira de altura.
+  const [aberto, setAberto] = useState<string | null>(null);
+
   // O volume de um grupo é o de qualquer sub-músculo dele: todos carregam o
   // mesmo número, porque o banco não distingue. Somar contaria o mesmo treino
   // três vezes no quadríceps.
@@ -92,7 +96,12 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
             <li key={group}>
               <button
                 type="button"
-                onClick={() => onSelect(isSelected ? null : group)}
+                onClick={() => {
+                  onSelect(isSelected ? null : group);
+                  // Selecionar abre o grupo: quem clica em "Costas" quer ver o
+                  // corpo aceso e, logo em seguida, refinar em Dorsal ou Lombar.
+                  setAberto(partes.length > 1 && !isSelected ? group : null);
+                }}
                 className={`w-full text-left rounded-lg px-3 py-2 transition-colors ${
                   isSelected
                     ? "bg-primary/15 border border-primary/30"
@@ -111,7 +120,20 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
                   >
                     {group}
                   </span>
-                  <span className="text-xs text-muted-foreground">{hasData ? `${pct}%` : "—"}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground text-xs">
+                      {hasData ? `${pct}%` : "—"}
+                    </span>
+                    {partes.length > 1 && aberto === group && (
+                      <span
+                        className={`text-muted-foreground text-[10px] transition-transform ${
+                          aberto === group ? "rotate-90" : ""
+                        }`}
+                      >
+                        ▶
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {hasData && (

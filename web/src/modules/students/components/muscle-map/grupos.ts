@@ -38,13 +38,14 @@ export type GrupoMuscular = (typeof GRUPOS_MUSCULARES)[number];
  * O grupo é conceito da tela; a malha é o que existe no modelo. Clicar em
  * "Quadríceps" acende as três cabeças porque o grupo é o conjunto delas.
  *
- * **Nem todo grupo divide, e o motivo é material, não preguiça.** O deltoide é
- * uma malha só por lado no écorché: anterior, lateral e posterior não existem
- * como peças separadas, e separá-los exigiria cortar a geometria por ângulo em
- * torno do ombro — outra técnica, não este pipeline. Quadríceps chega com 16
- * ilhas e isquiotibiais com 14, então ali dividir é só ler a posição.
+ * A maioria dos grupos divide só de ler a posição das ilhas — quadríceps chega
+ * com 16 peças e isquiotibiais com 14. O deltoide é a exceção: ele é **uma
+ * malha só por lado**, envolvendo o ombro como um capuz, e por isso é o único
+ * que o pipeline corta de verdade em vez de reagrupar.
  *
- * Grupo que não divide lista o próprio nome, e a tela não mostra sub-item.
+ * Onde o écorché não aparta, a divisão não é oferecida: o bíceps não tem as
+ * duas cabeças (elas formam um ventre só, e a peça de trás é o braquial) e o
+ * tríceps não tem a medial, que fica embaixo das outras duas.
  *
  * **O volume ainda é do grupo.** O banco tem `pernas` como valor único, então
  * vasto lateral, medial e reto femoral recebem a mesma cor. A divisão é
@@ -60,8 +61,7 @@ export const SUBMUSCULOS: Record<GrupoMuscular, readonly string[]> = {
   Costas: ["Trapézio", "Dorsal", "Lombar"],
   Glúteos: ["Glúteo_máximo", "Glúteo_médio"],
   Isquiotibiais: ["Bíceps_femoral", "Semitendinoso", "Semimembranoso"],
-  // Uma malha só por lado no modelo — ver a nota acima.
-  Ombros: ["Ombros"],
+  Ombros: ["Deltoide_anterior", "Deltoide_lateral", "Deltoide_posterior"],
   Panturrilha: ["Gastrocnêmio", "Sóleo"],
   Peitoral: ["Peitoral_maior", "Serrátil"],
   Quadríceps: ["Vasto_lateral", "Reto_femoral", "Vasto_medial"],
