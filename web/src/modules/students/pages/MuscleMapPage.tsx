@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   GRUPOS_MUSCULARES,
   grupoDaMalha,
@@ -212,10 +213,33 @@ export default function MuscleMapPage() {
   const [days, setDays] = useState<90 | 180 | 365>(90);
   const [selectedMuscle, setSelectedMuscle] = useState<string | null>(null);
 
+  // Tela cheia cobre a navegação do dashboard; o modo normal a preserva. A
+  // imersão total é boa para explorar e ruim para quem só passou para conferir
+  // um número e quer voltar às outras abas do aluno — por isso é escolha, não
+  // imposição.
+  const [telaCheia, setTelaCheia] = useState(false);
+
+  // O portal existe por causa do empilhamento, não por capricho: o conteúdo do
+  // dashboard vive dentro de um `relative z-10`, que cria contexto próprio, e a
+  // sidebar é `z-50` fora dele. Nenhum `z-index` daqui passa por cima dela —
+  // filho de contexto não escapa do pai. Só saindo para o `body` a tela cheia
+  // cobre mesmo a navegação.
+  const [montado, setMontado] = useState(false);
+  useEffect(() => setMontado(true), []);
+
+  // Esc sai da tela cheia. Sem isso, a única saída seria o botão, e tela cheia
+  // sem tecla de fuga prende quem entrou sem querer.
+  useEffect(() => {
+    if (!telaCheia) return;
+    const aoTeclar = (e: KeyboardEvent) => e.key === "Escape" && setTelaCheia(false);
+    window.addEventListener("keydown", aoTeclar);
+    return () => window.removeEventListener("keydown", aoTeclar);
+  }, [telaCheia]);
+
   const { data: metrics, isLoading } = useWorkoutMetrics(studentId, days);
   const volumeByMuscle = metrics?.volumeByMuscle ?? [];
 
-  return (
+  const cena = (
     /*
      * A tela inteira é o ambiente, não um cartão dentro de uma página.
      *
@@ -228,14 +252,20 @@ export default function MuscleMapPage() {
      * dashboard, que tem seu próprio scroll — sem isso a cena herdaria a altura
      * do conteúdo e voltaria a ser um cartão alto.
      */
-    <div className="fixed inset-0 overflow-hidden bg-[#07070a]">
+    <div
+      className={
+        telaCheia
+          ? "fixed inset-0 z-50 overflow-hidden bg-background"
+          : "relative h-[calc(100vh-13rem)] overflow-hidden rounded-2xl border border-border bg-background"
+      }
+    >
       {/* Brilho ambiente atrás do corpo. Dá um "lugar" ao vazio: sem ele o
           fundo é preto chapado e a cena parece um recorte. */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 60% 55% at 50% 40%, rgba(120,110,140,0.16), transparent 70%)",
+            "radial-gradient(ellipse 60% 55% at 50% 40%, color-mix(in srgb, var(--color-primary) 10%, transparent), transparent 70%)",
         }}
       />
 
@@ -251,7 +281,7 @@ export default function MuscleMapPage() {
       <div className="pointer-events-none absolute top-0 right-0 left-0 flex items-start justify-between gap-4 p-6">
         <div className="pointer-events-auto flex items-center gap-3">
           <Link
-            className="rounded-full border border-white/10 bg-black/40 p-2.5 text-white/60 backdrop-blur-md transition-colors hover:text-white"
+            className="rounded-full border border-border bg-surface/70 p-2.5 text-muted-foreground backdrop-blur-md transition-colors hover:text-foreground"
             href={`/dashboard/students/${studentId}`}
           >
             <svg
@@ -274,31 +304,62 @@ export default function MuscleMapPage() {
               Mapa Muscular
             </p>
             {student && (
-              <h1 className="font-bold text-white text-xl leading-tight">{student.full_name}</h1>
+              <h1 className="font-bold text-foreground text-xl leading-tight">
+                {student.full_name}
+              </h1>
             )}
           </div>
         </div>
 
-        <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-white/10 bg-black/40 p-1 backdrop-blur-md">
-          {PERIODS.map((p) => (
-            <button
-              className={`rounded-full px-3.5 py-1.5 font-medium text-xs transition-colors ${
-                days === p.value
-                  ? "bg-primary text-primary-foreground"
-                  : "text-white/50 hover:text-white"
-              }`}
-              key={p.value}
-              onClick={() => setDays(p.value as 90 | 180 | 365)}
-              type="button"
+        <div className="pointer-events-auto flex items-center gap-2">
+          <button
+            aria-label={telaCheia ? "Sair da tela cheia" : "Ver em tela cheia"}
+            className="rounded-full border border-border bg-surface/70 p-2.5 text-muted-foreground backdrop-blur-md transition-colors hover:text-foreground"
+            onClick={() => setTelaCheia((v) => !v)}
+            title={telaCheia ? "Sair da tela cheia (Esc)" : "Ver em tela cheia"}
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              {p.label}
-            </button>
-          ))}
+              <path
+                d={
+                  telaCheia
+                    ? "M9 9L4 4m0 0v5m0-5h5m6 6l5 5m0 0v-5m0 5h-5"
+                    : "M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"
+                }
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+              />
+            </svg>
+          </button>
+
+          <div className="flex items-center gap-1 rounded-full border border-border bg-surface/70 p-1 backdrop-blur-md">
+            {PERIODS.map((p) => (
+              <button
+                className={`rounded-full px-3.5 py-1.5 font-medium text-xs transition-colors ${
+                  days === p.value
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                key={p.value}
+                onClick={() => setDays(p.value as 90 | 180 | 365)}
+                type="button"
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* ── Números, embaixo à esquerda ─────────────────────────────────── */}
-      <div className="pointer-events-none absolute bottom-6 left-6 flex gap-6 rounded-2xl border border-white/10 bg-black/40 px-6 py-4 backdrop-blur-md">
+      <div className="pointer-events-none absolute bottom-6 left-6 flex gap-6 rounded-2xl border border-border bg-surface/70 px-6 py-4 backdrop-blur-md">
         {[
           { rotulo: "Grupos treinados", valor: isLoading ? "—" : String(volumeByMuscle.length) },
           {
@@ -310,10 +371,10 @@ export default function MuscleMapPage() {
           { rotulo: "Músculo + treinado", valor: isLoading ? "—" : (metrics?.topMuscle ?? "—") },
         ].map((n) => (
           <div key={n.rotulo}>
-            <p className="mb-1 font-bold text-[10px] text-white/40 uppercase tracking-widest">
+            <p className="mb-1 font-bold text-[10px] text-muted-foreground uppercase tracking-widest">
               {n.rotulo}
             </p>
-            <p className="font-bold text-lg text-white">{n.valor}</p>
+            <p className="font-bold text-foreground text-lg">{n.valor}</p>
           </div>
         ))}
       </div>
@@ -327,9 +388,16 @@ export default function MuscleMapPage() {
         />
       </div>
 
-      <p className="pointer-events-none absolute right-6 bottom-2 text-[10px] text-white/25">
-        arraste para girar · scroll para aproximar
+      <p className="pointer-events-none absolute right-6 bottom-2 text-[10px] text-muted-foreground/60">
+        {telaCheia
+          ? "arraste para girar · scroll para aproximar · Esc para sair"
+          : "arraste para girar · scroll para aproximar"}
       </p>
     </div>
   );
+
+  // Em tela cheia a cena sai para o `body`; no modo normal ela fica no fluxo da
+  // página, com a navegação do dashboard visível em volta.
+  if (!telaCheia) return cena;
+  return montado ? createPortal(cena, document.body) : null;
 }
