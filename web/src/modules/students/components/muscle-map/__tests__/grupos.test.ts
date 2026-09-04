@@ -7,6 +7,7 @@ import {
   MALHA_NEUTRA,
   MALHAS_DE_MUSCULO,
   MALHAS_DO_GRUPO,
+  malhasAcesas,
   SUBMUSCULOS,
   volumePorMalha,
 } from "../grupos";
@@ -152,5 +153,27 @@ describe("o volume que vem do banco", () => {
       .filter((g) => g !== undefined && !GRUPOS_MUSCULARES.includes(g));
 
     expect(inventados).toEqual([]);
+  });
+
+  // Quem acende o quê. Ficou fora do viewer porque é regra de nome como o
+  // resto do arquivo, e regra de nome quebra calada: uma seleção que não casa
+  // com malha nenhuma não pinta nada e não reclama — foi assim que o clique em
+  // "Vasto lateral" ficou mudo por causa do underscore.
+  it("grupo acende todas as malhas dele", () => {
+    expect(malhasAcesas("Ombros")).toEqual(
+      new Set(["Deltoide_anterior", "Deltoide_lateral", "Deltoide_posterior"]),
+    );
+  });
+
+  it("sub-músculo acende só a malha dele", () => {
+    expect(malhasAcesas("Deltoide_lateral")).toEqual(new Set(["Deltoide_lateral"]));
+  });
+
+  it("seleção que não existe no modelo não acende nada", () => {
+    expect(malhasAcesas("Deltoide médio")).toEqual(new Set());
+  });
+
+  it("sem seleção, nada acende", () => {
+    expect(malhasAcesas(null)).toEqual(new Set());
   });
 });

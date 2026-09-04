@@ -7,7 +7,7 @@ import { Component, type ReactNode, Suspense, useEffect, useMemo, useRef, useSta
 import * as THREE from "three";
 import type { MuscleVolume } from "@/shared/hooks/useWorkoutMetrics";
 import { escalaDeCor, type TomDoMusculo } from "./escalaDeCor";
-import { MALHA_NEUTRA, rotuloDaMalha, SUBMUSCULOS } from "./grupos";
+import { MALHA_NEUTRA, malhasAcesas, rotuloDaMalha } from "./grupos";
 
 /**
  * O corpo 3D, pintado por nome de malha.
@@ -65,11 +65,7 @@ function Corpo({ tons, onHover, onSelect, selectedMuscle, volumeByMuscle }: Corp
     });
   }, [cena]);
 
-  const acesas = useMemo(() => {
-    if (!selectedMuscle) return new Set<string>();
-    const doGrupo = SUBMUSCULOS[selectedMuscle as keyof typeof SUBMUSCULOS];
-    return new Set(doGrupo ?? [selectedMuscle]);
-  }, [selectedMuscle]);
+  const acesas = useMemo(() => malhasAcesas(selectedMuscle), [selectedMuscle]);
 
   useEffect(() => {
     cena.traverse((obj) => {
@@ -92,11 +88,13 @@ function Corpo({ tons, onHover, onSelect, selectedMuscle, volumeByMuscle }: Corp
       // A seleção pode ser um grupo ("Costas") ou um sub-músculo ("Dorsal").
       // Grupo acende todas as malhas dele; sub-músculo acende só a sua.
       const aceso = !neutra && acesas.has(obj.name);
-      // Branco a 0.5 estourava o músculo selecionado e apagava a cor de volume
-      // junto. Um realce discreto basta: o que diz "este é o selecionado" é o
-      // contraste com os vizinhos, não a potência do brilho.
+      // O selecionado clareia a **cor**, não só o brilho. Só emissivo a 0.22 era
+      // invisível num músculo pequeno visto de longe, e a 0.5 estourava a peça
+      // e apagava a informação de volume junto. Clarear a base resolve os dois:
+      // lê de relance e não queima.
+      if (aceso) material.color.lerp(new THREE.Color("#ffffff"), 0.45);
       material.emissive = new THREE.Color(aceso ? "#ffffff" : (tom?.cor ?? "#000000"));
-      material.emissiveIntensity = aceso ? 0.22 : (tom?.brilho ?? 0);
+      material.emissiveIntensity = aceso ? 0.25 : (tom?.brilho ?? 0);
       material.needsUpdate = true;
     });
   }, [cena, tons, acesas]);

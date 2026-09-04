@@ -121,10 +121,11 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
                     {group}
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground text-xs">
-                      {hasData ? `${pct}%` : "—"}
-                    </span>
-                    {partes.length > 1 && aberto === group && (
+                    {/* Sem volume, nada: o traço que ficava aqui não dizia
+                        mais que a ausência do número, e encostado na seta
+                        parecia parte do controle de abrir. */}
+                    {hasData && <span className="text-muted-foreground text-xs">{pct}%</span>}
+                    {partes.length > 1 && (
                       <span
                         className={`text-muted-foreground text-[10px] transition-transform ${
                           aberto === group ? "rotate-90" : ""
@@ -146,15 +147,12 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
                 )}
               </button>
 
-              {/* Sub-músculos, só onde a geometria do modelo divide. Grupo que
-                  não divide não mostra sub-item — o deltoide é uma malha só por
-                  lado, e listar "anterior/lateral/posterior" ali prometeria uma
-                  separação que não existe.
+              {/* Sub-músculos do grupo aberto.
 
                   O percentual não se repete no sub-item de propósito: o volume
-                  é do grupo, e mostrar o mesmo número três vezes sugeriria que
-                  o dado distingue as cabeças. Ele não distingue — ainda. */}
-              {partes.length > 1 && (
+                  é do grupo, e mostrar o mesmo número em três linhas sugeriria
+                  que o dado distingue as cabeças. Ele não distingue — ainda. */}
+              {partes.length > 1 && aberto === group && (
                 <ul className="mt-1 ml-3 flex flex-col gap-0.5 border-white/10 border-l pl-3">
                   {partes.map((parte) => (
                     <li key={parte}>

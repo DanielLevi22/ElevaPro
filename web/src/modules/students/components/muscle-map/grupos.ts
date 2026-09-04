@@ -88,6 +88,29 @@ export function rotuloDaMalha(malha: string): string {
 /** Todas as malhas de músculo do modelo, achatadas. */
 export const MALHAS_DE_MUSCULO = Object.values(SUBMUSCULOS).flat();
 
+/**
+ * As malhas que uma seleção acende.
+ *
+ * A seleção da lateral pode ser um grupo — "Ombros" — ou um sub-músculo —
+ * "Deltoide_lateral". Grupo acende as três cabeças; sub-músculo acende só a
+ * dele. Mora aqui, e não no viewer, porque é regra de nome como o resto do
+ * arquivo, e regra de nome quebra calada: uma seleção que não casa com malha
+ * nenhuma não pinta nada e não reclama.
+ *
+ * @example
+ * malhasAcesas("Ombros");           // as três cabeças do deltoide
+ * malhasAcesas("Deltoide_lateral"); // só ela
+ */
+export function malhasAcesas(selecao: string | null): Set<string> {
+  if (!selecao) return new Set();
+
+  const doGrupo = SUBMUSCULOS[selecao as GrupoMuscular];
+  if (doGrupo) return new Set(doGrupo);
+
+  // Sub-músculo: acende só ele, e só se existir de verdade no modelo.
+  return new Set(MALHAS_DE_MUSCULO.includes(selecao) ? [selecao] : []);
+}
+
 /** O grupo a que uma malha pertence. */
 export function grupoDaMalha(malha: string): GrupoMuscular | null {
   for (const [grupo, malhas] of Object.entries(SUBMUSCULOS)) {
