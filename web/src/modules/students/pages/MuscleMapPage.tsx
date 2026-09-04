@@ -97,7 +97,7 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
 
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/40 p-4 backdrop-blur-md">
-      <h3 className="font-bold text-[10px] text-white/40 uppercase tracking-widest">
+      <h3 className="font-bold text-[10px] text-foreground/55 uppercase tracking-widest">
         Grupos musculares
       </h3>
 
@@ -128,7 +128,11 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
                 <div className="flex items-center justify-between">
                   <span
                     className={`font-medium text-sm ${
-                      isSelected ? "text-primary" : hasData ? "text-white" : "text-white/45"
+                      isSelected
+                        ? "text-primary"
+                        : hasData
+                          ? "text-foreground"
+                          : "text-foreground/55"
                     }`}
                   >
                     {group}
@@ -137,10 +141,10 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
                     {/* Sem volume, nada: o traço que ficava aqui não dizia
                         mais que a ausência do número, e encostado na seta
                         parecia parte do controle de abrir. */}
-                    {hasData && <span className="text-white/50 text-xs">{pct}%</span>}
+                    {hasData && <span className="text-foreground/60 text-xs">{pct}%</span>}
                     {partes.length > 1 && (
                       <span
-                        className={`text-[10px] text-white/35 transition-transform ${
+                        className={`text-[10px] text-foreground/45 transition-transform ${
                           aberto === group ? "rotate-90" : ""
                         }`}
                       >
@@ -173,7 +177,7 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
                         className={`w-full rounded px-2 py-1 text-left text-xs transition-colors ${
                           selectedMuscle === parte
                             ? "bg-primary/20 text-primary"
-                            : "text-white/45 hover:bg-white/5 hover:text-white"
+                            : "text-foreground/60 hover:bg-foreground/5 hover:text-foreground"
                         }`}
                         onClick={() => onSelect(selectedMuscle === parte ? null : parte)}
                         type="button"
@@ -198,7 +202,7 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
         e a tela terá dito isso sem ser verdade. Some quando o catálogo de
         exercícios ganhar valores finos.
       */}
-      <p className="border-border border-t pt-3 text-[11px] text-muted-foreground leading-relaxed">
+      <p className="border-border border-t pt-3 text-[11px] text-foreground/65 leading-relaxed">
         A cor mostra o volume do <strong className="text-foreground">grupo</strong>. As divisões
         abaixo de cada um são anatômicas — o registro de treino ainda não separa uma cabeça da
         outra.
@@ -208,7 +212,7 @@ function MuscleGroupPanel({ volumeByMuscle, selectedMuscle, onSelect }: MuscleGr
         <button
           type="button"
           onClick={() => onSelect(null)}
-          className="text-left text-white/40 text-xs transition-colors hover:text-white"
+          className="text-left text-foreground/60 text-xs transition-colors hover:text-foreground"
         >
           ✕ Limpar seleção
         </button>
@@ -301,7 +305,7 @@ export default function MuscleMapPage() {
       <div className="pointer-events-none absolute top-0 right-0 left-0 flex items-start justify-between gap-4 p-6">
         <div className="pointer-events-auto flex items-center gap-3">
           <Link
-            className="rounded-full border border-border bg-surface/70 p-2.5 text-muted-foreground backdrop-blur-md transition-colors hover:text-foreground"
+            className="rounded-full border border-border bg-surface/85 p-2.5 text-muted-foreground backdrop-blur-md transition-colors hover:text-foreground"
             href={`/dashboard/students/${studentId}`}
           >
             <svg
@@ -334,7 +338,7 @@ export default function MuscleMapPage() {
         <div className="pointer-events-auto flex items-center gap-2">
           <button
             aria-label={telaCheia ? "Sair da tela cheia" : "Ver em tela cheia"}
-            className="rounded-full border border-border bg-surface/70 p-2.5 text-muted-foreground backdrop-blur-md transition-colors hover:text-foreground"
+            className="rounded-full border border-border bg-surface/85 p-2.5 text-muted-foreground backdrop-blur-md transition-colors hover:text-foreground"
             onClick={() => setTelaCheia((v) => !v)}
             title={telaCheia ? "Sair da tela cheia (Esc)" : "Ver em tela cheia"}
             type="button"
@@ -359,7 +363,7 @@ export default function MuscleMapPage() {
             </svg>
           </button>
 
-          <div className="flex items-center gap-1 rounded-full border border-border bg-surface/70 p-1 backdrop-blur-md">
+          <div className="flex items-center gap-1 rounded-full border border-border bg-surface/85 p-1 backdrop-blur-md">
             {PERIODS.map((p) => (
               <button
                 className={`rounded-full px-3.5 py-1.5 font-medium text-xs transition-colors ${
@@ -379,7 +383,7 @@ export default function MuscleMapPage() {
       </div>
 
       {/* ── Números, embaixo à esquerda ─────────────────────────────────── */}
-      <div className="pointer-events-none absolute bottom-6 left-6 flex gap-6 rounded-2xl border border-border bg-surface/70 px-6 py-4 backdrop-blur-md">
+      <div className="pointer-events-none absolute bottom-6 left-6 flex gap-6 rounded-2xl border border-border bg-surface/85 px-6 py-4 backdrop-blur-md">
         {[
           { rotulo: "Grupos treinados", valor: isLoading ? "—" : String(volumeByMuscle.length) },
           {

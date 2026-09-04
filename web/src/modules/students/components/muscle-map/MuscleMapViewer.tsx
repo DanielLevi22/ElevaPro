@@ -296,7 +296,11 @@ export function MuscleMapViewer({
       />
 
       <button
-        className="absolute right-6 bottom-6 rounded-full border border-border bg-surface/70 px-4 py-2 font-bold text-[11px] text-muted-foreground uppercase tracking-widest backdrop-blur-md transition-colors hover:text-foreground"
+        /* Centro-baixo, e não no canto direito: ali ele ficava debaixo do
+           painel de músculos, que é irmão posterior no DOM e pintava por cima.
+           O `z-10` é cinto e suspensório para o caso de a lateral mudar de
+           largura. */
+        className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 rounded-full border border-border bg-surface/85 px-4 py-2 font-bold text-[11px] text-foreground/80 uppercase tracking-widest backdrop-blur-md transition-colors hover:text-foreground"
         onClick={() => {
           setEmRepouso(false);
           setVista(vista === "costas" ? "frente" : "costas");
