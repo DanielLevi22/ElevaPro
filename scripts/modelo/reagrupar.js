@@ -357,5 +357,5 @@ for (const [nome, g] of ordem) {
 const impares = ordem.filter(([nome, g]) => nome !== NEUTRO && g.ilhas % 2 === 1);
 if (impares.length > 0) {
   console.log("");
-  console.log("nº ímpar de ilhas (conferir): " + impares.map(([n]) => n).join(", "));
+  console.log(`nº ímpar de ilhas (conferir): ${impares.map(([n]) => n).join(", ")}`);
 }
