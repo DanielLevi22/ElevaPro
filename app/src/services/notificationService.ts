@@ -68,9 +68,11 @@ export async function scheduleMealNotifications(
   meals: MealNotification[]
 ): Promise<void> {
   try {
-    // NUCLEAR OPTION: Cancel ALL notifications to ensure no ghosts remain from previous attempts
-    await Notifications.cancelAllScheduledNotificationsAsync();
-    console.log('☢️ CANCELLING ALL NOTIFICATIONS (Nuclear Option) to prevent duplicates');
+    // Só o que é deste plano. Cancelar tudo levava junto o lembrete de treino,
+    // que é agendado em outro lugar e não tem nada com o plano alimentar — e o
+    // identificador de cada notificação já começa com o id do plano justamente
+    // para permitir esta distinção.
+    await cancelPlanNotifications(planId);
 
     for (const meal of meals) {
       if (!meal.mealTime || meal.dayOfWeek === undefined || meal.dayOfWeek === null) {
