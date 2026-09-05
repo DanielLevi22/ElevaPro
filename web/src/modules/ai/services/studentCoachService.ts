@@ -61,11 +61,19 @@ export async function saveStudentMessage(
   content: string,
   metadata?: Record<string, unknown>,
 ): Promise<string | null> {
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from("ai_chat_messages")
     .insert({ session_id: sessionId, role, content, metadata: (metadata ?? {}) as Json })
     .select("id")
     .single();
+
+  if (error) {
+    // Mesmo motivo do `saveMessage`: `null` quer dizer "não gravou, tenta de
+    // novo", e sem o log a resposta do coach sumiria sem uma linha explicando.
+    // Sessão sim, conteúdo não (LGPD_COMPLIANCE, seção 4).
+    console.error("[saveStudentMessage] não gravou", { sessionId, role, erro: error.message });
+    return null;
+  }
 
   return data?.id ?? null;
 }
