@@ -195,11 +195,22 @@ export async function saveMessage(
   content: string,
   metadata?: Record<string, unknown>,
 ): Promise<string | null> {
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from("ai_chat_messages")
     .insert({ session_id: sessionId, role, content, metadata: (metadata ?? {}) as Json })
     .select("id")
     .single();
+
+  if (error) {
+    // Sem esta linha o insert recusado é indistinguível de um que deu certo e
+    // não retornou nada — e quem chama trata `null` como "tenta de novo",
+    // então a resposta sumiria da conversa em silêncio.
+    //
+    // A sessão vai no log, o conteúdo nunca: a conversa carrega inferência
+    // sobre saúde de titular identificado (LGPD_COMPLIANCE, seção 4).
+    console.error("[saveMessage] não gravou", { sessionId, role, erro: error.message });
+    return null;
+  }
 
   return data?.id ?? null;
 }
