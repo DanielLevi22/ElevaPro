@@ -8,6 +8,7 @@ import { dispensar, foiDispensada } from "../services/propostaDispensada";
 import type { ChatMessage, DietMealsProposal, DietPlanProposal, SseEvent } from "../types";
 import { DietMealsProposalCard, DietPlanProposalCard } from "./DietProposalCards";
 import { PainelDeProposta } from "./PainelDeProposta";
+import { TextoDoAssistente } from "./TextoDoAssistente";
 
 interface Props {
   studentId: string;
@@ -265,7 +266,9 @@ export function NutritionCoachChat({
                   : "rounded-bl-sm border border-white/10 bg-surface text-foreground"
               }`}
             >
-              {msg.content}
+              {/* Só o texto do assistente é interpretado: quem escreve um
+                  asterisco na própria mensagem espera ver um asterisco. */}
+              {msg.role === "assistant" ? <TextoDoAssistente content={msg.content} /> : msg.content}
             </div>
           </div>
         ))}

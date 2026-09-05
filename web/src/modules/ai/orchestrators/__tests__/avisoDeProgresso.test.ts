@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import type {
   AIProvider,
   ContentBlock,
@@ -33,11 +33,17 @@ type Linha = SseEvent | Execucao;
 /** Os blocos de sistema do último turno, para conferir o que o modelo recebeu. */
 let blocosRecebidos: SystemBlock[] = [];
 
+/** Quando o turno deve terminar cortado pelo teto de tokens. */
+let cortaPorLimite = false;
+/** O teto que o orquestrador pediu, para conferir que não ficou no default. */
+let tetoPedido: number | undefined;
+
 function providerFalso(ferramentas: string[], textos: string[] = []): AIProvider {
   let turnos = 0;
   return {
     async *stream(options): AsyncGenerator<ProviderStreamEvent> {
       blocosRecebidos = options.systemBlocks;
+      tetoPedido = options.maxTokens;
       const turno = turnos++;
 
       for (const pedaco of textos[turno] ? [textos[turno]] : []) {
@@ -68,7 +74,9 @@ function providerFalso(ferramentas: string[], textos: string[] = []): AIProvider
       yield {
         type: "turn_end",
         fullContent: blocos as unknown as ContentBlock[],
-        stopReason: "tool_use",
+        // Cortado no meio do JSON da ferramenta: é o caso que produzia proposta
+        // com exercício faltando.
+        stopReason: cortaPorLimite ? "max_tokens" : "tool_use",
       };
     },
   };
@@ -185,5 +193,46 @@ describe("o que o modelo recebe de contexto", () => {
 
     expect(blocosRecebidos.at(-1)?.cacheControl).toBeUndefined();
     expect(blocosRecebidos[0]?.cacheControl).toBe(true);
+  });
+});
+
+describe("turno cortado pelo teto de tokens", () => {
+  afterEach(() => {
+    cortaPorLimite = false;
+  });
+
+  it("pede um teto folgado, não o default do provider", async () => {
+    await linhaDoTempo([], ["oi"]);
+
+    expect(tetoPedido).toBeGreaterThanOrEqual(8192);
+  });
+
+  // Executar com JSON pela metade é gravar prescrição truncada, que é pior que
+  // não gravar.
+  it("não executa a ferramenta quando o JSON dela veio cortado", async () => {
+    cortaPorLimite = true;
+
+    const linha = await linhaDoTempo(["propose_workouts"]);
+
+    expect(linha.some((e) => e.type === "executou")).toBe(false);
+  });
+
+  // O silêncio é o que tornava isso confuso: a proposta não aparecia e ninguém
+  // dizia por quê.
+  it("diz que foi cortado, em vez de terminar em silêncio", async () => {
+    cortaPorLimite = true;
+
+    const linha = await linhaDoTempo(["propose_workouts"]);
+    const erro = linha.find((e) => e.type === "error");
+
+    expect(erro).toBeDefined();
+    expect((erro as { message: string }).message).toContain("cortada");
+  });
+
+  it("turno normal continua executando e terminando", async () => {
+    const linha = await linhaDoTempo(["propose_workouts"]);
+
+    expect(linha.some((e) => e.type === "executou")).toBe(true);
+    expect(linha.at(-1)).toEqual({ type: "done" });
   });
 });

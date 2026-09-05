@@ -15,6 +15,7 @@ import { formatContextForPrompt, loadStudentContext } from "@/modules/ai/service
 import { definirTituloProvisorio, nomearConversa } from "@/modules/ai/services/conversationTitle";
 import { resumirDisponibilidade } from "@/modules/ai/services/disponibilidade";
 import { queryExercises, unknownExerciseNames } from "@/modules/ai/services/exerciseCatalog";
+import { mensagemDeFalha } from "@/modules/ai/services/mensagemDeFalha";
 import { criarRespostaEmProgresso } from "@/modules/ai/services/respostaEmProgresso";
 import { runWorkoutOrchestrator } from "@/modules/ai/services/workoutOrchestrator";
 import type { BulkWorkoutItem, PeriodizationProposal, SseEvent } from "@/modules/ai/types";
@@ -303,7 +304,7 @@ export async function POST(
         controller.enqueue(
           sseChunk({
             type: "error",
-            message: "Não consegui responder agora. Tente de novo em instantes.",
+            message: mensagemDeFalha(err),
           }),
         );
       } finally {

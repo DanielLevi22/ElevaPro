@@ -2,7 +2,11 @@ import { type NextRequest, NextResponse } from "next/server";
 import { authorizeStudent } from "@/lib/api-auth";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { StudentCoachOrchestrator } from "@/modules/ai/orchestrators/student-coach.orchestrator";
-import { updateMessage } from "@/modules/ai/services/chatService";
+import {
+  getSessionState,
+  updateMessage,
+  updateSessionState,
+} from "@/modules/ai/services/chatService";
 import { criarRespostaEmProgresso } from "@/modules/ai/services/respostaEmProgresso";
 import {
   formatStudentCoachContext,
@@ -77,11 +81,47 @@ export async function POST(request: NextRequest) {
         let savedPlanId: string | undefined;
 
         const onToolCall = async (name: string, input: unknown): Promise<string> => {
+          if (name === "propose_plan") {
+            // Guardada antes de aparecer na tela: é esta cópia que a aprovação
+            // salva. Salvar o que o modelo reemite no turno seguinte deixava o
+            // plano gravado divergir do que o aluno aprovou olhando o cartão.
+            const plano = input as PlanProposalData;
+            await updateSessionState(sessionId, { pendingStudentPlan: plano });
+            controller.enqueue(sseChunk({ type: "plan_proposal", data: plano }));
+            return "Plano apresentado ao aluno. Aguardando confirmação.";
+          }
+
           if (name === "save_plan") {
+            const estado = await getSessionState(sessionId);
+            const plano = estado.pendingStudentPlan;
+
+            // Fila vazia significa que já foi salvo. Sem esta checagem, insistir
+            // gravava outra periodização ativa para o mesmo aluno, com os
+            // mesmos dias.
+            if (!plano) {
+              const jaSalvo = estado.resolvedStudentPlan;
+              return JSON.stringify({
+                error: jaSalvo
+                  ? "Este plano já foi salvo."
+                  : "Nenhum plano pendente para salvar. Apresente um com 'propose_plan' antes.",
+                ...(jaSalvo ? { plan_id: jaSalvo.periodizationId } : {}),
+              });
+            }
+
             try {
-              const plan = input as PlanProposalData;
-              const planId = await saveStudentCoachPlan(studentId, plan.workout, plan.nutrition);
+              const planId = await saveStudentCoachPlan(
+                studentId,
+                sessionId,
+                plano.workout,
+                plano.nutrition,
+              );
               savedPlanId = planId;
+              // Sai da fila de decisão sem sair da tela: some o risco de gravar
+              // de novo, e o cartão continua recuperável ao reabrir.
+              await updateSessionState(sessionId, {
+                pendingStudentPlan: undefined,
+                resolvedStudentPlan: { plan: plano, periodizationId: planId },
+              });
               return JSON.stringify({ success: true, plan_id: planId });
             } catch (err) {
               return JSON.stringify({ error: String(err) });

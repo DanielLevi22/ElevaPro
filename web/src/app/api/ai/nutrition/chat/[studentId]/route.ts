@@ -14,6 +14,7 @@ import {
 import { formatContextForPrompt, loadStudentContext } from "@/modules/ai/services/contextLoader";
 import { definirTituloProvisorio, nomearConversa } from "@/modules/ai/services/conversationTitle";
 import { queryFoods, unknownFoodNames } from "@/modules/ai/services/foodCatalog";
+import { mensagemDeFalha } from "@/modules/ai/services/mensagemDeFalha";
 import { criarRespostaEmProgresso } from "@/modules/ai/services/respostaEmProgresso";
 import type { DietMealsProposal, DietPlanProposal, SseEvent } from "@/modules/ai/types";
 
@@ -213,7 +214,7 @@ export async function POST(
         controller.enqueue(
           sseChunk({
             type: "error",
-            message: "Não consegui responder agora. Tente de novo em instantes.",
+            message: mensagemDeFalha(err),
           }),
         );
       } finally {
