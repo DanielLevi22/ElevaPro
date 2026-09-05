@@ -65,53 +65,6 @@ export const STUDENT_COACH_TOOLS: ToolDefinition[] = [
       required: ["workout", "nutrition", "goal_summary"],
     },
   },
-  {
-    name: "save_plan",
-    description:
-      "Salva o plano aprovado pelo aluno no banco de dados. Use SOMENTE após o aluno confirmar explicitamente com 'aprovar', 'confirmar', 'salvar', 'ativar' ou similar.",
-    input_schema: {
-      type: "object",
-      properties: {
-        workout: {
-          type: "object",
-          properties: {
-            split_name: { type: "string" },
-            days_per_week: { type: "number" },
-            duration_weeks: { type: "number" },
-            goal: { type: "string" },
-            level: { type: "string" },
-            days: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  day_label: { type: "string" },
-                  muscle_groups: { type: "array", items: { type: "string" } },
-                  exercise_count: { type: "number" },
-                  duration_min: { type: "number" },
-                },
-                required: ["day_label", "muscle_groups", "exercise_count", "duration_min"],
-              },
-            },
-          },
-          required: ["split_name", "days_per_week", "duration_weeks", "goal", "level", "days"],
-        },
-        nutrition: {
-          type: "object",
-          properties: {
-            daily_calories: { type: "number" },
-            protein_g: { type: "number" },
-            carbs_g: { type: "number" },
-            fat_g: { type: "number" },
-            meals_count: { type: "number" },
-            strategy: { type: "string" },
-          },
-          required: ["daily_calories", "protein_g", "carbs_g", "fat_g", "meals_count", "strategy"],
-        },
-      },
-      required: ["workout", "nutrition"],
-    },
-  },
 ];
 
 export interface WorkoutDayProposal {

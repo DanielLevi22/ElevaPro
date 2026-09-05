@@ -33,6 +33,8 @@ export function useStudentCoach() {
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [planCard, setPlanCard] = useState<PlanCard | null>(null);
+  /** O clique em Aprovar já está a caminho — o botão não pode disparar dois. */
+  const [aprovando, setAprovando] = useState(false);
   const [coachStarted, setCoachStarted] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -141,8 +143,54 @@ export function useStudentCoach() {
     [input, loading, session?.access_token],
   );
 
-  function approvePlan() {
-    sendMessage("Aprovado! Pode salvar o plano.");
+  /**
+   * Salva o plano guardado no servidor, não o que o modelo reemitir.
+   *
+   * Antes isto mandava a frase "Aprovado! Pode salvar o plano." pelo chat e
+   * torcia para o modelo agir — o mesmo desenho que travou a periodização em
+   * laço. Agora quem grava é a rota, com reivindicação atômica: dois cliques
+   * gravam uma vez só.
+   */
+  async function approvePlan() {
+    if (aprovando || !session?.access_token) return;
+
+    setAprovando(true);
+    try {
+      const res = await fetch("/api/ai/student/coach/save-plan", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data?.error ?? "falha ao salvar");
+
+      setPlanCard(null);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: `Pronto! Seu plano "${data.name}" está salvo. Bora começar?`,
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+    } catch (err) {
+      console.error("[useStudentCoach] aprovar plano", err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: "Não consegui salvar o plano agora. Tente de novo em instantes.",
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+    } finally {
+      setAprovando(false);
+    }
   }
 
   function rejectPlan() {
@@ -174,6 +222,7 @@ export function useStudentCoach() {
     inputRef,
     sendMessage,
     approvePlan,
+    aprovando,
     rejectPlan,
     startCoach,
   };

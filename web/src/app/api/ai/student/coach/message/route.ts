@@ -2,11 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { authorizeStudent } from "@/lib/api-auth";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { StudentCoachOrchestrator } from "@/modules/ai/orchestrators/student-coach.orchestrator";
-import {
-  getSessionState,
-  updateMessage,
-  updateSessionState,
-} from "@/modules/ai/services/chatService";
+import { updateMessage, updateSessionState } from "@/modules/ai/services/chatService";
 import { criarRespostaEmProgresso } from "@/modules/ai/services/respostaEmProgresso";
 import {
   formatStudentCoachContext,
@@ -15,7 +11,6 @@ import {
 import {
   getOrCreateStudentCoachSession,
   getStudentSessionMessages,
-  saveStudentCoachPlan,
   saveStudentMessage,
 } from "@/modules/ai/services/studentCoachService";
 import type { PlanProposalData, SseEvent } from "@/modules/ai/types";
@@ -91,42 +86,6 @@ export async function POST(request: NextRequest) {
             return "Plano apresentado ao aluno. Aguardando confirmação.";
           }
 
-          if (name === "save_plan") {
-            const estado = await getSessionState(sessionId);
-            const plano = estado.pendingStudentPlan;
-
-            // Fila vazia significa que já foi salvo. Sem esta checagem, insistir
-            // gravava outra periodização ativa para o mesmo aluno, com os
-            // mesmos dias.
-            if (!plano) {
-              const jaSalvo = estado.resolvedStudentPlan;
-              return JSON.stringify({
-                error: jaSalvo
-                  ? "Este plano já foi salvo."
-                  : "Nenhum plano pendente para salvar. Apresente um com 'propose_plan' antes.",
-                ...(jaSalvo ? { plan_id: jaSalvo.periodizationId } : {}),
-              });
-            }
-
-            try {
-              const planId = await saveStudentCoachPlan(
-                studentId,
-                sessionId,
-                plano.workout,
-                plano.nutrition,
-              );
-              savedPlanId = planId;
-              // Sai da fila de decisão sem sair da tela: some o risco de gravar
-              // de novo, e o cartão continua recuperável ao reabrir.
-              await updateSessionState(sessionId, {
-                pendingStudentPlan: undefined,
-                resolvedStudentPlan: { plan: plano, periodizationId: planId },
-              });
-              return JSON.stringify({ success: true, plan_id: planId });
-            } catch (err) {
-              return JSON.stringify({ error: String(err) });
-            }
-          }
           return JSON.stringify({ error: "unknown tool" });
         };
 

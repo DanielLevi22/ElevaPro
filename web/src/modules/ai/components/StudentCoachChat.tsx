@@ -17,6 +17,7 @@ export function StudentCoachChat() {
     loading,
     initializing,
     planCard,
+    aprovando,
     coachStarted,
     inputRef,
     sendMessage,
@@ -118,7 +119,7 @@ export function StudentCoachChat() {
         {planCard && (
           <PlanProposalCard
             data={planCard.data}
-            loading={loading}
+            loading={aprovando || loading}
             onApprove={approvePlan}
             onReject={rejectPlan}
           />
