@@ -384,6 +384,37 @@ O Eleva Pro é, na prática, uma plataforma de saúde. Dados de avaliação fís
 - Consentimento explícito antes de coletar a anamnese
 - O aluno deve conseguir ver quais especialistas têm acesso aos seus dados de saúde
 
+### O que a revogação alcança — levantamento completo, 2026-09-04
+
+Toda tabela em que o especialista alcança dado do aluno foi conferida contra o
+banco. O critério é a **base legal**, não o vínculo.
+
+| Base legal | Tabelas | Revogar o consentimento… | Migration |
+|---|---|---|---|
+| Art. 11 (tutela da saúde **+** consentimento) | `health_daily_metrics`, `meal_logs`, `physical_assessments`, `student_anamnesis`, `body_scans` | **fecha** o acesso do especialista | 0043, 0044, 0045 |
+| Art. 7°, V (execução de contrato) | `profiles`, `specialist_services`, `workout_sessions`, `workout_session_sets`, `workout_session_exercises`, `achievements`, `daily_goals`, `student_streaks` | não alcança — o caminho é encerrar o vínculo | — |
+
+A segunda linha é decisão, não omissão: revogar o consentimento de dados de
+saúde não pode desligar a prescrição de treino nem apagar o aluno do painel.
+São o serviço que ele contratou, e somar a checagem ali não tem ganho jurídico.
+
+**A classificação é travada por teste.** A `verify-rls.sql` percorre as duas
+listas e falha nos dois sentidos: tabela de Art. 11 cuja política de
+especialista não consulta o consentimento (`REVOGAÇÃO SEM EFEITO`), e tabela de
+execução de contrato que passou a consultá-lo (`SERVIÇO DESLIGADO POR
+REVOGAÇÃO`). É a trava que alcança a tabela que ainda não existe — o defeito da
+`0043` reaparece toda vez que alguém copia uma política sem saber qual copiar.
+Mexer numa das listas é mexer nesta tabela; as duas mudam juntas.
+
+**Pendência — `workout_sessions.notes`.** A tabela é mista: séries e datas são
+execução de contrato, mas o campo aberto onde o aluno escreve sobre dor e
+cirurgia é Art. 11 (§2.2, desde 2026-08-28). RLS decide por linha, não por
+coluna, e fechar a tabela derrubaria o acompanhamento de desempenho junto. Hoje
+a proteção existe e mora no cliente, em `notasSeConsentido`
+(`app/src/modules/workout/services/consentimento.ts`) — mesma classe de lacuna
+que a `0043` fechou. Resolver pede coluna gerada, view ou trigger: é decisão de
+desenho, não de política.
+
 ---
 
 ### Acesso administrativo — o que o admin alcança e o que não alcança
@@ -430,13 +461,33 @@ acesso do especialista**, e não apaga nada: o histórico já gravado continua
 visível ao próprio aluno. Revogar não é exercer o direito de eliminação
 (Art. 18, VI), que continua disponível separadamente.
 
-> **`meal_logs` e `physical_assessments` ainda não fazem isso.** Este parágrafo
-> as citava como tendo o mesmo comportamento; desde a `0043` elas divergem — as
-> políticas delas não consultam `student_consents`, e revogar não retira o
-> acesso do especialista àquelas tabelas. É a mesma lacuna que a `0043` fechou
-> aqui, e vale a mesma leitura do Art. 11: a base do especialista é tutela da
-> saúde **mais** consentimento. Fica registrado como pendência, sem migration
-> ainda — o helper `private.has_health_consent` já existe e serve às duas.
+> **`meal_logs` e `physical_assessments` seguiram na `0044`**, com uma diferença
+> deliberada. Elas usam `private.health_consent_not_revoked`, que só nega diante
+> de **revogação explícita**; `health_daily_metrics` usa
+> `private.has_health_consent`, que exige consentimento presente e nega também
+> na ausência de registro.
+>
+> A diferença não é descuido. Métrica diária só existe se houve consentimento —
+> `healthSync.ts` recusa a escrita antes de gravar —, então ausência de registro
+> e ausência de dado são a mesma coisa. Avaliação física e registro de refeição
+> nascem por caminhos que nunca checaram consentimento: o especialista cria a
+> avaliação presencialmente, o aluno registra a refeição. Existe acervo sem
+> linha nenhuma em `student_consents`, e o helper estrito o apagaria do painel
+> — inclusive a avaliação recém-tirada, que o próprio especialista não releria.
+>
+> Ausência de consentimento continua sendo problema real; o remédio dela é o
+> portão de coleta no app, não retirar do profissional o histórico clínico do
+> aluno que está na frente dele. **Para apertar depois**, troque o helper nas
+> duas políticas — mas antes meça quantos alunos com vínculo ativo não têm linha
+> em `student_consents`: é o número de painéis que ficariam vazios.
+>
+> A `0044` fecha também o **INSERT** de `physical_assessments`: coletar dado de
+> saúde novo de quem revogou é o caso mais claro do Art. 11, e sem isso o
+> especialista criaria avaliação que ninguém consegue reler.
+>
+> As duas metades — revogou some, sem registro permanece — são travadas na
+> `verify-rls.sql`. Trocar um helper pelo outro é a falha provável deste
+> desenho, e o teste acusa nos dois sentidos.
 
 > **Corrigido na `0043`, em 2026-09-04.** Até essa migration este parágrafo
 > afirmava que, revogado o consentimento, "o especialista perde o acesso pela

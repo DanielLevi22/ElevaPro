@@ -227,6 +227,66 @@ BEGIN
   RAISE NOTICE 'ok  isolamento entre alunos e por vínculo, e escalonamento recusado';
 END $$;
 
+-- ── Toda tabela de Art. 11 confere o consentimento; nenhuma de Art. 7° confere ──
+--
+-- As travas de comportamento abaixo provam tabela a tabela. Esta prova a
+-- **regra**, e é a que alcança a tabela que ainda não existe: dado de saúde
+-- nascendo com política de especialista que só olha o vínculo é o defeito que
+-- a 0043 encontrou em health_daily_metrics, e ele reaparece toda vez que
+-- alguém copia uma política existente sem saber qual copiar.
+--
+-- O critério é a BASE LEGAL, não o vínculo. Art. 11 pede tutela da saúde MAIS
+-- consentimento, então revogar derruba o acesso. Art. 7°, V é o serviço que o
+-- aluno contratou: somar a checagem ali desligaria a prescrição de treino e
+-- apagaria o aluno do painel sem ganho jurídico nenhum. O caminho para encerrar
+-- essas é encerrar o vínculo.
+--
+-- Mexer numa das listas é mexer na classificação da `LGPD_COMPLIANCE.md` §2.2.
+-- Se for essa a intenção, o documento muda junto — não só esta lista.
+
+DO $$
+DECLARE
+  saude       text[] := ARRAY['health_daily_metrics','meal_logs','physical_assessments',
+                              'student_anamnesis','body_scans'];
+  contrato    text[] := ARRAY['profiles','specialist_services','workout_sessions',
+                              'workout_session_sets','workout_session_exercises',
+                              'achievements','daily_goals','student_streaks'];
+  faltando    text[];
+  sobrando    text[];
+BEGIN
+  -- Art. 11 sem a checagem: dado de saúde que sobrevive à revogação.
+  SELECT array_agg(DISTINCT t ORDER BY t) INTO faltando
+  FROM unnest(saude) AS t
+  WHERE EXISTS (
+    SELECT 1 FROM pg_policies p
+    WHERE p.schemaname = 'public' AND p.tablename = t
+      AND (COALESCE(p.qual,'') || COALESCE(p.with_check,'')) ~ 'is_linked_specialist|student_specialists'
+      AND (COALESCE(p.qual,'') || COALESCE(p.with_check,'')) !~ 'consent'
+  );
+
+  IF faltando IS NOT NULL THEN
+    RAISE EXCEPTION 'REVOGAÇÃO SEM EFEITO: tabela(s) de Art. 11 com acesso do especialista que ignora o consentimento: %',
+      array_to_string(faltando, ', ');
+  END IF;
+
+  -- Art. 7° COM a checagem: serviço contratado desligado por revogação.
+  SELECT array_agg(DISTINCT t ORDER BY t) INTO sobrando
+  FROM unnest(contrato) AS t
+  WHERE EXISTS (
+    SELECT 1 FROM pg_policies p
+    WHERE p.schemaname = 'public' AND p.tablename = t
+      AND (COALESCE(p.qual,'') || COALESCE(p.with_check,'')) ~ 'is_linked_specialist|student_specialists'
+      AND (COALESCE(p.qual,'') || COALESCE(p.with_check,'')) ~ 'consent'
+  );
+
+  IF sobrando IS NOT NULL THEN
+    RAISE EXCEPTION 'SERVIÇO DESLIGADO POR REVOGAÇÃO: tabela(s) de execução de contrato que passaram a exigir consentimento: %',
+      array_to_string(sobrando, ', ');
+  END IF;
+
+  RAISE NOTICE 'ok  Art. 11 confere consentimento em 5 tabelas; Art. 7° não confere em 8';
+END $$;
+
 -- ── Feedback de treino e observação de refeição ──────────────────────────────
 -- `workout_sessions.notes` é o campo aberto do fim do treino, onde o aluno
 -- escreve sobre dor e cirurgia: dado sensível pelo Art. 11, e não pela mesma
@@ -574,6 +634,148 @@ BEGIN
 
   RESET ROLE;
   RAISE NOTICE 'ok  métricas diárias: isoladas por vínculo e por consentimento, imutáveis, invisíveis ao admin';
+END $$;
+
+ROLLBACK;
+
+-- ── Revogação alcança as tabelas de Art. 11 (0044, 0045) ────────────────────
+-- A `0043` fechou `health_daily_metrics`; a `0044` estendeu a regra a
+-- `meal_logs` e `physical_assessments`, que a `LGPD_COMPLIANCE.md` §7 já citava
+-- como tendo o mesmo comportamento sem tê-lo.
+--
+-- A semântica aqui é **outra de propósito**, e o teste existe para travá-la nos
+-- dois sentidos. Estas tabelas usam `health_consent_not_revoked`, que só nega
+-- diante de revogação explícita: elas têm acervo gravado por caminhos que nunca
+-- checaram consentimento, e o helper estrito da `0043` esvaziaria o painel de
+-- todo aluno sem registro. As duas metades são afirmadas abaixo — quem revogou
+-- some, quem nunca registrou nada continua visível — porque trocar uma pela
+-- outra sem querer é a falha provável deste desenho.
+
+BEGIN;
+
+DO $$
+DECLARE
+  aluno_a  uuid := gen_random_uuid();
+  aluno_b  uuid := gen_random_uuid();
+  espec    uuid := gen_random_uuid();
+  visiveis int;
+  vazou    int;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (aluno_a, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-ra@elevapro.local', '{"full_name":"A","account_type":"student"}'::jsonb),
+    (aluno_b, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-rb@elevapro.local', '{"full_name":"B","account_type":"student"}'::jsonb),
+    (espec,   '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-re@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb);
+
+  INSERT INTO public.physical_assessments (student_id, specialist_id, height_cm, weight_kg)
+  VALUES (aluno_a, espec, 175, 80), (aluno_b, espec, 168, 62);
+
+  INSERT INTO public.meal_logs (student_id, logged_date, completed)
+  VALUES (aluno_a, current_date, true), (aluno_b, current_date, true);
+
+  INSERT INTO public.student_anamnesis (student_id, responses)
+  VALUES (aluno_a, '{"lesoes":"hérnia de disco"}'::jsonb),
+         (aluno_b, '{"lesoes":"nenhuma"}'::jsonb);
+
+  INSERT INTO public.body_scans (student_id)
+  VALUES (aluno_a), (aluno_b);
+
+  -- Execução de contrato, para provar que a revogação NÃO a alcança.
+  INSERT INTO public.workout_sessions (student_id, started_at, completed_at, intensity)
+  VALUES (aluno_a, now(), now(), 7);
+
+  INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
+  VALUES
+    (aluno_a, espec, 'personal_training', 'active'),
+    (aluno_b, espec, 'personal_training', 'active');
+
+  -- Só o aluno A registra consentimento. O B fica **sem linha nenhuma**, que é
+  -- a situação de todo o acervo anterior ao portão de coleta.
+  INSERT INTO public.student_consents (student_id, consent_type, given_at, policy_version)
+  VALUES (aluno_a, 'health_data_collection', now(), '1.2');
+
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+
+  SELECT count(*) INTO visiveis FROM public.physical_assessments WHERE student_id = aluno_a;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'especialista não lê a avaliação do aluno A, que consentiu (viu %)', visiveis;
+  END IF;
+
+  -- A metade que protege o produto: sem registro de consentimento o acervo
+  -- continua visível. Se esta asserção falhar, a política trocou de helper e
+  -- todo aluno anterior ao portão sumiu do painel do especialista.
+  SELECT count(*) INTO visiveis FROM public.physical_assessments WHERE student_id = aluno_b;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'ACERVO SUMIU: aluno B, sem registro de consentimento, ficou invisível ao especialista';
+  END IF;
+
+  SELECT count(*) INTO visiveis FROM public.meal_logs WHERE student_id = aluno_b;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'ACERVO SUMIU: refeições do aluno B, sem registro de consentimento, ficaram invisíveis';
+  END IF;
+
+  -- A metade que cumpre o Art. 11: revogou, fecha.
+  RESET ROLE;
+  UPDATE public.student_consents SET revoked_at = now()
+   WHERE student_id = aluno_a AND consent_type = 'health_data_collection';
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+
+  SELECT count(*) INTO vazou FROM public.physical_assessments WHERE student_id = aluno_a;
+  IF vazou <> 0 THEN
+    RAISE EXCEPTION 'CONSENTIMENTO IGNORADO: aluno A revogou e o especialista ainda lê % avaliação(ões)', vazou;
+  END IF;
+
+  SELECT count(*) INTO vazou FROM public.meal_logs WHERE student_id = aluno_a;
+  IF vazou <> 0 THEN
+    RAISE EXCEPTION 'CONSENTIMENTO IGNORADO: aluno A revogou e o especialista ainda lê % refeição(ões)', vazou;
+  END IF;
+
+  SELECT count(*) INTO vazou FROM public.student_anamnesis WHERE student_id = aluno_a;
+  IF vazou <> 0 THEN
+    RAISE EXCEPTION 'CONSENTIMENTO IGNORADO: aluno A revogou e o especialista ainda lê % anamnese(s)', vazou;
+  END IF;
+
+  SELECT count(*) INTO vazou FROM public.body_scans WHERE student_id = aluno_a;
+  IF vazou <> 0 THEN
+    RAISE EXCEPTION 'CONSENTIMENTO IGNORADO: aluno A revogou e o especialista ainda lê % body scan(s)', vazou;
+  END IF;
+
+  -- O serviço contratado sobrevive à revogação: o treino prescrito e a sessão
+  -- executada são Art. 7°, V, e o caminho para encerrá-los é encerrar o
+  -- vínculo. Se esta asserção falhar, alguém somou consentimento a uma política
+  -- de execução de contrato e desligou o produto para quem revogou.
+  SELECT count(*) INTO visiveis FROM public.workout_sessions WHERE student_id = aluno_a;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'SERVIÇO DESLIGADO: revogar tirou do especialista a sessão de treino do aluno A (viu %)', visiveis;
+  END IF;
+
+  -- E não coleta dado novo de quem revogou: escrita que ninguém consegue reler
+  -- é pior que a recusa.
+  BEGIN
+    INSERT INTO public.physical_assessments (student_id, specialist_id, height_cm, weight_kg)
+    VALUES (aluno_a, espec, 175, 81);
+    RAISE EXCEPTION 'COLETA APÓS REVOGAÇÃO: INSERT de avaliação foi aceito para quem revogou';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+
+  -- O próprio aluno segue vendo o que é dele. Revogar não é eliminar.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', aluno_a, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO visiveis FROM public.physical_assessments WHERE student_id = aluno_a;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'revogar apagou a avaliação do próprio aluno (viu %)', visiveis;
+  END IF;
+
+  RESET ROLE;
+  RAISE NOTICE 'ok  revogação fecha as 5 tabelas de Art. 11, poupa a execução de contrato, e ausência de registro não esvazia o acervo';
 END $$;
 
 ROLLBACK;
