@@ -27,7 +27,11 @@ const COACHES: { module: ChatModule; short: string }[] = [
  */
 function rotulo(sessao: ChatSessionSummary): string {
   if (sessao.title) return sessao.title;
-  return `Conversa de ${new Date(sessao.created_at).toLocaleDateString("pt-BR", {
+  // A data da última atividade, que é por onde a lista é ordenada. Rotular pela
+  // criação fazia a lista parecer bagunçada: conversa criada ontem e usada hoje
+  // sobe para o topo exibindo ontem, e quem lê as datas conclui que a ordem
+  // está errada quando ela está certa.
+  return `Conversa de ${new Date(sessao.updated_at).toLocaleDateString("pt-BR", {
     day: "2-digit",
     month: "2-digit",
   })}`;
