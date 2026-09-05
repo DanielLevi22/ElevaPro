@@ -16,6 +16,7 @@ import { StatusModal, type StatusModalType } from '@/components/ui/StatusModal';
 import { colors as brandColors } from '@/constants/colors';
 import { useHealthData } from '@/hooks/useHealthData';
 import { MealCard } from '../components/MealCard';
+import { refeicoesDoDia } from '../services/refeicoesDoDia';
 import { useNutritionStore } from '../store/nutritionStore';
 import FoodSearchScreen from './FoodSearchScreen';
 
@@ -211,9 +212,9 @@ export function StudentNutritionScreen() {
     }
   };
 
-  const dayMeals = meals
-    .filter((m) => m.day_of_week === selectedDay)
-    .sort((a, b) => (a.meal_order || 0) - (b.meal_order || 0));
+  const dayMeals = refeicoesDoDia(meals, currentDietPlan?.plan_type, selectedDay).sort(
+    (a, b) => (a.meal_order || 0) - (b.meal_order || 0)
+  );
 
   const dayTotalMacros = dayMeals.reduce(
     (total, meal) => {
