@@ -45,6 +45,8 @@ export default function HealthConnectScreen() {
           toRead: [
             'HKQuantityTypeIdentifierStepCount',
             'HKQuantityTypeIdentifierActiveEnergyBurned',
+            'HKQuantityTypeIdentifierRestingHeartRate',
+            'HKCategoryTypeIdentifierSleepAnalysis',
           ],
         });
 
@@ -85,10 +87,18 @@ export default function HealthConnectScreen() {
         const granted = await requestPermission([
           { accessType: 'read', recordType: 'Steps' },
           { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
+          { accessType: 'read', recordType: 'SleepSession' },
+          { accessType: 'read', recordType: 'RestingHeartRate' },
         ]);
 
         console.log('[HealthConnect] permissões concedidas:', JSON.stringify(granted));
 
+        // Passos ou calorias bastam para seguir. Sono e FC de repouso são
+        // pedidos no mesmo diálogo mas não entram nesta condição de propósito:
+        // o Health Connect deixa conceder tipo a tipo, e recusar o sono é
+        // escolha legítima que não pode barrar o resto — o Art. 8°, §4° anula
+        // autorização em bloco, e um fluxo que exige tudo é autorização em
+        // bloco com outro nome.
         const concedeuLeitura = granted.some(
           (p: { recordType: string; accessType: string }) =>
             p.accessType === 'read' &&
@@ -223,9 +233,25 @@ export default function HealthConnectScreen() {
             Sincronizar com {isIOS ? 'Apple Health' : 'Google Fit'}
           </Text>
 
-          <Text className="text-zinc-400 text-center text-sm font-medium mb-12 px-2 leading-6">
-            Sincronizar seu perfil de saúde agiliza o processo de criar um plano de treino
-            personalizado e salvar seus resultados.
+          {/*
+            Este texto é o que a `POLICY_VERSION` versiona: subir a constante
+            sem mexer aqui pede reconsentimento sob o mesmo texto de antes, que
+            é reconsentimento à toa — e é assim que se ensina a aceitar sem ler.
+            O que ele precisa dizer, e antes não dizia: o que é lido, quem lê, e
+            o que acontece ao desligar.
+          */}
+          <Text className="text-zinc-400 text-center text-sm font-medium mb-4 px-2 leading-6">
+            Lemos do seu relógio{' '}
+            <Text className="text-white font-semibold">
+              passos, calorias, quanto você dormiu e sua frequência cardíaca de repouso
+            </Text>
+            , para acompanhar sua atividade entre os treinos.
+          </Text>
+
+          <Text className="text-zinc-500 text-center text-xs mb-10 px-2 leading-5">
+            Seu personal vinculado vê esses dados. Você pode desligar quando quiser em Minhas
+            Autorizações: a coleta para na hora e ele perde o acesso — o histórico continua visível
+            só para você.
           </Text>
 
           <View className="gap-y-4">

@@ -602,6 +602,8 @@ export type Database = {
           created_at: string;
           date: string;
           id: string;
+          resting_heart_rate: number | null;
+          sleep_minutes: number | null;
           steps: number;
           student_id: string;
           synced_at: string;
@@ -611,6 +613,8 @@ export type Database = {
           created_at?: string;
           date: string;
           id?: string;
+          resting_heart_rate?: number | null;
+          sleep_minutes?: number | null;
           steps?: number;
           student_id: string;
           synced_at?: string;
@@ -620,6 +624,8 @@ export type Database = {
           created_at?: string;
           date?: string;
           id?: string;
+          resting_heart_rate?: number | null;
+          sleep_minutes?: number | null;
           steps?: number;
           student_id?: string;
           synced_at?: string;

@@ -127,6 +127,57 @@ describe("healthService — métricas diárias", () => {
     });
   });
 
+  // A leitura de cada métrica falha por conta própria: o relógio dá passos e
+  // não dá sono, ou o Health Connect concede uma permissão e nega outra. Se a
+  // gravação parcial enviasse `null` no que não leu, cada sincronização de
+  // passos apagaria o sono da noite anterior — e o dado sumiria sem erro
+  // nenhum, que é a forma mais cara de perdê-lo.
+  it("não apaga a métrica que esta leitura não trouxe", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({});
+    await createHealthService(supabase).upsertDaily("aluno-1", {
+      date: "2026-09-04",
+      steps: 8421,
+      active_calories: 512,
+    });
+
+    const payload = chamadas[0].payload as Record<string, unknown>;
+    expect(payload).not.toHaveProperty("sleep_minutes");
+    expect(payload).not.toHaveProperty("resting_heart_rate");
+  });
+
+  it("grava sono e FC de repouso quando a leitura os trouxe", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({});
+    await createHealthService(supabase).upsertDaily("aluno-1", {
+      date: "2026-09-04",
+      steps: 8421,
+      active_calories: 512,
+      sleep_minutes: 431,
+      resting_heart_rate: 58,
+    });
+
+    const payload = chamadas[0].payload as Record<string, unknown>;
+    expect(payload.sleep_minutes).toBe(431);
+    expect(payload.resting_heart_rate).toBe(58);
+  });
+
+  // `null` explícito é o caminho de apagar de propósito, e precisa continuar
+  // distinguível de "não li". Sem esta asserção, uma implementação que filtrasse
+  // por `!= null` em vez de `!== undefined` passaria nos dois testes acima e
+  // tornaria a eliminação impossível.
+  it("aceita null explícito para apagar a métrica", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({});
+    await createHealthService(supabase).upsertDaily("aluno-1", {
+      date: "2026-09-04",
+      steps: 8421,
+      active_calories: 512,
+      sleep_minutes: null,
+    });
+
+    const payload = chamadas[0].payload as Record<string, unknown>;
+    expect(payload).toHaveProperty("sleep_minutes");
+    expect(payload.sleep_minutes).toBeNull();
+  });
+
   // Regressão do DT-24. `health_daily_metrics` é sensível pela
   // LGPD_COMPLIANCE.md: com `select("*")`, a coluna criada amanhã sai do banco
   // no dia em que nasce, para toda camada que já consultava.

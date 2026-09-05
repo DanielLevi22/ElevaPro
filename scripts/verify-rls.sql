@@ -227,6 +227,34 @@ BEGIN
   RAISE NOTICE 'ok  isolamento entre alunos e por vínculo, e escalonamento recusado';
 END $$;
 
+-- ── Faixas de plausibilidade do relógio (0046) ───────────────────────────────
+-- HealthKit e Health Connect medem sono em unidades diferentes, e um valor em
+-- segundos gravado como minutos passaria despercebido para sempre — vira "o
+-- aluno dormiu 8 dias". O CHECK é a única barreira depois que o dado sai do
+-- aparelho, e por isso a existência dele é afirmada aqui, não só a ausência de
+-- linha absurda: num banco vazio, contar linhas fora da faixa passa sozinho.
+
+DO $$
+DECLARE
+  ausentes text[];
+BEGIN
+  SELECT array_agg(esperado ORDER BY esperado) INTO ausentes
+  FROM unnest(ARRAY['health_daily_metrics_sleep_minutes_plausible',
+                    'health_daily_metrics_resting_hr_plausible']) AS esperado
+  WHERE NOT EXISTS (
+    SELECT 1 FROM pg_constraint c
+    JOIN pg_class t ON t.oid = c.conrelid
+    WHERE t.relname = 'health_daily_metrics' AND c.conname = esperado
+  );
+
+  IF ausentes IS NOT NULL THEN
+    RAISE EXCEPTION 'ERRO DE UNIDADE SEM BARREIRA: CHECK ausente em health_daily_metrics: %',
+      array_to_string(ausentes, ', ');
+  END IF;
+
+  RAISE NOTICE 'ok  sono e FC de repouso com faixa de plausibilidade no banco';
+END $$;
+
 -- ── Toda tabela de Art. 11 confere o consentimento; nenhuma de Art. 7° confere ──
 --
 -- As travas de comportamento abaixo provam tabela a tabela. Esta prova a
@@ -525,10 +553,11 @@ BEGIN
   -- que o admin não lê passaria sem nunca ter existido um admin.
   UPDATE public.profiles SET account_type = 'admin' WHERE id = admin;
 
-  INSERT INTO public.health_daily_metrics (student_id, date, steps, active_calories)
+  INSERT INTO public.health_daily_metrics
+    (student_id, date, steps, active_calories, sleep_minutes, resting_heart_rate)
   VALUES
-    (aluno_a, current_date, 8421, 512),
-    (aluno_b, current_date, 3110, 197);
+    (aluno_a, current_date, 8421, 512, 431, 58),
+    (aluno_b, current_date, 3110, 197, 388, 66);
 
   INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
   VALUES (aluno_a, espec, 'personal_training', 'active');
@@ -555,6 +584,17 @@ BEGIN
     FROM public.health_daily_metrics WHERE student_id = aluno_b;
   IF vazou <> 0 THEN
     RAISE EXCEPTION 'VAZAMENTO: especialista lê % dia(s) do aluno B, sem vínculo', vazou;
+  END IF;
+
+  -- As colunas da 0046 herdam a política, que é por linha. "Deveria herdar" e
+  -- "herdou" não são a mesma afirmação — foi por isso que as colunas da 0035
+  -- ganharam teste próprio. Fica aqui, com o vínculo ainda ativo: mais abaixo o
+  -- teste desvincula, e a asserção passaria a medir a outra coisa.
+  SELECT count(*) INTO visiveis
+    FROM public.health_daily_metrics
+   WHERE student_id = aluno_a AND sleep_minutes IS NOT NULL AND resting_heart_rate IS NOT NULL;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'especialista não lê sono/FC de repouso do aluno A (viu %)', visiveis;
   END IF;
 
   -- Ler é tudo que o especialista pode. A métrica é medida do aparelho, e o

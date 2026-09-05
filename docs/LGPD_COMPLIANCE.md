@@ -86,6 +86,8 @@ Dados referentes à saúde exigem **base legal específica** e proteção refor�
 | Registro alimentar (campo legado) | `diet_logs` | Tutela da saúde + Consentimento | Acompanhamento nutricional |
 | Passos por dia (agregado) | `health_daily_metrics.steps` | Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I) | Acompanhamento de atividade entre sessões de treino |
 | Calorias ativas por dia (agregado) | `health_daily_metrics.active_calories` | Tutela da saúde + Consentimento | Estimativa de gasto energético para ajuste do plano |
+| **Duração do sono por dia** | `health_daily_metrics.sleep_minutes` | Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I) | Ajuste de carga a partir da recuperação. Guarda **só a duração**: horário de dormir e de acordar revelariam rotina doméstica sem mudar prescrição, e os estágios (leve/profundo/REM) entram quando existir a leitura que os consome. `NULL` é ausência de leitura, nunca zero |
+| **FC de repouso por dia** | `health_daily_metrics.resting_heart_rate` | Tutela da saúde + Consentimento | Sinal de fadiga acumulada entre sessões. Um valor por dia — a série intradiária de batimentos permitiria inferir estresse, atividade sexual e crise de ansiedade, muito além de acompanhar treino |
 
 | Conversa do especialista com o coach de IA | `ai_chat_messages.content` | Consentimento explícito (Art. 11, I) — a mesma do dado de origem | Prescrição assistida |
 
@@ -124,6 +126,16 @@ Dados que foram explicitamente rejeitados do schema por violar o princípio da n
 - `gender` em `profiles` — mesmo motivo
 - `phone` — nunca utilizado funcionalmente
 - `cref` / `crn` — credenciais removidas do fluxo de cadastro
+- **Horário de dormir e de acordar** (Onda 1 do relógio, `0046`) — revelam rotina
+  doméstica e presença em casa, para uma decisão de treino que a duração do sono já
+  informa. Mesmo raciocínio de `birth_date` em `profiles`
+- **Estágios do sono** (leve, profundo, REM) — a API entrega, e nenhuma tela consome.
+  Entram quando existir a leitura que os usa; "pode ser útil no futuro" é o critério
+  que esta seção existe para recusar
+- **Pressão arterial, SpO₂ e temperatura corporal** — o campo existe no HealthKit e no
+  Health Connect, mas nenhum relógio de consumo os alimenta de forma confiável no
+  Brasil. Coletar exigiria entrada manual, e nasceria uma coluna de dado sensível quase
+  sempre vazia — a mesma armadilha de `meal_logs.photo_url` na `0035`
 - `is_super_admin` — redundante com `account_type`
 - **Foto de refeição** (`meal_logs.photo_url`, apagada na `0035`) — foto de prato
   é dado pessoal com rosto, casa e companhia no enquadramento, para uma
@@ -448,7 +460,7 @@ A LGPD exige que dados sejam eliminados quando deixam de ser necessários (Art. 
 | Anamnese | Enquanto a conta estiver ativa | Auto-relato do aluno |
 | Histórico de treinos | Enquanto a conta estiver ativa | Histórico de evolução |
 | Histórico de dietas | Enquanto a conta estiver ativa | Histórico de evolução |
-| Passos e calorias diários | Enquanto a conta estiver ativa | Comparação de longo prazo é a finalidade; `ON DELETE CASCADE` elimina junto com a conta |
+| Passos, calorias, sono e FC de repouso diários | Enquanto a conta estiver ativa | Comparação de longo prazo é a finalidade; `ON DELETE CASCADE` elimina junto com a conta |
 | Conversa com o coach de IA (`ai_chat_sessions`, `ai_chat_messages`) | Enquanto a conta do aluno estiver ativa | É o registro da prescrição assistida. `ON DELETE CASCADE` a partir de `profiles` elimina junto com a conta |
 | Análise corporal por imagem (`body_scans`) | Enquanto a conta estiver ativa | A comparação entre escaneamentos é a finalidade, e ela precisa do histórico. **A imagem não é guardada** — as colunas de URL de foto foram removidas na `0026`, para que ninguém as preencha por engano — só o resultado derivado, que é a maior minimização possível para um dado biométrico (`ADR-0010`). `ON DELETE CASCADE` a partir de `profiles` elimina junto com a conta |
 | Logs de autenticação | 90 dias | Segurança — detecção de acessos suspeitos |

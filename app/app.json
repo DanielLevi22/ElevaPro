@@ -10,8 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSHealthShareUsageDescription": "Precisamos acessar seus dados de saúde para sincronizar passos e calorias.",
-        "NSHealthUpdateUsageDescription": "Precisamos acessar seus dados de saúde para salvar seus treinos."
+        "NSHealthShareUsageDescription": "Lemos do seu relógio passos, calorias, duração do sono e frequência cardíaca de repouso, para acompanhar sua atividade entre os treinos. Você escolhe o que compartilhar e pode desligar quando quiser."
       },
       "bundleIdentifier": "com.elevapro.app"
     },
@@ -32,9 +31,9 @@
         "FOREGROUND_SERVICE_LOCATION",
         "android.permission.health.READ_STEPS",
         "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
+        "android.permission.health.READ_SLEEP",
+        "android.permission.health.READ_RESTING_HEART_RATE",
         "android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND",
-        "android.permission.health.WRITE_STEPS",
-        "android.permission.health.WRITE_ACTIVE_CALORIES_BURNED",
         "RECORD_AUDIO",
         "INTERNET"
       ]
@@ -50,8 +49,7 @@
       [
         "@kingstinct/react-native-healthkit",
         {
-          "NSHealthShareUsageDescription": "Precisamos acessar seus dados de saúde para sincronizar passos e calorias.",
-          "NSHealthUpdateUsageDescription": "Precisamos acessar seus dados de saúde para salvar seus treinos."
+          "NSHealthShareUsageDescription": "Lemos do seu relógio passos, calorias, duração do sono e frequência cardíaca de repouso, para acompanhar sua atividade entre os treinos. Você escolhe o que compartilhar e pode desligar quando quiser."
         }
       ],
       "react-native-health-connect",
