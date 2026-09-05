@@ -426,10 +426,25 @@ A LGPD exige que dados sejam eliminados quando deixam de ser necessários (Art. 
 ### Revogação de consentimento — `health_daily_metrics`
 
 Revogar o consentimento de coleta de saúde é **prospectivo**: a coleta cessa
-imediatamente e o especialista perde o acesso pela RLS, mas o histórico já
-gravado permanece visível ao próprio aluno. Mesmo comportamento de `meal_logs`
-e `physical_assessments` — revogar não é o mesmo que exercer o direito de
-eliminação (Art. 18, VI), que continua disponível separadamente.
+imediatamente, mas o histórico já gravado permanece. Mesmo comportamento de
+`meal_logs` e `physical_assessments` — revogar não é o mesmo que exercer o
+direito de eliminação (Art. 18, VI), que continua disponível separadamente.
+
+> **Divergência conhecida — corrigida neste texto em 2026-09-04.** Até aqui este
+> parágrafo afirmava que, revogado o consentimento, "o especialista perde o
+> acesso pela RLS". **Isso nunca foi verdade.** Nenhuma das duas políticas de
+> `health_daily_metrics` consulta `student_consents`: a do especialista olha só
+> `student_specialists.status = 'active'` (verificado contra o banco em
+> 2026-09-04, e é o texto da própria `0015`). Quem revoga hoje interrompe a
+> escrita — a checagem existe, mas mora no cliente, em `healthSync.ts` — e segue
+> com o histórico inteiro visível ao especialista vinculado.
+>
+> É o mesmo padrão que a auditoria de 2026-08-11 encontrou em `workout_sessions`:
+> controle documentado que o banco não tem. A decisão de qual lado corrigir —
+> fazer a RLS consultar o consentimento, ou assumir que a revogação alcança só a
+> coleta — está aberta e **bloqueia a Onda 1 do relógio**, porque sono e
+> frequência cardíaca de repouso ampliam o que o especialista passa a enxergar
+> sob um consentimento que o titular acredita poder desligar.
 
 > Política de retenção detalhada deve ser definida e publicada na Política de Privacidade antes do lançamento.
 
@@ -516,6 +531,16 @@ reais, semeia dado de saúde para os dois lados e afirma tabela a tabela quem
 enxerga o quê — incluindo o especialista desvinculado perdendo acesso na mesma
 consulta, sem job de limpeza. `scripts/check-rls.js` roda no pre-commit e no CI
 e falha se uma tabela nova nascer sem RLS.
+
+`health_daily_metrics` era a única tabela de saúde sem teste de **comportamento**
+na `verify-rls.sql` — tinha só a checagem estrutural de que a RLS está ligada.
+Coberta em 2026-09-04, antes das colunas da Onda 1 do relógio: isolamento por
+vínculo nos dois sentidos, imutabilidade para o especialista, perda de acesso ao
+desvincular e invisibilidade para o admin. Prova negativa registrada no parecer
+que a originou. Um detalhe do caminho vale para quem escrever o próximo teste: o
+`admin` semeado por `auth.users` nasce **rebaixado a `member`** pelo trigger da
+`0040`, e sem a promoção explícita a asserção "o admin não lê" passa sem nunca
+ter existido um admin.
 
 **O que a RLS não cobre — 1: o Storage.** A RLS protege a linha; arquivo em
 bucket precisa de política própria. O bucket `assessments`, para onde o mobile

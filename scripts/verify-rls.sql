@@ -422,6 +422,124 @@ END $$;
 
 ROLLBACK;
 
+-- ── Métricas diárias do relógio ──────────────────────────────────────────────
+-- `health_daily_metrics` é dado sensível pela `LGPD_COMPLIANCE.md` (Seção 2.2,
+-- Art. 11, II, f + Art. 11, I) e era a única tabela de saúde do schema sem
+-- teste de comportamento — só a checagem estrutural de que a RLS está ligada.
+-- Ligada e correta são coisas diferentes: é a mesma distância que a auditoria
+-- de 2026-08-11 encontrou em `workout_sessions`.
+--
+-- A prova vem antes das colunas da Onda 1 do relógio (sono, FC de repouso) de
+-- propósito. Coluna nova herda a política, que é por linha — mas "deveria
+-- herdar" e "herdou" não são a mesma afirmação, e foi por isso que as colunas
+-- da 0035 ganharam teste próprio.
+--
+-- Linhas semeadas para os DOIS alunos: sem isso "zero linhas" significaria
+-- tabela vazia, e o teste passaria com uma política que deixa todo mundo ler.
+
+BEGIN;
+
+DO $$
+DECLARE
+  aluno_a uuid := gen_random_uuid();
+  aluno_b uuid := gen_random_uuid();
+  espec   uuid := gen_random_uuid();
+  admin   uuid := gen_random_uuid();
+  visiveis int;
+  vazou    int;
+  afetadas int;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (aluno_a, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-ha@elevapro.local', '{"full_name":"A","account_type":"student"}'::jsonb),
+    (aluno_b, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-hb@elevapro.local', '{"full_name":"B","account_type":"student"}'::jsonb),
+    (espec,   '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-he@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb),
+    (admin,   '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-hx@elevapro.local', '{"full_name":"X","account_type":"admin"}'::jsonb);
+
+  -- O trigger da 0040 rebaixa `account_type = 'admin'` pedido no signup. Sem
+  -- esta promoção explícita o "admin" do teste é um member, e a afirmação de
+  -- que o admin não lê passaria sem nunca ter existido um admin.
+  UPDATE public.profiles SET account_type = 'admin' WHERE id = admin;
+
+  INSERT INTO public.health_daily_metrics (student_id, date, steps, active_calories)
+  VALUES
+    (aluno_a, current_date, 8421, 512),
+    (aluno_b, current_date, 3110, 197);
+
+  INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
+  VALUES (aluno_a, espec, 'personal_training', 'active');
+
+  SET LOCAL ROLE authenticated;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO visiveis
+    FROM public.health_daily_metrics WHERE student_id = aluno_a;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'especialista vinculado não lê a métrica do aluno A (viu %)', visiveis;
+  END IF;
+
+  SELECT count(*) INTO vazou
+    FROM public.health_daily_metrics WHERE student_id = aluno_b;
+  IF vazou <> 0 THEN
+    RAISE EXCEPTION 'VAZAMENTO: especialista lê % dia(s) do aluno B, sem vínculo', vazou;
+  END IF;
+
+  -- Ler é tudo que o especialista pode. A métrica é medida do aparelho, e o
+  -- remédio para medida inexata é medir de novo, não digitar outro número
+  -- (Art. 6°, V) — mesma doutrina de `body_scans` na 0038.
+  UPDATE public.health_daily_metrics SET steps = 99999 WHERE student_id = aluno_a;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 0 THEN
+    RAISE EXCEPTION 'HISTÓRICO REESCRITO: especialista alterou % dia(s) do aluno A', afetadas;
+  END IF;
+
+  -- Desvinculou, perde o acesso na mesma consulta — sem job de limpeza, sem
+  -- janela de exposição.
+  RESET ROLE;
+  UPDATE public.student_specialists SET status = 'inactive'
+   WHERE student_id = aluno_a AND specialist_id = espec;
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO vazou
+    FROM public.health_daily_metrics WHERE student_id = aluno_a;
+  IF vazou <> 0 THEN
+    RAISE EXCEPTION 'VAZAMENTO: especialista desvinculado ainda lê % dia(s) do aluno A', vazou;
+  END IF;
+
+  -- Um aluno não lê a rotina do outro.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', aluno_b, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO vazou
+    FROM public.health_daily_metrics WHERE student_id = aluno_a;
+  IF vazou <> 0 THEN
+    RAISE EXCEPTION 'VAZAMENTO: aluno B lê % dia(s) do aluno A', vazou;
+  END IF;
+
+  -- Administrar a plataforma não inclui ler dado de saúde de ninguém
+  -- (LGPD_COMPLIANCE.md, Seção 6). Afirmado lá, provado aqui.
+  IF (SELECT account_type FROM public.profiles WHERE id = admin) <> 'admin' THEN
+    RAISE EXCEPTION 'TESTE INVÁLIDO: a conta usada como admin não é admin';
+  END IF;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', admin, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO vazou FROM public.health_daily_metrics;
+  IF vazou <> 0 THEN
+    RAISE EXCEPTION 'VAZAMENTO: admin lê % dia(s) de métrica de saúde', vazou;
+  END IF;
+
+  RESET ROLE;
+  RAISE NOTICE 'ok  métricas diárias: isoladas por vínculo, imutáveis para o especialista, invisíveis ao admin';
+END $$;
+
+ROLLBACK;
+
 -- ── Análise corporal ─────────────────────────────────────────────────────────
 -- `body_scans` é chamada de "o dado mais sensível do schema" pela própria 0017,
 -- e até aqui nunca teve teste de comportamento: só a checagem estrutural de que
