@@ -48,7 +48,53 @@ const stubRecords = () =>
     if (recordType === 'Steps') {
       return Promise.resolve({ records: [{ count: 1200 }, { count: 300 }] });
     }
-    return Promise.resolve({ records: [{ energy: { inKilocalories: 88.4 } }] });
+    if (recordType === 'ActiveCaloriesBurned') {
+      return Promise.resolve({ records: [{ energy: { inKilocalories: 88.4 } }] });
+    }
+    if (recordType === 'SleepSession') {
+      return Promise.resolve({
+        records: [
+          {
+            startTime: '2026-09-03T23:00:00.000Z',
+            endTime: '2026-09-04T07:00:00.000Z',
+            stages: [
+              // 3h de leve + 2h de profundo + 1h de REM = 6h. A hora acordado
+              // no meio fica de fora, e é justamente ela que separa "deitou" de
+              // "dormiu".
+              {
+                stage: 4,
+                startTime: '2026-09-03T23:00:00.000Z',
+                endTime: '2026-09-04T01:00:00.000Z',
+              },
+              {
+                stage: 2,
+                startTime: '2026-09-04T01:00:00.000Z',
+                endTime: '2026-09-04T02:00:00.000Z',
+              },
+              {
+                stage: 1,
+                startTime: '2026-09-04T02:00:00.000Z',
+                endTime: '2026-09-04T05:00:00.000Z',
+              },
+              {
+                stage: 5,
+                startTime: '2026-09-04T05:00:00.000Z',
+                endTime: '2026-09-04T06:00:00.000Z',
+              },
+            ],
+          },
+        ],
+      });
+    }
+    if (recordType === 'RestingHeartRate') {
+      return Promise.resolve({
+        records: [
+          { time: '2026-09-04T06:00:00.000Z', beatsPerMinute: 61 },
+          { time: '2026-09-04T09:00:00.000Z', beatsPerMinute: 57 },
+        ],
+      });
+    }
+    return Promise.resolve({ records: [] });
   });
 
 beforeEach(() => {
@@ -169,8 +215,62 @@ describe('leitura vazia não vira zero', () => {
     await expect(readDeviceMetrics()).resolves.toEqual({
       steps: 1500,
       calories: 88,
+      // 6h dormidas: o trecho `awake` (2) do meio da noite não entra.
+      sleepMinutes: 360,
+      // O mais recente, não o primeiro nem a média.
+      restingHeartRate: 57,
       hasRecords: true,
     });
+  });
+
+  // Sono e FC de repouso são permissões próprias no Health Connect, concedidas
+  // tipo a tipo. Se a falha de uma derrubasse a leitura toda, recusar o sono —
+  // escolha legítima — apagaria os passos do aluno.
+  it('lê passos mesmo quando a leitura de sono falha', async () => {
+    grantAllWithBackground();
+    mockReadRecords.mockImplementation((recordType: string) => {
+      if (recordType === 'Steps') {
+        return Promise.resolve({ records: [{ count: 1500 }] });
+      }
+      if (recordType === 'ActiveCaloriesBurned') {
+        return Promise.resolve({ records: [{ energy: { inKilocalories: 88.4 } }] });
+      }
+      return Promise.reject(new Error('permissão de sono negada'));
+    });
+
+    await expect(readDeviceMetrics()).resolves.toEqual({
+      steps: 1500,
+      calories: 88,
+      sleepMinutes: null,
+      restingHeartRate: null,
+      hasRecords: true,
+    });
+  });
+
+  // O registro vem de app de terceiro (Zepp, Mi Fitness, Garmin Connect) e pode
+  // chegar sem campo. NaN atravessa soma, arredondamento e serialização sem
+  // reclamar, e o dia perderia a métrica sem erro nenhum — ou, pior, derrubaria
+  // a gravação inteira no CHECK da 0046, levando junto os passos que estavam
+  // certos.
+  it('descarta leitura malformada em vez de gravar NaN', async () => {
+    grantAllWithBackground();
+    mockReadRecords.mockImplementation((recordType: string) => {
+      if (recordType === 'Steps') {
+        return Promise.resolve({ records: [{ count: 1500 }] });
+      }
+      if (recordType === 'ActiveCaloriesBurned') {
+        return Promise.resolve({ records: [{ energy: { inKilocalories: 88.4 } }] });
+      }
+      if (recordType === 'SleepSession') {
+        return Promise.resolve({ records: [{ startTime: undefined, endTime: undefined }] });
+      }
+      return Promise.resolve({ records: [{ time: '2026-09-04T06:00:00.000Z' }] });
+    });
+
+    const metrics = await readDeviceMetrics();
+    expect(metrics?.sleepMinutes).toBeNull();
+    expect(metrics?.restingHeartRate).toBeNull();
+    expect(metrics?.steps).toBe(1500);
   });
 
   it('readDeviceMetrics recusa sem a permissão de background', async () => {

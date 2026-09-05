@@ -47,8 +47,17 @@ export interface Finalidade {
  *   por voz. Não armazenar não é não tratar — o Art. 5º, X inclui coleta,
  *   acesso e processamento —, e o mesmo motivo da `1.1` vale aqui: não faltava
  *   autorização, faltava o aluno saber (`ADR-0022`).
+ * - `1.3` (2026-09-04) — acrescenta **sono e frequência cardíaca de repouso**,
+ *   e diz o que a revogação faz. As duas coisas mudaram juntas de propósito: o
+ *   texto da `1.2` descrevia "acompanhamento de atividade entre sessões de
+ *   treino", e sono é comportamento fora do treino enquanto FC de repouso é
+ *   sinal vital — finalidade nova, não detalhe da anterior. E até a `0043` a
+ *   revogação só interrompia a coleta: o especialista seguia lendo o histórico,
+ *   embora este documento afirmasse o contrário. Agora revogar fecha o acesso
+ *   dele às cinco tabelas de Art. 11, e o texto pode prometer isso porque o
+ *   banco cumpre.
  */
-export const POLICY_VERSION = "1.2";
+export const POLICY_VERSION = "1.3";
 
 /** Coleta de dados de saúde: avaliação, anamnese, métricas diárias, body scan. */
 export const SAUDE: Finalidade = { tipo: CONSENT_HEALTH_COLLECTION, versao: POLICY_VERSION };
@@ -146,18 +155,38 @@ export const createHealthService = (supabase: SupabaseClient) => ({
   /**
    * Grava o acumulado do dia. Idempotente por (student_id, date) — o background
    * fetch reenvia o mesmo dia várias vezes e um append inflaria a contagem.
+   *
+   * **Métrica ausente não vira coluna apagada.** Cada leitura falha por conta
+   * própria: o relógio dá passos e não dá sono, ou o Health Connect nega uma
+   * permissão e concede outra. Uma gravação parcial que enviasse `null` no que
+   * não leu limparia o sono da noite anterior a cada sincronização de passos —
+   * o mesmo defeito que `hasRecords` corrigiu para o zero-por-ausência, num
+   * lugar diferente. Chave omitida do payload não entra no `ON CONFLICT DO
+   * UPDATE` e preserva o que já está gravado.
+   *
+   * Para apagar de propósito, passe `null` explícito.
+   *
+   * @example
+   * // só passos: o sono de ontem continua lá
+   * await health.upsertDaily(id, { date, steps: 8421, active_calories: 512 });
    */
   upsertDaily: async (studentId: string, metric: HealthMetricInput): Promise<void> => {
-    const { error } = await supabase.from("health_daily_metrics").upsert(
-      {
-        student_id: studentId,
-        date: metric.date,
-        steps: metric.steps,
-        active_calories: metric.active_calories,
-        synced_at: new Date().toISOString(),
-      },
-      { onConflict: "student_id,date" },
-    );
+    const payload: Record<string, unknown> = {
+      student_id: studentId,
+      date: metric.date,
+      steps: metric.steps,
+      active_calories: metric.active_calories,
+      synced_at: new Date().toISOString(),
+    };
+
+    if (metric.sleep_minutes !== undefined) payload.sleep_minutes = metric.sleep_minutes;
+    if (metric.resting_heart_rate !== undefined) {
+      payload.resting_heart_rate = metric.resting_heart_rate;
+    }
+
+    const { error } = await supabase
+      .from("health_daily_metrics")
+      .upsert(payload, { onConflict: "student_id,date" });
     if (error) throw error;
   },
 
@@ -171,7 +200,9 @@ export const createHealthService = (supabase: SupabaseClient) => ({
       // Campos nomeados, não `*`: tabela sensível pela `LGPD_COMPLIANCE.md`.
       // `select("*")` faz dado de saúde sair do banco para camadas que não
       // pediram por ele — e passa a carregar coluna nova sozinho.
-      .select("id, student_id, date, steps, active_calories, synced_at")
+      .select(
+        "id, student_id, date, steps, active_calories, sleep_minutes, resting_heart_rate, synced_at",
+      )
       .eq("student_id", studentId)
       .gte("date", startDate)
       .lte("date", endDate)
@@ -184,7 +215,9 @@ export const createHealthService = (supabase: SupabaseClient) => ({
   getDay: async (studentId: string, date: string): Promise<HealthDailyMetric | null> => {
     const { data, error } = await supabase
       .from("health_daily_metrics")
-      .select("id, student_id, date, steps, active_calories, synced_at")
+      .select(
+        "id, student_id, date, steps, active_calories, sleep_minutes, resting_heart_rate, synced_at",
+      )
       .eq("student_id", studentId)
       .eq("date", date)
       .maybeSingle();

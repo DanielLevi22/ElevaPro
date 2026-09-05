@@ -332,13 +332,29 @@ export default function DashboardScreen() {
             icone="heart-circle-outline"
             legenda={
               healthSource === 'device'
-                ? 'Passos e calorias do aparelho'
+                ? 'Sono, FC de repouso, passos e calorias'
                 : healthSource === 'mock'
                   ? 'Dados simulados — toque para conectar'
-                  : 'Passos e calorias'
+                  : 'Conecte o relógio para ver'
             }
-            onPress={() => router.push(ROUTES.ONBOARDING.HEALTH_CONNECT)}
-            titulo={healthSource === 'device' ? 'Saúde Conectada' : 'Conectar Saúde'}
+            /*
+              Há dado para mostrar, o cartão leva ao dado; não há, leva à
+              permissão. Mandar quem já autorizou de volta ao onboarding era
+              pedir de novo o que ele já deu.
+
+              `mock` conta como "há dado" de propósito: ele existe para a tela
+              funcionar sem aparelho, e tratá-lo como desconectado deixava a
+              tela inalcançável no emulador — que é onde ela é aberta primeiro.
+              O badge "Simulado" no topo dela diz de onde vem o número.
+            */
+            onPress={() =>
+              router.push(
+                healthSource === 'unavailable'
+                  ? ROUTES.ONBOARDING.HEALTH_CONNECT
+                  : ROUTES.STUDENT.HEALTH
+              )
+            }
+            titulo={healthSource === 'device' ? 'Saúde do dia' : 'Conectar Saúde'}
           />
         </Animated.View>
 
