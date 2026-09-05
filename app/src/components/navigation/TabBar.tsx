@@ -462,7 +462,12 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       pointerEvents="box-none"
       style={[
         styles.container,
-        { paddingBottom: Platform.OS === 'ios' ? insets.bottom : insets.bottom + 10 },
+        // O inset já é a altura que o sistema ocupa embaixo. Os 10px extras que
+        // havia no Android empurravam a barra para cima do inset e deixavam uma
+        // faixa de fundo entre ela e a barra do sistema — era essa faixa que se
+        // lia como uma segunda barra no aparelho real, e que não aparece no
+        // emulador porque lá o inset costuma ser zero.
+        { paddingBottom: insets.bottom },
       ]}
     >
       {/* Background layer */}
