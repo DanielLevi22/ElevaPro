@@ -473,6 +473,14 @@ BEGIN
   INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
   VALUES (aluno_a, espec, 'personal_training', 'active');
 
+  -- Consentimento para os dois alunos: desde a 0043 a leitura do especialista
+  -- depende dele, e sem semear aqui o teste passaria por falta de autorização
+  -- em vez de por falta de vínculo — dois motivos diferentes, mesmo resultado.
+  INSERT INTO public.student_consents (student_id, consent_type, given_at, policy_version)
+  VALUES
+    (aluno_a, 'health_data_collection', now(), '1.2'),
+    (aluno_b, 'health_data_collection', now(), '1.2');
+
   SET LOCAL ROLE authenticated;
 
   PERFORM set_config('request.jwt.claims',
@@ -497,6 +505,36 @@ BEGIN
   IF afetadas <> 0 THEN
     RAISE EXCEPTION 'HISTÓRICO REESCRITO: especialista alterou % dia(s) do aluno A', afetadas;
   END IF;
+
+  -- Revogou, perde o acesso na mesma consulta (0043). O aluno tem dois caminhos
+  -- de saída com escopos diferentes: revogar tira o dado de saúde do
+  -- especialista, encerrar o vínculo tira tudo. Este é o primeiro.
+  RESET ROLE;
+  UPDATE public.student_consents SET revoked_at = now()
+   WHERE student_id = aluno_a AND consent_type = 'health_data_collection';
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO vazou
+    FROM public.health_daily_metrics WHERE student_id = aluno_a;
+  IF vazou <> 0 THEN
+    RAISE EXCEPTION 'CONSENTIMENTO IGNORADO: aluno A revogou e o especialista ainda lê % dia(s)', vazou;
+  END IF;
+
+  -- E o próprio aluno continua vendo o que já foi coletado: revogar interrompe
+  -- a coleta e o compartilhamento, não exerce o direito de eliminação
+  -- (Art. 18, VI), que é caminho separado.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', aluno_a, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO visiveis
+    FROM public.health_daily_metrics WHERE student_id = aluno_a;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'revogar apagou o histórico do próprio aluno (viu %)', visiveis;
+  END IF;
+
+  RESET ROLE;
+  UPDATE public.student_consents SET revoked_at = NULL
+   WHERE student_id = aluno_a AND consent_type = 'health_data_collection';
 
   -- Desvinculou, perde o acesso na mesma consulta — sem job de limpeza, sem
   -- janela de exposição.
@@ -535,7 +573,7 @@ BEGIN
   END IF;
 
   RESET ROLE;
-  RAISE NOTICE 'ok  métricas diárias: isoladas por vínculo, imutáveis para o especialista, invisíveis ao admin';
+  RAISE NOTICE 'ok  métricas diárias: isoladas por vínculo e por consentimento, imutáveis, invisíveis ao admin';
 END $$;
 
 ROLLBACK;

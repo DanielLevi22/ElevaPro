@@ -425,37 +425,51 @@ A LGPD exige que dados sejam eliminados quando deixam de ser necessários (Art. 
 
 ### Revogação de consentimento — `health_daily_metrics`
 
-Revogar o consentimento de coleta de saúde é **prospectivo**: a coleta cessa
-imediatamente, mas o histórico já gravado permanece. Mesmo comportamento de
-`meal_logs` e `physical_assessments` — revogar não é o mesmo que exercer o
-direito de eliminação (Art. 18, VI), que continua disponível separadamente.
+Revogar o consentimento de coleta de saúde **interrompe a coleta e fecha o
+acesso do especialista**, e não apaga nada: o histórico já gravado continua
+visível ao próprio aluno. Revogar não é exercer o direito de eliminação
+(Art. 18, VI), que continua disponível separadamente.
 
-> **Divergência conhecida — corrigida neste texto em 2026-09-04.** Até aqui este
-> parágrafo afirmava que, revogado o consentimento, "o especialista perde o
-> acesso pela RLS". **Isso nunca foi verdade.** Nenhuma das duas políticas de
-> `health_daily_metrics` consulta `student_consents`: a do especialista olha só
-> `student_specialists.status = 'active'` (verificado contra o banco em
-> 2026-09-04, e é o texto da própria `0015`). Quem revoga hoje interrompe a
-> escrita — a checagem existe, mas mora no cliente, em `healthSync.ts` — e segue
-> com o histórico inteiro visível ao especialista vinculado.
+> **`meal_logs` e `physical_assessments` ainda não fazem isso.** Este parágrafo
+> as citava como tendo o mesmo comportamento; desde a `0043` elas divergem — as
+> políticas delas não consultam `student_consents`, e revogar não retira o
+> acesso do especialista àquelas tabelas. É a mesma lacuna que a `0043` fechou
+> aqui, e vale a mesma leitura do Art. 11: a base do especialista é tutela da
+> saúde **mais** consentimento. Fica registrado como pendência, sem migration
+> ainda — o helper `private.has_health_consent` já existe e serve às duas.
+
+> **Corrigido na `0043`, em 2026-09-04.** Até essa migration este parágrafo
+> afirmava que, revogado o consentimento, "o especialista perde o acesso pela
+> RLS" — e não era verdade. Nenhuma política de `health_daily_metrics` consultava
+> `student_consents`: a do especialista olhava só
+> `student_specialists.status = 'active'`. A única checagem de consentimento
+> morava no cliente, em `healthSync.ts`, onde alcança a escrita e nada mais.
+> Quem revogava interrompia a coleta e seguia com o histórico inteiro visível ao
+> especialista. Mesmo padrão que a auditoria de 2026-08-11 encontrou em
+> `workout_sessions`: controle documentado que o banco não tem.
 >
-> É o mesmo padrão que a auditoria de 2026-08-11 encontrou em `workout_sessions`:
-> controle documentado que o banco não tem. **Mas o alcance aqui é outro, e o
-> texto anterior desta nota o exagerava.** Quem continua lendo é o próprio aluno
-> e o especialista com vínculo ativo — mais ninguém, e isso está provado por
-> comportamento na `verify-rls.sql`, não só afirmado. Não há terceiro alcançando
-> dado nenhum.
+> A partir da `0043` o aluno tem **dois caminhos de saída, com escopos
+> diferentes, e os dois são reais**:
 >
-> **Decidido em 2026-09-04:** a revogação alcança a coleta, não o histórico. O
-> profissional que segue vendo é exatamente aquele para quem o dado foi
-> coletado, e o aluno encerra esse acesso encerrando o vínculo, que é o caminho
-> próprio para isso. O que precisa mudar é a **tela de consentimento**, que não
-> pode prometer o que não acontece: revogar interrompe a coleta, e o que já foi
-> coletado segue com o especialista enquanto o vínculo existir. Para apagar, o
-> caminho é a eliminação (Art. 18, VI), separada e disponível.
+> | Ação do aluno | O que o especialista perde |
+> |---|---|
+> | Revogar o consentimento de saúde | o dado de saúde coletado |
+> | Encerrar o vínculo | tudo do aluno |
 >
-> Fazer a RLS consultar `student_consents` continua sendo melhoria possível, e
-> não pré-requisito de nada.
+> O segundo já valia desde a `0015`. O primeiro passa a valer pela política
+> `specialist_read_consented_health_metrics`, que soma
+> `private.is_linked_specialist` a `private.has_health_consent`. Para o
+> especialista ler dado de saúde o Art. 11 pede tutela da saúde (II, f) **e**
+> consentimento (I) — caiu o consentimento, caiu a base.
+>
+> O helper **não compara `policy_version` de propósito**, e o cliente compara. As
+> duas coisas respondem a perguntas diferentes: texto desatualizado é motivo para
+> parar de coletar, não para retirar do profissional o que já foi coletado sob
+> autorização válida. Comparar no banco faria toda subida de `POLICY_VERSION`
+> esvaziar o painel de todos os especialistas até cada aluno reabrir o app.
+>
+> Ambos os caminhos, mais a permanência do histórico para o próprio aluno, são
+> verificados por comportamento na `verify-rls.sql`, com prova negativa.
 
 > Política de retenção detalhada deve ser definida e publicada na Política de Privacidade antes do lançamento.
 
