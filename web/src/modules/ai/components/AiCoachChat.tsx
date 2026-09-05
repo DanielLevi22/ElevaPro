@@ -48,6 +48,7 @@ export function AiCoachChat({
   /** Com que dados o coach está trabalhando — só a existência, nunca o valor. */
   const [contexto, setContexto] = useState<BlocoDeContexto[]>([]);
   const [savingWorkouts, setSavingWorkouts] = useState(false);
+  const [savingPeriodization, setSavingPeriodization] = useState(false);
   /** O que o coach está fazendo agora, enquanto a ferramenta roda. */
   const [activity, setActivity] = useState<string | null>(null);
   /** A proposta aparecendo enquanto é escrita, antes de o cartão existir. */
@@ -79,6 +80,14 @@ export function AiCoachChat({
         // há decisão a tomar; aprovada, com os treinos que foram salvos. Sem
         // isto, sair da tela e voltar apagava o cartão — e o botão de aprovar
         // com ele — com a proposta viva no banco.
+        // A periodização volta guardada do servidor, como a proposta de
+        // treinos: sem isto, recarregar a página apagava o cartão e o botão de
+        // aprovar junto, com a proposta viva no banco.
+        setProposal(
+          data.periodization
+            ? { data: data.periodization, savedId: data.savedPeriodizationId ?? undefined }
+            : null,
+        );
         const titulos: string[] = data.savedWorkoutTitles ?? [];
         const resolvida = titulos.length > 0;
         setSavedWorkoutTitles(titulos);
@@ -172,6 +181,57 @@ export function AiCoachChat({
       ]);
     } finally {
       setSavingWorkouts(false);
+    }
+  }
+
+  /**
+   * Salva a periodização guardada no servidor, não a que está na tela.
+   *
+   * Antes o botão mandava a frase `"Aprovado! Pode salvar a periodização."` pelo
+   * chat, e o modelo é que deveria salvar. Só que o histórico que ele relê tem
+   * apenas texto: ele chegava ao turno seguinte sem os dados da proposta,
+   * propunha de novo para reconstruí-los, e pedia aprovação outra vez. Sem fim.
+   */
+  async function approvePeriodization() {
+    if (!proposal || proposal.savedId || savingPeriodization || !session?.access_token) return;
+
+    setSavingPeriodization(true);
+    try {
+      const res = await fetch(`/api/ai/chat/${studentId}/save-periodization`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ sessionId }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data?.error ?? "falha ao salvar");
+
+      setProposal((prev) => (prev ? { ...prev, savedId: data.id } : null));
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: `Pronto! Periodização "${data.name}" salva. Podemos montar os treinos da primeira fase.`,
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+    } catch (err) {
+      console.error("[AiCoachChat] salvar periodização", err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: "Não consegui salvar a periodização agora. Tente de novo em instantes.",
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+    } finally {
+      setSavingPeriodization(false);
     }
   }
 
@@ -382,8 +442,8 @@ export function AiCoachChat({
           <PeriodizationProposalCard
             data={proposal.data}
             savedId={proposal.savedId}
-            loading={loading}
-            onApprove={() => sendMessage("Aprovado! Pode salvar a periodização.")}
+            loading={savingPeriodization || loading}
+            onApprove={approvePeriodization}
             onAdjust={() => sendMessage("Quero ajustar algumas coisas na proposta.")}
           />
         </PainelDeProposta>

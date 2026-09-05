@@ -4,18 +4,22 @@ import type { ToolCallHandler } from "@/modules/ai/orchestrators/base.orchestrat
 import type { SseEvent } from "@/modules/ai/types";
 
 /**
- * O cartão de periodização depois que ela já foi salva.
+ * O que a proposta de periodização deixa no servidor.
  *
- * O modelo reapresentava a proposta no mesmo turno em que mandou salvar, e a
- * tela obedecia: o cartão voltava como "Aguardando aprovação", com o botão de
- * salvar, para uma periodização que já estava no banco. Quem tinha acabado de
- * aprovar via o próprio clique ser desfeito.
+ * O defeito que isto trava: propor não guardava nada. O histórico que o modelo
+ * relê tem só texto — chamada de ferramenta e resultado não são gravados —,
+ * então no turno seguinte ele não tinha nome, semanas, data nem fases para
+ * salvar. Para reconstruir, propunha de novo; a rota respondia "aguardando
+ * aprovação"; e ele pedia que se aprovasse outra vez. Clicar em Aprovar nunca
+ * salvava nada.
  */
 
 /** O que o modelo aciona neste turno, na ordem. */
 let ferramentasDoTurno: { name: string; input: unknown }[];
 /** O que a ferramenta devolveu ao modelo — é aí que a recusa aparece. */
 let respostasAoModelo: string[];
+/** O `state` da conversa, como o banco o veria. */
+let estado: Record<string, unknown>;
 
 vi.mock("@/lib/api-auth", () => ({
   authorizeLinkedSpecialist: async () => ({
@@ -31,7 +35,10 @@ vi.mock("@/modules/ai/services/chatService", () => ({
   saveMessage: async () => "msg-1",
   updateMessage: async () => undefined,
   savePeriodization: async () => "periodizacao-1",
-  updateSessionState: async () => undefined,
+  getSessionState: async () => estado,
+  updateSessionState: async (_id: string, patch: Record<string, unknown>) => {
+    estado = { ...estado, ...patch };
+  },
   phaseOwnedBy: async () => ({ id: "fase-1" }),
 }));
 
@@ -84,7 +91,7 @@ async function eventosDoTurno(): Promise<SseEvent[]> {
   const request = new Request("https://x/api", {
     method: "POST",
     headers: { authorization: "Bearer t", "content-type": "application/json" },
-    body: JSON.stringify({ message: "Aprovado! Pode salvar." }),
+    body: JSON.stringify({ message: "monta a periodização" }),
   }) as unknown as NextRequest;
 
   const resposta = await POST(request, { params: Promise.resolve({ studentId: "aluno-1" }) });
@@ -99,6 +106,7 @@ async function eventosDoTurno(): Promise<SseEvent[]> {
 beforeEach(() => {
   ferramentasDoTurno = [];
   respostasAoModelo = [];
+  estado = { savedWorkouts: [] };
 });
 
 describe("cartão da periodização", () => {
@@ -110,37 +118,55 @@ describe("cartão da periodização", () => {
     expect(eventos).toContainEqual({ type: "proposal", data: PROPOSTA });
   });
 
-  it("não reapresenta o cartão depois de salvar no mesmo turno", async () => {
-    ferramentasDoTurno = [
-      { name: "propose_periodization", input: PROPOSTA },
-      { name: "save_periodization", input: PROPOSTA },
-      { name: "propose_periodization", input: PROPOSTA },
-    ];
+  // O ponto do conserto: sem a cópia guardada, o botão Aprovar não tem o que
+  // salvar, e o assistente não tem como reconstruir a proposta.
+  it("guarda a proposta no servidor, que é o que o botão Aprovar salva", async () => {
+    ferramentasDoTurno = [{ name: "propose_periodization", input: PROPOSTA }];
 
-    const eventos = await eventosDoTurno();
+    await eventosDoTurno();
 
-    expect(eventos.filter((e) => e.type === "proposal")).toHaveLength(1);
-    expect(eventos).toContainEqual({
-      type: "saved",
-      entity: "periodization",
-      id: "periodizacao-1",
-      name: PROPOSTA.name,
-    });
+    expect(estado.pendingPeriodization).toEqual(PROPOSTA);
+  });
+
+  // "Salvando agora!" e nada acontecendo é o que fazia o especialista clicar em
+  // Aprovar de novo, e de novo.
+  it("manda o modelo esperar em vez de anunciar que vai salvar", async () => {
+    ferramentasDoTurno = [{ name: "propose_periodization", input: PROPOSTA }];
+
+    await eventosDoTurno();
+
+    const resposta = JSON.parse(respostasAoModelo[0]);
+    expect(resposta.success).toBe(true);
+    expect(resposta.instrucao).toContain("cartão");
   });
 
   // Recusar calado faria o modelo tentar de novo. Ele precisa saber que já está
   // salva e qual é o próximo passo.
-  it("diz ao modelo que já está salva e manda seguir para os treinos", async () => {
-    ferramentasDoTurno = [
-      { name: "save_periodization", input: PROPOSTA },
-      { name: "propose_periodization", input: PROPOSTA },
-    ];
+  it("recusa propor de novo depois de aprovada, e diz o que fazer", async () => {
+    estado = {
+      savedWorkouts: [],
+      resolvedPeriodization: { proposal: PROPOSTA, id: "periodizacao-1" },
+    };
+    ferramentasDoTurno = [{ name: "propose_periodization", input: PROPOSTA }];
 
-    await eventosDoTurno();
+    const eventos = await eventosDoTurno();
 
-    expect(JSON.parse(respostasAoModelo[1])).toEqual({
+    expect(JSON.parse(respostasAoModelo[0])).toEqual({
       error: "Esta periodização já foi salva.",
       instrucao: "Não proponha de novo. Siga para os treinos da fase.",
     });
+    // E o cartão não renasce como "aguardando aprovação" na tela de quem já
+    // aprovou.
+    expect(eventos.filter((e) => e.type === "proposal")).toHaveLength(0);
+  });
+
+  // A aprovação mora na rota, não numa frase do chat. Enquanto a ferramenta
+  // existisse, ela seria um segundo caminho de gravação sem reivindicação.
+  it("salvar deixou de ser ferramenta do modelo", async () => {
+    ferramentasDoTurno = [{ name: "save_periodization", input: PROPOSTA }];
+
+    await eventosDoTurno();
+
+    expect(JSON.parse(respostasAoModelo[0])).toEqual({ error: "unknown tool" });
   });
 });

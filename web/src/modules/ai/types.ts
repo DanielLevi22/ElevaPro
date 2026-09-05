@@ -147,6 +147,19 @@ export interface DietMealsProposal {
 
 export interface AiSessionState {
   savedWorkouts: { id: string; title: string; phaseId: string }[];
+  /**
+   * A periodização proposta e ainda não aprovada.
+   *
+   * Faltava, e era o que tornava a aprovação impossível: o histórico que o
+   * modelo relê tem só texto — chamada de ferramenta e resultado não são
+   * gravados —, então no turno seguinte ele não tinha nome, semanas, data nem
+   * fases para passar ao `save_periodization`. Para reconstruir, ele propunha
+   * de novo, a rota respondia "aguardando aprovação", e ele pedia que se
+   * aprovasse outra vez. Sem fim.
+   */
+  pendingPeriodization?: PeriodizationProposal;
+  /** A que já foi aprovada, com o id gravado — mesmo papel do `resolvedWorkoutProposal`. */
+  resolvedPeriodization?: { proposal: PeriodizationProposal; id: string };
   pendingWorkoutProposal?: BulkWorkoutProposal;
   /**
    * A proposta que já foi aprovada, com o que dela foi salvo.

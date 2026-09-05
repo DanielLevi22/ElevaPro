@@ -53,7 +53,6 @@ const TOOL_LABELS: Record<string, string> = {
   query_foods: "Consultando o catálogo de alimentos",
   query_body_scan: "Consultando a análise corporal",
   propose_periodization: "Montando a proposta de periodização",
-  save_periodization: "Salvando a periodização",
   propose_workouts: "Montando a proposta de treinos",
   propose_diet_plan: "Calculando as metas do plano",
   propose_meals: "Montando as refeições",
