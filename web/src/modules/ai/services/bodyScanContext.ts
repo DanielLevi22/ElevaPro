@@ -15,6 +15,19 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
  * a chama. Foi o mesmo defeito dos ids de fase: a ferramenta existia e o
  * contexto não a anunciava.
  */
+/**
+ * A frase que apresenta `query_body_scan` ao modelo.
+ *
+ * Fica aqui, e não no roteiro, de propósito: só aparece quando existem
+ * análises. Anunciar uma ferramenta que voltaria vazia gasta contexto em todo
+ * turno e convida a chamada inútil.
+ *
+ * Exportada porque é ela que o contrato das ferramentas aponta ao verificar que
+ * nenhuma ferramenta registrada é invisível para o modelo.
+ */
+export const CONVITE_DA_ANALISE_CORPORAL =
+  "Use 'query_body_scan' se a composição corporal ou a postura importarem para o que você vai prescrever.";
+
 export async function formatBodyScanIndex(studentId: string): Promise<string> {
   const scans = await createBodyScanService(supabaseAdmin).list(studentId, 10);
 
@@ -27,7 +40,7 @@ export async function formatBodyScanIndex(studentId: string): Promise<string> {
   return [
     "--- ANÁLISE CORPORAL ---",
     `${scans.length} ${scans.length === 1 ? "análise" : "análises"} por imagem. A mais recente em ${ultima}.`,
-    "Use 'query_body_scan' se a composição corporal ou a postura importarem para o que você vai prescrever.",
+    CONVITE_DA_ANALISE_CORPORAL,
   ].join("\n");
 }
 
