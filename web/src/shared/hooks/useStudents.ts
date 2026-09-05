@@ -18,7 +18,7 @@ export function useStudents() {
     });
   }, []);
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ["students", userId],
     queryFn: async () => {
       if (!userId) return [];
@@ -29,6 +29,13 @@ export function useStudents() {
     staleTime: 1000 * 60 * 15,
     refetchOnWindowFocus: false,
   });
+
+  // Enquanto o `getUser` não responde, a consulta fica desabilitada — e
+  // consulta desabilitada não está carregando: o React Query reporta
+  // `isLoading: false` com `data` vazio. Quem lê isso conclui "não há alunos"
+  // no único instante em que ainda não dava para saber, e a tela de detalhe
+  // chegava a dizer "Aluno não encontrado" para um aluno que existe.
+  return { ...query, isLoading: query.isLoading || !userId };
 }
 
 export function useSpecialistServices() {
