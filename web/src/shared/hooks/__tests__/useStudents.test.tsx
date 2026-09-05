@@ -27,17 +27,28 @@ vi.mock("@elevapro/supabase", () => ({
   },
 }));
 
+/** Quem foi pedido por id, para provar que a busca não passa pela listagem. */
+let pedidoPorId: { specialistId: string; studentId: string } | null = null;
+
 vi.mock("@elevapro/shared", () => ({
   createStudentsService: () => ({
     fetchStudents: async () => ({ students: alunos, total: alunos.length }),
+    fetchStudentById: async (specialistId: string, studentId: string) => {
+      pedidoPorId = { specialistId, studentId };
+      return alunos.find((a) => a.id === studentId) ?? null;
+    },
   }),
 }));
 
-const { useStudents } = await import("../useStudents");
+const { useStudent, useStudents } = await import("../useStudents");
 
 function montar() {
+  return montarHook(() => useStudents());
+}
+
+function montarHook<T>(hook: () => T) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return renderHook(() => useStudents(), {
+  return renderHook(hook, {
     wrapper: ({ children }) => (
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     ),
@@ -47,6 +58,7 @@ function montar() {
 beforeEach(() => {
   usuario = { id: "esp-1" };
   alunos = [{ id: "aluno-1", full_name: "João" }];
+  pedidoPorId = null;
 });
 
 describe("useStudents", () => {
@@ -78,5 +90,43 @@ describe("useStudents", () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.data).toEqual([]);
+  });
+});
+
+describe("useStudent", () => {
+  // A tela de detalhe procurava o aluno na listagem, que pagina: com mais de
+  // 200 alunos, o de número 201 nunca cabia na página pedida.
+  it("busca o aluno por id, sem depender da listagem", async () => {
+    const { result } = montarHook(() => useStudent("aluno-1"));
+
+    liberarUsuario();
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(pedidoPorId).toEqual({ specialistId: "esp-1", studentId: "aluno-1" });
+    expect(result.current.data).toMatchObject({ id: "aluno-1" });
+  });
+
+  it("aluno sem vínculo com este especialista não abre", async () => {
+    const { result } = montarHook(() => useStudent("de-outro"));
+
+    liberarUsuario();
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.data).toBeNull();
+  });
+
+  // Mesma armadilha da listagem: consulta desabilitada não está carregando, e
+  // quem lesse isso negaria o aluno antes de ter resposta.
+  it("continua carregando enquanto não se sabe quem é o especialista", () => {
+    const { result } = montarHook(() => useStudent("aluno-1"));
+
+    expect(result.current.isLoading).toBe(true);
+  });
+
+  it("sem id de aluno, não busca nada e não conclui ausência", () => {
+    const { result } = montarHook(() => useStudent(undefined));
+
+    expect(result.current.isLoading).toBe(true);
+    expect(pedidoPorId).toBeNull();
   });
 });
