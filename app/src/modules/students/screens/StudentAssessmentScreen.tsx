@@ -115,7 +115,7 @@ export default function StudentAssessmentScreen() {
               onPress={() => setActiveTab('ai')}
             />
             <TabButton
-              label="Física"
+              label="Avaliação"
               icon="body-outline"
               isActive={activeTab === 'physical'}
               onPress={() => setActiveTab('physical')}

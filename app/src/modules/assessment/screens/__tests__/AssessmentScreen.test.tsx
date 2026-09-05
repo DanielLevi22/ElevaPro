@@ -45,7 +45,7 @@ describe('AssessmentScreen', () => {
   it('should switch to Physical tab when pressed', () => {
     render(<AssessmentScreen />);
 
-    fireEvent.press(screen.getByText('Física'));
+    fireEvent.press(screen.getByRole('tab', { name: 'Avaliação' }));
 
     expect(screen.getByTestId('mock-PhysicalAssessment')).toBeTruthy();
     expect(screen.queryByTestId('mock-BodyScanIntroduction')).toBeNull();

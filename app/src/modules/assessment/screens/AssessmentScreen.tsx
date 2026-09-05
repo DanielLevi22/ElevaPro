@@ -26,6 +26,11 @@ const TabButton = ({
     className="flex-1 flex-row items-center justify-center z-10 h-full"
     onPress={onPress}
     activeOpacity={0.8}
+    // O rótulo da aba repete o título da tela, e leitor de tela anunciaria os
+    // dois iguais. `accessibilityRole` diz que este é o que se toca.
+    accessibilityRole="tab"
+    accessibilityState={{ selected: isActive }}
+    accessibilityLabel={label}
   >
     <Ionicons
       name={icon}
@@ -98,7 +103,7 @@ export default function AssessmentScreen() {
             onPress={() => setActiveTab('ai')}
           />
           <TabButton
-            label="Física"
+            label="Avaliação"
             icon="body-outline"
             isActive={activeTab === 'physical'}
             onPress={() => setActiveTab('physical')}
