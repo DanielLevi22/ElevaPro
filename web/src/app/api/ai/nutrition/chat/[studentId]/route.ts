@@ -15,6 +15,7 @@ import { formatContextForPrompt, loadStudentContext } from "@/modules/ai/service
 import { definirTituloProvisorio, nomearConversa } from "@/modules/ai/services/conversationTitle";
 import { queryFoods, unknownFoodNames } from "@/modules/ai/services/foodCatalog";
 import { mensagemDeFalha } from "@/modules/ai/services/mensagemDeFalha";
+import { criarRespostaEmProgresso } from "@/modules/ai/services/respostaEmProgresso";
 import type { DietMealsProposal, DietPlanProposal, SseEvent } from "@/modules/ai/types";
 
 /** Linha em branco entre os blocos do contexto. */
@@ -71,6 +72,10 @@ export async function POST(
   const encoder = new TextEncoder();
   const sseChunk = (event: SseEvent) => encoder.encode(`data: ${JSON.stringify(event)}\n\n`);
 
+  // Fora do `start` para o `cancel` alcançar: quem fecha a aba no meio do turno
+  // cancela o stream, e é aqui que o texto já dito é preservado.
+  let resposta: ReturnType<typeof criarRespostaEmProgresso> | undefined;
+
   const stream = new ReadableStream({
     async start(controller) {
       try {
@@ -114,7 +119,10 @@ export async function POST(
           await definirTituloProvisorio(sessionId, userMessage).catch(() => {});
         }
 
-        let assistantFullText = "";
+        // A resposta é gravada enquanto chega: só no fim, um corte aos 60s da
+        // Vercel levava o turno inteiro, e lá o processo é encerrado sem
+        // `catch` nenhum para socorrer.
+        resposta = criarRespostaEmProgresso(sessionId);
 
         const onToolCall = async (name: string, input: unknown): Promise<string> => {
           const typed = input as Record<string, unknown>;
@@ -185,20 +193,24 @@ export async function POST(
           contextText,
           onToolCall,
         })) {
-          if (event.type === "text") assistantFullText += event.content;
+          if (event.type === "text") resposta.empurrar(event.content);
           controller.enqueue(sseChunk(event));
         }
 
-        if (assistantFullText.trim()) {
-          await saveMessage(sessionId, "assistant", assistantFullText);
+        await resposta.concluir();
 
-          // Depois do stream, nunca durante.
-          if (primeiraTroca) await nomearConversa(sessionId, userMessage, assistantFullText);
+        // Depois do stream, nunca durante.
+        if (resposta.texto.trim() && primeiraTroca) {
+          await nomearConversa(sessionId, userMessage, resposta.texto);
         }
       } catch (err) {
         // O log registra a sessão, nunca o contexto: alimento e quantidade
         // dizem muito sobre a pessoa (LGPD_COMPLIANCE, seção 4).
         console.error("[POST /api/ai/nutrition/chat] especialista", specialistId, err);
+        // O que o modelo chegou a dizer antes de quebrar fica na conversa,
+        // marcado como incompleto — descartar deixava a pergunta salva com
+        // silêncio embaixo.
+        await resposta?.interromper().catch(() => {});
         controller.enqueue(
           sseChunk({
             type: "error",
@@ -208,6 +220,12 @@ export async function POST(
       } finally {
         controller.close();
       }
+    },
+
+    // Fechou a aba, perdeu a rede: o turno para no meio e o que já foi dito
+    // continua sendo o que aconteceu.
+    async cancel() {
+      await resposta?.interromper().catch(() => {});
     },
   });
 

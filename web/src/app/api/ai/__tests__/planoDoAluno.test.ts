@@ -48,12 +48,15 @@ vi.mock("@/modules/ai/services/chatService", () => ({
   updateSessionState: async (_id: string, patch: Record<string, unknown>) => {
     estado = { ...estado, ...patch };
   },
+  updateMessage: async () => undefined,
 }));
 
 vi.mock("@/modules/ai/services/studentCoachService", () => ({
   getOrCreateStudentCoachSession: async () => "sessao-1",
   getStudentSessionMessages: async () => [],
-  saveStudentMessage: async () => undefined,
+  // Devolve id porque a resposta do coach nasce na primeira palavra e é
+  // reescrita durante o turno.
+  saveStudentMessage: async () => "msg-1",
   saveStudentCoachPlan: async (
     _studentId: string,
     _sessionId: string,

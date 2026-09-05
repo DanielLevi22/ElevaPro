@@ -182,15 +182,38 @@ export async function getSessionMessages(sessionId: string): Promise<ChatMessage
   }));
 }
 
+/**
+ * Grava a mensagem e devolve o id.
+ *
+ * O id existe para quem precisa voltar na linha depois: a resposta do
+ * assistente nasce na primeira palavra e cresce durante o turno, porque um
+ * corte aos 60s da Vercel encerra o processo sem passar por `catch` nenhum.
+ */
 export async function saveMessage(
   sessionId: string,
   role: "user" | "assistant",
   content: string,
   metadata?: Record<string, unknown>,
+): Promise<string | null> {
+  const { data } = await supabaseAdmin
+    .from("ai_chat_messages")
+    .insert({ session_id: sessionId, role, content, metadata: (metadata ?? {}) as Json })
+    .select("id")
+    .single();
+
+  return data?.id ?? null;
+}
+
+/** Reescreve o conteúdo de uma mensagem já gravada. */
+export async function updateMessage(
+  messageId: string,
+  content: string,
+  metadata?: Record<string, unknown>,
 ): Promise<void> {
   await supabaseAdmin
     .from("ai_chat_messages")
-    .insert({ session_id: sessionId, role, content, metadata: (metadata ?? {}) as Json });
+    .update({ content, metadata: (metadata ?? {}) as Json })
+    .eq("id", messageId);
 }
 
 const DIA_MS = 86_400_000;
