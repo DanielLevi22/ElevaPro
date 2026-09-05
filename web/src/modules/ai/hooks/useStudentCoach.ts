@@ -15,6 +15,9 @@ export interface SessionInfo {
   messageCount: number;
   messages: ChatMessage[];
   activePlan: { name: string; goal: string; status: string } | null;
+  /** A proposta guardada no servidor: pendente, ou a última já salva. */
+  planProposal: PlanProposalData | null;
+  planSaved: boolean;
 }
 
 export interface PlanCard {
@@ -41,6 +44,11 @@ export function useStudentCoach() {
       .then((r) => r.json())
       .then((data: SessionInfo) => {
         setSessionInfo(data);
+        // O cartão vivia só na memória da tela: recarregar apagava a proposta e
+        // o botão de confirmar junto, com ela guardada no servidor.
+        if (data.planProposal) {
+          setPlanCard({ data: data.planProposal, ...(data.planSaved ? { savedId: "salvo" } : {}) });
+        }
         if (data.messageCount > 0) {
           setCoachStarted(true);
           setMessages(data.messages);
@@ -56,6 +64,8 @@ export function useStudentCoach() {
       if (!msg || loading || !session?.access_token) return;
 
       setInput("");
+      // O cartão sai da tela ao enviar, mas o que estava guardado no servidor
+      // volta na próxima abertura — a decisão só some quando é tomada.
       setPlanCard(null);
 
       const assistantId = crypto.randomUUID();
