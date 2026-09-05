@@ -121,7 +121,17 @@ export async function POST(
           if (name === "query_foods") {
             const result = await queryFoods({
               search_term: typeof typed.search_term === "string" ? typed.search_term : undefined,
+              category: typeof typed.category === "string" ? typed.category : undefined,
             });
+
+            if (result.unknownCategory) {
+              return JSON.stringify({
+                foods: [],
+                erro: `Não conheço a categoria "${result.unknownCategory.requested}".`,
+                categorias_disponiveis: result.unknownCategory.available,
+              });
+            }
+
             return JSON.stringify(result);
           }
 

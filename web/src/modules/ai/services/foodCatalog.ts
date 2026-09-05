@@ -1,16 +1,66 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 /**
- * Consulta do catálogo de alimentos para o coach de nutrição.
+ * Consulta do catálogo de alimentos para o assistente de nutrição.
  *
- * **Sem filtro por categoria, de propósito.** O catálogo tem 44 alimentos e
- * `foods.category` é `NULL` nos 44 — uma ferramenta que filtrasse por
- * "proteínas" ou "carboidratos" devolveria zero em toda chamada, e o modelo
- * concluiria que o catálogo está vazio. Foi exatamente o que aconteceu com
- * `muscle_group` no coach de treino, e custou dois dias para aparecer.
+ * O filtro por categoria existia como ideia e não como código: `foods.category`
+ * era `NULL` em todas as linhas, e uma ferramenta que filtrasse por "proteínas"
+ * devolveria zero em toda chamada — o mesmo que `muscle_group` fez no
+ * assistente de treino. A curadoria foi feita na 0047 e no seed, e o filtro
+ * passou a poder existir.
  *
- * A busca é por nome. Categorizar os alimentos é curadoria, não código.
+ * Categoria que não existe responde dizendo o que existe, nunca lista vazia:
+ * lista vazia é o que faz o modelo anunciar catálogo vazio com o catálogo
+ * cheio.
  */
+
+/** As categorias que o CHECK da 0047 aceita. */
+export const FOOD_CATEGORIES = [
+  "proteina",
+  "carboidrato",
+  "leguminosa",
+  "fruta",
+  "hortalica",
+  "gordura",
+  "laticinio",
+  "bebida",
+  "suplemento",
+] as const;
+
+export type FoodCategory = (typeof FOOD_CATEGORIES)[number];
+
+/** Como a pessoa fala, para o valor que o banco guarda. */
+const CATEGORY_SYNONYMS: Record<string, FoodCategory> = {
+  proteinas: "proteina",
+  proteico: "proteina",
+  carne: "proteina",
+  carnes: "proteina",
+  peixe: "proteina",
+  peixes: "proteina",
+  carboidratos: "carboidrato",
+  carbo: "carboidrato",
+  carbos: "carboidrato",
+  cereal: "carboidrato",
+  cereais: "carboidrato",
+  leguminosas: "leguminosa",
+  feijao: "leguminosa",
+  frutas: "fruta",
+  hortalicas: "hortalica",
+  verdura: "hortalica",
+  verduras: "hortalica",
+  legume: "hortalica",
+  legumes: "hortalica",
+  vegetal: "hortalica",
+  vegetais: "hortalica",
+  gorduras: "gordura",
+  oleaginosa: "gordura",
+  oleaginosas: "gordura",
+  laticinios: "laticinio",
+  lacteo: "laticinio",
+  lacteos: "laticinio",
+  bebidas: "bebida",
+  suplementos: "suplemento",
+};
 
 const COMBINING_MARKS = /[̀-ͯ]/g;
 
@@ -21,6 +71,7 @@ function normalize(term: string): string {
 export interface FoodRow {
   id: string;
   name: string;
+  category: string | null;
   serving_size: string | number;
   serving_unit: string;
   calories: string | number | null;
@@ -33,27 +84,59 @@ export interface FoodQueryResult {
   foods: FoodRow[];
   /** Quantos existem no filtro — o modelo precisa saber se está vendo tudo. */
   total: number;
+  /** Preenchido quando a categoria pedida não existe, com as que existem. */
+  unknownCategory?: { requested: string; available: readonly string[] };
 }
 
-/** Cabe o catálogo inteiro: são 44 alimentos. */
+/**
+ * Traduz o termo do modelo para a categoria do banco, ou `null` se não conhece.
+ *
+ * Não reconhecer é resposta, não ausência: é o que deixa a ferramenta dizer "não
+ * conheço, o que existe é X" em vez de devolver vazio e o modelo concluir que
+ * não há alimento.
+ */
+export function resolveFoodCategory(term: string): FoodCategory | null {
+  const normalized = normalize(term);
+  if (normalized.length === 0) return null;
+  return FOOD_CATEGORIES.find((c) => c === normalized) ?? CATEGORY_SYNONYMS[normalized] ?? null;
+}
+
+/**
+ * Teto de uma consulta. O catálogo passou de 44 para quase 180 e não cabe mais
+ * inteiro numa resposta — por isso `total` vem junto, dizendo ao modelo quando
+ * ele está vendo só uma parte e precisa filtrar.
+ */
 const MAX_RESULTS = 60;
 
-const COLUNAS = "id, name, serving_size, serving_unit, calories, protein, carbs, fat";
+const COLUNAS = "id, name, category, serving_size, serving_unit, calories, protein, carbs, fat";
 
 /**
  * Alimentos do catálogo, por nome ou todos.
  *
  * @example
+ * await queryFoods({ category: "proteinas" }); // sinônimo resolve sozinho
  * await queryFoods({ search_term: "frango" });
- * await queryFoods({}); // o catálogo inteiro, para montar um plano do zero
  */
-export async function queryFoods(input: { search_term?: string }): Promise<FoodQueryResult> {
+export async function queryFoods(input: {
+  search_term?: string;
+  category?: string;
+}): Promise<FoodQueryResult> {
+  const category = input.category ? resolveFoodCategory(input.category) : null;
+  if (input.category && !category) {
+    return {
+      foods: [],
+      total: 0,
+      unknownCategory: { requested: input.category, available: FOOD_CATEGORIES },
+    };
+  }
+
   let query = supabaseAdmin
     .from("foods")
     .select(COLUNAS, { count: "exact" })
     .order("name")
     .limit(MAX_RESULTS);
 
+  if (category) query = query.eq("category", category);
   if (input.search_term) query = query.ilike("name", `%${input.search_term}%`);
 
   const { data, error, count } = await query;
