@@ -82,6 +82,63 @@ export const createStudentsService = (supabase: SupabaseClient, apiBaseUrl = "")
     return { students, total: count ?? students.length };
   },
 
+  /**
+   * Um aluno, por id, para a tela que já sabe qual quer.
+   *
+   * A tela de detalhe procurava o aluno dentro da listagem, que pede uma página
+   * de cada vez: com mais de 200 alunos, o de número 201 não abria — a tela
+   * dizia "não encontrado" para um aluno que existe e é do especialista.
+   *
+   * São perguntas diferentes: "quais são meus alunos" pagina, "quem é este
+   * aluno" não. O vínculo `active` é a mesma regra dos dois, então aluno de
+   * outro especialista continua não abrindo.
+   *
+   * @example
+   * const aluno = await studentsService.fetchStudentById(especialistaId, alunoId);
+   * if (!aluno) mostrarNaoEncontrado();
+   */
+  fetchStudentById: async (specialistId: string, studentId: string): Promise<Student | null> => {
+    const { data, error } = await supabase
+      .from("student_specialists")
+      .select(
+        `
+        id,
+        service_type,
+        status,
+        created_at,
+        student:profiles!student_id (
+          id,
+          full_name,
+          email,
+          avatar_url,
+          account_status
+        )
+      `,
+      )
+      .eq("specialist_id", specialistId)
+      .eq("student_id", studentId)
+      .eq("status", "active")
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    const profile = Array.isArray(data.student) ? data.student[0] : data.student;
+    if (!profile) return null;
+
+    return {
+      id: profile.id,
+      full_name: profile.full_name,
+      email: profile.email,
+      avatar_url: profile.avatar_url,
+      account_status: profile.account_status,
+      service_type: data.service_type,
+      link_status: data.status,
+      link_created_at: data.created_at,
+    } as Student;
+  },
+
   fetchStudentDetails: async (studentId: string): Promise<PhysicalAssessment | null> => {
     const { data, error } = await supabase
       .from("physical_assessments")

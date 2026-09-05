@@ -11,6 +11,7 @@ import { BulkWorkoutProposalCard } from "./BulkWorkoutProposalCard";
 import { ContextoDisponivel } from "./ContextoDisponivel";
 import { PainelDeProposta } from "./PainelDeProposta";
 import { PeriodizationProposalCard } from "./PeriodizationProposalCard";
+import { TextoDoAssistente } from "./TextoDoAssistente";
 
 interface Props {
   studentId: string;
@@ -305,7 +306,15 @@ export function AiCoachChat({
                   : "bg-surface border border-white/10 text-foreground rounded-bl-sm"
               }`}
             >
-              {msg.content || (
+              {/* Só o texto do assistente é interpretado: quem escreve um
+                  asterisco na própria mensagem espera ver um asterisco. */}
+              {msg.content ? (
+                msg.role === "assistant" ? (
+                  <TextoDoAssistente content={msg.content} />
+                ) : (
+                  msg.content
+                )
+              ) : (
                 <span className="flex gap-1 items-center text-muted-foreground">
                   <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:0ms]" />
                   <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:150ms]" />

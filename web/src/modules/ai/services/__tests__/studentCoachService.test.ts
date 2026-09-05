@@ -180,7 +180,7 @@ describe("saveStudentCoachPlan", () => {
       .mockReturnValueOnce(plansChain) // training_plans
       .mockReturnValueOnce(sessionsChain); // ai_chat_sessions
 
-    const id = await saveStudentCoachPlan("student-1", workout, nutrition);
+    const id = await saveStudentCoachPlan("student-1", "sessao-1", workout, nutrition);
 
     expect(id).toBe("period-xyz");
     expect(periodChain.insert).toHaveBeenCalledWith(
@@ -207,7 +207,7 @@ describe("saveStudentCoachPlan", () => {
     });
     mockFrom.mockReturnValue(chain);
 
-    await expect(saveStudentCoachPlan("student-1", workout, nutrition)).rejects.toThrow(
+    await expect(saveStudentCoachPlan("student-1", "sessao-1", workout, nutrition)).rejects.toThrow(
       "Failed to save student plan",
     );
   });
@@ -224,7 +224,7 @@ describe("saveStudentCoachPlan", () => {
 
     mockFrom.mockReturnValueOnce(periodChain).mockReturnValueOnce(plansChain);
 
-    await expect(saveStudentCoachPlan("student-1", workout, nutrition)).rejects.toThrow(
+    await expect(saveStudentCoachPlan("student-1", "sessao-1", workout, nutrition)).rejects.toThrow(
       "Failed to save plan days",
     );
   });

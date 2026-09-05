@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
-import { useStudents } from "@/shared/hooks/useStudents";
+import { useStudent } from "@/shared/hooks/useStudents";
 import { formatDate } from "@/shared/utils/formatDate";
 import { AssessmentModal } from "./AssessmentModal";
 import { EditStudentModal } from "./EditStudentModal";
@@ -50,12 +50,14 @@ export function StudentDetailShell({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const router = useRouter();
   const studentId = params.id as string;
-  const { data: students = [], isLoading } = useStudents();
+  // Busca por id, não procura na listagem: a listagem pagina, e o aluno de
+  // número 201 nunca cabia na página pedida — a tela dizia "não encontrado"
+  // para um aluno que existe e é deste especialista.
+  const { data: student, isLoading } = useStudent(studentId);
   // Os modais usam o próprio studentId como gatilho de abertura: null = fechado.
   const [editingId, setEditingId] = useState<string | null>(null);
   const [assessingId, setAssessingId] = useState<string | null>(null);
 
-  const student = students.find((s) => s.id === studentId);
   const base = `/dashboard/students/${studentId}`;
 
   if (isLoading) {
