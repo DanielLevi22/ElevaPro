@@ -78,6 +78,8 @@ export const ROUTES = {
     SESSION_HISTORY: '/student/session-history',
     /** A própria análise corporal. A gêmea em (tabs)/students/ é do especialista. */
     POSTURE_ANALYSIS: '/student/posture-analysis',
+    /** Sono, FC de repouso, passos e calorias do relógio, com a linha de base. */
+    HEALTH: '/student/saude',
   },
 } as const;
 

@@ -332,13 +332,20 @@ export default function DashboardScreen() {
             icone="heart-circle-outline"
             legenda={
               healthSource === 'device'
-                ? 'Passos e calorias do aparelho'
+                ? 'Sono, FC de repouso, passos e calorias'
                 : healthSource === 'mock'
                   ? 'Dados simulados — toque para conectar'
-                  : 'Passos e calorias'
+                  : 'Conecte o relógio para ver'
             }
-            onPress={() => router.push(ROUTES.ONBOARDING.HEALTH_CONNECT)}
-            titulo={healthSource === 'device' ? 'Saúde Conectada' : 'Conectar Saúde'}
+            // Conectado, o cartão leva ao dado; desconectado, leva à permissão.
+            // Mandar quem já autorizou de volta ao onboarding era pedir de novo
+            // o que ele já deu — e não havia outra porta para a tela.
+            onPress={() =>
+              router.push(
+                healthSource === 'device' ? ROUTES.STUDENT.HEALTH : ROUTES.ONBOARDING.HEALTH_CONNECT
+              )
+            }
+            titulo={healthSource === 'device' ? 'Saúde do dia' : 'Conectar Saúde'}
           />
         </Animated.View>
 

@@ -24,6 +24,7 @@ const TABS = [
   { segment: "muscle-map", label: "Mapa Muscular" },
   { segment: "body-scan", label: "Análise Corporal" },
   { segment: "activities", label: "Atividades" },
+  { segment: "health", label: "Relógio" },
   { segment: "ai-coach", label: "Assistente" },
 ];
 
