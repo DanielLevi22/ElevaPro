@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from "next/server";
 import { authorizeStudent } from "@/lib/api-auth";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { StudentCoachOrchestrator } from "@/modules/ai/orchestrators/student-coach.orchestrator";
+import { updateMessage } from "@/modules/ai/services/chatService";
+import { criarRespostaEmProgresso } from "@/modules/ai/services/respostaEmProgresso";
 import {
   formatStudentCoachContext,
   loadStudentCoachContext,
@@ -37,6 +39,10 @@ export async function POST(request: NextRequest) {
     return encoder.encode(`data: ${JSON.stringify(event)}\n\n`);
   }
 
+  // Fora do `start` para o `cancel` alcançar: quem fecha a aba no meio do turno
+  // cancela o stream, e é aqui que o texto já dito é preservado.
+  let resposta: ReturnType<typeof criarRespostaEmProgresso> | undefined;
+
   const stream = new ReadableStream({
     async start(controller) {
       try {
@@ -60,7 +66,14 @@ export async function POST(request: NextRequest) {
           ctx.personaTrack,
         );
 
-        let assistantFullText = "";
+        // A resposta é gravada enquanto chega: só no fim, um corte aos 60s da
+        // Vercel levava o turno inteiro, e lá o processo é encerrado sem
+        // `catch` nenhum para socorrer.
+        resposta = criarRespostaEmProgresso(sessionId, {
+          salvar: saveStudentMessage,
+          atualizar: updateMessage,
+          agora: Date.now,
+        });
         let savedPlanId: string | undefined;
 
         const onToolCall = async (name: string, input: unknown): Promise<string> => {
@@ -84,26 +97,28 @@ export async function POST(request: NextRequest) {
           onToolCall,
         })) {
           if (event.type === "text") {
-            assistantFullText += event.content;
+            resposta.empurrar(event.content);
           }
           controller.enqueue(sseChunk(event));
         }
 
-        if (assistantFullText.trim()) {
-          await saveStudentMessage(
-            sessionId,
-            "assistant",
-            assistantFullText,
-            savedPlanId ? { saved_plan_id: savedPlanId } : undefined,
-          );
-        }
+        await resposta.concluir(savedPlanId ? { saved_plan_id: savedPlanId } : undefined);
       } catch (err) {
+        // O que o coach chegou a dizer antes de quebrar fica na conversa,
+        // marcado como incompleto.
+        await resposta?.interromper().catch(() => {});
         controller.enqueue(
           sseChunk({ type: "error", message: err instanceof Error ? err.message : String(err) }),
         );
       } finally {
         controller.close();
       }
+    },
+
+    // Fechou a aba, perdeu a rede: o turno para no meio e o que já foi dito
+    // continua sendo o que aconteceu.
+    async cancel() {
+      await resposta?.interromper().catch(() => {});
     },
   });
 
