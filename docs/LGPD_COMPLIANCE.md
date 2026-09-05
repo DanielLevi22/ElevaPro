@@ -440,11 +440,22 @@ direito de eliminação (Art. 18, VI), que continua disponível separadamente.
 > com o histórico inteiro visível ao especialista vinculado.
 >
 > É o mesmo padrão que a auditoria de 2026-08-11 encontrou em `workout_sessions`:
-> controle documentado que o banco não tem. A decisão de qual lado corrigir —
-> fazer a RLS consultar o consentimento, ou assumir que a revogação alcança só a
-> coleta — está aberta e **bloqueia a Onda 1 do relógio**, porque sono e
-> frequência cardíaca de repouso ampliam o que o especialista passa a enxergar
-> sob um consentimento que o titular acredita poder desligar.
+> controle documentado que o banco não tem. **Mas o alcance aqui é outro, e o
+> texto anterior desta nota o exagerava.** Quem continua lendo é o próprio aluno
+> e o especialista com vínculo ativo — mais ninguém, e isso está provado por
+> comportamento na `verify-rls.sql`, não só afirmado. Não há terceiro alcançando
+> dado nenhum.
+>
+> **Decidido em 2026-09-04:** a revogação alcança a coleta, não o histórico. O
+> profissional que segue vendo é exatamente aquele para quem o dado foi
+> coletado, e o aluno encerra esse acesso encerrando o vínculo, que é o caminho
+> próprio para isso. O que precisa mudar é a **tela de consentimento**, que não
+> pode prometer o que não acontece: revogar interrompe a coleta, e o que já foi
+> coletado segue com o especialista enquanto o vínculo existir. Para apagar, o
+> caminho é a eliminação (Art. 18, VI), separada e disponível.
+>
+> Fazer a RLS consultar `student_consents` continua sendo melhoria possível, e
+> não pré-requisito de nada.
 
 > Política de retenção detalhada deve ser definida e publicada na Política de Privacidade antes do lançamento.
 
