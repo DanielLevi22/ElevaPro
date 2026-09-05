@@ -145,10 +145,27 @@ jobs:
       # a integração Git do Vercel é quem cria o alias de branch, e ela não está
       # no caminho aqui. Sem alias fixo, nada externo consegue apontar para o
       # preview: o build do mobile congelaria no deploy do dia.
+      # `--archive=tgz` sobe um tarball em vez de milhares de arquivos avulsos.
+      # O plano free da Vercel limita 5000 uploads de arquivo por 24h, e nove
+      # PRs mergeados em sequência estouraram o teto: os previews passaram a
+      # falhar com `api-upload-free`, e o job acusava no passo do alias, duas
+      # etapas adiante. Um deploy arquivado conta como um upload.
       - name: Deploy to Vercel (Preview)
         id: deploy
         run: |
-          url=$(npx vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} | tail -1)
+          # `pipefail` porque o código de saída de um pipeline é o do último
+          # comando: sem ele o `vercel deploy` falhava, o `tail` devolvia 0, e
+          # o passo passava com a URL vazia. Quem denunciava era o alias, com
+          # uma mensagem que não dizia nada sobre o que tinha acontecido.
+          set -euo pipefail
+
+          url=$(npx vercel deploy --prebuilt --archive=tgz --token=${{ secrets.VERCEL_TOKEN }} | tail -1)
+
+          if [ -z "$url" ]; then
+            echo "::error::O deploy de preview não produziu URL. A causa está no log do próprio comando, acima."
+            exit 1
+          fi
+
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Deployment: $url"
 
@@ -316,8 +333,11 @@ jobs:
 
           npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
+      # Arquivado pelo mesmo motivo do preview: no plano free o teto de 5000
+      # uploads por 24h é compartilhado, e produção não pode ficar refém do
+      # número de previews do dia.
       - name: Deploy to Vercel (Production)
-        run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel deploy --prebuilt --prod --archive=tgz --token=${{ secrets.VERCEL_TOKEN }}
 
       # O mesmo que o preview faz, sem bypass: produção não fica atrás do
       # Deployment Protection. Sem token a rota responde 401 'Token ausente.' —
