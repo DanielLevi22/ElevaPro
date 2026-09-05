@@ -10,7 +10,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * que ele nunca volta a responder vazio quando o vazio seria mentira.
  */
 
-let rows: { name: string; category: string | null }[];
+let rows: { id?: string; name: string; category?: string | null }[];
 let total: number;
 let queryError: unknown;
 let filtros: { eq?: [string, string]; ilike?: [string, string] };
@@ -39,11 +39,15 @@ vi.mock("@/lib/supabase-admin", () => ({
   supabaseAdmin: { from: () => mockFrom() },
 }));
 
-const { FOOD_CATEGORIES, queryFoods, resolveFoodCategory } = await import("../foodCatalog");
+const { FOOD_CATEGORIES, foodIdsByName, queryFoods, resolveFoodCategory, unknownFoodNames } =
+  await import("../foodCatalog");
 
 beforeEach(() => {
   vi.clearAllMocks();
-  rows = [{ name: "Frango (peito grelhado)", category: "proteina" }];
+  rows = [
+    { id: "f1", name: "Frango (peito grelhado)", category: "proteina" },
+    { id: "f2", name: "Arroz integral cozido", category: "carboidrato" },
+  ];
   total = 28;
   queryError = null;
   filtros = {};
@@ -122,12 +126,45 @@ describe("queryFoods", () => {
     const resultado = await queryFoods({ category: "proteina" });
 
     expect(resultado.total).toBe(28);
-    expect(resultado.foods).toHaveLength(1);
+    expect(resultado.foods).toHaveLength(2);
   });
 
   it("propaga erro em vez de devolver lista vazia", async () => {
     queryError = { code: "42703", message: "column does not exist" };
 
     await expect(queryFoods({})).rejects.toMatchObject({ code: "42703" });
+  });
+});
+
+describe("unknownFoodNames", () => {
+  // O modelo reescreve caixa e acento do que leu, e `diet_meal_items.food_id` é
+  // NOT NULL: nome que não casa vira item de refeição que não existe.
+  it("aceita caixa e acento trocados pelo modelo", async () => {
+    expect(await unknownFoodNames(["FRANGO (PEITO GRELHADO)"])).toEqual([]);
+    expect(await unknownFoodNames(["Arroz integral cozido"])).toEqual([]);
+  });
+
+  it("aponta só o que não existe", async () => {
+    const faltando = await unknownFoodNames(["Frango (peito grelhado)", "Farinha de grilo"]);
+
+    expect(faltando).toEqual(["Farinha de grilo"]);
+  });
+
+  it("não consulta nada com lista vazia", async () => {
+    expect(await unknownFoodNames([])).toEqual([]);
+    expect(mockFrom).not.toHaveBeenCalled();
+  });
+});
+
+describe("foodIdsByName", () => {
+  // Sem o id não há item de refeição: a coluna é NOT NULL com ON DELETE restrict.
+  it("mapeia o nome que o modelo escreveu para o id do catálogo", async () => {
+    const mapa = await foodIdsByName(["frango (peito grelhado)"]);
+
+    expect(mapa.get("frango (peito grelhado)")).toBe("f1");
+  });
+
+  it("não inventa id para alimento inexistente", async () => {
+    expect((await foodIdsByName(["Farinha de grilo"])).size).toBe(0);
   });
 });
