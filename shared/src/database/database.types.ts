@@ -1470,7 +1470,14 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      /** Devolve ao `state` a proposta que a rota reivindicou e não conseguiu gravar. */
+      devolver_proposta: {
+        Args: { p_session_id: string; p_chave: string; p_valor: Json };
+        Returns: undefined;
+      };
       link_student_by_code: { Args: { p_code: string }; Returns: Json };
+      /** Tira a proposta pendente do `state` sob a trava da linha. `null` = já foi. */
+      reivindicar_proposta: { Args: { p_session_id: string; p_chave: string }; Returns: Json };
       set_own_account_type: {
         Args: {
           p_account_type: Database["public"]["Enums"]["account_type"];

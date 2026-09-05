@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeLinkedSpecialist } from "@/lib/api-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { aprovarProposta } from "@/modules/ai/services/aprovacaoDaProposta";
 import {
   getOrCreateSession,
   getSessionState,
@@ -8,7 +9,7 @@ import {
   sessionOwnedBy,
   updateSessionState,
 } from "@/modules/ai/services/chatService";
-import type { BulkWorkoutExercise, BulkWorkoutItem } from "@/modules/ai/types";
+import type { BulkWorkoutExercise, BulkWorkoutItem, BulkWorkoutProposal } from "@/modules/ai/types";
 
 // Na Vercel uma rota sem isto morre no default de poucos segundos. Uma conversa
 // com uso de ferramenta passa disso com folga, e localmente não existe teto —
@@ -95,6 +96,22 @@ async function saveExercises(
   }
 }
 
+/**
+ * Apaga os treinos que esta chamada chegou a criar.
+ *
+ * Só é chamado quando a gravação falhou no meio. `workout_exercises` tem
+ * `ON DELETE CASCADE` a partir de `workouts`, então apagar o treino leva os
+ * exercícios junto.
+ */
+async function apagarTreinos(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const { error } = await supabaseAdmin
+    .from("workouts" as never)
+    .delete()
+    .in("id", ids);
+  if (error) throw new Error(`falha ao desfazer os treinos ${ids.join(", ")}: ${error.message}`);
+}
+
 // POST /api/ai/chat/[studentId]/save-workouts
 // Saves the pending bulk workout proposal directly, without going through the AI.
 // Called when the specialist clicks "Aprovar e Salvar Todos" on the BulkWorkoutProposalCard.
@@ -129,34 +146,64 @@ export async function POST(
 
   const sessionState = await getSessionState(sessionId);
 
-  const proposal = sessionState.pendingWorkoutProposal;
-  if (!proposal) {
+  // Os ids que esta chamada criar, para o desfazer alcançá-los se a gravação
+  // falhar no meio: sem isso, os treinos que já entraram ficariam no banco com
+  // a proposta de volta na fila, e a segunda tentativa os duplicaria.
+  const criados: string[] = [];
+
+  // A proposta é reivindicada, não lida: quem chega primeiro a recebe, quem
+  // chega depois recebe nada. Era essa janela que deixava duas abas — ou um
+  // retry depois do tempo — gravarem os mesmos treinos duas vezes.
+  // Só as linhas moram aqui dentro. O estado e a mensagem vêm depois do
+  // sucesso: escrevê-los junto abriria a chance de o cartão dizer "salvo" para
+  // treinos que o desfazer acabou de apagar.
+  let aprovada: BulkWorkoutProposal | undefined;
+
+  let saved: { id: string; title: string }[] | null;
+  try {
+    saved = await aprovarProposta<BulkWorkoutProposal, { id: string; title: string }[]>(
+      sessionId,
+      "pendingWorkoutProposal",
+      {
+        gravar: async (proposal) => {
+          aprovada = proposal;
+          const salvos: { id: string; title: string }[] = [];
+
+          for (const workout of proposal.workouts ?? []) {
+            const { workoutId, title } = await saveWorkout(
+              workout,
+              proposal.phase_id,
+              specialistId,
+            );
+            await saveExercises(workoutId, workout.exercises);
+            criados.push(workoutId);
+            salvos.push({ id: workoutId, title });
+          }
+
+          return salvos;
+        },
+        desfazer: () => apagarTreinos(criados),
+      },
+    );
+  } catch (err) {
+    console.error("[POST save-workouts] especialista", specialistId, err);
+    return NextResponse.json({ error: String(err) }, { status: 500 });
+  }
+
+  if (!saved || !aprovada) {
     return NextResponse.json({ error: "Nenhuma proposta pendente encontrada." }, { status: 400 });
   }
+  const proposal = aprovada;
 
-  const workouts = proposal.workouts ?? [];
-  const saved: { id: string; title: string }[] = [];
-
-  for (const workout of workouts) {
-    try {
-      const { workoutId, title } = await saveWorkout(workout, proposal.phase_id, specialistId);
-      await saveExercises(workoutId, workout.exercises);
-      saved.push({ id: workoutId, title });
-    } catch (err) {
-      return NextResponse.json({ error: String(err) }, { status: 500 });
-    }
-  }
-
-  // Sai da fila de decisão e vira histórico da tela. Continuar "pendente"
-  // deixaria um segundo clique salvar os mesmos treinos outra vez; sumir de
-  // vez deixava a conversa anunciando "aprovados e salvos: A, B, C" com a tela
-  // sem nada para mostrar ao reabrir.
+  // Sai da fila de decisão e vira histórico da tela. A chave pendente já saiu
+  // do `state` na reivindicação; o que falta é o registro do que foi aprovado,
+  // porque sumir de vez deixava a conversa anunciando "aprovados e salvos: A,
+  // B, C" com a tela sem nada para mostrar ao reabrir.
   await updateSessionState(sessionId, {
     savedWorkouts: [
       ...sessionState.savedWorkouts,
       ...saved.map((w) => ({ id: w.id, title: w.title, phaseId: proposal.phase_id })),
     ],
-    pendingWorkoutProposal: undefined,
     resolvedWorkoutProposal: { proposal, savedTitles: saved.map((w) => w.title) },
   });
 

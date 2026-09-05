@@ -23,10 +23,25 @@ const propostaDaConversa: Record<string, unknown> = {
     },
   },
   "sessao-recente": { savedWorkouts: [] },
+  // Dois treinos: com um só, uma falha no meio do laço não tem "meio".
+  "sessao-de-dois": {
+    savedWorkouts: [],
+    pendingWorkoutProposal: {
+      phase_id: "fase-1",
+      phase_name: "Adaptação",
+      workouts: [{ title: "Treino A" }, { title: "Treino B" }],
+    },
+  },
 };
 
 let donoDaSessao: string | null;
 let estadoGravado: { sessionId: string; patch: unknown } | null;
+/** Em qual treino do laço a gravação quebra (1 = o primeiro). `null` = nenhum. */
+let falharNoTreino: number | null;
+/** Os ids que o desfazer mandou apagar. */
+let apagados: string[];
+/** Quantos treinos já entraram nesta requisição — o laço passa por `from` a cada volta. */
+let treinosGravados: number;
 
 vi.mock("@/lib/api-auth", () => ({
   authorizeLinkedSpecialist: async () => ({
@@ -48,17 +63,57 @@ vi.mock("@/modules/ai/services/chatService", () => ({
 vi.mock("@/lib/supabase-admin", () => {
   const builder: Record<string, unknown> = {};
   const chain = () => builder;
+  let apagando = false;
+
   builder.insert = vi.fn(chain);
   builder.select = vi.fn(chain);
-  builder.in = vi.fn(chain);
   builder.ilike = vi.fn(chain);
   builder.limit = vi.fn(chain);
-  builder.single = async () => ({ data: { id: "workout-1" }, error: null });
+  builder.delete = vi.fn(() => {
+    apagando = true;
+    return builder;
+  });
+  builder.in = vi.fn((_coluna: string, valores: string[]) => {
+    if (apagando) {
+      apagados.push(...valores);
+      apagando = false;
+    }
+    return builder;
+  });
+  builder.single = async () => {
+    treinosGravados += 1;
+    if (falharNoTreino === treinosGravados) {
+      return { data: null, error: { message: `treino ${treinosGravados} caiu` } };
+    }
+    return { data: { id: `workout-${treinosGravados}` }, error: null };
+  };
   builder.maybeSingle = async () => ({ data: null, error: null });
   // biome-ignore lint/suspicious/noThenProperty: o builder do PostgREST é thenable
   builder.then = (resolve: (value: unknown) => unknown) =>
     resolve({ data: [{ id: "ex-1", name: "Supino reto com barra" }], error: null });
-  return { supabaseAdmin: { from: () => builder } };
+
+  return {
+    supabaseAdmin: {
+      from: () => builder,
+      // O que o banco faz: tira a chave do `state` e devolve o que estava lá.
+      // A segunda chamada não acha mais nada — é essa a trava.
+      rpc: async (nome: string, args: Record<string, unknown>) => {
+        const estado = propostaDaConversa[args.p_session_id as string] as
+          | Record<string, unknown>
+          | undefined;
+        const chave = args.p_chave as string;
+
+        if (nome === "devolver_proposta") {
+          if (estado) estado[chave] = args.p_valor;
+          return { data: null, error: null };
+        }
+
+        const valor = estado?.[chave] ?? null;
+        if (estado) delete estado[chave];
+        return { data: valor, error: null };
+      },
+    },
+  };
 });
 
 const { POST } = await import("../chat/[studentId]/save-workouts/route");
@@ -76,6 +131,25 @@ function pedido(corpo: unknown): NextRequest {
 beforeEach(() => {
   donoDaSessao = "sessao-antiga";
   estadoGravado = null;
+  falharNoTreino = null;
+  apagados = [];
+  treinosGravados = 0;
+  propostaDaConversa["sessao-antiga"] = {
+    savedWorkouts: [],
+    pendingWorkoutProposal: {
+      phase_id: "fase-1",
+      phase_name: "Adaptação",
+      workouts: [{ title: "Treino A", exercises: [{ exercise_name: "Supino reto com barra" }] }],
+    },
+  };
+  propostaDaConversa["sessao-de-dois"] = {
+    savedWorkouts: [],
+    pendingWorkoutProposal: {
+      phase_id: "fase-1",
+      phase_name: "Adaptação",
+      workouts: [{ title: "Treino A" }, { title: "Treino B" }],
+    },
+  };
 });
 
 describe("aprovar treinos", () => {
@@ -93,11 +167,11 @@ describe("aprovar treinos", () => {
   it("tira a proposta da fila e a guarda com os títulos salvos", async () => {
     await POST(pedido({ sessionId: "sessao-antiga" }), contexto);
 
+    // A chave pendente sai na reivindicação, dentro do banco — o que a rota
+    // grava depois é só o registro do que foi aprovado.
+    expect(propostaDaConversa["sessao-antiga"]).not.toHaveProperty("pendingWorkoutProposal");
     expect(estadoGravado?.patch).toMatchObject({
-      pendingWorkoutProposal: undefined,
-      resolvedWorkoutProposal: {
-        savedTitles: ["Treino A"],
-      },
+      resolvedWorkoutProposal: { savedTitles: ["Treino A"] },
     });
   });
 
@@ -117,5 +191,59 @@ describe("aprovar treinos", () => {
 
     expect(resposta.status).toBe(400);
     expect(await resposta.json()).toEqual({ error: "Nenhuma proposta pendente encontrada." });
+  });
+});
+
+/**
+ * A trava contra gravar duas vezes.
+ *
+ * Duas abas, dois aparelhos, ou um retry depois do `maxDuration = 60` da
+ * Vercel: todos liam a mesma proposta pendente e gravavam os mesmos treinos na
+ * conta do aluno.
+ */
+describe("aprovar duas vezes", () => {
+  it("a segunda aprovação não grava nada e responde que não há proposta", async () => {
+    const primeira = await POST(pedido({ sessionId: "sessao-antiga" }), contexto);
+    expect(primeira.status).toBe(200);
+
+    const segunda = await POST(pedido({ sessionId: "sessao-antiga" }), contexto);
+
+    expect(segunda.status).toBe(400);
+    expect(await segunda.json()).toEqual({ error: "Nenhuma proposta pendente encontrada." });
+  });
+});
+
+/**
+ * Uma falha no meio do laço gravava metade e deixava a proposta pendente —
+ * clicar de novo duplicava a metade que já tinha passado.
+ */
+describe("quando a gravação falha no meio", () => {
+  beforeEach(() => {
+    donoDaSessao = "sessao-de-dois";
+  });
+
+  it("apaga os treinos que já tinham entrado", async () => {
+    falharNoTreino = 2;
+
+    const resposta = await POST(pedido({ sessionId: "sessao-de-dois" }), contexto);
+
+    expect(resposta.status).toBe(500);
+    expect(apagados).toEqual(["workout-1"]);
+  });
+
+  it("devolve a proposta à fila, para a pessoa poder tentar de novo", async () => {
+    falharNoTreino = 2;
+
+    await POST(pedido({ sessionId: "sessao-de-dois" }), contexto);
+
+    expect(propostaDaConversa["sessao-de-dois"]).toHaveProperty("pendingWorkoutProposal");
+  });
+
+  it("não registra os treinos como salvos", async () => {
+    falharNoTreino = 2;
+
+    await POST(pedido({ sessionId: "sessao-de-dois" }), contexto);
+
+    expect(estadoGravado).toBeNull();
   });
 });

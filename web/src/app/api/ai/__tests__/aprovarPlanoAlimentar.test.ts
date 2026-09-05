@@ -61,7 +61,28 @@ vi.mock("@/lib/supabase-admin", () => {
   builder.single = async () => ({ data: { id: "plano-1", name: PLANO.name }, error: null });
   // biome-ignore lint/suspicious/noThenProperty: o builder do PostgREST é thenable
   builder.then = (resolve: (value: unknown) => unknown) => resolve({ data: [], error: null });
-  return { supabaseAdmin: { from: () => builder } };
+  return {
+    supabaseAdmin: {
+      from: () => builder,
+      // O que o banco faz: tira a chave do `state` e devolve o que estava lá.
+      // A segunda chamada não acha mais nada — é essa a trava.
+      rpc: async (nome: string, args: Record<string, unknown>) => {
+        const estado = estadoDaConversa[args.p_session_id as string] as
+          | Record<string, unknown>
+          | undefined;
+        const chave = args.p_chave as string;
+
+        if (nome === "devolver_proposta") {
+          if (estado) estado[chave] = args.p_valor;
+          return { data: null, error: null };
+        }
+
+        const valor = estado?.[chave] ?? null;
+        if (estado) delete estado[chave];
+        return { data: valor, error: null };
+      },
+    },
+  };
 });
 
 const { POST } = await import("../nutrition/chat/[studentId]/save-plan/route");
@@ -79,6 +100,7 @@ function pedido(corpo: unknown): NextRequest {
 beforeEach(() => {
   donoDaSessao = "sessao-antiga";
   estadoGravado = null;
+  estadoDaConversa["sessao-antiga"] = { savedWorkouts: [], pendingDietPlan: PLANO };
 });
 
 describe("aprovar o plano alimentar", () => {
@@ -103,10 +125,10 @@ describe("aprovar o plano alimentar", () => {
   it("tira o plano da fila e o guarda para a tela poder mostrá-lo", async () => {
     await POST(pedido({ sessionId: "sessao-antiga" }), contexto);
 
-    expect(estadoGravado?.patch).toMatchObject({
-      pendingDietPlan: undefined,
-      resolvedDietPlan: PLANO,
-    });
+    // A chave pendente sai na reivindicação, dentro do banco — o que a rota
+    // grava depois é só o registro do que foi aprovado.
+    expect(estadoDaConversa["sessao-antiga"]).not.toHaveProperty("pendingDietPlan");
+    expect(estadoGravado?.patch).toMatchObject({ resolvedDietPlan: PLANO });
   });
 
   it("sem sessionId, cai na conversa mais recente", async () => {
@@ -114,5 +136,18 @@ describe("aprovar o plano alimentar", () => {
 
     expect(resposta.status).toBe(400);
     expect(await resposta.json()).toEqual({ error: "Nenhuma proposta pendente encontrada." });
+  });
+});
+
+// Duas abas, ou um retry depois do tempo: os dois liam o mesmo plano pendente e
+// gravavam dois planos ativos para o mesmo aluno.
+describe("aprovar o plano duas vezes", () => {
+  it("a segunda aprovação não grava nada e responde que não há proposta", async () => {
+    expect((await POST(pedido({ sessionId: "sessao-antiga" }), contexto)).status).toBe(200);
+
+    const segunda = await POST(pedido({ sessionId: "sessao-antiga" }), contexto);
+
+    expect(segunda.status).toBe(400);
+    expect(await segunda.json()).toEqual({ error: "Nenhuma proposta pendente encontrada." });
   });
 });

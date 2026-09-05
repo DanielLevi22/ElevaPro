@@ -974,3 +974,80 @@ BEGIN
 
   RAISE NOTICE 'ok  escala: toda avaliação física carrega altura e peso';
 END $$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- A proposta só é aprovada uma vez — Art. 6º, V (qualidade) e VI (prevenção)
+--
+-- Aprovar duas vezes gravava duas vezes: as rotas liam a proposta pendente,
+-- gravavam, e só então limpavam o pendente. Duas abas, ou um retry depois do
+-- `maxDuration = 60` da Vercel, e a mesma prescrição entrava duplicada na conta
+-- do aluno — dado incorreto sobre a saúde de alguém, que é o que o Art. 6º, V
+-- proíbe, e prescrição repetida que ninguém pediu.
+--
+-- A trava é sobre o comportamento, não sobre a existência da função: uma
+-- migration futura que troque o `FOR UPDATE` por um SELECT comum recriaria a
+-- janela sem mudar nenhuma assinatura, e nada acusaria.
+BEGIN;
+
+DO $$
+DECLARE
+  aluno    uuid := gen_random_uuid();
+  espec    uuid := gen_random_uuid();
+  conversa uuid;
+  primeira jsonb;
+  segunda  jsonb;
+  sobrou   jsonb;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (aluno, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-proposta-a@elevapro.local', '{"full_name":"A","account_type":"student"}'::jsonb),
+    (espec, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-proposta-e@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb);
+
+  INSERT INTO public.ai_chat_sessions (student_id, specialist_id, module, state)
+  VALUES (aluno, espec, 'workout', jsonb_build_object(
+    'savedWorkouts', '[]'::jsonb,
+    'pendingWorkoutProposal', jsonb_build_object('phase_name', 'Adaptação'),
+    'resolvedDietPlan', jsonb_build_object('name', 'Cutting 8')
+  ))
+  RETURNING id INTO conversa;
+
+  primeira := public.reivindicar_proposta(conversa, 'pendingWorkoutProposal');
+  segunda  := public.reivindicar_proposta(conversa, 'pendingWorkoutProposal');
+
+  IF primeira IS NULL THEN
+    RAISE EXCEPTION 'a primeira reivindicação voltou vazia — ninguém consegue aprovar';
+  END IF;
+
+  -- O que a duplicação custava: a segunda aprovação recebia a mesma proposta e
+  -- gravava os mesmos treinos outra vez.
+  IF segunda IS NOT NULL THEN
+    RAISE EXCEPTION
+      'PRESCRIÇÃO DUPLICADA: a segunda reivindicação devolveu a proposta de novo (%)', segunda;
+  END IF;
+
+  -- Reivindicar uma chave leva só ela. O resto do `state` é o registro do que
+  -- já foi decidido, e perdê-lo apagaria a tela do especialista.
+  SELECT state INTO sobrou FROM public.ai_chat_sessions WHERE id = conversa;
+  IF sobrou -> 'resolvedDietPlan' IS NULL OR sobrou -> 'savedWorkouts' IS NULL THEN
+    RAISE EXCEPTION 'a reivindicação levou junto o resto do state: %', sobrou;
+  END IF;
+
+  -- Chave que não existe não é erro, é "não há o que aprovar" — e não pode
+  -- mexer no que está lá.
+  IF public.reivindicar_proposta(conversa, 'pendingDietMeals') IS NOT NULL THEN
+    RAISE EXCEPTION 'reivindicar chave ausente devolveu alguma coisa';
+  END IF;
+
+  -- A volta: falhou a gravação, a proposta retorna à fila de decisão.
+  PERFORM public.devolver_proposta(conversa, 'pendingWorkoutProposal', primeira);
+  SELECT state INTO sobrou FROM public.ai_chat_sessions WHERE id = conversa;
+  IF sobrou -> 'pendingWorkoutProposal' IS NULL THEN
+    RAISE EXCEPTION 'devolver_proposta não recolocou a proposta na fila: %', sobrou;
+  END IF;
+
+  RAISE NOTICE 'ok  proposta: reivindicada uma vez só, e devolvida quando a gravação falha';
+END $$;
+
+ROLLBACK;
