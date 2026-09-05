@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { rotaDeIA } from "@/lib/ai-route";
 import { authorizeLinkedSpecialist } from "@/lib/api-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { aprovarProposta } from "@/modules/ai/services/aprovacaoDaProposta";
 import {
   getOrCreateSession,
   getSessionState,
@@ -10,6 +11,19 @@ import {
   updateSessionState,
 } from "@/modules/ai/services/chatService";
 import { foodIdsByName } from "@/modules/ai/services/foodCatalog";
+import type { DietMealsProposal } from "@/modules/ai/types";
+
+/**
+ * Apaga as refeições que esta chamada chegou a criar.
+ *
+ * `diet_meal_items` tem `ON DELETE CASCADE` a partir de `diet_meals`, então
+ * apagar a refeição leva os alimentos junto.
+ */
+async function apagarRefeicoes(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const { error } = await supabaseAdmin.from("diet_meals").delete().in("id", ids);
+  if (error) throw new Error(`falha ao desfazer as refeições ${ids.join(", ")}: ${error.message}`);
+}
 
 // Na Vercel uma rota sem isto morre no default de poucos segundos. Uma conversa
 // com uso de ferramenta passa disso com folga, e localmente não existe teto —
@@ -52,17 +66,20 @@ const handler = async (
     return NextResponse.json({ error: "conversa não encontrada" }, { status: 404 });
   }
   const state = await getSessionState(sessionId);
-  const proposal = state.pendingDietMeals;
+  const pendente = state.pendingDietMeals;
   const dietPlanId = state.savedDietPlanId;
 
-  if (!proposal) {
+  if (!pendente) {
     return NextResponse.json({ error: "Nenhuma proposta pendente encontrada." }, { status: 400 });
   }
   if (!dietPlanId) {
     return NextResponse.json({ error: "Salve o plano alimentar antes." }, { status: 400 });
   }
 
-  const nomes = proposal.meals.flatMap((m) => m.items.map((i) => i.food_name));
+  // A validação dos alimentos vem antes da reivindicação, de propósito: ela
+  // responde 400 sem gravar nada, e reivindicar primeiro consumiria a proposta
+  // para devolver um erro que a pessoa ainda pode corrigir no chat.
+  const nomes = pendente.meals.flatMap((m) => m.items.map((i) => i.food_name));
   const idsPorNome = await foodIdsByName(nomes);
   const faltando = nomes.filter((n) => !idsPorNome.has(n));
 
@@ -73,50 +90,71 @@ const handler = async (
     );
   }
 
-  const salvas: { id: string; name: string }[] = [];
+  const criadas: string[] = [];
+  let aprovada: DietMealsProposal | undefined;
 
-  for (const [ordem, meal] of proposal.meals.entries()) {
-    const { data: mealRow, error: mealError } = await supabaseAdmin
-      .from("diet_meals")
-      .insert({
-        diet_plan_id: dietPlanId,
-        name: meal.name,
-        meal_order: ordem,
-        meal_time: meal.meal_time ?? null,
-        // NULL na dieta única, 0–6 na cíclica — são estruturas diferentes.
-        day_of_week: proposal.plan_type === "cyclic" ? (meal.day_of_week ?? null) : null,
-      })
-      .select("id")
-      .single();
+  let salvas: { id: string; name: string }[] | null;
+  try {
+    salvas = await aprovarProposta<DietMealsProposal, { id: string; name: string }[]>(
+      sessionId,
+      "pendingDietMeals",
+      {
+        gravar: async (proposal) => {
+          aprovada = proposal;
+          const gravadas: { id: string; name: string }[] = [];
 
-    if (mealError || !mealRow) {
-      console.error("[POST save-meals] especialista", specialistId, mealError);
-      return NextResponse.json({ error: "Não consegui salvar as refeições." }, { status: 500 });
-    }
+          for (const [ordem, meal] of proposal.meals.entries()) {
+            const { data: mealRow, error: mealError } = await supabaseAdmin
+              .from("diet_meals")
+              .insert({
+                diet_plan_id: dietPlanId,
+                name: meal.name,
+                meal_order: ordem,
+                meal_time: meal.meal_time ?? null,
+                // NULL na dieta única, 0–6 na cíclica — são estruturas diferentes.
+                day_of_week: proposal.plan_type === "cyclic" ? (meal.day_of_week ?? null) : null,
+              })
+              .select("id")
+              .single();
 
-    const itens = meal.items.map((item, index) => ({
-      diet_meal_id: mealRow.id,
-      food_id: idsPorNome.get(item.food_name) as string,
-      quantity: item.quantity,
-      unit: item.unit,
-      order_index: index,
-    }));
+            if (mealError || !mealRow) {
+              throw new Error(mealError?.message ?? "insert de diet_meals não retornou");
+            }
+            criadas.push(mealRow.id);
 
-    if (itens.length > 0) {
-      const { error: itemError } = await supabaseAdmin.from("diet_meal_items").insert(itens);
-      if (itemError) {
-        console.error("[POST save-meals] itens", specialistId, itemError);
-        return NextResponse.json({ error: "Não consegui salvar os alimentos." }, { status: 500 });
-      }
-    }
+            const itens = meal.items.map((item, index) => ({
+              diet_meal_id: mealRow.id,
+              food_id: idsPorNome.get(item.food_name) as string,
+              quantity: item.quantity,
+              unit: item.unit,
+              order_index: index,
+            }));
 
-    salvas.push({ id: mealRow.id, name: meal.name });
+            if (itens.length > 0) {
+              const { error: itemError } = await supabaseAdmin
+                .from("diet_meal_items")
+                .insert(itens);
+              if (itemError) throw new Error(`itens de "${meal.name}": ${itemError.message}`);
+            }
+
+            gravadas.push({ id: mealRow.id, name: meal.name });
+          }
+
+          return gravadas;
+        },
+        desfazer: () => apagarRefeicoes(criadas),
+      },
+    );
+  } catch (err) {
+    console.error("[POST save-meals] especialista", specialistId, err);
+    return NextResponse.json({ error: "Não consegui salvar as refeições." }, { status: 500 });
   }
 
-  await updateSessionState(sessionId, {
-    pendingDietMeals: undefined,
-    resolvedDietMeals: proposal,
-  });
+  if (!salvas || !aprovada) {
+    return NextResponse.json({ error: "Nenhuma proposta pendente encontrada." }, { status: 400 });
+  }
+
+  await updateSessionState(sessionId, { resolvedDietMeals: aprovada });
 
   await saveMessage(
     sessionId,
