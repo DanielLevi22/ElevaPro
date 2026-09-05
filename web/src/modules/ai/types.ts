@@ -176,6 +176,13 @@ export type SseEvent =
   /** O modelo parou para consultar ou gravar. Sem isto o stream fica mudo. */
   | { type: "tool_start"; tool: string; label: string }
   | { type: "tool_end"; tool: string }
+  /**
+   * Um pedaço da proposta que está sendo escrita agora.
+   *
+   * Só das ferramentas que fazem a tela esperar. Consulta volta antes de a
+   * pessoa terminar de ler a frase anterior e não tem o que prever.
+   */
+  | { type: "proposal_building"; tool: string; partial: string }
   | { type: "proposal"; data: PeriodizationProposal }
   | { type: "workout_proposal"; data: BulkWorkoutProposal }
   | { type: "diet_plan_proposal"; data: DietPlanProposal }

@@ -45,6 +45,21 @@ const TOOL_LABELS: Record<string, string> = {
   propose_meals: "Montando as refeições",
 };
 
+/**
+ * De quais ferramentas vale mostrar a proposta sendo escrita.
+ *
+ * Nem toda ferramenta com rótulo: `query_*` volta em menos de um segundo, e
+ * `save_*` recebe um id — prever o que já foi decidido não diz nada. A prévia
+ * é para as quatro que levam de 15 a 20 segundos montando JSON, que é onde a
+ * tela ficava parada.
+ */
+const FERRAMENTAS_COM_PREVIA = new Set([
+  "propose_periodization",
+  "propose_workouts",
+  "propose_diet_plan",
+  "propose_meals",
+]);
+
 export abstract class BaseOrchestrator {
   constructor(protected provider: AIProvider) {}
 
@@ -98,6 +113,12 @@ export abstract class BaseOrchestrator {
           // deste evento vêm de 15 a 20 segundos de JSON, sem nada.
           const label = TOOL_LABELS[event.name];
           if (label) yield { type: "tool_start", tool: event.name, label };
+        } else if (event.type === "tool_input_delta") {
+          // O conteúdo daqueles segundos parados. Repassado cru: quem monta o
+          // que já dá para saber é a tela, que é onde isso aparece.
+          if (FERRAMENTAS_COM_PREVIA.has(event.name)) {
+            yield { type: "proposal_building", tool: event.name, partial: event.partial };
+          }
         } else if (event.type === "tool_use") {
           toolUses.push({ id: event.id, name: event.name, input: event.input });
         } else if (event.type === "turn_end") {
