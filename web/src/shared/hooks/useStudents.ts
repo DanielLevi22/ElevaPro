@@ -38,6 +38,43 @@ export function useStudents() {
   return { ...query, isLoading: query.isLoading || !userId };
 }
 
+/**
+ * Um aluno, buscado por id.
+ *
+ * A tela de detalhe procurava o aluno dentro da listagem, que pagina: com mais
+ * de 200 alunos, o de número 201 não abria. São perguntas diferentes — "quais
+ * são meus alunos" pagina, "quem é este aluno" não.
+ *
+ * `null` significa "não é seu, ou não existe"; `undefined` significa "ainda não
+ * sei". A tela precisa dos dois separados para não negar o aluno enquanto a
+ * resposta não chegou, que foi o defeito da #245.
+ */
+export function useStudent(studentId: string | undefined) {
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setUserId(user.id);
+    });
+  }, []);
+
+  const query = useQuery({
+    queryKey: ["student", userId, studentId],
+    queryFn: async () => {
+      if (!userId || !studentId) return null;
+      return studentsService.fetchStudentById(userId, studentId);
+    },
+    enabled: !!userId && !!studentId,
+    staleTime: 1000 * 60 * 15,
+    refetchOnWindowFocus: false,
+  });
+
+  // Mesma razão do `useStudents`: consulta desabilitada não está carregando, e
+  // quem lesse `isLoading: false` com `data` indefinido concluiria ausência no
+  // instante em que ainda não dava para saber.
+  return { ...query, isLoading: query.isLoading || !userId || !studentId };
+}
+
 export function useSpecialistServices() {
   const [userId, setUserId] = useState<string | null>(null);
 
