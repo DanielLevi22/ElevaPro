@@ -27,6 +27,12 @@ let studentList: typeof students = students;
 
 vi.mock("@/shared/hooks/useStudents", () => ({
   useStudents: () => ({ data: studentList, isLoading: false }),
+  // A tela busca por id: procurar na listagem era o que deixava o aluno de
+  // número 201 fora, porque a listagem pagina.
+  useStudent: (id: string) => ({
+    data: studentList.find((s) => s.id === id) ?? null,
+    isLoading: false,
+  }),
 }));
 
 vi.mock("../components/EditStudentModal", () => ({

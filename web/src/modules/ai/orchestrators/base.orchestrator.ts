@@ -17,6 +17,20 @@ export interface OrchestratorRunInput {
   onToolCall?: ToolCallHandler;
 }
 
+/**
+ * Quanto cabe num turno.
+ *
+ * O teto é compartilhado entre o texto que o modelo escreve e o JSON da
+ * ferramenta que ele monta — os dois saem da mesma resposta. Com 2048, uma
+ * proposta de quatro ou cinco treinos com sete exercícios e observações
+ * chegava perto do limite somada à frase que vem antes dela, e o corte no meio
+ * do JSON virava proposta com exercício faltando.
+ *
+ * `max_tokens` é limite, não consumo: espaço não usado não é cobrado. Deixá-lo
+ * apertado não economizava nada e produzia exatamente esse defeito.
+ */
+const MAX_TOKENS_DO_TURNO = 8192;
+
 /** Parágrafo entre o texto de um turno e o do seguinte. */
 const QUEBRA = `
 
@@ -102,7 +116,14 @@ export abstract class BaseOrchestrator {
       let primeiroTextoDoTurno = true;
       const toolUses: Array<{ id: string; name: string; input: unknown }> = [];
 
-      for await (const event of this.provider.stream({ systemBlocks, messages, tools })) {
+      let cortadoPorLimite = false;
+
+      for await (const event of this.provider.stream({
+        systemBlocks,
+        messages,
+        tools,
+        maxTokens: MAX_TOKENS_DO_TURNO,
+      })) {
         if (event.type === "text_delta") {
           if (primeiroTextoDoTurno && jaEscreveu) yield { type: "text", content: QUEBRA };
           primeiroTextoDoTurno = false;
@@ -123,7 +144,21 @@ export abstract class BaseOrchestrator {
           toolUses.push({ id: event.id, name: event.name, input: event.input });
         } else if (event.type === "turn_end") {
           fullContent = event.fullContent;
+          cortadoPorLimite = event.stopReason === "max_tokens";
         }
+      }
+
+      // Executar ferramenta com JSON pela metade é gravar prescrição truncada,
+      // que é pior que não gravar. E o silêncio é o que tornava isso confuso:
+      // a proposta simplesmente não aparecia, sem ninguém dizer por quê.
+      if (cortadoPorLimite) {
+        yield {
+          type: "error",
+          message:
+            "A resposta ficou longa demais e foi cortada antes de terminar. " +
+            "Peça para dividir — uma fase por vez, ou menos exercícios por treino.",
+        };
+        return;
       }
 
       messages.push({ role: "assistant", content: fullContent });

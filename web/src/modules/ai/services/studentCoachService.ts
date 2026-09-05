@@ -1,6 +1,7 @@
 import type { Json } from "@elevapro/shared";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { NutritionProposal, WorkoutProposal } from "../tools/studentCoachTools";
+import { updateSessionState } from "./chatService";
 
 export async function getOrCreateStudentCoachSession(studentId: string): Promise<string> {
   const module = "student_coach";
@@ -80,6 +81,7 @@ function isoDatePlusWeeks(weeks: number): string {
 
 export async function saveStudentCoachPlan(
   studentId: string,
+  sessionId: string,
   workout: WorkoutProposal,
   nutrition: NutritionProposal,
 ): Promise<string> {
@@ -126,14 +128,16 @@ export async function saveStudentCoachPlan(
     throw new Error(`Failed to save plan days for student ${studentId}: ${phaseError.message}`);
   }
 
-  // Nutrition summary stored in session state — no separate table in Phase 1
-  await supabaseAdmin
-    .from("ai_chat_sessions")
-    .update({
-      state: { nutrition_plan: nutrition, saved_periodization_id: period.id } as unknown as Json,
-    })
-    .eq("student_id", studentId)
-    .is("specialist_id", null);
+  // A nutrição não tem tabela própria na Fase 1 e fica no estado da sessão.
+  //
+  // Mesclando, nunca substituindo: um `update` de `state` troca o objeto
+  // inteiro, e aqui já convivem a proposta pendente e a resolvida. Enquanto não
+  // havia mais nada guardado, substituir não doía — passou a doer no instante
+  // em que a proposta passou a morar ali.
+  await updateSessionState(sessionId, {
+    nutritionPlan: nutrition,
+    savedPeriodizationId: period.id,
+  } as Record<string, unknown>);
 
   return period.id;
 }

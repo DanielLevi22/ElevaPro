@@ -163,6 +163,20 @@ export interface AiSessionState {
   pendingDietMeals?: DietMealsProposal;
   savedDietPlanId?: string;
   /**
+   * O plano que o assistente do aluno apresentou, e o que dele foi salvo.
+   *
+   * `save_plan` gravava o que o modelo reemitia no segundo turno, e não o que
+   * o aluno aprovou olhando o cartão — uma periodização de doze semanas com
+   * quatro dias tem espaço de sobra para divergir entre as duas versões.
+   * Guardar aqui é o que permite salvar a cópia revisada.
+   *
+   * Sair de `pendingStudentPlan` para `resolvedStudentPlan` é também a trava
+   * contra salvar duas vezes: sem fila, um segundo `save_plan` não tem o que
+   * gravar.
+   */
+  pendingStudentPlan?: PlanProposalData;
+  resolvedStudentPlan?: { plan: PlanProposalData; periodizationId: string };
+  /**
    * As propostas de dieta já aprovadas. Mesmo papel de
    * `resolvedWorkoutProposal`: sair da fila de decisão sem sair da tela.
    * Enquanto ficassem em "pendente", um segundo clique salvaria de novo.
