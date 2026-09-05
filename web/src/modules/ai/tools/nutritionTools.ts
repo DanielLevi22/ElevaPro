@@ -4,13 +4,30 @@ export const NUTRITION_TOOLS: ToolDefinition[] = [
   {
     name: "query_foods",
     description:
-      "Busca alimentos do catálogo. Use antes de sugerir qualquer alimento — nunca invente nome que não veio daqui, porque item de refeição sem alimento cadastrado não é salvo. Sem `search_term` devolve o catálogo inteiro, que é pequeno: chame assim uma vez e monte o plano com o que voltou.",
+      "Busca alimentos do catálogo. Use antes de sugerir qualquer alimento — nunca invente nome que não veio daqui, porque item de refeição sem alimento cadastrado não é salvo. A resposta traz `total`: se ele for maior que a lista, você está vendo só uma parte e precisa filtrar.",
     input_schema: {
       type: "object" as const,
       properties: {
+        category: {
+          // O catálogo passou de 44 para quase 180 e não cabe inteiro numa
+          // resposta. Filtrar por categoria é o que deixa montar uma refeição
+          // sem carregar o catálogo todo a cada pergunta.
+          type: "string",
+          enum: [
+            "proteina",
+            "carboidrato",
+            "leguminosa",
+            "fruta",
+            "hortalica",
+            "gordura",
+            "laticinio",
+            "bebida",
+            "suplemento",
+          ],
+          description:
+            "Que tipo de alimento. Peça a categoria da vez em vez do catálogo inteiro: para montar um almoço, consulte 'proteina', depois 'carboidrato', depois 'hortalica'.",
+        },
         search_term: {
-          // Sem filtro por categoria: `foods.category` é NULL em 100% das
-          // linhas, e filtrar por ela devolveria zero sempre.
           type: "string",
           description: "Parte do nome do alimento (ex: frango, arroz, aveia). Opcional.",
         },
