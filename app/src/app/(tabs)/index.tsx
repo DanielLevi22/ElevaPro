@@ -337,12 +337,21 @@ export default function DashboardScreen() {
                   ? 'Dados simulados — toque para conectar'
                   : 'Conecte o relógio para ver'
             }
-            // Conectado, o cartão leva ao dado; desconectado, leva à permissão.
-            // Mandar quem já autorizou de volta ao onboarding era pedir de novo
-            // o que ele já deu — e não havia outra porta para a tela.
+            /*
+              Há dado para mostrar, o cartão leva ao dado; não há, leva à
+              permissão. Mandar quem já autorizou de volta ao onboarding era
+              pedir de novo o que ele já deu.
+
+              `mock` conta como "há dado" de propósito: ele existe para a tela
+              funcionar sem aparelho, e tratá-lo como desconectado deixava a
+              tela inalcançável no emulador — que é onde ela é aberta primeiro.
+              O badge "Simulado" no topo dela diz de onde vem o número.
+            */
             onPress={() =>
               router.push(
-                healthSource === 'device' ? ROUTES.STUDENT.HEALTH : ROUTES.ONBOARDING.HEALTH_CONNECT
+                healthSource === 'unavailable'
+                  ? ROUTES.ONBOARDING.HEALTH_CONNECT
+                  : ROUTES.STUDENT.HEALTH
               )
             }
             titulo={healthSource === 'device' ? 'Saúde do dia' : 'Conectar Saúde'}
