@@ -5,8 +5,7 @@ import {
 } from "../prompts/student-coach.prompts";
 import type { AIProvider, SystemBlock, ToolDefinition } from "../providers/types";
 import { STUDENT_COACH_TOOLS } from "../tools/studentCoachTools";
-import type { PlanProposalData, SseEvent } from "../types";
-import { BaseOrchestrator, type ToolCallHandler } from "./base.orchestrator";
+import { BaseOrchestrator } from "./base.orchestrator";
 
 type CoachMode = "express" | "analytical";
 type PersonaTrack = "beginner" | "returning" | "intermediate" | "advanced";
@@ -45,27 +44,5 @@ export class StudentCoachOrchestrator extends BaseOrchestrator {
 
   getTools(): ToolDefinition[] {
     return STUDENT_COACH_TOOLS;
-  }
-
-  // propose_plan yields a plan_proposal SSE event so the UI can render the confirmation card.
-  // save_plan delegates to onToolCall which persists the plan to the database.
-  protected async handleTool(
-    name: string,
-    input: unknown,
-    onToolCall: ToolCallHandler | undefined,
-  ): Promise<{ sseEvents: SseEvent[]; result: string }> {
-    if (name === "propose_plan") {
-      return {
-        sseEvents: [{ type: "plan_proposal", data: input as PlanProposalData }],
-        result: "Plano apresentado ao aluno. Aguardando confirmacao.",
-      };
-    }
-    if (name === "save_plan") {
-      const result = onToolCall
-        ? await onToolCall(name, input)
-        : JSON.stringify({ error: "save_plan handler not provided" });
-      return { sseEvents: [], result };
-    }
-    return super.handleTool(name, input, onToolCall);
   }
 }

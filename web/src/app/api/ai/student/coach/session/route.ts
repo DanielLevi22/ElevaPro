@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { rotaDeIA } from "@/lib/ai-route";
 import { authorizeStudent } from "@/lib/api-auth";
 import { getAiReadinessScore } from "@/modules/ai/services/aiReadiness";
+import { getSessionState } from "@/modules/ai/services/chatService";
 import {
   buildProfileSummary,
   loadStudentCoachContext,
@@ -24,10 +25,11 @@ const handler = async (request: NextRequest) => {
 
   const ctx = await loadStudentCoachContext(studentId);
 
-  const [sessionId] = await Promise.all([getOrCreateStudentCoachSession(studentId)]);
-  const [profileSummary, messages] = await Promise.all([
+  const sessionId = await getOrCreateStudentCoachSession(studentId);
+  const [profileSummary, messages, estado] = await Promise.all([
     Promise.resolve(buildProfileSummary(ctx)),
     getStudentSessionMessages(sessionId),
+    getSessionState(sessionId),
   ]);
 
   const readiness = getAiReadinessScore(ctx);
@@ -41,6 +43,12 @@ const handler = async (request: NextRequest) => {
     messageCount: messages.length,
     messages,
     activePlan: ctx.activePlan,
+    // O cartão do plano vivia só na memória da tela: recarregar apagava a
+    // proposta e o botão de confirmar junto, com ela guardada no servidor. A
+    // pendente vem primeiro — havendo decisão a tomar, é ela que a tela
+    // precisa mostrar.
+    planProposal: estado.pendingStudentPlan ?? estado.resolvedStudentPlan?.plan ?? null,
+    planSaved: !estado.pendingStudentPlan && Boolean(estado.resolvedStudentPlan),
   });
 };
 
