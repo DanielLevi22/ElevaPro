@@ -984,9 +984,17 @@ END $$;
 -- do aluno — dado incorreto sobre a saúde de alguém, que é o que o Art. 6º, V
 -- proíbe, e prescrição repetida que ninguém pediu.
 --
--- A trava é sobre o comportamento, não sobre a existência da função: uma
--- migration futura que troque o `FOR UPDATE` por um SELECT comum recriaria a
--- janela sem mudar nenhuma assinatura, e nada acusaria.
+-- Duas coisas são verificadas, e vale saber qual é qual.
+--
+-- O comportamento — reivindicar duas vezes devolve a proposta só na primeira —
+-- é testado de verdade, e é dele que dependem o segundo clique e o retry.
+--
+-- Já a corrida entre duas abas depende do `FOR UPDATE`, e isso um script de uma
+-- sessão só não alcança: as duas chamadas aqui são sequenciais, e passariam
+-- igual com um SELECT comum. Por isso o `FOR UPDATE` é conferido na definição
+-- da função — guarda mais fraca que a de comportamento, e a que existe: uma
+-- migration futura que o remova recriaria a janela sem mudar assinatura
+-- nenhuma, e nada mais acusaria.
 BEGIN;
 
 DO $$
@@ -1047,7 +1055,17 @@ BEGIN
     RAISE EXCEPTION 'devolver_proposta não recolocou a proposta na fila: %', sobrou;
   END IF;
 
-  RAISE NOTICE 'ok  proposta: reivindicada uma vez só, e devolvida quando a gravação falha';
+  -- O que o teste sequencial acima não alcança. Sem a trava de linha, duas abas
+  -- leem a mesma proposta pendente e gravam os mesmos treinos na conta do aluno.
+  IF (SELECT pg_get_functiondef(p.oid) FROM pg_proc p
+      JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname = 'public' AND p.proname = 'reivindicar_proposta') NOT LIKE '%FOR UPDATE%'
+  THEN
+    RAISE EXCEPTION
+      'CORRIDA REABERTA: reivindicar_proposta perdeu o FOR UPDATE — duas abas voltam a gravar a mesma proposta';
+  END IF;
+
+  RAISE NOTICE 'ok  proposta: reivindicada uma vez só, com trava de linha, e devolvida quando a gravação falha';
 END $$;
 
 ROLLBACK;
