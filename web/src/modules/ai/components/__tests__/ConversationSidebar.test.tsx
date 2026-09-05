@@ -138,4 +138,22 @@ describe("ConversationSidebar", () => {
     fireEvent.click(screen.getByRole("button", { name: /mostrar conversas/i }));
     expect(screen.getByText("Bloco de força")).toBeInTheDocument();
   });
+
+  // A lista é ordenada por atividade. Rotular pela criação fazia conversa
+  // criada ontem e usada hoje subir ao topo exibindo ontem, e quem lê as datas
+  // conclui que a ordem está errada quando ela está certa.
+  it("conversa sem título é datada pela última atividade, não pela criação", () => {
+    montar({
+      sessions: [
+        conversa({
+          title: null,
+          created_at: "2026-08-20T10:00:00Z",
+          updated_at: "2026-09-05T10:00:00Z",
+        }),
+      ],
+    });
+
+    expect(screen.getByText("Conversa de 05/09")).toBeInTheDocument();
+    expect(screen.queryByText("Conversa de 20/08")).not.toBeInTheDocument();
+  });
 });

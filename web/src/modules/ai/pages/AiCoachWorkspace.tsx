@@ -56,8 +56,17 @@ export function AiCoachWorkspace() {
   const student = students.find((s) => s.id === studentId);
 
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [activeModule, setActiveModule] = useState<ChatModule>("workout");
+  /**
+   * A conversa aberta, ou `null` enquanto ninguém escolheu.
+   *
+   * Um par, não dois estados. Enquanto o id e o módulo viviam separados, eles
+   * podiam discordar: o id apontava para a conversa de treino e o módulo dizia
+   * `nutrition`, e a tela renderizava o chat de nutrição carregando a conversa
+   * de treino. `null` também é o que distingue "ninguém escolheu" de "escolheu
+   * treino" — antes os dois eram o mesmo valor, e por isso a escolha da pessoa
+   * era sobrescrita.
+   */
+  const [conversa, setConversa] = useState<{ id: string; module: ChatModule } | null>(null);
   const [busy, setBusy] = useState(false);
 
   const carregarLista = useCallback(async (): Promise<ChatSessionSummary[]> => {
@@ -79,12 +88,16 @@ export function AiCoachWorkspace() {
 
   // Abre a conversa mais recente, seja ela de treino ou de nutrição — é a que a
   // pessoa estava usando quando saiu.
+  //
+  // Só quando não há nenhuma escolhida. Este efeito roda de novo sempre que o
+  // `accessToken` muda, e o Supabase renova o token sozinho de tempos em
+  // tempos: sem a guarda, a conversa trocava no meio do uso, sem ninguém
+  // clicar em nada.
   useEffect(() => {
     let cancelado = false;
     carregarLista().then((lista) => {
       if (cancelado || lista.length === 0) return;
-      setActiveId((atual) => atual ?? lista[0].id);
-      setActiveModule((atual) => (atual === "workout" ? lista[0].module : atual));
+      setConversa((atual) => atual ?? { id: lista[0].id, module: lista[0].module });
     });
     return () => {
       cancelado = true;
@@ -92,8 +105,7 @@ export function AiCoachWorkspace() {
   }, [carregarLista]);
 
   function selecionar(sessao: ChatSessionSummary) {
-    setActiveModule(sessao.module);
-    setActiveId(sessao.id);
+    setConversa({ id: sessao.id, module: sessao.module });
   }
 
   async function criar(module: ChatModule) {
@@ -109,8 +121,7 @@ export function AiCoachWorkspace() {
         body: JSON.stringify({ module }),
       }).then((r) => r.json());
 
-      setActiveModule(module);
-      setActiveId(sessionId ?? null);
+      setConversa(sessionId ? { id: sessionId, module } : null);
       await carregarLista();
     } finally {
       setBusy(false);
@@ -134,10 +145,9 @@ export function AiCoachWorkspace() {
 
       // Arquivar a conversa aberta deixaria a tela mostrando algo que saiu da
       // lista: recai na mais recente que sobrou.
-      if (sessionId === activeId) {
+      if (sessionId === conversa?.id) {
         const proxima = lista[0] ?? null;
-        setActiveId(proxima?.id ?? null);
-        setActiveModule(proxima?.module ?? "workout");
+        setConversa(proxima ? { id: proxima.id, module: proxima.module } : null);
       }
     } finally {
       setBusy(false);
@@ -166,7 +176,9 @@ export function AiCoachWorkspace() {
    */
   const registrarSessao = useCallback(
     (sessionId: string) => {
-      setActiveId((atual) => atual ?? sessionId);
+      // O módulo é o do chat que está na tela — sem conversa escolhida, é o de
+      // treino, que é o que a tela renderiza por padrão.
+      setConversa((atual) => atual ?? { id: sessionId, module: "workout" });
       void carregarLista();
     },
     [carregarLista],
@@ -189,7 +201,7 @@ export function AiCoachWorkspace() {
         <div>
           <h2 className="font-bold text-foreground text-xl">Assistente</h2>
           <p className="text-muted-foreground text-sm">
-            {TITULO_DO_COACH[activeModule]}
+            {TITULO_DO_COACH[conversa?.module ?? "workout"]}
             {student?.full_name ? ` · ${student.full_name}` : ""}
           </p>
         </div>
@@ -198,7 +210,7 @@ export function AiCoachWorkspace() {
       <div className="flex gap-4">
         <ConversationSidebar
           sessions={sessions}
-          activeId={activeId}
+          activeId={conversa?.id ?? null}
           onSelect={selecionar}
           onCreate={criar}
           onArchive={arquivar}
@@ -210,19 +222,19 @@ export function AiCoachWorkspace() {
             pendentes e o histórico pertencem à conversa que sai, e reaproveitar
             o componente deixaria o cartão da anterior na tela da seguinte. */}
         <div className="min-w-0 flex-1">
-          {activeModule === "nutrition" ? (
+          {conversa?.module === "nutrition" ? (
             <NutritionCoachChat
-              key={activeId ?? "nutrition-recente"}
+              key={conversa?.id ?? "nutrition-recente"}
               studentId={studentId}
-              sessionId={activeId}
+              sessionId={conversa?.id ?? null}
               onSessionResolved={registrarSessao}
               onConversationChanged={carregarLista}
             />
           ) : (
             <AiCoachChat
-              key={activeId ?? "workout-recente"}
+              key={conversa?.id ?? "workout-recente"}
               studentId={studentId}
-              sessionId={activeId}
+              sessionId={conversa?.id ?? null}
               onSessionResolved={registrarSessao}
               onConversationChanged={carregarLista}
             />
