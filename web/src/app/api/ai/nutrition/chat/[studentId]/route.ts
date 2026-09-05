@@ -240,10 +240,15 @@ export async function GET(
 
   // Mesmo motivo do chat de treino: a proposta guardada é a que a aprovação
   // salva, e sem devolvê-la recarregar a tela apagava o cartão com o botão.
+  //
+  // A pendente vem primeiro — havendo decisão a tomar, é ela que a tela precisa
+  // mostrar. Sem pendente, volta a aprovada, marcada como salva.
   return NextResponse.json({
     sessionId,
     messages,
-    planProposal: estado.pendingDietPlan ?? null,
-    mealsProposal: estado.pendingDietMeals ?? null,
+    planProposal: estado.pendingDietPlan ?? estado.resolvedDietPlan ?? null,
+    planSaved: !estado.pendingDietPlan && Boolean(estado.resolvedDietPlan),
+    mealsProposal: estado.pendingDietMeals ?? estado.resolvedDietMeals ?? null,
+    mealsSaved: !estado.pendingDietMeals && Boolean(estado.resolvedDietMeals),
   });
 }

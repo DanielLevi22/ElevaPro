@@ -162,6 +162,13 @@ export interface AiSessionState {
   pendingDietPlan?: DietPlanProposal;
   pendingDietMeals?: DietMealsProposal;
   savedDietPlanId?: string;
+  /**
+   * As propostas de dieta já aprovadas. Mesmo papel de
+   * `resolvedWorkoutProposal`: sair da fila de decisão sem sair da tela.
+   * Enquanto ficassem em "pendente", um segundo clique salvaria de novo.
+   */
+  resolvedDietPlan?: DietPlanProposal;
+  resolvedDietMeals?: DietMealsProposal;
 }
 
 export type SseEvent =

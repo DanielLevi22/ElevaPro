@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
 import { criarAcumuladorDeTexto } from "../services/acumuladorDeTexto";
+import { dispensar, foiDispensada } from "../services/propostaDispensada";
 import type { ChatMessage, DietMealsProposal, DietPlanProposal, SseEvent } from "../types";
 import { DietMealsProposalCard, DietPlanProposalCard } from "./DietProposalCards";
+import { PainelDeProposta } from "./PainelDeProposta";
 
 interface Props {
   studentId: string;
@@ -59,10 +61,14 @@ export function NutritionCoachChat({
         if (data.sessionId) onSessionResolved(data.sessionId);
         // Mesmo motivo do chat de treino: proposta guardada no servidor volta
         // para a tela ao abrir, em vez de sumir com o botão de aprovar.
-        setPlanProposal(data.planProposal ?? null);
-        setPlanSaved(false);
-        setMealsProposal(data.mealsProposal ?? null);
-        setMealsSaved(false);
+        const planoSalvo = Boolean(data.planSaved);
+        const refeicoesSalvas = Boolean(data.mealsSaved);
+        const jaDispensou = data.sessionId ? foiDispensada(data.sessionId) : false;
+
+        setPlanSaved(planoSalvo);
+        setPlanProposal(planoSalvo && jaDispensou ? null : (data.planProposal ?? null));
+        setMealsSaved(refeicoesSalvas);
+        setMealsProposal(refeicoesSalvas && jaDispensou ? null : (data.mealsProposal ?? null));
         setMessages(
           data.messages?.length
             ? data.messages
@@ -113,6 +119,10 @@ export function NutritionCoachChat({
           Authorization: `Bearer ${session.access_token}`,
           "Content-Type": "application/json",
         },
+        // Qual conversa: a proposta guardada vive no `state` desta, e sem o id
+        // o servidor aprovava contra a mais recente do módulo — respondendo
+        // "nenhuma proposta pendente" com a proposta na tela.
+        body: JSON.stringify({ sessionId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? "falha ao salvar");
@@ -283,7 +293,21 @@ export function NutritionCoachChat({
           </div>
         )}
 
-        {planProposal && (
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Proposta pendente mora fora da lista: é ação esperando decisão, não
+          mensagem. Dentro dela era só o último item, e texto novo entrava
+          antes — o mesmo que já tirou o cartão de treino de lá. */}
+      {planProposal && (
+        <PainelDeProposta
+          titulo="Metas do plano"
+          resolvido={planSaved}
+          onFechar={() => {
+            if (sessionId) dispensar(sessionId);
+            setPlanProposal(null);
+          }}
+        >
           <DietPlanProposalCard
             data={planProposal}
             saved={planSaved}
@@ -291,9 +315,18 @@ export function NutritionCoachChat({
             onApprove={() => approve("save-plan")}
             onAdjust={() => sendMessage("Quero ajustar as metas do plano.")}
           />
-        )}
+        </PainelDeProposta>
+      )}
 
-        {mealsProposal && (
+      {mealsProposal && (
+        <PainelDeProposta
+          titulo="Refeições do plano"
+          resolvido={mealsSaved}
+          onFechar={() => {
+            if (sessionId) dispensar(sessionId);
+            setMealsProposal(null);
+          }}
+        >
           <DietMealsProposalCard
             data={mealsProposal}
             saved={mealsSaved}
@@ -301,10 +334,8 @@ export function NutritionCoachChat({
             onApprove={() => approve("save-meals")}
             onAdjust={() => sendMessage("Quero ajustar as refeições.")}
           />
-        )}
-
-        <div ref={bottomRef} />
-      </div>
+        </PainelDeProposta>
+      )}
 
       <div className="border-t border-white/10 pt-4">
         <div className="flex items-end gap-3">
