@@ -30,10 +30,14 @@ type Linha = SseEvent | Execucao;
  * Provider falso que imita o real: nomeia a ferramenta ao começar a montá-la
  * (`content_block_start`) e só depois entrega a chamada pronta.
  */
+/** Os blocos de sistema do último turno, para conferir o que o modelo recebeu. */
+let blocosRecebidos: SystemBlock[] = [];
+
 function providerFalso(ferramentas: string[], textos: string[] = []): AIProvider {
   let turnos = 0;
   return {
-    async *stream(): AsyncGenerator<ProviderStreamEvent> {
+    async *stream(options): AsyncGenerator<ProviderStreamEvent> {
+      blocosRecebidos = options.systemBlocks;
       const turno = turnos++;
 
       for (const pedaco of textos[turno] ? [textos[turno]] : []) {
@@ -72,7 +76,9 @@ function providerFalso(ferramentas: string[], textos: string[] = []): AIProvider
 
 class OrquestradorDeTeste extends BaseOrchestrator {
   buildSystemBlocks(): SystemBlock[] {
-    return [{ text: "prompt" }];
+    // Cacheado como nos orquestradores de verdade: é o prefixo que a data não
+    // pode invalidar.
+    return [{ text: "prompt", cacheControl: true }];
   }
   getTools(): ToolDefinition[] {
     return [];
@@ -160,5 +166,24 @@ describe("texto entre turnos", () => {
     const linha = await linhaDoTempo([], ["Olá!"]);
 
     expect(texto(linha)).toBe("Olá!");
+  });
+});
+
+describe("o que o modelo recebe de contexto", () => {
+  // Sem a data, "hoje" é palavra sem referente e o assistente pergunta de volta
+  // que dia é hoje quando o especialista responde "hoje".
+  it("a data de hoje vai junto, todo turno", async () => {
+    await linhaDoTempo([], ["oi"]);
+
+    expect(blocosRecebidos.at(-1)?.text).toContain("HOJE É");
+  });
+
+  // O prompt e o contexto do aluno são cacheados por prefixo. A data muda todo
+  // dia: cacheá-la junto invalidaria o prefixo inteiro uma vez por dia.
+  it("a data não é cacheada, e o que vem antes dela continua sendo", async () => {
+    await linhaDoTempo([], ["oi"]);
+
+    expect(blocosRecebidos.at(-1)?.cacheControl).toBeUndefined();
+    expect(blocosRecebidos[0]?.cacheControl).toBe(true);
   });
 });

@@ -5,6 +5,7 @@ import type {
   SystemBlock,
   ToolDefinition,
 } from "../providers/types";
+import { blocoDaDataDeHoje } from "../services/dataDeHoje";
 import type { SseEvent } from "../types";
 
 export type ToolCallHandler = (name: string, input: unknown) => Promise<string>;
@@ -16,8 +17,13 @@ export interface OrchestratorRunInput {
   onToolCall?: ToolCallHandler;
 }
 
+/** Parágrafo entre o texto de um turno e o do seguinte. */
+const QUEBRA = `
+
+`;
+
 /**
- * O que dizer enquanto o coach está com uma ferramenta na mão.
+ * O que dizer enquanto o assistente está com uma ferramenta na mão.
  *
  * O aviso começa quando o modelo **começa a montar** a chamada, não quando ela
  * executa: gerar o JSON de uma proposta de três treinos leva de 15 a 20
@@ -28,11 +34,6 @@ export interface OrchestratorRunInput {
  * ter ido ao servidor. Enquanto o modelo monta ou executa uma ferramenta,
  * inclusive consulta, a tela tem o que dizer.
  */
-/** Parágrafo entre o texto de um turno e o do seguinte. */
-const QUEBRA = `
-
-`;
-
 const TOOL_LABELS: Record<string, string> = {
   query_exercises: "Consultando o catálogo de exercícios",
   query_foods: "Consultando o catálogo de alimentos",
@@ -66,7 +67,14 @@ export abstract class BaseOrchestrator {
   async *run(input: OrchestratorRunInput): AsyncGenerator<SseEvent> {
     const messages: LLMMessage[] = [...input.history, { role: "user", content: input.userMessage }];
 
-    const systemBlocks = this.buildSystemBlocks(input.contextText);
+    // A data vai por último e sem cache: os blocos de prompt e de contexto são
+    // cacheados por prefixo, e a data muda todo dia — cacheá-la junto
+    // invalidaria o prefixo inteiro uma vez por dia, que é justamente o que o
+    // cache existe para evitar. Vale para os três assistentes de uma vez.
+    const systemBlocks = [
+      ...this.buildSystemBlocks(input.contextText),
+      { text: blocoDaDataDeHoje() },
+    ];
     const tools = this.getTools();
 
     // Turno posterior a uma ferramenta continua a mesma bolha. Sem a quebra, o
