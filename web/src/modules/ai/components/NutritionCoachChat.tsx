@@ -3,11 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
+import { criarAcumuladorDaPrevia } from "../services/acumuladorDaPrevia";
 import { criarAcumuladorDeTexto } from "../services/acumuladorDeTexto";
+import type { Previa } from "../services/previaDaProposta";
 import { dispensar, foiDispensada } from "../services/propostaDispensada";
 import type { ChatMessage, DietMealsProposal, DietPlanProposal, SseEvent } from "../types";
 import { DietMealsProposalCard, DietPlanProposalCard } from "./DietProposalCards";
 import { PainelDeProposta } from "./PainelDeProposta";
+import { PreviaDaProposta } from "./PreviaDaProposta";
 import { TextoDoAssistente } from "./TextoDoAssistente";
 
 interface Props {
@@ -40,6 +43,8 @@ export function NutritionCoachChat({
   const [saving, setSaving] = useState(false);
   /** O que o coach está fazendo agora — o turno inteiro, não só na ferramenta. */
   const [activity, setActivity] = useState<string | null>(null);
+  /** A proposta aparecendo enquanto é escrita, antes de o cartão existir. */
+  const [previa, setPrevia] = useState<Previa | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -158,6 +163,8 @@ export function NutritionCoachChat({
       createdAt: new Date().toISOString(),
     };
     const assistantId = crypto.randomUUID();
+    // A proposta que vier sendo escrita aparece por aqui, uma vez por quadro.
+    const emMontagem = criarAcumuladorDaPrevia(setPrevia);
     const texto = criarAcumuladorDeTexto((pedaco) =>
       setMessages((prev) =>
         prev.map((m) => (m.id === assistantId ? { ...m, content: m.content + pedaco } : m)),
@@ -200,14 +207,19 @@ export function NutritionCoachChat({
 
             if (event.type === "text") {
               texto.empurrar(event.content);
+            } else if (event.type === "proposal_building") {
+              emMontagem.empurrar(event.tool, event.partial);
             } else if (event.type === "tool_start") {
               setActivity(event.label);
             } else if (event.type === "tool_end") {
               setActivity(null);
             } else if (event.type === "diet_plan_proposal") {
+              // O cartão de verdade chegou: a prévia cumpriu o papel dela.
+              emMontagem.limpar();
               setPlanProposal(event.data);
               setPlanSaved(false);
             } else if (event.type === "diet_meals_proposal") {
+              emMontagem.limpar();
               setMealsProposal(event.data);
               setMealsSaved(false);
             } else if (event.type === "error") {
@@ -223,6 +235,7 @@ export function NutritionCoachChat({
     } finally {
       // O último pedaço chega depois do último quadro.
       texto.liberar();
+      emMontagem.limpar();
       setLoading(false);
       setActivity(null);
       inputRef.current?.focus();
@@ -280,7 +293,7 @@ export function NutritionCoachChat({
 
             O orquestrador só emite `tool_start` para o que grava, então esta
             condição não precisa saber quais ferramentas são quais. */}
-        {activity && (
+        {activity && !previa && (
           <div className="flex justify-start">
             <div
               className="flex items-center gap-2.5 rounded-2xl rounded-bl-sm border border-white/10 bg-surface px-4 py-2.5 text-sm text-muted-foreground"
@@ -298,6 +311,10 @@ export function NutritionCoachChat({
 
         <div ref={bottomRef} />
       </div>
+
+      {/* A proposta sendo escrita ocupa o mesmo canto que o cartão vai ocupar,
+          e sai quando ele chega. */}
+      {previa && <PreviaDaProposta previa={previa} />}
 
       {/* Proposta pendente mora fora da lista: é ação esperando decisão, não
           mensagem. Dentro dela era só o último item, e texto novo entrava

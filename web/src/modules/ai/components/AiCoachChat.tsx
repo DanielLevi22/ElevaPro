@@ -3,14 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
+import { criarAcumuladorDaPrevia } from "../services/acumuladorDaPrevia";
 import { criarAcumuladorDeTexto } from "../services/acumuladorDeTexto";
 import type { BlocoDeContexto } from "../services/disponibilidade";
+import type { Previa } from "../services/previaDaProposta";
 import { dispensar, foiDispensada } from "../services/propostaDispensada";
 import type { BulkWorkoutProposal, ChatMessage, PeriodizationProposal, SseEvent } from "../types";
 import { BulkWorkoutProposalCard } from "./BulkWorkoutProposalCard";
 import { ContextoDisponivel } from "./ContextoDisponivel";
 import { PainelDeProposta } from "./PainelDeProposta";
 import { PeriodizationProposalCard } from "./PeriodizationProposalCard";
+import { PreviaDaProposta } from "./PreviaDaProposta";
 import { TextoDoAssistente } from "./TextoDoAssistente";
 
 interface Props {
@@ -47,6 +50,8 @@ export function AiCoachChat({
   const [savingWorkouts, setSavingWorkouts] = useState(false);
   /** O que o coach está fazendo agora, enquanto a ferramenta roda. */
   const [activity, setActivity] = useState<string | null>(null);
+  /** A proposta aparecendo enquanto é escrita, antes de o cartão existir. */
+  const [previa, setPrevia] = useState<Previa | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -186,6 +191,8 @@ export function AiCoachChat({
     setMessages((prev) => [...prev, userMsg]);
 
     const assistantId = crypto.randomUUID();
+    // A proposta que vier sendo escrita aparece por aqui, uma vez por quadro.
+    const emMontagem = criarAcumuladorDaPrevia(setPrevia);
     const texto = criarAcumuladorDeTexto((pedaco) =>
       setMessages((prev) =>
         prev.map((m) => (m.id === assistantId ? { ...m, content: m.content + pedaco } : m)),
@@ -229,12 +236,17 @@ export function AiCoachChat({
             if (event.type === "text") {
               texto.empurrar(event.content);
             } else if (event.type === "proposal") {
+              // O cartão de verdade chegou: a prévia cumpriu o papel dela.
+              emMontagem.limpar();
               setProposal({ data: event.data });
+            } else if (event.type === "proposal_building") {
+              emMontagem.empurrar(event.tool, event.partial);
             } else if (event.type === "tool_start") {
               setActivity(event.label);
             } else if (event.type === "tool_end") {
               setActivity(null);
             } else if (event.type === "workout_proposal") {
+              emMontagem.limpar();
               setWorkoutProposal(event.data);
               setSavedWorkoutTitles([]);
             } else if (event.type === "saved" && event.entity === "periodization") {
@@ -260,6 +272,7 @@ export function AiCoachChat({
       // O último pedaço chega depois do último quadro: sem isto a resposta
       // aparece truncada na tela e completa no histórico.
       texto.liberar();
+      emMontagem.limpar();
       setLoading(false);
       setActivity(null);
       inputRef.current?.focus();
@@ -333,7 +346,7 @@ export function AiCoachChat({
             O preço: o JSON da proposta é gerado DENTRO do bloco `tool_use`, que
             só chega completo, então entre a última palavra do modelo e o
             `tool_start` seguem 15 a 20 segundos sem evento nenhum. */}
-        {activity && (
+        {activity && !previa && (
           <div className="flex justify-start">
             <div
               className="flex items-center gap-2.5 rounded-2xl rounded-bl-sm border border-white/10 bg-surface px-4 py-2.5 text-sm text-muted-foreground"
@@ -351,6 +364,10 @@ export function AiCoachChat({
 
         <div ref={bottomRef} />
       </div>
+
+      {/* A proposta sendo escrita ocupa o mesmo canto que o cartão vai ocupar,
+          e sai quando ele chega. */}
+      {previa && <PreviaDaProposta previa={previa} />}
 
       {/* Proposta pendente mora aqui, fora da lista: é ação esperando decisão,
           não mensagem. Dentro da lista ela era só o último item — texto novo

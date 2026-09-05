@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { BulkWorkoutProposal } from "../../types";
 
@@ -136,5 +136,113 @@ describe("proposta na tela do coach", () => {
     rerender(chat);
 
     expect(screen.getByRole("region", { name: "Proposta de treinos" })).toBeInTheDocument();
+  });
+});
+
+/**
+ * A espera deixando de ser opaca.
+ *
+ * Montar a proposta leva de 15 a 20 segundos dentro do bloco da ferramenta.
+ * Antes, a tela mostrava um rótulo girando o tempo todo; agora ela monta junto
+ * com o modelo — e some assim que o cartão de verdade chega.
+ */
+describe("proposta sendo escrita", () => {
+  /** Stream SSE que o teste alimenta pedaço a pedaço, como a rede faria. */
+  function streamManual() {
+    const encoder = new TextEncoder();
+    let controlador!: ReadableStreamDefaultController<Uint8Array>;
+    const body = new ReadableStream<Uint8Array>({
+      start(c) {
+        controlador = c;
+      },
+    });
+    return {
+      body,
+      enviar: (evento: unknown) =>
+        controlador.enqueue(
+          encoder.encode(`data: ${JSON.stringify(evento)}
+
+`),
+        ),
+      fechar: () => controlador.close(),
+    };
+  }
+
+  async function enviarMensagem(stream: { body: ReadableStream<Uint8Array> }) {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init?: RequestInit) =>
+        init?.method === "POST"
+          ? ({ body: stream.body } as Response)
+          : ({ json: async () => aoAbrir } as Response),
+      ),
+    );
+
+    await act(async () => {
+      fireEvent.change(screen.getByPlaceholderText(/Digite uma mensagem/), {
+        target: { value: "monta os treinos" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Enviar mensagem" }));
+    });
+  }
+
+  it("mostra o que já chegou da proposta, e troca pelo cartão quando ele chega", async () => {
+    await montar();
+    await waitFor(() => expect(screen.getByPlaceholderText(/Digite uma mensagem/)).toBeVisible());
+
+    const stream = streamManual();
+    await enviarMensagem(stream);
+
+    await act(async () => {
+      stream.enviar({
+        type: "proposal_building",
+        tool: "propose_workouts",
+        partial: '{"phase_name":"Base","workouts":[{"title":"Treino A"',
+      });
+    });
+
+    await waitFor(() =>
+      expect(screen.getByRole("region", { name: /sendo montada/ })).toBeInTheDocument(),
+    );
+    expect(screen.getByText("Treino A")).toBeInTheDocument();
+    // Não há como aprovar o que ainda está sendo escrito.
+    expect(screen.queryByRole("button", { name: /Aprovar e Salvar/ })).not.toBeInTheDocument();
+
+    await act(async () => {
+      stream.enviar({ type: "workout_proposal", data: PROPOSTA });
+      stream.enviar({ type: "done" });
+      stream.fechar();
+    });
+
+    await waitFor(() =>
+      expect(screen.getByRole("region", { name: "Proposta de treinos" })).toBeInTheDocument(),
+    );
+    expect(screen.queryByRole("region", { name: /sendo montada/ })).not.toBeInTheDocument();
+  });
+
+  // Meio exercício não vira exercício com série indefinida na tela.
+  it("não mostra o exercício cujo nome ainda está pela metade", async () => {
+    await montar();
+    await waitFor(() => expect(screen.getByPlaceholderText(/Digite uma mensagem/)).toBeVisible());
+
+    const stream = streamManual();
+    await enviarMensagem(stream);
+
+    await act(async () => {
+      stream.enviar({
+        type: "proposal_building",
+        tool: "propose_workouts",
+        partial:
+          '{"workouts":[{"title":"Treino A","exercises":[{"exercise_name":"Supino","sets":3,"reps":"8-12"},{"exercise_name":"Agach',
+      });
+    });
+
+    await waitFor(() => expect(screen.getByText("Supino")).toBeInTheDocument());
+    expect(screen.queryByText(/Agach/)).not.toBeInTheDocument();
+
+    await act(async () => {
+      stream.enviar({ type: "done" });
+      stream.fechar();
+    });
   });
 });

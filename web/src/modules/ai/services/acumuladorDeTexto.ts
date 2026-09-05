@@ -27,7 +27,7 @@ export interface AcumuladorDeTexto {
 /** Agendador de quadro. Injetável porque `requestAnimationFrame` não existe em teste. */
 export type Agendador = (aplicar: () => void) => void;
 
-const proximoQuadro: Agendador = (aplicar) => {
+export const proximoQuadro: Agendador = (aplicar) => {
   // Fora do navegador (SSR, teste sem DOM) não há quadro para esperar: aplicar
   // direto preserva o comportamento em vez de engolir o texto.
   if (typeof requestAnimationFrame === "function") requestAnimationFrame(aplicar);

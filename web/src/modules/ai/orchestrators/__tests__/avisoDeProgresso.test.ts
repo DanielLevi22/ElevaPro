@@ -67,7 +67,11 @@ function providerFalso(ferramentas: string[], textos: string[] = []): AIProvider
         input: {},
       }));
 
-      for (const bloco of blocos) yield { type: "tool_building", name: bloco.name };
+      for (const bloco of blocos) {
+        yield { type: "tool_building", name: bloco.name };
+        // Os 15 a 20 segundos de JSON, encolhidos a um pedaço.
+        yield { type: "tool_input_delta", name: bloco.name, partial: `{"de":"${bloco.name}"` };
+      }
       for (const bloco of blocos) {
         yield { type: "tool_use", id: bloco.id, name: bloco.name, input: bloco.input };
       }
@@ -193,6 +197,52 @@ describe("o que o modelo recebe de contexto", () => {
 
     expect(blocosRecebidos.at(-1)?.cacheControl).toBeUndefined();
     expect(blocosRecebidos[0]?.cacheControl).toBe(true);
+  });
+});
+
+/**
+ * A prévia é para a espera longa, e só para ela.
+ *
+ * Consulta volta antes de a pessoa terminar de ler a frase anterior, e salvar
+ * recebe um id — prever o que já foi decidido não diz nada a ninguém.
+ */
+describe("prévia da proposta", () => {
+  const previas = (linha: Linha[]) =>
+    linha.filter(
+      (e): e is Extract<SseEvent, { type: "proposal_building" }> => e.type === "proposal_building",
+    );
+
+  it.each([
+    "propose_periodization",
+    "propose_workouts",
+    "propose_diet_plan",
+    "propose_meals",
+  ])("repassa os pedaços de %s enquanto são escritos", async (ferramenta) => {
+    const linha = await linhaDoTempo([ferramenta]);
+
+    expect(previas(linha)).toEqual([
+      { type: "proposal_building", tool: ferramenta, partial: `{"de":"${ferramenta}"` },
+    ]);
+  });
+
+  it.each([
+    "query_exercises",
+    "query_foods",
+    "save_periodization",
+  ])("%s não manda prévia, mesmo tendo rótulo", async (ferramenta) => {
+    expect(previas(await linhaDoTempo([ferramenta]))).toEqual([]);
+  });
+
+  // O pedaço chega antes de a ferramenta executar — é justamente a espera que
+  // ele preenche.
+  it("a prévia chega antes da execução", async () => {
+    const linha = await linhaDoTempo(["propose_workouts"]);
+
+    const pedaco = linha.findIndex((e) => e.type === "proposal_building");
+    const execucao = linha.findIndex((e) => e.type === "executou");
+
+    expect(pedaco).toBeGreaterThanOrEqual(0);
+    expect(pedaco).toBeLessThan(execucao);
   });
 });
 

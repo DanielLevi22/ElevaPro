@@ -30,13 +30,22 @@ export class AnthropicProvider implements AIProvider {
       ...(options.temperature === undefined ? {} : { temperature: options.temperature }),
     });
 
+    // Os `input_json_delta` não dizem de que ferramenta são — só o índice do
+    // bloco. O nome só aparece no `content_block_start`, então é aqui que ele
+    // fica guardado até o bloco fechar.
+    const ferramentaDoBloco = new Map<number, string>();
+
     for await (const event of apiStream) {
       if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
         yield { type: "text_delta", content: event.delta.text };
+      } else if (event.type === "content_block_delta" && event.delta.type === "input_json_delta") {
+        const name = ferramentaDoBloco.get(event.index);
+        if (name) yield { type: "tool_input_delta", name, partial: event.delta.partial_json };
       } else if (event.type === "content_block_start" && event.content_block.type === "tool_use") {
         // A API nomeia a ferramenta aqui, antes de um único caractere do JSON.
         // É o único instante em que dá para avisar a tela do que vem, porque
         // depois só há `input_json_delta` até o bloco fechar.
+        ferramentaDoBloco.set(event.index, event.content_block.name);
         yield { type: "tool_building", name: event.content_block.name };
       }
     }

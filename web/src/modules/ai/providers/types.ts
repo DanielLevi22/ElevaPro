@@ -56,6 +56,15 @@ export type ProviderStreamEvent =
    * nada para avisar.
    */
   | { type: "tool_building"; name: string }
+  /**
+   * Um pedaço do JSON da ferramenta, do tamanho em que a API o emitiu.
+   *
+   * É o conteúdo daqueles 15 a 20 segundos. Vai como fragmento, não como o
+   * acumulado até agora: acumulado, cada evento reenviaria tudo o que já foi
+   * enviado, e uma proposta de 4 KB atravessaria a rede umas trinta vezes.
+   * Quem junta é quem mostra.
+   */
+  | { type: "tool_input_delta"; name: string; partial: string }
   | { type: "tool_use"; id: string; name: string; input: unknown }
   | { type: "turn_end"; fullContent: ContentBlock[]; stopReason: string };
 
