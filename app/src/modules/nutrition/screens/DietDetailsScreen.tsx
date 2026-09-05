@@ -33,6 +33,7 @@ import { useDietMeals, useDietPlan } from '@/hooks/useNutrition';
 import { FoodSearchModal } from '../components';
 import { DayActionsModal } from '../components/DayActionsModal';
 import { type FoodItem } from '../screens/FoodSearchScreen';
+import { refeicoesDoDia } from '../services/refeicoesDoDia';
 import { useNutritionStore } from '../store/nutritionStore';
 
 export default function DietDetailsScreen() {
@@ -445,7 +446,7 @@ export default function DietDetailsScreen() {
     );
   }
 
-  const currentDayMeals = meals.filter((m) => m.day_of_week === selectedDay);
+  const currentDayMeals = refeicoesDoDia(meals, plan?.plan_type, selectedDay);
 
   // Calculate daily totals
   const dailyTotals = currentDayMeals.reduce(
