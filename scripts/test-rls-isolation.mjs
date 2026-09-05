@@ -239,7 +239,15 @@ async function main() {
   await api("/rest/v1/physical_assessments", {
     method: "POST",
     token: espec1.token,
-    body: { student_id: alunoA.id, specialist_id: espec1.id, weight_kg: 80 },
+    // `height_cm` entrou como NOT NULL na 0037 e este INSERT nunca foi
+    // atualizado: as três verificações abaixo falhavam desde então, por schema
+    // e não por RLS — o script não roda no pre-commit e ninguém viu.
+    body: {
+      student_id: alunoA.id,
+      specialist_id: espec1.id,
+      weight_kg: 80,
+      height_cm: 175,
+    },
   });
   const criou = await api(
     `/rest/v1/physical_assessments?select=id,weight_kg&student_id=eq.${alunoA.id}`,
