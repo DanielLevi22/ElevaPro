@@ -95,6 +95,12 @@
         {
           "color": "#00FF88"
         }
+      ],
+      [
+        "expo-navigation-bar",
+        {
+          "enforceContrast": false
+        }
       ]
     ],
     "experiments": {
