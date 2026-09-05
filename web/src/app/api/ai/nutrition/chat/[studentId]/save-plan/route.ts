@@ -6,6 +6,7 @@ import {
   getOrCreateSession,
   getSessionState,
   saveMessage,
+  sessionOwnedBy,
   updateSessionState,
 } from "@/modules/ai/services/chatService";
 
@@ -38,7 +39,21 @@ const handler = async (
   if (!auth.ok) return auth.response;
   const specialistId = auth.caller.id;
 
-  const sessionId = await getOrCreateSession(studentId, specialistId, "nutrition");
+  // A proposta guardada vive no `state` da conversa que a produziu. Sem o
+  // `sessionId` do cliente esta rota pegava a mais recente do módulo — e
+  // aprovar numa conversa que não fosse a última respondia "nenhuma proposta
+  // pendente" com a proposta na tela. O dono é validado porque o id vem do
+  // cliente e o `service_role` abaixo não consulta RLS.
+  const corpo = await request.json().catch(() => null);
+  const pedida = typeof corpo?.sessionId === "string" ? corpo.sessionId : undefined;
+
+  const sessionId = pedida
+    ? await sessionOwnedBy(pedida, studentId, specialistId)
+    : await getOrCreateSession(studentId, specialistId, "nutrition");
+
+  if (!sessionId) {
+    return NextResponse.json({ error: "conversa não encontrada" }, { status: 404 });
+  }
   const state = await getSessionState(sessionId);
   const plan = state.pendingDietPlan;
 
@@ -72,9 +87,13 @@ const handler = async (
     return NextResponse.json({ error: "Não consegui salvar o plano." }, { status: 500 });
   }
 
+  // Sai da fila de decisão e vira histórico da tela: sumir de vez deixava a
+  // conversa anunciando o plano salvo com a tela sem nada para mostrar ao
+  // reabrir.
   await updateSessionState(sessionId, {
     savedDietPlanId: data.id,
     pendingDietPlan: undefined,
+    resolvedDietPlan: plan,
   });
 
   // A aprovação acontece no cartão, fora da conversa. Sem esta linha o coach

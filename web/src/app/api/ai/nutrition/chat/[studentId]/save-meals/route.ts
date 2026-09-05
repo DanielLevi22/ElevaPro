@@ -6,6 +6,7 @@ import {
   getOrCreateSession,
   getSessionState,
   saveMessage,
+  sessionOwnedBy,
   updateSessionState,
 } from "@/modules/ai/services/chatService";
 import { foodIdsByName } from "@/modules/ai/services/foodCatalog";
@@ -35,7 +36,21 @@ const handler = async (
   if (!auth.ok) return auth.response;
   const specialistId = auth.caller.id;
 
-  const sessionId = await getOrCreateSession(studentId, specialistId, "nutrition");
+  // A proposta guardada vive no `state` da conversa que a produziu. Sem o
+  // `sessionId` do cliente esta rota pegava a mais recente do módulo — e
+  // aprovar numa conversa que não fosse a última respondia "nenhuma proposta
+  // pendente" com a proposta na tela. O dono é validado porque o id vem do
+  // cliente e o `service_role` abaixo não consulta RLS.
+  const corpo = await request.json().catch(() => null);
+  const pedida = typeof corpo?.sessionId === "string" ? corpo.sessionId : undefined;
+
+  const sessionId = pedida
+    ? await sessionOwnedBy(pedida, studentId, specialistId)
+    : await getOrCreateSession(studentId, specialistId, "nutrition");
+
+  if (!sessionId) {
+    return NextResponse.json({ error: "conversa não encontrada" }, { status: 404 });
+  }
   const state = await getSessionState(sessionId);
   const proposal = state.pendingDietMeals;
   const dietPlanId = state.savedDietPlanId;
@@ -98,7 +113,10 @@ const handler = async (
     salvas.push({ id: mealRow.id, name: meal.name });
   }
 
-  await updateSessionState(sessionId, { pendingDietMeals: undefined });
+  await updateSessionState(sessionId, {
+    pendingDietMeals: undefined,
+    resolvedDietMeals: proposal,
+  });
 
   await saveMessage(
     sessionId,
