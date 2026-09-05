@@ -6,6 +6,7 @@ import { useStudentCoach } from "../hooks/useStudentCoach";
 import { AiReadinessGate } from "./AiReadinessGate";
 import { PlanProposalCard } from "./PlanProposalCard";
 import { ProfileConfirmationCard } from "./ProfileConfirmationCard";
+import { TextoDoAssistente } from "./TextoDoAssistente";
 
 export function StudentCoachChat() {
   const {
@@ -95,7 +96,15 @@ export function StudentCoachChat() {
                   : "bg-surface border border-white/10 text-foreground rounded-bl-sm"
               }`}
             >
-              {msg.content || (
+              {/* Só o texto do assistente é interpretado: quem escreve um
+                  asterisco na própria mensagem espera ver um asterisco. */}
+              {msg.content ? (
+                msg.role === "assistant" ? (
+                  <TextoDoAssistente content={msg.content} />
+                ) : (
+                  msg.content
+                )
+              ) : (
                 <span className="flex gap-1 items-center text-muted-foreground">
                   <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:0ms]" />
                   <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:150ms]" />
