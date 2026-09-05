@@ -35,6 +35,20 @@ const ADMIN_IMPORT = /from\s+["']@\/lib\/supabase-admin["']/;
 const AUTH_IMPORT = /from\s+["']@\/lib\/api-auth["']/;
 
 /**
+ * A rota que delega a autorização ao esqueleto de aprovação.
+ *
+ * `criarRotaDeAprovacao` não é atalho: ele **exige** um `acesso` declarado, e
+ * as duas implementações — `acessoDoEspecialista` e `acessoDoAluno` — chamam
+ * `@/lib/api-auth` antes de qualquer coisa tocar o banco. Uma rota que declara
+ * o esqueleto não tem como esquecer a autorização; ela não compila sem o campo.
+ *
+ * Por isso a garantia continua de pé com o import saindo das rotas — mas ela
+ * passa a depender de um arquivo só, e é esse arquivo que o bloco abaixo trava.
+ */
+const ESQUELETO_IMPORT = /from\s+["']@\/modules\/ai\/services\/rotaDeAprovacao["']/;
+const ESQUELETO = path.join(ROOT, "web/src/modules/ai/services/rotaDeAprovacao.ts");
+
+/**
  * Rotas públicas por decisão de produto — cadastro acontece antes de existir
  * conta para autorizar. Entrada aqui é decisão consciente, não conveniência.
  */
@@ -63,9 +77,26 @@ function main() {
     if (PUBLIC_ROUTES.has(relativa)) continue;
 
     const source = fs.readFileSync(file, "utf8");
-    if (!AUTH_IMPORT.test(source)) {
+    if (!AUTH_IMPORT.test(source) && !ESQUELETO_IMPORT.test(source)) {
       desprotegidas.push({ rota: relativa, usaAdmin: ADMIN_IMPORT.test(source) });
     }
+  }
+
+  // O esqueleto virou o ponto único por onde quatro rotas se autorizam. Se ele
+  // perder a chamada a `@/lib/api-auth`, quatro rotas ficam abertas de uma vez
+  // e nenhuma delas acusa — porque cada uma delega para cá.
+  if (fs.existsSync(ESQUELETO) && !AUTH_IMPORT.test(fs.readFileSync(ESQUELETO, "utf8"))) {
+    console.error(
+      [
+        "",
+        "✗ rotaDeAprovacao.ts deixou de importar @/lib/api-auth.",
+        "",
+        "   Quatro rotas delegam a autorizacao a ele. Sem essa chamada, as quatro",
+        "   gravam prescricao sem verificar quem pede, e nenhuma acusa sozinha.",
+        "",
+      ].join("\n"),
+    );
+    process.exit(1);
   }
 
   if (desprotegidas.length === 0) {
