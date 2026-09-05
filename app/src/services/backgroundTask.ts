@@ -65,8 +65,12 @@ TaskManager.defineTask(BACKGROUND_DIET_SYNC, async () => {
 
       await useNutritionStore.getState().fetchDietPlan(studentId);
 
-      // The fetchDietPlan action ALREADY calls scheduleMealNotifications internally!
-      // So we don't need to duplicate that logic here.
+      // O agendamento vive em `fetchMeals`, não em `fetchDietPlan`: lembrete de
+      // refeição precisa das refeições, e o plano sozinho não as traz. Este
+      // comentário já afirmou que `fetchDietPlan` agendava, e foi por isso que
+      // ninguém percebeu que nada era agendado em lugar nenhum.
+      const plano = useNutritionStore.getState().currentDietPlan;
+      if (plano?.id) await useNutritionStore.getState().fetchMeals(plano.id);
 
       console.log('✅ Background Fetch: Plan updated and notifications rescheduled.');
       return BackgroundFetch.BackgroundFetchResult.NewData;

@@ -11,7 +11,8 @@ import { supabase } from '@elevapro/supabase';
 import { create } from 'zustand';
 import { useAuthStore } from '@/auth';
 import { useGamificationStore } from '@/modules/gamification/store/gamificationStore';
-import { cancelPlanNotifications } from '@/services/notificationService';
+import { cancelPlanNotifications, scheduleMealNotifications } from '@/services/notificationService';
+import { lembretesDaDieta } from '../services/lembretesDaDieta';
 import type { StrategyResult } from '../utils/dietStrategies';
 
 export type { Food };
@@ -254,13 +255,11 @@ export const useNutritionStore = create<NutritionStore>((set, get) => ({
 
       if (!data) return;
 
+      // O agendamento em si mora em `fetchMeals`: lembrete de refeição precisa
+      // das refeições, e aqui só o plano foi carregado. Aqui ficam apenas os
+      // lembretes de um plano que deixou de valer.
       const currentUser = useAuthStore.getState().user;
-      const lastScheduled =
-        (get() as unknown as { lastNotificationSchedule?: number }).lastNotificationSchedule ?? 0;
-      const ONE_HOUR = 60 * 60 * 1000;
-
-      if (data.id && currentUser?.id === studentId && Date.now() - lastScheduled > ONE_HOUR) {
-        set({ lastNotificationSchedule: Date.now() } as unknown as Partial<NutritionStore>);
+      if (data.id && currentUser?.id === studentId && data.status !== 'active') {
         await cancelPlanNotifications(data.id);
       }
     } catch (error) {
@@ -428,6 +427,17 @@ export const useNutritionStore = create<NutritionStore>((set, get) => ({
         meals: mealsValues,
         mealItems: { ...state.mealItems, ...itemsMap },
       }));
+
+      // O agendamento acontece aqui e não em `fetchDietPlan` porque é aqui que
+      // as refeições existem — sem elas não há hora nem dia para avisar.
+      //
+      // Só o plano do próprio aluno: o especialista abre o plano de vários e
+      // não pode receber lembrete de refeição de nenhum deles.
+      const plano = get().currentDietPlan;
+      const usuario = useAuthStore.getState().user;
+      if (plano?.id === dietPlanId && usuario?.id === plano?.student_id) {
+        await scheduleMealNotifications(plano.id, lembretesDaDieta(mealsValues, itemsMap));
+      }
     } catch (error) {
       console.error('Error fetching meals:', error);
     }
