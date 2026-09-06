@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { rotaDeIA } from "@/lib/ai-route";
-import { authorizeStudent } from "@/lib/api-auth";
+import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
 import { getAiReadinessScore } from "@/modules/ai/services/aiReadiness";
 import { getSessionState } from "@/modules/ai/services/chatService";
 import {
@@ -19,7 +19,7 @@ import {
 export const maxDuration = 60;
 
 const handler = async (request: NextRequest) => {
-  const auth = await authorizeStudent(request);
+  const auth = await authorizeStudentWithHealthConsent(request);
   if (!auth.ok) return auth.response;
   const studentId = auth.caller.id;
 

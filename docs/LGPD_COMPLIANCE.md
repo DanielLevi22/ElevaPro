@@ -775,7 +775,7 @@ modelo. Fechado pelo PRD
 | Item | Ação necessária |
 |------|----------------|
 | ~~Consentimento no app mobile antes de `toggleMealCompletion` e `substituteFood`~~ | **Coberto em 2026-08-28.** O gate deixou de ser por chamada e passou a ser de abertura: `HealthDataConsentGate` bloqueia o app do aluno enquanto `student_consents` não estiver na `POLICY_VERSION` corrente, então nenhum caminho de escrita de `meal_logs` é alcançável sem consentimento vigente. Gate na porta cobre os caminhos que ainda não existem; verificação por chamada só cobre as duas que alguém lembrou de instrumentar |
-| NutriBotService e ScanFoodService (BFF API routes) sem verificação de consentimento | Adicionar middleware de consentimento nas routes `/api/ai/student/nutribot` e `/api/ai/student/scan-food` |
+| ~~NutriBotService e ScanFoodService (BFF API routes) sem verificação de consentimento~~ | ✅ Resolvido em 2026-09-05 — as duas passaram a usar `authorizeStudentWithHealthConsent` |
 
 ---
 
@@ -826,11 +826,11 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 | `/api/ai/nutrition/chat/[studentId]` | Os mesmos campos do coach de treino: objetivo, experiência, **lesões**, **condições de saúde**, peso, altura, % gordura. **Sem o nome do titular** | Anthropic | ✅ Sim (Art. 11) | Consentimento explícito — verificado na rota |
 | `/api/ai/chat/[studentId]` | Objetivo, experiência, frequência, dias, **lesões**, **condições de saúde**, peso, altura, % gordura, periodizações. **Sem o nome do titular** | Anthropic | ✅ Sim (Art. 11) | Consentimento explícito — verificado na rota desde 2026-08-12 |
 | `/api/ai/body-scan` | Fotos corporais (base64, 3 imagens) + métricas estimadas | Anthropic | ✅ Sim (Art. 5°, II) | Consentimento explícito (Art. 11, I) — **verificado na rota**. A imagem não é persistida: guarda-se só o resultado |
-| `/api/ai/nutrition/adherence` | `diet_logs` anonimizados + nome do plano | Anthropic | ✅ Sim | Consentimento explícito — **não verificado na rota** |
-| `/api/ai/student/coach/message` | Anamnese, peso, altura, % de gordura e plano do aluno | Anthropic | ✅ Sim (Art. 11) | **Só autenticação** (`authorizeStudent`) — sem checagem de `student_consents` |
-| `/api/ai/student/coach/session` | Idem — abre a sessão do coach do aluno | Anthropic | ✅ Sim (Art. 11) | **Só autenticação** — sem checagem de `student_consents` |
-| `/api/ai/student/nutribot` | Contexto nutricional do aluno | Anthropic | ✅ Sim | **Só autenticação** — sem checagem de `student_consents` |
-| `/api/ai/student/scan-food` | Foto de alimento enviada pelo aluno | Anthropic | ⚠️ Imagem do titular | **Só autenticação** — sem checagem de `student_consents` |
+| `/api/ai/nutrition/adherence` | `diet_logs` anonimizados + nome do plano | Anthropic | ✅ Sim | Consentimento explícito — **verificado na rota** desde 2026-09-05. Também passou de `authorizeUser` para conta de aluno: antes, qualquer autenticado pedia análise do log que enviasse |
+| `/api/ai/student/coach/message` | Anamnese, peso, altura, % de gordura e plano do aluno | Anthropic | ✅ Sim (Art. 11) | Consentimento explícito — **verificado na rota** desde 2026-09-05 (`authorizeStudentWithHealthConsent`) |
+| `/api/ai/student/coach/session` | Idem — abre a sessão do coach do aluno | Anthropic | ✅ Sim (Art. 11) | Consentimento explícito — **verificado na rota** desde 2026-09-05 |
+| `/api/ai/student/nutribot` | Contexto nutricional do aluno | Anthropic | ✅ Sim | Consentimento explícito — **verificado na rota** desde 2026-09-05 |
+| `/api/ai/student/scan-food` | Foto de alimento enviada pelo aluno | Anthropic | ⚠️ Imagem do titular | Consentimento explícito — **verificado na rota** desde 2026-09-05 |
 | `/api/ai/voice-command` | Removido — rota e serviço eliminados | — | — | — |
 | `/api/ai/workout/negotiate` | Nível do aluno, objetivo, lista de exercícios | Anthropic | ❌ Não sensível | Execução de contrato |
 | `/api/ai/workout/batch` | Idem | Anthropic | ❌ Não sensível | Execução de contrato |
@@ -850,6 +850,8 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 | A IA não cria alimento no catálogo: `foods` é compartilhado entre todos os especialistas | Qualidade dos dados (Art. 6°, V) |
 | Nenhum dado é persistido nas rotas BFF — processamento em memória e descartado | Necessidade + Segurança |
 | Autenticação obrigatória (Bearer token validado via Supabase) antes de qualquer processamento | Segurança (Art. 6°, VII) |
+| O consentimento é conferido num portão só, `authorizeStudentWithHealthConsent`, e não em cinco cópias. Cinco rotas ficaram abertas porque cada uma decidia sozinha: portão único é o que impede a sexta de nascer aberta. A consulta roda sob a identidade do titular, não com `service_role` | Base legal Art. 11, I + Segurança (Art. 6°, VII) |
+| Falha ao consultar `student_consents` recusa com `503`, não libera. "Não consegui perguntar" não é "pode", e o código separa a falha de infraestrutura da recusa (`403 consent_required`), que pedem ações diferentes de quem lê | Prevenção (Art. 6°, VI) |
 | Transmissão via HTTPS (Vercel → Anthropic/Google) | Segurança |
 | Dados de `diet_logs` enviados ao Claude não contêm identificadores do aluno (`student_id` nunca incluído no payload) | Necessidade |
 
@@ -861,7 +863,7 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 | Anthropic e Google devem ser listados como sub-processadores na Política de Privacidade | Atualizar política de privacidade | Legal |
 | ~~Rota `/api/ai/body-scan` deve verificar `student_consents` antes de processar~~ | ✅ Resolvido — a rota checa `hasCollectionConsent` sob a identidade do titular antes de desserializar o corpo, e devolve `403 consent_required`. O app checa antes de ler a foto do aparelho e oferece o fluxo (`ADR-0010`) | — |
 | ~~`loadStudentContext` manda a anamnese inteira (`select("*")`)~~ | ✅ Resolvido — `specialistContextLoader.ts` lê seis campos nomeados, e `check-column-refs.js` recusa `select("*")` em tabela sensível no pre-commit | — |
-| Rota `/api/ai/nutrition/adherence` deve verificar `student_consents` antes de processar | Idem | Dev |
+| ~~Rota `/api/ai/nutrition/adherence` deve verificar `student_consents` antes de processar~~ | ✅ Resolvido em 2026-09-05, junto das quatro rotas do aluno que tinham o mesmo buraco. `consentimentoNaSaida.test.ts` recusa rota nova que autentique o aluno sem checar consentimento, nomeando o arquivo e o artigo | — |
 | ~~Verificar DPA Google (Gemini) para dado biométrico de voz~~ | Eliminado — voice command removido do escopo | — |
 
 ---

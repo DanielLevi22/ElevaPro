@@ -33,6 +33,10 @@ vi.mock("@/modules/ai/ai.config", () => ({ aiProviders: { reasoning: {}, fast: {
 
 vi.mock("@/lib/api-auth", () => ({
   authorizeStudent: async () => ({ ok: true, caller: { id: "aluno-1", accountType: "student" } }),
+  authorizeStudentWithHealthConsent: async () => ({
+    ok: true,
+    caller: { id: "aluno-1", accountType: "student" },
+  }),
 }));
 
 vi.mock("@/modules/ai/services/chatService", () => ({

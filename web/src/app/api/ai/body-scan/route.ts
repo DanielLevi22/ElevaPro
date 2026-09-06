@@ -1,6 +1,5 @@
 import {
   createBodyScanService,
-  createHealthService,
   type EtapaDaAnalise,
   etapaDoTexto,
   type LinhaDoFluxo,
@@ -9,7 +8,7 @@ import {
   type VereditosDaCaptura,
 } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
-import { authorizeStudent } from "@/lib/api-auth";
+import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
 import { clienteDoTitular } from "@/lib/supabase-titular";
 import { aiProviders } from "@/modules/ai/ai.config";
 import type { ContentBlock, ProviderTurnOptions } from "@/modules/ai/providers/types";
@@ -154,27 +153,14 @@ Nunca retorne "height" nem "weight" — eles já são conhecidos. Nunca retorne 
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await authorizeStudent(request);
+  // Antes de ler o corpo da requisição, de propósito: sem consentimento a
+  // imagem não deve nem ser desserializada aqui, muito menos sair para os EUA.
+  // Art. 11, I.
+  const auth = await authorizeStudentWithHealthConsent(request);
   if (!auth.ok) return auth.response;
 
   const client = clienteDoTitular(request);
   const userId = auth.caller.id;
-
-  // Antes de ler o corpo da requisição, de propósito: sem consentimento a
-  // imagem não deve nem ser desserializada aqui, muito menos sair para os EUA.
-  // Pendência da seção 10 do LGPD_COMPLIANCE — Art. 11, I.
-  let hasConsent: boolean;
-  try {
-    hasConsent = await createHealthService(client).hasCollectionConsent(userId);
-  } catch {
-    return NextResponse.json({ error: "consent_check_failed" }, { status: 503 });
-  }
-
-  if (!hasConsent) {
-    // Código estável para o app distinguir "falta consentir" de "deu erro" e
-    // oferecer o fluxo, em vez de mostrar falha genérica.
-    return NextResponse.json({ error: "consent_required" }, { status: 403 });
-  }
 
   const body = (await request.json()) as {
     images: {
