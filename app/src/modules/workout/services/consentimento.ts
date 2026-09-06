@@ -4,6 +4,20 @@ import { supabase } from '@elevapro/supabase';
 const healthService = createHealthService(supabase);
 
 /**
+ * Consentimento vigente para dado de saúde, fechado na dúvida.
+ *
+ * Falha de rede não autoriza: sem esta escolha, uma queda de conexão viraria
+ * permissão para gravar dado de Art. 11.
+ */
+async function temConsentimento(studentId: string): Promise<boolean> {
+  try {
+    return await healthService.hasCollectionConsent(studentId);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Devolve as observações do aluno só quando há consentimento vigente para dado
  * de saúde; caso contrário, `undefined` — a sessão é gravada sem elas.
  *
@@ -28,10 +42,29 @@ export async function notasSeConsentido(
   notas: string | undefined
 ): Promise<string | undefined> {
   if (!notas?.trim()) return undefined;
-  try {
-    return (await healthService.hasCollectionConsent(studentId)) ? notas : undefined;
-  } catch {
-    // Falha de rede não autoriza: na dúvida, a sessão é gravada sem o texto.
-    return undefined;
-  }
+  return (await temConsentimento(studentId)) ? notas : undefined;
+}
+
+/**
+ * Devolve a frequência cardíaca média só quando há consentimento vigente;
+ * caso contrário, `null` — a sessão é gravada sem ela.
+ *
+ * Mesma decisão das observações, aplicada à outra metade sensível da corrida.
+ * Distância, ritmo e cadência atravessam sem passar por aqui: são execução de
+ * contrato, e exigir consentimento para elas desligaria o acompanhamento de
+ * desempenho de quem revoga (migration `0049`).
+ *
+ * O portão existe em duas camadas de propósito. A RLS impede o **especialista**
+ * de ler sem consentimento; esta função impede o app de **gravar**. A primeira
+ * sozinha deixaria o dado entrar no banco de quem já disse não.
+ *
+ * @example
+ * const bpm = await batimentoSeConsentido(alunoId, await mediaDeBatimentos(ini, fim));
+ */
+export async function batimentoSeConsentido(
+  studentId: string,
+  batimento: number | null
+): Promise<number | null> {
+  if (batimento === null) return null;
+  return (await temConsentimento(studentId)) ? batimento : null;
 }

@@ -147,6 +147,17 @@ export interface WorkoutSession {
   /** Modalidade do cardio. Na musculação o nome vem da prescrição. */
   activity_name: string | null;
   /**
+   * Medidas da corrida, derivadas do GPS e do acelerômetro no aparelho.
+   * Nulas quando não houve leitura — quem nega a permissão de localização
+   * corre de verdade e termina sem distância, e zero diria que ficou parado.
+   *
+   * A série de coordenadas que produziu estes números não é gravada em lugar
+   * nenhum (issue #278).
+   */
+  distance_meters: number | null;
+  avg_pace_seconds_per_km: number | null;
+  avg_cadence_spm: number | null;
+  /**
    * Quando o aluno corrigiu o próprio feedback (Art. 18, III). Nulo enquanto
    * nunca foi corrigido. Não existe versão anterior guardada, de propósito.
    */
@@ -306,6 +317,13 @@ export interface CreateWorkoutSessionInput {
   /** Cardio apenas: medidos durante a sessão, não derivados do relógio. */
   duration_seconds?: number | null;
   active_calories?: number | null;
+  /**
+   * Corrida apenas: derivados no aparelho. Execução de contrato, ao contrário
+   * da frequência cardíaca, que é Art. 11 e vai por `saveSessionHeartRate`.
+   */
+  distance_meters?: number | null;
+  avg_pace_seconds_per_km?: number | null;
+  avg_cadence_spm?: number | null;
   /** Cardio apenas: a modalidade que o aluno escolheu. */
   activity_name?: string | null;
 }

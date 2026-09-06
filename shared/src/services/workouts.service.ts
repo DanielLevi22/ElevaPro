@@ -449,6 +449,9 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
         duration_seconds: input.duration_seconds ?? null,
         active_calories: input.active_calories ?? null,
         activity_name: input.activity_name ?? null,
+        distance_meters: input.distance_meters ?? null,
+        avg_pace_seconds_per_km: input.avg_pace_seconds_per_km ?? null,
+        avg_cadence_spm: input.avg_cadence_spm ?? null,
       })
       .select()
       .single();
@@ -511,6 +514,30 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
    *   { workout_exercise_id: "abc", sets: [{ reps_actual: 10, weight_actual: 40 }] },
    * ]);
    */
+  /**
+   * Grava a frequência cardíaca média de uma sessão.
+   *
+   * Vive em `workout_session_vitals`, e não numa coluna de `workout_sessions`,
+   * porque a base legal é outra: Art. 11, II, f **mais** consentimento, contra
+   * a execução de contrato da sessão. A RLS decide por linha, então uma coluna
+   * de Art. 11 lá dentro ficaria sob uma política que não consulta
+   * consentimento — e que não pode consultar, sob pena de revogar desligar a
+   * prescrição de treino junto (migration `0049`).
+   *
+   * Chamar só com consentimento vigente. Quem chama é responsável, do mesmo
+   * modo que é por `notes`.
+   *
+   * @example
+   * await saveSessionHeartRate(session.id, 164);
+   */
+  saveSessionHeartRate: async (sessionId: string, avgHeartRate: number): Promise<void> => {
+    const { error } = await supabase
+      .from("workout_session_vitals")
+      .insert({ session_id: sessionId, avg_heart_rate: avgHeartRate });
+
+    if (error) throw error;
+  },
+
   saveSessionExercises: async (
     sessionId: string,
     items: SaveSessionExerciseInput[],
