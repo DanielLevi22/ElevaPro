@@ -166,6 +166,49 @@ export const workoutSessions = pgTable("workout_sessions", {
   // Modalidade do cardio ("Corrida", "Bike"). Na musculação o nome vem da
   // prescrição; aqui não há prescrição para vir.
   activity_name: text("activity_name"),
+  // Medidas da corrida, derivadas no aparelho. Execução de contrato, como
+  // duration_seconds e active_calories logo acima — é a medida da sessão
+  // contratada, não relato clínico.
+  //
+  // NULL é ausência de medida, nunca zero: quem nega a permissão de localização
+  // corre de verdade e termina sem distância, e zero diria que ficou parado.
+  //
+  // A série de coordenadas que produziu estes números **não é gravada em lugar
+  // nenhum** — revela endereço de casa e janela de ausência sem mudar nenhuma
+  // decisão de prescrição (issue #278). A `verify-rls.sql` trava isso contra o
+  // schema inteiro.
+  distance_meters: integer("distance_meters"),
+  avg_pace_seconds_per_km: integer("avg_pace_seconds_per_km"),
+  // Do acelerômetro, não do Health Connect: vinda da plataforma de saúde a
+  // cadência herdaria o Art. 11 da fonte e exigiria permissão nova só para ela.
+  avg_cadence_spm: integer("avg_cadence_spm"),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * FC média por sessão, lida do Health Connect / HealthKit.
+ *
+ * Mora fora de `workout_sessions` porque a base legal é outra: Art. 11, II, f
+ * (tutela da saúde) **mais** consentimento (Art. 11, I), enquanto a sessão é
+ * execução de contrato. A RLS decide por linha e não por coluna, então uma
+ * coluna de Art. 11 lá dentro ficaria sob uma política que não consulta
+ * consentimento — e que não pode consultar, sob pena de revogar desligar a
+ * prescrição de treino junto.
+ *
+ * Chaveada pela sessão, sem `student_id` próprio: o dono já está em
+ * `workout_sessions`, e duplicar abriria a chance de as duas discordarem —
+ * uma linha com o dono errado entregaria a FC de um aluno ao especialista de
+ * outro. A eliminação chega por cascade, da conta para a sessão e daqui.
+ *
+ * Só a média. A série de batimentos permitiria inferir estresse e crise de
+ * ansiedade, muito além de acompanhar treino — mesma minimização da FC de
+ * repouso em [health_daily_metrics].
+ */
+export const workoutSessionVitals = pgTable("workout_session_vitals", {
+  session_id: uuid("session_id")
+    .primaryKey()
+    .references(() => workoutSessions.id, { onDelete: "cascade" }),
+  avg_heart_rate: integer("avg_heart_rate").notNull(),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
