@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { authorizeStudent } from "@/lib/api-auth";
+import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { StudentCoachOrchestrator } from "@/modules/ai/orchestrators/student-coach.orchestrator";
 import { updateMessage, updateSessionState } from "@/modules/ai/services/chatService";
@@ -23,7 +23,7 @@ import type { PlanProposalData, SseEvent } from "@/modules/ai/types";
 export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
-  const auth = await authorizeStudent(request);
+  const auth = await authorizeStudentWithHealthConsent(request);
   if (!auth.ok) return auth.response;
   const studentId = auth.caller.id;
 

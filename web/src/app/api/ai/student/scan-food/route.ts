@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { authorizeStudent } from "@/lib/api-auth";
+import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { responderEmUmTurno } from "@/modules/ai/providers/turnoUnico";
 
@@ -25,7 +25,7 @@ Se não for claro, estime com confidence menor. Nunca retorne texto fora do JSON
 export async function POST(request: NextRequest) {
   // A rota não lê nada do banco: só o Gemini olha a foto. A checagem existe
   // para não deixar o endpoint de IA aberto a qualquer portador de token.
-  const auth = await authorizeStudent(request);
+  const auth = await authorizeStudentWithHealthConsent(request);
   if (!auth.ok) return auth.response;
 
   const body = (await request.json()) as { imageBase64?: string; mimeType?: string };

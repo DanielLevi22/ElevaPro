@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { rotaDeIA } from "@/lib/ai-route";
-import { authorizeUser } from "@/lib/api-auth";
+import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { responderEmUmTurno } from "@/modules/ai/providers/turnoUnico";
 
@@ -15,8 +15,10 @@ const handler = async (request: NextRequest) => {
   // `const { data } = await client.auth.getUser(token)` — descartando o erro — e
   // devolvia só "existe um usuário". Nunca dizia qual papel ele tem, e o
   // `check-api-auth.js` não pegava porque a rota não toca `supabaseAdmin`.
-  // `authorizeUser` lê o `account_type` de `profiles`, não de `user_metadata`.
-  const auth = await authorizeUser(request);
+  // `authorizeUser` deixava qualquer autenticado pedir análise de log
+  // alimentar de quem mandasse o corpo. Quem chama é o app do aluno, pelo
+  // próprio aluno logado — e `diet_logs` é dado de saúde (Art. 11).
+  const auth = await authorizeStudentWithHealthConsent(request);
   if (!auth.ok) return auth.response;
 
   const body = (await request.json()) as {

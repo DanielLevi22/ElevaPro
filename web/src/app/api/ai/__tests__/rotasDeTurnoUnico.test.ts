@@ -46,6 +46,10 @@ vi.mock("@/modules/ai/ai.config", () => ({
 vi.mock("@/lib/api-auth", () => ({
   authorizeUser: async () => ({ ok: true, caller: { id: "u-1", accountType: "specialist" } }),
   authorizeStudent: async () => ({ ok: true, caller: { id: "u-1", accountType: "student" } }),
+  authorizeStudentWithHealthConsent: async () => ({
+    ok: true,
+    caller: { id: "u-1", accountType: "student" },
+  }),
 }));
 
 /** O invólucro só confere ambiente; aqui ele não é o alvo. */

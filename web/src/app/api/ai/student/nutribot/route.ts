@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { rotaDeIA } from "@/lib/ai-route";
-import { authorizeStudent } from "@/lib/api-auth";
+import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { responderEmUmTurno } from "@/modules/ai/providers/turnoUnico";
@@ -56,7 +56,7 @@ async function loadDietContext(studentId: string): Promise<string> {
 }
 
 const handler = async (request: NextRequest) => {
-  const auth = await authorizeStudent(request);
+  const auth = await authorizeStudentWithHealthConsent(request);
   if (!auth.ok) return auth.response;
   const studentId = auth.caller.id;
 
