@@ -641,7 +641,18 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         sessionData.avgHeartRate ?? null
       );
       if (batimento !== null) {
-        await workoutsService.saveSessionHeartRate(session.id, batimento);
+        try {
+          await workoutsService.saveSessionHeartRate(session.id, batimento);
+        } catch {
+          // A sessão já está gravada. Deixar esta falha subir diria ao aluno
+          // que o treino não foi salvo, e a tentativa seguinte criaria uma
+          // segunda linha — perder a corrida inteira por causa do batimento é
+          // pior que perder o batimento.
+          //
+          // Sem o objeto de erro: o do PostgREST carrega o payload, e aqui o
+          // payload é dado de saúde.
+          console.error('[workoutStore] sessão gravada, FC média não');
+        }
       }
     } catch (error) {
       // Sem o objeto de erro: o do PostgREST pode carregar o payload da linha,

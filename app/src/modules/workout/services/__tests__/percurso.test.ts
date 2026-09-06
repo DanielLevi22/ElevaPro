@@ -77,4 +77,26 @@ describe('medirPercurso', () => {
 
     expect(medirPercurso(quaseParado).paceSecondsPerKm).toBeNull();
   });
+
+  // O CHECK da `0049` recusa ritmo fora de 60..3600 s/km, e o INSERT recusado
+  // derruba a gravação da sessão inteira — a corrida some, não só o ritmo.
+  // Quem produz o número é quem tem de respeitar a faixa.
+  it('não devolve ritmo mais lento que o mínimo fisiológico', () => {
+    // 60 m de deriva ao longo de 40 minutos: passa do corte de distância e
+    // daria 40000 s/km.
+    const arrastando = [posicao(0, 0), posicao(0.00054, 2400)];
+
+    const { distanceMeters, paceSecondsPerKm } = medirPercurso(arrastando);
+
+    expect(distanceMeters).toBeGreaterThan(50);
+    expect(paceSecondsPerKm).toBeNull();
+  });
+
+  it('não devolve ritmo mais rápido que o teto fisiológico', () => {
+    // 1 km em 30 s são 120 km/h, abaixo do corte de velocidade por trecho mas
+    // impossível como média.
+    const rapidoDemais = [posicao(0, 0), posicao(0.0089932, 30)];
+
+    expect(medirPercurso(rapidoDemais).paceSecondsPerKm).toBeNull();
+  });
 });

@@ -30,6 +30,12 @@ const METS: Record<string, number> = {
   Cardio: 5.0,
 };
 
+/** Distância só é gravada quando sobrevive ao arredondamento. */
+function metrosPersistiveis(metros: number): number | null {
+  const arredondados = Math.round(metros);
+  return arredondados > 0 ? arredondados : null;
+}
+
 function formatarTempo(total: number): string {
   const horas = Math.floor(total / 3600);
   const minutos = Math.floor((total % 3600) / 60);
@@ -53,6 +59,7 @@ export default function CardioSessionScreen() {
   const [minutosDigitados, setMinutosDigitados] = useState('');
   const [mostrarCompartilhar, setMostrarCompartilhar] = useState(false);
   const [mostrarFeedback, setMostrarFeedback] = useState(false);
+  const [fimDaSessao, setFimDaSessao] = useState<Date | null>(null);
   const [resumoParaCompartilhar, setResumoParaCompartilhar] = useState({
     title: '',
     duration: '',
@@ -78,6 +85,11 @@ export default function CardioSessionScreen() {
 
   const finalizar = useCallback(() => {
     pausar();
+    // O fim é agora, não quando o aluno enviar o feedback. Capturá-lo lá dentro
+    // faria `completed_at` e a janela de leitura da FC incluírem todo o tempo
+    // que o modal ficou aberto — e um modal esquecido aberto viraria uma
+    // corrida de duas horas com a FC do sofá.
+    setFimDaSessao(new Date());
     setMostrarFeedback(true);
   }, [pausar]);
 
@@ -93,13 +105,13 @@ export default function CardioSessionScreen() {
   }, []);
 
   const aoEnviarFeedback = useCallback(
-    async (rpe: number, notas: string) => {
+    async (rpe: number | undefined, notas: string) => {
       setMostrarFeedback(false);
 
       const inicio = cronometro.inicioDaSessao;
-      if (!user?.id || !inicio) return;
+      const fim = fimDaSessao;
+      if (!user?.id || !inicio || !fim) return;
 
-      const fim = new Date();
       const tempoFormatado = formatarTempo(cronometro.segundos);
       const caloriasFinais = Math.round(cronometro.calorias);
 
@@ -118,7 +130,11 @@ export default function CardioSessionScreen() {
           completedAt: fim.toISOString(),
           intensity: rpe,
           notes: notas,
-          distanceMeters: rastreio.distanceMeters > 0 ? Math.round(rastreio.distanceMeters) : null,
+          // Arredonda ANTES de decidir: 0,4 m de deriva passam por `> 0` e
+          // gravam `distance_meters: 0`, que é exatamente o valor que a `0049`
+          // diz que nunca pode ser escrito — zero afirma que o aluno não saiu
+          // do lugar, e ausência de leitura é nulo.
+          distanceMeters: metrosPersistiveis(rastreio.distanceMeters),
           avgPaceSecondsPerKm: rastreio.paceSecondsPerKm,
           avgCadenceSpm: rastreio.avgCadenceSpm,
           avgHeartRate: batimento,
@@ -157,6 +173,7 @@ export default function CardioSessionScreen() {
       user?.id,
       modalidade,
       cronometro.inicioDaSessao,
+      fimDaSessao,
       cronometro.segundos,
       cronometro.calorias,
       rastreio.distanceMeters,
@@ -168,6 +185,16 @@ export default function CardioSessionScreen() {
       router,
     ]
   );
+
+  // Fechar o modal sem enviar não pode jogar a corrida fora em silêncio: o
+  // aluno correu, o cronômetro parou e ele só não quis responder o RPE. A
+  // sessão é gravada sem feedback, que é execução de contrato de qualquer modo.
+  // `undefined`, e não zero: o RPE é declaração do aluno, e um valor inventado
+  // pelo sistema nesse campo é exatamente a mistura que a `0035` desfez em
+  // `notes` — dado gerado ocupando o lugar do que o titular disse.
+  const aoFecharFeedbackSemEnviar = useCallback(() => {
+    aoEnviarFeedback(undefined, '');
+  }, [aoEnviarFeedback]);
 
   const naoComecou = !cronometro.emAndamento && cronometro.segundos === 0;
 
@@ -223,7 +250,7 @@ export default function CardioSessionScreen() {
 
         <WorkoutFeedbackModal
           visible={mostrarFeedback}
-          onClose={() => setMostrarFeedback(false)}
+          onClose={aoFecharFeedbackSemEnviar}
           onSubmit={aoEnviarFeedback}
         />
       </View>

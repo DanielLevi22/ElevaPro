@@ -31,6 +31,18 @@ const VELOCIDADE_MAXIMA_M_POR_S = 25;
  */
 const DISTANCIA_MINIMA_PARA_RITMO = 50;
 
+/**
+ * Faixa que o CHECK da migration `0049` aceita. Precisa ser respeitada **aqui**,
+ * e não só no banco: o INSERT recusado não descarta o ritmo, derruba a gravação
+ * da sessão inteira — a corrida some junto com o número ruim.
+ *
+ * 60 s/km são 60 km/h, teto de bicicleta; 3600 s/km é 1 km/h, mais lento que
+ * caminhada de idoso. O corte de distância acima não cobre este caso: 60 m de
+ * deriva ao longo de 40 minutos passam dele e dariam 40000 s/km.
+ */
+const RITMO_MINIMO_S_POR_KM = 60;
+const RITMO_MAXIMO_S_POR_KM = 3600;
+
 export interface Posicao {
   latitude: number;
   longitude: number;
@@ -104,9 +116,9 @@ export function medirPercurso(posicoes: Posicao[]): Percurso {
 
   const segundosTotais =
     (confiaveis[confiaveis.length - 1].timestamp - confiaveis[0].timestamp) / 1000;
+  const ritmo = Math.round(segundosTotais / (distanceMeters / 1000));
 
-  return {
-    distanceMeters,
-    paceSecondsPerKm: Math.round(segundosTotais / (distanceMeters / 1000)),
-  };
+  const persistivel = ritmo >= RITMO_MINIMO_S_POR_KM && ritmo <= RITMO_MAXIMO_S_POR_KM;
+
+  return { distanceMeters, paceSecondsPerKm: persistivel ? ritmo : null };
 }

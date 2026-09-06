@@ -783,6 +783,28 @@ describe('workoutStore', () => {
     expect(gravadoEm('workout_sessions')).not.toHaveProperty('avg_heart_rate');
   });
 
+  // A sessão é gravada primeiro e a FC depois, em tabelas diferentes. Se a
+  // segunda falhar, deixar o erro subir diz ao aluno que o treino não foi
+  // salvo — e a tentativa seguinte cria uma segunda linha da mesma corrida.
+  it('não perde a corrida quando a gravação do batimento falha', async () => {
+    const { tabelas } = mockCardio({ consentiu: true });
+    const anterior = mockSupabase.from.getMockImplementation();
+    if (!anterior) throw new Error('mockCardio não instalou a implementação do from');
+
+    mockSupabase.from.mockImplementation((tabela: string) => {
+      if (tabela === 'workout_session_vitals') {
+        return { insert: jest.fn().mockResolvedValue({ error: { message: 'boom' } }) };
+      }
+      return anterior(tabela);
+    });
+
+    await expect(
+      useWorkoutStore.getState().saveCardioSession({ ...cardioBase, avgHeartRate: 164 })
+    ).resolves.toBeUndefined();
+
+    expect(tabelas).toContain('workout_sessions');
+  });
+
   // A RLS impede o especialista de LER sem consentimento; este portão impede o
   // app de GRAVAR. Sem ele, o batimento de quem já disse não entraria no banco
   // e só deixaria de ser exibido.

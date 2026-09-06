@@ -89,6 +89,10 @@ export default function HealthConnectScreen() {
           { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
           { accessType: 'read', recordType: 'SleepSession' },
           { accessType: 'read', recordType: 'RestingHeartRate' },
+          // Batimento da sessão de corrida. Sem pedir aqui, `mediaDeBatimentos`
+          // devolve lista vazia para sempre no Android e a FC nunca é gravada —
+          // sem erro, sem aviso, com a permissão declarada no manifesto.
+          { accessType: 'read', recordType: 'HeartRate' },
         ]);
 
         console.log('[HealthConnect] permissões concedidas:', JSON.stringify(granted));

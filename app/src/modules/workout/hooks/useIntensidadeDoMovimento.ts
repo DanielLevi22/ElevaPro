@@ -1,15 +1,27 @@
 import { Accelerometer } from 'expo-sensors';
 import * as Speech from 'expo-speech';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { IntensidadePercebida } from '../components/CabecalhoDaSessao';
 
 /** 1,0 g é o aparelho parado, só com a gravidade. */
 const LIMIAR_ALTA = 1.8;
 const LIMIAR_MODERADA = 1.2;
 
-function classificar(magnitude: number): IntensidadePercebida {
-  if (magnitude > LIMIAR_ALTA) return 'Alta';
-  if (magnitude > LIMIAR_MODERADA) return 'Moderada';
+/**
+ * Faixa morta entre as faixas. Sem ela, uma corrida que oscila em torno de 1,8 g
+ * — que é o normal, porque cada passada é um pico — atravessa o limiar a cada
+ * amostra e o app fala sem parar.
+ */
+const HISTERESE = 0.15;
+
+function classificar(magnitude: number, atual: IntensidadePercebida): IntensidadePercebida {
+  // Para SAIR de uma faixa é preciso passar do limiar mais a histerese; para
+  // entrar, o limiar puro. É o que transforma oscilação em transição.
+  const alta = atual === 'Alta' ? LIMIAR_ALTA - HISTERESE : LIMIAR_ALTA;
+  const moderada = atual === 'Baixa' ? LIMIAR_MODERADA : LIMIAR_MODERADA - HISTERESE;
+
+  if (magnitude > alta) return 'Alta';
+  if (magnitude > moderada) return 'Moderada';
   return 'Baixa';
 }
 
@@ -26,21 +38,24 @@ function classificar(magnitude: number): IntensidadePercebida {
  */
 export function useIntensidadeDoMovimento(ativo: boolean): IntensidadePercebida {
   const [intensidade, setIntensidade] = useState<IntensidadePercebida>('Baixa');
+  // O ref guarda o valor corrente para o listener sem entrar nas dependências
+  // do efeito — lê-lo do estado obrigaria a reinscrever o acelerômetro a cada
+  // mudança de faixa.
+  const atualRef = useRef<IntensidadePercebida>('Baixa');
 
   useEffect(() => {
     if (!ativo) return;
 
     Accelerometer.setUpdateInterval(1000);
     const inscricao = Accelerometer.addListener(({ x, y, z }) => {
-      const nova = classificar(Math.sqrt(x * x + y * y + z * z));
+      const nova = classificar(Math.sqrt(x * x + y * y + z * z), atualRef.current);
+      if (nova === atualRef.current) return;
 
-      // Funcional: a fala depende do valor anterior, e lê-lo de fora obrigaria
-      // a reinscrever o acelerômetro a cada mudança de intensidade.
-      setIntensidade((atual) => {
-        if (nova === atual) return atual;
-        Speech.speak(`Intensidade ${nova}`, { language: 'pt-BR' });
-        return nova;
-      });
+      atualRef.current = nova;
+      setIntensidade(nova);
+      // Fora do atualizador de estado: o React pode reexecutá-lo, e falar de
+      // dentro dele faria o aparelho repetir o anúncio sem que nada mudasse.
+      Speech.speak(`Intensidade ${nova}`, { language: 'pt-BR' });
     });
 
     return () => inscricao.remove();

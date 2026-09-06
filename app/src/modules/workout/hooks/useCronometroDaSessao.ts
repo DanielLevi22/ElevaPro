@@ -48,6 +48,9 @@ export function useCronometroDaSessao({
   const iniciadoEm = useRef<number | null>(null);
   const acumulado = useRef(0);
   const ultimoAviso = useRef(0);
+  /** Qual meta já foi anunciada. Guardar o valor, e não um sim/não, faz a troca
+   * de meta rearmar o aviso sozinha, sem efeito nenhum para isso. */
+  const metaAnunciada = useRef<number | null>(null);
 
   const calorias = (segundos * (met * pesoKg)) / 3600;
 
@@ -91,7 +94,16 @@ export function useCronometroDaSessao({
   useEffect(() => {
     if (segundos === 0) return;
 
-    if (metaEmMinutos !== null && segundos === metaEmMinutos * 60) {
+    // `>=` com trava, e não `===`: o tique relê o relógio do sistema, então
+    // voltar do background ou um segundo perdido pulam o valor exato e o aluno
+    // nunca ouve os parabéns. A trava é o que impede o aviso de repetir a cada
+    // segundo depois de atingida a meta.
+    if (
+      metaEmMinutos !== null &&
+      metaAnunciada.current !== metaEmMinutos &&
+      segundos >= metaEmMinutos * 60
+    ) {
+      metaAnunciada.current = metaEmMinutos;
       Speech.speak(`Parabéns! Você atingiu sua meta de ${metaEmMinutos} minutos.`, {
         language: 'pt-BR',
       });
