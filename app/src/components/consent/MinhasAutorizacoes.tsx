@@ -34,7 +34,11 @@ const CATALOGO: { finalidade: Finalidade; titulo: string; descricao: string }[] 
   {
     finalidade: SAUDE,
     titulo: 'Dados de saúde',
-    descricao: 'Avaliação física, anamnese, passos e calorias, body scan.',
+    // O que o aluno revoga precisa estar escrito aqui, senão ele decide sobre
+    // uma lista que não corresponde ao que é coletado. Estava parada na `1.2`:
+    // sono e FC de repouso entraram na `1.3` e nunca chegaram nesta tela.
+    descricao:
+      'Avaliação física, anamnese, body scan, passos e calorias, sono e frequência cardíaca de repouso, e a frequência cardíaca média das corridas.',
   },
   {
     finalidade: TECNICA,

@@ -13,7 +13,7 @@ import { createWorkoutsService } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { create } from 'zustand';
 import { useAuthStore } from '@/modules/auth/store/authStore';
-import { notasSeConsentido } from '../services/consentimento';
+import { batimentoSeConsentido, notasSeConsentido } from '../services/consentimento';
 import { type AIWorkoutItem, WorkoutAIService } from '../services/WorkoutAIService';
 
 export type {
@@ -108,6 +108,15 @@ interface WorkoutState {
     completedAt: string;
     intensity?: number;
     notes?: string;
+    /**
+     * Medidas da corrida, derivadas no aparelho. Nulas quando o GPS não foi
+     * autorizado — a corrida continua sendo gravada sem elas.
+     */
+    distanceMeters?: number | null;
+    avgPaceSecondsPerKm?: number | null;
+    avgCadenceSpm?: number | null;
+    /** Dado de Art. 11: só é gravado com consentimento vigente. */
+    avgHeartRate?: number | null;
   }) => Promise<void>;
   fetchLastWorkoutSession: (
     studentId: string
@@ -601,7 +610,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       // com `specialist_id` recebendo o id do **aluno**, o que produzia uma
       // prescrição órfã por aluno e tornava impossível qualquer sessão de cardio
       // aparecer nas telas que filtram por dono do treino.
-      await workoutsService.createWorkoutSession({
+      const session = await workoutsService.createWorkoutSession({
         workout_id: null,
         student_id: sessionData.studentId,
         started_at: sessionData.startedAt,
@@ -615,7 +624,36 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         duration_seconds: sessionData.durationSeconds,
         active_calories: Math.round(sessionData.calories),
         activity_name: sessionData.exerciseName,
+        // Execução de contrato, como duração e calorias: atravessam sem passar
+        // por consentimento nenhum. Exigi-lo aqui desligaria o acompanhamento
+        // de desempenho de quem revoga dado de saúde.
+        distance_meters: sessionData.distanceMeters ?? null,
+        avg_pace_seconds_per_km: sessionData.avgPaceSecondsPerKm ?? null,
+        avg_cadence_spm: sessionData.avgCadenceSpm ?? null,
       });
+
+      // A FC é a outra metade, e é Art. 11: tabela própria, e só com
+      // consentimento vigente. Gravada depois da sessão porque depende do id
+      // dela — e omitida sem estrago quando não há batimento ou não há
+      // autorização, do mesmo modo que `notes`.
+      const batimento = await batimentoSeConsentido(
+        sessionData.studentId,
+        sessionData.avgHeartRate ?? null
+      );
+      if (batimento !== null) {
+        try {
+          await workoutsService.saveSessionHeartRate(session.id, batimento);
+        } catch {
+          // A sessão já está gravada. Deixar esta falha subir diria ao aluno
+          // que o treino não foi salvo, e a tentativa seguinte criaria uma
+          // segunda linha — perder a corrida inteira por causa do batimento é
+          // pior que perder o batimento.
+          //
+          // Sem o objeto de erro: o do PostgREST carrega o payload, e aqui o
+          // payload é dado de saúde.
+          console.error('[workoutStore] sessão gravada, FC média não');
+        }
+      }
     } catch (error) {
       // Sem o objeto de erro: o do PostgREST pode carregar o payload da linha,
       // e `notes` é dado sensível de saúde.

@@ -1338,12 +1338,41 @@ export type Database = {
           },
         ];
       };
+      workout_session_vitals: {
+        Row: {
+          avg_heart_rate: number;
+          created_at: string;
+          session_id: string;
+        };
+        Insert: {
+          avg_heart_rate: number;
+          created_at?: string;
+          session_id: string;
+        };
+        Update: {
+          avg_heart_rate?: number;
+          created_at?: string;
+          session_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "workout_session_vitals_session_id_fkey";
+            columns: ["session_id"];
+            isOneToOne: true;
+            referencedRelation: "workout_sessions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       workout_sessions: {
         Row: {
           active_calories: number | null;
           activity_name: string | null;
+          avg_cadence_spm: number | null;
+          avg_pace_seconds_per_km: number | null;
           completed_at: string | null;
           created_at: string;
+          distance_meters: number | null;
           duration_seconds: number | null;
           feedback_edited_at: string | null;
           id: string;
@@ -1357,8 +1386,11 @@ export type Database = {
         Insert: {
           active_calories?: number | null;
           activity_name?: string | null;
+          avg_cadence_spm?: number | null;
+          avg_pace_seconds_per_km?: number | null;
           completed_at?: string | null;
           created_at?: string;
+          distance_meters?: number | null;
           duration_seconds?: number | null;
           feedback_edited_at?: string | null;
           id?: string;
@@ -1372,8 +1404,11 @@ export type Database = {
         Update: {
           active_calories?: number | null;
           activity_name?: string | null;
+          avg_cadence_spm?: number | null;
+          avg_pace_seconds_per_km?: number | null;
           completed_at?: string | null;
           created_at?: string;
+          distance_meters?: number | null;
           duration_seconds?: number | null;
           feedback_edited_at?: string | null;
           id?: string;

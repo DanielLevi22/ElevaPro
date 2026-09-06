@@ -3,7 +3,6 @@ app/src/components/workout/WorkoutAnalyticsService.ts 7
 app/src/modules/auth/screens/LoginScreen.tsx 1
 app/src/modules/nutrition/store/nutritionStore.ts 2
 app/src/modules/students/store/studentStore.ts 3
-app/src/modules/workout/screens/CardioSessionScreen.tsx 1
 app/src/modules/workout/store/workoutStore.ts 2
 app/src/packages/supabase/abilities.ts 1
 app/src/packages/supabase/getUserContextJWT.ts 1

@@ -275,7 +275,7 @@ END $$;
 DO $$
 DECLARE
   saude       text[] := ARRAY['health_daily_metrics','meal_logs','physical_assessments',
-                              'student_anamnesis','body_scans'];
+                              'student_anamnesis','body_scans','workout_session_vitals'];
   contrato    text[] := ARRAY['profiles','specialist_services','workout_sessions',
                               'workout_session_sets','workout_session_exercises',
                               'achievements','daily_goals','student_streaks'];
@@ -312,7 +312,46 @@ BEGIN
       array_to_string(sobrando, ', ');
   END IF;
 
-  RAISE NOTICE 'ok  Art. 11 confere consentimento em 5 tabelas; Art. 7° não confere em 8';
+  RAISE NOTICE 'ok  Art. 11 confere consentimento em 6 tabelas; Art. 7° não confere em 8';
+END $$;
+
+-- ── Nenhuma coordenada, em tabela nenhuma (0049) ─────────────────────────────
+-- A #278 decidiu que a corrida grava distância e ritmo, e **não** o caminho: a
+-- série de posições revela endereço de casa, janela previsível de ausência e os
+-- lugares que a pessoa frequenta, sem mudar nenhuma decisão de prescrição. É a
+-- mesma minimização que tirou horário de dormir e acordar da `0046`.
+--
+-- Esta guarda varre o schema INTEIRO, e não uma lista de tabelas, porque a
+-- decisão precisa alcançar a tabela que ainda não existe — é o modo como o
+-- defeito da `0043` reapareceu: alguém copia um desenho sem saber qual copiar.
+-- Sem ela, "não persistir coordenada" seria decisão em documento e o banco
+-- ficaria livre para contradizê-la, que é exatamente o que a auditoria de
+-- 2026-08-11 encontrou em `workout_sessions`.
+
+DO $$
+DECLARE
+  geograficas text;
+BEGIN
+  SELECT string_agg(format('%s.%s', table_name, column_name), ', ' ORDER BY table_name)
+    INTO geograficas
+  FROM information_schema.columns
+  WHERE table_schema = 'public'
+    AND (
+      column_name ~* '(latitude|longitude|^lat$|^lng$|^lon$|coordinate|polyline|geohash|waypoint)'
+      -- Por tipo também, e não só por nome: uma coluna `caminho path` guarda
+      -- exatamente o mesmo rastro e não casa com nenhum nome acima. Os quatro
+      -- primeiros são nativos do Postgres e não precisam de extensão nenhuma
+      -- para existir — foi o que a prova negativa desta guarda encontrou.
+      OR udt_name IN ('geography', 'geometry', 'point', 'path', 'line', 'lseg', 'box', 'circle', 'polygon')
+    );
+
+  IF geograficas IS NOT NULL THEN
+    RAISE EXCEPTION
+      'RASTRO GRAVADO: coluna de geolocalização em public — %. A #278 decidiu persistir só o derivado (distância, ritmo); reverter isso é decisão de LGPD, não de schema',
+      geograficas;
+  END IF;
+
+  RAISE NOTICE 'ok  nenhuma coluna de geolocalização em public';
 END $$;
 
 -- ── Feedback de treino e observação de refeição ──────────────────────────────
@@ -464,6 +503,27 @@ BEGIN
   BEGIN
     UPDATE public.workout_sessions SET active_calories = 9999 WHERE id = sessao_a;
     RAISE EXCEPTION 'HISTÓRICO REESCRITO: UPDATE de active_calories foi aceito';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- As medidas da corrida (0049) entram na mesma proibição. Distância e ritmo
+  -- são o que o especialista usa para prescrever a semana seguinte; editáveis
+  -- pelo aluno, viram o número que ele gostaria de ter feito.
+  BEGIN
+    UPDATE public.workout_sessions SET distance_meters = 42195 WHERE id = sessao_a;
+    RAISE EXCEPTION 'HISTÓRICO REESCRITO: UPDATE de distance_meters foi aceito';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  BEGIN
+    UPDATE public.workout_sessions SET avg_pace_seconds_per_km = 180 WHERE id = sessao_a;
+    RAISE EXCEPTION 'HISTÓRICO REESCRITO: UPDATE de avg_pace_seconds_per_km foi aceito';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  BEGIN
+    UPDATE public.workout_sessions SET avg_cadence_spm = 190 WHERE id = sessao_a;
+    RAISE EXCEPTION 'HISTÓRICO REESCRITO: UPDATE de avg_cadence_spm foi aceito';
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
 
@@ -674,6 +734,152 @@ BEGIN
 
   RESET ROLE;
   RAISE NOTICE 'ok  métricas diárias: isoladas por vínculo e por consentimento, imutáveis, invisíveis ao admin';
+END $$;
+
+ROLLBACK;
+
+-- ── FC média da sessão (0049) ────────────────────────────────────────────────
+-- A tabela nasceu separada de `workout_sessions` justamente para poder ter esta
+-- política: Art. 11 pede tutela da saúde MAIS consentimento, então revogar
+-- fecha o acesso do especialista — o que a tabela de sessões não pode fazer,
+-- porque revogar consentimento de saúde não pode desligar a prescrição de
+-- treino.
+--
+-- As duas metades são semeadas: aluno A com consentimento, aluno B sem vínculo.
+-- "Zero linhas" só significa bloqueio quando existe linha do outro lado para
+-- ter vazado.
+
+BEGIN;
+
+DO $$
+DECLARE
+  aluno_a  uuid := gen_random_uuid();
+  aluno_b  uuid := gen_random_uuid();
+  espec    uuid := gen_random_uuid();
+  sessao_a uuid;
+  sessao_sem_fc uuid;
+  visiveis int;
+  vazou    int;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (aluno_a, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-va@elevapro.local', '{"full_name":"A","account_type":"student"}'::jsonb),
+    (aluno_b, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-vb@elevapro.local', '{"full_name":"B","account_type":"student"}'::jsonb),
+    (espec,   '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-ve@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb);
+
+  INSERT INTO public.workout_sessions
+    (student_id, started_at, completed_at, session_type, duration_seconds,
+     distance_meters, avg_pace_seconds_per_km, avg_cadence_spm)
+  VALUES (aluno_a, now(), now(), 'cardio', 3604, 9620, 374, 179)
+  RETURNING id INTO sessao_a;
+
+  INSERT INTO public.workout_session_vitals (session_id, avg_heart_rate)
+  VALUES (sessao_a, 164);
+
+  -- Sessão do aluno A sem FC gravada: é o alvo do passo 7, onde só a RLS pode
+  -- barrar o INSERT do aluno B.
+  INSERT INTO public.workout_sessions
+    (student_id, started_at, completed_at, session_type, duration_seconds)
+  VALUES (aluno_a, now(), now(), 'cardio', 1800)
+  RETURNING id INTO sessao_sem_fc;
+
+  INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
+  VALUES (aluno_a, espec, 'personal_training', 'active');
+
+  INSERT INTO public.student_consents (student_id, consent_type, given_at, policy_version)
+  VALUES (aluno_a, 'health_data_collection', now(), '1.4');
+
+  SET LOCAL ROLE authenticated;
+
+  -- 1. Com vínculo e consentimento, o especialista lê. É o caso de uso: sem
+  --    ele, tudo abaixo passaria com uma tabela simplesmente vazia.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO visiveis
+    FROM public.workout_session_vitals WHERE session_id = sessao_a;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'especialista vinculado e consentido não lê a FC da sessão (viu %)', visiveis;
+  END IF;
+
+  -- 2. Revogou, perde. Caiu o consentimento, caiu a base do Art. 11.
+  RESET ROLE;
+  UPDATE public.student_consents SET revoked_at = now()
+   WHERE student_id = aluno_a AND consent_type = 'health_data_collection';
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO vazou
+    FROM public.workout_session_vitals WHERE session_id = sessao_a;
+  IF vazou <> 0 THEN
+    RAISE EXCEPTION 'CONSENTIMENTO IGNORADO: aluno revogou e o especialista ainda lê a FC (% linha(s))', vazou;
+  END IF;
+
+  -- 3. E o serviço contratado NÃO cai junto: a mesma revogação não pode tirar
+  --    do especialista a distância e o ritmo, que são execução de contrato.
+  --    É a metade que a guarda de classificação afirma em tabela, provada aqui
+  --    em comportamento.
+  SELECT count(*) INTO visiveis
+    FROM public.workout_sessions WHERE id = sessao_a;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'SERVIÇO DESLIGADO POR REVOGAÇÃO: revogar saúde tirou a sessão de treino do especialista';
+  END IF;
+
+  -- 4. O próprio aluno continua vendo a FC que já foi medida. Revogar
+  --    interrompe a coleta e o compartilhamento; eliminar é o Art. 18, VI, que
+  --    é caminho separado.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', aluno_a, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO visiveis
+    FROM public.workout_session_vitals WHERE session_id = sessao_a;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'revogar apagou a FC do próprio aluno (viu %)', visiveis;
+  END IF;
+
+  -- 5. Medida corrigida não é medida. Sem GRANT e sem política, nas duas
+  --    camadas — a `0020` concede UPDATE e DELETE por default privileges a
+  --    toda tabela nova, e sem o REVOKE da `0049` só a ausência de política
+  --    estaria segurando.
+  BEGIN
+    UPDATE public.workout_session_vitals SET avg_heart_rate = 120
+     WHERE session_id = sessao_a;
+    RAISE EXCEPTION 'MEDIDA REESCRITA: UPDATE de avg_heart_rate foi aceito';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  BEGIN
+    DELETE FROM public.workout_session_vitals WHERE session_id = sessao_a;
+    RAISE EXCEPTION 'MEDIDA APAGADA: DELETE em workout_session_vitals foi aceito';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- 6. Um aluno não lê o batimento do outro.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', aluno_b, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO vazou
+    FROM public.workout_session_vitals WHERE session_id = sessao_a;
+  IF vazou <> 0 THEN
+    RAISE EXCEPTION 'VAZAMENTO: aluno B lê a FC do aluno A (% linha(s))', vazou;
+  END IF;
+
+  -- 7. E não grava FC na sessão alheia: sinal vital registrado por terceiro não
+  --    é medida, é invenção.
+  --
+  --    A tentativa vai numa sessão do aluno A que ainda NÃO tem linha de FC.
+  --    Contra `sessao_a` o INSERT também falharia — por violar a chave primária
+  --    — e o teste passaria sem a RLS ter opinado, que é como uma trava vira
+  --    decoração.
+  BEGIN
+    INSERT INTO public.workout_session_vitals (session_id, avg_heart_rate)
+    VALUES (sessao_sem_fc, 200);
+    RAISE EXCEPTION 'FC FORJADA: aluno B gravou batimento na sessão do aluno A';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  RESET ROLE;
+  RAISE NOTICE 'ok  FC de sessão: revogação fecha o especialista sem derrubar o treino, imutável, isolada por aluno';
 END $$;
 
 ROLLBACK;

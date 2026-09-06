@@ -56,8 +56,21 @@ export interface Finalidade {
  *   embora este documento afirmasse o contrário. Agora revogar fecha o acesso
  *   dele às cinco tabelas de Art. 11, e o texto pode prometer isso porque o
  *   banco cumpre.
+ * - `1.4` (2026-09-06) — acrescenta a **frequência cardíaca média da corrida**,
+ *   lida do relógio pelo período da sessão. Finalidade nova pelo mesmo critério
+ *   da `1.3`: o texto anterior cobria o agregado do dia, e esta é a medida de
+ *   uma sessão específica, que o especialista usa para ajustar a prescrição.
+ *   Continua no mesmo `consent_type` — é coleta de dado de saúde para
+ *   acompanhamento, ao contrário da Análise de Técnica, que ganhou tipo próprio
+ *   na `0041` por ser outra natureza.
+ *
+ *   O texto diz também o que **não** é coletado, porque nesta feature a
+ *   ausência é a decisão: o percurso da corrida não é guardado. O GPS mede
+ *   distância e ritmo no aparelho e as coordenadas morrem com a sessão — elas
+ *   revelariam endereço de casa e janela de ausência sem mudar prescrição
+ *   nenhuma (issue #278, migration `0049`).
  */
-export const POLICY_VERSION = "1.3";
+export const POLICY_VERSION = "1.4";
 
 /** Coleta de dados de saúde: avaliação, anamnese, métricas diárias, body scan. */
 export const SAUDE: Finalidade = { tipo: CONSENT_HEALTH_COLLECTION, versao: POLICY_VERSION };

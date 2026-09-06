@@ -648,6 +648,7 @@ describe('workoutStore', () => {
   function mockCardio({ consentiu }: { consentiu: boolean }) {
     const inserts: Record<string, unknown>[] = [];
     const tabelas: string[] = [];
+    const porTabela: { tabela: string; payload: Record<string, unknown> }[] = [];
 
     mockSupabase.from.mockImplementation((tabela: string) => {
       tabelas.push(tabela);
@@ -672,6 +673,7 @@ describe('workoutStore', () => {
       return {
         insert: jest.fn((payload: Record<string, unknown>) => {
           inserts.push(payload);
+          porTabela.push({ tabela, payload });
           return {
             select: jest.fn().mockReturnThis(),
             single: jest.fn().mockResolvedValue({ data: { id: 'sessao-1' }, error: null }),
@@ -683,7 +685,10 @@ describe('workoutStore', () => {
       };
     });
 
-    return { inserts, tabelas };
+    /** O payload gravado numa tabela, ou `undefined` se ela nunca foi tocada. */
+    const gravadoEm = (tabela: string) => porTabela.find((i) => i.tabela === tabela)?.payload;
+
+    return { inserts, tabelas, gravadoEm };
   }
 
   const cardioBase = {
@@ -727,6 +732,99 @@ describe('workoutStore', () => {
 
     expect(inserts[0].notes).toBe('senti dor no joelho');
     expect(inserts[0].duration_seconds).toBe(1800);
+  });
+
+  it('grava distância, ritmo e cadência da corrida na própria sessão', async () => {
+    const { gravadoEm } = mockCardio({ consentiu: true });
+
+    await useWorkoutStore.getState().saveCardioSession({
+      ...cardioBase,
+      distanceMeters: 9620,
+      avgPaceSecondsPerKm: 374,
+      avgCadenceSpm: 179,
+    });
+
+    expect(gravadoEm('workout_sessions')).toMatchObject({
+      distance_meters: 9620,
+      avg_pace_seconds_per_km: 374,
+      avg_cadence_spm: 179,
+    });
+  });
+
+  // Quem nega a permissão de localização corre de verdade e termina sem
+  // distância. Zero diria que ficou parado — e a corrida não pode deixar de ser
+  // gravada só porque o GPS não veio.
+  it('grava a corrida sem as medidas quando não houve leitura de GPS', async () => {
+    const { gravadoEm } = mockCardio({ consentiu: true });
+
+    await useWorkoutStore.getState().saveCardioSession(cardioBase);
+
+    expect(gravadoEm('workout_sessions')).toMatchObject({
+      distance_meters: null,
+      avg_pace_seconds_per_km: null,
+      avg_cadence_spm: null,
+      session_type: 'cardio',
+    });
+  });
+
+  // A FC é Art. 11 e a sessão é execução de contrato: por isso ela vai para
+  // `workout_session_vitals`, cuja política soma vínculo e consentimento. Numa
+  // coluna de `workout_sessions` ficaria sob uma política que não consulta
+  // consentimento nenhum (migration `0049`).
+  it('grava a frequência cardíaca em tabela própria, não na sessão', async () => {
+    const { gravadoEm } = mockCardio({ consentiu: true });
+
+    await useWorkoutStore.getState().saveCardioSession({ ...cardioBase, avgHeartRate: 164 });
+
+    expect(gravadoEm('workout_session_vitals')).toEqual({
+      session_id: 'sessao-1',
+      avg_heart_rate: 164,
+    });
+    expect(gravadoEm('workout_sessions')).not.toHaveProperty('avg_heart_rate');
+  });
+
+  // A sessão é gravada primeiro e a FC depois, em tabelas diferentes. Se a
+  // segunda falhar, deixar o erro subir diz ao aluno que o treino não foi
+  // salvo — e a tentativa seguinte cria uma segunda linha da mesma corrida.
+  it('não perde a corrida quando a gravação do batimento falha', async () => {
+    const { tabelas } = mockCardio({ consentiu: true });
+    const anterior = mockSupabase.from.getMockImplementation();
+    if (!anterior) throw new Error('mockCardio não instalou a implementação do from');
+
+    mockSupabase.from.mockImplementation((tabela: string) => {
+      if (tabela === 'workout_session_vitals') {
+        return { insert: jest.fn().mockResolvedValue({ error: { message: 'boom' } }) };
+      }
+      return anterior(tabela);
+    });
+
+    await expect(
+      useWorkoutStore.getState().saveCardioSession({ ...cardioBase, avgHeartRate: 164 })
+    ).resolves.toBeUndefined();
+
+    expect(tabelas).toContain('workout_sessions');
+  });
+
+  // A RLS impede o especialista de LER sem consentimento; este portão impede o
+  // app de GRAVAR. Sem ele, o batimento de quem já disse não entraria no banco
+  // e só deixaria de ser exibido.
+  it('não grava a frequência cardíaca sem consentimento vigente', async () => {
+    const { gravadoEm, tabelas } = mockCardio({ consentiu: false });
+
+    await useWorkoutStore.getState().saveCardioSession({ ...cardioBase, avgHeartRate: 164 });
+
+    expect(tabelas).not.toContain('workout_session_vitals');
+    // E a corrida em si continua gravada: distância e ritmo são execução de
+    // contrato, e revogar saúde não pode desligar o acompanhamento.
+    expect(gravadoEm('workout_sessions')).toMatchObject({ session_type: 'cardio' });
+  });
+
+  it('não grava linha de batimento quando o relógio não mediu', async () => {
+    const { tabelas } = mockCardio({ consentiu: true });
+
+    await useWorkoutStore.getState().saveCardioSession({ ...cardioBase, avgHeartRate: null });
+
+    expect(tabelas).not.toContain('workout_session_vitals');
   });
 
   // O texto livre é dado sensível (Art. 11) e só pode ser persistido com

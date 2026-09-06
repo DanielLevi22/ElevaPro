@@ -89,6 +89,10 @@ export default function HealthConnectScreen() {
           { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
           { accessType: 'read', recordType: 'SleepSession' },
           { accessType: 'read', recordType: 'RestingHeartRate' },
+          // Batimento da sessão de corrida. Sem pedir aqui, `mediaDeBatimentos`
+          // devolve lista vazia para sempre no Android e a FC nunca é gravada —
+          // sem erro, sem aviso, com a permissão declarada no manifesto.
+          { accessType: 'read', recordType: 'HeartRate' },
         ]);
 
         console.log('[HealthConnect] permissões concedidas:', JSON.stringify(granted));
@@ -243,9 +247,25 @@ export default function HealthConnectScreen() {
           <Text className="text-zinc-400 text-center text-sm font-medium mb-4 px-2 leading-6">
             Lemos do seu relógio{' '}
             <Text className="text-white font-semibold">
-              passos, calorias, quanto você dormiu e sua frequência cardíaca de repouso
+              passos, calorias, quanto você dormiu, sua frequência cardíaca de repouso e a
+              frequência cardíaca média das suas corridas
             </Text>
             , para acompanhar sua atividade entre os treinos.
+          </Text>
+
+          {/*
+            A ausência também precisa ser dita. Nesta feature ela é a decisão:
+            o GPS mede distância e ritmo no aparelho e as coordenadas morrem com
+            a sessão. Sem esta frase o aluno assume o contrário — todo aplicativo
+            de corrida que ele conhece guarda o mapa — e consentimento assumido
+            errado não é informado (Art. 9°).
+          */}
+          <Text className="text-zinc-400 text-center text-sm font-medium mb-4 px-2 leading-6">
+            Durante a corrida o GPS mede{' '}
+            <Text className="text-white font-semibold">distância e ritmo</Text>. O caminho que você
+            percorreu é desenhado na tela e{' '}
+            <Text className="text-white font-semibold">descartado ao fim do treino</Text> — ele não
+            é salvo nem enviado para ninguém.
           </Text>
 
           <Text className="text-zinc-500 text-center text-xs mb-10 px-2 leading-5">

@@ -61,6 +61,10 @@ const IOS_AUTH = {
     'HKQuantityTypeIdentifierStepCount',
     'HKQuantityTypeIdentifierActiveEnergyBurned',
     'HKQuantityTypeIdentifierRestingHeartRate',
+    // Batimento durante a sessão, lido por `mediaDeBatimentos`. Pedido junto
+    // com os demais porque o HealthKit só abre um diálogo por autorização: um
+    // segundo pedido no meio da corrida interromperia o treino.
+    'HKQuantityTypeIdentifierHeartRate',
     'HKCategoryTypeIdentifierSleepAnalysis',
   ],
 } as const;

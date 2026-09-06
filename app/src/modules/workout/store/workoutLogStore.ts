@@ -31,6 +31,18 @@ export interface WorkoutLog {
   /** Cardio: medidos na sessão. Nulos na musculação. */
   duration_seconds: number | null;
   active_calories: number | null;
+  /** Medidas da corrida. Nulas quando não houve leitura de GPS. */
+  distance_meters: number | null;
+  avg_pace_seconds_per_km: number | null;
+  /**
+   * FC média da sessão, de `workout_session_vitals`.
+   *
+   * Vem por junção, e não por coluna, porque a base legal é outra: a RLS
+   * daquela tabela exige consentimento vigente. Para o especialista de um aluno
+   * que revogou, esta junção volta vazia enquanto o resto da sessão continua
+   * visível — que é exatamente o comportamento que a `0049` desenhou.
+   */
+  avg_heart_rate: number | null;
   /** Modalidade do cardio. Na musculação o nome vem da prescrição. */
   activity_name: string | null;
   /** Título da prescrição, quando a sessão veio de uma. */
@@ -76,6 +88,23 @@ interface WorkoutLogState {
   isWorkoutCompletedToday: (workoutId: string) => boolean;
 }
 
+/**
+ * Traz a FC média da junção para o nível da sessão.
+ *
+ * O PostgREST devolve o recurso embutido como objeto quando a chave é única e
+ * como lista quando não consegue provar isso — e a diferença muda com a versão.
+ * Os dois casos viram o mesmo número aqui, e ausência vira `null`: para o
+ * especialista de quem revogou o consentimento a junção volta vazia, e nulo é a
+ * resposta certa, não zero.
+ */
+function achatarVitals(linha: Record<string, unknown>): WorkoutLog {
+  const { vitals, ...sessao } = linha;
+  const medida = Array.isArray(vitals) ? vitals[0] : vitals;
+  const bpm = (medida as { avg_heart_rate?: number } | null | undefined)?.avg_heart_rate;
+
+  return { ...sessao, avg_heart_rate: bpm ?? null } as WorkoutLog;
+}
+
 export const useWorkoutLogStore = create<WorkoutLogState>((set, get) => ({
   logs: [],
   loading: false,
@@ -87,13 +116,13 @@ export const useWorkoutLogStore = create<WorkoutLogState>((set, get) => ({
         // Campos nomeados: tabela sensível pela LGPD_COMPLIANCE.md.
         .from('workout_sessions')
         .select(
-          'id, student_id, workout_id, started_at, completed_at, intensity, notes, feedback_edited_at, session_type, duration_seconds, active_calories, activity_name, created_at, workout:workouts(title)'
+          'id, student_id, workout_id, started_at, completed_at, intensity, notes, feedback_edited_at, session_type, duration_seconds, active_calories, activity_name, distance_meters, avg_pace_seconds_per_km, created_at, workout:workouts(title), vitals:workout_session_vitals(avg_heart_rate)'
         )
         .eq('student_id', studentId)
         .order('completed_at', { ascending: false });
 
       if (error) throw error;
-      set({ logs: (data ?? []) as unknown as WorkoutLog[] });
+      set({ logs: (data ?? []).map(achatarVitals) });
     } catch (error) {
       console.error('Error fetching workout logs:', error);
     } finally {

@@ -80,6 +80,8 @@ Dados referentes à saúde exigem **base legal específica** e proteção refor�
 | Dados de treino executado (séries, cargas, datas, `intensity`) | `workout_sessions` | Execução de contrato | Acompanhamento de desempenho |
 | **Observações do aluno sobre a própria sessão** | `workout_sessions.notes` | **Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I)** | Ajuste de prescrição a partir do que o aluno relata |
 | Tipo, duração e calorias da sessão | `workout_sessions.session_type`, `.duration_seconds`, `.active_calories` | Execução de contrato | Distinguir cardio de musculação e medir a sessão |
+| **Distância, ritmo e cadência da corrida** | `workout_sessions.distance_meters`, `.avg_pace_seconds_per_km`, `.avg_cadence_spm` | Execução de contrato (Art. 7°, V) | Medir a corrida para ajustar a prescrição. Mesma classificação de duração e calorias: é a medida da sessão contratada, não relato clínico. Derivados no aparelho — **a série de coordenadas que os produz não é gravada** (ver §2.3) |
+| **FC média da sessão** | `workout_session_vitals.avg_heart_rate` | Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I) | Esforço real da corrida, para calibrar a carga. Em **tabela própria**, e não numa coluna de `workout_sessions`: a RLS decide por linha, e aquela tabela é de execução de contrato — uma coluna de Art. 11 lá dentro ficaria sob política que não consulta consentimento, que é a pendência de `notes` pela segunda vez. Só a média; a série intradiária é vedada pelo mesmo motivo da FC de repouso |
 | Plano alimentar (metas calóricas e macros) | `diet_plans` | Tutela da saúde + Consentimento (Art. 11, II, f + I) | Prescrição nutricional — especialista ou autogerenciado pelo member |
 | Refeições e alimentos do plano | `diet_meals`, `diet_meal_items` | Tutela da saúde + Consentimento | Composição do plano alimentar |
 | Registro de refeições realizadas e substituições | `meal_logs` | Tutela da saúde + Consentimento | Acompanhamento de aderência nutricional |
@@ -126,6 +128,19 @@ Dados que foram explicitamente rejeitados do schema por violar o princípio da n
 - `gender` em `profiles` — mesmo motivo
 - `phone` — nunca utilizado funcionalmente
 - `cref` / `crn` — credenciais removidas do fluxo de cadastro
+- **Traçado da corrida** — a série de coordenadas de GPS (issue #278, `0049`). O
+  ponto de partida da maioria das corridas é o endereço de casa; o horário
+  repetido é a janela previsível de ausência; o conjunto revela trabalho,
+  academia e clínica. Nenhuma decisão de prescrição muda em função da rua, e
+  distância e ritmo entregam a finalidade inteira. O GPS mede no aparelho, as
+  coordenadas alimentam o desenho da tela de resumo e morrem com a sessão —
+  mesma doutrina do Body scan (`ADR-0010`): processa no aparelho, persiste o
+  derivado. **A ausência é travada por teste**: a `verify-rls.sql` varre o
+  schema inteiro por nome e por tipo de coluna, e alcança a tabela que ainda não
+  existe. O custo aceito é não haver histórico de mapa.
+- **Série de batimentos da sessão** — só a média entra. A série permitiria
+  inferir estresse e crise de ansiedade, pelo mesmo raciocínio já aplicado à FC
+  de repouso.
 - **Horário de dormir e de acordar** (Onda 1 do relógio, `0046`) — revelam rotina
   doméstica e presença em casa, para uma decisão de treino que a duração do sono já
   informa. Mesmo raciocínio de `birth_date` em `profiles`
@@ -403,7 +418,7 @@ banco. O critério é a **base legal**, não o vínculo.
 
 | Base legal | Tabelas | Revogar o consentimento… | Migration |
 |---|---|---|---|
-| Art. 11 (tutela da saúde **+** consentimento) | `health_daily_metrics`, `meal_logs`, `physical_assessments`, `student_anamnesis`, `body_scans` | **fecha** o acesso do especialista | 0043, 0044, 0045 |
+| Art. 11 (tutela da saúde **+** consentimento) | `health_daily_metrics`, `meal_logs`, `physical_assessments`, `student_anamnesis`, `body_scans`, `workout_session_vitals` | **fecha** o acesso do especialista | 0043, 0044, 0045, 0049 |
 | Art. 7°, V (execução de contrato) | `profiles`, `specialist_services`, `workout_sessions`, `workout_session_sets`, `workout_session_exercises`, `achievements`, `daily_goals`, `student_streaks` | não alcança — o caminho é encerrar o vínculo | — |
 
 A segunda linha é decisão, não omissão: revogar o consentimento de dados de
@@ -459,6 +474,8 @@ A LGPD exige que dados sejam eliminados quando deixam de ser necessários (Art. 
 | Avaliações físicas | Enquanto existir vínculo com especialista | Histórico clínico necessário ao especialista |
 | Anamnese | Enquanto a conta estiver ativa | Auto-relato do aluno |
 | Histórico de treinos | Enquanto a conta estiver ativa | Histórico de evolução |
+| FC média das sessões (`workout_session_vitals`) | Enquanto a conta estiver ativa | Comparar esforço entre corridas é a finalidade, e ela precisa do histórico. Eliminada por cascade em dois saltos: a conta apaga a sessão, e a sessão apaga a FC |
+| Traçado da corrida | **Não é retido** — existe só na memória da sessão | Não há o que reter: as coordenadas são descartadas quando a tela fecha (§2.3) |
 | Histórico de dietas | Enquanto a conta estiver ativa | Histórico de evolução |
 | Passos, calorias, sono e FC de repouso diários | Enquanto a conta estiver ativa | Comparação de longo prazo é a finalidade; `ON DELETE CASCADE` elimina junto com a conta |
 | Conversa com o coach de IA (`ai_chat_sessions`, `ai_chat_messages`) | Enquanto a conta do aluno estiver ativa | É o registro da prescrição assistida. `ON DELETE CASCADE` a partir de `profiles` elimina junto com a conta |
@@ -711,6 +728,12 @@ modelo. Fechado pelo PRD
 | `notes` guarda só o que o aluno digitou; duração e calorias do cardio em colunas próprias | Qualidade (Art. 6°, V) e direito de acesso: texto do titular e texto do sistema não podem ocupar o mesmo campo |
 | O bloco recente do briefing atravessa a fronteira já resumido — nunca a linha de sessão | Necessidade + Segurança: dado de saúde cru não vai para o HTML da página |
 | Erro de gravação de sessão logado sem corpo | Prevenção (Art. 6°, VIII): o erro do PostgREST pode carregar o payload, inclusive `notes` |
+| Distância, ritmo e cadência em `workout_sessions`; FC média em `workout_session_vitals` (`0049`) | Base legal correta para cada dado (Art. 7°, V e Art. 11). A separação é o que permite a política de FC consultar consentimento sem que revogar desligue o acompanhamento de desempenho |
+| A série de coordenadas do GPS não é persistida em tabela nenhuma | Necessidade (Art. 6°, III): distância e ritmo entregam a finalidade inteira, e o traçado acrescenta endereço de casa e janela de ausência. Travado por varredura de schema na `verify-rls.sql`, por nome **e** por tipo de coluna |
+| As novas colunas de medida nascem sem GRANT de UPDATE | Qualidade (Art. 6°, V): distância e ritmo são o que o especialista usa para prescrever; editáveis pelo aluno, viram o número que ele gostaria de ter feito. A guarda da `0036` afirma a lista exata e falha se alguém conceder |
+| `workout_session_vitals` sem política de UPDATE e sem política de DELETE, e com `REVOKE` explícito dos dois | Segurança (Art. 6°, VII) em camada dupla. A `0020` concede UPDATE e DELETE por *default privileges* a **toda tabela nova**: sem o REVOKE, só a ausência de política seguraria — que é exatamente a proteção que a `0017` achou que tinha e não tinha |
+| Permissão de localização em background removida do app (`#278`) | Finalidade e Necessidade (Art. 6°, I e III). **Até aqui esta era uma violação viva:** a tela pedia `ACCESS_BACKGROUND_LOCATION` e ligava o rastreamento sem nenhuma tarefa registrada no app — o sistema concedia a permissão mais invasiva que existe e nenhuma coordenada era recebida nem usada. Coleta sem finalidade, e motivo de rejeição na Play Store. O rastreio passou a serviço de primeiro plano iniciado pelo aluno |
+| Portão de consentimento na gravação da FC, além da RLS na leitura | Art. 11, I nas duas pontas. A RLS impede o **especialista de ler**; `batimentoSeConsentido` impede o app de **gravar**. A primeira sozinha deixaria o dado de quem já disse não entrar no banco e apenas deixar de ser exibido |
 
 > **Revisão de 2026-08-28 — `session-feedback-correction`.** A lição da abertura
 > desta seção valeu de novo, na mesma tabela: **decisão documentada não é
@@ -748,6 +771,24 @@ modelo. Fechado pelo PRD
 > `workout_sessions` e `workout_session_exercises` **sem RLS nenhuma**. Corrigido
 > na migration `0017`. O caso está registrado na abertura da seção 10: decisão
 > documentada não é controle implementado.
+
+
+> **Revisão de 2026-09-06 — `#278`, a corrida vira medida.** Duas coisas
+> merecem registro. A primeira: a feature nasceu de um pedido para replicar a
+> tela de corrida de um relógio comercial, mapa incluído, e o mapa **não** foi
+> feito. O parecer reprovou o traçado na necessidade, o produto aceitou, e o
+> que entrou foi a medida. Vale anotar porque é o caso raro em que a decisão de
+> LGPD foi tomada antes de o dado existir, e não depois de uma auditoria achar
+> a coluna cheia.
+>
+> A segunda: a revisão encontrou uma coleta **já em produção** sem finalidade
+> nenhuma — permissão de localização em background pedida, concedida e nunca
+> usada, porque a tarefa que receberia as posições nunca foi registrada. Ela
+> não veio da feature nova; estava lá havia meses, invisível para todas as
+> guardas, porque nenhuma delas olha para permissão declarada. É a mesma classe
+> do que a auditoria de 2026-08-11 encontrou, com o sinal trocado: lá o
+> documento prometia um controle que o banco não tinha, aqui o app pedia uma
+> autorização que o código não usava.
 
 ---
 
