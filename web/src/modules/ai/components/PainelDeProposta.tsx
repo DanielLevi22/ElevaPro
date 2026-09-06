@@ -42,7 +42,13 @@ export function PainelDeProposta({ titulo, resolvido, onFechar, children }: Prop
       // O teto é porcentagem do espaço de conversa, não da janela. Com `vh` o
       // painel media 42% da tela inteira — em janela baixa isso é quase tudo o
       // que sobra depois do cabeçalho, e a conversa ficava com uma linha.
-      className="flex max-h-[45%] shrink-0 flex-col border-t border-white/10 bg-background/80 backdrop-blur"
+      //
+      // Em tela estreita o teto sobe para 70%: dividir meio a meio deixa as
+      // duas coisas pequenas demais para servirem, e entre uma conversa que já
+      // foi lida e uma decisão a tomar, é a decisão que precisa da tela.
+      // Recolher devolve a conversa inteira, e o cabeçalho do painel continua
+      // visível dizendo o que está pendente.
+      className="flex max-h-[70%] shrink-0 flex-col border-t border-white/10 bg-background/80 backdrop-blur sm:max-h-[45%]"
     >
       <div className="flex shrink-0 items-center gap-2 px-1 py-2">
         <button
