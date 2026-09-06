@@ -77,9 +77,9 @@ export function StudentCoachChat() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-280px)] min-h-[500px]">
+    <div className="flex h-[calc(100dvh-16rem)] min-h-88 flex-col">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-4 pr-2 pb-4">
+      <div className="min-h-0 flex-1 overflow-y-auto space-y-4 pr-2 pb-4">
         {messages.map((msg) => (
           <div
             key={msg.id}

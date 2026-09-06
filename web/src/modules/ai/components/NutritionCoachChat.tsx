@@ -260,8 +260,8 @@ export function NutritionCoachChat({
   }
 
   return (
-    <div className="flex h-[calc(100vh-280px)] min-h-125 flex-col">
-      <div className="flex-1 space-y-4 overflow-y-auto pr-2 pb-4">
+    <div className="flex h-[calc(100dvh-16rem)] min-h-88 flex-col">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-2 pb-4">
         {messages.map((msg) => (
           <div
             key={msg.id}
