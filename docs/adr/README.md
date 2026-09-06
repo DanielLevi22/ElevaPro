@@ -48,6 +48,7 @@
 | [ADR-0010](0010-body-scan-calibrado.md) | Análise corporal calibrada pela altura do aluno | accepted |
 | [ADR-0022](0022-o-aparelho-mede-o-modelo-interpreta.md) | O aparelho mede a geometria; o modelo interpreta | accepted |
 | [ADR-0023](0023-a-tecnica-se-julga-por-regra-e-nao-se-guarda.md) | A técnica se julga por regra geométrica, e não se guarda | accepted |
+| [ADR-0024](0024-a-corrida-se-mede-e-o-caminho-nao-se-guarda.md) | A corrida se mede, e o caminho não se guarda | accepted |
 
 ### Inteligência Artificial
 

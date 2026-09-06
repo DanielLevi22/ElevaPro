@@ -70,6 +70,9 @@ function detalheCardio(log: WorkoutLog): string | null {
   if (log.avg_pace_seconds_per_km) partes.push(`${comoRitmo(log.avg_pace_seconds_per_km)}/km`);
   if (log.duration_seconds) partes.push(`${Math.round(log.duration_seconds / 60)} min`);
   if (log.active_calories) partes.push(`${log.active_calories} kcal`);
+  // Ausente para o especialista de quem revogou o consentimento: a RLS de
+  // `workout_session_vitals` esvazia a junção, e o resto da linha continua.
+  if (log.avg_heart_rate) partes.push(`${log.avg_heart_rate} bpm`);
   return partes.length > 0 ? partes.join(' · ') : null;
 }
 
