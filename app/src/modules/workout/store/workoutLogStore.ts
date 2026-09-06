@@ -31,6 +31,9 @@ export interface WorkoutLog {
   /** Cardio: medidos na sessão. Nulos na musculação. */
   duration_seconds: number | null;
   active_calories: number | null;
+  /** Medidas da corrida. Nulas quando não houve leitura de GPS. */
+  distance_meters: number | null;
+  avg_pace_seconds_per_km: number | null;
   /** Modalidade do cardio. Na musculação o nome vem da prescrição. */
   activity_name: string | null;
   /** Título da prescrição, quando a sessão veio de uma. */
@@ -87,7 +90,7 @@ export const useWorkoutLogStore = create<WorkoutLogState>((set, get) => ({
         // Campos nomeados: tabela sensível pela LGPD_COMPLIANCE.md.
         .from('workout_sessions')
         .select(
-          'id, student_id, workout_id, started_at, completed_at, intensity, notes, feedback_edited_at, session_type, duration_seconds, active_calories, activity_name, created_at, workout:workouts(title)'
+          'id, student_id, workout_id, started_at, completed_at, intensity, notes, feedback_edited_at, session_type, duration_seconds, active_calories, activity_name, distance_meters, avg_pace_seconds_per_km, created_at, workout:workouts(title)'
         )
         .eq('student_id', studentId)
         .order('completed_at', { ascending: false });

@@ -46,9 +46,28 @@ function dataCurta(iso: string | null): string {
     : `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
+/** 374 s/km → "6'14"". */
+function comoRitmo(segundosPorKm: number): string {
+  const minutos = Math.floor(segundosPorKm / 60);
+  const segundos = segundosPorKm % 60;
+  return `${minutos}'${segundos < 10 ? '0' : ''}${segundos}"`;
+}
+
+/**
+ * Resumo de uma linha para a corrida.
+ *
+ * Distância e ritmo entram aqui e o percurso não entra em lugar nenhum: as
+ * coordenadas morrem com a sessão, então esta tela nunca terá o mapa (#278).
+ */
 function detalheCardio(log: WorkoutLog): string | null {
   if (log.session_type !== 'cardio') return null;
   const partes: string[] = [];
+  // Distância primeiro: numa corrida é a medida que responde "como foi", e a
+  // duração sozinha não distingue 5 km de 9 km na mesma hora.
+  if (log.distance_meters) {
+    partes.push(`${(log.distance_meters / 1000).toFixed(2).replace('.', ',')} km`);
+  }
+  if (log.avg_pace_seconds_per_km) partes.push(`${comoRitmo(log.avg_pace_seconds_per_km)}/km`);
   if (log.duration_seconds) partes.push(`${Math.round(log.duration_seconds / 60)} min`);
   if (log.active_calories) partes.push(`${log.active_calories} kcal`);
   return partes.length > 0 ? partes.join(' · ') : null;
