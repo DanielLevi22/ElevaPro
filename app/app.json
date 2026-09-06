@@ -10,7 +10,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSHealthShareUsageDescription": "Lemos do seu relógio passos, calorias, duração do sono e frequência cardíaca de repouso, para acompanhar sua atividade entre os treinos. Você escolhe o que compartilhar e pode desligar quando quiser."
+        "NSHealthShareUsageDescription": "Lemos do seu relógio passos, calorias, duração do sono, frequência cardíaca de repouso e a frequência cardíaca média das suas corridas, para acompanhar sua atividade entre os treinos. Você escolhe o que compartilhar e pode desligar quando quiser.",
+        "NSLocationWhenInUseUsageDescription": "Usamos o GPS durante a corrida para medir distância e ritmo. O caminho percorrido é desenhado na tela e descartado ao fim da sessão — ele não é salvo nem enviado para ninguém."
       },
       "bundleIdentifier": "com.elevapro.app"
     },
@@ -26,12 +27,13 @@
         "SCHEDULE_EXACT_ALARM",
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_BACKGROUND_LOCATION",
+        "ACTIVITY_RECOGNITION",
         "FOREGROUND_SERVICE",
         "FOREGROUND_SERVICE_LOCATION",
         "android.permission.health.READ_STEPS",
         "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
         "android.permission.health.READ_SLEEP",
+        "android.permission.health.READ_HEART_RATE",
         "android.permission.health.READ_RESTING_HEART_RATE",
         "android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND",
         "RECORD_AUDIO",
