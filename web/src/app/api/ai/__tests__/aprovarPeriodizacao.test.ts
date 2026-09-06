@@ -42,6 +42,7 @@ vi.mock("@/modules/ai/services/chatService", () => ({
   getOrCreateSession: async () => "sessao-recente",
   sessionOwnedBy: async (sessionId: string) => (donoDaSessao === sessionId ? sessionId : null),
   saveMessage: async () => "msg-1",
+  getSessionState: async () => estadoDaConversa["sessao-1"] ?? { savedWorkouts: [] },
   savePeriodization: async () => {
     if (falharAoGravar) throw new Error("training_plans recusou as fases");
     return "periodizacao-1";

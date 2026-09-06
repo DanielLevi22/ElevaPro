@@ -1,14 +1,9 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { authorizeLinkedSpecialist } from "@/lib/api-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { aprovarProposta } from "@/modules/ai/services/aprovacaoDaProposta";
 import {
-  getOrCreateSession,
-  getSessionState,
-  saveMessage,
-  sessionOwnedBy,
-  updateSessionState,
-} from "@/modules/ai/services/chatService";
+  acessoDoEspecialista,
+  criarRotaDeAprovacao,
+  especialistaDe,
+} from "@/modules/ai/services/rotaDeAprovacao";
 import type { BulkWorkoutExercise, BulkWorkoutItem, BulkWorkoutProposal } from "@/modules/ai/types";
 
 // Na Vercel uma rota sem isto morre no default de poucos segundos. Uma conversa
@@ -97,126 +92,48 @@ async function saveExercises(
 }
 
 /**
- * Apaga os treinos que esta chamada chegou a criar.
+ * Grava os treinos da fase a partir da proposta guardada no servidor.
  *
- * Só é chamado quando a gravação falhou no meio. `workout_exercises` tem
- * `ON DELETE CASCADE` a partir de `workouts`, então apagar o treino leva os
- * exercícios junto.
+ * O que é salvo é a cópia que o especialista revisou no cartão. Pedir ao modelo
+ * que reemitisse tudo num segundo turno daria a uma proposta de 4 treinos × 6
+ * exercícios espaço de sobra para divergir do que foi aprovado.
  */
-async function apagarTreinos(ids: string[]): Promise<void> {
-  if (ids.length === 0) return;
-  const { error } = await supabaseAdmin
-    .from("workouts" as never)
-    .delete()
-    .in("id", ids);
-  if (error) throw new Error(`falha ao desfazer os treinos ${ids.join(", ")}: ${error.message}`);
-}
+export const POST = criarRotaDeAprovacao<BulkWorkoutProposal, { id: string; title: string }[]>({
+  rotulo: "POST save-workouts",
+  chave: "pendingWorkoutProposal",
+  acesso: acessoDoEspecialista("workout"),
+  // `workout_exercises` cai por cascata a partir de `workouts`.
+  desfazerEm: "workouts",
 
-// POST /api/ai/chat/[studentId]/save-workouts
-// Saves the pending bulk workout proposal directly, without going through the AI.
-// Called when the specialist clicks "Aprovar e Salvar Todos" on the BulkWorkoutProposalCard.
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ studentId: string }> },
-) {
-  const { studentId } = await params;
+  gravar: async (ctx, proposta) => {
+    const salvos: { id: string; title: string }[] = [];
 
-  // `studentId` vem da URL: sem a checagem de vínculo, esta rota grava
-  // prescrição na conta de qualquer aluno. O `service_role` abaixo não consulta
-  // RLS — a barreira é esta linha.
-  const auth = await authorizeLinkedSpecialist(request, studentId);
-  if (!auth.ok) return auth.response;
-  const specialistId = auth.caller.id;
+    for (const workout of proposta.workouts ?? []) {
+      const { workoutId, title } = await saveWorkout(
+        workout,
+        proposta.phase_id,
+        especialistaDe(ctx),
+      );
+      await saveExercises(workoutId, workout.exercises);
+      ctx.registrar(workoutId);
+      salvos.push({ id: workoutId, title });
+    }
 
-  // A proposta pendente vive no `state` da conversa que a produziu. Sem o
-  // `sessionId` do cliente esta rota pegava a mais recente — e aprovar numa
-  // conversa antiga da lateral lia o estado de outra, respondendo "nenhuma
-  // proposta pendente" com a proposta na tela. O dono é validado porque o id
-  // vem do cliente e o `service_role` abaixo não consulta RLS.
-  const corpo = await request.json().catch(() => null);
-  const pedida = typeof corpo?.sessionId === "string" ? corpo.sessionId : undefined;
+    return salvos;
+  },
 
-  const sessionId = pedida
-    ? await sessionOwnedBy(pedida, studentId, specialistId)
-    : await getOrCreateSession(studentId, specialistId, "workout");
-
-  if (!sessionId) {
-    return NextResponse.json({ error: "conversa não encontrada" }, { status: 404 });
-  }
-
-  const sessionState = await getSessionState(sessionId);
-
-  // Os ids que esta chamada criar, para o desfazer alcançá-los se a gravação
-  // falhar no meio: sem isso, os treinos que já entraram ficariam no banco com
-  // a proposta de volta na fila, e a segunda tentativa os duplicaria.
-  const criados: string[] = [];
-
-  // A proposta é reivindicada, não lida: quem chega primeiro a recebe, quem
-  // chega depois recebe nada. Era essa janela que deixava duas abas — ou um
-  // retry depois do tempo — gravarem os mesmos treinos duas vezes.
-  // Só as linhas moram aqui dentro. O estado e a mensagem vêm depois do
-  // sucesso: escrevê-los junto abriria a chance de o cartão dizer "salvo" para
-  // treinos que o desfazer acabou de apagar.
-  let aprovada: BulkWorkoutProposal | undefined;
-
-  let saved: { id: string; title: string }[] | null;
-  try {
-    saved = await aprovarProposta<BulkWorkoutProposal, { id: string; title: string }[]>(
-      sessionId,
-      "pendingWorkoutProposal",
-      {
-        gravar: async (proposal) => {
-          aprovada = proposal;
-          const salvos: { id: string; title: string }[] = [];
-
-          for (const workout of proposal.workouts ?? []) {
-            const { workoutId, title } = await saveWorkout(
-              workout,
-              proposal.phase_id,
-              specialistId,
-            );
-            await saveExercises(workoutId, workout.exercises);
-            criados.push(workoutId);
-            salvos.push({ id: workoutId, title });
-          }
-
-          return salvos;
-        },
-        desfazer: () => apagarTreinos(criados),
-      },
-    );
-  } catch (err) {
-    console.error("[POST save-workouts] especialista", specialistId, err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
-  }
-
-  if (!saved || !aprovada) {
-    return NextResponse.json({ error: "Nenhuma proposta pendente encontrada." }, { status: 400 });
-  }
-  const proposal = aprovada;
-
-  // Sai da fila de decisão e vira histórico da tela. A chave pendente já saiu
-  // do `state` na reivindicação; o que falta é o registro do que foi aprovado,
-  // porque sumir de vez deixava a conversa anunciando "aprovados e salvos: A,
-  // B, C" com a tela sem nada para mostrar ao reabrir.
-  await updateSessionState(sessionId, {
+  resolver: (proposta, salvos, estado) => ({
     savedWorkouts: [
-      ...sessionState.savedWorkouts,
-      ...saved.map((w) => ({ id: w.id, title: w.title, phaseId: proposal.phase_id })),
+      ...estado.savedWorkouts,
+      ...salvos.map((w) => ({ id: w.id, title: w.title, phaseId: proposta.phase_id })),
     ],
-    resolvedWorkoutProposal: { proposal, savedTitles: saved.map((w) => w.title) },
-  });
+    resolvedWorkoutProposal: { proposal: proposta, savedTitles: salvos.map((w) => w.title) },
+  }),
 
-  // A aprovação acontece no cartão, fora da conversa. Sem esta linha o
-  // histórico não registra nada, e no turno seguinte o coach responde que ainda
-  // falta aprovar — o especialista acabou de aprovar e ouve que não aprovou.
-  await saveMessage(
-    sessionId,
-    "assistant",
-    `✅ Treinos aprovados e salvos na fase ${proposal.phase_name}: ${saved
+  mensagem: (proposta, salvos) =>
+    `✅ Treinos aprovados e salvos na fase ${proposta.phase_name}: ${salvos
       .map((w) => w.title)
       .join(", ")}.`,
-  );
 
-  return NextResponse.json({ saved });
-}
+  corpo: (_proposta, salvos) => ({ saved: salvos }),
+});

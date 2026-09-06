@@ -4,13 +4,12 @@ import type { ToolCallHandler } from "@/modules/ai/orchestrators/base.orchestrat
 import type { PlanProposalData, SseEvent } from "@/modules/ai/types";
 
 /**
- * O plano que o aluno aprova é o plano que fica gravado.
+ * O que `propose_plan` deixa guardado no servidor.
  *
- * `save_plan` gravava o que o modelo reemitia no segundo turno, e não a
- * proposta que o aluno viu no cartão — uma periodização de doze semanas com
- * quatro dias tem espaço de sobra para as duas versões divergirem. E nada
- * impedia salvar duas vezes: insistir gravava outra periodização ativa para o
- * mesmo aluno.
+ * É o que o botão Aprovar salva. A gravação em si mudou de lugar — saiu da
+ * ferramenta `save_plan` e foi para a rota `save-plan`, testada em
+ * `aprovarPlanoDoAluno.test.ts` — mas guardar a proposta continua sendo
+ * condição para tudo: sem ela, o botão não tem o que salvar.
  */
 
 const PLANO = {
@@ -24,14 +23,7 @@ const PLANO = {
   nutrition: { calories: 2400 },
 } as unknown as PlanProposalData;
 
-/** O que o modelo tentaria reemitir na hora de salvar — nunca deve ser gravado. */
-const PLANO_REEMITIDO = {
-  ...PLANO,
-  workout: { ...PLANO.workout, split_name: "Outro treino" },
-} as PlanProposalData;
-
 let estado: Record<string, unknown>;
-let gravado: { workout: { split_name: string } } | null;
 let ferramentasDoTurno: { name: string; input: unknown }[];
 let respostas: string[];
 
@@ -57,14 +49,7 @@ vi.mock("@/modules/ai/services/studentCoachService", () => ({
   // Devolve id porque a resposta do coach nasce na primeira palavra e é
   // reescrita durante o turno.
   saveStudentMessage: async () => "msg-1",
-  saveStudentCoachPlan: async (
-    _studentId: string,
-    _sessionId: string,
-    workout: { split_name: string },
-  ) => {
-    gravado = { workout };
-    return "periodizacao-1";
-  },
+  saveStudentCoachPlan: async () => "periodizacao-1",
 }));
 
 vi.mock("@/modules/ai/services/studentCoachContextLoader", () => ({
@@ -99,7 +84,6 @@ async function turno(): Promise<SseEvent[]> {
 
 beforeEach(() => {
   estado = { savedWorkouts: [] };
-  gravado = null;
   ferramentasDoTurno = [];
   respostas = [];
 });
@@ -115,55 +99,4 @@ describe("plano do aluno", () => {
   });
 
   // O ponto: o que grava é a cópia guardada, não o que o modelo mandar agora.
-  it("salva a proposta guardada, não a que o modelo reemite", async () => {
-    ferramentasDoTurno = [
-      { name: "propose_plan", input: PLANO },
-      { name: "save_plan", input: PLANO_REEMITIDO },
-    ];
-
-    await turno();
-
-    expect(gravado?.workout.split_name).toBe("Push Pull Legs");
-  });
-
-  it("aprovar duas vezes grava uma vez só", async () => {
-    ferramentasDoTurno = [
-      { name: "propose_plan", input: PLANO },
-      { name: "save_plan", input: PLANO },
-    ];
-    await turno();
-    gravado = null;
-
-    ferramentasDoTurno = [{ name: "save_plan", input: PLANO }];
-    await turno();
-
-    expect(gravado).toBeNull();
-    expect(JSON.parse(respostas.at(-1) as string)).toMatchObject({
-      error: "Este plano já foi salvo.",
-      plan_id: "periodizacao-1",
-    });
-  });
-
-  it("salvar tira da fila e guarda para a tela poder mostrar", async () => {
-    ferramentasDoTurno = [
-      { name: "propose_plan", input: PLANO },
-      { name: "save_plan", input: PLANO },
-    ];
-
-    await turno();
-
-    expect(estado.pendingStudentPlan).toBeUndefined();
-    expect(estado.resolvedStudentPlan).toEqual({ plan: PLANO, periodizationId: "periodizacao-1" });
-  });
-
-  it("salvar sem proposta nenhuma diz o que fazer, em vez de gravar", async () => {
-    ferramentasDoTurno = [{ name: "save_plan", input: PLANO }];
-
-    await turno();
-
-    expect(gravado).toBeNull();
-    expect(JSON.parse(respostas[0])).toMatchObject({
-      error: "Nenhum plano pendente para salvar. Apresente um com 'propose_plan' antes.",
-    });
-  });
 });
