@@ -14,6 +14,7 @@ import {
 import { formatContextForPrompt, loadStudentContext } from "@/modules/ai/services/contextLoader";
 import { definirTituloProvisorio, nomearConversa } from "@/modules/ai/services/conversationTitle";
 import { queryFoods, unknownFoodNames } from "@/modules/ai/services/foodCatalog";
+import { historicoDoTurno } from "@/modules/ai/services/historicoDoTurno";
 import { mensagemDeFalha } from "@/modules/ai/services/mensagemDeFalha";
 import { criarRespostaEmProgresso } from "@/modules/ai/services/respostaEmProgresso";
 import type { DietMealsProposal, DietPlanProposal, SseEvent } from "@/modules/ai/types";
@@ -98,10 +99,7 @@ export async function POST(
         }
 
         const storedMessages = await getSessionMessages(sessionId);
-        const history = storedMessages.map((m) => ({
-          role: m.role as "user" | "assistant",
-          content: m.content,
-        }));
+        const history = historicoDoTurno(storedMessages);
 
         // Só o índice, não o conteúdo: o contexto vai em todo turno, e a
         // análise inteira encareceria a conversa por um dado que a maioria dos

@@ -33,6 +33,7 @@ const {
   CATEGORIES,
   MUSCLE_GROUPS,
   VENUES,
+  esquecerCatalogo,
   queryExercises,
   resolveMuscleGroups,
   unknownExerciseNames,
@@ -40,6 +41,9 @@ const {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // O catálogo fica guardado por um minuto para não varrer a tabela a cada
+  // consulta. Sem esquecer aqui, um teste herdaria o catálogo do anterior.
+  esquecerCatalogo();
   rows = [
     { name: "Desenvolvimento militar", muscle_group: "ombro" },
     { name: "Elevação lateral com halteres", muscle_group: "ombro" },
@@ -95,7 +99,17 @@ describe("resolveMuscleGroups", () => {
 });
 
 describe("queryExercises", () => {
-  const nomes = (r: { exercises: { name: string }[] }) => r.exercises.map((e) => e.name);
+  /**
+   * Os nomes, achatados dos grupos e reordenados.
+   *
+   * O resultado passou a vir agrupado por músculo para economizar token — a
+   * ordem entre grupos é a de aparição, e o que estes testes afirmam é *quais*
+   * nomes voltaram, não em que ordem.
+   */
+  const nomes = (r: { por_grupo: Record<string, string[]> }) =>
+    Object.values(r.por_grupo)
+      .flat()
+      .sort((a, b) => a.localeCompare(b, "pt-BR"));
 
   it("filtra pelos grupos resolvidos, não pelo texto cru", async () => {
     const resultado = await queryExercises({ muscle_groups: ["Ombros"] });
@@ -177,7 +191,7 @@ describe("queryExercises", () => {
     const resultado = await queryExercises({ muscle_groups: ["ombro"] });
 
     expect(resultado.total).toBe(2);
-    expect(resultado.exercises).toHaveLength(2);
+    expect(Object.values(resultado.por_grupo).flat()).toHaveLength(2);
   });
 
   it("propaga erro em vez de devolver lista vazia", async () => {
@@ -209,9 +223,13 @@ describe("queryExercises", () => {
 });
 
 describe("queryExercises — onde e que tipo", () => {
-  const nomes = (r: { exercises: { name: string }[] }) => r.exercises.map((e) => e.name);
+  const nomes = (r: { por_grupo: Record<string, string[]> }) =>
+    Object.values(r.por_grupo)
+      .flat()
+      .sort((a, b) => a.localeCompare(b, "pt-BR"));
 
   beforeEach(() => {
+    esquecerCatalogo();
     rows = [
       { name: "Leg press 45°", muscle_group: "pernas", venue: "academia", category: "forca" },
       {
@@ -298,14 +316,37 @@ describe("queryExercises — onde e que tipo", () => {
     expect(mockFrom).not.toHaveBeenCalled();
   });
 
-  it("devolve a classificação junto do nome, para o coach poder dizer", async () => {
+  // O grupo muscular é a chave; ele nunca precisou ser repetido em cada linha.
+  it("agrupa os nomes pelo músculo, sem repetir o grupo em cada exercício", async () => {
     const resultado = await queryExercises({ search_term: "Rotação externa" });
 
-    expect(resultado.exercises[0]).toEqual({
-      name: "Rotação externa com elástico",
-      muscle_group: "ombro",
-      venue: "ambos",
-      category: "estabilizacao",
+    expect(resultado.por_grupo).toEqual({ ombro: ["Rotação externa com elástico"] });
+  });
+
+  /**
+   * A economia que motivou o formato: medido no catálogo de 181 exercícios, o
+   * formato antigo gastava 2.333 tokens no teto de 80 itens, e o agrupado
+   * gasta 636. Três dos quatro campos eram eco do filtro que o modelo tinha
+   * acabado de mandar.
+   */
+  it("não repete o filtro de volta quando ele já determina o resultado", async () => {
+    const resultado = await queryExercises({ category: "alongamento" });
+
+    // Um valor só de `venue` e de `category` significa que o filtro os fixou —
+    // dizê-los em cada linha seria devolver ao modelo o que ele mandou.
+    expect(resultado.venue_por_exercicio).toBeUndefined();
+    expect(resultado.category_por_exercicio).toBeUndefined();
+  });
+
+  // Sem filtro de local, casa e academia voltam misturados — e aí a distinção
+  // muda o treino que dá para montar.
+  it("diz onde treinar quando o resultado mistura casa e academia", async () => {
+    const resultado = await queryExercises({ muscle_groups: ["pernas"] });
+
+    expect(resultado.venue_por_exercicio).toEqual({
+      "Agachamento livre sem peso": "casa",
+      "Alongamento de quadríceps em pé": "ambos",
+      "Leg press 45°": "academia",
     });
   });
 });

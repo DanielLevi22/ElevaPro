@@ -3,6 +3,7 @@ import { authorizeStudent } from "@/lib/api-auth";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { StudentCoachOrchestrator } from "@/modules/ai/orchestrators/student-coach.orchestrator";
 import { updateMessage, updateSessionState } from "@/modules/ai/services/chatService";
+import { historicoDoTurno } from "@/modules/ai/services/historicoDoTurno";
 import { criarRespostaEmProgresso } from "@/modules/ai/services/respostaEmProgresso";
 import {
   formatStudentCoachContext,
@@ -50,10 +51,7 @@ export async function POST(request: NextRequest) {
         const sessionId = await getOrCreateStudentCoachSession(studentId);
         const storedMessages = await getStudentSessionMessages(sessionId);
 
-        const history = storedMessages.map((m) => ({
-          role: m.role,
-          content: m.content,
-        }));
+        const history = historicoDoTurno(storedMessages);
 
         const contextText = formatStudentCoachContext(ctx);
 

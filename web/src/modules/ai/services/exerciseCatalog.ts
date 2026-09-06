@@ -158,7 +158,29 @@ export interface ExerciseQueryInput {
 }
 
 export interface ExerciseQueryResult {
-  exercises: { name: string; muscle_group: string; venue: string; category: string }[];
+  /**
+   * Os nomes, agrupados pelo grupo muscular.
+   *
+   * Antes cada exercício vinha como um objeto de quatro campos, e três deles
+   * eram eco do filtro que o modelo acabara de mandar: quem pede
+   * `muscle_groups:["peito"], venue:"gym"` já sabe que tudo que voltou é peito
+   * e é de academia. Medido no catálogo de 181, o formato antigo gastava 2.333
+   * tokens no teto de 80 itens; agrupado, gasta 636 — e é reenviado a cada
+   * turno seguinte da mesma requisição.
+   *
+   * O que o modelo precisa de verdade é o `name`, exato, porque é ele que vai
+   * para `propose_workouts` e é por ele que a gravação casa.
+   */
+  por_grupo: Record<string, string[]>;
+  /**
+   * Onde treinar e que tipo de exercício é — **só quando variam** no resultado.
+   *
+   * Filtrou por academia? Então dizer "gym" em cada linha não informa nada.
+   * Não filtrou, e voltou casa e academia misturados? Aí a distinção importa
+   * para montar o treino, e ela aparece.
+   */
+  venue_por_exercicio?: Record<string, string>;
+  category_por_exercicio?: Record<string, string>;
   /** Quantos existem no filtro — o modelo precisa saber se está vendo tudo. */
   total: number;
   /** Preenchido quando o grupo pedido não existe, com os que existem. */
@@ -192,16 +214,45 @@ interface CatalogRow {
   category: string | null;
 }
 
+/**
+ * O catálogo lido uma vez por minuto, não uma vez por consulta.
+ *
+ * Montar uma divisão ABC dispara `query_exercises` várias vezes no mesmo turno,
+ * e `unknownExerciseNames` lê de novo na hora de gravar — eram cinco ou seis
+ * varreduras da tabela inteira para responder uma pergunta só. O catálogo muda
+ * quando alguém cadastra exercício, o que não acontece durante uma conversa.
+ *
+ * Um minuto é curto o bastante para um exercício recém-cadastrado aparecer sem
+ * ninguém entender por que não apareceu, e longo o bastante para cobrir a
+ * conversa inteira com uma leitura.
+ */
+const VALIDADE_MS = 60_000;
+
+let cache: { linhas: CatalogRow[]; expiraEm: number } | null = null;
+
+/** Esquece o catálogo guardado. Existe para o teste não herdar o do anterior. */
+export function esquecerCatalogo(): void {
+  cache = null;
+}
+
 /** O catálogo inteiro, nas quatro colunas que classificam. */
 async function readCatalog(): Promise<CatalogRow[]> {
+  if (cache && Date.now() < cache.expiraEm) return cache.linhas;
+
   const { data, error } = await supabaseAdmin
     .from("exercises")
     .select("name, muscle_group, venue, category");
 
   // Erro tem que subir: era indistinguível de "não achei nada", e o modelo
   // afirmava com convicção que o catálogo estava vazio.
+  //
+  // E não guarda: cachear a falha faria um minuto de indisponibilidade do banco
+  // virar um minuto de "o catálogo está vazio" para todo mundo.
   if (error) throw error;
-  return (data ?? []) as CatalogRow[];
+
+  const linhas = (data ?? []) as CatalogRow[];
+  cache = { linhas, expiraEm: Date.now() + VALIDADE_MS };
+  return linhas;
 }
 
 /**
@@ -222,6 +273,37 @@ export async function unknownExerciseNames(names: string[]): Promise<string[]> {
   return names.filter((n) => !existentes.has(normalize(n)));
 }
 
+/** Os nomes sob o grupo muscular a que pertencem, na ordem em que vieram. */
+function agruparPorMusculo(linhas: CatalogRow[]): Record<string, string[]> {
+  const grupos: Record<string, string[]> = {};
+  for (const linha of linhas) {
+    const grupo = linha.muscle_group ?? "(sem grupo)";
+    grupos[grupo] ??= [];
+    grupos[grupo].push(linha.name);
+  }
+  return grupos;
+}
+
+/**
+ * O campo só entra no resultado quando tem mais de um valor.
+ *
+ * Um valor só significa que o filtro já o determinou — repeti-lo em cada linha
+ * é devolver ao modelo o que ele mandou. Dois ou mais, e a distinção passa a
+ * dizer alguma coisa sobre o treino a montar.
+ */
+function soQuandoVaria(
+  linhas: CatalogRow[],
+  campo: "venue" | "category",
+  chave: string,
+): Record<string, Record<string, string>> {
+  const valores = new Set(linhas.map((l) => l[campo] ?? ""));
+  if (valores.size < 2) return {};
+
+  const mapa: Record<string, string> = {};
+  for (const linha of linhas) mapa[linha.name] = linha[campo] ?? "";
+  return { [chave]: mapa };
+}
+
 export async function queryExercises(input: ExerciseQueryInput): Promise<ExerciseQueryResult> {
   const pedidos = input.muscle_groups ?? [];
   const groups = new Set(pedidos.flatMap(resolveMuscleGroups));
@@ -231,7 +313,7 @@ export async function queryExercises(input: ExerciseQueryInput): Promise<Exercis
     // Devolver lista vazia aqui foi o que fez o coach afirmar que o banco
     // estava vazio. Dizer o que existe deixa o modelo se corrigir sozinho.
     return {
-      exercises: [],
+      por_grupo: {},
       total: 0,
       unknownGroup: { requested: naoReconhecidos, available: MUSCLE_GROUPS },
     };
@@ -240,7 +322,7 @@ export async function queryExercises(input: ExerciseQueryInput): Promise<Exercis
   const venue = input.venue ? resolveTerm(input.venue, VENUES, VENUE_SYNONYMS) : null;
   if (input.venue && !venue) {
     return {
-      exercises: [],
+      por_grupo: {},
       total: 0,
       unknownFilter: { field: "venue", requested: input.venue, available: VENUES },
     };
@@ -251,7 +333,7 @@ export async function queryExercises(input: ExerciseQueryInput): Promise<Exercis
     : null;
   if (input.category && !category) {
     return {
-      exercises: [],
+      por_grupo: {},
       total: 0,
       unknownFilter: { field: "category", requested: input.category, available: CATEGORIES },
     };
@@ -279,13 +361,12 @@ export async function queryExercises(input: ExerciseQueryInput): Promise<Exercis
 
   encontrados.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 
+  const mostrados = encontrados.slice(0, MAX_RESULTS);
+
   return {
-    exercises: encontrados.slice(0, MAX_RESULTS).map((e) => ({
-      name: e.name,
-      muscle_group: e.muscle_group ?? "",
-      venue: e.venue ?? "",
-      category: e.category ?? "",
-    })),
+    por_grupo: agruparPorMusculo(mostrados),
+    ...soQuandoVaria(mostrados, "venue", "venue_por_exercicio"),
+    ...soQuandoVaria(mostrados, "category", "category_por_exercicio"),
     total: encontrados.length,
     // Filtro que não casou com nada, num catálogo que tem linhas: é deriva de
     // dado, não catálogo vazio, e só o valor cru mostra isso.
