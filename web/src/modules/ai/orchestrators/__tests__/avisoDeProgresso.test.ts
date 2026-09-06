@@ -120,7 +120,6 @@ const avisos = (linha: Linha[]) => linha.filter((e) => e.type === "tool_start");
 describe("aviso de progresso", () => {
   it.each([
     ["propose_workouts", "Montando a proposta de treinos"],
-    ["save_periodization", "Salvando a periodização"],
     ["query_exercises", "Consultando o catálogo de exercícios"],
     ["propose_periodization", "Montando a proposta de periodização"],
   ])("anuncia %s com o rótulo da ferramenta", async (ferramenta, rotulo) => {
@@ -228,7 +227,7 @@ describe("prévia da proposta", () => {
   it.each([
     "query_exercises",
     "query_foods",
-    "save_periodization",
+    "query_body_scan",
   ])("%s não manda prévia, mesmo tendo rótulo", async (ferramenta) => {
     expect(previas(await linhaDoTempo([ferramenta]))).toEqual([]);
   });

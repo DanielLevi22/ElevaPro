@@ -50,34 +50,6 @@ export const WORKOUT_TOOLS: ToolDefinition[] = [
     },
   },
   {
-    name: "save_periodization",
-    description:
-      "Salva a periodização no banco de dados após confirmação explícita do especialista. Use SOMENTE quando o especialista aprovar a proposta com palavras como 'ok', 'pode salvar', 'confirma', 'aprovado'.",
-    input_schema: {
-      type: "object",
-      properties: {
-        name: { type: "string" },
-        goal: { type: "string" },
-        durationWeeks: { type: "number" },
-        startDate: { type: "string", description: "AAAA-MM-DD, o mesmo da proposta" },
-        level: { type: "string" },
-        phases: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              name: { type: "string" },
-              weeks: { type: "number" },
-              focus: { type: "string" },
-            },
-            required: ["name", "weeks", "focus"],
-          },
-        },
-      },
-      required: ["name", "goal", "durationWeeks", "startDate", "level", "phases"],
-    },
-  },
-  {
     name: "propose_workouts",
     description:
       "Apresenta os treinos de uma fase para o especialista revisar e aprovar. Use SOMENTE depois de: (1) a periodização estar salva, (2) ter concordado sobre a divisão, e (3) ter consultado 'query_exercises' — todo `exercise_name` precisa ter vindo de lá, escrito exatamente igual. A aprovação acontece no cartão, não no chat: depois de chamar, diga apenas que a proposta está pronta para revisão.",

@@ -7,7 +7,6 @@ import {
   getSessionState,
   phaseOwnedBy,
   saveMessage,
-  savePeriodization,
   sessionOwnedBy,
   updateSessionState,
 } from "@/modules/ai/services/chatService";
@@ -163,53 +162,40 @@ export async function POST(
         // Vercel levava o turno inteiro — e lá o processo é encerrado, sem
         // `catch` nenhum para socorrer.
         resposta = criarRespostaEmProgresso(sessionId);
-        let savedPeriodizationId: string | undefined;
 
         const onToolCall = async (name: string, input: unknown): Promise<string> => {
           const typedInput = input as Record<string, unknown>;
 
           if (name === "propose_periodization") {
             // Propor de novo depois de salvar é o cartão renascendo como
-            // "Aguardando aprovação" na tela de quem acabou de aprovar — e o
-            // botão de salvar reaparece para uma periodização que já está no
-            // banco. O turno sabe que salvou; recusar aqui é mais barato que
-            // ensinar a tela a distinguir proposta velha de proposta nova.
-            if (savedPeriodizationId) {
+            // "Aguardando aprovação" na tela de quem acabou de aprovar, com o
+            // botão de salvar de volta para uma periodização que já está no
+            // banco.
+            //
+            // A checagem lê o `state`, e não uma variável do turno: quem grava
+            // agora é a rota de aprovação, num pedido à parte. Uma variável
+            // local não atravessaria isso.
+            if ((await getSessionState(sessionId)).resolvedPeriodization) {
               return JSON.stringify({
                 error: "Esta periodização já foi salva.",
                 instrucao: "Não proponha de novo. Siga para os treinos da fase.",
               });
             }
 
-            controller.enqueue(
-              sseChunk({ type: "proposal", data: input as PeriodizationProposal }),
-            );
-            return "Proposta apresentada ao especialista. Aguardando revisão e aprovação.";
-          }
-
-          if (name === "save_periodization") {
-            try {
-              const periodId = await savePeriodization(studentId, specialistId, {
-                name: typedInput.name as string,
-                goal: typedInput.goal as string,
-                durationWeeks: typedInput.durationWeeks as number,
-                startDate: typedInput.startDate as string,
-                level: typedInput.level as string,
-                phases: typedInput.phases as { name: string; weeks: number; focus: string }[],
-              });
-              savedPeriodizationId = periodId;
-              controller.enqueue(
-                sseChunk({
-                  type: "saved",
-                  entity: "periodization",
-                  id: periodId,
-                  name: typedInput.name as string,
-                }),
-              );
-              return JSON.stringify({ success: true, periodization_id: periodId });
-            } catch (err) {
-              return JSON.stringify({ error: String(err) });
-            }
+            // Guardar é o que torna a aprovação possível. O histórico que o
+            // modelo relê tem só texto — chamada de ferramenta e resultado não
+            // são gravados —, então sem esta cópia ele chega ao turno seguinte
+            // sem nome, semanas, data nem fases, e propõe de novo para
+            // reconstruí-los. Era esse o laço.
+            const periodizacao = input as PeriodizationProposal;
+            await updateSessionState(sessionId, { pendingPeriodization: periodizacao });
+            controller.enqueue(sseChunk({ type: "proposal", data: periodizacao }));
+            return JSON.stringify({
+              success: true,
+              aguardando: "aprovação do especialista no cartão",
+              instrucao:
+                "A aprovação acontece no cartão, não no chat. Diga apenas que a proposta está pronta para revisão e espere.",
+            });
           }
 
           if (name === "propose_workouts") {
@@ -278,9 +264,7 @@ export async function POST(
           controller.enqueue(sseChunk(event));
         }
 
-        await resposta.concluir(
-          savedPeriodizationId ? { saved_periodization_id: savedPeriodizationId } : undefined,
-        );
+        await resposta.concluir();
 
         if (resposta.texto.trim() && primeiraTroca) {
           // Depois do stream, nunca durante: somar uma chamada a resposta que a
@@ -383,5 +367,12 @@ export async function GET(
     savedWorkoutTitles: estado.pendingWorkoutProposal
       ? []
       : (estado.resolvedWorkoutProposal?.savedTitles ?? []),
+    // Mesma regra da proposta de treinos: a pendente vem primeiro, porque é ela
+    // que tem decisão a tomar; sem pendente, volta a aprovada com o id, para o
+    // cartão reabrir marcado como salvo em vez de pedir aprovação de novo.
+    periodization: estado.pendingPeriodization ?? estado.resolvedPeriodization?.proposal ?? null,
+    savedPeriodizationId: estado.pendingPeriodization
+      ? null
+      : (estado.resolvedPeriodization?.id ?? null),
   });
 }

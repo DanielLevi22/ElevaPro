@@ -16,7 +16,11 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
  */
 
 /** As três propostas que esperam decisão no `state` da conversa. */
-export type ChaveDeProposta = "pendingWorkoutProposal" | "pendingDietPlan" | "pendingDietMeals";
+export type ChaveDeProposta =
+  | "pendingPeriodization"
+  | "pendingWorkoutProposal"
+  | "pendingDietPlan"
+  | "pendingDietMeals";
 
 export interface Gravacao<Proposta, Resultado> {
   /** Grava a proposta reivindicada. Lançar aqui aciona o `desfazer`. */
