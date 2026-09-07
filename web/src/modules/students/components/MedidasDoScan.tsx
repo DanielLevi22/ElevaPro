@@ -1,3 +1,11 @@
+// Cliente porque o `DataTable` é cliente e a interface dele é feita de funções:
+// `render` e `rowKey` atravessariam a fronteira como props, e função não
+// serializa. Não era erro de tipo nem de teste — a página inteira devolvia 500
+// no servidor, e só para o aluno cujo scan tinha medida (sem medida a seção
+// retorna null antes de chegar aqui). Os outros quatro consumidores do
+// `DataTable` já são cliente pelo mesmo motivo.
+"use client";
+
 import { type BodyScanRecord, linhasMedidas, ressalvasDoScan } from "@elevapro/shared";
 import { DataTable } from "@/shared/components/ui/DataTable";
 
