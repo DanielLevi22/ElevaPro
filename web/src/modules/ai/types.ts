@@ -86,7 +86,8 @@ export interface StudentContext {
     name: string;
     goal: string;
     status: string;
-    phases: { id: string; name: string; weeks: number; focus: string }[];
+    /** `workoutCount` é o que diz se a fase ainda precisa ser montada. */
+    phases: { id: string; name: string; weeks: number; focus: string; workoutCount: number }[];
   }[];
 }
 

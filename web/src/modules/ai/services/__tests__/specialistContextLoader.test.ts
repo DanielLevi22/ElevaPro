@@ -170,6 +170,68 @@ describe("formatContextForPrompt", () => {
     expect(texto).toContain("Não afirme que ele não tem lesão");
   });
 
+  // A conversa parava na fase 1 de uma periodização de quatro: o contexto
+  // listava as quatro iguais, o coach não tinha como saber que três estavam
+  // vazias, e quem descobria era o especialista.
+  it("marca a fase que ainda não tem treinos", async () => {
+    tables.training_periodizations = {
+      data: [
+        {
+          id: "per-1",
+          name: "Hipertrofia 2026",
+          objective: "Hipertrofia",
+          status: "active",
+          training_plans: [
+            {
+              id: "fase-1",
+              name: "Ativação",
+              duration_weeks: 4,
+              focus: "Correção",
+              workouts: [{ count: 4 }],
+            },
+            {
+              id: "fase-2",
+              name: "Base",
+              duration_weeks: 6,
+              focus: "Volume",
+              workouts: [{ count: 0 }],
+            },
+          ],
+        },
+      ],
+      error: null,
+    };
+
+    const texto = formatContextForPrompt(await loadStudentContext("aluno-1", "espec-1"));
+
+    expect(texto).toContain("[id: fase-1] Ativação: 4 semanas — Correção — 4 treinos");
+    expect(texto).toContain("[id: fase-2] Base: 6 semanas — Volume — SEM TREINOS");
+  });
+
+  // PostgREST devolve `workouts: []` quando a fase não tem nenhum — ausência de
+  // linha, não `count: 0`. Lido como `undefined`, o marcador sumiria justamente
+  // da fase que precisa dele.
+  it("trata fase sem linha de contagem como sem treinos", async () => {
+    tables.training_periodizations = {
+      data: [
+        {
+          id: "per-1",
+          name: "Hipertrofia 2026",
+          objective: "Hipertrofia",
+          status: "active",
+          training_plans: [
+            { id: "fase-1", name: "Ativação", duration_weeks: 4, focus: "Correção", workouts: [] },
+          ],
+        },
+      ],
+      error: null,
+    };
+
+    const texto = formatContextForPrompt(await loadStudentContext("aluno-1", "espec-1"));
+
+    expect(texto).toContain("SEM TREINOS");
+  });
+
   it("distingue anamnese em branco de histórico indisponível", async () => {
     tables.student_anamnesis = { data: { responses: {} }, error: null };
     tables.physical_assessments = { data: null, error: null };

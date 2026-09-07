@@ -141,6 +141,11 @@ export function AiCoachChat({
   async function approveWorkouts() {
     if (!workoutProposal || savingWorkouts || !session?.access_token) return;
 
+    // Lido antes de gravar: a continuação roda depois, e até lá o cartão já
+    // pode ter sido trocado pela proposta da fase seguinte.
+    const fase = workoutProposal.phase_name;
+    let gravou = false;
+
     setSavingWorkouts(true);
     try {
       const res = await fetch(`/api/ai/chat/${studentId}/save-workouts`, {
@@ -159,12 +164,13 @@ export function AiCoachChat({
 
       const salvos = (data.saved ?? []) as { title: string }[];
       setSavedWorkoutTitles(salvos.map((w) => w.title));
+      gravou = true;
       setMessages((prev) => [
         ...prev,
         {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: `Pronto! ${salvos.length === 1 ? "1 treino salvo" : `${salvos.length} treinos salvos`} na fase ${workoutProposal.phase_name}.`,
+          content: `Pronto! ${salvos.length === 1 ? "1 treino salvo" : `${salvos.length} treinos salvos`} na fase ${fase}.`,
           createdAt: new Date().toISOString(),
         },
       ]);
@@ -182,6 +188,15 @@ export function AiCoachChat({
     } finally {
       setSavingWorkouts(false);
     }
+
+    // Aprovar é meio do trabalho, não o fim dele: uma periodização de quatro
+    // fases precisa de quatro rodadas, e a conversa parava na primeira. Ninguém
+    // avisava que faltavam três — o especialista é que descobria e digitava.
+    //
+    // Fora do `try` de propósito: enquanto ele estivesse aberto, `savingWorkouts`
+    // seguiria verdadeiro pelo turno inteiro e o cartão recém-salvo ficaria
+    // preso em "salvando".
+    if (gravou) await sendMessage(`Aprovei os treinos da fase ${fase}. E agora?`);
   }
 
   /**
@@ -453,7 +468,10 @@ export function AiCoachChat({
           cópia guardada no servidor, idêntica à revisada. */}
       {workoutProposal && (
         <PainelDeProposta
-          titulo="Proposta de treinos"
+          // A fase entra no título porque é o que distingue uma proposta da
+          // seguinte. Sem ela, o cabeçalho da fase 1 e o da fase 4 são a mesma
+          // frase, e um cartão que não trocou é indistinguível de um que trocou.
+          titulo={`Proposta de treinos · ${workoutProposal.phase_name}`}
           resolvido={savedWorkoutTitles.length > 0}
           onFechar={() => {
             // Fechar tem que fechar: sem lembrar, o cartão voltaria na próxima
