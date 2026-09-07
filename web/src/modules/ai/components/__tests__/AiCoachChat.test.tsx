@@ -63,8 +63,13 @@ beforeEach(() => {
         return { json: async () => aoAbrir } as Response;
       }
       // O turno do modelo não interessa aqui: o que importa é o que a tela faz
-      // com a proposta enquanto a conversa anda.
-      return { body: null, json: async () => ({ saved: [] }) } as Response;
+      // com a proposta enquanto a conversa anda. `ok` precisa vir: sem ele o
+      // salvar cai no ramo de erro, e a aprovação nunca chega ao sucesso.
+      return {
+        ok: true,
+        body: null,
+        json: async () => ({ saved: [{ id: "t1", title: "Treino A — Full Body Base" }] }),
+      } as Response;
     }),
   );
 });
@@ -72,6 +77,45 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
 });
+
+/** Stream SSE que o teste alimenta pedaço a pedaço, como a rede faria. */
+function streamManual() {
+  const encoder = new TextEncoder();
+  let controlador!: ReadableStreamDefaultController<Uint8Array>;
+  const body = new ReadableStream<Uint8Array>({
+    start(c) {
+      controlador = c;
+    },
+  });
+  return {
+    body,
+    enviar: (evento: unknown) =>
+      controlador.enqueue(
+        encoder.encode(`data: ${JSON.stringify(evento)}
+
+`),
+      ),
+    fechar: () => controlador.close(),
+  };
+}
+
+async function enviarMensagem(stream: { body: ReadableStream<Uint8Array> }) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (_url: string, init?: RequestInit) =>
+      init?.method === "POST"
+        ? ({ body: stream.body } as Response)
+        : ({ json: async () => aoAbrir } as Response),
+    ),
+  );
+
+  await act(async () => {
+    fireEvent.change(screen.getByPlaceholderText(/Digite uma mensagem/), {
+      target: { value: "monta os treinos" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar mensagem" }));
+  });
+}
 
 describe("proposta na tela do coach", () => {
   it("não mostra painel nenhum quando não há proposta", async () => {
@@ -88,9 +132,22 @@ describe("proposta na tela do coach", () => {
     await montar();
 
     await waitFor(() =>
-      expect(screen.getByRole("region", { name: "Proposta de treinos" })).toBeInTheDocument(),
+      expect(screen.getByRole("region", { name: /Proposta de treinos/ })).toBeInTheDocument(),
     );
     expect(screen.getByRole("button", { name: /Aprovar e Salvar Todos/ })).toBeInTheDocument();
+  });
+
+  // Sem a fase no cabeçalho, a proposta da fase 1 e a da fase 4 são a mesma
+  // frase — e um cartão que não trocou fica indistinguível de um que trocou.
+  it("diz no cabeçalho de qual fase é a proposta", async () => {
+    aoAbrir = { ...aoAbrir, workoutProposal: PROPOSTA, savedWorkoutTitles: [] };
+    await montar();
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("region", { name: /Proposta de treinos · Base Aeróbia e Resistência/ }),
+      ).toBeInTheDocument(),
+    );
   });
 
   // A conversa dizia "✅ treinos aprovados e salvos: A, B, C" e a tela não
@@ -104,7 +161,7 @@ describe("proposta na tela do coach", () => {
     await montar();
 
     await waitFor(() =>
-      expect(screen.getByRole("region", { name: "Proposta de treinos" })).toBeInTheDocument(),
+      expect(screen.getByRole("region", { name: /Proposta de treinos/ })).toBeInTheDocument(),
     );
     expect(screen.getByText("· salvo")).toBeInTheDocument();
     // Resolvida não oferece aprovar de novo — salvar duas vezes duplicaria.
@@ -124,18 +181,79 @@ describe("proposta na tela do coach", () => {
     expect(screen.queryByRole("region", { name: /Proposta de treinos/ })).not.toBeInTheDocument();
   });
 
+  // Aprovar recolhe o painel, e o painel não desmonta entre uma proposta e a
+  // seguinte: a proposta da fase 2 chegava para um painel já fechado, e a
+  // leitura era "ficou o cartão da fase 1".
+  it("reabre o painel quando chega a proposta da fase seguinte", async () => {
+    aoAbrir = {
+      ...aoAbrir,
+      workoutProposal: PROPOSTA,
+      savedWorkoutTitles: ["Treino A — Full Body Base"],
+    };
+    await montar();
+    await waitFor(() => expect(screen.getByText("· salvo")).toBeInTheDocument());
+    // Resolvida abre recolhida: o cartão não está na tela.
+    expect(
+      screen.queryByRole("button", { name: /Aprovar e Salvar Todos/ }),
+    ).not.toBeInTheDocument();
+
+    const stream = streamManual();
+    await enviarMensagem(stream);
+    await act(async () => {
+      stream.enviar({
+        type: "workout_proposal",
+        data: { ...PROPOSTA, phase_id: "fase-2", phase_name: "Hipertrofia Base" },
+      });
+      stream.fechar();
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("region", { name: /Proposta de treinos · Hipertrofia Base/ }),
+      ).toBeInTheDocument(),
+    );
+    expect(screen.getByRole("button", { name: /Aprovar e Salvar Todos/ })).toBeInTheDocument();
+  });
+
+  // A conversa parava na fase aprovada. Faltando três das quatro, ninguém
+  // avisava — o especialista é que descobria e digitava.
+  it("segue a conversa sozinha depois de aprovar os treinos da fase", async () => {
+    aoAbrir = { ...aoAbrir, workoutProposal: PROPOSTA, savedWorkoutTitles: [] };
+    await montar();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /Aprovar e Salvar Todos/ })).toBeInTheDocument(),
+    );
+
+    const chamadas = () => (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls;
+    const antes = chamadas().length;
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /Aprovar e Salvar Todos/ }));
+    });
+
+    await waitFor(() => {
+      const turno = chamadas()
+        .slice(antes)
+        .find(([url, init]) => url === "/api/ai/chat/aluno-1" && init?.method === "POST");
+      expect(turno).toBeDefined();
+      expect(JSON.parse((turno?.[1] as RequestInit).body as string).message).toContain(
+        PROPOSTA.phase_name,
+      );
+    });
+  });
+
   // Enquanto o cartão era o último item da lista, ele era limpo a cada envio.
   it("a proposta pendente continua na tela depois de outra mensagem", async () => {
     aoAbrir = { ...aoAbrir, workoutProposal: PROPOSTA, savedWorkoutTitles: [] };
     const { rerender } = await montar();
 
     await waitFor(() =>
-      expect(screen.getByRole("region", { name: "Proposta de treinos" })).toBeInTheDocument(),
+      expect(screen.getByRole("region", { name: /Proposta de treinos/ })).toBeInTheDocument(),
     );
 
     rerender(chat);
 
-    expect(screen.getByRole("region", { name: "Proposta de treinos" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /Proposta de treinos/ })).toBeInTheDocument();
   });
 });
 
@@ -147,45 +265,6 @@ describe("proposta na tela do coach", () => {
  * com o modelo — e some assim que o cartão de verdade chega.
  */
 describe("proposta sendo escrita", () => {
-  /** Stream SSE que o teste alimenta pedaço a pedaço, como a rede faria. */
-  function streamManual() {
-    const encoder = new TextEncoder();
-    let controlador!: ReadableStreamDefaultController<Uint8Array>;
-    const body = new ReadableStream<Uint8Array>({
-      start(c) {
-        controlador = c;
-      },
-    });
-    return {
-      body,
-      enviar: (evento: unknown) =>
-        controlador.enqueue(
-          encoder.encode(`data: ${JSON.stringify(evento)}
-
-`),
-        ),
-      fechar: () => controlador.close(),
-    };
-  }
-
-  async function enviarMensagem(stream: { body: ReadableStream<Uint8Array> }) {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (_url: string, init?: RequestInit) =>
-        init?.method === "POST"
-          ? ({ body: stream.body } as Response)
-          : ({ json: async () => aoAbrir } as Response),
-      ),
-    );
-
-    await act(async () => {
-      fireEvent.change(screen.getByPlaceholderText(/Digite uma mensagem/), {
-        target: { value: "monta os treinos" },
-      });
-      fireEvent.click(screen.getByRole("button", { name: "Enviar mensagem" }));
-    });
-  }
-
   it("mostra o que já chegou da proposta, e troca pelo cartão quando ele chega", async () => {
     await montar();
     await waitFor(() => expect(screen.getByPlaceholderText(/Digite uma mensagem/)).toBeVisible());
@@ -215,7 +294,7 @@ describe("proposta sendo escrita", () => {
     });
 
     await waitFor(() =>
-      expect(screen.getByRole("region", { name: "Proposta de treinos" })).toBeInTheDocument(),
+      expect(screen.getByRole("region", { name: /Proposta de treinos/ })).toBeInTheDocument(),
     );
     expect(screen.queryByRole("region", { name: /sendo montada/ })).not.toBeInTheDocument();
   });

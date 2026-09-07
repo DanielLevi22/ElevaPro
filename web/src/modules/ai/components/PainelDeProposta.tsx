@@ -29,10 +29,17 @@ export function PainelDeProposta({ titulo, resolvido, onFechar, children }: Prop
   const [recolhido, setRecolhido] = useState(resolvido);
   const eraResolvido = useRef(resolvido);
 
-  // Recolhe ao deixar de haver decisão a tomar, e só nessa transição: quem
-  // expandir depois não é recolhido pelas costas no próximo render.
+  // Recolhe ao deixar de haver decisão a tomar, e expande quando volta a haver.
+  // Só nas transições: quem mexeu no botão não é desfeito pelas costas no
+  // próximo render.
+  //
+  // A volta existe porque o painel não desmonta entre uma proposta e a
+  // seguinte. Aprovar a fase 1 o recolhia, e a proposta da fase 2 chegava para
+  // um painel já fechado — o cartão novo ficava escondido atrás de um cabeçalho
+  // que ainda era o da decisão anterior, e a leitura era "ele não trouxe nada"
+  // ou "ficou o cartão de antes".
   useEffect(() => {
-    if (resolvido && !eraResolvido.current) setRecolhido(true);
+    if (resolvido !== eraResolvido.current) setRecolhido(resolvido);
     eraResolvido.current = resolvido;
   }, [resolvido]);
 
@@ -43,12 +50,18 @@ export function PainelDeProposta({ titulo, resolvido, onFechar, children }: Prop
       // painel media 42% da tela inteira — em janela baixa isso é quase tudo o
       // que sobra depois do cabeçalho, e a conversa ficava com uma linha.
       //
-      // Em tela estreita o teto sobe para 70%: dividir meio a meio deixa as
-      // duas coisas pequenas demais para servirem, e entre uma conversa que já
-      // foi lida e uma decisão a tomar, é a decisão que precisa da tela.
-      // Recolher devolve a conversa inteira, e o cabeçalho do painel continua
+      // Enquanto há decisão a tomar o teto é 82%: uma proposta de quatro
+      // treinos com sete exercícios cada não cabe em 45% de nada, e o que
+      // sobrava era uma janelinha por onde o cartão passava aos pedaços —
+      // ninguém revisa prescrição rolando 300px de cada vez. Entre uma conversa
+      // já lida e a decisão que está sendo pedida, é a decisão que precisa da
+      // tela; recolher devolve a conversa inteira, e o cabeçalho continua
       // visível dizendo o que está pendente.
-      className="flex max-h-[70%] shrink-0 flex-col border-t border-white/10 bg-background/80 backdrop-blur sm:max-h-[45%]"
+      //
+      // Resolvida, o painel volta a ser rodapé: já não há o que revisar.
+      className={`flex shrink-0 flex-col border-t border-white/10 bg-background/80 backdrop-blur ${
+        resolvido ? "max-h-[60%] sm:max-h-[45%]" : "max-h-[82%] sm:max-h-[78%]"
+      }`}
     >
       <div className="flex shrink-0 items-center gap-2 px-1 py-2">
         <button
@@ -80,7 +93,10 @@ export function PainelDeProposta({ titulo, resolvido, onFechar, children }: Prop
 
       {!recolhido && (
         <div className="overflow-y-auto pb-3 pr-1">
-          <div className="mx-auto max-w-lg">{children}</div>
+          {/* `max-w-lg` era 512px num painel que ocupa a largura toda: o
+              cartão saía estreito e alto, e a altura é justamente o que não
+              cabe. Mais largura é menos rolagem pela mesma informação. */}
+          <div className="mx-auto max-w-3xl">{children}</div>
         </div>
       )}
     </section>

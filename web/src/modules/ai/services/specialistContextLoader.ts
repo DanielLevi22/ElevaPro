@@ -141,10 +141,13 @@ export async function loadStudentContext(
       // `savePeriodization` escreve nela. A leitura pedia `goal`, o PostgREST
       // devolvia 42703 e o erro era descartado — o coach dizia "nenhuma
       // periodização criada" mesmo quando havia.
+      // `workouts(count)` e não os treinos: o coach só precisa saber se a fase
+      // já foi montada, e trazer título e exercício de tudo encheria o prompt
+      // com o que ele não vai usar.
       .select(
         `
         id, name, objective, status,
-        training_plans(id, name, duration_weeks, focus)
+        training_plans(id, name, duration_weeks, focus, workouts(count))
       `,
       )
       .eq("student_id", studentId)
@@ -161,7 +164,13 @@ export async function loadStudentContext(
       name: string;
       objective: string;
       status: string;
-      training_plans: { id: string; name: string; duration_weeks: number; focus: string }[];
+      training_plans: {
+        id: string;
+        name: string;
+        duration_weeks: number;
+        focus: string;
+        workouts: { count: number }[];
+      }[];
     };
     return {
       id: period.id,
@@ -173,6 +182,7 @@ export async function loadStudentContext(
         name: pl.name,
         weeks: pl.duration_weeks,
         focus: pl.focus,
+        workoutCount: pl.workouts?.[0]?.count ?? 0,
       })),
     };
   });
@@ -236,8 +246,18 @@ export function formatContextForPrompt(ctx: StudentContext): string {
         // O id vai junto porque `propose_workouts` exige a fase. Sem ele o
         // modelo inventa um slug — "fase-1-adaptacao" — e a gravação morre com
         // "invalid input syntax for type uuid".
+        // Quantos treinos cada fase já tem: é o que separa "falta montar" de
+        // "já está pronto". Sem isso o coach lia quatro fases idênticas, não
+        // tinha como saber que três estavam vazias, e parava na primeira — o
+        // especialista é que precisava dizer que faltavam as outras.
         for (const ph of p.phases) {
-          lines.push(`  - [id: ${ph.id}] ${ph.name}: ${ph.weeks} semanas — ${ph.focus}`);
+          const treinos =
+            ph.workoutCount === 0
+              ? "SEM TREINOS"
+              : `${ph.workoutCount} ${ph.workoutCount === 1 ? "treino" : "treinos"}`;
+          lines.push(
+            `  - [id: ${ph.id}] ${ph.name}: ${ph.weeks} semanas — ${ph.focus} — ${treinos}`,
+          );
         }
       } else {
         lines.push("  (sem fases definidas)");
