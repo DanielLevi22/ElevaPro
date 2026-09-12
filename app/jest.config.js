@@ -35,12 +35,17 @@ module.exports = {
   // threshold que falha no dia em que entra não é guarda, é bloqueio. Sobe a
   // cada PR que traz teste (alvo do PRD: 30%).
   //
+  // 9 → 19 na #281: os testes de contrato das primitivas do design system e
+  // dos dois seams de token levaram a cobertura real a 20,12%. O degrau fica
+  // um ponto abaixo do medido, para não falhar por variação de arredondamento
+  // em arquivo que ninguém tocou.
+  //
   // Antes não havia limite nenhum: a cobertura era coletada, publicada como
   // artefato do CI e ignorada. Dava para zerar a suíte sem quebrar o build.
   coverageThreshold: {
     global: {
-      statements: 9,
-      lines: 8,
+      statements: 19,
+      lines: 18,
     },
   },
 };
