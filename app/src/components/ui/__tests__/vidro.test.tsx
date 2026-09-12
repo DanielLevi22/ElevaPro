@@ -2,6 +2,7 @@ import { render } from '@testing-library/react-native';
 import { Text } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { coresDoTema } from '@/shared/design';
+import { AlvoDoVidro } from '../AlvoDoVidro';
 import { Anel } from '../Anel';
 import { Vidro } from '../Vidro';
 
@@ -30,7 +31,10 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   default: () => ({ width: 390, height: 800, scale: 3, fontScale: 1 }),
 }));
 
-jest.mock('expo-blur', () => ({ BlurView: 'BlurView' }));
+jest.mock('expo-blur', () => ({
+  BlurView: 'BlurView',
+  BlurTargetView: 'BlurTargetView',
+}));
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 
 const escuro = coresDoTema('escuro');
@@ -181,6 +185,21 @@ describe('Vidro', () => {
     );
 
     expect(noEscuro.length).toBeGreaterThan(JSON.stringify(toJSON()).length);
+  });
+
+  it('entrega o alvo ao blur quando a tela declara um', () => {
+    // Sem alvo o `expo-blur` não desfoca nada no Android e volta para
+    // `blurMethod: 'none'` — foi assim que o vidro ficou sem blur sem ninguém
+    // perceber. O alvo é o contrato que faltava.
+    const { UNSAFE_getByType } = render(
+      <AlvoDoVidro>
+        <Vidro>
+          <Text>conteúdo</Text>
+        </Vidro>
+      </AlvoDoVidro>
+    );
+
+    expect(UNSAFE_getByType('BlurView' as never).props.blurTarget).toBeTruthy();
   });
 
   it('renderiza o conteúdo por cima das camadas', () => {

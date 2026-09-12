@@ -2,9 +2,10 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useColorScheme } from 'nativewind';
 import type { ReactNode } from 'react';
-import { Platform, View, type ViewProps } from 'react-native';
+import { Platform, StyleSheet, View, type ViewProps } from 'react-native';
 import { cn } from '@/lib/utils';
 import { useCores } from '@/shared/design';
+import { METODO_DE_BLUR, useAlvoDoVidro } from './AlvoDoVidro';
 
 /**
  * A superfície de vidro fosco do kit.
@@ -46,29 +47,27 @@ interface VidroProps extends ViewProps {
 }
 
 /**
- * O blur fica fora do Android, e isto foi **medido**, não estimado.
+ * O blur, e a correção de um diagnóstico meu.
  *
- * `adb shell dumpsys gfxinfo`, rolando a tela inicial de ponta a ponta:
+ * Eu medi o vidro contra o app chapado e achei 44% de frames perdidos contra
+ * 3,85%, e concluí que o `BlurView` era o culpado. Estava errado: o `expo-blur`
+ * nasce com `blurMethod: 'none'` no Android, e os métodos reais exigem a prop
+ * `blurTarget` — sem ela o pacote volta para `'none'`. **O blur nunca esteve
+ * ligado no Android.**
  *
- *     | frames perdidos | p90    | p95    | p99
- *     |-----------------|--------|--------|-------
- *     app chapado       |  3,85% |  23 ms |  26 ms |  38 ms
- *     com blur          | 44,44% |  42 ms |  48 ms |  61 ms
+ * O custo era das camadas: um `Svg` por cartão, com o mesmo `id` de gradiente
+ * em todos. Tirando-o, o jank caiu a 23,53% e os percentis voltaram para junto
+ * do baseline — p99 até melhor, 30 ms contra 38 ms.
  *
- * Onze vezes mais frames perdidos e o p90 quase dobrado. `BlurView` no Android
- * é redesenhado a cada frame, e vidro em cada cartão de uma lista que rola é o
- * caso conhecidamente caro — a medição confirmou com folga. Junto vinha
- * artefato visível: uma mancha escura e borrada na lateral direita dos cartões.
+ *     medição              | janky  | p90   | p95   | p99
+ *     app chapado          |  3,85% | 23 ms | 26 ms | 38 ms
+ *     vidro com Svg/cartão | 44,44% | 42 ms | 48 ms | 61 ms
+ *     vidro sem o Svg      | 23,53% | 26 ms | 29 ms | 30 ms
  *
- * Sem o blur a superfície continua sendo o gradiente, a borda, o brilho de
- * canto e a sombra; o que se perde é o fundo aparecendo desfocado através dela.
- * É a troca que a #281 previu — "se custar frame, aquela tela vira superfície
- * opaca e eu aviso" — aplicada por plataforma, porque o custo é da plataforma.
- *
- * No iOS o `BlurView` é nativo e barato, e lá ele fica. Vale remedir quando
- * o `expo-blur` mudar de implementação no Android.
+ * Com o alvo declarado, o Android usa `dimezisBlurViewSdk31Plus`, que é o
+ * `RenderEffect` — o caminho de GPU. Vale remedir depois desta mudança: agora
+ * sim existe blur no Android para custar algo.
  */
-const COM_BLUR = Platform.OS === 'ios';
 
 /** Intensidade do `BlurView` equivalente ao `blur(26px)` do desenho. */
 const INTENSIDADE = 26;
@@ -140,6 +139,7 @@ const FIM_DO_GRADIENTE = { x: 0.5, y: 1 };
 
 export function Vidro({ children, forte = false, className, classeExterna, ...props }: VidroProps) {
   const cores = useCores();
+  const alvo = useAlvoDoVidro();
   const { colorScheme } = useColorScheme();
   const escuro = colorScheme === 'dark';
 
@@ -156,11 +156,17 @@ export function Vidro({ children, forte = false, className, classeExterna, ...pr
         className={cn('overflow-hidden rounded-xl border border-glass-border', className)}
         {...props}
       >
-        {COM_BLUR ? (
+        {/*
+          No iOS o blur não precisa de alvo. No Android sem alvo ele não
+          desfocaria nada, e renderizar a view por nada é custo puro.
+        */}
+        {Platform.OS === 'ios' || alvo ? (
           <BlurView
             intensity={INTENSIDADE}
             tint={escuro ? 'dark' : 'light'}
-            className="absolute inset-0"
+            blurMethod={METODO_DE_BLUR}
+            blurTarget={alvo ?? undefined}
+            style={StyleSheet.absoluteFill}
           />
         ) : null}
 

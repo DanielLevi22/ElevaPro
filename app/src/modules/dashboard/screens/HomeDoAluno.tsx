@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { type ImageSourcePropType, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { ConfettiOverlay } from '@/components/gamification/ConfettiOverlay';
 import { StreakCounter } from '@/components/gamification/StreakCounter';
+import { AlvoDoVidro } from '@/components/ui/AlvoDoVidro';
 import { Anel } from '@/components/ui/Anel';
 import { AvatarDoCabecalho } from '@/components/ui/AvatarDoCabecalho';
 import { BlocoDeMetrica } from '@/components/ui/BlocoDeMetrica';
@@ -50,6 +51,15 @@ export function HomeDoAluno({ dados }: { dados: Dados }) {
 
   return (
     <ScreenLayout useSafeArea={false}>
+      {/*
+        Fora da rolagem, como no kit: a foto é `position: absolute` e o conteúdo
+        rola por cima dela. Também é o que permite o blur no Android, que precisa
+        de um alvo estável — alvo dentro de `ScrollView` muda a cada frame.
+      */}
+      <AlvoDoVidro>
+        <FundoDeFoto imagem={FOTO_POR_GRUPO[grupo]} receita={RECEITA_DA_HOME} />
+      </AlvoDoVidro>
+
       <ScrollView
         contentContainerClassName="px-4 pb-28 pt-14"
         showsVerticalScrollIndicator={false}
@@ -61,15 +71,6 @@ export function HomeDoAluno({ dados }: { dados: Dados }) {
           />
         }
       >
-        {/*
-          O kit põe um radial da primária atrás do conteúdo (`.phone::after`)
-          com `filter: blur(40px)`. Sem filtro em SVG o radial aparece como um
-          disco verde visível em vez de luz ambiente — e disco errado é pior que
-          luz ausente. Fica como diferença medida e aceita, ao lado do
-          `saturate(140%)` do vidro e do glow do anel.
-        */}
-        <FundoDeFoto imagem={FOTO_POR_GRUPO[grupo]} receita={RECEITA_DA_HOME} />
-
         <View className="flex-row items-center justify-between">
           <View className="min-w-0 flex-1">
             <Text className="text-legenda font-semibold text-hero-secondary">{hoje()}</Text>
