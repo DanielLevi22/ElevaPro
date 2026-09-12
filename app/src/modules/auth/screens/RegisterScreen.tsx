@@ -132,7 +132,7 @@ export function RegisterScreen() {
           sub={SUBTITULO[etapas.etapa]}
         />
 
-        <View className="flex-1 px-5">
+        <View className="flex-1 justify-center px-5">
           <View className="mb-5 flex-row gap-1.5">
             {TRACOS.map((traco, i) => (
               <View
@@ -226,22 +226,22 @@ export function RegisterScreen() {
               )}
             </View>
           </View>
+        </View>
 
-          <View className="flex-1" />
-
-          <View className="flex-row items-center justify-center pb-7 pt-6">
-            <Text className="text-rotulo tracking-tight text-muted-foreground">
-              Já tem uma conta?{' '}
+        {/* Fora do bloco centralizado, como no login: junto, `justify-center`
+            levaria este convite para o meio da tela. */}
+        <View className="flex-row items-center justify-center px-5 pt-6">
+          <Text className="text-rotulo tracking-tight text-muted-foreground">
+            Já tem uma conta?{' '}
+          </Text>
+          <TouchableOpacity
+            accessibilityRole="link"
+            onPress={() => router.replace(ROUTES.AUTH.LOGIN)}
+          >
+            <Text className="text-rotulo font-bold tracking-tight text-primary-text">
+              Faça login
             </Text>
-            <TouchableOpacity
-              accessibilityRole="link"
-              onPress={() => router.replace(ROUTES.AUTH.LOGIN)}
-            >
-              <Text className="text-rotulo font-bold tracking-tight text-primary-text">
-                Faça login
-              </Text>
-            </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </ScreenLayout>

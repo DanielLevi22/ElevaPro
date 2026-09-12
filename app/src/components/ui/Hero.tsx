@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useColorScheme } from 'nativewind';
 import type { ReactNode } from 'react';
-import { Image, type ImageSourcePropType, Text, View } from 'react-native';
-import { useCores } from '@/shared/design';
+import { Dimensions, Image, type ImageSourcePropType, Text, View } from 'react-native';
+import { useCores, useEscala } from '@/shared/design';
 
 /**
  * O topo das telas de entrada: foto de academia, wordmark, título e chips.
@@ -42,7 +42,23 @@ interface HeroProps {
   chips?: ChipDoHero[];
 }
 
-const ALTURA_DA_FOTO = 300;
+/**
+ * A faixa de foto ocupa a mesma fração da altura que no desenho: 300 de 800.
+ *
+ * Fixar em 300 deixava a foto curta em aparelho alto — 30% da tela em vez de
+ * 37,5% —, e é uma faixa vertical, então quem manda nela é a altura e não a
+ * largura. O piso garante que em tela curta ela não encolha abaixo do desenho.
+ */
+const FRACAO_DA_ALTURA = 300 / 800;
+const ALTURA_MINIMA_DA_FOTO = 300;
+
+function alturaDaFoto(): number {
+  return Math.max(
+    ALTURA_MINIMA_DA_FOTO,
+    Math.round(Dimensions.get('window').height * FRACAO_DA_ALTURA)
+  );
+}
+
 const TAMANHO_DO_ICONE_DO_CHIP = 13;
 
 /**
@@ -56,12 +72,13 @@ const VEU = {
 
 export function Hero({ imagem, titulo, sub, chips }: HeroProps) {
   const cores = useCores();
+  const escalar = useEscala();
   const { colorScheme } = useColorScheme();
   const paradas = colorScheme === 'dark' ? VEU.escuro : VEU.claro;
 
   return (
     <View>
-      <View className="absolute left-0 right-0 top-0" style={{ height: ALTURA_DA_FOTO }}>
+      <View className="absolute left-0 right-0 top-0" style={{ height: alturaDaFoto() }}>
         <Image source={imagem} resizeMode="cover" className="h-full w-full" />
         <LinearGradient
           // Tupla, e não array: o `LinearGradient` do Expo exige pelo menos duas
@@ -78,7 +95,7 @@ export function Hero({ imagem, titulo, sub, chips }: HeroProps) {
 
       <View className="px-5 pb-6 pt-16">
         <View className="mb-20 flex-row items-center gap-2.5">
-          <View className="h-[34px] w-[34px] items-center justify-center rounded-sm bg-primary">
+          <View className="h-[2.125rem] w-[2.125rem] items-center justify-center rounded-sm bg-primary">
             <Text className="font-display-black text-rotulo text-primary-foreground">E</Text>
           </View>
           <Text className="font-display text-corpo uppercase italic text-hero">Eleva Pro</Text>
@@ -94,13 +111,17 @@ export function Hero({ imagem, titulo, sub, chips }: HeroProps) {
         ) : null}
 
         {chips?.length ? (
-          <View className="mt-[18px] flex-row flex-wrap gap-[7px]">
+          <View className="mt-[1.125rem] flex-row flex-wrap gap-[0.4375rem]">
             {chips.map((chip) => (
               <View
                 key={chip.label}
-                className="flex-row items-center gap-1.5 rounded-full bg-hero-chip px-[11px] py-1.5"
+                className="flex-row items-center gap-1.5 rounded-full bg-hero-chip px-[0.6875rem] py-1.5"
               >
-                <Ionicons name={chip.icon} size={TAMANHO_DO_ICONE_DO_CHIP} color={cores.onHero} />
+                <Ionicons
+                  name={chip.icon}
+                  size={escalar(TAMANHO_DO_ICONE_DO_CHIP)}
+                  color={cores.onHero}
+                />
                 <Text className="text-micro font-semibold tracking-tight text-hero">
                   {chip.label}
                 </Text>

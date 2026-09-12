@@ -8,7 +8,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { cn } from '@/lib/utils';
-import { escala, useCores } from '@/shared/design';
+import { escala, useCores, useEscala } from '@/shared/design';
 import { Button } from './Button';
 
 /**
@@ -75,6 +75,7 @@ export function ConfirmModal({
   type = 'info',
 }: ConfirmModalProps) {
   const cores = useCores();
+  const escalar = useEscala();
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
 
@@ -104,7 +105,7 @@ export function ConfirmModal({
             <View className="h-20 w-20 items-center justify-center rounded-full border border-border bg-background">
               <Ionicons
                 name={ICONE[type]}
-                size={escala.texto.display}
+                size={escalar(escala.texto.display)}
                 color={corDoTipo(type, cores)}
               />
             </View>

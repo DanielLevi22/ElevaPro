@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { type ReactNode, useState } from 'react';
 import { Text, TextInput, type TextInputProps, TouchableOpacity, View } from 'react-native';
 import { cn } from '@/lib/utils';
-import { useCores } from '@/shared/design';
+import { useCores, useEscala } from '@/shared/design';
 
 /**
  * Campo de texto, no desenho do app.
@@ -51,19 +51,20 @@ export function Input({
   ...props
 }: InputProps) {
   const cores = useCores();
+  const escalar = useEscala();
   const [visivel, setVisivel] = useState(false);
 
   return (
     <View className={className}>
       {label ? (
-        <Text className="px-4 pb-[7px] text-legenda uppercase tracking-wide text-muted-foreground">
+        <Text className="px-4 pb-[0.4375rem] text-legenda uppercase tracking-wide text-muted-foreground">
           {label}
         </Text>
       ) : null}
 
-      <View className="h-[50px] flex-row items-center gap-3 px-4">
+      <View className="h-[3.125rem] flex-row items-center gap-3 px-4">
         {icon ? (
-          <Ionicons name={icon} size={TAMANHO_DO_ICONE} color={cores.mutedForeground} />
+          <Ionicons name={icon} size={escalar(TAMANHO_DO_ICONE)} color={cores.mutedForeground} />
         ) : null}
         <TextInput
           placeholderTextColor={cores.placeholder}
@@ -85,7 +86,7 @@ export function Input({
           >
             <Ionicons
               name={visivel ? 'eye-off' : 'eye'}
-              size={TAMANHO_DO_OLHO}
+              size={escalar(TAMANHO_DO_OLHO)}
               color={cores.mutedForeground}
             />
           </TouchableOpacity>
@@ -94,7 +95,9 @@ export function Input({
       </View>
 
       {error ? (
-        <Text className="px-4 pt-[7px] text-legenda leading-[1.35] text-destructive">{error}</Text>
+        <Text className="px-4 pt-[0.4375rem] text-legenda leading-[1.35] text-destructive">
+          {error}
+        </Text>
       ) : null}
     </View>
   );

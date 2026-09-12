@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ReactNode } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { cn } from '@/lib/utils';
-import { useCores } from '@/shared/design';
+import { useCores, useEscala } from '@/shared/design';
 
 /**
  * A linha da lista grouped-inset: ícone em caixa, título, subtítulo e um espaço
@@ -39,6 +39,7 @@ const TAMANHO_DA_MARCA = 21;
 
 export function Row({ icon, title, sub, onPress, selected, chevron, trailing }: RowProps) {
   const cores = useCores();
+  const escalar = useEscala();
   const ehEscolha = selected !== undefined;
 
   return (
@@ -55,13 +56,13 @@ export function Row({ icon, title, sub, onPress, selected, chevron, trailing }: 
     >
       <View
         className={cn(
-          'h-[38px] w-[38px] items-center justify-center rounded-sm',
+          'h-[2.375rem] w-[2.375rem] items-center justify-center rounded-sm',
           selected ? 'bg-primary/20' : 'bg-muted'
         )}
       >
         <Ionicons
           name={icon}
-          size={TAMANHO_DO_ICONE}
+          size={escalar(TAMANHO_DO_ICONE)}
           color={selected ? cores.primaryText : cores.mutedForeground}
         />
       </View>
@@ -73,10 +74,18 @@ export function Row({ icon, title, sub, onPress, selected, chevron, trailing }: 
 
       {trailing}
       {selected ? (
-        <Ionicons name="checkmark-circle" size={TAMANHO_DA_MARCA} color={cores.primaryText} />
+        <Ionicons
+          name="checkmark-circle"
+          size={escalar(TAMANHO_DA_MARCA)}
+          color={cores.primaryText}
+        />
       ) : null}
       {chevron ? (
-        <Ionicons name="chevron-forward" size={TAMANHO_DO_ICONE} color={cores.placeholder} />
+        <Ionicons
+          name="chevron-forward"
+          size={escalar(TAMANHO_DO_ICONE)}
+          color={cores.placeholder}
+        />
       ) : null}
     </TouchableOpacity>
   );

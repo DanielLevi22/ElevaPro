@@ -63,7 +63,7 @@ export function LoginScreen() {
           chips={PILARES}
         />
 
-        <View className="flex-1 px-5">
+        <View className="flex-1 justify-center px-5">
           <Group>
             <Input
               icon="mail"
@@ -93,22 +93,25 @@ export function LoginScreen() {
               onPress={() => router.push(ROUTES.AUTH.FORGOT_PASSWORD)}
             />
           </View>
+        </View>
 
-          <View className="flex-1" />
-
-          <View className="flex-row items-center justify-center pb-7 pt-6">
-            <Text className="text-rotulo tracking-tight text-muted-foreground">
-              Personal Trainer?{' '}
+        {/*
+          Fora do bloco centralizado: o formulário se acomoda no meio da sobra e
+          este convite fica no fim da rolagem. Junto, `justify-center` levaria o
+          rodapé para o meio da tela.
+        */}
+        <View className="flex-row items-center justify-center px-5 pt-6">
+          <Text className="text-rotulo tracking-tight text-muted-foreground">
+            Personal Trainer?{' '}
+          </Text>
+          <TouchableOpacity
+            accessibilityRole="link"
+            onPress={() => router.push(ROUTES.AUTH.REGISTER)}
+          >
+            <Text className="text-rotulo font-bold tracking-tight text-primary-text">
+              Cadastre-se grátis
             </Text>
-            <TouchableOpacity
-              accessibilityRole="link"
-              onPress={() => router.push(ROUTES.AUTH.REGISTER)}
-            >
-              <Text className="text-rotulo font-bold tracking-tight text-primary-text">
-                Cadastre-se grátis
-              </Text>
-            </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </ScreenLayout>

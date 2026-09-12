@@ -71,7 +71,7 @@ export function ForgotPasswordScreen() {
           sub="Enviamos um link para você definir uma nova."
         />
 
-        <View className="flex-1 px-5">
+        <View className="flex-1 justify-center px-5">
           <Group footer="O link chega no e-mail cadastrado e vale por uma hora.">
             <Input
               icon="mail"
@@ -95,8 +95,6 @@ export function ForgotPasswordScreen() {
             />
             <Button label="Voltar" variant="ghost" fullWidth onPress={() => router.back()} />
           </View>
-
-          <View className="flex-1" />
         </View>
       </ScrollView>
     </ScreenLayout>

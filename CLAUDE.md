@@ -79,6 +79,14 @@ components/  hooks/  services/  store/  screens/  types.ts  index.ts
 
 **Mobile:**
 - Estilização: só NativeWind com tokens do design system. StyleSheet e inline proibidos.
+- Cor vem de `@/shared/design`. Em `className`, o token (`bg-primary`); em prop que
+  não aceita classe, `useCores()`. Hexadecimal à mão falha no pre-commit (ADR-0025).
+- **Medida é relativa, nunca pixel fixo.** O kit foi desenhado num telefone de 390pt
+  e o aparelho de teste tem 448×997dp: pixel fixo não acompanha e o desenho aparece
+  menor, com faixa vazia embaixo. Em classe, `rem` — `h-[3.125rem]`, não `h-[50px]`;
+  o `metro.config.js` desliga o inline do `rem` para ele resolver em runtime. Em prop
+  numérica (`size` de ícone), `useEscala()`. Fio de `0.5px` e borda de `1px` seguem
+  em pixel: são constante do aparelho, e engrossariam numa tela grande.
 - Ícones: só `@expo/vector-icons`.
 - Rotas: `router.push(ROUTES.X)` — nunca string literal solta.
 

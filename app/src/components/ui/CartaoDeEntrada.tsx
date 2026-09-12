@@ -40,7 +40,7 @@ export function CartaoDeEntrada({
   return (
     <TouchableOpacity activeOpacity={0.8} className={className} onPress={onPress}>
       <View
-        className="rounded-[24px] p-5 flex-row items-center justify-between border bg-card"
+        className="rounded-[1.5rem] p-5 flex-row items-center justify-between border bg-card"
         style={{ borderColor: cores.border }}
       >
         <View className="flex-row items-center gap-4 flex-1">
@@ -55,7 +55,7 @@ export function CartaoDeEntrada({
               {titulo}
             </Text>
             <Text
-              className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase font-sans"
+              className="text-muted-foreground text-micro font-bold tracking-widest uppercase font-sans"
               style={corDaLegenda === undefined ? undefined : { color: corDaLegenda }}
             >
               {legenda}

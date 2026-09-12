@@ -8,7 +8,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { cn } from '@/lib/utils';
-import { useCores } from '@/shared/design';
+import { useCores, useEscala } from '@/shared/design';
 import { Button } from './Button';
 
 /**
@@ -68,6 +68,7 @@ export function StatusModal({
   buttonText = 'Entendi',
 }: StatusModalProps) {
   const cores = useCores();
+  const escalar = useEscala();
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
 
@@ -101,7 +102,11 @@ export function StatusModal({
           className="w-full max-w-sm overflow-hidden rounded-3xl border border-border bg-card"
         >
           <View className={cn('items-center border-b py-8', HALO[type])}>
-            <Ionicons name={ICONE[type]} size={TAMANHO_DO_ICONE} color={corDoTom(type, cores)} />
+            <Ionicons
+              name={ICONE[type]}
+              size={escalar(TAMANHO_DO_ICONE)}
+              color={corDoTom(type, cores)}
+            />
           </View>
 
           <View className="items-center p-6">

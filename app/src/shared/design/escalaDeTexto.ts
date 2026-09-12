@@ -1,5 +1,5 @@
 import { rem } from 'nativewind';
-import { Dimensions } from 'react-native';
+import { Dimensions, useWindowDimensions } from 'react-native';
 
 /**
  * Ajusta o tamanho do texto à largura do aparelho, mantendo a proporção do
@@ -65,4 +65,22 @@ export function ajustarEscalaDeTexto(): () => void {
   });
 
   return () => inscricao.remove();
+}
+
+/**
+ * O mesmo fator, para o que chega como **número** e não como classe: `size` de
+ * ícone, altura calculada, qualquer medida que uma prop exige crua.
+ *
+ * Classe do NativeWind resolve `rem` sozinha e não precisa disto. Isto é para a
+ * borda onde não existe classe — e é hook, e não função solta, porque precisa
+ * reagir a rotação e a aparelho dobrável como o resto.
+ *
+ * @example
+ * const escalar = useEscala();
+ * <Ionicons name="mail" size={escalar(19)} color={cores.mutedForeground} />
+ */
+export function useEscala(): (medida: number) => number {
+  const { width } = useWindowDimensions();
+  const fator = fatorDaTela(width);
+  return (medida) => Math.round(medida * fator);
 }

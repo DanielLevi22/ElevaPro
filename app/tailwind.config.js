@@ -73,14 +73,16 @@ module.exports = {
           chip: literal('hero-chip'),
         },
       },
+      // Em `rem` pelo mesmo motivo da escala de texto: o raio é medida do
+      // desenho e cresce com ela. `full` fica de fora, é pílula.
       borderRadius: {
-        sm: '8px',
-        md: '12px',
-        lg: '16px',
-        xl: '22px',
-        '2xl': '24px',
-        '3xl': '32px',
-        painel: '40px',
+        sm: emRem(8),
+        md: emRem(12),
+        lg: emRem(16),
+        xl: emRem(22),
+        '2xl': emRem(24),
+        '3xl': emRem(32),
+        painel: emRem(40),
       },
       /**
        * Em React Native o peso não se combina com família própria: cada peso é

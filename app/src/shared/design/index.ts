@@ -7,7 +7,7 @@
  * hexadecimal escrito à mão.
  */
 export { type Cores, coresDoTema, useCores } from './cores';
-export { ajustarEscalaDeTexto, fatorDaTela, REM_BASE } from './escalaDeTexto';
+export { ajustarEscalaDeTexto, fatorDaTela, REM_BASE, useEscala } from './escalaDeTexto';
 export { gerarGlobalCss } from './globalCss';
 export { type PreferenciaDeTema, useTemaStore } from './temaStore';
 export {
