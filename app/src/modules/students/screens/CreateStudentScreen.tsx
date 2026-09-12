@@ -1,25 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeInDown, FadeInRight, Layout } from 'react-native-reanimated';
 import { useAuthStore } from '@/auth';
 import { showAlert } from '@/components/ui/appAlert';
+import { Button } from '@/components/ui/Button';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
+import { useCores } from '@/shared/design';
 import { useStudentStore } from '../store/studentStore';
 
 type Tab = 'personal' | 'measurements' | 'skinfolds';
 
 export default function CreateStudentScreen() {
+  const cores = useCores();
   const router = useRouter();
   const { createStudent, addPhysicalAssessment, isLoading } = useStudentStore();
   const { user } = useAuthStore();
@@ -152,10 +147,9 @@ export default function CreateStudentScreen() {
         });
       }
 
-      router.replace({
-        pathname: '/(tabs)/students/invite',
-        params: { studentId: result.studentId, name: fullName },
-      });
+      // Volta para a lista: o aluno já nasce com e-mail e senha definidos aqui
+      // pelo Specialist, e não há mais código de convite para exibir.
+      router.replace('/(tabs)/students');
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       showAlert({
@@ -177,11 +171,18 @@ export default function CreateStudentScreen() {
     <View className={`flex-1 ${widthClass} mb-4`}>
       <Text className="text-zinc-400 text-xs font-bold mb-2 ml-1 uppercase">{label}</Text>
       <View className="bg-zinc-900 rounded-xl border border-zinc-800 focus:border-orange-500 flex-row items-center px-4 h-12">
-        {icon && <Ionicons name={icon} size={18} color="#71717A" style={{ marginRight: 8 }} />}
+        {icon && (
+          <Ionicons
+            name={icon}
+            size={18}
+            color={cores.mutedForeground}
+            style={{ marginRight: 8 }}
+          />
+        )}
         <TextInput
           className="flex-1 text-white text-base font-sans"
           placeholder={placeholder}
-          placeholderTextColor="#52525B"
+          placeholderTextColor={cores.placeholder}
           value={value}
           onChangeText={onChange}
           keyboardType="numeric"
@@ -200,7 +201,7 @@ export default function CreateStudentScreen() {
               onPress={() => router.back()}
               className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 items-center justify-center mr-4"
             >
-              <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+              <Ionicons name="arrow-back" size={20} color={cores.foreground} />
             </TouchableOpacity>
             <Text className="text-2xl font-extrabold text-white font-display tracking-tight">
               Novo Aluno
@@ -244,13 +245,13 @@ export default function CreateStudentScreen() {
                       <Ionicons
                         name="person-outline"
                         size={20}
-                        color="#71717A"
+                        color={cores.mutedForeground}
                         style={{ marginRight: 10 }}
                       />
                       <TextInput
                         className="flex-1 text-white text-base font-sans"
                         placeholder="Ex: João Silva"
-                        placeholderTextColor="#52525B"
+                        placeholderTextColor={cores.placeholder}
                         value={fullName}
                         onChangeText={setFullName}
                         autoCapitalize="words"
@@ -264,13 +265,13 @@ export default function CreateStudentScreen() {
                       <Ionicons
                         name="call-outline"
                         size={20}
-                        color="#71717A"
+                        color={cores.mutedForeground}
                         style={{ marginRight: 10 }}
                       />
                       <TextInput
                         className="flex-1 text-white text-base font-sans"
                         placeholder="(00) 00000-0000"
-                        placeholderTextColor="#52525B"
+                        placeholderTextColor={cores.placeholder}
                         value={phone}
                         onChangeText={setPhone}
                         keyboardType="phone-pad"
@@ -284,13 +285,13 @@ export default function CreateStudentScreen() {
                       <Ionicons
                         name="mail-outline"
                         size={20}
-                        color="#71717A"
+                        color={cores.mutedForeground}
                         style={{ marginRight: 10 }}
                       />
                       <TextInput
                         className="flex-1 text-white text-base font-sans"
                         placeholder="email@exemplo.com"
-                        placeholderTextColor="#52525B"
+                        placeholderTextColor={cores.placeholder}
                         value={email}
                         onChangeText={setEmail}
                         keyboardType="email-address"
@@ -305,13 +306,13 @@ export default function CreateStudentScreen() {
                       <Ionicons
                         name="lock-closed-outline"
                         size={20}
-                        color="#71717A"
+                        color={cores.mutedForeground}
                         style={{ marginRight: 10 }}
                       />
                       <TextInput
                         className="flex-1 text-white text-base font-sans"
                         placeholder="Mínimo 6 caracteres"
-                        placeholderTextColor="#52525B"
+                        placeholderTextColor={cores.placeholder}
                         value={password}
                         onChangeText={setPassword}
                         secureTextEntry
@@ -373,25 +374,13 @@ export default function CreateStudentScreen() {
               </View>
             )}
 
-            <TouchableOpacity
+            <Button
+              label="Cadastrar Aluno"
               onPress={handleCreate}
-              disabled={isLoading}
-              activeOpacity={0.8}
+              isLoading={isLoading}
+              fullWidth
               className="mt-6 mb-10"
-            >
-              <LinearGradient
-                colors={['#FF6B35', '#FF2E63']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                className="rounded-2xl py-4 items-center justify-center shadow-lg shadow-orange-500/20"
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <Text className="text-white text-lg font-bold font-display">Cadastrar Aluno</Text>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
+            />
           </Animated.View>
         </ScrollView>
       </View>

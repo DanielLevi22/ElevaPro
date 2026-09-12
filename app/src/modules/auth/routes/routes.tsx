@@ -7,7 +7,6 @@ export function AuthNavigator() {
       <Stack.Screen name="register" />
       <Stack.Screen name="forgot-password" />
       <Stack.Screen name="pending-approval" />
-      <Stack.Screen name="student-login" />
     </Stack>
   );
 }

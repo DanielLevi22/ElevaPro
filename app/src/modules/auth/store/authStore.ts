@@ -33,7 +33,6 @@ export interface AuthState {
 
   initializeSession: (session: Session | null) => Promise<void>;
   signOut: () => Promise<void>;
-  signInWithCode: (code: string) => Promise<{ success: boolean; error?: string }>;
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signUp: (
     email: string,
@@ -260,39 +259,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         success: false,
         error: error instanceof Error ? error.message : 'Erro ao criar conta.',
       };
-    }
-  },
-
-  signInWithCode: async (code: string) => {
-    try {
-      const cleanCode = code
-        .trim()
-        .toUpperCase()
-        .replace(/[^A-Z0-9]/g, '');
-
-      if (!cleanCode || cleanCode.length < 3) {
-        return { success: false, error: 'Código inválido.' };
-      }
-
-      // Use a simple, deterministic email format
-      const email = `aluno${cleanCode.toLowerCase()}@test.com`;
-      const password = cleanCode;
-
-      // 1. Try to login
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        console.error('SignInWithCode error:', error);
-        return { success: false, error: 'Código inválido ou não encontrado.' };
-      }
-
-      return { success: true };
-    } catch (error) {
-      console.error('SignInWithCode error:', error);
-      return { success: false, error: 'Erro inesperado ao entrar.' };
     }
   },
 }));
