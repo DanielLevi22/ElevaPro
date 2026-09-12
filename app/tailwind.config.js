@@ -74,6 +74,23 @@ module.exports = {
         '3xl': '32px',
         painel: '40px',
       },
+      /**
+       * Em React Native o peso não se combina com família própria: cada peso é
+       * uma família registrada com nome próprio. Por isso `font-display` e
+       * `font-display-black` são duas classes, e não uma classe mais
+       * `font-extrabold`.
+       *
+       * `sans` fica na fonte do sistema de propósito — é a decisão do desenho, e
+       * é o que faz o app parecer nativo. Carregar Inter para o corpo inteiro
+       * custa bundle para desfazer isso.
+       */
+      fontFamily: {
+        sans: ['System'],
+        display: ['Outfit_700Bold'],
+        'display-black': ['Outfit_800ExtraBold'],
+        mono: ['JetBrainsMono_400Regular'],
+        'mono-semibold': ['JetBrainsMono_600SemiBold'],
+      },
       // Escala iOS, vinda das telas do mobile — não a do dashboard, que tem 14
       // de corpo. Espelha `escala.texto` de src/shared/design/tokens.ts.
       fontSize: {

@@ -2,6 +2,11 @@
 // todo `className` em LinearGradient e Image é descartado sem aviso.
 import '@/lib/nativewind-interop';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+  JetBrainsMono_400Regular,
+  JetBrainsMono_600SemiBold,
+} from '@expo-google-fonts/jetbrains-mono';
+import { Outfit_700Bold, Outfit_800ExtraBold } from '@expo-google-fonts/outfit';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
@@ -38,6 +43,17 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    // As duas famílias do design. O corpo da interface fica com a fonte do
+    // sistema, como o desenho pede — é o que faz o app parecer nativo —, então
+    // só estas duas precisam vir junto: Outfit para título e wordmark,
+    // JetBrains Mono para conteúdo de natureza numérica.
+    //
+    // Sem elas, `font-display` era uma classe que 350 lugares pediam e o
+    // Tailwind ignorava em silêncio, por não haver família declarada.
+    Outfit_700Bold,
+    Outfit_800ExtraBold,
+    JetBrainsMono_400Regular,
+    JetBrainsMono_600SemiBold,
     // Os icones vinham por conta do `@expo/vector-icons`, que so carrega a
     // fonte quando o primeiro icone renderiza. Com 101 telas usando Ionicons,
     // sao dezenas de `loadAsync` disparados juntos disputando o mesmo arquivo

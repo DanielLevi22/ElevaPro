@@ -18,6 +18,8 @@
   },
   "dependencies": {
     "@casl/ability": "^6.7.1",
+    "@expo-google-fonts/jetbrains-mono": "^0.4.1",
+    "@expo-google-fonts/outfit": "^0.4.3",
     "@expo/vector-icons": "^15.0.3",
     "@kingstinct/react-native-healthkit": "^14.0.2",
     "@react-native-community/datetimepicker": "9.1.0",
