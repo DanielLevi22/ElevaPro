@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react-native';
 import { Text } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, RadialGradient } from 'react-native-svg';
 import { coresDoTema } from '@/shared/design';
 import { Anel } from '../Anel';
 import { Vidro } from '../Vidro';
@@ -121,15 +121,20 @@ describe('Anel', () => {
 
 describe('Vidro', () => {
   it('desenha as camadas que o CSS faz numa declaração só', () => {
-    // Gradiente de preenchimento, brilho diagonal, e o blur — três camadas que
-    // no desenho são `background`, `::before` e `backdrop-filter`.
+    // Preenchimento em gradiente, brilho de canto em radial, e o blur — três
+    // camadas que no desenho são `background`, `::before` e `backdrop-filter`.
+    //
+    // O brilho é radial, e não linear: a primeira versão usava um linear
+    // diagonal e isso escurecia visivelmente a lateral direita de cada cartão,
+    // porque linear espalha o branco no eixo todo em vez de deixá-lo no canto.
     const { UNSAFE_getAllByType } = render(
       <Vidro>
         <Text>conteúdo</Text>
       </Vidro>
     );
 
-    expect(UNSAFE_getAllByType('LinearGradient' as never)).toHaveLength(2);
+    expect(UNSAFE_getAllByType('LinearGradient' as never)).toHaveLength(1);
+    expect(UNSAFE_getAllByType(RadialGradient)).toHaveLength(1);
     expect(UNSAFE_getAllByType('BlurView' as never)).toHaveLength(1);
   });
 

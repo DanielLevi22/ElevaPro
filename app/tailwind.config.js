@@ -92,6 +92,7 @@ module.exports = {
           bottom: literal('specular-bottom'),
         },
         scrim: literal('scrim'),
+        sombra: literal('sombra'),
         /** Cor por grandeza: a mesma no ícone, no anel e na barra da métrica. */
         metrica: {
           passos: comAlfa('metrica-passos'),

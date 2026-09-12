@@ -2,7 +2,6 @@ import { useRouter } from 'expo-router';
 import { type ImageSourcePropType, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { ConfettiOverlay } from '@/components/gamification/ConfettiOverlay';
 import { StreakCounter } from '@/components/gamification/StreakCounter';
-import { WeeklyProgress } from '@/components/gamification/WeeklyProgress';
 import { Anel } from '@/components/ui/Anel';
 import { AvatarDoCabecalho } from '@/components/ui/AvatarDoCabecalho';
 import { BlocoDeMetrica } from '@/components/ui/BlocoDeMetrica';
@@ -45,7 +44,7 @@ export function HomeDoAluno({ dados }: { dados: Dados }) {
   const router = useRouter();
   const cores = useCores();
   const { perfil, treinoSugerido, saude, gamificacao, carregando, recarregar } = dados;
-  const { dailyGoal, weeklyGoals, streak, showConfetti } = gamificacao;
+  const { dailyGoal, streak, showConfetti } = gamificacao;
 
   const grupo = treinoSugerido?.muscle_group || 'Geral';
 
@@ -62,6 +61,13 @@ export function HomeDoAluno({ dados }: { dados: Dados }) {
           />
         }
       >
+        {/*
+          O kit põe um radial da primária atrás do conteúdo (`.phone::after`)
+          com `filter: blur(40px)`. Sem filtro em SVG o radial aparece como um
+          disco verde visível em vez de luz ambiente — e disco errado é pior que
+          luz ausente. Fica como diferença medida e aceita, ao lado do
+          `saturate(140%)` do vidro e do glow do anel.
+        */}
         <FundoDeFoto imagem={FOTO_POR_GRUPO[grupo]} receita={RECEITA_DA_HOME} />
 
         <View className="flex-row items-center justify-between">
@@ -93,7 +99,7 @@ export function HomeDoAluno({ dados }: { dados: Dados }) {
           {faltaParaFecharODia(dailyGoal)}
         </Text>
 
-        <View className="flex-row gap-2.5">
+        <View className="flex-row items-stretch gap-2.5">
           <BlocoDeMetrica
             icon="footsteps"
             tom="passos"
@@ -133,9 +139,6 @@ export function HomeDoAluno({ dados }: { dados: Dados }) {
 
         <TituloDeSecao>Hoje</TituloDeSecao>
         <EntradasDeHoje dados={dados} />
-
-        <TituloDeSecao>Minha semana</TituloDeSecao>
-        <WeeklyProgress weeklyGoals={weeklyGoals} />
       </ScrollView>
 
       <ConfettiOverlay show={showConfetti} />

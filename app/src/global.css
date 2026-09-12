@@ -53,6 +53,7 @@
     --specular: rgba(255, 255, 255, 1);
     --specular-bottom: rgba(0, 0, 0, 0.04);
     --scrim: rgba(255, 255, 255, 0.62);
+    --sombra: rgb(16, 18, 24);
   }
 
   .dark:root {
@@ -90,5 +91,6 @@
     --specular: rgba(255, 255, 255, 0.22);
     --specular-bottom: rgba(0, 0, 0, 0.18);
     --scrim: rgba(0, 0, 0, 0.55);
+    --sombra: rgb(0, 0, 0);
   }
 }

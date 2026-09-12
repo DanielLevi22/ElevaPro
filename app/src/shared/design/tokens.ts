@@ -117,6 +117,11 @@ type TokensLiterais = {
   specularBottom: CorLiteral;
   /** Véu sobre a foto do hero, na parada do meio. */
   scrim: CorLiteral;
+  /**
+   * Cor da sombra do vidro. Muda de cor, e não só de força, entre os temas: no
+   * claro ela é azulada, porque sombra preta sob objeto claro lê como sujeira.
+   */
+  sombra: CorLiteral;
 };
 
 export type Tema = 'claro' | 'escuro';
@@ -171,6 +176,7 @@ const escuro: Paleta = {
     specular: 'rgba(255, 255, 255, 0.22)',
     specularBottom: 'rgba(0, 0, 0, 0.18)',
     scrim: 'rgba(0, 0, 0, 0.55)',
+    sombra: 'rgb(0, 0, 0)',
   },
 };
 
@@ -217,6 +223,7 @@ const claro: Paleta = {
     specular: 'rgba(255, 255, 255, 1)',
     specularBottom: 'rgba(0, 0, 0, 0.04)',
     scrim: 'rgba(255, 255, 255, 0.62)',
+    sombra: 'rgb(16, 18, 24)',
   },
 };
 

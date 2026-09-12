@@ -25,7 +25,7 @@ interface BlocoDeMetricaProps {
 
 export function BlocoDeMetrica({ icon, tom, valor, unidade, legenda }: BlocoDeMetricaProps) {
   return (
-    <Vidro className="flex-1 p-3.5">
+    <Vidro classeExterna="flex-1" className="p-3.5">
       <View className="mb-3">
         <CaixaDeIcone icon={icon} tom={tom} tamanho="bloco" />
       </View>
@@ -33,10 +33,17 @@ export function BlocoDeMetrica({ icon, tom, valor, unidade, legenda }: BlocoDeMe
       <View className="flex-row items-baseline gap-[0.1875rem]">
         <Text className="font-display-black text-h2 tracking-tight text-foreground">{valor}</Text>
         {unidade ? (
-          <Text className="text-micro font-semibold text-muted-foreground">{unidade}</Text>
+          <Text className="text-[0.6875rem] font-semibold text-muted-foreground">{unidade}</Text>
         ) : null}
       </View>
-      <Text className="mt-0.5 text-micro text-muted-foreground">{legenda}</Text>
+      {/*
+        Uma linha só, no 11,5 do kit. Com a legenda maior, "Queimadas hoje"
+        quebrava em duas e "Sono" em uma — e os três blocos ficavam de alturas
+        diferentes lado a lado.
+      */}
+      <Text numberOfLines={1} className="mt-0.5 text-[0.71875rem] text-muted-foreground">
+        {legenda}
+      </Text>
     </Vidro>
   );
 }
