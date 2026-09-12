@@ -1,9 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useColorScheme } from 'nativewind';
 import type { ReactNode } from 'react';
-import { Dimensions, Image, type ImageSourcePropType, Text, View } from 'react-native';
+import { type ImageSourcePropType, Text, View } from 'react-native';
 import { useCores, useEscala } from '@/shared/design';
+import { FundoDeFoto, RECEITA_DA_AUTENTICACAO } from './FundoDeFoto';
 
 /**
  * O topo das telas de entrada: foto de academia, wordmark, título e chips.
@@ -12,15 +11,13 @@ import { useCores, useEscala } from '@/shared/design';
  * `onHeroSecondary` existem — no claro o desenho clareia a foto e escreve em
  * escuro sobre ela, em vez de manter texto branco.
  *
- * O véu sobre a foto **não é uma cor nova**: é a própria cor de fundo em três
- * opacidades, terminando opaca para o conteúdo abaixo emendar sem costura. As
- * opacidades diferem por tema porque o desenho pede um véu mais forte no claro,
- * onde a foto precisa recuar mais para o texto escuro passar contraste.
+ * A foto e o véu vivem no `FundoDeFoto`, que a tela inicial também usa com
+ * outra rampa. O que é do `Hero` é o que vai **sobre** a foto.
  *
- * O desenho também aplica `brightness(1.06) saturate(.92)` na foto no tema
- * claro. React Native não tem filtro de imagem; o véu a 60% já faz o essencial
- * do trabalho, e perseguir o filtro exigiria reprocessar a imagem. É a
- * diferença medida e aceita que a ADR-0025 prevê.
+ * O desenho aplica `brightness(1.06) saturate(.92)` na foto no tema claro.
+ * React Native não tem filtro de imagem; o véu já faz o essencial do trabalho, e
+ * perseguir o filtro exigiria reprocessar a imagem. É a diferença medida e
+ * aceita que a ADR-0025 prevê.
  *
  * @example
  * <Hero
@@ -42,56 +39,15 @@ interface HeroProps {
   chips?: ChipDoHero[];
 }
 
-/**
- * A faixa de foto ocupa a mesma fração da altura que no desenho: 300 de 800.
- *
- * Fixar em 300 deixava a foto curta em aparelho alto — 30% da tela em vez de
- * 37,5% —, e é uma faixa vertical, então quem manda nela é a altura e não a
- * largura. O piso garante que em tela curta ela não encolha abaixo do desenho.
- */
-const FRACAO_DA_ALTURA = 300 / 800;
-const ALTURA_MINIMA_DA_FOTO = 300;
-
-function alturaDaFoto(): number {
-  return Math.max(
-    ALTURA_MINIMA_DA_FOTO,
-    Math.round(Dimensions.get('window').height * FRACAO_DA_ALTURA)
-  );
-}
-
 const TAMANHO_DO_ICONE_DO_CHIP = 13;
-
-/**
- * As paradas do véu, em opacidade sobre a cor de fundo. A última é opaca: é
- * onde a foto acaba e a tela começa.
- */
-const VEU = {
-  escuro: [0.45, 0.55, 1],
-  claro: [0.6, 0.72, 1],
-} as const;
 
 export function Hero({ imagem, titulo, sub, chips }: HeroProps) {
   const cores = useCores();
   const escalar = useEscala();
-  const { colorScheme } = useColorScheme();
-  const paradas = colorScheme === 'dark' ? VEU.escuro : VEU.claro;
 
   return (
     <View>
-      <View className="absolute left-0 right-0 top-0" style={{ height: alturaDaFoto() }}>
-        <Image source={imagem} resizeMode="cover" className="h-full w-full" />
-        <LinearGradient
-          // Tupla, e não array: o `LinearGradient` do Expo exige pelo menos duas
-          // cores no tipo, e um `map` devolve `string[]`.
-          colors={[
-            comAlfa(cores.background, paradas[0]),
-            comAlfa(cores.background, paradas[1]),
-            cores.background,
-          ]}
-          locations={[0, 0.55, 1]}
-          className="absolute inset-0"
-        />
-      </View>
+      <FundoDeFoto imagem={imagem} receita={RECEITA_DA_AUTENTICACAO} />
 
       <View className="px-5 pb-6 pt-16">
         <View className="mb-20 flex-row items-center gap-2.5">
@@ -137,18 +93,4 @@ export function Hero({ imagem, titulo, sub, chips }: HeroProps) {
       </View>
     </View>
   );
-}
-
-const CANAL_CHEIO = 255;
-
-/**
- * Cor de token mais opacidade, na forma de oito dígitos que o React Native
- * entende. Mora aqui, e não no módulo de design, porque só o véu precisa dela —
- * um segundo uso move; um uso só não abre porta para cor arbitrária.
- */
-function comAlfa(hex: string, alfa: number): string {
-  const canal = Math.round(alfa * CANAL_CHEIO)
-    .toString(16)
-    .padStart(2, '0');
-  return `${hex}${canal}`;
 }
