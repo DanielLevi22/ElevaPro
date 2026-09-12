@@ -7,13 +7,13 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useAuthStore } from '@/auth';
 import { ConfettiOverlay } from '@/components/gamification/ConfettiOverlay';
 import { ProgressCard } from '@/components/gamification/ProgressCard';
-import { StatCard } from '@/components/gamification/StatCard';
 import { StreakCounter } from '@/components/gamification/StreakCounter';
 import { WeeklyProgress } from '@/components/gamification/WeeklyProgress';
 import { AvatarDoCabecalho } from '@/components/ui/AvatarDoCabecalho';
 import { CartaoDeEntrada } from '@/components/ui/CartaoDeEntrada';
 import { PremiumCard } from '@/components/ui/PremiumCard';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
+import { StatCard } from '@/components/ui/StatCard';
 import { colors as brandColors } from '@/constants/colors';
 import { useHealthData } from '@/hooks/useHealthData';
 import { useAssessmentStore } from '@/modules/assessment/store/assessmentStore';
@@ -22,6 +22,7 @@ import { useGamificationStore } from '@/modules/gamification/store/gamificationS
 import { useStudentStore } from '@/modules/students';
 import { useWorkoutStore } from '@/modules/workout';
 import { ROUTES } from '@/navigation/types';
+import { useCores } from '@/shared/design';
 import { getLocalDateISOString } from '@/utils/dateUtils';
 
 const MUSCLE_IMAGES: Record<string, ImageSourcePropType> = {
@@ -68,16 +69,18 @@ export default function DashboardScreen() {
     loading: _healthLoading,
   } = useHealthData();
 
+  const cores = useCores();
+
   // Professional Data Stores
   const { students, fetchStudents, isLoading: studentsLoading } = useStudentStore();
   const { workouts, fetchWorkouts, isLoading: workoutsLoading } = useWorkoutStore();
   const { anamnesisResponses, isAnamnesisSubmitted } = useAssessmentStore();
 
   const anamnese = isAnamnesisSubmitted
-    ? { cor: '#10B981', icone: 'checkmark-circle' as const, legenda: 'Concluído' }
+    ? { cor: cores.success, icone: 'checkmark-circle' as const, legenda: 'Concluído' }
     : Object.keys(anamnesisResponses).length > 0
-      ? { cor: '#F59E0B', icone: 'document-text' as const, legenda: 'Em Andamento' }
-      : { cor: '#A855F7', icone: 'document-text' as const, legenda: 'Ficha de Saúde' };
+      ? { cor: cores.warning, icone: 'document-text' as const, legenda: 'Em Andamento' }
+      : { cor: cores.accent, icone: 'document-text' as const, legenda: 'Ficha de Saúde' };
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [suggestedWorkout, setSuggestedWorkout] = useState<SuggestedWorkout | null>(null);
@@ -191,7 +194,7 @@ export default function DashboardScreen() {
             <View className="items-end gap-1.5">
               {streak?.freeze_available && streak.freeze_available > 0 && (
                 <View className="bg-blue-500/20 px-2 py-0.5 rounded-full">
-                  <Ionicons name="snow" size={10} color="#3B82F6" />
+                  <Ionicons name="snow" size={10} color={cores.secondary} />
                 </View>
               )}
               <StreakCounter
@@ -275,7 +278,7 @@ export default function DashboardScreen() {
           <WeeklyProgress weeklyGoals={weeklyGoals} />
 
           <CartaoDeEntrada
-            cor="#3B82F6"
+            cor={cores.secondary}
             icone="speedometer"
             legenda="Correr, Pedalar, Caminhar"
             onPress={() => router.push(ROUTES.TABS.CARDIO)}
@@ -283,7 +286,7 @@ export default function DashboardScreen() {
           />
 
           <CartaoDeEntrada
-            cor="#EAB308"
+            cor={cores.warning}
             icone="trophy"
             legenda="Sua posição entre os alunos"
             onPress={() => router.push(ROUTES.TABS.RANKING)}
@@ -315,7 +318,7 @@ export default function DashboardScreen() {
               alcançava a tela. Quem barra a câmera é o consentimento próprio
               da finalidade, não a ausência de rota. */}
           <CartaoDeEntrada
-            cor="#34d399"
+            cor={cores.primary}
             icone="body"
             legenda="Agachamento — conta e julga a profundidade"
             onPress={() => router.push(ROUTES.TECHNIQUE.ROOT)}
@@ -328,7 +331,7 @@ export default function DashboardScreen() {
               de conectado tirava do aluno a única porta de volta. A legenda
               carrega o estado. */}
           <CartaoDeEntrada
-            cor="#10b981"
+            cor={cores.success}
             icone="heart-circle-outline"
             legenda={
               healthSource === 'device'

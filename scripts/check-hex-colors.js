@@ -60,23 +60,48 @@ function arquivosDoCommit() {
 }
 
 /**
- * Comentário citando cor é documentação, não uso — e boa parte dos comentários
- * do módulo de design existe justamente para registrar qual hexadecimal cada
- * token produz.
+ * Remove comentário antes de procurar cor: comentário citando hexadecimal é
+ * documentação, não uso — boa parte dos comentários do módulo de design existe
+ * justamente para registrar qual cor cada token produz.
+ *
+ * Percorre o arquivo inteiro em vez de linha a linha porque bloco de comentário
+ * atravessa linhas, e o que fica dentro dele não é código. Sem isso, a primeira
+ * versão desta guarda acusou `#194` — uma referência de issue dentro de um
+ * comentário JSX de três linhas — como se fosse uma cor de três dígitos.
  */
-function semComentario(linha) {
-  return linha
-    .replace(/\/\/.*$/, "")
-    .replace(/\/\*.*?\*\//g, "")
-    .replace(/^\s*\*.*$/, "");
+function semComentarios(conteudo) {
+  let dentroDeBloco = false;
+  return conteudo.split("\n").map((linha) => {
+    let limpa = "";
+    let i = 0;
+    while (i < linha.length) {
+      if (dentroDeBloco) {
+        const fim = linha.indexOf("*/", i);
+        if (fim === -1) return limpa;
+        dentroDeBloco = false;
+        i = fim + 2;
+        continue;
+      }
+      if (linha.startsWith("//", i)) return limpa;
+      if (linha.startsWith("/*", i)) {
+        dentroDeBloco = true;
+        i += 2;
+        continue;
+      }
+      limpa += linha[i];
+      i += 1;
+    }
+    return limpa;
+  });
 }
 
 function achadosEm(arquivo) {
   const conteudo = fs.readFileSync(path.join(ROOT, arquivo), "utf8");
   const achados = [];
-  conteudo.split("\n").forEach((linha, i) => {
-    const cores = semComentario(linha).match(HEX);
-    if (cores) achados.push({ linha: i + 1, cores, texto: linha.trim() });
+  const linhasOriginais = conteudo.split("\n");
+  semComentarios(conteudo).forEach((linha, i) => {
+    const cores = linha.match(HEX);
+    if (cores) achados.push({ linha: i + 1, cores, texto: linhasOriginais[i].trim() });
   });
   return achados;
 }

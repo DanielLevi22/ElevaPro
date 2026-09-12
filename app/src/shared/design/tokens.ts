@@ -173,7 +173,7 @@ export type NomeDeCor = keyof TokensHsl | keyof TokensLiterais;
 export const escala = {
   espaco: { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32, 10: 40, 12: 48, 16: 64 },
   raio: { sm: 8, md: 12, lg: 16, xl: 22, '2xl': 24, '3xl': 32, painel: 40, full: 9999 },
-  texto: { display: 32, h1: 24, h2: 20, corpo: 17, rotulo: 16, legenda: 13, micro: 12 },
+  texto: { display: 32, numero: 28, h1: 24, h2: 20, corpo: 17, rotulo: 16, legenda: 13, micro: 12 },
   entrelinha: { justa: 1.1, normal: 1.5 },
   duracao: { rapida: 150, padrao: 300 },
 } as const;

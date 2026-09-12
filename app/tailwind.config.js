@@ -83,6 +83,7 @@ module.exports = {
         corpo: '17px',
         h2: '20px',
         h1: '24px',
+        numero: '28px',
         display: '32px',
       },
     },
