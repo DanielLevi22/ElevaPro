@@ -2,8 +2,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useColorScheme } from 'nativewind';
 import type { ReactNode } from 'react';
-import { Platform, StyleSheet, View, type ViewProps } from 'react-native';
-import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
+import { Platform, View, type ViewProps } from 'react-native';
 import { cn } from '@/lib/utils';
 import { useCores } from '@/shared/design';
 
@@ -18,7 +17,7 @@ import { useCores } from '@/shared/design';
  * | `backdrop-filter: blur(26px)`   | `BlurView` do expo-blur                |
  * | `saturate(140%)`                | não tem equivalente — não reproduzido  |
  * | `linear-gradient(160deg, …)`    | `LinearGradient` com o vetor de 160°   |
- * | `::before` radial de brilho     | `RadialGradient` do react-native-svg   |
+ * | `::before` radial de brilho     | removido — quebrava a simetria         |
  * | `inset 0 1px 0` (topo)          | uma linha de 1px no topo               |
  * | `inset 0 -1px 0` (base)         | uma linha de 1px na base               |
  * | duas sombras externas           | uma só — RN não empilha sombra         |
@@ -91,7 +90,21 @@ const INTENSIDADE = 26;
  * dizia "uma só" e o código não tinha nenhuma — era o que faltava para o
  * cartão parecer vidro em vez de painel chapado.
  */
-function relevo(cor: string, opacidade: number) {
+/**
+ * O relevo, e o fundo que o Android exige para desenhá-lo.
+ *
+ * `elevation` no Android só produz sombra se a View tiver **fundo pintado** —
+ * com fundo transparente ele não tem contorno de onde tirar a sombra e não
+ * desenha nada. Foi o que deixou o cartão branco sobre cinza-claro parecendo
+ * uma caixa chapada no tema claro: o vidro estava certo, a profundidade não
+ * existia.
+ *
+ * Pintar o invólucro com a cor de fundo da tela resolve, e custa pouco
+ * justamente onde o blur já não existe: o preenchimento do vidro no claro é
+ * 86% de branco, então o que estava atrás já não aparecia. No iOS, onde o blur
+ * fica, o invólucro segue transparente — lá a sombra não depende de fundo.
+ */
+function relevo(cor: string, opacidade: number, fundo: string) {
   return Platform.select({
     ios: {
       shadowColor: cor,
@@ -99,7 +112,7 @@ function relevo(cor: string, opacidade: number) {
       shadowOpacity: opacidade,
       shadowRadius: 13,
     },
-    default: { elevation: 6 },
+    default: { elevation: 6, backgroundColor: fundo },
   });
 }
 
@@ -111,35 +124,19 @@ function relevo(cor: string, opacidade: number) {
 const OPACIDADE_DA_SOMBRA = { escuro: 0.55, claro: 0.22 } as const;
 
 /**
- * O brilho do canto, que no desenho é
- * `radial-gradient(120% 80% at 12% -10%, rgba(255,255,255,.14), transparent 55%)`.
+ * O preenchimento desce reto, e o kit usa 160°.
  *
- * A primeira versão disto era um gradiente **linear** diagonal, e foi um erro
- * visível: linear espalha o branco da esquerda para a direita e o lado direito
- * do cartão parece escurecido por contraste — virava uma faixa escura na lateral
- * de cada linha da lista. Radial mantém a luz no canto, que é o que o desenho
- * diz.
+ * São 20° de diferença, e eles são deliberados: qualquer inclinação faz um lado
+ * do cartão ficar mais claro que o outro, e numa lista de dez linhas a assimetria
+ * vira o defeito que se vê antes do efeito. O mesmo motivo tirou o brilho de
+ * canto — no kit ele é um radial a 14% no canto superior esquerdo, imperceptível
+ * sobre vidro translúcido em CSS e visível demais aqui.
  *
- * O centro fica **acima da borda de cima** (`-10%`), então metade do blob cai
- * fora do cartão: é assim que a luz parece vir de fora.
+ * O que o vidro é, então: o gradiente vertical, a borda, as duas linhas de
+ * brilho e a sombra de relevo. Simétrico da esquerda para a direita.
  */
-const BRILHO = {
-  centroX: '12%',
-  centroY: '-10%',
-  raioX: '120%',
-  raioY: '80%',
-  desvanece: '55%',
-  opacidade: { escuro: 0.14, claro: 0.9 },
-} as const;
-
-/**
- * O vetor de `160deg` do CSS, em coordenadas de 0 a 1.
- *
- * `160deg` aponta 160° no sentido do relógio a partir de "para cima", ou seja
- * quase para baixo e um pouco para a direita: `(sin 160°, −cos 160°)`.
- */
-const INICIO_DO_GRADIENTE = { x: 0.329, y: 0.03 };
-const FIM_DO_GRADIENTE = { x: 0.671, y: 0.97 };
+const INICIO_DO_GRADIENTE = { x: 0.5, y: 0 };
+const FIM_DO_GRADIENTE = { x: 0.5, y: 1 };
 
 export function Vidro({ children, forte = false, className, classeExterna, ...props }: VidroProps) {
   const cores = useCores();
@@ -148,7 +145,11 @@ export function Vidro({ children, forte = false, className, classeExterna, ...pr
 
   return (
     <View
-      style={relevo(cores.sombra, escuro ? OPACIDADE_DA_SOMBRA.escuro : OPACIDADE_DA_SOMBRA.claro)}
+      style={relevo(
+        cores.sombra,
+        escuro ? OPACIDADE_DA_SOMBRA.escuro : OPACIDADE_DA_SOMBRA.claro,
+        cores.background
+      )}
       className={cn('rounded-xl', classeExterna)}
     >
       <View
@@ -174,32 +175,6 @@ export function Vidro({ children, forte = false, className, classeExterna, ...pr
           end={FIM_DO_GRADIENTE}
           className="absolute inset-0"
         />
-
-        {/*
-          `style`, e não `className`: o `react-native-svg` não está registrado
-          no `cssInterop`, e ali a classe é descartada **em silêncio** — o `Svg`
-          entra no fluxo com 100% de altura e estica o cartão. O aviso está no
-          topo de `lib/nativewind-interop.ts`, e eu caí nele de qualquer forma.
-        */}
-        <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
-          <Defs>
-            <RadialGradient
-              id="brilhoDoVidro"
-              cx={BRILHO.centroX}
-              cy={BRILHO.centroY}
-              rx={BRILHO.raioX}
-              ry={BRILHO.raioY}
-            >
-              <Stop
-                offset="0%"
-                stopColor={cores.specular}
-                stopOpacity={BRILHO.opacidade[escuro ? 'escuro' : 'claro']}
-              />
-              <Stop offset={BRILHO.desvanece} stopColor={cores.specular} stopOpacity={0} />
-            </RadialGradient>
-          </Defs>
-          <Rect width="100%" height="100%" fill="url(#brilhoDoVidro)" />
-        </Svg>
 
         {/* As duas linhas que no desenho são `inset box-shadow`. */}
         <View className="absolute left-0 right-0 top-0 h-px bg-specular" />

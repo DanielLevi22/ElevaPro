@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react-native';
 import { Text } from 'react-native';
-import Svg, { Circle, RadialGradient } from 'react-native-svg';
+import Svg, { Circle } from 'react-native-svg';
 import { coresDoTema } from '@/shared/design';
 import { Anel } from '../Anel';
 import { Vidro } from '../Vidro';
@@ -120,22 +120,20 @@ describe('Anel', () => {
 });
 
 describe('Vidro', () => {
-  it('desenha as camadas que o CSS faz numa declaração só', () => {
-    // Preenchimento em gradiente, brilho de canto em radial, e o blur — três
-    // camadas que no desenho são `background`, `::before` e `backdrop-filter`.
-    //
-    // O brilho é radial, e não linear: a primeira versão usava um linear
-    // diagonal e isso escurecia visivelmente a lateral direita de cada cartão,
-    // porque linear espalha o branco no eixo todo em vez de deixá-lo no canto.
+  it('preenche com um gradiente vertical, para os dois lados ficarem iguais', () => {
+    // O kit usa 160°, e as duas tentativas anteriores de reproduzir a
+    // inclinação e o brilho de canto deixaram a lateral direita visivelmente
+    // diferente da esquerda — numa lista de dez linhas a assimetria vira o
+    // defeito que se vê antes do efeito.
     const { UNSAFE_getAllByType } = render(
       <Vidro>
         <Text>conteúdo</Text>
       </Vidro>
     );
+    const preenchimento = UNSAFE_getAllByType('LinearGradient' as never)[0];
 
-    expect(UNSAFE_getAllByType('LinearGradient' as never)).toHaveLength(1);
-    expect(UNSAFE_getAllByType(RadialGradient)).toHaveLength(1);
-    expect(UNSAFE_getAllByType('BlurView' as never)).toHaveLength(1);
+    expect(preenchimento.props.start).toEqual({ x: 0.5, y: 0 });
+    expect(preenchimento.props.end).toEqual({ x: 0.5, y: 1 });
   });
 
   it('acompanha o tema no tom do blur', () => {
