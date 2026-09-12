@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-
 import { useEffect, useRef } from 'react';
 import { Modal, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInUp, SlideOutDown } from 'react-native-reanimated';
+import { useCores } from '@/shared/design';
 
 interface SearchModalProps {
   visible: boolean;
@@ -19,6 +19,7 @@ export function SearchModal({
   onChangeText,
   placeholder = 'Buscar...',
 }: SearchModalProps) {
+  const cores = useCores();
   const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
@@ -45,32 +46,32 @@ export function SearchModal({
             <Animated.View
               entering={SlideInUp.duration(300)}
               exiting={SlideOutDown.duration(300)}
-              className="pt-16 px-6 pb-6 bg-zinc-900 rounded-b-3xl border-b border-zinc-800 shadow-2xl shadow-black"
+              className="pt-16 px-6 pb-6 bg-card rounded-b-3xl border-b border-border shadow-2xl shadow-black"
             >
               <View className="flex-row items-center gap-4">
-                <View className="flex-1 flex-row items-center bg-zinc-800 rounded-2xl px-4 py-3 border border-zinc-700">
-                  <Ionicons name="search" size={20} color="#71717A" />
+                <View className="flex-1 flex-row items-center bg-muted rounded-2xl px-4 py-3 border border-border">
+                  <Ionicons name="search" size={20} color={cores.mutedForeground} />
                   <TextInput
                     ref={inputRef}
                     value={value}
                     onChangeText={onChangeText}
                     placeholder={placeholder}
-                    placeholderTextColor="#52525B"
-                    className="flex-1 ml-3 text-white text-base font-sans"
+                    placeholderTextColor={cores.placeholder}
+                    className="flex-1 ml-3 text-foreground text-base font-sans"
                     returnKeyType="search"
                   />
                   {value.length > 0 && (
                     <TouchableOpacity onPress={() => onChangeText('')}>
-                      <Ionicons name="close-circle" size={20} color="#71717A" />
+                      <Ionicons name="close-circle" size={20} color={cores.mutedForeground} />
                     </TouchableOpacity>
                   )}
                 </View>
 
                 <TouchableOpacity
                   onPress={onClose}
-                  className="w-10 h-10 items-center justify-center rounded-xl bg-zinc-800"
+                  className="w-10 h-10 items-center justify-center rounded-xl bg-muted"
                 >
-                  <Ionicons name="close" size={24} color="#E4E4E7" />
+                  <Ionicons name="close" size={24} color={cores.foreground} />
                 </TouchableOpacity>
               </View>
             </Animated.View>

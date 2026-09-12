@@ -28,6 +28,7 @@ import { registerHealthSyncAsync } from '@/services/backgroundHealthTask';
 import { registerBackgroundFetchAsync } from '@/services/backgroundTask';
 import { requestNotificationPermissions } from '@/services/notificationService';
 import { assertBffConfigured } from '@/shared/bff';
+import { ajustarEscalaDeTexto } from '@/shared/design';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -64,6 +65,11 @@ export default function RootLayout() {
     ...Ionicons.font,
     ...MaterialCommunityIcons.font,
   });
+
+  // O kit foi desenhado num telefone de 390pt; num aparelho de 448dp o mesmo
+  // tamanho ocuparia 15% menos da tela. Isto move a base de `rem`, e com ela
+  // todo o texto, sem nenhuma tela precisar saber.
+  useEffect(() => ajustarEscalaDeTexto(), []);
 
   useEffect(() => {
     // Fonte e acabamento. Lancar aqui trocava um icone sem forma por um app

@@ -13,6 +13,14 @@ const literal = (nome) => `var(--${nome})`;
 /** Token em triplete: aceita modificador de opacidade (`bg-primary/20`). */
 const comAlfa = (nome) => `hsl(var(--${nome}) / <alpha-value>)`;
 
+/**
+ * A base de `rem`. Espelha `REM_BASE` de src/shared/design/tokens.ts, e o teste
+ * de lá falha se as duas divergirem.
+ */
+const REM_BASE = 16;
+
+const emRem = (px) => `${px / REM_BASE}rem`;
+
 module.exports = {
   content: ['./src/**/*.{js,jsx,ts,tsx}'],
   // Obrigatório: sem `class`, o NativeWind recusa trocar o tema em runtime e a
@@ -91,17 +99,28 @@ module.exports = {
         mono: ['JetBrainsMono_400Regular'],
         'mono-semibold': ['JetBrainsMono_600SemiBold'],
       },
-      // Escala iOS, vinda das telas do mobile — não a do dashboard, que tem 14
-      // de corpo. Espelha `escala.texto` de src/shared/design/tokens.ts.
+      /**
+       * Escala iOS, vinda das telas do mobile — não a do dashboard, que tem 14
+       * de corpo. Espelha `escala.texto` de src/shared/design/tokens.ts.
+       *
+       * Em `rem`, e não em `px`, de propósito: o NativeWind resolve `rem` a
+       * partir de um observável que `ajustarEscalaDeTexto()` define no boot
+       * conforme a largura do aparelho. O desenho foi feito para 390pt, e num
+       * aparelho de 448dp o mesmo `32px` ocuparia 15% menos da tela. Com `rem`
+       * a proporção do desenho se mantém sem tocar em nenhum call site.
+       *
+       * Os números são os do desenho, em pixel, divididos pela base — ficam
+       * legíveis aqui e o teste dos tokens confere o caminho de volta.
+       */
       fontSize: {
-        micro: '12px',
-        legenda: '13px',
-        rotulo: '16px',
-        corpo: '17px',
-        h2: '20px',
-        h1: '24px',
-        numero: '28px',
-        display: '32px',
+        micro: emRem(12),
+        legenda: emRem(13),
+        rotulo: emRem(16),
+        corpo: emRem(17),
+        h2: emRem(20),
+        h1: emRem(24),
+        numero: emRem(28),
+        display: emRem(32),
       },
     },
   },

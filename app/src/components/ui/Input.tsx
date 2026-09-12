@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { ReactNode } from 'react';
-import { Text, TextInput, type TextInputProps, View } from 'react-native';
+import { type ReactNode, useState } from 'react';
+import { Text, TextInput, type TextInputProps, TouchableOpacity, View } from 'react-native';
 import { cn } from '@/lib/utils';
 import { useCores } from '@/shared/design';
 
@@ -18,7 +18,7 @@ import { useCores } from '@/shared/design';
  * @example
  * <Group>
  *   <Input icon="mail" placeholder="seu@email.com" keyboardType="email-address" />
- *   <Input icon="lock-closed" placeholder="••••••••" secureTextEntry trailing={<Olho />} />
+ *   <Input icon="lock-closed" placeholder="••••••••" senha />
  * </Group>
  */
 interface InputProps extends TextInputProps {
@@ -26,13 +26,32 @@ interface InputProps extends TextInputProps {
   trailing?: ReactNode;
   label?: string;
   error?: string;
+  /**
+   * Campo de senha: esconde o texto e mostra o olho de revelar.
+   *
+   * O estado de visibilidade mora aqui, e não na tela, porque ele é do campo e
+   * de mais ninguém — a tela de cadastro tem dois campos de senha e cada um
+   * revela o seu. Era o terceiro call site a repetir o mesmo `useState` e o
+   * mesmo `TouchableOpacity`.
+   */
+  senha?: boolean;
   className?: string;
 }
 
 const TAMANHO_DO_ICONE = 19;
+const TAMANHO_DO_OLHO = 18;
 
-export function Input({ icon, trailing, label, error, className, ...props }: InputProps) {
+export function Input({
+  icon,
+  trailing,
+  label,
+  error,
+  senha = false,
+  className,
+  ...props
+}: InputProps) {
   const cores = useCores();
+  const [visivel, setVisivel] = useState(false);
 
   return (
     <View className={className}>
@@ -53,7 +72,24 @@ export function Input({ icon, trailing, label, error, className, ...props }: Inp
             props.editable === false && 'opacity-60'
           )}
           {...props}
+          // Depois do spread, e não antes: com `senha`, quem manda no sigilo é
+          // o olho deste componente. Um `secureTextEntry` vindo do call site
+          // venceria o toggle e o olho viraria enfeite.
+          secureTextEntry={senha ? !visivel : props.secureTextEntry}
         />
+        {senha ? (
+          <TouchableOpacity
+            onPress={() => setVisivel((atual) => !atual)}
+            accessibilityRole="button"
+            accessibilityLabel={visivel ? 'Ocultar senha' : 'Mostrar senha'}
+          >
+            <Ionicons
+              name={visivel ? 'eye-off' : 'eye'}
+              size={TAMANHO_DO_OLHO}
+              color={cores.mutedForeground}
+            />
+          </TouchableOpacity>
+        ) : null}
         {trailing}
       </View>
 

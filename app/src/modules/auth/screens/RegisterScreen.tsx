@@ -132,7 +132,7 @@ export function RegisterScreen() {
           sub={SUBTITULO[etapas.etapa]}
         />
 
-        <View className="px-5">
+        <View className="flex-1 px-5">
           <View className="mb-5 flex-row gap-1.5">
             {TRACOS.map((traco, i) => (
               <View
@@ -198,7 +198,7 @@ export function RegisterScreen() {
                 value={password}
                 onChangeText={setPassword}
                 placeholder="Mínimo 8 caracteres"
-                secureTextEntry
+                senha
                 autoComplete="new-password"
               />
               <Input
@@ -206,7 +206,7 @@ export function RegisterScreen() {
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 placeholder="Digite a senha novamente"
-                secureTextEntry
+                senha
                 autoComplete="new-password"
               />
             </Group>
@@ -226,6 +226,8 @@ export function RegisterScreen() {
               )}
             </View>
           </View>
+
+          <View className="flex-1" />
 
           <View className="flex-row items-center justify-center pb-7 pt-6">
             <Text className="text-rotulo tracking-tight text-muted-foreground">

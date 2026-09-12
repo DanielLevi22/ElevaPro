@@ -1,5 +1,4 @@
 import { supabase } from '@elevapro/supabase';
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -10,7 +9,6 @@ import { type ChipDoHero, Hero } from '@/components/ui/Hero';
 import { Input } from '@/components/ui/Input';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { ROUTES } from '@/navigation/types';
-import { useCores } from '@/shared/design';
 import { useAuthStore } from '../store/authStore';
 
 /**
@@ -28,15 +26,11 @@ const PILARES: ChipDoHero[] = [
   { icon: 'sparkles', label: 'Assistente' },
 ];
 
-const TAMANHO_DO_OLHO = 18;
-
 export function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [senhaVisivel, setSenhaVisivel] = useState(false);
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuthStore();
-  const cores = useCores();
   const router = useRouter();
 
   async function handleLogin() {
@@ -69,7 +63,7 @@ export function LoginScreen() {
           chips={PILARES}
         />
 
-        <View className="px-5">
+        <View className="flex-1 px-5">
           <Group>
             <Input
               icon="mail"
@@ -85,21 +79,8 @@ export function LoginScreen() {
               value={password}
               onChangeText={setPassword}
               placeholder="••••••••"
-              secureTextEntry={!senhaVisivel}
+              senha
               autoComplete="current-password"
-              trailing={
-                <TouchableOpacity
-                  onPress={() => setSenhaVisivel((visivel) => !visivel)}
-                  accessibilityRole="button"
-                  accessibilityLabel={senhaVisivel ? 'Ocultar senha' : 'Mostrar senha'}
-                >
-                  <Ionicons
-                    name={senhaVisivel ? 'eye-off' : 'eye'}
-                    size={TAMANHO_DO_OLHO}
-                    color={cores.mutedForeground}
-                  />
-                </TouchableOpacity>
-              }
             />
           </Group>
 
@@ -112,6 +93,8 @@ export function LoginScreen() {
               onPress={() => router.push(ROUTES.AUTH.FORGOT_PASSWORD)}
             />
           </View>
+
+          <View className="flex-1" />
 
           <View className="flex-row items-center justify-center pb-7 pt-6">
             <Text className="text-rotulo tracking-tight text-muted-foreground">
