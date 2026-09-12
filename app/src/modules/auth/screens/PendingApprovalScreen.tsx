@@ -86,7 +86,7 @@ export function PendingApprovalScreen() {
         )}
 
         {/* Main Message */}
-        <View className="bg-surface border border-border rounded-2xl p-6 mb-6">
+        <View className="bg-card border border-border rounded-2xl p-6 mb-6">
           <Text className="text-base text-zinc-400 text-center leading-6 mb-4 font-sans">
             Sua conta de profissional foi criada com sucesso e está em análise.
           </Text>
@@ -116,7 +116,7 @@ export function PendingApprovalScreen() {
         </View>
 
         {/* Info Box */}
-        <View className="bg-surface border border-border rounded-2xl p-6 mb-8">
+        <View className="bg-card border border-border rounded-2xl p-6 mb-8">
           <Text className="text-base font-semibold text-foreground mb-4 font-display">
             O que acontece agora?
           </Text>

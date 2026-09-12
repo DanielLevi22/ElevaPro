@@ -92,7 +92,7 @@ export function HealthDataConsentGate({ studentId, isStudent }: HealthDataConsen
       onRequestClose={() => setPrecisaConsentir(false)}
     >
       <View className="flex-1 justify-end bg-black/80">
-        <View className="bg-surface rounded-t-[32px] border-t border-border max-h-[88%]">
+        <View className="bg-card rounded-t-[32px] border-t border-border max-h-[88%]">
           <View className="items-center pt-7 pb-4">
             <View className="w-16 h-16 rounded-full bg-primary/10 items-center justify-center border border-primary/20">
               <Ionicons name="shield-checkmark" size={32} color={colors.primary.solid} />
@@ -161,7 +161,7 @@ export function HealthDataConsentGate({ studentId, isStudent }: HealthDataConsen
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel="Agora não, seguir sem registrar dados de saúde"
-              className="w-full py-4 rounded-2xl bg-surface-highlight border border-border items-center justify-center"
+              className="w-full py-4 rounded-2xl bg-muted border border-border items-center justify-center"
             >
               <Text className="text-muted-foreground font-bold text-base font-display uppercase tracking-wider">
                 Agora não
