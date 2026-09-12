@@ -104,7 +104,7 @@ export default function RootLayout() {
 
 function RootLayoutNav({ loaded }: { loaded: boolean }) {
   const colorScheme = useColorScheme();
-  const { session, initializeSession, isLoading, accountType, accountStatus } = useAuthStore();
+  const { session, initializeSession, isLoading, accountType } = useAuthStore();
 
   const segments = useSegments();
   const router = useRouter();
@@ -153,16 +153,12 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
       // Redirect to login if not authenticated
       router.replace('/(auth)/login');
     } else if (session && inAuthGroup) {
-      // Redirect based on role and status
-      if (accountType === 'specialist' && accountStatus === 'invited') {
-        router.replace('/(auth)/pending-approval');
-      } else if (accountType === 'specialist') {
-        router.replace('/(tabs)');
-      } else {
-        router.replace('/(tabs)');
-      }
+      // Todo papel entra pelo mesmo lugar. Os três ramos anteriores mandavam
+      // para `(tabs)` em dois deles, e o terceiro era a fila de aprovação do
+      // especialista, removida na 0050.
+      router.replace('/(tabs)');
     }
-  }, [session, segments, isLoading, accountType, accountStatus, router]);
+  }, [session, segments, isLoading, router]);
 
   // Removed manual loading view to use Native Splash
 

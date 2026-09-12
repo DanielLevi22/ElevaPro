@@ -148,12 +148,10 @@ export default function UserDetailsPage() {
   }
 
   const getStatusBadge = (status: string | null) => {
-    // Especialista sem status é conta que ainda espera aprovação; os demais
-    // legados contam como ativos.
-    let s = status;
-    if (!s) {
-      s = user?.account_type === "specialist" ? "invited" : "active";
-    }
+    // Conta legada sem status conta como ativa. O especialista tinha exceção
+    // aqui — aparecia como "Convidado", porque esperava aprovação —, e a fila
+    // de aprovação foi removida na 0050.
+    const s = status ?? "active";
 
     // Só três chaves porque o enum `account_status` só tem três valores. As
     // antigas ("pending", "rejected", "suspended") nunca casavam e todo usuário
