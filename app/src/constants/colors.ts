@@ -1,158 +1,103 @@
+import { coresDoTema } from '@/shared/design';
+
 /**
- * Energy Gradient Color System
- * Mobile-only color palette for Eleva Pro
+ * @deprecated Ponte para o design system. Use `useCores()` de `@/shared/design`.
  *
- * Design Philosophy:
- * - Vibrant orange-to-pink gradients for energy and motivation
- * - Electric blue for secondary actions and info
- * - Vibrant purple for accents and highlights
- * - Deep blacks for premium dark mode experience
+ * Este módulo era a paleta "Energy Gradient" — laranja → rosa — escrita à mão e
+ * sobrescrevendo os tokens do design pelo `tailwind.config.js`. Era isso que
+ * fazia toda tela nascer coral com o lime declarado logo ao lado (ADR-0025).
+ *
+ * Agora ele só reempacota `@/shared/design`, então existe uma fonte de cor só e
+ * a divergência não pode voltar. Continua existindo por uma razão prática: 10
+ * dos 47 arquivos que o importam leem cor em escopo de módulo, onde um hook não
+ * pode ser chamado. Migrá-los exigiria reestruturar telas que serão reescritas
+ * lote a lote de qualquer forma.
+ *
+ * **Congelado no tema escuro.** Quem lê daqui não acompanha a troca de tema —
+ * mais uma razão para sair. Cada lote de telas remove seus call sites; quando o
+ * último sair, este arquivo vai junto.
  */
+const escuro = coresDoTema('escuro');
+const claro = coresDoTema('claro');
 
 export const colors = {
-  // Primary Gradient (Orange → Pink)
   primary: {
-    start: '#FF6B35', // Vibrant Orange
-    end: '#FF2E63', // Hot Pink
-    solid: '#FF4D5A', // Mid-point for solid usage
-    light: '#FF8A65', // Lighter variant
-    dark: '#E63946', // Darker variant
+    start: escuro.primary,
+    end: escuro.accent,
+    solid: escuro.primary,
+    light: escuro.primary,
+    dark: escuro.primaryText,
   },
-
-  // Secondary (Electric Blue)
   secondary: {
-    main: '#00D9FF', // Electric Blue
-    light: '#33E3FF', // Light Blue
-    dark: '#00B8D9', // Dark Blue
+    main: escuro.secondary,
+    light: escuro.secondary,
+    dark: escuro.secondary,
   },
-
-  // Accent (Vibrant Purple)
   accent: {
-    main: '#9D4EDD', // Vibrant Purple
-    light: '#B565F0', // Light Purple
-    dark: '#8338C9', // Dark Purple
+    main: escuro.accent,
+    light: escuro.accent,
+    dark: escuro.accent,
   },
-
-  // Backgrounds
   background: {
-    primary: '#0A0A0A', // Deep Black
-    secondary: '#1A1A1A', // Dark Gray
-    surface: '#242424', // Card/Surface
-    elevated: '#2E2E2E', // Elevated Surface
+    primary: escuro.background,
+    secondary: escuro.card,
+    surface: escuro.card,
+    elevated: escuro.muted,
   },
-
-  // Text
   text: {
-    primary: '#FFFFFF', // White
-    secondary: '#A1A1AA', // Light Gray
-    muted: '#71717A', // Muted Gray
-    disabled: '#52525B', // Disabled Gray
+    primary: escuro.foreground,
+    secondary: escuro.mutedForeground,
+    muted: escuro.mutedForeground,
+    disabled: escuro.placeholder,
   },
-
-  // Status Colors
   status: {
-    success: '#00C9A7', // Emerald Green
-    warning: '#FFB800', // Gold Yellow
-    error: '#FF3B30', // Red
-    info: '#00D9FF', // Electric Blue
+    success: escuro.success,
+    warning: escuro.warning,
+    error: escuro.destructive,
+    info: escuro.secondary,
   },
-
-  // Borders
   border: {
-    default: '#3F3F46', // Zinc-700
-    light: '#52525B', // Zinc-600
-    dark: '#27272A', // Zinc-800
+    default: escuro.border,
+    light: escuro.border,
+    dark: escuro.border,
   },
-
-  // Macros
+  /**
+   * O design não tem paleta de macronutriente. Carboidrato era roxo, que não
+   * existe mais, e caiu no accent por ser a terceira cor de sinal. Quando a
+   * tela de nutrição for reconstruída, isso vira decisão de design, não
+   * herança.
+   */
   macro: {
-    protein: '#00C9A7', // Emerald Green
-    carbs: '#9D4EDD', // Vibrant Purple
-    fat: '#FFB800', // Gold Yellow
-    calories: '#FFFFFF', // White
+    protein: escuro.success,
+    carbs: escuro.accent,
+    fat: escuro.warning,
+    calories: escuro.foreground,
   },
-
-  // Gradients (for LinearGradient usage - using tuples for type safety)
   gradients: {
-    primary: ['#FF6B35', '#FF2E63'] as const, // Orange to Pink
-    primaryReverse: ['#FF2E63', '#FF6B35'] as const, // Pink to Orange
-    secondary: ['#00D9FF', '#00B8D9'] as const, // Blue gradient
-    accent: ['#9D4EDD', '#8338C9'] as const, // Purple gradient
-    success: ['#00C9A7', '#00A88E'] as const, // Green gradient
-    dark: ['#1A1A1A', '#0A0A0A'] as const, // Dark gradient
+    primary: [escuro.primary, escuro.accent],
+    primaryReverse: [escuro.accent, escuro.primary],
+    secondary: [escuro.secondary, escuro.secondary],
+    accent: [escuro.accent, escuro.accent],
+    success: [escuro.success, escuro.success],
+    dark: [escuro.card, escuro.background],
   },
-};
+} as const;
 
-// Tailwind-compatible color object
-export const tailwindColors = {
-  primary: {
-    DEFAULT: colors.primary.solid,
-    50: '#FFE8E0',
-    100: '#FFD1C1',
-    200: '#FFA38A',
-    300: '#FF8A65',
-    400: '#FF6B35',
-    500: colors.primary.solid,
-    600: '#E63946',
-    700: '#CC2936',
-    800: '#B31B28',
-    900: '#99101C',
-  },
-  secondary: {
-    DEFAULT: colors.secondary.main,
-    50: '#E0F7FF',
-    100: '#B3EDFF',
-    200: '#80E3FF',
-    300: '#4DD9FF',
-    400: '#26D4FF',
-    500: colors.secondary.main,
-    600: '#00B8D9',
-    700: '#0097B3',
-    800: '#00768C',
-    900: '#005566',
-  },
-  accent: {
-    DEFAULT: colors.accent.main,
-    50: '#F3E8FF',
-    100: '#E4C7FF',
-    200: '#D4A5FF',
-    300: '#C483FF',
-    400: '#B565F0',
-    500: colors.accent.main,
-    600: '#8338C9',
-    700: '#6B2BA3',
-    800: '#531F7D',
-    900: '#3B1357',
-  },
-  background: {
-    DEFAULT: colors.background.primary,
-    primary: colors.background.primary,
-    secondary: colors.background.secondary,
-    surface: colors.background.surface,
-    elevated: colors.background.elevated,
-  },
-};
-
-// Legacy theme structure for backward compatibility with Themed.tsx
-const legacyTheme = {
-  light: {
-    text: '#000000',
-    background: '#FFFFFF',
-    tint: colors.primary.solid,
-    tabIconDefault: '#CCCCCC',
-    tabIconSelected: colors.primary.solid,
-  },
-  dark: {
-    text: colors.text.primary,
-    background: colors.background.primary,
-    tint: colors.primary.solid,
-    tabIconDefault: '#CCCCCC',
-    tabIconSelected: colors.primary.solid,
-  },
-};
-
-// Default export includes both new structure and legacy theme
+/** @deprecated Estrutura antiga que `Themed.tsx` ainda consome. */
 export default {
   ...colors,
-  ...legacyTheme,
+  light: {
+    text: claro.foreground,
+    background: claro.background,
+    tint: claro.primary,
+    tabIconDefault: claro.mutedForeground,
+    tabIconSelected: claro.primary,
+  },
+  dark: {
+    text: escuro.foreground,
+    background: escuro.background,
+    tint: escuro.primary,
+    tabIconDefault: escuro.mutedForeground,
+    tabIconSelected: escuro.primary,
+  },
 };
