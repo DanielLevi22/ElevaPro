@@ -28,7 +28,9 @@
     "api:test-auth": "node scripts/test-api-auth.mjs",
     "env:sync": "node scripts/sync-env.js",
     "env:sync:preview": "node scripts/sync-env.js preview",
-    "env:sync:production": "node scripts/sync-env.js production"
+    "env:sync:production": "node scripts/sync-env.js production",
+    "check:file-size:tocados": "node scripts/check-file-size.js --tocados",
+    "app:check-hex": "node scripts/check-hex-colors.js"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",
