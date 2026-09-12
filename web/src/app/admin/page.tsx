@@ -3,7 +3,6 @@
 import { supabase } from "@elevapro/supabase";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { PendingApprovalsList } from "./components/PendingApprovalsList";
 
 interface DashboardStats {
   totalUsers: number;
@@ -125,11 +124,6 @@ export default function AdminDashboard() {
           <h3 className="text-sm font-medium text-muted-foreground mb-2">Alunos</h3>
           <p className="text-3xl font-bold text-blue-400">{stats?.totalStudents || 0}</p>
         </div>
-      </div>
-
-      {/* Pending Approvals Section */}
-      <div className="mb-8">
-        <PendingApprovalsList />
       </div>
     </div>
   );

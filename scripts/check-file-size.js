@@ -2,24 +2,29 @@
 /**
  * check-file-size.js
  *
- * Avisa — **não bloqueia** — sobre arquivos acima do limite de 500 linhas que o
- * `CLAUDE.md` define.
+ * O limite de 500 linhas que o `CLAUDE.md` define, em dois modos.
  *
- * Aviso, e não erro, de propósito. São 24 arquivos e cerca de 14 mil linhas,
- * numa base com 9% de cobertura no mobile. Quebrar tudo de uma vez troca dívida
- * conhecida por regressão desconhecida, e um bloqueio que ninguém consegue
- * atender vira `--no-verify` — que o `CLAUDE.md` proíbe justamente por isso.
+ * Sem argumento: **avisa** sobre todos os arquivos acima do limite, e não
+ * bloqueia. São 24 arquivos e cerca de 14 mil linhas, numa base com 9% de
+ * cobertura no mobile. Quebrar tudo de uma vez troca dívida conhecida por
+ * regressão desconhecida, e um bloqueio que ninguém consegue atender vira
+ * `--no-verify` — que o `CLAUDE.md` proíbe justamente por isso.
  *
- * A regra que vale é outra, e é de manutenção: **arquivo acima de 500 linhas
- * que for tocado por qualquer motivo sai do PR abaixo de 500.** Este script
- * existe para essa conversa acontecer na revisão, com o número na tela.
+ * Com `--tocados`: **bloqueia**, mas só o arquivo que o commit toca. É a regra
+ * de manutenção que este arquivo sempre descreveu — "arquivo acima de 500
+ * linhas que for tocado sai do PR abaixo de 500" — agora verificada em vez de
+ * combinada. Roda no pre-commit.
+ *
+ * A catraca é o que torna o bloqueio atendível: ninguém precisa reescrever 24
+ * arquivos para commitar, e a dívida sai por onde o trabalho já ia passar.
  *
  * Arquivo gerado não conta: `database.types.ts` tem 1.558 linhas porque o banco
  * tem esse tamanho, e ninguém o edita à mão.
  *
- * Uso: npm run check:file-size
+ * Uso: npm run check:file-size · npm run check:file-size:tocados
  */
 
+const { execSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -48,9 +53,8 @@ function arquivos(dir) {
   return encontrados;
 }
 
-function main() {
+function acimaDoLimite() {
   const grandes = [];
-
   for (const dir of FONTES) {
     for (const arquivo of arquivos(dir)) {
       const relativo = path.relative(ROOT, arquivo).split(path.sep).join("/");
@@ -60,13 +64,51 @@ function main() {
       if (linhas > LIMITE) grandes.push({ relativo, linhas });
     }
   }
+  return grandes.sort((a, b) => b.linhas - a.linhas);
+}
+
+/**
+ * A catraca: o arquivo que o commit toca precisa sair abaixo do limite.
+ *
+ * É a regra que o cabeçalho deste arquivo sempre descreveu — "arquivo acima de
+ * 500 linhas que for tocado sai do PR abaixo de 500" — só que agora verificada,
+ * em vez de combinada. Continua sem bloquear os outros: quem não é tocado
+ * segue na lista de aviso, e a dívida sai por onde o trabalho passa.
+ */
+function main() {
+  const grandes = acimaDoLimite();
+  const tocados = process.argv.includes("--tocados");
+
+  if (tocados) {
+    const doCommit = new Set(
+      execSync("git diff --cached --name-only --diff-filter=ACM", { cwd: ROOT, encoding: "utf8" })
+        .split("\n")
+        .filter(Boolean),
+    );
+    const infratores = grandes.filter(({ relativo }) => doCommit.has(relativo));
+
+    if (infratores.length > 0) {
+      console.error(`\n✗ Arquivo tocado por este commit acima de ${LIMITE} linhas:\n`);
+      for (const { relativo, linhas } of infratores) {
+        console.error(`   ${String(linhas).padStart(5)}  ${relativo}`);
+      }
+      console.error(
+        `\n   O ${"CLAUDE.md"} define ${LIMITE} linhas e uma responsabilidade por arquivo.\n` +
+          "   A regra não é reescrever tudo — é que o arquivo que você tocou sai\n" +
+          "   deste commit abaixo do limite. Tire a lógica para um hook, ou a\n" +
+          "   subárvore para um componente do módulo.\n",
+      );
+      process.exit(1);
+    }
+    console.log(`✓ Nenhum arquivo deste commit acima de ${LIMITE} linhas.`);
+    return;
+  }
 
   if (grandes.length === 0) {
     console.log(`✓ Nenhum arquivo acima de ${LIMITE} linhas.`);
     return;
   }
 
-  grandes.sort((a, b) => b.linhas - a.linhas);
   console.log(`\n⚠ ${grandes.length} arquivo(s) acima de ${LIMITE} linhas:\n`);
   for (const { relativo, linhas } of grandes) {
     console.log(`   ${String(linhas).padStart(5)}  ${relativo}`);

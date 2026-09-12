@@ -77,7 +77,7 @@ export default function RoleSelectionScreen() {
       >
         <View
           className={`w-12 h-12 rounded-full items-center justify-center mr-4 ${
-            selectedRole === type ? 'bg-primary' : 'bg-surface-highlight'
+            selectedRole === type ? 'bg-primary' : 'bg-muted'
           }`}
         >
           <Ionicons name={icon} size={24} color={selectedRole === type ? '#000000' : '#FFFFFF'} />

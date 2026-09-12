@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect } from 'react';
 import { Modal, Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
@@ -8,7 +7,18 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { cn } from '@/lib/utils';
+import { escala, useCores } from '@/shared/design';
+import { Button } from './Button';
 
+/**
+ * Diálogo de confirmação: ícone, título, mensagem e duas ações.
+ *
+ * É o `Dialog` do design system na forma que o mobile usa. Ficou chapado: o
+ * cabeçalho tinha gradiente de quatro cores escritas à mão, e o desenho não usa
+ * gradiente em superfície — a separação é a borda, e o brilho fica reservado ao
+ * primário.
+ */
 interface ConfirmModalProps {
   visible: boolean;
   /** Chamado sempre que o modal sai de cena — pelos dois botões. */
@@ -28,6 +38,31 @@ interface ConfirmModalProps {
   type?: 'danger' | 'warning' | 'info' | 'success';
 }
 
+const ICONE = {
+  danger: 'alert-circle',
+  warning: 'warning',
+  info: 'information-circle',
+  success: 'checkmark-circle',
+} as const;
+
+/** Classe literal por tipo: Tailwind só gera o que aparece escrito no fonte. */
+const HALO = {
+  danger: 'bg-destructive/10',
+  warning: 'bg-warning/10',
+  info: 'bg-secondary/10',
+  success: 'bg-success/10',
+} as const;
+
+const VARIANTE_DA_ACAO = {
+  danger: 'destructive',
+  warning: 'primary',
+  info: 'primary',
+  success: 'primary',
+} as const;
+
+const DURACAO_DE_ENTRADA = 200;
+const DURACAO_DE_SAIDA = 150;
+
 export function ConfirmModal({
   visible,
   onClose,
@@ -39,125 +74,69 @@ export function ConfirmModal({
   cancelText = 'Cancelar',
   type = 'info',
 }: ConfirmModalProps) {
+  const cores = useCores();
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
 
   useEffect(() => {
     if (visible) {
-      opacity.value = withTiming(1, { duration: 200 });
+      opacity.value = withTiming(1, { duration: DURACAO_DE_ENTRADA });
       scale.value = withSpring(1, { damping: 15 });
-    } else {
-      opacity.value = withTiming(0, { duration: 150 });
-      scale.value = withTiming(0.8, { duration: 150 });
+      return;
     }
+    opacity.value = withTiming(0, { duration: DURACAO_DE_SAIDA });
+    scale.value = withTiming(0.8, { duration: DURACAO_DE_SAIDA });
   }, [visible, opacity, scale]);
 
-  const containerStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
-
-  const contentStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const getConfig = () => {
-    switch (type) {
-      case 'danger':
-        return {
-          icon: 'trash' as const,
-          color: '#F87171',
-          gradient: ['#DC2626', '#EF4444'] as const,
-          bg: 'bg-red-500/10',
-          border: 'border-red-500/30',
-        };
-      case 'success':
-        return {
-          icon: 'trophy' as const,
-          color: '#34D399', // Emerald 400
-          gradient: ['#059669', '#34D399'] as const,
-          bg: 'bg-emerald-500/10',
-          border: 'border-emerald-500/30',
-        };
-      case 'warning':
-        return {
-          icon: 'warning' as const,
-          color: '#FBBF24',
-          gradient: ['#D97706', '#F59E0B'] as const,
-          bg: 'bg-amber-500/10',
-          border: 'border-amber-500/30',
-        };
-      default:
-        return {
-          icon: 'help-circle' as const,
-          color: '#60A5FA',
-          gradient: ['#2563EB', '#3B82F6'] as const,
-          bg: 'bg-blue-500/10',
-          border: 'border-blue-500/30',
-        };
-    }
-  };
-
-  const config = getConfig();
-
-  if (!visible) return null;
+  const estiloDoFundo = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  const estiloDoCartao = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   return (
-    <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
-      <View className="flex-1 justify-center items-center bg-black/80 px-6">
-        <Animated.View style={[containerStyle]} className="absolute inset-0 bg-black/40" />
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
+      <View className="flex-1 items-center justify-center px-6">
+        <Animated.View style={estiloDoFundo} className="absolute inset-0 bg-black/60" />
 
         <Animated.View
-          style={[contentStyle]}
-          className="w-full max-w-sm bg-zinc-950 rounded-[32px] border border-white/10 overflow-hidden shadow-2xl"
+          style={estiloDoCartao}
+          className="w-full max-w-sm overflow-hidden rounded-3xl border border-border bg-card"
         >
-          {/* Header Icon Area */}
-          <View className={`items-center py-8 ${config.bg} border-b border-white/5`}>
-            <View className="w-20 h-20 rounded-full bg-black/40 items-center justify-center border border-white/10 shadow-lg">
-              <Ionicons name={config.icon} size={40} color={config.color} />
+          <View className={cn('items-center border-b border-border py-8', HALO[type])}>
+            <View className="h-20 w-20 items-center justify-center rounded-full border border-border bg-background">
+              <Ionicons
+                name={ICONE[type]}
+                size={escala.texto.display}
+                color={corDoTipo(type, cores)}
+              />
             </View>
           </View>
 
-          {/* Content */}
-          <View className="p-8 items-center">
-            <Text className="text-white text-2xl font-extrabold font-display text-center mb-2">
+          <View className="items-center p-8">
+            <Text className="mb-2 text-center text-h1 font-extrabold tracking-tight text-foreground">
               {title}
             </Text>
-            <Text className="text-zinc-500 text-center font-sans mb-8 leading-relaxed">
+            <Text className="mb-8 text-center text-corpo leading-normal text-muted-foreground">
               {message}
             </Text>
 
             <View className="w-full gap-3">
-              <TouchableOpacity
+              <Button
+                label={confirmText}
+                variant={VARIANTE_DA_ACAO[type]}
+                fullWidth
                 onPress={() => {
                   onConfirm();
                   onClose();
                 }}
-                activeOpacity={0.9}
-                className="w-full"
-              >
-                <LinearGradient
-                  colors={config.gradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  className="py-4 rounded-2xl items-center justify-center shadow-lg"
-                >
-                  <Text className="text-white font-bold text-base font-display uppercase tracking-wider">
-                    {confirmText}
-                  </Text>
-                </LinearGradient>
-              </TouchableOpacity>
-
+              />
               <TouchableOpacity
+                accessibilityRole="button"
                 onPress={() => {
                   onCancel?.();
                   onClose();
                 }}
-                activeOpacity={0.7}
-                className="w-full py-4 rounded-2xl bg-zinc-900 border border-white/5 items-center justify-center"
+                className="w-full items-center justify-center rounded-2xl bg-muted py-4"
               >
-                <Text className="text-zinc-400 font-bold text-base font-display uppercase tracking-wider">
-                  {cancelText}
-                </Text>
+                <Text className="text-corpo font-semibold text-foreground">{cancelText}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -166,3 +145,16 @@ export function ConfirmModal({
     </Modal>
   );
 }
+
+/** O ícone não aceita classe: precisa da cor já resolvida. */
+function corDoTipo(
+  type: NonNullable<ConfirmModalProps['type']>,
+  cores: ReturnType<typeof useCores>
+): string {
+  if (type === 'danger') return cores.destructive;
+  if (type === 'warning') return cores.warning;
+  if (type === 'success') return cores.success;
+  return cores.secondary;
+}
+
+export type { ConfirmModalProps };

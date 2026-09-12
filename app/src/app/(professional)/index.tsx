@@ -12,12 +12,12 @@ export default function ProfessionalDashboard() {
         <Text className="text-2xl font-bold text-foreground mb-4">Painel do Profissional</Text>
         <Text className="text-foreground mb-8">Bem-vindo, {user?.email}</Text>
 
-        <View className="bg-surface p-4 rounded-lg mb-4">
+        <View className="bg-card p-4 rounded-lg mb-4">
           <Text className="text-foreground font-semibold mb-2">Meus Alunos</Text>
           <Text className="text-muted-foreground">Funcionalidade em breve...</Text>
         </View>
 
-        <View className="bg-surface p-4 rounded-lg mb-4">
+        <View className="bg-card p-4 rounded-lg mb-4">
           <Text className="text-foreground font-semibold mb-2">Avaliações</Text>
           <Link href="/assessment/body-scan" asChild>
             <TouchableOpacity className="bg-primary p-3 rounded-md items-center">

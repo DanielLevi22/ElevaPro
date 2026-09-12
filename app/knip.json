@@ -1,0 +1,25 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "src/app/**/*.{ts,tsx}",
+    "plugins/**/*.js",
+    "scripts/**/*.js",
+    "__tests__/**/*.{ts,tsx}",
+    "src/**/__tests__/**/*.{ts,tsx}"
+  ],
+  "project": ["src/**/*.{ts,tsx}", "!src/**/*.d.ts"],
+  "ignore": ["coverage/**"],
+  "paths": {
+    "@/nutrition": ["src/modules/nutrition"],
+    "@/workout": ["src/modules/workout"],
+    "@/students": ["src/modules/students"],
+    "@/auth": ["src/modules/auth"],
+    "@/technique": ["src/modules/technique"],
+    "@/assessment": ["src/modules/assessment"],
+    "@elevapro/core": ["src/packages/core"],
+    "@elevapro/supabase": ["src/packages/supabase"],
+    "@elevapro/shared": ["../shared/src"],
+    "@elevapro/shared/*": ["../shared/src/*"],
+    "@/*": ["src/*"]
+  }
+}

@@ -75,6 +75,17 @@ npm run api:check-auth
 # que o app nao esta configurado, com o arquivo de ambiente certo no lugar.
 npm run app:check-env
 
+# ── Cor escrita à mão ─────────────────────────────────────────────────────────
+# A regra de usar só token do design system existia no CLAUDE.md e foi ignorada
+# 685 vezes, porque nada a verificava. Catraca: só o arquivo que o commit toca.
+npm run app:check-hex
+
+# ── Tamanho de arquivo ────────────────────────────────────────────────────────
+# Mesma catraca. O arquivo que você tocou sai abaixo de 500 linhas; os outros 23
+# seguem na lista de aviso de `npm run check:file-size`. Bloquear todos de uma
+# vez seria um muro que ninguém atravessa — e muro assim vira `--no-verify`.
+npm run check:file-size:tocados
+
 # ── Lint e TypeCheck ──────────────────────────────────────────────────────────
 # O lint da raiz cobre app/, web/, shared/ e scripts/ com o mesmo biome.json.
 # Antes só app/ e web/ eram verificados, então shared/ passava direto.

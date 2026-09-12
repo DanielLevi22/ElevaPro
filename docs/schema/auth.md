@@ -63,6 +63,17 @@ Renomeações em relação ao schema anterior: `professional → specialist`, `m
 
 O valor `pending` existia no schema anterior para aprovação do specialist pelo admin — fluxo removido. `invited` substitui essa necessidade no contexto correto (onboarding do aluno).
 
+> **O fluxo de aprovação já voltou uma vez.** A migration `0034` reintroduziu
+> "especialista nasce `invited` e espera o /admin", sem notar que este documento
+> registrava a remoção; a `0040` o reafirmou ao reescrever o trigger por outro
+> motivo. A `0050` removeu de novo e migrou para `active` quem estava preso na
+> fila. Se a ideia reaparecer, a decisão é esta linha — e mudá-la exige mexer
+> nas duas metades, trigger **e** interface, que é a lição da própria `0034`.
+>
+> `invited` continua existindo **só** para o Fluxo A do aluno. Um `UPDATE` em
+> `account_status = 'invited'` sem filtrar `account_type` apaga o estado de
+> convite de todo aluno provisionado.
+
 **O que foi removido e por quê:**
 
 | Campo removido | Motivo |

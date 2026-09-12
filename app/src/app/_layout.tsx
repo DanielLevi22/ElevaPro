@@ -2,6 +2,11 @@
 // todo `className` em LinearGradient e Image é descartado sem aviso.
 import '@/lib/nativewind-interop';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+  JetBrainsMono_400Regular,
+  JetBrainsMono_600SemiBold,
+} from '@expo-google-fonts/jetbrains-mono';
+import { Outfit_700Bold, Outfit_800ExtraBold } from '@expo-google-fonts/outfit';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
@@ -38,6 +43,17 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    // As duas famílias do design. O corpo da interface fica com a fonte do
+    // sistema, como o desenho pede — é o que faz o app parecer nativo —, então
+    // só estas duas precisam vir junto: Outfit para título e wordmark,
+    // JetBrains Mono para conteúdo de natureza numérica.
+    //
+    // Sem elas, `font-display` era uma classe que 350 lugares pediam e o
+    // Tailwind ignorava em silêncio, por não haver família declarada.
+    Outfit_700Bold,
+    Outfit_800ExtraBold,
+    JetBrainsMono_400Regular,
+    JetBrainsMono_600SemiBold,
     // Os icones vinham por conta do `@expo/vector-icons`, que so carrega a
     // fonte quando o primeiro icone renderiza. Com 101 telas usando Ionicons,
     // sao dezenas de `loadAsync` disparados juntos disputando o mesmo arquivo
@@ -88,7 +104,7 @@ export default function RootLayout() {
 
 function RootLayoutNav({ loaded }: { loaded: boolean }) {
   const colorScheme = useColorScheme();
-  const { session, initializeSession, isLoading, accountType, accountStatus } = useAuthStore();
+  const { session, initializeSession, isLoading, accountType } = useAuthStore();
 
   const segments = useSegments();
   const router = useRouter();
@@ -137,16 +153,12 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
       // Redirect to login if not authenticated
       router.replace('/(auth)/login');
     } else if (session && inAuthGroup) {
-      // Redirect based on role and status
-      if (accountType === 'specialist' && accountStatus === 'invited') {
-        router.replace('/(auth)/pending-approval');
-      } else if (accountType === 'specialist') {
-        router.replace('/(tabs)');
-      } else {
-        router.replace('/(tabs)');
-      }
+      // Todo papel entra pelo mesmo lugar. Os três ramos anteriores mandavam
+      // para `(tabs)` em dois deles, e o terceiro era a fila de aprovação do
+      // especialista, removida na 0050.
+      router.replace('/(tabs)');
     }
-  }, [session, segments, isLoading, accountType, accountStatus, router]);
+  }, [session, segments, isLoading, router]);
 
   // Removed manual loading view to use Native Splash
 

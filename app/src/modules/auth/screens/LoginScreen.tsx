@@ -1,20 +1,21 @@
 import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
-import { Link, useRouter } from 'expo-router';
+import { Link } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { showAlert } from '@/components/ui/appAlert';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
+import { useCores } from '@/shared/design';
 import { useAuthStore } from '../store/authStore';
 
 export function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
   const { signIn } = useAuthStore();
+  const cores = useCores();
 
   async function handleLogin() {
     setLoading(true);
@@ -40,15 +41,17 @@ export function LoginScreen() {
           .eq('id', user.id)
           .single();
 
-        if (profile?.account_status === 'invited') {
-          router.replace('/(auth)/pending-approval');
-          setLoading(false);
-          return;
-          // O enum `account_status` do banco é `active | inactive | invited`.
-          // Aqui se comparava com 'rejected' e 'suspended', que nunca
-          // existiram: o ramo jamais executava e conta desativada entrava
-          // normalmente. 'inactive' é o estado real de quem perdeu o acesso.
-        } else if (profile?.account_status === 'inactive') {
+        // O enum `account_status` do banco é `active | inactive | invited`.
+        // Aqui se comparava com 'rejected' e 'suspended', que nunca existiram:
+        // o ramo jamais executava e conta desativada entrava normalmente.
+        // 'inactive' é o estado real de quem perdeu o acesso.
+        //
+        // `invited` não barra mais ninguém. Ele barrava duas pessoas de uma vez:
+        // o especialista na fila de aprovação, que deixou de existir na 0050, e
+        // o aluno provisionado pelo Specialist — que nasce `invited` no Fluxo A
+        // e era mandado para a tela de aprovação na primeira vez que tentava
+        // entrar. Esse aluno nunca conseguiu acessar o app.
+        if (profile?.account_status === 'inactive') {
           await supabase.auth.signOut();
           showAlert({
             title: 'Acesso Negado',
@@ -71,7 +74,7 @@ export function LoginScreen() {
         {/* Header with Icon */}
         <View className="items-center mt-16 mb-12">
           <View className="w-28 h-28 rounded-full bg-primary/15 items-center justify-center mb-8 border-2 border-primary/30 shadow-lg shadow-primary/20">
-            <Ionicons name="barbell" size={56} color="#A3E635" />
+            <Ionicons name="barbell" size={56} color={cores.primaryText} />
           </View>
 
           <Text className="text-5xl font-extrabold text-foreground mb-4 tracking-tight">

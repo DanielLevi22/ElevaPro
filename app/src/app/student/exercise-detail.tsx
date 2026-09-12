@@ -215,7 +215,7 @@ export default function ExerciseDetailScreen() {
       <View className="flex-row items-center px-6 pt-2 pb-4">
         <TouchableOpacity
           onPress={() => router.back()}
-          className="bg-surface p-2.5 rounded-xl mr-4 border border-border"
+          className="bg-card p-2.5 rounded-xl mr-4 border border-border"
         >
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
@@ -372,7 +372,7 @@ export default function ExerciseDetailScreen() {
         </View>
 
         {showTimer && (
-          <Card className="p-4 mb-6 border-2 border-border bg-surface">
+          <Card className="p-4 mb-6 border-2 border-border bg-card">
             <Text className="text-lg font-bold text-foreground mb-2 text-center font-display">
               Tempo de Descanso
             </Text>

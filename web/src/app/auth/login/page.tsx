@@ -22,10 +22,6 @@ export default function LoginPage() {
       const result = await useAuthStore.getState().signIn(email, password);
 
       if (!result.success) {
-        if (result.error === "pending_approval") {
-          router.push("/auth/pending-approval");
-          return;
-        }
         if (result.error === "account_suspended") {
           setError("Sua conta foi suspensa ou rejeitada. Entre em contato com o suporte.");
           return;
