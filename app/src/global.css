@@ -10,7 +10,16 @@
 
 @layer base {
   :root {
-    --background: 240 23.8% 95.9%;
+    --metrica-passos: 158.1 64.4% 51.6%;
+    --metrica-calorias: 27 96% 61%;
+    --metrica-sono: 234.5 89.5% 73.9%;
+    --metrica-proteina: 158.1 64.4% 51.6%;
+    --metrica-carboidrato: 82.7 78% 55.5%;
+    --metrica-gordura: 43.3 96.4% 56.3%;
+  }
+
+  :root {
+    --background: 240 18.5% 94.7%;
     --foreground: 0 0% 0%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 0%;
@@ -29,15 +38,25 @@
     --warning-foreground: 0 0% 0%;
     --border: rgba(60, 60, 67, 0.2);
     --muted: rgba(118, 118, 128, 0.12);
-    --muted-foreground: rgba(60, 60, 67, 0.78);
-    --placeholder: rgba(60, 60, 67, 0.42);
+    --muted-foreground: rgba(60, 60, 67, 0.8);
+    --placeholder: rgba(60, 60, 67, 0.45);
     --on-hero: #0b0b0f;
     --on-hero-secondary: rgba(28, 28, 32, 0.82);
-    --hero-chip: rgba(255, 255, 255, 0.7);
+    --on-hero-tertiary: rgba(28, 28, 32, 0.68);
+    --hero-chip: rgba(255, 255, 255, 0.72);
+    --hero-chip-border: rgba(60, 60, 67, 0.16);
+    --glass: rgba(255, 255, 255, 0.86);
+    --glass-strong: rgba(118, 118, 128, 0.16);
+    --glass-border: rgba(60, 60, 67, 0.14);
+    --glass-top: rgba(255, 255, 255, 0.98);
+    --glass-bottom: rgba(255, 255, 255, 0.78);
+    --specular: rgba(255, 255, 255, 1);
+    --specular-bottom: rgba(0, 0, 0, 0.04);
+    --scrim: rgba(255, 255, 255, 0.62);
   }
 
   .dark:root {
-    --background: 0 0% 0%;
+    --background: 220 17.6% 3.3%;
     --foreground: 0 0% 100%;
     --card: 240 3.4% 11.4%;
     --card-foreground: 0 0% 100%;
@@ -56,10 +75,20 @@
     --warning-foreground: 0 0% 0%;
     --border: rgba(84, 84, 88, 0.65);
     --muted: rgba(118, 118, 128, 0.24);
-    --muted-foreground: rgba(235, 235, 245, 0.62);
-    --placeholder: rgba(235, 235, 245, 0.32);
+    --muted-foreground: rgba(235, 235, 245, 0.66);
+    --placeholder: rgba(235, 235, 245, 0.34);
     --on-hero: #ffffff;
-    --on-hero-secondary: rgba(255, 255, 255, 0.88);
-    --hero-chip: rgba(255, 255, 255, 0.18);
+    --on-hero-secondary: rgba(255, 255, 255, 0.82);
+    --on-hero-tertiary: rgba(255, 255, 255, 0.75);
+    --hero-chip: rgba(255, 255, 255, 0.16);
+    --hero-chip-border: rgba(255, 255, 255, 0.28);
+    --glass: rgba(255, 255, 255, 0.07);
+    --glass-strong: rgba(255, 255, 255, 0.11);
+    --glass-border: rgba(255, 255, 255, 0.13);
+    --glass-top: rgba(255, 255, 255, 0.13);
+    --glass-bottom: rgba(255, 255, 255, 0.035);
+    --specular: rgba(255, 255, 255, 0.22);
+    --specular-bottom: rgba(0, 0, 0, 0.18);
+    --scrim: rgba(0, 0, 0, 0.55);
   }
 }

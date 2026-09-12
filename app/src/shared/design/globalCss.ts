@@ -1,4 +1,4 @@
-import { paleta, type Tema } from './tokens';
+import { metrica, paleta, type Tema } from './tokens';
 
 /**
  * Monta o conteúdo de `src/global.css` a partir dos tokens.
@@ -36,7 +36,19 @@ const CABECALHO = `/* Gerado a partir de src/shared/design/tokens.ts — não ed
 
 export function gerarGlobalCss(): string {
   const blocos = (Object.keys(SELETOR_POR_TEMA) as Tema[]).map(blocoDoTema);
-  return `${CABECALHO}\n\n@layer base {\n${blocos.join('\n\n')}\n}\n`;
+  return `${CABECALHO}\n\n@layer base {\n${blocoDeMetrica()}\n\n${blocos.join('\n\n')}\n}\n`;
+}
+
+/**
+ * Cor de métrica não muda com o tema: verde é passos no claro e no escuro.
+ * Sai num `:root` sozinho, como a marca faria, e não se repete no bloco do
+ * escuro — repetir valor igual nos dois temas é convidar os dois a divergirem.
+ */
+function blocoDeMetrica(): string {
+  const declaracoes = Object.entries(metrica).map(([nome, valor]) =>
+    declaracao(`metrica-${nome}`, valor)
+  );
+  return `  :root {\n${declaracoes.join('\n')}\n  }`;
 }
 
 function blocoDoTema(tema: Tema): string {

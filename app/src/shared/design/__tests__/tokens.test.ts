@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { coresDoTema } from '../cores';
 import { fatorDaTela, REM_BASE } from '../escalaDeTexto';
 import { gerarGlobalCss } from '../globalCss';
-import { escala, hslParaHex, marca, paleta } from '../tokens';
+import { escala, hslParaHex, marca, metrica, paleta } from '../tokens';
 
 /**
  * Este arquivo substitui `src/constants/__tests__/colors.test.ts`, que travava
@@ -46,10 +46,24 @@ describe('hslParaHex', () => {
     expect(hslParaHex(marca.hotPink)).toBe('#ff0099');
   });
 
+  it('reproduz as cores de métrica do kit de vidro', () => {
+    // Os tripletes foram calculados à mão a partir dos hexadecimais do
+    // `home-glass.html`; é este teste que verifica a conta.
+    expect(hslParaHex(metrica.passos)).toBe('#34d399');
+    expect(hslParaHex(metrica.calorias)).toBe('#fb923c');
+    expect(hslParaHex(metrica.sono)).toBe('#818cf8');
+    expect(hslParaHex(metrica.carboidrato)).toBe('#a3e635');
+    expect(hslParaHex(metrica.gordura)).toBe('#fbbf24');
+  });
+
+  it('reproduz o fundo do kit de vidro, que não é preto puro', () => {
+    // O fluxo chapado usa #000 e o de vidro usa #07080a; o app é vidro.
+    expect(hslParaHex(paleta.escuro.hsl.background)).toBe('#07080a');
+    expect(hslParaHex(paleta.claro.hsl.background)).toBe('#efeff4');
+  });
+
   it('reproduz as superfícies iOS sem deriva de arredondamento', () => {
     expect(hslParaHex(paleta.escuro.hsl.card)).toBe('#1c1c1e');
-    expect(hslParaHex(paleta.escuro.hsl.background)).toBe('#000000');
-    expect(hslParaHex(paleta.claro.hsl.background)).toBe('#f2f2f7');
     expect(hslParaHex(paleta.claro.hsl.card)).toBe('#ffffff');
   });
 
@@ -83,7 +97,7 @@ describe('paleta do design', () => {
   });
 
   it('inverte fundo e texto entre os dois temas', () => {
-    expect(coresDoTema('escuro').background).toBe('#000000');
+    expect(coresDoTema('escuro').background).toBe('#07080a');
     expect(coresDoTema('escuro').foreground).toBe('#ffffff');
     expect(coresDoTema('claro').foreground).toBe('#000000');
   });

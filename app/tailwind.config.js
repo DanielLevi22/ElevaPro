@@ -70,7 +70,36 @@ module.exports = {
         hero: {
           DEFAULT: literal('on-hero'),
           secondary: literal('on-hero-secondary'),
+          tertiary: literal('on-hero-tertiary'),
           chip: literal('hero-chip'),
+          'chip-border': literal('hero-chip-border'),
+        },
+        /**
+         * A pilha de vidro do kit. `glass` é o preenchimento do meio, `top` e
+         * `bottom` são as pontas do gradiente de 160°, e `specular` é o brilho
+         * interno que dá espessura à borda. `strong` é trilho de progresso e
+         * fundo de ícone neutro.
+         */
+        glass: {
+          DEFAULT: literal('glass'),
+          strong: literal('glass-strong'),
+          border: literal('glass-border'),
+          top: literal('glass-top'),
+          bottom: literal('glass-bottom'),
+        },
+        specular: {
+          DEFAULT: literal('specular'),
+          bottom: literal('specular-bottom'),
+        },
+        scrim: literal('scrim'),
+        /** Cor por grandeza: a mesma no ícone, no anel e na barra da métrica. */
+        metrica: {
+          passos: comAlfa('metrica-passos'),
+          calorias: comAlfa('metrica-calorias'),
+          sono: comAlfa('metrica-sono'),
+          proteina: comAlfa('metrica-proteina'),
+          carboidrato: comAlfa('metrica-carboidrato'),
+          gordura: comAlfa('metrica-gordura'),
         },
       },
       // Em `rem` pelo mesmo motivo da escala de texto: o raio é medida do
