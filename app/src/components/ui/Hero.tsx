@@ -95,8 +95,13 @@ export function Hero({ imagem, titulo, sub, chips }: HeroProps) {
 
       <View className="px-5 pb-6 pt-16">
         <View className="mb-20 flex-row items-center gap-2.5">
-          <View className="h-[2.125rem] w-[2.125rem] items-center justify-center rounded-sm bg-primary">
-            <Text className="font-display-black text-rotulo text-primary-foreground">E</Text>
+          {/*
+            Três medidas de uma vez que não estão na escala: o quadrado tem 34,
+            a inicial 18 e o raio 9 — valores próprios do wordmark no desenho.
+            Em `rem` sobre a base 16, para acompanharem o aparelho como o resto.
+          */}
+          <View className="h-[2.125rem] w-[2.125rem] items-center justify-center rounded-[0.5625rem] bg-primary">
+            <Text className="font-display-black text-[1.125rem] text-primary-foreground">E</Text>
           </View>
           <Text className="font-display text-corpo uppercase italic text-hero">Eleva Pro</Text>
         </View>
