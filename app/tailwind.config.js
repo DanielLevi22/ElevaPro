@@ -74,11 +74,13 @@ module.exports = {
         '3xl': '32px',
         painel: '40px',
       },
+      // Escala iOS, vinda das telas do mobile — não a do dashboard, que tem 14
+      // de corpo. Espelha `escala.texto` de src/shared/design/tokens.ts.
       fontSize: {
-        micro: '10px',
-        pequeno: '12px',
-        corpo: '14px',
-        h3: '16px',
+        micro: '12px',
+        legenda: '13px',
+        rotulo: '16px',
+        corpo: '17px',
         h2: '20px',
         h1: '24px',
         display: '32px',

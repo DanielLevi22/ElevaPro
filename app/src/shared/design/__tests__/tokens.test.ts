@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { coresDoTema } from '../cores';
 import { gerarGlobalCss } from '../globalCss';
-import { hslParaHex, marca, paleta } from '../tokens';
+import { escala, hslParaHex, marca, paleta } from '../tokens';
 
 /**
  * Este arquivo substitui `src/constants/__tests__/colors.test.ts`, que travava
@@ -121,5 +121,32 @@ describe('global.css', () => {
   it('entrega o triplete cru na marca, para o Tailwind aceitar /50', () => {
     expect(css).toContain('--primary: 84 100% 50%;');
     expect(css).toContain('--border: rgba(84, 84, 88, 0.65);');
+  });
+});
+
+describe('escala de texto', () => {
+  /**
+   * `escala.texto` e o `fontSize` do Tailwind são duas declarações da mesma
+   * escala: uma para quem lê número em TypeScript, outra para quem escreve
+   * `text-corpo`. Duas declarações da mesma coisa divergem — é literalmente o
+   * defeito que este módulo existe para matar, e não teria graça repeti-lo uma
+   * camada acima.
+   */
+  it('é a mesma no TypeScript e no Tailwind', () => {
+    const { theme } = require('../../../../tailwind.config.js');
+    const doTailwind = Object.fromEntries(
+      Object.entries(theme.extend.fontSize).map(([nome, valor]) => [
+        nome,
+        Number.parseInt(valor as string, 10),
+      ])
+    );
+
+    expect(doTailwind).toEqual(escala.texto);
+  });
+
+  it('usa os tamanhos iOS das telas do mobile, e não os 14 de corpo do dashboard', () => {
+    expect(escala.texto.corpo).toBe(17);
+    expect(escala.texto.rotulo).toBe(16);
+    expect(escala.texto.legenda).toBe(13);
   });
 });
