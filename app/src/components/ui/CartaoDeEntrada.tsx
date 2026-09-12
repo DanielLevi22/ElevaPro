@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { colors as brandColors } from '@/constants/colors';
+import { useCores } from '@/shared/design';
 
 /**
  * O cartão que leva a uma seção, na Home.
@@ -36,11 +36,12 @@ export function CartaoDeEntrada({
   onPress,
   className = 'mt-4',
 }: CartaoDeEntradaProps) {
+  const cores = useCores();
   return (
     <TouchableOpacity activeOpacity={0.8} className={className} onPress={onPress}>
       <View
-        className="rounded-[24px] p-5 flex-row items-center justify-between border bg-zinc-900"
-        style={{ borderColor: brandColors.border.default }}
+        className="rounded-[1.5rem] p-5 flex-row items-center justify-between border bg-card"
+        style={{ borderColor: cores.border }}
       >
         <View className="flex-row items-center gap-4 flex-1">
           <View
@@ -50,18 +51,18 @@ export function CartaoDeEntrada({
             <Ionicons color={cor} name={icone} size={24} />
           </View>
           <View className="flex-1">
-            <Text className="text-white text-lg font-black font-display tracking-tight">
+            <Text className="text-foreground text-lg font-black font-display tracking-tight">
               {titulo}
             </Text>
             <Text
-              className="text-zinc-500 text-[10px] font-bold tracking-widest uppercase font-sans"
+              className="text-muted-foreground text-micro font-bold tracking-widest uppercase font-sans"
               style={corDaLegenda === undefined ? undefined : { color: corDaLegenda }}
             >
               {legenda}
             </Text>
           </View>
         </View>
-        <Ionicons color={brandColors.text.muted} name="chevron-forward" size={20} />
+        <Ionicons color={cores.mutedForeground} name="chevron-forward" size={20} />
       </View>
     </TouchableOpacity>
   );

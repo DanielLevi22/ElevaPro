@@ -52,7 +52,7 @@ const TEXTO = {
 
 const ALTURA = {
   sm: 'h-9 rounded-xl',
-  md: 'h-[50px] rounded-2xl',
+  md: 'h-[3.125rem] rounded-2xl',
   lg: 'h-14 rounded-2xl',
 } as const;
 const TAMANHO_DO_TEXTO = { sm: 'text-legenda', md: 'text-corpo', lg: 'text-corpo' } as const;

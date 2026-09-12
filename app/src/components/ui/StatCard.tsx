@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
 import { cn } from '@/lib/utils';
-import { useCores } from '@/shared/design';
+import { useCores, useEscala } from '@/shared/design';
 
 /**
  * Bloco de métrica: rótulo pequeno, número grande e a variação abaixo.
@@ -38,6 +38,7 @@ const TAMANHO_DO_ICONE = 20;
 
 export function StatCard({ label, value, trend, change, icon }: StatCardProps) {
   const cores = useCores();
+  const escalar = useEscala();
 
   return (
     <View className="mb-3 flex-row items-start justify-between rounded-xl border border-border bg-card p-5">
@@ -52,7 +53,7 @@ export function StatCard({ label, value, trend, change, icon }: StatCardProps) {
             <View className={cn('rounded-full p-0.5', FUNDO_DA_VARIACAO[trend])}>
               <Ionicons
                 name={SETA[trend]}
-                size={TAMANHO_DA_SETA}
+                size={escalar(TAMANHO_DA_SETA)}
                 color={corDaVariacao(trend, cores)}
               />
             </View>
@@ -63,7 +64,7 @@ export function StatCard({ label, value, trend, change, icon }: StatCardProps) {
 
       {icon ? (
         <View className="rounded-lg border border-border bg-muted p-2.5">
-          <Ionicons name={icon} size={TAMANHO_DO_ICONE} color={cores.mutedForeground} />
+          <Ionicons name={icon} size={escalar(TAMANHO_DO_ICONE)} color={cores.mutedForeground} />
         </View>
       ) : null}
     </View>

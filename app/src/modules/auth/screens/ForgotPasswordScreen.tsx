@@ -1,21 +1,29 @@
 import { supabase } from '@elevapro/supabase';
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { showAlert } from '@/components/ui/appAlert';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Group } from '@/components/ui/Group';
+import { Hero } from '@/components/ui/Hero';
 import { Input } from '@/components/ui/Input';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 
+/**
+ * Recuperação de senha.
+ *
+ * O desenho do kit não cobre esta tela. Ela é derivada do mesmo padrão das
+ * outras duas — hero, um `Group` com um campo, e as ações abaixo —, que é
+ * recombinação de padrão existente e não pede desenho novo (regra acordada na
+ * #281).
+ */
 export function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [enviado, setEnviado] = useState(false);
   const router = useRouter();
 
-  const handleResetPassword = async () => {
+  async function enviarLink() {
     if (!email.trim()) {
       showAlert({ title: 'Erro', message: 'Por favor, insira seu e-mail.', type: 'error' });
       return;
@@ -23,16 +31,15 @@ export function ForgotPasswordScreen() {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         // O esquema é declarado em app.json como `elevapro`. Enquanto isto
         // apontava para `meupersonal://`, o link do e-mail não voltava para o
         // app — a recuperação de senha terminava em lugar nenhum.
         redirectTo: 'elevapro://reset-password',
       });
-
       if (error) throw error;
 
-      setSent(true);
+      setEnviado(true);
       showAlert({
         title: 'E-mail enviado!',
         message: 'Verifique sua caixa de entrada para redefinir sua senha.',
@@ -40,71 +47,56 @@ export function ForgotPasswordScreen() {
         buttonText: 'OK',
         onDismiss: () => router.back(),
       });
-    } catch (error: unknown) {
+    } catch (erro: unknown) {
       showAlert({
         title: 'Erro',
-        message: error instanceof Error ? error.message : 'Erro desconhecido',
+        message: erro instanceof Error ? erro.message : 'Erro desconhecido',
         type: 'error',
       });
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
-    <ScreenLayout>
-      <View className="flex-1 p-6">
-        <View className="flex-row items-center mb-8">
-          <TouchableOpacity onPress={() => router.back()} className="mr-4 p-2 -ml-2">
-            <Ionicons name="arrow-back" size={24} color="#F4F4F5" />
-          </TouchableOpacity>
-          <Text className="text-2xl font-bold text-foreground font-display">
-            Esqueci minha senha
-          </Text>
-        </View>
+    <ScreenLayout useSafeArea={false}>
+      <ScrollView
+        contentContainerClassName="grow pb-8"
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Hero
+          imagem={require('../../../../assets/workouts/shoulders.jpg')}
+          titulo="Recuperar senha"
+          sub="Enviamos um link para você definir uma nova."
+        />
 
-        <View className="flex-1 justify-center">
-          <Card className="p-6">
-            <View className="items-center mb-6">
-              <View className="bg-primary/10 p-4 rounded-full mb-4 border border-primary/20">
-                <Ionicons name="lock-closed-outline" size={48} color="#CCFF00" />
-              </View>
-              <Text className="text-foreground text-xl font-bold mb-2 font-display">
-                Recuperar Senha
-              </Text>
-              <Text className="text-zinc-400 text-center text-sm font-sans">
-                Digite seu e-mail e enviaremos um link para redefinir sua senha.
-              </Text>
-            </View>
-
+        <View className="flex-1 justify-center px-5">
+          <Group footer="O link chega no e-mail cadastrado e vale por uma hora.">
             <Input
-              label="E-mail"
-              placeholder="seu@email.com"
+              icon="mail"
               value={email}
               onChangeText={setEmail}
+              placeholder="seu@email.com"
               keyboardType="email-address"
               autoCapitalize="none"
-              editable={!sent}
+              autoComplete="email"
+              editable={!enviado}
             />
+          </Group>
 
+          <View className="gap-2.5">
             <Button
-              label={sent ? 'E-mail Enviado' : 'Enviar Link'}
-              onPress={handleResetPassword}
+              label={enviado ? 'E-mail enviado' : 'Enviar link'}
+              onPress={enviarLink}
               isLoading={loading}
-              disabled={sent}
-              className="mt-6"
+              disabled={enviado}
+              fullWidth
             />
-
-            {sent && (
-              <View className="mt-4 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-                <Text className="text-green-400 text-sm text-center font-sans">
-                  ✓ Verifique seu e-mail para continuar
-                </Text>
-              </View>
-            )}
-          </Card>
+            <Button label="Voltar" variant="ghost" fullWidth onPress={() => router.back()} />
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </ScreenLayout>
   );
 }

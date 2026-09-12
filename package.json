@@ -31,7 +31,8 @@
     "env:sync:production": "node scripts/sync-env.js production",
     "check:file-size:tocados": "node scripts/check-file-size.js --tocados",
     "app:check-hex": "node scripts/check-hex-colors.js",
-    "app:check-dead": "cd app && npx knip --no-progress"
+    "app:check-dead": "cd app && npx knip --no-progress",
+    "app:check-medidas": "node scripts/check-medidas-fixas.js"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",

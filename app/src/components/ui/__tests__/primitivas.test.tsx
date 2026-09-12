@@ -31,6 +31,16 @@ jest.mock('nativewind', () => ({
   colorScheme: { set: jest.fn() },
 }));
 
+/**
+ * A janela fica fixa na largura do desenho (390pt) para o teste afirmar as
+ * medidas do desenho, e não o resultado do fator de escala do aparelho de quem
+ * roda a suíte. O fator em si tem teste próprio, em `tokens.test.ts`.
+ */
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
+  __esModule: true,
+  default: () => ({ width: 390, height: 800, scale: 3, fontScale: 1 }),
+}));
+
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 
 const escuro = coresDoTema('escuro');

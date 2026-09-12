@@ -9,6 +9,7 @@ import {
   View,
   type ViewStyle,
 } from 'react-native';
+import { useCores } from '@/shared/design';
 
 interface PremiumCardProps {
   onPress?: () => void;
@@ -29,13 +30,14 @@ export function PremiumCard({
   image,
   children,
   icon,
-  iconColor = '#FFFFFF',
+  iconColor,
   badge,
   containerStyle,
 }: PremiumCardProps) {
+  const cores = useCores();
   const content = (
     <View
-      className="rounded-3xl overflow-hidden border border-white/10 shadow-lg bg-zinc-900"
+      className="rounded-3xl overflow-hidden border border-border shadow-lg bg-card"
       style={containerStyle}
     >
       <ImageBackground
@@ -47,12 +49,14 @@ export function PremiumCard({
           <View className="flex-row justify-between items-start mb-4">
             <View className="flex-1 mr-4">
               {badge && <View className="mb-2">{badge}</View>}
-              <Text className="text-white text-3xl font-extrabold font-display leading-tight">
+              <Text className="text-foreground text-3xl font-extrabold font-display leading-tight">
                 {title}
               </Text>
-              {subtitle && <Text className="text-zinc-400 font-medium mt-1">{subtitle}</Text>}
+              {subtitle && (
+                <Text className="text-muted-foreground font-medium mt-1">{subtitle}</Text>
+              )}
             </View>
-            {icon && <Ionicons name={icon} size={28} color={iconColor} />}
+            {icon && <Ionicons name={icon} size={28} color={iconColor ?? cores.foreground} />}
           </View>
 
           {children}

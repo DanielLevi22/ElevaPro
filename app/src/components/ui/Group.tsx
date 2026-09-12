@@ -33,7 +33,7 @@ export function Group({ children, header, footer, className }: GroupProps) {
   return (
     <View className={cn('mb-5', className)}>
       {header ? (
-        <Text className="px-4 pb-[7px] text-legenda uppercase tracking-wide text-muted-foreground">
+        <Text className="px-4 pb-[0.4375rem] text-legenda uppercase tracking-wide text-muted-foreground">
           {header}
         </Text>
       ) : null}
@@ -53,7 +53,7 @@ export function Group({ children, header, footer, className }: GroupProps) {
       </View>
 
       {footer ? (
-        <Text className="px-4 pt-[7px] text-legenda leading-[1.35] text-muted-foreground">
+        <Text className="px-4 pt-[0.4375rem] text-legenda leading-[1.35] text-muted-foreground">
           {footer}
         </Text>
       ) : null}

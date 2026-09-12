@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { coresDoTema } from '../cores';
+import { fatorDaTela, REM_BASE } from '../escalaDeTexto';
 import { gerarGlobalCss } from '../globalCss';
 import { escala, hslParaHex, marca, paleta } from '../tokens';
 
@@ -133,11 +134,13 @@ describe('escala de texto', () => {
    * camada acima.
    */
   it('é a mesma no TypeScript e no Tailwind', () => {
+    // O Tailwind declara em `rem` para a escala poder acompanhar o aparelho;
+    // o caminho de volta tem de dar exatamente os pixels do desenho.
     const { theme } = require('../../../../tailwind.config.js');
     const doTailwind = Object.fromEntries(
       Object.entries(theme.extend.fontSize).map(([nome, valor]) => [
         nome,
-        Number.parseInt(valor as string, 10),
+        Number.parseFloat(valor as string) * REM_BASE,
       ])
     );
 
@@ -148,5 +151,28 @@ describe('escala de texto', () => {
     expect(escala.texto.corpo).toBe(17);
     expect(escala.texto.rotulo).toBe(16);
     expect(escala.texto.legenda).toBe(13);
+  });
+});
+
+describe('fator de escala da tela', () => {
+  /**
+   * O kit foi desenhado num telefone de 390pt. Sem ajuste, num aparelho de
+   * 448dp tudo aparece cerca de 15% menor em relação à tela.
+   */
+  it('cresce na proporção da largura, contra os 390 do desenho', () => {
+    expect(fatorDaTela(390)).toBeCloseTo(1);
+    expect(fatorDaTela(448)).toBeCloseTo(1.149, 3);
+  });
+
+  it('não encolhe em telefone menor que o desenho', () => {
+    // Encolher poria a legibilidade em jogo, que é pior que perder proporção.
+    expect(fatorDaTela(320)).toBe(1);
+  });
+
+  it('para de crescer antes de virar cartaz no tablet', () => {
+    // Aplicativo nativo em tela grande mostra mais conteúdo, não conteúdo
+    // maior: sem teto, 1024dp daria fator 2,6 e um título de 83 de altura.
+    expect(fatorDaTela(1024)).toBe(1.2);
+    expect(fatorDaTela(768)).toBe(1.2);
   });
 });

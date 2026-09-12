@@ -1,310 +1,308 @@
 import { createAuthService, type ServiceType } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
-import { Ionicons } from '@expo/vector-icons';
-import { Link, useRouter } from 'expo-router';
+import type { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { showAlert } from '@/components/ui/appAlert';
 import { Button } from '@/components/ui/Button';
+import { Group } from '@/components/ui/Group';
+import { Hero } from '@/components/ui/Hero';
 import { Input } from '@/components/ui/Input';
+import { Row } from '@/components/ui/Row';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
-import { ServiceSelectionCard } from '@/components/ui/ServiceSelectionCard';
+import { cn } from '@/lib/utils';
+import { ROUTES } from '@/navigation/types';
+import {
+  type Etapa,
+  type PapelNoCadastro,
+  TOTAL_DE_TRACOS,
+  useEtapasDoCadastro,
+} from '../hooks/useEtapasDoCadastro';
 
 const authService = createAuthService(supabase);
 
-type AccountRole = 'specialist' | 'student' | 'member';
-type Step = 'role' | 'services' | 'personal_data';
+const SENHA_MINIMA = 8;
+const NOME_MINIMO = 2;
+
+/** Identidade estável por traço, para a barra não se remontar a cada etapa. */
+const TRACOS = Array.from({ length: TOTAL_DE_TRACOS }, (_, i) => `traco-${i + 1}`);
+
+type Opcao<T> = {
+  valor: T;
+  icon: keyof typeof Ionicons.glyphMap;
+  titulo: string;
+  sub: string;
+};
+
+/** Os rótulos são os do desenho, e batem com o enum `account_type`. */
+const PAPEIS: Opcao<PapelNoCadastro>[] = [
+  {
+    valor: 'specialist',
+    icon: 'barbell',
+    titulo: 'Sou Especialista',
+    sub: 'Personal trainer ou nutricionista',
+  },
+  {
+    valor: 'student',
+    icon: 'flash',
+    titulo: 'Sou Aluno',
+    sub: 'Treino com personal trainer dedicado',
+  },
+  {
+    valor: 'member',
+    icon: 'person',
+    titulo: 'Sou Membro',
+    sub: 'Crie seus próprios treinos e dietas',
+  },
+];
+
+const SERVICOS: Opcao<ServiceType>[] = [
+  {
+    valor: 'personal_training',
+    icon: 'barbell',
+    titulo: 'Personal Training',
+    sub: 'Montagem e acompanhamento de treinos',
+  },
+  {
+    valor: 'nutrition_consulting',
+    icon: 'restaurant',
+    titulo: 'Consultoria Nutricional',
+    sub: 'Planos alimentares e macros',
+  },
+];
+
+const SUBTITULO: Record<Etapa, string> = {
+  papel: 'Como você vai usar o Eleva Pro?',
+  servicos: 'Quais serviços você oferece?',
+  dados: 'Complete seu cadastro',
+};
 
 export function RegisterScreen() {
-  const [step, setStep] = useState<Step>('role');
-  const [role, setRole] = useState<AccountRole>('specialist');
-  const [selectedServices, setSelectedServices] = useState<ServiceType[]>([]);
+  const router = useRouter();
+  const etapas = useEtapasDoCadastro();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
-  const toggleService = (service: ServiceType) => {
-    setSelectedServices((prev) =>
-      prev.includes(service) ? prev.filter((s) => s !== service) : [...prev, service]
-    );
-  };
-
-  const handleRoleNext = () => {
-    if (role === 'specialist') {
-      setStep('services');
-    } else {
-      setStep('personal_data');
-    }
-  };
-
-  const handleServicesNext = () => {
-    if (selectedServices.length === 0) {
-      showAlert({
-        title: 'Atenção',
-        message: 'Selecione pelo menos um serviço que você oferece',
-        type: 'warning',
-      });
+  function seguir() {
+    if (etapas.impedimento) {
+      showAlert({ title: 'Atenção', message: etapas.impedimento, type: 'warning' });
       return;
     }
-    setStep('personal_data');
-  };
+    etapas.avancar();
+  }
 
-  const handleRegister = async () => {
-    if (!fullName.trim() || fullName.trim().length < 2) {
-      showAlert({ title: 'Erro', message: 'Digite seu nome completo', type: 'error' });
-      return;
-    }
-    if (password.length < 8) {
-      showAlert({
-        title: 'Erro',
-        message: 'A senha deve ter no mínimo 8 caracteres',
-        type: 'error',
-      });
-      return;
-    }
-    if (password !== confirmPassword) {
-      showAlert({ title: 'Erro', message: 'As senhas não coincidem', type: 'error' });
+  async function cadastrar() {
+    const erro = validarDados({ fullName, password, confirmPassword });
+    if (erro) {
+      showAlert({ title: 'Erro', message: erro, type: 'error' });
       return;
     }
 
     setLoading(true);
     try {
-      if (role === 'student') {
-        const { data, error } = await authService.signUpStudent({
-          email: email.trim().toLowerCase(),
-          password,
-          full_name: fullName.trim(),
-        });
-        if (error) throw error;
-        if (!data.user) throw new Error('Erro ao criar usuário');
-      } else if (role === 'member') {
-        const { data, error } = await authService.signUpMember({
-          email: email.trim().toLowerCase(),
-          password,
-          full_name: fullName.trim(),
-        });
-        if (error) throw error;
-        if (!data.user) throw new Error('Erro ao criar usuário');
-      } else {
-        const { data, error } = await authService.signUpSpecialist({
-          email: email.trim().toLowerCase(),
-          password,
-          full_name: fullName.trim(),
-          service_types: selectedServices,
-        });
-        if (error) throw error;
-        if (!data.user) throw new Error('Erro ao criar usuário');
-      }
-
-      router.replace('/(tabs)');
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : 'Erro desconhecido. Tente novamente.';
-      if (message.toLowerCase().includes('already registered')) {
-        showAlert({
-          title: 'E-mail já cadastrado',
-          message: 'Este e-mail já possui uma conta. Faça login.',
-          type: 'warning',
-        });
-      } else {
-        showAlert({ title: 'Erro no Cadastro', message: message, type: 'error' });
-      }
+      await criarConta({
+        papel: etapas.papel,
+        servicos: etapas.servicos,
+        fullName: fullName.trim(),
+        email: email.trim().toLowerCase(),
+        password,
+      });
+      router.replace(ROUTES.TABS.ROOT);
+    } catch (erro: unknown) {
+      showAlert(avisoDoErro(erro));
     } finally {
       setLoading(false);
     }
-  };
-
-  const stepSubtitle: Record<Step, string> = {
-    role: 'Como você vai usar o Eleva Pro?',
-    services: 'Quais serviços você oferece?',
-    personal_data: 'Complete seu cadastro',
-  };
+  }
 
   return (
-    <ScreenLayout>
+    <ScreenLayout useSafeArea={false}>
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, padding: 24 }}
+        contentContainerClassName="grow pb-8"
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Header */}
-        <View className="items-center mt-12 mb-8">
-          <View className="w-24 h-24 rounded-full bg-primary/15 items-center justify-center mb-6 border-2 border-primary/30">
-            <Ionicons name="person-add" size={48} color="#A3E635" />
-          </View>
-          <Text className="text-4xl font-extrabold text-foreground mb-3 tracking-tight text-center">
-            Criar Conta
-          </Text>
-          <Text className="text-base text-muted text-center leading-6 px-4">
-            {stepSubtitle[step]}
-          </Text>
-        </View>
+        <Hero
+          imagem={require('../../../../assets/workouts/chest.jpg')}
+          titulo="Criar Conta"
+          sub={SUBTITULO[etapas.etapa]}
+        />
 
-        {/* Step 0: Seleção de role */}
-        {step === 'role' && (
-          <View className="flex-1">
-            <View className="gap-y-3 mb-6">
-              {[
-                {
-                  value: 'specialist' as AccountRole,
-                  label: 'Sou Especialista',
-                  sub: 'Personal trainer ou nutricionista',
-                  icon: 'barbell-outline' as const,
-                },
-                {
-                  value: 'student' as AccountRole,
-                  label: 'Sou Aluno',
-                  sub: 'Treino com personal trainer dedicado',
-                  icon: 'flash-outline' as const,
-                },
-                {
-                  value: 'member' as AccountRole,
-                  label: 'Sou Membro',
-                  sub: 'Crie seus próprios treinos e dietas',
-                  icon: 'person-outline' as const,
-                },
-              ].map((opt) => (
-                <TouchableOpacity
-                  key={opt.value}
-                  onPress={() => setRole(opt.value)}
-                  className={`flex-row items-center gap-4 p-5 rounded-2xl border-2 ${
-                    role === opt.value
-                      ? 'border-primary bg-primary/10'
-                      : 'border-white/10 bg-white/5'
-                  }`}
-                >
-                  <View
-                    className={`w-12 h-12 rounded-xl items-center justify-center ${
-                      role === opt.value ? 'bg-primary/20' : 'bg-white/5'
-                    }`}
-                  >
-                    <Ionicons
-                      name={opt.icon}
-                      size={24}
-                      color={role === opt.value ? '#A3E635' : '#71717a'}
-                    />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-foreground font-bold text-base">{opt.label}</Text>
-                    <Text className="text-muted text-sm mt-0.5">{opt.sub}</Text>
-                  </View>
-                  {role === opt.value && (
-                    <Ionicons name="checkmark-circle" size={22} color="#A3E635" />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-            <Button label="Continuar" onPress={handleRoleNext} />
-          </View>
-        )}
-
-        {/* Step 1: Seleção de serviços (specialist only) */}
-        {step === 'services' && (
-          <View className="flex-1">
-            <Text className="text-muted text-sm mb-6">
-              Selecione um ou mais serviços (pode alterar depois)
-            </Text>
-
-            <ServiceSelectionCard
-              service="personal_training"
-              selected={selectedServices.includes('personal_training')}
-              onToggle={() => toggleService('personal_training')}
-            />
-
-            <ServiceSelectionCard
-              service="nutrition_consulting"
-              selected={selectedServices.includes('nutrition_consulting')}
-              onToggle={() => toggleService('nutrition_consulting')}
-            />
-
-            <View className="flex-row gap-3 mt-6">
-              <Button
-                label="Voltar"
-                onPress={() => setStep('role')}
-                variant="outline"
-                className="flex-1"
+        <View className="flex-1 justify-center px-5">
+          <View className="mb-5 flex-row gap-1.5">
+            {TRACOS.map((traco, i) => (
+              <View
+                key={traco}
+                className={cn(
+                  'h-1 flex-1 rounded-full',
+                  i <= etapas.indiceDoTraco ? 'bg-primary' : 'bg-muted'
+                )}
               />
-              <Button label="Continuar" onPress={handleServicesNext} className="flex-1" />
-            </View>
+            ))}
           </View>
-        )}
 
-        {/* Step 2: Dados pessoais */}
-        {step === 'personal_data' && (
-          <View className="flex-1">
-            <View className="mb-6 gap-y-5">
+          {etapas.etapa === 'papel' ? (
+            <Group header="Tipo de conta">
+              {PAPEIS.map((opcao) => (
+                <Row
+                  key={opcao.valor}
+                  icon={opcao.icon}
+                  title={opcao.titulo}
+                  sub={opcao.sub}
+                  selected={etapas.papel === opcao.valor}
+                  onPress={() => etapas.escolherPapel(opcao.valor)}
+                />
+              ))}
+            </Group>
+          ) : null}
+
+          {etapas.etapa === 'servicos' ? (
+            <Group header="Serviços" footer="Selecione um ou mais serviços (pode alterar depois).">
+              {SERVICOS.map((opcao) => (
+                <Row
+                  key={opcao.valor}
+                  icon={opcao.icon}
+                  title={opcao.titulo}
+                  sub={opcao.sub}
+                  selected={etapas.servicos.includes(opcao.valor)}
+                  onPress={() => etapas.alternarServico(opcao.valor)}
+                />
+              ))}
+            </Group>
+          ) : null}
+
+          {etapas.etapa === 'dados' ? (
+            <Group header="Dados pessoais" footer="A senha deve ter no mínimo 8 caracteres.">
               <Input
-                label="Nome Completo"
+                icon="person"
                 value={fullName}
                 onChangeText={setFullName}
                 placeholder="Seu nome"
-                autoCapitalize="words"
+                autoComplete="name"
               />
               <Input
-                label="E-mail"
+                icon="mail"
                 value={email}
                 onChangeText={setEmail}
                 placeholder="seu@email.com"
                 keyboardType="email-address"
                 autoCapitalize="none"
-                autoCorrect={false}
+                autoComplete="email"
               />
               <Input
-                label="Senha"
+                icon="lock-closed"
                 value={password}
                 onChangeText={setPassword}
                 placeholder="Mínimo 8 caracteres"
-                secureTextEntry
+                senha
+                autoComplete="new-password"
               />
               <Input
-                label="Confirmar Senha"
+                icon="lock-closed"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 placeholder="Digite a senha novamente"
-                secureTextEntry
+                senha
+                autoComplete="new-password"
               />
+            </Group>
+          ) : null}
+
+          <View className="flex-row gap-2.5">
+            {etapas.ehPrimeira ? null : (
+              <View className="flex-1">
+                <Button label="Voltar" variant="tinted" fullWidth onPress={etapas.voltar} />
+              </View>
+            )}
+            <View className="flex-1">
+              {etapas.ehUltima ? (
+                <Button label="Criar Conta" fullWidth isLoading={loading} onPress={cadastrar} />
+              ) : (
+                <Button label="Continuar" fullWidth onPress={seguir} />
+              )}
             </View>
-
-            <View className="flex-row gap-3">
-              <Button
-                label="Voltar"
-                onPress={() => setStep(role === 'specialist' ? 'services' : 'role')}
-                variant="outline"
-                className="flex-1"
-              />
-
-              <Button
-                label="Criar Conta"
-                onPress={handleRegister}
-                isLoading={loading}
-                size="lg"
-                className="flex-1"
-              />
-            </View>
           </View>
-        )}
+        </View>
 
-        {/* Footer */}
-        <View className="mt-auto">
-          <View className="flex-row items-center my-6">
-            <View className="flex-1 h-[1px] bg-white/10" />
-            <Text className="text-muted px-4 text-sm">ou</Text>
-            <View className="flex-1 h-[1px] bg-white/10" />
-          </View>
-
-          <View className="flex-row justify-center items-center mb-6">
-            <Text className="text-muted text-base">Já tem uma conta? </Text>
-            <Link href={'/(auth)/login' as never} asChild>
-              <TouchableOpacity>
-                <Text className="text-primary text-base font-bold">Faça login</Text>
-              </TouchableOpacity>
-            </Link>
-          </View>
+        {/* Fora do bloco centralizado, como no login: junto, `justify-center`
+            levaria este convite para o meio da tela. */}
+        <View className="flex-row items-center justify-center px-5 pt-6">
+          <Text className="text-rotulo tracking-tight text-muted-foreground">
+            Já tem uma conta?{' '}
+          </Text>
+          <TouchableOpacity
+            accessibilityRole="link"
+            onPress={() => router.replace(ROUTES.AUTH.LOGIN)}
+          >
+            <Text className="text-rotulo font-bold tracking-tight text-primary-text">
+              Faça login
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </ScreenLayout>
   );
+}
+
+/** Devolve o primeiro impedimento, ou `null` quando os dados servem. */
+function validarDados(dados: {
+  fullName: string;
+  password: string;
+  confirmPassword: string;
+}): string | null {
+  if (dados.fullName.trim().length < NOME_MINIMO) return 'Digite seu nome completo';
+  if (dados.password.length < SENHA_MINIMA) {
+    return `A senha deve ter no mínimo ${SENHA_MINIMA} caracteres`;
+  }
+  if (dados.password !== dados.confirmPassword) return 'As senhas não coincidem';
+  return null;
+}
+
+type DadosDoCadastro = {
+  papel: PapelNoCadastro;
+  servicos: ServiceType[];
+  fullName: string;
+  email: string;
+  password: string;
+};
+
+/**
+ * Cada papel tem seu método no serviço, e não um só com um campo de tipo: é o
+ * servidor que decide o que cada cadastro pode declarar. O `account_type` vindo
+ * do cliente é validado no trigger `handle_new_user` — valor desconhecido cai
+ * para `member` em vez de abortar (migration 0040).
+ */
+async function criarConta(dados: DadosDoCadastro): Promise<void> {
+  const comum = {
+    email: dados.email,
+    password: dados.password,
+    full_name: dados.fullName,
+  };
+
+  const resposta =
+    dados.papel === 'specialist'
+      ? await authService.signUpSpecialist({ ...comum, service_types: dados.servicos })
+      : dados.papel === 'student'
+        ? await authService.signUpStudent(comum)
+        : await authService.signUpMember(comum);
+
+  if (resposta.error) throw resposta.error;
+  if (!resposta.data.user) throw new Error('Erro ao criar usuário');
+}
+
+function avisoDoErro(erro: unknown): Parameters<typeof showAlert>[0] {
+  const mensagem = erro instanceof Error ? erro.message : 'Erro desconhecido. Tente novamente.';
+
+  if (mensagem.toLowerCase().includes('already registered')) {
+    return {
+      title: 'E-mail já cadastrado',
+      message: 'Este e-mail já possui uma conta. Faça login.',
+      type: 'warning',
+    };
+  }
+  return { title: 'Erro no Cadastro', message: mensagem, type: 'error' };
 }

@@ -1,4 +1,15 @@
 export const ROUTES = {
+  /**
+   * Entrada no app. São três desde a #281: o login por código de convite e a
+   * fila de aprovação do especialista foram removidos, e com eles as rotas
+   * `student-login` e `pending-approval`.
+   */
+  AUTH: {
+    LOGIN: '/(auth)/login',
+    REGISTER: '/(auth)/register',
+    FORGOT_PASSWORD: '/(auth)/forgot-password',
+  },
+
   // Tabs
   TABS: {
     ROOT: '/(tabs)',

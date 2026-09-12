@@ -27,7 +27,26 @@ const inputPath = path.resolve(__dirname, './src/global.css').replace(/\\/g, '/'
 
 let finalConfig = config;
 try {
-  finalConfig = withNativeWind(config, { input: inputPath });
+  finalConfig = withNativeWind(config, {
+    input: inputPath,
+    /**
+     * Sem isto o NativeWind **inlina** `rem` em tempo de build, com base 14, e
+     * `rem.set()` em runtime não muda nada. Foi assim que a primeira tentativa
+     * de ajustar a escala ao aparelho saiu pela culatra: a escala de texto está
+     * declarada em `rem` sobre base 16, e inlinada a 14 ela ficou 12% MENOR.
+     *
+     * Com `false`, `rem` é resolvido em runtime a partir de um observável. Aí
+     * `ajustarEscalaDeTexto()` move texto **e** espaçamento de uma vez — a
+     * escala de espaço do Tailwind já é em `rem` (`p-4` = 1rem), e o preset do
+     * NativeWind não a sobrescreve.
+     *
+     * O custo é o que a documentação chama de performance do inline: cada
+     * valor passa por uma leitura de observável em vez de vir como número. É o
+     * preço documentado de escala dinâmica, e é o mecanismo que o próprio
+     * NativeWind oferece para isso.
+     */
+    inlineRem: false,
+  });
   console.log('✅ NativeWind configuration applied successfully.');
 } catch (error) {
   console.error('❌ Error applying withNativeWind:', error);

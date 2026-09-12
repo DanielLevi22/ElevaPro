@@ -80,6 +80,12 @@ npm run app:check-env
 # 685 vezes, porque nada a verificava. Catraca: só o arquivo que o commit toca.
 npm run app:check-hex
 
+# ── Medida em pixel fixo ──────────────────────────────────────────────────────
+# O desenho foi feito para um telefone de 390pt e o aparelho de teste tem 448dp:
+# pixel fixo não acompanha e o desenho aparece menor. A saída é `rem`, que o
+# NativeWind resolve em runtime, e `useEscala()` para prop numérica.
+npm run app:check-medidas
+
 # ── Tamanho de arquivo ────────────────────────────────────────────────────────
 # Mesma catraca. O arquivo que você tocou sai abaixo de 500 linhas; os outros 23
 # seguem na lista de aviso de `npm run check:file-size`. Bloquear todos de uma
