@@ -2,7 +2,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { Switch as SwitchNativo } from 'react-native';
 import { coresDoTema } from '@/shared/design';
 import { Avatar } from '../Avatar';
-import { SelectRow } from '../SelectRow';
+import { Row } from '../Row';
 import { StatusBadge } from '../StatusBadge';
 import { Switch } from '../Switch';
 
@@ -50,10 +50,10 @@ describe('StatusBadge', () => {
   });
 });
 
-describe('SelectRow', () => {
+describe('Row', () => {
   it('anuncia se está escolhida, para o leitor de tela e não só para o olho', () => {
     const { getByRole } = render(
-      <SelectRow icon="barbell" title="Sou Especialista" selected onPress={jest.fn()} />
+      <Row icon="barbell" title="Sou Especialista" selected onPress={jest.fn()} />
     );
 
     expect(getByRole('radio').props.accessibilityState).toMatchObject({ selected: true });
@@ -62,7 +62,7 @@ describe('SelectRow', () => {
   it('marca a escolha com a cor de texto de marca, que passa contraste', () => {
     // `primary` puro é o lime de fundo; sobre superfície ele não passa AA.
     const { UNSAFE_getAllByType } = render(
-      <SelectRow icon="barbell" title="Sou Especialista" selected onPress={jest.fn()} />
+      <Row icon="barbell" title="Sou Especialista" selected onPress={jest.fn()} />
     );
     const icones = UNSAFE_getAllByType('Ionicons' as never);
 
@@ -71,7 +71,7 @@ describe('SelectRow', () => {
 
   it('apaga o ícone quando não está escolhida', () => {
     const { UNSAFE_getAllByType } = render(
-      <SelectRow icon="barbell" title="Sou Especialista" onPress={jest.fn()} />
+      <Row icon="barbell" title="Sou Especialista" onPress={jest.fn()} />
     );
     const icones = UNSAFE_getAllByType('Ionicons' as never);
 
@@ -81,20 +81,49 @@ describe('SelectRow', () => {
 
   it('avisa o call site quando é tocada', () => {
     const aoTocar = jest.fn();
-    const { getByRole } = render(
-      <SelectRow icon="barbell" title="Sou Especialista" onPress={aoTocar} />
-    );
+    const { getByRole } = render(<Row icon="barbell" title="Sou Especialista" onPress={aoTocar} />);
 
-    fireEvent.press(getByRole('radio'));
+    fireEvent.press(getByRole('button'));
     expect(aoTocar).toHaveBeenCalledTimes(1);
   });
 
   it('omite o subtítulo quando não recebe um', () => {
     const { queryByText } = render(
-      <SelectRow icon="barbell" title="Sou Especialista" onPress={jest.fn()} />
+      <Row icon="barbell" title="Sou Especialista" onPress={jest.fn()} />
     );
 
     expect(queryByText('Personal trainer ou nutricionista')).toBeNull();
+  });
+
+  it('só é rádio quando a escolha está em jogo — navegar não é escolher', () => {
+    // Sem `selected`, a linha é um link: anunciá-la como rádio faria o leitor
+    // de tela prometer uma escolha que a tela não oferece. `disabled` sempre
+    // aparece no estado porque o React Native o injeta; `selected`, não.
+    const { getByRole } = render(<Row icon="person-outline" title="Perfil" chevron />);
+
+    expect(getByRole('button').props.accessibilityState.selected).toBeUndefined();
+  });
+
+  it('não finge ser tocável quando não recebe ação', () => {
+    const { getByRole } = render(<Row icon="moon" title="Tema" />);
+
+    expect(getByRole('button').props.accessibilityState.disabled).toBe(true);
+  });
+
+  it('põe a seta na cor discreta, e não na de texto', () => {
+    const { UNSAFE_getAllByType } = render(<Row icon="person-outline" title="Perfil" chevron />);
+    const seta = UNSAFE_getAllByType('Ionicons' as never)[1];
+
+    expect(seta.props.name).toBe('chevron-forward');
+    expect(seta.props.color).toBe(escuro.placeholder);
+  });
+
+  it('aceita controle à direita, como a chave de uma preferência', () => {
+    const { UNSAFE_getByType } = render(
+      <Row icon="moon" title="Tema escuro" trailing={<Switch checked onChange={jest.fn()} />} />
+    );
+
+    expect(UNSAFE_getByType(SwitchNativo)).toBeTruthy();
   });
 });
 
