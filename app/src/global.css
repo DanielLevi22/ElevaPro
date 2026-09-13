@@ -61,6 +61,7 @@
     --texto-proteina: #0b7a52;
     --texto-carboidrato: #4e7a0b;
     --texto-gordura: #8a5e03;
+    --sobre-metrica: #06281a;
   }
 
   .dark:root {
@@ -106,5 +107,6 @@
     --texto-proteina: #34d399;
     --texto-carboidrato: #a3e635;
     --texto-gordura: #fbbf24;
+    --sobre-metrica: #06281a;
   }
 }

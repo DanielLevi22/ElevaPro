@@ -147,6 +147,12 @@ type TokensLiterais = {
   textoProteina: CorLiteral;
   textoCarboidrato: CorLiteral;
   textoGordura: CorLiteral;
+  /**
+   * O check sobre a cor de métrica — refeição feita, item comprado. **Igual nos
+   * dois temas**, como o `sobreImagem`: o verde não muda de tema, então o que
+   * fica em cima dele também não. O kit escreve `#06281a` à mão.
+   */
+  sobreMetrica: CorLiteral;
 };
 
 export type Tema = 'claro' | 'escuro';
@@ -209,6 +215,7 @@ const escuro: Paleta = {
     textoProteina: '#34d399',
     textoCarboidrato: '#a3e635',
     textoGordura: '#fbbf24',
+    sobreMetrica: '#06281a',
   },
 };
 
@@ -263,6 +270,7 @@ const claro: Paleta = {
     textoProteina: '#0b7a52',
     textoCarboidrato: '#4e7a0b',
     textoGordura: '#8a5e03',
+    sobreMetrica: '#06281a',
   },
 };
 

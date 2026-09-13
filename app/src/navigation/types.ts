@@ -90,6 +90,23 @@ export const ROUTES = {
     EXECUTE: (id: string): `/(tabs)/workouts/execute/${string}` => `/(tabs)/workouts/execute/${id}`,
   },
 
+  // Nutrição do aluno, no desenho de vidro (#298). O member segue nas telas antigas.
+  NUTRITION: {
+    ROOT: '/(tabs)/nutrition',
+    MEAL: (refeicaoId: string): `/(tabs)/nutrition/refeicao/${string}` =>
+      `/(tabs)/nutrition/refeicao/${refeicaoId}`,
+    SWAP: (
+      refeicaoId: string,
+      itemId: string
+    ): `/(tabs)/nutrition/substituir?refeicaoId=${string}&itemId=${string}` =>
+      `/(tabs)/nutrition/substituir?refeicaoId=${refeicaoId}&itemId=${itemId}`,
+    SEARCH: '/(tabs)/nutrition/buscar',
+    SCAN: '/(tabs)/nutrition/scan',
+    ASSISTANT: '/(tabs)/nutrition/bot',
+    SHOPPING: '/(tabs)/nutrition/shopping-list',
+    ADHERENCE: '/(tabs)/nutrition/aderencia',
+  },
+
   // Telas do próprio aluno sobre os dados dele
   STUDENT: {
     ANAMNESIS: '/student/anamnesis',

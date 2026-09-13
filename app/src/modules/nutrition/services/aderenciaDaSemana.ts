@@ -48,7 +48,7 @@ export function semanaDe(hoje: string): string[] {
   return ROTULOS.map((_, i) => new Date(segunda + i * UM_DIA).toISOString().slice(0, 10));
 }
 
-function diaDaSemana(data: string): number {
+export function diaDaSemana(data: string): number {
   return new Date(`${data}T00:00:00Z`).getUTCDay();
 }
 
@@ -91,7 +91,7 @@ function contarDia(entrada: EntradaDaAderencia, data: string, indice: number): C
  * Os números da tela de aderência do kit.
  *
  * @example
- * const semana = aderenciaDaSemana({ hoje: hojeNoFuso(), tipoDoPlano: plano.plan_type,
+ * const semana = aderenciaDaSemana({ hoje: getLocalDateISOString(), tipoDoPlano: plano.plan_type,
  *   refeicoes: meals, registros, itensDoPlano: mealItems });
  */
 export function aderenciaDaSemana(entrada: EntradaDaAderencia): AderenciaDaSemana {

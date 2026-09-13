@@ -99,6 +99,8 @@ module.exports = {
           secundario: literal('sobre-imagem-secundario'),
         },
         /** Cor por grandeza: a mesma no ícone, no anel e na barra da métrica. */
+        /** O check sobre a cor de métrica: igual nos dois temas. */
+        'sobre-metrica': literal('sobre-metrica'),
         /** Texto de macro: escurece no claro para passar contraste sobre o vidro. */
         'texto-macro': {
           proteina: literal('texto-proteina'),
