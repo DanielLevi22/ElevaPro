@@ -12,6 +12,7 @@ import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
 import { useCores, useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
+import { textoDasRepeticoes } from './LinhasDaExecucao';
 
 /**
  * As peças do cronômetro em tela cheia — o da série e o do descanso: o anel
@@ -186,7 +187,7 @@ export function CartaoDaSerie({ item, numero }: CartaoDaSerieProps) {
           {item.exercise?.name ?? 'Exercício'}
         </Text>
         <View className="mt-[0.1875rem] flex-row gap-3">
-          <DadoComIcone icone="repeat" texto={`${item.reps ?? '—'} reps`} />
+          <DadoComIcone icone="repeat" texto={textoDasRepeticoes(item.reps, 'reps')} />
           {item.rest_seconds ? (
             <DadoComIcone icone="time-outline" texto={`${item.rest_seconds} s descanso`} />
           ) : null}

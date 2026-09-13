@@ -6,7 +6,7 @@ import { BarraDeProgresso } from '@/components/ui/BarraDeProgresso';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
 import { Chip } from '@/components/ui/Chip';
 import { Vidro } from '@/components/ui/Vidro';
-import { comOpacidade, useCores, useEscala } from '@/shared/design';
+import { useCores, useEscala } from '@/shared/design';
 import { fotoDoObjetivo } from '@/shared/imagens/fotosDeTreino';
 
 /**
@@ -27,8 +27,6 @@ interface CartaoDoCicloEmAndamentoProps {
   onContinuar: () => void;
 }
 
-/** O chip do objetivo sobre a foto: branco a 16%, o mesmo nos dois temas. */
-const FUNDO_DO_CHIP = 0.16;
 const TAMANHO_DO_ICONE = 12;
 
 export function CartaoDoCicloEmAndamento({
@@ -57,16 +55,7 @@ export function CartaoDoCicloEmAndamento({
         />
         <View className="flex-row items-center gap-1.5">
           <Chip tom="destaque">Em andamento</Chip>
-          {periodizacao.objective ? (
-            <View
-              className="rounded-full px-2.5 py-1"
-              style={{ backgroundColor: comOpacidade(cores.sobreImagem, FUNDO_DO_CHIP) }}
-            >
-              <Text className="text-[0.65625rem] font-extrabold uppercase tracking-wider text-sobre-imagem">
-                {periodizacao.objective}
-              </Text>
-            </View>
-          ) : null}
+          {periodizacao.objective ? <Chip tom="sobreImagem">{periodizacao.objective}</Chip> : null}
         </View>
         <View>
           <Text

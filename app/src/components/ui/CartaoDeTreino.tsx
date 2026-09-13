@@ -73,7 +73,7 @@ export function CartaoDeTreino({
       <View className="flex-1 justify-end p-4">
         <View className="mb-[0.5625rem] flex-row gap-1.5">
           {chips.map((chip) => (
-            <Chip key={chip.texto} tom={chip.tom}>
+            <Chip key={chip.texto} tom={chip.tom ?? 'sobreImagem'}>
               {chip.texto}
             </Chip>
           ))}

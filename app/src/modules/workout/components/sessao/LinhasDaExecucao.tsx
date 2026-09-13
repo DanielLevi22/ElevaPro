@@ -21,6 +21,17 @@ export function prescricao(item: WorkoutExercise): string {
   return carga === null ? series : `${series} · ${formatarCarga(carga)}`;
 }
 
+/**
+ * "12-15 reps", mas "10 min" sozinho: repetição só quando a prescrição é
+ * quantidade. Tempo com "repetições" atrás dizia uma coisa que o treino não é.
+ *
+ * @example textoDasRepeticoes('8-10', 'reps') // "8-10 reps"
+ */
+export function textoDasRepeticoes(reps: string | null, unidade: 'reps' | 'repetições'): string {
+  if (!reps) return '—';
+  return numeroDaPrescricao(reps) === null ? reps : `${reps} ${unidade}`;
+}
+
 const TAMANHO_DO_CHECK = 18;
 const TAMANHO_DA_SETA = 16;
 

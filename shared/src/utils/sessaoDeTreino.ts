@@ -17,14 +17,22 @@ export interface SerieFeita {
 
 /**
  * O número de um campo da prescrição, que é texto: "8-10" vale 8, "47,5" vale
- * 47,5. Texto sem número vira nulo — e não `NaN`, que atravessaria até o banco.
+ * 47,5, "40 kg" vale 40.
  *
- * @example numeroDaPrescricao("8-10") // 8
+ * Só número, faixa ou quilo. "10 min" é tempo, e não dez repetições: lê-lo
+ * como 10 gravava a esteira com dez repetições em `reps_actual`. Texto que não
+ * é quantidade vira nulo — e nunca `NaN`, que atravessaria até o banco.
+ *
+ * @example numeroDaPrescricao("8-10")   // 8
+ * @example numeroDaPrescricao("10 min") // null
  */
 export function numeroDaPrescricao(texto: string | null | undefined): number | null {
-  const valor = Number.parseFloat(String(texto ?? "").replace(",", "."));
-  return Number.isNaN(valor) ? null : valor;
+  const casou = QUANTIDADE.exec(String(texto ?? ""));
+  return casou ? Number.parseFloat(casou[1].replace(",", ".")) : null;
 }
+
+/** Um número, e opcionalmente uma faixa ("8-10") ou a unidade de carga. */
+const QUANTIDADE = /^\s*(\d+(?:[.,]\d+)?)\s*(?:[-–]\s*\d+(?:[.,]\d+)?\s*)?(?:kg)?\s*$/i;
 
 const QUILOS_POR_TONELADA = 1000;
 const SEGUNDOS_POR_MINUTO = 60;

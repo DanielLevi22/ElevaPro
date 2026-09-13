@@ -156,14 +156,18 @@ describe("evolução frente à última execução", () => {
 describe("número da prescrição", () => {
   it.each([
     ["8-10", 8],
+    ["8 – 10", 8],
     ["47,5", 47.5],
     ["40", 40],
+    ["40 kg", 40],
   ])("lê %s como %d", (texto, numero) => {
     expect(numeroDaPrescricao(texto)).toBe(numero);
   });
 
   // `NaN` atravessaria até `weight_prescribed` no banco.
-  it.each([["até a falha"], [""], [null]])("devolve nulo para %p", (texto) => {
+  // Regressão: "10 min" era lido como 10, e a esteira ia ao banco com dez
+  // repetições.
+  it.each([["10 min"], ["até a falha"], [""], [null]])("devolve nulo para %p", (texto) => {
     expect(numeroDaPrescricao(texto)).toBeNull();
   });
 });

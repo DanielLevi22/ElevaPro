@@ -13,6 +13,9 @@ import { BotaoDeDestaque } from './BotaoDeDestaque';
  * barra (52) e o respiro acima dela (14). A soma é medida, e não classe,
  * porque o `inset` muda de aparelho para aparelho.
  *
+ * Mais 22: o "+" central da tab bar, que o kit não desenha, sobressai 16 acima
+ * da barra com o brilho dele, e com os 66 do kit o botão encostava nele.
+ *
  * @example
  * <TelaDeVidroComFoto folgaNoFim="botaoFixo" sobreposicao={<BotaoFixoNoRodape rotulo="Iniciar treino" icone="play" onPress={iniciar} />} />
  */
@@ -22,8 +25,8 @@ interface BotaoFixoNoRodapeProps {
   onPress: () => void;
 }
 
-/** A tab bar do kit sem a área do indicador (52) e o respiro acima dela (14). */
-const ACIMA_DA_TAB_BAR = 66;
+/** A tab bar do kit (52), o respiro acima dela (14) e o que o "+" sobressai (22). */
+const ACIMA_DA_TAB_BAR = 88;
 
 export function BotaoFixoNoRodape({ rotulo, icone, onPress }: BotaoFixoNoRodapeProps) {
   const escalar = useEscala();

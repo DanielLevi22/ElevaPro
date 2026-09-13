@@ -219,11 +219,14 @@ function IndicadorDeAcao({
     };
   });
   const estiloDoAceso = useAnimatedStyle(() => ({ opacity: escolhida.value === acao ? 1 : 0 }));
+  // Medido fora do worklet: `escalar` é função do JavaScript, e chamá-la na
+  // thread de UI derruba o app.
+  const subida = escalar(SUBIDA_DO_ROTULO);
   const estiloDoRotulo = useAnimatedStyle(() => {
     const ativo = escolhida.value === acao;
     return {
       opacity: withSpring(ativo ? 1 : 0),
-      transform: [{ translateY: withSpring(ativo ? escalar(SUBIDA_DO_ROTULO) : 0) }],
+      transform: [{ translateY: withSpring(ativo ? subida : 0) }],
     };
   });
 

@@ -35,8 +35,11 @@ interface TelaDeVidroComFotoProps {
   centralizado?: boolean;
 }
 
-/** O kit: 120 de respiro sob a tab bar; 150 quando o botão fixo está por cima dela. */
-const FOLGA = { tab: 'px-4 pb-[7.5rem] pt-14', botaoFixo: 'px-4 pb-[9.375rem] pt-14' } as const;
+/**
+ * O kit: 120 de respiro sob a tab bar; 150 quando o botão fixo está por cima
+ * dela, mais os 22 que o botão subiu para não encostar no "+" central.
+ */
+const FOLGA = { tab: 'px-4 pb-[7.5rem] pt-14', botaoFixo: 'px-4 pb-[10.75rem] pt-14' } as const;
 
 export function TelaDeVidroComFoto({
   imagem,

@@ -2,6 +2,7 @@ import { formatarDuracao } from '@elevapro/shared';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
+import { textoDasRepeticoes } from '../../../components/sessao/LinhasDaExecucao';
 import {
   AnelDoCronometro,
   CartaoDaSerie,
@@ -78,7 +79,7 @@ function EtapaDaSerie({ sessao, agora, despachar }: PropsDaEtapa) {
       />
       {proxima ? (
         <>
-          <TituloDeSecao estilo="rotulo" acao={`${proxima.item.reps ?? '—'} repetições`}>
+          <TituloDeSecao estilo="rotulo" acao={textoDasRepeticoes(proxima.item.reps, 'repetições')}>
             Agora
           </TituloDeSecao>
           <CartaoDaSerie item={proxima.item} numero={proxima.numero} />
