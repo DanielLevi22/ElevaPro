@@ -5,14 +5,15 @@ import { ConfettiOverlay } from '@/components/gamification/ConfettiOverlay';
 import { AlvoDoVidro } from '@/components/ui/AlvoDoVidro';
 import { Anel } from '@/components/ui/Anel';
 import { BrilhoAmbiente } from '@/components/ui/BrilhoAmbiente';
+import { CartaoDeTreino } from '@/components/ui/CartaoDeTreino';
 import { FundoDeFoto, RECEITA_DA_HOME } from '@/components/ui/FundoDeFoto';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { ROUTES } from '@/navigation/types';
 import { useCores } from '@/shared/design';
+import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { BlocosDaSaude } from '../components/BlocosDaSaude';
 import { CabecalhoDaHome } from '../components/CabecalhoDaHome';
-import { CartaoDoTreinoDoDia } from '../components/CartaoDoTreinoDoDia';
 import { EntradasDeHoje } from '../components/EntradasDeHoje';
 import { faltaParaFecharODia } from '../services/faltaParaFecharODia';
 import { type DadosDaHomeDoAluno, PERCENTUAL_COMPLETO } from '../types';
@@ -33,20 +34,11 @@ import { type DadosDaHomeDoAluno, PERCENTUAL_COMPLETO } from '../types';
  * @example
  * <HomeDoAluno dados={aluno} />
  */
-const FOTO_POR_GRUPO: Record<string, ImageSourcePropType> = {
-  Peito: require('../../../../assets/workouts/chest.jpg'),
-  Costas: require('../../../../assets/workouts/back.jpg'),
-  Pernas: require('../../../../assets/workouts/legs.jpg'),
-  Braços: require('../../../../assets/workouts/arms.jpg'),
-  Ombros: require('../../../../assets/workouts/shoulders.jpg'),
-  Abs: require('../../../../assets/workouts/abs.jpg'),
-  Geral: require('../../../../assets/workouts/chest.jpg'),
-};
 
 export function HomeDoAluno({ dados }: { dados: DadosDaHomeDoAluno }) {
   const cores = useCores();
   const { treinoSugerido, carregando, recarregar } = dados;
-  const foto = FOTO_POR_GRUPO[treinoSugerido?.muscle_group || 'Geral'] ?? FOTO_POR_GRUPO.Geral;
+  const foto = fotoDoGrupo(treinoSugerido?.muscle_group);
   // A luz de fundo se ancora nos blocos de métrica, e não na altura da tela.
   const [topoDosBlocos, setTopoDosBlocos] = useState<number | null>(null);
 
@@ -129,9 +121,9 @@ function TreinoDoDia({ dados, foto }: { dados: DadosDaHomeDoAluno; foto: ImageSo
       <TituloDeSecao acao="Ver tudo" onAcao={() => router.push(ROUTES.TABS.WORKOUTS)}>
         Treino do dia
       </TituloDeSecao>
-      <CartaoDoTreinoDoDia
+      <CartaoDeTreino
         titulo={treino.title}
-        etiqueta={treino.muscle_group || 'Geral'}
+        chips={[{ texto: treino.muscle_group || 'Geral', tom: 'destaque' }]}
         imagem={foto}
         exercicios={treino.exercicios}
         minutos={treino.duration_minutes}

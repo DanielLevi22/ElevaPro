@@ -1,4 +1,9 @@
-import { type AccountType, createAuthService, type ProfileSummary } from '@elevapro/shared';
+import {
+  type AccountType,
+  contarExercicios,
+  createAuthService,
+  type ProfileSummary,
+} from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
@@ -157,6 +162,6 @@ export function sugerirTreino(treinos: Workout[]): TreinoSugerido | null {
     id: primeiro.id,
     title: primeiro.title,
     muscle_group: primeiro.muscle_group,
-    exercicios: primeiro.exercises_count ?? primeiro.exercises?.length,
+    exercicios: contarExercicios(primeiro),
   };
 }

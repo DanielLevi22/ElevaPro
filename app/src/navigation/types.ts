@@ -80,6 +80,14 @@ export const ROUTES = {
     CREATE_PERIODIZATION: '/(tabs)/workouts/create-periodization',
     DETAILS: (id: string): `/(tabs)/workouts/${string}` => `/(tabs)/workouts/${id}`,
     SELECT_EXERCISES: '/workouts/select-exercises',
+    PERIODIZATION: (id: string): `/(tabs)/workouts/periodizations/${string}` =>
+      `/(tabs)/workouts/periodizations/${id}`,
+    PHASE: (
+      periodizationId: string,
+      phaseId: string
+    ): `/(tabs)/workouts/periodizations/${string}/phases/${string}` =>
+      `/(tabs)/workouts/periodizations/${periodizationId}/phases/${phaseId}`,
+    EXECUTE: (id: string): `/(tabs)/workouts/execute/${string}` => `/(tabs)/workouts/execute/${id}`,
   },
 
   // Telas do próprio aluno sobre os dados dele

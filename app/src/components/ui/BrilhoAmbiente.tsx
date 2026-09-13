@@ -63,9 +63,15 @@ interface BrilhoAmbienteProps {
   /**
    * Onde fica o **topo dos blocos de métrica**, em dp a partir do topo da tela.
    * A luz se centra 4 abaixo dele, como no kit (370 contra 366).
+   *
+   * Tela sem blocos não passa nada, e a luz fica onde o kit a põe em qualquer
+   * telefone: centro a 370 do topo, escalado como o resto do desenho.
    */
-  topoDosBlocos: number;
+  topoDosBlocos?: number;
 }
+
+/** O centro da luz no kit, quando não há blocos para ancorá-la. */
+const CENTRO_NO_KIT = 370;
 
 /** No kit o centro da luz fica 4 abaixo do topo dos blocos: 370 contra 366. */
 const DO_TOPO_DOS_BLOCOS_AO_CENTRO = 4;
@@ -116,7 +122,10 @@ export function BrilhoAmbiente({ topoDosBlocos }: BrilhoAmbienteProps) {
   const cores = useCores();
   const escalar = useEscala();
   const alcance = escalar(ALCANCE_VERTICAL);
-  const centro = topoDosBlocos + escalar(DO_TOPO_DOS_BLOCOS_AO_CENTRO);
+  const centro =
+    topoDosBlocos === undefined
+      ? escalar(CENTRO_NO_KIT)
+      : topoDosBlocos + escalar(DO_TOPO_DOS_BLOCOS_AO_CENTRO);
   const { colorScheme } = useColorScheme();
   const pico = colorScheme === 'dark' ? OPACIDADE.escuro : OPACIDADE.claro;
   // `useId` devolve ":r0:", e dois-pontos quebram a referência `url(#…)`.
