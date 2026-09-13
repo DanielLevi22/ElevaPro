@@ -21,7 +21,7 @@ async function temConsentimento(studentId: string): Promise<boolean> {
  * Devolve as observações do aluno só quando há consentimento vigente para dado
  * de saúde; caso contrário, `undefined` — a sessão é gravada sem elas.
  *
- * Séries, cargas, datas e RPE são execução de contrato e não dependem de
+ * Séries, cargas, datas e PSE são execução de contrato e não dependem de
  * consentimento. O texto livre é o que exige Art. 11: é onde o aluno escreve
  * "senti dor no ombro". Gravar os dois sob a mesma decisão trataria uma medida
  * de carga como relato clínico, ou o contrário.

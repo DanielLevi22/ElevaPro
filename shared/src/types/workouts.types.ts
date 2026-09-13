@@ -136,8 +136,8 @@ export interface WorkoutSession {
   workout_id: string | null;
   started_at: string;
   completed_at: string | null;
-  /** RPE de 1 a 10. Use `rpeLabel`/`formatRpe` para exibir — a escala é única. */
-  intensity: number | null;
+  /** PSE de 1 a 10. Use `sensacaoDaPse`/`formatPse` para exibir — a escala é única. */
+  perceived_exertion: number | null;
   /** Texto do aluno, e só dele. Dado sensível de saúde (Art. 11). */
   notes: string | null;
   session_type: WorkoutSessionType;
@@ -175,8 +175,8 @@ export interface WorkoutSession {
  * 42501 em runtime que ninguém lê.
  */
 export interface UpdateSessionFeedbackInput {
-  /** RPE de 1 a 10. `null` remove a avaliação. */
-  intensity?: number | null;
+  /** PSE de 1 a 10. `null` remove a avaliação. */
+  perceived_exertion?: number | null;
   /**
    * `null` ou string vazia apagam a observação e mantêm a sessão — é o Art. 18,
    * VI aplicado só à parte consentida. Quem chama é responsável por não gravar
@@ -212,6 +212,50 @@ export interface WorkoutSessionSet {
   completed: boolean;
   skipped: boolean;
   created_at: string;
+}
+
+/**
+ * Uma sessão no histórico do aluno, com o título da prescrição e a FC média.
+ *
+ * A FC vem por junção com `workout_session_vitals`, e não por coluna, porque a
+ * base legal é outra: a RLS daquela tabela exige consentimento vigente. Para o
+ * especialista de um aluno que revogou, ela volta nula enquanto o resto da
+ * sessão continua visível — o comportamento que a `0049` desenhou.
+ */
+export interface SessaoDoHistorico {
+  id: string;
+  student_id: string;
+  workout_id: string | null;
+  started_at: string;
+  completed_at: string | null;
+  /** PSE de 1 a 10. Use `sensacaoDaPse`/`formatPse` para exibir. */
+  perceived_exertion: number | null;
+  /** Texto do aluno, e só dele. Dado sensível de saúde (Art. 11). */
+  notes: string | null;
+  feedback_edited_at: string | null;
+  session_type: WorkoutSessionType;
+  duration_seconds: number | null;
+  active_calories: number | null;
+  distance_meters: number | null;
+  avg_pace_seconds_per_km: number | null;
+  avg_heart_rate: number | null;
+  activity_name: string | null;
+  workout: { title: string | null } | null;
+  created_at: string;
+}
+
+/**
+ * A última execução de um treino, série a série — o que o pré-início mostra
+ * ("Último: 12 ago · volume 4,0 t") e o que a sessão compara para achar
+ * evolução.
+ */
+export interface SessaoComSeries {
+  id: string;
+  completed_at: string | null;
+  exercises: {
+    workout_exercise_id: string | null;
+    sets: Pick<WorkoutSessionSet, "set_index" | "reps_actual" | "weight_actual" | "completed">[];
+  }[];
 }
 
 // Input types
@@ -306,8 +350,8 @@ export interface CreateWorkoutSessionInput {
   workout_id?: string | null;
   started_at: string;
   completed_at?: string | null;
-  /** RPE de 1 a 10, como o aluno respondeu no fim da sessão. */
-  intensity?: number;
+  /** PSE de 1 a 10, como o aluno respondeu no fim da sessão. */
+  perceived_exertion?: number;
   /**
    * Só o que o aluno digitou. Dado sensível (Art. 11) — quem chama é
    * responsável por não gravar sem consentimento vigente.

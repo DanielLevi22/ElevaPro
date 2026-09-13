@@ -1,7 +1,6 @@
 import type {
   Exercise,
   Periodization,
-  SaveSessionSetInput,
   TrainingPlan,
   UpdatePeriodizationInput,
   UpdateTrainingPlanInput,
@@ -13,8 +12,6 @@ import { createWorkoutsService } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { create } from 'zustand';
 import { useAuthStore } from '@/modules/auth/store/authStore';
-import { batimentoSeConsentido, notasSeConsentido } from '../services/consentimento';
-import { type AIWorkoutItem, WorkoutAIService } from '../services/WorkoutAIService';
 
 export type {
   Exercise,
@@ -73,58 +70,9 @@ interface WorkoutState {
     muscle_group?: string;
     specialist_id: string;
   }) => Promise<void>;
-  generateWorkoutsForPhase: (
-    trainingPlanId: string,
-    split: string,
-    specialistId: string
-  ) => Promise<void>;
-  generateWorkoutsForPeriodization: (
-    periodizationId: string,
-    phases: TrainingPlan[],
-    split: string,
-    specialistId: string,
-    agreedExercises?: string[]
-  ) => Promise<void>;
-  saveGeneratedWorkouts: (
-    trainingPlanId: string,
-    aiWorkouts: { letter: string; focus?: string; exercises: AIWorkoutItem[] }[],
-    specialistId: string
-  ) => Promise<void>;
-  saveWorkoutSession: (sessionData: {
-    workoutId: string;
-    studentId: string;
-    startedAt: string;
-    completedAt: string;
-    items: { workoutExerciseId: string; sets: SaveSessionSetInput[] }[];
-    intensity?: number;
-    notes?: string;
-  }) => Promise<string>;
-  saveCardioSession: (sessionData: {
-    studentId: string;
-    exerciseName: string;
-    durationSeconds: number;
-    calories: number;
-    startedAt: string;
-    completedAt: string;
-    intensity?: number;
-    notes?: string;
-    /**
-     * Medidas da corrida, derivadas no aparelho. Nulas quando o GPS não foi
-     * autorizado — a corrida continua sendo gravada sem elas.
-     */
-    distanceMeters?: number | null;
-    avgPaceSecondsPerKm?: number | null;
-    avgCadenceSpm?: number | null;
-    /** Dado de Art. 11: só é gravado com consentimento vigente. */
-    avgHeartRate?: number | null;
-  }) => Promise<void>;
   fetchLastWorkoutSession: (
     studentId: string
   ) => Promise<{ workout_id: string | null; completed_at: string | null } | null>;
-  fetchWorkoutSessionDetails: (
-    workoutId: string,
-    studentId: string
-  ) => Promise<WorkoutSession | null>;
   setSelectedExercises: (exercises: SelectedExercise[]) => void;
   clearSelectedExercises: () => void;
   duplicateWorkout: (workoutId: string, targetPlanId: string) => Promise<void>;
@@ -352,178 +300,6 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     }
   },
 
-  saveGeneratedWorkouts: async (trainingPlanId, aiWorkouts, specialistId) => {
-    try {
-      set({ isLoading: true });
-      const availableExercises = get().exercises;
-      if (availableExercises.length === 0) await get().fetchExercises();
-
-      await workoutsService.deleteWorkout(trainingPlanId).catch(() => {
-        // Ignore — we delete by plan below
-      });
-
-      const { error: deleteError } = await supabase
-        .from('workouts')
-        .delete()
-        .eq('training_plan_id', trainingPlanId);
-      if (deleteError) throw deleteError;
-
-      if (aiWorkouts.length === 0) {
-        await get().fetchWorkoutsForPhase(trainingPlanId);
-        return;
-      }
-
-      const workoutsToInsert = aiWorkouts.map((aiWorkout) => ({
-        training_plan_id: trainingPlanId,
-        specialist_id: specialistId,
-        title: `Treino ${aiWorkout.letter}`,
-        description: aiWorkout.focus ? `Foco: ${aiWorkout.focus}` : '',
-        muscle_group: aiWorkout.focus ?? null,
-      }));
-
-      const { data: newWorkouts, error: workoutError } = await supabase
-        .from('workouts')
-        .insert(workoutsToInsert)
-        .select();
-      if (workoutError) throw workoutError;
-
-      const itemsToInsert: {
-        workout_id: string;
-        exercise_id: string;
-        sets: number;
-        reps: string;
-        rest_seconds: number;
-        notes: string;
-        order_index: number;
-      }[] = [];
-
-      aiWorkouts.forEach((aiWorkout, wIndex) => {
-        const matchingTitle = `Treino ${aiWorkout.letter}`;
-        const newWorkout =
-          newWorkouts.find((w) => w.title === matchingTitle) || newWorkouts[wIndex];
-        if (aiWorkout.exercises && aiWorkout.exercises.length > 0) {
-          aiWorkout.exercises.forEach((item: AIWorkoutItem, index: number) => {
-            const exercise = availableExercises.find(
-              (e: Exercise) => e.name.toLowerCase() === item.exerciseName.toLowerCase()
-            );
-            if (exercise) {
-              itemsToInsert.push({
-                workout_id: newWorkout.id,
-                exercise_id: exercise.id,
-                sets: item.sets,
-                reps: item.reps,
-                rest_seconds: item.rest,
-                notes: item.technique
-                  ? item.technique +
-                    (item.load_suggestion ? ` | Carga: ${item.load_suggestion}` : '')
-                  : item.load_suggestion
-                    ? `Carga: ${item.load_suggestion}`
-                    : '',
-                order_index: index,
-              });
-            }
-          });
-        }
-      });
-
-      if (itemsToInsert.length > 0) {
-        const { error: itemsError } = await supabase
-          .from('workout_exercises')
-          .insert(itemsToInsert);
-        if (itemsError) throw itemsError;
-      }
-
-      await get().fetchWorkoutsForPhase(trainingPlanId);
-    } catch (error) {
-      console.error('Error saving generated workouts:', error);
-      throw error;
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
-  generateWorkoutsForPhase: async (trainingPlanId, split, specialistId) => {
-    try {
-      const { data: plan } = await supabase
-        .from('training_plans')
-        .select('name')
-        .eq('id', trainingPlanId)
-        .single();
-
-      const goal = plan?.name || 'Hipertrofia';
-
-      if (get().exercises.length === 0) await get().fetchExercises();
-      const availableExercises = get().exercises;
-
-      const { plan: aiWorkouts } = await WorkoutAIService.generateWorkoutStructure(
-        split,
-        goal,
-        'Intermediário',
-        availableExercises
-      );
-
-      await get().saveGeneratedWorkouts(trainingPlanId, aiWorkouts, specialistId);
-    } catch (error) {
-      console.error('Error generating workouts:', error);
-      throw error;
-    }
-  },
-
-  generateWorkoutsForPeriodization: async (
-    _periodizationId,
-    phases,
-    split,
-    specialistId,
-    agreedExercises
-  ) => {
-    try {
-      set({ isLoading: true });
-
-      const goal = phases[0]?.name || 'Hipertrofia';
-
-      if (get().exercises.length === 0) await get().fetchExercises();
-      const availableExercises = get().exercises;
-
-      const aiPhases = phases.map((p) => ({
-        name: p.name,
-        focus: p.name,
-        weeks:
-          p.start_date && p.end_date
-            ? Math.round(
-                (new Date(p.end_date).getTime() - new Date(p.start_date).getTime()) /
-                  (7 * 24 * 60 * 60 * 1000)
-              ) || 4
-            : 4,
-      }));
-
-      const batchResult = await WorkoutAIService.generateBatchWorkoutPlan(
-        aiPhases,
-        split,
-        goal,
-        'Intermediário',
-        availableExercises,
-        agreedExercises
-          ? `Exercícios exigidos pelo aluno: ${agreedExercises.join(', ')}`
-          : undefined
-      );
-
-      const savePromises = phases.map((phase, i) => {
-        const aiResponse = batchResult[i];
-        if (aiResponse?.plan) {
-          return get().saveGeneratedWorkouts(phase.id, aiResponse.plan, specialistId);
-        }
-        return Promise.resolve();
-      });
-
-      await Promise.all(savePromises);
-    } catch (error) {
-      console.error('Error in batch generation:', error);
-      throw error;
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
   addWorkoutItems: async (workoutId, items) => {
     try {
       await workoutsService.addExercisesToWorkout(
@@ -561,107 +337,6 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     }
   },
 
-  saveWorkoutSession: async (sessionData) => {
-    try {
-      if (useAuthStore.getState().isMasquerading) {
-        // Sem o objeto: `sessionData.notes` é o texto do aluno sobre a própria
-        // saúde, e log de desenvolvimento vaza para onde ninguém controla.
-        console.log('🎭 Masquerade Mode: sessão de treino não gravada');
-        return `masquerade-session-id-${Date.now()}`;
-      }
-
-      const session = await workoutsService.createWorkoutSession({
-        workout_id: sessionData.workoutId,
-        student_id: sessionData.studentId,
-        started_at: sessionData.startedAt,
-        completed_at: sessionData.completedAt,
-        intensity: sessionData.intensity,
-        notes: await notasSeConsentido(sessionData.studentId, sessionData.notes),
-        session_type: 'strength',
-      });
-
-      if (sessionData.items.length > 0) {
-        await workoutsService.saveSessionExercises(
-          session.id,
-          sessionData.items.map((item) => ({
-            workout_exercise_id: item.workoutExerciseId,
-            sets: item.sets,
-          }))
-        );
-      }
-
-      return session.id;
-    } catch (error) {
-      // Sem o objeto de erro: o do PostgREST pode carregar o payload da linha.
-      console.error('[workoutStore] falha ao salvar sessão de treino');
-      throw error;
-    }
-  },
-
-  saveCardioSession: async (sessionData) => {
-    try {
-      if (useAuthStore.getState().isMasquerading) {
-        console.log('🎭 Masquerade Mode: sessão de cardio não gravada');
-        return;
-      }
-
-      // Sem prescrição: cardio livre não vem de treino nenhum. Até a `0035` esta
-      // função criava uma linha sintética em `workouts` só para ter um id aqui —
-      // com `specialist_id` recebendo o id do **aluno**, o que produzia uma
-      // prescrição órfã por aluno e tornava impossível qualquer sessão de cardio
-      // aparecer nas telas que filtram por dono do treino.
-      const session = await workoutsService.createWorkoutSession({
-        workout_id: null,
-        student_id: sessionData.studentId,
-        started_at: sessionData.startedAt,
-        completed_at: sessionData.completedAt,
-        intensity: sessionData.intensity,
-        // Só o que o aluno digitou. A duração e as calorias moravam aqui dentro,
-        // numa string gerada, e sumiam no instante em que ele escrevia qualquer
-        // coisa — `notes || <resumo>` significa que os dois nunca coexistiram.
-        notes: await notasSeConsentido(sessionData.studentId, sessionData.notes),
-        session_type: 'cardio',
-        duration_seconds: sessionData.durationSeconds,
-        active_calories: Math.round(sessionData.calories),
-        activity_name: sessionData.exerciseName,
-        // Execução de contrato, como duração e calorias: atravessam sem passar
-        // por consentimento nenhum. Exigi-lo aqui desligaria o acompanhamento
-        // de desempenho de quem revoga dado de saúde.
-        distance_meters: sessionData.distanceMeters ?? null,
-        avg_pace_seconds_per_km: sessionData.avgPaceSecondsPerKm ?? null,
-        avg_cadence_spm: sessionData.avgCadenceSpm ?? null,
-      });
-
-      // A FC é a outra metade, e é Art. 11: tabela própria, e só com
-      // consentimento vigente. Gravada depois da sessão porque depende do id
-      // dela — e omitida sem estrago quando não há batimento ou não há
-      // autorização, do mesmo modo que `notes`.
-      const batimento = await batimentoSeConsentido(
-        sessionData.studentId,
-        sessionData.avgHeartRate ?? null
-      );
-      if (batimento !== null) {
-        try {
-          await workoutsService.saveSessionHeartRate(session.id, batimento);
-        } catch {
-          // A sessão já está gravada. Deixar esta falha subir diria ao aluno
-          // que o treino não foi salvo, e a tentativa seguinte criaria uma
-          // segunda linha — perder a corrida inteira por causa do batimento é
-          // pior que perder o batimento.
-          //
-          // Sem o objeto de erro: o do PostgREST carrega o payload, e aqui o
-          // payload é dado de saúde.
-          console.error('[workoutStore] sessão gravada, FC média não');
-        }
-      }
-    } catch (error) {
-      // Sem o objeto de erro: o do PostgREST pode carregar o payload da linha,
-      // e `notes` é dado sensível de saúde.
-      console.error('[workoutStore] falha ao salvar sessão de cardio');
-      throw error;
-    }
-  },
-
   fetchLastWorkoutSession: async (studentId) => {
     try {
       const { data, error } = await supabase
@@ -676,34 +351,6 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       return data;
     } catch (error) {
       console.error('Error fetching last workout session:', error);
-      return null;
-    }
-  },
-
-  fetchWorkoutSessionDetails: async (workoutId, studentId) => {
-    try {
-      const { data, error } = await supabase
-        .from('workout_sessions')
-        // Série a série, com carga e repetição executadas — o que a análise de
-        // progressão precisa e o antigo `sets_data` não entregava em formato
-        // consultável.
-        .select(`
-          id, workout_id, student_id, started_at, completed_at, intensity, notes,
-          exercises:workout_session_exercises(
-            workout_exercise_id,
-            sets:workout_session_sets(set_index, reps_actual, weight_actual, completed)
-          )
-        `)
-        .eq('workout_id', workoutId)
-        .eq('student_id', studentId)
-        .order('completed_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error;
-      return data as WorkoutSession | null;
-    } catch (error) {
-      console.error('Error fetching workout session details:', error);
       return null;
     }
   },

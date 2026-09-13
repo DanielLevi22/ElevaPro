@@ -23,7 +23,7 @@ const SESSAO = 'sessao-1';
 function sessaoGravada(over: Record<string, unknown> = {}) {
   return {
     id: SESSAO,
-    intensity: 7,
+    perceived_exertion: 7,
     notes: 'era o ombro esquerdo',
     feedback_edited_at: '2026-08-28T12:00:00Z',
     ...over,
@@ -38,13 +38,14 @@ beforeEach(() => {
 });
 
 describe('updateSessionFeedback — o direito de correção (Art. 18, III)', () => {
-  it('corrige o RPE e a observação da própria sessão', async () => {
-    await useWorkoutLogStore
-      .getState()
-      .updateSessionFeedback(SESSAO, ALUNO, { intensity: 7, notes: 'era o ombro esquerdo' });
+  it('corrige a PSE e a observação da própria sessão', async () => {
+    await useWorkoutLogStore.getState().updateSessionFeedback(SESSAO, ALUNO, {
+      perceived_exertion: 7,
+      notes: 'era o ombro esquerdo',
+    });
 
     expect(mockUpdateSessionFeedback).toHaveBeenCalledWith(SESSAO, {
-      intensity: 7,
+      perceived_exertion: 7,
       notes: 'era o ombro esquerdo',
     });
   });
@@ -54,16 +55,17 @@ describe('updateSessionFeedback — o direito de correção (Art. 18, III)', () 
       logs: [
         {
           id: SESSAO,
-          intensity: 8,
+          perceived_exertion: 8,
           notes: 'senti dor no ombro direito',
           feedback_edited_at: null,
         },
       ] as never,
     });
 
-    await useWorkoutLogStore
-      .getState()
-      .updateSessionFeedback(SESSAO, ALUNO, { intensity: 7, notes: 'era o ombro esquerdo' });
+    await useWorkoutLogStore.getState().updateSessionFeedback(SESSAO, ALUNO, {
+      perceived_exertion: 7,
+      notes: 'era o ombro esquerdo',
+    });
 
     const log = useWorkoutLogStore.getState().logs[0];
     expect(log.notes).toBe('era o ombro esquerdo');
@@ -86,22 +88,22 @@ describe('TRAVA LGPD — o que a correção não pode fazer', () => {
    * Art. 11, I — o texto livre é dado sensível de saúde e só é gravado com
    * consentimento vigente. É onde o aluno escreve "senti dor no ombro".
    *
-   * Séries, cargas, datas e RPE são execução de contrato (Art. 7°, V) e não
-   * dependem de consentimento — por isso o RPE passa e o texto não. Tratar os
+   * Séries, cargas, datas e PSE são execução de contrato (Art. 7°, V) e não
+   * dependem de consentimento — por isso a PSE passa e o texto não. Tratar os
    * dois sob a mesma decisão trataria medida de carga como relato clínico.
    *
    * É isto que dá sentido ao "Agora não" do `HealthDataConsentGate`: sem esta
    * verificação, recusar seria um botão que não muda nada.
    */
-  it('não grava o texto corrigido sem consentimento vigente, mas grava o RPE', async () => {
+  it('não grava o texto corrigido sem consentimento vigente, mas grava a PSE', async () => {
     mockHasCollectionConsent.mockResolvedValue(false);
 
     await useWorkoutLogStore
       .getState()
-      .updateSessionFeedback(SESSAO, ALUNO, { intensity: 7, notes: 'texto novo' });
+      .updateSessionFeedback(SESSAO, ALUNO, { perceived_exertion: 7, notes: 'texto novo' });
 
     const [, patch] = mockUpdateSessionFeedback.mock.calls[0];
-    expect(patch.intensity).toBe(7);
+    expect(patch.perceived_exertion).toBe(7);
     expect(patch.notes).toBeNull();
     if (patch.notes === 'texto novo') {
       throw new Error(
@@ -120,7 +122,7 @@ describe('TRAVA LGPD — o que a correção não pode fazer', () => {
 
     await useWorkoutLogStore
       .getState()
-      .updateSessionFeedback(SESSAO, ALUNO, { intensity: 5, notes: 'texto novo' });
+      .updateSessionFeedback(SESSAO, ALUNO, { perceived_exertion: 5, notes: 'texto novo' });
 
     expect(mockUpdateSessionFeedback.mock.calls[0][1].notes).toBeNull();
   });
@@ -151,7 +153,7 @@ describe('TRAVA LGPD — o que a correção não pode fazer', () => {
   it('nunca envia coluna de medida no patch de correção', async () => {
     await useWorkoutLogStore
       .getState()
-      .updateSessionFeedback(SESSAO, ALUNO, { intensity: 7, notes: 'ok' });
+      .updateSessionFeedback(SESSAO, ALUNO, { perceived_exertion: 7, notes: 'ok' });
 
     const [, patch] = mockUpdateSessionFeedback.mock.calls[0];
     const proibidas = [
