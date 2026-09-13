@@ -9,8 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
+import { BotaoFixoNoRodape } from '@/components/ui/BotaoFixoNoRodape';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
@@ -44,7 +43,6 @@ interface TelaDeFeedbackProps {
 
 /** O meio da escala: nem leve nem puxado, até o aluno dizer. */
 const PSE_PADRAO = 5;
-const MARGEM_DO_FUNDO = 16;
 
 export function TelaDeFeedback({
   imagem,
@@ -69,7 +67,8 @@ export function TelaDeFeedback({
         imagem={imagem}
         folgaNoFim="botaoFixo"
         sobreposicao={
-          <BotaoDoRodape
+          <BotaoFixoNoRodape
+            icone="checkmark"
             rotulo={corrigindo ? 'Salvar correção' : 'Salvar e finalizar'}
             onPress={() => {
               if (!salvando) onSalvar(pse, notas);
@@ -158,28 +157,5 @@ function Observacoes({ notas, onMudar }: { notas: string; onMudar: (notas: strin
         className="min-h-[3.75rem] text-[0.84375rem] leading-snug text-foreground"
       />
     </Vidro>
-  );
-}
-
-/** O botão fixo do rodapé. A sessão é imersiva: sem tab bar, ele desce ao fundo. */
-export function BotaoDoRodape({
-  rotulo,
-  icone = 'checkmark',
-  onPress,
-}: {
-  rotulo: string;
-  icone?: 'checkmark' | 'share-outline';
-  onPress: () => void;
-}) {
-  const escalar = useEscala();
-  const insets = useSafeAreaInsets();
-
-  return (
-    <View
-      className="absolute left-[1.125rem] right-[1.125rem]"
-      style={{ bottom: insets.bottom + escalar(MARGEM_DO_FUNDO) }}
-    >
-      <BotaoDeDestaque rotulo={rotulo} icone={icone} onPress={onPress} />
-    </View>
   );
 }

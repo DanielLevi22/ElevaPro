@@ -58,7 +58,7 @@ export function ExecucaoDoTreino({
   const aSeguir = sessao.itens.filter((i) => i.id !== atual?.id && !concluido(i.id, i.sets));
 
   return (
-    <TelaDeVidroComFoto imagem={fotoDoGrupo(treino.muscle_group)} folgaNoFim="nenhuma">
+    <TelaDeVidroComFoto imagem={fotoDoGrupo(treino.muscle_group)}>
       <TopoDaSessao
         titulo={treino.title}
         tempo={formatarDuracao((agora - (sessao.iniciadaEm ?? agora)) / 1000)}

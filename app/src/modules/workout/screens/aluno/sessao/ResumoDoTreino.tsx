@@ -8,6 +8,7 @@ import {
 } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
+import { BotaoFixoNoRodape } from '@/components/ui/BotaoFixoNoRodape';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { Chip } from '@/components/ui/Chip';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
@@ -15,7 +16,6 @@ import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import { useCores, useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
-import { BotaoDoRodape } from '../../../components/sessao/TelaDeFeedback';
 import { useContextoDoTreino } from '../../../hooks/useContextoDoTreino';
 
 /**
@@ -53,7 +53,7 @@ export function ResumoDoTreino({
       imagem={fotoDoGrupo(treino.muscle_group)}
       folgaNoFim="botaoFixo"
       sobreposicao={
-        <BotaoDoRodape rotulo="Compartilhar" icone="share-outline" onPress={onCompartilhar} />
+        <BotaoFixoNoRodape rotulo="Compartilhar" icone="share-outline" onPress={onCompartilhar} />
       }
     >
       <View className="flex-row justify-between">

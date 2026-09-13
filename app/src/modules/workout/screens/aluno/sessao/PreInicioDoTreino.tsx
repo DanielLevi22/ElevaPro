@@ -57,7 +57,6 @@ export function PreInicioDoTreino({
   return (
     <TelaDeVidroComFoto
       imagem={fotoDoGrupo(treino.muscle_group)}
-      folgaNoFim="nenhuma"
       centralizado
       sobreposicao={
         // Fora da rolagem, no mesmo lugar do topo das outras telas (`pt-14`,

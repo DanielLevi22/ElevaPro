@@ -40,7 +40,7 @@ export function DescansoDoTreino({
   const progresso = progressoDaSessao(sessao);
 
   return (
-    <TelaDeVidroComFoto imagem={fotoDoGrupo(treino.muscle_group)} folgaNoFim="nenhuma">
+    <TelaDeVidroComFoto imagem={fotoDoGrupo(treino.muscle_group)}>
       <TopoDaSessao
         titulo={treino.title}
         tempo={formatarDuracao((agora - (sessao.iniciadaEm ?? agora)) / 1000)}

@@ -1,6 +1,6 @@
 import type { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import { usePathname } from 'expo-router';
+import { useGlobalSearchParams, usePathname } from 'expo-router';
 // O expo-router publica o compat como `expo-router/react-navigation`, mas sem
 // shim para os subpacotes — o de bottom-tabs só resolve pelo caminho de build.
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
@@ -9,6 +9,7 @@ import { Platform, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../modules/auth/store/authStore';
+import { ehVisaoDoAluno, modoDaRota } from '../../modules/workout/routes/visaoDoAluno';
 import { type AcaoRapida, BotaoDeAcoes } from './BotaoDeAcoes';
 import { ItemDaAba } from './ItemDaAba';
 import { isImmersiveRoute } from './immersiveRoutes';
@@ -58,6 +59,7 @@ const INTENSIDADE_DO_BLUR = 24;
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
+  const { mode } = useGlobalSearchParams<{ mode?: string }>();
   const { accountType, isMasquerading } = useAuthStore();
   const arrastando = useSharedValue(0);
   const estiloDasAbas = useAnimatedStyle(() => ({
@@ -73,7 +75,12 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const opcoes = descriptors[state.routes[state.index].key].options as {
     tabBarStyle?: { display?: string };
   };
-  if (opcoes.tabBarStyle?.display === 'none' || isImmersiveRoute(pathname)) return null;
+  // Sem o especialista mascarado: a rota do detalhe também não o trata como
+  // aluno, e ele vê a tela antiga, que precisa da barra escondida.
+  const visaoDoAluno = ehVisaoDoAluno(accountType, modoDaRota(mode));
+  if (opcoes.tabBarStyle?.display === 'none' || isImmersiveRoute(pathname, visaoDoAluno)) {
+    return null;
+  }
 
   const aba = (rota: Route) => (
     <ItemDaAba
