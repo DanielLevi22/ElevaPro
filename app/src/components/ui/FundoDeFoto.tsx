@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useColorScheme } from 'nativewind';
-import { Dimensions, Image, type ImageSourcePropType, View } from 'react-native';
-import { useCores } from '@/shared/design';
+import { Image, type ImageSourcePropType, useWindowDimensions, View } from 'react-native';
+import { comOpacidade, useCores } from '@/shared/design';
 
 /**
  * A faixa de foto no topo, com o véu que a funde ao fundo da tela.
@@ -76,7 +76,10 @@ export function FundoDeFoto({ imagem, receita }: FundoDeFotoProps) {
   const { colorScheme } = useColorScheme();
   const tema = colorScheme === 'dark' ? 'escuro' : 'claro';
 
-  const altura = Math.round(Dimensions.get('window').height * receita.fracao[tema]);
+  const { height: alturaDaTela } = useWindowDimensions();
+  // Fração da **tela**, e não do pai: no `Hero` o pai tem a altura do conteúdo,
+  // e uma classe `h-[%]` mediria contra ele. Por isso é medida, e não classe.
+  const altura = Math.round(alturaDaTela * receita.fracao[tema]);
   const paradas = receita.veu[tema];
 
   return (
@@ -87,24 +90,15 @@ export function FundoDeFoto({ imagem, receita }: FundoDeFotoProps) {
         // `map` devolve `string[]`. A receita sempre tem três paradas ou mais,
         // então a asserção descreve o que é verdade e não esconde um risco.
         colors={
-          paradas.map((p) => comAlfa(cores.background, p.opacidade)) as [string, string, string]
+          paradas.map((p) => comOpacidade(cores.background, p.opacidade)) as [
+            string,
+            string,
+            string,
+          ]
         }
         locations={paradas.map((p) => p.posicao) as [number, number, number]}
         className="absolute inset-0"
       />
     </View>
   );
-}
-
-const CANAL_CHEIO = 255;
-
-/**
- * Cor de token mais opacidade, em oito dígitos, que é a forma que o React
- * Native entende. Mora aqui porque só o véu precisa dela.
- */
-function comAlfa(hex: string, alfa: number): string {
-  const canal = Math.round(alfa * CANAL_CHEIO)
-    .toString(16)
-    .padStart(2, '0');
-  return `${hex}${canal}`;
 }

@@ -68,17 +68,9 @@ const VOLTA_COMPLETA = 100;
 export function Anel({ valor, meta, rotulo, sub, tamanho = TAMANHO_PADRAO, cor }: AnelProps) {
   const cores = useCores();
   const escalar = useEscala();
-
   const lado = escalar(tamanho);
-  const espessura = escalar(ESPESSURA);
-  const raio = (lado - espessura) / 2;
-  const perimetro = 2 * Math.PI * raio;
-  const preenchido = (fracaoPreenchida(valor, meta) / VOLTA_COMPLETA) * perimetro;
   // A tela do SVG cresce para caber o brilho, e o anel continua ocupando `lado`.
   const margem = escalar(SANGRIA_DO_BRILHO);
-  const tela = lado + 2 * margem;
-  const centro = tela / 2;
-  const traco = cor ?? cores.primary;
 
   return (
     <View
@@ -89,8 +81,8 @@ export function Anel({ valor, meta, rotulo, sub, tamanho = TAMANHO_PADRAO, cor }
     >
       {/* O traço nasce às três horas; girar um quarto de volta o leva ao topo. */}
       <Svg
-        width={tela}
-        height={tela}
+        width={lado + 2 * margem}
+        height={lado + 2 * margem}
         style={{
           position: 'absolute',
           top: -margem,
@@ -98,37 +90,10 @@ export function Anel({ valor, meta, rotulo, sub, tamanho = TAMANHO_PADRAO, cor }
           transform: [{ rotate: '-90deg' }],
         }}
       >
-        {CAMADAS_DO_BRILHO.map(([meiaLargura, opacidade]) => (
-          <Circle
-            key={meiaLargura}
-            cx={centro}
-            cy={centro}
-            r={raio}
-            fill="none"
-            stroke={traco}
-            strokeOpacity={opacidade}
-            strokeWidth={escalar(meiaLargura * 2)}
-            strokeLinecap="round"
-            strokeDasharray={`${preenchido} ${perimetro}`}
-          />
-        ))}
-        <Circle
-          cx={centro}
-          cy={centro}
-          r={raio}
-          fill="none"
-          stroke={cores.glassStrong}
-          strokeWidth={espessura}
-        />
-        <Circle
-          cx={centro}
-          cy={centro}
-          r={raio}
-          fill="none"
-          stroke={traco}
-          strokeWidth={espessura}
-          strokeLinecap="round"
-          strokeDasharray={`${preenchido} ${perimetro}`}
+        <Tracos
+          geometria={geometriaDoAnel(lado, margem, escalar(ESPESSURA), valor, meta)}
+          traco={cor ?? cores.primary}
+          trilho={cores.glassStrong}
         />
       </Svg>
 
@@ -146,6 +111,66 @@ export function Anel({ valor, meta, rotulo, sub, tamanho = TAMANHO_PADRAO, cor }
         ) : null}
       </View>
     </View>
+  );
+}
+
+interface GeometriaDoAnel {
+  centro: number;
+  raio: number;
+  espessura: number;
+  /** `strokeDasharray` do arco preenchido: comprimento e volta inteira. */
+  tracejado: string;
+}
+
+function geometriaDoAnel(
+  lado: number,
+  margem: number,
+  espessura: number,
+  valor: number,
+  meta: number
+): GeometriaDoAnel {
+  const raio = (lado - espessura) / 2;
+  const perimetro = 2 * Math.PI * raio;
+  const preenchido = (fracaoPreenchida(valor, meta) / VOLTA_COMPLETA) * perimetro;
+  return { centro: lado / 2 + margem, raio, espessura, tracejado: `${preenchido} ${perimetro}` };
+}
+
+/** Brilho por baixo, trilho, e o arco por cima — a ordem é a do `drop-shadow`. */
+function Tracos({
+  geometria,
+  traco,
+  trilho,
+}: {
+  geometria: GeometriaDoAnel;
+  traco: string;
+  trilho: string;
+}) {
+  const escalar = useEscala();
+  const { centro, raio, espessura, tracejado } = geometria;
+  const circulo = { cx: centro, cy: centro, r: raio, fill: 'none' } as const;
+
+  return (
+    <>
+      {CAMADAS_DO_BRILHO.map(([meiaLargura, opacidade]) => (
+        <Circle
+          key={meiaLargura}
+          {...circulo}
+          stroke={traco}
+          strokeOpacity={opacidade}
+          strokeWidth={escalar(meiaLargura * 2)}
+          strokeLinecap="round"
+          strokeDasharray={tracejado}
+        />
+      ))}
+      <Circle {...circulo} stroke={trilho} strokeWidth={espessura} />
+      <Circle
+        {...circulo}
+        stroke={traco}
+        strokeWidth={espessura}
+        strokeLinecap="round"
+        strokeDasharray={tracejado}
+      />
+    </>
   );
 }
 

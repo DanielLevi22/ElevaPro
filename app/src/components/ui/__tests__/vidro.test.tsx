@@ -32,11 +32,23 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   default: () => ({ width: 390, height: 800, scale: 3, fontScale: 1 }),
 }));
 
+/**
+ * Os nativos viram `View` com `testID`, para as consultas serem por id e não
+ * por tipo — tipo em string exigia um cast em cada consulta.
+ */
+function mockNativo(testID: string) {
+  const { createElement } = require('react');
+  const { View } = require('react-native');
+  return (props: object) => createElement(View, { ...props, testID });
+}
 jest.mock('expo-blur', () => ({
-  BlurView: 'BlurView',
-  BlurTargetView: 'BlurTargetView',
+  BlurView: mockNativo('blur'),
+  BlurTargetView: mockNativo('alvo-do-blur'),
 }));
-jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
+jest.mock('expo-linear-gradient', () => ({ LinearGradient: mockNativo('gradiente') }));
+
+/** Blur e gradiente ficam atrás do conteúdo, fora da árvore de acessibilidade. */
+const OCULTOS = { includeHiddenElements: true };
 
 const escuro = coresDoTema('escuro');
 const OPACIDADE_DO_KIT_NO_ESCURO = 0.14;
@@ -167,24 +179,24 @@ describe('Vidro', () => {
     // inclinação e o brilho de canto deixaram a lateral direita visivelmente
     // diferente da esquerda — numa lista de dez linhas a assimetria vira o
     // defeito que se vê antes do efeito.
-    const { UNSAFE_getAllByType } = render(
+    const { getByTestId } = render(
       <Vidro>
         <Text>conteúdo</Text>
       </Vidro>
     );
-    const preenchimento = UNSAFE_getAllByType('LinearGradient' as never)[0];
+    const preenchimento = getByTestId('gradiente', OCULTOS);
 
     expect(preenchimento.props.start).toEqual({ x: 0.5, y: 0 });
     expect(preenchimento.props.end).toEqual({ x: 0.5, y: 1 });
   });
 
   it('acompanha o tema no tom do blur', () => {
-    const { UNSAFE_getByType, rerender } = render(
+    const { getByTestId, rerender } = render(
       <Vidro>
         <Text>conteúdo</Text>
       </Vidro>
     );
-    expect(UNSAFE_getByType('BlurView' as never).props.tint).toBe('dark');
+    expect(getByTestId('blur', OCULTOS).props.tint).toBe('dark');
 
     mockEsquema = 'light';
     rerender(
@@ -192,17 +204,17 @@ describe('Vidro', () => {
         <Text>conteúdo</Text>
       </Vidro>
     );
-    expect(UNSAFE_getByType('BlurView' as never).props.tint).toBe('light');
+    expect(getByTestId('blur', OCULTOS).props.tint).toBe('light');
   });
 
   it('no modo forte troca o gradiente de três paradas pelo trilho chapado', () => {
     // É o que o kit usa em trilho de progresso e fundo de ícone neutro.
-    const { UNSAFE_getAllByType } = render(
+    const { getByTestId } = render(
       <Vidro forte>
         <Text>conteúdo</Text>
       </Vidro>
     );
-    const preenchimento = UNSAFE_getAllByType('LinearGradient' as never)[0];
+    const preenchimento = getByTestId('gradiente', OCULTOS);
 
     expect(preenchimento.props.colors).toEqual([escuro.glassStrong, escuro.glassStrong]);
   });
@@ -230,7 +242,7 @@ describe('Vidro', () => {
     // deste teste punha o vidro dentro do alvo e passava; na tela o vidro mora
     // na rolagem, irmã do fundo, e ali o contexto chegava `null` nos vinte
     // cartões. O teste agora monta a forma da tela.
-    const { UNSAFE_getByType } = render(
+    const { getByTestId } = render(
       <AlvoDoVidro fundo={<Text>foto</Text>}>
         <Vidro>
           <Text>conteúdo</Text>
@@ -238,21 +250,21 @@ describe('Vidro', () => {
       </AlvoDoVidro>
     );
 
-    expect(UNSAFE_getByType('BlurView' as never).props.blurTarget).toBeTruthy();
+    expect(getByTestId('blur', OCULTOS).props.blurTarget).toBeTruthy();
   });
 
   it('não põe o vidro dentro do alvo que ele desfoca', () => {
     // A biblioteca nativa proíbe: o alvo não pode conter o vidro que o usa.
-    const { UNSAFE_getByType } = render(
+    const { getByTestId } = render(
       <AlvoDoVidro fundo={<Text>foto</Text>}>
         <Vidro>
           <Text>conteúdo</Text>
         </Vidro>
       </AlvoDoVidro>
     );
-    const alvo = UNSAFE_getByType('BlurTargetView' as never);
+    const alvo = getByTestId('alvo-do-blur', OCULTOS);
 
-    expect(alvo.findAllByType('BlurView' as never)).toHaveLength(0);
+    expect(alvo.findAll((no) => no.props.testID === 'blur')).toHaveLength(0);
   });
 
   it('não pinta fundo atrás do vidro, para o que está atrás atravessar', () => {

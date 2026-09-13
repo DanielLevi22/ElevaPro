@@ -76,7 +76,7 @@ module.exports = {
         },
         /**
          * A pilha de vidro do kit. `glass` é o preenchimento do meio, `top` e
-         * `bottom` são as pontas do gradiente de 160°, e `specular` é o brilho
+         * `bottom` são as pontas do gradiente vertical, e `specular` é o brilho
          * interno que dá espessura à borda. `strong` é trilho de progresso e
          * fundo de ícone neutro.
          */
@@ -91,8 +91,12 @@ module.exports = {
           DEFAULT: literal('specular'),
           bottom: literal('specular-bottom'),
         },
-        scrim: literal('scrim'),
         sombra: literal('sombra'),
+        /** Legenda sobre foto com véu preto: igual nos dois temas. */
+        'sobre-imagem': {
+          DEFAULT: literal('sobre-imagem'),
+          secundario: literal('sobre-imagem-secundario'),
+        },
         /** Cor por grandeza: a mesma no ícone, no anel e na barra da métrica. */
         metrica: {
           passos: comAlfa('metrica-passos'),

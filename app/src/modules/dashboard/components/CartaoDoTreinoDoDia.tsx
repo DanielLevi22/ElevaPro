@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image, type ImageSourcePropType, Text, TouchableOpacity, View } from 'react-native';
-import { coresDoTema, useEscala } from '@/shared/design';
+import { useCores, useEscala } from '@/shared/design';
 
 /**
  * O treino do dia, sobre a foto do grupo muscular.
@@ -23,19 +23,7 @@ interface CartaoDoTreinoDoDiaProps {
   onPress: () => void;
 }
 
-const ALTURA = 164;
 const TAMANHO_DO_ICONE = 13;
-
-/** Preto quase transparente no topo, quase opaco no pé: o texto fica no pé. */
-const VEU = ['rgba(0, 0, 0, 0.1)', 'rgba(0, 0, 0, 0.82)'] as const;
-
-/**
- * A tinta deste cartão é branca **nos dois temas**, porque o véu é preto nos
- * dois: ele é imagem com legenda, e não faixa que se funde à tela. Vem do token
- * do tema escuro em vez de um `#ffffff` à mão — é o mesmo valor, e continua
- * dentro do sistema.
- */
-const TINTA = coresDoTema('escuro').onHero;
 
 export function CartaoDoTreinoDoDia({
   titulo,
@@ -46,6 +34,9 @@ export function CartaoDoTreinoDoDia({
   onPress,
 }: CartaoDoTreinoDoDiaProps) {
   const escalar = useEscala();
+  // Os tokens de imagem são iguais nos dois temas: o véu é preto sempre, então
+  // a legenda é branca sempre (ver `sobreImagem` em `tokens.ts`).
+  const cores = useCores();
 
   return (
     <TouchableOpacity
@@ -53,11 +44,14 @@ export function CartaoDoTreinoDoDia({
       activeOpacity={0.9}
       accessibilityRole="button"
       accessibilityLabel={`Treino do dia: ${titulo}`}
-      className="overflow-hidden rounded-2xl"
-      style={{ height: escalar(ALTURA) }}
+      // 164 do kit, em rem.
+      className="h-[10.25rem] overflow-hidden rounded-2xl"
     >
       <Image source={imagem} resizeMode="cover" className="absolute h-full w-full" />
-      <LinearGradient colors={VEU} className="absolute inset-0" />
+      <LinearGradient
+        colors={[cores.veuDaImagemTopo, cores.veuDaImagemBase]}
+        className="absolute inset-0"
+      />
 
       <View className="flex-1 justify-end p-4">
         <View className="mb-2 self-start rounded-full bg-primary px-2.5 py-1">
@@ -66,19 +60,29 @@ export function CartaoDoTreinoDoDia({
           </Text>
         </View>
 
-        <Text className="text-h2 font-bold tracking-tight text-white">{titulo}</Text>
+        <Text className="text-h2 font-bold tracking-tight text-sobre-imagem">{titulo}</Text>
 
         <View className="mt-1 flex-row items-center gap-3.5">
           {exercicios ? (
             <View className="flex-row items-center gap-1.5">
-              <Ionicons name="barbell" size={escalar(TAMANHO_DO_ICONE)} color={TINTA} />
-              <Text className="text-micro text-white/85">{exercicios} exercícios</Text>
+              <Ionicons
+                name="barbell"
+                size={escalar(TAMANHO_DO_ICONE)}
+                color={cores.sobreImagemSecundario}
+              />
+              <Text className="text-micro text-sobre-imagem-secundario">
+                {exercicios} exercícios
+              </Text>
             </View>
           ) : null}
           {minutos ? (
             <View className="flex-row items-center gap-1.5">
-              <Ionicons name="time-outline" size={escalar(TAMANHO_DO_ICONE)} color={TINTA} />
-              <Text className="text-micro text-white/85">~{minutos} min</Text>
+              <Ionicons
+                name="time-outline"
+                size={escalar(TAMANHO_DO_ICONE)}
+                color={cores.sobreImagemSecundario}
+              />
+              <Text className="text-micro text-sobre-imagem-secundario">~{minutos} min</Text>
             </View>
           ) : null}
         </View>

@@ -1,5 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { AccountType, Profile, ProfileWithServices, ServiceType } from "../types/auth.types";
+import type {
+  AccountType,
+  Profile,
+  ProfileSummary,
+  ProfileWithServices,
+  ServiceType,
+} from "../types/auth.types";
 
 export interface SignUpSpecialistParams {
   email: string;
@@ -138,6 +144,23 @@ export const createAuthService = (supabase: SupabaseClient) => ({
 
     if (error) return null;
     return data as Profile;
+  },
+
+  /**
+   * Só o que a tela desenha da identidade, para quem não precisa da linha toda.
+   *
+   * @example
+   * const perfil = await createAuthService(supabase).getProfileSummary(user.id);
+   */
+  getProfileSummary: async (userId: string): Promise<ProfileSummary | null> => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return data as ProfileSummary;
   },
 
   getProfileWithServices: async (userId: string): Promise<ProfileWithServices | null> => {
