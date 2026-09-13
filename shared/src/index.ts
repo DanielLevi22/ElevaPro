@@ -18,6 +18,7 @@ export * from "./services/gamification.service";
 export * from "./services/health.service";
 export * from "./services/nutrition.service";
 export * from "./services/students.service";
+export type { CicloDoAluno } from "./services/workouts/ciclos";
 export * from "./services/workouts.service";
 export * from "./technique/agachamento";
 export * from "./technique/diagnostico";

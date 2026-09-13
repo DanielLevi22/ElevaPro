@@ -7,6 +7,7 @@ import type {
   UpdateWorkoutInput,
   Workout,
 } from "../types/workouts.types";
+import { criarServicoDeCiclos } from "./workouts/ciclos";
 import { criarServicoDeHistorico } from "./workouts/historico";
 import { criarServicoDePeriodizacoes } from "./workouts/periodizacoes";
 import { criarServicoDeSessoes } from "./workouts/sessoes";
@@ -22,6 +23,7 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
   ...criarServicoDePeriodizacoes(supabase),
   ...criarServicoDeSessoes(supabase),
   ...criarServicoDeHistorico(supabase),
+  ...criarServicoDeCiclos(supabase),
   // ── Exercises ──────────────────────────────────────────────────────────────
 
   /**

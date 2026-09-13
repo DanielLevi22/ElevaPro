@@ -239,3 +239,23 @@ export function dataCurtaDoInstante(iso: string): string {
 export function intervaloCurto(inicio: string, fim: string): string {
   return `${dataCurta(inicio)} – ${dataCurta(fim)}`;
 }
+
+/**
+ * O período de um ciclo na lista de periodizações.
+ *
+ * Um ciclo que ainda não começou diz quando começa ("a partir de 21 out"); os
+ * outros, os meses de ponta a ponta, com o ano uma vez quando é o mesmo ("jan –
+ * abr 2026") e nas duas pontas quando não é ("nov 2025 – fev 2026").
+ *
+ * @example periodoDoCiclo("2026-01-05", "2026-04-20", new Date()) // "jan – abr 2026"
+ */
+export function periodoDoCiclo(inicio: string, fim: string, hoje: Date): string {
+  const comeco = dataLocal(inicio);
+  if (comeco.getTime() > hoje.getTime()) return `a partir de ${dataCurta(inicio)}`;
+  const final = dataLocal(fim);
+  const [mesInicio, mesFim] = [MESES[comeco.getMonth()], MESES[final.getMonth()]];
+  if (comeco.getFullYear() === final.getFullYear()) {
+    return `${mesInicio} – ${mesFim} ${final.getFullYear()}`;
+  }
+  return `${mesInicio} ${comeco.getFullYear()} – ${mesFim} ${final.getFullYear()}`;
+}

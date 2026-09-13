@@ -3,6 +3,7 @@ import {
   concluidosNaSemana,
   dataCurtaDoInstante,
   intervaloCurto,
+  periodoDoCiclo,
   progressoDoCiclo,
   proximoTreino,
   situacaoDaFase,
@@ -196,5 +197,23 @@ describe("dataCurtaDoInstante", () => {
   it("escreve o instante no dia local, e não no dia UTC", () => {
     const local = new Date(2026, 7, 12, 22, 0);
     expect(dataCurtaDoInstante(local.toISOString())).toBe("12 ago");
+  });
+});
+
+describe("periodoDoCiclo", () => {
+  const hoje = new Date(2026, 8, 13);
+
+  it("escreve os meses de ponta a ponta, com o ano uma vez quando é o mesmo", () => {
+    expect(periodoDoCiclo("2026-01-05", "2026-04-20", hoje)).toBe("jan – abr 2026");
+  });
+
+  it("escreve o ano nas duas pontas quando o ciclo atravessa a virada", () => {
+    expect(periodoDoCiclo("2025-11-03", "2026-02-23", hoje)).toBe("nov 2025 – fev 2026");
+  });
+
+  // Um ciclo planejado ainda não tem "de quando até quando" que interesse: o
+  // aluno quer saber quando começa.
+  it("diz quando começa o ciclo que ainda não começou", () => {
+    expect(periodoDoCiclo("2026-10-21", "2026-12-30", hoje)).toBe("a partir de 21 out");
   });
 });

@@ -14,7 +14,8 @@ import { BotaoRedondo } from './BotaoRedondo';
 interface CabecalhoSobreFotoProps {
   sobrelinha: string;
   titulo: string;
-  onVoltar: () => void;
+  /** Sem ele não há botão: a tela de entrada de uma aba não tem para onde voltar. */
+  onVoltar?: () => void;
   /** O botão da direita, quando a tela tem ação. */
   direita?: ReactNode;
 }
@@ -27,7 +28,7 @@ export function CabecalhoSobreFoto({
 }: CabecalhoSobreFotoProps) {
   return (
     <View className="flex-row items-center gap-3">
-      <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={onVoltar} />
+      {onVoltar ? <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={onVoltar} /> : null}
       <View className="min-w-0 flex-1">
         <Text
           numberOfLines={1}
