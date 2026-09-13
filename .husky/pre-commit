@@ -75,6 +75,11 @@ npm run api:check-auth
 # que o app nao esta configurado, com o arquivo de ambiente certo no lugar.
 npm run app:check-env
 
+# ── Fronteira entre módulos ───────────────────────────────────────────────────
+# O guarda existia e não rodava em lugar nenhum: a tela inicial da #289 passou
+# com quatro imports de módulo para módulo. Catraca sobre o baseline existente.
+npm run app:check-modules
+
 # ── Cor escrita à mão ─────────────────────────────────────────────────────────
 # A regra de usar só token do design system existia no CLAUDE.md e foi ignorada
 # 685 vezes, porque nada a verificava. Catraca: só o arquivo que o commit toca.

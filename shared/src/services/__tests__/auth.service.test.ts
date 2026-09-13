@@ -138,6 +138,29 @@ describe("authService — perfil", () => {
   });
 });
 
+describe("authService — resumo do perfil", () => {
+  // A tela inicial usava `select("*")` para mostrar nome e avatar: trazia email,
+  // papel e status para o aparelho sem motivo. Minimização (LGPD, Art. 6°, III)
+  // é pedir só o que a tela desenha.
+  it("pede só id, nome e avatar, e não a linha inteira", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({
+      data: { id: "u1", full_name: "Ana", avatar_url: null },
+    });
+
+    const perfil = await createAuthService(supabase).getProfileSummary("u1");
+
+    expect(chamadas[0].tabela).toBe("profiles");
+    expect(chamadas[0].select).toBe("id, full_name, avatar_url");
+    expect(chamadas[0].filtros).toEqual({ id: "u1" });
+    expect(perfil).toEqual({ id: "u1", full_name: "Ana", avatar_url: null });
+  });
+
+  it("devolve null quando o perfil não existe, em vez de lançar", async () => {
+    const { supabase } = criarSupabaseFake({ data: null });
+    expect(await createAuthService(supabase).getProfileSummary("u1")).toBeNull();
+  });
+});
+
 describe("authService — definir tipo de conta", () => {
   it("manda o papel pela RPC do servidor", async () => {
     const { supabase, rpcs } = criarSupabaseFake({});

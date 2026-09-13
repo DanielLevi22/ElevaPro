@@ -21,13 +21,25 @@ interface BlocoDeMetricaProps {
   /** Some quando a grandeza já está no valor, como "7h20" de sono. */
   unidade?: string;
   legenda: string;
+  /**
+   * Aviso curto sobre a origem do número, ao lado do ícone — "Simulado".
+   *
+   * Existe porque o bloco mostra o número grande e sem contexto: sem o selo, o
+   * dado de mentira que o app usa sem relógio conectado lia como leitura real.
+   */
+  selo?: string;
 }
 
-export function BlocoDeMetrica({ icon, tom, valor, unidade, legenda }: BlocoDeMetricaProps) {
+export function BlocoDeMetrica({ icon, tom, valor, unidade, legenda, selo }: BlocoDeMetricaProps) {
   return (
     <Vidro classeExterna="flex-1" className="p-3.5">
-      <View className="mb-3">
+      <View className="mb-3 flex-row items-start justify-between">
         <CaixaDeIcone icon={icon} tom={tom} tamanho="bloco" />
+        {selo ? (
+          <Text className="rounded-full bg-warning/15 px-1.5 py-0.5 text-[0.5625rem] font-bold uppercase tracking-wide text-warning">
+            {selo}
+          </Text>
+        ) : null}
       </View>
 
       <View className="flex-row items-baseline gap-[0.1875rem]">

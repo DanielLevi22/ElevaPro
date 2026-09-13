@@ -30,6 +30,32 @@ const CORES_POR_TEMA: Record<Tema, Cores> = {
   escuro: resolver('escuro'),
 };
 
+const CANAL_CHEIO = 255;
+const HEX_DE_SEIS = /^#[0-9a-f]{6}$/i;
+const RGB = /^rgb\((.+)\)$/;
+
+/**
+ * Uma cor de token com opacidade, na forma que o React Native aceita.
+ *
+ * Os tokens chegam em duas formas — hexadecimal, dos triplos HSL, e `rgb(...)`,
+ * dos literais — e quem compõe opacidade precisa das duas. Uma `rgba` já tem
+ * alfa, e compor por cima dele é ambíguo: por isso é recusada, e não adivinhada.
+ *
+ * @example comOpacidade(cores.background, 0.55) // '#07080a8c'
+ * @example comOpacidade(cores.sombra, 0.22)     // 'rgba(16, 18, 24, 0.22)'
+ */
+export function comOpacidade(cor: string, alfa: number): string {
+  if (HEX_DE_SEIS.test(cor)) {
+    const canal = Math.round(alfa * CANAL_CHEIO)
+      .toString(16)
+      .padStart(2, '0');
+    return `${cor}${canal}`;
+  }
+  const rgb = RGB.exec(cor);
+  if (rgb) return `rgba(${rgb[1]}, ${alfa})`;
+  throw new Error(`comOpacidade: cor "${cor}" não é #rrggbb nem rgb(r, g, b)`);
+}
+
 /** Cores de um tema específico, para quem precisa das duas ao mesmo tempo. */
 export function coresDoTema(tema: Tema): Cores {
   return CORES_POR_TEMA[tema];

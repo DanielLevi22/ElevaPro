@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { View } from 'react-native';
 import { cn } from '@/lib/utils';
-import { useCores, useEscala } from '@/shared/design';
+import { type NomeDeCor, useCores, useEscala } from '@/shared/design';
 
 /**
  * Ícone dentro de um quadrado tingido com a cor dele a 18%.
@@ -45,6 +45,20 @@ const FUNDO: Record<TomDeMetrica, string> = {
   marca: 'bg-primary/20',
 };
 
+/**
+ * O token do ícone por tom. Mapa, e não cascata de `if`: é a mesma tabela do
+ * `FUNDO` acima, na forma que a prop `color` aceita.
+ */
+const COR_DO_ICONE: Record<TomDeMetrica, NomeDeCor> = {
+  passos: 'metricaPassos',
+  calorias: 'metricaCalorias',
+  sono: 'metricaSono',
+  proteina: 'metricaProteina',
+  carboidrato: 'metricaCarboidrato',
+  gordura: 'metricaGordura',
+  marca: 'primary',
+};
+
 const CAIXA = {
   bloco: 'h-[2rem] w-[2rem] rounded-[0.625rem]',
   linha: 'h-[2.5rem] w-[2.5rem] rounded-[0.8125rem]',
@@ -61,19 +75,8 @@ export function CaixaDeIcone({ icon, tom, tamanho = 'linha' }: CaixaDeIconeProps
       <Ionicons
         name={icon}
         size={escalar(TAMANHO_DO_ICONE[tamanho])}
-        color={corDoTom(tom, cores)}
+        color={cores[COR_DO_ICONE[tom]]}
       />
     </View>
   );
-}
-
-/** O ícone não aceita classe: precisa da cor já resolvida. */
-export function corDoTom(tom: TomDeMetrica, cores: ReturnType<typeof useCores>): string {
-  if (tom === 'marca') return cores.primary;
-  if (tom === 'passos') return cores.metricaPassos;
-  if (tom === 'calorias') return cores.metricaCalorias;
-  if (tom === 'sono') return cores.metricaSono;
-  if (tom === 'proteina') return cores.metricaProteina;
-  if (tom === 'carboidrato') return cores.metricaCarboidrato;
-  return cores.metricaGordura;
 }

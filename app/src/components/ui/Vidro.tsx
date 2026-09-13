@@ -2,9 +2,9 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useColorScheme } from 'nativewind';
 import type { ReactNode } from 'react';
-import { Platform, StyleSheet, View, type ViewProps } from 'react-native';
+import { type BoxShadowValue, PixelRatio, Platform, View, type ViewProps } from 'react-native';
 import { cn } from '@/lib/utils';
-import { useCores } from '@/shared/design';
+import { type Cores, comOpacidade, useCores, useEscala } from '@/shared/design';
 import { METODO_DE_BLUR, useAlvoDoVidro } from './AlvoDoVidro';
 
 /**
@@ -16,15 +16,16 @@ import { METODO_DE_BLUR, useAlvoDoVidro } from './AlvoDoVidro';
  * | no desenho                      | aqui                                   |
  * |---------------------------------|----------------------------------------|
  * | `backdrop-filter: blur(26px)`   | `BlurView` do expo-blur                |
- * | `saturate(140%)`                | não tem equivalente — não reproduzido  |
- * | `linear-gradient(160deg, …)`    | `LinearGradient` com o vetor de 160°   |
+ * | `saturate(140%)`                | `filter: saturate(1.4)` (Android)      |
+ * | `linear-gradient(160deg, …)`    | `LinearGradient` vertical (ver abaixo) |
  * | `::before` radial de brilho     | removido — quebrava a simetria         |
  * | `inset 0 1px 0` (topo)          | uma linha de 1px no topo               |
  * | `inset 0 -1px 0` (base)         | uma linha de 1px na base               |
- * | duas sombras externas           | uma só — RN não empilha sombra         |
+ * | duas sombras externas           | as duas, com `boxShadow`               |
  *
- * Por isso ela é **um componente**, e não uma classe repetida: são cinco
- * camadas, e repeti-las à mão em cada cartão seria errar em pelo menos uma.
+ * Por isso ela é **um componente**, e não uma classe repetida: blur,
+ * preenchimento, borda, brilhos e sombra, e repeti-los à mão em cada cartão
+ * seria errar em pelo menos um.
  *
  * @example
  * <Vidro className="p-3.5">
@@ -46,81 +47,78 @@ interface VidroProps extends ViewProps {
   classeExterna?: string;
 }
 
-/**
- * O blur, e a correção de um diagnóstico meu.
- *
- * Eu medi o vidro contra o app chapado e achei 44% de frames perdidos contra
- * 3,85%, e concluí que o `BlurView` era o culpado. Estava errado: o `expo-blur`
- * nasce com `blurMethod: 'none'` no Android, e os métodos reais exigem a prop
- * `blurTarget` — sem ela o pacote volta para `'none'`. **O blur nunca esteve
- * ligado no Android.**
- *
- * O custo era das camadas: um `Svg` por cartão, com o mesmo `id` de gradiente
- * em todos. Tirando-o, o jank caiu a 23,53% e os percentis voltaram para junto
- * do baseline — p99 até melhor, 30 ms contra 38 ms.
- *
- *     medição              | janky  | p90   | p95   | p99
- *     app chapado          |  3,85% | 23 ms | 26 ms | 38 ms
- *     vidro com Svg/cartão | 44,44% | 42 ms | 48 ms | 61 ms
- *     vidro sem o Svg      | 23,53% | 26 ms | 29 ms | 30 ms
- *
- * Com o alvo declarado, o Android usa `dimezisBlurViewSdk31Plus`, que é o
- * `RenderEffect` — o caminho de GPU. Vale remedir depois desta mudança: agora
- * sim existe blur no Android para custar algo.
- */
-
-/** Intensidade do `BlurView` equivalente ao `blur(26px)` do desenho. */
-const INTENSIDADE = 26;
+/** Intensidade do `BlurView` no iOS, onde ela é a própria força do material. */
+const INTENSIDADE_NO_IOS = 26;
 
 /**
- * O relevo do vidro.
+ * O `backdrop-filter: blur(26px) saturate(140%)` do kit, no Android.
  *
- * O desenho empilha duas sombras — uma larga que levanta o cartão e uma curta
- * de contato. React Native aceita uma só, então fica a larga, que é a que dá o
- * relevo; a de contato se perde.
+ * Lido no código do expo-blur 57 e do Dimezis BlurView 3.1.0, que ele usa:
  *
- * `shadowRadius` é metade do blur do CSS: `blur(26px)` espalha 13 para cada
- * lado. No Android a sombra vem de `elevation`, que precisa de fundo pintado
- * para ter contorno — e o fundo aqui é translúcido de propósito. Por isso a
- * elevação é menor: sem ela o Android não desenha nada, e alta demais ela
- * aparece como um retângulo duro atrás do vidro.
- *
- * **Eu havia esquecido esta camada inteira.** O comentário da tabela acima
- * dizia "uma só" e o código não tinha nenhuma — era o que faltava para o
- * cartão parecer vidro em vez de painel chapado.
+ * - **raio**: o expo-blur passa `intensity / blurReductionFactor`, e o Dimezis
+ *   aplica `RenderEffect.createBlurEffect(raio × 4)` em pixel físico. Com os
+ *   padrões (26 / 4 × 4) isso era 26px — sigma de ~5dp, contra os ~30dp que o
+ *   `blur(26px)` pede na nossa escala. A foto atravessava o vidro quase nítida
+ *   e sujava os blocos de marrom;
+ * - **tinta**: o `tint` pinta `rgb(25,25,25)` com alfa `intensity × 0,69%`
+ *   por cima do blur. O kit não tem essa camada, e ela acinzentava o verde da
+ *   luz ambiente. Com `intensity` 1 ela vai a 1/255, e o raio passa a vir todo
+ *   do `blurReductionFactor`;
+ * - **saturação**: o `saturate(140%)` vira `filter: saturate(1.4)` na própria
+ *   view do blur — só o que é desfocado satura, como no CSS. É ele que faz a
+ *   luz verde ler como cor dentro do vidro, e não como cinza.
  */
+const SIGMA_DO_KIT = 26;
+const SATURACAO_DO_KIT = 1.4;
+const INTENSIDADE_NO_ANDROID = 1;
+/** O Dimezis multiplica o raio por este fator antes do `RenderEffect`. */
+const FATOR_DO_DIMEZIS = 4;
+
 /**
- * O relevo, e o fundo que o Android exige para desenhá-lo.
+ * O `blurReductionFactor` que entrega o sigma do kit no Android.
  *
- * `elevation` no Android só produz sombra se a View tiver **fundo pintado** —
- * com fundo transparente ele não tem contorno de onde tirar a sombra e não
- * desenha nada. Foi o que deixou o cartão branco sobre cinza-claro parecendo
- * uma caixa chapada no tema claro: o vidro estava certo, a profundidade não
- * existia.
+ * O Skia, que desenha o `RenderEffect`, converte raio em sigma por
+ * `sigma = raio × 0,57735 + 0,5`; a conta abaixo é o inverso.
  *
- * Pintar o invólucro com a cor de fundo da tela resolve, e custa pouco
- * justamente onde o blur já não existe: o preenchimento do vidro no claro é
- * 86% de branco, então o que estava atrás já não aparecia. No iOS, onde o blur
- * fica, o invólucro segue transparente — lá a sombra não depende de fundo.
+ * @example reducaoParaOSigma(30, 3) // ≈ 0,026 com intensity 1
  */
-function relevo(cor: string, opacidade: number, fundo: string) {
-  return Platform.select({
-    ios: {
-      shadowColor: cor,
-      shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: opacidade,
-      shadowRadius: 13,
-    },
-    default: { elevation: 6, backgroundColor: fundo },
-  });
+export function reducaoParaOSigma(sigmaEmDp: number, densidade: number): number {
+  const sigmaEmPx = sigmaEmDp * densidade;
+  const raioDoRenderEffect = (sigmaEmPx - 0.5) / 0.57735;
+  return INTENSIDADE_NO_ANDROID / (raioDoRenderEffect / FATOR_DO_DIMEZIS);
 }
 
 /**
- * A sombra do desenho não é só mais fraca no claro: é de outra cor. No escuro é
- * preto a 55%, no claro é o azulado `rgba(16,18,24,.22)` — sombra de objeto
- * claro sobre fundo claro não pode ser preta, ou lê como sujeira.
+ * O relevo do vidro: as duas sombras do kit, com `boxShadow`.
+ *
+ *     escuro: 0 10px 26px -10px rgba(0,0,0,.55), 0 2px 6px -2px rgba(0,0,0,.35)
+ *     claro:  0 8px 20px -10px rgba(16,18,24,.22), 0 2px 5px -2px rgba(16,18,24,.12)
+ *
+ * `boxShadow` é estilo nativo da New Architecture (Android 9+ e iOS), com a
+ * sintaxe e a semântica do CSS — várias sombras, espalhamento negativo, e
+ * **desenhada só fora da caixa**.
+ *
+ * Esse último ponto é o motivo da troca. Antes a sombra vinha de `elevation`,
+ * que no Android só existe com fundo pintado, e o invólucro era pintado com a
+ * cor da tela. Isso deixava o vidro **opaco no Android**: medido no aparelho, o
+ * miolo de dois blocos saía no mesmo `37,38,40` enquanto o vão entre eles tinha
+ * a luz ambiente em `17,25,8`. A luz aparecia só nas frestas, e virava mancha.
+ * Com `boxShadow` não há fundo nenhum, e o que está atrás atravessa o vidro.
+ *
+ * A sombra de contato, que o `elevation` perdia, volta: são as duas do kit.
  */
-const OPACIDADE_DA_SOMBRA = { escuro: 0.55, claro: 0.22 } as const;
+type Sombra = { y: number; blur: number; espalhamento: number; alfa: number };
+
+const SOMBRAS: Record<'escuro' | 'claro', Sombra[]> = {
+  escuro: [
+    { y: 10, blur: 26, espalhamento: -10, alfa: 0.55 },
+    { y: 2, blur: 6, espalhamento: -2, alfa: 0.35 },
+  ],
+  claro: [
+    { y: 8, blur: 20, espalhamento: -10, alfa: 0.22 },
+    { y: 2, blur: 5, espalhamento: -2, alfa: 0.12 },
+  ],
+};
 
 /**
  * O preenchimento desce reto, e o kit usa 160°.
@@ -137,39 +135,25 @@ const OPACIDADE_DA_SOMBRA = { escuro: 0.55, claro: 0.22 } as const;
 const INICIO_DO_GRADIENTE = { x: 0.5, y: 0 };
 const FIM_DO_GRADIENTE = { x: 0.5, y: 1 };
 
+/** Preenche o pai: `BlurView` não está no `cssInterop`, e `className` sumiria. */
+const PREENCHE = { position: 'absolute', inset: 0 } as const;
+
 export function Vidro({ children, forte = false, className, classeExterna, ...props }: VidroProps) {
   const cores = useCores();
-  const alvo = useAlvoDoVidro();
+  const escalar = useEscala();
   const { colorScheme } = useColorScheme();
   const escuro = colorScheme === 'dark';
 
   return (
     <View
-      style={relevo(
-        cores.sombra,
-        escuro ? OPACIDADE_DA_SOMBRA.escuro : OPACIDADE_DA_SOMBRA.claro,
-        cores.background
-      )}
+      style={{ boxShadow: sombrasDoKit(escuro, cores, escalar) }}
       className={cn('rounded-xl', classeExterna)}
     >
       <View
         className={cn('overflow-hidden rounded-xl border border-glass-border', className)}
         {...props}
       >
-        {/*
-          No iOS o blur não precisa de alvo. No Android sem alvo ele não
-          desfocaria nada, e renderizar a view por nada é custo puro.
-        */}
-        {Platform.OS === 'ios' || alvo ? (
-          <BlurView
-            intensity={INTENSIDADE}
-            tint={escuro ? 'dark' : 'light'}
-            blurMethod={METODO_DE_BLUR}
-            blurTarget={alvo ?? undefined}
-            style={StyleSheet.absoluteFill}
-          />
-        ) : null}
-
+        <CamadaDeBlur escuro={escuro} />
         <LinearGradient
           colors={
             forte
@@ -182,7 +166,9 @@ export function Vidro({ children, forte = false, className, classeExterna, ...pr
           className="absolute inset-0"
         />
 
-        {/* As duas linhas que no desenho são `inset box-shadow`. */}
+        {/* As duas linhas que no desenho são `inset box-shadow`. A de baixo só
+            no escuro: o `html.light .glass` do kit troca a lista de sombras e
+            deixa só a de cima — o token claro existe, e o kit não o desenha. */}
         <View className="absolute left-0 right-0 top-0 h-px bg-specular" />
         {escuro ? (
           <View className="absolute bottom-0 left-0 right-0 h-px bg-specular-bottom" />
@@ -192,6 +178,47 @@ export function Vidro({ children, forte = false, className, classeExterna, ...pr
       </View>
     </View>
   );
+}
+
+/**
+ * O blur de trás do vidro.
+ *
+ * No iOS ele não precisa de alvo. No Android, sem alvo não desfocaria nada, e
+ * montar a view por nada é custo puro — o vidro fica com o gradiente e a borda.
+ */
+function CamadaDeBlur({ escuro }: { escuro: boolean }) {
+  const escalar = useEscala();
+  const alvo = useAlvoDoVidro();
+  if (Platform.OS !== 'ios' && !alvo) return null;
+
+  return (
+    <BlurView
+      intensity={Platform.OS === 'ios' ? INTENSIDADE_NO_IOS : INTENSIDADE_NO_ANDROID}
+      blurReductionFactor={reducaoParaOSigma(escalar(SIGMA_DO_KIT), PixelRatio.get())}
+      tint={escuro ? 'dark' : 'light'}
+      blurMethod={METODO_DE_BLUR}
+      blurTarget={alvo ?? undefined}
+      style={[
+        PREENCHE,
+        Platform.OS === 'android' ? { filter: [{ saturate: SATURACAO_DO_KIT }] } : null,
+      ]}
+    />
+  );
+}
+
+/** As sombras do kit no tema, escaladas como o resto do desenho. */
+function sombrasDoKit(
+  escuro: boolean,
+  cores: Cores,
+  escalar: (medida: number) => number
+): BoxShadowValue[] {
+  return SOMBRAS[escuro ? 'escuro' : 'claro'].map((sombra) => ({
+    offsetX: 0,
+    offsetY: escalar(sombra.y),
+    blurRadius: escalar(sombra.blur),
+    spreadDistance: escalar(sombra.espalhamento),
+    color: comOpacidade(cores.sombra, sombra.alfa),
+  }));
 }
 
 export type { VidroProps };

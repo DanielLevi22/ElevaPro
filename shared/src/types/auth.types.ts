@@ -14,6 +14,14 @@ export interface Profile {
   created_at: string;
 }
 
+/**
+ * O perfil como a tela o mostra: nome e avatar.
+ *
+ * Existe para quem só desenha a identidade não trazer email, papel e status
+ * para o aparelho — é o que o `Profile` inteiro carrega.
+ */
+export type ProfileSummary = Pick<Profile, "id" | "full_name" | "avatar_url">;
+
 export interface SpecialistService {
   id: string;
   specialist_id: string;

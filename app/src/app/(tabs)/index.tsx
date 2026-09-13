@@ -1,22 +1,19 @@
 import { Text } from 'react-native';
-import { useAuthStore } from '@/auth';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
-import { PainelDoEspecialista } from '@/modules/dashboard/components/PainelDoEspecialista';
-import { useDadosDaHome } from '@/modules/dashboard/hooks/useDadosDaHome';
-import { HomeDoAluno } from '@/modules/dashboard/screens/HomeDoAluno';
+import { useDadosDaHome } from '@/hooks/useDadosDaHome';
+import { HomeDoAluno, PainelDoEspecialista } from '@/modules/dashboard';
 
 /**
  * A entrada do app, e só a escolha de qual delas.
  *
- * Eram 410 linhas com duas telas dentro. Agora os dados vêm de
- * `useDadosDaHome`, e cada papel tem a sua tela: o painel do especialista e a
- * home do aluno não compartilham nada além do arquivo em que moravam.
+ * Os dados vêm de `useDadosDaHome`, que junta cada módulo; cada papel tem a sua
+ * tela e recebe o seu recorte. O painel do especialista e a home do aluno não
+ * compartilham nada além do arquivo em que moravam.
  */
 export default function TelaInicial() {
-  const dados = useDadosDaHome();
-  const { accountType, isMasquerading } = useAuthStore();
+  const { accountType, isMasquerading, aluno, especialista } = useDadosDaHome();
 
-  if (dados.carregando && !dados.perfil && !accountType) {
+  if (aluno.carregando && !aluno.perfil && !accountType) {
     return (
       <ScreenLayout className="items-center justify-center">
         <Text className="text-corpo font-semibold text-muted-foreground">Carregando…</Text>
@@ -27,14 +24,14 @@ export default function TelaInicial() {
   if (accountType === 'specialist' && !isMasquerading) {
     return (
       <PainelDoEspecialista
-        isLoading={dados.carregando}
-        onRefresh={dados.recarregar}
-        profile={dados.perfil}
-        students={dados.students}
-        workouts={dados.workouts}
+        isLoading={especialista.carregando}
+        onRefresh={especialista.recarregar}
+        profile={especialista.perfil}
+        students={especialista.alunos}
+        workouts={especialista.treinos}
       />
     );
   }
 
-  return <HomeDoAluno dados={dados} />;
+  return <HomeDoAluno dados={aluno} />;
 }

@@ -101,9 +101,9 @@ type TokensLiterais = {
   heroChipBorder: CorLiteral;
   /**
    * A pilha de vidro. O kit aplica as sete juntas em todo cartão: um gradiente
-   * de 160° do topo ao pé, a borda, e o brilho especular de cima e de baixo que
-   * dá a espessura. `glassStrong` é o trilho de progresso e o fundo de ícone
-   * neutro.
+   * do topo ao pé (vertical aqui, 160° no kit — ver `Vidro.tsx`), a borda, e o
+   * brilho especular de cima e de baixo que dá a espessura. `glassStrong` é o
+   * trilho de progresso e o fundo de ícone neutro.
    *
    * Os dois temas são muito diferentes, e não inversos: no escuro o vidro é
    * quase transparente (7%), no claro é quase branco (86%).
@@ -115,13 +115,23 @@ type TokensLiterais = {
   glassBottom: CorLiteral;
   specular: CorLiteral;
   specularBottom: CorLiteral;
-  /** Véu sobre a foto do hero, na parada do meio. */
-  scrim: CorLiteral;
   /**
    * Cor da sombra do vidro. Muda de cor, e não só de força, entre os temas: no
    * claro ela é azulada, porque sombra preta sob objeto claro lê como sujeira.
    */
   sombra: CorLiteral;
+  /**
+   * Legenda sobre fotografia com véu preto — o cartão do treino do dia.
+   *
+   * **Iguais nos dois temas**, e é por isso que não são o `onHero`: o hero se
+   * funde à tela e inverte no claro; o cartão é imagem com legenda, e o véu é
+   * preto sempre. O kit escreve `#fff` e `rgba(255,255,255,.85)` à mão.
+   */
+  sobreImagem: CorLiteral;
+  sobreImagemSecundario: CorLiteral;
+  /** As pontas do `linear-gradient(rgba(0,0,0,.1), rgba(0,0,0,.82))` do kit. */
+  veuDaImagemTopo: CorLiteral;
+  veuDaImagemBase: CorLiteral;
 };
 
 export type Tema = 'claro' | 'escuro';
@@ -175,8 +185,11 @@ const escuro: Paleta = {
     glassBottom: 'rgba(255, 255, 255, 0.035)',
     specular: 'rgba(255, 255, 255, 0.22)',
     specularBottom: 'rgba(0, 0, 0, 0.18)',
-    scrim: 'rgba(0, 0, 0, 0.55)',
     sombra: 'rgb(0, 0, 0)',
+    sobreImagem: '#ffffff',
+    sobreImagemSecundario: 'rgba(255, 255, 255, 0.85)',
+    veuDaImagemTopo: 'rgba(0, 0, 0, 0.1)',
+    veuDaImagemBase: 'rgba(0, 0, 0, 0.82)',
   },
 };
 
@@ -222,8 +235,11 @@ const claro: Paleta = {
     glassBottom: 'rgba(255, 255, 255, 0.78)',
     specular: 'rgba(255, 255, 255, 1)',
     specularBottom: 'rgba(0, 0, 0, 0.04)',
-    scrim: 'rgba(255, 255, 255, 0.62)',
     sombra: 'rgb(16, 18, 24)',
+    sobreImagem: '#ffffff',
+    sobreImagemSecundario: 'rgba(255, 255, 255, 0.85)',
+    veuDaImagemTopo: 'rgba(0, 0, 0, 0.1)',
+    veuDaImagemBase: 'rgba(0, 0, 0, 0.82)',
   },
 };
 

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { coresDoTema } from '../cores';
+import { comOpacidade, coresDoTema } from '../cores';
 import { fatorDaTela, REM_BASE } from '../escalaDeTexto';
 import { gerarGlobalCss } from '../globalCss';
 import { escala, hslParaHex, marca, metrica, paleta } from '../tokens';
@@ -71,6 +71,23 @@ describe('hslParaHex', () => {
     expect(() => hslParaHex('#ccff00')).toThrow('"#ccff00"');
     expect(() => hslParaHex('#ccff00')).toThrow('H S% L%');
     expect(() => hslParaHex('84 100%')).toThrow('"84 100%"');
+  });
+});
+
+describe('comOpacidade', () => {
+  // Existiam duas `comAlfa` com o mesmo nome e contratos diferentes: uma só
+  // entendia hexadecimal, a outra só `rgb(...)`. O token chega nas duas formas,
+  // e trocar um pelo outro produzia cor inválida sem erro.
+  it('acrescenta o canal alfa a um hexadecimal de seis dígitos', () => {
+    expect(comOpacidade('#07080a', 0.55)).toBe('#07080a8c');
+  });
+
+  it('transforma rgb em rgba com a opacidade pedida', () => {
+    expect(comOpacidade('rgb(16, 18, 24)', 0.22)).toBe('rgba(16, 18, 24, 0.22)');
+  });
+
+  it('recusa a forma que não sabe compor, com o valor na mensagem', () => {
+    expect(() => comOpacidade('rgba(0, 0, 0, 0.5)', 0.2)).toThrow('rgba(0, 0, 0, 0.5)');
   });
 });
 
