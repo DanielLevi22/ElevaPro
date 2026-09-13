@@ -310,3 +310,47 @@ describe("bodyScanService — TRAVA LGPD: eliminação (Art. 18, VI)", () => {
     });
   });
 });
+
+describe("workoutsService — sessões que decidem o próximo treino", () => {
+  // As duas consultas saíram do `workoutStore` do mobile, que as fazia direto
+  // no Supabase (#292). O rodízio e as marcas da semana só precisam de qual
+  // treino e quando — nada da sessão além disso chega ao aparelho.
+  it("busca a última sessão de força concluída, só com treino e data", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({
+      data: { workout_id: "w1", completed_at: "2026-09-10T20:00:00Z" },
+    });
+
+    const ultima = await createWorkoutsService(supabase).fetchLastWorkoutSession("aluno-1");
+
+    expect(chamadas[0].tabela).toBe("workout_sessions");
+    expect(chamadas[0].select).toBe("workout_id, completed_at");
+    expect(chamadas[0].filtros).toEqual({ student_id: "aluno-1" });
+    // Sessão de cardio não tem treino de fase; entrar no rodízio a desviaria.
+    expect(chamadas[0].metodos.map((m) => m.nome)).toContain("not");
+    expect(ultima).toEqual({ workout_id: "w1", completed_at: "2026-09-10T20:00:00Z" });
+  });
+
+  it("sem sessão nenhuma devolve null, e não lança", async () => {
+    const { supabase } = criarSupabaseFake({ data: null });
+    expect(await createWorkoutsService(supabase).fetchLastWorkoutSession("aluno-1")).toBeNull();
+  });
+
+  it("busca as sessões desde o começo da semana, só com treino e data", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({
+      data: [{ workout_id: "w1", completed_at: "2026-09-08T12:00:00Z" }],
+    });
+
+    const sessoes = await createWorkoutsService(supabase).fetchCompletedSessionsSince(
+      "aluno-1",
+      "2026-09-07T07:00:00.000Z",
+    );
+
+    expect(chamadas[0].tabela).toBe("workout_sessions");
+    expect(chamadas[0].select).toBe("workout_id, completed_at");
+    expect(chamadas[0].filtros).toEqual({
+      student_id: "aluno-1",
+      completed_at: "2026-09-07T07:00:00.000Z",
+    });
+    expect(sessoes).toHaveLength(1);
+  });
+});
