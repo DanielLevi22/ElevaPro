@@ -203,17 +203,17 @@ describe("workoutsService — exercícios do treino", () => {
 describe("workoutsService — TRAVA LGPD: correção do feedback (Art. 18, III)", () => {
   it("corrige a declaração do titular e carimba a data da correção", async () => {
     const { supabase, chamadas } = criarSupabaseFake({
-      data: { id: "s1", intensity: 7, notes: "era o esquerdo" },
+      data: { id: "s1", perceived_exertion: 7, notes: "era o esquerdo" },
     });
 
     await createWorkoutsService(supabase).updateSessionFeedback("s1", {
-      intensity: 7,
+      perceived_exertion: 7,
       notes: "era o esquerdo",
     });
 
     const payload = chamadas[0].payload as Record<string, unknown>;
     expect(chamadas[0].tabela).toBe("workout_sessions");
-    expect(payload.intensity).toBe(7);
+    expect(payload.perceived_exertion).toBe(7);
     expect(payload.notes).toBe("era o esquerdo");
     // Sem o carimbo, a correção é indistinguível de o aluno ter escrito aquilo
     // desde o começo — e o especialista, que já leu a versão anterior, não teria
@@ -226,7 +226,7 @@ describe("workoutsService — TRAVA LGPD: correção do feedback (Art. 18, III)"
    * foi MEDIDO. Digitar outro número não devolve exatidão a uma medida: cria um
    * dado falso que o profissional usa para prescrever.
    *
-   * A `0036` fecha isso no banco com `REVOKE UPDATE` + `GRANT UPDATE (intensity,
+   * A `0036` fecha isso no banco com `REVOKE UPDATE` + `GRANT UPDATE (perceived_exertion,
    * notes, feedback_edited_at)`. Este teste existe porque o erro do banco seria
    * um 42501 em runtime, longe de quem escreveu o caminho.
    */
@@ -234,7 +234,7 @@ describe("workoutsService — TRAVA LGPD: correção do feedback (Art. 18, III)"
     const { supabase, chamadas } = criarSupabaseFake({ data: { id: "s1" } });
 
     await createWorkoutsService(supabase).updateSessionFeedback("s1", {
-      intensity: 7,
+      perceived_exertion: 7,
       notes: "ok",
       // O tipo recusa isto; o `as never` força o caso de quem contornar o tipo.
       completed_at: "2020-01-01T00:00:00Z",
@@ -258,7 +258,7 @@ describe("workoutsService — TRAVA LGPD: correção do feedback (Art. 18, III)"
     if (vazadas.length > 0) {
       throw new Error(
         `HISTÓRICO REESCRITO: updateSessionFeedback enviou coluna de medida (${vazadas.join(", ")}). ` +
-          "Só intensity, notes e feedback_edited_at podem sair daqui — Art. 18, III. " +
+          "Só perceived_exertion, notes e feedback_edited_at podem sair daqui — Art. 18, III. " +
           "Ver a migration 0036 e o bloco de prova em scripts/verify-rls.sql",
       );
     }
@@ -279,13 +279,45 @@ describe("workoutsService — TRAVA LGPD: correção do feedback (Art. 18, III)"
     // renderizaria aspas vazias, e a coluna deixaria de distinguir "não escreveu"
     // de "apagou".
     expect(payload.notes).toBeNull();
-    expect("intensity" in payload).toBe(false);
+    expect("perceived_exertion" in payload).toBe(false);
   });
 
-  it("não toca em intensity quando só a observação é corrigida", async () => {
+  it("não toca em perceived_exertion quando só a observação é corrigida", async () => {
     const { supabase, chamadas } = criarSupabaseFake({ data: { id: "s1" } });
     await createWorkoutsService(supabase).updateSessionFeedback("s1", { notes: "novo texto" });
-    expect("intensity" in (chamadas[0].payload as Record<string, unknown>)).toBe(false);
+    expect("perceived_exertion" in (chamadas[0].payload as Record<string, unknown>)).toBe(false);
+  });
+});
+
+describe("workoutsService — TRAVA LGPD: a sensação não é gravada (Art. 6°, III)", () => {
+  /**
+   * Art. 6°, III — necessidade. "Leve", "Na medida" e "Puxado" são a PSE dita
+   * em palavra (`sensacaoDaPse`), e o banco guarda só o número. Gravar a
+   * palavra também seria o mesmo dado duas vezes — e as duas cópias poderiam
+   * discordar sobre o esforço que o aluno declarou.
+   */
+  it("grava a PSE e nenhuma coluna de sensação, mesmo recebendo uma", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({ data: { id: "s1" } });
+
+    await createWorkoutsService(supabase).createWorkoutSession({
+      student_id: "aluno-1",
+      workout_id: "treino-1",
+      started_at: "2026-09-13T10:00:00Z",
+      completed_at: "2026-09-13T11:00:00Z",
+      perceived_exertion: 8,
+      // O tipo recusa isto; o `as never` força o caso de quem contornar o tipo.
+      sensacao: "puxado",
+    } as never);
+
+    const payload = chamadas[0].payload as Record<string, unknown>;
+    expect(payload.perceived_exertion).toBe(8);
+    const derivadas = Object.keys(payload).filter((coluna) => /sensa|feel/i.test(coluna));
+    if (derivadas.length > 0) {
+      throw new Error(
+        `DADO DUPLICADO: a sessão gravou a sensação derivada da PSE (${derivadas.join(", ")}). ` +
+          "A palavra sai de sensacaoDaPse na leitura — Art. 6°, III e issue #295.",
+      );
+    }
   });
 });
 
@@ -357,11 +389,11 @@ describe("workoutsService — sessões que decidem o próximo treino", () => {
 });
 
 describe("workoutsService — colunas das leituras do aluno", () => {
-  // O aluno lê o próprio ciclo e as fases pela tela de vidro. `select("*")`
+  // O aluno lê a própria periodização e as fases pela tela de vidro. `select("*")`
   // traria qualquer coluna que a tabela ganhe depois — de nota interna do
   // especialista a campo que nem existe hoje. Pedir o que a tela usa é o que
   // a minimização (LGPD, Art. 6°, III) quer dizer na prática.
-  it("pede as colunas do ciclo, e não a linha inteira", async () => {
+  it("pede as colunas da periodização, e não a linha inteira", async () => {
     const { supabase, chamadas } = criarSupabaseFake({ data: [] });
 
     await createWorkoutsService(supabase).fetchStudentPeriodizations("aluno-1");
@@ -375,10 +407,41 @@ describe("workoutsService — colunas das leituras do aluno", () => {
   it("pede as colunas da fase, e não a linha inteira", async () => {
     const { supabase, chamadas } = criarSupabaseFake([{ data: [{ id: "f1" }] }, { data: [] }]);
 
-    await createWorkoutsService(supabase).fetchTrainingPlans("ciclo-1");
+    await createWorkoutsService(supabase).fetchTrainingPlans("periodizacao-1");
 
     expect(chamadas[0].select).toBe(
       "id, periodization_id, name, status, start_date, end_date, order_index, created_at",
     );
+  });
+});
+
+describe("workoutsService — ajuste do exercício do catálogo", () => {
+  it("atualiza só o campo pedido, do exercício pedido", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({ data: { id: "ex-1" } });
+
+    await createWorkoutsService(supabase).updateExercise("ex-1", {
+      video_url: "https://video/remada",
+    });
+
+    expect(chamadas[0].tabela).toBe("exercises");
+    expect(chamadas[0].filtros).toEqual({ id: "ex-1" });
+    expect(chamadas[0].payload).toEqual({ video_url: "https://video/remada" });
+  });
+
+  // O ajuste da sessão apaga o vídeo mandando `null`. Uma string vazia ficaria
+  // gravada como vídeo "existente" e o player tentaria abrir nada.
+  it("apaga o vídeo quando recebe null", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({ data: { id: "ex-1" } });
+
+    await createWorkoutsService(supabase).updateExercise("ex-1", { video_url: null });
+
+    expect(chamadas[0].payload).toEqual({ video_url: null });
+  });
+
+  it("propaga a recusa do banco em vez de fingir que salvou", async () => {
+    const { supabase } = criarSupabaseFake({ error: { message: "42501" } });
+    await expect(
+      createWorkoutsService(supabase).updateExercise("ex-1", { video_url: null }),
+    ).rejects.toEqual({ message: "42501" });
   });
 });

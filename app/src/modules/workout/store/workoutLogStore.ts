@@ -1,72 +1,13 @@
-import type { WorkoutSessionType } from '@elevapro/shared';
-import { createWorkoutsService } from '@elevapro/shared';
+import { createWorkoutsService, type SessaoDoHistorico } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { create } from 'zustand';
+import { registrarFalha } from '@/lib/registro';
 import { notasSeConsentido } from '../services/consentimento';
 
 const workoutsService = createWorkoutsService(supabase);
 
-/**
- * Uma linha de `workout_sessions` — o store consulta essa tabela, não uma
- * `workout_logs` (que não existe).
- *
- * O campo se chama `notes` no banco; a interface declarava `feedback`, nome que
- * a tabela nunca teve. Como ninguém lia `log.feedback`, o erro ficou invisível:
- * o insert já gravava `notes` corretamente.
- */
-export interface WorkoutLog {
-  id: string;
-  student_id: string;
-  workout_id: string | null;
-  started_at: string;
-  completed_at: string | null;
-  intensity: number | null;
-  notes: string | null;
-  /**
-   * Quando o aluno corrigiu o próprio feedback (Art. 18, III). Nulo enquanto
-   * nunca corrigiu. Ver migration `0036`.
-   */
-  feedback_edited_at: string | null;
-  session_type: WorkoutSessionType;
-  /** Cardio: medidos na sessão. Nulos na musculação. */
-  duration_seconds: number | null;
-  active_calories: number | null;
-  /** Medidas da corrida. Nulas quando não houve leitura de GPS. */
-  distance_meters: number | null;
-  avg_pace_seconds_per_km: number | null;
-  /**
-   * FC média da sessão, de `workout_session_vitals`.
-   *
-   * Vem por junção, e não por coluna, porque a base legal é outra: a RLS
-   * daquela tabela exige consentimento vigente. Para o especialista de um aluno
-   * que revogou, esta junção volta vazia enquanto o resto da sessão continua
-   * visível — que é exatamente o comportamento que a `0049` desenhou.
-   */
-  avg_heart_rate: number | null;
-  /** Modalidade do cardio. Na musculação o nome vem da prescrição. */
-  activity_name: string | null;
-  /** Título da prescrição, quando a sessão veio de uma. */
-  workout: { title: string | null } | null;
-  created_at: string;
-}
-
-export interface WorkoutSession {
-  id: string;
-  workout_id: string;
-  student_id: string;
-  started_at: string;
-  completed_at: string | null;
-}
-
-export interface ExerciseLog {
-  id: string;
-  workout_session_id: string;
-  workout_item_id: string;
-  sets_completed: number;
-  reps_completed: string;
-  weight_used: string;
-  completed: boolean;
-}
+/** Uma linha do histórico. O formato mora no `shared`, junto da consulta. */
+export type WorkoutLog = SessaoDoHistorico;
 
 interface WorkoutLogState {
   logs: WorkoutLog[];
@@ -79,32 +20,17 @@ interface WorkoutLogState {
   updateSessionFeedback: (
     sessionId: string,
     studentId: string,
-    campos: { intensity?: number | null; notes?: string | null }
+    campos: { perceived_exertion?: number | null; notes?: string | null }
   ) => Promise<void>;
-  createLog: (
-    workoutId: string,
-    feedback?: string
-  ) => Promise<{ success: boolean; error?: string }>;
-  isWorkoutCompletedToday: (workoutId: string) => boolean;
 }
 
 /**
- * Traz a FC média da junção para o nível da sessão.
+ * O histórico de sessões do aluno e a correção do feedback de cada uma.
  *
- * O PostgREST devolve o recurso embutido como objeto quando a chave é única e
- * como lista quando não consegue provar isso — e a diferença muda com a versão.
- * Os dois casos viram o mesmo número aqui, e ausência vira `null`: para o
- * especialista de quem revogou o consentimento a junção volta vazia, e nulo é a
- * resposta certa, não zero.
+ * A consulta mora no `shared` (`fetchSessionHistory`); aqui ficam o estado da
+ * lista e a decisão de consentimento, que é do app — é ele que sabe quem está
+ * escrevendo.
  */
-function achatarVitals(linha: Record<string, unknown>): WorkoutLog {
-  const { vitals, ...sessao } = linha;
-  const medida = Array.isArray(vitals) ? vitals[0] : vitals;
-  const bpm = (medida as { avg_heart_rate?: number } | null | undefined)?.avg_heart_rate;
-
-  return { ...sessao, avg_heart_rate: bpm ?? null } as WorkoutLog;
-}
-
 export const useWorkoutLogStore = create<WorkoutLogState>((set, get) => ({
   logs: [],
   loading: false,
@@ -112,48 +38,33 @@ export const useWorkoutLogStore = create<WorkoutLogState>((set, get) => ({
   fetchLogs: async (studentId: string) => {
     set({ loading: true });
     try {
-      const { data, error } = await supabase
-        // Campos nomeados: tabela sensível pela LGPD_COMPLIANCE.md.
-        .from('workout_sessions')
-        .select(
-          'id, student_id, workout_id, started_at, completed_at, intensity, notes, feedback_edited_at, session_type, duration_seconds, active_calories, activity_name, distance_meters, avg_pace_seconds_per_km, created_at, workout:workouts(title), vitals:workout_session_vitals(avg_heart_rate)'
-        )
-        .eq('student_id', studentId)
-        .order('completed_at', { ascending: false });
-
-      if (error) throw error;
-      set({ logs: (data ?? []).map(achatarVitals) });
-    } catch (error) {
-      console.error('Error fetching workout logs:', error);
+      set({ logs: await workoutsService.fetchSessionHistory(studentId) });
+    } catch {
+      // Sem o objeto de erro: a linha carrega `notes`, dado sensível de saúde.
+      registrarFalha('historico.carregar');
     } finally {
       set({ loading: false });
     }
   },
 
   updateSessionFeedback: async (sessionId, studentId, campos) => {
+    const salva = get().logs.find((log) => log.id === sessionId)?.notes ?? null;
+    const patch = {
+      ...(campos.perceived_exertion !== undefined
+        ? { perceived_exertion: campos.perceived_exertion }
+        : {}),
+      ...(await notasParaGravar(campos.notes, salva, studentId)),
+    };
+    if (Object.keys(patch).length === 0) return;
+
     try {
-      // O texto passa pela mesma decisão de consentimento da gravação: sem
-      // consentimento vigente o RPE é corrigido e a observação não. `undefined`
-      // significa "não mexer"; `null` é o pedido explícito de apagar, e apagar
-      // nunca depende de consentimento — é o Art. 18, VI.
-      const notas =
-        campos.notes === undefined
-          ? undefined
-          : campos.notes === null || campos.notes.trim() === ''
-            ? null
-            : ((await notasSeConsentido(studentId, campos.notes)) ?? null);
-
-      const atualizada = await workoutsService.updateSessionFeedback(sessionId, {
-        ...(campos.intensity !== undefined ? { intensity: campos.intensity } : {}),
-        ...(notas !== undefined ? { notes: notas } : {}),
-      });
-
+      const atualizada = await workoutsService.updateSessionFeedback(sessionId, patch);
       set((state) => ({
         logs: state.logs.map((log) =>
           log.id === sessionId
             ? {
                 ...log,
-                intensity: atualizada.intensity,
+                perceived_exertion: atualizada.perceived_exertion,
                 notes: atualizada.notes,
                 feedback_edited_at: atualizada.feedback_edited_at,
               }
@@ -163,48 +74,36 @@ export const useWorkoutLogStore = create<WorkoutLogState>((set, get) => ({
     } catch (error) {
       // Sem o objeto de erro: o do PostgREST carrega o payload da linha, e o
       // payload aqui é `notes` — dado sensível de saúde (Art. 11).
-      console.error('[workoutLogStore] falha ao corrigir feedback da sessão');
+      registrarFalha('historico.corrigirFeedback');
       throw error;
     }
   },
-
-  createLog: async (workoutId: string, feedback?: string) => {
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        return { success: false, error: 'Usuário não autenticado' };
-      }
-
-      const now = new Date().toISOString();
-
-      const { error } = await supabase.from('workout_sessions').insert({
-        student_id: user.id,
-        workout_id: workoutId,
-        notes: feedback || null,
-        started_at: now,
-        completed_at: now,
-      });
-
-      if (error) {
-        console.error('Error creating workout log:', error);
-        return { success: false, error: error.message };
-      }
-
-      // Refresh logs
-      await get().fetchLogs(user.id);
-      return { success: true };
-    } catch (error: unknown) {
-      console.error('Error creating workout log:', error);
-      return { success: false, error: (error as Error).message };
-    }
-  },
-
-  isWorkoutCompletedToday: (workoutId: string) => {
-    const today = new Date().toISOString().split('T')[0];
-    return get().logs.some(
-      (log) => log.workout_id === workoutId && log.completed_at?.startsWith(today)
-    );
-  },
 }));
+
+/**
+ * A observação que vai no patch, ou nenhuma.
+ *
+ * O texto passa pela mesma decisão de consentimento da gravação: sem
+ * consentimento vigente a PSE é corrigida e a observação não. `undefined`
+ * significa "não mexer"; `null` é o pedido explícito de apagar, e apagar nunca
+ * depende de consentimento — é o Art. 18, VI.
+ *
+ * O texto igual ao já salvo também é "não mexer": a tela de correção devolve a
+ * observação inteira mesmo quando só a PSE mudou, e mandá-la de novo pela
+ * decisão de consentimento apagaria, sem consentimento vigente, uma observação
+ * que o aluno não tocou.
+ *
+ * @example await notasParaGravar('dor no ombro', null, aluno.id) // { notes: 'dor no ombro' }
+ */
+async function notasParaGravar(
+  notas: string | null | undefined,
+  salva: string | null,
+  studentId: string
+): Promise<{ notes?: string | null }> {
+  if (notas === undefined) return {};
+  if (notas === null) return { notes: null };
+  const texto = notas.trim();
+  if (texto === (salva?.trim() ?? '')) return {};
+  if (texto === '') return { notes: null };
+  return { notes: (await notasSeConsentido(studentId, notas)) ?? null };
+}

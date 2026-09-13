@@ -115,11 +115,11 @@ O specialist associa o treino a um dia da semana ou deixa NULL (qualquer dia). E
 
 **`completed_at NULL`**: sessão em andamento (aluno abriu o treino mas ainda não terminou). O app pode retomar uma sessão não finalizada.
 
-**`workout_id SET NULL`**: quando um treino é deletado (ex: specialist reorganiza a periodização), a sessão do aluno é preservada — apenas perde a referência ao treino. O histórico de performance (`sets_data`, `intensity`, `notes`, datas) fica intacto. Isso é exigência LGPD: o dado do aluno não pode ser destruído por ação unilateral do specialist.
+**`workout_id SET NULL`**: quando um treino é deletado (ex: specialist reorganiza a periodização), a sessão do aluno é preservada — apenas perde a referência ao treino. O histórico de performance (séries, `perceived_exertion`, `notes`, datas) fica intacto. Isso é exigência LGPD: o dado do aluno não pode ser destruído por ação unilateral do specialist.
 
 **Por que não RESTRICT?** RESTRICT bloquearia toda a cadeia de deleção `training_periodizations → training_plans → workouts`. Se um aluno executou qualquer treino de uma periodização, o specialist nunca conseguiria deletar ou reorganizar a estrutura — erro silencioso difícil de diagnosticar.
 
-**`intensity`**: RPE (Rate of Perceived Exertion) de 1-10. O aluno avalia no final da sessão. Útil para análise de progressão e ajuste de carga pelo specialist.
+**`perceived_exertion`**: PSE (percepção subjetiva de esforço) de 1 a 10 — `intensity` até a migration `0051`. O aluno avalia no fim da sessão. A sensação do app (1–3 Leve, 4–6 Na medida, 7–10 Puxado) é derivada deste número em `shared/src/utils/pse.ts` e não é gravada.
 
 **Sem `specialist_id`**: enquanto o workout existir, o specialist é derivável via `workout → training_plan → training_periodizations.specialist_id`. Quando `workout_id` vira NULL (treino deletado), a sessão fica órfã de specialist — mas o dado do aluno permanece.
 

@@ -1,33 +1,12 @@
-import { ActivityIndicator, View } from 'react-native';
-import { useAuthStore } from '@/auth';
-import { ExecuteWorkoutScreen, WorkoutDetailsScreen } from '@/workout';
+import { WorkoutDetailsScreen } from '@/workout';
 
-export default function WorkoutDetailsRoute() {
-  const { accountType, isLoading } = useAuthStore();
-
-  if (isLoading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: '#09090B',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <ActivityIndicator size="large" color="#FF6B35" />
-      </View>
-    );
-  }
-
-  // If user is a personal/professional, show the Details/Edit screen
-  // If user is a student, show the Execute/Start screen
-  const isProfessional =
-    (accountType as string) === 'personal' || (accountType as string) === 'specialist';
-
-  if (isProfessional) {
-    return <WorkoutDetailsScreen />;
-  }
-
-  return <ExecuteWorkoutScreen />;
+/**
+ * O treino de um aluno, aberto pelo especialista a partir da ficha do aluno.
+ *
+ * A rota caía na execução para quem não era especialista, mas `/students` só
+ * existe na navegação do especialista: o aluno treina por `workouts/execute`,
+ * e a sessão antiga que esta rota abria foi substituída pela sessão do kit.
+ */
+export default function TreinoDoAlunoRoute() {
+  return <WorkoutDetailsScreen />;
 }

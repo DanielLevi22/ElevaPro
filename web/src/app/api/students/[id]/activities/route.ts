@@ -8,7 +8,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
  * Atividades de um aluno, agrupadas por dia.
  *
  * Substitui `/api/students/[id]/history`, que listava três tipos de evento
- * soltos e não lia `intensity` nem `notes` — as duas colunas que o app coletava
+ * soltos e não lia a PSE (`perceived_exertion`, antes `intensity`) nem `notes` — as duas colunas que o app coletava
  * a cada sessão e ninguém exibia.
  *
  * A rota agrega tabelas sensíveis com `service_role`, que **ignora RLS por

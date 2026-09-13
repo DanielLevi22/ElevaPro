@@ -66,7 +66,7 @@ export const criarServicoDeSessoes = (supabase: SupabaseClient) => ({
         workout_id: input.workout_id ?? null,
         started_at: input.started_at,
         completed_at: input.completed_at ?? null,
-        intensity: input.intensity ?? null,
+        perceived_exertion: input.perceived_exertion ?? null,
         notes: input.notes ?? null,
         session_type: input.session_type ?? "strength",
         duration_seconds: input.duration_seconds ?? null,
@@ -85,7 +85,7 @@ export const criarServicoDeSessoes = (supabase: SupabaseClient) => ({
   /**
    * Corrige o feedback que o aluno escreveu sobre a própria sessão.
    *
-   * Só `intensity` e `notes` — é o Art. 18, III aplicado ao que o titular
+   * Só `perceived_exertion` e `notes` — é o Art. 18, III aplicado ao que o titular
    * DECLAROU. Data, séries, duração e calorias são medida do evento: o remédio
    * para uma medida inexata é medir de novo, não digitar outro número. A `0036`
    * impõe a mesma fronteira no banco por privilégio de coluna, então um
@@ -98,7 +98,7 @@ export const criarServicoDeSessoes = (supabase: SupabaseClient) => ({
    *
    * @example
    * // corrigir os dois
-   * await updateSessionFeedback(id, { intensity: 7, notes: "era o ombro esquerdo" });
+   * await updateSessionFeedback(id, { perceived_exertion: 7, notes: "era o ombro esquerdo" });
    * // apagar só a observação; a sessão continua no histórico
    * await updateSessionFeedback(id, { notes: null });
    */
@@ -107,7 +107,7 @@ export const criarServicoDeSessoes = (supabase: SupabaseClient) => ({
     input: UpdateSessionFeedbackInput,
   ): Promise<WorkoutSession> => {
     const patch: Record<string, unknown> = { feedback_edited_at: new Date().toISOString() };
-    if (input.intensity !== undefined) patch.intensity = input.intensity;
+    if (input.perceived_exertion !== undefined) patch.perceived_exertion = input.perceived_exertion;
     // Texto em branco é o pedido de apagar, não um texto de um espaço.
     if (input.notes !== undefined) patch.notes = input.notes?.trim() || null;
 

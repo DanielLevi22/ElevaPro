@@ -1,6 +1,5 @@
 export { default as CreatePeriodizationScreen } from './CreatePeriodizationScreen';
 export { default as CreateTrainingPlanScreen } from './CreateTrainingPlanScreen';
-export { default as ExecuteWorkoutScreen } from './ExecuteWorkoutScreen';
 export { default as PeriodizationDetailsScreen } from './PeriodizationDetailsScreen';
 export { default as PeriodizationsScreen } from './PeriodizationsScreen';
 export { default as PhaseDetailsScreen } from './PhaseDetailsScreen';

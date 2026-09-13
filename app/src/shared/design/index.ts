@@ -6,6 +6,7 @@
  * `className`, e é a única saída autorizada pela regra de lint que proíbe
  * hexadecimal escrito à mão.
  */
+export { type MedidaDoBrilho, useBrilho } from './brilho';
 export { type Cores, comOpacidade, coresDoTema, useCores } from './cores';
 export { ajustarEscalaDeTexto, fatorDaTela, REM_BASE, useEscala } from './escalaDeTexto';
 export { gerarGlobalCss } from './globalCss';

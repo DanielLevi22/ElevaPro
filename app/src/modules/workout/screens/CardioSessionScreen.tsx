@@ -5,20 +5,21 @@ import { useAuthStore } from '@/auth';
 import { showAlert, showConfirm } from '@/components/ui/appAlert';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { ShareWorkoutModal } from '@/components/workout/ShareWorkoutModal';
-import { WorkoutFeedbackModal } from '@/components/workout/WorkoutFeedbackModal';
 import { useGamificationStore } from '@/modules/gamification/store/gamificationStore';
+import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { getLocalDateISOString } from '@/utils/dateUtils';
 import { CabecalhoDaSessao } from '../components/CabecalhoDaSessao';
 import { ControlesDaSessao } from '../components/ControlesDaSessao';
 import { MetaDeTempo } from '../components/MetaDeTempo';
 import { MetricasDaCorrida } from '../components/MetricasDaCorrida';
 import { RelogioDaSessao } from '../components/RelogioDaSessao';
+import { ModalDeFeedback } from '../components/sessao/ModalDeFeedback';
 import { useCronometroDaSessao } from '../hooks/useCronometroDaSessao';
 import { useIntensidadeDoMovimento } from '../hooks/useIntensidadeDoMovimento';
 import { usePesoDoAluno } from '../hooks/usePesoDoAluno';
 import { useRastreioDaCorrida } from '../hooks/useRastreioDaCorrida';
 import { mediaDeBatimentos } from '../services/frequenciaDaSessao';
-import { useWorkoutStore } from '../store/workoutStore';
+import { gravarSessaoDeCardio } from '../services/registroDaSessao';
 
 /** METs aproximados por modalidade. */
 const METS: Record<string, number> = {
@@ -48,9 +49,8 @@ function formatarTempo(total: number): string {
 export default function CardioSessionScreen() {
   const { exerciseName } = useLocalSearchParams();
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, isMasquerading } = useAuthStore();
   const { incrementWorkoutProgress } = useGamificationStore();
-  const { saveCardioSession } = useWorkoutStore();
 
   const modalidade = (exerciseName as string) || 'Cardio Livre';
   const met = METS[modalidade] ?? METS.Cardio;
@@ -105,7 +105,7 @@ export default function CardioSessionScreen() {
   }, []);
 
   const aoEnviarFeedback = useCallback(
-    async (rpe: number | undefined, notas: string) => {
+    async (pse: number | undefined, notas: string) => {
       setMostrarFeedback(false);
 
       const inicio = cronometro.inicioDaSessao;
@@ -121,24 +121,27 @@ export default function CardioSessionScreen() {
         // leitura acontece aqui, e não a cada tique.
         const batimento = await mediaDeBatimentos(inicio, fim);
 
-        await saveCardioSession({
-          studentId: user.id,
-          exerciseName: modalidade,
-          durationSeconds: cronometro.segundos,
-          calories: cronometro.calorias,
-          startedAt: inicio.toISOString(),
-          completedAt: fim.toISOString(),
-          intensity: rpe,
-          notes: notas,
-          // Arredonda ANTES de decidir: 0,4 m de deriva passam por `> 0` e
-          // gravam `distance_meters: 0`, que é exatamente o valor que a `0049`
-          // diz que nunca pode ser escrito — zero afirma que o aluno não saiu
-          // do lugar, e ausência de leitura é nulo.
-          distanceMeters: metrosPersistiveis(rastreio.distanceMeters),
-          avgPaceSecondsPerKm: rastreio.paceSecondsPerKm,
-          avgCadenceSpm: rastreio.avgCadenceSpm,
-          avgHeartRate: batimento,
-        });
+        await gravarSessaoDeCardio(
+          {
+            studentId: user.id,
+            exerciseName: modalidade,
+            durationSeconds: cronometro.segundos,
+            calories: cronometro.calorias,
+            startedAt: inicio.toISOString(),
+            completedAt: fim.toISOString(),
+            perceivedExertion: pse,
+            notes: notas,
+            // Arredonda ANTES de decidir: 0,4 m de deriva passam por `> 0` e
+            // gravam `distance_meters: 0`, que é exatamente o valor que a `0049`
+            // diz que nunca pode ser escrito — zero afirma que o aluno não saiu
+            // do lugar, e ausência de leitura é nulo.
+            distanceMeters: metrosPersistiveis(rastreio.distanceMeters),
+            avgPaceSecondsPerKm: rastreio.paceSecondsPerKm,
+            avgCadenceSpm: rastreio.avgCadenceSpm,
+            avgHeartRate: batimento,
+          },
+          { mascarado: isMasquerading }
+        );
 
         // Só depois de gravar: encerrar apaga as posições da memória, e uma
         // falha antes disto deixaria o aluno sem o traçado e sem a sessão.
@@ -180,16 +183,16 @@ export default function CardioSessionScreen() {
       rastreio.paceSecondsPerKm,
       rastreio.avgCadenceSpm,
       rastreio.encerrar,
-      saveCardioSession,
+      isMasquerading,
       incrementWorkoutProgress,
       router,
     ]
   );
 
   // Fechar o modal sem enviar não pode jogar a corrida fora em silêncio: o
-  // aluno correu, o cronômetro parou e ele só não quis responder o RPE. A
+  // aluno correu, o cronômetro parou e ele só não quis responder a PSE. A
   // sessão é gravada sem feedback, que é execução de contrato de qualquer modo.
-  // `undefined`, e não zero: o RPE é declaração do aluno, e um valor inventado
+  // `undefined`, e não zero: a PSE é declaração do aluno, e um valor inventado
   // pelo sistema nesse campo é exatamente a mistura que a `0035` desfez em
   // `notes` — dado gerado ocupando o lugar do que o titular disse.
   const aoFecharFeedbackSemEnviar = useCallback(() => {
@@ -248,10 +251,11 @@ export default function CardioSessionScreen() {
           stats={resumoParaCompartilhar}
         />
 
-        <WorkoutFeedbackModal
-          visible={mostrarFeedback}
-          onClose={aoFecharFeedbackSemEnviar}
-          onSubmit={aoEnviarFeedback}
+        <ModalDeFeedback
+          visivel={mostrarFeedback}
+          imagem={fotoDoGrupo(null)}
+          onFechar={aoFecharFeedbackSemEnviar}
+          onSalvar={aoEnviarFeedback}
         />
       </View>
     </ScreenLayout>

@@ -1,15 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
   concluidosNaSemana,
+  dataCurtaDoInstante,
   intervaloCurto,
-  progressoDoCiclo,
+  periodoDaPeriodizacao,
+  progressoDaPeriodizacao,
   proximoTreino,
   situacaoDaFase,
   treinouHoje,
 } from "../periodizacao";
 
 /**
- * As contas que o aluno lê no fluxo de treino: em que semana do ciclo está,
+ * As contas que o aluno lê no fluxo de treino: em que semana da periodização está,
  * como vai cada fase e qual treino vem agora.
  *
  * Toda data aqui é construída em hora local (`new Date(ano, mes, dia, hora)`),
@@ -18,33 +20,35 @@ import {
  */
 const em = (ano: number, mes: number, dia: number, hora = 12) => new Date(ano, mes - 1, dia, hora);
 
-describe("progressoDoCiclo", () => {
+describe("progressoDaPeriodizacao", () => {
   // O kit mostra "Semana 7 de 16 · 44%": o percentual é da semana, não do dia.
   it("diz a semana corrente, o total e o percentual pela semana", () => {
     const hoje = em(2026, 6, 20);
-    expect(progressoDoCiclo("2026-05-06", "2026-08-25", hoje)).toEqual({
+    expect(progressoDaPeriodizacao("2026-05-06", "2026-08-25", hoje)).toEqual({
       semanaAtual: 7,
       totalSemanas: 16,
       percentual: 44,
     });
   });
 
-  it("um ciclo de 8 semanas tem 8 semanas, e não 9", () => {
+  it("uma periodização de 8 semanas tem 8 semanas, e não 9", () => {
     // Regressão vista no aparelho: "Condicionamento 8 Semanas", de 04/09 a
     // 30/10, aparecia como "Semana 2 de 9" — os dias eram contados com as duas
     // pontas, e 57 dias arredondam para 9 semanas.
-    expect(progressoDoCiclo("2026-09-04", "2026-10-30", em(2026, 9, 12)).totalSemanas).toBe(8);
+    expect(progressoDaPeriodizacao("2026-09-04", "2026-10-30", em(2026, 9, 12)).totalSemanas).toBe(
+      8,
+    );
   });
 
   it("antes do início está na semana zero, e não na primeira", () => {
-    expect(progressoDoCiclo("2026-10-01", "2026-12-01", em(2026, 9, 12))).toMatchObject({
+    expect(progressoDaPeriodizacao("2026-10-01", "2026-12-01", em(2026, 9, 12))).toMatchObject({
       semanaAtual: 0,
       percentual: 0,
     });
   });
 
   it("depois do fim fica na última semana, sem passar de 100%", () => {
-    expect(progressoDoCiclo("2026-01-05", "2026-02-01", em(2026, 9, 12))).toEqual({
+    expect(progressoDaPeriodizacao("2026-01-05", "2026-02-01", em(2026, 9, 12))).toEqual({
       semanaAtual: 4,
       totalSemanas: 4,
       percentual: 100,
@@ -53,8 +57,10 @@ describe("progressoDoCiclo", () => {
 
   it("lê a data do banco em hora local, e não em UTC", () => {
     // Às 00h30 do dia do início, em UTC ainda seria o dia anterior em fuso
-    // negativo — e o ciclo apareceria como não começado.
-    expect(progressoDoCiclo("2026-09-12", "2026-10-09", em(2026, 9, 12, 0)).semanaAtual).toBe(1);
+    // negativo — e a periodização apareceria como não começada.
+    expect(
+      progressoDaPeriodizacao("2026-09-12", "2026-10-09", em(2026, 9, 12, 0)).semanaAtual,
+    ).toBe(1);
   });
 });
 
@@ -72,8 +78,8 @@ describe("situacaoDaFase", () => {
   // banco desde a 0024/0025, e o tipo já não admite nulo.
   const ativa = { status: "active" as const, start_date: "2026-09-01", end_date: "2026-09-30" };
 
-  it("fase em andamento avança pelos dias decorridos, contados como os do ciclo", () => {
-    // 29 dias de intervalo — sem somar o dia final, como `progressoDoCiclo`.
+  it("fase em andamento avança pelos dias decorridos, contados como os da periodização", () => {
+    // 29 dias de intervalo — sem somar o dia final, como `progressoDaPeriodizacao`.
     expect(situacaoDaFase(ativa, em(2026, 9, 16))).toEqual({
       rotulo: "Em andamento",
       tom: "ativa",
@@ -186,5 +192,32 @@ describe("intervaloCurto", () => {
 
   it("lê a data do banco sem cair no dia anterior", () => {
     expect(intervaloCurto("2026-01-01", "2026-12-31")).toBe("01 jan – 31 dez");
+  });
+});
+
+describe("dataCurtaDoInstante", () => {
+  // Um instante é lido no fuso do aparelho: o treino terminou às 22h do dia 12
+  // aqui, e o banco guardou 01h do dia 13 em UTC.
+  it("escreve o instante no dia local, e não no dia UTC", () => {
+    const local = new Date(2026, 7, 12, 22, 0);
+    expect(dataCurtaDoInstante(local.toISOString())).toBe("12 ago");
+  });
+});
+
+describe("periodoDaPeriodizacao", () => {
+  const hoje = new Date(2026, 8, 13);
+
+  it("escreve os meses de ponta a ponta, com o ano uma vez quando é o mesmo", () => {
+    expect(periodoDaPeriodizacao("2026-01-05", "2026-04-20", hoje)).toBe("jan – abr 2026");
+  });
+
+  it("escreve o ano nas duas pontas quando a periodização atravessa a virada", () => {
+    expect(periodoDaPeriodizacao("2025-11-03", "2026-02-23", hoje)).toBe("nov 2025 – fev 2026");
+  });
+
+  // Uma periodização planejada ainda não tem "de quando até quando" que interesse: o
+  // aluno quer saber quando começa.
+  it("diz quando começa a periodização que ainda não começou", () => {
+    expect(periodoDaPeriodizacao("2026-10-21", "2026-12-30", hoje)).toBe("a partir de 21 out");
   });
 });

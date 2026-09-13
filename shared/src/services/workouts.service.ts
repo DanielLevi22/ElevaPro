@@ -7,19 +7,23 @@ import type {
   UpdateWorkoutInput,
   Workout,
 } from "../types/workouts.types";
+import { criarServicoDeHistorico } from "./workouts/historico";
 import { criarServicoDePeriodizacoes } from "./workouts/periodizacoes";
+import { criarServicoDeResumoDasPeriodizacoes } from "./workouts/resumoDasPeriodizacoes";
 import { criarServicoDeSessoes } from "./workouts/sessoes";
 
 /**
  * O serviço de treino: exercícios, treinos, periodizações, fases e sessões.
  *
- * Composto por assunto — periodizações e sessões moram em `./workouts/` — para
+ * Composto por assunto — periodizações, sessões e histórico moram em `./workouts/` — para
  * que nenhum arquivo passe do limite e cada um mude por um motivo só. Quem usa
  * vê um serviço único, como antes.
  */
 export const createWorkoutsService = (supabase: SupabaseClient) => ({
   ...criarServicoDePeriodizacoes(supabase),
   ...criarServicoDeSessoes(supabase),
+  ...criarServicoDeHistorico(supabase),
+  ...criarServicoDeResumoDasPeriodizacoes(supabase),
   // ── Exercises ──────────────────────────────────────────────────────────────
 
   /**
@@ -54,7 +58,17 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
     return data as Exercise;
   },
 
-  updateExercise: async (id: string, input: Partial<CreateExerciseInput>): Promise<Exercise> => {
+  /**
+   * `null` num campo opcional apaga o valor — é como o ajuste da sessão remove
+   * o vídeo de um exercício.
+   *
+   * @example
+   * await updateExercise(exercicio.id, { video_url: null });
+   */
+  updateExercise: async (
+    id: string,
+    input: { [Campo in keyof CreateExerciseInput]?: CreateExerciseInput[Campo] | null },
+  ): Promise<Exercise> => {
     const { data, error } = await supabase
       .from("exercises")
       .update(input)

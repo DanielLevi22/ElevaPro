@@ -30,7 +30,7 @@ const DIA = {
       at: "2026-08-28T11:00:00Z",
       title: "Treino A",
       detail: null,
-      rpe: 8,
+      pse: 8,
       studentNote: "senti dor no ombro",
     },
   ],

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { type ImageSourcePropType, ScrollView } from 'react-native';
+import { cn } from '@/lib/utils';
 import { AlvoDoVidro } from './AlvoDoVidro';
 import { BrilhoAmbiente } from './BrilhoAmbiente';
 import { FundoDeFoto, RECEITA_DA_HOME } from './FundoDeFoto';
@@ -25,17 +26,27 @@ interface TelaDeVidroComFotoProps {
   children: ReactNode;
   /** O que flutua fixo sobre a rolagem, como o botão de ação do detalhe. */
   sobreposicao?: ReactNode;
-  /** Espaço no fim da rolagem: maior quando há botão fixo cobrindo o rodapé. */
+  /**
+   * Espaço no fim da rolagem, para o último cartão não ficar atrás do que
+   * flutua no rodapé: a tab bar, ou a tab bar e o botão fixo acima dela.
+   */
   folgaNoFim?: 'tab' | 'botaoFixo';
+  /** Conteúdo no meio da altura, como o pré-início do treino. */
+  centralizado?: boolean;
 }
 
-const FOLGA = { tab: 'px-4 pb-28 pt-14', botaoFixo: 'px-4 pb-32 pt-14' } as const;
+/**
+ * O kit: 120 de respiro sob a tab bar; 150 quando o botão fixo está por cima
+ * dela, mais os 22 que o botão subiu para não encostar no "+" central.
+ */
+const FOLGA = { tab: 'px-4 pb-[7.5rem] pt-14', botaoFixo: 'px-4 pb-[10.75rem] pt-14' } as const;
 
 export function TelaDeVidroComFoto({
   imagem,
   children,
   sobreposicao,
   folgaNoFim = 'tab',
+  centralizado = false,
 }: TelaDeVidroComFotoProps) {
   return (
     <ScreenLayout useSafeArea={false}>
@@ -48,7 +59,10 @@ export function TelaDeVidroComFoto({
         }
       >
         <ScrollView
-          contentContainerClassName={FOLGA[folgaNoFim]}
+          contentContainerClassName={cn(
+            FOLGA[folgaNoFim],
+            centralizado ? 'flex-grow justify-center' : null
+          )}
           showsVerticalScrollIndicator={false}
         >
           {children}

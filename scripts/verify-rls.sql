@@ -114,7 +114,7 @@ END $$;
 
 DO $$
 DECLARE
-  colunas_editaveis text[] := ARRAY['feedback_edited_at', 'intensity', 'notes'];
+  colunas_editaveis text[] := ARRAY['feedback_edited_at', 'notes', 'perceived_exertion'];
   concedidas text[];
 BEGIN
   -- Table-level UPDATE precisa ter saído: enquanto ele existir, o grant de
@@ -150,7 +150,7 @@ BEGIN
     RAISE EXCEPTION 'workout_sessions voltou a ter política de DELETE (ou FOR ALL)';
   END IF;
 
-  RAISE NOTICE 'ok  workout_sessions: UPDATE só em intensity/notes/feedback_edited_at, DELETE sem política';
+  RAISE NOTICE 'ok  workout_sessions: UPDATE só em perceived_exertion/notes/feedback_edited_at, DELETE sem política';
 END $$;
 
 -- ── Comportamento ────────────────────────────────────────────────────────────
@@ -383,7 +383,7 @@ BEGIN
   -- Sessão com texto livre para os DOIS alunos: assim "zero linhas" significa
   -- bloqueio e não tabela vazia.
   INSERT INTO public.workout_sessions
-    (student_id, started_at, completed_at, intensity, notes, session_type,
+    (student_id, started_at, completed_at, perceived_exertion, notes, session_type,
      duration_seconds, active_calories, activity_name)
   VALUES
     (aluno_a, now(), now(), 8, 'senti dor no ombro', 'cardio', 1920, 280, 'Corrida'),
@@ -452,7 +452,7 @@ BEGIN
      'verify-ce@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb);
 
   INSERT INTO public.workout_sessions
-    (student_id, started_at, completed_at, intensity, notes, session_type)
+    (student_id, started_at, completed_at, perceived_exertion, notes, session_type)
   VALUES (aluno_a, now(), now(), 8, 'senti dor no ombro direito', 'strength')
   RETURNING id INTO sessao_a;
 
@@ -465,7 +465,7 @@ BEGIN
 
   -- 1. O aluno corrige a própria declaração. É o direito do Art. 18, III.
   UPDATE public.workout_sessions
-     SET notes = 'era o ombro esquerdo', intensity = 7, feedback_edited_at = now()
+     SET notes = 'era o ombro esquerdo', perceived_exertion = 7, feedback_edited_at = now()
    WHERE id = sessao_a;
   GET DIAGNOSTICS afetadas = ROW_COUNT;
   IF afetadas <> 1 THEN
@@ -565,7 +565,7 @@ BEGIN
   END IF;
 
   RESET ROLE;
-  RAISE NOTICE 'ok  correção: dono edita notes/intensity, ninguém edita medida, ninguém apaga sessão';
+  RAISE NOTICE 'ok  correção: dono edita notes/perceived_exertion, ninguém edita medida, ninguém apaga sessão';
 END $$;
 
 ROLLBACK;
@@ -930,7 +930,7 @@ BEGIN
   VALUES (aluno_a), (aluno_b);
 
   -- Execução de contrato, para provar que a revogação NÃO a alcança.
-  INSERT INTO public.workout_sessions (student_id, started_at, completed_at, intensity)
+  INSERT INTO public.workout_sessions (student_id, started_at, completed_at, perceived_exertion)
   VALUES (aluno_a, now(), now(), 7);
 
   INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)

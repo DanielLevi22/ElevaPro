@@ -1,14 +1,9 @@
 export { ExerciseConfigModal } from './components/ExerciseConfigModal';
-export { RestTimer } from './components/RestTimer';
 export { StudentAssignmentModal } from './components/StudentAssignmentModal';
-export { useWorkoutTimer } from './hooks/useWorkoutTimer';
 export * from './routes';
 export * from './screens';
 export type { VoiceAction } from './services/VoiceCommandService';
-export type { ExerciseLog, WorkoutSession } from './store/workoutLogStore';
 export { useWorkoutLogStore } from './store/workoutLogStore';
-export type { ExerciseSessionState, SetState } from './store/workoutSessionStore';
-export { workoutSessionStore } from './store/workoutSessionStore';
 export type { Exercise, SelectedExercise, Workout, WorkoutItem } from './store/workoutStore';
 export { useWorkoutStore } from './store/workoutStore';
 export type { WorkoutExercise } from './types';

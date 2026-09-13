@@ -1,5 +1,5 @@
 import type { ActivityDay, ActivityEvent, ActivityKind } from "@elevapro/shared";
-import { formatRpe } from "@elevapro/shared";
+import { formatPse } from "@elevapro/shared";
 import { Apple, ClipboardList, Dumbbell, Footprints, HeartPulse, Salad } from "lucide-react";
 import { formatDate } from "@/shared/utils/formatDate";
 
@@ -45,9 +45,9 @@ function EventRow({ event }: { event: ActivityEvent }) {
           <p className="font-medium text-foreground">{event.title}</p>
           {/* Sem campo vazio e sem "—": evento sem detalhe simplesmente some. */}
           {event.detail && <span className="text-sm text-muted-foreground">{event.detail}</span>}
-          {event.rpe !== null && (
+          {event.pse !== null && (
             <span className="rounded-full bg-surface-highlight px-2 py-0.5 text-xs font-semibold text-foreground">
-              RPE {formatRpe(event.rpe)}
+              PSE {formatPse(event.pse)}
             </span>
           )}
         </div>

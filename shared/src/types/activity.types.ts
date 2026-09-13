@@ -32,10 +32,10 @@ export interface ActivityEvent {
   /** Linha secundária já montada — "32 min · 280 kcal", "Plano ativo". */
   detail: string | null;
   /**
-   * RPE de 1 a 10, quando a sessão tem. Use `formatRpe` para exibir; o número
+   * PSE de 1 a 10, quando a sessão tem. Use `formatPse` para exibir; o número
    * cru atravessa a fronteira porque a formatação é decisão da tela.
    */
-  rpe: number | null;
+  pse: number | null;
   /**
    * O que o aluno escreveu, e só isso. Dado sensível de saúde (Art. 11) — só
    * viaja para quem passou por `authorizeLinkedSpecialist`.
@@ -79,7 +79,7 @@ export interface ActivityDay {
 /**
  * Um item do bloco "Aconteceu" do briefing.
  *
- * É o que atravessa a fronteira para o cliente: nome, tipo, título, RPE e
+ * É o que atravessa a fronteira para o cliente: nome, tipo, título, PSE e
  * horário. Nem `notes`, nem linha de sessão, nem id de treino — o comentário
  * do `briefing/page.tsx` registra a razão.
  */
@@ -89,7 +89,7 @@ export interface RecentActivityItem {
   studentName: string;
   kind: ActivityKind;
   title: string;
-  rpe: number | null;
+  pse: number | null;
   at: string;
 }
 
@@ -98,7 +98,7 @@ export interface WorkoutSessionRow {
   student_id: string;
   started_at: string;
   completed_at: string | null;
-  intensity: number | null;
+  perceived_exertion: number | null;
   notes: string | null;
   session_type: WorkoutSessionType;
   duration_seconds: number | null;

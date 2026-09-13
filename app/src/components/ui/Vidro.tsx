@@ -45,6 +45,11 @@ interface VidroProps extends ViewProps {
   className?: string;
   /** Layout **do próprio cartão** na fila onde ele está: `flex-1`, largura. */
   classeExterna?: string;
+  /**
+   * O cartão em foco da tela — o exercício em execução. O kit troca a sombra
+   * de relevo pelo brilho da primária e pinta a borda na mesma cor, a 55%.
+   */
+  destaque?: boolean;
 }
 
 /** Intensidade do `BlurView` no iOS, onde ela é a própria força do material. */
@@ -136,9 +141,16 @@ const INICIO_DO_GRADIENTE = { x: 0.5, y: 0 };
 const FIM_DO_GRADIENTE = { x: 0.5, y: 1 };
 
 /** Preenche o pai: `BlurView` não está no `cssInterop`, e `className` sumiria. */
-const PREENCHE = { position: 'absolute', inset: 0 } as const;
+export const PREENCHE = { position: 'absolute', inset: 0 } as const;
 
-export function Vidro({ children, forte = false, className, classeExterna, ...props }: VidroProps) {
+export function Vidro({
+  children,
+  forte = false,
+  destaque = false,
+  className,
+  classeExterna,
+  ...props
+}: VidroProps) {
   const cores = useCores();
   const escalar = useEscala();
   const { colorScheme } = useColorScheme();
@@ -146,11 +158,19 @@ export function Vidro({ children, forte = false, className, classeExterna, ...pr
 
   return (
     <View
-      style={{ boxShadow: sombrasDoKit(escuro, cores, escalar) }}
+      style={{
+        boxShadow: destaque
+          ? brilhoDeDestaque(cores, escalar)
+          : sombrasDoKit(escuro, cores, escalar),
+      }}
       className={cn('rounded-xl', classeExterna)}
     >
       <View
-        className={cn('overflow-hidden rounded-xl border border-glass-border', className)}
+        className={cn(
+          'overflow-hidden rounded-xl border',
+          destaque ? 'border-primary/55' : 'border-glass-border',
+          className
+        )}
         {...props}
       >
         <CamadaDeBlur escuro={escuro} />
@@ -219,6 +239,29 @@ function sombrasDoKit(
     spreadDistance: escalar(sombra.espalhamento),
     color: comOpacidade(cores.sombra, sombra.alfa),
   }));
+}
+
+/**
+ * O brilho do cartão em destaque: `0 18px 44px -18px` da primária e uma
+ * sombra de contato de 40% embaixo — o que tira o cartão do plano da lista.
+ */
+function brilhoDeDestaque(cores: Cores, escalar: (medida: number) => number): BoxShadowValue[] {
+  return [
+    {
+      offsetX: 0,
+      offsetY: escalar(18),
+      blurRadius: escalar(44),
+      spreadDistance: escalar(-18),
+      color: cores.primary,
+    },
+    {
+      offsetX: 0,
+      offsetY: escalar(4),
+      blurRadius: escalar(12),
+      spreadDistance: escalar(-4),
+      color: comOpacidade(cores.sombra, 0.4),
+    },
+  ];
 }
 
 export type { VidroProps };

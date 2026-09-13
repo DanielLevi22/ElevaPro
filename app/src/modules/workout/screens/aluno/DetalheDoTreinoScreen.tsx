@@ -1,15 +1,13 @@
 import { contagem, gruposDoTreino, treinouHoje, type Workout } from '@elevapro/shared';
 import { useRouter } from 'expo-router';
 import { Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { showConfirm } from '@/components/ui/appAlert';
-import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
+import { BotaoFixoNoRodape } from '@/components/ui/BotaoFixoNoRodape';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { Chip } from '@/components/ui/Chip';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { ROUTES } from '@/navigation/types';
-import { useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { EstadoDaTela } from '../../components/aluno/EstadoDaTela';
 import { LinhaDoExercicio } from '../../components/aluno/LinhaDoExercicio';
@@ -33,8 +31,6 @@ interface DetalheDoTreinoScreenProps {
   alunoId: string;
   modo: ModoDaRota;
 }
-
-const MARGEM_DO_FUNDO = 16;
 
 export function DetalheDoTreinoScreen({ treinoId, alunoId, modo }: DetalheDoTreinoScreenProps) {
   const { treino, naoEncontrado } = useDetalheDoTreino(treinoId);
@@ -105,14 +101,9 @@ interface IniciarTreinoProps {
  * abre este detalhe: quem entrava pela lista ou pela tela inicial começava sem
  * ser perguntado.
  *
- * O kit põe o botão a 100 do fundo, acima da tab bar. O detalhe é rota imersiva
- * (`immersiveRoutes.ts`) e a tab bar some: o botão desce para junto do fundo,
- * acima da área do sistema — medida, não classe.
  */
 function IniciarTreino({ treino, alunoId, modo }: IniciarTreinoProps) {
   const router = useRouter();
-  const escalar = useEscala();
-  const insets = useSafeAreaInsets();
   const { ultima } = useSessoesDoAluno(alunoId);
 
   const iniciar = () => router.push(comModo(ROUTES.WORKOUTS.EXECUTE(treino.id), modo));
@@ -128,12 +119,5 @@ function IniciarTreino({ treino, alunoId, modo }: IniciarTreinoProps) {
     });
   };
 
-  return (
-    <View
-      className="absolute left-[1.125rem] right-[1.125rem]"
-      style={{ bottom: insets.bottom + escalar(MARGEM_DO_FUNDO) }}
-    >
-      <BotaoDeDestaque rotulo="Iniciar treino" icone="play" onPress={confirmarEIniciar} />
-    </View>
-  );
+  return <BotaoFixoNoRodape rotulo="Iniciar treino" icone="play" onPress={confirmarEIniciar} />;
 }

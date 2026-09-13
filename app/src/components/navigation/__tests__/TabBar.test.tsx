@@ -6,6 +6,7 @@ jest.mock('expo-blur', () => ({ BlurView: 'BlurView' }));
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), navigate: jest.fn() }),
   usePathname: jest.fn(() => '/workouts'),
+  useGlobalSearchParams: () => ({}),
 }));
 // O wrapper do NativeWind para safe-area-context quebra ao envolver os ícones
 // sob o mock de jest.setup. Nada aqui depende de como o ícone renderiza.
@@ -68,11 +69,19 @@ describe('TabBar', () => {
     });
   });
 
-  it('some nas telas imersivas de treino', () => {
+  it('some nas telas antigas de detalhe, que desenham o próprio rodapé', () => {
+    const { usePathname } = jest.requireMock('expo-router');
+    usePathname.mockReturnValue('/students/aluno-1/workouts/details/abc-123');
+
+    expect(render(<TabBar {...buildProps()} />).toJSON()).toBeNull();
+  });
+
+  // O kit desenha a sessão com a tab bar embaixo e o botão fixo acima dela.
+  it('continua na sessão de treino do aluno, como no kit', () => {
     const { usePathname } = jest.requireMock('expo-router');
     usePathname.mockReturnValue('/workouts/execute/abc-123');
 
-    expect(render(<TabBar {...buildProps()} />).toJSON()).toBeNull();
+    expect(render(<TabBar {...buildProps()} />).toJSON()).not.toBeNull();
   });
 
   it('some quando a rota pede tabBarStyle display none', () => {
