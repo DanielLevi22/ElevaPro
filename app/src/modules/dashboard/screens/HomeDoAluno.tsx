@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { type ImageSourcePropType, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { ConfettiOverlay } from '@/components/gamification/ConfettiOverlay';
 import { StreakCounter } from '@/components/gamification/StreakCounter';
@@ -6,6 +7,7 @@ import { AlvoDoVidro } from '@/components/ui/AlvoDoVidro';
 import { Anel } from '@/components/ui/Anel';
 import { AvatarDoCabecalho } from '@/components/ui/AvatarDoCabecalho';
 import { BlocoDeMetrica } from '@/components/ui/BlocoDeMetrica';
+import { BrilhoAmbiente } from '@/components/ui/BrilhoAmbiente';
 import { FundoDeFoto, RECEITA_DA_HOME } from '@/components/ui/FundoDeFoto';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
@@ -48,99 +50,111 @@ export function HomeDoAluno({ dados }: { dados: Dados }) {
   const { dailyGoal, streak, showConfetti } = gamificacao;
 
   const grupo = treinoSugerido?.muscle_group || 'Geral';
+  // A luz de fundo se ancora nos blocos de métrica, e não na altura da tela.
+  const [topoDosBlocos, setTopoDosBlocos] = useState<number | null>(null);
 
   return (
     <ScreenLayout useSafeArea={false}>
       {/*
-        Fora da rolagem, como no kit: a foto é `position: absolute` e o conteúdo
-        rola por cima dela. Também é o que permite o blur no Android, que precisa
-        de um alvo estável — alvo dentro de `ScrollView` muda a cada frame.
+        O fundo fora da rolagem, como no kit: a foto é `position: absolute` e o
+        conteúdo rola por cima dela. A rolagem fica dentro do alvo como filha,
+        para os cartões receberem o alvo do blur pelo contexto.
       */}
-      <AlvoDoVidro>
-        <FundoDeFoto imagem={FOTO_POR_GRUPO[grupo]} receita={RECEITA_DA_HOME} />
-      </AlvoDoVidro>
-
-      <ScrollView
-        contentContainerClassName="px-4 pb-28 pt-14"
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={carregando}
-            onRefresh={recarregar}
-            tintColor={cores.primary}
-          />
+      <AlvoDoVidro
+        fundo={
+          <>
+            <FundoDeFoto imagem={FOTO_POR_GRUPO[grupo]} receita={RECEITA_DA_HOME} />
+            {topoDosBlocos === null ? null : <BrilhoAmbiente topoDosBlocos={topoDosBlocos} />}
+          </>
         }
       >
-        <View className="flex-row items-center justify-between">
-          <View className="min-w-0 flex-1">
-            <Text className="text-legenda font-semibold text-hero-secondary">{hoje()}</Text>
-            <Text className="mt-0.5 text-h1 font-bold tracking-tight text-hero">
-              Olá, {perfil?.full_name?.split(' ')[0] || 'Aluno'}
-            </Text>
+        <ScrollView
+          contentContainerClassName="px-4 pb-28 pt-14"
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={carregando}
+              onRefresh={recarregar}
+              tintColor={cores.primary}
+            />
+          }
+        >
+          <View className="flex-row items-center justify-between">
+            <View className="min-w-0 flex-1">
+              <Text className="text-legenda font-semibold text-hero-secondary">{hoje()}</Text>
+              <Text className="mt-0.5 text-h1 font-bold tracking-tight text-hero">
+                Olá, {perfil?.full_name?.split(' ')[0] || 'Aluno'}
+              </Text>
+            </View>
+
+            <View className="flex-row items-center gap-2">
+              <StreakCounter
+                streak={streak?.current_streak || 0}
+                frozen={streak?.last_freeze_date === hojeISO()}
+              />
+              <AvatarDoCabecalho profile={perfil} />
+            </View>
           </View>
 
-          <View className="flex-row items-center gap-2">
-            <StreakCounter
-              streak={streak?.current_streak || 0}
-              frozen={streak?.last_freeze_date === hojeISO()}
+          <View className="mt-6 items-center">
+            <Anel
+              valor={dailyGoal?.completion_percentage ?? 0}
+              meta={100}
+              rotulo={`${Math.round(dailyGoal?.completion_percentage ?? 0)}%`}
+              sub="Meta do dia"
             />
-            <AvatarDoCabecalho profile={perfil} />
           </View>
-        </View>
+          <Text className="mb-5 mt-2.5 text-center text-legenda text-hero-secondary">
+            {faltaParaFecharODia(dailyGoal)}
+          </Text>
 
-        <View className="mt-6 items-center">
-          <Anel
-            valor={dailyGoal?.completion_percentage ?? 0}
-            meta={100}
-            rotulo={`${Math.round(dailyGoal?.completion_percentage ?? 0)}%`}
-            sub="Meta do dia"
-          />
-        </View>
-        <Text className="mb-5 mt-2.5 text-center text-legenda text-hero-secondary">
-          {faltaParaFecharODia(dailyGoal)}
-        </Text>
-
-        <View className="flex-row items-stretch gap-2.5">
-          <BlocoDeMetrica
-            icon="footsteps"
-            tom="passos"
-            valor={saude.steps.toLocaleString('pt-BR')}
-            unidade="passos"
-            legenda={`${Math.round((saude.steps / META_DE_PASSOS) * 100)}% da meta`}
-          />
-          <BlocoDeMetrica
-            icon="flame"
-            tom="calorias"
-            valor={`${saude.calories}`}
-            unidade="kcal"
-            legenda="Queimadas hoje"
-          />
-          <BlocoDeMetrica
-            icon="moon"
-            tom="sono"
-            valor={emHoras(saude.sleepMinutes)}
-            legenda="Sono"
-          />
-        </View>
-
-        {treinoSugerido ? (
-          <>
-            <TituloDeSecao acao="Ver tudo" onAcao={() => router.push(ROUTES.TABS.WORKOUTS)}>
-              Treino do dia
-            </TituloDeSecao>
-            <CartaoDoTreinoDoDia
-              titulo={treinoSugerido.title}
-              etiqueta={grupo}
-              imagem={FOTO_POR_GRUPO[grupo]}
-              minutos={treinoSugerido.duration_minutes}
-              onPress={() => router.push(ROUTES.WORKOUTS.DETAILS(treinoSugerido.id))}
+          <View
+            className="flex-row items-stretch gap-2.5"
+            // O conteúdo começa no topo da tela (sem safe area), então o `y` no
+            // contêiner da rolagem é o `y` na tela enquanto ela não rolou.
+            onLayout={(evento) => setTopoDosBlocos(evento.nativeEvent.layout.y)}
+          >
+            <BlocoDeMetrica
+              icon="footsteps"
+              tom="passos"
+              valor={saude.steps.toLocaleString('pt-BR')}
+              unidade="passos"
+              legenda={`${Math.round((saude.steps / META_DE_PASSOS) * 100)}% da meta`}
             />
-          </>
-        ) : null}
+            <BlocoDeMetrica
+              icon="flame"
+              tom="calorias"
+              valor={`${saude.calories}`}
+              unidade="kcal"
+              legenda="Queimadas hoje"
+            />
+            <BlocoDeMetrica
+              icon="moon"
+              tom="sono"
+              valor={emHoras(saude.sleepMinutes)}
+              legenda="Sono"
+            />
+          </View>
 
-        <TituloDeSecao>Hoje</TituloDeSecao>
-        <EntradasDeHoje dados={dados} />
-      </ScrollView>
+          {treinoSugerido ? (
+            <>
+              <TituloDeSecao acao="Ver tudo" onAcao={() => router.push(ROUTES.TABS.WORKOUTS)}>
+                Treino do dia
+              </TituloDeSecao>
+              <CartaoDoTreinoDoDia
+                titulo={treinoSugerido.title}
+                etiqueta={grupo}
+                imagem={FOTO_POR_GRUPO[grupo]}
+                minutos={treinoSugerido.duration_minutes}
+                onPress={() => router.push(ROUTES.WORKOUTS.DETAILS(treinoSugerido.id))}
+              />
+            </>
+          ) : null}
+
+          <TituloDeSecao>Hoje</TituloDeSecao>
+          <EntradasDeHoje dados={dados} />
+        </ScrollView>
+      </AlvoDoVidro>
 
       <ConfettiOverlay show={showConfetti} />
     </ScreenLayout>
