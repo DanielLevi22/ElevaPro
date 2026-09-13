@@ -1,4 +1,4 @@
-import { useWorkoutLogStore } from '../workoutLogStore';
+import { useWorkoutLogStore, type WorkoutLog } from '../workoutLogStore';
 
 const mockUpdateSessionFeedback = jest.fn();
 const mockHasCollectionConsent = jest.fn();
@@ -19,6 +19,29 @@ jest.mock('@elevapro/shared', () => ({
 
 const ALUNO = 'aluno-1';
 const SESSAO = 'sessao-1';
+
+function sessaoDoHistorico(campos: Partial<WorkoutLog> = {}): WorkoutLog {
+  return {
+    id: SESSAO,
+    student_id: ALUNO,
+    workout_id: 'treino-1',
+    started_at: '2026-08-27T10:00:00Z',
+    completed_at: '2026-08-27T11:00:00Z',
+    perceived_exertion: 8,
+    notes: null,
+    feedback_edited_at: null,
+    session_type: 'strength',
+    duration_seconds: 3600,
+    active_calories: null,
+    distance_meters: null,
+    avg_pace_seconds_per_km: null,
+    avg_heart_rate: null,
+    activity_name: null,
+    workout: { title: 'Treino A' },
+    created_at: '2026-08-27T11:00:00Z',
+    ...campos,
+  };
+}
 
 function sessaoGravada(over: Record<string, unknown> = {}) {
   return {
@@ -52,14 +75,7 @@ describe('updateSessionFeedback — o direito de correção (Art. 18, III)', () 
 
   it('reflete a correção na lista já carregada, sem refetch', async () => {
     useWorkoutLogStore.setState({
-      logs: [
-        {
-          id: SESSAO,
-          perceived_exertion: 8,
-          notes: 'senti dor no ombro direito',
-          feedback_edited_at: null,
-        },
-      ] as never,
+      logs: [sessaoDoHistorico({ notes: 'senti dor no ombro direito' })],
     });
 
     await useWorkoutLogStore.getState().updateSessionFeedback(SESSAO, ALUNO, {
@@ -111,6 +127,25 @@ describe('TRAVA LGPD — o que a correção não pode fazer', () => {
           'Ver notasSeConsentido e o Bloco B do parecer em docs/PRDs/session-feedback-correction.md'
       );
     }
+  });
+
+  /**
+   * Regressão da revisão da #295: a tela de correção devolve a observação
+   * inteira mesmo quando o aluno só mexeu na PSE. Passada de novo pela decisão
+   * de consentimento, a observação que ele não tocou virava `null` e sumia.
+   */
+  it('não apaga a observação salva quando só a PSE muda e não há consentimento', async () => {
+    mockHasCollectionConsent.mockResolvedValue(false);
+    useWorkoutLogStore.setState({
+      logs: [sessaoDoHistorico({ notes: 'senti dor no ombro' })],
+    });
+
+    await useWorkoutLogStore
+      .getState()
+      .updateSessionFeedback(SESSAO, ALUNO, { perceived_exertion: 6, notes: 'senti dor no ombro' });
+
+    expect(mockUpdateSessionFeedback.mock.calls[0][1]).toEqual({ perceived_exertion: 6 });
+    expect(mockHasCollectionConsent).not.toHaveBeenCalled();
   });
 
   /**

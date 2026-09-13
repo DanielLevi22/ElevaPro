@@ -9,7 +9,7 @@ import { BotaoRedondo } from './BotaoRedondo';
  * está ("Fase 2 · Hipertrofia"); o título, o que a tela é.
  *
  * @example
- * <CabecalhoSobreFoto sobrelinha="Periodização" titulo="Ciclo 2026" onVoltar={router.back} />
+ * <CabecalhoSobreFoto sobrelinha="Periodização" titulo="Hipertrofia 2026" onVoltar={router.back} />
  */
 interface CabecalhoSobreFotoProps {
   sobrelinha: string;

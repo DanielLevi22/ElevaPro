@@ -1,7 +1,7 @@
 import { formatPse } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -11,7 +11,6 @@ import {
   View,
 } from 'react-native';
 import { useAuthStore } from '@/auth';
-import { showAlert } from '@/components/ui/appAlert';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
@@ -19,23 +18,8 @@ import { Vidro } from '@/components/ui/Vidro';
 import { useCores, useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { ModalDeFeedback } from '../components/sessao/ModalDeFeedback';
+import { useCorrecaoDeFeedback } from '../hooks/useCorrecaoDeFeedback';
 import { useWorkoutLogStore, type WorkoutLog } from '../store/workoutLogStore';
-
-/**
- * O histórico das sessões do próprio aluno, e o caminho para corrigir o que ele
- * declarou — Art. 18, III.
- *
- * A tela existe porque o direito não tinha por onde ser exercido: o aluno
- * apertava "Salvar e finalizar" e o texto ficava como estava para sempre.
- * Ficou grave quando o especialista passou a LER `workout_sessions.notes` no
- * feed de atividades: quem escreveu "senti dor no ombro direito" quando era o
- * esquerdo não tinha como consertar antes de a prescrição ser ajustada para o
- * lado errado.
- *
- * O que a tela NÃO oferece, de propósito: editar data, duração, calorias ou
- * séries. Aquilo é medida do evento, e o remédio para uma medida inexata é
- * medir de novo. A `0036` impõe a mesma fronteira no banco.
- */
 
 function tituloDaSessao(log: WorkoutLog): string {
   if (log.session_type === 'cardio') return log.activity_name ?? 'Cardio';
@@ -137,101 +121,53 @@ function LinhaDaSessao({ log, onCorrigir }: { log: WorkoutLog; onCorrigir: () =>
   );
 }
 
+/**
+ * O histórico das sessões do próprio aluno, e o caminho para corrigir o que ele
+ * declarou — Art. 18, III.
+ *
+ * A tela existe porque o direito não tinha por onde ser exercido: o aluno
+ * apertava "Salvar e finalizar" e o texto ficava como estava para sempre.
+ * Ficou grave quando o especialista passou a LER `workout_sessions.notes` no
+ * feed de atividades: quem escreveu "senti dor no ombro direito" quando era o
+ * esquerdo não tinha como consertar antes de a prescrição ser ajustada para o
+ * lado errado.
+ *
+ * O que a tela NÃO oferece, de propósito: editar data, duração, calorias ou
+ * séries. Aquilo é medida do evento, e o remédio para uma medida inexata é
+ * medir de novo. A `0036` impõe a mesma fronteira no banco.
+ *
+ * @example
+ * // app/student/session-history.tsx
+ * <SessionHistoryScreen />
+ */
 export function SessionHistoryScreen() {
-  const router = useRouter();
-  const cores = useCores();
   const user = useAuthStore((s) => s.user);
-  const { logs, loading, fetchLogs, updateSessionFeedback } = useWorkoutLogStore();
-
-  const [emCorrecao, setEmCorrecao] = useState<WorkoutLog | null>(null);
-  const [confirmandoApagar, setConfirmandoApagar] = useState<WorkoutLog | null>(null);
+  const { logs, loading, fetchLogs } = useWorkoutLogStore();
+  const correcao = useCorrecaoDeFeedback(user?.id);
 
   useEffect(() => {
     if (user?.id) fetchLogs(user.id);
   }, [user?.id, fetchLogs]);
 
-  const salvarCorrecao = useCallback(
-    async (pse: number, notes: string) => {
-      const alvo = emCorrecao;
-      if (!alvo || !user?.id) return;
-      setEmCorrecao(null);
-      try {
-        await updateSessionFeedback(alvo.id, user.id, { perceived_exertion: pse, notes });
-      } catch {
-        // Sem o erro: o do PostgREST carrega o payload, e o payload é `notes`.
-        showAlert({
-          type: 'error',
-          title: 'Não deu',
-          message: 'Não consegui salvar a correção. Tente de novo.',
-        });
-      }
-    },
-    [emCorrecao, user?.id, updateSessionFeedback]
-  );
-
-  const apagarObservacao = useCallback(async () => {
-    const alvo = confirmandoApagar;
-    if (!alvo || !user?.id) return;
-    setConfirmandoApagar(null);
-    try {
-      await updateSessionFeedback(alvo.id, user.id, { notes: null });
-    } catch {
-      showAlert({
-        type: 'error',
-        title: 'Não deu',
-        message: 'Não consegui apagar a observação. Tente de novo.',
-      });
-    }
-  }, [confirmandoApagar, user?.id, updateSessionFeedback]);
-
   return (
     <ScreenLayout>
-      <View className="mb-2 flex-row items-center gap-4 px-4 py-4">
-        <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={router.back} />
-        <View className="flex-1">
-          <Text className="text-h1 font-extrabold text-foreground">Meus treinos</Text>
-          <Text className="text-legenda text-muted-foreground">
-            Corrija o que você escreveu a qualquer momento
-          </Text>
-        </View>
-      </View>
-
-      {loading && logs.length === 0 ? (
-        <View className="flex-1 items-center justify-center py-16">
-          <ActivityIndicator color={cores.primary} />
-        </View>
-      ) : (
-        <FlatList
-          data={logs}
-          keyExtractor={(log) => log.id}
-          contentContainerClassName="px-4 pb-8"
-          refreshControl={
-            <RefreshControl
-              refreshing={loading}
-              onRefresh={() => user?.id && fetchLogs(user.id)}
-              tintColor={cores.primary}
-            />
-          }
-          ListEmptyComponent={<HistoricoVazio />}
-          renderItem={({ item }) => (
-            <LinhaDaSessao log={item} onCorrigir={() => setEmCorrecao(item)} />
-          )}
-        />
-      )}
+      <CabecalhoDoHistorico />
+      <ListaDoHistorico
+        logs={logs}
+        carregando={loading}
+        onRecarregar={() => user?.id && fetchLogs(user.id)}
+        onCorrigir={correcao.corrigir}
+      />
 
       <ModalDeFeedback
-        visivel={emCorrecao !== null}
+        visivel={correcao.emCorrecao !== null}
         modo="correcao"
         imagem={fotoDoGrupo(null)}
-        pseInicial={emCorrecao?.perceived_exertion ?? null}
-        notasIniciais={emCorrecao?.notes ?? null}
-        onFechar={() => setEmCorrecao(null)}
-        onSalvar={salvarCorrecao}
-        onApagarObservacao={() => {
-          const alvo = emCorrecao;
-          setEmCorrecao(null);
-          setConfirmandoApagar(alvo);
-        }}
+        pseInicial={correcao.emCorrecao?.perceived_exertion ?? null}
+        notasIniciais={correcao.emCorrecao?.notes ?? null}
+        onFechar={correcao.fecharCorrecao}
+        onSalvar={correcao.salvarCorrecao}
+        onApagarObservacao={correcao.pedirParaApagar}
       />
 
       {/*
@@ -241,16 +177,66 @@ export function SessionHistoryScreen() {
         (Art. 18, VI), a sessão é execução de contrato e continua.
       */}
       <ConfirmModal
-        visible={confirmandoApagar !== null}
+        visible={correcao.confirmandoApagar !== null}
         type="danger"
         title="Apagar observação?"
         message="A observação some. O treino, a data e as séries continuam no seu histórico."
         confirmText="Apagar observação"
         cancelText="Manter"
-        onConfirm={apagarObservacao}
-        onClose={() => setConfirmandoApagar(null)}
+        onConfirm={correcao.apagarObservacao}
+        onClose={correcao.fecharConfirmacao}
       />
     </ScreenLayout>
+  );
+}
+
+function CabecalhoDoHistorico() {
+  const router = useRouter();
+  return (
+    <View className="mb-2 flex-row items-center gap-4 px-4 py-4">
+      <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={router.back} />
+      <View className="flex-1">
+        <Text className="text-h1 font-extrabold text-foreground">Meus treinos</Text>
+        <Text className="text-legenda text-muted-foreground">
+          Corrija o que você escreveu a qualquer momento
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+interface ListaDoHistoricoProps {
+  logs: WorkoutLog[];
+  carregando: boolean;
+  onRecarregar: () => void;
+  onCorrigir: (log: WorkoutLog) => void;
+}
+
+/** O indicador só na primeira carga; depois, o puxar-para-atualizar da lista. */
+function ListaDoHistorico({ logs, carregando, onRecarregar, onCorrigir }: ListaDoHistoricoProps) {
+  const cores = useCores();
+  if (carregando && logs.length === 0) {
+    return (
+      <View className="flex-1 items-center justify-center py-16">
+        <ActivityIndicator color={cores.primary} />
+      </View>
+    );
+  }
+  return (
+    <FlatList
+      data={logs}
+      keyExtractor={(log) => log.id}
+      contentContainerClassName="px-4 pb-8"
+      refreshControl={
+        <RefreshControl
+          refreshing={carregando}
+          onRefresh={onRecarregar}
+          tintColor={cores.primary}
+        />
+      }
+      ListEmptyComponent={<HistoricoVazio />}
+      renderItem={({ item }) => <LinhaDaSessao log={item} onCorrigir={() => onCorrigir(item)} />}
+    />
   );
 }
 

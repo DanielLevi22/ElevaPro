@@ -1,4 +1,4 @@
-import { type CicloDoAluno, progressoDoCiclo } from '@elevapro/shared';
+import { progressoDaPeriodizacao, type ResumoDaPeriodizacao } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ImageBackground, Text, View } from 'react-native';
@@ -10,34 +10,38 @@ import { useCores, useEscala } from '@/shared/design';
 import { fotoDoObjetivo } from '@/shared/imagens/fotosDeTreino';
 
 /**
- * O ciclo em andamento no topo da lista de periodizações: foto do objetivo,
- * semana, fases e treinos, e o botão que volta ao ciclo.
+ * A periodização em andamento no topo da lista de periodizações: foto do objetivo,
+ * semana, fases e treinos, e o botão que volta à periodização.
  *
  * O kit tem mais duas células na faixa, "Restantes" e "Aderência". Não
- * entraram: o app não tem regra de quantos treinos o ciclo espera por semana,
+ * entraram: o app não tem regra de quantos treinos a periodização espera por semana,
  * e sem ela os dois números seriam inventados (a regra do treino do dia é a
  * #291).
  *
  * @example
- * <CartaoDoCicloEmAndamento ciclo={ativo} especialista="Daniel L." onContinuar={abrir} />
+ * <CartaoDaPeriodizacaoAtiva resumo={ativo} especialista="Daniel L." onContinuar={abrir} />
  */
-interface CartaoDoCicloEmAndamentoProps {
-  ciclo: CicloDoAluno;
+interface CartaoDaPeriodizacaoAtivaProps {
+  resumo: ResumoDaPeriodizacao;
   especialista: string | null;
   onContinuar: () => void;
 }
 
 const TAMANHO_DO_ICONE = 12;
 
-export function CartaoDoCicloEmAndamento({
-  ciclo,
+export function CartaoDaPeriodizacaoAtiva({
+  resumo,
   especialista,
   onContinuar,
-}: CartaoDoCicloEmAndamentoProps) {
+}: CartaoDaPeriodizacaoAtivaProps) {
   const cores = useCores();
   const escalar = useEscala();
-  const { periodizacao, faseAtual } = ciclo;
-  const progresso = progressoDoCiclo(periodizacao.start_date, periodizacao.end_date, new Date());
+  const { periodizacao, faseAtual } = resumo;
+  const progresso = progressoDaPeriodizacao(
+    periodizacao.start_date,
+    periodizacao.end_date,
+    new Date()
+  );
   const legenda = [especialista, faseAtual ? `Fase ${faseAtual.numero} · ${faseAtual.nome}` : null]
     .filter(Boolean)
     .join(' · ');
@@ -90,8 +94,8 @@ export function CartaoDoCicloEmAndamento({
         </View>
         <BarraDeProgresso percentual={progresso.percentual} />
         <View className="mt-[0.8125rem] flex-row overflow-hidden rounded-[0.875rem] bg-glass-strong">
-          <CelulaDoCiclo valor={String(ciclo.fases)} rotulo="Fases" />
-          <CelulaDoCiclo valor={String(ciclo.treinos)} rotulo="Treinos" />
+          <CelulaDaPeriodizacao valor={String(resumo.fases)} rotulo="Fases" />
+          <CelulaDaPeriodizacao valor={String(resumo.treinos)} rotulo="Treinos" />
         </View>
         <View className="mt-[0.8125rem]">
           <BotaoDeDestaque
@@ -106,7 +110,7 @@ export function CartaoDoCicloEmAndamento({
   );
 }
 
-function CelulaDoCiclo({ valor, rotulo }: { valor: string; rotulo: string }) {
+function CelulaDaPeriodizacao({ valor, rotulo }: { valor: string; rotulo: string }) {
   return (
     <View className="flex-1 items-center px-1 py-[0.5625rem]">
       <Text className="font-display-black text-sm tracking-tight text-foreground">{valor}</Text>

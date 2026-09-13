@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { useCores, useEscala } from '@/shared/design';
+import { useBrilho, useCores, useEscala } from '@/shared/design';
 
 /**
  * Anel de progresso, com o valor no meio.
@@ -270,6 +270,7 @@ function PontoDaPonta({
   cor: string;
 }) {
   const escalar = useEscala();
+  const brilho = useBrilho();
   const raioDoPonto = escalar(RAIO_DO_PONTO);
   const angulo = (geometria.fracao * 2 - 0.5) * Math.PI;
   const centro = geometria.centro - margem;
@@ -285,7 +286,7 @@ function PontoDaPonta({
         height: raioDoPonto * 2,
         borderRadius: raioDoPonto,
         backgroundColor: cor,
-        boxShadow: [{ offsetX: 0, offsetY: 0, blurRadius: escalar(BRILHO_DO_PONTO), color: cor }],
+        boxShadow: brilho({ blur: BRILHO_DO_PONTO }, { cor }),
       }}
     />
   );

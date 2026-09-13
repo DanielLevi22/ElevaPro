@@ -4,7 +4,7 @@ import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
 import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
-import { comOpacidade, useCores, useEscala } from '@/shared/design';
+import { useBrilho, useCores, useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 
 /**
@@ -78,6 +78,7 @@ const ANEL_DO_PONTO = 3;
 function Identificacao({ item, onAjustar }: { item: WorkoutExercise; onAjustar: () => void }) {
   const cores = useCores();
   const escalar = useEscala();
+  const brilho = useBrilho();
 
   return (
     <View className="flex-row items-center gap-3">
@@ -91,17 +92,7 @@ function Identificacao({ item, onAjustar }: { item: WorkoutExercise; onAjustar: 
         <View className="flex-row items-center gap-1.5">
           <View
             className="h-1.5 w-1.5 rounded-full bg-primary"
-            style={{
-              boxShadow: [
-                {
-                  offsetX: 0,
-                  offsetY: 0,
-                  blurRadius: 0,
-                  spreadDistance: escalar(ANEL_DO_PONTO),
-                  color: comOpacidade(cores.primary, 0.25),
-                },
-              ],
-            }}
+            style={{ boxShadow: brilho({ blur: 0, espalhamento: ANEL_DO_PONTO }, { alfa: 0.25 }) }}
           />
           <Text className="text-[0.625rem] font-extrabold uppercase tracking-[0.14em] text-primary-text">
             Em execução
@@ -192,66 +183,73 @@ const TAMANHO_DO_CHECK = 13;
 /** O brilho da célula atual: `0 6px 16px -8px` da primária. */
 const BRILHO_DA_ATUAL = { y: 6, blur: 16, espalhamento: -8 } as const;
 
-/** Feita em verde, com check e repetições; a atual em primária com brilho; as pendentes em vidro. */
+/** Uma célula por série, na ordem: a primeira sem registro é a atual. */
 function CelulasDasSeries({ total, feitas }: { total: number; feitas: readonly SerieFeita[] }) {
-  const cores = useCores();
-  const escalar = useEscala();
-  const brilho = {
-    boxShadow: [
-      {
-        offsetX: 0,
-        offsetY: escalar(BRILHO_DA_ATUAL.y),
-        blurRadius: escalar(BRILHO_DA_ATUAL.blur),
-        spreadDistance: escalar(BRILHO_DA_ATUAL.espalhamento),
-        color: cores.primary,
-      },
-    ],
-  };
-
   return (
     <View className="flex-row gap-1.5">
-      {Array.from({ length: total }, (_, indice) => {
-        const feita = feitas[indice];
-        const atual = indice === feitas.length;
-        return (
-          <View
-            // biome-ignore lint/suspicious/noArrayIndexKey: a série é a própria posição
-            key={indice}
-            className={cn(
-              'h-[3.25rem] flex-1 items-center justify-center gap-0.5 rounded-[0.875rem] border-[0.09375rem]',
-              feita ? 'border-transparent bg-metrica-passos/15' : null,
-              atual ? 'border-primary bg-primary/20' : null,
-              !feita && !atual ? 'border-transparent bg-glass-strong' : null
-            )}
-            style={atual ? brilho : undefined}
-          >
-            {feita ? (
-              <Ionicons
-                name="checkmark"
-                size={escalar(TAMANHO_DO_CHECK)}
-                color={cores.metricaPassos}
-              />
-            ) : (
-              <Text
-                className={cn(
-                  'text-[0.53125rem] font-extrabold uppercase tracking-[0.12em]',
-                  atual ? 'text-primary-text' : 'text-placeholder'
-                )}
-              >
-                S{indice + 1}
-              </Text>
-            )}
-            <Text
-              className={cn(
-                'font-display-black text-[0.9375rem] tracking-tight',
-                feita ? 'text-metrica-passos' : atual ? 'text-primary-text' : 'text-placeholder'
-              )}
-            >
-              {feita?.reps ?? '—'}
-            </Text>
-          </View>
-        );
-      })}
+      {Array.from({ length: total }, (_, indice) => (
+        <CelulaDaSerie
+          // biome-ignore lint/suspicious/noArrayIndexKey: a série é a própria posição
+          key={indice}
+          numero={indice + 1}
+          feita={feitas[indice]}
+          atual={indice === feitas.length}
+        />
+      ))}
     </View>
   );
 }
+
+interface CelulaDaSerieProps {
+  numero: number;
+  feita: SerieFeita | undefined;
+  atual: boolean;
+}
+
+/** Feita em verde, com check e repetições; a atual em primária com brilho; a pendente em vidro. */
+function CelulaDaSerie({ numero, feita, atual }: CelulaDaSerieProps) {
+  const cores = useCores();
+  const escalar = useEscala();
+  const brilho = useBrilho();
+  const tom = feita ? 'feita' : atual ? 'atual' : 'pendente';
+
+  return (
+    <View
+      className={cn(
+        'h-[3.25rem] flex-1 items-center justify-center gap-0.5 rounded-[0.875rem] border-[0.09375rem]',
+        FUNDO_DA_CELULA[tom]
+      )}
+      style={atual ? { boxShadow: brilho(BRILHO_DA_ATUAL) } : undefined}
+    >
+      {feita ? (
+        <Ionicons name="checkmark" size={escalar(TAMANHO_DO_CHECK)} color={cores.metricaPassos} />
+      ) : (
+        <Text
+          className={cn(
+            'text-[0.53125rem] font-extrabold uppercase tracking-[0.12em]',
+            atual ? 'text-primary-text' : 'text-placeholder'
+          )}
+        >
+          S{numero}
+        </Text>
+      )}
+      <Text
+        className={cn('font-display-black text-[0.9375rem] tracking-tight', TEXTO_DA_CELULA[tom])}
+      >
+        {feita?.reps ?? '—'}
+      </Text>
+    </View>
+  );
+}
+
+const FUNDO_DA_CELULA = {
+  feita: 'border-transparent bg-metrica-passos/15',
+  atual: 'border-primary bg-primary/20',
+  pendente: 'border-transparent bg-glass-strong',
+} as const;
+
+const TEXTO_DA_CELULA = {
+  feita: 'text-metrica-passos',
+  atual: 'text-primary-text',
+  pendente: 'text-placeholder',
+} as const;

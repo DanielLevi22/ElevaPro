@@ -1,5 +1,14 @@
-import { createWorkoutsService, type SaveSessionSetInput } from '@elevapro/shared';
+import {
+  createWorkoutsService,
+  numeroDaPrescricao,
+  type SaveSessionSetInput,
+  type SerieFeita,
+  type Workout,
+  type WorkoutExercise,
+} from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
+import { registrarAviso, registrarFalha } from '@/lib/registro';
+import type { EstadoDaSessao } from '../store/maquinaDaSessao';
 import { batimentoSeConsentido, notasSeConsentido } from './consentimento';
 
 const servicoDeTreinos = createWorkoutsService(supabase);
@@ -33,6 +42,65 @@ export interface SessaoDeForcaParaGravar {
   notes?: string;
 }
 
+/** O que o aluno respondeu no feedback, junto de quem é a sessão. */
+export interface FeedbackDaSessao {
+  alunoId: string;
+  pse: number;
+  notas: string;
+}
+
+type SessaoExecutada = Pick<EstadoDaSessao, 'itens' | 'feitas' | 'iniciadaEm' | 'concluidaEm'>;
+
+/**
+ * A sessão executada no formato da gravação: só os exercícios com série feita,
+ * cada série com o prescrito ao lado do executado.
+ *
+ * O prescrito vem do treino como o especialista o montou; o executado, do que
+ * o aluno fez com os ajustes da sessão. Separar os dois é o que torna a
+ * evolução mensurável — ajustar a carga no meio do treino não reescreve o que
+ * foi prescrito.
+ *
+ * @example
+ * const paraGravar = montarSessaoDeForca(treino, sessao, { alunoId, pse: 7, notas: '' }, Date.now());
+ */
+export function montarSessaoDeForca(
+  treino: Workout,
+  sessao: SessaoExecutada,
+  { alunoId, pse, notas }: FeedbackDaSessao,
+  agora: number
+): SessaoDeForcaParaGravar {
+  const prescritos = new Map((treino.exercises ?? []).map((item) => [item.id, item]));
+  return {
+    workoutId: treino.id,
+    studentId: alunoId,
+    startedAt: new Date(sessao.iniciadaEm ?? agora).toISOString(),
+    completedAt: new Date(sessao.concluidaEm ?? agora).toISOString(),
+    perceivedExertion: pse,
+    notes: notas,
+    items: sessao.itens
+      .filter((item) => (sessao.feitas[item.id]?.length ?? 0) > 0)
+      .map((item) => ({
+        workoutExerciseId: item.id,
+        exerciseId: item.exercise_id,
+        sets: seriesParaGravar(prescritos.get(item.id), sessao.feitas[item.id] ?? []),
+      })),
+  };
+}
+
+function seriesParaGravar(
+  prescrito: WorkoutExercise | undefined,
+  feitas: readonly SerieFeita[]
+): SaveSessionSetInput[] {
+  return feitas.map((serie) => ({
+    reps_prescribed: prescrito?.reps ?? null,
+    reps_actual: serie.reps,
+    weight_prescribed: numeroDaPrescricao(prescrito?.weight),
+    weight_actual: serie.carga,
+    rest_prescribed: prescrito?.rest_seconds ?? null,
+    completed: true,
+  }));
+}
+
 /**
  * Grava a sessão de musculação e uma linha por série. Devolve o id da sessão.
  *
@@ -47,8 +115,6 @@ export async function gravarSessaoDeForca(
   sessao: SessaoDeForcaParaGravar,
   { mascarado }: Opcoes
 ): Promise<string | null> {
-  // Sem o objeto: `notes` é o texto do aluno sobre a própria saúde, e log de
-  // desenvolvimento vaza para onde ninguém controla.
   if (mascarado) return null;
 
   try {
@@ -72,8 +138,9 @@ export async function gravarSessaoDeForca(
     );
     return gravada.id;
   } catch (erro) {
-    // Sem o objeto de erro: o do PostgREST pode carregar o payload da linha.
-    console.error('[registroDaSessao] falha ao gravar sessão de treino');
+    // Sem o objeto de erro: o do PostgREST pode carregar o payload da linha, e
+    // `notes` é o texto do aluno sobre a própria saúde.
+    registrarFalha('sessao.gravar', { tipo: 'forca' });
     throw erro;
   }
 }
@@ -137,7 +204,7 @@ export async function gravarSessaoDeCardio(
     await gravarBatimento(gravada.id, sessao.studentId, sessao.avgHeartRate ?? null);
   } catch (erro) {
     // Sem o objeto de erro: o payload aqui inclui `notes`, dado de saúde.
-    console.error('[registroDaSessao] falha ao gravar sessão de cardio');
+    registrarFalha('sessao.gravar', { tipo: 'cardio' });
     throw erro;
   }
 }
@@ -149,13 +216,17 @@ export async function gravarSessaoDeCardio(
  * tentativa seguinte criaria uma segunda linha: perder a corrida inteira por
  * causa do batimento é pior que perder o batimento.
  */
-async function gravarBatimento(sessaoId: string, alunoId: string, medido: number | null) {
+async function gravarBatimento(
+  sessaoId: string,
+  alunoId: string,
+  medido: number | null
+): Promise<void> {
   const batimento = await batimentoSeConsentido(alunoId, medido);
   if (batimento === null) return;
   try {
     await servicoDeTreinos.saveSessionHeartRate(sessaoId, batimento);
   } catch {
     // Sem o objeto de erro: o do PostgREST carrega o payload, e é dado de saúde.
-    console.error('[registroDaSessao] sessão gravada, FC média não');
+    registrarAviso('sessao.gravarBatimento', { sessaoGravada: true });
   }
 }

@@ -4,7 +4,7 @@ import { TelaDeFeedback } from './TelaDeFeedback';
 
 /**
  * A tela de feedback aberta por cima de outra: o fim do cardio e a correção no
- * histórico. A sessão de musculação a mostra como etapa, sem modal.
+ * histórico. A sessão de musculação a mostra como momento, sem modal.
  *
  * O modal só existe enquanto está visível: montar a tela a cada abertura é o
  * que faz a correção da segunda sessão chegar com os valores dela, e não com os

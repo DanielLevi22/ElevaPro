@@ -13,7 +13,7 @@ import {
   resumoDaSessao,
   seriesDaSessaoAnterior,
   volumeDasSeries,
-} from "../sessaoDeTreino";
+} from "../sessao";
 
 describe("resumo da sessão", () => {
   it("soma o volume como carga × repetições das séries feitas", () => {

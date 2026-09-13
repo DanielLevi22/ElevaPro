@@ -2,7 +2,7 @@ import type { Workout } from '@elevapro/shared';
 import { useWorkoutStore } from '../store/workoutStore';
 
 /**
- * Onde o treino está no plano: "Treino B", "Fase 2" e o objetivo do ciclo —
+ * Onde o treino está no plano: "Treino B", "Fase 2" e o objetivo da periodização —
  * os chips do pré-início e a linha de data do resumo.
  *
  * Lê só o que já está na store, sem buscar: quem chega à sessão pelo caminho do
@@ -28,11 +28,11 @@ export function useContextoDoTreino(treino: Workout): ContextoDoTreino {
   const posicao = daFase.findIndex((w) => w.id === treino.id);
   const indiceDaFase = fases.findIndex((f) => f.id === treino.training_plan_id);
   const fase = fases[indiceDaFase];
-  const ciclo = periodizations.find((p) => p.id === fase?.periodization_id);
+  const periodizacao = periodizations.find((p) => p.id === fase?.periodization_id);
 
   return {
     letra: posicao === -1 ? null : `Treino ${String.fromCharCode(PRIMEIRA_LETRA + posicao)}`,
     fase: indiceDaFase === -1 ? null : `Fase ${indiceDaFase + 1}`,
-    objetivo: ciclo?.objective ?? null,
+    objetivo: periodizacao?.objective ?? null,
   };
 }

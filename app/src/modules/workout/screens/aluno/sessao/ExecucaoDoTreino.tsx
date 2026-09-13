@@ -16,8 +16,9 @@ import { TopoDaSessao } from '../../../components/sessao/TopoDaSessao';
 import {
   type AcaoDaSessao,
   type EstadoDaSessao,
+  exercicioConcluido,
   progressoDaSessao,
-  seriesFeitasDo,
+  tempoDaSessao,
 } from '../../../store/maquinaDaSessao';
 
 /**
@@ -27,7 +28,7 @@ import {
  * @example
  * <ExecucaoDoTreino treino={treino} sessao={sessao} agora={agora} … />
  */
-export interface PropsDaEtapa {
+export interface PropsDoMomento {
   treino: Workout;
   sessao: EstadoDaSessao;
   agora: number;
@@ -36,7 +37,7 @@ export interface PropsDaEtapa {
   onFechar: () => void;
 }
 
-interface ExecucaoDoTreinoProps extends PropsDaEtapa {
+interface ExecucaoDoTreinoProps extends PropsDoMomento {
   anteriores: Record<string, SerieFeita[]>;
   onAjustar: (itemId: string) => void;
 }
@@ -52,16 +53,15 @@ export function ExecucaoDoTreino({
   onAjustar,
 }: ExecucaoDoTreinoProps) {
   const atual = sessao.itens.find((item) => item.id === sessao.atualId);
-  const concluido = (id: string, series: number | null) =>
-    seriesFeitasDo(sessao, id) >= (series ?? 0);
-  const feitos = sessao.itens.filter((i) => i.id !== atual?.id && concluido(i.id, i.sets));
-  const aSeguir = sessao.itens.filter((i) => i.id !== atual?.id && !concluido(i.id, i.sets));
+  const outros = sessao.itens.filter((i) => i.id !== atual?.id);
+  const feitos = outros.filter((i) => exercicioConcluido(sessao, i));
+  const aSeguir = outros.filter((i) => !exercicioConcluido(sessao, i));
 
   return (
     <TelaDeVidroComFoto imagem={fotoDoGrupo(treino.muscle_group)}>
       <TopoDaSessao
         titulo={treino.title}
-        tempo={formatarDuracao((agora - (sessao.iniciadaEm ?? agora)) / 1000)}
+        tempo={formatarDuracao(tempoDaSessao(sessao, agora))}
         voz={voz}
         onFechar={onFechar}
       />

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Text, TouchableOpacity } from 'react-native';
 import { cn } from '@/lib/utils';
-import { comOpacidade, useCores, useEscala } from '@/shared/design';
+import { useBrilho, useCores, useEscala } from '@/shared/design';
 
 /**
  * A ação principal do kit de vidro: lime, caixa alta, com brilho da própria cor.
@@ -58,7 +58,7 @@ export function BotaoDeDestaque({
 }: BotaoDeDestaqueProps) {
   const cores = useCores();
   const escalar = useEscala();
-  const brilho = BRILHO[tamanho];
+  const comBrilho = useBrilho();
 
   return (
     <TouchableOpacity
@@ -67,17 +67,7 @@ export function BotaoDeDestaque({
       accessibilityRole="button"
       accessibilityLabel={rotulo}
       className={cn('flex-row items-center justify-center gap-2 bg-primary', FORMA[tamanho])}
-      style={{
-        boxShadow: [
-          {
-            offsetX: 0,
-            offsetY: escalar(brilho.y),
-            blurRadius: escalar(brilho.blur),
-            spreadDistance: escalar(brilho.espalhamento),
-            color: comOpacidade(cores.primary, brilho.alfa),
-          },
-        ],
-      }}
+      style={{ boxShadow: comBrilho(BRILHO[tamanho], { alfa: BRILHO[tamanho].alfa }) }}
     >
       {icone ? (
         <Ionicons

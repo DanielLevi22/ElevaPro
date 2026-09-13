@@ -141,7 +141,7 @@ const INICIO_DO_GRADIENTE = { x: 0.5, y: 0 };
 const FIM_DO_GRADIENTE = { x: 0.5, y: 1 };
 
 /** Preenche o pai: `BlurView` não está no `cssInterop`, e `className` sumiria. */
-const PREENCHE = { position: 'absolute', inset: 0 } as const;
+export const PREENCHE = { position: 'absolute', inset: 0 } as const;
 
 export function Vidro({
   children,

@@ -16,13 +16,13 @@ import {
   progressoDaSessao,
   proximaSerie,
   restanteDoDescanso,
-  seriesFeitasDo,
   tempoDaSerie,
+  tempoDaSessao,
 } from '../../../store/maquinaDaSessao';
-import type { PropsDaEtapa } from './ExecucaoDoTreino';
+import type { PropsDoMomento } from './ExecucaoDoTreino';
 
 /**
- * O cronômetro em tela cheia do kit (tela 6), nas duas etapas que o usam:
+ * O cronômetro em tela cheia do kit (tela 6), nas duas momentos que o usam:
  *
  * - **série**: abre parado em 00:00, e o play conta o tempo do exercício, com o
  *   anel enchendo uma volta por minuto. Ao lado, zerar e concluir;
@@ -32,7 +32,7 @@ import type { PropsDaEtapa } from './ExecucaoDoTreino';
  * @example
  * <CronometroDoTreino treino={treino} sessao={sessao} agora={agora} … />
  */
-export function CronometroDoTreino(props: PropsDaEtapa) {
+export function CronometroDoTreino(props: PropsDoMomento) {
   const { treino, sessao, agora, voz, onFechar } = props;
   const proxima = proximaSerie(sessao);
   const progresso = progressoDaSessao(sessao);
@@ -41,7 +41,7 @@ export function CronometroDoTreino(props: PropsDaEtapa) {
     <TelaDeVidroComFoto imagem={fotoDoGrupo(treino.muscle_group)}>
       <TopoDaSessao
         titulo={treino.title}
-        tempo={formatarDuracao((agora - (sessao.iniciadaEm ?? agora)) / 1000)}
+        tempo={formatarDuracao(tempoDaSessao(sessao, agora))}
         voz={voz}
         onFechar={onFechar}
       />
@@ -50,11 +50,15 @@ export function CronometroDoTreino(props: PropsDaEtapa) {
           exercicio={progresso.exercicio}
           exercicios={progresso.exercicios}
           nome={proxima.item.exercise?.name ?? 'Exercício'}
-          feitas={seriesFeitasDo(sessao, proxima.item.id)}
+          feitas={proxima.numero - 1}
           total={proxima.item.sets ?? 0}
         />
       ) : null}
-      {sessao.etapa === 'serie' ? <EtapaDaSerie {...props} /> : <EtapaDoDescanso {...props} />}
+      {sessao.momento === 'serie' ? (
+        <MomentoDaSerie {...props} />
+      ) : (
+        <MomentoDoDescanso {...props} />
+      )}
     </TelaDeVidroComFoto>
   );
 }
@@ -62,7 +66,7 @@ export function CronometroDoTreino(props: PropsDaEtapa) {
 /** Uma volta do anel por minuto: a série não tem duração prescrita para encher. */
 const VOLTA_DO_EXERCICIO = 60;
 
-function EtapaDaSerie({ sessao, agora, despachar }: PropsDaEtapa) {
+function MomentoDaSerie({ sessao, agora, despachar }: PropsDoMomento) {
   const proxima = proximaSerie(sessao);
   const segundos = tempoDaSerie(sessao, agora);
   // Aos 60 s o anel está cheio, e não vazio: o resto zero só vale antes de começar.
@@ -107,7 +111,7 @@ function EtapaDaSerie({ sessao, agora, despachar }: PropsDaEtapa) {
   );
 }
 
-function EtapaDoDescanso({ sessao, agora, despachar }: PropsDaEtapa) {
+function MomentoDoDescanso({ sessao, agora, despachar }: PropsDoMomento) {
   const proxima = proximaSerie(sessao);
   const restante = restanteDoDescanso(sessao, agora);
   const total = sessao.descanso?.total ?? 0;

@@ -2,11 +2,14 @@ import type { WorkoutExercise } from '@elevapro/shared';
 import {
   type AcaoDaSessao,
   type EstadoDaSessao,
+  emAndamento,
   estadoInicial,
+  exercicioConcluido,
   progressoDaSessao,
   proximaSerie,
   restanteDoDescanso,
   tempoDaSerie,
+  tempoDaSessao,
   transicionar,
 } from '../maquinaDaSessao';
 
@@ -47,12 +50,12 @@ describe('máquina da sessão de treino', () => {
   const emExecucao = aplicar(inicial, { tipo: 'iniciar', agora: T0 });
 
   it('começa no pré-início, sem relógio', () => {
-    expect(inicial.etapa).toBe('preInicio');
+    expect(inicial.momento).toBe('preInicio');
     expect(inicial.iniciadaEm).toBeNull();
   });
 
   it('percorre pré-início → execução → série → descanso → execução → feedback → resumo', () => {
-    const etapas: string[] = [];
+    const momentos: string[] = [];
     let estado = inicial;
     const passos: AcaoDaSessao[] = [
       { tipo: 'iniciar', agora: T0 },
@@ -65,10 +68,10 @@ describe('máquina da sessão de treino', () => {
     ];
     for (const passo of passos) {
       estado = transicionar(estado, passo);
-      etapas.push(estado.etapa);
+      momentos.push(estado.momento);
     }
 
-    expect(etapas).toEqual([
+    expect(momentos).toEqual([
       'execucao',
       'serie',
       'serie',
@@ -90,7 +93,7 @@ describe('máquina da sessão de treino', () => {
   // quando ele diz que começou.
   it('abre a série parada em zero, e só conta depois do play', () => {
     const aberta = aplicar(emExecucao, { tipo: 'abrirSerie' });
-    expect(aberta.etapa).toBe('serie');
+    expect(aberta.momento).toBe('serie');
     expect(tempoDaSerie(aberta, segundos(30))).toBe(0);
 
     const correndo = aplicar(aberta, { tipo: 'alternarSerie', agora: segundos(30) });
@@ -110,7 +113,7 @@ describe('máquina da sessão de treino', () => {
     expect(tempoDaSerie(retomada, segundos(505))).toBe(25);
 
     const zerada = aplicar(retomada, { tipo: 'zerarSerie' });
-    expect(zerada.etapa).toBe('serie');
+    expect(zerada.momento).toBe('serie');
     expect(tempoDaSerie(zerada, segundos(600))).toBe(0);
   });
 
@@ -123,13 +126,13 @@ describe('máquina da sessão de treino', () => {
 
   it('começa o descanso sozinho quando a série termina', () => {
     const estado = aplicar(emExecucao, ...fazerSerie(0, 35));
-    expect(estado.etapa).toBe('descanso');
+    expect(estado.momento).toBe('descanso');
     expect(restanteDoDescanso(estado, segundos(35))).toBe(90);
   });
 
   it('fecha a série sem registrar nada', () => {
     const estado = aplicar(emExecucao, { tipo: 'abrirSerie' }, { tipo: 'fecharSerie' });
-    expect(estado.etapa).toBe('execucao');
+    expect(estado.momento).toBe('execucao');
     expect(estado.feitas.puxada).toBeUndefined();
   });
 
@@ -152,8 +155,8 @@ describe('máquina da sessão de treino', () => {
 
   it('volta à execução quando o tempo do descanso acaba', () => {
     const descansando = aplicar(emExecucao, ...fazerSerie(0, 0));
-    expect(aplicar(descansando, { tipo: 'tique', agora: segundos(89) }).etapa).toBe('descanso');
-    expect(aplicar(descansando, { tipo: 'tique', agora: segundos(90) }).etapa).toBe('execucao');
+    expect(aplicar(descansando, { tipo: 'tique', agora: segundos(89) }).momento).toBe('descanso');
+    expect(aplicar(descansando, { tipo: 'tique', agora: segundos(90) }).momento).toBe('execucao');
   });
 
   it('soma e tira 15 s do descanso, sem ir abaixo de zero', () => {
@@ -174,7 +177,7 @@ describe('máquina da sessão de treino', () => {
       segundos: -15,
       agora: segundos(80),
     });
-    expect(zerado.etapa).toBe('execucao');
+    expect(zerado.momento).toBe('execucao');
     expect(restanteDoDescanso(zerado, segundos(80))).toBe(0);
   });
 
@@ -183,7 +186,7 @@ describe('máquina da sessão de treino', () => {
       tipo: 'alternarDescanso',
       agora: segundos(30),
     });
-    expect(aplicar(pausado, { tipo: 'tique', agora: segundos(500) }).etapa).toBe('descanso');
+    expect(aplicar(pausado, { tipo: 'tique', agora: segundos(500) }).momento).toBe('descanso');
     expect(restanteDoDescanso(pausado, segundos(500))).toBe(60);
 
     const retomado = aplicar(pausado, { tipo: 'alternarDescanso', agora: segundos(500) });
@@ -196,7 +199,7 @@ describe('máquina da sessão de treino', () => {
       { tipo: 'iniciar', agora: T0 },
       ...fazerSerie(0, 30)
     );
-    expect(estado.etapa).toBe('feedback');
+    expect(estado.momento).toBe('feedback');
     expect(estado.descanso).toBeNull();
   });
 
@@ -206,7 +209,7 @@ describe('máquina da sessão de treino', () => {
       { tipo: 'iniciar', agora: T0 },
       ...fazerSerie(0, 30)
     );
-    expect(estado.etapa).toBe('execucao');
+    expect(estado.momento).toBe('execucao');
   });
 
   // "Feito" por voz, com o celular longe da mão, registra da própria lista.
@@ -214,16 +217,16 @@ describe('máquina da sessão de treino', () => {
     const estado = aplicar(emExecucao, { tipo: 'concluirSerie', agora: segundos(10) });
     expect(estado.feitas.puxada).toHaveLength(1);
     expect(estado.duracaoDaUltima).toBeNull();
-    expect(estado.etapa).toBe('descanso');
+    expect(estado.momento).toBe('descanso');
   });
 
   it('finaliza antes da hora e volta ao treino se o aluno fechar o feedback', () => {
     const noFeedback = aplicar(emExecucao, { tipo: 'finalizar', agora: segundos(100) });
-    expect(noFeedback.etapa).toBe('feedback');
+    expect(noFeedback.momento).toBe('feedback');
     expect(noFeedback.concluidaEm).toBe(segundos(100));
 
     const deVolta = aplicar(noFeedback, { tipo: 'voltarAoTreino' });
-    expect(deVolta.etapa).toBe('execucao');
+    expect(deVolta.momento).toBe('execucao');
     expect(deVolta.concluidaEm).toBeNull();
   });
 
@@ -251,5 +254,50 @@ describe('máquina da sessão de treino', () => {
   it('diz qual é a próxima série durante o descanso', () => {
     const estado = aplicar(emExecucao, ...fazerSerie(0, 30));
     expect(proximaSerie(estado)).toMatchObject({ item: { id: 'puxada' }, numero: 2 });
+  });
+
+  // A lista só oferece os exercícios "A seguir"; a guarda é para o que chega por
+  // fora dela — um toque atrasado depois da última série, ou a voz.
+  it('não troca para um exercício já concluído, nem fora da execução', () => {
+    const umaSerie = estadoInicial([item('puxada', 1), item('remada', 1)]);
+    const puxadaFeita = aplicar(umaSerie, { tipo: 'iniciar', agora: T0 }, ...fazerSerie(0, 30), {
+      tipo: 'terminarDescanso',
+    });
+    expect(aplicar(puxadaFeita, { tipo: 'escolher', itemId: 'puxada' }).atualId).toBe('remada');
+
+    const noDescanso = aplicar(emExecucao, ...fazerSerie(0, 30));
+    expect(aplicar(noDescanso, { tipo: 'escolher', itemId: 'remada' })).toBe(noDescanso);
+    expect(aplicar(emExecucao, { tipo: 'escolher', itemId: 'inexistente' })).toBe(emExecucao);
+  });
+
+  // Finalizar do pré-início pularia direto para o feedback de um treino que não
+  // começou, e do resumo apagaria o horário de conclusão já gravado.
+  it('só finaliza com o treino correndo', () => {
+    const finalizar: AcaoDaSessao = { tipo: 'finalizar', agora: segundos(50) };
+    expect(aplicar(inicial, finalizar)).toBe(inicial);
+
+    const noResumo = aplicar(emExecucao, finalizar, { tipo: 'salva' });
+    expect(aplicar(noResumo, { tipo: 'finalizar', agora: segundos(99) })).toBe(noResumo);
+
+    const naSerie = aplicar(emExecucao, { tipo: 'abrirSerie' });
+    expect(aplicar(naSerie, finalizar)).toMatchObject({ momento: 'feedback', serie: null });
+  });
+
+  it('considera em andamento só a execução, a série e o descanso', () => {
+    const momentos = ['preInicio', 'execucao', 'serie', 'descanso', 'feedback', 'resumo'] as const;
+    expect(momentos.filter(emAndamento)).toEqual(['execucao', 'serie', 'descanso']);
+  });
+
+  it('marca o exercício como concluído depois da última série', () => {
+    const [puxada] = emExecucao.itens;
+    const umaFeita = aplicar(emExecucao, ...fazerSerie(0, 30));
+    expect(exercicioConcluido(umaFeita, puxada)).toBe(false);
+    const duasFeitas = aplicar(umaFeita, { tipo: 'terminarDescanso' }, ...fazerSerie(40, 70));
+    expect(exercicioConcluido(duasFeitas, puxada)).toBe(true);
+  });
+
+  it('conta o tempo do treino desde o início, e zero antes dele', () => {
+    expect(tempoDaSessao(inicial, segundos(10))).toBe(0);
+    expect(tempoDaSessao(emExecucao, segundos(90))).toBe(90);
   });
 });

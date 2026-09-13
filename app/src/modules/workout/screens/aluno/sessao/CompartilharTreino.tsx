@@ -16,6 +16,7 @@ import { Switch } from '@/components/ui/Switch';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
+import { registrarAviso } from '@/lib/registro';
 import { cn } from '@/lib/utils';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import {
@@ -145,7 +146,7 @@ export function CompartilharTreino({
 }
 
 /** Tira a foto do card e abre o compartilhamento do sistema. */
-function useCompartilharImagem(cartao: React.RefObject<View | null>) {
+function useCompartilharImagem(cartao: React.RefObject<View | null>): () => Promise<void> {
   const [ocupado, setOcupado] = useState(false);
 
   return async () => {
@@ -163,6 +164,7 @@ function useCompartilharImagem(cartao: React.RefObject<View | null>) {
       const imagem = await captureRef(cartao, { format: 'png', quality: 1, result: 'tmpfile' });
       await Sharing.shareAsync(imagem, { mimeType: 'image/png', UTI: 'public.png' });
     } catch {
+      registrarAviso('treino.compartilhar');
       showAlert({
         type: 'error',
         title: 'Não deu',

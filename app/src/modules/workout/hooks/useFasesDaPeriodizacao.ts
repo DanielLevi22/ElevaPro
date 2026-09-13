@@ -4,7 +4,7 @@ import { useWorkoutStore } from '../store/workoutStore';
 import { useNomeDoEspecialista } from './useNomeDoEspecialista';
 
 /**
- * O ciclo do aluno e as fases dele, para a tela de fases.
+ * A periodização do aluno e as fases dele, para a tela de fases.
  *
  * O aluno chega aqui pela lista de periodizações, que já carregou a dele; por
  * link direto a lista está vazia, e o hook a busca. As fases vêm do serviço
@@ -15,9 +15,9 @@ import { useNomeDoEspecialista } from './useNomeDoEspecialista';
  * `private.is_my_specialist`, e a tela não precisa de mais que "Daniel L.".
  *
  * @example
- * const { periodizacao, fases, naoEncontrado } = useFasesDoCiclo(id, aluno.id);
+ * const { periodizacao, fases, naoEncontrado } = useFasesDaPeriodizacao(id, aluno.id);
  */
-interface FasesDoCiclo {
+interface FasesDaPeriodizacao {
   periodizacao: Periodization | null;
   fases: TrainingPlan[];
   especialista: string | null;
@@ -25,30 +25,37 @@ interface FasesDoCiclo {
   naoEncontrado: boolean;
 }
 
-export function useFasesDoCiclo(periodizacaoId: string, alunoId: string): FasesDoCiclo {
+export function useFasesDaPeriodizacao(
+  periodizacaoId: string,
+  alunoId: string
+): FasesDaPeriodizacao {
   const loja = useWorkoutStore();
   const periodizacao = loja.periodizations.find((p) => p.id === periodizacaoId) ?? null;
-  const buscou = useBuscaDoCiclo(Boolean(periodizacao), periodizacaoId, alunoId);
+  const buscou = useBuscaDaPeriodizacao(Boolean(periodizacao), periodizacaoId, alunoId);
 
   return {
     periodizacao,
     // A store guarda as fases da última periodização aberta: filtrar evita
-    // mostrar as de outro ciclo no instante antes da busca voltar.
+    // mostrar as de outra periodização no instante antes da busca voltar.
     fases: loja.currentPeriodizationPhases.filter((f) => f.periodization_id === periodizacaoId),
     especialista: useNomeDoEspecialista(periodizacao?.specialist_id),
     naoEncontrado: buscou && !periodizacao,
   };
 }
 
-/** Busca o ciclo se ainda não estiver na store, e as fases sempre. */
-function useBuscaDoCiclo(temCiclo: boolean, periodizacaoId: string, alunoId: string): boolean {
+/** Busca a periodização se ainda não estiver na store, e as fases sempre. */
+function useBuscaDaPeriodizacao(
+  temPeriodizacao: boolean,
+  periodizacaoId: string,
+  alunoId: string
+): boolean {
   const { fetchPeriodizations, fetchPeriodizationPhases } = useWorkoutStore();
-  const [buscou, setBuscou] = useState(temCiclo);
+  const [buscou, setBuscou] = useState(temPeriodizacao);
 
   useEffect(() => {
-    if (temCiclo) return;
+    if (temPeriodizacao) return;
     fetchPeriodizations(alunoId).finally(() => setBuscou(true));
-  }, [temCiclo, alunoId, fetchPeriodizations]);
+  }, [temPeriodizacao, alunoId, fetchPeriodizations]);
 
   useEffect(() => {
     fetchPeriodizationPhases(periodizacaoId);

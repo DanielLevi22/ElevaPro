@@ -2,18 +2,18 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Periodization, TrainingStatus } from "../../types/workouts.types";
 
 /**
- * Um ciclo do aluno como a lista de periodizações o mostra: o ciclo, quantas
+ * Uma periodização do aluno como a lista a mostra: a periodização, quantas
  * fases e treinos tem, e a fase em andamento.
  */
-export interface CicloDoAluno {
+export interface ResumoDaPeriodizacao {
   periodizacao: Periodization;
   fases: number;
   treinos: number;
-  /** A fase ativa, com a posição dela no ciclo. Nula fora de um ciclo em andamento. */
+  /** A fase ativa, com a posição dela na periodização. Nula fora de uma periodização ativa. */
   faseAtual: { numero: number; nome: string } | null;
 }
 
-const COLUNAS_DO_CICLO =
+const COLUNAS_DA_PERIODIZACAO =
   "id, specialist_id, student_id, name, objective, status, start_date, end_date, created_at, updated_at";
 
 interface LinhaDaFase {
@@ -24,53 +24,60 @@ interface LinhaDaFase {
   order_index: number;
 }
 
-export const criarServicoDeCiclos = (supabase: SupabaseClient) => ({
+export const criarServicoDeResumoDasPeriodizacoes = (supabase: SupabaseClient) => ({
   /**
-   * Os ciclos do aluno, do mais recente ao mais antigo, com as contagens que a
+   * As periodizações do aluno, da mais recente à mais antiga, com as contagens que a
    * lista mostra.
    *
-   * Três consultas, e não uma por ciclo: ciclos, as fases de todos eles e os
+   * Três consultas, e não uma por periodização: as periodizações, as fases de todas elas e os
    * treinos de todas as fases. Das fases e dos treinos só vêm as chaves e o que
    * a lista escreve — nome e posição da fase —, e nunca a prescrição.
    *
    * @example
-   * const ciclos = await service.fetchStudentCycles(aluno.id);
+   * const resumos = await service.fetchStudentPeriodizationSummaries(aluno.id);
    */
-  fetchStudentCycles: async (studentId: string): Promise<CicloDoAluno[]> => {
-    const { data: ciclos, error } = await supabase
+  fetchStudentPeriodizationSummaries: async (
+    studentId: string,
+  ): Promise<ResumoDaPeriodizacao[]> => {
+    const { data: periodizacoes, error } = await supabase
       .from("training_periodizations")
-      .select(COLUNAS_DO_CICLO)
+      .select(COLUNAS_DA_PERIODIZACAO)
       .eq("student_id", studentId)
       .order("start_date", { ascending: false });
     if (error) throw error;
-    if (!ciclos?.length) return [];
+    if (!periodizacoes?.length) return [];
 
-    const fases = await fasesDosCiclos(
+    const fases = await fasesDasPeriodizacoes(
       supabase,
-      (ciclos as Periodization[]).map((c) => c.id),
+      (periodizacoes as Periodization[]).map((p) => p.id),
     );
     const treinosPorFase = await treinosDasFases(
       supabase,
       fases.map((f) => f.id),
     );
 
-    return (ciclos as Periodization[]).map((periodizacao) => {
-      const doCiclo = fases
+    return (periodizacoes as Periodization[]).map((periodizacao) => {
+      const daPeriodizacao = fases
         .filter((f) => f.periodization_id === periodizacao.id)
         .sort((a, b) => a.order_index - b.order_index);
-      const indiceAtivo = doCiclo.findIndex((f) => f.status === "active");
+      const indiceAtivo = daPeriodizacao.findIndex((f) => f.status === "active");
       return {
         periodizacao,
-        fases: doCiclo.length,
-        treinos: doCiclo.reduce((soma, f) => soma + (treinosPorFase.get(f.id) ?? 0), 0),
+        fases: daPeriodizacao.length,
+        treinos: daPeriodizacao.reduce((soma, f) => soma + (treinosPorFase.get(f.id) ?? 0), 0),
         faseAtual:
-          indiceAtivo === -1 ? null : { numero: indiceAtivo + 1, nome: doCiclo[indiceAtivo].name },
+          indiceAtivo === -1
+            ? null
+            : { numero: indiceAtivo + 1, nome: daPeriodizacao[indiceAtivo].name },
       };
     });
   },
 });
 
-async function fasesDosCiclos(supabase: SupabaseClient, ids: string[]): Promise<LinhaDaFase[]> {
+async function fasesDasPeriodizacoes(
+  supabase: SupabaseClient,
+  ids: string[],
+): Promise<LinhaDaFase[]> {
   const { data, error } = await supabase
     .from("training_plans")
     .select("id, periodization_id, name, status, order_index")

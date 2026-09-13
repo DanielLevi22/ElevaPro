@@ -1,4 +1,9 @@
-import { type CicloDoAluno, contagem, periodoDoCiclo, progressoDoCiclo } from '@elevapro/shared';
+import {
+  contagem,
+  periodoDaPeriodizacao,
+  progressoDaPeriodizacao,
+  type ResumoDaPeriodizacao,
+} from '@elevapro/shared';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Vidro } from '@/components/ui/Vidro';
@@ -6,34 +11,37 @@ import { cn } from '@/lib/utils';
 import { useCores, useEscala } from '@/shared/design';
 
 /**
- * Um ciclo que não está em andamento, na lista "Histórico": concluído, com
- * check verde, ou planejado, com calendário e esmaecido.
+ * Uma periodização que não está em andamento, na lista "Histórico": concluída, com
+ * check verde, ou planejada, com calendário e esmaecido.
  *
  * @example
- * <LinhaDoHistoricoDeCiclos ciclo={ciclo} onPress={() => abrir(ciclo)} />
+ * <LinhaDoHistoricoDePeriodizacoes resumo={resumo} onPress={() => abrir(resumo)} />
  */
-interface LinhaDoHistoricoDeCiclosProps {
-  ciclo: CicloDoAluno;
+interface LinhaDoHistoricoDePeriodizacoesProps {
+  resumo: ResumoDaPeriodizacao;
   onPress: () => void;
 }
 
 const TAMANHO_DO_ICONE = 18;
 
-export function LinhaDoHistoricoDeCiclos({ ciclo, onPress }: LinhaDoHistoricoDeCiclosProps) {
+export function LinhaDoHistoricoDePeriodizacoes({
+  resumo,
+  onPress,
+}: LinhaDoHistoricoDePeriodizacoesProps) {
   const cores = useCores();
   const escalar = useEscala();
-  const { periodizacao } = ciclo;
+  const { periodizacao } = resumo;
   const concluido = periodizacao.status === 'completed';
   const hoje = new Date();
-  const semanas = progressoDoCiclo(
+  const semanas = progressoDaPeriodizacao(
     periodizacao.start_date,
     periodizacao.end_date,
     hoje
   ).totalSemanas;
   const detalhe = [
-    periodoDoCiclo(periodizacao.start_date, periodizacao.end_date, hoje),
+    periodoDaPeriodizacao(periodizacao.start_date, periodizacao.end_date, hoje),
     contagem(semanas, 'semana', 'semanas'),
-    contagem(ciclo.fases, 'fase', 'fases'),
+    contagem(resumo.fases, 'fase', 'fases'),
   ].join(' · ');
 
   return (

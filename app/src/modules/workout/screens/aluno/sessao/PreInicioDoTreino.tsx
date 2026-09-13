@@ -14,7 +14,7 @@ import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { Chip } from '@/components/ui/Chip';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { Vidro } from '@/components/ui/Vidro';
-import { comOpacidade, useCores, useEscala } from '@/shared/design';
+import { useBrilho, useCores, useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { useContextoDoTreino } from '../../../hooks/useContextoDoTreino';
 
@@ -107,22 +107,10 @@ export function PreInicioDoTreino({
 function IconeInclinado() {
   const cores = useCores();
   const escalar = useEscala();
+  const brilho = useBrilho();
 
   return (
-    <View
-      className="rotate-12 rounded-[2.5rem]"
-      style={{
-        boxShadow: [
-          {
-            offsetX: 0,
-            offsetY: 0,
-            blurRadius: escalar(BRILHO_DO_ICONE.blur),
-            spreadDistance: escalar(BRILHO_DO_ICONE.espalhamento),
-            color: comOpacidade(cores.primary, 1),
-          },
-        ],
-      }}
-    >
+    <View className="rotate-12 rounded-[2.5rem]" style={{ boxShadow: brilho(BRILHO_DO_ICONE) }}>
       <Vidro
         classeExterna="rounded-[2.5rem]"
         className="h-[7.75rem] w-[7.75rem] items-center justify-center rounded-[2.5rem] border-primary"

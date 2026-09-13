@@ -2,10 +2,22 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useVoiceCoach } from '@/hooks/useVoiceCoach';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import type { VoiceAction } from '../services/VoiceCommandService';
-import { type AcaoDaSessao, type EstadoDaSessao, proximaSerie } from '../store/maquinaDaSessao';
+import {
+  type AcaoDaSessao,
+  type EstadoDaSessao,
+  emAndamento,
+  proximaSerie,
+} from '../store/maquinaDaSessao';
+
+interface VozDaSessao {
+  mudo: boolean;
+  alternarMudo: () => void;
+  ouvindo: boolean;
+  alternarMicrofone: () => void;
+}
 
 /**
- * A voz da sessão: o que o coach anuncia a cada mudança de etapa e o que o
+ * A voz da sessão: o que o coach anuncia a cada mudança de momento e o que o
  * aluno pode mandar falando.
  *
  * Os anúncios saem da **transição**, e não de quem a provocou: o descanso que
@@ -16,13 +28,6 @@ import { type AcaoDaSessao, type EstadoDaSessao, proximaSerie } from '../store/m
  * @example
  * const voz = useVozDaSessao(sessao, despachar, pedirParaFinalizar);
  */
-interface VozDaSessao {
-  mudo: boolean;
-  alternarMudo: () => void;
-  ouvindo: boolean;
-  alternarMicrofone: () => void;
-}
-
 export function useVozDaSessao(
   sessao: EstadoDaSessao,
   despachar: (acao: AcaoDaSessao) => void,
@@ -42,22 +47,22 @@ export function useVozDaSessao(
 
 type CoachRef = { current: ReturnType<typeof useVoiceCoach> };
 
-function useAnuncios(sessao: EstadoDaSessao, coachRef: CoachRef) {
-  const etapaAnterior = useRef(sessao.etapa);
+function useAnuncios(sessao: EstadoDaSessao, coachRef: CoachRef): void {
+  const momentoAnterior = useRef(sessao.momento);
   const atualAnterior = useRef(sessao.atualId);
 
   useEffect(() => {
     const coach = coachRef.current;
-    const deOnde = etapaAnterior.current;
+    const deOnde = momentoAnterior.current;
     const trocouDeExercicio = atualAnterior.current !== sessao.atualId;
-    etapaAnterior.current = sessao.etapa;
+    momentoAnterior.current = sessao.momento;
     atualAnterior.current = sessao.atualId;
     const proxima = proximaSerie(sessao);
 
-    if (sessao.etapa === 'descanso' && deOnde !== 'descanso' && sessao.descanso) {
+    if (sessao.momento === 'descanso' && deOnde !== 'descanso' && sessao.descanso) {
       coach.announceRest(sessao.descanso.total);
     } else if (
-      sessao.etapa === 'execucao' &&
+      sessao.momento === 'execucao' &&
       proxima &&
       (deOnde === 'preInicio' || trocouDeExercicio)
     ) {
@@ -68,13 +73,13 @@ function useAnuncios(sessao: EstadoDaSessao, coachRef: CoachRef) {
         item.reps ?? '',
         item.weight ?? undefined
       );
-    } else if (sessao.etapa === 'execucao' && deOnde === 'descanso' && proxima) {
+    } else if (sessao.momento === 'execucao' && deOnde === 'descanso' && proxima) {
       coach.announceSetStart(
         proxima.numero,
         proxima.item.reps ?? '',
         proxima.item.weight ?? undefined
       );
-    } else if (sessao.etapa === 'resumo' && deOnde !== 'resumo') {
+    } else if (sessao.momento === 'resumo' && deOnde !== 'resumo') {
       coach.announceFinish();
     }
   }, [sessao, coachRef]);
@@ -85,17 +90,17 @@ function useMicrofone(
   despachar: (acao: AcaoDaSessao) => void,
   pedirParaFinalizar: () => void,
   coachRef: CoachRef
-) {
+): Pick<VozDaSessao, 'ouvindo' | 'alternarMicrofone'> {
   const [desligado, setDesligado] = useState(false);
-  const correndo = ['execucao', 'serie', 'descanso'].includes(sessao.etapa);
+  const correndo = emAndamento(sessao.momento);
 
   // "Pausar" e "retomar" falam do cronômetro que estiver na tela: o da série ou
   // o do descanso.
-  const etapa = sessao.etapa;
+  const momento = sessao.momento;
   const alternar = useCallback(
     (agora: number) =>
-      despachar({ tipo: etapa === 'serie' ? 'alternarSerie' : 'alternarDescanso', agora }),
-    [etapa, despachar]
+      despachar({ tipo: momento === 'serie' ? 'alternarSerie' : 'alternarDescanso', agora }),
+    [momento, despachar]
   );
 
   const aoComando = useCallback(

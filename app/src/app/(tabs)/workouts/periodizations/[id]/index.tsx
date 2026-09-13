@@ -2,14 +2,14 @@ import { useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '@/auth';
 import {
   ehVisaoDoAluno,
-  FasesDoCicloScreen,
+  FasesDaPeriodizacaoScreen,
   modoDaRota,
   PeriodizationDetailsScreen,
   primeiroValor,
 } from '@/workout';
 
 /**
- * O ciclo, na tela do papel de quem abre.
+ * A periodização, na tela do papel de quem abre.
  *
  * O aluno vê as fases no desenho de vidro; o especialista e o membro que monta
  * o próprio plano seguem na tela de edição.
@@ -21,7 +21,11 @@ export default function PeriodizacaoRoute() {
 
   if (user?.id && ehVisaoDoAluno(accountType, modo)) {
     return (
-      <FasesDoCicloScreen periodizacaoId={primeiroValor(id) ?? ''} alunoId={user.id} modo={modo} />
+      <FasesDaPeriodizacaoScreen
+        periodizacaoId={primeiroValor(id) ?? ''}
+        alunoId={user.id}
+        modo={modo}
+      />
     );
   }
   return <PeriodizationDetailsScreen />;

@@ -14,7 +14,7 @@ import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
-import { comOpacidade, useCores, useEscala } from '@/shared/design';
+import { useBrilho, useCores, useEscala } from '@/shared/design';
 import { EscalaDePse } from './EscalaDePse';
 
 /**
@@ -99,7 +99,8 @@ export function TelaDeFeedback({
 }
 
 const TAMANHO_DO_CHECK = 36;
-const BRILHO_DO_CHECK = 34;
+/** `0 0 34px -4px` da primária, como no kit. */
+const BRILHO_DO_CHECK = { blur: 34, espalhamento: -4 } as const;
 
 /**
  * O subtítulo diz quem lê, toda vez, e não uma vez só no consentimento: o que
@@ -110,22 +111,13 @@ const BRILHO_DO_CHECK = 34;
 function Cabecalho({ corrigindo }: { corrigindo: boolean }) {
   const cores = useCores();
   const escalar = useEscala();
+  const brilho = useBrilho();
 
   return (
     <View className="items-center pt-6">
       <View
         className="h-[4.75rem] w-[4.75rem] items-center justify-center rounded-full border-2 border-primary bg-primary/20"
-        style={{
-          boxShadow: [
-            {
-              offsetX: 0,
-              offsetY: 0,
-              blurRadius: escalar(BRILHO_DO_CHECK),
-              spreadDistance: escalar(-4),
-              color: comOpacidade(cores.primary, 1),
-            },
-          ],
-        }}
+        style={{ boxShadow: brilho(BRILHO_DO_CHECK) }}
       >
         <Ionicons name="checkmark" size={escalar(TAMANHO_DO_CHECK)} color={cores.primary} />
       </View>

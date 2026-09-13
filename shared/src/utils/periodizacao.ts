@@ -1,9 +1,11 @@
+import { doisDigitos, MESES_CURTOS } from "./calendario";
+
 /**
- * As contas que o aluno lê no fluxo de treino: a semana do ciclo, a situação de
+ * As contas que o aluno lê no fluxo de treino: a semana da periodização, a situação de
  * cada fase e qual treino vem agora.
  *
  * Moram em `shared/` porque são regra de produto, e não de tela: o web mostra
- * o mesmo ciclo ao especialista, e duas cópias desta conta divergiriam na
+ * a mesma periodização ao especialista, e duas cópias desta conta divergiriam na
  * primeira vez que alguém mexesse numa delas.
  */
 
@@ -28,7 +30,7 @@ const SEGUNDA = 1;
  * Data do banco (`YYYY-MM-DD`) em hora local.
  *
  * `new Date("2026-08-01")` é lido como UTC e, em fuso negativo, cai no dia
- * anterior — o ciclo apareceria começando um dia depois.
+ * anterior — a periodização apareceria começando um dia depois.
  */
 function dataLocal(iso: string): Date {
   const [ano, mes, dia] = iso.split("-").map(Number);
@@ -39,7 +41,7 @@ function limitar(valor: number, minimo: number, maximo: number): number {
   return Math.min(maximo, Math.max(minimo, valor));
 }
 
-export interface ProgressoDoCiclo {
+export interface ProgressoDaPeriodizacao {
   /** Zero antes do início; o total depois do fim. */
   semanaAtual: number;
   totalSemanas: number;
@@ -47,19 +49,23 @@ export interface ProgressoDoCiclo {
 }
 
 /**
- * Em que semana do ciclo o aluno está.
+ * Em que semana da periodização o aluno está.
  *
  * O percentual é da semana, e não do dia: o kit mostra "Semana 7 de 16 · 44%",
  * e 7 de 16 é 43,75%.
  *
- * @example progressoDoCiclo("2026-05-06", "2026-08-25", new Date()) // { semanaAtual: 7, ... }
+ * @example progressoDaPeriodizacao("2026-05-06", "2026-08-25", new Date()) // { semanaAtual: 7, ... }
  */
-export function progressoDoCiclo(inicio: string, fim: string, hoje: Date): ProgressoDoCiclo {
+export function progressoDaPeriodizacao(
+  inicio: string,
+  fim: string,
+  hoje: Date,
+): ProgressoDaPeriodizacao {
   const comeco = dataLocal(inicio).getTime();
   // Sem somar o dia final: de 04/09 a 30/10 são 56 dias, 8 semanas. Contando
-  // as duas pontas eram 57, e o ciclo de 8 semanas aparecia com 9.
-  const diasNoCiclo = Math.round((dataLocal(fim).getTime() - comeco) / DIA_EM_MS);
-  const totalSemanas = Math.max(1, Math.ceil(diasNoCiclo / DIAS_POR_SEMANA));
+  // as duas pontas eram 57, e a periodização de 8 semanas aparecia com 9.
+  const diasNaPeriodizacao = Math.round((dataLocal(fim).getTime() - comeco) / DIA_EM_MS);
+  const totalSemanas = Math.max(1, Math.ceil(diasNaPeriodizacao / DIAS_POR_SEMANA));
   const decorrido = hoje.getTime() - comeco;
 
   if (decorrido < 0) return { semanaAtual: 0, totalSemanas, percentual: 0 };
@@ -111,7 +117,7 @@ export function situacaoDaFase(fase: FaseDatada, hoje: Date): SituacaoDaFase {
     return { rotulo: "Planejada", tom: "planejada", percentual: 0 };
   }
   const comeco = dataLocal(fase.start_date).getTime();
-  // Mesma contagem de `progressoDoCiclo`: o intervalo, sem somar o dia final.
+  // Mesma contagem de `progressoDaPeriodizacao`: o intervalo, sem somar o dia final.
   const diasNaFase = Math.max(
     1,
     Math.round((dataLocal(fase.end_date).getTime() - comeco) / DIA_EM_MS),
@@ -202,8 +208,6 @@ export function inicioDaSemanaISO(agora: Date): string {
   return inicioDaSemana(agora).toISOString();
 }
 
-const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-
 /**
  * Uma data do banco como o kit escreve: "06 mai".
  *
@@ -211,7 +215,7 @@ const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "o
  */
 export function dataCurta(iso: string): string {
   const data = dataLocal(iso);
-  return `${String(data.getDate()).padStart(2, "0")} ${MESES[data.getMonth()]}`;
+  return `${doisDigitos(data.getDate())} ${MESES_CURTOS[data.getMonth()]}`;
 }
 
 /**
@@ -225,7 +229,7 @@ export function dataCurta(iso: string): string {
  */
 export function dataCurtaDoInstante(iso: string): string {
   const data = new Date(iso);
-  return `${String(data.getDate()).padStart(2, "0")} ${MESES[data.getMonth()]}`;
+  return `${doisDigitos(data.getDate())} ${MESES_CURTOS[data.getMonth()]}`;
 }
 
 /**
@@ -241,19 +245,19 @@ export function intervaloCurto(inicio: string, fim: string): string {
 }
 
 /**
- * O período de um ciclo na lista de periodizações.
+ * O período de uma periodização na lista de periodizações.
  *
- * Um ciclo que ainda não começou diz quando começa ("a partir de 21 out"); os
+ * Uma periodização que ainda não começou diz quando começa ("a partir de 21 out"); os
  * outros, os meses de ponta a ponta, com o ano uma vez quando é o mesmo ("jan –
  * abr 2026") e nas duas pontas quando não é ("nov 2025 – fev 2026").
  *
- * @example periodoDoCiclo("2026-01-05", "2026-04-20", new Date()) // "jan – abr 2026"
+ * @example periodoDaPeriodizacao("2026-01-05", "2026-04-20", new Date()) // "jan – abr 2026"
  */
-export function periodoDoCiclo(inicio: string, fim: string, hoje: Date): string {
+export function periodoDaPeriodizacao(inicio: string, fim: string, hoje: Date): string {
   const comeco = dataLocal(inicio);
   if (comeco.getTime() > hoje.getTime()) return `a partir de ${dataCurta(inicio)}`;
   const final = dataLocal(fim);
-  const [mesInicio, mesFim] = [MESES[comeco.getMonth()], MESES[final.getMonth()]];
+  const [mesInicio, mesFim] = [MESES_CURTOS[comeco.getMonth()], MESES_CURTOS[final.getMonth()]];
   if (comeco.getFullYear() === final.getFullYear()) {
     return `${mesInicio} – ${mesFim} ${final.getFullYear()}`;
   }

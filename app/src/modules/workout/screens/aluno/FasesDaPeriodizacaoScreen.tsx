@@ -6,36 +6,40 @@ import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { ROUTES } from '@/navigation/types';
 import { fotoDoObjetivo } from '@/shared/imagens/fotosDeTreino';
 import { CartaoDaFase } from '../../components/aluno/CartaoDaFase';
-import { CartaoDoCiclo } from '../../components/aluno/CartaoDoCiclo';
+import { CartaoDaPeriodizacao } from '../../components/aluno/CartaoDaPeriodizacao';
 import { EstadoDaTela } from '../../components/aluno/EstadoDaTela';
-import { useFasesDoCiclo } from '../../hooks/useFasesDoCiclo';
+import { useFasesDaPeriodizacao } from '../../hooks/useFasesDaPeriodizacao';
 import { comModo, type ModoDaRota } from '../../routes/visaoDoAluno';
 
 /**
- * As fases do ciclo, na visão do aluno — tela 1 do fluxo de treino do kit.
+ * As fases da periodização, na visão do aluno — tela 1 do fluxo de treino do kit.
  *
  * A do especialista continua em `PeriodizationDetailsScreen`, com ativar,
  * encerrar e criar fase. As duas liam o papel com `isStudentView` em cada
  * botão; separadas, cada uma tem só o que o papel dela faz.
  *
  * @example
- * <FasesDoCicloScreen periodizacaoId={id} alunoId={user.id} modo={modo} />
+ * <FasesDaPeriodizacaoScreen periodizacaoId={id} alunoId={user.id} modo={modo} />
  */
-interface FasesDoCicloScreenProps {
+interface FasesDaPeriodizacaoScreenProps {
   periodizacaoId: string;
   alunoId: string;
   modo: ModoDaRota;
 }
 
-export function FasesDoCicloScreen({ periodizacaoId, alunoId, modo }: FasesDoCicloScreenProps) {
+export function FasesDaPeriodizacaoScreen({
+  periodizacaoId,
+  alunoId,
+  modo,
+}: FasesDaPeriodizacaoScreenProps) {
   const router = useRouter();
-  const { periodizacao, fases, especialista, naoEncontrado } = useFasesDoCiclo(
+  const { periodizacao, fases, especialista, naoEncontrado } = useFasesDaPeriodizacao(
     periodizacaoId,
     alunoId
   );
 
   if (!periodizacao) {
-    return <EstadoDaTela naoEncontrado={naoEncontrado} mensagem="Ciclo não encontrado." />;
+    return <EstadoDaTela naoEncontrado={naoEncontrado} mensagem="Periodização não encontrada." />;
   }
 
   return (
@@ -45,7 +49,7 @@ export function FasesDoCicloScreen({ periodizacaoId, alunoId, modo }: FasesDoCic
         titulo={periodizacao.name}
         onVoltar={router.back}
       />
-      <CartaoDoCiclo
+      <CartaoDaPeriodizacao
         periodizacao={periodizacao}
         fases={fases.length}
         treinos={fases.reduce((soma, fase) => soma + (fase.workouts_count ?? 0), 0)}
@@ -64,7 +68,7 @@ export function FasesDoCicloScreen({ periodizacaoId, alunoId, modo }: FasesDoCic
       {fases.length === 0 ? (
         <View className="items-center py-8">
           <Text className="text-micro text-muted-foreground">
-            Seu especialista ainda não montou as fases deste ciclo.
+            Seu especialista ainda não montou as fases desta periodização.
           </Text>
         </View>
       ) : null}

@@ -25,8 +25,8 @@
 --
 -- Nenhuma função, view ou política cita a coluna (conferido no banco local
 -- antes de escrever esta migration). O bloco abaixo repete a conferência no
--- banco onde a migration roda, para um objeto criado fora das migrations não
--- quebrar calado.
+-- banco onde a migration roda — funções pelo corpo, views e políticas pelo
+-- `pg_depend` —, para um objeto criado fora das migrations não passar calado.
 --
 -- ## Ordem de deploy
 --
@@ -48,6 +48,26 @@ BEGIN
   IF dependentes IS NOT NULL THEN
     RAISE EXCEPTION
       'funções citam workout_sessions.intensity e quebrariam com o rename: %. Reescreva-as nesta migration.',
+      dependentes;
+  END IF;
+
+  -- View e política não quebram com o rename: guardam a coluna pelo número, e
+  -- seguem funcionando. Mas uma view que expõe a coluna continuaria publicando
+  -- o nome `intensity`, e uma política sobre ela merece ser relida — as duas
+  -- param a migration para alguém decidir, em vez de passar caladas.
+  SELECT string_agg(DISTINCT coalesce(v.relname, pol.polname), ', ') INTO dependentes
+  FROM pg_depend d
+  JOIN pg_attribute a ON a.attrelid = d.refobjid AND a.attnum = d.refobjsubid
+  LEFT JOIN pg_rewrite r ON d.classid = 'pg_rewrite'::regclass AND r.oid = d.objid
+  LEFT JOIN pg_class v ON v.oid = r.ev_class AND v.oid <> d.refobjid
+  LEFT JOIN pg_policy pol ON d.classid = 'pg_policy'::regclass AND pol.oid = d.objid
+  WHERE d.refobjid = 'public.workout_sessions'::regclass
+    AND a.attname = 'intensity'
+    AND (v.oid IS NOT NULL OR pol.oid IS NOT NULL);
+
+  IF dependentes IS NOT NULL THEN
+    RAISE EXCEPTION
+      'views ou políticas dependem de workout_sessions.intensity: %. Reescreva-as nesta migration.',
       dependentes;
   END IF;
 END $$;

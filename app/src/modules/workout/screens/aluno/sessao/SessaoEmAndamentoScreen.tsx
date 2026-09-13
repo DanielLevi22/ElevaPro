@@ -4,21 +4,12 @@ import { useCallback, useEffect, useRef } from 'react';
 import { showConfirm } from '@/components/ui/appAlert';
 import { EstadoDaTela } from '../../../components/aluno/EstadoDaTela';
 import { useDetalheDoTreino } from '../../../hooks/useDetalheDoTreino';
-import { useSessaoDeTreino } from '../../../hooks/useSessaoDeTreino';
+import { useSessaoEmAndamento } from '../../../hooks/useSessaoEmAndamento';
 import { useVozDaSessao } from '../../../hooks/useVozDaSessao';
 import { type EstadoDaSessao, progressoDaSessao } from '../../../store/maquinaDaSessao';
-import { EtapaDaSessao } from './EtapaDaSessao';
+import { MomentoDaSessao } from './MomentoDaSessao';
 
-/**
- * A sessão de treino do kit (telas 4 a 8), no lugar da `ExecuteWorkoutScreen`.
- *
- * Esta tela só carrega o treino e decide as saídas; cada etapa da máquina
- * (`maquinaDaSessao`) desenha a sua tela em `EtapaDaSessao`.
- *
- * @example
- * <SessaoDeTreinoScreen treinoId={id} alunoId={user.id} mascarado={false} … />
- */
-export interface SessaoDeTreinoScreenProps {
+export interface SessaoEmAndamentoScreenProps {
   treinoId: string;
   alunoId: string;
   /** O especialista está vendo o app como o aluno: a sessão não é gravada. */
@@ -29,7 +20,16 @@ export interface SessaoDeTreinoScreenProps {
   onTreinoRegistrado: () => void;
 }
 
-export function SessaoDeTreinoScreen(props: SessaoDeTreinoScreenProps) {
+/**
+ * A sessão de treino do kit (telas 4 a 8), no lugar da `ExecuteWorkoutScreen`.
+ *
+ * Esta tela só carrega o treino e decide as saídas; cada momento da máquina
+ * (`maquinaDaSessao`) desenha a sua tela em `MomentoDaSessao`.
+ *
+ * @example
+ * <SessaoEmAndamentoScreen treinoId={id} alunoId={user.id} mascarado={false} … />
+ */
+export function SessaoEmAndamentoScreen(props: SessaoEmAndamentoScreenProps) {
   const { treino, naoEncontrado } = useDetalheDoTreino(props.treinoId);
   if (!treino) {
     return <EstadoDaTela naoEncontrado={naoEncontrado} mensagem="Treino não encontrado." />;
@@ -38,9 +38,10 @@ export function SessaoDeTreinoScreen(props: SessaoDeTreinoScreenProps) {
   return <SessaoDoTreino key={treino.id} treino={treino} {...props} />;
 }
 
-function SessaoDoTreino({ treino, ...props }: SessaoDeTreinoScreenProps & { treino: Workout }) {
+/** A sessão montada, com o treino já carregado: liga a máquina, a voz e as saídas. */
+function SessaoDoTreino({ treino, ...props }: SessaoEmAndamentoScreenProps & { treino: Workout }) {
   const router = useRouter();
-  const { sessao, agora, despachar } = useSessaoDeTreino(treino.exercises ?? []);
+  const { sessao, agora, despachar } = useSessaoEmAndamento(treino.exercises ?? []);
   const sairSemPerguntar = useSaidaSemSalvar(sessao);
   const pedirParaFinalizar = useCallback(
     () =>
@@ -54,7 +55,7 @@ function SessaoDoTreino({ treino, ...props }: SessaoDeTreinoScreenProps & { trei
   const voz = useVozDaSessao(sessao, despachar, pedirParaFinalizar);
 
   return (
-    <EtapaDaSessao
+    <MomentoDaSessao
       treino={treino}
       sessao={sessao}
       agora={agora}
@@ -72,7 +73,11 @@ function SessaoDoTreino({ treino, ...props }: SessaoDeTreinoScreenProps & { trei
  * o feedback e é gravado. Sem nenhuma série feita não há o que gravar, e aí o
  * X é só sair.
  */
-function confirmarFinalizacao(sessao: EstadoDaSessao, finalizar: () => void, sair: () => void) {
+function confirmarFinalizacao(
+  sessao: EstadoDaSessao,
+  finalizar: () => void,
+  sair: () => void
+): void {
   const { seriesFeitas, seriesTotais } = progressoDaSessao(sessao);
   if (seriesFeitas === 0) {
     showConfirm({
@@ -104,7 +109,7 @@ function useSaidaSemSalvar(sessao: EstadoDaSessao): (sair: () => void) => void {
   const navigation = useNavigation();
   const emAndamento = useRef(false);
   const liberado = useRef(false);
-  emAndamento.current = sessao.etapa !== 'preInicio' && sessao.etapa !== 'resumo';
+  emAndamento.current = sessao.momento !== 'preInicio' && sessao.momento !== 'resumo';
 
   useEffect(
     () =>

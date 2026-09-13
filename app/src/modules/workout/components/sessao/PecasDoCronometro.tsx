@@ -10,7 +10,7 @@ import { Anel } from '@/components/ui/Anel';
 import { DadoComIcone } from '@/components/ui/DadoComIcone';
 import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
-import { useCores, useEscala } from '@/shared/design';
+import { useBrilho, useCores, useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { textoDasRepeticoes } from './LinhasDaExecucao';
 
@@ -221,7 +221,7 @@ const BRILHO_DO_PLAY = 34;
 
 /**
  * Dois botões de vidro ao lado do play, que inicia e pausa. O que fica de cada
- * lado muda com a etapa: zerar e concluir na série, −15 s e +15 s no descanso.
+ * lado muda com a momento: zerar e concluir na série, −15 s e +15 s no descanso.
  */
 export function ControlesDoCronometro({
   esquerda,
@@ -233,6 +233,7 @@ export function ControlesDoCronometro({
 }: ControlesDoCronometroProps) {
   const cores = useCores();
   const escalar = useEscala();
+  const brilho = useBrilho();
   const rotulo = correndo ? 'Pausar' : rotuloParado;
 
   return (
@@ -246,16 +247,7 @@ export function ControlesDoCronometro({
             accessibilityRole="button"
             accessibilityLabel={rotulo}
             className="h-[4.75rem] w-[4.75rem] items-center justify-center rounded-full bg-primary"
-            style={{
-              boxShadow: [
-                {
-                  offsetX: 0,
-                  offsetY: 0,
-                  blurRadius: escalar(BRILHO_DO_PLAY),
-                  color: cores.primary,
-                },
-              ],
-            }}
+            style={{ boxShadow: brilho({ blur: BRILHO_DO_PLAY }) }}
           >
             <Ionicons
               name={correndo ? 'pause' : 'play'}

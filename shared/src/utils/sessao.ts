@@ -1,4 +1,5 @@
 import type { SessaoComSeries } from "../types/workouts.types";
+import { DIAS_DA_SEMANA, doisDigitos, MESES_POR_EXTENSO, MS_POR_SEGUNDO } from "./calendario";
 
 /**
  * As contas de uma sessão de treino de força: volume, gasto, evolução e os
@@ -99,7 +100,7 @@ export function formatarDuracao(segundos: number): string {
   const horas = Math.floor(total / SEGUNDOS_POR_HORA);
   const minutos = Math.floor((total % SEGUNDOS_POR_HORA) / SEGUNDOS_POR_MINUTO);
   const resto = total % SEGUNDOS_POR_MINUTO;
-  const mmss = `${String(minutos).padStart(2, "0")}:${String(resto).padStart(2, "0")}`;
+  const mmss = `${doisDigitos(minutos)}:${doisDigitos(resto)}`;
   return horas > 0 ? `${horas}:${mmss}` : mmss;
 }
 
@@ -132,7 +133,7 @@ export function resumoDaSessao(
   pesoKg: number,
 ): ResumoDaSessao {
   const todas = Object.values(feitas).flat();
-  const duracaoSegundos = Math.max(0, Math.round((fimMs - inicioMs) / 1000));
+  const duracaoSegundos = Math.max(0, Math.round((fimMs - inicioMs) / MS_POR_SEGUNDO));
   return {
     duracaoSegundos,
     volumeKg: volumeDasSeries(todas),
@@ -225,22 +226,6 @@ function textoDaEvolucao(hoje: readonly SerieFeita[], antes: readonly SerieFeita
   return null;
 }
 
-const DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-const MESES_POR_EXTENSO = [
-  "janeiro",
-  "fevereiro",
-  "março",
-  "abril",
-  "maio",
-  "junho",
-  "julho",
-  "agosto",
-  "setembro",
-  "outubro",
-  "novembro",
-  "dezembro",
-];
-
 /**
  * O dia de uma sessão por extenso, sem a hora — como o card de compartilhar
  * escreve.
@@ -248,7 +233,7 @@ const MESES_POR_EXTENSO = [
  * @example diaPorExtenso(new Date(2026, 7, 12, 19, 42)) // "Quarta, 12 de agosto"
  */
 export function diaPorExtenso(instante: Date): string {
-  return `${DIAS[instante.getDay()]}, ${instante.getDate()} de ${MESES_POR_EXTENSO[instante.getMonth()]}`;
+  return `${DIAS_DA_SEMANA[instante.getDay()]}, ${instante.getDate()} de ${MESES_POR_EXTENSO[instante.getMonth()]}`;
 }
 
 /**
@@ -257,6 +242,6 @@ export function diaPorExtenso(instante: Date): string {
  * @example dataPorExtenso(new Date(2026, 7, 12, 19, 42)) // "Quarta, 12 de agosto · 19:42"
  */
 export function dataPorExtenso(instante: Date): string {
-  const hora = `${String(instante.getHours()).padStart(2, "0")}:${String(instante.getMinutes()).padStart(2, "0")}`;
+  const hora = `${doisDigitos(instante.getHours())}:${doisDigitos(instante.getMinutes())}`;
   return `${diaPorExtenso(instante)} · ${hora}`;
 }

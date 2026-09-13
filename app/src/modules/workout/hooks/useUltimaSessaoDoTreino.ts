@@ -1,6 +1,7 @@
 import { createWorkoutsService, type SessaoComSeries } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { avisandoSeFalhar } from '@/lib/registro';
 
 const servicoDeTreinos = createWorkoutsService(supabase);
 
@@ -11,26 +12,21 @@ const servicoDeTreinos = createWorkoutsService(supabase);
  * pré-início, o selo "+2,5 kg" do cartão em execução e as evoluções do resumo.
  * Falhar aqui não impede o treino — só some a comparação.
  *
+ * Velha na hora (`staleTime: 0`): a próxima sessão tem de comparar com a que
+ * acabou de ser gravada. E sem invalidar ao gravar, de propósito — o resumo
+ * ainda está na tela, e comparar a sessão com ela mesma zeraria as evoluções.
+ *
  * @example
  * const anterior = useUltimaSessaoDoTreino(treino.id, aluno.id);
  */
 export function useUltimaSessaoDoTreino(treinoId: string, alunoId: string): SessaoComSeries | null {
-  const [anterior, setAnterior] = useState<SessaoComSeries | null>(null);
-
-  useEffect(() => {
-    let ativo = true;
-    servicoDeTreinos
-      .fetchUltimaSessaoDoTreino(treinoId, alunoId)
-      .then((sessao) => {
-        if (ativo) setAnterior(sessao);
-      })
-      .catch(() => {
-        console.log('[useUltimaSessaoDoTreino] sem a sessão anterior; segue sem comparação');
-      });
-    return () => {
-      ativo = false;
-    };
-  }, [treinoId, alunoId]);
-
-  return anterior;
+  const { data } = useQuery({
+    queryKey: ['ultimaSessaoDoTreino', treinoId, alunoId],
+    queryFn: () =>
+      avisandoSeFalhar('sessao.lerAnterior', () =>
+        servicoDeTreinos.fetchUltimaSessaoDoTreino(treinoId, alunoId)
+      ),
+    staleTime: 0,
+  });
+  return data ?? null;
 }

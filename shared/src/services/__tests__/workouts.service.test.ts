@@ -389,11 +389,11 @@ describe("workoutsService — sessões que decidem o próximo treino", () => {
 });
 
 describe("workoutsService — colunas das leituras do aluno", () => {
-  // O aluno lê o próprio ciclo e as fases pela tela de vidro. `select("*")`
+  // O aluno lê a própria periodização e as fases pela tela de vidro. `select("*")`
   // traria qualquer coluna que a tabela ganhe depois — de nota interna do
   // especialista a campo que nem existe hoje. Pedir o que a tela usa é o que
   // a minimização (LGPD, Art. 6°, III) quer dizer na prática.
-  it("pede as colunas do ciclo, e não a linha inteira", async () => {
+  it("pede as colunas da periodização, e não a linha inteira", async () => {
     const { supabase, chamadas } = criarSupabaseFake({ data: [] });
 
     await createWorkoutsService(supabase).fetchStudentPeriodizations("aluno-1");
@@ -407,10 +407,41 @@ describe("workoutsService — colunas das leituras do aluno", () => {
   it("pede as colunas da fase, e não a linha inteira", async () => {
     const { supabase, chamadas } = criarSupabaseFake([{ data: [{ id: "f1" }] }, { data: [] }]);
 
-    await createWorkoutsService(supabase).fetchTrainingPlans("ciclo-1");
+    await createWorkoutsService(supabase).fetchTrainingPlans("periodizacao-1");
 
     expect(chamadas[0].select).toBe(
       "id, periodization_id, name, status, start_date, end_date, order_index, created_at",
     );
+  });
+});
+
+describe("workoutsService — ajuste do exercício do catálogo", () => {
+  it("atualiza só o campo pedido, do exercício pedido", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({ data: { id: "ex-1" } });
+
+    await createWorkoutsService(supabase).updateExercise("ex-1", {
+      video_url: "https://video/remada",
+    });
+
+    expect(chamadas[0].tabela).toBe("exercises");
+    expect(chamadas[0].filtros).toEqual({ id: "ex-1" });
+    expect(chamadas[0].payload).toEqual({ video_url: "https://video/remada" });
+  });
+
+  // O ajuste da sessão apaga o vídeo mandando `null`. Uma string vazia ficaria
+  // gravada como vídeo "existente" e o player tentaria abrir nada.
+  it("apaga o vídeo quando recebe null", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({ data: { id: "ex-1" } });
+
+    await createWorkoutsService(supabase).updateExercise("ex-1", { video_url: null });
+
+    expect(chamadas[0].payload).toEqual({ video_url: null });
+  });
+
+  it("propaga a recusa do banco em vez de fingir que salvou", async () => {
+    const { supabase } = criarSupabaseFake({ error: { message: "42501" } });
+    await expect(
+      createWorkoutsService(supabase).updateExercise("ex-1", { video_url: null }),
+    ).rejects.toEqual({ message: "42501" });
   });
 });

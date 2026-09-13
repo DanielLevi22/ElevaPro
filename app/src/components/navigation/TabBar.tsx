@@ -10,6 +10,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-na
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../modules/auth/store/authStore';
 import { ehVisaoDoAluno, modoDaRota } from '../../modules/workout/routes/visaoDoAluno';
+import { PREENCHE } from '../ui/Vidro';
 import { type AcaoRapida, BotaoDeAcoes } from './BotaoDeAcoes';
 import { ItemDaAba } from './ItemDaAba';
 import { isImmersiveRoute } from './immersiveRoutes';
@@ -154,7 +155,7 @@ function FundoDaBarra() {
         <BlurView
           intensity={INTENSIDADE_DO_BLUR}
           tint={colorScheme === 'dark' ? 'dark' : 'light'}
-          style={{ position: 'absolute', inset: 0 }}
+          style={PREENCHE}
         />
       ) : null}
     </View>

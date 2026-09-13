@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { useAuthStore } from '@/auth';
 import { useGamificationStore } from '@/modules/gamification';
 import { getLocalDateISOString } from '@/utils/dateUtils';
-import { primeiroValor, SessaoDeTreinoScreen } from '@/workout';
+import { primeiroValor, SessaoEmAndamentoScreen } from '@/workout';
 
 /**
  * A sessão de treino. A rota compõe o que é de outros módulos — a conta, a
@@ -21,7 +21,7 @@ export default function SessaoDeTreinoRoute() {
 
   if (!user?.id) return null;
   return (
-    <SessaoDeTreinoScreen
+    <SessaoEmAndamentoScreen
       treinoId={primeiroValor(id) ?? ''}
       alunoId={user.id}
       mascarado={isMasquerading}

@@ -14,8 +14,8 @@ interface CabecalhoDaSessaoProps {
  * Título da sessão de cardio e a intensidade que o acelerômetro estima ao vivo.
  *
  * A intensidade daqui é leitura de movimento, e nunca é gravada: o que vai para
- * o banco é o RPE que o aluno responde no fim, que é outra coisa (ver o
- * comentário de `intensity` em `workout_sessions`).
+ * o banco é a PSE que o aluno responde no fim, que é outra coisa (ver o
+ * comentário de `perceived_exertion` em `workout_sessions`).
  */
 export const CabecalhoDaSessao = memo(function CabecalhoDaSessao({
   exercicio,
@@ -39,7 +39,7 @@ export const CabecalhoDaSessao = memo(function CabecalhoDaSessao({
         </Text>
         <Text className="text-white text-2xl font-bold font-display text-center">{exercicio}</Text>
         <View className="bg-zinc-800 px-2 py-0.5 rounded-full mt-1">
-          <Text className="text-zinc-400 text-[10px] font-bold">
+          <Text className="text-zinc-400 text-[0.625rem] font-bold">
             Intensidade: <Text className="text-orange-500">{intensidade}</Text>
           </Text>
         </View>

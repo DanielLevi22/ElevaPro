@@ -1,4 +1,33 @@
+import type { Periodization, TrainingPlan } from '@elevapro/shared';
 import { useWorkoutStore } from '../workoutStore';
+
+function periodizacao(campos: Partial<Periodization> & { id: string }): Periodization {
+  return {
+    specialist_id: 'p1',
+    student_id: 's1',
+    name: 'Periodização',
+    objective: null,
+    status: 'planned',
+    start_date: '2024-01-01',
+    end_date: '2024-02-01',
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+    ...campos,
+  };
+}
+
+function fase(campos: Partial<TrainingPlan> & { id: string }): TrainingPlan {
+  return {
+    periodization_id: 'p1',
+    name: 'Fase',
+    status: 'planned',
+    start_date: '2024-01-01',
+    end_date: '2024-02-01',
+    order_index: 0,
+    created_at: '2024-01-01T00:00:00Z',
+    ...campos,
+  };
+}
 
 // Use global mocks defined in jest.setup.ts
 // biome-ignore lint/correctness/noUnusedVariables: auto-suppressed during final sweep
@@ -113,22 +142,8 @@ describe('workoutStore — periodizações e fases', () => {
     // Seed state with an active periodization for same student
     useWorkoutStore.setState({
       periodizations: [
-        {
-          id: 'old-active',
-          student_id: studentId,
-          status: 'active',
-          name: 'Old',
-          start_date: '',
-          end_date: '',
-        } as never,
-        {
-          id: periodizationId,
-          student_id: studentId,
-          status: 'planned',
-          name: 'New',
-          start_date: '',
-          end_date: '',
-        } as never,
+        periodizacao({ id: 'old-active', student_id: studentId, status: 'active', name: 'Old' }),
+        periodizacao({ id: periodizationId, student_id: studentId, name: 'New' }),
       ],
     });
 
@@ -179,8 +194,8 @@ describe('workoutStore — periodizações e fases', () => {
       start_date: '2024-01-01',
       end_date: '2024-02-01',
       status: 'active',
-      type: 'hypertrophy',
-    } as never);
+      objective: null,
+    });
 
     expect(result).toEqual(mockPeriodization);
     const state = useWorkoutStore.getState();
@@ -206,7 +221,12 @@ describe('workoutStore — periodizações e fases', () => {
       useWorkoutStore.getState().createPeriodization({
         name: 'Fail',
         student_id: 's1',
-      } as never)
+        specialist_id: 'p1',
+        start_date: '2024-01-01',
+        end_date: '2024-02-01',
+        status: 'planned',
+        objective: null,
+      })
     ).rejects.toThrow('Insert failed');
   });
 
@@ -224,7 +244,7 @@ describe('workoutStore — periodizações e fases', () => {
     });
 
     useWorkoutStore.setState({
-      periodizations: [{ id: 'p1', name: 'Old' } as never],
+      periodizations: [periodizacao({ id: 'p1', name: 'Old' })],
     });
 
     await useWorkoutStore.getState().updatePeriodization('p1', { name: 'New' });
@@ -247,7 +267,7 @@ describe('workoutStore — periodizações e fases', () => {
     });
 
     useWorkoutStore.setState({
-      currentPeriodizationPhases: [{ id: 'tp1', name: 'Old' } as never],
+      currentPeriodizationPhases: [fase({ id: 'tp1', name: 'Old' })],
     });
 
     await useWorkoutStore.getState().updateTrainingPlan('tp1', { name: 'New' });
@@ -271,8 +291,8 @@ describe('workoutStore — periodizações e fases', () => {
 
     useWorkoutStore.setState({
       currentPeriodizationPhases: [
-        { id: 'tp1', name: 'Phase 1' } as never,
-        { id: 'tp2', name: 'Phase 2' } as never,
+        fase({ id: 'tp1', name: 'Phase 1' }),
+        fase({ id: 'tp2', name: 'Phase 2' }),
       ],
     });
 

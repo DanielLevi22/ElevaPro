@@ -1,34 +1,35 @@
-import type { WorkoutExercise } from '@elevapro/shared';
+import { MS_POR_SEGUNDO, type WorkoutExercise } from '@elevapro/shared';
 import { useCallback, useEffect, useReducer, useState } from 'react';
 import {
   type AcaoDaSessao,
   type EstadoDaSessao,
+  emAndamento,
   estadoInicial,
   transicionar,
 } from '../store/maquinaDaSessao';
 
-const TIQUE_MS = 1000;
+const TIQUE_MS = MS_POR_SEGUNDO;
 
 /**
  * A sessão de treino em andamento: o estado da máquina e o relógio.
  *
  * O relógio só bate da execução ao descanso — é o que redesenha o "18:24 em
  * execução" e o anel —, e cada tique também avisa a máquina, que encerra o
- * descanso quando o tempo acaba. Fora dessas etapas não há por que acordar a
+ * descanso quando o tempo acaba. Fora desses momentos não há por que acordar a
  * tela a cada segundo.
  *
  * @example
- * const { sessao, agora, despachar } = useSessaoDeTreino(treino.exercises ?? []);
+ * const { sessao, agora, despachar } = useSessaoEmAndamento(treino.exercises ?? []);
  * despachar({ tipo: 'abrirSerie' });
  */
-export function useSessaoDeTreino(itens: WorkoutExercise[]): {
+export function useSessaoEmAndamento(itens: WorkoutExercise[]): {
   sessao: EstadoDaSessao;
   agora: number;
   despachar: (acao: AcaoDaSessao) => void;
 } {
   const [sessao, despachar] = useReducer(transicionar, itens, estadoInicial);
   const [agora, setAgora] = useState(Date.now);
-  const correndo = ['execucao', 'serie', 'descanso'].includes(sessao.etapa);
+  const correndo = emAndamento(sessao.momento);
 
   useEffect(() => {
     if (!correndo) return;

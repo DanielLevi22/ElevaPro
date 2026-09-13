@@ -1,27 +1,36 @@
-import { contagem, dataCurta, type Periodization, progressoDoCiclo } from '@elevapro/shared';
+import { contagem, dataCurta, type Periodization, progressoDaPeriodizacao } from '@elevapro/shared';
 import { Text, View } from 'react-native';
 import { BarraDeProgresso } from '@/components/ui/BarraDeProgresso';
 import { DadoComIcone } from '@/components/ui/DadoComIcone';
 import { Vidro } from '@/components/ui/Vidro';
 
 /**
- * Em que semana do ciclo o aluno está, e do que o ciclo é feito.
+ * Em que semana da periodização o aluno está, e do que a periodização é feita.
  *
  * Antes do início não há "Semana 0 de 16" — o cartão diz quando começa. É a
- * única diferença do kit, que só desenha o ciclo em andamento.
+ * única diferença do kit, que só desenha a periodização em andamento.
  *
  * @example
- * <CartaoDoCiclo periodizacao={p} fases={3} treinos={12} especialista="Daniel L." />
+ * <CartaoDaPeriodizacao periodizacao={p} fases={3} treinos={12} especialista="Daniel L." />
  */
-interface CartaoDoCicloProps {
+interface CartaoDaPeriodizacaoProps {
   periodizacao: Periodization;
   fases: number;
   treinos: number;
   especialista: string | null;
 }
 
-export function CartaoDoCiclo({ periodizacao, fases, treinos, especialista }: CartaoDoCicloProps) {
-  const progresso = progressoDoCiclo(periodizacao.start_date, periodizacao.end_date, new Date());
+export function CartaoDaPeriodizacao({
+  periodizacao,
+  fases,
+  treinos,
+  especialista,
+}: CartaoDaPeriodizacaoProps) {
+  const progresso = progressoDaPeriodizacao(
+    periodizacao.start_date,
+    periodizacao.end_date,
+    new Date()
+  );
 
   return (
     <Vidro classeExterna="mt-[1.125rem]" className="p-4">
