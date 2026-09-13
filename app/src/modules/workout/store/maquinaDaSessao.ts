@@ -1,20 +1,31 @@
 import { numeroDaPrescricao, type SerieFeita, type WorkoutExercise } from '@elevapro/shared';
 import { DEFAULT_REST_TIME } from '../constants';
+import {
+  type Cronometro,
+  cronometroParado,
+  pausarCronometro,
+  segundosDoCronometro,
+  soltarCronometro,
+} from './cronometro';
 
 /**
- * A sessão de treino como uma sequência de estados, do jeito que o kit a
- * desenha: pré-início → execução ⇄ descanso → feedback → resumo.
+ * A sessão de treino como uma sequência de estados:
  *
- * A tela antiga era um estado só com cinco modais pendurados, e cada modal
- * decidia sozinho quando abrir. Aqui cada transição é explícita e pura — dá
- * para testar a sessão inteira sem montar tela nenhuma —, e cada etapa desenha
- * a sua tela.
+ *     pré-início → execução → série ⇄ descanso → execução … → feedback → resumo
  *
- * O tempo entra como `agora` em cada ação, e o estado guarda instantes, não
- * contagens. Um `setInterval` que soma 1 perde tempo toda vez que o sistema
- * suspende o app; um instante relido no tique já volta do background certo.
+ * - **execução** é a lista: o que foi feito, o exercício atual e o que vem;
+ * - **série** é o cronômetro do exercício. Abre parado em 00:00 e só conta
+ *   quando o aluno aperta o play; "Concluir" registra a série;
+ * - **descanso** começa sozinho quando a série termina, e volta à execução
+ *   quando o tempo acaba.
+ *
+ * Cada transição é explícita e pura — dá para testar a sessão inteira sem
+ * montar tela nenhuma. O tempo entra como `agora` em cada ação, e o estado
+ * guarda instantes, não contagens: um `setInterval` que soma 1 perde tempo toda
+ * vez que o sistema suspende o app, e um instante relido volta do background
+ * certo.
  */
-export type Etapa = 'preInicio' | 'execucao' | 'descanso' | 'feedback' | 'resumo';
+export type Etapa = 'preInicio' | 'execucao' | 'serie' | 'descanso' | 'feedback' | 'resumo';
 
 export interface Descanso {
   /** Segundos do intervalo; cresce com +15 s, não encolhe com −15 s. */
@@ -32,17 +43,26 @@ export interface EstadoDaSessao {
   feitas: Record<string, SerieFeita[]>;
   iniciadaEm: number | null;
   concluidaEm: number | null;
+  /** O tempo do exercício da série aberta. Nulo fora da etapa `serie`. */
+  serie: Cronometro | null;
   descanso: Descanso | null;
   /** A série registrada por último — o resumo do descanso. */
   ultima: SerieFeita | null;
+  /** Quanto a última série levou, em segundos. Mostrado, não gravado. */
+  duracaoDaUltima: number | null;
 }
 
 export type AcaoDaSessao =
   | { tipo: 'iniciar'; agora: number }
-  | { tipo: 'check'; agora: number }
+  | { tipo: 'abrirSerie' }
+  | { tipo: 'alternarSerie'; agora: number }
+  | { tipo: 'zerarSerie' }
+  | { tipo: 'concluirSerie'; agora: number }
+  | { tipo: 'fecharSerie' }
   | { tipo: 'escolher'; itemId: string }
   | { tipo: 'ajustarExercicio'; item: WorkoutExercise }
   | { tipo: 'ajustarDescanso'; segundos: number; agora: number }
+  | { tipo: 'alternarDescanso'; agora: number }
   | { tipo: 'pausarDescanso'; agora: number }
   | { tipo: 'retomarDescanso'; agora: number }
   | { tipo: 'terminarDescanso' }
@@ -65,8 +85,10 @@ export function estadoInicial(itens: WorkoutExercise[]): EstadoDaSessao {
     feitas: {},
     iniciadaEm: null,
     concluidaEm: null,
+    serie: null,
     descanso: null,
     ultima: null,
+    duracaoDaUltima: null,
   };
 }
 
@@ -77,8 +99,14 @@ export function transicionar(estado: EstadoDaSessao, acao: AcaoDaSessao): Estado
       return estado.etapa === 'preInicio'
         ? { ...estado, etapa: 'execucao', iniciadaEm: acao.agora }
         : estado;
-    case 'check':
-      return estado.etapa === 'execucao' ? registrarSerie(estado, acao.agora) : estado;
+    case 'abrirSerie':
+      return abrirSerie(estado);
+    case 'alternarSerie':
+    case 'zerarSerie':
+    case 'fecharSerie':
+      return transicaoDaSerie(estado, acao);
+    case 'concluirSerie':
+      return concluirSerie(estado, acao.agora);
     case 'escolher':
       return { ...estado, atualId: acao.itemId };
     case 'ajustarExercicio':
@@ -88,6 +116,10 @@ export function transicionar(estado: EstadoDaSessao, acao: AcaoDaSessao): Estado
       };
     case 'ajustarDescanso':
       return ajustarDescanso(estado, acao.segundos, acao.agora);
+    case 'alternarDescanso':
+      return estado.descanso?.pausadoCom === null
+        ? pausarDescanso(estado, acao.agora)
+        : retomarDescanso(estado, acao.agora);
     case 'pausarDescanso':
       return pausarDescanso(estado, acao.agora);
     case 'retomarDescanso':
@@ -99,7 +131,13 @@ export function transicionar(estado: EstadoDaSessao, acao: AcaoDaSessao): Estado
         ? paraExecucao(estado)
         : estado;
     case 'finalizar':
-      return { ...estado, etapa: 'feedback', concluidaEm: acao.agora, descanso: null };
+      return {
+        ...estado,
+        etapa: 'feedback',
+        concluidaEm: acao.agora,
+        serie: null,
+        descanso: null,
+      };
     case 'voltarAoTreino':
       return estado.etapa === 'feedback'
         ? { ...estado, etapa: 'execucao', concluidaEm: null }
@@ -110,7 +148,7 @@ export function transicionar(estado: EstadoDaSessao, acao: AcaoDaSessao): Estado
 }
 
 function paraExecucao(estado: EstadoDaSessao): EstadoDaSessao {
-  return { ...estado, etapa: 'execucao', descanso: null };
+  return { ...estado, etapa: 'execucao', serie: null, descanso: null };
 }
 
 function seriesDo(item: WorkoutExercise): number {
@@ -121,8 +159,43 @@ function feitasDo(estado: EstadoDaSessao, itemId: string): number {
   return estado.feitas[itemId]?.length ?? 0;
 }
 
-function registrarSerie(estado: EstadoDaSessao, agora: number): EstadoDaSessao {
-  const item = estado.itens.find((i) => i.id === estado.atualId);
+function itemAtual(estado: EstadoDaSessao): WorkoutExercise | undefined {
+  return estado.itens.find((i) => i.id === estado.atualId);
+}
+
+/** Abre o cronômetro da série atual, parado: o tempo só conta no play. */
+function abrirSerie(estado: EstadoDaSessao): EstadoDaSessao {
+  const item = itemAtual(estado);
+  if (estado.etapa !== 'execucao' || !item || feitasDo(estado, item.id) >= seriesDo(item)) {
+    return estado;
+  }
+  return { ...estado, etapa: 'serie', serie: cronometroParado() };
+}
+
+function transicaoDaSerie(
+  estado: EstadoDaSessao,
+  acao: Extract<AcaoDaSessao, { tipo: 'alternarSerie' | 'zerarSerie' | 'fecharSerie' }>
+): EstadoDaSessao {
+  if (estado.etapa !== 'serie' || !estado.serie) return estado;
+  if (acao.tipo === 'fecharSerie') return paraExecucao(estado);
+  if (acao.tipo === 'zerarSerie') return { ...estado, serie: cronometroParado() };
+  const { serie } = estado;
+  return {
+    ...estado,
+    serie:
+      serie.desde === null
+        ? soltarCronometro(serie, acao.agora)
+        : pausarCronometro(serie, acao.agora),
+  };
+}
+
+/**
+ * Registra a série atual e começa o descanso na hora. A voz ("feito") conclui
+ * também da lista, sem ter aberto o cronômetro — aí a série fica sem duração.
+ */
+function concluirSerie(estado: EstadoDaSessao, agora: number): EstadoDaSessao {
+  if (estado.etapa !== 'serie' && estado.etapa !== 'execucao') return estado;
+  const item = itemAtual(estado);
   if (!item || feitasDo(estado, item.id) >= seriesDo(item)) return estado;
 
   const serie: SerieFeita = {
@@ -130,10 +203,12 @@ function registrarSerie(estado: EstadoDaSessao, agora: number): EstadoDaSessao {
     carga: numeroDaPrescricao(item.weight),
   };
   const feitas = { ...estado.feitas, [item.id]: [...(estado.feitas[item.id] ?? []), serie] };
-  const depois = {
+  const depois: EstadoDaSessao = {
     ...estado,
     feitas,
     ultima: serie,
+    duracaoDaUltima: estado.serie ? segundosDoCronometro(estado.serie, agora) : null,
+    serie: null,
     atualId: proximoIncompleto({ ...estado, feitas }, item.id),
   };
 
@@ -141,7 +216,7 @@ function registrarSerie(estado: EstadoDaSessao, agora: number): EstadoDaSessao {
     return { ...depois, etapa: 'feedback', concluidaEm: agora, descanso: null };
   }
   const descanso = item.rest_seconds ?? DEFAULT_REST_TIME;
-  if (descanso <= 0) return depois;
+  if (descanso <= 0) return paraExecucao(depois);
   return {
     ...depois,
     etapa: 'descanso',
@@ -201,6 +276,11 @@ export function restanteDoDescanso(estado: EstadoDaSessao, agora: number): numbe
   return Math.max(0, Math.ceil((descanso.terminaEm - agora) / MS));
 }
 
+/** Segundos do exercício na série aberta. Zero fora dela. */
+export function tempoDaSerie(estado: EstadoDaSessao, agora: number): number {
+  return estado.serie ? segundosDoCronometro(estado.serie, agora) : 0;
+}
+
 export interface ProgressoDaSessao {
   /** Posição do exercício atual, a partir de 1. */
   exercicio: number;
@@ -220,11 +300,11 @@ export function progressoDaSessao(estado: EstadoDaSessao): ProgressoDaSessao {
   };
 }
 
-/** A série que vem agora — o "A seguir" do descanso. */
+/** A série que vem agora — o "A seguir" do descanso e o título do cronômetro. */
 export function proximaSerie(
   estado: EstadoDaSessao
 ): { item: WorkoutExercise; numero: number } | null {
-  const item = estado.itens.find((i) => i.id === estado.atualId);
+  const item = itemAtual(estado);
   return item ? { item, numero: feitasDo(estado, item.id) + 1 } : null;
 }
 

@@ -47,8 +47,7 @@ interface VidroProps extends ViewProps {
   classeExterna?: string;
   /**
    * O cartão em foco da tela — o exercício em execução. O kit troca a sombra
-   * de relevo por um aro e um brilho da primária (`0 0 0 1px`, `0 14px 34px
-   * -14px`) e pinta a borda na mesma cor.
+   * de relevo pelo brilho da primária e pinta a borda na mesma cor, a 55%.
    */
   destaque?: boolean;
 }
@@ -169,7 +168,7 @@ export function Vidro({
       <View
         className={cn(
           'overflow-hidden rounded-xl border',
-          destaque ? 'border-primary' : 'border-glass-border',
+          destaque ? 'border-primary/55' : 'border-glass-border',
           className
         )}
         {...props}
@@ -242,16 +241,25 @@ function sombrasDoKit(
   }));
 }
 
-/** O aro e o brilho da primária do cartão em destaque. */
+/**
+ * O brilho do cartão em destaque: `0 18px 44px -18px` da primária e uma
+ * sombra de contato de 40% embaixo — o que tira o cartão do plano da lista.
+ */
 function brilhoDeDestaque(cores: Cores, escalar: (medida: number) => number): BoxShadowValue[] {
   return [
-    { offsetX: 0, offsetY: 0, blurRadius: 0, spreadDistance: 1, color: cores.primary },
     {
       offsetX: 0,
-      offsetY: escalar(14),
-      blurRadius: escalar(34),
-      spreadDistance: escalar(-14),
+      offsetY: escalar(18),
+      blurRadius: escalar(44),
+      spreadDistance: escalar(-18),
       color: cores.primary,
+    },
+    {
+      offsetX: 0,
+      offsetY: escalar(4),
+      blurRadius: escalar(12),
+      spreadDistance: escalar(-4),
+      color: comOpacidade(cores.sombra, 0.4),
     },
   ];
 }

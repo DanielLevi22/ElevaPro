@@ -87,18 +87,26 @@ function useMicrofone(
   coachRef: CoachRef
 ) {
   const [desligado, setDesligado] = useState(false);
-  const correndo = sessao.etapa === 'execucao' || sessao.etapa === 'descanso';
+  const correndo = ['execucao', 'serie', 'descanso'].includes(sessao.etapa);
+
+  // "Pausar" e "retomar" falam do cronômetro que estiver na tela: o da série ou
+  // o do descanso.
+  const etapa = sessao.etapa;
+  const alternar = useCallback(
+    (agora: number) =>
+      despachar({ tipo: etapa === 'serie' ? 'alternarSerie' : 'alternarDescanso', agora }),
+    [etapa, despachar]
+  );
 
   const aoComando = useCallback(
     (acao: VoiceAction) => {
       const agora = Date.now();
-      if (acao === 'next_set') despachar({ tipo: 'check', agora });
+      if (acao === 'next_set') despachar({ tipo: 'concluirSerie', agora });
       else if (acao === 'finish_workout') pedirParaFinalizar();
-      else if (acao === 'pause_timer') despachar({ tipo: 'pausarDescanso', agora });
-      else if (acao === 'resume_timer') despachar({ tipo: 'retomarDescanso', agora });
+      else if (acao === 'pause_timer' || acao === 'resume_timer') alternar(agora);
       else if (acao === 'repeat_instruction') coachRef.current.repeatLastInstruction();
     },
-    [despachar, pedirParaFinalizar, coachRef]
+    [despachar, pedirParaFinalizar, coachRef, alternar]
   );
 
   const { isRecording, startListening, stopListening } = useVoiceInput({

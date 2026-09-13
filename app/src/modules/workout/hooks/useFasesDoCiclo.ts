@@ -1,12 +1,7 @@
-import {
-  createAuthService,
-  nomeCurto,
-  type Periodization,
-  type TrainingPlan,
-} from '@elevapro/shared';
-import { supabase } from '@elevapro/supabase';
+import type { Periodization, TrainingPlan } from '@elevapro/shared';
 import { useEffect, useState } from 'react';
 import { useWorkoutStore } from '../store/workoutStore';
+import { useNomeDoEspecialista } from './useNomeDoEspecialista';
 
 /**
  * O ciclo do aluno e as fases dele, para a tela de fases.
@@ -29,8 +24,6 @@ interface FasesDoCiclo {
   /** Só depois de a busca voltar: antes dela, ausência é carregamento. */
   naoEncontrado: boolean;
 }
-
-const servicoDeAuth = createAuthService(supabase);
 
 export function useFasesDoCiclo(periodizacaoId: string, alunoId: string): FasesDoCiclo {
   const loja = useWorkoutStore();
@@ -62,21 +55,4 @@ function useBuscaDoCiclo(temCiclo: boolean, periodizacaoId: string, alunoId: str
   }, [periodizacaoId, fetchPeriodizationPhases]);
 
   return buscou;
-}
-
-function useNomeDoEspecialista(especialistaId: string | null | undefined): string | null {
-  const [nome, setNome] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!especialistaId) return;
-    let ativo = true;
-    servicoDeAuth.getProfileSummary(especialistaId).then((perfil) => {
-      if (ativo) setNome(nomeCurto(perfil?.full_name));
-    });
-    return () => {
-      ativo = false;
-    };
-  }, [especialistaId]);
-
-  return nome;
 }

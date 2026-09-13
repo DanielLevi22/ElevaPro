@@ -1,36 +1,58 @@
-import { formatarCarga, type SerieFeita, type WorkoutExercise } from '@elevapro/shared';
+import {
+  formatarCarga,
+  formatarDuracao,
+  type SerieFeita,
+  type WorkoutExercise,
+} from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { Anel } from '@/components/ui/Anel';
 import { DadoComIcone } from '@/components/ui/DadoComIcone';
 import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
-import { comOpacidade, useCores, useEscala } from '@/shared/design';
+import { useCores, useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 
 /**
- * O descanso em tela cheia do kit: o anel com o tempo, o resumo da série que
- * acabou, a série que vem e os controles.
+ * As peças do cronômetro em tela cheia — o da série e o do descanso: o anel
+ * com o tempo, o resumo da série que acabou, o cartão da série e os controles.
  */
 
 const SEGUNDOS_POR_MINUTO = 60;
 
-interface AnelDoDescansoProps {
-  restante: number;
-  total: number;
+interface AnelDoCronometroProps {
+  /** "Execução" ou "Descanso". */
+  rotulo: string;
+  /** O que o relógio mostra: o que passou na série, o que falta no descanso. */
+  segundos: number;
+  /** Quanto do anel está aceso, de 0 a `meta`. */
+  valor: number;
+  meta: number;
+  legenda: string;
 }
 
-/** O anel pontilhado com "00:45" no meio, os dois-pontos na primária. */
-export function AnelDoDescanso({ restante, total }: AnelDoDescansoProps) {
-  const mm = String(Math.floor(restante / SEGUNDOS_POR_MINUTO)).padStart(2, '0');
-  const ss = String(restante % SEGUNDOS_POR_MINUTO).padStart(2, '0');
+/**
+ * O anel pontilhado com "00:45" no meio, os dois-pontos na primária.
+ *
+ * Na série o anel enche, e no descanso ele esvazia: um mostra o esforço
+ * acumulando, o outro o tempo acabando.
+ */
+export function AnelDoCronometro({
+  rotulo,
+  segundos,
+  valor,
+  meta,
+  legenda,
+}: AnelDoCronometroProps) {
+  const mm = String(Math.floor(segundos / SEGUNDOS_POR_MINUTO)).padStart(2, '0');
+  const ss = String(segundos % SEGUNDOS_POR_MINUTO).padStart(2, '0');
 
   return (
     <View className="mt-2 items-center">
       <Anel
-        valor={restante}
-        meta={total}
-        rotulo={`Descanso: ${mm}:${ss}`}
+        valor={valor}
+        meta={meta}
+        rotulo={`${rotulo}: ${mm}:${ss}`}
         tamanho={166}
         espessura={5}
         brilho={10}
@@ -38,7 +60,7 @@ export function AnelDoDescanso({ restante, total }: AnelDoDescansoProps) {
         ponto
       >
         <Text className="text-[0.6875rem] font-bold uppercase tracking-[0.22em] text-hero-secondary">
-          Descanso
+          {rotulo}
         </Text>
         <View className="mt-1 flex-row items-baseline gap-0.5">
           <Text className="font-display-black text-[3rem] leading-tight tracking-tight text-hero">
@@ -49,7 +71,7 @@ export function AnelDoDescanso({ restante, total }: AnelDoDescansoProps) {
             {ss}
           </Text>
         </View>
-        <Text className="mt-1 text-[0.78125rem] text-hero-secondary">Intervalo de {total} s</Text>
+        <Text className="mt-1 text-[0.78125rem] text-hero-secondary">{legenda}</Text>
       </Anel>
     </View>
   );
@@ -57,15 +79,22 @@ export function AnelDoDescanso({ restante, total }: AnelDoDescansoProps) {
 
 const TAMANHO_DO_ICONE_DO_RESUMO = 17;
 
+interface ResumoDaSerieProps {
+  serie: SerieFeita;
+  /** Quanto a série levou. Nulo quando foi concluída sem o cronômetro. */
+  duracao: number | null;
+}
+
 /**
- * Reps, carga e status da série que acabou de ser feita.
+ * Reps, carga, tempo e status da série que acabou de ser feita.
  *
- * O kit tem uma quarta célula, PSE da série. Não entrou: o app pede a PSE uma
- * vez, no fim da sessão, e perguntar a cada série seria coletar um dado novo
- * — que precisaria de revisão LGPD própria — só para preencher a célula.
+ * O kit tem PSE da série na terceira célula. Não entrou: o app pede a PSE uma
+ * vez, no fim da sessão, e perguntar a cada série seria coletar um dado novo.
+ * No lugar dela entra o tempo que o exercício levou, que o cronômetro mede e o
+ * app só mostra — não grava.
  */
-export function ResumoDaSerie({ serie }: { serie: SerieFeita }) {
-  const celulas = [
+export function ResumoDaSerie({ serie, duracao }: ResumoDaSerieProps) {
+  const celulas: CelulaDoResumoProps[] = [
     { icone: 'repeat', rotulo: 'Reps', valor: serie.reps === null ? '—' : String(serie.reps) },
     {
       icone: 'barbell-outline',
@@ -73,8 +102,13 @@ export function ResumoDaSerie({ serie }: { serie: SerieFeita }) {
       valor: serie.carga === null ? '—' : formatarCarga(serie.carga).replace(' kg', ''),
       unidade: serie.carga === null ? undefined : 'kg',
     },
+    {
+      icone: 'stopwatch-outline',
+      rotulo: 'Tempo',
+      valor: duracao === null ? '—' : formatarDuracao(duracao),
+    },
     { icone: 'checkmark-circle-outline', rotulo: 'Status', valor: 'Concluída', status: true },
-  ] as const;
+  ];
 
   return (
     <Vidro classeExterna="mt-1.5" className="flex-row px-1.5 py-3">
@@ -91,7 +125,7 @@ interface CelulaDoResumoProps {
   valor: string;
   unidade?: string;
   status?: boolean;
-  ultima: boolean;
+  ultima?: boolean;
 }
 
 function CelulaDoResumo({ icone, rotulo, valor, unidade, status, ultima }: CelulaDoResumoProps) {
@@ -126,13 +160,13 @@ function CelulaDoResumo({ icone, rotulo, valor, unidade, status, ultima }: Celul
   );
 }
 
-interface ProximaSerieProps {
+interface CartaoDaSerieProps {
   item: WorkoutExercise;
   numero: number;
 }
 
 /** "Série 2 de 4 · Remada Curvada", com a foto do grupo e a prescrição. */
-export function ProximaSerie({ item, numero }: ProximaSerieProps) {
+export function CartaoDaSerie({ item, numero }: CartaoDaSerieProps) {
   return (
     <Vidro className="flex-row items-center gap-[0.8125rem] p-3">
       <Image
@@ -162,62 +196,86 @@ export function ProximaSerie({ item, numero }: ProximaSerieProps) {
   );
 }
 
-const PASSO_DO_AJUSTE = 15;
-const TAMANHO_DO_ICONE_LATERAL = 21;
-const TAMANHO_DO_PLAY = 30;
-const BRILHO_DO_RETOMAR = 34;
-
-interface ControlesDoDescansoProps {
-  onAjustar: (segundos: number) => void;
-  onRetomar: () => void;
+export interface BotaoDoCronometro {
+  icone: keyof typeof Ionicons.glyphMap;
+  rotulo: string;
+  /** O que o leitor de tela anuncia, quando o rótulo curto não basta. */
+  descricao?: string;
+  onPress: () => void;
 }
 
-/** −15 s, Retomar e +15 s. Retomar encerra o descanso e volta à série. */
-export function ControlesDoDescanso({ onAjustar, onRetomar }: ControlesDoDescansoProps) {
+interface ControlesDoCronometroProps {
+  esquerda: BotaoDoCronometro;
+  direita: BotaoDoCronometro;
+  correndo: boolean;
+  /** O rótulo do play quando está parado: "Iniciar" na série, "Retomar" no descanso. */
+  rotuloParado: string;
+  onAlternar: () => void;
+  /** A saída discreta sob os botões: "Voltar à lista", "Pular descanso". */
+  saida: { rotulo: string; onPress: () => void };
+}
+
+const TAMANHO_DO_PLAY = 30;
+const BRILHO_DO_PLAY = 34;
+
+/**
+ * Dois botões de vidro ao lado do play, que inicia e pausa. O que fica de cada
+ * lado muda com a etapa: zerar e concluir na série, −15 s e +15 s no descanso.
+ */
+export function ControlesDoCronometro({
+  esquerda,
+  direita,
+  correndo,
+  rotuloParado,
+  onAlternar,
+  saida,
+}: ControlesDoCronometroProps) {
   const cores = useCores();
   const escalar = useEscala();
+  const rotulo = correndo ? 'Pausar' : rotuloParado;
 
   return (
-    <View className="mt-4 flex-row items-center justify-center gap-[1.875rem]">
-      <BotaoLateral icone="play-back" rotulo="−15 s" onPress={() => onAjustar(-PASSO_DO_AJUSTE)} />
-      <View className="items-center gap-1.5">
-        <TouchableOpacity
-          onPress={onRetomar}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel="Retomar o treino"
-          className="h-[4.75rem] w-[4.75rem] items-center justify-center rounded-full bg-primary"
-          style={{
-            boxShadow: [
-              {
-                offsetX: 0,
-                offsetY: 0,
-                blurRadius: escalar(BRILHO_DO_RETOMAR),
-                color: comOpacidade(cores.primary, 1),
-              },
-            ],
-          }}
-        >
-          <Ionicons name="play" size={escalar(TAMANHO_DO_PLAY)} color={cores.primaryForeground} />
-        </TouchableOpacity>
-        <Text className="text-[0.65625rem] font-bold text-primary-text">Retomar</Text>
+    <View className="mt-4 items-center">
+      <View className="flex-row items-center justify-center gap-[1.875rem]">
+        <BotaoLateral {...esquerda} />
+        <View className="items-center gap-1.5">
+          <TouchableOpacity
+            onPress={onAlternar}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={rotulo}
+            className="h-[4.75rem] w-[4.75rem] items-center justify-center rounded-full bg-primary"
+            style={{
+              boxShadow: [
+                {
+                  offsetX: 0,
+                  offsetY: 0,
+                  blurRadius: escalar(BRILHO_DO_PLAY),
+                  color: cores.primary,
+                },
+              ],
+            }}
+          >
+            <Ionicons
+              name={correndo ? 'pause' : 'play'}
+              size={escalar(TAMANHO_DO_PLAY)}
+              color={cores.primaryForeground}
+            />
+          </TouchableOpacity>
+          <Text className="text-[0.65625rem] font-bold text-primary-text">{rotulo}</Text>
+        </View>
+        <BotaoLateral {...direita} />
       </View>
-      <BotaoLateral
-        icone="play-forward"
-        rotulo="+15 s"
-        onPress={() => onAjustar(PASSO_DO_AJUSTE)}
-      />
+      <TouchableOpacity onPress={saida.onPress} accessibilityRole="button" className="mt-4 py-2">
+        <Text className="text-legenda font-semibold text-hero-secondary">{saida.rotulo}</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
-interface BotaoLateralProps {
-  icone: keyof typeof Ionicons.glyphMap;
-  rotulo: string;
-  onPress: () => void;
-}
+const TAMANHO_DO_ICONE_LATERAL = 21;
 
-function BotaoLateral({ icone, rotulo, onPress }: BotaoLateralProps) {
+function BotaoLateral({ icone, rotulo, descricao, onPress }: BotaoDoCronometro) {
   const cores = useCores();
   const escalar = useEscala();
 
@@ -227,7 +285,7 @@ function BotaoLateral({ icone, rotulo, onPress }: BotaoLateralProps) {
         onPress={onPress}
         activeOpacity={0.8}
         accessibilityRole="button"
-        accessibilityLabel={`${rotulo.startsWith('+') ? 'Mais' : 'Menos'} 15 segundos de descanso`}
+        accessibilityLabel={descricao ?? rotulo}
       >
         <Vidro
           classeExterna="rounded-full"

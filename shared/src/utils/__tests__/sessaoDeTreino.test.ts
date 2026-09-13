@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
   dataPorExtenso,
+  diaPorExtenso,
   evolucoesDaSessao,
   formatarCarga,
+  formatarDecimal,
   formatarDuracao,
   formatarVolume,
+  ganhoDeCarga,
   gastoDoTreino,
   numeroDaPrescricao,
   resumoDaSessao,
-  seloDeCarga,
   seriesDaSessaoAnterior,
   volumeDasSeries,
 } from "../sessaoDeTreino";
@@ -88,6 +90,7 @@ describe("formatos do kit", () => {
 
   it("escreve o instante por extenso, no fuso do aparelho", () => {
     expect(dataPorExtenso(new Date(2026, 7, 12, 19, 42))).toBe("Quarta, 12 de agosto · 19:42");
+    expect(diaPorExtenso(new Date(2026, 7, 12, 19, 42))).toBe("Quarta, 12 de agosto");
   });
 });
 
@@ -136,12 +139,17 @@ describe("evolução frente à última execução", () => {
   });
 
   // Verde para uma queda diria o contrário do que aconteceu.
-  it("põe selo só quando a carga de hoje passa a maior da última vez", () => {
+  it("dá o ganho de carga só quando a de hoje passa a maior da última vez", () => {
     const antes = [{ reps: 10, carga: 45 }];
-    expect(seloDeCarga(47.5, antes)).toBe("+2,5 kg");
-    expect(seloDeCarga(45, antes)).toBeNull();
-    expect(seloDeCarga(40, antes)).toBeNull();
-    expect(seloDeCarga(47.5, undefined)).toBeNull();
+    expect(ganhoDeCarga(47.5, antes)).toBe(2.5);
+    expect(ganhoDeCarga(45, antes)).toBeNull();
+    expect(ganhoDeCarga(40, antes)).toBeNull();
+    expect(ganhoDeCarga(47.5, undefined)).toBeNull();
+  });
+
+  it("escreve o decimal com vírgula e sem zero à direita", () => {
+    expect(formatarDecimal(2.5)).toBe("2,5");
+    expect(formatarDecimal(3)).toBe("3");
   });
 });
 

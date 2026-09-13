@@ -55,8 +55,10 @@ export function volumeDasSeries(series: readonly SerieFeita[]): number {
  *
  * À mão, e não `toLocaleString`: o motor de Intl muda entre plataformas e
  * versões, e o kit tem um formato só.
+ *
+ * @example formatarDecimal(2.5) // "2,5"
  */
-function decimal(valor: number): string {
+export function formatarDecimal(valor: number): string {
   const arredondado = Math.round(valor * 10) / 10;
   return String(arredondado).replace(".", ",");
 }
@@ -68,7 +70,7 @@ function decimal(valor: number): string {
  * @example formatarVolume(850)  // "850 kg"
  */
 export function formatarVolume(quilos: number): string {
-  if (quilos >= QUILOS_POR_TONELADA) return `${decimal(quilos / QUILOS_POR_TONELADA)} t`;
+  if (quilos >= QUILOS_POR_TONELADA) return `${formatarDecimal(quilos / QUILOS_POR_TONELADA)} t`;
   return `${Math.round(quilos)} kg`;
 }
 
@@ -76,7 +78,7 @@ export function formatarVolume(quilos: number): string {
  * @example formatarCarga(47.5) // "47,5 kg"
  */
 export function formatarCarga(quilos: number): string {
-  return `${decimal(quilos)} kg`;
+  return `${formatarDecimal(quilos)} kg`;
 }
 
 /**
@@ -159,19 +161,19 @@ function repsMaximas(series: readonly SerieFeita[]): number {
 }
 
 /**
- * O selo do cartão em execução: quanto a carga de hoje passa a maior da última
- * vez. Só aparece quando sobe — o kit o pinta de verde, e verde para uma queda
- * diria o contrário do que aconteceu.
+ * Quanto a carga de hoje passa a maior da última vez, em quilos. Nulo quando
+ * não sobe — o kit pinta a evolução de verde, e verde para uma queda diria o
+ * contrário do que aconteceu.
  *
- * @example seloDeCarga(47.5, [{ reps: 10, carga: 45 }]) // "+2,5 kg"
+ * @example ganhoDeCarga(47.5, [{ reps: 10, carga: 45 }]) // 2.5
  */
-export function seloDeCarga(
+export function ganhoDeCarga(
   cargaDeHoje: number | null,
   anteriores: readonly SerieFeita[] | undefined,
-): string | null {
+): number | null {
   const antes = cargaMaxima(anteriores ?? []);
   if (cargaDeHoje === null || antes === 0 || cargaDeHoje <= antes) return null;
-  return `+${formatarCarga(cargaDeHoje - antes)}`;
+  return cargaDeHoje - antes;
 }
 
 export interface Evolucao {
@@ -232,11 +234,21 @@ const MESES_POR_EXTENSO = [
 ];
 
 /**
+ * O dia de uma sessão por extenso, sem a hora — como o card de compartilhar
+ * escreve.
+ *
+ * @example diaPorExtenso(new Date(2026, 7, 12, 19, 42)) // "Quarta, 12 de agosto"
+ */
+export function diaPorExtenso(instante: Date): string {
+  return `${DIAS[instante.getDay()]}, ${instante.getDate()} de ${MESES_POR_EXTENSO[instante.getMonth()]}`;
+}
+
+/**
  * O instante de uma sessão como o resumo do kit escreve, no fuso do aparelho.
  *
  * @example dataPorExtenso(new Date(2026, 7, 12, 19, 42)) // "Quarta, 12 de agosto · 19:42"
  */
 export function dataPorExtenso(instante: Date): string {
   const hora = `${String(instante.getHours()).padStart(2, "0")}:${String(instante.getMinutes()).padStart(2, "0")}`;
-  return `${DIAS[instante.getDay()]}, ${instante.getDate()} de ${MESES_POR_EXTENSO[instante.getMonth()]} · ${hora}`;
+  return `${diaPorExtenso(instante)} · ${hora}`;
 }

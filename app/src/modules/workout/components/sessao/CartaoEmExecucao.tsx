@@ -1,113 +1,215 @@
-import type { SerieFeita, WorkoutExercise } from '@elevapro/shared';
+import { formatarDecimal, type SerieFeita, type WorkoutExercise } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
-import { Chip } from '@/components/ui/Chip';
 import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
-import { useCores, useEscala } from '@/shared/design';
+import { comOpacidade, useCores, useEscala } from '@/shared/design';
+import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 
 /**
- * O exercício em execução — o único cartão com aro e brilho da primária na
+ * O exercício em execução — o único cartão com borda e brilho da primária na
  * tela, porque é onde o aluno está.
  *
- * Mostra a prescrição em chips, o selo de evolução quando a carga subiu desde
- * a última vez, uma célula por série (feita, atual, pendente) e o "Iniciar" que
- * registra a série atual.
+ * Em cima, a foto, o nome e a faixa da prescrição com a evolução de carga; em
+ * baixo, uma célula por série (feita, atual, pendente) e o botão que abre o
+ * cronômetro da série atual. O kit escreve "Concluir série" nesse botão; aqui
+ * ele é "Iniciar série", porque a série é registrada no cronômetro, e não ao
+ * tocar aqui (decisão de produto, #295).
  *
  * @example
- * <CartaoEmExecucao item={atual} feitas={sessao.feitas[atual.id] ?? []} selo="+2,5 kg" … />
+ * <CartaoEmExecucao item={atual} feitas={sessao.feitas[atual.id] ?? []} ganho={2.5} … />
  */
 interface CartaoEmExecucaoProps {
   item: WorkoutExercise;
   feitas: readonly SerieFeita[];
-  /** "+2,5 kg" quando a carga de hoje passa a da última vez. */
-  selo: string | null;
-  onCheck: () => void;
+  /** Quilos a mais que a última vez. Nulo quando não subiu. */
+  ganho: number | null;
+  /** Abre o cronômetro da série. Nada é registrado até o aluno concluir lá. */
+  onIniciar: () => void;
   onAjustar: () => void;
 }
-
-const TAMANHO_DO_LAPIS = 15;
 
 export function CartaoEmExecucao({
   item,
   feitas,
-  selo,
-  onCheck,
+  ganho,
+  onIniciar,
   onAjustar,
 }: CartaoEmExecucaoProps) {
-  const cores = useCores();
-  const escalar = useEscala();
   const total = item.sets ?? 0;
+  const proxima = Math.min(feitas.length + 1, total);
 
   return (
-    <Vidro destaque classeExterna="mt-3" className="p-[0.9375rem]">
-      <View className="flex-row items-start justify-between gap-2.5">
-        <View className="min-w-0 flex-1">
-          <Text className="text-[0.65625rem] font-extrabold uppercase tracking-widest text-primary-text">
-            Em execução
-          </Text>
-          <Text className="mt-[0.1875rem] font-display-black text-[1.3125rem] tracking-tight text-foreground">
-            {item.exercise?.name ?? 'Exercício'}
-          </Text>
-        </View>
-        <TouchableOpacity
-          onPress={onAjustar}
-          accessibilityRole="button"
-          accessibilityLabel="Ajustar séries, carga e descanso"
-        >
-          <Vidro
-            classeExterna="rounded-md"
-            className="h-9 w-9 items-center justify-center rounded-md"
-          >
-            <Ionicons
-              name="pencil"
-              size={escalar(TAMANHO_DO_LAPIS)}
-              color={cores.mutedForeground}
-            />
-          </Vidro>
-        </TouchableOpacity>
+    <Vidro destaque classeExterna="mt-3">
+      <View className="bg-primary/10 px-[0.9375rem] pb-[0.9375rem] pt-3.5">
+        <View className="absolute bottom-0 left-0 top-0 w-[0.1875rem] bg-primary" />
+        <Identificacao item={item} onAjustar={onAjustar} />
+        <FaixaDaPrescricao item={item} ganho={ganho} />
       </View>
 
-      <ChipsDaPrescricao item={item} selo={selo} />
-      <CelulasDasSeries total={total} feitas={feitas} />
-
-      <View className="mt-[0.8125rem] flex-row items-center gap-2.5">
-        <View className="h-[2.875rem] flex-1 items-center justify-center overflow-hidden rounded-[0.875rem] bg-glass-strong">
-          <View
-            className="absolute bottom-0 left-0 top-0 bg-primary opacity-30"
-            style={{ width: `${total > 0 ? (feitas.length / total) * 100 : 0}%` }}
-          />
-          <Text className="text-[0.65625rem] font-extrabold uppercase tracking-widest text-foreground">
-            {feitas.length} / {total} concluídas
+      <View className="px-[0.9375rem] pb-[0.9375rem] pt-[0.8125rem]">
+        <View className="mb-2 flex-row items-baseline justify-between">
+          <Text className="text-[0.59375rem] font-extrabold uppercase tracking-[0.14em] text-placeholder">
+            Séries
+          </Text>
+          <Text className="text-[0.6875rem] font-bold text-muted-foreground">
+            {feitas.length} de {total} concluídas
           </Text>
         </View>
-        <BotaoDeDestaque rotulo="Iniciar" icone="play" tamanho="compacto" onPress={onCheck} />
+        <CelulasDasSeries total={total} feitas={feitas} />
+        <View className="mt-[0.8125rem]">
+          <BotaoDeDestaque
+            rotulo={`Iniciar série ${proxima}`}
+            icone="play"
+            tamanho="cartao"
+            onPress={onIniciar}
+          />
+        </View>
       </View>
     </Vidro>
   );
 }
 
-function ChipsDaPrescricao({ item, selo }: { item: WorkoutExercise; selo: string | null }) {
-  const carga = item.weight ? `${String(item.weight).replace('.', ',')} kg` : null;
+const TAMANHO_DO_LAPIS = 15;
+/** O anel de 3 em volta do ponto "em execução", a 25% da primária. */
+const ANEL_DO_PONTO = 3;
+
+function Identificacao({ item, onAjustar }: { item: WorkoutExercise; onAjustar: () => void }) {
+  const cores = useCores();
+  const escalar = useEscala();
+
   return (
-    <View className="mt-3 flex-row flex-wrap gap-[0.4375rem]">
-      <Chip icone="repeat">{`${item.sets ?? 0} × ${item.reps ?? '—'}`}</Chip>
-      {carga ? <Chip icone="barbell-outline">{carga}</Chip> : null}
-      {item.rest_seconds ? <Chip icone="time-outline">{`${item.rest_seconds} s`}</Chip> : null}
-      {selo ? (
-        <Chip tom="evolucao" icone="trending-up">
-          {selo}
-        </Chip>
-      ) : null}
+    <View className="flex-row items-center gap-3">
+      <Image
+        source={fotoDoGrupo(item.exercise?.muscle_group)}
+        className="h-[3.25rem] w-[3.25rem] shrink-0 rounded-[0.9375rem] border-[0.09375rem] border-primary/60"
+        resizeMode="cover"
+        accessibilityIgnoresInvertColors
+      />
+      <View className="min-w-0 flex-1">
+        <View className="flex-row items-center gap-1.5">
+          <View
+            className="h-1.5 w-1.5 rounded-full bg-primary"
+            style={{
+              boxShadow: [
+                {
+                  offsetX: 0,
+                  offsetY: 0,
+                  blurRadius: 0,
+                  spreadDistance: escalar(ANEL_DO_PONTO),
+                  color: comOpacidade(cores.primary, 0.25),
+                },
+              ],
+            }}
+          />
+          <Text className="text-[0.625rem] font-extrabold uppercase tracking-[0.14em] text-primary-text">
+            Em execução
+          </Text>
+        </View>
+        <Text
+          numberOfLines={1}
+          className="mt-[0.1875rem] font-display-black text-[1.25rem] tracking-tight text-foreground"
+        >
+          {item.exercise?.name ?? 'Exercício'}
+        </Text>
+      </View>
+      <TouchableOpacity
+        onPress={onAjustar}
+        accessibilityRole="button"
+        accessibilityLabel="Ajustar séries, carga e descanso"
+        className="h-[2.125rem] w-[2.125rem] shrink-0 items-center justify-center rounded-[0.6875rem] bg-glass-strong"
+      >
+        <Ionicons name="pencil" size={escalar(TAMANHO_DO_LAPIS)} color={cores.mutedForeground} />
+      </TouchableOpacity>
     </View>
   );
 }
 
-/** Feita em verde com as repetições; a atual em primária; as pendentes em vidro. */
-function CelulasDasSeries({ total, feitas }: { total: number; feitas: readonly SerieFeita[] }) {
+const TAMANHO_DA_SETA = 12;
+
+/** "4 × 8-10 · 45 kg · 90 s", e a evolução em verde quando a carga subiu. */
+function FaixaDaPrescricao({ item, ganho }: { item: WorkoutExercise; ganho: number | null }) {
+  const cores = useCores();
+  const escalar = useEscala();
+  const carga = item.weight ? `${String(item.weight).replace('.', ',')} kg` : '—';
+  const descanso = item.rest_seconds ? `${item.rest_seconds} s` : '—';
+
   return (
-    <View className="mt-3.5 flex-row gap-1.5">
+    <View className="mt-3.5 flex-row overflow-hidden rounded-[0.875rem] bg-glass-strong">
+      <CelulaDaFaixa valor={`${item.sets ?? 0} × ${item.reps ?? '—'}`} rotulo="Séries" />
+      <CelulaDaFaixa valor={carga} rotulo="Carga" />
+      <CelulaDaFaixa valor={descanso} rotulo="Descanso" />
+      <View
+        className={cn(
+          'flex-1 items-center px-1.5 py-[0.5625rem]',
+          ganho ? 'bg-metrica-passos/15' : null
+        )}
+      >
+        <View className="flex-row items-center gap-[0.1875rem]">
+          {ganho ? (
+            <Ionicons
+              name="trending-up"
+              size={escalar(TAMANHO_DA_SETA)}
+              color={cores.metricaPassos}
+            />
+          ) : null}
+          <Text
+            className={cn(
+              'font-display-black text-sm tracking-tight',
+              ganho ? 'text-metrica-passos' : 'text-placeholder'
+            )}
+          >
+            {ganho ? formatarDecimal(ganho) : '—'}
+          </Text>
+        </View>
+        <RotuloDaFaixa>Evolução</RotuloDaFaixa>
+      </View>
+    </View>
+  );
+}
+
+function CelulaDaFaixa({ valor, rotulo }: { valor: string; rotulo: string }) {
+  return (
+    <View className="flex-1 items-center px-1.5 py-[0.5625rem]">
+      <Text numberOfLines={1} className="font-display-black text-sm tracking-tight text-foreground">
+        {valor}
+      </Text>
+      <RotuloDaFaixa>{rotulo}</RotuloDaFaixa>
+    </View>
+  );
+}
+
+function RotuloDaFaixa({ children }: { children: string }) {
+  return (
+    <Text className="mt-0.5 text-[0.53125rem] font-bold uppercase tracking-[0.12em] text-placeholder">
+      {children}
+    </Text>
+  );
+}
+
+const TAMANHO_DO_CHECK = 13;
+/** O brilho da célula atual: `0 6px 16px -8px` da primária. */
+const BRILHO_DA_ATUAL = { y: 6, blur: 16, espalhamento: -8 } as const;
+
+/** Feita em verde, com check e repetições; a atual em primária com brilho; as pendentes em vidro. */
+function CelulasDasSeries({ total, feitas }: { total: number; feitas: readonly SerieFeita[] }) {
+  const cores = useCores();
+  const escalar = useEscala();
+  const brilho = {
+    boxShadow: [
+      {
+        offsetX: 0,
+        offsetY: escalar(BRILHO_DA_ATUAL.y),
+        blurRadius: escalar(BRILHO_DA_ATUAL.blur),
+        spreadDistance: escalar(BRILHO_DA_ATUAL.espalhamento),
+        color: cores.primary,
+      },
+    ],
+  };
+
+  return (
+    <View className="flex-row gap-1.5">
       {Array.from({ length: total }, (_, indice) => {
         const feita = feitas[indice];
         const atual = indice === feitas.length;
@@ -116,18 +218,32 @@ function CelulasDasSeries({ total, feitas }: { total: number; feitas: readonly S
             // biome-ignore lint/suspicious/noArrayIndexKey: a série é a própria posição
             key={indice}
             className={cn(
-              'h-11 flex-1 items-center justify-center gap-px rounded-[0.8125rem] border',
-              feita ? 'border-transparent bg-metrica-passos/20' : null,
+              'h-[3.25rem] flex-1 items-center justify-center gap-0.5 rounded-[0.875rem] border-[0.09375rem]',
+              feita ? 'border-transparent bg-metrica-passos/15' : null,
               atual ? 'border-primary bg-primary/20' : null,
               !feita && !atual ? 'border-transparent bg-glass-strong' : null
             )}
+            style={atual ? brilho : undefined}
           >
-            <Text className="text-[0.5625rem] font-bold uppercase tracking-widest text-placeholder">
-              S{indice + 1}
-            </Text>
+            {feita ? (
+              <Ionicons
+                name="checkmark"
+                size={escalar(TAMANHO_DO_CHECK)}
+                color={cores.metricaPassos}
+              />
+            ) : (
+              <Text
+                className={cn(
+                  'text-[0.53125rem] font-extrabold uppercase tracking-[0.12em]',
+                  atual ? 'text-primary-text' : 'text-placeholder'
+                )}
+              >
+                S{indice + 1}
+              </Text>
+            )}
             <Text
               className={cn(
-                'font-display-black text-[0.78125rem]',
+                'font-display-black text-[0.9375rem] tracking-tight',
                 feita ? 'text-metrica-passos' : atual ? 'text-primary-text' : 'text-placeholder'
               )}
             >

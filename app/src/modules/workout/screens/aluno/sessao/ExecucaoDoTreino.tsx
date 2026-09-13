@@ -1,8 +1,8 @@
 import {
   formatarDuracao,
+  ganhoDeCarga,
   numeroDaPrescricao,
   type SerieFeita,
-  seloDeCarga,
   type Workout,
 } from '@elevapro/shared';
 import { View } from 'react-native';
@@ -77,8 +77,8 @@ export function ExecucaoDoTreino({
         <CartaoEmExecucao
           item={atual}
           feitas={sessao.feitas[atual.id] ?? []}
-          selo={seloDeCarga(numeroDaPrescricao(atual.weight), anteriores[atual.id])}
-          onCheck={() => despachar({ tipo: 'check', agora: Date.now() })}
+          ganho={ganhoDeCarga(numeroDaPrescricao(atual.weight), anteriores[atual.id])}
+          onIniciar={() => despachar({ tipo: 'abrirSerie' })}
           onAjustar={() => onAjustar(atual.id)}
         />
       ) : null}

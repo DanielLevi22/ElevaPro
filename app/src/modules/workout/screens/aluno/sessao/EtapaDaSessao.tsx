@@ -1,6 +1,5 @@
 import {
   evolucoesDaSessao,
-  formatarDuracao,
   numeroDaPrescricao,
   resumoDaSessao,
   seriesDaSessaoAnterior,
@@ -8,7 +7,6 @@ import {
 } from '@elevapro/shared';
 import { useMemo, useState } from 'react';
 import { showAlert } from '@/components/ui/appAlert';
-import { ShareWorkoutModal } from '@/components/workout/ShareWorkoutModal';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { AjusteDoExercicio } from '../../../components/sessao/AjusteDoExercicio';
 import { TelaDeFeedback } from '../../../components/sessao/TelaDeFeedback';
@@ -16,7 +14,8 @@ import { usePesoDoAluno } from '../../../hooks/usePesoDoAluno';
 import { useUltimaSessaoDoTreino } from '../../../hooks/useUltimaSessaoDoTreino';
 import { gravarSessaoDeForca } from '../../../services/registroDaSessao';
 import type { EstadoDaSessao } from '../../../store/maquinaDaSessao';
-import { DescansoDoTreino } from './DescansoDoTreino';
+import { CompartilharTreino } from './CompartilharTreino';
+import { CronometroDoTreino } from './CronometroDoTreino';
 import { ExecucaoDoTreino, type PropsDaEtapa } from './ExecucaoDoTreino';
 import { PreInicioDoTreino } from './PreInicioDoTreino';
 import { ResumoDoTreino } from './ResumoDoTreino';
@@ -58,8 +57,9 @@ export function EtapaDaSessao(props: EtapaDaSessaoProps) {
           />
         </>
       );
+    case 'serie':
     case 'descanso':
-      return <DescansoDoTreino {...props} />;
+      return <CronometroDoTreino {...props} />;
     case 'feedback':
       return (
         <TelaDeFeedback
@@ -165,27 +165,27 @@ function Resumo({
     nome: item.exercise?.name ?? 'Exercício',
   }));
 
-  return (
-    <>
-      <ResumoDoTreino
+  const evolucoes = evolucoesDaSessao(itens, sessao.feitas, anteriores);
+
+  if (compartilhando) {
+    return (
+      <CompartilharTreino
         treino={treino}
         resumo={resumo}
-        evolucoes={evolucoesDaSessao(itens, sessao.feitas, anteriores)}
+        recordes={evolucoes.length}
         concluidaEm={fim}
-        onSair={onSair}
-        onCompartilhar={() => setCompartilhando(true)}
+        onVoltar={() => setCompartilhando(false)}
       />
-      <ShareWorkoutModal
-        visible={compartilhando}
-        onClose={() => setCompartilhando(false)}
-        stats={{
-          title: 'Treino Concluído',
-          duration: formatarDuracao(resumo.duracaoSegundos),
-          calories: `${resumo.kcal} kcal`,
-          date: new Date(fim).toLocaleDateString('pt-BR'),
-          exerciseName: treino.title,
-        }}
-      />
-    </>
+    );
+  }
+  return (
+    <ResumoDoTreino
+      treino={treino}
+      resumo={resumo}
+      evolucoes={evolucoes}
+      concluidaEm={fim}
+      onSair={onSair}
+      onCompartilhar={() => setCompartilhando(true)}
+    />
   );
 }
