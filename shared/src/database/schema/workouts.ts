@@ -142,16 +142,16 @@ export const workoutSessions = pgTable("workout_sessions", {
   workout_id: uuid("workout_id").references(() => workouts.id, { onDelete: "set null" }),
   started_at: timestamp("started_at", { withTimezone: true }).notNull(),
   completed_at: timestamp("completed_at", { withTimezone: true }),
-  // Escala de esforço percebido (RPE), 1 a 10. Execução de contrato — é medida
+  // Percepção subjetiva de esforço (PSE), 1 a 10. Execução de contrato — é medida
   // de carga, não relato clínico. Não confundir com o `intensity` do
   // acelerômetro na tela de cardio, que é outra coisa e nunca é gravado.
-  intensity: integer("intensity"),
+  perceived_exertion: integer("perceived_exertion"),
   // Texto livre do aluno. Dado sensível de saúde (Art. 11) — ver seção 2.2 de
   // docs/LGPD_COMPLIANCE.md. Nunca recebe texto gerado pelo app.
   notes: text("notes"),
   // Quando o aluno corrigiu o próprio feedback (Art. 18, III). Metadado, não
   // conteúdo: guardamos QUE mudou e QUANDO, nunca o texto anterior — a versão
-  // antiga é o dado inexato que o Art. 6°, V manda corrigir. Só `intensity`,
+  // antiga é o dado inexato que o Art. 6°, V manda corrigir. Só `perceived_exertion`,
   // `notes` e esta coluna são atualizáveis pelo aluno; a `0036` fecha o resto
   // por privilégio de coluna.
   feedback_edited_at: timestamp("feedback_edited_at", { withTimezone: true }),

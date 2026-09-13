@@ -96,7 +96,7 @@ function eventoDeSessao(row: WorkoutSessionRow, tituloTreino: string | null): Ac
     at: row.completed_at ?? row.started_at,
     title: tituloSessao(row, tituloTreino),
     detail: row.session_type === "cardio" ? detalheCardio(row) : null,
-    rpe: row.intensity,
+    pse: row.perceived_exertion,
     studentNote: row.notes,
     noteEditedAt: row.feedback_edited_at,
   };
@@ -181,7 +181,7 @@ export const createActivityService = (supabase: SupabaseClient) => ({
       supabase
         .from("workout_sessions")
         .select(
-          "id, student_id, started_at, completed_at, intensity, notes, session_type, duration_seconds, active_calories, activity_name",
+          "id, student_id, started_at, completed_at, perceived_exertion, notes, session_type, duration_seconds, active_calories, activity_name",
         )
         .in("student_id", studentIds)
         .not("completed_at", "is", null)
@@ -222,7 +222,7 @@ export const createActivityService = (supabase: SupabaseClient) => ({
         // vive no briefing, que é Server Component justamente para o dado de
         // saúde cru não chegar ao HTML da página.
         title: tituloSessao(linha, null),
-        rpe: linha.intensity,
+        pse: linha.perceived_exertion,
         at: linha.completed_at ?? linha.started_at,
       });
     }
@@ -238,7 +238,7 @@ export const createActivityService = (supabase: SupabaseClient) => ({
         studentName: nomes.get(linha.student_id) ?? "Aluno",
         kind: "meal",
         title: "Registrou uma refeição",
-        rpe: null,
+        pse: null,
         at: linha.logged_date,
       });
     }
@@ -266,7 +266,7 @@ export const createActivityService = (supabase: SupabaseClient) => ({
       supabase
         .from("workout_sessions")
         .select(
-          "id, student_id, started_at, completed_at, intensity, notes, feedback_edited_at, session_type, duration_seconds, active_calories, activity_name, workout:workouts(title)",
+          "id, student_id, started_at, completed_at, perceived_exertion, notes, feedback_edited_at, session_type, duration_seconds, active_calories, activity_name, workout:workouts(title)",
         )
         .eq("student_id", studentId)
         .order("started_at", { ascending: false })
@@ -325,7 +325,7 @@ export const createActivityService = (supabase: SupabaseClient) => ({
         at: linha.logged_date,
         title: "Refeição registrada",
         detail: null,
-        rpe: null,
+        pse: null,
         studentNote: null,
         noteEditedAt: null,
       });
@@ -344,7 +344,7 @@ export const createActivityService = (supabase: SupabaseClient) => ({
         at: linha.created_at,
         title: "Avaliação física",
         detail: linha.weight_kg ? `${linha.weight_kg} kg` : "Medidas registradas",
-        rpe: null,
+        pse: null,
         studentNote: null,
         noteEditedAt: null,
       });
@@ -367,7 +367,7 @@ export const createActivityService = (supabase: SupabaseClient) => ({
         at: linha.created_at,
         title: linha.name ?? "Plano alimentar",
         detail: linha.status === "active" ? "Plano ativo" : "Plano encerrado",
-        rpe: null,
+        pse: null,
         studentNote: null,
         noteEditedAt: null,
       });

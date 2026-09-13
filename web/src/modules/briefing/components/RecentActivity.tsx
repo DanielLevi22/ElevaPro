@@ -1,5 +1,5 @@
 import type { ActivityKind, RecentActivityItem } from "@elevapro/shared";
-import { formatRpe } from "@elevapro/shared";
+import { formatPse } from "@elevapro/shared";
 import { Apple, ClipboardList, Dumbbell, Footprints, HeartPulse, Salad } from "lucide-react";
 import Link from "next/link";
 
@@ -80,12 +80,12 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
                   </span>
 
                   {/*
-                    O RPE aparece aqui também: é o sinal mais barato de ler.
-                    "Marina, RPE 8" três vezes na semana é conversa para hoje.
+                    A PSE aparece aqui também: é o sinal mais barato de ler.
+                    "Marina, PSE 8" três vezes na semana é conversa para hoje.
                   */}
-                  {item.rpe !== null && (
+                  {item.pse !== null && (
                     <span className="shrink-0 rounded-full bg-surface-highlight px-2 py-0.5 text-xs font-semibold text-foreground">
-                      RPE {formatRpe(item.rpe)}
+                      PSE {formatPse(item.pse)}
                     </span>
                   )}
 

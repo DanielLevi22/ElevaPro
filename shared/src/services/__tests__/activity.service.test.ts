@@ -11,7 +11,7 @@ function sessao(over: Record<string, unknown> = {}) {
     student_id: "aluno-1",
     started_at: "2026-08-28T10:00:00Z",
     completed_at: "2026-08-28T11:00:00Z",
-    intensity: 8,
+    perceived_exertion: 8,
     notes: null,
     session_type: "strength",
     duration_seconds: null,
@@ -124,7 +124,7 @@ describe("activityService — atividades do aluno", () => {
     expect(sessoes?.select).toContain("session_type");
   });
 
-  it("agrupa por dia e mostra RPE e a observação do aluno", async () => {
+  it("agrupa por dia e mostra PSE e a observação do aluno", async () => {
     const { supabase } = criarSupabaseFake([
       { data: [sessao({ notes: "senti dor no ombro", workout: { title: "Treino A" } })] },
       ...semNada.slice(1),
@@ -136,7 +136,7 @@ describe("activityService — atividades do aluno", () => {
     expect(dias[0].events[0]).toMatchObject({
       kind: "workout",
       title: "Treino A",
-      rpe: 8,
+      pse: 8,
       studentNote: "senti dor no ombro",
     });
   });

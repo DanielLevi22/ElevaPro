@@ -11,7 +11,7 @@ function evento(over: Partial<ActivityEvent> = {}): ActivityEvent {
     at: "2026-08-28T11:00:00Z",
     title: "Treino A — Push",
     detail: null,
-    rpe: null,
+    pse: null,
     studentNote: null,
     noteEditedAt: null,
     ...over,
@@ -26,9 +26,9 @@ describe("ActivityDayCard", () => {
   // O aluno escolhe "Difícil" no modal do mobile; o especialista tem de ler a
   // mesma palavra. Só o número faria os dois falarem de "8" com significados
   // diferentes — que é o motivo de a escala ter virado função compartilhada.
-  it("mostra o RPE com o rótulo da escala, não só o número", () => {
-    render(<ActivityDayCard day={dia({ events: [evento({ rpe: 8 })] })} />);
-    expect(screen.getByText("RPE 8 — Difícil")).toBeInTheDocument();
+  it("mostra a PSE com o rótulo da escala, não só o número", () => {
+    render(<ActivityDayCard day={dia({ events: [evento({ pse: 8 })] })} />);
+    expect(screen.getByText("PSE 8 — Puxado")).toBeInTheDocument();
   });
 
   // O feedback existia e nenhuma tela do web o lia. É a razão de ser da feature.
@@ -40,9 +40,9 @@ describe("ActivityDayCard", () => {
   });
 
   // Evento sem feedback some; não vira campo vazio nem travessão.
-  it("não renderiza RPE nem observação quando não há", () => {
+  it("não renderiza PSE nem observação quando não há", () => {
     render(<ActivityDayCard day={dia({ events: [evento()] })} />);
-    expect(screen.queryByText(/RPE/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/PSE/)).not.toBeInTheDocument();
     expect(screen.queryByText("—")).not.toBeInTheDocument();
   });
 

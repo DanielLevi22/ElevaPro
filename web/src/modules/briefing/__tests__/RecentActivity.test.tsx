@@ -10,7 +10,7 @@ function item(over: Partial<RecentActivityItem> = {}): RecentActivityItem {
     studentName: "Marina Costa",
     kind: "workout",
     title: "Treino B — Pull",
-    rpe: null,
+    pse: null,
     at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     ...over,
   };
@@ -35,14 +35,14 @@ describe("RecentActivity", () => {
     expect(screen.getByText("Marina Costa")).toBeInTheDocument();
   });
 
-  // "Marina, RPE 8" três vezes na semana é conversa para hoje: é o sinal mais
+  // "Marina, PSE 8" três vezes na semana é conversa para hoje: é o sinal mais
   // barato de ler numa lista.
-  it("mostra o RPE quando a sessão tem, e some quando não tem", () => {
-    const { rerender } = render(<RecentActivity items={[item({ rpe: 8 })]} />);
-    expect(screen.getByText("RPE 8 — Difícil")).toBeInTheDocument();
+  it("mostra a PSE quando a sessão tem, e some quando não tem", () => {
+    const { rerender } = render(<RecentActivity items={[item({ pse: 8 })]} />);
+    expect(screen.getByText("PSE 8 — Puxado")).toBeInTheDocument();
 
-    rerender(<RecentActivity items={[item({ rpe: null })]} />);
-    expect(screen.queryByText(/RPE/)).not.toBeInTheDocument();
+    rerender(<RecentActivity items={[item({ pse: null })]} />);
+    expect(screen.queryByText(/PSE/)).not.toBeInTheDocument();
   });
 
   it("mostra a distância em linguagem de conversa", () => {

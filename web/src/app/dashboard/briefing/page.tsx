@@ -28,7 +28,7 @@ export default async function Page() {
 
   // Independentes: em serie, a tela espera as duas antes de pintar qualquer
   // coisa. O item de atividade que atravessa a fronteira ja vem resumido --
-  // nome, tipo, titulo, RPE e horario --, nunca a linha de sessao.
+  // nome, tipo, titulo, PSE e horario --, nunca a linha de sessao.
   const [{ signals, stats }, recentActivity] = await Promise.all([
     createBriefingService(supabase as never).fetchBriefing(user.id),
     createActivityService(supabase as never).fetchRecentActivity(user.id),

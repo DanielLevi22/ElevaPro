@@ -1376,8 +1376,8 @@ export type Database = {
           duration_seconds: number | null;
           feedback_edited_at: string | null;
           id: string;
-          intensity: number | null;
           notes: string | null;
+          perceived_exertion: number | null;
           session_type: Database["public"]["Enums"]["workout_session_type"];
           started_at: string;
           student_id: string;
@@ -1394,8 +1394,8 @@ export type Database = {
           duration_seconds?: number | null;
           feedback_edited_at?: string | null;
           id?: string;
-          intensity?: number | null;
           notes?: string | null;
+          perceived_exertion?: number | null;
           session_type?: Database["public"]["Enums"]["workout_session_type"];
           started_at: string;
           student_id: string;
@@ -1412,8 +1412,8 @@ export type Database = {
           duration_seconds?: number | null;
           feedback_edited_at?: string | null;
           id?: string;
-          intensity?: number | null;
           notes?: string | null;
+          perceived_exertion?: number | null;
           session_type?: Database["public"]["Enums"]["workout_session_type"];
           started_at?: string;
           student_id?: string;

@@ -77,7 +77,7 @@ Dados referentes à saúde exigem **base legal específica** e proteção refor�
 | **Imagem do corpo processada ao vivo no aparelho** | *não persiste em lugar nenhum* | Tutela da saúde + **Consentimento informado sobre o processamento local** | Posicionar o aluno e medir. É tratamento pelo Art. 5°, X mesmo sem armazenamento — e por isso precisa estar no texto de consentimento, o que exige `POLICY_VERSION` nova |
 | **Imagem do corpo processada ao vivo durante o exercício** (Análise de Técnica) | *não persiste em lugar nenhum* | Tutela da saúde (Art. 11, II, f) + **Consentimento explícito** (Art. 11, I) | Contar repetições e julgar a profundidade do agachamento. Mesma doutrina do Body scan: não armazenar não é não tratar (Art. 5°, X). **Finalidade nova**, e por isso ganhou `consent_type` próprio (`technique_analysis`, migration 0041) em vez de entrar no do Body scan — ver a nota abaixo da Seção 3 |
 | **Vídeo de calibração processado no browser** (painel `/admin/tecnica`) | *não persiste em lugar nenhum* — nem banco, nem bucket, nem disco | Consentimento explícito (Art. 11, I) dos dois profissionais filmados, por termo escrito | Calibrar o limiar do Critério. O vídeo morre ao fechar a aba; o que se exporta são os 33 landmarks por quadro — boneco de palito, sem imagem e sem rosto — como fixture versionada no repositório |
-| Dados de treino executado (séries, cargas, datas, `intensity`) | `workout_sessions` | Execução de contrato | Acompanhamento de desempenho |
+| Dados de treino executado (séries, cargas, datas, PSE em `perceived_exertion`) | `workout_sessions` | Execução de contrato | Acompanhamento de desempenho |
 | **Observações do aluno sobre a própria sessão** | `workout_sessions.notes` | **Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I)** | Ajuste de prescrição a partir do que o aluno relata |
 | Tipo, duração e calorias da sessão | `workout_sessions.session_type`, `.duration_seconds`, `.active_calories` | Execução de contrato | Distinguir cardio de musculação e medir a sessão |
 | **Distância, ritmo e cadência da corrida** | `workout_sessions.distance_meters`, `.avg_pace_seconds_per_km`, `.avg_cadence_spm` | Execução de contrato (Art. 7°, V) | Medir a corrida para ajustar a prescrição. Mesma classificação de duração e calorias: é a medida da sessão contratada, não relato clínico. Derivados no aparelho — **a série de coordenadas que os produz não é gravada** (ver §2.3) |
@@ -106,8 +106,10 @@ Dados referentes à saúde exigem **base legal específica** e proteção refor�
 > de cada sessão — "senti dor no ombro", "tive tontura", "voltei da cirurgia do
 > joelho". Séries, cargas e datas da mesma tabela são execução de contrato;
 > este campo não é, e por isso foi separado da linha genérica em 2026-08-28. A
-> escala de esforço (`intensity`, 1 a 10) continua como execução de contrato —
-> é medida de carga, não relato clínico.
+> escala de esforço (`perceived_exertion`, a PSE de 1 a 10 — `intensity` até a
+> `0051`) continua como execução de contrato — é medida de carga, não relato
+> clínico. A sensação que o app mostra (Leve, Na medida, Puxado) é derivada
+> desse número e não é gravada: seria o mesmo dado duas vezes (Art. 6°, III).
 >
 > A distinção tem consequência prática, e é por ela que a separação importa:
 > texto do titular e dado gerado pelo sistema têm tratamento diferente no
@@ -365,7 +367,7 @@ A LGPD garante direitos aos titulares que o sistema precisa implementar. Abaixo 
 | Direito | Onde implementar | Status |
 |---------|-----------------|--------|
 | Acesso aos dados | Tela "Meus Dados" (mobile + web) | Pendente |
-| Correção (Art. 18, III) | Perfil · anamnese (reabre o questionário) · adesão à refeição (alterna e substitui) · **feedback de sessão** (`intensity` e `notes`, no histórico do mobile — desde 2026-08-28) | **Coberto para o que o titular declarou.** Fora: medida do evento — datas, séries, duração, calorias, `body_scans` e `physical_assessments`. O remédio para medida inexata é medir de novo, não digitar outro número (Art. 6°, V). Desde a `0038` isso deixou de ser só política e virou schema: `body_scans` não tem política de UPDATE para nenhum papel do cliente, e a `verify-rls.sql` conta as linhas afetadas para provar. Pendente: tela "Meus Dados" reunindo os caminhos num lugar só |
+| Correção (Art. 18, III) | Perfil · anamnese (reabre o questionário) · adesão à refeição (alterna e substitui) · **feedback de sessão** (`perceived_exertion` e `notes`, no histórico do mobile — desde 2026-08-28) | **Coberto para o que o titular declarou.** Fora: medida do evento — datas, séries, duração, calorias, `body_scans` e `physical_assessments`. O remédio para medida inexata é medir de novo, não digitar outro número (Art. 6°, V). Desde a `0038` isso deixou de ser só política e virou schema: `body_scans` não tem política de UPDATE para nenhum papel do cliente, e a `verify-rls.sql` conta as linhas afetadas para provar. Pendente: tela "Meus Dados" reunindo os caminhos num lugar só |
 | Exclusão (Art. 18, VI) | Por item: **observação da sessão** (apaga o texto, a sessão fica) · **análise corporal** (`body_scans`, apaga a análise) — desde 2026-08-28 | **Parcial, por item.** A sessão de treino em si não é apagável: é execução de contrato (Art. 7°, V) e o inciso VI alcança o que foi tratado com consentimento. Pendente: fluxo "Excluir minha conta", que elimina tudo por `ON DELETE CASCADE` |
 | Portabilidade | Exportar dados em JSON/PDF | Pendente |
 | Revogação do consentimento | Tela de configurações de privacidade | Pendente |
@@ -717,7 +719,7 @@ modelo. Fechado pelo PRD
 | RLS bloqueia INSERT de sessões por specialists | Specialist não pode inserir histórico falso em nome do aluno |
 | RLS bloqueia specialist após desvínculo | Specialist desvinculado perde acesso ao histórico de sessões do aluno |
 | DELETE em `workout_sessions` fechado para todos os papéis do cliente — **desde a migration `0036` (2026-08-28)** | Histórico é imutável. **Até a `0036` esta linha descrevia um controle que o banco não tinha:** a `sessions_own` da `0017` era `FOR ALL`, o que inclui DELETE, e o aluno podia apagar a própria sessão. Verificado no banco em 2026-08-28. Agora são políticas por comando e não existe política de DELETE — provado em `scripts/verify-rls.sql` |
-| UPDATE em `workout_sessions` restrito a `intensity`, `notes` e `feedback_edited_at` por privilégio de coluna (`0036`) | Qualidade (Art. 6°, V) + Direito de correção (Art. 18, III): o titular corrige o que **declarou** e não reescreve o que **aconteceu**. Antes, a mesma `FOR ALL` deixava o aluno mudar a data de uma sessão ou transformar cardio em musculação, sem rastro. Privilégio e não trigger porque aparece em `information_schema.role_column_grants` — verificável por guarda |
+| UPDATE em `workout_sessions` restrito a `perceived_exertion` (antes `intensity`), `notes` e `feedback_edited_at` por privilégio de coluna (`0036`; a `0051` renomeou a coluna e o privilégio acompanhou) | Qualidade (Art. 6°, V) + Direito de correção (Art. 18, III): o titular corrige o que **declarou** e não reescreve o que **aconteceu**. Antes, a mesma `FOR ALL` deixava o aluno mudar a data de uma sessão ou transformar cardio em musculação, sem rastro. Privilégio e não trigger porque aparece em `information_schema.role_column_grants` — verificável por guarda |
 | Correção carimba `feedback_edited_at`; a versão anterior **não** é guardada | Prestação de contas (Art. 6°, X) precisa do fato da correção, não do conteúdo antigo. Guardar a versão errada para sempre conserva exatamente o que o Art. 6°, V manda remover |
 | O especialista nunca escreve em `workout_sessions` — só SELECT com vínculo ativo | Terceiro editando declaração alheia não é correção, é falsificação. Provado em `verify-rls.sql` |
 | Erro da mutação de correção logado sem corpo | Prevenção (Art. 6°, VIII): o erro do PostgREST carrega o payload, e o payload aqui é `notes` |

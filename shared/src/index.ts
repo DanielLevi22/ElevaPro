@@ -37,6 +37,7 @@ export * from "./types/workouts.types";
 export * from "./utils/anamnese";
 export * from "./utils/nome";
 export * from "./utils/periodizacao";
-export * from "./utils/rpe";
+export * from "./utils/pse";
+export * from "./utils/sessaoDeTreino";
 export * from "./utils/texto";
 export * from "./utils/treino";
