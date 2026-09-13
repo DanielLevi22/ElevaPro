@@ -57,6 +57,7 @@
     --sobre-imagem-secundario: rgba(255, 255, 255, 0.85);
     --veu-da-imagem-topo: rgba(0, 0, 0, 0.1);
     --veu-da-imagem-base: rgba(0, 0, 0, 0.82);
+    --barra-de-abas: rgba(255, 255, 255, 0.9);
   }
 
   .dark:root {
@@ -98,5 +99,6 @@
     --sobre-imagem-secundario: rgba(255, 255, 255, 0.85);
     --veu-da-imagem-topo: rgba(0, 0, 0, 0.1);
     --veu-da-imagem-base: rgba(0, 0, 0, 0.82);
+    --barra-de-abas: rgba(18, 19, 22, 0.72);
   }
 }

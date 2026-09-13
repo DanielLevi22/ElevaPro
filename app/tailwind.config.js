@@ -92,6 +92,7 @@ module.exports = {
           bottom: literal('specular-bottom'),
         },
         sombra: literal('sombra'),
+        'barra-de-abas': literal('barra-de-abas'),
         /** Legenda sobre foto com véu preto: igual nos dois temas. */
         'sobre-imagem': {
           DEFAULT: literal('sobre-imagem'),

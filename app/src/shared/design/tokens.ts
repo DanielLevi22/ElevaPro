@@ -132,6 +132,11 @@ type TokensLiterais = {
   /** As pontas do `linear-gradient(rgba(0,0,0,.1), rgba(0,0,0,.82))` do kit. */
   veuDaImagemTopo: CorLiteral;
   veuDaImagemBase: CorLiteral;
+  /**
+   * O fundo da tab bar (`--tab-bg` do kit): quase opaco, porque o blur de 24
+   * sozinho não segura ícone e rótulo legíveis sobre a foto que passa por baixo.
+   */
+  barraDeAbas: CorLiteral;
 };
 
 export type Tema = 'claro' | 'escuro';
@@ -190,6 +195,7 @@ const escuro: Paleta = {
     sobreImagemSecundario: 'rgba(255, 255, 255, 0.85)',
     veuDaImagemTopo: 'rgba(0, 0, 0, 0.1)',
     veuDaImagemBase: 'rgba(0, 0, 0, 0.82)',
+    barraDeAbas: 'rgba(18, 19, 22, 0.72)',
   },
 };
 
@@ -240,6 +246,7 @@ const claro: Paleta = {
     sobreImagemSecundario: 'rgba(255, 255, 255, 0.85)',
     veuDaImagemTopo: 'rgba(0, 0, 0, 0.1)',
     veuDaImagemBase: 'rgba(0, 0, 0, 0.82)',
+    barraDeAbas: 'rgba(255, 255, 255, 0.9)',
   },
 };
 
