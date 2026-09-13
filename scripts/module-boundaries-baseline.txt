@@ -9,6 +9,5 @@ app/src/modules/nutrition/store/nutritionStore.ts 1
 app/src/modules/students/screens/StudentAnamnesisScreen.tsx 2
 app/src/modules/students/screens/StudentAssessmentScreen.tsx 1
 app/src/modules/workout/screens/CardioSessionScreen.tsx 1
-app/src/modules/workout/screens/ExecuteWorkoutScreen.tsx 1
 app/src/modules/workout/services/WorkoutAIService.ts 1
 app/src/modules/workout/store/workoutStore.ts 1

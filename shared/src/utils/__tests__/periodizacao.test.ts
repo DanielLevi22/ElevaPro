@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   concluidosNaSemana,
+  dataCurtaDoInstante,
   intervaloCurto,
   progressoDoCiclo,
   proximoTreino,
@@ -186,5 +187,14 @@ describe("intervaloCurto", () => {
 
   it("lê a data do banco sem cair no dia anterior", () => {
     expect(intervaloCurto("2026-01-01", "2026-12-31")).toBe("01 jan – 31 dez");
+  });
+});
+
+describe("dataCurtaDoInstante", () => {
+  // Um instante é lido no fuso do aparelho: o treino terminou às 22h do dia 12
+  // aqui, e o banco guardou 01h do dia 13 em UTC.
+  it("escreve o instante no dia local, e não no dia UTC", () => {
+    const local = new Date(2026, 7, 12, 22, 0);
+    expect(dataCurtaDoInstante(local.toISOString())).toBe("12 ago");
   });
 });

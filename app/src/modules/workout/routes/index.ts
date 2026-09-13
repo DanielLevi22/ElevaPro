@@ -3,6 +3,7 @@
 // Telas do aluno, que as rotas de `(tabs)/workouts` escolhem pelo papel
 export { DetalheDoTreinoScreen } from '../screens/aluno/DetalheDoTreinoScreen';
 export { FasesDoCicloScreen } from '../screens/aluno/FasesDoCicloScreen';
+export { SessaoDeTreinoScreen } from '../screens/aluno/sessao/SessaoDeTreinoScreen';
 export { TreinosDaFaseScreen } from '../screens/aluno/TreinosDaFaseScreen';
 export { default as CreateWorkoutScreen } from '../screens/CreateWorkoutScreen';
 export { default as SelectExercisesScreen } from '../screens/SelectExercisesScreen';

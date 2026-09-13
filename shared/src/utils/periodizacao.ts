@@ -215,6 +215,20 @@ export function dataCurta(iso: string): string {
 }
 
 /**
+ * Um instante (`timestamptz`) no mesmo formato, no fuso do aparelho.
+ *
+ * Separado de `dataCurta` porque lá a data já é do calendário e ler como
+ * instante a voltaria um dia em fuso negativo; aqui é o contrário — um treino
+ * das 22h de Brasília é gravado no dia seguinte em UTC.
+ *
+ * @example dataCurtaDoInstante("2026-08-13T01:00:00Z") // "12 ago" em Brasília
+ */
+export function dataCurtaDoInstante(iso: string): string {
+  const data = new Date(iso);
+  return `${String(data.getDate()).padStart(2, "0")} ${MESES[data.getMonth()]}`;
+}
+
+/**
  * O intervalo de uma fase como o kit escreve: "06 mai – 02 jun".
  *
  * Mês à mão, e não `toLocaleDateString`: o pt-BR devolve "06 de mai.", e o

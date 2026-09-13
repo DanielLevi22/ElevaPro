@@ -45,6 +45,12 @@ interface VidroProps extends ViewProps {
   className?: string;
   /** Layout **do próprio cartão** na fila onde ele está: `flex-1`, largura. */
   classeExterna?: string;
+  /**
+   * O cartão em foco da tela — o exercício em execução. O kit troca a sombra
+   * de relevo por um aro e um brilho da primária (`0 0 0 1px`, `0 14px 34px
+   * -14px`) e pinta a borda na mesma cor.
+   */
+  destaque?: boolean;
 }
 
 /** Intensidade do `BlurView` no iOS, onde ela é a própria força do material. */
@@ -138,7 +144,14 @@ const FIM_DO_GRADIENTE = { x: 0.5, y: 1 };
 /** Preenche o pai: `BlurView` não está no `cssInterop`, e `className` sumiria. */
 const PREENCHE = { position: 'absolute', inset: 0 } as const;
 
-export function Vidro({ children, forte = false, className, classeExterna, ...props }: VidroProps) {
+export function Vidro({
+  children,
+  forte = false,
+  destaque = false,
+  className,
+  classeExterna,
+  ...props
+}: VidroProps) {
   const cores = useCores();
   const escalar = useEscala();
   const { colorScheme } = useColorScheme();
@@ -146,11 +159,19 @@ export function Vidro({ children, forte = false, className, classeExterna, ...pr
 
   return (
     <View
-      style={{ boxShadow: sombrasDoKit(escuro, cores, escalar) }}
+      style={{
+        boxShadow: destaque
+          ? brilhoDeDestaque(cores, escalar)
+          : sombrasDoKit(escuro, cores, escalar),
+      }}
       className={cn('rounded-xl', classeExterna)}
     >
       <View
-        className={cn('overflow-hidden rounded-xl border border-glass-border', className)}
+        className={cn(
+          'overflow-hidden rounded-xl border',
+          destaque ? 'border-primary' : 'border-glass-border',
+          className
+        )}
         {...props}
       >
         <CamadaDeBlur escuro={escuro} />
@@ -219,6 +240,20 @@ function sombrasDoKit(
     spreadDistance: escalar(sombra.espalhamento),
     color: comOpacidade(cores.sombra, sombra.alfa),
   }));
+}
+
+/** O aro e o brilho da primária do cartão em destaque. */
+function brilhoDeDestaque(cores: Cores, escalar: (medida: number) => number): BoxShadowValue[] {
+  return [
+    { offsetX: 0, offsetY: 0, blurRadius: 0, spreadDistance: 1, color: cores.primary },
+    {
+      offsetX: 0,
+      offsetY: escalar(14),
+      blurRadius: escalar(34),
+      spreadDistance: escalar(-14),
+      color: cores.primary,
+    },
+  ];
 }
 
 export type { VidroProps };
