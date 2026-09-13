@@ -137,6 +137,16 @@ type TokensLiterais = {
    * sozinho não segura ícone e rótulo legíveis sobre a foto que passa por baixo.
    */
   barraDeAbas: CorLiteral;
+  /**
+   * Texto de macro — o percentual sob o anel, a diferença de uma troca.
+   *
+   * O anel usa a cor de métrica nos dois temas, mas a mesma cor como **texto**
+   * não passa AA sobre o vidro claro: o kit troca por um tom escuro só no claro
+   * (`--mp-t`, `--mc-t`, `--mf-t`). No escuro é a própria cor de métrica.
+   */
+  textoProteina: CorLiteral;
+  textoCarboidrato: CorLiteral;
+  textoGordura: CorLiteral;
 };
 
 export type Tema = 'claro' | 'escuro';
@@ -196,6 +206,9 @@ const escuro: Paleta = {
     veuDaImagemTopo: 'rgba(0, 0, 0, 0.1)',
     veuDaImagemBase: 'rgba(0, 0, 0, 0.82)',
     barraDeAbas: 'rgba(18, 19, 22, 0.72)',
+    textoProteina: '#34d399',
+    textoCarboidrato: '#a3e635',
+    textoGordura: '#fbbf24',
   },
 };
 
@@ -247,6 +260,9 @@ const claro: Paleta = {
     veuDaImagemTopo: 'rgba(0, 0, 0, 0.1)',
     veuDaImagemBase: 'rgba(0, 0, 0, 0.82)',
     barraDeAbas: 'rgba(255, 255, 255, 0.9)',
+    textoProteina: '#0b7a52',
+    textoCarboidrato: '#4e7a0b',
+    textoGordura: '#8a5e03',
   },
 };
 

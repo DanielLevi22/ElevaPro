@@ -99,6 +99,12 @@ module.exports = {
           secundario: literal('sobre-imagem-secundario'),
         },
         /** Cor por grandeza: a mesma no ícone, no anel e na barra da métrica. */
+        /** Texto de macro: escurece no claro para passar contraste sobre o vidro. */
+        'texto-macro': {
+          proteina: literal('texto-proteina'),
+          carboidrato: literal('texto-carboidrato'),
+          gordura: literal('texto-gordura'),
+        },
         metrica: {
           passos: comAlfa('metrica-passos'),
           calorias: comAlfa('metrica-calorias'),

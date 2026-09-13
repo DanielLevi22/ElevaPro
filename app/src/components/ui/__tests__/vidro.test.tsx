@@ -4,7 +4,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { coresDoTema } from '@/shared/design';
 import { AlvoDoVidro } from '../AlvoDoVidro';
 import { Anel } from '../Anel';
-import { BrilhoAmbiente, paradasDoBrilho } from '../BrilhoAmbiente';
+import { BRILHO_DA_NUTRICAO, BrilhoAmbiente, paradasDoBrilho } from '../BrilhoAmbiente';
 import { reducaoParaOSigma, Vidro } from '../Vidro';
 
 /**
@@ -354,6 +354,15 @@ describe('BrilhoAmbiente', () => {
     const estilo = getByTestId('brilho-ambiente', { includeHiddenElements: true }).props.style;
 
     expect(estilo.top + estilo.height / 2).toBe(370);
+  });
+
+  // A nutrição não tem blocos nem foto: a luz do kit fica no topo, com centro a
+  // 150 (top −60, altura 420), e não atrás dos blocos como na tela inicial.
+  it('na nutrição, a luz fica no topo da tela, onde o kit a põe', () => {
+    const { getByTestId } = render(<BrilhoAmbiente receita={BRILHO_DA_NUTRICAO} />);
+    const estilo = getByTestId('brilho-ambiente', { includeHiddenElements: true }).props.style;
+
+    expect(estilo.top + estilo.height / 2).toBe(150);
   });
 
   it('não intercepta toque nem leitor de tela', () => {
