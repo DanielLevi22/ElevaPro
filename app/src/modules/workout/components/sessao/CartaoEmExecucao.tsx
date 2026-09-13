@@ -12,7 +12,7 @@ import { useCores, useEscala } from '@/shared/design';
  * tela, porque é onde o aluno está.
  *
  * Mostra a prescrição em chips, o selo de evolução quando a carga subiu desde
- * a última vez, uma célula por série (feita, atual, pendente) e o "Check" que
+ * a última vez, uma célula por série (feita, atual, pendente) e o "Iniciar" que
  * registra a série atual.
  *
  * @example
@@ -82,7 +82,7 @@ export function CartaoEmExecucao({
             {feitas.length} / {total} concluídas
           </Text>
         </View>
-        <BotaoDeDestaque rotulo="Check" icone="checkmark" tamanho="compacto" onPress={onCheck} />
+        <BotaoDeDestaque rotulo="Iniciar" icone="play" tamanho="compacto" onPress={onCheck} />
       </View>
     </Vidro>
   );
