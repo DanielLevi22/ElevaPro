@@ -13,6 +13,7 @@ export {
 } from '../components';
 export { DetalheDaRefeicaoScreen } from '../screens/aluno/DetalheDaRefeicaoScreen';
 export { PlanoDoDiaScreen } from '../screens/aluno/PlanoDoDiaScreen';
+export { SubstituirAlimentoScreen } from '../screens/aluno/SubstituirAlimentoScreen';
 // Screens
 export { default as CreateDietScreen } from '../screens/CreateDietScreen';
 export { default as DietDetailsScreen } from '../screens/DietDetailsScreen';

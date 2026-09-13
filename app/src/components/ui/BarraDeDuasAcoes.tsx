@@ -60,11 +60,16 @@ export function BarraDeDuasAcoes({ secundaria, principal }: BarraDeDuasAcoesProp
   );
 }
 
+/**
+ * A principal desabilitada vira vidro com texto apagado, e não lime a 50%: com
+ * opacidade, a lista que rola por baixo atravessava o botão.
+ */
 function BotaoDaBarra({ acao, tom }: { acao: Acao; tom: 'vidro' | 'principal' }) {
   const cores = useCores();
   const escalar = useEscala();
   const brilho = useBrilho();
-  const principal = tom === 'principal';
+  const aceso = tom === 'principal' && !acao.desabilitada;
+  const corDoTexto = acao.desabilitada ? cores.placeholder : cores.foreground;
 
   return (
     <TouchableOpacity
@@ -76,26 +81,25 @@ function BotaoDaBarra({ acao, tom }: { acao: Acao; tom: 'vidro' | 'principal' })
       accessibilityState={{ disabled: acao.desabilitada }}
       className={cn(
         'h-[2.625rem] flex-row items-center justify-center gap-[0.4375rem] rounded-[0.8125rem]',
-        principal
-          ? 'flex-1 bg-primary'
-          : 'overflow-hidden border border-glass-border bg-background px-4',
-        acao.desabilitada ? 'opacity-50' : null
+        tom === 'principal' ? 'flex-1' : 'px-4',
+        aceso ? 'bg-primary' : 'overflow-hidden border border-glass-border bg-background'
       )}
-      style={principal ? { boxShadow: brilho(BRILHO_DA_PRINCIPAL, { alfa: 0.8 }) } : undefined}
+      style={aceso ? { boxShadow: brilho(BRILHO_DA_PRINCIPAL, { alfa: 0.8 }) } : undefined}
     >
-      {principal ? null : <View className="absolute inset-0 bg-glass-strong" />}
+      {aceso ? null : <View className="absolute inset-0 bg-glass-strong" />}
       <Ionicons
         name={acao.icone}
         size={escalar(TAMANHO_DO_ICONE)}
-        color={principal ? cores.primaryForeground : cores.foreground}
+        color={aceso ? cores.primaryForeground : corDoTexto}
       />
       <Text
         numberOfLines={1}
-        className={
-          principal
-            ? 'text-[0.71875rem] font-extrabold uppercase tracking-wide text-primary-foreground'
-            : 'text-[0.71875rem] font-extrabold uppercase tracking-wide text-foreground'
-        }
+        className={cn(
+          'text-[0.71875rem] font-extrabold uppercase tracking-wide',
+          aceso ? 'text-primary-foreground' : null,
+          !aceso && acao.desabilitada ? 'text-placeholder' : null,
+          !aceso && !acao.desabilitada ? 'text-foreground' : null
+        )}
       >
         {acao.rotulo}
       </Text>

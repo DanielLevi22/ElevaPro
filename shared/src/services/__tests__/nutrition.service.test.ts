@@ -263,3 +263,24 @@ describe("nutritionService — registro de refeição", () => {
     }
   });
 });
+
+describe("nutritionService — alimentos da mesma categoria", () => {
+  // A troca do aluno procura equivalentes entre os alimentos do mesmo grupo:
+  // frango por peixe, arroz por batata. Buscar o catálogo inteiro trazia azeite
+  // como candidato a substituir frango.
+  it("filtra pela categoria e limita a quantidade", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({ data: [] });
+    await createNutritionService(supabase).fetchFoodsByCategory("proteina", 40);
+
+    expect(chamadas[0].tabela).toBe("foods");
+    expect(chamadas[0].filtros).toEqual({ category: "proteina" });
+    expect(chamadas[0].metodos).toContainEqual({ nome: "limit", args: [40] });
+  });
+
+  it("propaga erro em vez de devolver lista vazia", async () => {
+    const { supabase } = criarSupabaseFake({ error: { message: "42501" } });
+    await expect(createNutritionService(supabase).fetchFoodsByCategory("proteina")).rejects.toEqual(
+      { message: "42501" },
+    );
+  });
+});
