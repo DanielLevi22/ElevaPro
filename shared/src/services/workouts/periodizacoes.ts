@@ -9,6 +9,19 @@ import type {
 } from "../../types/workouts.types";
 
 /**
+ * As colunas que o tipo declara, e não `*`.
+ *
+ * O aluno lê o próprio ciclo e as fases por estas consultas. Com `*`, qualquer
+ * coluna que a tabela ganhe depois chegaria ao aparelho sem ninguém decidir —
+ * a minimização da LGPD (Art. 6°, III) é pedir o que a tela usa. `level`,
+ * `focus` e `duration_weeks` existem na tabela e nenhuma tela as lê.
+ */
+const COLUNAS_DO_CICLO =
+  "id, specialist_id, student_id, name, objective, status, start_date, end_date, created_at, updated_at";
+const COLUNAS_DA_FASE =
+  "id, periodization_id, name, status, start_date, end_date, order_index, created_at";
+
+/**
  * Periodizações e as fases delas (`training_plans`).
  *
  * Parte do `createWorkoutsService`, que compõe este arquivo com o de sessões e
@@ -54,7 +67,7 @@ export const criarServicoDePeriodizacoes = (supabase: SupabaseClient) => ({
   fetchStudentPeriodizations: async (studentId: string): Promise<Periodization[]> => {
     const { data, error } = await supabase
       .from("training_periodizations")
-      .select("*")
+      .select(COLUNAS_DO_CICLO)
       .eq("student_id", studentId)
       .order("created_at", { ascending: false });
     if (error) throw error;
@@ -155,7 +168,7 @@ export const criarServicoDePeriodizacoes = (supabase: SupabaseClient) => ({
   fetchTrainingPlans: async (periodizationId: string): Promise<TrainingPlan[]> => {
     const { data, error } = await supabase
       .from("training_plans")
-      .select("*")
+      .select(COLUNAS_DA_FASE)
       .eq("periodization_id", periodizationId)
       .order("order_index", { ascending: true });
     if (error) throw error;

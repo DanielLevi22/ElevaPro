@@ -3,9 +3,11 @@ import type { ImageSourcePropType } from 'react-native';
 /**
  * A foto de cada grupo muscular e de cada objetivo de ciclo.
  *
- * Existia copiada em sete arquivos, cada cópia com um conjunto de chaves: uma
- * aceitava "Abs", outra "Abdominais", outra os nomes em inglês. Um treino de
- * abdômen mostrava foto de peito ou de costas conforme a tela que o abria.
+ * O mapa estava copiado em sete arquivos, cada cópia com um conjunto de chaves:
+ * uma aceitava "Abs", outra "Abdominais", outra os nomes em inglês, e um treino
+ * de abdômen mostrava foto de peito ou de costas conforme a tela que o abria.
+ * As telas novas usam só este; as cópias que restam nas telas antigas do
+ * especialista saem quando elas forem reescritas.
  *
  * @example
  * <FundoDeFoto imagem={fotoDoGrupo(treino.muscle_group)} … />

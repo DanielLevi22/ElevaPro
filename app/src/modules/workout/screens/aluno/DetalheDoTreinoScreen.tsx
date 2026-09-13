@@ -1,21 +1,21 @@
-import { gruposDoTreino } from '@elevapro/shared';
+import { contagem, gruposDoTreino, treinouHoje, type Workout } from '@elevapro/shared';
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AlvoDoVidro } from '@/components/ui/AlvoDoVidro';
+import { showConfirm } from '@/components/ui/appAlert';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
-import { BrilhoAmbiente } from '@/components/ui/BrilhoAmbiente';
 import { Chip } from '@/components/ui/Chip';
-import { FundoDeFoto, RECEITA_DA_HOME } from '@/components/ui/FundoDeFoto';
-import { ScreenLayout } from '@/components/ui/ScreenLayout';
+import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { ROUTES } from '@/navigation/types';
-import { useCores, useEscala } from '@/shared/design';
+import { useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
+import { EstadoDaTela } from '../../components/aluno/EstadoDaTela';
 import { LinhaDoExercicio } from '../../components/aluno/LinhaDoExercicio';
 import { useDetalheDoTreino } from '../../hooks/useDetalheDoTreino';
-import { comModo } from '../../services/visaoDoAluno';
+import { useSessoesDoAluno } from '../../hooks/useSessoesDoAluno';
+import { comModo, type ModoDaRota } from '../../routes/visaoDoAluno';
 
 /**
  * O treino antes de começar, na visão do aluno — tela 3 do fluxo do kit.
@@ -26,92 +26,114 @@ import { comModo } from '../../services/visaoDoAluno';
  * botão ausente.
  *
  * @example
- * <DetalheDoTreinoScreen treinoId={id} modo={mode} />
+ * <DetalheDoTreinoScreen treinoId={id} alunoId={user.id} modo={modo} />
  */
-const MARGEM_DO_FUNDO = 16;
-
 interface DetalheDoTreinoScreenProps {
   treinoId: string;
-  modo?: string;
+  alunoId: string;
+  modo: ModoDaRota;
 }
 
-export function DetalheDoTreinoScreen({ treinoId, modo }: DetalheDoTreinoScreenProps) {
-  const router = useRouter();
-  const cores = useCores();
-  const escalar = useEscala();
-  const insets = useSafeAreaInsets();
+const MARGEM_DO_FUNDO = 16;
+
+export function DetalheDoTreinoScreen({ treinoId, alunoId, modo }: DetalheDoTreinoScreenProps) {
   const { treino, naoEncontrado } = useDetalheDoTreino(treinoId);
 
-  if (!treino) {
-    return (
-      <ScreenLayout className="items-center justify-center">
-        {naoEncontrado ? (
-          <Text className="text-corpo text-muted-foreground">Treino não encontrado.</Text>
-        ) : (
-          <ActivityIndicator color={cores.primary} />
-        )}
-      </ScreenLayout>
-    );
-  }
+  if (!treino)
+    return <EstadoDaTela naoEncontrado={naoEncontrado} mensagem="Treino não encontrado." />;
 
   const exercicios = treino.exercises ?? [];
 
   return (
-    <ScreenLayout useSafeArea={false}>
-      <AlvoDoVidro
-        fundo={
-          <>
-            <FundoDeFoto imagem={fotoDoGrupo(treino.muscle_group)} receita={RECEITA_DA_HOME} />
-            <BrilhoAmbiente />
-          </>
-        }
+    <TelaDeVidroComFoto
+      imagem={fotoDoGrupo(treino.muscle_group)}
+      folgaNoFim="botaoFixo"
+      sobreposicao={
+        exercicios.length > 0 ? (
+          <IniciarTreino treino={treino} alunoId={alunoId} modo={modo} />
+        ) : null
+      }
+    >
+      <CabecalhoDoTreino treino={treino} />
+      <TituloDeSecao
+        estilo="rotulo"
+        acao={contagem(exercicios.length, 'movimento planejado', 'movimentos planejados')}
       >
-        <ScrollView
-          contentContainerClassName="px-4 pb-32 pt-14"
-          showsVerticalScrollIndicator={false}
-        >
-          <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={router.back} />
+        Lista de exercícios
+      </TituloDeSecao>
+      {exercicios.map((item, indice) => (
+        <LinhaDoExercicio key={item.id} item={item} ordem={indice + 1} />
+      ))}
+    </TelaDeVidroComFoto>
+  );
+}
 
-          <View className="mt-[3.625rem]">
-            <View className="mb-2.5 flex-row flex-wrap gap-1.5">
-              {gruposDoTreino(treino).map((grupo) => (
-                <Chip key={grupo}>{grupo}</Chip>
-              ))}
-            </View>
-            <Text className="text-[1.875rem] font-bold leading-tight tracking-tight text-hero">
-              {treino.title}
-            </Text>
-            {treino.description ? (
-              <Text className="mt-[0.4375rem] text-[0.84375rem] leading-snug text-hero-secondary">
-                {treino.description}
-              </Text>
-            ) : null}
-          </View>
+function CabecalhoDoTreino({ treino }: { treino: Workout }) {
+  const router = useRouter();
 
-          <TituloDeSecao estilo="rotulo" acao={`${exercicios.length} movimentos planejados`}>
-            Lista de exercícios
-          </TituloDeSecao>
-          {exercicios.map((item, indice) => (
-            <LinhaDoExercicio key={item.id} item={item} ordem={indice + 1} />
+  return (
+    <>
+      <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={router.back} />
+      <View className="mt-[3.625rem]">
+        <View className="mb-2.5 flex-row flex-wrap gap-1.5">
+          {gruposDoTreino(treino).map((grupo) => (
+            <Chip key={grupo}>{grupo}</Chip>
           ))}
-        </ScrollView>
-
-        {exercicios.length > 0 ? (
-          // O kit põe o botão a 100 do fundo, acima da tab bar. Aqui o detalhe é
-          // rota imersiva (`immersiveRoutes.ts`) e a tab bar some: o botão desce
-          // para junto do fundo, acima da área do sistema — medida, não classe.
-          <View
-            className="absolute left-[1.125rem] right-[1.125rem]"
-            style={{ bottom: insets.bottom + escalar(MARGEM_DO_FUNDO) }}
-          >
-            <BotaoDeDestaque
-              rotulo="Iniciar treino"
-              icone="play"
-              onPress={() => router.push(comModo(ROUTES.WORKOUTS.EXECUTE(treino.id), modo))}
-            />
-          </View>
+        </View>
+        <Text className="text-[1.875rem] font-bold leading-tight tracking-tight text-hero">
+          {treino.title}
+        </Text>
+        {treino.description ? (
+          <Text className="mt-[0.4375rem] text-[0.84375rem] leading-snug text-hero-secondary">
+            {treino.description}
+          </Text>
         ) : null}
-      </AlvoDoVidro>
-    </ScreenLayout>
+      </View>
+    </>
+  );
+}
+
+interface IniciarTreinoProps {
+  treino: Workout;
+  alunoId: string;
+  modo: ModoDaRota;
+}
+
+/**
+ * O botão que de fato começa o treino — e por isso é aqui que mora a pergunta
+ * antes de um segundo treino no mesmo dia. Estava no cartão da fase, que só
+ * abre este detalhe: quem entrava pela lista ou pela tela inicial começava sem
+ * ser perguntado.
+ *
+ * O kit põe o botão a 100 do fundo, acima da tab bar. O detalhe é rota imersiva
+ * (`immersiveRoutes.ts`) e a tab bar some: o botão desce para junto do fundo,
+ * acima da área do sistema — medida, não classe.
+ */
+function IniciarTreino({ treino, alunoId, modo }: IniciarTreinoProps) {
+  const router = useRouter();
+  const escalar = useEscala();
+  const insets = useSafeAreaInsets();
+  const { ultima } = useSessoesDoAluno(alunoId);
+
+  const iniciar = () => router.push(comModo(ROUTES.WORKOUTS.EXECUTE(treino.id), modo));
+  const confirmarEIniciar = () => {
+    if (!treinouHoje(ultima, new Date())) return iniciar();
+    showConfirm({
+      title: 'Treino realizado',
+      message: 'Você já registrou um treino hoje. Deseja realizar outro treino?',
+      type: 'warning',
+      confirmText: 'Sim, treinar',
+      cancelText: 'Cancelar',
+      onConfirm: iniciar,
+    });
+  };
+
+  return (
+    <View
+      className="absolute left-[1.125rem] right-[1.125rem]"
+      style={{ bottom: insets.bottom + escalar(MARGEM_DO_FUNDO) }}
+    >
+      <BotaoDeDestaque rotulo="Iniciar treino" icone="play" onPress={confirmarEIniciar} />
+    </View>
   );
 }

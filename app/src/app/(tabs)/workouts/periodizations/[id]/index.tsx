@@ -1,8 +1,12 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '@/auth';
-import { FasesDoCicloScreen } from '@/modules/workout/screens/aluno/FasesDoCicloScreen';
-import PeriodizationDetailsScreen from '@/modules/workout/screens/PeriodizationDetailsScreen';
-import { ehVisaoDoAluno, parametro } from '@/modules/workout/services/visaoDoAluno';
+import {
+  ehVisaoDoAluno,
+  FasesDoCicloScreen,
+  modoDaRota,
+  PeriodizationDetailsScreen,
+  primeiroValor,
+} from '@/workout';
 
 /**
  * O ciclo, na tela do papel de quem abre.
@@ -13,11 +17,11 @@ import { ehVisaoDoAluno, parametro } from '@/modules/workout/services/visaoDoAlu
 export default function PeriodizacaoRoute() {
   const { id, mode } = useLocalSearchParams<{ id: string; mode?: string }>();
   const { user, accountType } = useAuthStore();
-  const modo = parametro(mode);
+  const modo = modoDaRota(mode);
 
   if (user?.id && ehVisaoDoAluno(accountType, modo)) {
     return (
-      <FasesDoCicloScreen periodizacaoId={parametro(id) ?? ''} alunoId={user.id} modo={modo} />
+      <FasesDoCicloScreen periodizacaoId={primeiroValor(id) ?? ''} alunoId={user.id} modo={modo} />
     );
   }
   return <PeriodizationDetailsScreen />;

@@ -16,7 +16,8 @@ const PERCENTUAL_CHEIO = 100;
  *
  * Quem treina à 1h da manhã está fechando o dia anterior, e contar esse treino
  * como de hoje fazia o app dizer "você já treinou hoje" logo ao acordar. A
- * regra já existia na tela de fase; saiu dela para cá sem mudar.
+ * regra veio da tela de fase do especialista, sem mudar; a cópia que continua
+ * lá sai quando aquela tela for reescrita.
  */
 const VIRADA_DO_DIA_DE_ACADEMIA = 4;
 
@@ -95,6 +96,11 @@ interface FaseDatada {
  * O status vem do especialista, e não das datas: fase ativa é a que ele
  * ativou. As datas só dizem quanto dela já passou.
  *
+ * O percentual é por data, e não por treinos concluídos contra os planejados:
+ * a consulta das fases traz quantos treinos cada uma tem, mas não quantos o
+ * aluno já fez nelas. Contar feitos por fase é consulta nova, e fica para
+ * quando o progresso por treino for pedido.
+ *
  * @example situacaoDaFase(fase, new Date()) // { rotulo: "Em andamento", tom: "ativa", percentual: 62 }
  */
 export function situacaoDaFase(fase: FaseDatada, hoje: Date): SituacaoDaFase {
@@ -105,7 +111,11 @@ export function situacaoDaFase(fase: FaseDatada, hoje: Date): SituacaoDaFase {
     return { rotulo: "Planejada", tom: "planejada", percentual: 0 };
   }
   const comeco = dataLocal(fase.start_date).getTime();
-  const diasNaFase = Math.round((dataLocal(fase.end_date).getTime() - comeco) / DIA_EM_MS) + 1;
+  // Mesma contagem de `progressoDoCiclo`: o intervalo, sem somar o dia final.
+  const diasNaFase = Math.max(
+    1,
+    Math.round((dataLocal(fase.end_date).getTime() - comeco) / DIA_EM_MS),
+  );
   const decorridos = (hoje.getTime() - comeco) / DIA_EM_MS;
   const percentual = Math.round(
     limitar((decorridos / diasNaFase) * PERCENTUAL_CHEIO, 0, PERCENTUAL_CHEIO),
@@ -125,6 +135,22 @@ function diaDeAcademia(momento: Date): string {
 }
 
 /**
+ * Se já houve treino no dia de academia de hoje.
+ *
+ * @example treinouHoje(ultimaSessao, new Date()) // true depois do treino de hoje
+ */
+export function treinouHoje(ultima: SessaoConcluida | null, agora: Date): boolean {
+  if (!ultima?.completed_at) return false;
+  return diaDeAcademia(new Date(ultima.completed_at)) === diaDeAcademia(agora);
+}
+
+export interface SugestaoDeTreino {
+  /** Posição do treino na lista da fase. */
+  indice: number;
+  feitoHoje: boolean;
+}
+
+/**
  * Qual treino da fase vem agora: o seguinte ao último feito, em rodízio.
  *
  * Sem histórico — ou com o último treino feito em outra fase — é o primeiro.
@@ -137,14 +163,13 @@ export function proximoTreino(
   treinos: { id: string }[],
   ultima: SessaoConcluida | null,
   agora: Date,
-): { indice: number; feitoHoje: boolean } | null {
+): SugestaoDeTreino | null {
   if (treinos.length === 0) return null;
   if (!ultima?.completed_at) return { indice: 0, feitoHoje: false };
 
-  const feitoHoje = diaDeAcademia(new Date(ultima.completed_at)) === diaDeAcademia(agora);
   const indiceDoUltimo = treinos.findIndex((treino) => treino.id === ultima.workout_id);
   const indice = indiceDoUltimo === -1 ? 0 : (indiceDoUltimo + 1) % treinos.length;
-  return { indice, feitoHoje };
+  return { indice, feitoHoje: treinouHoje(ultima, agora) };
 }
 
 /** Começo da semana de academia: segunda-feira, na virada das 4h. */

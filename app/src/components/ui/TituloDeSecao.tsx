@@ -24,25 +24,25 @@ interface TituloDeSecaoProps {
 }
 
 export function TituloDeSecao({ children, acao, onAcao, estilo = 'titulo' }: TituloDeSecaoProps) {
-  if (estilo === 'rotulo') {
-    return (
-      <View className="mb-2.5 mt-5 flex-row items-baseline justify-between px-0.5">
-        <Text className="text-[0.65625rem] font-bold uppercase tracking-widest text-placeholder">
-          {children}
-        </Text>
-        {acao ? <Text className="text-[0.71875rem] text-placeholder">{acao}</Text> : null}
-      </View>
-    );
-  }
-
   return (
     <View className="mb-2.5 mt-5 flex-row items-baseline justify-between px-0.5">
-      <Text className="text-h2 font-bold tracking-tight text-foreground">{children}</Text>
-      {acao ? (
-        <TouchableOpacity onPress={onAcao} disabled={!onAcao} accessibilityRole="button">
-          <Text className="text-legenda font-semibold text-primary-text">{acao}</Text>
-        </TouchableOpacity>
-      ) : null}
+      {estilo === 'rotulo' ? (
+        <>
+          <Text className="text-[0.65625rem] font-bold uppercase tracking-widest text-placeholder">
+            {children}
+          </Text>
+          {acao ? <Text className="text-[0.71875rem] text-placeholder">{acao}</Text> : null}
+        </>
+      ) : (
+        <>
+          <Text className="text-h2 font-bold tracking-tight text-foreground">{children}</Text>
+          {acao ? (
+            <TouchableOpacity onPress={onAcao} disabled={!onAcao} accessibilityRole="button">
+              <Text className="text-legenda font-semibold text-primary-text">{acao}</Text>
+            </TouchableOpacity>
+          ) : null}
+        </>
+      )}
     </View>
   );
 }

@@ -5,6 +5,7 @@ import {
   progressoDoCiclo,
   proximoTreino,
   situacaoDaFase,
+  treinouHoje,
 } from "../periodizacao";
 
 /**
@@ -67,12 +68,28 @@ describe("situacaoDaFase", () => {
     });
   });
 
-  it("fase em andamento avança pelos dias decorridos", () => {
-    const fase = { status: "active" as const, start_date: "2026-09-01", end_date: "2026-09-30" };
-    expect(situacaoDaFase(fase, em(2026, 9, 16))).toEqual({
+  // Sem teste de "fase sem data": `start_date` e `end_date` são NOT NULL no
+  // banco desde a 0024/0025, e o tipo já não admite nulo.
+  const ativa = { status: "active" as const, start_date: "2026-09-01", end_date: "2026-09-30" };
+
+  it("fase em andamento avança pelos dias decorridos, contados como os do ciclo", () => {
+    // 29 dias de intervalo — sem somar o dia final, como `progressoDoCiclo`.
+    expect(situacaoDaFase(ativa, em(2026, 9, 16))).toEqual({
       rotulo: "Em andamento",
       tom: "ativa",
-      percentual: 52,
+      percentual: 53,
+    });
+  });
+
+  it("fase ativa antes das próprias datas ainda está em zero", () => {
+    expect(situacaoDaFase(ativa, em(2026, 8, 20)).percentual).toBe(0);
+  });
+
+  it("fase ativa depois das próprias datas não passa de 100%", () => {
+    // O especialista ainda não a encerrou; o status manda, as datas só medem.
+    expect(situacaoDaFase(ativa, em(2026, 10, 20))).toMatchObject({
+      tom: "ativa",
+      percentual: 100,
     });
   });
 
@@ -113,12 +130,42 @@ describe("proximoTreino", () => {
     expect(proximoTreino(treinos, ultima, em(2026, 9, 12, 9))?.feitoHoje).toBe(false);
   });
 
+  it("com todos os treinos da fase feitos, o rodízio recomeça do primeiro", () => {
+    const ultima = { workout_id: "c", completed_at: em(2026, 9, 11).toISOString() };
+    expect(proximoTreino(treinos, ultima, em(2026, 9, 12))).toEqual({
+      indice: 0,
+      feitoHoje: false,
+    });
+  });
+
   it("fase sem treino não sugere nada", () => {
     expect(proximoTreino([], null, em(2026, 9, 12))).toBeNull();
   });
 });
 
+describe("treinouHoje", () => {
+  // O detalhe do treino pergunta antes de um segundo treino no mesmo dia; a
+  // pergunta precisa estar onde o treino começa, e não só no cartão da fase.
+  it("sem sessão, não treinou", () => {
+    expect(treinouHoje(null, em(2026, 9, 12))).toBe(false);
+  });
+
+  it("segue a mesma virada das 4h do rodízio", () => {
+    const ultima = { workout_id: "a", completed_at: em(2026, 9, 12, 1).toISOString() };
+    expect(treinouHoje(ultima, em(2026, 9, 11, 23))).toBe(true);
+    expect(treinouHoje(ultima, em(2026, 9, 12, 8))).toBe(false);
+  });
+});
+
 describe("concluidosNaSemana", () => {
+  it("com a semana toda feita, marca todos", () => {
+    const sessoes = ["a", "b", "c"].map((id, dia) => ({
+      workout_id: id,
+      completed_at: em(2026, 9, 8 + dia).toISOString(),
+    }));
+    expect(concluidosNaSemana(sessoes, em(2026, 9, 12)).size).toBe(3);
+  });
+
   it("marca os treinos feitos desde a segunda, e ignora os da semana anterior", () => {
     // 2026-09-12 é sábado; a semana começou na segunda, dia 7.
     const sessoes = [

@@ -1,3 +1,4 @@
+import { contagem } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Vidro } from '@/components/ui/Vidro';
@@ -14,11 +15,14 @@ import { useCores, useEscala } from '@/shared/design';
  * @example
  * <LinhaDoTreinoDaFase letra="B" titulo="Costas & Bíceps" exercicios={6} estado="proximo" onPress={abrir} />
  */
+export type EstadoDoTreino = 'proximo' | 'feito' | 'pendente';
+
 interface LinhaDoTreinoDaFaseProps {
   letra: string;
   titulo: string;
-  exercicios: number;
-  estado: 'proximo' | 'feito' | 'pendente';
+  /** `undefined` quando a consulta não trouxe a contagem: a linha a omite. */
+  exercicios: number | undefined;
+  estado: EstadoDoTreino;
   onPress: () => void;
 }
 
@@ -71,9 +75,11 @@ export function LinhaDoTreinoDaFase({
           >
             {titulo}
           </Text>
-          <Text className="mt-px text-micro text-muted-foreground">
-            {exercicios} {exercicios === 1 ? 'exercício' : 'exercícios'}
-          </Text>
+          {exercicios === undefined ? null : (
+            <Text className="mt-px text-micro text-muted-foreground">
+              {contagem(exercicios, 'exercício', 'exercícios')}
+            </Text>
+          )}
         </View>
         {estado === 'feito' ? (
           <Ionicons

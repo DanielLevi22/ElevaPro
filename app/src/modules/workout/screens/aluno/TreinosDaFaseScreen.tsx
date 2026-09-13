@@ -1,37 +1,41 @@
-import type { Workout } from '@elevapro/shared';
+import { contagem, contarExercicios, type Workout } from '@elevapro/shared';
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
-import { AlvoDoVidro } from '@/components/ui/AlvoDoVidro';
-import { showConfirm } from '@/components/ui/appAlert';
-import { BrilhoAmbiente } from '@/components/ui/BrilhoAmbiente';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { CabecalhoSobreFoto } from '@/components/ui/CabecalhoSobreFoto';
 import { CartaoDeTreino } from '@/components/ui/CartaoDeTreino';
-import { FundoDeFoto, RECEITA_DA_HOME } from '@/components/ui/FundoDeFoto';
-import { ScreenLayout } from '@/components/ui/ScreenLayout';
+import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { ROUTES } from '@/navigation/types';
 import { useCores } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
-import { LinhaDoTreinoDaFase } from '../../components/aluno/LinhaDoTreinoDaFase';
+import { EstadoDaTela } from '../../components/aluno/EstadoDaTela';
+import {
+  type EstadoDoTreino,
+  LinhaDoTreinoDaFase,
+} from '../../components/aluno/LinhaDoTreinoDaFase';
 import { useTreinosDaFase } from '../../hooks/useTreinosDaFase';
-import { comModo } from '../../services/visaoDoAluno';
+import { comModo, type ModoDaRota } from '../../routes/visaoDoAluno';
 
 /**
- * A fase ativa na visão do aluno — tela 2 do fluxo de treino do kit.
+ * Uma fase na visão do aluno — tela 2 do fluxo de treino do kit.
  *
  * O kit chama o destaque de "Sugerido para hoje". Aqui ele é **"Próximo"**: a
  * regra de qual treino é do dia ainda é a #291, e o que existe é o rodízio —
  * o seguinte ao último feito. Dizer "hoje" sem a regra seria afirmar o que o
  * app não sabe.
  *
+ * O destaque e o botão de começar só existem na fase **ativa**. Numa planejada
+ * ou concluída a tela lista os treinos e mais nada: "Começar treino" de uma
+ * fase que ainda não começou convidaria a treinar fora do plano.
+ *
  * @example
- * <TreinosDaFaseScreen periodizacaoId={cicloId} faseId={faseId} alunoId={user.id} />
+ * <TreinosDaFaseScreen periodizacaoId={cicloId} faseId={faseId} alunoId={user.id} modo={modo} />
  */
 interface TreinosDaFaseScreenProps {
   periodizacaoId: string;
   faseId: string;
   alunoId: string;
-  modo?: string;
+  modo: ModoDaRota;
 }
 
 const PRIMEIRA_LETRA = 65;
@@ -43,124 +47,104 @@ export function TreinosDaFaseScreen({
   modo,
 }: TreinosDaFaseScreenProps) {
   const router = useRouter();
-  const cores = useCores();
   const dados = useTreinosDaFase(periodizacaoId, faseId, alunoId);
-  const { fase, treinos, proximo, feitos } = dados;
+  const { fase, treinos } = dados;
 
-  if (!fase) {
-    return (
-      <ScreenLayout className="items-center justify-center">
-        <ActivityIndicator color={cores.primary} />
-      </ScreenLayout>
-    );
-  }
+  if (!fase)
+    return <EstadoDaTela naoEncontrado={dados.naoEncontrada} mensagem="Fase não encontrada." />;
 
+  const ativa = fase.status === 'active';
+  const proximo = ativa ? dados.proximo : null;
   const abrir = (treino: Workout) => router.push(comModo(ROUTES.WORKOUTS.DETAILS(treino.id), modo));
 
   return (
-    <ScreenLayout useSafeArea={false}>
-      <AlvoDoVidro
-        fundo={
-          <>
-            <FundoDeFoto
-              imagem={fotoDoGrupo(proximo?.treino.muscle_group)}
-              receita={RECEITA_DA_HOME}
-            />
-            <BrilhoAmbiente />
-          </>
-        }
-      >
-        <ScrollView
-          contentContainerClassName="px-4 pb-28 pt-14"
-          showsVerticalScrollIndicator={false}
-        >
-          <CabecalhoSobreFoto
-            sobrelinha={sobrelinhaDaFase(dados.numeroDaFase, fase.name)}
-            titulo="Próximo treino"
-            onVoltar={router.back}
+    <TelaDeVidroComFoto imagem={fotoDoGrupo(proximo?.muscle_group)}>
+      <CabecalhoSobreFoto
+        sobrelinha={sobrelinhaDaFase(dados.numeroDaFase, fase.name)}
+        titulo={ativa ? 'Próximo treino' : 'Treinos da fase'}
+        onVoltar={router.back}
+      />
+      {proximo ? (
+        <View className="mt-[1.125rem]">
+          <DestaqueDoProximo
+            treino={proximo}
+            letra={letraDoTreino(treinos.indexOf(proximo))}
+            treinouHoje={dados.treinouHoje}
+            onAbrir={() => abrir(proximo)}
           />
+        </View>
+      ) : null}
+      <ListaDaFase dados={dados} proximo={proximo} onAbrir={abrir} />
+    </TelaDeVidroComFoto>
+  );
+}
 
-          {proximo ? (
-            <View className="mt-[1.125rem]">
-              <DestaqueDoProximo
-                treino={proximo.treino}
-                letra={letraDoTreino(treinos.indexOf(proximo.treino))}
-                feitoHoje={proximo.feitoHoje}
-                onAbrir={() => abrir(proximo.treino)}
-              />
-            </View>
-          ) : null}
+interface ListaDaFaseProps {
+  dados: ReturnType<typeof useTreinosDaFase>;
+  proximo: Workout | null;
+  onAbrir: (treino: Workout) => void;
+}
 
-          {/* Antes da busca voltar a lista está vazia, e "0 treinos" seria
-              afirmar que a fase não tem treino. */}
-          {dados.carregando && treinos.length === 0 ? (
-            <ActivityIndicator className="mt-8" color={cores.primary} />
-          ) : null}
-          <TituloDeSecao estilo="rotulo" acao={`${treinos.length} treinos`}>
-            Treinos da fase
-          </TituloDeSecao>
-          {treinos.map((treino, indice) => (
-            <LinhaDoTreinoDaFase
-              key={treino.id}
-              letra={letraDoTreino(indice)}
-              titulo={treino.title}
-              exercicios={contarExercicios(treino)}
-              estado={estadoDoTreino(treino, proximo?.treino, feitos)}
-              onPress={() => abrir(treino)}
-            />
-          ))}
-          {treinos.length === 0 && !dados.carregando ? (
-            <Text className="py-8 text-center text-micro text-muted-foreground">
-              Seu especialista ainda não montou os treinos desta fase.
-            </Text>
-          ) : null}
-        </ScrollView>
-      </AlvoDoVidro>
-    </ScreenLayout>
+function ListaDaFase({ dados, proximo, onAbrir }: ListaDaFaseProps) {
+  const cores = useCores();
+  // Antes da busca voltar a lista está vazia, e "0 treinos" seria afirmar que
+  // a fase não tem treino.
+  if (dados.carregandoTreinos) return <ActivityIndicator className="mt-8" color={cores.primary} />;
+
+  return (
+    <>
+      <TituloDeSecao estilo="rotulo" acao={contagem(dados.treinos.length, 'treino', 'treinos')}>
+        Treinos da fase
+      </TituloDeSecao>
+      {dados.treinos.map((treino, indice) => (
+        <LinhaDoTreinoDaFase
+          key={treino.id}
+          letra={letraDoTreino(indice)}
+          titulo={treino.title}
+          exercicios={contarExercicios(treino)}
+          estado={estadoDoTreino(treino, proximo, dados.feitos)}
+          onPress={() => onAbrir(treino)}
+        />
+      ))}
+      {dados.treinos.length === 0 ? (
+        <Text className="py-8 text-center text-micro text-muted-foreground">
+          Seu especialista ainda não montou os treinos desta fase.
+        </Text>
+      ) : null}
+    </>
   );
 }
 
 interface DestaqueDoProximoProps {
   treino: Workout;
   letra: string;
-  feitoHoje: boolean;
+  treinouHoje: boolean;
   onAbrir: () => void;
 }
 
 /**
- * Já treinou hoje, o cartão não some: o próximo continua sendo o próximo, e o
- * botão pede confirmação antes de um segundo treino no mesmo dia — a mesma
- * pergunta que a tela anterior fazia.
+ * O próximo treino continua sendo o próximo mesmo depois de um treino hoje. O
+ * chip "Treinou hoje" fala do **aluno**, e não do treino — o que estava aqui
+ * antes, "Feito hoje", marcava como feito justamente o treino que não foi. A
+ * pergunta antes de um segundo treino no mesmo dia mora no detalhe, onde o
+ * treino começa de fato.
  */
-function DestaqueDoProximo({ treino, letra, feitoHoje, onAbrir }: DestaqueDoProximoProps) {
-  const comecar = () => {
-    if (!feitoHoje) return onAbrir();
-    showConfirm({
-      title: 'Treino realizado',
-      message: 'Você já registrou um treino hoje. Deseja realizar outro treino?',
-      type: 'warning',
-      confirmText: 'Sim, treinar',
-      cancelText: 'Cancelar',
-      onConfirm: onAbrir,
-    });
-  };
+function DestaqueDoProximo({ treino, letra, treinouHoje, onAbrir }: DestaqueDoProximoProps) {
+  const chips = [
+    { texto: 'Próximo', tom: 'destaque' as const },
+    { texto: `Treino ${letra}` },
+    ...(treinouHoje ? [{ texto: 'Treinou hoje' }] : []),
+  ];
 
   return (
     <CartaoDeTreino
       tamanho="destaque"
       titulo={treino.title}
-      chips={[
-        { texto: feitoHoje ? 'Feito hoje' : 'Próximo', tom: feitoHoje ? 'neutro' : 'destaque' },
-        { texto: `Treino ${letra}` },
-      ]}
+      chips={chips}
       imagem={fotoDoGrupo(treino.muscle_group)}
       exercicios={contarExercicios(treino)}
       onPress={onAbrir}
-      acao={{
-        rotulo: feitoHoje ? 'Treinar de novo' : 'Começar treino',
-        icone: 'play',
-        onPress: comecar,
-      }}
+      acao={{ rotulo: 'Começar treino', icone: 'play', onPress: onAbrir }}
     />
   );
 }
@@ -170,15 +154,11 @@ function letraDoTreino(indice: number): string {
   return String.fromCharCode(PRIMEIRA_LETRA + Math.max(0, indice));
 }
 
-function contarExercicios(treino: Workout): number {
-  return treino.exercises_count ?? treino.exercises?.length ?? 0;
-}
-
 function estadoDoTreino(
   treino: Workout,
-  proximo: Workout | undefined,
+  proximo: Workout | null,
   feitos: Set<string>
-): 'proximo' | 'feito' | 'pendente' {
+): EstadoDoTreino {
   if (treino.id === proximo?.id) return 'proximo';
   return feitos.has(treino.id) ? 'feito' : 'pendente';
 }

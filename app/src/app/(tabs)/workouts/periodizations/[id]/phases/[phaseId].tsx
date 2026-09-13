@@ -1,8 +1,12 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '@/auth';
-import { TreinosDaFaseScreen } from '@/modules/workout/screens/aluno/TreinosDaFaseScreen';
-import PhaseDetailsScreen from '@/modules/workout/screens/PhaseDetailsScreen';
-import { ehVisaoDoAluno, parametro } from '@/modules/workout/services/visaoDoAluno';
+import {
+  ehVisaoDoAluno,
+  modoDaRota,
+  PhaseDetailsScreen,
+  primeiroValor,
+  TreinosDaFaseScreen,
+} from '@/workout';
 
 /**
  * A fase, na tela do papel de quem abre.
@@ -17,13 +21,13 @@ export default function FaseRoute() {
     mode?: string;
   }>();
   const { user, accountType } = useAuthStore();
-  const modo = parametro(mode);
+  const modo = modoDaRota(mode);
 
   if (user?.id && ehVisaoDoAluno(accountType, modo)) {
     return (
       <TreinosDaFaseScreen
-        periodizacaoId={parametro(id) ?? ''}
-        faseId={parametro(phaseId) ?? ''}
+        periodizacaoId={primeiroValor(id) ?? ''}
+        faseId={primeiroValor(phaseId) ?? ''}
         alunoId={user.id}
         modo={modo}
       />

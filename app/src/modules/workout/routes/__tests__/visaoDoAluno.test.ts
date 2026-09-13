@@ -1,4 +1,4 @@
-import { comModo, ehVisaoDoAluno, parametro } from '../visaoDoAluno';
+import { comModo, ehVisaoDoAluno, modoDaRota, primeiroValor } from '../visaoDoAluno';
 
 describe('ehVisaoDoAluno', () => {
   it('o aluno vê as telas de aluno em qualquer modo', () => {
@@ -31,10 +31,15 @@ describe('comModo', () => {
   });
 });
 
-describe('parametro', () => {
+describe('parâmetros da rota', () => {
   it('pega o primeiro quando o parâmetro vem repetido', () => {
-    expect(parametro(['a', 'b'])).toBe('a');
-    expect(parametro('a')).toBe('a');
-    expect(parametro(undefined)).toBeUndefined();
+    expect(primeiroValor(['a', 'b'])).toBe('a');
+    expect(primeiroValor(undefined)).toBeUndefined();
+  });
+
+  it('só reconhece o modo que o fluxo usa', () => {
+    expect(modoDaRota('execute')).toBe('execute');
+    expect(modoDaRota(['execute'])).toBe('execute');
+    expect(modoDaRota('qualquer')).toBeUndefined();
   });
 });

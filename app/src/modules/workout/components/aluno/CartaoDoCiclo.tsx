@@ -1,9 +1,8 @@
-import { dataCurta, type Periodization, progressoDoCiclo } from '@elevapro/shared';
-import { Ionicons } from '@expo/vector-icons';
+import { contagem, dataCurta, type Periodization, progressoDoCiclo } from '@elevapro/shared';
 import { Text, View } from 'react-native';
 import { BarraDeProgresso } from '@/components/ui/BarraDeProgresso';
+import { DadoComIcone } from '@/components/ui/DadoComIcone';
 import { Vidro } from '@/components/ui/Vidro';
-import { useCores, useEscala } from '@/shared/design';
 
 /**
  * Em que semana do ciclo o aluno está, e do que o ciclo é feito.
@@ -21,8 +20,6 @@ interface CartaoDoCicloProps {
   especialista: string | null;
 }
 
-const TAMANHO_DO_ICONE = 13;
-
 export function CartaoDoCiclo({ periodizacao, fases, treinos, especialista }: CartaoDoCicloProps) {
   const progresso = progressoDoCiclo(periodizacao.start_date, periodizacao.end_date, new Date());
 
@@ -38,25 +35,10 @@ export function CartaoDoCiclo({ periodizacao, fases, treinos, especialista }: Ca
       </View>
       <BarraDeProgresso percentual={progresso.percentual} />
       <View className="mt-3 flex-row flex-wrap gap-x-[1.125rem] gap-y-1">
-        <Metadado icone="layers-outline" texto={`${fases} ${fases === 1 ? 'fase' : 'fases'}`} />
-        <Metadado
-          icone="barbell-outline"
-          texto={`${treinos} ${treinos === 1 ? 'treino' : 'treinos'}`}
-        />
-        {especialista ? <Metadado icone="person-outline" texto={especialista} /> : null}
+        <DadoComIcone icone="layers-outline" texto={contagem(fases, 'fase', 'fases')} />
+        <DadoComIcone icone="barbell-outline" texto={contagem(treinos, 'treino', 'treinos')} />
+        {especialista ? <DadoComIcone icone="person-outline" texto={especialista} /> : null}
       </View>
     </Vidro>
-  );
-}
-
-function Metadado({ icone, texto }: { icone: keyof typeof Ionicons.glyphMap; texto: string }) {
-  const cores = useCores();
-  const escalar = useEscala();
-
-  return (
-    <View className="flex-row items-center gap-[0.3125rem]">
-      <Ionicons name={icone} size={escalar(TAMANHO_DO_ICONE)} color={cores.placeholder} />
-      <Text className="text-[0.71875rem] text-muted-foreground">{texto}</Text>
-    </View>
   );
 }

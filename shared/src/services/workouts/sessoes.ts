@@ -36,7 +36,7 @@ export const criarServicoDeSessoes = (supabase: SupabaseClient) => ({
       .limit(1)
       .maybeSingle();
     if (error) throw error;
-    return (data as SessaoConcluida | null) ?? null;
+    return data as SessaoConcluida | null;
   },
 
   /**
@@ -57,8 +57,6 @@ export const criarServicoDeSessoes = (supabase: SupabaseClient) => ({
     if (error) throw error;
     return (data ?? []) as SessaoConcluida[];
   },
-
-  // ── Workout Sessions ───────────────────────────────────────────────────────
 
   createWorkoutSession: async (input: CreateWorkoutSessionInput): Promise<WorkoutSession> => {
     const { data, error } = await supabase
@@ -128,18 +126,6 @@ export const criarServicoDeSessoes = (supabase: SupabaseClient) => ({
   },
 
   /**
-   * Grava os exercícios da sessão e as séries de cada um.
-   *
-   * Os dois passos moram aqui, e não na tela, porque cada tela que os
-   * reimplementava esquecia um: até a `0023` havia três telas de execução, e
-   * duas gravavam só o JSON de `sets_data`, invisível para as métricas.
-   *
-   * @example
-   * await saveSessionExercises(sessionId, [
-   *   { workout_exercise_id: "abc", sets: [{ reps_actual: 10, weight_actual: 40 }] },
-   * ]);
-   */
-  /**
    * Grava a frequência cardíaca média de uma sessão.
    *
    * Vive em `workout_session_vitals`, e não numa coluna de `workout_sessions`,
@@ -163,6 +149,18 @@ export const criarServicoDeSessoes = (supabase: SupabaseClient) => ({
     if (error) throw error;
   },
 
+  /**
+   * Grava os exercícios da sessão e as séries de cada um.
+   *
+   * Os dois passos moram aqui, e não na tela, porque cada tela que os
+   * reimplementava esquecia um: até a `0023` havia três telas de execução, e
+   * duas gravavam só o JSON de `sets_data`, invisível para as métricas.
+   *
+   * @example
+   * await saveSessionExercises(sessionId, [
+   *   { workout_exercise_id: "abc", sets: [{ reps_actual: 10, weight_actual: 40 }] },
+   * ]);
+   */
   saveSessionExercises: async (
     sessionId: string,
     items: SaveSessionExerciseInput[],

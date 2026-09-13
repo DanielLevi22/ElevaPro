@@ -312,9 +312,10 @@ describe("bodyScanService — TRAVA LGPD: eliminação (Art. 18, VI)", () => {
 });
 
 describe("workoutsService — sessões que decidem o próximo treino", () => {
-  // As duas consultas saíram do `workoutStore` do mobile, que as fazia direto
-  // no Supabase (#292). O rodízio e as marcas da semana só precisam de qual
-  // treino e quando — nada da sessão além disso chega ao aparelho.
+  // O fluxo do aluno lê as sessões por aqui, e não pelo `workoutStore`, que
+  // ainda tem a versão direta no Supabase para a tela do especialista (#292).
+  // O rodízio e as marcas da semana só precisam de qual treino e quando —
+  // nada da sessão além disso chega ao aparelho.
   it("busca a última sessão de força concluída, só com treino e data", async () => {
     const { supabase, chamadas } = criarSupabaseFake({
       data: { workout_id: "w1", completed_at: "2026-09-10T20:00:00Z" },
@@ -352,5 +353,32 @@ describe("workoutsService — sessões que decidem o próximo treino", () => {
       completed_at: "2026-09-07T07:00:00.000Z",
     });
     expect(sessoes).toHaveLength(1);
+  });
+});
+
+describe("workoutsService — colunas das leituras do aluno", () => {
+  // O aluno lê o próprio ciclo e as fases pela tela de vidro. `select("*")`
+  // traria qualquer coluna que a tabela ganhe depois — de nota interna do
+  // especialista a campo que nem existe hoje. Pedir o que a tela usa é o que
+  // a minimização (LGPD, Art. 6°, III) quer dizer na prática.
+  it("pede as colunas do ciclo, e não a linha inteira", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({ data: [] });
+
+    await createWorkoutsService(supabase).fetchStudentPeriodizations("aluno-1");
+
+    expect(chamadas[0].select).toBe(
+      "id, specialist_id, student_id, name, objective, status, start_date, end_date, created_at, updated_at",
+    );
+    expect(chamadas[0].filtros).toEqual({ student_id: "aluno-1" });
+  });
+
+  it("pede as colunas da fase, e não a linha inteira", async () => {
+    const { supabase, chamadas } = criarSupabaseFake([{ data: [{ id: "f1" }] }, { data: [] }]);
+
+    await createWorkoutsService(supabase).fetchTrainingPlans("ciclo-1");
+
+    expect(chamadas[0].select).toBe(
+      "id, periodization_id, name, status, start_date, end_date, order_index, created_at",
+    );
   });
 });

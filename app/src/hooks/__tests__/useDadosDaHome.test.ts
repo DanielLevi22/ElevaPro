@@ -26,6 +26,9 @@ jest.mock('@elevapro/supabase', () => ({ supabase: {} }));
 // O hook cria o serviço na importação, antes deste arquivo inicializar o mock:
 // a chamada precisa ler `mockResumoDoPerfil` na hora, e não capturá-lo.
 jest.mock('@elevapro/shared', () => ({
+  // As regras puras (contagem de exercícios) valem de verdade; só o serviço,
+  // que falaria com o banco, é trocado.
+  ...jest.requireActual('@elevapro/shared'),
   createAuthService: () => ({
     getProfileSummary: (id: string) => mockResumoDoPerfil(id),
   }),

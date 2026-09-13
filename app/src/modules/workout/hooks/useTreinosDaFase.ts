@@ -1,19 +1,15 @@
 import {
   concluidosNaSemana,
-  createWorkoutsService,
-  inicioDaSemanaISO,
   proximoTreino,
-  type SessaoConcluida,
   type TrainingPlan,
   type Workout,
 } from '@elevapro/shared';
-import { supabase } from '@elevapro/supabase';
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useWorkoutStore } from '../store/workoutStore';
+import { useSessoesDoAluno } from './useSessoesDoAluno';
 
 /**
- * A fase ativa do aluno: os treinos dela, qual vem agora e quais já foram feitos
+ * Uma fase do aluno: os treinos dela, qual vem agora e quais já foram feitos
  * na semana.
  *
  * As sessões são buscadas de novo a cada foco: o aluno volta a esta tela depois
@@ -26,10 +22,13 @@ import { useWorkoutStore } from '../store/workoutStore';
 interface TreinosDaFase {
   fase: TrainingPlan | null;
   numeroDaFase: number;
+  /** Só depois de a busca voltar: antes dela, ausência é carregamento. */
+  naoEncontrada: boolean;
   treinos: Workout[];
-  proximo: { treino: Workout; feitoHoje: boolean } | null;
+  carregandoTreinos: boolean;
+  proximo: Workout | null;
+  treinouHoje: boolean;
   feitos: Set<string>;
-  carregando: boolean;
 }
 
 export function useTreinosDaFase(
@@ -37,15 +36,45 @@ export function useTreinosDaFase(
   faseId: string,
   alunoId: string
 ): TreinosDaFase {
-  const loja = useWorkoutStore();
-  const { currentPeriodizationPhases: fases, workouts, fetchPeriodizationPhases } = loja;
-  const { fetchWorkoutsForPhase } = loja;
-  const indiceDaFase = fases.findIndex((f) => f.id === faseId);
+  const { fase, numeroDaFase, naoEncontrada } = useFaseDaLoja(periodizacaoId, faseId);
+  const { treinos, carregandoTreinos } = useTreinosDaLista(faseId);
   const { ultima, daSemana } = useSessoesDoAluno(alunoId);
 
+  return useMemo(() => {
+    const agora = new Date();
+    const sugestao = proximoTreino(treinos, ultima, agora);
+    return {
+      fase,
+      numeroDaFase,
+      naoEncontrada,
+      treinos,
+      carregandoTreinos,
+      proximo: sugestao ? treinos[sugestao.indice] : null,
+      treinouHoje: sugestao?.feitoHoje ?? false,
+      feitos: concluidosNaSemana(daSemana, agora),
+    };
+  }, [fase, numeroDaFase, naoEncontrada, treinos, carregandoTreinos, ultima, daSemana]);
+}
+
+function useFaseDaLoja(periodizacaoId: string, faseId: string) {
+  const { currentPeriodizationPhases: fases, fetchPeriodizationPhases } = useWorkoutStore();
+  const indice = fases.findIndex((f) => f.id === faseId);
+  const [buscou, setBuscou] = useState(indice !== -1);
+
   useEffect(() => {
-    if (indiceDaFase === -1) fetchPeriodizationPhases(periodizacaoId);
-  }, [indiceDaFase, periodizacaoId, fetchPeriodizationPhases]);
+    if (indice !== -1) return;
+    fetchPeriodizationPhases(periodizacaoId).finally(() => setBuscou(true));
+  }, [indice, periodizacaoId, fetchPeriodizationPhases]);
+
+  return {
+    fase: fases[indice] ?? null,
+    numeroDaFase: indice + 1,
+    naoEncontrada: buscou && indice === -1,
+  };
+}
+
+function useTreinosDaLista(faseId: string): { treinos: Workout[]; carregandoTreinos: boolean } {
+  const { workouts, fetchWorkoutsForPhase, isLoading } = useWorkoutStore();
 
   useEffect(() => {
     fetchWorkoutsForPhase(faseId);
@@ -57,50 +86,5 @@ export function useTreinosDaFase(
     () => workouts.filter((treino) => treino.training_plan_id === faseId),
     [workouts, faseId]
   );
-
-  return useMemo(() => {
-    const agora = new Date();
-    const sugestao = proximoTreino(treinos, ultima, agora);
-    return {
-      fase: fases[indiceDaFase] ?? null,
-      numeroDaFase: indiceDaFase + 1,
-      treinos,
-      proximo: sugestao
-        ? { treino: treinos[sugestao.indice], feitoHoje: sugestao.feitoHoje }
-        : null,
-      feitos: concluidosNaSemana(daSemana, agora),
-      carregando: loja.isLoading,
-    };
-  }, [fases, indiceDaFase, treinos, ultima, daSemana, loja.isLoading]);
-}
-
-const servicoDeTreinos = createWorkoutsService(supabase);
-
-/**
- * As sessões pelo serviço do `shared`, e não pela store: a store de treino
- * ainda consulta o Supabase direto nessas leituras (#292), e é a tela do
- * especialista que a usa até o lote do professor.
- */
-function useSessoesDoAluno(alunoId: string) {
-  const [ultima, setUltima] = useState<SessaoConcluida | null>(null);
-  const [daSemana, setDaSemana] = useState<SessaoConcluida[]>([]);
-
-  useFocusEffect(
-    useCallback(() => {
-      let ativo = true;
-      Promise.all([
-        servicoDeTreinos.fetchLastWorkoutSession(alunoId),
-        servicoDeTreinos.fetchCompletedSessionsSince(alunoId, inicioDaSemanaISO(new Date())),
-      ]).then(([ultimaSessao, sessoes]) => {
-        if (!ativo) return;
-        setUltima(ultimaSessao);
-        setDaSemana(sessoes);
-      });
-      return () => {
-        ativo = false;
-      };
-    }, [alunoId])
-  );
-
-  return { ultima, daSemana };
+  return { treinos, carregandoTreinos: isLoading && treinos.length === 0 };
 }

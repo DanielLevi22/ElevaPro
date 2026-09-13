@@ -25,3 +25,15 @@ export function gruposDoTreino(treino: Workout): string[] {
   }
   return grupos.slice(0, GRUPOS_NA_LINHA);
 }
+
+/**
+ * Quantos exercícios o treino tem, venha a contagem pronta ou a lista.
+ *
+ * Sem nenhum dos dois devolve `undefined`: zero afirmaria um treino vazio, e o
+ * que se sabe é só que a consulta não trouxe o dado.
+ *
+ * @example contarExercicios(treino) // 6
+ */
+export function contarExercicios(treino: Workout): number | undefined {
+  return treino.exercises_count ?? treino.exercises?.length;
+}

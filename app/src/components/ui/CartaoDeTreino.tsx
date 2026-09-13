@@ -1,10 +1,11 @@
-import { Ionicons } from '@expo/vector-icons';
+import { contagem } from '@elevapro/shared';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image, type ImageSourcePropType, Text, TouchableOpacity, View } from 'react-native';
 import { cn } from '@/lib/utils';
-import { useCores, useEscala } from '@/shared/design';
+import { useCores } from '@/shared/design';
 import { BotaoDeDestaque } from './BotaoDeDestaque';
 import { Chip, type ChipProps } from './Chip';
+import { DadoComIcone } from './DadoComIcone';
 
 /**
  * Um treino sobre a foto do grupo muscular: chips, nome, exercícios e duração.
@@ -42,8 +43,6 @@ interface CartaoDeTreinoProps {
 /** 164 e 218 do kit, em rem. */
 const ALTURA = { compacto: 'h-[10.25rem]', destaque: 'h-[13.625rem]' } as const;
 const TITULO = { compacto: 'text-h2', destaque: 'text-[1.4375rem]' } as const;
-
-const TAMANHO_DO_ICONE = 13;
 
 export function CartaoDeTreino({
   titulo,
@@ -83,8 +82,16 @@ export function CartaoDeTreino({
           {titulo}
         </Text>
         <View className="mt-1 flex-row items-center gap-3.5">
-          {exercicios ? <Dado icone="barbell" texto={`${exercicios} exercícios`} /> : null}
-          {minutos ? <Dado icone="time-outline" texto={`~${minutos} min`} /> : null}
+          {exercicios ? (
+            <DadoComIcone
+              icone="barbell"
+              texto={contagem(exercicios, 'exercício', 'exercícios')}
+              tom="sobreImagem"
+            />
+          ) : null}
+          {minutos ? (
+            <DadoComIcone icone="time-outline" texto={`~${minutos} min`} tom="sobreImagem" />
+          ) : null}
         </View>
         {acao ? (
           <View className="mt-3.5">
@@ -98,18 +105,6 @@ export function CartaoDeTreino({
         ) : null}
       </View>
     </TouchableOpacity>
-  );
-}
-
-function Dado({ icone, texto }: { icone: keyof typeof Ionicons.glyphMap; texto: string }) {
-  const cores = useCores();
-  const escalar = useEscala();
-
-  return (
-    <View className="flex-row items-center gap-1.5">
-      <Ionicons name={icone} size={escalar(TAMANHO_DO_ICONE)} color={cores.sobreImagemSecundario} />
-      <Text className="text-micro text-sobre-imagem-secundario">{texto}</Text>
-    </View>
   );
 }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Workout } from "../../types/workouts.types";
-import { gruposDoTreino } from "../treino";
+import { contarExercicios, gruposDoTreino } from "../treino";
 
 const treino = (grupo: string | null, dosExercicios: (string | null)[]): Workout =>
   ({
@@ -22,5 +22,19 @@ describe("gruposDoTreino", () => {
 
   it("sem grupo nenhum não inventa um", () => {
     expect(gruposDoTreino(treino(null, [null]))).toEqual([]);
+  });
+});
+
+describe("contarExercicios", () => {
+  it("usa a contagem que a consulta trouxe", () => {
+    expect(contarExercicios({ exercises_count: 6 } as Workout)).toBe(6);
+  });
+
+  it("conta a lista quando veio a lista e não a contagem", () => {
+    expect(contarExercicios(treino(null, ["Peito", "Costas"]))).toBe(2);
+  });
+
+  it("sem nenhum dos dois, devolve undefined — zero afirmaria o que não se sabe", () => {
+    expect(contarExercicios({} as Workout)).toBeUndefined();
   });
 });
