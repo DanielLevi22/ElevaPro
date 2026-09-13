@@ -1,5 +1,5 @@
 import { useColorScheme } from 'nativewind';
-import { hslParaHex, type NomeDeCor, paleta, type Tema } from './tokens';
+import { hslParaHex, metrica, type NomeDeCor, paleta, type Tema } from './tokens';
 
 /**
  * As cores do tema ativo já resolvidas em string que o React Native aceita.
@@ -14,7 +14,14 @@ export type Cores = Record<NomeDeCor, string>;
 function resolver(tema: Tema): Cores {
   const { hsl, literais } = paleta[tema];
   const deHsl = Object.entries(hsl).map(([nome, triplete]) => [nome, hslParaHex(triplete)]);
-  return Object.fromEntries([...deHsl, ...Object.entries(literais)]) as Cores;
+  // Cor de métrica entra nos dois temas com o mesmo valor: ela identifica uma
+  // grandeza, não uma superfície. Entra aqui porque o desenho pinta o ícone da
+  // métrica com ela, e `color` de ícone não aceita classe.
+  const deMetrica = Object.entries(metrica).map(([nome, triplete]) => [
+    `metrica${nome[0].toUpperCase()}${nome.slice(1)}`,
+    hslParaHex(triplete),
+  ]);
+  return Object.fromEntries([...deHsl, ...deMetrica, ...Object.entries(literais)]) as Cores;
 }
 
 /** Resolvido uma vez no import: são 24 conversões que nunca mudam em runtime. */

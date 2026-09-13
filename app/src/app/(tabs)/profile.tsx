@@ -9,7 +9,9 @@ import { useAuthStore } from '@/auth';
 import { MinhasAutorizacoes } from '@/components/consent/MinhasAutorizacoes';
 import { showConfirm } from '@/components/ui/appAlert';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
+import { SeletorDeTema } from '@/components/ui/SeletorDeTema';
 import { colors as brandColors } from '@/constants/colors';
+import { useCores } from '@/shared/design';
 
 const authService = createAuthService(supabase);
 
@@ -30,6 +32,7 @@ const PLACEHOLDER_LEVEL = 1;
 const PLACEHOLDER_XP = 0;
 
 export default function ProfileScreen() {
+  const cores = useCores();
   const { signOut, user } = useAuthStore();
   const [profile, setProfile] = useState<Profile | null>(null);
   const router = useRouter();
@@ -63,7 +66,7 @@ export default function ProfileScreen() {
     <ScreenLayout>
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Header Background */}
-        <View className="absolute top-0 w-full h-[200px]">
+        <View className="absolute top-0 w-full h-[12.5rem]">
           <LinearGradient
             colors={[`${brandColors.primary.start}40`, 'transparent']}
             style={{ flex: 1 }}
@@ -90,7 +93,7 @@ export default function ProfileScreen() {
 
           {/* Gamer Card */}
           <View
-            className="rounded-[32px] p-1 border overflow-hidden mb-8"
+            className="rounded-[2rem] p-1 border overflow-hidden mb-8"
             style={{
               backgroundColor: brandColors.background.secondary,
               borderColor: brandColors.border.dark,
@@ -98,11 +101,11 @@ export default function ProfileScreen() {
           >
             <LinearGradient
               colors={[brandColors.background.surface, brandColors.background.secondary]}
-              className="p-6 rounded-[28px]"
+              className="p-6 rounded-[1.75rem]"
             >
               <View className="items-center mb-6">
                 <View
-                  className="w-[100px] h-[100px] rounded-full items-center justify-center mb-4 border-2 shadow-xl relative"
+                  className="w-[6.25rem] h-[6.25rem] rounded-full items-center justify-center mb-4 border-2 shadow-xl relative"
                   style={{
                     borderColor: brandColors.primary.start,
                     backgroundColor: brandColors.background.elevated,
@@ -119,7 +122,7 @@ export default function ProfileScreen() {
                     colors={brandColors.gradients.primary}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
-                    className="absolute -bottom-3 px-3 py-1 rounded-full border-2 border-[#1A1A1A]"
+                    className="absolute -bottom-3 px-3 py-1 rounded-full border-2 border-card"
                   >
                     <Text className="text-white font-black text-xs italic tracking-widest">
                       LVL {PLACEHOLDER_LEVEL}
@@ -131,7 +134,7 @@ export default function ProfileScreen() {
                   {profile?.full_name || 'Usuário'}
                 </Text>
                 <Text
-                  className="text-xs font-black uppercase tracking-[2px] mt-1"
+                  className="text-xs font-black uppercase tracking-[0.125rem] mt-1"
                   style={{
                     color:
                       profile?.account_type === 'specialist'
@@ -147,8 +150,10 @@ export default function ProfileScreen() {
               {profile?.account_type !== 'specialist' && (
                 <View className="w-full">
                   <View className="flex-row justify-between mb-2">
-                    <Text className="text-zinc-500 text-[10px] font-black uppercase">XP ATUAL</Text>
-                    <Text className="text-white text-[10px] font-black uppercase">
+                    <Text className="text-zinc-500 text-[0.625rem] font-black uppercase">
+                      XP ATUAL
+                    </Text>
+                    <Text className="text-white text-[0.625rem] font-black uppercase">
                       {PLACEHOLDER_XP} / {(PLACEHOLDER_LEVEL * 20) ** 2}
                     </Text>
                   </View>
@@ -172,10 +177,10 @@ export default function ProfileScreen() {
           <TouchableOpacity
             onPress={() => router.push('/onboarding/health-connect')}
             activeOpacity={0.8}
-            className="mb-8 h-[100px] rounded-[32px] overflow-hidden border border-zinc-800 relative bg-zinc-900"
+            className="mb-8 h-[6.25rem] rounded-[2rem] overflow-hidden border border-zinc-800 relative bg-zinc-900"
           >
             <LinearGradient
-              colors={['#18181b', '#09090b']}
+              colors={[cores.card, cores.background]}
               className="absolute inset-0 flex-row items-center justify-between p-6"
             >
               <View className="flex-1 mr-4">
@@ -188,7 +193,7 @@ export default function ProfileScreen() {
               </View>
 
               <View className="w-14 h-14 bg-rose-500/10 rounded-2xl items-center justify-center border border-rose-500/20">
-                <Ionicons name="heart-circle-outline" size={32} color="#f43f5e" />
+                <Ionicons name="heart-circle-outline" size={32} color={cores.destructive} />
               </View>
             </LinearGradient>
           </TouchableOpacity>
@@ -215,7 +220,7 @@ export default function ProfileScreen() {
                 <Ionicons name="mail-outline" size={20} color={brandColors.secondary.main} />
               </View>
               <View>
-                <Text className="text-zinc-500 text-[10px] font-black uppercase">Email</Text>
+                <Text className="text-zinc-500 text-[0.625rem] font-black uppercase">Email</Text>
                 <Text className="text-white font-bold">{user?.email}</Text>
               </View>
             </View>
@@ -235,7 +240,9 @@ export default function ProfileScreen() {
                 />
               </View>
               <View>
-                <Text className="text-zinc-500 text-[10px] font-black uppercase">Permissão</Text>
+                <Text className="text-zinc-500 text-[0.625rem] font-black uppercase">
+                  Permissão
+                </Text>
                 <Text className="text-white font-bold capitalize">
                   {profile ? ACCOUNT_TYPE_LABEL[profile.account_type] : '—'}
                 </Text>
@@ -254,7 +261,16 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        <Text className="text-center text-zinc-700 font-bold text-[10px] mt-10 uppercase tracking-widest">
+        {/*
+          A escolha de tema vive aqui, e não no menu, porque o menu tem
+          `href: null` no layout de abas — está escondido da tab bar. O seletor
+          existia desde a #281 e ninguém conseguia chegar nele.
+        */}
+        <View className="mt-6 px-5">
+          <SeletorDeTema />
+        </View>
+
+        <Text className="text-center text-zinc-700 font-bold text-[0.625rem] mt-10 uppercase tracking-widest">
           Eleva Pro v1.2.0
         </Text>
       </ScrollView>

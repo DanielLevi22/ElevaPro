@@ -37,6 +37,29 @@ export const marca = {
 } as const satisfies Record<string, TripleHsl>;
 
 /**
+ * Cor por métrica. Não é marca e não é estado: é identidade de uma grandeza.
+ *
+ * O kit de vidro dá cor própria a passos, calorias, sono e a cada macro, e usa
+ * a mesma cor no ícone, no anel e na barra daquela grandeza — é assim que a
+ * pessoa reconhece "calorias" sem ler o rótulo. Vira família de token pelo
+ * mesmo critério que promoveu a camada de superfície iOS na #281: está no
+ * desenho, é usada consistentemente, e sem token volta como hexadecimal à mão
+ * na primeira tela de nutrição.
+ *
+ * Em triplete porque o desenho pinta o fundo do ícone com a mesma cor a 18%.
+ * Passos e proteína compartilham o verde no desenho; ficam nomeadas em separado
+ * porque o papel é que dá o nome, e uma pode divergir da outra depois.
+ */
+export const metrica = {
+  passos: '158.1 64.4% 51.6%',
+  calorias: '27 96% 61%',
+  sono: '234.5 89.5% 73.9%',
+  proteina: '158.1 64.4% 51.6%',
+  carboidrato: '82.7 78% 55.5%',
+  gordura: '43.3 96.4% 56.3%',
+} as const satisfies Record<string, TripleHsl>;
+
+/**
  * Tokens que aceitam modificador de opacidade no Tailwind (`bg-primary/20`),
  * porque `hsl(var(--x) / <alpha-value>)` exige o triplete cru.
  */
@@ -73,7 +96,32 @@ type TokensLiterais = {
   placeholder: CorLiteral;
   onHero: CorLiteral;
   onHeroSecondary: CorLiteral;
+  onHeroTertiary: CorLiteral;
   heroChip: CorLiteral;
+  heroChipBorder: CorLiteral;
+  /**
+   * A pilha de vidro. O kit aplica as sete juntas em todo cartão: um gradiente
+   * de 160° do topo ao pé, a borda, e o brilho especular de cima e de baixo que
+   * dá a espessura. `glassStrong` é o trilho de progresso e o fundo de ícone
+   * neutro.
+   *
+   * Os dois temas são muito diferentes, e não inversos: no escuro o vidro é
+   * quase transparente (7%), no claro é quase branco (86%).
+   */
+  glass: CorLiteral;
+  glassStrong: CorLiteral;
+  glassBorder: CorLiteral;
+  glassTop: CorLiteral;
+  glassBottom: CorLiteral;
+  specular: CorLiteral;
+  specularBottom: CorLiteral;
+  /** Véu sobre a foto do hero, na parada do meio. */
+  scrim: CorLiteral;
+  /**
+   * Cor da sombra do vidro. Muda de cor, e não só de força, entre os temas: no
+   * claro ela é azulada, porque sombra preta sob objeto claro lê como sujeira.
+   */
+  sombra: CorLiteral;
 };
 
 export type Tema = 'claro' | 'escuro';
@@ -92,7 +140,7 @@ type Paleta = { hsl: TokensHsl; literais: TokensLiterais };
  */
 const escuro: Paleta = {
   hsl: {
-    background: '0 0% 0%',
+    background: '220 17.6% 3.3%',
     foreground: '0 0% 100%',
     card: '240 3.4% 11.4%',
     cardForeground: '0 0% 100%',
@@ -113,11 +161,22 @@ const escuro: Paleta = {
   literais: {
     border: 'rgba(84, 84, 88, 0.65)',
     muted: 'rgba(118, 118, 128, 0.24)',
-    mutedForeground: 'rgba(235, 235, 245, 0.62)',
-    placeholder: 'rgba(235, 235, 245, 0.32)',
+    mutedForeground: 'rgba(235, 235, 245, 0.66)',
+    placeholder: 'rgba(235, 235, 245, 0.34)',
     onHero: '#ffffff',
-    onHeroSecondary: 'rgba(255, 255, 255, 0.88)',
-    heroChip: 'rgba(255, 255, 255, 0.18)',
+    onHeroSecondary: 'rgba(255, 255, 255, 0.82)',
+    onHeroTertiary: 'rgba(255, 255, 255, 0.75)',
+    heroChip: 'rgba(255, 255, 255, 0.16)',
+    heroChipBorder: 'rgba(255, 255, 255, 0.28)',
+    glass: 'rgba(255, 255, 255, 0.07)',
+    glassStrong: 'rgba(255, 255, 255, 0.11)',
+    glassBorder: 'rgba(255, 255, 255, 0.13)',
+    glassTop: 'rgba(255, 255, 255, 0.13)',
+    glassBottom: 'rgba(255, 255, 255, 0.035)',
+    specular: 'rgba(255, 255, 255, 0.22)',
+    specularBottom: 'rgba(0, 0, 0, 0.18)',
+    scrim: 'rgba(0, 0, 0, 0.55)',
+    sombra: 'rgb(0, 0, 0)',
   },
 };
 
@@ -128,7 +187,7 @@ const escuro: Paleta = {
  */
 const claro: Paleta = {
   hsl: {
-    background: '240 23.8% 95.9%',
+    background: '240 18.5% 94.7%',
     foreground: '0 0% 0%',
     card: '0 0% 100%',
     cardForeground: '0 0% 0%',
@@ -149,18 +208,32 @@ const claro: Paleta = {
   literais: {
     border: 'rgba(60, 60, 67, 0.2)',
     muted: 'rgba(118, 118, 128, 0.12)',
-    mutedForeground: 'rgba(60, 60, 67, 0.78)',
-    placeholder: 'rgba(60, 60, 67, 0.42)',
+    mutedForeground: 'rgba(60, 60, 67, 0.8)',
+    placeholder: 'rgba(60, 60, 67, 0.45)',
     onHero: '#0b0b0f',
     onHeroSecondary: 'rgba(28, 28, 32, 0.82)',
-    heroChip: 'rgba(255, 255, 255, 0.7)',
+    onHeroTertiary: 'rgba(28, 28, 32, 0.68)',
+    heroChip: 'rgba(255, 255, 255, 0.72)',
+    heroChipBorder: 'rgba(60, 60, 67, 0.16)',
+    glass: 'rgba(255, 255, 255, 0.86)',
+    glassStrong: 'rgba(118, 118, 128, 0.16)',
+    glassBorder: 'rgba(60, 60, 67, 0.14)',
+    glassTop: 'rgba(255, 255, 255, 0.98)',
+    glassBottom: 'rgba(255, 255, 255, 0.78)',
+    specular: 'rgba(255, 255, 255, 1)',
+    specularBottom: 'rgba(0, 0, 0, 0.04)',
+    scrim: 'rgba(255, 255, 255, 0.62)',
+    sombra: 'rgb(16, 18, 24)',
   },
 };
 
 export const paleta: Record<Tema, Paleta> = { claro, escuro };
 
-/** Nome de token de cor, em qualquer um dos dois grupos. */
-export type NomeDeCor = keyof TokensHsl | keyof TokensLiterais;
+/** Nome de cor de métrica como `useCores` a entrega: `metricaPassos`. */
+type NomeDeMetrica = `metrica${Capitalize<keyof typeof metrica>}`;
+
+/** Nome de token de cor, em qualquer um dos grupos. */
+export type NomeDeCor = keyof TokensHsl | keyof TokensLiterais | NomeDeMetrica;
 
 /**
  * Escalas que não dependem do tema.
