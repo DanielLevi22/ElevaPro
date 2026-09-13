@@ -22,7 +22,8 @@ interface TelaDaNutricaoProps {
   sobreposicao?: ReactNode;
   /**
    * Espaço no fim da rolagem para o último cartão não ficar atrás do rodapé: a
-   * tab bar sozinha (110 no kit), ou a barra de duas ações acima dela (150).
+   * tab bar sozinha (110 no kit), ou a barra de duas ações acima dela (150, mais
+   * os 22 que a barra sobe pelo "+" central).
    */
   folgaNoFim?: 'tab' | 'rodape';
   /** Sem ele, a rolagem não tem puxar-para-atualizar. */
@@ -31,7 +32,7 @@ interface TelaDaNutricaoProps {
   semRespiroNoTopo?: boolean;
 }
 
-const FOLGA = { tab: 'pb-[7.625rem]', rodape: 'pb-[10.125rem]' } as const;
+const FOLGA = { tab: 'pb-[7.625rem]', rodape: 'pb-[11.5rem]' } as const;
 
 export function TelaDaNutricao({
   children,

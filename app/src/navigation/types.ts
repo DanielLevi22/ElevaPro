@@ -93,13 +93,18 @@ export const ROUTES = {
   // Nutrição do aluno, no desenho de vidro (#298). O member segue nas telas antigas.
   NUTRITION: {
     ROOT: '/(tabs)/nutrition',
-    MEAL: (refeicaoId: string): `/(tabs)/nutrition/refeicao/${string}` =>
-      `/(tabs)/nutrition/refeicao/${refeicaoId}`,
+    /** `data` é o dia aberto no plano: o detalhe mostra o que foi comido nele. */
+    MEAL: (
+      refeicaoId: string,
+      data: string
+    ): `/(tabs)/nutrition/refeicao/${string}?data=${string}` =>
+      `/(tabs)/nutrition/refeicao/${refeicaoId}?data=${data}`,
     SWAP: (
       refeicaoId: string,
-      itemId: string
-    ): `/(tabs)/nutrition/substituir?refeicaoId=${string}&itemId=${string}` =>
-      `/(tabs)/nutrition/substituir?refeicaoId=${refeicaoId}&itemId=${itemId}`,
+      itemId: string,
+      data: string
+    ): `/(tabs)/nutrition/substituir?refeicaoId=${string}&itemId=${string}&data=${string}` =>
+      `/(tabs)/nutrition/substituir?refeicaoId=${refeicaoId}&itemId=${itemId}&data=${data}`,
     SEARCH: '/(tabs)/nutrition/buscar',
     SCAN: '/(tabs)/nutrition/scan',
     ASSISTANT: '/(tabs)/nutrition/bot',

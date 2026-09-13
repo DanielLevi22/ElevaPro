@@ -136,7 +136,7 @@ function linhaDaRefeicao(
  * O especialista vendo como aluno só lê. E dia que ainda não chegou não se
  * marca: o registro é do que o aluno comeu, não do que pretende comer.
  */
-function motivoParaNaoMarcar(somenteLeitura: boolean, data: string, hoje: string) {
+export function motivoParaNaoMarcar(somenteLeitura: boolean, data: string, hoje: string) {
   if (somenteLeitura) {
     return {
       title: 'Modo leitura',

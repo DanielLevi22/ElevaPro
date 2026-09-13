@@ -133,7 +133,7 @@ function RefeicoesDoDia({ plano }: { plano: PlanoDoDia }) {
           resumo={resumo}
           calorias={calorias}
           feita={feita}
-          onAbrir={() => router.push(ROUTES.NUTRITION.MEAL(refeicao.id))}
+          onAbrir={() => router.push(ROUTES.NUTRITION.MEAL(refeicao.id, plano.data))}
           onMarcar={() => plano.marcar(refeicao.id)}
         />
       ))}

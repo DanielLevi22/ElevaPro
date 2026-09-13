@@ -11,6 +11,7 @@ export {
   MacroProgressBar,
   MealCard,
 } from '../components';
+export { DetalheDaRefeicaoScreen } from '../screens/aluno/DetalheDaRefeicaoScreen';
 export { PlanoDoDiaScreen } from '../screens/aluno/PlanoDoDiaScreen';
 // Screens
 export { default as CreateDietScreen } from '../screens/CreateDietScreen';
