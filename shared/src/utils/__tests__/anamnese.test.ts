@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   achatarRespostas,
+  declaresContinuousMedication,
   filtrarEntradaNumerica,
   lerRespostaNumerica,
   lerRespostaTexto,
@@ -165,5 +166,46 @@ describe("filtro da digitação em campo numérico", () => {
   // Nenhuma pergunta da anamnese tem resposta negativa.
   it("não deixa passar sinal negativo", () => {
     expect(filtrarEntradaNumerica("-70")).toBe("70");
+  });
+});
+
+describe("declaresContinuousMedication", () => {
+  it("resposta vazia ou ausente não declara medicação", () => {
+    expect(declaresContinuousMedication(undefined)).toBe(false);
+    expect(declaresContinuousMedication("   ")).toBe(false);
+  });
+
+  it("as negativas comuns não declaram medicação", () => {
+    for (const answer of [
+      "Não",
+      "nao",
+      "NÃO uso",
+      "Não tomo.",
+      "nenhum",
+      "Nenhuma",
+      "nada",
+      "-",
+      "n/a",
+    ]) {
+      expect(declaresContinuousMedication(answer)).toBe(false);
+    }
+  });
+
+  // A negativa precisa ser a resposta inteira. Quem escreve "Não, mas tomo atenolol"
+  // é justamente quem usa betabloqueador, e é quem mais precisa do aviso nas zonas.
+  it("resposta que começa negando mas cita remédio declara medicação", () => {
+    expect(declaresContinuousMedication("Não, mas tomo atenolol")).toBe(true);
+    expect(declaresContinuousMedication("nada além de propranolol")).toBe(true);
+  });
+
+  it("qualquer outro texto declara medicação", () => {
+    expect(declaresContinuousMedication("Losartana 50mg")).toBe(true);
+    expect(declaresContinuousMedication("uso betabloqueador")).toBe(true);
+  });
+
+  it("lê a resposta embrulhada que o mobile grava", () => {
+    expect(declaresContinuousMedication({ questionId: "medications", value: "Atenolol" })).toBe(
+      true,
+    );
   });
 });

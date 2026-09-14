@@ -12,6 +12,8 @@ const { mockSupabase } = global as unknown as {
 
 const DO_ALUNO = { mascarado: false };
 
+const ZONES = { zone1: 5, zone2: 15, zone3: 40, zone4: 30, zone5: 10 };
+
 /**
  * Um Supabase falso que registra cada insert por tabela e responde ao
  * consentimento com o valor pedido.
@@ -218,11 +220,16 @@ describe('gravarSessaoDeCardio', () => {
   it('grava a frequência cardíaca em tabela própria, não na sessão', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await gravarSessaoDeCardio({ ...corrida, avgHeartRate: 164 }, DO_ALUNO);
+    await gravarSessaoDeCardio({ ...corrida, avgHeartRate: 164, heartRateZones: ZONES }, DO_ALUNO);
 
     expect(gravadoEm('workout_session_vitals')).toEqual({
       session_id: 'sessao-1',
       avg_heart_rate: 164,
+      zone_1_pct: 5,
+      zone_2_pct: 15,
+      zone_3_pct: 40,
+      zone_4_pct: 30,
+      zone_5_pct: 10,
     });
     expect(gravadoEm('workout_sessions')).not.toHaveProperty('avg_heart_rate');
   });
@@ -243,13 +250,19 @@ describe('gravarSessaoDeCardio', () => {
     expect(tabelas).toContain('workout_sessions');
   });
 
-  // A RLS impede o especialista de LER; este portão impede o app de GRAVAR.
-  it('não grava a frequência cardíaca sem consentimento vigente', async () => {
+  // LGPD, Art. 11, I. A média e as zonas são dado de saúde e só entram com
+  // consentimento vigente. A RLS impede o especialista de LER; este portão impede o
+  // app de GRAVAR — sem ele, o dado entraria no banco de quem já disse não.
+  it('sem consentimento vigente, nem a média nem as zonas são gravadas', async () => {
     const { tabelas, gravadoEm } = supabaseQueRegistra({ consentiu: false });
 
-    await gravarSessaoDeCardio({ ...corrida, avgHeartRate: 164 }, DO_ALUNO);
+    await gravarSessaoDeCardio({ ...corrida, avgHeartRate: 164, heartRateZones: ZONES }, DO_ALUNO);
 
-    expect(tabelas).not.toContain('workout_session_vitals');
+    if (tabelas.includes('workout_session_vitals')) {
+      throw new Error(
+        'SAÚDE GRAVADA SEM CONSENTIMENTO: média e zonas foram para workout_session_vitals'
+      );
+    }
     expect(gravadoEm('workout_sessions')).toMatchObject({ session_type: 'cardio' });
   });
 

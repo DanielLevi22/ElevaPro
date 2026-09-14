@@ -363,7 +363,7 @@ export interface CreateWorkoutSessionInput {
   active_calories?: number | null;
   /**
    * Corrida apenas: derivados no aparelho. Execução de contrato, ao contrário
-   * da frequência cardíaca, que é Art. 11 e vai por `saveSessionHeartRate`.
+   * da frequência cardíaca, que é Art. 11 e vai por `saveSessionVitals`.
    */
   distance_meters?: number | null;
   avg_pace_seconds_per_km?: number | null;

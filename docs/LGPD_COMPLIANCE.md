@@ -82,6 +82,7 @@ Dados referentes à saúde exigem **base legal específica** e proteção refor�
 | Tipo, duração e calorias da sessão | `workout_sessions.session_type`, `.duration_seconds`, `.active_calories` | Execução de contrato | Distinguir cardio de musculação e medir a sessão |
 | **Distância, ritmo e cadência da corrida** | `workout_sessions.distance_meters`, `.avg_pace_seconds_per_km`, `.avg_cadence_spm` | Execução de contrato (Art. 7°, V) | Medir a corrida para ajustar a prescrição. Mesma classificação de duração e calorias: é a medida da sessão contratada, não relato clínico. Derivados no aparelho — **a série de coordenadas que os produz não é gravada** (ver §2.3) |
 | **FC média da sessão** | `workout_session_vitals.avg_heart_rate` | Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I) | Esforço real da corrida, para calibrar a carga. Em **tabela própria**, e não numa coluna de `workout_sessions`: a RLS decide por linha, e aquela tabela é de execução de contrato — uma coluna de Art. 11 lá dentro ficaria sob política que não consulta consentimento, que é a pendência de `notes` pela segunda vez. Só a média; a série intradiária é vedada pelo mesmo motivo da FC de repouso |
+| **Tempo por zona de FC da sessão** (lote do cardio em vidro, ADR-0026) | `workout_session_vitals`, uma coluna de percentual por zona, na mesma linha da média | Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I) | Distinguir 40 minutos constantes de um intervalado, que a média sozinha não mostra. Cinco percentuais pela FC máxima de 220 − idade: não permitem reconstruir a série nem inferir estresse. Nascem na linha da média, sob a mesma RLS que consulta consentimento, e herdam o REVOKE de UPDATE e DELETE. Nulos quando não há idade declarada |
 | Plano alimentar (metas calóricas e macros) | `diet_plans` | Tutela da saúde + Consentimento (Art. 11, II, f + I) | Prescrição nutricional — especialista ou autogerenciado pelo member |
 | Refeições e alimentos do plano | `diet_meals`, `diet_meal_items` | Tutela da saúde + Consentimento | Composição do plano alimentar |
 | Registro de refeições realizadas e substituições | `meal_logs` | Tutela da saúde + Consentimento | Acompanhamento de aderência nutricional |
@@ -200,6 +201,16 @@ Dados que foram explicitamente rejeitados do schema por violar o princípio da n
   são conhecidas; ler as sessões do relógio revelaria os exercícios feitos fora do
   app, com horário, para uma finalidade que ainda não existe. Entram, com parecer
   próprio, quando existir a importação do cardio feito só com o relógio
+- **A série de batimentos da corrida continua não gravada** (lote do cardio em vidro) — com a
+  capacidade `workoutHeartRate`, a série da janela da sessão é lida no aparelho,
+  vira média e percentual por zona, e morre ali. O que muda em relação à `0049` é
+  só o derivado guardado, não a série
+- **Medicação declarada fora da anamnese** — o cardio lê a resposta "Usa algum
+  medicamento contínuo?" só para decidir, no aparelho, se as zonas ganham o aviso
+  de que medicação pode alterar a FC. O texto não é gravado em outra tabela, não
+  vai ao log e não sai do aparelho; o que existe fora da anamnese é um booleano
+  em memória. Da anamnese o cardio lê só `age` e `medications`, nunca `responses`
+  inteiro
 - **Leitura da água do dia pelo especialista** (`0052`) — a tabela nasce sem
   política para ele. Nenhuma tela do especialista usa o dado; se uma passar a
   usar, a política nasce consultando o consentimento — a `verify-rls.sql` já põe
@@ -503,7 +514,7 @@ A LGPD exige que dados sejam eliminados quando deixam de ser necessários (Art. 
 | Avaliações físicas | Enquanto existir vínculo com especialista | Histórico clínico necessário ao especialista |
 | Anamnese | Enquanto a conta estiver ativa | Auto-relato do aluno |
 | Histórico de treinos | Enquanto a conta estiver ativa | Histórico de evolução |
-| FC média das sessões (`workout_session_vitals`) | Enquanto a conta estiver ativa | Comparar esforço entre corridas é a finalidade, e ela precisa do histórico. Eliminada por cascade em dois saltos: a conta apaga a sessão, e a sessão apaga a FC |
+| FC média e tempo por zona das sessões (`workout_session_vitals`) | Enquanto a conta estiver ativa | Comparar esforço entre corridas é a finalidade, e ela precisa do histórico. Eliminada por cascade em dois saltos: a conta apaga a sessão, e a sessão apaga a FC |
 | Traçado da corrida | **Não é retido** — existe só na memória da sessão | Não há o que reter: as coordenadas são descartadas quando a tela fecha (§2.3) |
 | Histórico de dietas | Enquanto a conta estiver ativa | Histórico de evolução |
 | Passos, calorias, sono e FC de repouso diários | Enquanto a conta estiver ativa | Comparação de longo prazo é a finalidade; `ON DELETE CASCADE` elimina junto com a conta |
@@ -932,6 +943,7 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 | Falha ao consultar `student_consents` recusa com `503`, não libera. "Não consegui perguntar" não é "pode", e o código separa a falha de infraestrutura da recusa (`403 consent_required`), que pedem ações diferentes de quem lê | Prevenção (Art. 6°, VI) |
 | Transmissão via HTTPS (Vercel → Anthropic/Google) | Segurança |
 | O texto de consentimento `1.5` (issue #298) diz que a foto do prato, a pergunta ao assistente, o plano e o que falta de calorias e macros do dia vão a um serviço de IA externo, que a foto não é guardada e que o nome do aluno não vai junto. O scan e o assistente já transmitiam; o que faltava era o aluno saber antes de fotografar (Art. 9°) | Transparência (Art. 6°, VI) |
+| O texto de consentimento `1.6` (issue #304) diz que da corrida ficam guardados a FC média **e o tempo em cada zona de esforço**, que a idade da anamnese calcula as zonas, e que os batimentos um a um são lidos no aparelho e descartados. As zonas são dado de saúde novo guardado (`0054`) e a idade ganhou finalidade nova: não faltava autorização, faltava o aluno saber | Transparência (Art. 6°, VI) |
 | A saudação do assistente de nutrição, que tem o primeiro nome do aluno, é montada no aparelho e **não entra no histórico enviado** à rota. Achado da revisão de código do PR 1 da #298 | Necessidade (Art. 6°, III) |
 | A rota de sugestões monta a mensagem ao provedor **campo a campo** — os macros validados e os nomes das favoritas cortados — e nunca repassa o corpo do pedido. Travado em `rotasDeNutricaoDoAluno.test.ts`, que confere que nenhum id, nome ou e-mail do aluno chega ao provedor (issue #298) | Necessidade (Art. 6°, III) |
 | As sugestões da busca e o preço da lista ficam **só no aparelho**: as sugestões até o dia virar, num registro por aluno que o dia novo sobrescreve; o preço só na memória da sessão do app. Nada disso vai ao banco | Necessidade (Art. 6°, III) |

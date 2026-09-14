@@ -5,11 +5,12 @@ import {
   type SerieFeita,
   type Workout,
   type WorkoutExercise,
+  type ZoneShare,
 } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { registrarAviso, registrarFalha } from '@/lib/registro';
 import type { EstadoDaSessao } from '../store/maquinaDaSessao';
-import { batimentoSeConsentido, notasSeConsentido } from './consentimento';
+import { heartRateIfConsented, notasSeConsentido } from './consentimento';
 
 const servicoDeTreinos = createWorkoutsService(supabase);
 
@@ -163,6 +164,8 @@ export interface SessaoDeCardioParaGravar {
   avgCadenceSpm?: number | null;
   /** Dado de Art. 11: só é gravado com consentimento vigente. */
   avgHeartRate?: number | null;
+  /** Tempo em cada zona de FC. Art. 11, e nulo sem idade declarada na anamnese. */
+  heartRateZones?: ZoneShare | null;
 }
 
 /**
@@ -201,7 +204,7 @@ export async function gravarSessaoDeCardio(
       avg_pace_seconds_per_km: sessao.avgPaceSecondsPerKm ?? null,
       avg_cadence_spm: sessao.avgCadenceSpm ?? null,
     });
-    await gravarBatimento(gravada.id, sessao.studentId, sessao.avgHeartRate ?? null);
+    await saveVitalsIfConsented(gravada.id, sessao);
   } catch (erro) {
     // Sem o objeto de erro: o payload aqui inclui `notes`, dado de saúde.
     registrarFalha('sessao.gravar', { tipo: 'cardio' });
@@ -210,23 +213,27 @@ export async function gravarSessaoDeCardio(
 }
 
 /**
- * A FC depois da sessão, porque depende do id dela — e sem derrubar a corrida.
+ * A FC média e as zonas depois da sessão, porque dependem do id dela — e sem
+ * derrubar a corrida.
  *
  * Deixar esta falha subir diria ao aluno que o treino não foi salvo, e a
  * tentativa seguinte criaria uma segunda linha: perder a corrida inteira por
- * causa do batimento é pior que perder o batimento.
+ * causa do batimento é pior que perder o batimento. As zonas seguem a média:
+ * sem consentimento ou sem medida, nenhuma das duas vai.
  */
-async function gravarBatimento(
-  sessaoId: string,
-  alunoId: string,
-  medido: number | null
+async function saveVitalsIfConsented(
+  sessionId: string,
+  session: SessaoDeCardioParaGravar
 ): Promise<void> {
-  const batimento = await batimentoSeConsentido(alunoId, medido);
-  if (batimento === null) return;
+  const avgHeartRate = await heartRateIfConsented(session.studentId, session.avgHeartRate ?? null);
+  if (avgHeartRate === null) return;
   try {
-    await servicoDeTreinos.saveSessionHeartRate(sessaoId, batimento);
+    await servicoDeTreinos.saveSessionVitals(sessionId, {
+      avgHeartRate,
+      zones: session.heartRateZones ?? null,
+    });
   } catch {
     // Sem o objeto de erro: o do PostgREST carrega o payload, e é dado de saúde.
-    registrarAviso('sessao.gravarBatimento', { sessaoGravada: true });
+    registrarAviso('session.save_vitals', { sessionSaved: true });
   }
 }

@@ -37,6 +37,9 @@ interface HealthDataConsentGateProps {
 const ITENS_ARMAZENADOS = [
   'Passos e calorias do dia',
   'Treinos executados, com séries e cargas',
+  // A 1.6 existe por esta linha: as zonas passaram a ser guardadas, e a idade da
+  // anamnese passou a calculá-las.
+  'Das suas corridas, a frequência cardíaca média e o tempo em cada zona de esforço, calculadas com a idade da sua anamnese',
   'Refeições registradas do seu plano',
   'A água que você registra no dia',
   'O que você escreve no feedback de fim de treino',

@@ -77,8 +77,13 @@ export interface Finalidade {
  *   existiam; o lote aumentou o que atravessa, e o aluno precisa saber antes de
  *   fotografar (Art. 9°). O texto diz também o que não vai: a foto não é
  *   guardada, e o nome do aluno não segue junto.
+ * - `1.6` (2026-09-14) — acrescenta **o tempo em cada zona de FC das corridas** e
+ *   diz que **a idade da anamnese calcula as zonas**. Issue #304 e migration
+ *   `0054`: as zonas são dado de saúde novo guardado, e a idade passa a servir a
+ *   uma finalidade que o texto não mencionava. O texto diz também o que continua
+ *   fora: a série de batimentos é lida no aparelho e não é guardada.
  */
-export const POLICY_VERSION = "1.5";
+export const POLICY_VERSION = "1.6";
 
 /** Coleta de dados de saúde: avaliação, anamnese, métricas diárias, body scan. */
 export const SAUDE: Finalidade = { tipo: CONSENT_HEALTH_COLLECTION, versao: POLICY_VERSION };
