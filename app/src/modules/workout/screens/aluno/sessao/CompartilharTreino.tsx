@@ -16,6 +16,7 @@ import { Switch } from '@/components/ui/Switch';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
+import { useNomeDoEspecialista } from '@/hooks/useNomeDoEspecialista';
 import { registrarAviso } from '@/lib/registro';
 import { cn } from '@/lib/utils';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
@@ -24,7 +25,6 @@ import {
   type FormatoDoCard,
 } from '../../../components/sessao/CardDeCompartilhar';
 import { useContextoDoTreino } from '../../../hooks/useContextoDoTreino';
-import { useNomeDoEspecialista } from '../../../hooks/useNomeDoEspecialista';
 
 /**
  * O compartilhar do kit (tela 9): a prévia do card, o formato, o que entra nele

@@ -1,7 +1,7 @@
 import type { Periodization, TrainingPlan } from '@elevapro/shared';
 import { useEffect, useState } from 'react';
+import { useNomeDoEspecialista } from '@/hooks/useNomeDoEspecialista';
 import { useWorkoutStore } from '../store/workoutStore';
-import { useNomeDoEspecialista } from './useNomeDoEspecialista';
 
 /**
  * A periodização do aluno e as fases dele, para a tela de fases.

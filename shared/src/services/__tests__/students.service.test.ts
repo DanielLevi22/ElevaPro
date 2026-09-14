@@ -207,3 +207,23 @@ describe("studentsService — vínculos", () => {
     expect(await createStudentsService(supabase).fetchStudentLinks("aluno-1")).toEqual([]);
   });
 });
+
+describe("studentsService — últimas pesagens", () => {
+  // A aderência mostra só a variação de peso. A avaliação física tem dobras,
+  // circunferências e observações: pedir a linha inteira para ler um número é o
+  // que o Art. 6°, III recusa, e o `select("*")` nem passa no pre-commit.
+  it("lê só peso e data da avaliação, das mais recentes para trás", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({ data: [] });
+    await createStudentsService(supabase).fetchUltimasPesagens("aluno-1", 2);
+
+    expect(chamadas[0].tabela).toBe("physical_assessments");
+    expect(chamadas[0].select).toBe("weight_kg, assessed_at");
+    expect(chamadas[0].filtros).toEqual({ student_id: "aluno-1" });
+    expect(chamadas[0].metodos).toContainEqual({ nome: "limit", args: [2] });
+  });
+
+  it("sem avaliação, devolve lista vazia", async () => {
+    const { supabase } = criarSupabaseFake({ data: null });
+    expect(await createStudentsService(supabase).fetchUltimasPesagens("aluno-1")).toEqual([]);
+  });
+});
