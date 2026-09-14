@@ -8,6 +8,12 @@ import type {
 } from "../../types/workouts.types";
 import type { SessaoConcluida } from "../../utils/periodizacao";
 
+/** Começo e fim de uma sessão de cardio concluída, em ISO. */
+export interface CardioWindow {
+  started_at: string;
+  completed_at: string;
+}
+
 /**
  * Sessões de treino: registro, feedback, frequência cardíaca e as leituras que
  * decidem o próximo treino.
@@ -56,6 +62,28 @@ export const criarServicoDeSessoes = (supabase: SupabaseClient) => ({
       .gte("completed_at", desde);
     if (error) throw error;
     return (data ?? []) as SessaoConcluida[];
+  },
+
+  /**
+   * Começo e fim das sessões de cardio concluídas desde um instante.
+   *
+   * É a janela onde o app procura batimento para saber se o relógio do aluno
+   * grava FC durante o treino. Usar as sessões do próprio app, e não as sessões
+   * de exercício do relógio, dispensa ler os exercícios feitos fora dele
+   * (`LGPD_COMPLIANCE.md` §2.3) — por isso nada além das duas datas.
+   *
+   * @example
+   * const windows = await service.fetchCardioWindowsSince(aluno.id, trintaDiasAtras.toISOString());
+   */
+  fetchCardioWindowsSince: async (studentId: string, since: string): Promise<CardioWindow[]> => {
+    const { data, error } = await supabase
+      .from("workout_sessions")
+      .select("started_at, completed_at")
+      .eq("student_id", studentId)
+      .eq("session_type", "cardio")
+      .gte("completed_at", since);
+    if (error) throw error;
+    return (data ?? []) as CardioWindow[];
   },
 
   createWorkoutSession: async (input: CreateWorkoutSessionInput): Promise<WorkoutSession> => {
