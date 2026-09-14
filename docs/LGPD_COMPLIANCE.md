@@ -822,6 +822,7 @@ modelo. Fechado pelo PRD
 | `foods` públicos legíveis por todos os autenticados; customizados protegidos por `created_by = auth.uid()` | Necessidade + Segurança |
 | `meal_logs.photo_url` e `meal_logs.notes` apagadas na `0035` — nenhuma das duas tinha caminho de escrita | Necessidade (Art. 6°, III): coluna que nunca é preenchida é convite, não neutralidade |
 | Item extra de `actual_items` leva só os campos do alimento que a soma usa — sem `created_by` nem datas do catálogo — e sempre a `origem` (issue #298) | Necessidade (Art. 6°, III) + Qualidade (Art. 6°, V) |
+| O prato do scan entra em `actual_items` **um item por componente**, nas gramas que o aluno ajustou e com a origem `scan`; a sugestão aceita do assistente, um item por alimento com a origem `assistente`. O especialista lê "Quinoa 80 g" estimado pela foto, e não um prato opaco. Componente incompleto na resposta do modelo derruba a lista inteira, e o prato entra pelo total (issue #298) | Qualidade (Art. 6°, V) |
 | O registro do item extra lê o `meal_logs` do dia no banco, e não o que a tela tem em memória: juntar com o dia errado apagaria a troca de outro dia | Qualidade (Art. 6°, V) |
 | `hydration_daily` (`0052`): RLS só do titular, `TO authenticated`, INSERT e UPDATE com `private.has_health_consent`, sem DELETE (mais restrito que o parecer, que previa o DELETE do próprio: a correção é outro total e a eliminação é o CASCADE), sem `anon`, CHECK de 0 a 10.000 ml. Travado na `verify-rls.sql` por comportamento, com prova negativa (política sem consentimento e leitura de especialista, as duas acusadas) | Segurança (Art. 6°, VII) + Base legal Art. 11, I |
 | `diet_meals.prep_minutes`, `difficulty` e `servings` (`0053`) são metadado de receita, e não dado sobre o titular — ficam sob a RLS da `0013` | Necessidade |
@@ -892,13 +893,14 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 | `/api/ai/nutrition/adherence` | `diet_logs` anonimizados + nome do plano | Anthropic | ✅ Sim | Consentimento explícito — **verificado na rota** desde 2026-09-05. Também passou de `authorizeUser` para conta de aluno: antes, qualquer autenticado pedia análise do log que enviasse |
 | `/api/ai/student/coach/message` | Anamnese, peso, altura, % de gordura e plano do aluno | Anthropic | ✅ Sim (Art. 11) | Consentimento explícito — **verificado na rota** desde 2026-09-05 (`authorizeStudentWithHealthConsent`) |
 | `/api/ai/student/coach/session` | Idem — abre a sessão do coach do aluno | Anthropic | ✅ Sim (Art. 11) | Consentimento explícito — **verificado na rota** desde 2026-09-05 |
-| `/api/ai/student/nutribot` | Contexto nutricional do aluno | Anthropic | ✅ Sim | Consentimento explícito — **verificado na rota** desde 2026-09-05 |
-| `/api/ai/student/scan-food` | Foto de alimento enviada pelo aluno | Anthropic | ⚠️ Imagem do titular | Consentimento explícito — **verificado na rota** desde 2026-09-05 |
+| `/api/ai/student/nutribot` | Contexto nutricional do aluno e o histórico da conversa (só papel e texto). Volta com a resposta e, quando aplicável, a sugestão estruturada (`sugestao`: refeição e itens com gramas e macros), que **não volta ao provedor** no histórico | Anthropic | ✅ Sim | Consentimento explícito — **verificado na rota** desde 2026-09-05 |
+| `/api/ai/student/scan-food` | Foto de alimento enviada pelo aluno — pelo scan ou anexada na conversa do assistente. Volta com o prato e os `components` (nome, gramas e macros de cada um). A imagem não é guardada, e na conversa **só o resultado em texto** entra no histórico | Anthropic | ⚠️ Imagem do titular | Consentimento explícito — **verificado na rota** desde 2026-09-05 |
+| `/api/ai/student/sugestoes` | Só os quatro macros que faltam no dia e até 5 nomes de refeições favoritas (60 caracteres cada). Nenhum id, nome ou e-mail do aluno | Anthropic | ✅ Sim (derivado do plano) | Consentimento explícito — **verificado na rota** (`authorizeStudentWithHealthConsent`, issue #298) |
 | `/api/ai/voice-command` | Removido — rota e serviço eliminados | — | — | — |
 | `/api/ai/workout/negotiate` | Nível do aluno, objetivo, lista de exercícios | Anthropic | ❌ Não sensível | Execução de contrato |
 | `/api/ai/workout/batch` | Idem | Anthropic | ❌ Não sensível | Execução de contrato |
 | `/api/ai/nutrition/recipe` | Nome da refeição + ingredientes | Anthropic | ❌ Não sensível | Execução de contrato |
-| `/api/ai/nutrition/assistant` | Lista de compras categorizada | Anthropic | ❌ Não sensível | Execução de contrato |
+| `/api/ai/nutrition/assistant` | Lista de compras categorizada. Para o preço estimado (`promptType: "price"`), só nome e quantidade de cada item — sem o id do Food | Anthropic | ❌ Não sensível | Execução de contrato |
 
 **Decisões tomadas nesta revisão:**
 
@@ -918,6 +920,8 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 | Transmissão via HTTPS (Vercel → Anthropic/Google) | Segurança |
 | O texto de consentimento `1.5` (issue #298) diz que a foto do prato, a pergunta ao assistente, o plano e o que falta de calorias e macros do dia vão a um serviço de IA externo, que a foto não é guardada e que o nome do aluno não vai junto. O scan e o assistente já transmitiam; o que faltava era o aluno saber antes de fotografar (Art. 9°) | Transparência (Art. 6°, VI) |
 | A saudação do assistente de nutrição, que tem o primeiro nome do aluno, é montada no aparelho e **não entra no histórico enviado** à rota. Achado da revisão de código do PR 1 da #298 | Necessidade (Art. 6°, III) |
+| A rota de sugestões monta a mensagem ao provedor **campo a campo** — os macros validados e os nomes das favoritas cortados — e nunca repassa o corpo do pedido. Travado em `rotasDeNutricaoDoAluno.test.ts`, que confere que nenhum id, nome ou e-mail do aluno chega ao provedor (issue #298) | Necessidade (Art. 6°, III) |
+| As sugestões da busca e o preço da lista ficam **só no aparelho**: as sugestões até o dia virar, num registro por aluno que o dia novo sobrescreve; o preço só na memória da sessão do app. Nada disso vai ao banco | Necessidade (Art. 6°, III) |
 | Dados de `diet_logs` enviados ao Claude não contêm identificadores do aluno (`student_id` nunca incluído no payload) | Necessidade |
 
 **Pendências obrigatórias antes do lançamento:**

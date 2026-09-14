@@ -1,3 +1,4 @@
+import { separarSugestaoDaResposta } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
 import { rotaDeIA } from "@/lib/ai-route";
 import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
@@ -76,6 +77,11 @@ const handler = async (request: NextRequest) => {
 Seja amigável, motivador e conciso. Evite conselhos médicos.
 Use o plano do aluno como referência para sugestões de substituições e receitas.
 
+Quando sugerir o que comer numa refeição do plano, com alimentos e quantidades
+concretos, acrescente ao fim da resposta UM bloco, exatamente neste formato:
+<sugestao>{"refeicao":"nome da refeição do plano","itens":[{"nome":"alimento","gramas":número,"calorias":número,"proteina":número,"carboidrato":número,"gordura":número}]}</sugestao>
+Sem sugestão aplicável, não escreva o bloco. Nunca explique o bloco no texto.
+
 PLANO ALIMENTAR DO ALUNO:
 ${dietContext}`,
       },
@@ -88,7 +94,10 @@ ${dietContext}`,
     maxTokens: 512,
   });
 
-  return NextResponse.json({ reply: texto });
+  // O bloco sai do texto e vira campo próprio: o app antigo lê só `reply`, e o
+  // novo desenha o cartão "Adicionar ao jantar" quando `sugestao` vem.
+  const { resposta, sugestao } = separarSugestaoDaResposta(texto);
+  return NextResponse.json({ reply: resposta, sugestao });
 };
 
 export const POST = rotaDeIA(handler);

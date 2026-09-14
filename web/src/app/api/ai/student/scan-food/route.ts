@@ -1,3 +1,4 @@
+import { lerAnaliseDoPrato } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
 import { aiProviders } from "@/modules/ai/ai.config";
@@ -9,17 +10,15 @@ import { responderEmUmTurno } from "@/modules/ai/providers/turnoUnico";
 // plano Hobby; no Pro dá para subir até 300.
 export const maxDuration = 60;
 
-interface FoodAnalysisResult {
-  name: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  confidence: number;
-}
-
-const SYSTEM_PROMPT = `Você é um analista nutricional. Analise o alimento na imagem e retorne APENAS JSON válido:
-{"name":"Nome da refeição em Português","calories":número,"protein":número,"carbs":número,"fat":número,"confidence":número entre 0 e 1}
+/**
+ * O contrato ganhou `components` na issue #298, sem tirar nada: o app antigo lê
+ * os mesmos campos de sempre, e o novo desenha "Componentes detectados" quando
+ * o modelo separa o prato.
+ */
+const SYSTEM_PROMPT = `Você é um analista nutricional. Analise o prato na imagem e retorne APENAS JSON válido:
+{"name":"Nome do prato em Português","calories":número,"protein":número,"carbs":número,"fat":número,"confidence":número entre 0 e 1,
+"components":[{"name":"componente","grams":número,"calories":número,"protein":número,"carbs":número,"fat":número}]}
+Separe o prato nos componentes que dá para ver, com as gramas estimadas de cada um. Os totais do prato são a soma dos componentes.
 Se não for claro, estime com confidence menor. Nunca retorne texto fora do JSON.`;
 
 export async function POST(request: NextRequest) {
@@ -53,15 +52,15 @@ export async function POST(request: NextRequest) {
       },
     ],
     tools: [],
-    maxTokens: 256,
+    // Com a lista de componentes, 256 cortava o JSON de um prato de cinco itens,
+    // e o corte vira 502 no scan inteiro.
+    maxTokens: 1024,
   });
 
-  let result: FoodAnalysisResult;
-  try {
-    result = JSON.parse(texto.replace(/```json|```/g, "").trim()) as FoodAnalysisResult;
-  } catch {
+  const analise = lerAnaliseDoPrato(texto);
+  if (!analise) {
     return NextResponse.json({ error: "Failed to parse AI response" }, { status: 502 });
   }
 
-  return NextResponse.json(result);
+  return NextResponse.json(analise);
 }

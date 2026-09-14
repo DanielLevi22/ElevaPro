@@ -18,7 +18,7 @@ const registro = {
   refeicaoId: "almoco",
   data: "2026-09-13",
   doPlano,
-  extra: prato,
+  extras: [prato],
 };
 
 describe("diário alimentar — registrar item extra", () => {
@@ -70,6 +70,24 @@ describe("diário alimentar — registrar item extra", () => {
     const itens = (gravado.payload as { actual_items: ItemRegistrado[] }).actual_items;
     expect(itens[0]).toEqual(troca);
     expect(itens[1]).toMatchObject({ origem: "scan", food: { name: "Bowl" } });
+  });
+
+  // O prato do scan separado em componentes entra como um item por componente:
+  // o especialista lê o que foi estimado, e não um "Bowl" opaco.
+  it("grava vários extras de uma vez, cada um com id próprio", async () => {
+    const arroz = { ...prato, food: { ...prato.food, name: "Arroz" } } as typeof prato;
+    const { supabase, chamadas } = criarSupabaseFake([
+      { data: { id: "log-1", actual_items: [] } },
+      {},
+    ]);
+    await createDiarioAlimentar(supabase).registrarItemExtra({
+      ...registro,
+      extras: [prato, arroz],
+    });
+
+    const itens = (chamadas[1].payload as { actual_items: ItemRegistrado[] }).actual_items;
+    expect(itens.map((i) => i.food?.name)).toEqual(["Bowl", "Arroz"]);
+    expect(new Set(itens.map((i) => i.id)).size).toBe(2);
   });
 
   it("propaga erro da leitura em vez de gravar por cima", async () => {

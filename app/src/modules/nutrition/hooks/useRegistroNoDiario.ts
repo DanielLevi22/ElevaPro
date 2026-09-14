@@ -1,23 +1,12 @@
-import {
-  createDiarioAlimentar,
-  type DietMeal,
-  type ItemRegistrado,
-  refeicaoMaisProxima,
-} from '@elevapro/shared';
+import { createDiarioAlimentar, type DietMeal, refeicaoMaisProxima } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { useState } from 'react';
 import { showAlert } from '@/components/ui/appAlert';
+import type { PedidoDeRegistro } from '../services/itensEstimados';
 import { useNutritionStore } from '../store/nutritionStore';
 import { AVISO_DE_MODO_LEITURA, type PlanoDoDia, usePlanoDoDia } from './usePlanoDoDia';
 
 const diario = createDiarioAlimentar(supabase);
-
-/** O que espera a escolha da refeição para ser gravado. */
-export interface PedidoDeRegistro {
-  /** Como o item aparece no diálogo: "100 g de Banana", "Bowl, 380 kcal estimadas". */
-  descricao: string;
-  extra: Omit<ItemRegistrado, 'id'>;
-}
 
 export interface RegistroNoDiario {
   plano: PlanoDoDia;
@@ -25,7 +14,8 @@ export interface RegistroNoDiario {
   refeicoes: DietMeal[];
   refeicaoEscolhida: string | null;
   escolherRefeicao: (refeicaoId: string) => void;
-  pedir: (pedido: PedidoDeRegistro) => void;
+  /** `refeicaoCitada` é o nome que o assistente escreveu; casando com uma do dia, ela vem escolhida. */
+  pedir: (pedido: PedidoDeRegistro, refeicaoCitada?: string) => void;
   confirmar: () => void;
   cancelar: () => void;
 }
@@ -40,7 +30,7 @@ export interface RegistroNoDiario {
  *
  * @example
  * const registro = useRegistroNoDiario(user.id, { somenteLeitura });
- * registro.pedir({ descricao: '100 g de Banana', extra });
+ * registro.pedir({ descricao: '100 g de Banana', extras: [extra] });
  */
 export function useRegistroNoDiario(
   alunoId: string,
@@ -51,7 +41,7 @@ export function useRegistroNoDiario(
   const [pedido, setPedido] = useState<PedidoDeRegistro | null>(null);
   const [refeicaoEscolhida, setRefeicaoEscolhida] = useState<string | null>(null);
 
-  const pedir = (novo: PedidoDeRegistro) => {
+  const pedir = (novo: PedidoDeRegistro, refeicaoCitada?: string) => {
     if (somenteLeitura) return showAlert(AVISO_DE_MODO_LEITURA);
     if (refeicoes.length === 0) {
       return showAlert({
@@ -60,7 +50,8 @@ export function useRegistroNoDiario(
       });
     }
     const agora = new Date().toTimeString().slice(0, 5);
-    setRefeicaoEscolhida(refeicaoMaisProxima(refeicoes, agora)?.id ?? null);
+    const citada = refeicaoCitada ? refeicaoPeloNome(refeicoes, refeicaoCitada) : null;
+    setRefeicaoEscolhida(citada?.id ?? refeicaoMaisProxima(refeicoes, agora)?.id ?? null);
     setPedido(novo);
   };
 
@@ -101,7 +92,7 @@ async function gravar({ alunoId, dia, refeicaoId, pedido }: Gravacao): Promise<v
       refeicaoId,
       data: dia,
       doPlano: mealItems[refeicaoId] ?? [],
-      extra: pedido.extra,
+      extras: pedido.extras,
     });
     showAlert({
       title: 'Registrado',
@@ -115,4 +106,10 @@ async function gravar({ alunoId, dia, refeicaoId, pedido }: Gravacao): Promise<v
       type: 'error',
     });
   }
+}
+
+/** A refeição do dia com o nome que o assistente escreveu, sem diferenciar maiúscula. */
+function refeicaoPeloNome(refeicoes: DietMeal[], nome: string): DietMeal | null {
+  const procurado = nome.trim().toLocaleLowerCase('pt-BR');
+  return refeicoes.find((r) => r.name.trim().toLocaleLowerCase('pt-BR') === procurado) ?? null;
 }

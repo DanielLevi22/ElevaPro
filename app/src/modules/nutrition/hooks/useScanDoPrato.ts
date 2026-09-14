@@ -1,23 +1,28 @@
-import * as ImageManipulator from 'expo-image-manipulator';
-import * as ImagePicker from 'expo-image-picker';
+import type { AnaliseDoPrato, ComponenteDoPrato } from '@elevapro/shared';
 import { useState } from 'react';
 import { showAlert } from '@/components/ui/appAlert';
 import { mensagemDeErroBff } from '@/shared/bff';
-import type { Macros } from '../services/consumoDoDia';
-import {
-  type FoodAnalysisResult,
-  FoodRecognitionService,
-} from '../services/FoodRecognitionService';
+import { MACROS_ZERADOS, type Macros } from '../services/consumoDoDia';
+import { FoodRecognitionService } from '../services/FoodRecognitionService';
+import { fotoDoPrato } from '../services/fotoDoPrato';
+import { pedidoDoPrato } from '../services/itensEstimados';
+import { type PratoComPorcoes, pratoComPorcoes } from '../services/porcoesDoPrato';
 import { type RegistroNoDiario, useRegistroNoDiario } from './useRegistroNoDiario';
 
 export interface ScanDoPrato {
   imagem: string | null;
   analisando: boolean;
-  resultado: FoodAnalysisResult | null;
+  resultado: AnaliseDoPrato | null;
+  /** Os componentes com as gramas que o aluno ajustou. Vazio no contrato antigo. */
+  componentes: ComponenteDoPrato[];
   macros: Macros;
   metaDiaria: Macros;
   fotografar: () => void;
   escolherDaGaleria: () => void;
+  /** Soma (ou tira) gramas de um componente. */
+  ajustarPorcao: (indice: number, deltaGramas: number) => void;
+  /** Falso sem análise, ou com todos os componentes zerados: não há o que registrar. */
+  podeAdicionar: boolean;
   adicionar: () => void;
   registro: RegistroNoDiario;
 }
@@ -28,11 +33,9 @@ interface OpcoesDoScan {
   obterToken: () => string;
 }
 
-/** A foto vai reduzida: 800 de largura basta ao modelo e corta o que sai do aparelho. */
-const LARGURA_ENVIADA = 800;
-
 /**
- * O scan do prato: a foto, o reconhecimento pelo BFF e o registro no diário.
+ * O scan do prato: a foto, o reconhecimento pelo BFF, as porções ajustáveis e
+ * o registro no diário.
  *
  * A imagem não é guardada em lugar nenhum — nem no banco, nem no bucket. Vai ao
  * BFF, que confere o consentimento de saúde antes, e o que fica é o resultado,
@@ -48,13 +51,16 @@ export function useScanDoPrato(
   const registro = useRegistroNoDiario(alunoId, { somenteLeitura });
   const [imagem, setImagem] = useState<string | null>(null);
   const [analisando, setAnalisando] = useState(false);
-  const [resultado, setResultado] = useState<FoodAnalysisResult | null>(null);
+  const [resultado, setResultado] = useState<AnaliseDoPrato | null>(null);
+  const [gramas, setGramas] = useState<Record<number, number>>({});
+  const prato = resultado ? pratoComPorcoes(resultado, gramas) : null;
 
   const analisar = async (origem: 'camera' | 'galeria') => {
-    const uri = await pegarFoto(origem);
+    const uri = await fotoDoPrato(origem);
     if (!uri) return;
     setImagem(uri);
     setResultado(null);
+    setGramas({});
     setAnalisando(true);
     FoodRecognitionService.analyzeFoodImage(uri, obterToken())
       .then(setResultado)
@@ -68,72 +74,30 @@ export function useScanDoPrato(
       .finally(() => setAnalisando(false));
   };
 
+  const ajustarPorcao = (indice: number, deltaGramas: number) => {
+    const atual = prato?.componentes[indice]?.grams ?? 0;
+    setGramas((antes) => ({ ...antes, [indice]: Math.max(0, atual + deltaGramas) }));
+  };
+
   return {
     imagem,
     analisando,
     resultado,
-    macros: macrosDoResultado(resultado),
+    componentes: prato?.componentes ?? [],
+    macros: prato?.macros ?? MACROS_ZERADOS,
     metaDiaria: registro.plano.meta,
     fotografar: () => analisar('camera'),
     escolherDaGaleria: () => analisar('galeria'),
+    ajustarPorcao,
+    podeAdicionar: prato !== null && temOQueRegistrar(prato),
     adicionar: () => {
-      if (resultado) registro.pedir(pedidoDoPrato(resultado));
+      if (resultado && prato) registro.pedir(pedidoDoPrato(resultado, prato));
     },
     registro,
   };
 }
 
-function macrosDoResultado(resultado: FoodAnalysisResult | null): Macros {
-  return {
-    calorias: resultado?.calories ?? 0,
-    proteina: resultado?.protein ?? 0,
-    carboidrato: resultado?.carbs ?? 0,
-    gordura: resultado?.fat ?? 0,
-  };
-}
-
-/**
- * O prato vira um item de uma porção com os macros do reconhecimento: a foto
- * não diz gramas, e inventar 100 g daria ao número uma precisão que ele não tem.
- */
-function pedidoDoPrato(resultado: FoodAnalysisResult) {
-  const { name, calories, protein, carbs, fat } = resultado;
-  return {
-    descricao: `${name}, ${Math.round(calories)} kcal estimadas pela foto`,
-    extra: {
-      quantity: 1,
-      unit: 'porção',
-      food: { name, serving_size: 1, serving_unit: 'porção', calories, protein, carbs, fat },
-      origem: 'scan' as const,
-    },
-  };
-}
-
-const OPCOES_DA_FOTO: ImagePicker.ImagePickerOptions = {
-  mediaTypes: ['images'],
-  allowsEditing: true,
-  aspect: [4, 3],
-  quality: 0.7,
-};
-
-async function pegarFoto(origem: 'camera' | 'galeria'): Promise<string | null> {
-  if (origem === 'camera' && !(await ImagePicker.requestCameraPermissionsAsync()).granted) {
-    showAlert({
-      title: 'Sem acesso à câmera',
-      message: 'Libere a câmera nas configurações para fotografar o prato.',
-      type: 'warning',
-    });
-    return null;
-  }
-  const escolha =
-    origem === 'camera'
-      ? await ImagePicker.launchCameraAsync(OPCOES_DA_FOTO)
-      : await ImagePicker.launchImageLibraryAsync(OPCOES_DA_FOTO);
-  if (escolha.canceled) return null;
-  const reduzida = await ImageManipulator.manipulateAsync(
-    escolha.assets[0].uri,
-    [{ resize: { width: LARGURA_ENVIADA } }],
-    { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-  );
-  return reduzida.uri;
+/** Sem componentes vale o prato inteiro; com eles, ao menos um com gramas. */
+function temOQueRegistrar(prato: PratoComPorcoes): boolean {
+  return prato.componentes.length === 0 || prato.componentes.some((c) => c.grams > 0);
 }

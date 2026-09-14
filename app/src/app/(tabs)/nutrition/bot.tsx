@@ -1,5 +1,5 @@
 import { primeiroNome } from '@elevapro/shared';
-import { useAuthStore } from '@/auth';
+import { tokenDaSessao, useAuthStore } from '@/auth';
 import { AssistenteDeNutricaoScreen } from '@/modules/nutrition/routes/index';
 import NutriBotScreen from '@/modules/nutrition/screens/NutriBotScreen';
 
@@ -8,14 +8,15 @@ import NutriBotScreen from '@/modules/nutrition/screens/NutriBotScreen';
  * member segue na tela antiga até o plano dele ganhar desenho.
  */
 export default function NutriBotRoute() {
-  const { user, accountType } = useAuthStore();
+  const { user, accountType, isMasquerading } = useAuthStore();
   if (accountType === 'member' || !user?.id) return <NutriBotScreen />;
 
   return (
     <AssistenteDeNutricaoScreen
       alunoId={user.id}
       primeiroNome={primeiroNome(user.user_metadata?.full_name) ?? 'Aluno'}
-      obterToken={() => useAuthStore.getState().session?.access_token ?? ''}
+      somenteLeitura={isMasquerading}
+      obterToken={tokenDaSessao}
     />
   );
 }

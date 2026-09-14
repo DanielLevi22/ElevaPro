@@ -13,39 +13,50 @@ import { BotaoDoAssistente } from '../../components/aluno/BotaoDoAssistente';
 import { CategoriasDoCatalogo } from '../../components/aluno/CategoriasDoCatalogo';
 import { ConfirmacaoDoRegistro } from '../../components/aluno/ConfirmacaoDoRegistro';
 import { LinhaDoAlimento } from '../../components/aluno/LinhaDoAlimento';
+import { SugestoesDoAssistente } from '../../components/aluno/SugestoesDoAssistente';
 import { TelaDaNutricao } from '../../components/aluno/TelaDaNutricao';
 import { type BuscaDeAlimento, useBuscaDeAlimento } from '../../hooks/useBuscaDeAlimento';
+import { useSugestoesDoDia } from '../../hooks/useSugestoesDoDia';
 import { numeroDoBanco } from '../../services/consumoDoDia';
 
 /**
  * Tela 3 do fluxo de nutrição do kit: o que falta do dia, a busca, as
  * categorias do catálogo e os resultados com "+".
  *
- * Três partes do kit não entraram aqui:
+ * Duas partes do kit não entraram aqui:
  * - o sino, porque o aluno não tem tela de notificações — o lugar dele abre o
  *   scan do prato, que é a outra resposta a "o que você vai comer agora?";
- * - "Sugestões do assistente", que chega com a rota dela no terceiro PR da #298;
  * - "receita" no campo de busca, porque o catálogo só tem alimento.
+ *
+ * "Sugestões do Coach IA" do kit é "Sugestões do assistente": "Coach" é o
+ * especialista (issue #298).
  *
  * O botão de filtro ao lado da busca põe primeiro o que tem mais proteína por
  * caloria — o único filtro que o catálogo sustenta sem dado novo.
  *
  * @example
- * <BuscarAlimentoScreen alunoId={user.id} primeiroNome="Daniel" somenteLeitura={false} />
+ * <BuscarAlimentoScreen alunoId={user.id} primeiroNome="Daniel" somenteLeitura={false} obterToken={() => token} />
  */
 interface BuscarAlimentoScreenProps {
   alunoId: string;
   primeiroNome: string;
   somenteLeitura: boolean;
+  /** O token da sessão na hora do pedido das sugestões: a rota o lê do login. */
+  obterToken: () => string;
 }
 
 export function BuscarAlimentoScreen({
   alunoId,
   primeiroNome,
   somenteLeitura,
+  obterToken,
 }: BuscarAlimentoScreenProps) {
   const router = useRouter();
   const busca = useBuscaDeAlimento(alunoId, { somenteLeitura });
+  const sugestoes = useSugestoesDoDia(alunoId, busca.registro.plano, {
+    somenteLeitura,
+    obterToken,
+  });
   const [todas, setTodas] = useState(false);
 
   return (
@@ -75,6 +86,7 @@ export function BuscarAlimentoScreen({
         todas={todas}
         onEscolher={busca.escolherCategoria}
       />
+      <SugestoesDoAssistente sugestoes={sugestoes} />
       <Resultados busca={busca} />
       <ConfirmacaoDoRegistro registro={busca.registro} />
     </TelaDaNutricao>

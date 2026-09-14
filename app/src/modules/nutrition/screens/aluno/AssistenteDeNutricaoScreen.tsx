@@ -16,11 +16,15 @@ import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
+import { CartaoDaSugestao } from '../../components/aluno/CartaoDaSugestao';
+import { ConfirmacaoDoRegistro } from '../../components/aluno/ConfirmacaoDoRegistro';
 import { TelaDaNutricao } from '../../components/aluno/TelaDaNutricao';
 import {
   type ConversaDoAssistente,
   useConversaDoAssistente,
 } from '../../hooks/useConversaDoAssistente';
+import { type RegistroNoDiario, useRegistroNoDiario } from '../../hooks/useRegistroNoDiario';
+import { pedidoDaSugestao } from '../../services/itensEstimados';
 import type { ChatMessage } from '../../services/NutriBotService';
 
 /**
@@ -31,17 +35,17 @@ import type { ChatMessage } from '../../services/NutriBotService';
  * - "NutriBot" vira "Assistente", com "nutrição" embaixo: é o mesmo assistente
  *   do app, em outra superfície (`CONTEXT.md`);
  * - o kit desenha a barra "Anexar foto · Enviar mensagem" sem campo para
- *   escrever. Aqui a barra é o campo com o botão de enviar; anexar foto chega
- *   com o reconhecimento no terceiro PR, junto do cartão "Adicionar ao jantar";
+ *   escrever. Aqui a barra é anexar, o campo e enviar;
  * - "online" vira "nutrição": o assistente não fica offline, e o status diria
  *   uma coisa que não significa nada.
  *
  * @example
- * <AssistenteDeNutricaoScreen alunoId={user.id} primeiroNome="Daniel" obterToken={() => token} />
+ * <AssistenteDeNutricaoScreen alunoId={user.id} primeiroNome="Daniel" somenteLeitura={false} obterToken={() => token} />
  */
 interface AssistenteDeNutricaoScreenProps {
   alunoId: string;
   primeiroNome: string;
+  somenteLeitura: boolean;
   obterToken: () => string;
 }
 
@@ -50,10 +54,12 @@ const PERGUNTAS_RAPIDAS = ['Trocar o lanche', 'Receita rápida', 'Quanto de águ
 export function AssistenteDeNutricaoScreen({
   alunoId,
   primeiroNome,
+  somenteLeitura,
   obterToken,
 }: AssistenteDeNutricaoScreenProps) {
   const router = useRouter();
-  const conversa = useConversaDoAssistente(alunoId, { primeiroNome, obterToken });
+  const registro = useRegistroNoDiario(alunoId, { somenteLeitura });
+  const conversa = useConversaDoAssistente(registro.plano, { primeiroNome, obterToken });
   const rolagem = useRef<ScrollView>(null);
 
   return (
@@ -65,11 +71,15 @@ export function AssistenteDeNutricaoScreen({
         folgaNoFim="rodape"
         rolagemRef={rolagem}
         sobreposicao={
-          <CampoDaConversa respondendo={conversa.respondendo} onEnviar={conversa.enviar} />
+          <CampoDaConversa
+            respondendo={conversa.respondendo}
+            onEnviar={conversa.enviar}
+            onAnexar={conversa.anexarFoto}
+          />
         }
       >
         <CabecalhoDoAssistente onVoltar={router.back} />
-        <Baloes conversa={conversa} />
+        <Baloes conversa={conversa} registro={registro} />
         <TituloDeSecao estilo="rotulo">Perguntas rápidas</TituloDeSecao>
         <View className="flex-row flex-wrap gap-2">
           {PERGUNTAS_RAPIDAS.map((pergunta) => (
@@ -87,6 +97,7 @@ export function AssistenteDeNutricaoScreen({
             </TouchableOpacity>
           ))}
         </View>
+        <ConfirmacaoDoRegistro registro={registro} />
       </TelaDaNutricao>
     </KeyboardAvoidingView>
   );
@@ -117,11 +128,25 @@ function CabecalhoDoAssistente({ onVoltar }: { onVoltar: () => void }) {
   );
 }
 
-function Baloes({ conversa }: { conversa: ConversaDoAssistente }) {
+function Baloes({
+  conversa,
+  registro,
+}: {
+  conversa: ConversaDoAssistente;
+  registro: RegistroNoDiario;
+}) {
   return (
     <View className="mt-[1.375rem] gap-3">
-      {conversa.mensagens.map((mensagem) => (
-        <Balao key={mensagem.id} mensagem={mensagem} />
+      {conversa.mensagens.map(({ sugestao, ...mensagem }) => (
+        <View key={mensagem.id} className="gap-2">
+          <Balao mensagem={mensagem} />
+          {sugestao ? (
+            <CartaoDaSugestao
+              sugestao={sugestao}
+              onAdicionar={() => registro.pedir(pedidoDaSugestao(sugestao), sugestao.refeicao)}
+            />
+          ) : null}
+        </View>
       ))}
       {conversa.respondendo ? <Digitando /> : null}
     </View>
@@ -174,13 +199,14 @@ function Digitando() {
 const ACIMA_DO_INSET = 84;
 const BRILHO_DO_ENVIO = { y: 10, blur: 26, espalhamento: -10 } as const;
 
-function CampoDaConversa({
-  respondendo,
-  onEnviar,
-}: {
+interface CampoDaConversaProps {
   respondendo: boolean;
   onEnviar: (texto: string) => void;
-}) {
+  /** A foto do prato passa pelo reconhecimento, e só o resultado vai à conversa. */
+  onAnexar: () => void;
+}
+
+function CampoDaConversa({ respondendo, onEnviar, onAnexar }: CampoDaConversaProps) {
   const cores = useCores();
   const escalar = useEscala();
   const brilho = useBrilho();
@@ -199,6 +225,16 @@ function CampoDaConversa({
       className="absolute left-[1.125rem] right-[1.125rem] flex-row gap-[0.5625rem]"
       style={{ bottom: insets.bottom + escalar(ACIMA_DO_INSET) }}
     >
+      <TouchableOpacity
+        onPress={onAnexar}
+        disabled={respondendo}
+        accessibilityRole="button"
+        accessibilityLabel="Anexar foto do prato"
+        className="h-[2.625rem] w-[2.625rem] items-center justify-center overflow-hidden rounded-[0.8125rem] border border-glass-border bg-background"
+      >
+        <View className="absolute inset-0 bg-glass-strong" />
+        <Ionicons name="image-outline" size={escalar(17)} color={cores.foreground} />
+      </TouchableOpacity>
       {/* Vidro forte sobre a cor da tela, como a secundária da barra de ações:
           a conversa rola por baixo e não pode atravessar o que se digita. */}
       <View className="h-[2.625rem] flex-1 justify-center overflow-hidden rounded-[0.8125rem] border border-glass-border bg-background px-3.5">

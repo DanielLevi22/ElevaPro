@@ -1,3 +1,4 @@
+import { lerPrecoEstimado } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
 import { rotaDeIA } from "@/lib/ai-route";
 import { authorizeUser } from "@/lib/api-auth";
@@ -10,11 +11,11 @@ import { responderEmUmTurno } from "@/modules/ai/providers/turnoUnico";
 // plano Hobby; no Pro dá para subir até 300.
 export const maxDuration = 60;
 
-type PromptType = "recipes" | "analysis" | "tips" | "meal_prep" | "cooking_guide";
+type PromptType = "recipes" | "analysis" | "tips" | "meal_prep" | "cooking_guide" | "price";
 
 interface ShoppingCategory {
   category: string;
-  items: { name: string; quantity: string }[];
+  items: (string | { name: string; quantity?: string })[];
 }
 
 const PROMPTS: Record<PromptType, string> = {
@@ -25,9 +26,17 @@ const PROMPTS: Record<PromptType, string> = {
   tips: "Você é um comprador proativo. Dê dicas específicas sobre como escolher a qualidade dos itens frescos (frutas/legumes/carnes) presentes nesta lista. Bullet points curtos. Responda em Português do Brasil.",
   meal_prep:
     "Você é um especialista em meal prep. Crie um guia passo-a-passo para cozinhar/preparar esses ingredientes de forma eficiente para a semana. Agrupe tarefas. Seja prático. Responda em Português do Brasil.",
+  price:
+    'Você estima preço de supermercado no Brasil. Some o custo aproximado de todos os itens desta lista nas quantidades dadas e retorne APENAS JSON válido: {"total": número em reais}. Nunca retorne texto fora do JSON.',
   cooking_guide:
     "Você é um instrutor culinário. Escolha os componentes principais da refeição desta lista e ensine passo-a-passo como cozinhá-los perfeitamente. Foque na técnica. Responda em Português do Brasil.",
 };
+
+/** O item como texto: "Frango (1,4 kg)". O app antigo manda só o nome. */
+function descreverItem(item: string | { name: string; quantity?: string }): string {
+  if (typeof item === "string") return item;
+  return item.quantity ? `${item.name} (${item.quantity})` : item.name;
+}
 
 const handler = async (request: NextRequest) => {
   // Antes: `getAuthenticatedUserId`, uma cópia local que fazia
@@ -54,8 +63,10 @@ const handler = async (request: NextRequest) => {
     return NextResponse.json({ error: `Invalid promptType: ${promptType}` }, { status: 400 });
   }
 
+  // Só nome e quantidade de cada item: é o que o preço precisa, e nada do aluno
+  // ou do plano vai junto (parecer do /lgpd-check da #298).
   const itemsList = categories
-    .map((cat) => `${cat.category}: ${cat.items.map((i) => i.name).join(", ")}`)
+    .map((cat) => `${cat.category}: ${cat.items.map(descreverItem).join(", ")}`)
     .join("\n");
 
   const { texto } = await responderEmUmTurno(aiProviders.fast, {
@@ -65,6 +76,9 @@ const handler = async (request: NextRequest) => {
     maxTokens: 1024,
   });
 
+  if (promptType === "price") {
+    return NextResponse.json({ precoEstimado: lerPrecoEstimado(texto) });
+  }
   return NextResponse.json({ response: texto || "Não consegui gerar uma resposta." });
 };
 
