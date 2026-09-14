@@ -182,9 +182,11 @@ export default function HealthConnectScreen() {
             Lemos do seu relógio{' '}
             <Text className="text-white font-semibold">
               passos, calorias, quanto você dormiu, sua frequência cardíaca de repouso e a
-              frequência cardíaca média das suas corridas
+              frequência cardíaca das suas corridas
             </Text>
-            , para acompanhar sua atividade entre os treinos.
+            , para acompanhar sua atividade entre os treinos. Da corrida guardamos só a média e o
+            tempo em cada zona de esforço, calculadas com a idade da sua anamnese; os batimentos um
+            a um são lidos no seu aparelho e descartados.
           </Text>
 
           {/*

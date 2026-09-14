@@ -39,7 +39,7 @@ const CATALOGO: { finalidade: Finalidade; titulo: string; descricao: string }[] 
     // uma lista que não corresponde ao que é coletado. Estava parada na `1.2`:
     // sono e FC de repouso entraram na `1.3` e nunca chegaram nesta tela.
     descricao:
-      'Avaliação física, anamnese, body scan, passos e calorias, sono e frequência cardíaca de repouso, a frequência cardíaca média das corridas, as refeições registradas e a água do dia.',
+      'Avaliação física, anamnese, body scan, passos e calorias, sono e frequência cardíaca de repouso, a frequência cardíaca média e o tempo em cada zona das corridas, as refeições registradas e a água do dia.',
   },
   {
     finalidade: TECNICA,
