@@ -32,11 +32,34 @@ export function textoDoPreco(total: number | null): string | null {
 }
 
 /**
- * O total estimado pelo assistente, ou `null` quando ele não soube dizer.
- *
- * @example const total = await estimarPrecoDaLista(lista.grupos, token);
+ * As estimativas já pedidas nesta sessão do app, pela lista exata que foi.
+ * Voltar à tela ou alternar o período não chama a IA de novo pela mesma lista.
  */
-export async function estimarPrecoDaLista(
+const precosPedidos = new Map<string, Promise<number | null>>();
+
+/**
+ * O total estimado da lista, pedido ao assistente uma vez por lista. Falha dá
+ * `null` e não fica guardada: a próxima vez na tela tenta de novo.
+ *
+ * @example const total = await estimarPrecoUmaVez(lista.grupos, token);
+ */
+export function estimarPrecoUmaVez(
+  grupos: GrupoDeCompras[],
+  token: string
+): Promise<number | null> {
+  const assinatura = JSON.stringify(pedidoDoPreco(grupos));
+  const pedido =
+    precosPedidos.get(assinatura) ??
+    estimarPrecoDaLista(grupos, token).catch(() => {
+      precosPedidos.delete(assinatura);
+      return null;
+    });
+  precosPedidos.set(assinatura, pedido);
+  return pedido;
+}
+
+/** O total estimado pelo assistente, ou `null` quando ele não soube dizer. */
+async function estimarPrecoDaLista(
   grupos: GrupoDeCompras[],
   token: string
 ): Promise<number | null> {
@@ -46,6 +69,10 @@ export async function estimarPrecoDaLista(
     { token }
   );
   const dados = await lerRespostaBff<{ precoEstimado?: number | null }>(response, url);
-  if (!response.ok) throw new Error(`price BFF error: ${response.status}`);
+  if (!response.ok) {
+    throw new Error(
+      `price BFF error: status ${response.status}, esperado 2xx com { precoEstimado }`
+    );
+  }
   return dados.precoEstimado ?? null;
 }

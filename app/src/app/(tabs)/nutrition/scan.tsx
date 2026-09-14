@@ -1,4 +1,4 @@
-import { useAuthStore } from '@/auth';
+import { tokenDaSessao, useAuthStore } from '@/auth';
 import { EscanearPratoScreen } from '@/modules/nutrition/routes/index';
 import ScanFoodScreen from '@/modules/nutrition/screens/ScanFoodScreen';
 
@@ -14,7 +14,7 @@ export default function ScanFoodRoute() {
     <EscanearPratoScreen
       alunoId={user.id}
       somenteLeitura={isMasquerading}
-      obterToken={() => useAuthStore.getState().session?.access_token ?? ''}
+      obterToken={tokenDaSessao}
     />
   );
 }

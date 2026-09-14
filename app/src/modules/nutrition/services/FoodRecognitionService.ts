@@ -2,13 +2,17 @@ import type { AnaliseDoPrato } from '@elevapro/shared';
 import * as FileSystem from 'expo-file-system/legacy';
 import { fetchBff, lerRespostaBff } from '@/shared/bff';
 
-/** O contrato da rota vive no `shared`, junto do leitor que a rota usa. */
+/**
+ * O contrato da rota vive no `shared`, junto do leitor que a rota usa. O nome
+ * antigo fica só para a tela do member (`ScanFoodScreen`); código novo usa
+ * `AnaliseDoPrato`.
+ */
 export type FoodAnalysisResult = AnaliseDoPrato;
 
 const ROTA = '/api/ai/student/scan-food';
 
 export const FoodRecognitionService = {
-  analyzeFoodImage: async (uri: string, authToken: string): Promise<FoodAnalysisResult> => {
+  analyzeFoodImage: async (uri: string, authToken: string): Promise<AnaliseDoPrato> => {
     const imageBase64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
 
     const { response, url } = await fetchBff(

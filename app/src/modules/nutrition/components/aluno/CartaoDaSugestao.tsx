@@ -5,9 +5,17 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { Vidro } from '@/components/ui/Vidro';
 import { useCores, useEscala } from '@/shared/design';
 
+interface CartaoDaSugestaoProps {
+  sugestao: SugestaoDoAssistente;
+  onAdicionar: () => void;
+}
+
 /**
  * O cartão "Adicionar ao jantar" do kit: a sugestão aplicável que veio com a
- * resposta do assistente, com os itens e as gramas.
+ * resposta do assistente, com a refeição, os itens e as gramas.
+ *
+ * O título é "Adicionar ao diário", e a refeição vai na linha de baixo: o nome
+ * vem do plano ("Ceia", "Café da manhã"), e "ao" antes dele erra o gênero.
  *
  * "Adicionar" leva ao diálogo do registro, com a refeição citada já escolhida;
  * "Ver macros" abre as calorias e os macros de cada item.
@@ -15,11 +23,6 @@ import { useCores, useEscala } from '@/shared/design';
  * @example
  * <CartaoDaSugestao sugestao={mensagem.sugestao} onAdicionar={() => registrar(mensagem.sugestao)} />
  */
-interface CartaoDaSugestaoProps {
-  sugestao: SugestaoDoAssistente;
-  onAdicionar: () => void;
-}
-
 export function CartaoDaSugestao({ sugestao, onAdicionar }: CartaoDaSugestaoProps) {
   const cores = useCores();
   const escalar = useEscala();
@@ -32,8 +35,8 @@ export function CartaoDaSugestao({ sugestao, onAdicionar }: CartaoDaSugestaoProp
         <Ionicons name="clipboard-outline" size={escalar(15)} color={cores.textoProteina} />
       </View>
       <View className="flex-1">
-        <Text className="text-[0.84375rem] font-bold text-foreground">{`Adicionar ao ${sugestao.refeicao}`}</Text>
-        <Text className="mt-0.5 text-[0.75rem] text-muted-foreground">{resumo}</Text>
+        <Text className="text-[0.84375rem] font-bold text-foreground">Adicionar ao diário</Text>
+        <Text className="mt-0.5 text-[0.75rem] text-muted-foreground">{`${sugestao.refeicao} · ${resumo}`}</Text>
         {verMacros ? <MacrosDosItens sugestao={sugestao} /> : null}
         <View className="mt-[0.6875rem] flex-row gap-2">
           <TouchableOpacity

@@ -1,5 +1,5 @@
 import { primeiroNome } from '@elevapro/shared';
-import { useAuthStore } from '@/auth';
+import { tokenDaSessao, useAuthStore } from '@/auth';
 import { AssistenteDeNutricaoScreen } from '@/modules/nutrition/routes/index';
 import NutriBotScreen from '@/modules/nutrition/screens/NutriBotScreen';
 
@@ -16,7 +16,7 @@ export default function NutriBotRoute() {
       alunoId={user.id}
       primeiroNome={primeiroNome(user.user_metadata?.full_name) ?? 'Aluno'}
       somenteLeitura={isMasquerading}
-      obterToken={() => useAuthStore.getState().session?.access_token ?? ''}
+      obterToken={tokenDaSessao}
     />
   );
 }

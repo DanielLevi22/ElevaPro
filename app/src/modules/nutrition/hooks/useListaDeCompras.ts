@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Share } from 'react-native';
 import { carregarPlanoDoAluno } from '../services/carregarPlanoDoAluno';
 import { type GrupoDeCompras, listaDeCompras } from '../services/listaDeCompras';
-import { estimarPrecoDaLista, pedidoDoPreco, textoDoPreco } from '../services/precoDaLista';
+import { estimarPrecoUmaVez, pedidoDoPreco, textoDoPreco } from '../services/precoDaLista';
 import { useComprasStore } from '../store/comprasStore';
 import { useNutritionStore } from '../store/nutritionStore';
 
@@ -69,14 +69,8 @@ export function useListaDeCompras(
 }
 
 /**
- * As estimativas já pedidas nesta sessão do app, pela lista exata que foi.
- * Voltar à tela ou alternar o período não chama a IA de novo pela mesma lista.
- */
-const precosPedidos = new Map<string, Promise<number | null>>();
-
-/**
- * O preço da lista, estimado pelo assistente quando a lista muda. Falha fica
- * sem preço, e não "R$ 0": a lista não depende dele.
+ * O preço da lista, estimado pelo assistente quando a lista muda. Sem
+ * estimativa fica sem preço, e não "R$ 0": a lista não depende dele.
  */
 function usePrecoDaLista(grupos: GrupoDeCompras[], obterToken: () => string): string | null {
   const assinatura = JSON.stringify(pedidoDoPreco(grupos));
@@ -89,17 +83,10 @@ function usePrecoDaLista(grupos: GrupoDeCompras[], obterToken: () => string): st
   useEffect(() => {
     const { grupos: lista, obterToken: token } = atual.current;
     if (lista.length === 0) return;
-    let pedido = precosPedidos.get(assinatura);
-    if (!pedido) {
-      pedido = estimarPrecoDaLista(lista, token()).catch(() => {
-        // A falha não fica guardada: a próxima vez na tela tenta de novo.
-        precosPedidos.delete(assinatura);
-        return null;
-      });
-      precosPedidos.set(assinatura, pedido);
-    }
     let ativo = true;
-    pedido.then((total) => ativo && setPrecos((antes) => ({ ...antes, [assinatura]: total })));
+    estimarPrecoUmaVez(lista, token()).then(
+      (total) => ativo && setPrecos((antes) => ({ ...antes, [assinatura]: total }))
+    );
     return () => {
       ativo = false;
     };

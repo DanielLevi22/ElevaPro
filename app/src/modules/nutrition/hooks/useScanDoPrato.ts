@@ -1,20 +1,18 @@
-import type { ComponenteDoPrato } from '@elevapro/shared';
+import type { AnaliseDoPrato, ComponenteDoPrato } from '@elevapro/shared';
 import { useState } from 'react';
 import { showAlert } from '@/components/ui/appAlert';
 import { mensagemDeErroBff } from '@/shared/bff';
 import { MACROS_ZERADOS, type Macros } from '../services/consumoDoDia';
-import {
-  type FoodAnalysisResult,
-  FoodRecognitionService,
-} from '../services/FoodRecognitionService';
+import { FoodRecognitionService } from '../services/FoodRecognitionService';
 import { fotoDoPrato } from '../services/fotoDoPrato';
+import { pedidoDoPrato } from '../services/itensEstimados';
 import { type PratoComPorcoes, pratoComPorcoes } from '../services/porcoesDoPrato';
 import { type RegistroNoDiario, useRegistroNoDiario } from './useRegistroNoDiario';
 
 export interface ScanDoPrato {
   imagem: string | null;
   analisando: boolean;
-  resultado: FoodAnalysisResult | null;
+  resultado: AnaliseDoPrato | null;
   /** Os componentes com as gramas que o aluno ajustou. Vazio no contrato antigo. */
   componentes: ComponenteDoPrato[];
   macros: Macros;
@@ -23,6 +21,8 @@ export interface ScanDoPrato {
   escolherDaGaleria: () => void;
   /** Soma (ou tira) gramas de um componente. */
   ajustarPorcao: (indice: number, deltaGramas: number) => void;
+  /** Falso sem análise, ou com todos os componentes zerados: não há o que registrar. */
+  podeAdicionar: boolean;
   adicionar: () => void;
   registro: RegistroNoDiario;
 }
@@ -51,7 +51,7 @@ export function useScanDoPrato(
   const registro = useRegistroNoDiario(alunoId, { somenteLeitura });
   const [imagem, setImagem] = useState<string | null>(null);
   const [analisando, setAnalisando] = useState(false);
-  const [resultado, setResultado] = useState<FoodAnalysisResult | null>(null);
+  const [resultado, setResultado] = useState<AnaliseDoPrato | null>(null);
   const [gramas, setGramas] = useState<Record<number, number>>({});
   const prato = resultado ? pratoComPorcoes(resultado, gramas) : null;
 
@@ -89,6 +89,7 @@ export function useScanDoPrato(
     fotografar: () => analisar('camera'),
     escolherDaGaleria: () => analisar('galeria'),
     ajustarPorcao,
+    podeAdicionar: prato !== null && temOQueRegistrar(prato),
     adicionar: () => {
       if (resultado && prato) registro.pedir(pedidoDoPrato(resultado, prato));
     },
@@ -96,38 +97,7 @@ export function useScanDoPrato(
   };
 }
 
-/**
- * O que entra no diário. Com componentes, um item por componente, nas gramas
- * ajustadas: o especialista lê "Quinoa 80 g", e não um "Bowl" opaco. Sem
- * componentes, o prato inteiro como uma porção — a foto não diz gramas, e
- * inventar 100 g daria ao número uma precisão que ele não tem.
- */
-function pedidoDoPrato(resultado: FoodAnalysisResult, prato: PratoComPorcoes) {
-  const descricao = `${resultado.name}, ${Math.round(prato.macros.calorias)} kcal estimadas pela foto`;
-  if (prato.componentes.length === 0) {
-    const { name, calories, protein, carbs, fat } = resultado;
-    return {
-      descricao,
-      extras: [
-        {
-          quantity: 1,
-          unit: 'porção',
-          food: { name, serving_size: 1, serving_unit: 'porção', calories, protein, carbs, fat },
-          origem: 'scan' as const,
-        },
-      ],
-    };
-  }
-  return { descricao, extras: prato.componentes.filter((c) => c.grams > 0).map(itemDoComponente) };
-}
-
-/** O componente como item: a porção de referência são as próprias gramas. */
-function itemDoComponente(componente: ComponenteDoPrato) {
-  const { name, grams, calories, protein, carbs, fat } = componente;
-  return {
-    quantity: grams,
-    unit: 'g',
-    food: { name, serving_size: grams, serving_unit: 'g', calories, protein, carbs, fat },
-    origem: 'scan' as const,
-  };
+/** Sem componentes vale o prato inteiro; com eles, ao menos um com gramas. */
+function temOQueRegistrar(prato: PratoComPorcoes): boolean {
+  return prato.componentes.length === 0 || prato.componentes.some((c) => c.grams > 0);
 }

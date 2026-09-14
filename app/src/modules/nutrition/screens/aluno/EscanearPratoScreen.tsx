@@ -1,3 +1,4 @@
+import type { AnaliseDoPrato } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -14,7 +15,6 @@ import { ConfirmacaoDoRegistro } from '../../components/aluno/ConfirmacaoDoRegis
 import { TelaDaNutricao } from '../../components/aluno/TelaDaNutricao';
 import { type ScanDoPrato, useScanDoPrato } from '../../hooks/useScanDoPrato';
 import { percentualDaMeta } from '../../services/consumoDoDia';
-import type { FoodAnalysisResult } from '../../services/FoodRecognitionService';
 
 /**
  * Tela 5 do fluxo de nutrição do kit: a foto com a moldura de reconhecimento,
@@ -79,7 +79,7 @@ function AcoesDoScan({ scan }: { scan: ScanDoPrato }) {
         rotulo: 'Adicionar ao diário',
         icone: 'add',
         onPress: scan.adicionar,
-        desabilitada: !scan.resultado,
+        desabilitada: !scan.podeAdicionar,
       }}
     />
   );
@@ -142,7 +142,7 @@ function AvisoDeAnalise() {
 
 interface ResultadoDoScanProps {
   scan: ScanDoPrato;
-  resultado: FoodAnalysisResult;
+  resultado: AnaliseDoPrato;
 }
 
 function ResultadoDoScan({ scan, resultado }: ResultadoDoScanProps) {

@@ -24,6 +24,7 @@ import {
   useConversaDoAssistente,
 } from '../../hooks/useConversaDoAssistente';
 import { type RegistroNoDiario, useRegistroNoDiario } from '../../hooks/useRegistroNoDiario';
+import { pedidoDaSugestao } from '../../services/itensEstimados';
 import type { ChatMessage } from '../../services/NutriBotService';
 
 /**
@@ -136,13 +137,13 @@ function Baloes({
 }) {
   return (
     <View className="mt-[1.375rem] gap-3">
-      {conversa.mensagens.map((mensagem) => (
+      {conversa.mensagens.map(({ sugestao, ...mensagem }) => (
         <View key={mensagem.id} className="gap-2">
           <Balao mensagem={mensagem} />
-          {mensagem.sugestao ? (
+          {sugestao ? (
             <CartaoDaSugestao
-              sugestao={mensagem.sugestao}
-              onAdicionar={() => registrarSugestao(registro, mensagem.sugestao)}
+              sugestao={sugestao}
+              onAdicionar={() => registro.pedir(pedidoDaSugestao(sugestao), sugestao.refeicao)}
             />
           ) : null}
         </View>
@@ -176,33 +177,6 @@ function Balao({ mensagem }: { mensagem: ChatMessage }) {
       </Vidro>
     </View>
   );
-}
-
-/**
- * A sugestão aceita vai ao diário item por item, com origem `assistente`: é
- * estimativa de modelo, e o especialista precisa saber (LGPD, Art. 6°, V). As
- * gramas do modelo viram a porção de referência de cada item.
- */
-function registrarSugestao(registro: RegistroNoDiario, sugestao: ChatMessage['sugestao']) {
-  if (!sugestao) return;
-  const extras = sugestao.itens.map(
-    ({ nome, gramas, calorias, proteina, carboidrato, gordura }) => ({
-      quantity: gramas,
-      unit: 'g',
-      food: {
-        name: nome,
-        serving_size: gramas,
-        serving_unit: 'g',
-        calories: calorias,
-        protein: proteina,
-        carbs: carboidrato,
-        fat: gordura,
-      },
-      origem: 'assistente' as const,
-    })
-  );
-  const descricao = sugestao.itens.map((item) => `${item.gramas} g de ${item.nome}`).join(', ');
-  registro.pedir({ descricao, extras }, sugestao.refeicao);
 }
 
 /** Os três pontos do kit enquanto a resposta não chega. */

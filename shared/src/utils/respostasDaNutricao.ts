@@ -51,8 +51,18 @@ function componente(bruto: unknown): ComponenteDoPrato | null {
 }
 
 /**
- * A resposta do scan, validada. Componente incompleto sai da lista; sem nome ou
- * sem os macros do prato, não há análise.
+ * Os componentes do prato, ou nenhum: com um só incompleto, a soma dos outros
+ * mostraria um prato menor que o do modelo, sem aviso.
+ */
+function componentesDoPrato(bruto: unknown): ComponenteDoPrato[] {
+  if (!Array.isArray(bruto)) return [];
+  const lidos = bruto.map(componente);
+  return lidos.every((c): c is ComponenteDoPrato => c !== null) ? lidos : [];
+}
+
+/**
+ * A resposta do scan, validada. Um componente incompleto derruba a lista, e o
+ * prato vale pelo total; sem nome ou sem os macros do prato, não há análise.
  *
  * @example lerAnaliseDoPrato(textoDoModelo)?.components
  */
@@ -62,12 +72,11 @@ export function lerAnaliseDoPrato(textoDoModelo: string): AnaliseDoPrato | null 
   const name = texto(bruto.name);
   const macros = medidas(bruto, MACROS);
   if (!name || !macros) return null;
-  const componentes = Array.isArray(bruto.components) ? bruto.components : [];
   return {
     name,
     ...macros,
     confidence: Math.min(1, medida(bruto.confidence) ?? 0),
-    components: componentes.map(componente).filter((c): c is ComponenteDoPrato => c !== null),
+    components: componentesDoPrato(bruto.components),
   };
 }
 

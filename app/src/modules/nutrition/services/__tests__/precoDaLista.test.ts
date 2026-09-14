@@ -1,4 +1,8 @@
-import { pedidoDoPreco, textoDoPreco } from '../precoDaLista';
+import * as bff from '@/shared/bff';
+import { estimarPrecoUmaVez, pedidoDoPreco, textoDoPreco } from '../precoDaLista';
+
+// A rede é a fronteira: o que se confere é quantas vezes a lista sai do aparelho.
+jest.mock('@/shared/bff', () => ({ fetchBff: jest.fn(), lerRespostaBff: jest.fn() }));
 
 /**
  * O preço estimado da lista de compras (issue #298): ao assistente vão só o
@@ -41,5 +45,43 @@ describe('texto do preço', () => {
   // Sem estimativa, o preço some — nunca "R$ 0".
   it('sem estimativa, não há texto', () => {
     expect(textoDoPreco(null)).toBeNull();
+  });
+});
+
+describe('estimar o preço uma vez por lista', () => {
+  const fetchBff = jest.mocked(bff.fetchBff);
+  const lerRespostaBff = jest.mocked(bff.lerRespostaBff);
+
+  function respostaDaRota(ok: boolean, precoEstimado: number | null) {
+    fetchBff.mockResolvedValueOnce({
+      response: { ok, status: ok ? 200 : 503 } as Response,
+      url: '',
+    });
+    lerRespostaBff.mockResolvedValueOnce({ precoEstimado });
+  }
+
+  beforeEach(() => jest.clearAllMocks());
+
+  // Voltar à tela ou alternar o período não chama a IA de novo pela mesma lista.
+  it('a mesma lista pede ao assistente uma vez só', async () => {
+    const lista = [
+      { rotulo: 'Grãos', itens: [{ chave: 'f9', nome: 'Feijão', quantidade: '1 kg' }] },
+    ];
+    respostaDaRota(true, 12);
+
+    expect(await estimarPrecoUmaVez(lista, 'token')).toBe(12);
+    expect(await estimarPrecoUmaVez(lista, 'token')).toBe(12);
+    expect(fetchBff).toHaveBeenCalledTimes(1);
+  });
+
+  it('a falha não fica guardada: o próximo pedido tenta de novo', async () => {
+    const lista = [
+      { rotulo: 'Grãos', itens: [{ chave: 'f8', nome: 'Lentilha', quantidade: '500 g' }] },
+    ];
+    respostaDaRota(false, null);
+    respostaDaRota(true, 9);
+
+    expect(await estimarPrecoUmaVez(lista, 'token')).toBeNull();
+    expect(await estimarPrecoUmaVez(lista, 'token')).toBe(9);
   });
 });

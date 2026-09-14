@@ -90,6 +90,13 @@ _Avoid_: porção padrão, serving
 Registro de que o aluno de fato consumiu uma DietMeal numa data.
 _Avoid_: check-in de refeição, consumo
 
+**Sugestão do assistente**:
+O que o assistente de nutrição oferece **ao aluno** — uma refeição que cabe no que falta
+do dia, ou os itens de uma resposta da conversa. Não passa por aprovação e não é guardada
+no servidor: aceita, vira item extra do MealLog com a origem `assistente`. Não confundir
+com a Proposta, que vai ao specialist e espera aprovação.
+_Avoid_: recomendação, dica, proposta
+
 ### Treino
 
 **Periodization**:

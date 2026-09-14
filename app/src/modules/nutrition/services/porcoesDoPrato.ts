@@ -11,7 +11,8 @@ function umaCasa(valor: number): number {
   return Math.round(valor * 10) / 10;
 }
 
-function escalar(componente: ComponenteDoPrato, gramas: number): ComponenteDoPrato {
+/** O componente em outras gramas, com os macros na mesma proporção. */
+function componenteNasGramas(componente: ComponenteDoPrato, gramas: number): ComponenteDoPrato {
   const novas = Math.max(0, gramas);
   const fator = componente.grams > 0 ? novas / componente.grams : 0;
   return {
@@ -58,7 +59,7 @@ export function pratoComPorcoes(
     };
   }
   const componentes = analise.components.map((componente, indice) =>
-    escalar(componente, gramas[indice] ?? componente.grams)
+    componenteNasGramas(componente, gramas[indice] ?? componente.grams)
   );
   return {
     componentes,

@@ -45,15 +45,17 @@ describe("análise do prato", () => {
     ]);
   });
 
-  // Um componente sem gramas não dá para ajustar nem somar: sai da lista, e o
-  // prato continua valendo pelo total.
-  it("descarta componente incompleto e mantém os válidos", () => {
+  // Um componente sem gramas não dá para ajustar nem somar. Tirar só ele faria
+  // o total da tela — a soma dos componentes — cair calado: a lista inteira sai,
+  // e o prato vale pelo total do modelo.
+  it("com um componente incompleto, nenhum componente vale", () => {
     const analise = lerAnaliseDoPrato(
       '{"name":"Bowl","calories":260,"protein":20,"carbs":30,"fat":6,"confidence":0.8,' +
         '"components":[{"name":"Quinoa","calories":96},{"name":"Abacate","grams":60,"calories":96,"protein":1,"carbs":5,"fat":9}]}',
     );
 
-    expect(analise?.components.map((c) => c.name)).toEqual(["Abacate"]);
+    expect(analise?.components).toEqual([]);
+    expect(analise?.calories).toBe(260);
   });
 
   it("confiança fora de 0 a 1 é cortada na faixa", () => {

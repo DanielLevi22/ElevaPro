@@ -1,24 +1,12 @@
-import {
-  createDiarioAlimentar,
-  type DietMeal,
-  type ItemRegistrado,
-  refeicaoMaisProxima,
-} from '@elevapro/shared';
+import { createDiarioAlimentar, type DietMeal, refeicaoMaisProxima } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { useState } from 'react';
 import { showAlert } from '@/components/ui/appAlert';
+import type { PedidoDeRegistro } from '../services/itensEstimados';
 import { useNutritionStore } from '../store/nutritionStore';
 import { AVISO_DE_MODO_LEITURA, type PlanoDoDia, usePlanoDoDia } from './usePlanoDoDia';
 
 const diario = createDiarioAlimentar(supabase);
-
-/** O que espera a escolha da refeição para ser gravado. */
-export interface PedidoDeRegistro {
-  /** Como o item aparece no diálogo: "100 g de Banana", "Bowl, 380 kcal estimadas". */
-  descricao: string;
-  /** Um item, ou um por componente do prato do scan. */
-  extras: Omit<ItemRegistrado, 'id'>[];
-}
 
 export interface RegistroNoDiario {
   plano: PlanoDoDia;

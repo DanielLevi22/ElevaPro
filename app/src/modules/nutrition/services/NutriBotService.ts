@@ -52,7 +52,11 @@ export const NutriBotService = {
     return { reply: data.reply, sugestao: data.sugestao ?? null };
   },
 
-  /** Só o texto, para a tela do member, que não desenha a sugestão. */
+  /**
+   * Só o texto, para a tela do member, que não desenha a sugestão.
+   *
+   * @example const texto = await NutriBotService.sendMessage(historico, 'posso trocar o arroz?', token);
+   */
   sendMessage: async (chatHistory: ChatMessage[], userMessage: string, authToken: string) =>
     (await NutriBotService.perguntar(chatHistory, userMessage, authToken)).reply,
 };

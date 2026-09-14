@@ -52,7 +52,9 @@ export async function POST(request: NextRequest) {
       },
     ],
     tools: [],
-    maxTokens: 256,
+    // Com a lista de componentes, 256 cortava o JSON de um prato de cinco itens,
+    // e o corte vira 502 no scan inteiro.
+    maxTokens: 1024,
   });
 
   const analise = lerAnaliseDoPrato(texto);

@@ -8,3 +8,4 @@ export type { AuthState } from './store/authStore';
 
 // Store
 export { useAuthStore } from './store/authStore';
+export { tokenDaSessao } from './tokenDaSessao';

@@ -45,15 +45,24 @@ export function useSugestoesDoDia(
     if (!podePedir || pedido.current === chave) return;
     pedido.current = chave;
     const nomes = nomesDasFavoritas(refeicoes, favoritas ?? []);
-    buscarSugestoesDoDia(faltamNoDia(plano.meta, plano.consumo), nomes, obterToken())
-      .then((sugestoes) => {
-        // Resposta ilegível volta vazia: guardada, esconderia a seção o dia todo.
-        if (sugestoes.length > 0) {
-          useSugestoesStore.getState().guardar(alunoId, { dia: plano.hoje, sugestoes });
-        }
-      })
-      .catch(() => undefined);
+    pedirEGuardar(alunoId, plano, nomes, obterToken());
   }, [podePedir, alunoId, plano, refeicoes, favoritas, obterToken]);
 
   return guardadas ?? NENHUMA;
+}
+
+/**
+ * Pede as sugestões do dia e as guarda. Resposta vazia (ilegível) ou falha não
+ * se guardam: esconderiam a seção o dia todo.
+ */
+async function pedirEGuardar(
+  alunoId: string,
+  plano: PlanoDoDia,
+  favoritas: string[],
+  token: string
+) {
+  const faltam = faltamNoDia(plano.meta, plano.consumo);
+  const sugestoes = await buscarSugestoesDoDia(faltam, favoritas, token).catch(() => NENHUMA);
+  if (sugestoes.length === 0) return;
+  useSugestoesStore.getState().guardar(alunoId, { dia: plano.hoje, sugestoes });
 }

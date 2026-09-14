@@ -63,6 +63,10 @@ export async function buscarSugestoesDoDia(
     { token }
   );
   const dados = await lerRespostaBff<{ sugestoes?: SugestaoDeRefeicao[] }>(response, url);
-  if (!response.ok) throw new Error(`sugestoes BFF error: ${response.status}`);
+  if (!response.ok) {
+    throw new Error(
+      `sugestoes BFF error: status ${response.status}, esperado 2xx com { sugestoes }`
+    );
+  }
   return dados.sugestoes ?? [];
 }
