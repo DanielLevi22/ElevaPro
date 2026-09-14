@@ -1,6 +1,4 @@
 import type { ComponenteDoPrato } from '@elevapro/shared';
-import * as ImageManipulator from 'expo-image-manipulator';
-import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { showAlert } from '@/components/ui/appAlert';
 import { mensagemDeErroBff } from '@/shared/bff';
@@ -9,6 +7,7 @@ import {
   type FoodAnalysisResult,
   FoodRecognitionService,
 } from '../services/FoodRecognitionService';
+import { fotoDoPrato } from '../services/fotoDoPrato';
 import { type PratoComPorcoes, pratoComPorcoes } from '../services/porcoesDoPrato';
 import { type RegistroNoDiario, useRegistroNoDiario } from './useRegistroNoDiario';
 
@@ -34,9 +33,6 @@ interface OpcoesDoScan {
   obterToken: () => string;
 }
 
-/** A foto vai reduzida: 800 de largura basta ao modelo e corta o que sai do aparelho. */
-const LARGURA_ENVIADA = 800;
-
 /**
  * O scan do prato: a foto, o reconhecimento pelo BFF, as porções ajustáveis e
  * o registro no diário.
@@ -60,7 +56,7 @@ export function useScanDoPrato(
   const prato = resultado ? pratoComPorcoes(resultado, gramas) : null;
 
   const analisar = async (origem: 'camera' | 'galeria') => {
-    const uri = await pegarFoto(origem);
+    const uri = await fotoDoPrato(origem);
     if (!uri) return;
     setImagem(uri);
     setResultado(null);
@@ -134,33 +130,4 @@ function itemDoComponente(componente: ComponenteDoPrato) {
     food: { name, serving_size: grams, serving_unit: 'g', calories, protein, carbs, fat },
     origem: 'scan' as const,
   };
-}
-
-const OPCOES_DA_FOTO: ImagePicker.ImagePickerOptions = {
-  mediaTypes: ['images'],
-  allowsEditing: true,
-  aspect: [4, 3],
-  quality: 0.7,
-};
-
-async function pegarFoto(origem: 'camera' | 'galeria'): Promise<string | null> {
-  if (origem === 'camera' && !(await ImagePicker.requestCameraPermissionsAsync()).granted) {
-    showAlert({
-      title: 'Sem acesso à câmera',
-      message: 'Libere a câmera nas configurações para fotografar o prato.',
-      type: 'warning',
-    });
-    return null;
-  }
-  const escolha =
-    origem === 'camera'
-      ? await ImagePicker.launchCameraAsync(OPCOES_DA_FOTO)
-      : await ImagePicker.launchImageLibraryAsync(OPCOES_DA_FOTO);
-  if (escolha.canceled) return null;
-  const reduzida = await ImageManipulator.manipulateAsync(
-    escolha.assets[0].uri,
-    [{ resize: { width: LARGURA_ENVIADA } }],
-    { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-  );
-  return reduzida.uri;
 }

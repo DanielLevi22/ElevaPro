@@ -9,6 +9,7 @@ import { Chip } from '@/components/ui/Chip';
 import { Vidro } from '@/components/ui/Vidro';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
 import { TresMacros } from '../../components/aluno/AnelDeMacro';
+import { ComponentesDoPrato } from '../../components/aluno/ComponentesDoPrato';
 import { ConfirmacaoDoRegistro } from '../../components/aluno/ConfirmacaoDoRegistro';
 import { TelaDaNutricao } from '../../components/aluno/TelaDaNutricao';
 import { type ScanDoPrato, useScanDoPrato } from '../../hooks/useScanDoPrato';
@@ -20,9 +21,8 @@ import type { FoodAnalysisResult } from '../../services/FoodRecognitionService';
  * o prato, as calorias sobre a meta do dia e os macros.
  *
  * O kit desenha a câmera ao vivo; o app fotografa ou escolhe da galeria, e a
- * foto ocupa o lugar dela. "Componentes detectados" e "Ajustar porções" chegam
- * com o contrato novo do reconhecimento, no terceiro PR da #298 — hoje ele
- * devolve o prato inteiro, sem componentes.
+ * foto ocupa o lugar dela. "Componentes detectados" só aparece quando o modelo
+ * separou o prato; as porções ajustadas mudam o total e o que vai ao diário.
  *
  * @example
  * <EscanearPratoScreen alunoId={user.id} somenteLeitura={false} obterToken={() => token} />
@@ -166,7 +166,7 @@ function ResultadoDoScan({ scan, resultado }: ResultadoDoScanProps) {
           </Text>
           <View className="mt-1 flex-row items-baseline gap-[0.3125rem]">
             <Text className="font-display-black text-[2.5rem] tracking-tight text-foreground">
-              {Math.round(resultado.calories)}
+              {Math.round(scan.macros.calorias)}
             </Text>
             <Text className="text-[0.8125rem] font-bold text-muted-foreground">kcal</Text>
           </View>
@@ -185,6 +185,7 @@ function ResultadoDoScan({ scan, resultado }: ResultadoDoScanProps) {
         </Anel>
       </Vidro>
       <TresMacros valores={scan.macros} metas={scan.metaDiaria} ordem={ORDEM_DO_SCAN} />
+      <ComponentesDoPrato componentes={scan.componentes} onAjustar={scan.ajustarPorcao} />
     </>
   );
 }

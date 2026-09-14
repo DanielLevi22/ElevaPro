@@ -1,12 +1,17 @@
+import type { AnaliseDoPrato } from '@elevapro/shared';
 import { useState } from 'react';
 import { mensagemDeErroBff } from '@/shared/bff';
+import { FoodRecognitionService } from '../services/FoodRecognitionService';
+import { fotoDoPrato } from '../services/fotoDoPrato';
 import { type ChatMessage, NutriBotService } from '../services/NutriBotService';
-import { type PlanoDoDia, usePlanoDoDia } from './usePlanoDoDia';
+import type { PlanoDoDia } from './usePlanoDoDia';
 
 export interface ConversaDoAssistente {
   mensagens: ChatMessage[];
   respondendo: boolean;
   enviar: (texto: string) => void;
+  /** Escolhe a foto de um prato, reconhece e pergunta sobre o resultado. */
+  anexarFoto: () => void;
 }
 
 interface OpcoesDaConversa {
@@ -23,17 +28,18 @@ interface OpcoesDaConversa {
  * pedida à IA — não há o que perguntar ao modelo para dizer uma conta. Por
  * isso ela também não vai no histórico enviado: leva o nome do aluno.
  *
+ * A foto anexada passa pelo reconhecimento do scan, e **só o resultado** entra
+ * na conversa. A imagem nunca vai para o histórico do chat (issue #298).
+ *
  * @example
- * const conversa = useConversaDoAssistente(user.id, { primeiroNome: 'Daniel', obterToken });
+ * const conversa = useConversaDoAssistente(registro.plano, { primeiroNome: 'Daniel', obterToken });
  */
 export function useConversaDoAssistente(
-  alunoId: string,
+  plano: PlanoDoDia,
   { primeiroNome, obterToken }: OpcoesDaConversa
 ): ConversaDoAssistente {
-  const plano = usePlanoDoDia(alunoId, { somenteLeitura: true });
   const [mensagens, setMensagens] = useState<ChatMessage[]>([]);
   const [respondendo, setRespondendo] = useState(false);
-
   const saudacao = mensagemDoAssistente('saudacao', textoDaSaudacao(primeiroNome, plano));
 
   const enviar = async (texto: string) => {
@@ -49,7 +55,25 @@ export function useConversaDoAssistente(
     setRespondendo(false);
   };
 
-  return { mensagens: [saudacao, ...mensagens], respondendo, enviar };
+  const anexarFoto = async () => {
+    if (respondendo) return;
+    const uri = await fotoDoPrato('galeria');
+    if (!uri) return;
+    setRespondendo(true);
+    try {
+      const analise = await FoodRecognitionService.analyzeFoodImage(uri, obterToken());
+      setRespondendo(false);
+      enviar(perguntaSobreOPrato(analise));
+    } catch (erro) {
+      setMensagens((atuais) => [
+        ...atuais,
+        mensagemDoAssistente(`erro-${Date.now()}`, mensagemDeErroBff(erro)),
+      ]);
+      setRespondendo(false);
+    }
+  };
+
+  return { mensagens: [saudacao, ...mensagens], respondendo, enviar, anexarFoto };
 }
 
 function mensagemDoAssistente(
@@ -72,6 +96,12 @@ async function responder(historico: ChatMessage[], pergunta: string, token: stri
   } catch (erro) {
     return mensagemDoAssistente(`erro-${Date.now()}`, mensagemDeErroBff(erro));
   }
+}
+
+/** O que a foto vira na conversa: o prato reconhecido, em texto, e a pergunta. */
+function perguntaSobreOPrato(analise: AnaliseDoPrato): string {
+  const macros = `${Math.round(analise.protein)} g de proteína, ${Math.round(analise.carbs)} g de carboidrato e ${Math.round(analise.fat)} g de gordura`;
+  return `Fotografei meu prato: ${analise.name}, cerca de ${Math.round(analise.calories)} kcal (${macros}). Cabe no meu plano de hoje?`;
 }
 
 function textoDaSaudacao(primeiroNome: string, plano: PlanoDoDia): string {

@@ -26,7 +26,8 @@ export interface RegistroNoDiario {
   refeicoes: DietMeal[];
   refeicaoEscolhida: string | null;
   escolherRefeicao: (refeicaoId: string) => void;
-  pedir: (pedido: PedidoDeRegistro) => void;
+  /** `refeicaoCitada` é o nome que o assistente escreveu; casando com uma do dia, ela vem escolhida. */
+  pedir: (pedido: PedidoDeRegistro, refeicaoCitada?: string) => void;
   confirmar: () => void;
   cancelar: () => void;
 }
@@ -52,7 +53,7 @@ export function useRegistroNoDiario(
   const [pedido, setPedido] = useState<PedidoDeRegistro | null>(null);
   const [refeicaoEscolhida, setRefeicaoEscolhida] = useState<string | null>(null);
 
-  const pedir = (novo: PedidoDeRegistro) => {
+  const pedir = (novo: PedidoDeRegistro, refeicaoCitada?: string) => {
     if (somenteLeitura) return showAlert(AVISO_DE_MODO_LEITURA);
     if (refeicoes.length === 0) {
       return showAlert({
@@ -61,7 +62,8 @@ export function useRegistroNoDiario(
       });
     }
     const agora = new Date().toTimeString().slice(0, 5);
-    setRefeicaoEscolhida(refeicaoMaisProxima(refeicoes, agora)?.id ?? null);
+    const citada = refeicaoCitada ? refeicaoPeloNome(refeicoes, refeicaoCitada) : null;
+    setRefeicaoEscolhida(citada?.id ?? refeicaoMaisProxima(refeicoes, agora)?.id ?? null);
     setPedido(novo);
   };
 
@@ -116,4 +118,10 @@ async function gravar({ alunoId, dia, refeicaoId, pedido }: Gravacao): Promise<v
       type: 'error',
     });
   }
+}
+
+/** A refeição do dia com o nome que o assistente escreveu, sem diferenciar maiúscula. */
+function refeicaoPeloNome(refeicoes: DietMeal[], nome: string): DietMeal | null {
+  const procurado = nome.trim().toLocaleLowerCase('pt-BR');
+  return refeicoes.find((r) => r.name.trim().toLocaleLowerCase('pt-BR') === procurado) ?? null;
 }
