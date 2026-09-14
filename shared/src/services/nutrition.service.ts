@@ -3,7 +3,6 @@ import type {
   AddFoodToMealInput,
   CreateDietMealInput,
   CreateDietPlanInput,
-  CreateFoodInput,
   DietMeal,
   DietMealItem,
   DietPlan,
@@ -14,39 +13,10 @@ import type {
   UpdateDietPlanInput,
   UpdateMealItemInput,
 } from "../types/nutrition.types";
+import { createCatalogoDeAlimentos } from "./catalogoDeAlimentos.service";
 
 export const createNutritionService = (supabase: SupabaseClient) => ({
-  // ── Foods ──────────────────────────────────────────────────────────────────
-
-  searchFoods: async (query: string, page = 0, pageSize = 10): Promise<Food[]> => {
-    const from = page * pageSize;
-    const to = from + pageSize - 1;
-    // Uses ilike for broad partial matching. After migration 0002 is applied on all
-    // environments, switch to: .or(`name.ilike.%${query}%,search_vector.fts.${query}`)
-    const { data, error } = await supabase
-      .from("foods")
-      .select("*")
-      .ilike("name", `%${query}%`)
-      .range(from, to);
-    if (error) throw error;
-    return (data || []) as Food[];
-  },
-
-  fetchFoods: async (limit = 50): Promise<Food[]> => {
-    const { data, error } = await supabase.from("foods").select("*").limit(limit);
-    if (error) throw error;
-    return (data || []) as Food[];
-  },
-
-  createFood: async (input: CreateFoodInput & { created_by?: string }): Promise<Food> => {
-    const { data, error } = await supabase
-      .from("foods")
-      .insert({ ...input, is_custom: true, source: input.source ?? "Manual" })
-      .select()
-      .single();
-    if (error) throw error;
-    return data as Food;
-  },
+  ...createCatalogoDeAlimentos(supabase),
 
   // ── Diet Plans ─────────────────────────────────────────────────────────────
 

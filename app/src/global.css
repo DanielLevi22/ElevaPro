@@ -58,6 +58,10 @@
     --veu-da-imagem-topo: rgba(0, 0, 0, 0.1);
     --veu-da-imagem-base: rgba(0, 0, 0, 0.82);
     --barra-de-abas: rgba(255, 255, 255, 0.9);
+    --texto-proteina: #0b7a52;
+    --texto-carboidrato: #4e7a0b;
+    --texto-gordura: #8a5e03;
+    --sobre-metrica: #06281a;
   }
 
   .dark:root {
@@ -100,5 +104,9 @@
     --veu-da-imagem-topo: rgba(0, 0, 0, 0.1);
     --veu-da-imagem-base: rgba(0, 0, 0, 0.82);
     --barra-de-abas: rgba(18, 19, 22, 0.72);
+    --texto-proteina: #34d399;
+    --texto-carboidrato: #a3e635;
+    --texto-gordura: #fbbf24;
+    --sobre-metrica: #06281a;
   }
 }

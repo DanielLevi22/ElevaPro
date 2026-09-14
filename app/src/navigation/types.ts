@@ -90,6 +90,30 @@ export const ROUTES = {
     EXECUTE: (id: string): `/(tabs)/workouts/execute/${string}` => `/(tabs)/workouts/execute/${id}`,
   },
 
+  // Nutrição do aluno, no desenho de vidro (#298). O member segue nas telas antigas.
+  NUTRITION: {
+    ROOT: '/(tabs)/nutrition',
+    /** `data` é o dia aberto no plano: o detalhe mostra o que foi comido nele. */
+    MEAL: (
+      refeicaoId: string,
+      data: string
+    ): `/(tabs)/nutrition/refeicao/${string}?data=${string}` =>
+      `/(tabs)/nutrition/refeicao/${refeicaoId}?data=${data}`,
+    SWAP: (
+      refeicaoId: string,
+      itemId: string,
+      data: string
+    ): `/(tabs)/nutrition/substituir?refeicaoId=${string}&itemId=${string}&data=${string}` =>
+      `/(tabs)/nutrition/substituir?refeicaoId=${refeicaoId}&itemId=${itemId}&data=${data}`,
+    SEARCH: '/(tabs)/nutrition/buscar',
+    SCAN: '/(tabs)/nutrition/scan',
+    ASSISTANT: '/(tabs)/nutrition/bot',
+    SHOPPING: '/(tabs)/nutrition/shopping-list',
+    ADHERENCE: '/(tabs)/nutrition/aderencia',
+    /** O modo de preparo de uma refeição, gerado pelo assistente de receita. */
+    COOKING: '/(tabs)/nutrition/cooking',
+  },
+
   // Telas do próprio aluno sobre os dados dele
   STUDENT: {
     ANAMNESIS: '/student/anamnesis',

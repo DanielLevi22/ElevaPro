@@ -11,7 +11,14 @@ export {
   MacroProgressBar,
   MealCard,
 } from '../components';
-// Screens
+export { AderenciaDaSemanaScreen } from '../screens/aluno/AderenciaDaSemanaScreen';
+export { AssistenteDeNutricaoScreen } from '../screens/aluno/AssistenteDeNutricaoScreen';
+export { BuscarAlimentoScreen } from '../screens/aluno/BuscarAlimentoScreen';
+export { DetalheDaRefeicaoScreen } from '../screens/aluno/DetalheDaRefeicaoScreen';
+export { EscanearPratoScreen } from '../screens/aluno/EscanearPratoScreen';
+export { ListaDeComprasScreen } from '../screens/aluno/ListaDeComprasScreen';
+export { PlanoDoDiaScreen } from '../screens/aluno/PlanoDoDiaScreen';
+export { SubstituirAlimentoScreen } from '../screens/aluno/SubstituirAlimentoScreen';
 // Screens
 export { default as CreateDietScreen } from '../screens/CreateDietScreen';
 export { default as DietDetailsScreen } from '../screens/DietDetailsScreen';

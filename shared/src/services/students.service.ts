@@ -152,6 +152,27 @@ export const createStudentsService = (supabase: SupabaseClient, apiBaseUrl = "")
     return data as PhysicalAssessment | null;
   },
 
+  /**
+   * As pesagens mais recentes do aluno, só peso e data — a variação de peso da
+   * aderência. A avaliação inteira tem dobras e medidas que a tela não usa.
+   *
+   * @example const [ultima, anterior] = await students.fetchUltimasPesagens(alunoId, 2);
+   */
+  fetchUltimasPesagens: async (
+    studentId: string,
+    quantas = 2,
+  ): Promise<Pick<PhysicalAssessment, "weight_kg" | "assessed_at">[]> => {
+    const { data, error } = await supabase
+      .from("physical_assessments")
+      .select("weight_kg, assessed_at")
+      .eq("student_id", studentId)
+      .order("assessed_at", { ascending: false })
+      .limit(quantas);
+
+    if (error) throw error;
+    return (data ?? []) as Pick<PhysicalAssessment, "weight_kg" | "assessed_at">[];
+  },
+
   fetchStudentHistory: async (studentId: string): Promise<PhysicalAssessment[]> => {
     const { data, error } = await supabase
       .from("physical_assessments")

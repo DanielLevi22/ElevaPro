@@ -15,6 +15,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
  * @example
  * <TituloDeSecao acao="Ver tudo" onAcao={verTreinos}>Treino do dia</TituloDeSecao>
  * <TituloDeSecao estilo="rotulo" acao="4 treinos">Treinos da fase</TituloDeSecao>
+ * <TituloDeSecao estilo="rotulo" acao="Substituir" onAcao={trocar}>Alimentos</TituloDeSecao>
  */
 interface TituloDeSecaoProps {
   children: string;
@@ -31,7 +32,7 @@ export function TituloDeSecao({ children, acao, onAcao, estilo = 'titulo' }: Tit
           <Text className="text-[0.65625rem] font-bold uppercase tracking-widest text-placeholder">
             {children}
           </Text>
-          {acao ? <Text className="text-[0.71875rem] text-placeholder">{acao}</Text> : null}
+          {acao ? <AcaoDoRotulo acao={acao} onAcao={onAcao} /> : null}
         </>
       ) : (
         <>
@@ -44,5 +45,19 @@ export function TituloDeSecao({ children, acao, onAcao, estilo = 'titulo' }: Tit
         </>
       )}
     </View>
+  );
+}
+
+/**
+ * A ação do rótulo. Sem toque ela é informação ("4 treinos"), no tom do rótulo;
+ * com toque é link, e o fluxo de nutrição do kit a pinta na primária em peso
+ * 600 ("Substituir", "Ver tudo").
+ */
+function AcaoDoRotulo({ acao, onAcao }: { acao: string; onAcao?: () => void }) {
+  if (!onAcao) return <Text className="text-[0.71875rem] text-placeholder">{acao}</Text>;
+  return (
+    <TouchableOpacity onPress={onAcao} accessibilityRole="button">
+      <Text className="text-[0.71875rem] font-semibold text-primary-text">{acao}</Text>
+    </TouchableOpacity>
   );
 }

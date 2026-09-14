@@ -6,12 +6,12 @@ import { CabecalhoSobreFoto } from '@/components/ui/CabecalhoSobreFoto';
 import { Chip } from '@/components/ui/Chip';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
+import { useNomeDoEspecialista } from '@/hooks/useNomeDoEspecialista';
 import { ROUTES } from '@/navigation/types';
 import { useCores } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { CartaoDaPeriodizacaoAtiva } from '../../components/aluno/CartaoDaPeriodizacaoAtiva';
 import { LinhaDoHistoricoDePeriodizacoes } from '../../components/aluno/LinhaDoHistoricoDePeriodizacoes';
-import { useNomeDoEspecialista } from '../../hooks/useNomeDoEspecialista';
 import { useResumosDasPeriodizacoes } from '../../hooks/useResumosDasPeriodizacoes';
 
 /**
