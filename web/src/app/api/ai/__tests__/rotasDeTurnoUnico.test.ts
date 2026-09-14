@@ -149,7 +149,9 @@ describe("guia de preparo", () => {
 describe("análise de alimento por foto", () => {
   it("pede o nível de raciocínio e manda a imagem no bloco próprio", async () => {
     const { POST } = await import("../student/scan-food/route");
-    respostaDoModelo = '{"name":"Arroz","calories":130}';
+    // O prato precisa dos quatro macros desde a #298: resposta sem eles é 502.
+    respostaDoModelo =
+      '{"name":"Arroz","calories":130,"protein":2,"carbs":28,"fat":0,"confidence":0.9}';
 
     const resposta = await POST(pedido({ imageBase64: "AAAA", mimeType: "image/jpeg" }));
 
@@ -286,7 +288,8 @@ describe("nutribot do aluno", () => {
       contexto,
     );
 
-    expect(await resposta.json()).toEqual({ reply: "Pode trocar por batata-doce." });
+    // `sugestao` entrou na #298; o app antigo lê só `reply`, que não muda.
+    expect(await resposta.json()).toMatchObject({ reply: "Pode trocar por batata-doce." });
 
     const mensagens = chamadas[0].options.messages;
     expect(mensagens).toHaveLength(3);
