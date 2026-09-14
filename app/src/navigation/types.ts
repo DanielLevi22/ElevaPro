@@ -110,6 +110,8 @@ export const ROUTES = {
     ASSISTANT: '/(tabs)/nutrition/bot',
     SHOPPING: '/(tabs)/nutrition/shopping-list',
     ADHERENCE: '/(tabs)/nutrition/aderencia',
+    /** O modo de preparo de uma refeição, gerado pelo assistente de receita. */
+    COOKING: '/(tabs)/nutrition/cooking',
   },
 
   // Telas do próprio aluno sobre os dados dele

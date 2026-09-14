@@ -145,7 +145,7 @@ function CabecalhoDoPrato({ refeicao, itens, macros }: CabecalhoDoPratoProps) {
     (macros.proteina * KCAL_POR_GRAMA_DE_PROTEINA) / macros.calorias >= FRACAO_DE_ALTA_PROTEINA;
   const abrirPreparo = () =>
     router.push({
-      pathname: '/(tabs)/nutrition/cooking',
+      pathname: ROUTES.NUTRITION.COOKING,
       params: {
         mealName: refeicao.name,
         mealId: refeicao.id,

@@ -10,6 +10,10 @@ import type { CreateFoodInput, Food } from "../types/nutrition.types";
  * @example
  * const frangos = await createCatalogoDeAlimentos(supabase).searchFoods("frango");
  */
+/** As colunas do tipo `Food`, nomeadas: o `search_vector` do trigger não sai da tabela. */
+const COLUNAS_DO_ALIMENTO =
+  "id, name, category, serving_size, serving_unit, calories, protein, carbs, fat, fiber, source, is_custom, created_by, created_at";
+
 export const createCatalogoDeAlimentos = (supabase: SupabaseClient) => ({
   // ── Foods ──────────────────────────────────────────────────────────────────
 
@@ -36,7 +40,7 @@ export const createCatalogoDeAlimentos = (supabase: SupabaseClient) => ({
   fetchFoodsByCategory: async (category: string, limit = 60): Promise<Food[]> => {
     const { data, error } = await supabase
       .from("foods")
-      .select("*")
+      .select(COLUNAS_DO_ALIMENTO)
       .eq("category", category)
       .limit(limit);
     if (error) throw error;

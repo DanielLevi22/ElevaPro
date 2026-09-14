@@ -66,7 +66,7 @@ function inteiroSemSinalNegativoDeZero(valor: number): number {
 }
 
 /** Proteína por caloria: o que distingue equivalentes que já têm a mesma proteína. */
-function densidadeDeProteina(food: Food): number {
+export function densidadeDeProteina(food: Food): number {
   const calorias = numeroDoBanco(food.calories);
   return calorias > 0 ? numeroDoBanco(food.protein) / calorias : 0;
 }

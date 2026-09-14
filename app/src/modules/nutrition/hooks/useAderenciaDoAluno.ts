@@ -4,6 +4,7 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { getLocalDateISOString } from '@/utils/dateUtils';
 import { type AderenciaDaSemana, aderenciaDaSemana, semanaDe } from '../services/aderenciaDaSemana';
+import { carregarPlanoDoAluno } from '../services/carregarPlanoDoAluno';
 import { useNutritionStore } from '../store/nutritionStore';
 
 const nutricao = createNutritionService(supabase);
@@ -35,27 +36,7 @@ export function useAderenciaDoAluno(alunoId: string): AderenciaDoAluno {
   const itensDoPlano = useNutritionStore((s) => s.mealItems);
   const hoje = getLocalDateISOString();
   const semana = semanaDe(hoje);
-  const [registros, setRegistros] = useState<MealLog[]>([]);
-  const [pesos, setPesos] = useState<(number | null)[]>([]);
-  const [carregando, setCarregando] = useState(true);
-
-  const carregar = useCallback(async () => {
-    setCarregando(true);
-    const [dasemana, pesagens] = await Promise.all([
-      nutricao.fetchMealLogsByRange(alunoId, semana[0], semana[6]).catch(() => []),
-      alunos.fetchUltimasPesagens(alunoId, 2).catch(() => []),
-      carregarPlano(alunoId),
-    ]);
-    setRegistros(dasemana);
-    setPesos(pesagens.map((p) => p.weight_kg));
-    setCarregando(false);
-  }, [alunoId, semana[0], semana[6]]);
-
-  useFocusEffect(
-    useCallback(() => {
-      carregar();
-    }, [carregar])
-  );
+  const { registros, pesos, carregando } = useDadosDaSemana(alunoId, semana[0], semana[6]);
 
   const [ultimo, anterior] = pesos;
   return {
@@ -76,9 +57,28 @@ export function useAderenciaDoAluno(alunoId: string): AderenciaDoAluno {
   };
 }
 
-async function carregarPlano(alunoId: string): Promise<void> {
-  const store = useNutritionStore.getState();
-  await store.fetchDietPlan(alunoId);
-  const plano = useNutritionStore.getState().currentDietPlan;
-  if (plano) await store.fetchMeals(plano.id);
+/** Os registros da semana e as duas últimas pesagens, recarregados ao voltar à tela. */
+function useDadosDaSemana(alunoId: string, inicio: string, fim: string) {
+  const [registros, setRegistros] = useState<MealLog[]>([]);
+  const [pesos, setPesos] = useState<(number | null)[]>([]);
+  const [carregando, setCarregando] = useState(true);
+
+  const carregar = useCallback(async () => {
+    setCarregando(true);
+    const [dasemana, pesagens] = await Promise.all([
+      nutricao.fetchMealLogsByRange(alunoId, inicio, fim).catch(() => []),
+      alunos.fetchUltimasPesagens(alunoId, 2).catch(() => []),
+      carregarPlanoDoAluno(alunoId),
+    ]);
+    setRegistros(dasemana);
+    setPesos(pesagens.map((p) => p.weight_kg));
+    setCarregando(false);
+  }, [alunoId, inicio, fim]);
+
+  useFocusEffect(
+    useCallback(() => {
+      carregar();
+    }, [carregar])
+  );
+  return { registros, pesos, carregando };
 }

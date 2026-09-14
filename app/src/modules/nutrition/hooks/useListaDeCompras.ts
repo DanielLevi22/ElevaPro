@@ -1,6 +1,7 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Share } from 'react-native';
+import { carregarPlanoDoAluno } from '../services/carregarPlanoDoAluno';
 import { type GrupoDeCompras, listaDeCompras } from '../services/listaDeCompras';
 import { useComprasStore } from '../store/comprasStore';
 import { useNutritionStore } from '../store/nutritionStore';
@@ -39,7 +40,7 @@ export function useListaDeCompras(alunoId: string): ListaDoAluno {
 
   useFocusEffect(
     useCallback(() => {
-      carregarPlano(alunoId);
+      carregarPlanoDoAluno(alunoId);
     }, [alunoId])
   );
 
@@ -57,13 +58,6 @@ export function useListaDeCompras(alunoId: string): ListaDoAluno {
     limpar: () => useComprasStore.getState().limpar(chaveDaLista),
     compartilhar: () => Share.share({ message: textoDaLista(grupos, comprados, dias) }),
   };
-}
-
-async function carregarPlano(alunoId: string): Promise<void> {
-  const store = useNutritionStore.getState();
-  await store.fetchDietPlan(alunoId);
-  const plano = useNutritionStore.getState().currentDietPlan;
-  if (plano) await store.fetchMeals(plano.id);
 }
 
 /** O texto que vai para o WhatsApp: grupos em negrito e o que já foi comprado marcado. */

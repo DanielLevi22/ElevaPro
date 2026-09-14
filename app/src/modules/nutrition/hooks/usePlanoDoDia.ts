@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { showAlert } from '@/components/ui/appAlert';
 import { getLocalDateISOString } from '@/utils/dateUtils';
 import { diaDaSemana } from '../services/aderenciaDaSemana';
+import { carregarPlanoDoAluno } from '../services/carregarPlanoDoAluno';
 import {
   consumoDoDia,
   itensDaRefeicao,
@@ -62,14 +63,7 @@ export function usePlanoDoDia(
 
   const recarregar = useCallback(async () => {
     setCarregando(true);
-    const store = useNutritionStore.getState();
-    await store.fetchDietPlan(alunoId);
-    const doAluno = useNutritionStore.getState().currentDietPlan;
-    // Refeições e registros não dependem um do outro: em paralelo.
-    await Promise.all([
-      doAluno ? store.fetchMeals(doAluno.id) : null,
-      store.fetchDailyLogs(alunoId, data),
-    ]);
+    await carregarPlanoDoAluno(alunoId, data);
     setCarregando(false);
   }, [alunoId, data]);
 
@@ -136,13 +130,14 @@ function linhaDaRefeicao(
  * O especialista vendo como aluno só lê. E dia que ainda não chegou não se
  * marca: o registro é do que o aluno comeu, não do que pretende comer.
  */
+/** O especialista vendo como o aluno só lê: o aviso é o mesmo em toda escrita. */
+export const AVISO_DE_MODO_LEITURA = {
+  title: 'Modo leitura',
+  message: 'Você está vendo como o aluno. Não dá para registrar por ele.',
+};
+
 export function motivoParaNaoMarcar(somenteLeitura: boolean, data: string, hoje: string) {
-  if (somenteLeitura) {
-    return {
-      title: 'Modo leitura',
-      message: 'Você está vendo como o aluno. Não dá para marcar refeição por ele.',
-    };
-  }
+  if (somenteLeitura) return AVISO_DE_MODO_LEITURA;
   if (data > hoje) {
     return {
       title: 'Ainda não',

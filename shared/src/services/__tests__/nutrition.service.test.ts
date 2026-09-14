@@ -274,6 +274,7 @@ describe("nutritionService — alimentos da mesma categoria", () => {
 
     expect(chamadas[0].tabela).toBe("foods");
     expect(chamadas[0].filtros).toEqual({ category: "proteina" });
+    expect(chamadas[0].select).not.toBe("*");
     expect(chamadas[0].metodos).toContainEqual({ nome: "limit", args: [40] });
   });
 

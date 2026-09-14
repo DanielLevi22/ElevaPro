@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect } from 'react';
+import { type ReactNode, useEffect } from 'react';
 import { Modal, Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -36,6 +36,13 @@ interface ConfirmModalProps {
   confirmText?: string;
   cancelText?: string;
   type?: 'danger' | 'warning' | 'info' | 'success';
+  /**
+   * Uma escolha entre a mensagem e as ações — a refeição onde o alimento
+   * entra. Sem ela o diálogo é a confirmação simples de sempre.
+   */
+  children?: ReactNode;
+  /** A confirmação espera a escolha do `children`. */
+  confirmacaoDesabilitada?: boolean;
 }
 
 const ICONE = {
@@ -73,6 +80,8 @@ export function ConfirmModal({
   confirmText = 'Confirmar',
   cancelText = 'Cancelar',
   type = 'info',
+  children,
+  confirmacaoDesabilitada = false,
 }: ConfirmModalProps) {
   const cores = useCores();
   const escalar = useEscala();
@@ -118,12 +127,14 @@ export function ConfirmModal({
             <Text className="mb-8 text-center text-corpo leading-normal text-muted-foreground">
               {message}
             </Text>
+            {children ? <View className="-mt-4 mb-8 w-full">{children}</View> : null}
 
             <View className="w-full gap-3">
               <Button
                 label={confirmText}
                 variant={VARIANTE_DA_ACAO[type]}
                 fullWidth
+                disabled={confirmacaoDesabilitada}
                 onPress={() => {
                   onConfirm();
                   onClose();

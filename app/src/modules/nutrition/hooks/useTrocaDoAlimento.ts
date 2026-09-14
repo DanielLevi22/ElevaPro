@@ -10,6 +10,7 @@ import {
   ordenarEquivalentes,
 } from '../services/equivalenciaDaTroca';
 import { useNutritionStore } from '../store/nutritionStore';
+import { AVISO_DE_MODO_LEITURA } from './usePlanoDoDia';
 
 const nutricao = createNutritionService(supabase);
 
@@ -76,10 +77,7 @@ export function useTrocaDoAlimento({
   const confirmar = async () => {
     if (!original || !escolhido) return false;
     if (somenteLeitura) {
-      showAlert({
-        title: 'Modo leitura',
-        message: 'Você está vendo como o aluno. Não dá para trocar por ele.',
-      });
+      showAlert(AVISO_DE_MODO_LEITURA);
       return false;
     }
     return gravarTroca({ refeicaoId, data, original, escolhido });

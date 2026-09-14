@@ -71,7 +71,10 @@ export function listaDeCompras({
   itensDoPlano,
   dias,
 }: EntradaDaLista): GrupoDeCompras[] {
-  const fator = tipoDoPlano === 'cyclic' ? dias / DIAS_DA_SEMANA : dias;
+  // Mesma leitura do `refeicoesDoDia`: só 'unique' é dia que se repete. Plano
+  // sem tipo, com refeições por dia, é semana — tratá-lo como único voltava a
+  // comprar sete vezes mais.
+  const fator = tipoDoPlano === 'unique' ? dias : dias / DIAS_DA_SEMANA;
   const somas = somarPorAlimento(refeicoes, itensDoPlano, fator);
 
   return ORDEM_DOS_GRUPOS.map((rotulo) => ({

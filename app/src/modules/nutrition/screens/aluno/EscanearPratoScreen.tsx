@@ -9,6 +9,7 @@ import { Chip } from '@/components/ui/Chip';
 import { Vidro } from '@/components/ui/Vidro';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
 import { TresMacros } from '../../components/aluno/AnelDeMacro';
+import { ConfirmacaoDoRegistro } from '../../components/aluno/ConfirmacaoDoRegistro';
 import { TelaDaNutricao } from '../../components/aluno/TelaDaNutricao';
 import { type ScanDoPrato, useScanDoPrato } from '../../hooks/useScanDoPrato';
 import { percentualDaMeta } from '../../services/consumoDoDia';
@@ -57,6 +58,7 @@ export function EscanearPratoScreen({
           </Text>
         )}
       </View>
+      <ConfirmacaoDoRegistro registro={scan.registro} />
     </TelaDaNutricao>
   );
 }

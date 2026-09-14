@@ -1,12 +1,9 @@
-import { createNutritionService, type DietMeal, type Food } from '@elevapro/shared';
+import { createNutritionService, type Food } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { useEffect, useState } from 'react';
-import { showAlert, showConfirm } from '@/components/ui/appAlert';
-import { getLocalDateISOString } from '@/utils/dateUtils';
 import { numeroDoBanco } from '../services/consumoDoDia';
-import { refeicaoParaAgora, registrarNoDiario } from '../services/registrarNoDiario';
-import { useNutritionStore } from '../store/nutritionStore';
-import { usePlanoDoDia } from './usePlanoDoDia';
+import { densidadeDeProteina } from '../services/equivalenciaDaTroca';
+import { type RegistroNoDiario, useRegistroNoDiario } from './useRegistroNoDiario';
 
 const nutricao = createNutritionService(supabase);
 
@@ -26,13 +23,12 @@ export interface BuscaDeAlimento {
   buscando: boolean;
   faltamCalorias: number;
   adicionar: (food: Food) => void;
+  registro: RegistroNoDiario;
 }
 
 /**
- * A busca no catálogo do aluno, e o "+" que põe o alimento no registro de hoje.
- *
- * O alimento entra na refeição de hoje com horário mais perto de agora, na
- * porção de referência do catálogo. O aluno confirma antes, vendo qual.
+ * A busca no catálogo do aluno, e o "+" que põe o alimento no registro de hoje,
+ * na porção de referência do catálogo.
  *
  * @example
  * const busca = useBuscaDeAlimento(user.id, { somenteLeitura: isMasquerading });
@@ -41,28 +37,12 @@ export function useBuscaDeAlimento(
   alunoId: string,
   { somenteLeitura }: { somenteLeitura: boolean }
 ): BuscaDeAlimento {
-  const plano = usePlanoDoDia(alunoId, { somenteLeitura });
+  const registro = useRegistroNoDiario(alunoId, { somenteLeitura });
   const [consulta, setConsulta] = useState('');
   const [categoria, setCategoria] = useState<string | null>('proteina');
   const [maisProteina, setMaisProteina] = useState(false);
   const { resultados, buscando } = useResultados(consulta, categoria);
-
-  const adicionar = (food: Food) => {
-    if (somenteLeitura) {
-      return showAlert({
-        title: 'Modo leitura',
-        message: 'Você está vendo como o aluno. Não dá para registrar por ele.',
-      });
-    }
-    const refeicao = refeicaoParaAgora(plano.refeicoes.map((r) => r.refeicao));
-    if (!refeicao) {
-      return showAlert({
-        title: 'Sem refeição hoje',
-        message: 'Seu plano não tem refeição para hoje.',
-      });
-    }
-    confirmarRegistro({ alunoId, food, refeicao, aoGravar: plano.recarregar });
-  };
+  const { meta, consumo } = registro.plano;
 
   return {
     consulta,
@@ -73,8 +53,9 @@ export function useBuscaDeAlimento(
     alternarMaisProteina: () => setMaisProteina((atual) => !atual),
     resultados: maisProteina ? [...resultados].sort(porProteina) : resultados,
     buscando,
-    faltamCalorias: Math.max(0, Math.round(plano.meta.calorias - plano.consumo.calorias)),
-    adicionar,
+    faltamCalorias: Math.max(0, Math.round(meta.calorias - consumo.calorias)),
+    adicionar: (food) => registro.pedir(pedidoDoAlimento(food)),
+    registro,
   };
 }
 
@@ -111,69 +92,24 @@ async function buscar(consulta: string, categoria: string | null): Promise<Food[
 }
 
 function porProteina(a: Food, b: Food): number {
-  const densidade = (food: Food) =>
-    numeroDoBanco(food.calories) > 0
-      ? numeroDoBanco(food.protein) / numeroDoBanco(food.calories)
-      : 0;
-  return densidade(b) - densidade(a);
+  return densidadeDeProteina(b) - densidadeDeProteina(a);
 }
 
 /**
- * O que do Food vai para o registro: o que a soma e a tela usam. `created_by`
- * e datas do catálogo não têm o que fazer no que o aluno comeu (Art. 6°, III).
+ * O pedido de registro de um Food do catálogo. Vai para o registro só o que a
+ * soma e a tela usam: `created_by` e datas do catálogo não têm o que fazer no
+ * que o aluno comeu (Art. 6°, III).
  */
-function doCatalogo(food: Food) {
+function pedidoDoAlimento(food: Food) {
   const { id, name, category, serving_size, serving_unit, calories, protein, carbs, fat } = food;
-  return { id, name, category, serving_size, serving_unit, calories, protein, carbs, fat };
-}
-
-interface Confirmacao {
-  alunoId: string;
-  food: Food;
-  refeicao: DietMeal;
-  aoGravar: () => void;
-}
-
-function confirmarRegistro({ alunoId, food, refeicao, aoGravar }: Confirmacao) {
-  const quantidade = numeroDoBanco(food.serving_size) || 100;
-  showConfirm({
-    title: `Adicionar ao ${refeicao.name}?`,
-    message: `${quantidade} ${food.serving_unit} de ${food.name} entram no que você comeu hoje.`,
-    confirmText: 'Adicionar',
-    onConfirm: () => gravar({ alunoId, food, refeicao, quantidade, aoGravar }),
-  });
-}
-
-async function gravar({
-  alunoId,
-  food,
-  refeicao,
-  quantidade,
-  aoGravar,
-}: Confirmacao & { quantidade: number }) {
-  const { currentDietPlan, mealItems } = useNutritionStore.getState();
-  if (!currentDietPlan) return;
-  try {
-    await registrarNoDiario({
-      alunoId,
-      planoId: currentDietPlan.id,
-      refeicaoId: refeicao.id,
-      // Data local: em UTC, o jantar das 21h no Brasil caía no dia seguinte.
-      data: getLocalDateISOString(),
-      doPlano: mealItems[refeicao.id] ?? [],
-      extra: {
-        quantity: quantidade,
-        unit: food.serving_unit,
-        food: doCatalogo(food),
-        origem: 'busca',
-      },
-    });
-    aoGravar();
-  } catch {
-    showAlert({
-      title: 'Não deu para registrar',
-      message: 'Confira a conexão e tente de novo.',
-      type: 'error',
-    });
-  }
+  const quantidade = numeroDoBanco(serving_size) || 100;
+  return {
+    descricao: `${quantidade} ${serving_unit} de ${name}`,
+    extra: {
+      quantity: quantidade,
+      unit: serving_unit,
+      food: { id, name, category, serving_size, serving_unit, calories, protein, carbs, fat },
+      origem: 'busca' as const,
+    },
+  };
 }

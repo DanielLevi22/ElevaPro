@@ -11,6 +11,7 @@ import { ROUTES } from '@/navigation/types';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
 import { BotaoDoAssistente } from '../../components/aluno/BotaoDoAssistente';
 import { CategoriasDoCatalogo } from '../../components/aluno/CategoriasDoCatalogo';
+import { ConfirmacaoDoRegistro } from '../../components/aluno/ConfirmacaoDoRegistro';
 import { LinhaDoAlimento } from '../../components/aluno/LinhaDoAlimento';
 import { TelaDaNutricao } from '../../components/aluno/TelaDaNutricao';
 import { type BuscaDeAlimento, useBuscaDeAlimento } from '../../hooks/useBuscaDeAlimento';
@@ -75,6 +76,7 @@ export function BuscarAlimentoScreen({
         onEscolher={busca.escolherCategoria}
       />
       <Resultados busca={busca} />
+      <ConfirmacaoDoRegistro registro={busca.registro} />
     </TelaDaNutricao>
   );
 }

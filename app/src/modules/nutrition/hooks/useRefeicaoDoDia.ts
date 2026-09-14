@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { showAlert } from '@/components/ui/appAlert';
 import { getLocalDateISOString } from '@/utils/dateUtils';
 import { diaDaSemana } from '../services/aderenciaDaSemana';
+import { carregarPlanoDoAluno } from '../services/carregarPlanoDoAluno';
 import {
   type ItemDoPrato,
   itensDaRefeicao,
@@ -51,7 +52,7 @@ export function useRefeicaoDoDia(
 
   useEffect(() => {
     if (buscou) return;
-    carregarPlanoNaData(alunoId, data).finally(() => setBuscou(true));
+    carregarPlanoDoAluno(alunoId, data).finally(() => setBuscou(true));
   }, [alunoId, data, buscou]);
 
   const itens = itensDaRefeicao(registros[refeicaoId], itensDoPlano[refeicaoId]);
@@ -73,14 +74,4 @@ export function useRefeicaoDoDia(
     feita,
     marcar,
   };
-}
-
-async function carregarPlanoNaData(alunoId: string, data: string): Promise<void> {
-  const store = useNutritionStore.getState();
-  await store.fetchDietPlan(alunoId);
-  const plano = useNutritionStore.getState().currentDietPlan;
-  await Promise.all([
-    plano ? store.fetchMeals(plano.id) : null,
-    store.fetchDailyLogs(alunoId, data),
-  ]);
 }

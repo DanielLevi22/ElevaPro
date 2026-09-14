@@ -104,3 +104,21 @@ describe('lista de compras', () => {
     ).toEqual([]);
   });
 });
+
+describe('lista de compras — plano sem tipo', () => {
+  // `refeicoesDoDia` lê tudo que não é 'unique' como semana. A lista precisa ler
+  // igual, ou um plano antigo sem `plan_type` compra sete vezes mais.
+  it('plano sem tipo, com refeições por dia, vale como semana', () => {
+    const semana = Array.from({ length: 7 }, (_, dia) => refeicao(`almoco-${dia}`, dia));
+    const itens = Object.fromEntries(semana.map((r) => [r.id, [item(frango, 200)]]));
+
+    const lista = listaDeCompras({
+      tipoDoPlano: null,
+      refeicoes: semana,
+      itensDoPlano: itens,
+      dias: 7,
+    });
+
+    expect(lista[0].itens[0].quantidade).toBe('1,4 kg');
+  });
+});
