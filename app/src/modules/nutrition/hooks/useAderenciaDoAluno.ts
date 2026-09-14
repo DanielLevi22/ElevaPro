@@ -1,4 +1,10 @@
-import { createNutritionService, createStudentsService, type MealLog } from '@elevapro/shared';
+import {
+  type AguaDoDia,
+  createHidratacao,
+  createNutritionService,
+  createStudentsService,
+  type MealLog,
+} from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -9,6 +15,7 @@ import { useNutritionStore } from '../store/nutritionStore';
 
 const nutricao = createNutritionService(supabase);
 const alunos = createStudentsService(supabase);
+const agua = createHidratacao(supabase);
 
 export interface AderenciaDoAluno extends AderenciaDaSemana {
   /** `YYYY-MM-DD` de segunda e de domingo. */
@@ -21,6 +28,8 @@ export interface AderenciaDoAluno extends AderenciaDaSemana {
   pesoAtual: number | null;
   notaDoEspecialista: string | null;
   especialistaId: string | null;
+  /** A água dos dias com registro na semana, como o banco devolveu. */
+  aguaDaSemana: AguaDoDia[];
 }
 
 /**
@@ -36,7 +45,11 @@ export function useAderenciaDoAluno(alunoId: string): AderenciaDoAluno {
   const itensDoPlano = useNutritionStore((s) => s.mealItems);
   const hoje = getLocalDateISOString();
   const semana = semanaDe(hoje);
-  const { registros, pesos, carregando } = useDadosDaSemana(alunoId, semana[0], semana[6]);
+  const { registros, pesos, aguaDaSemana, carregando } = useDadosDaSemana(
+    alunoId,
+    semana[0],
+    semana[6]
+  );
 
   const [ultimo, anterior] = pesos;
   return {
@@ -54,24 +67,28 @@ export function useAderenciaDoAluno(alunoId: string): AderenciaDoAluno {
     pesoAtual: ultimo ?? null,
     notaDoEspecialista: plano?.notes?.trim() || null,
     especialistaId: plano?.specialist_id ?? null,
+    aguaDaSemana,
   };
 }
 
-/** Os registros da semana e as duas últimas pesagens, recarregados ao voltar à tela. */
+/** Os registros, a água da semana e as duas últimas pesagens, recarregados ao voltar à tela. */
 function useDadosDaSemana(alunoId: string, inicio: string, fim: string) {
   const [registros, setRegistros] = useState<MealLog[]>([]);
   const [pesos, setPesos] = useState<(number | null)[]>([]);
+  const [aguaDaSemana, setAguaDaSemana] = useState<AguaDoDia[]>([]);
   const [carregando, setCarregando] = useState(true);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
-    const [dasemana, pesagens] = await Promise.all([
+    const [dasemana, pesagens, dias] = await Promise.all([
       nutricao.fetchMealLogsByRange(alunoId, inicio, fim).catch(() => []),
       alunos.fetchUltimasPesagens(alunoId, 2).catch(() => []),
+      agua.lerIntervalo(alunoId, inicio, fim).catch(() => []),
       carregarPlanoDoAluno(alunoId),
     ]);
     setRegistros(dasemana);
     setPesos(pesagens.map((p) => p.weight_kg));
+    setAguaDaSemana(dias);
     setCarregando(false);
   }, [alunoId, inicio, fim]);
 
@@ -80,5 +97,5 @@ function useDadosDaSemana(alunoId: string, inicio: string, fim: string) {
       carregar();
     }, [carregar])
   );
-  return { registros, pesos, carregando };
+  return { registros, pesos, aguaDaSemana, carregando };
 }

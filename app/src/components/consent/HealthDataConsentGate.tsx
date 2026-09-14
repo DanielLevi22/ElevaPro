@@ -100,9 +100,12 @@ export function HealthDataConsentGate({ studentId, isStudent }: HealthDataConsen
             </View>
           </View>
 
-          {/* `flex-1`: sem ele o ScrollView não encolhe dentro do `max-h`, o rodapé
-              é empurrado para fora da tela e a última linha do aviso some. */}
-          <ScrollView className="px-7 flex-1" contentContainerClassName="pb-2">
+          {/* `shrink` sem `grow`, e não `flex-1`. A folha só tem `max-h`, sem
+              altura: com `flex-1` a rolagem dividia uma altura que não existe e
+              colapsava a zero — o aluno via "Aceitar e continuar" sem o texto
+              que estava aceitando, e consentimento sem texto não é informado
+              (Art. 9°). Sem encolher, o rodapé saía da tela. */}
+          <ScrollView className="px-7 shrink grow-0" contentContainerClassName="pb-2">
             <Text className="text-foreground text-2xl font-extrabold font-display text-center">
               Seus dados de saúde
             </Text>
