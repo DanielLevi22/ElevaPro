@@ -86,6 +86,28 @@ describe('consumo do dia', () => {
     expect(consumo).toEqual({ calorias: 254, proteina: 32, carboidrato: 23, gordura: 4 });
   });
 
+  // Registrar pela busca ou pelo scan já é dizer "comi isto". Sem somar, o
+  // prato escaneado sumia do anel até o aluno lembrar de marcar a refeição — e
+  // marcá-la contaria junto o prato do plano que ele talvez nem comeu.
+  it('refeição desmarcada soma só o item extra, e não o prato do plano', () => {
+    const banana = alimento({ id: 'banana', calories: 89, protein: 1, carbs: 23, fat: 0 });
+    const consumo = consumoDoDia(
+      [refeicao('lanche')],
+      {
+        lanche: registro({
+          completed: false,
+          actual_items: [
+            { id: 'item-1', quantity: 100, food: alimento() },
+            { id: 'extra_1', quantity: 100, food: banana, origem: 'busca' },
+          ],
+        }),
+      },
+      { lanche: [item()] }
+    );
+
+    expect(consumo).toEqual({ calorias: 89, proteina: 1, carboidrato: 23, gordura: 0 });
+  });
+
   // O banco devolve `numeric` como texto em alguns caminhos do PostgREST.
   it('lê macros e porção vindos como texto', () => {
     const textual = alimento({

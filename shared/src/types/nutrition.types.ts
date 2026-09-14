@@ -74,6 +74,33 @@ export interface MealLog {
   created_at: string;
 }
 
+/**
+ * De onde veio um item que não estava no prato do plano.
+ *
+ * `scan` e `assistente` são **estimativa de modelo**: o especialista precisa
+ * distinguir isso do que foi prescrito ou pesado (LGPD, Art. 6°, V). `busca` é
+ * o aluno escolhendo no catálogo.
+ */
+export type OrigemDoItem = "busca" | "scan" | "assistente";
+
+/**
+ * Um item do prato como o aluno o comeu — o formato de `meal_logs.actual_items`.
+ *
+ * O JSONB não tem esquema no banco. Este é o que o app grava e lê: o `food`
+ * embutido, para a soma não depender de o Food ainda existir no catálogo.
+ */
+export interface ItemRegistrado {
+  id: string;
+  quantity: number;
+  unit?: string;
+  food?: Pick<Food, "serving_size" | "calories" | "protein" | "carbs" | "fat"> &
+    Partial<Pick<Food, "id" | "name" | "category" | "serving_unit">>;
+  is_substitution?: boolean;
+  substituted_for?: string;
+  /** Ausente nos itens do plano e nas trocas; presente em todo item extra. */
+  origem?: OrigemDoItem;
+}
+
 // ── Input types ──────────────────────────────────────────────────────────────
 
 export interface CreateFoodInput {

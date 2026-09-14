@@ -1,4 +1,4 @@
-import type { DietMeal, DietMealItem, DietPlan, Food, MealLog } from '@elevapro/shared';
+import type { DietMeal, DietMealItem, DietPlan, ItemRegistrado, MealLog } from '@elevapro/shared';
 
 /** Calorias e macros em gramas, na unidade que as telas mostram. */
 export interface Macros {
@@ -8,25 +8,11 @@ export interface Macros {
   gordura: number;
 }
 
-type MacrosDoAlimento = Pick<Food, 'serving_size' | 'calories' | 'protein' | 'carbs' | 'fat'>;
-
 /**
- * Um item do prato como o aluno o comeu: o do plano, a troca ou o extra.
- *
- * `actual_items` é JSONB sem esquema no banco, então este é o formato que o app
- * grava e lê — `food` embutido, para a soma não depender de o Food ainda
- * existir no catálogo.
+ * Um item do prato como o aluno o comeu: o do plano, a troca ou o extra. O
+ * formato de `meal_logs.actual_items` mora no `shared`, junto de quem grava.
  */
-export interface ItemDoPrato {
-  id: string;
-  quantity: number;
-  unit?: string;
-  food?: MacrosDoAlimento & Partial<Pick<Food, 'id' | 'name' | 'category' | 'serving_unit'>>;
-  is_substitution?: boolean;
-  substituted_for?: string;
-  /** De onde veio o item extra. Estimado por IA: o especialista precisa saber (LGPD, Art. 6°, V). */
-  origem?: 'scan' | 'assistente';
-}
+export type ItemDoPrato = ItemRegistrado;
 
 export const MACROS_ZERADOS: Macros = { calorias: 0, proteina: 0, carboidrato: 0, gordura: 0 };
 
@@ -78,7 +64,11 @@ export function somarMacros(a: Macros, b: Macros): Macros {
 }
 
 /**
- * O que o aluno comeu no dia: só refeição marcada como feita soma.
+ * O que o aluno comeu no dia.
+ *
+ * Refeição marcada soma o prato inteiro. Desmarcada soma só o item extra — o
+ * que veio da busca, do scan ou do assistente: registrar já é dizer que comeu,
+ * e o prato do plano, não.
  *
  * @example consumoDoDia(refeicoesDoDia(meals, tipo, dia), dailyLogs, mealItems)
  */
@@ -88,10 +78,11 @@ export function consumoDoDia(
   itensDoPlano: Record<string, DietMealItem[]>
 ): Macros {
   return refeicoes
-    .filter((refeicao) => registros[refeicao.id]?.completed)
-    .map((refeicao) =>
-      macrosDosItens(itensDaRefeicao(registros[refeicao.id], itensDoPlano[refeicao.id]))
-    )
+    .map((refeicao) => {
+      const registro = registros[refeicao.id];
+      const itens = itensDaRefeicao(registro, itensDoPlano[refeicao.id]);
+      return macrosDosItens(registro?.completed ? itens : itens.filter((item) => item.origem));
+    })
     .reduce(somarMacros, MACROS_ZERADOS);
 }
 

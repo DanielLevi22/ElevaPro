@@ -37,6 +37,7 @@ export * from "./types/students.types";
 export * from "./types/workouts.types";
 export * from "./utils/anamnese";
 export * from "./utils/calendario";
+export * from "./utils/diarioAlimentar";
 export * from "./utils/nome";
 export * from "./utils/periodizacao";
 export * from "./utils/pse";
