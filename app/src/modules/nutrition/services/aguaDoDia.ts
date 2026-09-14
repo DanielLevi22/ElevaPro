@@ -26,16 +26,26 @@ export interface CoposDoDia {
 }
 
 /**
+ * Até onde vão os primeiros `copos` copos, em ml inteiros — a única conta de
+ * copo. Encher e contar usam a mesma: com meta de 2.750 ml o copo tem 343,75, e
+ * dividir o total gravado (arredondado) pelo copo exato deixava o copo recém
+ * tocado de fora.
+ */
+function ateOCopo(copos: number, metaMl: number): number {
+  return Math.round((copos * metaMl) / COPOS_DO_DIA);
+}
+
+/**
  * Os copos cheios e o que falta, com cada copo valendo 1/8 da meta.
  *
  * @example coposDoDia(700, 2000) // { total: 8, mlPorCopo: 250, cheios: 2, faltamMl: 1300 }
  */
 export function coposDoDia(totalMl: number, metaMl: number): CoposDoDia {
-  const mlPorCopo = metaMl / COPOS_DO_DIA;
+  const numeros = Array.from({ length: COPOS_DO_DIA }, (_, i) => i + 1);
   return {
     total: COPOS_DO_DIA,
-    mlPorCopo,
-    cheios: Math.min(COPOS_DO_DIA, Math.floor(totalMl / mlPorCopo)),
+    mlPorCopo: metaMl / COPOS_DO_DIA,
+    cheios: numeros.filter((copo) => ateOCopo(copo, metaMl) <= totalMl).length,
     faltamMl: Math.max(0, Math.round(metaMl - totalMl)),
   };
 }
@@ -47,9 +57,8 @@ export function coposDoDia(totalMl: number, metaMl: number): CoposDoDia {
  * @example totalAoTocarNoCopo(2, 250, 2000) // 750
  */
 export function totalAoTocarNoCopo(indice: number, totalAtualMl: number, metaMl: number): number {
-  const mlPorCopo = metaMl / COPOS_DO_DIA;
-  const ateEste = Math.round((indice + 1) * mlPorCopo);
-  if (totalAtualMl === ateEste) return Math.max(0, Math.round(indice * mlPorCopo));
+  const ateEste = ateOCopo(indice + 1, metaMl);
+  if (totalAtualMl === ateEste) return ateOCopo(indice, metaMl);
   return ateEste;
 }
 
@@ -73,4 +82,13 @@ export function mediaDeAguaDaSemana(
   const comAgua = totais.filter((ml) => ml > 0);
   if (comAgua.length === 0) return null;
   return Math.round(comAgua.reduce((soma, ml) => soma + ml, 0) / comAgua.length);
+}
+
+/**
+ * Ml como o kit escreve a água: litros com uma casa e vírgula.
+ *
+ * @example litros(2600) // "2,6 L"
+ */
+export function litros(ml: number): string {
+  return `${(Math.round(ml / 100) / 10).toString().replace('.', ',')} L`;
 }

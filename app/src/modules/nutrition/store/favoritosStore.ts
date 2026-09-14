@@ -1,14 +1,6 @@
-import { createMMKV } from 'react-native-mmkv';
 import { create } from 'zustand';
-import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
-
-const armazenamento = createMMKV({ id: 'refeicoes-favoritas' });
-
-const noAparelho: StateStorage = {
-  getItem: (nome) => armazenamento.getString(nome) ?? null,
-  setItem: (nome, valor) => armazenamento.set(nome, valor),
-  removeItem: (nome) => armazenamento.remove(nome),
-};
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { armazenamentoNoAparelho } from '@/lib/armazenamentoNoAparelho';
 
 interface FavoritosState {
   /** Por aluno, as refeições do plano marcadas com o coração. */
@@ -45,6 +37,9 @@ export const useFavoritosStore = create<FavoritosState>()(
           return { porAluno: { ...state.porAluno, [alunoId]: novos } };
         }),
     }),
-    { name: 'refeicoes-favoritas', storage: createJSONStorage(() => noAparelho) }
+    {
+      name: 'refeicoes-favoritas',
+      storage: createJSONStorage(() => armazenamentoNoAparelho('refeicoes-favoritas')),
+    }
   )
 );

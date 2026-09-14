@@ -56,17 +56,21 @@ REVOKE ALL ON "hydration_daily" FROM anon;
 REVOKE DELETE ON "hydration_daily" FROM authenticated;
 --> statement-breakpoint
 
+-- As três políticas são `TO authenticated`: a chave anônima já não tem
+-- privilégio (REVOKE acima), e declarar o papel poupa o planejador de avaliar
+-- a política para quem nunca passaria nela.
+
 -- O aluno lê a própria água. Histórico dele, sempre: revogar o consentimento
 -- interrompe a coleta, e não apaga o que já foi registrado (§7).
 CREATE POLICY "hydration_own_select" ON "hydration_daily"
-  FOR SELECT USING ("student_id" = (SELECT auth.uid()));
+  FOR SELECT TO authenticated USING ("student_id" = (SELECT auth.uid()));
 --> statement-breakpoint
 
 -- Gravar exige consentimento vigente, no banco. O helper é o estrito, e não o
 -- `health_consent_not_revoked` de `meal_logs`: esta tabela nasce depois do
 -- portão de consentimento, então não existe acervo sem registro para proteger.
 CREATE POLICY "hydration_own_insert" ON "hydration_daily"
-  FOR INSERT WITH CHECK (
+  FOR INSERT TO authenticated WITH CHECK (
     "student_id" = (SELECT auth.uid())
     AND (SELECT private.has_health_consent("student_id"))
   );
@@ -74,7 +78,7 @@ CREATE POLICY "hydration_own_insert" ON "hydration_daily"
 
 -- Corrigir o total do dia (Art. 18, III) com a mesma condição de gravar.
 CREATE POLICY "hydration_own_update" ON "hydration_daily"
-  FOR UPDATE
+  FOR UPDATE TO authenticated
   USING ("student_id" = (SELECT auth.uid()))
   WITH CHECK (
     "student_id" = (SELECT auth.uid())

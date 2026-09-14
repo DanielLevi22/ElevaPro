@@ -1,6 +1,12 @@
 "use client";
 
-import type { DietMeal, DietMealItem, Food } from "@elevapro/shared";
+import {
+  type DietMeal,
+  type DietMealItem,
+  type Food,
+  textoDaDificuldade,
+  textoDasPorcoes,
+} from "@elevapro/shared";
 
 interface MealCardProps {
   meal: DietMeal & { meal_foods?: (DietMealItem & { food: Food })[] };
@@ -202,8 +208,6 @@ export function MealCard({
   );
 }
 
-const DIFICULDADE = { facil: "Fácil", media: "Média", dificil: "Difícil" } as const;
-
 /**
  * "12:40 · 25 min · Fácil · 1 porção": o horário e o que o aluno vê do preparo,
  * para o especialista conferir sem abrir o modal.
@@ -214,8 +218,8 @@ function rotuloDoHorarioEPreparo(
   const partes = [
     meal.meal_time?.slice(0, 5) || "Definir horário",
     meal.prep_minutes ? `${meal.prep_minutes} min` : null,
-    meal.difficulty ? DIFICULDADE[meal.difficulty] : null,
-    meal.servings ? `${meal.servings} ${meal.servings === 1 ? "porção" : "porções"}` : null,
+    meal.difficulty ? textoDaDificuldade(meal.difficulty) : null,
+    meal.servings ? textoDasPorcoes(meal.servings) : null,
   ];
   return partes.filter(Boolean).join(" · ");
 }

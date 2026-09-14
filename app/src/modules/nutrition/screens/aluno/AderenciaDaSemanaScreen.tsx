@@ -12,7 +12,7 @@ import { TelaDaNutricao } from '../../components/aluno/TelaDaNutricao';
 import { type AderenciaDoAluno, useAderenciaDoAluno } from '../../hooks/useAderenciaDoAluno';
 import { useAguaDoDia } from '../../hooks/useAguaDoDia';
 import type { DiaDeAderencia } from '../../services/aderenciaDaSemana';
-import { mediaDeAguaDaSemana } from '../../services/aguaDoDia';
+import { litros, mediaDeAguaDaSemana } from '../../services/aguaDoDia';
 
 /**
  * Tela 8 do fluxo de nutrição do kit: as barras da semana, a grade de números
@@ -164,7 +164,7 @@ function GradeDaSemana({
         <BlocoDaSemana
           icone="water-outline"
           cor={cores.textoCarboidrato}
-          valor={mediaDeAgua === null ? '—' : `${umaCasa(mediaDeAgua / 1000)} L`}
+          valor={mediaDeAgua === null ? '—' : litros(mediaDeAgua)}
           rotulo="Água"
         />
         <BlocoDaSemana
@@ -180,11 +180,6 @@ function GradeDaSemana({
       </View>
     </View>
   );
-}
-
-/** "2,6": uma casa, com vírgula. */
-function umaCasa(valor: number): string {
-  return (Math.round(valor * 10) / 10).toString().replace('.', ',');
 }
 
 /** "2.180": o kit separa milhar com ponto. */

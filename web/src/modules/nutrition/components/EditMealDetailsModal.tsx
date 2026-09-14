@@ -1,6 +1,11 @@
 "use client";
 
-import type { DietMeal, DificuldadeDoPreparo } from "@elevapro/shared";
+import {
+  DIFICULDADES_DO_PREPARO,
+  type DietMeal,
+  type DificuldadeDoPreparo,
+  textoDaDificuldade,
+} from "@elevapro/shared";
 import { useState } from "react";
 import { CustomTimePicker } from "@/shared/components/CustomTimePicker";
 import { Button } from "@/shared/components/ui/Button";
@@ -24,11 +29,10 @@ interface EditMealDetailsModalProps {
   meal: DietMeal | null;
 }
 
-const DIFICULDADES: { valor: DificuldadeDoPreparo; rotulo: string }[] = [
-  { valor: "facil", rotulo: "Fácil" },
-  { valor: "media", rotulo: "Média" },
-  { valor: "dificil", rotulo: "Difícil" },
-];
+/** O valor do select, conferido contra os níveis que o banco aceita. */
+function dificuldadeEscolhida(valor: string): DificuldadeDoPreparo | "" {
+  return DIFICULDADES_DO_PREPARO.find((nivel) => nivel === valor) ?? "";
+}
 
 /** Campo numérico vazio é "não informado", e não zero: o aluno não vê a linha. */
 function numeroOuNulo(texto: string): number | null {
@@ -94,13 +98,13 @@ export function EditMealDetailsModal({ isOpen, onClose, onSave, meal }: EditMeal
             <select
               id="preparo-dificuldade"
               value={dificuldade}
-              onChange={(event) => setDificuldade(event.target.value as DificuldadeDoPreparo | "")}
+              onChange={(event) => setDificuldade(dificuldadeEscolhida(event.target.value))}
               className={`${FILTER_SELECT_CLASS} w-full`}
             >
               <option value="">—</option>
-              {DIFICULDADES.map(({ valor, rotulo }) => (
+              {DIFICULDADES_DO_PREPARO.map((valor) => (
                 <option key={valor} value={valor}>
-                  {rotulo}
+                  {textoDaDificuldade(valor)}
                 </option>
               ))}
             </select>

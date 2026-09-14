@@ -35,7 +35,10 @@ export function useAguaDoDia(
   { somenteLeitura }: { somenteLeitura: boolean }
 ): AguaDoDiaDoAluno {
   const hoje = getLocalDateISOString();
-  const [totalMl, setTotalMl] = useState(0);
+  // `null` é "não li": com leitura falha, o toque não pode gravar um total
+  // baixo por cima do que o aluno já registrou hoje.
+  const [totalLido, setTotalLido] = useState<number | null>(null);
+  const totalMl = totalLido ?? 0;
   const [pesoKg, setPesoKg] = useState<number | null>(null);
   const metaMl = metaDeAgua(pesoKg);
 
@@ -43,8 +46,8 @@ export function useAguaDoDia(
     useCallback(() => {
       agua
         .lerDia(alunoId, hoje)
-        .then(setTotalMl)
-        .catch(() => setTotalMl(0));
+        .then(setTotalLido)
+        .catch(() => setTotalLido(null));
       alunos
         .fetchUltimasPesagens(alunoId, 1)
         .then(([ultima]) => setPesoKg(ultima?.weight_kg ?? null))
@@ -54,11 +57,18 @@ export function useAguaDoDia(
 
   const tocar = (indice: number) => {
     if (somenteLeitura) return showAlert(AVISO_DE_MODO_LEITURA);
-    const anterior = totalMl;
+    if (totalLido === null) {
+      return showAlert({
+        title: 'Água de hoje indisponível',
+        message: 'Não consegui ler o que você já registrou hoje. Volte à tela para tentar de novo.',
+        type: 'warning',
+      });
+    }
+    const anterior = totalLido;
     const novo = totalAoTocarNoCopo(indice, anterior, metaMl);
-    setTotalMl(novo);
+    setTotalLido(novo);
     agua.gravarDia(alunoId, hoje, novo).catch(() => {
-      setTotalMl(anterior);
+      setTotalLido(anterior);
       showAlert({
         title: 'Não deu para registrar a água',
         message:

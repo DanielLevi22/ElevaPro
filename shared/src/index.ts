@@ -42,6 +42,7 @@ export * from "./utils/calendario";
 export * from "./utils/diarioAlimentar";
 export * from "./utils/nome";
 export * from "./utils/periodizacao";
+export * from "./utils/preparo";
 export * from "./utils/pse";
 export * from "./utils/sessao";
 export * from "./utils/texto";

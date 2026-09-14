@@ -1,4 +1,4 @@
-import type { DietMeal } from '@elevapro/shared';
+import { type DietMeal, textoDaDificuldade, textoDasPorcoes } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -196,12 +196,6 @@ function CabecalhoDoPrato({ refeicao, itens, macros }: CabecalhoDoPratoProps) {
   );
 }
 
-const DIFICULDADE: Record<NonNullable<DietMeal['difficulty']>, string> = {
-  facil: 'Fácil',
-  media: 'Média',
-  dificil: 'Difícil',
-};
-
 /** "25 min · Fácil · 1 porção" do kit, só com o que o especialista informou. */
 function dadosDoPreparo(refeicao: DietMeal) {
   const dados: {
@@ -211,11 +205,9 @@ function dadosDoPreparo(refeicao: DietMeal) {
   if (refeicao.prep_minutes)
     dados.push({ icone: 'time-outline', texto: `${refeicao.prep_minutes} min` });
   if (refeicao.difficulty)
-    dados.push({ icone: 'speedometer-outline', texto: DIFICULDADE[refeicao.difficulty] });
-  if (refeicao.servings) {
-    const porcoes = refeicao.servings === 1 ? 'porção' : 'porções';
-    dados.push({ icone: 'people-outline', texto: `${refeicao.servings} ${porcoes}` });
-  }
+    dados.push({ icone: 'speedometer-outline', texto: textoDaDificuldade(refeicao.difficulty) });
+  if (refeicao.servings)
+    dados.push({ icone: 'people-outline', texto: textoDasPorcoes(refeicao.servings) });
   return dados;
 }
 

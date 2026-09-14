@@ -82,3 +82,23 @@ describe('média de água da semana', () => {
     expect(mediaDeAguaDaSemana([], '2026-09-13', 0)).toBeNull();
   });
 });
+
+describe('copos com meta que não divide em ml inteiros', () => {
+  // Meta de 2.750 ml dá copo de 343,75. Tocar no 3º grava 1.031 ml, arredondado:
+  // dividindo por 343,75 dava 2,999… e a tela mostrava dois copos cheios.
+  it('o copo tocado aparece cheio mesmo com o total arredondado para baixo', () => {
+    const total = totalAoTocarNoCopo(2, 0, 2750);
+
+    expect(coposDoDia(total, 2750).cheios).toBe(3);
+  });
+
+  it('o primeiro copo de uma meta de 2.250 aparece cheio', () => {
+    expect(coposDoDia(totalAoTocarNoCopo(0, 0, 2250), 2250).cheios).toBe(1);
+  });
+
+  it('tocar de novo no copo que acabou de encher o esvazia', () => {
+    const cheio = totalAoTocarNoCopo(2, 0, 2750);
+
+    expect(coposDoDia(totalAoTocarNoCopo(2, cheio, 2750), 2750).cheios).toBe(2);
+  });
+});

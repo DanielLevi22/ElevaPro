@@ -5,6 +5,7 @@ import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
 import { useCores, useEscala } from '@/shared/design';
 import type { AguaDoDiaDoAluno } from '../../hooks/useAguaDoDia';
+import { litros } from '../../services/aguaDoDia';
 
 /**
  * "Hidratação de hoje" do kit: oito copos, a meta e o que falta.
@@ -42,11 +43,6 @@ export function HidratacaoDeHoje({ agua }: { agua: AguaDoDiaDoAluno }) {
       </Vidro>
     </>
   );
-}
-
-/** "3 L", "2,5 L": o kit escreve a meta em litros. */
-function litros(ml: number): string {
-  return `${(Math.round(ml / 100) / 10).toString().replace('.', ',')} L`;
 }
 
 function Copo({ cheio, numero, onPress }: { cheio: boolean; numero: number; onPress: () => void }) {
