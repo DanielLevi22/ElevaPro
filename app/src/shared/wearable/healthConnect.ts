@@ -71,6 +71,21 @@ export const healthConnectReader: WearableReader = {
 };
 
 /**
+ * O Health Connect existe e responde neste aparelho? A causa mais comum de não
+ * responder é não estar instalado.
+ *
+ * @example
+ * if (!(await isHealthConnectAvailable())) showAlert(...);
+ */
+export async function isHealthConnectAvailable(): Promise<boolean> {
+  try {
+    return await initialize();
+  } catch {
+    return false;
+  }
+}
+
+/**
  * O app pode ler o dia no Health Connect?
  *
  * Sempre chama `initialize()` antes de consultar: o SDK rejeita

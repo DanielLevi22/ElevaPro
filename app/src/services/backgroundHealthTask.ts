@@ -1,6 +1,6 @@
 import * as BackgroundFetch from 'expo-background-fetch';
 import * as TaskManager from 'expo-task-manager';
-import { readDeviceMetrics } from '@/hooks/useHealthData';
+import { readDeviceMetrics, refreshCapabilitiesIfStale } from '@/shared/wearable';
 import { localDateKey, syncDailyMetrics } from './healthSync';
 
 const BACKGROUND_HEALTH_SYNC = 'BACKGROUND_HEALTH_SYNC';
@@ -12,6 +12,9 @@ const SYNC_INTERVAL_SECONDS = 60 * 30;
 // Task própria, separada de BACKGROUND_DIET_SYNC de propósito: uma falha do
 // Health Connect não pode suprimir o reagendamento de notificação de refeição.
 TaskManager.defineTask(BACKGROUND_HEALTH_SYNC, async () => {
+  // A sincronização diária também é quando se descobre o que o relógio entrega.
+  // Tem janela própria de validade e nunca lança.
+  await refreshCapabilitiesIfStale();
   const metrics = await readDeviceMetrics();
 
   if (!metrics) {

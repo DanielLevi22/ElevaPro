@@ -31,7 +31,7 @@ function statusOf(available: boolean): CapabilityStatus {
 }
 
 /** O relógio trocado há um mês não pode continuar respondendo pelo de hoje. */
-const CARDIO_LOOKBACK_DAYS = 30;
+export const CARDIO_LOOKBACK_DAYS = 30;
 
 /**
  * Um batimento por minuto separa o relógio que mede o treino do que mede a cada

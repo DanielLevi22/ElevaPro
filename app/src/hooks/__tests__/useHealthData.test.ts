@@ -1,8 +1,9 @@
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { Platform } from 'react-native';
 import { getGrantedPermissions, initialize, readRecords } from 'react-native-health-connect';
-import { readDeviceMetrics, useHealthData } from '@/hooks/useHealthData';
+import { useHealthData } from '@/hooks/useHealthData';
 import { syncDailyMetrics } from '@/services/healthSync';
+import { readDeviceMetrics } from '@/shared/wearable';
 
 jest.mock('react-native-health-connect', () => ({
   initialize: jest.fn(),
@@ -15,6 +16,13 @@ jest.mock('react-native-health-connect', () => ({
 jest.mock('@kingstinct/react-native-healthkit', () => ({
   requestAuthorization: jest.fn(),
   queryStatisticsForQuantity: jest.fn(),
+}));
+
+// A detecção de capacidades tem teste próprio; aqui ela não pode sair lendo o
+// Health Connect simulado e bagunçar a contagem de chamadas do agregado.
+jest.mock('@/shared/wearable/refresh', () => ({
+  ...jest.requireActual('@/shared/wearable/refresh'),
+  refreshCapabilitiesIfStale: jest.fn(),
 }));
 
 jest.mock('@/services/healthSync', () => ({

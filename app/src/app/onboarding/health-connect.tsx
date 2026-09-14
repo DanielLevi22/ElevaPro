@@ -7,6 +7,29 @@ import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { showAlert } from '@/components/ui/appAlert';
 import { colors } from '@/constants/colors';
+import { registrarFalha } from '@/lib/registro';
+import { useCores } from '@/shared/design';
+import {
+  isPlatformAvailable,
+  requestBackgroundRead,
+  requestReadPermissions,
+} from '@/shared/wearable';
+
+const PLATFORM_UNAVAILABLE_ALERT = {
+  title: 'Health Connect indisponível',
+  message:
+    'Não consegui falar com o Health Connect. Verifique se ele está instalado e atualizado na Play Store.',
+  type: 'info',
+} as const;
+
+function permissionDeniedAlert(isIOS: boolean) {
+  const platform = isIOS ? 'HealthKit' : 'Health Connect';
+  return {
+    title: 'Permissão não concedida',
+    message: `Sem acesso ao ${platform} não dá para ler seus passos. Toque em Conectar para tentar de novo.`,
+    type: 'warning',
+  } as const;
+}
 
 /**
  * Registra o consentimento logo após a permissão do SO ser concedida.
@@ -33,115 +56,30 @@ export default function HealthConnectScreen() {
   const _insets = useSafeAreaInsets();
   // Ensure we are detecting platform correctly for icons
   const isIOS = Platform.OS === 'ios';
+  const cores = useCores();
 
   const handleConnect = async () => {
     try {
-      if (isIOS) {
-        // O trecho anterior lia as permissoes de `Ionicons.AppleHealthKit`, o
-        // import de icones — codigo sem efeito, mascarado por @ts-expect-error.
-        const { requestAuthorization } = require('@kingstinct/react-native-healthkit');
-
-        const granted = await requestAuthorization({
-          toRead: [
-            'HKQuantityTypeIdentifierStepCount',
-            'HKQuantityTypeIdentifierActiveEnergyBurned',
-            'HKQuantityTypeIdentifierRestingHeartRate',
-            'HKCategoryTypeIdentifierSleepAnalysis',
-          ],
-        });
-
-        if (!granted) {
-          showAlert({
-            title: 'Permissão não concedida',
-            message:
-              'Sem acesso ao HealthKit não dá para ler seus passos. Toque em Conectar para tentar de novo.',
-            type: 'warning',
-          });
-          return;
-        }
-
-        await recordCollectionConsent();
-        router.replace('/(tabs)');
-      } else {
-        const { initialize, requestPermission } = require('react-native-health-connect');
-
-        const isInitialized = await initialize();
-        if (!isInitialized) {
-          // Sair calado para as tabs fazia o toque no botão não produzir nada
-          // visível — indistinguível de o app ter travado. A causa mais comum
-          // é o Health Connect não estar instalado no aparelho.
-          console.log('[HealthConnectScreen] Health Connect not initialized');
-          showAlert({
-            title: 'Health Connect indisponível',
-            message:
-              'Não consegui falar com o Health Connect. Verifique se ele está instalado e atualizado na Play Store.',
-            type: 'info',
-          });
-          return;
-        }
-
-        // As permissões de dado vêm sozinhas neste pedido. O Health Connect
-        // trata `BackgroundAccessPermission` como especial e só a concede
-        // depois de as comuns existirem — misturada aqui, o diálogo volta
-        // vazio e tudo parece recusado.
-        const granted = await requestPermission([
-          { accessType: 'read', recordType: 'Steps' },
-          { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
-          { accessType: 'read', recordType: 'SleepSession' },
-          { accessType: 'read', recordType: 'RestingHeartRate' },
-          // Batimento da sessão de corrida. Sem pedir aqui, `mediaDeBatimentos`
-          // devolve lista vazia para sempre no Android e a FC nunca é gravada —
-          // sem erro, sem aviso, com a permissão declarada no manifesto.
-          { accessType: 'read', recordType: 'HeartRate' },
-        ]);
-
-        console.log('[HealthConnect] permissões concedidas:', JSON.stringify(granted));
-
-        // Passos ou calorias bastam para seguir. Sono e FC de repouso são
-        // pedidos no mesmo diálogo mas não entram nesta condição de propósito:
-        // o Health Connect deixa conceder tipo a tipo, e recusar o sono é
-        // escolha legítima que não pode barrar o resto — o Art. 8°, §4° anula
-        // autorização em bloco, e um fluxo que exige tudo é autorização em
-        // bloco com outro nome.
-        const concedeuLeitura = granted.some(
-          (p: { recordType: string; accessType: string }) =>
-            p.accessType === 'read' &&
-            (p.recordType === 'Steps' || p.recordType === 'ActiveCaloriesBurned')
-        );
-
-        // O retorno era descartado e o consentimento LGPD ficava gravado mesmo
-        // quando o usuário recusava — o iOS já checava, o Android não. Dava um
-        // estado impossível: consentimento concedido, permissão negada.
-        if (!concedeuLeitura) {
-          // Fica na tela em vez de mandar para as tabs: o botão "Conectar" é a
-          // ação que resolve, e tirar o aluno daqui o obriga a redescobrir o
-          // caminho para tentar de novo.
-          showAlert({
-            title: 'Permissão não concedida',
-            message:
-              'Sem acesso ao Health Connect não dá para ler seus passos. Toque em Conectar para tentar de novo.',
-            type: 'warning',
-          });
-          return;
-        }
-
-        // Só agora, e num pedido separado: sem ela a leitura em background
-        // volta lista vazia, mas ela não pode bloquear o fluxo — o aluno já
-        // autorizou o essencial e recusar o background é escolha legítima.
-        try {
-          const comBackground = await requestPermission([
-            { accessType: 'read', recordType: 'BackgroundAccessPermission' },
-          ]);
-          console.log('[HealthConnect] background:', JSON.stringify(comBackground));
-        } catch (bgError) {
-          console.log('[HealthConnect] background indisponível:', String(bgError));
-        }
-
-        await recordCollectionConsent();
-        router.replace('/(tabs)');
+      if (!(await isPlatformAvailable())) {
+        // Sair calado para as tabs fazia o toque no botão não produzir nada
+        // visível — indistinguível de o app ter travado.
+        showAlert(PLATFORM_UNAVAILABLE_ALERT);
+        return;
       }
-    } catch (error) {
-      console.error('[HealthConnectScreen] Error requesting permissions:', error);
+
+      // O retorno era descartado e o consentimento LGPD ficava gravado mesmo
+      // quando o usuário recusava: consentimento concedido, permissão negada.
+      if (!(await requestReadPermissions())) {
+        // Fica na tela: o botão "Conectar" é a ação que resolve.
+        showAlert(permissionDeniedAlert(isIOS));
+        return;
+      }
+
+      await requestBackgroundRead();
+      await recordCollectionConsent();
+      router.replace('/(tabs)');
+    } catch {
+      registrarFalha('relogio.pedir_permissoes');
       router.replace('/(tabs)');
     }
   };
@@ -153,7 +91,7 @@ export default function HealthConnectScreen() {
   return (
     <View className="flex-1 bg-black">
       {/* Background Gradients */}
-      <View className="absolute top-0 left-0 right-0 h-[600px] overflow-hidden">
+      <View className="absolute top-0 left-0 right-0 h-[37.5rem] overflow-hidden">
         <LinearGradient
           colors={[colors.primary.start, 'transparent']}
           className="absolute top-[-10%] left-0 right-0 h-[80%] opacity-20"
@@ -201,23 +139,14 @@ export default function HealthConnectScreen() {
             <Ionicons name="swap-horizontal" size={28} color="white" className="opacity-50" />
 
             {/* Health Platform Icon */}
+            {/* O rosa e o ciano de antes eram hexadecimal à mão; a marca não sai por
+                classe nem por `useCores`, e a tela é refeita no lote da saúde. */}
             <View className="w-24 h-24 bg-white rounded-3xl items-center justify-center shadow-2xl overflow-hidden relative">
+              <View className="absolute w-full h-full bg-primary/10" />
               {isIOS ? (
-                <>
-                  <LinearGradient
-                    colors={['#FF2E63', '#ff6b8b']}
-                    className="absolute w-full h-full opacity-10"
-                  />
-                  <Ionicons name="heart" size={48} color="#FF2E63" />
-                </>
+                <Ionicons name="heart" size={48} color={cores.primary} />
               ) : (
-                <>
-                  <LinearGradient
-                    colors={['#00D9FF', '#4facfe']}
-                    className="absolute w-full h-full opacity-10"
-                  />
-                  <Ionicons name="fitness" size={48} color="#00D9FF" />
-                </>
+                <Ionicons name="fitness" size={48} color={cores.primary} />
               )}
             </View>
           </View>
