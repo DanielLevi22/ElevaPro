@@ -33,7 +33,10 @@ const HEALTH_KIT_TYPES: Record<Capability, readonly HealthKitType[]> = {
   workoutHeartRate: ['HKQuantityTypeIdentifierHeartRate'],
 };
 
-function uniqueTypes<T>(table: Record<Capability, readonly T[]>, capabilities: Capability[]): T[] {
+function uniqueTypes<T>(
+  table: Record<Capability, readonly T[]>,
+  capabilities: readonly Capability[]
+): T[] {
   return [...new Set(capabilities.flatMap((capability) => table[capability]))];
 }
 
@@ -41,9 +44,9 @@ function uniqueTypes<T>(table: Record<Capability, readonly T[]>, capabilities: C
  * Record types do Health Connect para pedir leitura.
  *
  * @example
- * requestPermission(healthConnectReadTypes(ALL_CAPABILITIES).map((recordType) => ({ accessType: 'read', recordType })));
+ * requestPermission(healthConnectReadTypes(CAPABILITIES).map((recordType) => ({ accessType: 'read', recordType })));
  */
-export function healthConnectReadTypes(capabilities: Capability[]): HealthConnectType[] {
+export function healthConnectReadTypes(capabilities: readonly Capability[]): HealthConnectType[] {
   return uniqueTypes(HEALTH_CONNECT_TYPES, capabilities);
 }
 
@@ -51,8 +54,8 @@ export function healthConnectReadTypes(capabilities: Capability[]): HealthConnec
  * Identificadores do HealthKit para pedir leitura.
  *
  * @example
- * requestAuthorization({ toRead: healthKitReadTypes(ALL_CAPABILITIES) });
+ * requestAuthorization({ toRead: healthKitReadTypes(CAPABILITIES) });
  */
-export function healthKitReadTypes(capabilities: Capability[]): HealthKitType[] {
+export function healthKitReadTypes(capabilities: readonly Capability[]): HealthKitType[] {
   return uniqueTypes(HEALTH_KIT_TYPES, capabilities);
 }

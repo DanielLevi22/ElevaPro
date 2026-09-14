@@ -39,7 +39,7 @@ export async function syncDailyMetrics(metric: HealthMetricInput): Promise<SyncO
   } catch {
     // Sem o erro no log: o do PostgREST carrega o payload, e o payload aqui são
     // passos, sono e FC — dado de saúde fora de observabilidade (Art. 6°, VII).
-    registrarFalha('relogio.persistir_dia');
+    registrarFalha('wearable.persist_today');
     return 'failed';
   }
 }

@@ -1,29 +1,33 @@
 import { createMMKV } from 'react-native-mmkv';
-import type { Capability, CapabilityReport, CapabilityStatus } from './types';
+import { type CapabilityReport, type CapabilityStatus, isCapabilityStatus } from './types';
 
 const storage = createMMKV({ id: 'wearable-capabilities' });
 const KEY = 'report';
-
-const CAPABILITIES: Capability[] = ['dailyActivity', 'sleepAndRestingHr', 'workoutHeartRate'];
-const STATUSES = new Set<unknown>(['available', 'unavailable', 'unknown']);
 
 export interface CachedCapabilities {
   report: CapabilityReport;
   checkedAt: Date;
 }
 
+interface StoredReport {
+  report?: Record<string, unknown>;
+  checkedAt?: string;
+}
+
 function statusOrUnknown(value: unknown): CapabilityStatus {
-  return STATUSES.has(value) ? (value as CapabilityStatus) : 'unknown';
+  return isCapabilityStatus(value) ? value : 'unknown';
 }
 
 /**
- * Só o nome de cada capacidade e o estado dela, reconstruídos campo a campo: um
- * objeto espalhado levaria junto qualquer medida que viesse pendurada nele.
+ * Só o estado de cada capacidade, campo a campo: um objeto espalhado levaria
+ * junto qualquer medida que viesse pendurada nele.
  */
-function onlyStatuses(source: Partial<Record<Capability, unknown>>): CapabilityReport {
-  return Object.fromEntries(
-    CAPABILITIES.map((capability) => [capability, statusOrUnknown(source[capability])])
-  ) as CapabilityReport;
+function onlyStatuses(source: Record<string, unknown>): CapabilityReport {
+  return {
+    dailyActivity: statusOrUnknown(source.dailyActivity),
+    sleepAndRestingHr: statusOrUnknown(source.sleepAndRestingHr),
+    workoutHeartRate: statusOrUnknown(source.workoutHeartRate),
+  };
 }
 
 /**
@@ -34,10 +38,8 @@ function onlyStatuses(source: Partial<Record<Capability, unknown>>): CapabilityR
  * saveCapabilityReport(await detectCapabilities(reader, input), new Date());
  */
 export function saveCapabilityReport(report: CapabilityReport, checkedAt: Date): void {
-  storage.set(
-    KEY,
-    JSON.stringify({ report: onlyStatuses(report), checkedAt: checkedAt.toISOString() })
-  );
+  const stored: StoredReport = { report: onlyStatuses(report), checkedAt: checkedAt.toISOString() };
+  storage.set(KEY, JSON.stringify(stored));
 }
 
 /**
@@ -50,11 +52,10 @@ export function readCapabilityReport(): CachedCapabilities | null {
   const raw = storage.getString(KEY);
   if (!raw) return null;
   try {
-    const parsed: { report?: Partial<Record<Capability, unknown>>; checkedAt?: string } =
-      JSON.parse(raw);
+    const stored: StoredReport = JSON.parse(raw);
     return {
-      report: onlyStatuses(parsed.report ?? {}),
-      checkedAt: new Date(parsed.checkedAt ?? 0),
+      report: onlyStatuses(stored.report ?? {}),
+      checkedAt: new Date(stored.checkedAt ?? 0),
     };
   } catch {
     return null;

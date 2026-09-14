@@ -1,6 +1,7 @@
+import { lastDays, minutesBetween } from './time';
 import type { CapabilityReport, CapabilityStatus, TimeRange, WearableReader } from './types';
 
-interface DetectionInput {
+export interface DetectionInput {
   /** Consentimento de saúde vigente do Student. */
   hasHealthConsent: boolean;
   /** Começo e fim das sessões de cardio concluídas no próprio app. */
@@ -14,21 +15,11 @@ const UNKNOWN_REPORT: CapabilityReport = {
   workoutHeartRate: 'unknown',
 };
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
 /**
  * Sete dias cobrem o relógio que ficou na gaveta num fim de semana, sem que um
  * relógio trocado há um mês continue contando como fonte.
  */
-const RECENT_DAYS = 7;
-
-function lastDays(now: Date, days: number): TimeRange {
-  return { start: new Date(now.getTime() - days * DAY_MS), end: now };
-}
-
-function statusOf(available: boolean): CapabilityStatus {
-  return available ? 'available' : 'unavailable';
-}
+export const RECENT_DAYS = 7;
 
 /** O relógio trocado há um mês não pode continuar respondendo pelo de hoje. */
 export const CARDIO_LOOKBACK_DAYS = 30;
@@ -36,19 +27,26 @@ export const CARDIO_LOOKBACK_DAYS = 30;
 /**
  * Um batimento por minuto separa o relógio que mede o treino do que mede a cada
  * dez minutos em repouso. Ponto de partida, a calibrar no teste em aparelho da
- * pesquisa de relógios chineses (#302).
+ * pesquisa de relógios chineses (`docs/research/relogios-chineses-health-connect.md`).
  */
 const MIN_BEATS_PER_MINUTE = 1;
 
-const MINUTE_MS = 60 * 1000;
+function statusOf(available: boolean): CapabilityStatus {
+  return available ? 'available' : 'unavailable';
+}
 
 async function hasDenseHeartRate(reader: WearableReader, window: TimeRange): Promise<boolean> {
-  const minutes = (window.end.getTime() - window.start.getTime()) / MINUTE_MS;
+  const minutes = minutesBetween(window.start.getTime(), window.end.getTime());
   if (minutes <= 0) return false;
   const samples = await reader.heartRateSamples(window);
   return samples.length / minutes >= MIN_BEATS_PER_MINUTE;
 }
 
+/**
+ * Basta **uma** corrida recente com batimento denso. Outra corrida sem FC não
+ * desmente o relógio: é o dia em que ele ficou em casa, ou em que acabou a
+ * bateria.
+ */
 async function workoutHeartRate(
   reader: WearableReader,
   input: DetectionInput
@@ -61,7 +59,10 @@ async function workoutHeartRate(
   return statusOf(dense.some(Boolean));
 }
 
-async function sleepAndRestingHr(reader: WearableReader, range: TimeRange) {
+async function sleepAndRestingHr(
+  reader: WearableReader,
+  range: TimeRange
+): Promise<CapabilityStatus> {
   const [sleep, restingHeartRate] = await Promise.all([
     reader.hasSleep(range),
     reader.hasRestingHeartRate(range),

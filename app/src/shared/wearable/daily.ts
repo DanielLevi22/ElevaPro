@@ -18,12 +18,6 @@ export interface DailyAggregate {
   hasRecords: boolean;
 }
 
-/** Intervalo em ISO, no formato que as duas plataformas recebem. */
-export interface IsoRange {
-  startTime: string;
-  endTime: string;
-}
-
 /**
  * Estágios que contam como sono dormido — os mesmos códigos no Health Connect e
  * no HealthKit.
@@ -43,23 +37,28 @@ export const ASLEEP_STAGES = new Set([1, 3, 4, 5]);
  * metade seria gravada num registro diferente — o especialista veria duas noites
  * de quatro horas onde houve uma de oito. O corte ao meio-dia é o mesmo que Apple
  * e Google usam para atribuir uma noite a um dia.
+ *
+ * @example
+ * readSleep(sleepRange());
  */
-export function sleepRange(): IsoRange {
-  const end = new Date();
+export function sleepRange(now: Date = new Date()): { start: Date; end: Date } {
+  const end = new Date(now);
   end.setHours(12, 0, 0, 0);
   const start = new Date(end);
   start.setDate(start.getDate() - 1);
-  return { startTime: start.toISOString(), endTime: end.toISOString() };
+  return { start, end };
 }
 
-export function todayRange(): IsoRange {
-  const start = new Date();
+/**
+ * O dia civil local de hoje, da meia-noite à meia-noite seguinte.
+ *
+ * @example
+ * readSteps(todayRange());
+ */
+export function todayRange(now: Date = new Date()): { start: Date; end: Date } {
+  const start = new Date(now);
   start.setHours(0, 0, 0, 0);
   const end = new Date(start);
   end.setDate(end.getDate() + 1);
-  return { startTime: start.toISOString(), endTime: end.toISOString() };
+  return { start, end };
 }
-
-/** Faixas aceitas pelo CHECK da `0046`. */
-export const SLEEP_MINUTES = { min: 1, max: 1440 } as const;
-export const RESTING_BPM = { min: 20, max: 200 } as const;

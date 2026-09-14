@@ -1,53 +1,21 @@
 import { createHealthService, createWorkoutsService } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
-import { Platform } from 'react-native';
 import { registrarAviso } from '@/lib/registro';
-import { CARDIO_LOOKBACK_DAYS, detectCapabilities } from './capabilities';
 import { readCapabilityReport, saveCapabilityReport } from './capabilityCache';
-import { healthConnectReader } from './healthConnect';
-import { healthKitReader } from './healthKit';
+import { type CapabilityRefresher, createCapabilityRefresher } from './capabilityRefresher';
+import { currentPlatform } from './currentPlatform';
 import type { TimeRange, WearableReader } from './types';
 
 const healthService = createHealthService(supabase);
 const workoutsService = createWorkoutsService(supabase);
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-/**
- * O relatório vale por seis horas. A tela inicial, a de saúde e a de nutrição
- * pedem a leitura do dia ao abrir; sem esta janela cada uma refaria a detecção.
- */
-const STALE_AFTER_MS = 6 * 60 * 60 * 1000;
-
-/** O leitor da plataforma do aparelho, decidido na chamada: o teste troca a plataforma. */
-export function platformReader(): WearableReader {
-  return Platform.OS === 'ios' ? healthKitReader : healthConnectReader;
-}
-
-/** Fechado na dúvida: falha de rede não vira consentimento para ler dado de saúde. */
-async function hasHealthConsent(studentId: string): Promise<boolean> {
-  try {
-    return await healthService.hasCollectionConsent(studentId);
-  } catch {
-    return false;
-  }
-}
-
-async function cardioWindows(studentId: string, now: Date): Promise<TimeRange[]> {
-  try {
-    const since = new Date(now.getTime() - CARDIO_LOOKBACK_DAYS * DAY_MS).toISOString();
-    const windows = await workoutsService.fetchCardioWindowsSince(studentId, since);
-    return windows.map((w) => ({ start: new Date(w.started_at), end: new Date(w.completed_at) }));
-  } catch {
-    registrarAviso('relogio.janelas_de_cardio');
-    return [];
-  }
-}
-
-function isFresh(now: Date): boolean {
-  const cached = readCapabilityReport();
-  return cached !== null && now.getTime() - cached.checkedAt.getTime() < STALE_AFTER_MS;
-}
+/** Fora de iOS e Android nada é lido: toda capacidade fica indisponível. */
+const NO_READER: WearableReader = {
+  hasDailyActivity: async () => false,
+  hasSleep: async () => false,
+  hasRestingHeartRate: async () => false,
+  heartRateSamples: async () => [],
+};
 
 async function currentStudentId(): Promise<string | null> {
   const {
@@ -56,32 +24,54 @@ async function currentStudentId(): Promise<string | null> {
   return session?.user.id ?? null;
 }
 
+async function cardioWindowsSince(studentId: string, since: Date): Promise<TimeRange[]> {
+  const windows = await workoutsService.fetchCardioWindowsSince(studentId, since.toISOString());
+  return windows.map((window) => ({
+    start: new Date(window.started_at),
+    end: new Date(window.completed_at),
+  }));
+}
+
+function refresher(): CapabilityRefresher {
+  return createCapabilityRefresher({
+    reader: currentPlatform()?.reader ?? NO_READER,
+    currentStudentId,
+    hasHealthConsent: (studentId) => healthService.hasCollectionConsent(studentId),
+    cardioWindowsSince,
+    readCache: readCapabilityReport,
+    saveCache: saveCapabilityReport,
+    now: () => new Date(),
+  });
+}
+
+/** Nunca lança: quem chama é a leitura do dia e a tarefa de background. */
+async function safely(run: () => Promise<void>): Promise<void> {
+  try {
+    await run();
+  } catch {
+    registrarAviso('wearable.detect_capabilities');
+  }
+}
+
 /**
- * Refaz a detecção do que o relógio entrega quando o relatório guardado passou de
- * seis horas. Roda ao abrir o app e na sincronização em background.
- *
- * Só procura as sessões de cardio com consentimento: sem ele a detecção não lê o
- * relógio, e as janelas não teriam onde servir. Nunca lança — quem chama é a
- * leitura do dia, e ela não pode cair por causa disto.
+ * Refaz a detecção quando o relatório guardado passou da validade. Roda ao abrir o
+ * app e na sincronização em background.
  *
  * @example
  * void refreshCapabilitiesIfStale();
  */
-export async function refreshCapabilitiesIfStale(now: Date = new Date()): Promise<void> {
-  try {
-    if (isFresh(now)) return;
-    const studentId = await currentStudentId();
-    if (!studentId) return;
+export function refreshCapabilitiesIfStale(): Promise<void> {
+  return safely(() => refresher().refreshIfStale());
+}
 
-    const consent = await hasHealthConsent(studentId);
-    const windows = consent ? await cardioWindows(studentId, now) : [];
-    const report = await detectCapabilities(platformReader(), {
-      hasHealthConsent: consent,
-      cardioWindows: windows,
-      now,
-    });
-    saveCapabilityReport(report, now);
-  } catch {
-    registrarAviso('relogio.detectar_capacidades');
-  }
+/**
+ * Refaz a detecção agora, ignorando a validade. Chamado logo depois de o Student
+ * consentir: sem isto, o relatório "desconhecido" de antes do consentimento valeria
+ * por mais seis horas.
+ *
+ * @example
+ * await refreshCapabilities();
+ */
+export function refreshCapabilities(): Promise<void> {
+  return safely(() => refresher().refresh());
 }

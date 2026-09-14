@@ -59,6 +59,24 @@ describe('detectCapabilities — atividade e sono', () => {
     expect(report.dailyActivity).toBe('unavailable');
   });
 
+  it('sono e FC de repouso também são procurados só na última semana', async () => {
+    const ranges: TimeRange[] = [];
+    const { reader } = fakeReader();
+    reader.hasSleep = async (range) => {
+      ranges.push(range);
+      return true;
+    };
+    reader.hasRestingHeartRate = async (range) => {
+      ranges.push(range);
+      return true;
+    };
+
+    await detectCapabilities(reader, withConsent);
+
+    const lastWeek = { start: new Date('2026-09-07T12:00:00.000Z'), end: NOW };
+    expect(ranges).toEqual([lastWeek, lastWeek]);
+  });
+
   it('sono sem FC de repouso não basta: a recuperação precisa dos dois', async () => {
     const onlySleep = await detectCapabilities(fakeReader({ sleep: true }).reader, withConsent);
     const both = await detectCapabilities(

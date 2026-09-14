@@ -119,7 +119,7 @@ export default function CardioSessionScreen() {
         // O batimento é lido antes de encerrar o rastreio, mas depois de o
         // relógio ter tido o período inteiro para gravar — é por isso que a
         // leitura acontece aqui, e não a cada tique.
-        const batimento = await readSessionHeartRate(inicio, fim);
+        const heartRate = await readSessionHeartRate(inicio, fim);
 
         await gravarSessaoDeCardio(
           {
@@ -138,7 +138,7 @@ export default function CardioSessionScreen() {
             distanceMeters: metrosPersistiveis(rastreio.distanceMeters),
             avgPaceSecondsPerKm: rastreio.paceSecondsPerKm,
             avgCadenceSpm: rastreio.avgCadenceSpm,
-            avgHeartRate: batimento,
+            avgHeartRate: heartRate,
           },
           { mascarado: isMasquerading }
         );

@@ -73,7 +73,7 @@ export const criarServicoDeSessoes = (supabase: SupabaseClient) => ({
    * (`LGPD_COMPLIANCE.md` §2.3) — por isso nada além das duas datas.
    *
    * @example
-   * const windows = await service.fetchCardioWindowsSince(aluno.id, trintaDiasAtras.toISOString());
+   * const windows = await service.fetchCardioWindowsSince(student.id, thirtyDaysAgo.toISOString());
    */
   fetchCardioWindowsSince: async (studentId: string, since: string): Promise<CardioWindow[]> => {
     const { data, error } = await supabase

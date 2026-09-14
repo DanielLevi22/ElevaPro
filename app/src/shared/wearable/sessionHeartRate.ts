@@ -1,13 +1,5 @@
-import { plausibleInteger } from './plausible';
+import { plausibleInteger, WORKOUT_BPM } from './plausible';
 import type { WearableReader } from './types';
-
-/**
- * Faixa fisiológica em esforço. 30 bpm é abaixo do atleta de endurance mais
- * bradicárdico; 230 é acima da FC máxima de qualquer adulto. É a mesma faixa do
- * CHECK da `0049`, e o corte acontece aqui para a sessão não falhar ao gravar.
- */
-const MIN_BPM = 30;
-const MAX_BPM = 230;
 
 /**
  * FC média da janela de uma sessão, ou `null` quando não há o que gravar.
@@ -30,7 +22,7 @@ export async function averageSessionHeartRate(
     const samples = await reader.heartRateSamples({ start, end });
     if (samples.length === 0) return null;
     const sum = samples.reduce((total, bpm) => total + bpm, 0);
-    return plausibleInteger(sum / samples.length, MIN_BPM, MAX_BPM);
+    return plausibleInteger(sum / samples.length, WORKOUT_BPM);
   } catch {
     return null;
   }

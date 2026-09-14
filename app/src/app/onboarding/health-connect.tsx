@@ -11,6 +11,7 @@ import { registrarFalha } from '@/lib/registro';
 import { useCores } from '@/shared/design';
 import {
   isPlatformAvailable,
+  refreshCapabilities,
   requestBackgroundRead,
   requestReadPermissions,
 } from '@/shared/wearable';
@@ -46,8 +47,9 @@ async function recordCollectionConsent(): Promise<void> {
     if (!session?.user) return;
 
     await createHealthService(supabase).grantCollectionConsent(session.user.id);
-  } catch (error: unknown) {
-    console.log('[HealthConnectScreen] Falha ao registrar consentimento:', String(error));
+  } catch {
+    // Sem o erro no log: o do PostgREST pode carregar o payload do consentimento.
+    registrarFalha('wearable.record_consent');
   }
 }
 
@@ -77,9 +79,12 @@ export default function HealthConnectScreen() {
 
       await requestBackgroundRead();
       await recordCollectionConsent();
+      // Antes do consentimento toda capacidade era desconhecida; sem refazer agora,
+      // esse relatório valeria pela janela inteira de validade.
+      void refreshCapabilities();
       router.replace('/(tabs)');
     } catch {
-      registrarFalha('relogio.pedir_permissoes');
+      registrarFalha('wearable.request_permissions');
       router.replace('/(tabs)');
     }
   };

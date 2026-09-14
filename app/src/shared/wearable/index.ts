@@ -5,31 +5,15 @@
  * O que cada relógio entrega é julgado pelo dado que chega, em
  * `refreshCapabilitiesIfStale`, e fica em `readCapabilityReport`.
  */
-import { Platform } from 'react-native';
+import { currentPlatform } from './currentPlatform';
 import type { DailyAggregate } from './daily';
-import {
-  canReadHealthConnectToday,
-  isHealthConnectAvailable,
-  readHealthConnectToday,
-  requestHealthConnectBackgroundRead,
-  requestHealthConnectPermissions,
-} from './healthConnect';
-import { readHealthKitToday, requestHealthKitPermissions } from './healthKit';
-import { platformReader } from './refresh';
 import { averageSessionHeartRate } from './sessionHeartRate';
-import type { Capability } from './types';
+import { CAPABILITIES } from './types';
 
 export { clearCapabilityReport, readCapabilityReport } from './capabilityCache';
 export type { DailyAggregate } from './daily';
-export { refreshCapabilitiesIfStale } from './refresh';
+export { refreshCapabilities, refreshCapabilitiesIfStale } from './refresh';
 export type { Capability, CapabilityReport, CapabilityStatus } from './types';
-
-/** As capacidades que alguma funcionalidade usa hoje. As permissões saem daqui. */
-export const ALL_CAPABILITIES: Capability[] = [
-  'dailyActivity',
-  'sleepAndRestingHr',
-  'workoutHeartRate',
-];
 
 /**
  * A plataforma de saúde existe neste aparelho? O HealthKit sempre existe no iPhone;
@@ -38,21 +22,20 @@ export const ALL_CAPABILITIES: Capability[] = [
  * @example
  * if (!(await isPlatformAvailable())) showAlert(...);
  */
-export function isPlatformAvailable(): Promise<boolean> {
-  return Platform.OS === 'ios' ? Promise.resolve(true) : isHealthConnectAvailable();
+export async function isPlatformAvailable(): Promise<boolean> {
+  return (await currentPlatform()?.isAvailable()) ?? false;
 }
 
 /**
- * Pede ao sistema a leitura dos tipos das capacidades. Devolve se a leitura
- * essencial (passos ou calorias) foi concedida.
+ * Pede ao sistema a leitura dos tipos de todas as capacidades. No Android devolve
+ * se passos ou calorias foram concedidos; no iPhone, só que o diálogo foi
+ * respondido, porque o HealthKit não revela leitura negada.
  *
  * @example
  * if (!(await requestReadPermissions())) showAlert(...);
  */
-export function requestReadPermissions(): Promise<boolean> {
-  return Platform.OS === 'ios'
-    ? requestHealthKitPermissions(ALL_CAPABILITIES)
-    : requestHealthConnectPermissions(ALL_CAPABILITIES);
+export async function requestReadPermissions(): Promise<boolean> {
+  return (await currentPlatform()?.requestPermissions(CAPABILITIES)) ?? false;
 }
 
 /**
@@ -62,30 +45,19 @@ export function requestReadPermissions(): Promise<boolean> {
  * await requestBackgroundRead();
  */
 export async function requestBackgroundRead(): Promise<void> {
-  if (Platform.OS === 'android') await requestHealthConnectBackgroundRead();
+  await currentPlatform()?.requestBackgroundRead();
 }
 
 /**
- * O app pode ler o dia agora, em primeiro plano? No iOS isso é pedir a
- * autorização, que não abre diálogo de novo depois de respondida.
+ * O agregado de hoje em primeiro plano, ou `null` sem acesso à plataforma.
  *
  * @example
- * if (await canReadToday()) setToday(await readToday());
+ * const today = await readTodayInForeground();
  */
-export function canReadToday(): Promise<boolean> {
-  return Platform.OS === 'ios'
-    ? requestHealthKitPermissions(ALL_CAPABILITIES)
-    : canReadHealthConnectToday({ background: false });
-}
-
-/**
- * O agregado de hoje. Chamar depois de `canReadToday`.
- *
- * @example
- * const today = await readToday();
- */
-export function readToday(): Promise<DailyAggregate> {
-  return Platform.OS === 'ios' ? readHealthKitToday() : readHealthConnectToday();
+export async function readTodayInForeground(): Promise<DailyAggregate | null> {
+  const platform = currentPlatform();
+  if (!platform || !(await platform.ensureTodayAccess('foreground'))) return null;
+  return platform.readToday();
 }
 
 /**
@@ -101,12 +73,10 @@ export function readToday(): Promise<DailyAggregate> {
  */
 export async function readDeviceMetrics(): Promise<DailyAggregate | null> {
   try {
-    if (Platform.OS === 'android' && !(await canReadHealthConnectToday({ background: true }))) {
-      return null;
-    }
-    if (Platform.OS !== 'android' && Platform.OS !== 'ios') return null;
-    const metrics = await readToday();
-    return metrics.hasRecords ? metrics : null;
+    const platform = currentPlatform();
+    if (!platform || !(await platform.ensureTodayAccess('background'))) return null;
+    const today = await platform.readToday();
+    return today.hasRecords ? today : null;
   } catch {
     return null;
   }
@@ -119,6 +89,7 @@ export async function readDeviceMetrics(): Promise<DailyAggregate | null> {
  * @example
  * const bpm = await readSessionHeartRate(startedAt, finishedAt);
  */
-export function readSessionHeartRate(start: Date, end: Date): Promise<number | null> {
-  return averageSessionHeartRate(platformReader(), start, end);
+export async function readSessionHeartRate(start: Date, end: Date): Promise<number | null> {
+  const platform = currentPlatform();
+  return platform ? averageSessionHeartRate(platform.reader, start, end) : null;
 }

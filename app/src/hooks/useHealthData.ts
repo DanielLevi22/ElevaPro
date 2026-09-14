@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { registrarAviso } from '@/lib/registro';
 import { localDateKey, syncDailyMetrics } from '@/services/healthSync';
 import {
-  canReadToday,
   type DailyAggregate,
-  readToday,
+  readTodayInForeground,
   refreshCapabilitiesIfStale,
 } from '@/shared/wearable';
 
@@ -58,9 +57,14 @@ function unavailableState(reason: string): HealthData {
   return { ...INITIAL_STATE, loading: false, error: reason };
 }
 
-/** Persiste só leitura real, e só quando houve registro. */
+/**
+ * Persiste só leitura real, e só quando houve registro.
+ *
+ * Só no Android, como sempre foi: no iPhone o agregado do dia é gravado pela
+ * tarefa de background, e a tela em primeiro plano apenas mostra.
+ */
 async function persistToday(today: DailyAggregate): Promise<void> {
-  if (!today.hasRecords) return;
+  if (Platform.OS !== 'android' || !today.hasRecords) return;
   await syncDailyMetrics({
     date: localDateKey(),
     steps: today.steps,
@@ -72,15 +76,21 @@ async function persistToday(today: DailyAggregate): Promise<void> {
   });
 }
 
-async function loadToday(): Promise<HealthData> {
+interface TodayLoad {
+  state: HealthData;
+  /** A leitura real, para gravar; nula quando não houve acesso. */
+  today: DailyAggregate | null;
+}
+
+async function loadToday(): Promise<TodayLoad> {
   try {
-    if (!(await canReadToday())) return unavailableState('Permissão não concedida');
-    const today = await readToday();
-    await persistToday(today);
-    return { ...today, loading: false, error: null, source: 'device' };
+    const today = await readTodayInForeground();
+    if (!today) return { state: unavailableState('Permissão não concedida'), today: null };
+    return { state: { ...today, loading: false, error: null, source: 'device' }, today };
   } catch (error: unknown) {
-    registrarAviso('relogio.ler_dia');
-    return unavailableState(error instanceof Error ? error.message : String(error));
+    registrarAviso('wearable.read_today');
+    const reason = error instanceof Error ? error.message : String(error);
+    return { state: unavailableState(reason), today: null };
   }
 }
 
@@ -91,11 +101,15 @@ async function loadToday(): Promise<HealthData> {
  * const { steps, sleepMinutes, source, refetch } = useHealthData();
  */
 export function useHealthData() {
-  const [data, setData] = useState<HealthData>(INITIAL_STATE);
+  const [health, setHealth] = useState<HealthData>(INITIAL_STATE);
 
   const refetch = useCallback(async () => {
-    setData((previous) => ({ ...previous, loading: true }));
-    setData(await loadToday());
+    setHealth((previous) => ({ ...previous, loading: true }));
+    const { state, today } = await loadToday();
+    // A tela recebe o número antes da gravação: rede lenta não pode segurar o dado
+    // que já está no aparelho.
+    setHealth(state);
+    if (today) await persistToday(today);
     // Abrir o app é quando o que o relógio entrega pode ter mudado (relógio novo,
     // permissão revista). A detecção tem janela própria de validade.
     void refreshCapabilitiesIfStale();
@@ -110,5 +124,5 @@ export function useHealthData() {
     return () => subscription.remove();
   }, [refetch]);
 
-  return { ...data, refetch, hasPermissions: data.source === 'device' };
+  return { ...health, refetch, hasPermissions: health.source === 'device' };
 }
