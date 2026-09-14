@@ -18,7 +18,7 @@ import {
 import { AddFoodQuantityModal } from "./AddFoodQuantityModal";
 import { AddMealModal } from "./AddMealModal";
 import { EditFoodModal } from "./EditFoodModal";
-import { EditMealTimeModal } from "./EditMealTimeModal";
+import { EditMealDetailsModal } from "./EditMealDetailsModal";
 import { FoodSelector } from "./FoodSelector";
 import { MealCard } from "./MealCard";
 
@@ -272,17 +272,17 @@ export function MealEditor({ dietPlanId, dayOfWeek }: MealEditorProps) {
         item={editingItem}
       />
 
-      <EditMealTimeModal
+      <EditMealDetailsModal
+        key={editingMeal?.id ?? "nenhuma"}
         isOpen={isEditTimeModalOpen}
         onClose={() => {
           setIsEditTimeModalOpen(false);
           setEditingMeal(null);
         }}
-        onSave={(time) =>
-          editingMeal && updateMealMutation.mutate({ id: editingMeal.id, meal_time: time })
+        onSave={(detalhes) =>
+          editingMeal && updateMealMutation.mutate({ id: editingMeal.id, ...detalhes })
         }
-        currentTime={editingMeal?.meal_time || undefined}
-        mealName={editingMeal?.name || ""}
+        meal={editingMeal}
       />
 
       <AddFoodQuantityModal

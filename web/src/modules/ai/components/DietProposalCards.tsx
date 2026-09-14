@@ -81,7 +81,17 @@ export function DietPlanProposalCard({ data, saved, loading, onApprove, onAdjust
           </div>
         </div>
 
-        {data.notes && <p className="text-xs text-muted-foreground">{data.notes}</p>}
+        {data.notes ? (
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground">{data.notes}</p>
+            {/* A observação do plano aparece ao aluno como "Do seu especialista"
+                (issue #298). Quem aprova precisa saber disso antes de salvar uma
+                nota que julgava interna. */}
+            <p className="text-[11px] text-muted-foreground/80">
+              O aluno lê esta observação no app.
+            </p>
+          </div>
+        ) : null}
 
         {!saved && (
           <div className="flex gap-2 pt-1">

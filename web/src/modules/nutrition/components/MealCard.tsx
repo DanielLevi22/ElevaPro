@@ -56,7 +56,7 @@ export function MealCard({
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              {meal.meal_time || "Definir horário"}
+              {rotuloDoHorarioEPreparo(meal)}
             </button>
           </div>
           <div className="flex items-center gap-2">
@@ -200,4 +200,22 @@ export function MealCard({
       </div>
     </div>
   );
+}
+
+const DIFICULDADE = { facil: "Fácil", media: "Média", dificil: "Difícil" } as const;
+
+/**
+ * "12:40 · 25 min · Fácil · 1 porção": o horário e o que o aluno vê do preparo,
+ * para o especialista conferir sem abrir o modal.
+ */
+function rotuloDoHorarioEPreparo(
+  meal: Pick<DietMeal, "meal_time" | "prep_minutes" | "difficulty" | "servings">,
+): string {
+  const partes = [
+    meal.meal_time?.slice(0, 5) || "Definir horário",
+    meal.prep_minutes ? `${meal.prep_minutes} min` : null,
+    meal.difficulty ? DIFICULDADE[meal.difficulty] : null,
+    meal.servings ? `${meal.servings} ${meal.servings === 1 ? "porção" : "porções"}` : null,
+  ];
+  return partes.filter(Boolean).join(" · ");
 }
