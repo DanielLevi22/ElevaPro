@@ -48,6 +48,11 @@ components/  hooks/  services/  store/  screens/  types.ts  index.ts
 
 **Naming:** pastas `lowercase` · componentes `PascalCase` · hooks `useXxx` · stores `xxxStore` · services `XxxService` · tipos `PascalCase`
 
+**Idioma (ADR-0027):** identificador em inglês — tabela, coluna, enum, contrato, função,
+tipo, componente, arquivo. Texto para gente em português — interface, comentário,
+docs, commits. Ao tocar um arquivo com identificador em português, renomeie para inglês
+o que a mudança já alcança.
+
 ---
 
 ## Code Style
@@ -103,7 +108,7 @@ components/  hooks/  services/  store/  screens/  types.ts  index.ts
   date-fns direto: ele lança com data inválida, e `new Date("2026-08-01")` é lido
   como UTC e volta um dia em fuso negativo.
 
-**Acesso:** toda ação protegida precisa de CASL (UI) + RLS (banco). Roles: `admin`, `specialist`, `student`, `member` — enum `account_type`, fonte da verdade em `shared/src/types/auth.types.ts`.
+**Acesso:** toda ação protegida precisa de CASL (UI) + RLS (banco). Roles: `admin`, `specialist`, `student` — enum `account_type`, fonte da verdade em `shared/src/types/auth.types.ts`. O Student tem Guidance derivada do vínculo: `self_guided` ("Praticante", o modo principal — desenhe para ele primeiro) ou `specialist` ("Aluno"). O código ainda grava `member` até a migração do ADR-0028.
 
 ---
 

@@ -19,22 +19,26 @@ a assinatura no modelo B2B.
 _Avoid_: personal, trainer, coach, professional
 
 **Student**:
-Aluno que treina sob a orientação de um specialist. Não gerencia os próprios planos e
-não paga — o specialist paga por ele.
-_Avoid_: cliente, paciente, user, managed student
+Pessoa que treina na plataforma. Tem sempre uma Guidance, e é ela que decide quem
+monta os planos e quem paga. Na interface aparece como "Aluno" ou "Praticante",
+conforme a Guidance.
+_Avoid_: member, cliente, paciente, user, aluno autônomo
 
-**Member**:
-Aluno independente, sem specialist. Gerencia os próprios planos e paga a própria
-assinatura no modelo B2C.
-_Avoid_: aluno autônomo, autonomous student
+**Guidance**:
+Quem orienta o Student neste momento. `specialist` quando há vínculo ativo com um
+Specialist: ele prescreve e paga pelo Student ("Aluno"). `self_guided` quando não há:
+o Assistente propõe, o próprio Student aprova e paga a própria assinatura
+("Praticante"). É estado do vínculo, não escolha de cadastro — contratar ou encerrar
+um Specialist troca a Guidance sem trocar de conta. `self_guided` é o modo principal
+do produto.
+_Avoid_: modo, tipo de aluno, member, B2C/B2B como nome de pessoa
 
 **Admin**:
 Operador da plataforma, com acesso administrativo que atravessa contas.
 _Avoid_: root, superuser
 
-> A fonte da verdade dos quatro é o enum `account_type` em
-> [`shared/src/types/auth.types.ts`](shared/src/types/auth.types.ts) — divergência
-> aqui é bug de documentação.
+> O código ainda grava `member` como `account_type`. A troca por Student com Guidance
+> `self_guided` está no [ADR-0028](docs/adr/0028-o-praticante-vem-primeiro.md).
 
 ### Assistente
 
@@ -120,9 +124,14 @@ Um exercício dentro de um Workout, com séries, repetições e carga prescritas
 Item do banco de exercícios, com nome, grupo muscular e instrução de execução.
 
 **WorkoutSession**:
-Execução real de um Workout por um aluno numa data. É o que foi feito, em oposição ao
-Workout, que é o que foi prescrito.
+O que um aluno fez numa data: a execução de um Workout, ou um Cardio livre. É o que
+foi feito, em oposição ao Workout, que é o que foi prescrito.
 _Avoid_: treino realizado, sessão de treino
+
+**Cardio livre**:
+WorkoutSession de cardio que o próprio Student iniciou, sem prescrição por trás. Vale
+tanto quanto a prescrita, e é o caso normal com Guidance `self_guided`.
+_Avoid_: treino avulso, sessão extra
 
 **WorkoutSessionItem**:
 Um exercício dentro de uma WorkoutSession, com a carga e as repetições reais.
