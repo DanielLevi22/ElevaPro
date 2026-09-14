@@ -22,16 +22,22 @@ import type { ItemDeCompra } from '../../services/listaDeCompras';
  * Tela 7 do fluxo de nutrição do kit: o período, o quanto já foi comprado e os
  * itens por grupo do catálogo.
  *
- * O preço estimado do cartão de progresso chega com a estimativa, no terceiro
- * PR da #298. O assistente de lista e o modo de preparo, que a tela antiga do
- * member tinha, continuam lá: o kit não os desenha para o aluno.
+ * O preço do cartão de progresso é estimativa do assistente, sempre com "≈", e
+ * some quando ela não vem. O assistente de lista e o modo de preparo, que a
+ * tela antiga do member tinha, continuam lá: o kit não os desenha para o aluno.
  *
  * @example
- * <ListaDeComprasScreen alunoId={user.id} />
+ * <ListaDeComprasScreen alunoId={user.id} obterToken={() => token} />
  */
-export function ListaDeComprasScreen({ alunoId }: { alunoId: string }) {
+export function ListaDeComprasScreen({
+  alunoId,
+  obterToken,
+}: {
+  alunoId: string;
+  obterToken: () => string;
+}) {
   const router = useRouter();
-  const lista = useListaDeCompras(alunoId);
+  const lista = useListaDeCompras(alunoId, { obterToken });
 
   return (
     <TelaDaNutricao
@@ -157,6 +163,9 @@ function ProgressoDaCompra({ lista }: { lista: ListaDoAluno }) {
     <Vidro classeExterna="mt-3" className="p-4">
       <View className="mb-[0.5625rem] flex-row items-baseline justify-between">
         <Text className="text-[0.84375rem] font-bold text-foreground">{`${comprados} de ${lista.total} itens`}</Text>
+        {lista.preco ? (
+          <Text className="text-[0.78125rem] text-muted-foreground">{lista.preco}</Text>
+        ) : null}
       </View>
       <BarraDeProgresso percentual={lista.total === 0 ? 0 : (comprados / lista.total) * 100} />
     </Vidro>

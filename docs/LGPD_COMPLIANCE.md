@@ -892,13 +892,14 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 | `/api/ai/nutrition/adherence` | `diet_logs` anonimizados + nome do plano | Anthropic | ✅ Sim | Consentimento explícito — **verificado na rota** desde 2026-09-05. Também passou de `authorizeUser` para conta de aluno: antes, qualquer autenticado pedia análise do log que enviasse |
 | `/api/ai/student/coach/message` | Anamnese, peso, altura, % de gordura e plano do aluno | Anthropic | ✅ Sim (Art. 11) | Consentimento explícito — **verificado na rota** desde 2026-09-05 (`authorizeStudentWithHealthConsent`) |
 | `/api/ai/student/coach/session` | Idem — abre a sessão do coach do aluno | Anthropic | ✅ Sim (Art. 11) | Consentimento explícito — **verificado na rota** desde 2026-09-05 |
-| `/api/ai/student/nutribot` | Contexto nutricional do aluno | Anthropic | ✅ Sim | Consentimento explícito — **verificado na rota** desde 2026-09-05 |
-| `/api/ai/student/scan-food` | Foto de alimento enviada pelo aluno | Anthropic | ⚠️ Imagem do titular | Consentimento explícito — **verificado na rota** desde 2026-09-05 |
+| `/api/ai/student/nutribot` | Contexto nutricional do aluno e o histórico da conversa (só papel e texto). Volta com a resposta e, quando aplicável, a sugestão estruturada (`sugestao`: refeição e itens com gramas e macros), que **não volta ao provedor** no histórico | Anthropic | ✅ Sim | Consentimento explícito — **verificado na rota** desde 2026-09-05 |
+| `/api/ai/student/scan-food` | Foto de alimento enviada pelo aluno — pelo scan ou anexada na conversa do assistente. Volta com o prato e os `components` (nome, gramas e macros de cada um). A imagem não é guardada, e na conversa **só o resultado em texto** entra no histórico | Anthropic | ⚠️ Imagem do titular | Consentimento explícito — **verificado na rota** desde 2026-09-05 |
+| `/api/ai/student/sugestoes` | Só os quatro macros que faltam no dia e até 5 nomes de refeições favoritas (60 caracteres cada). Nenhum id, nome ou e-mail do aluno | Anthropic | ✅ Sim (derivado do plano) | Consentimento explícito — **verificado na rota** (`authorizeStudentWithHealthConsent`, issue #298) |
 | `/api/ai/voice-command` | Removido — rota e serviço eliminados | — | — | — |
 | `/api/ai/workout/negotiate` | Nível do aluno, objetivo, lista de exercícios | Anthropic | ❌ Não sensível | Execução de contrato |
 | `/api/ai/workout/batch` | Idem | Anthropic | ❌ Não sensível | Execução de contrato |
 | `/api/ai/nutrition/recipe` | Nome da refeição + ingredientes | Anthropic | ❌ Não sensível | Execução de contrato |
-| `/api/ai/nutrition/assistant` | Lista de compras categorizada | Anthropic | ❌ Não sensível | Execução de contrato |
+| `/api/ai/nutrition/assistant` | Lista de compras categorizada. Para o preço estimado (`promptType: "price"`), só nome e quantidade de cada item — sem o id do Food | Anthropic | ❌ Não sensível | Execução de contrato |
 
 **Decisões tomadas nesta revisão:**
 
@@ -918,6 +919,8 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 | Transmissão via HTTPS (Vercel → Anthropic/Google) | Segurança |
 | O texto de consentimento `1.5` (issue #298) diz que a foto do prato, a pergunta ao assistente, o plano e o que falta de calorias e macros do dia vão a um serviço de IA externo, que a foto não é guardada e que o nome do aluno não vai junto. O scan e o assistente já transmitiam; o que faltava era o aluno saber antes de fotografar (Art. 9°) | Transparência (Art. 6°, VI) |
 | A saudação do assistente de nutrição, que tem o primeiro nome do aluno, é montada no aparelho e **não entra no histórico enviado** à rota. Achado da revisão de código do PR 1 da #298 | Necessidade (Art. 6°, III) |
+| A rota de sugestões monta a mensagem ao provedor **campo a campo** — os macros validados e os nomes das favoritas cortados — e nunca repassa o corpo do pedido. Travado em `rotasDeNutricaoDoAluno.test.ts`, que confere que nenhum id, nome ou e-mail do aluno chega ao provedor (issue #298) | Necessidade (Art. 6°, III) |
+| As sugestões da busca e o preço da lista ficam **só no aparelho**: as sugestões até o dia virar, num registro por aluno que o dia novo sobrescreve; o preço só na memória da sessão do app. Nada disso vai ao banco | Necessidade (Art. 6°, III) |
 | Dados de `diet_logs` enviados ao Claude não contêm identificadores do aluno (`student_id` nunca incluído no payload) | Necessidade |
 
 **Pendências obrigatórias antes do lançamento:**

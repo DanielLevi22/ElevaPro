@@ -12,6 +12,7 @@ export default function BuscarRoute() {
       alunoId={user.id}
       primeiroNome={primeiroNome(user.user_metadata?.full_name) ?? 'Aluno'}
       somenteLeitura={isMasquerading}
+      obterToken={() => useAuthStore.getState().session?.access_token ?? ''}
     />
   );
 }

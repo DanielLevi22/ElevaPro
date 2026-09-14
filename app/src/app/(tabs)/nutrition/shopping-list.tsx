@@ -9,5 +9,10 @@ import ShoppingListScreen from '@/modules/nutrition/screens/ShoppingListScreen';
 export default function ShoppingListRoute() {
   const { user, accountType } = useAuthStore();
   if (accountType === 'member' || !user?.id) return <ShoppingListScreen />;
-  return <ListaDeComprasScreen alunoId={user.id} />;
+  return (
+    <ListaDeComprasScreen
+      alunoId={user.id}
+      obterToken={() => useAuthStore.getState().session?.access_token ?? ''}
+    />
+  );
 }
