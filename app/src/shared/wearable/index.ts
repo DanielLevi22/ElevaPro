@@ -5,9 +5,11 @@
  * O que cada relógio entrega é julgado pelo dado que chega, em
  * `refreshCapabilitiesIfStale`, e fica em `readCapabilityReport`.
  */
+
+import type { SessionVitals } from '@elevapro/shared';
 import { currentPlatform } from './currentPlatform';
 import type { DailyAggregate } from './daily';
-import { averageSessionHeartRate } from './sessionHeartRate';
+import { readSessionVitals as readVitalsWith } from './sessionVitals';
 import { CAPABILITIES } from './types';
 
 export { clearCapabilityReport, readCapabilityReport } from './capabilityCache';
@@ -83,13 +85,17 @@ export async function readDeviceMetrics(): Promise<DailyAggregate | null> {
 }
 
 /**
- * FC média da janela de uma sessão, ou `null` quando não há o que gravar. A série
- * lida nunca sai do módulo.
+ * FC média e tempo por zona da janela de uma sessão, ou `null` quando não há o que
+ * gravar. Sem FC máxima, as zonas vêm nulas. A série lida nunca sai do módulo.
  *
  * @example
- * const bpm = await readSessionHeartRate(startedAt, finishedAt);
+ * const vitals = await readSessionVitals(startedAt, finishedAt, profile.maxHeartRate);
  */
-export async function readSessionHeartRate(start: Date, end: Date): Promise<number | null> {
+export async function readSessionVitals(
+  start: Date,
+  end: Date,
+  maxHeartRate: number | null
+): Promise<SessionVitals | null> {
   const platform = currentPlatform();
-  return platform ? averageSessionHeartRate(platform.reader, start, end) : null;
+  return platform ? readVitalsWith(platform.reader, { start, end }, maxHeartRate) : null;
 }

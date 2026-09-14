@@ -7,7 +7,7 @@ import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { ShareWorkoutModal } from '@/components/workout/ShareWorkoutModal';
 import { useGamificationStore } from '@/modules/gamification/store/gamificationStore';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
-import { readSessionHeartRate } from '@/shared/wearable';
+import { readSessionVitals } from '@/shared/wearable';
 import { getLocalDateISOString } from '@/utils/dateUtils';
 import { CabecalhoDaSessao } from '../components/CabecalhoDaSessao';
 import { ControlesDaSessao } from '../components/ControlesDaSessao';
@@ -119,7 +119,8 @@ export default function CardioSessionScreen() {
         // O batimento é lido antes de encerrar o rastreio, mas depois de o
         // relógio ter tido o período inteiro para gravar — é por isso que a
         // leitura acontece aqui, e não a cada tique.
-        const heartRate = await readSessionHeartRate(inicio, fim);
+        // As zonas chegam com a sessão de cardio em vidro; esta tela antiga grava só a média.
+        const heartRate = (await readSessionVitals(inicio, fim, null))?.avgHeartRate ?? null;
 
         await gravarSessaoDeCardio(
           {
