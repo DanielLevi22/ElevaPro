@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  declaresContinuousMedication,
-  distributeIntoZones,
-  estimateMaxHeartRate,
-} from "../heartRateZones";
+import { distributeIntoZones, estimateMaxHeartRate, summarizeHeartRate } from "../heartRateZones";
 
 describe("estimateMaxHeartRate", () => {
   it("é 220 menos a idade declarada, quando declarada hoje", () => {
@@ -65,26 +61,29 @@ describe("distributeIntoZones", () => {
   });
 });
 
-describe("declaresContinuousMedication", () => {
-  it("resposta vazia ou ausente não declara medicação", () => {
-    expect(declaresContinuousMedication(undefined)).toBe(false);
-    expect(declaresContinuousMedication("   ")).toBe(false);
+describe("summarizeHeartRate", () => {
+  it("devolve a média arredondada e as zonas das amostras", () => {
+    expect(summarizeHeartRate([100, 130, 150, 170, 190], 200)).toEqual({
+      avgHeartRate: 148,
+      zones: { zone1: 20, zone2: 20, zone3: 20, zone4: 20, zone5: 20 },
+    });
   });
 
-  it("as negativas comuns não declaram medicação", () => {
-    for (const answer of ["Não", "nao", "NÃO uso", "nenhum", "Nenhuma", "nada", "-", "n/a"]) {
-      expect(declaresContinuousMedication(answer)).toBe(false);
-    }
+  it("sem fc máxima, devolve só a média", () => {
+    expect(summarizeHeartRate([150, 154], null)).toEqual({ avgHeartRate: 152, zones: null });
   });
 
-  it("qualquer outro texto declara medicação", () => {
-    expect(declaresContinuousMedication("Losartana 50mg")).toBe(true);
-    expect(declaresContinuousMedication("uso betabloqueador")).toBe(true);
+  // Uma leitura 0 ou 250 é o sensor escorregando no pulso, não esforço. Se entrasse
+  // nas zonas, um zero empurraria tempo para a Z1 que a média, filtrada, não viu.
+  it("descarta a amostra implausível da média e das zonas", () => {
+    expect(summarizeHeartRate([0, 150, 250, 150], 200)).toEqual({
+      avgHeartRate: 150,
+      zones: { zone1: 0, zone2: 0, zone3: 100, zone4: 0, zone5: 0 },
+    });
   });
 
-  it("lê a resposta embrulhada que o mobile grava", () => {
-    expect(declaresContinuousMedication({ questionId: "medications", value: "Atenolol" })).toBe(
-      true,
-    );
+  it("sem amostra plausível, não há o que gravar", () => {
+    expect(summarizeHeartRate([], 200)).toBeNull();
+    expect(summarizeHeartRate([9, 11], 200)).toBeNull();
   });
 });

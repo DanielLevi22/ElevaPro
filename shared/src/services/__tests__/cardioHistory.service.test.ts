@@ -81,6 +81,9 @@ describe("cardioHistoryService — última sessão de cardio", () => {
 
     expect(last).toEqual({ activityName: "Bicicleta", durationSeconds: 1800 });
     expect(chamadas[0].select).toBe("activity_name, duration_seconds");
+    // Sem o filtro de cardio, o "Repetir a última" ofereceria uma sessão de musculação.
+    expect(chamadas[0].filtros).toEqual({ student_id: "aluno-1", session_type: "cardio" });
+    expect(chamadas[0].metodos.map((metodo) => metodo.nome)).toContain("not");
   });
 
   it("sem sessão de cardio, não há o que repetir", async () => {

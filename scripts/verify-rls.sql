@@ -355,7 +355,7 @@ BEGIN
   RAISE NOTICE 'ok  nenhuma coluna de geolocalização em public';
 END $$;
 
--- ── FC só em tabela de saúde (issue #304) ──────────────────────────────────
+-- ── FC só em tabela de saúde, e só o derivado (issue #304) ──────────────────
 --
 -- LGPD, Art. 11. FC média, FC de repouso e tempo por zona são dado de saúde e só
 -- podem morar nas tabelas cuja RLS consulta consentimento. Uma coluna de FC em
@@ -363,26 +363,43 @@ END $$;
 -- especialista continua lendo depois de o aluno revogar — a pendência de `notes`
 -- pela terceira vez. Varre o schema inteiro para alcançar a tabela que ainda não
 -- existe.
+--
+-- E dentro de `workout_session_vitals`, só colunas escalares: uma lista ou um JSON
+-- ali é a série de batimentos que a 0049 vetou, com outro nome.
 
 DO $$
 DECLARE
-  saude    text[] := ARRAY['health_daily_metrics','workout_session_vitals'];
-  fora     text;
+  health_tables text[] := ARRAY['health_daily_metrics','workout_session_vitals'];
+  misplaced     text;
+  series        text;
 BEGIN
   SELECT string_agg(format('%s.%s', table_name, column_name), ', ' ORDER BY table_name)
-    INTO fora
+    INTO misplaced
   FROM information_schema.columns
   WHERE table_schema = 'public'
     AND column_name ~* '(heart|bpm|^zone_[0-9])'
-    AND table_name <> ALL (saude);
+    AND table_name <> ALL (health_tables);
 
-  IF fora IS NOT NULL THEN
+  IF misplaced IS NOT NULL THEN
     RAISE EXCEPTION
       'FC FORA DA TABELA DE SAÚDE: % está numa tabela cuja RLS não consulta consentimento. FC e zonas moram em workout_session_vitals (0049, 0054)',
-      fora;
+      misplaced;
   END IF;
 
-  RAISE NOTICE 'ok  FC e zonas só em tabela de saúde';
+  SELECT string_agg(column_name, ', ' ORDER BY column_name)
+    INTO series
+  FROM information_schema.columns
+  WHERE table_schema = 'public'
+    AND table_name = 'workout_session_vitals'
+    AND data_type IN ('ARRAY', 'json', 'jsonb');
+
+  IF series IS NOT NULL THEN
+    RAISE EXCEPTION
+      'SÉRIE DE BATIMENTOS GRAVADA: workout_session_vitals ganhou coluna de lista ou JSON (%). Só a média e os percentuais por zona podem ser guardados (0049)',
+      series;
+  END IF;
+
+  RAISE NOTICE 'ok  FC e zonas só em tabela de saúde, e só o derivado';
 END $$;
 
 -- ── Feedback de treino e observação de refeição ──────────────────────────────
@@ -848,7 +865,8 @@ BEGIN
   -- noutro lugar legível.
   SELECT count(*) INTO vazou
     FROM public.workout_session_vitals
-   WHERE session_id = sessao_a AND zone_3_pct IS NOT NULL;
+   WHERE session_id = sessao_a
+     AND num_nulls(zone_1_pct, zone_2_pct, zone_3_pct, zone_4_pct, zone_5_pct) < 5;
   IF vazou <> 0 THEN
     RAISE EXCEPTION 'CONSENTIMENTO IGNORADO: aluno revogou e o especialista ainda lê a FC e as zonas (% linha(s))', vazou;
   END IF;

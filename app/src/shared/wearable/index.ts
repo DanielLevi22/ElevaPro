@@ -9,7 +9,7 @@
 import type { SessionVitals } from '@elevapro/shared';
 import { currentPlatform } from './currentPlatform';
 import type { DailyAggregate } from './daily';
-import { readSessionVitals as readVitalsWith } from './sessionVitals';
+import { vitalsFromReader } from './sessionVitals';
 import { CAPABILITIES } from './types';
 
 export { clearCapabilityReport, readCapabilityReport } from './capabilityCache';
@@ -97,5 +97,5 @@ export async function readSessionVitals(
   maxHeartRate: number | null
 ): Promise<SessionVitals | null> {
   const platform = currentPlatform();
-  return platform ? readVitalsWith(platform.reader, { start, end }, maxHeartRate) : null;
+  return platform ? vitalsFromReader(platform.reader, { start, end }, maxHeartRate) : null;
 }

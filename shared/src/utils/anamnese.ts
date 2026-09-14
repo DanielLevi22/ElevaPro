@@ -175,3 +175,35 @@ export function filtrarEntradaNumerica(bruto: string): string {
   const decimal = semRuido.slice(primeiro + 1).replace(/[.,]/g, "");
   return `${inteiro}${separador}${decimal}`;
 }
+
+/**
+ * Negativas que são a resposta inteira, sem acento e em minúsculas. Casar só o
+ * começo faria "Não, mas tomo atenolol" valer como "não uso remédio" — e quem
+ * escreve assim é justamente quem usa betabloqueador.
+ */
+const NEGATIVE_ANSWER = /^(nao|nenhum|nenhuma|nada|n\/a|-+)( uso| tomo| utilizo| faco uso)?[.!]*$/;
+
+function normalizeAnswer(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .trim();
+}
+
+/**
+ * A resposta "Usa algum medicamento contínuo?" declara medicação?
+ *
+ * Existe para o aviso de que medicação pode alterar a FC nas zonas do cardio, e só
+ * isso: o texto não sai daqui, e o chamador recebe um booleano
+ * (`LGPD_COMPLIANCE.md` §2.3).
+ *
+ * @example
+ * declaresContinuousMedication("Não uso"); // false
+ * declaresContinuousMedication("Não, mas tomo atenolol"); // true
+ */
+export function declaresContinuousMedication(answer: unknown): boolean {
+  const text = lerRespostaTexto(answer, "medications");
+  if (!text) return false;
+  return !NEGATIVE_ANSWER.test(normalizeAnswer(text));
+}

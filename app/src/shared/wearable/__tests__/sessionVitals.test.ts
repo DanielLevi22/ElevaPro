@@ -1,4 +1,4 @@
-import { readSessionVitals } from '../sessionVitals';
+import { vitalsFromReader } from '../sessionVitals';
 import type { TimeRange, WearableReader } from '../types';
 
 const START = new Date('2026-09-02T18:41:00Z');
@@ -19,18 +19,18 @@ function readerWith(samples: number[] | Error) {
   return { reader, ranges };
 }
 
-describe('readSessionVitals', () => {
+describe('vitalsFromReader', () => {
   it('devolve a média das amostras da janela da sessão', async () => {
     const { reader, ranges } = readerWith([160, 164, 168]);
 
-    const vitals = await readSessionVitals(reader, { start: START, end: END }, null);
+    const vitals = await vitalsFromReader(reader, { start: START, end: END }, null);
 
     expect(vitals?.avgHeartRate).toBe(164);
     expect(ranges).toEqual([{ start: START, end: END }]);
   });
 
   it('sem fc máxima, devolve a média e nenhuma zona', async () => {
-    const vitals = await readSessionVitals(
+    const vitals = await vitalsFromReader(
       readerWith([150]).reader,
       { start: START, end: END },
       null
@@ -39,7 +39,7 @@ describe('readSessionVitals', () => {
   });
 
   it('com fc máxima, distribui as amostras nas cinco zonas', async () => {
-    const vitals = await readSessionVitals(
+    const vitals = await vitalsFromReader(
       readerWith([100, 130, 150, 170, 190]).reader,
       { start: START, end: END },
       200
@@ -52,7 +52,7 @@ describe('readSessionVitals', () => {
   // e cinco percentuais, e a lista lida morre dentro do módulo. Devolver a série
   // "para a tela desenhar" é exatamente o que esta trava existe para barrar.
   it('a leitura dos sinais vitais devolve média e zonas, nunca a série', async () => {
-    const vitals = await readSessionVitals(
+    const vitals = await vitalsFromReader(
       readerWith([150, 152, 154]).reader,
       { start: START, end: END },
       190
@@ -68,7 +68,7 @@ describe('readSessionVitals', () => {
   // significaria parada cardíaca.
   it('devolve nulo quando não há amostra na janela', async () => {
     await expect(
-      readSessionVitals(readerWith([]).reader, { start: START, end: END }, 190)
+      vitalsFromReader(readerWith([]).reader, { start: START, end: END }, 190)
     ).resolves.toBeNull();
   });
 
@@ -76,21 +76,21 @@ describe('readSessionVitals', () => {
   // não há o que gravar, e a sessão segue sem a FC.
   it('devolve nulo quando a leitura falha', async () => {
     const { reader } = readerWith(new Error('permission denied'));
-    await expect(readSessionVitals(reader, { start: START, end: END }, 190)).resolves.toBeNull();
+    await expect(vitalsFromReader(reader, { start: START, end: END }, 190)).resolves.toBeNull();
   });
 
   // Erro de unidade passaria despercebido: o CHECK da `0049` recusaria a linha e
   // a sessão inteira falharia ao gravar.
   it('descarta a média fora da faixa fisiológica', async () => {
     await expect(
-      readSessionVitals(readerWith([9, 11]).reader, { start: START, end: END }, 190)
+      vitalsFromReader(readerWith([9, 11]).reader, { start: START, end: END }, 190)
     ).resolves.toBeNull();
   });
 
   it('não lê nada quando a sessão não tem duração', async () => {
     const { reader, ranges } = readerWith([150]);
 
-    await expect(readSessionVitals(reader, { start: END, end: START }, 190)).resolves.toBeNull();
+    await expect(vitalsFromReader(reader, { start: END, end: START }, 190)).resolves.toBeNull();
     expect(ranges).toEqual([]);
   });
 });

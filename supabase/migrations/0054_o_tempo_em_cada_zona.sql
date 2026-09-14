@@ -50,5 +50,14 @@ ALTER TABLE "workout_session_vitals"
 COMMENT ON COLUMN "workout_session_vitals"."zone_1_pct" IS
   'Percentual do tempo abaixo de 60% da FC máxima (220 − idade). Só o derivado — a série de batimentos é vedada.';
 --> statement-breakpoint
+COMMENT ON COLUMN "workout_session_vitals"."zone_2_pct" IS
+  'Percentual do tempo entre 60% e 70% da FC máxima (220 − idade).';
+--> statement-breakpoint
+COMMENT ON COLUMN "workout_session_vitals"."zone_3_pct" IS
+  'Percentual do tempo entre 70% e 80% da FC máxima (220 − idade).';
+--> statement-breakpoint
+COMMENT ON COLUMN "workout_session_vitals"."zone_4_pct" IS
+  'Percentual do tempo entre 80% e 90% da FC máxima (220 − idade).';
+--> statement-breakpoint
 COMMENT ON COLUMN "workout_session_vitals"."zone_5_pct" IS
   'Percentual do tempo acima de 90% da FC máxima (220 − idade).';

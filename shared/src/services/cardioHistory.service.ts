@@ -68,6 +68,13 @@ function monthDuration(rows: HistoryRow[], now: Date): number {
  * const history = await service.fetchModalityHistory(student.id, { activityName: "Corrida", usesGps: true }, new Date());
  */
 export const createCardioHistoryService = (supabase: SupabaseClient) => ({
+  /**
+   * A última, a melhor e o total do mês de uma modalidade. Lê as últimas 400
+   * sessões: "melhor" é a melhor delas, e não do histórico inteiro.
+   *
+   * @example
+   * await service.fetchModalityHistory(student.id, { activityName: "Corrida", usesGps: true }, new Date());
+   */
   fetchModalityHistory: async (
     studentId: string,
     modality: ModalityQuery,
@@ -92,12 +99,21 @@ export const createCardioHistoryService = (supabase: SupabaseClient) => ({
     };
   },
 
+  /**
+   * A modalidade e a duração da última sessão de cardio, para o "Repetir a última".
+   * Sessão sem modalidade é pulada: não há o que repetir nela, e escondê-la não
+   * pode esconder a anterior.
+   *
+   * @example
+   * const last = await service.fetchLastCardio(student.id); // { activityName: "Bicicleta", durationSeconds: 1800 }
+   */
   fetchLastCardio: async (studentId: string): Promise<LastCardio | null> => {
     const { data, error } = await supabase
       .from("workout_sessions")
       .select("activity_name, duration_seconds")
       .eq("student_id", studentId)
       .eq("session_type", "cardio")
+      .not("activity_name", "is", null)
       .order("started_at", { ascending: false })
       .limit(1)
       .maybeSingle();

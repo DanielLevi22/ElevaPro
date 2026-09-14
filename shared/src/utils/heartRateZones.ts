@@ -1,5 +1,3 @@
-import { lerRespostaTexto } from "./anamnese";
-
 /**
  * Zonas de frequência cardíaca da sessão de cardio (issue #304, ADR-0026).
  *
@@ -15,6 +13,20 @@ export interface ZoneShare {
   zone4: number;
   zone5: number;
 }
+
+/** A FC média de uma sessão e, quando há FC máxima, o tempo em cada zona. */
+export interface SessionVitals {
+  avgHeartRate: number;
+  zones: ZoneShare | null;
+}
+
+/**
+ * Faixa fisiológica em esforço. 30 bpm é abaixo do atleta de endurance mais
+ * bradicárdico; 230 é acima da FC máxima de qualquer adulto. É a faixa do CHECK
+ * da `0049`, e vale para cada amostra: fora dela é o sensor escorregando no pulso.
+ */
+const MIN_WORKOUT_BPM = 30;
+const MAX_WORKOUT_BPM = 230;
 
 /**
  * Limite inferior das zonas 2 a 5, em fração da FC máxima. A Z1 recebe tudo o
@@ -77,8 +89,11 @@ function wholePercentages(counts: number[], total: number): number[] {
 /**
  * Percentual das amostras de batimento em cada zona, pela FC máxima.
  *
- * Conta amostras, e não segundos: os relógios gravam em intervalos regulares
- * durante o treino, e a proporção das amostras é a proporção do tempo.
+ * Conta amostras, e não segundos: supõe que o relógio grava em intervalo regular
+ * durante o treino, e então a proporção das amostras é a proporção do tempo. A
+ * suposição é conferida pelo roteiro de teste em aparelho de
+ * `docs/research/relogios-chineses-health-connect.md`; com amostragem irregular,
+ * o peso de cada amostra precisaria vir do intervalo até a seguinte.
  *
  * @example
  * distributeIntoZones([100, 130, 150, 170, 190], 200); // 20% em cada zona
@@ -102,25 +117,24 @@ export function distributeIntoZones(
   };
 }
 
-/** Negativas comuns, sem acento e em minúsculas. */
-const NEGATIVE_ANSWER = /^(nao|nenhum|nenhuma|nada|n\/a|-+)(\b|$)/;
-
-function normalize(text: string): string {
-  return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
-}
-
 /**
- * A resposta "Usa algum medicamento contínuo?" declara medicação?
- *
- * Existe para o aviso de que medicação pode alterar a FC, e só isso: o texto não
- * sai daqui, e o chamador recebe um booleano (`LGPD_COMPLIANCE.md` §2.3).
+ * A média e as zonas da série de batimentos de uma sessão, ou `null` quando não
+ * há amostra plausível. Média e zonas saem das mesmas amostras filtradas: um zero
+ * de sensor solto não pode pesar nas zonas depois de ter sido tirado da média.
  *
  * @example
- * declaresContinuousMedication("Não uso"); // false
- * declaresContinuousMedication("Atenolol 25mg"); // true
+ * summarizeHeartRate(samples, profile.maxHeartRate); // { avgHeartRate: 152, zones: {...} }
  */
-export function declaresContinuousMedication(answer: unknown): boolean {
-  const text = lerRespostaTexto(answer, "medications");
-  if (!text) return false;
-  return !NEGATIVE_ANSWER.test(normalize(text));
+export function summarizeHeartRate(
+  samples: readonly number[],
+  maxHeartRate: number | null,
+): SessionVitals | null {
+  const plausible = samples.filter(
+    (bpm) => Number.isFinite(bpm) && bpm >= MIN_WORKOUT_BPM && bpm <= MAX_WORKOUT_BPM,
+  );
+  if (plausible.length === 0) return null;
+
+  const average = plausible.reduce((total, bpm) => total + bpm, 0) / plausible.length;
+  const zones = maxHeartRate === null ? null : distributeIntoZones(plausible, maxHeartRate);
+  return { avgHeartRate: Math.round(average), zones };
 }

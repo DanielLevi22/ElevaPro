@@ -10,7 +10,7 @@ import {
 import { supabase } from '@elevapro/supabase';
 import { registrarAviso, registrarFalha } from '@/lib/registro';
 import type { EstadoDaSessao } from '../store/maquinaDaSessao';
-import { batimentoSeConsentido, notasSeConsentido } from './consentimento';
+import { heartRateIfConsented, notasSeConsentido } from './consentimento';
 
 const servicoDeTreinos = createWorkoutsService(supabase);
 
@@ -225,7 +225,7 @@ async function saveVitalsIfConsented(
   sessionId: string,
   session: SessaoDeCardioParaGravar
 ): Promise<void> {
-  const avgHeartRate = await batimentoSeConsentido(session.studentId, session.avgHeartRate ?? null);
+  const avgHeartRate = await heartRateIfConsented(session.studentId, session.avgHeartRate ?? null);
   if (avgHeartRate === null) return;
   try {
     await servicoDeTreinos.saveSessionVitals(sessionId, {

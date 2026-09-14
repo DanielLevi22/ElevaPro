@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { lerRespostaNumerica } from "../utils/anamnese";
-import { declaresContinuousMedication, estimateMaxHeartRate } from "../utils/heartRateZones";
+import { declaresContinuousMedication, lerRespostaNumerica } from "../utils/anamnese";
+import { estimateMaxHeartRate } from "../utils/heartRateZones";
 
 /** O que as zonas de FC precisam saber do Student, e nada além. */
 export interface HeartRateProfile {

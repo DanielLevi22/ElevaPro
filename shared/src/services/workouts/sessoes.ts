@@ -6,14 +6,8 @@ import type {
   WorkoutSession,
   WorkoutSessionExercise,
 } from "../../types/workouts.types";
-import type { ZoneShare } from "../../utils/heartRateZones";
+import type { SessionVitals } from "../../utils/heartRateZones";
 import type { SessaoConcluida } from "../../utils/periodizacao";
-
-/** A FC média de uma sessão e, quando há idade declarada, o tempo em cada zona. */
-export interface SessionVitals {
-  avgHeartRate: number;
-  zones: ZoneShare | null;
-}
 
 /** Começo e fim de uma sessão de cardio concluída, em ISO. */
 export interface CardioWindow {
@@ -175,7 +169,7 @@ export const criarServicoDeSessoes = (supabase: SupabaseClient) => ({
    * que é por `notes`.
    *
    * @example
-   * await saveSessionVitals(session.id, { avgHeartRate: 152, zones: distributeIntoZones(bpm, 187) });
+   * await saveSessionVitals(session.id, { avgHeartRate: 152, ...summarizeHeartRate(bpm, 187) });
    */
   saveSessionVitals: async (sessionId: string, vitals: SessionVitals): Promise<void> => {
     const { zones } = vitals;
