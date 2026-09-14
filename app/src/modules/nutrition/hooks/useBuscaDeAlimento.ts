@@ -105,11 +105,13 @@ function pedidoDoAlimento(food: Food) {
   const quantidade = numeroDoBanco(serving_size) || 100;
   return {
     descricao: `${quantidade} ${serving_unit} de ${name}`,
-    extra: {
-      quantity: quantidade,
-      unit: serving_unit,
-      food: { id, name, category, serving_size, serving_unit, calories, protein, carbs, fat },
-      origem: 'busca' as const,
-    },
+    extras: [
+      {
+        quantity: quantidade,
+        unit: serving_unit,
+        food: { id, name, category, serving_size, serving_unit, calories, protein, carbs, fat },
+        origem: 'busca' as const,
+      },
+    ],
   };
 }

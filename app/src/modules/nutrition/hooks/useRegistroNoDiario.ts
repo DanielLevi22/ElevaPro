@@ -16,7 +16,8 @@ const diario = createDiarioAlimentar(supabase);
 export interface PedidoDeRegistro {
   /** Como o item aparece no diálogo: "100 g de Banana", "Bowl, 380 kcal estimadas". */
   descricao: string;
-  extra: Omit<ItemRegistrado, 'id'>;
+  /** Um item, ou um por componente do prato do scan. */
+  extras: Omit<ItemRegistrado, 'id'>[];
 }
 
 export interface RegistroNoDiario {
@@ -40,7 +41,7 @@ export interface RegistroNoDiario {
  *
  * @example
  * const registro = useRegistroNoDiario(user.id, { somenteLeitura });
- * registro.pedir({ descricao: '100 g de Banana', extra });
+ * registro.pedir({ descricao: '100 g de Banana', extras: [extra] });
  */
 export function useRegistroNoDiario(
   alunoId: string,
@@ -101,7 +102,7 @@ async function gravar({ alunoId, dia, refeicaoId, pedido }: Gravacao): Promise<v
       refeicaoId,
       data: dia,
       doPlano: mealItems[refeicaoId] ?? [],
-      extra: pedido.extra,
+      extras: pedido.extras,
     });
     showAlert({
       title: 'Registrado',

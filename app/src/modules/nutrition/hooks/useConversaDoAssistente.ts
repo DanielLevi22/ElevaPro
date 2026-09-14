@@ -52,8 +52,12 @@ export function useConversaDoAssistente(
   return { mensagens: [saudacao, ...mensagens], respondendo, enviar };
 }
 
-function mensagemDoAssistente(id: string, conteudo: string): ChatMessage {
-  return { id, role: 'assistant', content: conteudo, createdAt: Date.now() };
+function mensagemDoAssistente(
+  id: string,
+  conteudo: string,
+  sugestao: ChatMessage['sugestao'] = null
+): ChatMessage {
+  return { id, role: 'assistant', content: conteudo, createdAt: Date.now(), sugestao };
 }
 
 function mensagemDoAluno(conteudo: string): ChatMessage {
@@ -63,8 +67,8 @@ function mensagemDoAluno(conteudo: string): ChatMessage {
 /** A resposta do assistente, ou a causa da falha dita no próprio chat. */
 async function responder(historico: ChatMessage[], pergunta: string, token: string) {
   try {
-    const resposta = await NutriBotService.sendMessage(historico, pergunta, token);
-    return mensagemDoAssistente(`resposta-${Date.now()}`, resposta);
+    const { reply, sugestao } = await NutriBotService.perguntar(historico, pergunta, token);
+    return mensagemDoAssistente(`resposta-${Date.now()}`, reply, sugestao);
   } catch (erro) {
     return mensagemDoAssistente(`erro-${Date.now()}`, mensagemDeErroBff(erro));
   }

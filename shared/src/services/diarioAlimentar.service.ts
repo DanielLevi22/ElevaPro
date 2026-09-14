@@ -10,7 +10,8 @@ export interface RegistroDeItemExtra {
   data: string;
   /** O prato do plano, copiado quando ainda não há registro. */
   doPlano: DietMealItem[];
-  extra: Omit<ItemRegistrado, "id">;
+  /** Um ou mais itens: o prato do scan separado em componentes entra um por um. */
+  extras: Omit<ItemRegistrado, "id">[];
 }
 
 /**
@@ -19,7 +20,7 @@ export interface RegistroDeItemExtra {
  *
  * @example
  * await createDiarioAlimentar(supabase).registrarItemExtra({ alunoId, planoId, refeicaoId,
- *   data: "2026-09-13", doPlano, extra: { quantity: 1, unit: "porção", food, origem: "scan" } });
+ *   data: "2026-09-13", doPlano, extras: [{ quantity: 1, unit: "porção", food, origem: "scan" }] });
  */
 export const createDiarioAlimentar = (supabase: SupabaseClient) => {
   /** O registro da refeição na data, se já existe — lido do banco, não da tela. */
@@ -54,13 +55,17 @@ export const createDiarioAlimentar = (supabase: SupabaseClient) => {
 
   return {
     /**
-     * Acrescenta o item ao que o aluno comeu na refeição, sem apagar a troca que
+     * Acrescenta os itens ao que o aluno comeu na refeição, sem apagar a troca que
      * já estiver lá, e sem marcar a refeição: comer o extra não é comer o prato.
      */
     registrarItemExtra: async (registro: RegistroDeItemExtra): Promise<void> => {
       const existente = await lerRegistro(registro.alunoId, registro.refeicaoId, registro.data);
-      const item: ItemRegistrado = { ...registro.extra, id: `extra_${Date.now()}` };
-      const itens = itensComExtra(existente?.actual_items, registro.doPlano, item);
+      const agora = Date.now();
+      const itens = registro.extras.reduce<unknown>(
+        (atuais, extra, indice) =>
+          itensComExtra(atuais, registro.doPlano, { ...extra, id: `extra_${agora}_${indice}` }),
+        existente?.actual_items,
+      );
       const logId = existente?.id ?? (await criarRegistro(registro));
 
       const { error } = await supabase

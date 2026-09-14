@@ -1,14 +1,9 @@
+import type { AnaliseDoPrato } from '@elevapro/shared';
 import * as FileSystem from 'expo-file-system/legacy';
 import { fetchBff, lerRespostaBff } from '@/shared/bff';
 
-export interface FoodAnalysisResult {
-  name: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  confidence: number;
-}
+/** O contrato da rota vive no `shared`, junto do leitor que a rota usa. */
+export type FoodAnalysisResult = AnaliseDoPrato;
 
 const ROTA = '/api/ai/student/scan-food';
 
@@ -31,6 +26,6 @@ export const FoodRecognitionService = {
       throw new Error(`scan-food BFF error: ${response.status}`);
     }
 
-    return dados;
+    return { ...dados, components: dados.components ?? [] };
   },
 };
