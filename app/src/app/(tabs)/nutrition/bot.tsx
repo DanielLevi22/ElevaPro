@@ -1,5 +1,21 @@
+import { primeiroNome } from '@elevapro/shared';
+import { useAuthStore } from '@/auth';
+import { AssistenteDeNutricaoScreen } from '@/modules/nutrition/routes/index';
 import NutriBotScreen from '@/modules/nutrition/screens/NutriBotScreen';
 
+/**
+ * O assistente de nutrição na tela do papel: o aluno no desenho do kit; o
+ * member segue na tela antiga até o plano dele ganhar desenho.
+ */
 export default function NutriBotRoute() {
-  return <NutriBotScreen />;
+  const { user, accountType } = useAuthStore();
+  if (accountType === 'member' || !user?.id) return <NutriBotScreen />;
+
+  return (
+    <AssistenteDeNutricaoScreen
+      alunoId={user.id}
+      primeiroNome={primeiroNome(user.user_metadata?.full_name) ?? 'Aluno'}
+      obterToken={() => useAuthStore.getState().session?.access_token ?? ''}
+    />
+  );
 }

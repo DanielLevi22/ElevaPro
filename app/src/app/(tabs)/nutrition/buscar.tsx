@@ -1,3 +1,4 @@
+import { primeiroNome } from '@elevapro/shared';
 import { useAuthStore } from '@/auth';
 import { BuscarAlimentoScreen } from '@/modules/nutrition/routes/index';
 
@@ -6,11 +7,10 @@ export default function BuscarRoute() {
   const { user, isMasquerading } = useAuthStore();
   if (!user?.id) return null;
 
-  const nomeCompleto = String(user.user_metadata?.full_name ?? '');
   return (
     <BuscarAlimentoScreen
       alunoId={user.id}
-      primeiroNome={nomeCompleto.split(' ')[0] || 'Aluno'}
+      primeiroNome={primeiroNome(user.user_metadata?.full_name) ?? 'Aluno'}
       somenteLeitura={isMasquerading}
     />
   );

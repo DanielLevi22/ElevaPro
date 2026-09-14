@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { AlvoDoVidro } from '@/components/ui/AlvoDoVidro';
 import { BRILHO_DA_NUTRICAO, BrilhoAmbiente } from '@/components/ui/BrilhoAmbiente';
@@ -30,6 +30,8 @@ interface TelaDaNutricaoProps {
   recarregar?: { carregando: boolean; onRecarregar: () => void };
   /** Sem o respiro de cima: a tela abre com imagem colada no topo. */
   semRespiroNoTopo?: boolean;
+  /** A conversa do assistente desce sozinha a cada mensagem, e precisa da rolagem. */
+  rolagemRef?: RefObject<ScrollView | null>;
 }
 
 const FOLGA = { tab: 'pb-[7.625rem]', rodape: 'pb-[11.5rem]' } as const;
@@ -40,6 +42,7 @@ export function TelaDaNutricao({
   folgaNoFim = 'tab',
   recarregar,
   semRespiroNoTopo = false,
+  rolagemRef,
 }: TelaDaNutricaoProps) {
   const cores = useCores();
 
@@ -47,6 +50,9 @@ export function TelaDaNutricao({
     <ScreenLayout useSafeArea={false}>
       <AlvoDoVidro fundo={<BrilhoAmbiente receita={BRILHO_DA_NUTRICAO} />}>
         <ScrollView
+          ref={rolagemRef}
+          onContentSizeChange={rolagemRef ? () => rolagemRef.current?.scrollToEnd() : undefined}
+          keyboardShouldPersistTaps="handled"
           contentContainerClassName={cn(
             FOLGA[folgaNoFim],
             semRespiroNoTopo ? null : 'px-[1.125rem] pt-[3.625rem]'
