@@ -16,9 +16,9 @@ import { type PlanoDoDia, usePlanoDoDia } from '../../hooks/usePlanoDoDia';
  * A aba Nutrição do aluno — tela 1 do fluxo de nutrição do kit: a semana, o
  * anel de calorias do dia, os três macros e as refeições.
  *
- * O "Editar" do título das refeições não entrou: o aluno não edita o plano que
- * o especialista prescreveu. O que ele muda é o que comeu, pela troca no
- * detalhe da refeição.
+ * O "Editar" do título das refeições virou "Lista de compras": o aluno não
+ * edita o plano que o especialista prescreveu — o que ele muda é o que comeu,
+ * pela troca no detalhe da refeição — e a lista precisava de uma porta.
  *
  * @example
  * <PlanoDoDiaScreen alunoId={user.id} somenteLeitura={isMasquerading} />
@@ -121,7 +121,13 @@ function RefeicoesDoDia({ plano }: { plano: PlanoDoDia }) {
 
   return (
     <>
-      <TituloDeSecao estilo="rotulo">
+      {/* No kit a ação é "Editar"; o aluno não edita a prescrição. O lugar vira a
+          porta da lista de compras, que a tela antiga abria pelo cabeçalho. */}
+      <TituloDeSecao
+        estilo="rotulo"
+        acao="Lista de compras"
+        onAcao={() => router.push(ROUTES.NUTRITION.SHOPPING)}
+      >
         {plano.data === plano.hoje ? 'Refeições de hoje' : 'Refeições do dia'}
       </TituloDeSecao>
       {plano.refeicoes.map(({ refeicao, resumo, calorias, feita }) => (

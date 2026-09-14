@@ -21,7 +21,8 @@ import { numeroDoBanco } from '../../services/consumoDoDia';
  * categorias do catálogo e os resultados com "+".
  *
  * Três partes do kit não entraram aqui:
- * - o sino, porque o aluno não tem tela de notificações;
+ * - o sino, porque o aluno não tem tela de notificações — o lugar dele abre o
+ *   scan do prato, que é a outra resposta a "o que você vai comer agora?";
  * - "Sugestões do assistente", que chega com a rota dela no terceiro PR da #298;
  * - "receita" no campo de busca, porque o catálogo só tem alimento.
  *
@@ -54,6 +55,7 @@ export function BuscarAlimentoScreen({
         primeiroNome={primeiroNome}
         faltamCalorias={busca.faltamCalorias}
         onVoltar={router.back}
+        onEscanear={() => router.push(ROUTES.NUTRITION.SCAN)}
       />
       <Text className="mt-[1.125rem] text-[1.6875rem] font-bold leading-[1.94rem] tracking-tight text-hero">
         {'O que você vai\ncomer '}
@@ -81,9 +83,10 @@ interface SaudacaoProps {
   primeiroNome: string;
   faltamCalorias: number;
   onVoltar: () => void;
+  onEscanear: () => void;
 }
 
-function Saudacao({ primeiroNome, faltamCalorias, onVoltar }: SaudacaoProps) {
+function Saudacao({ primeiroNome, faltamCalorias, onVoltar, onEscanear }: SaudacaoProps) {
   return (
     <View className="flex-row items-center gap-[0.6875rem] pt-1.5">
       <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={onVoltar} />
@@ -102,6 +105,7 @@ function Saudacao({ primeiroNome, faltamCalorias, onVoltar }: SaudacaoProps) {
             : 'Meta de calorias fechada hoje'}
         </Text>
       </View>
+      <BotaoRedondo icone="camera-outline" rotulo="Escanear o prato" onPress={onEscanear} />
     </View>
   );
 }
