@@ -1,5 +1,6 @@
 import { createHealthService, type HealthMetricInput } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
+import { registrarFalha } from '@/lib/registro';
 
 const healthService = createHealthService(supabase);
 
@@ -35,10 +36,10 @@ export async function syncDailyMetrics(metric: HealthMetricInput): Promise<SyncO
 
     await healthService.upsertDaily(studentId, metric);
     return 'saved';
-  } catch (error: unknown) {
-    // Sem PII no log: o valor de passos é dado de saúde e não pode ir para
-    // observabilidade em texto claro (Art. 6°, VII).
-    console.log('[HealthSync] Falha ao persistir agregado diário:', String(error));
+  } catch {
+    // Sem o erro no log: o do PostgREST carrega o payload, e o payload aqui são
+    // passos, sono e FC — dado de saúde fora de observabilidade (Art. 6°, VII).
+    registrarFalha('wearable.persist_today');
     return 'failed';
   }
 }

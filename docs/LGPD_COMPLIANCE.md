@@ -187,6 +187,19 @@ Dados que foram explicitamente rejeitados do schema por violar o princípio da n
   custo aceito é o favorito não acompanhar a troca de aparelho
 - **Marcação da lista de compras no servidor** (issue #298) — é lembrete de
   mercado, e não dado de saúde. Fica no aparelho, por plano e período
+- **Capacidades do relógio no servidor** (ADR-0026, fundação do Relógio) — o app
+  descobre o que o relógio do aluno entrega (passos e calorias, sono e FC de
+  repouso, FC durante o treino) olhando se há dado recente, e usa isso só para
+  liberar ou bloquear tela. O resultado fica no aparelho, e o cache guarda o nome da
+  capacidade e quando foi verificada, **nunca a medida** que provou a capacidade.
+  Gravar no servidor diria ao especialista qual relógio e quais sensores o aluno
+  usa, sem decisão de treino que dependa disso
+- **Sessões de exercício registradas pelo relógio** (`ExerciseSession` no Health
+  Connect, `HKWorkout` no HealthKit) — não são lidas na fundação. A FC durante o
+  treino é verificada na janela das sessões de cardio **do próprio app**, que já
+  são conhecidas; ler as sessões do relógio revelaria os exercícios feitos fora do
+  app, com horário, para uma finalidade que ainda não existe. Entram, com parecer
+  próprio, quando existir a importação do cardio feito só com o relógio
 - **Leitura da água do dia pelo especialista** (`0052`) — a tabela nasce sem
   política para ele. Nenhuma tela do especialista usa o dado; se uma passar a
   usar, a política nasce consultando o consentimento — a `verify-rls.sql` já põe

@@ -1,7 +1,7 @@
 # Modelo de negócio B2B + B2C com aluno gerenciado gratuito
 
 **Data:** 2026-04-19
-**Status:** accepted
+**Status:** accepted — a prioridade "B2B primário" foi substituída pelo [ADR-0028](0028-o-praticante-vem-primeiro.md); preços e aluno gerenciado gratuito seguem valendo
 
 ---
 

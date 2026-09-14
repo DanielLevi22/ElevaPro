@@ -7,6 +7,7 @@ import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { ShareWorkoutModal } from '@/components/workout/ShareWorkoutModal';
 import { useGamificationStore } from '@/modules/gamification/store/gamificationStore';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
+import { readSessionHeartRate } from '@/shared/wearable';
 import { getLocalDateISOString } from '@/utils/dateUtils';
 import { CabecalhoDaSessao } from '../components/CabecalhoDaSessao';
 import { ControlesDaSessao } from '../components/ControlesDaSessao';
@@ -18,7 +19,6 @@ import { useCronometroDaSessao } from '../hooks/useCronometroDaSessao';
 import { useIntensidadeDoMovimento } from '../hooks/useIntensidadeDoMovimento';
 import { usePesoDoAluno } from '../hooks/usePesoDoAluno';
 import { useRastreioDaCorrida } from '../hooks/useRastreioDaCorrida';
-import { mediaDeBatimentos } from '../services/frequenciaDaSessao';
 import { gravarSessaoDeCardio } from '../services/registroDaSessao';
 
 /** METs aproximados por modalidade. */
@@ -119,7 +119,7 @@ export default function CardioSessionScreen() {
         // O batimento é lido antes de encerrar o rastreio, mas depois de o
         // relógio ter tido o período inteiro para gravar — é por isso que a
         // leitura acontece aqui, e não a cada tique.
-        const batimento = await mediaDeBatimentos(inicio, fim);
+        const heartRate = await readSessionHeartRate(inicio, fim);
 
         await gravarSessaoDeCardio(
           {
@@ -138,7 +138,7 @@ export default function CardioSessionScreen() {
             distanceMeters: metrosPersistiveis(rastreio.distanceMeters),
             avgPaceSecondsPerKm: rastreio.paceSecondsPerKm,
             avgCadenceSpm: rastreio.avgCadenceSpm,
-            avgHeartRate: batimento,
+            avgHeartRate: heartRate,
           },
           { mascarado: isMasquerading }
         );

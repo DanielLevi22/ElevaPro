@@ -386,6 +386,32 @@ describe("workoutsService — sessões que decidem o próximo treino", () => {
     });
     expect(sessoes).toHaveLength(1);
   });
+
+  // A detecção de FC no treino (#302) olha as sessões de cardio do próprio app,
+  // e não as sessões de exercício do relógio. Ela precisa só do começo e do fim:
+  // PSE, notas, distância ou modalidade na resposta seriam dado de saúde lido sem
+  // uso (LGPD, Art. 6°, III).
+  it("busca só o começo e o fim das sessões de cardio concluídas desde uma data", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({
+      data: [{ started_at: "2026-09-10T10:00:00Z", completed_at: "2026-09-10T10:30:00Z" }],
+    });
+
+    const windows = await createWorkoutsService(supabase).fetchCardioWindowsSince(
+      "aluno-1",
+      "2026-08-15T00:00:00.000Z",
+    );
+
+    expect(chamadas[0].tabela).toBe("workout_sessions");
+    expect(chamadas[0].select).toBe("started_at, completed_at");
+    expect(chamadas[0].filtros).toEqual({
+      student_id: "aluno-1",
+      session_type: "cardio",
+      completed_at: "2026-08-15T00:00:00.000Z",
+    });
+    expect(windows).toEqual([
+      { started_at: "2026-09-10T10:00:00Z", completed_at: "2026-09-10T10:30:00Z" },
+    ]);
+  });
 });
 
 describe("workoutsService — colunas das leituras do aluno", () => {

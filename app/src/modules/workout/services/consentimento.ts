@@ -59,7 +59,7 @@ export async function notasSeConsentido(
  * sozinha deixaria o dado entrar no banco de quem já disse não.
  *
  * @example
- * const bpm = await batimentoSeConsentido(alunoId, await mediaDeBatimentos(ini, fim));
+ * const bpm = await batimentoSeConsentido(alunoId, await readSessionHeartRate(ini, fim));
  */
 export async function batimentoSeConsentido(
   studentId: string,

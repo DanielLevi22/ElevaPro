@@ -19,6 +19,17 @@ jest.mock('@elevapro/supabase', () => ({
   defineAbilitiesFor: jest.fn(() => ({ can: () => true, cannot: () => false })),
 }));
 
+// Armazenamento do aparelho que lembra, para a trava do logout olhar o cache de
+// capacidades de verdade (o stub do `jest.setup` não guarda nada).
+const mockDeviceMemory = new Map<string, string>();
+jest.mock('react-native-mmkv', () => ({
+  createMMKV: () => ({
+    getString: (key: string) => mockDeviceMemory.get(key),
+    set: (key: string, value: string) => mockDeviceMemory.set(key, value),
+    remove: (key: string) => mockDeviceMemory.delete(key),
+  }),
+}));
+
 const mockStudentReset = jest.fn();
 const mockNutritionReset = jest.fn();
 const mockWorkoutReset = jest.fn();
@@ -35,6 +46,7 @@ jest.mock('../../../workout/store/workoutStore', () => ({
 }));
 
 import { getUserContextJWT } from '@elevapro/supabase';
+import { readCapabilityReport, saveCapabilityReport } from '@/shared/wearable/capabilityCache';
 import { useNutritionStore } from '../../../nutrition/store/nutritionStore';
 import { useStudentStore } from '../../../students/store/studentStore';
 import { useWorkoutStore } from '../../../workout/store/workoutStore';
@@ -89,6 +101,22 @@ describe('authStore', () => {
     expect(useStudentStore.getState().reset).toHaveBeenCalled();
     expect(useNutritionStore.getState().reset).toHaveBeenCalled();
     expect(useWorkoutStore.getState().reset).toHaveBeenCalled();
+  });
+
+  // LGPD, Art. 18, e §2.3. O relatório diz o que o relógio de um Student entrega.
+  // Deixado no aparelho depois do logout, liberaria ou bloquearia tela para o
+  // próximo Student com base no relógio de outra pessoa.
+  it('o logout apaga o cache de capacidades do relógio', async () => {
+    saveCapabilityReport(
+      { dailyActivity: 'available', sleepAndRestingHr: 'available', workoutHeartRate: 'unknown' },
+      new Date('2026-09-14T12:00:00.000Z')
+    );
+
+    await useAuthStore.getState().signOut();
+
+    if (readCapabilityReport() !== null) {
+      throw new Error('RELÓGIO DO STUDENT ANTERIOR: o cache de capacidades sobreviveu ao logout');
+    }
   });
 
   it('should manage student view (masquerade)', async () => {

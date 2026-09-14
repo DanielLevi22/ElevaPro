@@ -21,6 +21,7 @@ export * from "./services/hidratacao.service";
 export * from "./services/nutrition.service";
 export * from "./services/students.service";
 export type { ResumoDaPeriodizacao } from "./services/workouts/resumoDasPeriodizacoes";
+export type { CardioWindow } from "./services/workouts/sessoes";
 export * from "./services/workouts.service";
 export * from "./technique/agachamento";
 export * from "./technique/diagnostico";
