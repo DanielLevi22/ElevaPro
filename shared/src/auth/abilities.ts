@@ -36,6 +36,7 @@ export type Subject =
   | "Analytics"
   | "Periodization"
   | "HealthMetric"
+  | "Hydration"
   | "all";
 
 export type AppAbility = MongoAbility<[Action, Subject]>;
@@ -93,6 +94,9 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
     can("read", "Profile");
     can("update", "Profile");
     can("manage", "HealthMetric");
+    // Só o próprio aluno, e nenhum especialista: a RLS de `hydration_daily`
+    // (0052) não tem política para ele, porque nenhuma tela dele usa o dado.
+    can("manage", "Hydration");
   }
 
   // member: usuário independente — cria e gerencia os próprios planos (sem specialist).
@@ -107,7 +111,7 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
   if (context.accountType === "member") {
     can("read", "Profile");
     can("update", "Profile");
-    can("manage", ["Workout", "Diet", "Exercise", "Food", "HealthMetric"]);
+    can("manage", ["Workout", "Diet", "Exercise", "Food", "HealthMetric", "Hydration"]);
   }
 
   return build();
