@@ -1,8 +1,10 @@
 import {
   createNutritionService,
+  type DietMeal,
   type DietMealItem,
   type ItemRegistrado,
   itensComExtra,
+  refeicaoMaisProxima,
 } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 
@@ -56,4 +58,15 @@ export async function registrarNoDiario({
       })
     ).id;
   await nutricao.updateMealLogItems(logId, itens);
+}
+
+/**
+ * A refeição de hoje em que o item extra entra: a de horário mais perto de
+ * agora e, sem horário em nenhuma, a primeira.
+ *
+ * @example refeicaoParaAgora(refeicoesDeHoje)?.name
+ */
+export function refeicaoParaAgora(refeicoes: DietMeal[]): DietMeal | null {
+  const agora = new Date().toTimeString().slice(0, 5);
+  return refeicaoMaisProxima(refeicoes, agora) ?? refeicoes[0] ?? null;
 }

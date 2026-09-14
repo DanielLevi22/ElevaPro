@@ -1,15 +1,10 @@
-import {
-  createNutritionService,
-  type DietMeal,
-  type Food,
-  refeicaoMaisProxima,
-} from '@elevapro/shared';
+import { createNutritionService, type DietMeal, type Food } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { useEffect, useState } from 'react';
 import { showAlert, showConfirm } from '@/components/ui/appAlert';
 import { getLocalDateISOString } from '@/utils/dateUtils';
 import { numeroDoBanco } from '../services/consumoDoDia';
-import { registrarNoDiario } from '../services/registrarNoDiario';
+import { refeicaoParaAgora, registrarNoDiario } from '../services/registrarNoDiario';
 import { useNutritionStore } from '../store/nutritionStore';
 import { usePlanoDoDia } from './usePlanoDoDia';
 
@@ -130,12 +125,6 @@ function porProteina(a: Food, b: Food): number {
 function doCatalogo(food: Food) {
   const { id, name, category, serving_size, serving_unit, calories, protein, carbs, fat } = food;
   return { id, name, category, serving_size, serving_unit, calories, protein, carbs, fat };
-}
-
-/** A refeição de horário mais perto de agora; sem horário em nenhuma, a primeira. */
-function refeicaoParaAgora(refeicoes: DietMeal[]): DietMeal | null {
-  const agora = new Date().toTimeString().slice(0, 5);
-  return refeicaoMaisProxima(refeicoes, agora) ?? refeicoes[0] ?? null;
 }
 
 interface Confirmacao {

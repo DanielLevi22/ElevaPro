@@ -14,6 +14,7 @@ export {
 export { AderenciaDaSemanaScreen } from '../screens/aluno/AderenciaDaSemanaScreen';
 export { BuscarAlimentoScreen } from '../screens/aluno/BuscarAlimentoScreen';
 export { DetalheDaRefeicaoScreen } from '../screens/aluno/DetalheDaRefeicaoScreen';
+export { EscanearPratoScreen } from '../screens/aluno/EscanearPratoScreen';
 export { ListaDeComprasScreen } from '../screens/aluno/ListaDeComprasScreen';
 export { PlanoDoDiaScreen } from '../screens/aluno/PlanoDoDiaScreen';
 export { SubstituirAlimentoScreen } from '../screens/aluno/SubstituirAlimentoScreen';
