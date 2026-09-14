@@ -1,4 +1,4 @@
-import type { DietMeal } from '@elevapro/shared';
+import { type DietMeal, textoDaDificuldade, textoDasPorcoes } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -23,6 +23,7 @@ import {
   macrosDosItens,
   percentualDaMeta,
 } from '../../services/consumoDoDia';
+import { useFavoritosStore } from '../../store/favoritosStore';
 
 /**
  * Tela 2 do fluxo de nutrição do kit: o prato de uma refeição, com o total, os
@@ -32,9 +33,10 @@ import {
  * O kit desenha as duas portas e nenhuma edição de quantidade; o aluno não
  * reescreve a prescrição, troca o que comeu.
  *
- * O coração de favorito e a linha de tempo, dificuldade e porções chegam com os
- * dados deles, no segundo PR da #298. O modo de preparo, que a tela antiga
- * abria pelo cartão, fica na linha de dados até lá.
+ * O coração guarda o favorito só no aparelho (LGPD, #298). A linha de tempo,
+ * dificuldade e porções mostra o que o especialista informou, e some o que ele
+ * não informou; o modo de preparo, que a tela antiga abria pelo cartão, fecha a
+ * linha.
  *
  * @example
  * <DetalheDaRefeicaoScreen alunoId={user.id} refeicaoId={id} data="2026-08-12" somenteLeitura={false} />
@@ -81,7 +83,12 @@ export function DetalheDaRefeicaoScreen({
         />
       }
     >
-      <TopoDaRefeicao nome={aberta.refeicao.name} onVoltar={router.back} />
+      <TopoDaRefeicao
+        alunoId={alunoId}
+        refeicaoId={refeicaoId}
+        nome={aberta.refeicao.name}
+        onVoltar={router.back}
+      />
       <View className="-mt-7 rounded-t-[1.75rem] bg-background px-[1.125rem] pt-5">
         <CabecalhoDoPrato refeicao={aberta.refeicao} itens={aberta.itens} macros={aberta.macros} />
         <TotalDoPrato aberta={aberta} />
@@ -117,15 +124,28 @@ function SemRefeicao({ naoEncontrada }: { naoEncontrada: boolean }) {
  * app não guarda foto de prato (LGPD, `0035`): o espaço leva o ícone da
  * refeição.
  */
-function TopoDaRefeicao({ nome, onVoltar }: { nome: string; onVoltar: () => void }) {
+interface TopoDaRefeicaoProps {
+  alunoId: string;
+  refeicaoId: string;
+  nome: string;
+  onVoltar: () => void;
+}
+
+function TopoDaRefeicao({ alunoId, refeicaoId, nome, onVoltar }: TopoDaRefeicaoProps) {
   const cores = useCores();
   const escalar = useEscala();
+  const favorita = useFavoritosStore((s) => (s.porAluno[alunoId] ?? []).includes(refeicaoId));
 
   return (
     <View className="h-[18.875rem] items-center justify-center bg-glass-strong pt-[3.25rem]">
       <Ionicons name={iconeDaRefeicao(nome)} size={escalar(64)} color={cores.placeholder} />
       <View className="absolute left-[1.125rem] right-[1.125rem] top-[4.125rem] flex-row justify-between">
         <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={onVoltar} />
+        <BotaoRedondo
+          icone={favorita ? 'heart' : 'heart-outline'}
+          rotulo={favorita ? 'Tirar dos favoritos' : 'Favoritar refeição'}
+          onPress={() => useFavoritosStore.getState().alternar(alunoId, refeicaoId)}
+        />
       </View>
     </View>
   );
@@ -162,17 +182,33 @@ function CabecalhoDoPrato({ refeicao, itens, macros }: CabecalhoDoPratoProps) {
       <Text className="text-[1.5rem] font-bold tracking-tight text-foreground">
         {tituloDoPrato(itens) || refeicao.name}
       </Text>
-      {itens.length > 0 ? (
-        <TouchableOpacity
-          onPress={abrirPreparo}
-          accessibilityRole="button"
-          className="mt-[0.4375rem] self-start"
-        >
-          <DadoComIcone icone="book-outline" texto="Modo de preparo" />
-        </TouchableOpacity>
-      ) : null}
+      <View className="mt-[0.4375rem] flex-row flex-wrap items-center gap-3.5">
+        {dadosDoPreparo(refeicao).map(({ icone, texto }) => (
+          <DadoComIcone key={icone} icone={icone} texto={texto} />
+        ))}
+        {itens.length > 0 ? (
+          <TouchableOpacity onPress={abrirPreparo} accessibilityRole="button">
+            <DadoComIcone icone="book-outline" texto="Modo de preparo" />
+          </TouchableOpacity>
+        ) : null}
+      </View>
     </>
   );
+}
+
+/** "25 min · Fácil · 1 porção" do kit, só com o que o especialista informou. */
+function dadosDoPreparo(refeicao: DietMeal) {
+  const dados: {
+    icone: 'time-outline' | 'speedometer-outline' | 'people-outline';
+    texto: string;
+  }[] = [];
+  if (refeicao.prep_minutes)
+    dados.push({ icone: 'time-outline', texto: `${refeicao.prep_minutes} min` });
+  if (refeicao.difficulty)
+    dados.push({ icone: 'speedometer-outline', texto: textoDaDificuldade(refeicao.difficulty) });
+  if (refeicao.servings)
+    dados.push({ icone: 'people-outline', texto: textoDasPorcoes(refeicao.servings) });
+  return dados;
 }
 
 /** "Frango, arroz & salada": os nomes do prato, com o último ligado por "&". */

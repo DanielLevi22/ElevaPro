@@ -85,6 +85,8 @@ Dados referentes à saúde exigem **base legal específica** e proteção refor�
 | Plano alimentar (metas calóricas e macros) | `diet_plans` | Tutela da saúde + Consentimento (Art. 11, II, f + I) | Prescrição nutricional — especialista ou autogerenciado pelo member |
 | Refeições e alimentos do plano | `diet_meals`, `diet_meal_items` | Tutela da saúde + Consentimento | Composição do plano alimentar |
 | Registro de refeições realizadas e substituições | `meal_logs` | Tutela da saúde + Consentimento | Acompanhamento de aderência nutricional |
+| **Item extra do que o aluno comeu, com a origem** | `meal_logs.actual_items` (`origem`: `busca`, `scan` ou `assistente`) | Tutela da saúde + Consentimento | O alimento da busca, o prato do scan e a sugestão aceita do assistente entram no registro da refeição. A **origem é gravada em todo item extra** (Art. 6°, V): `scan` e `assistente` são estimativa de modelo, e o especialista precisa distingui-las do que foi prescrito ou pesado. Travado em `diarioAlimentar.test.ts` e `diarioAlimentar.service.test.ts` (issue #298) |
+| **Água do dia** | `hydration_daily.water_ml` | Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I) | Acompanhar a meta de água. **Um total por dia**, e não um registro por copo: a série revelaria a rotina do dia inteiro. **Só o próprio aluno lê e grava**, e gravar exige consentimento vigente no banco; nenhum especialista lê, porque nenhuma tela dele consome o dado (`0052`, issue #298) |
 | Registro alimentar (campo legado) | `diet_logs` | Tutela da saúde + Consentimento | Acompanhamento nutricional |
 | Passos por dia (agregado) | `health_daily_metrics.steps` | Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I) | Acompanhamento de atividade entre sessões de treino |
 | Calorias ativas por dia (agregado) | `health_daily_metrics.active_calories` | Tutela da saúde + Consentimento | Estimativa de gasto energético para ajuste do plano |
@@ -178,6 +180,17 @@ Dados que foram explicitamente rejeitados do schema por violar o princípio da n
   a anamnese diz a restrição, e `category` diz que tipo de trabalho o exercício
   é. Se voltar, volta como coluna de `student_anamnesis`, do lado onde já há
   base legal e RLS, nunca no catálogo compartilhado
+- **Refeição favorita no servidor** (issue #298) — o favorito só alimenta a
+  sugestão do assistente, que parte do aparelho. Uma tabela guardaria preferência
+  alimentar associada ao plano de saúde, com RLS, exportação e eliminação, para
+  uma finalidade que o aparelho entrega sozinho. Fica no MMKV do aparelho; o
+  custo aceito é o favorito não acompanhar a troca de aparelho
+- **Marcação da lista de compras no servidor** (issue #298) — é lembrete de
+  mercado, e não dado de saúde. Fica no aparelho, por plano e período
+- **Leitura da água do dia pelo especialista** (`0052`) — a tabela nasce sem
+  política para ele. Nenhuma tela do especialista usa o dado; se uma passar a
+  usar, a política nasce consultando o consentimento — a `verify-rls.sql` já põe
+  `hydration_daily` na lista de Art. 11 e acusa a que não consultar
 
 ---
 
@@ -421,6 +434,7 @@ banco. O critério é a **base legal**, não o vínculo.
 | Base legal | Tabelas | Revogar o consentimento… | Migration |
 |---|---|---|---|
 | Art. 11 (tutela da saúde **+** consentimento) | `health_daily_metrics`, `meal_logs`, `physical_assessments`, `student_anamnesis`, `body_scans`, `workout_session_vitals` | **fecha** o acesso do especialista | 0043, 0044, 0045, 0049 |
+| Art. 11, só do titular | `hydration_daily` | não há acesso do especialista a fechar; **revogar interrompe a gravação**, que a política de INSERT e UPDATE recusa sem consentimento | 0052 |
 | Art. 7°, V (execução de contrato) | `profiles`, `specialist_services`, `workout_sessions`, `workout_session_sets`, `workout_session_exercises`, `achievements`, `daily_goals`, `student_streaks` | não alcança — o caminho é encerrar o vínculo | — |
 
 A segunda linha é decisão, não omissão: revogar o consentimento de dados de
@@ -480,6 +494,7 @@ A LGPD exige que dados sejam eliminados quando deixam de ser necessários (Art. 
 | Traçado da corrida | **Não é retido** — existe só na memória da sessão | Não há o que reter: as coordenadas são descartadas quando a tela fecha (§2.3) |
 | Histórico de dietas | Enquanto a conta estiver ativa | Histórico de evolução |
 | Passos, calorias, sono e FC de repouso diários | Enquanto a conta estiver ativa | Comparação de longo prazo é a finalidade; `ON DELETE CASCADE` elimina junto com a conta |
+| Água do dia (`hydration_daily`) | Enquanto a conta estiver ativa | A média da semana é a finalidade. Sem DELETE pelo app: a correção é gravar outro total (Art. 18, III), e a eliminação é o `ON DELETE CASCADE` a partir de `profiles` |
 | Conversa com o coach de IA (`ai_chat_sessions`, `ai_chat_messages`) | Enquanto a conta do aluno estiver ativa | É o registro da prescrição assistida. `ON DELETE CASCADE` a partir de `profiles` elimina junto com a conta |
 | Análise corporal por imagem (`body_scans`) | Enquanto a conta estiver ativa | A comparação entre escaneamentos é a finalidade, e ela precisa do histórico. **A imagem não é guardada** — as colunas de URL de foto foram removidas na `0026`, para que ninguém as preencha por engano — só o resultado derivado, que é a maior minimização possível para um dado biométrico (`ADR-0010`). `ON DELETE CASCADE` a partir de `profiles` elimina junto com a conta |
 | Logs de autenticação | 90 dias | Segurança — detecção de acessos suspeitos |
@@ -806,6 +821,11 @@ modelo. Fechado pelo PRD
 | `meal_logs.actual_items` (JSONB com substituições) nunca deve ser logado em texto claro | Prevenção (Art. 6°, VIII) |
 | `foods` públicos legíveis por todos os autenticados; customizados protegidos por `created_by = auth.uid()` | Necessidade + Segurança |
 | `meal_logs.photo_url` e `meal_logs.notes` apagadas na `0035` — nenhuma das duas tinha caminho de escrita | Necessidade (Art. 6°, III): coluna que nunca é preenchida é convite, não neutralidade |
+| Item extra de `actual_items` leva só os campos do alimento que a soma usa — sem `created_by` nem datas do catálogo — e sempre a `origem` (issue #298) | Necessidade (Art. 6°, III) + Qualidade (Art. 6°, V) |
+| O registro do item extra lê o `meal_logs` do dia no banco, e não o que a tela tem em memória: juntar com o dia errado apagaria a troca de outro dia | Qualidade (Art. 6°, V) |
+| `hydration_daily` (`0052`): RLS só do titular, `TO authenticated`, INSERT e UPDATE com `private.has_health_consent`, sem DELETE (mais restrito que o parecer, que previa o DELETE do próprio: a correção é outro total e a eliminação é o CASCADE), sem `anon`, CHECK de 0 a 10.000 ml. Travado na `verify-rls.sql` por comportamento, com prova negativa (política sem consentimento e leitura de especialista, as duas acusadas) | Segurança (Art. 6°, VII) + Base legal Art. 11, I |
+| `diet_meals.prep_minutes`, `difficulty` e `servings` (`0053`) são metadado de receita, e não dado sobre o titular — ficam sob a RLS da `0013` | Necessidade |
+| `diet_plans.notes` passa a aparecer ao aluno ("Do seu especialista"). É dado dele, ainda que escrito por terceiro, como `admin_notes`. A nota nasce da proposta de dieta do assistente, e o cartão da proposta avisa o especialista, antes de aprovar, de que o aluno lê a observação — o web não tem campo de nota no editor do plano | Livre acesso (Art. 18, II) + Transparência (Art. 6°, VI) |
 
 > **Revisão de 2026-08-28 — `student-activity-feed`.** As duas colunas foram
 > achadas ao mapear o que o feed de atividades poderia exibir: `photo_url` não
@@ -896,6 +916,8 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 | O consentimento é conferido num portão só, `authorizeStudentWithHealthConsent`, e não em cinco cópias. Cinco rotas ficaram abertas porque cada uma decidia sozinha: portão único é o que impede a sexta de nascer aberta. A consulta roda sob a identidade do titular, não com `service_role` | Base legal Art. 11, I + Segurança (Art. 6°, VII) |
 | Falha ao consultar `student_consents` recusa com `503`, não libera. "Não consegui perguntar" não é "pode", e o código separa a falha de infraestrutura da recusa (`403 consent_required`), que pedem ações diferentes de quem lê | Prevenção (Art. 6°, VI) |
 | Transmissão via HTTPS (Vercel → Anthropic/Google) | Segurança |
+| O texto de consentimento `1.5` (issue #298) diz que a foto do prato, a pergunta ao assistente, o plano e o que falta de calorias e macros do dia vão a um serviço de IA externo, que a foto não é guardada e que o nome do aluno não vai junto. O scan e o assistente já transmitiam; o que faltava era o aluno saber antes de fotografar (Art. 9°) | Transparência (Art. 6°, VI) |
+| A saudação do assistente de nutrição, que tem o primeiro nome do aluno, é montada no aparelho e **não entra no histórico enviado** à rota. Achado da revisão de código do PR 1 da #298 | Necessidade (Art. 6°, III) |
 | Dados de `diet_logs` enviados ao Claude não contêm identificadores do aluno (`student_id` nunca incluído no payload) | Necessidade |
 
 **Pendências obrigatórias antes do lançamento:**

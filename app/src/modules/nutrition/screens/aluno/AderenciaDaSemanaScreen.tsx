@@ -7,25 +7,33 @@ import { Vidro } from '@/components/ui/Vidro';
 import { useNomeDoEspecialista } from '@/hooks/useNomeDoEspecialista';
 import { cn } from '@/lib/utils';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
+import { HidratacaoDeHoje } from '../../components/aluno/HidratacaoDeHoje';
 import { TelaDaNutricao } from '../../components/aluno/TelaDaNutricao';
 import { type AderenciaDoAluno, useAderenciaDoAluno } from '../../hooks/useAderenciaDoAluno';
+import { useAguaDoDia } from '../../hooks/useAguaDoDia';
 import type { DiaDeAderencia } from '../../services/aderenciaDaSemana';
+import { litros, mediaDeAguaDaSemana } from '../../services/aguaDoDia';
 
 /**
  * Tela 8 do fluxo de nutrição do kit: as barras da semana, a grade de números
  * e a nota do especialista.
  *
- * A água — o bloco da grade e a "Hidratação de hoje" — chega com a tabela dela
- * no segundo PR da #298. Até lá o quarto bloco conta os dias na meta, que sai
- * das mesmas barras. O calendário do cabeçalho não entrou: a tela é da semana
- * corrente, e não há outra para escolher.
+ * O calendário do cabeçalho não entrou: a tela é da semana corrente, e não há
+ * outra para escolher.
  *
  * @example
- * <AderenciaDaSemanaScreen alunoId={user.id} />
+ * <AderenciaDaSemanaScreen alunoId={user.id} somenteLeitura={false} />
  */
-export function AderenciaDaSemanaScreen({ alunoId }: { alunoId: string }) {
+export function AderenciaDaSemanaScreen({
+  alunoId,
+  somenteLeitura,
+}: {
+  alunoId: string;
+  somenteLeitura: boolean;
+}) {
   const router = useRouter();
   const semana = useAderenciaDoAluno(alunoId);
+  const agua = useAguaDoDia(alunoId, { somenteLeitura });
 
   return (
     <TelaDaNutricao>
@@ -37,7 +45,11 @@ export function AderenciaDaSemanaScreen({ alunoId }: { alunoId: string }) {
         />
       </View>
       <BarrasDaSemana dias={semana.dias} />
-      <GradeDaSemana semana={semana} />
+      <GradeDaSemana
+        semana={semana}
+        mediaDeAgua={mediaDeAguaDaSemana(semana.aguaDaSemana, agua.hoje, agua.totalMl)}
+      />
+      <HidratacaoDeHoje agua={agua} />
       <NotaDoEspecialista nota={semana.notaDoEspecialista} especialistaId={semana.especialistaId} />
     </TelaDaNutricao>
   );
@@ -123,9 +135,14 @@ function BarraDoDia({ dia }: { dia: DiaDeAderencia }) {
   );
 }
 
-function GradeDaSemana({ semana }: { semana: AderenciaDoAluno }) {
+function GradeDaSemana({
+  semana,
+  mediaDeAgua,
+}: {
+  semana: AderenciaDoAluno;
+  mediaDeAgua: number | null;
+}) {
   const cores = useCores();
-  const diasNaMeta = semana.dias.filter((dia) => dia.destaque).length;
 
   return (
     <View className="mt-3 gap-2.5">
@@ -145,10 +162,10 @@ function GradeDaSemana({ semana }: { semana: AderenciaDoAluno }) {
       </View>
       <View className="flex-row gap-2.5">
         <BlocoDaSemana
-          icone="checkmark-done-outline"
+          icone="water-outline"
           cor={cores.textoCarboidrato}
-          valor={String(diasNaMeta)}
-          rotulo={diasNaMeta === 1 ? 'Dia na meta' : 'Dias na meta'}
+          valor={mediaDeAgua === null ? '—' : litros(mediaDeAgua)}
+          rotulo="Água"
         />
         <BlocoDaSemana
           icone={

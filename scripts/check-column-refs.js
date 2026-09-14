@@ -33,8 +33,8 @@ const FONTES = [
 
 /**
  * Tabelas classificadas como sensíveis pela `LGPD_COMPLIANCE.md` — anamnese,
- * avaliação física, sessões de treino, registro alimentar, métricas diárias e
- * fotos corporais.
+ * avaliação física, sessões de treino, registro alimentar, métricas diárias,
+ * fotos corporais e a água do dia.
  *
  * Nelas `select("*")` é recusado. Não por tráfego: com `*`, a coluna criada
  * amanhã passa a sair do banco no dia em que nasce, para toda camada que já
@@ -49,6 +49,7 @@ const TABELAS_SENSIVEIS = new Set([
   "meal_logs",
   "health_daily_metrics",
   "body_scans",
+  "hydration_daily",
 ]);
 
 /** Nome da tabela → colunas, lido do `pgTable(...)` do Drizzle. */

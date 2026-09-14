@@ -23,7 +23,7 @@ const SYSTEM_PROMPT = `Você é um analista nutricional. Analise o alimento na i
 Se não for claro, estime com confidence menor. Nunca retorne texto fora do JSON.`;
 
 export async function POST(request: NextRequest) {
-  // A rota não lê nada do banco: só o Gemini olha a foto. A checagem existe
+  // A rota não lê nada do banco: só o modelo olha a foto. A checagem existe
   // para não deixar o endpoint de IA aberto a qualquer portador de token.
   const auth = await authorizeStudentWithHealthConsent(request);
   if (!auth.ok) return auth.response;

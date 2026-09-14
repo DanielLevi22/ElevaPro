@@ -1,14 +1,6 @@
-import { createMMKV } from 'react-native-mmkv';
 import { create } from 'zustand';
-import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
-
-const armazenamento = createMMKV({ id: 'lista-de-compras' });
-
-const noAparelho: StateStorage = {
-  getItem: (nome) => armazenamento.getString(nome) ?? null,
-  setItem: (nome, valor) => armazenamento.set(nome, valor),
-  removeItem: (nome) => armazenamento.remove(nome),
-};
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { armazenamentoNoAparelho } from '@/lib/armazenamentoNoAparelho';
 
 interface ComprasState {
   /** Por lista (`planoId:dias`), as chaves dos itens já comprados. */
@@ -42,6 +34,9 @@ export const useComprasStore = create<ComprasState>()(
         }),
       limpar: (lista) => set((state) => ({ marcados: { ...state.marcados, [lista]: [] } })),
     }),
-    { name: 'compras-marcadas', storage: createJSONStorage(() => noAparelho) }
+    {
+      name: 'compras-marcadas',
+      storage: createJSONStorage(() => armazenamentoNoAparelho('lista-de-compras')),
+    }
   )
 );

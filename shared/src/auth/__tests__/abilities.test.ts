@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { type Action, defineAbilitiesFor, type Subject, type UserContext } from "../abilities";
 
 /**
- * Tabela de permissões: 4 papéis × 14 subjects.
+ * Tabela de permissões: 4 papéis × 15 subjects.
  *
  * Existe porque `abilities.ts` viveu duplicado no mobile e no web até divergir
  * sem ninguém notar — o mobile concedia `manage Periodization` ao `member` e o
@@ -25,6 +25,7 @@ const SUBJECTS: Subject[] = [
   "Analytics",
   "Periodization",
   "HealthMetric",
+  "Hydration",
   "all",
 ];
 
@@ -33,8 +34,8 @@ const GERENCIA: Record<string, Subject[]> = {
   admin: SUBJECTS,
   "specialist:personal_training": ["Client", "Workout", "Exercise", "Periodization"],
   "specialist:nutrition_consulting": ["Client", "Diet", "Food"],
-  student: ["HealthMetric"],
-  member: ["Workout", "Diet", "Exercise", "Food", "HealthMetric"],
+  student: ["HealthMetric", "Hydration"],
+  member: ["Workout", "Diet", "Exercise", "Food", "HealthMetric", "Hydration"],
 };
 
 /** O que cada papel pode LER além do que gerencia. */

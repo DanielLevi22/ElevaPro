@@ -275,7 +275,8 @@ END $$;
 DO $$
 DECLARE
   saude       text[] := ARRAY['health_daily_metrics','meal_logs','physical_assessments',
-                              'student_anamnesis','body_scans','workout_session_vitals'];
+                              'student_anamnesis','body_scans','workout_session_vitals',
+                              'hydration_daily'];
   contrato    text[] := ARRAY['profiles','specialist_services','workout_sessions',
                               'workout_session_sets','workout_session_exercises',
                               'achievements','daily_goals','student_streaks'];
@@ -312,7 +313,7 @@ BEGIN
       array_to_string(sobrando, ', ');
   END IF;
 
-  RAISE NOTICE 'ok  Art. 11 confere consentimento em 6 tabelas; Art. 7° não confere em 8';
+  RAISE NOTICE 'ok  Art. 11 confere consentimento em 7 tabelas; Art. 7° não confere em 8';
 END $$;
 
 -- ── Nenhuma coordenada, em tabela nenhuma (0049) ─────────────────────────────
@@ -1272,6 +1273,141 @@ BEGIN
   END IF;
 
   RAISE NOTICE 'ok  proposta: reivindicada uma vez só, com trava de linha, e devolvida quando a gravação falha';
+END $$;
+
+ROLLBACK;
+
+-- ── A água do dia (0052) ─────────────────────────────────────────────────────
+-- `hydration_daily` é registro alimentar, Art. 11, II, f + I (LGPD_COMPLIANCE.md
+-- §2.2, issue #298). O parecer do /lgpd-check decidiu três restrições, e cada
+-- uma é travada aqui por comportamento, com prova negativa feita no banco local:
+--
+--   1. só o próprio aluno lê e grava — nenhum outro aluno, nenhum especialista,
+--      nem o vinculado: nenhuma tela dele consome o dado (Art. 6°, III);
+--   2. gravar exige consentimento vigente, no banco, e não só no portão do app;
+--   3. o total tem faixa de plausibilidade, e o dia não se apaga por DELETE.
+--
+-- Linhas semeadas para os DOIS alunos: "zero linhas" precisa significar
+-- bloqueio, e não tabela vazia.
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint c JOIN pg_class t ON t.oid = c.conrelid
+    WHERE t.relname = 'hydration_daily' AND c.conname = 'hydration_daily_water_ml_plausible'
+  ) THEN
+    RAISE EXCEPTION 'ERRO DE UNIDADE SEM BARREIRA: CHECK de plausibilidade ausente em hydration_daily';
+  END IF;
+
+  IF has_table_privilege('anon', 'public.hydration_daily', 'SELECT') THEN
+    RAISE EXCEPTION 'VAZAMENTO PELA CHAVE ANÔNIMA: anon tem SELECT em hydration_daily';
+  END IF;
+
+  IF has_table_privilege('authenticated', 'public.hydration_daily', 'DELETE') THEN
+    RAISE EXCEPTION 'HISTÓRICO APAGÁVEL: authenticated tem DELETE em hydration_daily';
+  END IF;
+
+  RAISE NOTICE 'ok  água do dia: faixa de plausibilidade, sem anon e sem DELETE';
+END $$;
+
+BEGIN;
+
+DO $$
+DECLARE
+  aluno_a    uuid := gen_random_uuid();
+  aluno_b    uuid := gen_random_uuid();
+  sem_aceite uuid := gen_random_uuid();
+  espec      uuid := gen_random_uuid();
+  visiveis   int;
+  vazou      int;
+  afetadas   int;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (aluno_a,    '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-wa@elevapro.local', '{"full_name":"A","account_type":"student"}'::jsonb),
+    (aluno_b,    '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-wb@elevapro.local', '{"full_name":"B","account_type":"student"}'::jsonb),
+    (sem_aceite, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-wc@elevapro.local', '{"full_name":"C","account_type":"student"}'::jsonb),
+    (espec,      '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-we@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb);
+
+  INSERT INTO public.student_consents (student_id, consent_type, given_at, policy_version)
+  VALUES
+    (aluno_a, 'health_data_collection', now(), '1.5'),
+    (aluno_b, 'health_data_collection', now(), '1.5');
+
+  -- Vínculo ativo E consentimento: o especialista tem tudo que as outras
+  -- tabelas de saúde pedem. Se ainda assim ele não lê, é porque a tabela não
+  -- tem política para ele — que é a decisão, e não um acaso do teste.
+  INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
+  VALUES (aluno_a, espec, 'personal_training', 'active');
+
+  INSERT INTO public.hydration_daily (student_id, date, water_ml)
+  VALUES (aluno_b, current_date, 1500);
+
+  SET LOCAL ROLE authenticated;
+
+  -- O aluno com consentimento grava e corrige o próprio dia.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', aluno_a, 'role', 'authenticated')::text, true);
+  INSERT INTO public.hydration_daily (student_id, date, water_ml) VALUES (aluno_a, current_date, 750);
+  UPDATE public.hydration_daily SET water_ml = 1000 WHERE student_id = aluno_a;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 1 THEN
+    RAISE EXCEPTION 'o aluno não corrige a própria água (Art. 18, III): % linha(s)', afetadas;
+  END IF;
+
+  SELECT count(*) INTO vazou FROM public.hydration_daily WHERE student_id = aluno_b;
+  IF vazou <> 0 THEN
+    RAISE EXCEPTION 'VAZAMENTO: aluno A lê % dia(s) de água do aluno B', vazou;
+  END IF;
+
+  -- Gravar em nome de outro aluno é recusado pela política, e não só escondido.
+  BEGIN
+    INSERT INTO public.hydration_daily (student_id, date, water_ml)
+    VALUES (aluno_b, current_date - 1, 500);
+    RAISE EXCEPTION 'REGISTRO ALHEIO: aluno A gravou água no nome do aluno B';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- Apagar o dia não existe: a correção é outro total, a eliminação é da conta.
+  BEGIN
+    DELETE FROM public.hydration_daily WHERE student_id = aluno_a;
+    RAISE EXCEPTION 'HISTÓRICO APAGADO: DELETE em hydration_daily foi aceito';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- Sem consentimento, o banco recusa a coleta. O portão do app é a primeira
+  -- barreira; esta é a que vale quando o app tem um caminho que ninguém lembrou.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', sem_aceite, 'role', 'authenticated')::text, true);
+  BEGIN
+    INSERT INTO public.hydration_daily (student_id, date, water_ml)
+    VALUES (sem_aceite, current_date, 250);
+    RAISE EXCEPTION 'COLETA SEM CONSENTIMENTO: dado de saúde gravado por quem não autorizou (Art. 11, I)';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- O especialista vinculado e com consentimento não lê: nenhuma tela dele usa
+  -- o dado, e abrir a leitura "para depois" é o que o Art. 6°, III recusa.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO vazou FROM public.hydration_daily;
+  IF vazou <> 0 THEN
+    RAISE EXCEPTION 'LEITURA SEM FINALIDADE: especialista lê % dia(s) de água', vazou;
+  END IF;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', aluno_a, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO visiveis FROM public.hydration_daily WHERE student_id = aluno_a;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'o aluno não lê a própria água (viu %)', visiveis;
+  END IF;
+
+  RESET ROLE;
+  RAISE NOTICE 'ok  água do dia: só o próprio aluno, com consentimento, sem especialista e sem DELETE';
 END $$;
 
 ROLLBACK;

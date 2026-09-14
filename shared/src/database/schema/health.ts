@@ -35,3 +35,30 @@ export const healthDailyMetrics = pgTable(
     ),
   }),
 );
+
+/**
+ * A água bebida por dia, em ml (0052).
+ *
+ * Um total por dia, e não um registro por copo: a série revelaria a rotina do
+ * dia inteiro. Só o próprio aluno lê e grava, e gravar exige consentimento no
+ * banco — nenhuma tela do especialista consome o dado (issue #298).
+ */
+export const hydrationDaily = pgTable(
+  "hydration_daily",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    student_id: uuid("student_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    date: date("date").notNull(),
+    water_ml: integer("water_ml").notNull().default(0),
+    created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    studentDateUnique: unique("hydration_daily_student_id_date_unique").on(
+      table.student_id,
+      table.date,
+    ),
+  }),
+);

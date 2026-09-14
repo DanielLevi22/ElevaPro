@@ -175,6 +175,7 @@ async function main() {
     "diet_plans",
     "body_scans",
     "workout_sessions",
+    "hydration_daily",
   ];
   for (const t of saudeFechadaAoAdmin) {
     const n = await rowsOf(t, admin.token, alunoA.id);

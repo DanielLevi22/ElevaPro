@@ -47,8 +47,15 @@ export interface DietMeal {
   day_of_week: number | null;
   meal_time: string | null;
   target_calories: number | null;
+  /** Preparo informado pelo especialista (0053). `null` = não informado. */
+  prep_minutes?: number | null;
+  difficulty?: DificuldadeDoPreparo | null;
+  servings?: number | null;
   created_at: string;
 }
+
+/** Os três níveis do CHECK `diet_meals_difficulty_known`. */
+export type DificuldadeDoPreparo = "facil" | "media" | "dificil";
 
 export interface DietMealItem {
   id: string;
@@ -160,6 +167,9 @@ export interface UpdateDietMealInput {
   day_of_week?: number | null;
   meal_time?: string | null;
   target_calories?: number | null;
+  prep_minutes?: number | null;
+  difficulty?: DificuldadeDoPreparo | null;
+  servings?: number | null;
 }
 
 export interface AddFoodToMealInput {

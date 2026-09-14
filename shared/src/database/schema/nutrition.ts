@@ -67,6 +67,11 @@ export const dietMeals = pgTable("diet_meals", {
   day_of_week: integer("day_of_week"),
   meal_time: text("meal_time"),
   target_calories: numeric("target_calories", { precision: 7, scale: 2 }),
+  // Preparo informado pelo especialista (0053). Nulo = não informado: a tela
+  // do aluno esconde a linha em vez de inventar um tempo.
+  prep_minutes: integer("prep_minutes"),
+  difficulty: text("difficulty"),
+  servings: integer("servings"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

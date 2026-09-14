@@ -69,8 +69,16 @@ export interface Finalidade {
  *   distância e ritmo no aparelho e as coordenadas morrem com a sessão — elas
  *   revelariam endereço de casa e janela de ausência sem mudar prescrição
  *   nenhuma (issue #278, migration `0049`).
+ * - `1.5` (2026-09-13) — acrescenta **a água do dia** e diz **o que vai ao
+ *   serviço de IA** no fluxo de nutrição. Duas mudanças materiais, as duas da
+ *   #298: a água é dado de saúde novo (`0052`), e o texto nunca disse que a foto
+ *   do prato, a pergunta ao assistente e o que falta de calorias e macros do
+ *   dia saem do aparelho para um serviço externo. O scan e o assistente já
+ *   existiam; o lote aumentou o que atravessa, e o aluno precisa saber antes de
+ *   fotografar (Art. 9°). O texto diz também o que não vai: a foto não é
+ *   guardada, e o nome do aluno não segue junto.
  */
-export const POLICY_VERSION = "1.4";
+export const POLICY_VERSION = "1.5";
 
 /** Coleta de dados de saúde: avaliação, anamnese, métricas diárias, body scan. */
 export const SAUDE: Finalidade = { tipo: CONSENT_HEALTH_COLLECTION, versao: POLICY_VERSION };

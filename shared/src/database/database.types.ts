@@ -379,33 +379,42 @@ export type Database = {
           created_at: string;
           day_of_week: number | null;
           diet_plan_id: string;
+          difficulty: string | null;
           id: string;
           meal_order: number;
           meal_time: string | null;
           meal_type: string | null;
           name: string;
+          prep_minutes: number | null;
+          servings: number | null;
           target_calories: number | null;
         };
         Insert: {
           created_at?: string;
           day_of_week?: number | null;
           diet_plan_id: string;
+          difficulty?: string | null;
           id?: string;
           meal_order?: number;
           meal_time?: string | null;
           meal_type?: string | null;
           name: string;
+          prep_minutes?: number | null;
+          servings?: number | null;
           target_calories?: number | null;
         };
         Update: {
           created_at?: string;
           day_of_week?: number | null;
           diet_plan_id?: string;
+          difficulty?: string | null;
           id?: string;
           meal_order?: number;
           meal_time?: string | null;
           meal_type?: string | null;
           name?: string;
+          prep_minutes?: number | null;
+          servings?: number | null;
           target_calories?: number | null;
         };
         Relationships: [
@@ -633,6 +642,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "health_daily_metrics_student_id_profiles_id_fk";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      hydration_daily: {
+        Row: {
+          created_at: string;
+          date: string;
+          id: string;
+          student_id: string;
+          updated_at: string;
+          water_ml: number;
+        };
+        Insert: {
+          created_at?: string;
+          date: string;
+          id?: string;
+          student_id: string;
+          updated_at?: string;
+          water_ml?: number;
+        };
+        Update: {
+          created_at?: string;
+          date?: string;
+          id?: string;
+          student_id?: string;
+          updated_at?: string;
+          water_ml?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "hydration_daily_student_id_fkey";
             columns: ["student_id"];
             isOneToOne: false;
             referencedRelation: "profiles";

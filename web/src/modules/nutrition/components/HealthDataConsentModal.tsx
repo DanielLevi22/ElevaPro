@@ -31,6 +31,7 @@ export function HealthDataConsentModal({ onAccept, onDecline }: HealthDataConsen
             <li>Metas calóricas e de macronutrientes</li>
             <li>Refeições e alimentos do plano</li>
             <li>Registros de refeições realizadas</li>
+            <li>A água registrada no dia</li>
             <li>Suas observações no feedback de fim de treino</li>
           </ul>
           <p className="font-semibold text-foreground mt-2">Quem tem acesso:</p>

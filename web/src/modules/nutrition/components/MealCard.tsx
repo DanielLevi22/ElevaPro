@@ -1,6 +1,12 @@
 "use client";
 
-import type { DietMeal, DietMealItem, Food } from "@elevapro/shared";
+import {
+  type DietMeal,
+  type DietMealItem,
+  type Food,
+  textoDaDificuldade,
+  textoDasPorcoes,
+} from "@elevapro/shared";
 
 interface MealCardProps {
   meal: DietMeal & { meal_foods?: (DietMealItem & { food: Food })[] };
@@ -56,7 +62,7 @@ export function MealCard({
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              {meal.meal_time || "Definir horário"}
+              {rotuloDoHorarioEPreparo(meal)}
             </button>
           </div>
           <div className="flex items-center gap-2">
@@ -200,4 +206,20 @@ export function MealCard({
       </div>
     </div>
   );
+}
+
+/**
+ * "12:40 · 25 min · Fácil · 1 porção": o horário e o que o aluno vê do preparo,
+ * para o especialista conferir sem abrir o modal.
+ */
+function rotuloDoHorarioEPreparo(
+  meal: Pick<DietMeal, "meal_time" | "prep_minutes" | "difficulty" | "servings">,
+): string {
+  const partes = [
+    meal.meal_time?.slice(0, 5) || "Definir horário",
+    meal.prep_minutes ? `${meal.prep_minutes} min` : null,
+    meal.difficulty ? textoDaDificuldade(meal.difficulty) : null,
+    meal.servings ? textoDasPorcoes(meal.servings) : null,
+  ];
+  return partes.filter(Boolean).join(" · ");
 }
