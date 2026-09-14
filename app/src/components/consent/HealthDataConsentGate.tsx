@@ -38,6 +38,7 @@ const ITENS_ARMAZENADOS = [
   'Passos e calorias do dia',
   'Treinos executados, com séries e cargas',
   'Refeições registradas do seu plano',
+  'A água que você registra no dia',
   'O que você escreve no feedback de fim de treino',
 ];
 
@@ -92,7 +93,7 @@ export function HealthDataConsentGate({ studentId, isStudent }: HealthDataConsen
       onRequestClose={() => setPrecisaConsentir(false)}
     >
       <View className="flex-1 justify-end bg-black/80">
-        <View className="bg-card rounded-t-[32px] border-t border-border max-h-[88%]">
+        <View className="bg-card rounded-t-[2rem] border-t border-border max-h-[88%]">
           <View className="items-center pt-7 pb-4">
             <View className="w-16 h-16 rounded-full bg-primary/10 items-center justify-center border border-primary/20">
               <Ionicons name="shield-checkmark" size={32} color={colors.primary.solid} />
@@ -115,12 +116,29 @@ export function HealthDataConsentGate({ studentId, isStudent }: HealthDataConsen
             </Text>
             {ITENS_ARMAZENADOS.map((item) => (
               <View key={item} className="flex-row items-start gap-2.5 mb-2">
-                <Ionicons name="ellipse" size={6} color={colors.text.muted} className="mt-[7px]" />
+                <Ionicons
+                  name="ellipse"
+                  size={6}
+                  color={colors.text.muted}
+                  className="mt-[0.4375rem]"
+                />
                 <Text className="text-muted-foreground font-sans flex-1 leading-relaxed">
                   {item}
                 </Text>
               </View>
             ))}
+
+            {/* A 1.5 existe por este parágrafo: o scan e o assistente mandavam foto
+                e contexto do dia para fora do aparelho, e o texto não dizia. */}
+            <Text className="text-foreground font-bold font-display mt-6 mb-2">
+              O que sai do aparelho
+            </Text>
+            <Text className="text-muted-foreground font-sans leading-relaxed">
+              Quando você fotografa um prato ou pergunta ao assistente de nutrição, a foto, a
+              pergunta, seu plano alimentar e o que falta de calorias e macros do dia vão a um
+              serviço de inteligência artificial externo, só para gerar a resposta. A foto não é
+              guardada, e seu nome não vai junto.
+            </Text>
 
             <Text className="text-foreground font-bold font-display mt-6 mb-2">Quem lê</Text>
             <Text className="text-muted-foreground font-sans leading-relaxed">

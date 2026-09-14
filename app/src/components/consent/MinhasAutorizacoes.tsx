@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useEffect, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { showAlert, showConfirm } from '@/components/ui/appAlert';
+import { useCores } from '@/shared/design';
 
 /**
  * O que o aluno autorizou, e o caminho de volta.
@@ -38,7 +39,7 @@ const CATALOGO: { finalidade: Finalidade; titulo: string; descricao: string }[] 
     // uma lista que não corresponde ao que é coletado. Estava parada na `1.2`:
     // sono e FC de repouso entraram na `1.3` e nunca chegaram nesta tela.
     descricao:
-      'Avaliação física, anamnese, body scan, passos e calorias, sono e frequência cardíaca de repouso, e a frequência cardíaca média das corridas.',
+      'Avaliação física, anamnese, body scan, passos e calorias, sono e frequência cardíaca de repouso, a frequência cardíaca média das corridas, as refeições registradas e a água do dia.',
   },
   {
     finalidade: TECNICA,
@@ -48,6 +49,7 @@ const CATALOGO: { finalidade: Finalidade; titulo: string; descricao: string }[] 
 ];
 
 export function MinhasAutorizacoes({ studentId }: { studentId: string | null }) {
+  const cores = useCores();
   const [autorizacoes, setAutorizacoes] = useState<Autorizacao[] | null>(null);
 
   const carregar = useCallback(async () => {
@@ -120,7 +122,7 @@ export function MinhasAutorizacoes({ studentId }: { studentId: string | null }) 
               </Text>
             </View>
             <Ionicons
-              color={autorizacao.concedida ? '#10b981' : '#71717a'}
+              color={autorizacao.concedida ? cores.success : cores.placeholder}
               name={autorizacao.concedida ? 'checkmark-circle' : 'close-circle-outline'}
               size={22}
             />
