@@ -5,6 +5,7 @@ import {
   numeric,
   pgEnum,
   pgTable,
+  smallint,
   text,
   timestamp,
   uuid,
@@ -209,6 +210,14 @@ export const workoutSessionVitals = pgTable("workout_session_vitals", {
     .primaryKey()
     .references(() => workoutSessions.id, { onDelete: "cascade" }),
   avg_heart_rate: integer("avg_heart_rate").notNull(),
+  // Percentual do tempo em cada zona pela FC máxima de 220 − idade (0054). Nulas
+  // juntas quando não há idade declarada; somam 100 quando existem. Só o
+  // derivado — a série de batimentos continua vedada.
+  zone_1_pct: smallint("zone_1_pct"),
+  zone_2_pct: smallint("zone_2_pct"),
+  zone_3_pct: smallint("zone_3_pct"),
+  zone_4_pct: smallint("zone_4_pct"),
+  zone_5_pct: smallint("zone_5_pct"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

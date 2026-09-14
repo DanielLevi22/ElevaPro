@@ -1387,16 +1387,31 @@ export type Database = {
           avg_heart_rate: number;
           created_at: string;
           session_id: string;
+          zone_1_pct: number | null;
+          zone_2_pct: number | null;
+          zone_3_pct: number | null;
+          zone_4_pct: number | null;
+          zone_5_pct: number | null;
         };
         Insert: {
           avg_heart_rate: number;
           created_at?: string;
           session_id: string;
+          zone_1_pct?: number | null;
+          zone_2_pct?: number | null;
+          zone_3_pct?: number | null;
+          zone_4_pct?: number | null;
+          zone_5_pct?: number | null;
         };
         Update: {
           avg_heart_rate?: number;
           created_at?: string;
           session_id?: string;
+          zone_1_pct?: number | null;
+          zone_2_pct?: number | null;
+          zone_3_pct?: number | null;
+          zone_4_pct?: number | null;
+          zone_5_pct?: number | null;
         };
         Relationships: [
           {

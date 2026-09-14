@@ -355,6 +355,36 @@ BEGIN
   RAISE NOTICE 'ok  nenhuma coluna de geolocalização em public';
 END $$;
 
+-- ── FC só em tabela de saúde (issue #304) ──────────────────────────────────
+--
+-- LGPD, Art. 11. FC média, FC de repouso e tempo por zona são dado de saúde e só
+-- podem morar nas tabelas cuja RLS consulta consentimento. Uma coluna de FC em
+-- `workout_sessions` ficaria sob a política da execução de contrato, que o
+-- especialista continua lendo depois de o aluno revogar — a pendência de `notes`
+-- pela terceira vez. Varre o schema inteiro para alcançar a tabela que ainda não
+-- existe.
+
+DO $$
+DECLARE
+  saude    text[] := ARRAY['health_daily_metrics','workout_session_vitals'];
+  fora     text;
+BEGIN
+  SELECT string_agg(format('%s.%s', table_name, column_name), ', ' ORDER BY table_name)
+    INTO fora
+  FROM information_schema.columns
+  WHERE table_schema = 'public'
+    AND column_name ~* '(heart|bpm|^zone_[0-9])'
+    AND table_name <> ALL (saude);
+
+  IF fora IS NOT NULL THEN
+    RAISE EXCEPTION
+      'FC FORA DA TABELA DE SAÚDE: % está numa tabela cuja RLS não consulta consentimento. FC e zonas moram em workout_session_vitals (0049, 0054)',
+      fora;
+  END IF;
+
+  RAISE NOTICE 'ok  FC e zonas só em tabela de saúde';
+END $$;
+
 -- ── Feedback de treino e observação de refeição ──────────────────────────────
 -- `workout_sessions.notes` é o campo aberto do fim do treino, onde o aluno
 -- escreve sobre dor e cirurgia: dado sensível pelo Art. 11, e não pela mesma
@@ -777,8 +807,9 @@ BEGIN
   VALUES (aluno_a, now(), now(), 'cardio', 3604, 9620, 374, 179)
   RETURNING id INTO sessao_a;
 
-  INSERT INTO public.workout_session_vitals (session_id, avg_heart_rate)
-  VALUES (sessao_a, 164);
+  INSERT INTO public.workout_session_vitals
+    (session_id, avg_heart_rate, zone_1_pct, zone_2_pct, zone_3_pct, zone_4_pct, zone_5_pct)
+  VALUES (sessao_a, 164, 5, 15, 40, 30, 10);
 
   -- Sessão do aluno A sem FC gravada: é o alvo do passo 7, onde só a RLS pode
   -- barrar o INSERT do aluno B.
@@ -812,10 +843,14 @@ BEGIN
   SET LOCAL ROLE authenticated;
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+  -- As zonas (0054) moram na linha da média: a mesma revogação as fecha. Contar
+  -- pelas zonas, e não só pela linha, é o que acusa se um dia elas forem parar
+  -- noutro lugar legível.
   SELECT count(*) INTO vazou
-    FROM public.workout_session_vitals WHERE session_id = sessao_a;
+    FROM public.workout_session_vitals
+   WHERE session_id = sessao_a AND zone_3_pct IS NOT NULL;
   IF vazou <> 0 THEN
-    RAISE EXCEPTION 'CONSENTIMENTO IGNORADO: aluno revogou e o especialista ainda lê a FC (% linha(s))', vazou;
+    RAISE EXCEPTION 'CONSENTIMENTO IGNORADO: aluno revogou e o especialista ainda lê a FC e as zonas (% linha(s))', vazou;
   END IF;
 
   -- 3. E o serviço contratado NÃO cai junto: a mesma revogação não pode tirar

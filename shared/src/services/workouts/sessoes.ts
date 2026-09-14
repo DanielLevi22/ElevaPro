@@ -6,7 +6,14 @@ import type {
   WorkoutSession,
   WorkoutSessionExercise,
 } from "../../types/workouts.types";
+import type { ZoneShare } from "../../utils/heartRateZones";
 import type { SessaoConcluida } from "../../utils/periodizacao";
+
+/** A FC média de uma sessão e, quando há idade declarada, o tempo em cada zona. */
+export interface SessionVitals {
+  avgHeartRate: number;
+  zones: ZoneShare | null;
+}
 
 /** Começo e fim de uma sessão de cardio concluída, em ISO. */
 export interface CardioWindow {
@@ -154,25 +161,33 @@ export const criarServicoDeSessoes = (supabase: SupabaseClient) => ({
   },
 
   /**
-   * Grava a frequência cardíaca média de uma sessão.
+   * Grava os sinais vitais de uma sessão: a FC média e o tempo em cada zona.
    *
-   * Vive em `workout_session_vitals`, e não numa coluna de `workout_sessions`,
-   * porque a base legal é outra: Art. 11, II, f **mais** consentimento, contra
-   * a execução de contrato da sessão. A RLS decide por linha, então uma coluna
-   * de Art. 11 lá dentro ficaria sob uma política que não consulta
-   * consentimento — e que não pode consultar, sob pena de revogar desligar a
-   * prescrição de treino junto (migration `0049`).
+   * Vivem em `workout_session_vitals`, e não em `workout_sessions`, porque a base
+   * legal é outra: Art. 11, II, f **mais** consentimento, contra a execução de
+   * contrato da sessão. A RLS decide por linha, e só esta tabela consulta
+   * consentimento (migrations `0049` e `0054`).
    *
-   * Chamar só com consentimento vigente. Quem chama é responsável, do mesmo
-   * modo que é por `notes`.
+   * O payload é montado campo a campo, e nunca espalhando a entrada: um objeto
+   * espalhado levaria ao banco qualquer série que viesse pendurada nele.
+   *
+   * Chamar só com consentimento vigente. Quem chama é responsável, do mesmo modo
+   * que é por `notes`.
    *
    * @example
-   * await saveSessionHeartRate(session.id, 164);
+   * await saveSessionVitals(session.id, { avgHeartRate: 152, zones: distributeIntoZones(bpm, 187) });
    */
-  saveSessionHeartRate: async (sessionId: string, avgHeartRate: number): Promise<void> => {
-    const { error } = await supabase
-      .from("workout_session_vitals")
-      .insert({ session_id: sessionId, avg_heart_rate: avgHeartRate });
+  saveSessionVitals: async (sessionId: string, vitals: SessionVitals): Promise<void> => {
+    const { zones } = vitals;
+    const { error } = await supabase.from("workout_session_vitals").insert({
+      session_id: sessionId,
+      avg_heart_rate: vitals.avgHeartRate,
+      zone_1_pct: zones?.zone1 ?? null,
+      zone_2_pct: zones?.zone2 ?? null,
+      zone_3_pct: zones?.zone3 ?? null,
+      zone_4_pct: zones?.zone4 ?? null,
+      zone_5_pct: zones?.zone5 ?? null,
+    });
 
     if (error) throw error;
   },
