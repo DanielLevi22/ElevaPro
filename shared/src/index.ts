@@ -17,6 +17,7 @@ export * from "./services/diarioAlimentar.service";
 export * from "./services/fluxoDoBodyScan";
 export * from "./services/gamification.service";
 export * from "./services/health.service";
+export * from "./services/heartRateProfile.service";
 export * from "./services/hidratacao.service";
 export * from "./services/nutrition.service";
 export * from "./services/students.service";
