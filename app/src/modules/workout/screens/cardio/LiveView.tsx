@@ -32,6 +32,8 @@ export interface LiveViewProps {
 }
 
 const HOUR_MS = 3_600_000;
+/** Os lugares vazios de uma fila de três: no máximo dois. */
+const EMPTY_SLOTS = ['vazio-1', 'vazio-2'] as const;
 
 /**
  * Telas 4 e 5 do kit: a sessão ao vivo e a pausa.
@@ -70,20 +72,16 @@ export function LiveView(props: LiveViewProps) {
             {row.map(({ metric, ...tile }) => (
               <MetricTile key={metric} {...tile} />
             ))}
+            {/* Fila incompleta guarda o lugar: um bloco sozinho não estica. */}
+            {EMPTY_SLOTS.slice(0, 3 - row.length).map((slot) => (
+              <View key={slot} className="flex-1" />
+            ))}
           </View>
         ))}
       </View>
-      {modality.usesGps ? (
-        <View className="mt-2.5">
-          <LinhaDeVidro
-            icon="map-outline"
-            tom="ritmo"
-            titulo="Percurso"
-            sub="Traçado e parciais por km"
-            onPress={props.onOpenRoute}
-          />
-        </View>
-      ) : null}
+      {/* Ao vivo, os controles vêm antes do percurso: é o que precisa caber na tela
+          sem rolar, acima da tab bar. */}
+      {paused ? <RouteRow {...props} /> : null}
       {paused ? (
         <LapList laps={lapSummaries(session, modality.usesGps ? reading.distanceMeters : null)} />
       ) : (
@@ -100,7 +98,23 @@ export function LiveView(props: LiveViewProps) {
           }}
         />
       )}
+      {paused ? null : <RouteRow {...props} />}
     </GlassScreen>
+  );
+}
+
+function RouteRow({ modality, onOpenRoute }: LiveViewProps) {
+  if (!modality.usesGps) return null;
+  return (
+    <View className="mt-4">
+      <LinhaDeVidro
+        icon="map-outline"
+        tom="ritmo"
+        titulo="Percurso"
+        sub="Traçado e parciais por km"
+        onPress={onOpenRoute}
+      />
+    </View>
   );
 }
 
@@ -109,7 +123,9 @@ function LiveHeader({ modality, paused, onLeave }: LiveViewProps & { paused: boo
 
   return (
     <View className="flex-row items-center gap-3 pt-1.5">
-      <BotaoRedondo icone="chevron-down" rotulo="Sair da sessão" onPress={onLeave} />
+      {/* Minimiza, como o chevron do kit: a aba do cardio fica montada e a sessão
+          segue contando até o aluno voltar e finalizar. */}
+      <BotaoRedondo icone="chevron-down" rotulo="Minimizar a sessão" onPress={onLeave} />
       <View className="min-w-0 flex-1 items-center">
         <Text
           className={cn(

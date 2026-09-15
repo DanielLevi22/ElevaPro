@@ -206,4 +206,18 @@ describe('sessão de cardio — fim', () => {
     const state = apply(running(30), { type: 'finish', now: T0 + MINUTE }, { type: 'discard' });
     expect(state).toEqual(initialCardioSession());
   });
+
+  // A tela do cardio é uma aba e fica montada: sem recomeçar, quem voltava ao
+  // cardio depois de salvar via o resumo da sessão anterior (visto no emulador).
+  it('recomeçar a partir do resumo volta à escolha sem nada da sessão', () => {
+    const summary = apply(running(30), { type: 'finish', now: T0 + MINUTE }, { type: 'saved' });
+
+    expect(apply(summary, { type: 'restart' })).toEqual(initialCardioSession());
+  });
+
+  it('recomeçar no meio da sessão não apaga nada', () => {
+    const live = running(30);
+
+    expect(apply(live, { type: 'restart' })).toBe(live);
+  });
 });

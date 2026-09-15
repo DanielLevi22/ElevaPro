@@ -74,6 +74,7 @@ export function CardioScreen(props: CardioScreenProps) {
     stopTracking: tracking.encerrar,
   });
   useLeaveGuard(session, tracking.encerrar);
+  useRestartAfterSummary(session, dispatch);
 
   return (
     <CardioMoment
@@ -137,6 +138,28 @@ function useLeaveGuard(session: CardioSessionState, stopTracking: () => Promise<
         });
       }),
     [navigation, stopTracking]
+  );
+}
+
+/**
+ * A tela do cardio é uma aba, e aba fica montada: sair do resumo pelo voltar,
+ * pela tab bar ou pelo gesto deixaria o resumo esperando na próxima visita. Ao
+ * perder o foco no resumo, a sessão recomeça.
+ */
+function useRestartAfterSummary(
+  session: CardioSessionState,
+  dispatch: (action: CardioAction) => void
+): void {
+  const navigation = useNavigation();
+  const onSummary = useRef(false);
+  onSummary.current = session.moment === 'summary';
+
+  useEffect(
+    () =>
+      navigation.addListener('blur', () => {
+        if (onSummary.current) dispatch({ type: 'restart' });
+      }),
+    [navigation, dispatch]
   );
 }
 

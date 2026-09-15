@@ -3,7 +3,7 @@ import { type ReactNode, useId } from 'react';
 import { View } from 'react-native';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { cn } from '@/lib/utils';
-import { comOpacidade, useCores } from '@/shared/design';
+import { useCores } from '@/shared/design';
 
 /**
  * O `.stage` do kit: o cartão de vidro com um foco de luz no meio, onde o objeto
@@ -28,7 +28,7 @@ export function Stage({ children, className }: StageProps) {
   const cores = useCores();
   const { colorScheme } = useColorScheme();
   const id = `palco${useId().replace(/:/g, '')}`;
-  const spot = comOpacidade(cores.foreground, colorScheme === 'dark' ? SPOT.escuro : SPOT.claro);
+  const spot = colorScheme === 'dark' ? SPOT.escuro : SPOT.claro;
 
   return (
     <View
@@ -40,8 +40,10 @@ export function Stage({ children, className }: StageProps) {
       <Svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }}>
         <Defs>
           <RadialGradient id={id} cx="50%" cy="42%" rx="70%" ry="60%" fx="50%" fy="42%">
-            <Stop offset={0} stopColor={spot} />
-            <Stop offset={0.7} stopColor={spot} stopOpacity={0} />
+            {/* A opacidade vai em `stopOpacity`: o react-native-svg ignora o alfa de
+                um `#rrggbbaa`, e a luz de 7% saía como mancha preta opaca. */}
+            <Stop offset={0} stopColor={cores.foreground} stopOpacity={spot} />
+            <Stop offset={0.7} stopColor={cores.foreground} stopOpacity={0} />
           </RadialGradient>
         </Defs>
         <Rect width="100%" height="100%" fill={`url(#${id})`} />

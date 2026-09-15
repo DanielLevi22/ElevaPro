@@ -29,18 +29,35 @@ const TAREFA_DE_LOCALIZACAO = 'background-location-task';
  */
 const posicoesRecebidas: Posicao[] = [];
 
+/**
+ * Quando a sessão começou a coletar. O GPS entrega na hora a última posição que
+ * conhece, que pode ser de horas atrás e de outro lugar: contada, vira um trecho
+ * que o aluno não correu. A folga cobre o fix que chega com alguns segundos de
+ * atraso em relação ao relógio do aparelho.
+ */
+let inicioDaColeta = 0;
+const FOLGA_DO_PRIMEIRO_FIX_MS = 5000;
+
+/**
+ * Guarda uma posição, uma vez só. A tela e o serviço de primeiro plano entregam
+ * os mesmos fixes; o que não é mais novo que o último guardado já está aqui.
+ */
+function receberPosicao({ coords, timestamp }: Location.LocationObject): void {
+  if (timestamp < inicioDaColeta - FOLGA_DO_PRIMEIRO_FIX_MS) return;
+  const ultima = posicoesRecebidas[posicoesRecebidas.length - 1];
+  if (ultima && timestamp <= ultima.timestamp) return;
+  posicoesRecebidas.push({
+    latitude: coords.latitude,
+    longitude: coords.longitude,
+    timestamp,
+    accuracy: coords.accuracy,
+  });
+}
+
 TaskManager.defineTask(TAREFA_DE_LOCALIZACAO, async ({ data, error }) => {
   if (error || !data) return;
   const { locations } = data as { locations: Location.LocationObject[] };
-
-  for (const { coords, timestamp } of locations ?? []) {
-    posicoesRecebidas.push({
-      latitude: coords.latitude,
-      longitude: coords.longitude,
-      timestamp,
-      accuracy: coords.accuracy,
-    });
-  }
+  for (const location of locations ?? []) receberPosicao(location);
 });
 
 /**
@@ -134,23 +151,22 @@ export function useRastreioDaCorrida({ usesGps, countsSteps }: Medicoes): Rastre
     setTemLocalizacao(status === 'granted');
     if (status !== 'granted') return;
 
+    // Com a tela aberta, a inscrição direta é quem mede. O serviço de primeiro
+    // plano sobe sem erro, mas no Android com a nova arquitetura as entregas
+    // dele não chegavam ao JS com o app aberto (visto no emulador na #304): o
+    // TaskService tratava cada fix e a corrida terminava em 0,00 km. Ele fica
+    // para a tela apagada; os fixes repetidos entre os dois caem em
+    // `receberPosicao`.
+    inscricaoDeLocalizacao.current = await Location.watchPositionAsync(
+      { accuracy: Location.Accuracy.BestForNavigation, distanceInterval: 5 },
+      receberPosicao
+    );
     try {
       await Location.startLocationUpdatesAsync(TAREFA_DE_LOCALIZACAO, PRECISAO_DA_CORRIDA);
     } catch {
       // Sem serviço de primeiro plano o rastreio segue enquanto a tela estiver
       // aberta. Medir menos é melhor que não medir, e melhor ainda que pedir a
       // permissão de background só para cobrir este caso.
-      inscricaoDeLocalizacao.current = await Location.watchPositionAsync(
-        { accuracy: Location.Accuracy.BestForNavigation, distanceInterval: 5 },
-        ({ coords, timestamp }) => {
-          posicoesRecebidas.push({
-            latitude: coords.latitude,
-            longitude: coords.longitude,
-            timestamp,
-            accuracy: coords.accuracy,
-          });
-        }
-      );
     }
   }, []);
 
@@ -175,7 +191,10 @@ export function useRastreioDaCorrida({ usesGps, countsSteps }: Medicoes): Rastre
     // módulo, e uma sessão abandonada pelo botão voltar deixa pontos ali — na
     // corrida seguinte eles entrariam no cálculo e no desenho. Retomar depois de
     // uma pausa não zera: o percurso é o mesmo.
-    if (!iniciada.current) posicoesRecebidas.length = 0;
+    if (!iniciada.current) {
+      posicoesRecebidas.length = 0;
+      inicioDaColeta = Date.now();
+    }
     iniciada.current = true;
 
     // A modalidade decide o que é medido. Sem percurso não há por que pedir a

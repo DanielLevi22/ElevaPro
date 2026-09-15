@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
-import { formatKilometers, speedKmh } from '../../services/cardioMetrics';
+import { formatKilometers } from '../../services/cardioMetrics';
 import type { LapSummary } from '../../store/cardioSessionMachine';
 
 /**
@@ -52,7 +52,12 @@ function fastestLap(laps: LapSummary[]): number {
 }
 
 function LapRow({ lap, number, fastest }: { lap: LapSummary; number: number; fastest: boolean }) {
-  const speed = lap.distanceMeters === null ? null : speedKmh(lap.distanceMeters, lap.durationMs);
+  // Direto, e não pelo `speedKmh`: a trava de um minuto de lá protege a média ao
+  // vivo da deriva do começo, e uma volta de 40 s tem velocidade de verdade.
+  const speed =
+    lap.distanceMeters !== null && lap.distanceMeters > 0 && lap.durationMs > 0
+      ? lap.distanceMeters / 1000 / (lap.durationMs / 3_600_000)
+      : null;
   const detail =
     lap.distanceMeters === null
       ? null

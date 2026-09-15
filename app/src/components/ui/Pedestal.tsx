@@ -1,5 +1,5 @@
 import { type ReactNode, useId } from 'react';
-import { Platform, View } from 'react-native';
+import { View } from 'react-native';
 import Svg, {
   Defs,
   Ellipse,
@@ -9,7 +9,7 @@ import Svg, {
   Rect,
   Stop,
 } from 'react-native-svg';
-import { comOpacidade, illustration, useCores, useEscala } from '@/shared/design';
+import { illustration, useCores, useEscala } from '@/shared/design';
 
 /**
  * O palco dos objetos-herói do kit: a luz da primária no chão, a sombra de
@@ -65,8 +65,12 @@ const RING = { bottom: 0.13, width: 0.6, height: 0.11, alpha: 0.55 * 0.8 } as co
 /** O `dashed` de 1px do navegador: traço e vão de 3. */
 const RING_DASH = '3 3';
 
-/** `drop-shadow(0 18px 26px rgba(0,0,0,.55))` no objeto: só o Android tem `filter` de sombra. */
-const OBJECT_SHADOW = { y: 18, blur: 26, alpha: 0.55 } as const;
+/*
+ * O `drop-shadow(0 18px 26px)` que o kit põe no objeto não entrou. No Android o
+ * `filter` desenha o objeto numa camada do tamanho da caixa dele e recorta o que
+ * passa da borda — o halo verde das rodas saía cortado num retângulo. A sombra
+ * de contato do chão já assenta o objeto, e o iOS nem tem esse filtro.
+ */
 
 export function Pedestal({ size = 230, lift = 0, children }: PedestalProps) {
   const escalar = useEscala();
@@ -82,26 +86,7 @@ export function Pedestal({ size = 230, lift = 0, children }: PedestalProps) {
       <FloorGlow side={side} />
       <ContactShadow side={side} />
       <DashedRing side={side} />
-      <View
-        style={{
-          transform: [{ translateY: -escalar(lift) }],
-          filter:
-            Platform.OS === 'android'
-              ? [
-                  {
-                    dropShadow: {
-                      offsetX: 0,
-                      offsetY: escalar(OBJECT_SHADOW.y),
-                      standardDeviation: escalar(OBJECT_SHADOW.blur) / 2,
-                      color: comOpacidade(illustration.stageShadow, OBJECT_SHADOW.alpha),
-                    },
-                  },
-                ]
-              : undefined,
-        }}
-      >
-        {children}
-      </View>
+      <View style={{ transform: [{ translateY: -escalar(lift) }] }}>{children}</View>
     </View>
   );
 }
