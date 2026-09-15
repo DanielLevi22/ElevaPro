@@ -160,6 +160,41 @@ describe("healthService — métricas diárias", () => {
     expect(payload.resting_heart_rate).toBe(58);
   });
 
+  // A nota vai com a versão da regra, sempre as duas: o CHECK da `0055` recusa uma
+  // sem a outra, e um payload que mandasse só a nota derrubaria o dia inteiro.
+  it("grava a prontidão com a versão da regra, e apaga as duas juntas", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({});
+    const service = createHealthService(supabase);
+    await service.upsertDaily("aluno-1", {
+      date: "2026-09-04",
+      steps: 8421,
+      active_calories: 512,
+      readiness: { score: 82, version: 1 },
+    });
+    await service.upsertDaily("aluno-1", {
+      date: "2026-09-05",
+      steps: 8421,
+      active_calories: 512,
+      readiness: null,
+    });
+
+    expect(chamadas[0].payload).toMatchObject({ readiness_score: 82, readiness_version: 1 });
+    expect(chamadas[1].payload).toMatchObject({ readiness_score: null, readiness_version: null });
+  });
+
+  it("não apaga a prontidão que esta leitura não calculou", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({});
+    await createHealthService(supabase).upsertDaily("aluno-1", {
+      date: "2026-09-04",
+      steps: 8421,
+      active_calories: 512,
+    });
+
+    const payload = chamadas[0].payload as Record<string, unknown>;
+    expect(payload).not.toHaveProperty("readiness_score");
+    expect(payload).not.toHaveProperty("readiness_version");
+  });
+
   // `null` explícito é o caminho de apagar de propósito, e precisa continuar
   // distinguível de "não li". Sem esta asserção, uma implementação que filtrasse
   // por `!= null` em vez de `!== undefined` passaria nos dois testes acima e

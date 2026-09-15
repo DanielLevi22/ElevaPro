@@ -9,6 +9,10 @@ export interface HealthDailyMetric {
   sleep_minutes: number | null;
   /** FC de repouso em bpm. `null` = sem leitura no dia. */
   resting_heart_rate: number | null;
+  /** Prontidão do dia, 0 a 100 (ADR-0029). `null` sem base ou sem leitura. */
+  readiness_score: number | null;
+  /** A versão da regra que calculou a nota; nula junto com ela. */
+  readiness_version: number | null;
   synced_at: string;
   created_at: string;
 }
@@ -25,4 +29,9 @@ export interface HealthMetricInput {
    */
   sleep_minutes?: number | null;
   resting_heart_rate?: number | null;
+  /**
+   * A prontidão e a versão da regra, juntas num objeto para não existir nota sem
+   * régua. `null` apaga a do dia (a base deixou de bastar); omitir preserva.
+   */
+  readiness?: { score: number; version: number } | null;
 }
