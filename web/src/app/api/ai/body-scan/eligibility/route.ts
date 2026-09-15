@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { authorizeStudent } from "@/lib/api-auth";
 import { clienteDoTitular } from "@/lib/supabase-titular";
 import { decidirElegibilidade } from "@/modules/ai/services/escala";
+import { loadScaleSources } from "@/modules/ai/services/scaleSources";
 
 /**
  * O aluno pode escanear? — perguntado ANTES da câmera.
@@ -38,46 +39,17 @@ export async function GET(request: NextRequest) {
   // Sem consentimento nada de saúde é lido — nem para decidir se pode escanear.
   if (!temConsentimento) {
     return NextResponse.json(
-      decidirElegibilidade({ temConsentimento: false, avaliacao: null, anamnese: null }),
+      decidirElegibilidade({
+        temConsentimento: false,
+        specialistAssessment: null,
+        declaredAssessment: null,
+        anamnese: null,
+      }),
     );
   }
 
-  const [avaliacaoRes, anamneseRes] = await Promise.all([
-    client
-      .from("physical_assessments")
-      .select("height_cm, weight_kg")
-      .eq("student_id", userId)
-      .order("assessed_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+  const loaded = await loadScaleSources(client, userId);
+  if (!loaded.ok) return NextResponse.json({ error: "scale_lookup_failed" }, { status: 503 });
 
-    // Os dois campos extraídos NO BANCO, e não `responses` inteiro: a coluna
-    // guarda lesão, medicação e histórico clínico completo, e carregar tudo
-    // isso para ler altura é o oposto da minimização (Art. 6º, III).
-    client
-      .from("student_anamnesis")
-      .select("responses->height, responses->weight")
-      .eq("student_id", userId)
-      .maybeSingle(),
-  ]);
-
-  if (avaliacaoRes.error)
-    return NextResponse.json({ error: "scale_lookup_failed" }, { status: 503 });
-  if (anamneseRes.error)
-    return NextResponse.json({ error: "scale_lookup_failed" }, { status: 503 });
-
-  const avaliacao = avaliacaoRes.data
-    ? {
-        height_cm: Number(avaliacaoRes.data.height_cm),
-        weight_kg: Number(avaliacaoRes.data.weight_kg),
-      }
-    : null;
-
-  return NextResponse.json(
-    decidirElegibilidade({
-      temConsentimento: true,
-      avaliacao,
-      anamnese: anamneseRes.data as Record<string, unknown> | null,
-    }),
-  );
+  return NextResponse.json(decidirElegibilidade({ temConsentimento: true, ...loaded.sources }));
 }

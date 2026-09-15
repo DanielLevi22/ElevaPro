@@ -37,6 +37,8 @@ export type Subject =
   | "Periodization"
   | "HealthMetric"
   | "Hydration"
+  /** A medida corporal declarada pelo próprio aluno (0056); a do especialista não é editável. */
+  | "DeclaredMeasurement"
   | "all";
 
 export type AppAbility = MongoAbility<[Action, Subject]>;
@@ -65,6 +67,8 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
 
   if (context.accountType === "specialist") {
     can("manage", "Client");
+    // O vinculado lê a medida que o aluno declarou antes do vínculo (0056).
+    can("read", "DeclaredMeasurement");
     can("read", "Analytics");
     can("read", "Profile");
     can("update", "Profile");
@@ -97,6 +101,9 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
     // Só o próprio aluno, e nenhum especialista: a RLS de `hydration_daily`
     // (0052) não tem política para ele, porque nenhuma tela dele usa o dado.
     can("manage", "Hydration");
+    // Com especialista quem mede é ele, e o banco recusa a declaração (0056). O que o
+    // aluno declarou antes do vínculo continua dele para corrigir e apagar.
+    can(["update", "delete"], "DeclaredMeasurement");
   }
 
   // member: usuário independente — cria e gerencia os próprios planos (sem specialist).
@@ -111,7 +118,15 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
   if (context.accountType === "member") {
     can("read", "Profile");
     can("update", "Profile");
-    can("manage", ["Workout", "Diet", "Exercise", "Food", "HealthMetric", "Hydration"]);
+    can("manage", [
+      "Workout",
+      "Diet",
+      "Exercise",
+      "Food",
+      "HealthMetric",
+      "Hydration",
+      "DeclaredMeasurement",
+    ]);
   }
 
   return build();

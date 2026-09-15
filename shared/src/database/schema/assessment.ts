@@ -13,11 +13,17 @@ import { profiles } from "./auth";
 /**
  * De onde veio a Escala de um Body scan.
  *
- * `assessment` é medida com fita pelo especialista; `anamnese` é declarada pelo
- * aluno. O especialista precisa saber qual das duas calibrou o número que ele
+ * `assessment` é medida com fita pelo especialista; `self` é a medida declarada
+ * pelo aluno (0056); `anamnese` é o peso e a altura do cadastro. O especialista precisa saber qual das duas calibrou o número que ele
  * está lendo — é a diferença entre confiar e ponderar.
  */
-export const scaleSourceEnum = pgEnum("scale_source", ["assessment", "anamnese"]);
+export const scaleSourceEnum = pgEnum("scale_source", ["assessment", "anamnese", "self"]);
+
+/**
+ * Quem mediu uma avaliação física (0056): o especialista, com fita, ou o próprio
+ * aluno, que declara. A do especialista é imutável; a declarada, o aluno corrige.
+ */
+export const measurementSourceEnum = pgEnum("measurement_source", ["specialist", "self"]);
 
 export const studentAnamnesis = pgTable("student_anamnesis", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -39,6 +45,7 @@ export const physicalAssessments = pgTable("physical_assessments", {
     .notNull()
     .references(() => profiles.id, { onDelete: "cascade" }),
   specialist_id: uuid("specialist_id").references(() => profiles.id, { onDelete: "set null" }),
+  measured_by: measurementSourceEnum("measured_by").notNull().default("specialist"),
   assessed_at: timestamp("assessed_at", { withTimezone: true }).notNull().defaultNow(),
   // Básico
   // Obrigatórios: os dois formam a Escala que calibra o Body scan, e avaliação

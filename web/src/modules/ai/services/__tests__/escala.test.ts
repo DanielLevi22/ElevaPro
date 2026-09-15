@@ -10,7 +10,9 @@ describe("precedência da Escala", () => {
   it("usa a avaliação do especialista quando ela existe", () => {
     const anamnese = { height: 170, weight: 70 };
 
-    expect(resolverEscala({ avaliacao: AVALIACAO, anamnese })).toEqual({
+    expect(
+      resolverEscala({ specialistAssessment: AVALIACAO, declaredAssessment: null, anamnese }),
+    ).toEqual({
       ok: true,
       heightCm: 178,
       weightKg: 82.5,
@@ -19,14 +21,42 @@ describe("precedência da Escala", () => {
   });
 });
 
-describe("a Anamnese como segunda fonte", () => {
+describe("a medida declarada entre as duas", () => {
+  // A declarada é digitada pelo aluno, como a anamnese, mas é a medida mais recente
+  // dele. Vence a anamnese; perde para a fita do especialista (0056, #312).
+  it("usa a declarada quando não há medida do especialista, e grava a origem self", () => {
+    const declarada = { height_cm: 176, weight_kg: 79 };
+
+    expect(
+      resolverEscala({
+        specialistAssessment: null,
+        declaredAssessment: declarada,
+        anamnese: { height: 170, weight: 70 },
+      }),
+    ).toEqual({ ok: true, heightCm: 176, weightKg: 79, fonte: "self" });
+  });
+
+  it("a medida do especialista vence a declarada", () => {
+    expect(
+      resolverEscala({
+        specialistAssessment: AVALIACAO,
+        declaredAssessment: { height_cm: 176, weight_kg: 79 },
+        anamnese: null,
+      }),
+    ).toMatchObject({ heightCm: 178, fonte: "assessment" });
+  });
+});
+
+describe("a Anamnese como terceira fonte", () => {
   // O aluno não pode ficar preso esperando o especialista cadastrar a avaliação
   // dele. Sem Assessment, a declaração da Anamnese calibra — e o scan registra
   // que foi declarada, para o especialista saber o peso do número que lê.
   it("cai para a anamnese quando não há avaliação", () => {
     const anamnese = { height: 170, weight: 70 };
 
-    expect(resolverEscala({ avaliacao: null, anamnese })).toEqual({
+    expect(
+      resolverEscala({ specialistAssessment: null, declaredAssessment: null, anamnese }),
+    ).toEqual({
       ok: true,
       heightCm: 170,
       weightKg: 70,
@@ -42,7 +72,9 @@ describe("a Anamnese como segunda fonte", () => {
       weight: { questionId: "weight", value: "70,5" },
     };
 
-    expect(resolverEscala({ avaliacao: null, anamnese })).toEqual({
+    expect(
+      resolverEscala({ specialistAssessment: null, declaredAssessment: null, anamnese }),
+    ).toEqual({
       ok: true,
       heightCm: 170,
       weightKg: 70.5,
@@ -64,7 +96,9 @@ describe("recusa da Escala", () => {
   ];
 
   it.each(casos)("%s recusa como %s", (_titulo, motivo, anamnese) => {
-    expect(resolverEscala({ avaliacao: null, anamnese })).toEqual({ ok: false, motivo });
+    expect(
+      resolverEscala({ specialistAssessment: null, declaredAssessment: null, anamnese }),
+    ).toEqual({ ok: false, motivo });
   });
 
   // A altura é conferida antes do peso: mandar corrigir os dois de uma vez
@@ -72,7 +106,9 @@ describe("recusa da Escala", () => {
   it("nomeia a altura primeiro quando os dois estão ruins", () => {
     const anamnese = { height: "abc", weight: "abc" };
 
-    expect(resolverEscala({ avaliacao: null, anamnese })).toEqual({
+    expect(
+      resolverEscala({ specialistAssessment: null, declaredAssessment: null, anamnese }),
+    ).toEqual({
       ok: false,
       motivo: "altura_invalida",
     });
@@ -86,19 +122,34 @@ describe("decisão do portão de elegibilidade", () => {
   // ser lido para decidir se o aluno pode escanear (Art. 11, I).
   it("recusa por consentimento sem sequer olhar a escala", () => {
     expect(
-      decidirElegibilidade({ temConsentimento: false, avaliacao: AVALIACAO, anamnese }),
+      decidirElegibilidade({
+        temConsentimento: false,
+        specialistAssessment: AVALIACAO,
+        declaredAssessment: null,
+        anamnese,
+      }),
     ).toEqual({ podeEscanear: false, motivo: "consentimento" });
   });
 
   it("libera quando há consentimento e escala, dizendo a fonte", () => {
     expect(
-      decidirElegibilidade({ temConsentimento: true, avaliacao: AVALIACAO, anamnese }),
+      decidirElegibilidade({
+        temConsentimento: true,
+        specialistAssessment: AVALIACAO,
+        declaredAssessment: null,
+        anamnese,
+      }),
     ).toEqual({ podeEscanear: true, fonte: "assessment" });
   });
 
   it("repassa o motivo da escala quando ela recusa", () => {
     expect(
-      decidirElegibilidade({ temConsentimento: true, avaliacao: null, anamnese: null }),
+      decidirElegibilidade({
+        temConsentimento: true,
+        specialistAssessment: null,
+        declaredAssessment: null,
+        anamnese: null,
+      }),
     ).toEqual({ podeEscanear: false, motivo: "sem_anamnese" });
   });
 
@@ -108,7 +159,8 @@ describe("decisão do portão de elegibilidade", () => {
   it("nunca devolve altura nem peso no payload", () => {
     const liberado = decidirElegibilidade({
       temConsentimento: true,
-      avaliacao: AVALIACAO,
+      specialistAssessment: AVALIACAO,
+      declaredAssessment: null,
       anamnese,
     });
 

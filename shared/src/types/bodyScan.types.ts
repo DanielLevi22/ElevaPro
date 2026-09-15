@@ -136,7 +136,7 @@ export interface BodyScanInput extends MedidasDoAparelho {
    * pelo aluno na anamnese. Sem isto a tela rotula toda altura como "medido",
    * o que passa a mentir assim que a anamnese vira fonte.
    */
-  scale_source?: "assessment" | "anamnese";
+  scale_source?: "assessment" | "self" | "anamnese";
   body_fat_pct: number | null;
   lean_mass_kg: number | null;
   bmi: number | null;
