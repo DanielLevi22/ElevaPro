@@ -62,7 +62,7 @@ export function HealthCheckScreen({ studentId }: HealthCheckScreenProps) {
       }
     >
       <View className="flex-row items-center gap-3 pt-1.5">
-        <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={router.back} />
+        <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={router.back} />
         <View className="min-w-0 flex-1">
           <Text className="text-micro font-bold uppercase tracking-wide text-hero-secondary">
             Diagnóstico
@@ -71,7 +71,7 @@ export function HealthCheckScreen({ studentId }: HealthCheckScreenProps) {
             Health check
           </Text>
         </View>
-        <BotaoRedondo icone="refresh" rotulo="Conferir de novo" onPress={recheck} />
+        <BotaoRedondo icone="refresh-cw" rotulo="Conferir de novo" onPress={recheck} />
       </View>
 
       {result ? (

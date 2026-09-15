@@ -57,8 +57,8 @@ export function ResumoDoTreino({
       }
     >
       <View className="flex-row justify-between">
-        <BotaoRedondo icone="chevron-back" rotulo="Sair do resumo" onPress={onSair} />
-        <BotaoRedondo icone="share-outline" rotulo="Compartilhar" onPress={onCompartilhar} />
+        <BotaoRedondo icone="chevron-left" rotulo="Sair do resumo" onPress={onSair} />
+        <BotaoRedondo icone="share" rotulo="Compartilhar" onPress={onCompartilhar} />
       </View>
 
       <View className="items-start pt-11">

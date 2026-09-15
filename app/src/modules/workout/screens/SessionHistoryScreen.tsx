@@ -194,7 +194,7 @@ function CabecalhoDoHistorico() {
   const router = useRouter();
   return (
     <View className="mb-2 flex-row items-center gap-4 px-4 py-4">
-      <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={router.back} />
+      <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={router.back} />
       <View className="flex-1">
         <Text className="text-h1 font-extrabold text-foreground">Meus treinos</Text>
         <Text className="text-legenda text-muted-foreground">

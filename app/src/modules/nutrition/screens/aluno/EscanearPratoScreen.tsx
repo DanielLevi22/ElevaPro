@@ -116,7 +116,7 @@ function FotoDoPrato({ scan, onVoltar }: { scan: ScanDoPrato; onVoltar: () => vo
         style={{ boxShadow: brilhoDaMoldura }}
       />
       <View className="absolute left-[1.125rem] right-[1.125rem] top-[4.125rem] flex-row">
-        <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={onVoltar} />
+        <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={onVoltar} />
       </View>
       {scan.analisando ? <AvisoDeAnalise /> : null}
     </View>

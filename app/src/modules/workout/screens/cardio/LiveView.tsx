@@ -140,7 +140,7 @@ function LiveHeader({ modality, paused, onLeave }: LiveViewProps & { paused: boo
         </Text>
       </View>
       {openMusic ? (
-        <BotaoRedondo icone="musical-notes" rotulo="Abrir o app de música" onPress={openMusic} />
+        <BotaoRedondo icone="music" rotulo="Abrir o app de música" onPress={openMusic} />
       ) : (
         <View className="h-[2.375rem] w-[2.375rem]" />
       )}

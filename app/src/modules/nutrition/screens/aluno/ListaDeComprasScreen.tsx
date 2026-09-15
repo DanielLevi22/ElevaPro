@@ -65,11 +65,7 @@ export function ListaDeComprasScreen({
           titulo="Lista de compras"
           onVoltar={router.back}
           direita={
-            <BotaoRedondo
-              icone="share-outline"
-              rotulo="Compartilhar lista"
-              onPress={lista.compartilhar}
-            />
+            <BotaoRedondo icone="share" rotulo="Compartilhar lista" onPress={lista.compartilhar} />
           }
         />
       </View>

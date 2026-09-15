@@ -49,12 +49,12 @@ export function PlanoDoDiaScreen({ alunoId, somenteLeitura }: PlanoDoDiaScreenPr
         </View>
         <View className="flex-row gap-[0.5625rem]">
           <BotaoRedondo
-            icone="calendar-outline"
+            icone="calendar"
             rotulo="Aderência da semana"
             onPress={() => router.push(ROUTES.NUTRITION.ADHERENCE)}
           />
           <BotaoRedondo
-            icone="add"
+            icone="plus"
             rotulo="Buscar alimento"
             onPress={() => router.push(ROUTES.NUTRITION.SEARCH)}
           />

@@ -140,9 +140,10 @@ function TopoDaRefeicao({ alunoId, refeicaoId, nome, onVoltar }: TopoDaRefeicaoP
     <View className="h-[18.875rem] items-center justify-center bg-glass-strong pt-[3.25rem]">
       <Ionicons name={iconeDaRefeicao(nome)} size={escalar(64)} color={cores.placeholder} />
       <View className="absolute left-[1.125rem] right-[1.125rem] top-[4.125rem] flex-row justify-between">
-        <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={onVoltar} />
+        <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={onVoltar} />
         <BotaoRedondo
-          icone={favorita ? 'heart' : 'heart-outline'}
+          icone="heart"
+          preenchido={favorita}
           rotulo={favorita ? 'Tirar dos favoritos' : 'Favoritar refeição'}
           onPress={() => useFavoritosStore.getState().alternar(alunoId, refeicaoId)}
         />

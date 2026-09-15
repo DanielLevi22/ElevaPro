@@ -11,7 +11,20 @@ jest.mock('expo-router', () => ({
 // O wrapper do NativeWind para safe-area-context quebra ao envolver os ícones
 // sob o mock de jest.setup. Nada aqui depende de como o ícone renderiza.
 jest.mock('@expo/vector-icons', () => ({ MaterialCommunityIcons: 'MaterialCommunityIcons' }));
-jest.mock('react-native-svg', () => ({ __esModule: true, default: 'Svg', Path: 'Path' }));
+// Os ícones do Lucide desenham com os elementos do SVG que o desenho pede, e leem o
+// pacote pelas chaves: o mock lista cada elemento como um componente com o nome dele.
+jest.mock('react-native-svg', () => ({
+  __esModule: true,
+  default: 'Svg',
+  Svg: 'Svg',
+  Path: 'Path',
+  Circle: 'Circle',
+  Ellipse: 'Ellipse',
+  Line: 'Line',
+  Polygon: 'Polygon',
+  Polyline: 'Polyline',
+  Rect: 'Rect',
+}));
 jest.mock('react-native-gesture-handler', () => ({
   Gesture: {
     Pan: () => {

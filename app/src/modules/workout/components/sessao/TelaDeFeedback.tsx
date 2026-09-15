@@ -76,7 +76,7 @@ export function TelaDeFeedback({
         }
       >
         <View className="flex-row justify-end">
-          <BotaoRedondo icone="close" rotulo="Fechar sem salvar" onPress={onFechar} />
+          <BotaoRedondo icone="x" rotulo="Fechar sem salvar" onPress={onFechar} />
         </View>
         <Cabecalho corrigindo={corrigindo} />
         <EscalaDePse pse={pse} onMudar={setPse} />

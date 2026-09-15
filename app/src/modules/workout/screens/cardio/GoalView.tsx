@@ -122,7 +122,7 @@ function GoalHeader({ modality, onBack }: { modality: CardioModality; onBack: ()
 
   return (
     <View className="flex-row items-center gap-3 pt-1.5">
-      <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={onBack} />
+      <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={onBack} />
       <View className="min-w-0 flex-1">
         <Text className="text-micro font-bold uppercase tracking-wide text-hero-secondary">
           {modality.activityName}

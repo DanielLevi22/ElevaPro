@@ -1,4 +1,9 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import type { LucideIcon } from 'lucide-react-native';
+import Apple from 'lucide-react-native/icons/apple';
+import Dumbbell from 'lucide-react-native/icons/dumbbell';
+import Footprints from 'lucide-react-native/icons/footprints';
+import LayoutGrid from 'lucide-react-native/icons/layout-grid';
+import Plus from 'lucide-react-native/icons/plus';
 import { type TextStyle, View, type ViewStyle } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, { type SharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
@@ -16,7 +21,7 @@ interface BotaoDeAcoesProps {
 
 interface Atalho {
   acao: AcaoRapida;
-  icone: keyof typeof MaterialCommunityIcons.glyphMap;
+  Icone: LucideIcon;
   rotulo: string;
   /** Posição no desenho, a partir do centro do botão. */
   x: number;
@@ -24,13 +29,16 @@ interface Atalho {
 }
 
 const ATALHOS: readonly Atalho[] = [
-  { acao: 'treino', icone: 'dumbbell', rotulo: 'Treino', x: -60, y: -80 },
-  { acao: 'menu', icone: 'view-grid', rotulo: 'Menu', x: 60, y: -80 },
-  { acao: 'dieta', icone: 'food-apple', rotulo: 'Dieta', x: -100, y: -10 },
-  { acao: 'cardio', icone: 'run', rotulo: 'Cardio', x: 100, y: -10 },
+  { acao: 'treino', Icone: Dumbbell, rotulo: 'Treino', x: -60, y: -80 },
+  { acao: 'menu', Icone: LayoutGrid, rotulo: 'Menu', x: 60, y: -80 },
+  { acao: 'dieta', Icone: Apple, rotulo: 'Dieta', x: -100, y: -10 },
+  { acao: 'cardio', Icone: Footprints, rotulo: 'Cardio', x: 100, y: -10 },
 ];
 
 const TAMANHO_DO_MAIS = 32;
+/** O traço do Lucide no kit: 1,5 nos ícones, e 2,25 no "+" para ele ler no disco lime. */
+const TRACO = 1.5;
+const TRACO_DO_MAIS = 2.25;
 /** O brilho do `BotaoDeDestaque` no cartão: `0 10px 26px -8px`. */
 const BRILHO_DO_MAIS = { y: 10, blur: 26, espalhamento: -8 } as const;
 
@@ -78,9 +86,9 @@ export function BotaoDeAcoes({ comCardio, arrastando, onAcao }: BotaoDeAcoesProp
           className="h-[3.75rem] w-[3.75rem] items-center justify-center rounded-full bg-primary"
           style={[{ boxShadow: brilho(BRILHO_DO_MAIS) }, estiloDoBotao]}
         >
-          <MaterialCommunityIcons
-            name="plus"
+          <Plus
             size={escalar(TAMANHO_DO_MAIS)}
+            strokeWidth={TRACO_DO_MAIS}
             color={cores.primaryForeground}
           />
         </Animated.View>
@@ -125,15 +133,11 @@ function IndicadorDeAcao({ atalho, escolhida, arrastando }: IndicadorDeAcaoProps
         estiloDoCirculo,
       ]}
     >
-      <MaterialCommunityIcons
-        name={atalho.icone}
-        size={escalar(TAMANHO_DO_ICONE)}
-        color={cores.foreground}
-      />
+      <atalho.Icone size={escalar(TAMANHO_DO_ICONE)} strokeWidth={TRACO} color={cores.foreground} />
       <Animated.View className="absolute" style={estiloDoAceso}>
-        <MaterialCommunityIcons
-          name={atalho.icone}
+        <atalho.Icone
           size={escalar(TAMANHO_DO_ICONE)}
+          strokeWidth={TRACO}
           color={cores.primaryForeground}
         />
       </Animated.View>

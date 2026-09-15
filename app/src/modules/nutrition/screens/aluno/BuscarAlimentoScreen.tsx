@@ -103,7 +103,7 @@ interface SaudacaoProps {
 function Saudacao({ primeiroNome, faltamCalorias, onVoltar, onEscanear }: SaudacaoProps) {
   return (
     <View className="flex-row items-center gap-[0.6875rem] pt-1.5">
-      <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={onVoltar} />
+      <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={onVoltar} />
       <View className="h-10 w-10 shrink-0 items-center justify-center rounded-full bg-glass-strong">
         <Text className="text-[0.9375rem] font-bold text-hero">
           {primeiroNome.charAt(0).toUpperCase()}
@@ -119,7 +119,7 @@ function Saudacao({ primeiroNome, faltamCalorias, onVoltar, onEscanear }: Saudac
             : 'Meta de calorias fechada hoje'}
         </Text>
       </View>
-      <BotaoRedondo icone="camera-outline" rotulo="Escanear o prato" onPress={onEscanear} />
+      <BotaoRedondo icone="camera" rotulo="Escanear o prato" onPress={onEscanear} />
     </View>
   );
 }

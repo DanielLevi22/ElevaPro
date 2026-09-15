@@ -56,7 +56,7 @@ export function ModalityView(props: ModalityViewProps) {
       }
     >
       <View className="flex-row pt-1.5">
-        <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={onBack} />
+        <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={onBack} />
       </View>
 
       <Stage className="mt-3.5 px-2.5 pb-[1.125rem] pt-2.5">
