@@ -8,6 +8,7 @@ import { GlassSheet } from '@/components/ui/GlassSheet';
 import { LockHero } from '@/components/ui/LockHero';
 import { Pedestal } from '@/components/ui/Pedestal';
 import { useConsentPromptStore } from './consentPromptStore';
+import { storedItems } from './storedItems';
 
 /**
  * Pede o consentimento de dados de saúde na versão vigente da política, e
@@ -38,20 +39,6 @@ interface HealthDataConsentGateProps {
   /** O Aluno tem especialista que lê; o Praticante não. Muda o "Quem lê". */
   hasSpecialist: boolean;
 }
-
-const ITENS_ARMAZENADOS = [
-  'Passos e calorias do dia',
-  // A 1.7 existe por esta linha: a prontidão é inferência gravada (ADR-0029). O
-  // sono e a FC de repouso, da 1.3, faltavam na lista e entram junto.
-  'Duração do sono e frequência cardíaca de repouso, e a prontidão do dia calculada deles contra a sua própria média',
-  'Treinos executados, com séries e cargas',
-  // A 1.6 existe por esta linha: as zonas passaram a ser guardadas, e a idade da
-  // anamnese passou a calculá-las.
-  'Das suas corridas, a frequência cardíaca média e o tempo em cada zona de esforço, calculadas com a idade da sua anamnese',
-  'Refeições registradas do seu plano',
-  'A água que você registra no dia',
-  'O que você escreve no feedback de fim de treino',
-];
 
 export function HealthDataConsentGate({
   studentId,
@@ -137,7 +124,7 @@ export function HealthDataConsentGate({
       // da 0052) e as rotas de inteligência artificial
       // (`authorizeStudentWithHealthConsent`). Quem
       // recusa decide pelo que perde, e o texto precisa dizer o que é (#308).
-      footnote="Sem o aceite o app continua funcionando e seus treinos e refeições seguem registrados. Ficam de fora os dados do relógio, a água do dia, as anotações e a frequência cardíaca dos treinos, e as funções de inteligência artificial."
+      footnote="Sem o aceite o app continua funcionando e seus treinos e refeições seguem registrados. Ficam de fora os dados do relógio, a água do dia, as medidas que você registra, as anotações e a frequência cardíaca dos treinos, e as funções de inteligência artificial."
     >
       <Text className="mt-2 text-center font-display-black text-[1.4375rem] tracking-tight text-foreground">
         Seus dados de saúde
@@ -149,7 +136,7 @@ export function HealthDataConsentGate({
       </Text>
 
       <SheetHeading>O que é armazenado</SheetHeading>
-      {ITENS_ARMAZENADOS.map((item) => (
+      {storedItems(hasSpecialist).map((item) => (
         <Bullet key={item}>{item}</Bullet>
       ))}
 
