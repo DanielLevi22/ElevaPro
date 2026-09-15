@@ -161,6 +161,14 @@ type TokensLiterais = {
   textoRitmo: CorLiteral;
   textoCadencia: CorLiteral;
   /**
+   * Texto de sono, passos e calorias na Saúde do dia: a diferença para a média é
+   * escrita na cor da métrica, e no claro ela troca pelo tom escuro, como o kit faz
+   * com `--sleep-t`, `--steps-t` e `--kcal-t`.
+   */
+  textoSono: CorLiteral;
+  textoPassos: CorLiteral;
+  textoCalorias: CorLiteral;
+  /**
    * O check sobre a cor de métrica — refeição feita, item comprado. **Igual nos
    * dois temas**, como o `sobreImagem`: o verde não muda de tema, então o que
    * fica em cima dele também não. O kit escreve `#06281a` à mão.
@@ -188,6 +196,15 @@ export const illustration = {
   deckBottom: '#15171b',
   screenLit: '#2b2f36',
   screenOff: '#0a0b0d',
+  /** A caixa de aço do relógio, do brilho à sombra, e a coroa lateral. */
+  steelBright: '#e8eaee',
+  steelSoft: '#9ba1ab',
+  steelDeep: '#5a606b',
+  steelPale: '#c8cdd5',
+  steelMuted: '#7a8089',
+  crownLight: '#c3c8d0',
+  crownShade: '#6e747e',
+  crownDeep: '#666c76',
   /** Os extremos do `color-mix` que clareia e escurece a primária na esfera. */
   white: '#ffffff',
   black: '#000000',
@@ -260,6 +277,9 @@ const escuro: Paleta = {
     textoBatimento: '#f87171',
     textoRitmo: '#38bdf8',
     textoCadencia: '#c084fc',
+    textoSono: '#818cf8',
+    textoPassos: '#34d399',
+    textoCalorias: '#fb923c',
     sobreMetrica: '#06281a',
   },
 };
@@ -318,6 +338,9 @@ const claro: Paleta = {
     textoBatimento: '#b91c1c',
     textoRitmo: '#0369a1',
     textoCadencia: '#7e22ce',
+    textoSono: '#4338ca',
+    textoPassos: '#0b7a52',
+    textoCalorias: '#c2410c',
     sobreMetrica: '#06281a',
   },
 };

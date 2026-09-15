@@ -4,12 +4,12 @@ import { BarraDeDuasAcoes } from '@/components/ui/BarraDeDuasAcoes';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { CARDIO_GLOW } from '@/components/ui/BrilhoAmbiente';
 import { GlassScreen } from '@/components/ui/GlassScreen';
+import { InfoNote } from '@/components/ui/InfoNote';
 import { Pedestal } from '@/components/ui/Pedestal';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import type { CardioModality } from '../../cardioModalities';
 import { CardioHero } from '../../components/cardio/CardioHero';
-import { InfoNote } from '../../components/cardio/InfoNote';
 import { MetricTile } from '../../components/cardio/MetricTile';
 import { Stage } from '../../components/cardio/Stage';
 import {
