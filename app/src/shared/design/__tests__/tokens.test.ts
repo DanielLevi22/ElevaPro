@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { comOpacidade, coresDoTema } from '../cores';
+import { comOpacidade, coresDoTema, mixColors } from '../cores';
 import { fatorDaTela, REM_BASE } from '../escalaDeTexto';
 import { gerarGlobalCss } from '../globalCss';
 import { escala, hslParaHex, marca, metrica, paleta } from '../tokens';
@@ -95,6 +95,19 @@ describe('comOpacidade', () => {
 
   it('recusa a forma que não sabe compor, com o valor na mensagem', () => {
     expect(() => comOpacidade('rgba(0, 0, 0, 0.5)', 0.2)).toThrow('rgba(0, 0, 0, 0.5)');
+  });
+});
+
+describe('mixColors', () => {
+  // O `color-mix(in srgb, …)` dos objetos-herói: o brilho da esfera é a primária
+  // misturada ao branco, e a sombra dela, ao preto.
+  it('mistura dois hexadecimais em srgb, pelo peso do primeiro', () => {
+    expect(mixColors('#99ff00', '#ffffff', 0.25)).toBe('#e6ffbf');
+    expect(mixColors('#99ff00', '#000000', 0.6)).toBe('#5c9900');
+  });
+
+  it('recusa o que não é #rrggbb, com o valor na mensagem', () => {
+    expect(() => mixColors('rgb(0, 0, 0)', '#ffffff', 0.5)).toThrow('rgb(0, 0, 0)');
   });
 });
 

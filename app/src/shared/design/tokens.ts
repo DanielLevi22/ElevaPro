@@ -168,6 +168,35 @@ type TokensLiterais = {
   sobreMetrica: CorLiteral;
 };
 
+/**
+ * Os tons dos objetos-herói do kit (`hero-objects.js`): o metal escovado da
+ * bicicleta e da esteira, o deque e a tela apagada do painel.
+ *
+ * Não é superfície nem grandeza: é a matéria de uma ilustração, e por isso é
+ * **igual nos dois temas** — o alumínio da bicicleta não fica escuro no claro.
+ * Entra como família para a cor morar aqui, e não como hexadecimal à mão no
+ * desenho do palco.
+ */
+export const illustration = {
+  metalHighlight: '#d7dbe1',
+  metalLight: '#c9ced6',
+  metalMid: '#8e949e',
+  metalShade: '#6b7079',
+  metalDark: '#5d636d',
+  metalDeep: '#4a4f58',
+  deckTop: '#3a3f47',
+  deckBottom: '#15171b',
+  screenLit: '#2b2f36',
+  screenOff: '#0a0b0d',
+  /** Os extremos do `color-mix` que clareia e escurece a primária na esfera. */
+  white: '#ffffff',
+  black: '#000000',
+  /** O preto da sombra de palco: a mesma nos dois temas, como no kit. */
+  stageShadow: 'rgb(0, 0, 0)',
+  /** O lado da roda que não recebe a luz: branco a 12%. */
+  wheelUnlit: 'rgba(255, 255, 255, 0.12)',
+} as const satisfies Record<string, CorLiteral>;
+
 export type Tema = 'claro' | 'escuro';
 
 type Paleta = { hsl: TokensHsl; literais: TokensLiterais };

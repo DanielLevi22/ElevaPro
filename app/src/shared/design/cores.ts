@@ -56,6 +56,29 @@ export function comOpacidade(cor: string, alfa: number): string {
   throw new Error(`comOpacidade: cor "${cor}" não é #rrggbb nem rgb(r, g, b)`);
 }
 
+/**
+ * O `color-mix(in srgb, a peso%, b)` do CSS: cada canal é a média ponderada.
+ *
+ * Os objetos-herói do kit iluminam e sombreiam a primária misturando-a ao
+ * branco e ao preto. Só hexadecimal de seis dígitos: é a forma em que a cor de
+ * token chega dos triplos HSL.
+ *
+ * @example mixColors(cores.primary, illustration.white, 0.25) // a primária clareada
+ */
+export function mixColors(color: string, other: string, weight: number): string {
+  const channels = (hex: string): number[] => {
+    if (!HEX_DE_SEIS.test(hex)) throw new Error(`mixColors: cor "${hex}" não é #rrggbb`);
+    return [1, 3, 5].map((start) => Number.parseInt(hex.slice(start, start + 2), 16));
+  };
+  const [mine, theirs] = [channels(color), channels(other)];
+  const mixed = mine.map((channel, index) =>
+    Math.round(channel * weight + theirs[index] * (1 - weight))
+      .toString(16)
+      .padStart(2, '0')
+  );
+  return `#${mixed.join('')}`;
+}
+
 /** Cores de um tema específico, para quem precisa das duas ao mesmo tempo. */
 export function coresDoTema(tema: Tema): Cores {
   return CORES_POR_TEMA[tema];

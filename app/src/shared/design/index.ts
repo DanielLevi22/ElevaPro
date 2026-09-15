@@ -7,13 +7,14 @@
  * hexadecimal escrito à mão.
  */
 export { type MedidaDoBrilho, useBrilho } from './brilho';
-export { type Cores, comOpacidade, coresDoTema, useCores } from './cores';
+export { type Cores, comOpacidade, coresDoTema, mixColors, useCores } from './cores';
 export { ajustarEscalaDeTexto, fatorDaTela, REM_BASE, useEscala } from './escalaDeTexto';
 export { gerarGlobalCss } from './globalCss';
 export { type PreferenciaDeTema, useTemaStore } from './temaStore';
 export {
   escala,
   hslParaHex,
+  illustration,
   marca,
   type NomeDeCor,
   paleta,
