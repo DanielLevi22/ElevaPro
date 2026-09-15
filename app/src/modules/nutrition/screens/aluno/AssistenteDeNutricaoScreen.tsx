@@ -12,13 +12,13 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
+import { GlassScreen } from '@/components/ui/GlassScreen';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
 import { CartaoDaSugestao } from '../../components/aluno/CartaoDaSugestao';
 import { ConfirmacaoDoRegistro } from '../../components/aluno/ConfirmacaoDoRegistro';
-import { TelaDaNutricao } from '../../components/aluno/TelaDaNutricao';
 import {
   type ConversaDoAssistente,
   useConversaDoAssistente,
@@ -67,10 +67,10 @@ export function AssistenteDeNutricaoScreen({
       className="flex-1"
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <TelaDaNutricao
-        folgaNoFim="rodape"
-        rolagemRef={rolagem}
-        sobreposicao={
+      <GlassScreen
+        bottomSpace="actionBar"
+        scrollRef={rolagem}
+        overlay={
           <CampoDaConversa
             respondendo={conversa.respondendo}
             onEnviar={conversa.enviar}
@@ -98,7 +98,7 @@ export function AssistenteDeNutricaoScreen({
           ))}
         </View>
         <ConfirmacaoDoRegistro registro={registro} />
-      </TelaDaNutricao>
+      </GlassScreen>
     </KeyboardAvoidingView>
   );
 }

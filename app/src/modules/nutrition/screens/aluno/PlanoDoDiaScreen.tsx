@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { Anel } from '@/components/ui/Anel';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
+import { GlassScreen } from '@/components/ui/GlassScreen';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { ROUTES } from '@/navigation/types';
 import { useCores } from '@/shared/design';
@@ -9,7 +10,6 @@ import { TresMacros } from '../../components/aluno/AnelDeMacro';
 import { BotaoDoAssistente } from '../../components/aluno/BotaoDoAssistente';
 import { FaixaDaSemana } from '../../components/aluno/FaixaDaSemana';
 import { LinhaDaRefeicao } from '../../components/aluno/LinhaDaRefeicao';
-import { TelaDaNutricao } from '../../components/aluno/TelaDaNutricao';
 import { type PlanoDoDia, usePlanoDoDia } from '../../hooks/usePlanoDoDia';
 
 /**
@@ -34,9 +34,9 @@ export function PlanoDoDiaScreen({ alunoId, somenteLeitura }: PlanoDoDiaScreenPr
   const plano = usePlanoDoDia(alunoId, { somenteLeitura });
 
   return (
-    <TelaDaNutricao
-      recarregar={{ carregando: plano.puxando, onRecarregar: plano.puxarParaAtualizar }}
-      sobreposicao={<BotaoDoAssistente onPress={() => router.push(ROUTES.NUTRITION.ASSISTANT)} />}
+    <GlassScreen
+      refresh={{ refreshing: plano.puxando, onRefresh: plano.puxarParaAtualizar }}
+      overlay={<BotaoDoAssistente onPress={() => router.push(ROUTES.NUTRITION.ASSISTANT)} />}
     >
       <View className="flex-row items-center justify-between pt-1.5">
         <View className="min-w-0 flex-1">
@@ -61,7 +61,7 @@ export function PlanoDoDiaScreen({ alunoId, somenteLeitura }: PlanoDoDiaScreenPr
         </View>
       </View>
       <ConteudoDoPlano plano={plano} />
-    </TelaDaNutricao>
+    </GlassScreen>
   );
 }
 

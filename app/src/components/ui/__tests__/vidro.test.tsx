@@ -4,7 +4,12 @@ import Svg, { Circle } from 'react-native-svg';
 import { coresDoTema } from '@/shared/design';
 import { AlvoDoVidro } from '../AlvoDoVidro';
 import { Anel } from '../Anel';
-import { BRILHO_DA_NUTRICAO, BrilhoAmbiente, paradasDoBrilho } from '../BrilhoAmbiente';
+import {
+  BRILHO_DA_NUTRICAO,
+  BrilhoAmbiente,
+  CARDIO_GLOW,
+  paradasDoBrilho,
+} from '../BrilhoAmbiente';
 import { reducaoParaOSigma, Vidro } from '../Vidro';
 
 /**
@@ -363,6 +368,14 @@ describe('BrilhoAmbiente', () => {
     const estilo = getByTestId('brilho-ambiente', { includeHiddenElements: true }).props.style;
 
     expect(estilo.top + estilo.height / 2).toBe(150);
+  });
+
+  it('no cardio, a luz fica no topo, mais baixa que a da nutrição', () => {
+    // O kit do cardio põe o brilho a top −40 com altura 460: centro a 190.
+    const { getByTestId } = render(<BrilhoAmbiente receita={CARDIO_GLOW} />);
+    const estilo = getByTestId('brilho-ambiente', { includeHiddenElements: true }).props.style;
+
+    expect(estilo.top + estilo.height / 2).toBe(190);
   });
 
   it('não intercepta toque nem leitor de tela', () => {

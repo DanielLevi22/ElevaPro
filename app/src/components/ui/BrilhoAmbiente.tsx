@@ -150,6 +150,38 @@ export const BRILHO_DA_NUTRICAO: ReceitaDoBrilho = {
   ],
 };
 
+/**
+ * A luz do fluxo de cardio, também no topo, mais larga e mais forte:
+ *
+ *     left:-20%; right:-20%; top:-40px; height:460px;
+ *     radial-gradient(50% 50% at 50% 50%, primary/.2 0%, transparent 70%);
+ *     filter: blur(34px)          (claro: primary/.14)
+ *
+ * Medida pelo mesmo método, que reproduz a receita da nutrição a menos de 0,001:
+ * centro a 190 (−40 + 230), pico a 75,6% do declarado, e a luz alcança 1% a 232
+ * na horizontal (195 ± 232 de 390 é −9,49% de cada lado) e 206 na vertical; os
+ * dois perfis coincidem a menos de 0,04.
+ */
+export const CARDIO_GLOW: ReceitaDoBrilho = {
+  centro: 190,
+  alcanceVertical: 206,
+  largura: 'left-[-9.49%] right-[-9.49%]',
+  pico: { escuro: 0.2 * 0.756, claro: 0.14 * 0.756 },
+  perfil: [
+    [0, 1],
+    [0.1, 0.966],
+    [0.2, 0.878],
+    [0.3, 0.75],
+    [0.4, 0.608],
+    [0.5, 0.457],
+    [0.6, 0.311],
+    [0.7, 0.186],
+    [0.8, 0.089],
+    [0.9, 0.035],
+    [1, 0],
+  ],
+};
+
 interface BrilhoAmbienteProps {
   /**
    * Onde fica o **topo dos blocos de métrica**, em dp a partir do topo da tela.

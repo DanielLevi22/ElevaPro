@@ -5,11 +5,11 @@ import { BarraDeDuasAcoes } from '@/components/ui/BarraDeDuasAcoes';
 import { BarraDeProgresso } from '@/components/ui/BarraDeProgresso';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { CabecalhoSobreFoto } from '@/components/ui/CabecalhoSobreFoto';
+import { GlassScreen } from '@/components/ui/GlassScreen';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
-import { TelaDaNutricao } from '../../components/aluno/TelaDaNutricao';
 import {
   type ListaDoAluno,
   PERIODOS,
@@ -40,9 +40,9 @@ export function ListaDeComprasScreen({
   const lista = useListaDeCompras(alunoId, { obterToken });
 
   return (
-    <TelaDaNutricao
-      folgaNoFim="rodape"
-      sobreposicao={
+    <GlassScreen
+      bottomSpace="actionBar"
+      overlay={
         <BarraDeDuasAcoes
           secundaria={{
             rotulo: 'Limpar',
@@ -100,7 +100,7 @@ export function ListaDeComprasScreen({
             : 'Sem plano alimentar, não há lista.'}
         </Text>
       ) : null}
-    </TelaDaNutricao>
+    </GlassScreen>
   );
 }
 

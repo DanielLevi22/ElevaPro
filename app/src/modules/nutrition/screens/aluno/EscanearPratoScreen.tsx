@@ -7,12 +7,12 @@ import { Anel } from '@/components/ui/Anel';
 import { BarraDeDuasAcoes } from '@/components/ui/BarraDeDuasAcoes';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { Chip } from '@/components/ui/Chip';
+import { GlassScreen } from '@/components/ui/GlassScreen';
 import { Vidro } from '@/components/ui/Vidro';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
 import { TresMacros } from '../../components/aluno/AnelDeMacro';
 import { ComponentesDoPrato } from '../../components/aluno/ComponentesDoPrato';
 import { ConfirmacaoDoRegistro } from '../../components/aluno/ConfirmacaoDoRegistro';
-import { TelaDaNutricao } from '../../components/aluno/TelaDaNutricao';
 import { type ScanDoPrato, useScanDoPrato } from '../../hooks/useScanDoPrato';
 import { percentualDaMeta } from '../../services/consumoDoDia';
 
@@ -45,7 +45,7 @@ export function EscanearPratoScreen({
   const scan = useScanDoPrato(alunoId, { somenteLeitura, obterToken });
 
   return (
-    <TelaDaNutricao semRespiroNoTopo folgaNoFim="rodape" sobreposicao={<AcoesDoScan scan={scan} />}>
+    <GlassScreen flushTop bottomSpace="actionBar" overlay={<AcoesDoScan scan={scan} />}>
       <FotoDoPrato scan={scan} onVoltar={router.back} />
       <View className="-mt-[1.625rem] rounded-t-[1.75rem] bg-background px-[1.125rem] pt-5">
         {scan.resultado ? (
@@ -59,7 +59,7 @@ export function EscanearPratoScreen({
         )}
       </View>
       <ConfirmacaoDoRegistro registro={scan.registro} />
-    </TelaDaNutricao>
+    </GlassScreen>
   );
 }
 

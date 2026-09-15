@@ -3,12 +3,12 @@ import { useRouter } from 'expo-router';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { BarraDeDuasAcoes } from '@/components/ui/BarraDeDuasAcoes';
 import { CabecalhoSobreFoto } from '@/components/ui/CabecalhoSobreFoto';
+import { GlassScreen } from '@/components/ui/GlassScreen';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
 import { useCores, useEscala } from '@/shared/design';
 import { IconeDaRefeicao } from '../../components/aluno/IconeDaRefeicao';
-import { TelaDaNutricao } from '../../components/aluno/TelaDaNutricao';
 import { type TrocaDoAlimento, useTrocaDoAlimento } from '../../hooks/useTrocaDoAlimento';
 import { type ItemDoPrato, macrosDosItens } from '../../services/consumoDoDia';
 import type { Equivalente } from '../../services/equivalenciaDaTroca';
@@ -41,9 +41,9 @@ export function SubstituirAlimentoScreen(props: SubstituirAlimentoScreenProps) {
   };
 
   return (
-    <TelaDaNutricao
-      folgaNoFim="rodape"
-      sobreposicao={
+    <GlassScreen
+      bottomSpace="actionBar"
+      overlay={
         <BarraDeDuasAcoes
           secundaria={{ rotulo: 'Cancelar', icone: 'close', onPress: router.back }}
           principal={{
@@ -69,7 +69,7 @@ export function SubstituirAlimentoScreen(props: SubstituirAlimentoScreenProps) {
           Esse alimento não está mais na refeição.
         </Text>
       )}
-    </TelaDaNutricao>
+    </GlassScreen>
   );
 }
 

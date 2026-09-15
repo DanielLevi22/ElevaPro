@@ -2,13 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Text, View } from 'react-native';
 import { CabecalhoSobreFoto } from '@/components/ui/CabecalhoSobreFoto';
+import { GlassScreen } from '@/components/ui/GlassScreen';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import { useNomeDoEspecialista } from '@/hooks/useNomeDoEspecialista';
 import { cn } from '@/lib/utils';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
 import { HidratacaoDeHoje } from '../../components/aluno/HidratacaoDeHoje';
-import { TelaDaNutricao } from '../../components/aluno/TelaDaNutricao';
 import { type AderenciaDoAluno, useAderenciaDoAluno } from '../../hooks/useAderenciaDoAluno';
 import { useAguaDoDia } from '../../hooks/useAguaDoDia';
 import type { DiaDeAderencia } from '../../services/aderenciaDaSemana';
@@ -36,7 +36,7 @@ export function AderenciaDaSemanaScreen({
   const agua = useAguaDoDia(alunoId, { somenteLeitura });
 
   return (
-    <TelaDaNutricao>
+    <GlassScreen>
       <View className="pt-1.5">
         <CabecalhoSobreFoto
           sobrelinha={`Semana ${intervaloDaSemana(semana.inicio, semana.fim)}`}
@@ -51,7 +51,7 @@ export function AderenciaDaSemanaScreen({
       />
       <HidratacaoDeHoje agua={agua} />
       <NotaDoEspecialista nota={semana.notaDoEspecialista} especialistaId={semana.especialistaId} />
-    </TelaDaNutricao>
+    </GlassScreen>
   );
 }
 
