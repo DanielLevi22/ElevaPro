@@ -3,7 +3,7 @@ import {
   elapsedMs,
   goalProgress,
   initialCardioSession,
-  lapDurationsMs,
+  lapSummaries,
   transitionCardio,
 } from '../cardioSessionMachine';
 
@@ -102,19 +102,48 @@ describe('sessão de cardio — pausa, voltas e meta', () => {
     expect(elapsedMs(state, T0 + 50 * MINUTE)).toBe(10 * MINUTE);
   });
 
-  it('cada volta guarda o tempo da sessão, e as durações saem das marcas', () => {
+  it('cada volta guarda o tempo e a distância, e o resumo sai das marcas', () => {
     const state = apply(
       running(),
-      { type: 'lap', now: T0 + 6 * MINUTE },
-      { type: 'lap', now: T0 + 13 * MINUTE },
+      { type: 'lap', now: T0 + 6 * MINUTE, distanceMeters: 1200 },
+      { type: 'lap', now: T0 + 13 * MINUTE, distanceMeters: 2600 },
       { type: 'finish', now: T0 + 20 * MINUTE }
     );
-    expect(lapDurationsMs(state)).toEqual([6 * MINUTE, 7 * MINUTE, 7 * MINUTE]);
+    expect(lapSummaries(state, 4000)).toEqual([
+      { durationMs: 6 * MINUTE, distanceMeters: 1200 },
+      { durationMs: 7 * MINUTE, distanceMeters: 1400 },
+      { durationMs: 7 * MINUTE, distanceMeters: 1400 },
+    ]);
+  });
+
+  it('sem gps, a volta tem só a duração', () => {
+    const state = apply(
+      running(),
+      { type: 'lap', now: T0 + 6 * MINUTE, distanceMeters: null },
+      { type: 'finish', now: T0 + 10 * MINUTE }
+    );
+    expect(lapSummaries(state, null)).toEqual([
+      { durationMs: 6 * MINUTE, distanceMeters: null },
+      { durationMs: 4 * MINUTE, distanceMeters: null },
+    ]);
+  });
+
+  it('as pausas ficam guardadas com início e fim, para o percurso descontar', () => {
+    const state = apply(
+      running(),
+      { type: 'pause', now: T0 + 10 * MINUTE },
+      { type: 'resume', now: T0 + 15 * MINUTE },
+      { type: 'pause', now: T0 + 20 * MINUTE }
+    );
+    expect(state.pauses).toEqual([
+      { start: T0 + 10 * MINUTE, end: T0 + 15 * MINUTE },
+      { start: T0 + 20 * MINUTE, end: null },
+    ]);
   });
 
   it('volta só se marca com a sessão correndo', () => {
     const paused = apply(running(), { type: 'pause', now: T0 + MINUTE });
-    expect(apply(paused, { type: 'lap', now: T0 + 2 * MINUTE })).toBe(paused);
+    expect(apply(paused, { type: 'lap', now: T0 + 2 * MINUTE, distanceMeters: null })).toBe(paused);
   });
 
   it('a meta é batida uma vez só, no instante em que o tempo a alcança', () => {

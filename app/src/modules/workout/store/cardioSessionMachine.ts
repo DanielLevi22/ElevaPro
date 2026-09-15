@@ -34,12 +34,31 @@ export interface CardioSessionState {
   stopwatch: Cronometro;
   startedAt: number | null;
   finishedAt: number | null;
-  /** Tempo da sessão, em ms, no instante de cada volta marcada. */
-  lapMarksMs: number[];
+  /** Cada volta marcada: o tempo da sessão e a distância acumulada naquele instante. */
+  lapMarks: LapMark[];
+  /** Os intervalos em pausa, em instantes. O percurso os desconta das parciais. */
+  pauses: PauseInterval[];
   /** Quando a meta foi batida. Guardado para a vibração disparar uma vez só. */
   goalReachedAt: number | null;
   /** O percurso aberto por cima da sessão. */
   routeOpen: boolean;
+}
+
+export interface LapMark {
+  elapsedMs: number;
+  /** `null` na modalidade sem GPS. */
+  distanceMeters: number | null;
+}
+
+export interface PauseInterval {
+  start: number;
+  /** `null` enquanto a sessão está pausada. */
+  end: number | null;
+}
+
+export interface LapSummary {
+  durationMs: number;
+  distanceMeters: number | null;
 }
 
 type NoPayload = Record<never, never>;
@@ -53,7 +72,7 @@ interface ActionPayloads {
   start: { now: number };
   pause: { now: number };
   resume: { now: number };
-  lap: { now: number };
+  lap: { now: number; distanceMeters: number | null };
   tick: { now: number };
   openRoute: NoPayload;
   closeRoute: NoPayload;
@@ -80,7 +99,8 @@ export function initialCardioSession(): CardioSessionState {
     stopwatch: cronometroParado(),
     startedAt: null,
     finishedAt: null,
-    lapMarksMs: [],
+    lapMarks: [],
+    pauses: [],
     goalReachedAt: null,
     routeOpen: false,
   };
@@ -107,15 +127,28 @@ export function goalProgress(state: CardioSessionState, now: number): number | n
 }
 
 /**
- * Duração de cada volta. Com a sessão finalizada, o trecho depois da última marca
- * entra como a volta final.
+ * Duração e distância de cada volta. Com a sessão finalizada, o trecho depois da
+ * última marca entra como a volta final, medido até a distância total.
  *
- * @example lapDurationsMs(session) // [372000, 362000, 382000]
+ * @example lapSummaries(session, 7400) // [{ durationMs: 372000, distanceMeters: 2500 }, ...]
  */
-export function lapDurationsMs(state: CardioSessionState): number[] {
-  const total = state.finishedAt === null ? null : state.stopwatch.acumuladoMs;
-  const marks = total === null ? state.lapMarksMs : [...state.lapMarksMs, total];
-  return marks.map((mark, index) => mark - (index === 0 ? 0 : marks[index - 1]));
+export function lapSummaries(
+  state: CardioSessionState,
+  totalDistanceMeters: number | null
+): LapSummary[] {
+  const finalMark: LapMark[] =
+    state.finishedAt === null
+      ? []
+      : [{ elapsedMs: state.stopwatch.acumuladoMs, distanceMeters: totalDistanceMeters }];
+  const marks = [...state.lapMarks, ...finalMark];
+  return marks.map((mark, index) => {
+    const previous = marks[index - 1];
+    return {
+      durationMs: mark.elapsedMs - (previous?.elapsedMs ?? 0),
+      distanceMeters:
+        mark.distanceMeters === null ? null : mark.distanceMeters - (previous?.distanceMeters ?? 0),
+    };
+  });
 }
 
 const isRunning = (state: CardioSessionState): boolean =>
@@ -137,11 +170,40 @@ function back(state: CardioSessionState): CardioSessionState {
   return state;
 }
 
-function lap(state: CardioSessionState, now: number): CardioSessionState {
+function lap(
+  state: CardioSessionState,
+  now: number,
+  distanceMeters: number | null
+): CardioSessionState {
   if (state.moment !== 'live') return state;
   const mark = elapsedMs(state, now);
-  const last = state.lapMarksMs[state.lapMarksMs.length - 1] ?? 0;
-  return mark > last ? { ...state, lapMarksMs: [...state.lapMarksMs, mark] } : state;
+  const last = state.lapMarks[state.lapMarks.length - 1]?.elapsedMs ?? 0;
+  if (mark <= last) return state;
+  return { ...state, lapMarks: [...state.lapMarks, { elapsedMs: mark, distanceMeters }] };
+}
+
+function closeOpenPause(pauses: PauseInterval[], now: number): PauseInterval[] {
+  return pauses.map((pause) => (pause.end === null ? { ...pause, end: now } : pause));
+}
+
+function pause(state: CardioSessionState, now: number): CardioSessionState {
+  if (state.moment !== 'live') return state;
+  return {
+    ...state,
+    moment: 'paused',
+    stopwatch: pausarCronometro(state.stopwatch, now),
+    pauses: [...state.pauses, { start: now, end: null }],
+  };
+}
+
+function resume(state: CardioSessionState, now: number): CardioSessionState {
+  if (state.moment !== 'paused') return state;
+  return {
+    ...state,
+    moment: 'live',
+    stopwatch: soltarCronometro(state.stopwatch, now),
+    pauses: closeOpenPause(state.pauses, now),
+  };
 }
 
 function tick(state: CardioSessionState, now: number): CardioSessionState {
@@ -157,6 +219,7 @@ function finish(state: CardioSessionState, now: number): CardioSessionState {
     finishedAt: now,
     routeOpen: false,
     stopwatch: pausarCronometro(state.stopwatch, now),
+    pauses: closeOpenPause(state.pauses, now),
   };
 }
 
@@ -173,15 +236,9 @@ const TRANSITIONS: {
     state.moment === 'goal' ? { ...state, moment: 'modality', goalMinutes: minutes } : state,
   back,
   start: (state, { now }) => start(state, now),
-  pause: (state, { now }) =>
-    state.moment === 'live'
-      ? { ...state, moment: 'paused', stopwatch: pausarCronometro(state.stopwatch, now) }
-      : state,
-  resume: (state, { now }) =>
-    state.moment === 'paused'
-      ? { ...state, moment: 'live', stopwatch: soltarCronometro(state.stopwatch, now) }
-      : state,
-  lap: (state, { now }) => lap(state, now),
+  pause: (state, { now }) => pause(state, now),
+  resume: (state, { now }) => resume(state, now),
+  lap: (state, { now, distanceMeters }) => lap(state, now, distanceMeters),
   tick: (state, { now }) => tick(state, now),
   openRoute: (state) => (isRunning(state) ? { ...state, routeOpen: true } : state),
   closeRoute: (state) => (state.routeOpen ? { ...state, routeOpen: false } : state),

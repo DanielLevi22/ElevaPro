@@ -84,17 +84,18 @@ function temPrecisaoUtil(posicao: Posicao): boolean {
   return posicao.accuracy == null || posicao.accuracy <= PRECISAO_MINIMA_METROS;
 }
 
-/**
- * Distância e ritmo de uma corrida, ignorando o ruído do GPS.
- *
- * @example
- * const { distanceMeters, paceSecondsPerKm } = medirPercurso(posicoes);
- */
-export function medirPercurso(posicoes: Posicao[]): Percurso {
-  const confiaveis = posicoes.filter(temPrecisaoUtil);
-  if (confiaveis.length < 2) return PERCURSO_VAZIO;
+interface TrustedStep {
+  from: Posicao;
+  to: Posicao;
+  meters: number;
+}
 
-  let distanceMeters = 0;
+/**
+ * Os trechos confiáveis de uma corrida, já sem o ruído do GPS: sem fix impreciso e
+ * sem salto de satélite. É a mesma régua para a distância total e para as parciais.
+ */
+function trustedSteps(confiaveis: Posicao[]): TrustedStep[] {
+  const steps: TrustedStep[] = [];
   let anterior = confiaveis[0];
 
   for (const atual of confiaveis.slice(1)) {
@@ -106,10 +107,23 @@ export function medirPercurso(posicoes: Posicao[]): Percurso {
     // esteve, em vez de somar o salto de ida e o de volta.
     if (segundos <= 0 || trecho / segundos > VELOCIDADE_MAXIMA_M_POR_S) continue;
 
-    distanceMeters += trecho;
+    steps.push({ from: anterior, to: atual, meters: trecho });
     anterior = atual;
   }
+  return steps;
+}
 
+/**
+ * Distância e ritmo de uma corrida, ignorando o ruído do GPS.
+ *
+ * @example
+ * const { distanceMeters, paceSecondsPerKm } = medirPercurso(posicoes);
+ */
+export function medirPercurso(posicoes: Posicao[]): Percurso {
+  const confiaveis = posicoes.filter(temPrecisaoUtil);
+  if (confiaveis.length < 2) return PERCURSO_VAZIO;
+
+  const distanceMeters = trustedSteps(confiaveis).reduce((total, step) => total + step.meters, 0);
   if (distanceMeters < DISTANCIA_MINIMA_PARA_RITMO) {
     return { distanceMeters, paceSecondsPerKm: null };
   }
@@ -121,4 +135,55 @@ export function medirPercurso(posicoes: Posicao[]): Percurso {
   const persistivel = ritmo >= RITMO_MINIMO_S_POR_KM && ritmo <= RITMO_MAXIMO_S_POR_KM;
 
   return { distanceMeters, paceSecondsPerKm: persistivel ? ritmo : null };
+}
+
+/** Um intervalo em pausa, em instantes. `end` nulo é pausa ainda aberta. */
+export interface PausedRange {
+  start: number;
+  end: number | null;
+}
+
+export interface KmSplit {
+  km: number;
+  /** Tempo em movimento do quilômetro, sem as pausas. */
+  seconds: number;
+}
+
+function pausedMsBetween(from: number, to: number, pauses: PausedRange[]): number {
+  return pauses.reduce((total, pause) => {
+    const overlap = Math.min(to, pause.end ?? to) - Math.max(from, pause.start);
+    return total + Math.max(0, overlap);
+  }, 0);
+}
+
+/** O instante em que o trecho cruza a distância pedida, por interpolação linear. */
+function crossingInstant(step: TrustedStep, metersIntoStep: number): number {
+  const fraction = step.meters === 0 ? 0 : metersIntoStep / step.meters;
+  return step.from.timestamp + (step.to.timestamp - step.from.timestamp) * fraction;
+}
+
+/**
+ * Uma parcial a cada quilômetro completo, com o tempo em movimento de cada um. O
+ * quilômetro incompleto do fim não entra. As posições entram e não saem: só o tempo
+ * por quilômetro é devolvido (issue #278).
+ *
+ * @example
+ * kmSplits(positions, session.pauses) // [{ km: 1, seconds: 342 }, { km: 2, seconds: 331 }]
+ */
+export function kmSplits(posicoes: Posicao[], pauses: PausedRange[]): KmSplit[] {
+  const steps = trustedSteps(posicoes.filter(temPrecisaoUtil));
+  const splits: KmSplit[] = [];
+  let covered = 0;
+  let lastCrossing = steps[0]?.from.timestamp ?? 0;
+
+  for (const step of steps) {
+    while (covered + step.meters >= (splits.length + 1) * 1000) {
+      const crossing = crossingInstant(step, (splits.length + 1) * 1000 - covered);
+      const movingMs = crossing - lastCrossing - pausedMsBetween(lastCrossing, crossing, pauses);
+      splits.push({ km: splits.length + 1, seconds: Math.round(movingMs / 1000) });
+      lastCrossing = crossing;
+    }
+    covered += step.meters;
+  }
+  return splits;
 }
