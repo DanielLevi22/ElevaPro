@@ -103,6 +103,35 @@ export const SAUDE: Finalidade = { tipo: CONSENT_HEALTH_COLLECTION, versao: POLI
  */
 export const TECNICA: Finalidade = { tipo: CONSENT_TECHNIQUE_ANALYSIS, versao: "1.0" };
 
+export type ConsentState = "granted" | "outdated" | "revoked" | "missing";
+
+export interface ConsentStatus {
+  state: ConsentState;
+  givenAt: string | null;
+  policyVersion: string | null;
+}
+
+async function readConsentStatus(
+  supabase: SupabaseClient,
+  studentId: string,
+  finalidade: Finalidade,
+): Promise<ConsentStatus> {
+  const { data, error } = await supabase
+    .from("student_consents")
+    .select("given_at, revoked_at, policy_version")
+    .eq("student_id", studentId)
+    .eq("consent_type", finalidade.tipo)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data?.given_at) return { state: "missing", givenAt: null, policyVersion: null };
+  const found = { givenAt: data.given_at, policyVersion: data.policy_version };
+  // Retirado vale mais que a versão: quem retirou não está "pendente de aceitar".
+  if (data.revoked_at) return { state: "revoked", ...found };
+  if (data.policy_version !== finalidade.versao) return { state: "outdated", ...found };
+  return { state: "granted", ...found };
+}
+
 export const createHealthService = (supabase: SupabaseClient) => ({
   /**
    * Verifica o consentimento de coleta de dados de saúde do aluno **na versão
@@ -129,19 +158,19 @@ export const createHealthService = (supabase: SupabaseClient) => ({
   hasCollectionConsent: async (
     studentId: string,
     finalidade: Finalidade = SAUDE,
-  ): Promise<boolean> => {
-    const { data, error } = await supabase
-      .from("student_consents")
-      .select("given_at, revoked_at, policy_version")
-      .eq("student_id", studentId)
-      .eq("consent_type", finalidade.tipo)
-      .maybeSingle();
+  ): Promise<boolean> =>
+    (await readConsentStatus(supabase, studentId, finalidade)).state === "granted",
 
-    if (error) throw error;
-    if (!data) return false;
-    if (data.policy_version !== finalidade.versao) return false;
-    return Boolean(data.given_at) && !data.revoked_at;
-  },
+  /**
+   * Em que pé está o aceite, para o health check dizer ao Student o que fazer:
+   * aceito na versão vigente (com a data), pendente de uma versão nova, retirado,
+   * ou nunca dado. A regra de "aceito" é a mesma de `hasCollectionConsent`.
+   *
+   * @example
+   * const { state, givenAt } = await health.getConsentStatus(userId);
+   */
+  getConsentStatus: (studentId: string, finalidade: Finalidade = SAUDE): Promise<ConsentStatus> =>
+    readConsentStatus(supabase, studentId, finalidade),
 
   /**
    * Registra o consentimento de coleta na versão vigente. Reativa um

@@ -1,11 +1,18 @@
-import { initialize, readRecords } from 'react-native-health-connect';
-import { healthConnectReader } from '../healthConnect';
+import {
+  getGrantedPermissions,
+  initialize,
+  readRecords,
+  revokeAllPermissions,
+} from 'react-native-health-connect';
+import { healthConnectPlatform, healthConnectReader } from '../healthConnect';
 
 jest.mock('react-native-health-connect', () => ({
   initialize: jest.fn(),
   getGrantedPermissions: jest.fn(),
   readRecords: jest.fn(),
   requestPermission: jest.fn(),
+  revokeAllPermissions: jest.fn(),
+  openHealthConnectSettings: jest.fn(),
 }));
 
 const mockInitialize = initialize as jest.Mock;
@@ -61,5 +68,26 @@ describe('leitor do Health Connect', () => {
 
     await expect(healthConnectReader.hasSleep(RUN)).resolves.toBe(false);
     expect(mockReadRecords).not.toHaveBeenCalled();
+  });
+});
+
+describe('conexão com o Health Connect', () => {
+  it('a leitura em segundo plano só conta como concedida com a permissão própria', async () => {
+    (getGrantedPermissions as jest.Mock).mockResolvedValue([
+      { accessType: 'read', recordType: 'Steps' },
+    ]);
+    await expect(healthConnectPlatform.backgroundReadStatus()).resolves.toBe('denied');
+
+    (getGrantedPermissions as jest.Mock).mockResolvedValue([
+      { accessType: 'read', recordType: 'BackgroundAccessPermission' },
+    ]);
+    await expect(healthConnectPlatform.backgroundReadStatus()).resolves.toBe('granted');
+  });
+
+  // Desconectar tem de tirar do app o que ele recebeu, e não só esconder o relógio
+  // da tela: sem revogar, a leitura seguiria na próxima abertura.
+  it('desconectar revoga as permissões do app', async () => {
+    await expect(healthConnectPlatform.disconnect()).resolves.toBe('revoked');
+    expect(revokeAllPermissions).toHaveBeenCalled();
   });
 });

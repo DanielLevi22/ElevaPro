@@ -1,13 +1,20 @@
 import {
   getGrantedPermissions,
   initialize,
+  openHealthConnectSettings,
   readRecords,
   requestPermission,
+  revokeAllPermissions,
 } from 'react-native-health-connect';
 import { registrarAviso } from '@/lib/registro';
 import { ASLEEP_STAGES, type DailyAggregate, sleepRange, todayRange } from './daily';
 import { healthConnectReadTypes } from './permissions';
-import type { ReadContext, WearablePlatform } from './platform';
+import type {
+  BackgroundReadStatus,
+  DisconnectResult,
+  ReadContext,
+  WearablePlatform,
+} from './platform';
 import { plausibleInteger, RESTING_BPM, SLEEP_MINUTES } from './plausible';
 import { minutesBetween } from './time';
 import type { Capability, TimeRange, WearableReader } from './types';
@@ -207,6 +214,29 @@ async function requestBackgroundRead(): Promise<void> {
   }
 }
 
+async function backgroundReadStatus(): Promise<BackgroundReadStatus> {
+  if (!(await isAvailable())) return 'denied';
+  const granted = await getGrantedPermissions();
+  const hasBackground = granted.some(
+    (permission) =>
+      permission.recordType === 'BackgroundAccessPermission' && permission.accessType === 'read'
+  );
+  return hasBackground ? 'granted' : 'denied';
+}
+
+async function openSettings(): Promise<void> {
+  openHealthConnectSettings();
+}
+
+/**
+ * Revoga tudo o que o app recebeu. O Health Connect aplica a revogação quando o app
+ * reinicia, mas a partir daqui nenhuma leitura nova é pedida.
+ */
+async function disconnect(): Promise<DisconnectResult> {
+  if (await isAvailable()) await revokeAllPermissions();
+  return 'revoked';
+}
+
 /** O Health Connect, no Android. */
 export const healthConnectPlatform: WearablePlatform = {
   name: 'health_connect',
@@ -216,4 +246,7 @@ export const healthConnectPlatform: WearablePlatform = {
   requestBackgroundRead,
   ensureTodayAccess,
   readToday,
+  backgroundReadStatus,
+  openSettings,
+  disconnect,
 };

@@ -7,6 +7,15 @@ import type { Capability, WearableReader } from './types';
  */
 export type ReadContext = 'foreground' | 'background';
 
+/** A leitura em segundo plano: concedida, negada, ou algo que a plataforma não separa. */
+export type BackgroundReadStatus = 'granted' | 'denied' | 'not_applicable';
+
+/**
+ * O que "desconectar" conseguiu: o Health Connect revoga as permissões do app; o
+ * HealthKit não deixa o app revogar, e o que resta é abrir os Ajustes.
+ */
+export type DisconnectResult = 'revoked' | 'opened_settings';
+
 /**
  * Tudo o que o app pede a uma plataforma de saúde. O Health Connect e o HealthKit
  * implementam esta interface, e só `currentPlatform` escolhe entre os dois.
@@ -27,4 +36,8 @@ export interface WearablePlatform {
   /** Deixa a leitura do dia pronta, pedindo acesso onde a plataforma o faz sem diálogo novo. */
   ensureTodayAccess(context: ReadContext): Promise<boolean>;
   readToday(): Promise<DailyAggregate>;
+  backgroundReadStatus(): Promise<BackgroundReadStatus>;
+  /** A tela do sistema onde o Student muda o que concedeu. */
+  openSettings(): Promise<void>;
+  disconnect(): Promise<DisconnectResult>;
 }
