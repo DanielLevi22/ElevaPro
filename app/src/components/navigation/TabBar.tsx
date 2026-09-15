@@ -22,9 +22,11 @@ type Icone = keyof typeof MaterialCommunityIcons.glyphMap;
  * A tab bar do kit de vidro: faixa inteira no rodapé, fundo translúcido com
  * blur, fio de cima e as abas com ícone e rótulo.
  *
- * O kit tem cinco abas e nenhum botão central. Aqui são quatro e o "+" no meio
+ * O kit tem cinco abas e nenhum botão central. Aqui o "+" fica no meio
  * (`BotaoDeAcoes`), por decisão de produto (#295); o Perfil, a quinta aba do
- * kit, segue pelo menu do "+". As abas são as do kit para cada papel — o aluno
+ * kit, segue pelo menu do "+". O aluno tem cinco abas (Saúde entrou na #308) e o
+ * especialista quatro: cada lado do "+" ocupa metade da barra, para ele ficar no
+ * centro com dois itens de um lado e três do outro. As abas são as do kit para cada papel — o aluno
  * vê Ranking, e não Progresso, que abre pelo bloco de métricas da tela inicial.
  *
  * @example
@@ -44,6 +46,10 @@ const DO_ALUNO: Record<string, Aba> = {
     icone: 'silverware-fork-knife',
     iconeAtivo: 'silverware-fork-knife',
   },
+  // A saúde e o relógio ganharam aba própria (#308): é onde o aluno vê a
+  // prontidão e resolve o que falta no relógio, e escondido na tela inicial ficava
+  // a um bloco de distância de quem mais precisa dele.
+  saude: { rotulo: 'Saúde', icone: 'watch-variant', iconeAtivo: 'watch' },
   ranking: { rotulo: 'Ranking', icone: 'trophy-outline', iconeAtivo: 'trophy' },
 };
 
@@ -104,13 +110,17 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         className="flex-row items-start justify-around px-2 pt-3"
         style={[{ paddingBottom: insets.bottom }, estiloDasAbas]}
       >
-        {rotas.slice(0, 2).map(aba)}
+        <View pointerEvents="box-none" className="flex-1 flex-row items-start">
+          {rotas.slice(0, 2).map(aba)}
+        </View>
         <BotaoDeAcoes
           comCardio={ehAluno}
           arrastando={arrastando}
           onAcao={(acao) => executar(navigation, acao)}
         />
-        {rotas.slice(2, 4).map(aba)}
+        <View pointerEvents="box-none" className="flex-1 flex-row items-start">
+          {rotas.slice(2).map(aba)}
+        </View>
       </Animated.View>
     </View>
   );
