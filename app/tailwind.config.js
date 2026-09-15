@@ -101,6 +101,11 @@ module.exports = {
         /** Cor por grandeza: a mesma no ícone, no anel e na barra da métrica. */
         /** O check sobre a cor de métrica: igual nos dois temas. */
         'sobre-metrica': literal('sobre-metrica'),
+        /** O perigo do kit de saúde: o botão e o texto de retirar uma autorização. */
+        perigo: literal('perigo'),
+        'texto-perigo': literal('texto-perigo'),
+        'sobre-perigo': literal('sobre-perigo'),
+        'veu-da-folha': literal('veu-da-folha'),
         /** Texto de macro: escurece no claro para passar contraste sobre o vidro. */
         'texto-macro': {
           proteina: literal('texto-proteina'),
