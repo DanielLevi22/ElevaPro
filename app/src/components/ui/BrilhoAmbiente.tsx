@@ -182,6 +182,21 @@ export const CARDIO_GLOW: ReceitaDoBrilho = {
   ],
 };
 
+/**
+ * A luz do fluxo de saúde: a geometria do cardio, um pouco mais fraca.
+ *
+ *     left:-20%; right:-20%; top:-40px; height:460px;
+ *     radial-gradient(50% 50% at 50% 50%, primary/.18 0%, transparent 70%);
+ *     filter: blur(34px)          (claro: primary/.12)
+ *
+ * Mesmo cone e mesmo blur, então o perfil e o alcance medidos para o cardio valem;
+ * muda só o pico.
+ */
+export const HEALTH_GLOW: ReceitaDoBrilho = {
+  ...CARDIO_GLOW,
+  pico: { escuro: 0.18 * 0.756, claro: 0.12 * 0.756 },
+};
+
 interface BrilhoAmbienteProps {
   /**
    * Onde fica o **topo dos blocos de métrica**, em dp a partir do topo da tela.

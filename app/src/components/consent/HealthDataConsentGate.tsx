@@ -1,10 +1,12 @@
 import { createHealthService, POLICY_VERSION } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
+import { useConsentPromptStore } from './consentPromptStore';
 
 /**
  * Pede o consentimento de dados de saúde na versão vigente da política, e
@@ -52,7 +54,12 @@ export function HealthDataConsentGate({ studentId, isStudent }: HealthDataConsen
   const insets = useSafeAreaInsets();
   const [precisaConsentir, setPrecisaConsentir] = useState(false);
   const [gravando, setGravando] = useState(false);
+  const queryClient = useQueryClient();
+  // Uma tela que pede o aceite (o health check) muda este número e a consulta roda
+  // de novo: a folha aparece só se o aceite de fato faltar.
+  const pedidos = useConsentPromptStore((state) => state.requests);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `pedidos` não é lido no efeito; mudar é o próprio pedido para conferir o aceite de novo.
   useEffect(() => {
     if (!studentId || !isStudent) {
       setPrecisaConsentir(false);
@@ -73,7 +80,7 @@ export function HealthDataConsentGate({ studentId, isStudent }: HealthDataConsen
     return () => {
       ativo = false;
     };
-  }, [studentId, isStudent]);
+  }, [studentId, isStudent, pedidos]);
 
   const aceitar = useCallback(async () => {
     if (!studentId) return;
@@ -81,13 +88,16 @@ export function HealthDataConsentGate({ studentId, isStudent }: HealthDataConsen
     try {
       await createHealthService(supabase).grantCollectionConsent(studentId);
       setPrecisaConsentir(false);
+      // O health check e as autorizações mostram o aceite: sem invalidar, seguiriam
+      // dizendo "pendente" até a próxima abertura.
+      await queryClient.invalidateQueries({ queryKey: ['consentStatus'] });
     } catch (error: unknown) {
       // Sem corpo: o erro do PostgREST pode trazer o payload da linha.
       console.log('[HealthDataConsentGate] falha ao gravar consentimento:', String(error));
     } finally {
       setGravando(false);
     }
-  }, [studentId]);
+  }, [studentId, queryClient]);
 
   if (!precisaConsentir) return null;
 

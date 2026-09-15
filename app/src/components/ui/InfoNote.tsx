@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
-import { Vidro } from '@/components/ui/Vidro';
 import { useCores, useEscala } from '@/shared/design';
+import { Vidro } from './Vidro';
 
 /**
- * A nota de vidro do cardio: ícone na primária num quadrado de vidro forte e o
- * texto ao lado — "Como funciona", "Avisamos com vibração".
+ * A nota de vidro dos fluxos do kit: ícone na primária num quadrado de vidro forte
+ * e o texto ao lado — "Como funciona" no cardio, "Cada tipo é liberado separadamente"
+ * na saúde.
  *
  * @example
  * <InfoNote icon="notifications-outline">Avisamos com vibração ao bater a meta.</InfoNote>

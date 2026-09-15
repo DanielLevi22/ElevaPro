@@ -2,6 +2,50 @@ import { describe, expect, it } from "vitest";
 import { createHealthService, POLICY_VERSION } from "../health.service";
 import { criarSupabaseFake } from "./supabaseFake";
 
+describe("getConsentStatus", () => {
+  // O health check diz ao aluno em que pé está o aceite: aceito (com a data), pendente
+  // de uma versão nova, retirado ou nunca dado. Os quatro pedem ação diferente.
+  it("aceito na versão vigente, com a data", async () => {
+    const { supabase } = criarSupabaseFake({
+      data: { given_at: "2026-09-14T10:00:00Z", revoked_at: null, policy_version: POLICY_VERSION },
+    });
+    expect(await createHealthService(supabase).getConsentStatus("aluno-1")).toEqual({
+      state: "granted",
+      givenAt: "2026-09-14T10:00:00Z",
+      policyVersion: POLICY_VERSION,
+    });
+  });
+
+  it("pendente quando o aceite é de outra versão", async () => {
+    const { supabase } = criarSupabaseFake({
+      data: { given_at: "2026-08-01T10:00:00Z", revoked_at: null, policy_version: "1.6" },
+    });
+    expect((await createHealthService(supabase).getConsentStatus("aluno-1")).state).toBe(
+      "outdated",
+    );
+  });
+
+  it("retirado vale mais que a versão", async () => {
+    const { supabase } = criarSupabaseFake({
+      data: {
+        given_at: "2026-08-01T10:00:00Z",
+        revoked_at: "2026-09-01T10:00:00Z",
+        policy_version: POLICY_VERSION,
+      },
+    });
+    expect((await createHealthService(supabase).getConsentStatus("aluno-1")).state).toBe("revoked");
+  });
+
+  it("nunca dado, sem data nem versão", async () => {
+    const { supabase } = criarSupabaseFake({ data: null });
+    expect(await createHealthService(supabase).getConsentStatus("aluno-1")).toEqual({
+      state: "missing",
+      givenAt: null,
+      policyVersion: null,
+    });
+  });
+});
+
 describe("healthService — consentimento", () => {
   // A base legal do Art. 11 exige consentimento além da tutela da saúde: sem
   // registro, o dado pode aparecer na tela mas não pode ser persistido. Um

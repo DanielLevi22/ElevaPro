@@ -139,7 +139,7 @@ function LinhaDaSaude({ fonte }: { fonte: FonteDaSaude }) {
       sub={LEGENDA_DA_SAUDE[fonte]}
       onPress={() =>
         router.push(
-          fonte === 'unavailable' ? ROUTES.ONBOARDING.HEALTH_CONNECT : ROUTES.STUDENT.HEALTH
+          fonte === 'unavailable' ? ROUTES.ONBOARDING.HEALTH_CONNECT : ROUTES.HEALTH.TODAY
         )
       }
     />

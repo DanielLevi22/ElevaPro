@@ -4,6 +4,7 @@ import {
   queryStatisticsForQuantity,
   requestAuthorization,
 } from '@kingstinct/react-native-healthkit';
+import { Linking } from 'react-native';
 import { ASLEEP_STAGES, type DailyAggregate, sleepRange, todayRange } from './daily';
 import { healthKitReadTypes } from './permissions';
 import type { ReadContext, WearablePlatform } from './platform';
@@ -187,6 +188,17 @@ async function ensureTodayAccess(context: ReadContext): Promise<boolean> {
   return requestPermissions(CAPABILITIES);
 }
 
+/**
+ * O app Saúde, onde o Student muda o que concedeu. Sem ele, os Ajustes do app.
+ */
+async function openSettings(): Promise<void> {
+  try {
+    await Linking.openURL('x-apple-health://');
+  } catch {
+    await Linking.openSettings();
+  }
+}
+
 /** O HealthKit, no iPhone. */
 export const healthKitPlatform: WearablePlatform = {
   name: 'healthkit',
@@ -197,4 +209,12 @@ export const healthKitPlatform: WearablePlatform = {
   requestBackgroundRead: async () => {},
   ensureTodayAccess,
   readToday,
+  // O iOS entrega em segundo plano pela própria tarefa, sem permissão à parte.
+  backgroundReadStatus: async () => 'not_applicable',
+  openSettings,
+  // O HealthKit não deixa o app revogar o que o Student concedeu.
+  disconnect: async () => {
+    await openSettings();
+    return 'opened_settings';
+  },
 };

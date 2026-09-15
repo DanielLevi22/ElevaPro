@@ -4,6 +4,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { CARDIO_GLOW } from '@/components/ui/BrilhoAmbiente';
 import { GlassScreen } from '@/components/ui/GlassScreen';
+import { InfoNote } from '@/components/ui/InfoNote';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
@@ -13,7 +14,6 @@ import {
   type CardioModality,
   modalityByActivityName,
 } from '../../cardioModalities';
-import { InfoNote } from '../../components/cardio/InfoNote';
 import { formatMet } from '../../services/cardioMetrics';
 import type { CardioModalityId } from '../../store/cardioSessionMachine';
 

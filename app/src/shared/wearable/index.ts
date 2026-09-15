@@ -7,13 +7,16 @@
  */
 
 import type { SessionVitals } from '@elevapro/shared';
+import { clearCapabilityReport } from './capabilityCache';
 import { currentPlatform } from './currentPlatform';
 import type { DailyAggregate } from './daily';
+import type { BackgroundReadStatus, DisconnectResult } from './platform';
 import { vitalsFromReader } from './sessionVitals';
 import { CAPABILITIES } from './types';
 
 export { clearCapabilityReport, readCapabilityReport } from './capabilityCache';
 export type { DailyAggregate } from './daily';
+export type { BackgroundReadStatus, DisconnectResult } from './platform';
 export { refreshCapabilities, refreshCapabilitiesIfStale } from './refresh';
 export type { Capability, CapabilityReport, CapabilityStatus } from './types';
 
@@ -98,4 +101,45 @@ export async function readSessionVitals(
 ): Promise<SessionVitals | null> {
   const platform = currentPlatform();
   return platform ? vitalsFromReader(platform.reader, { start, end }, maxHeartRate) : null;
+}
+
+/**
+ * Qual plataforma de saúde este aparelho usa, para a tela dizer o nome certo.
+ *
+ * @example platformName() // 'health_connect'
+ */
+export function platformName(): 'health_connect' | 'healthkit' | null {
+  return currentPlatform()?.name ?? null;
+}
+
+/**
+ * A leitura em segundo plano está concedida? `not_applicable` no iPhone, onde ela
+ * não é permissão à parte.
+ *
+ * @example if ((await backgroundReadStatus()) === 'denied') mostrarPendencia();
+ */
+export async function backgroundReadStatus(): Promise<BackgroundReadStatus> {
+  return (await currentPlatform()?.backgroundReadStatus()) ?? 'denied';
+}
+
+/**
+ * Abre a tela do sistema onde o Student muda o que concedeu ao app.
+ *
+ * @example await openPlatformSettings();
+ */
+export async function openPlatformSettings(): Promise<void> {
+  await currentPlatform()?.openSettings();
+}
+
+/**
+ * Desconecta o relógio: revoga as permissões onde a plataforma deixa, e apaga o
+ * relatório de capacidades — sem acesso, ele liberaria tela com base no relógio de
+ * antes.
+ *
+ * @example if ((await disconnectPlatform()) === 'opened_settings') avisar();
+ */
+export async function disconnectPlatform(): Promise<DisconnectResult> {
+  const result = (await currentPlatform()?.disconnect()) ?? 'revoked';
+  if (result === 'revoked') clearCapabilityReport();
+  return result;
 }

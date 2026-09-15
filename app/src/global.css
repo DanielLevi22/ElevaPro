@@ -67,6 +67,9 @@
     --texto-batimento: #b91c1c;
     --texto-ritmo: #0369a1;
     --texto-cadencia: #7e22ce;
+    --texto-sono: #4338ca;
+    --texto-passos: #0b7a52;
+    --texto-calorias: #c2410c;
     --sobre-metrica: #06281a;
   }
 
@@ -116,6 +119,9 @@
     --texto-batimento: #f87171;
     --texto-ritmo: #38bdf8;
     --texto-cadencia: #c084fc;
+    --texto-sono: #818cf8;
+    --texto-passos: #34d399;
+    --texto-calorias: #fb923c;
     --sobre-metrica: #06281a;
   }
 }

@@ -1,3 +1,4 @@
-export type { HistoricoDeSaude } from './hooks/useHistoricoDeSaude';
-export { DIAS_DE_HISTORICO, useHistoricoDeSaude } from './hooks/useHistoricoDeSaude';
-export { SaudeDiariaScreen } from './screens/SaudeDiariaScreen';
+export { HealthCheckScreen } from './screens/HealthCheckScreen';
+export { HealthTodayScreen } from './screens/HealthTodayScreen';
+export { MyWatchScreen } from './screens/MyWatchScreen';
+export { WatchPermissionsScreen } from './screens/WatchPermissionsScreen';
