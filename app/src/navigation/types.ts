@@ -123,6 +123,14 @@ export const ROUTES = {
     POSTURE_ANALYSIS: '/student/posture-analysis',
   },
 
+  // Métricas em vidro (#312): o hub e o que se abre dele, dentro da aba Progresso.
+  PROGRESS: {
+    /** O hub, com os segmentos Geral, Nutrição e Treino. */
+    HOME: '/(tabs)/progress',
+    /** A evolução da carga máxima de cada exercício. */
+    LOADS: '/(tabs)/progress/loads',
+  },
+
   // Saúde em vidro (#308): dentro das abas, com a tab bar, como o kit desenha.
   HEALTH: {
     /** Saúde do dia: a prontidão, sono, FC de repouso, passos e calorias contra a média. */

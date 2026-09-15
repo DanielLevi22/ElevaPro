@@ -1,4 +1,4 @@
-import { addDays } from "./dateOnly";
+import { addDays, withinDays } from "./dateOnly";
 import { volumeDasSeries } from "./sessao";
 
 /**
@@ -65,8 +65,8 @@ export function summarizeTrainingLoad(
   weeks: number,
 ): TrainingLoadSummary {
   const periodDays = weeks * WEEK_DAYS;
-  const current = inWindow(sets, today, periodDays);
-  const previous = inWindow(sets, addDays(today, -periodDays), periodDays);
+  const current = withinDays(sets, today, periodDays);
+  const previous = withinDays(sets, addDays(today, -periodDays), periodDays);
   const total = volumeOf(current);
   return {
     total,
@@ -116,7 +116,7 @@ function weeklyLoad(sets: readonly CompletedSet[], today: string, weeks: number)
     const end = addDays(today, -(weeks - 1 - index) * WEEK_DAYS);
     return {
       weekStart: addDays(end, -(WEEK_DAYS - 1)),
-      kilograms: volumeOf(inWindow(sets, end, WEEK_DAYS)),
+      kilograms: volumeOf(withinDays(sets, end, WEEK_DAYS)),
     };
   });
 }
@@ -133,12 +133,6 @@ export function percentChange(from: number, to: number): number | null {
 
 function volumeOf(sets: readonly CompletedSet[]): number {
   return volumeDasSeries(sets.map((item) => ({ reps: item.reps, carga: item.weight })));
-}
-
-/** As séries de `length` dias terminando em `end`, inclusive. */
-function inWindow(sets: readonly CompletedSet[], end: string, length: number): CompletedSet[] {
-  const start = addDays(end, -(length - 1));
-  return sets.filter((item) => item.date >= start && item.date <= end);
 }
 
 export interface ExerciseProgress {
@@ -166,7 +160,7 @@ export function exerciseProgress(
   today: string,
   weeks: number,
 ): ExerciseProgress[] {
-  const weighted = inWindow(sets, today, weeks * WEEK_DAYS).filter(hasLoad);
+  const weighted = withinDays(sets, today, weeks * WEEK_DAYS).filter(hasLoad);
   const ids = [...new Set(weighted.map((item) => item.exerciseId))];
   return ids
     .map((id) => progressOf(weighted.filter((item) => item.exerciseId === id)))

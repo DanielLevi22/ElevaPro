@@ -1,5 +1,5 @@
 import type { DailyActivity } from "./dailyActivity";
-import { addDays, weekdayFromMonday } from "./dateOnly";
+import { addDays, weekdayFromMonday, withinDays } from "./dateOnly";
 
 /**
  * Os números do hub de Progresso (issue #312): treinos, aderência e dias top
@@ -40,10 +40,13 @@ const countWorkouts: Measure = (days) => sumOf(days, (day) => day.workouts);
  *
  * @example mealAdherence([{ plannedMeals: 5, doneMeals: 4, … }]) // 80
  */
-export const mealAdherence: Measure = (days) => {
-  const planned = sumOf(days, (day) => day.plannedMeals);
+export const mealAdherence = (
+  days: readonly Pick<DailyActivity, "plannedMeals" | "doneMeals">[],
+): number | null => {
+  const planned = days.reduce((total, day) => total + day.plannedMeals, 0);
   if (planned === 0) return null;
-  return Math.round((sumOf(days, (day) => day.doneMeals) / planned) * PERCENT);
+  const done = days.reduce((total, day) => total + day.doneMeals, 0);
+  return Math.round((done / planned) * PERCENT);
 };
 
 /** O plano do dia existia e foi cumprido inteiro. */
@@ -72,8 +75,8 @@ export function summarizeProgress(days: readonly DailyActivity[], today: string)
 }
 
 function trend(days: readonly DailyActivity[], today: string, measure: Measure): TrendNumber {
-  const value = measure(inWindow(days, today, PERIOD_DAYS));
-  const previous = measure(inWindow(days, addDays(today, -PERIOD_DAYS), PERIOD_DAYS));
+  const value = measure(withinDays(days, today, PERIOD_DAYS));
+  const previous = measure(withinDays(days, addDays(today, -PERIOD_DAYS), PERIOD_DAYS));
   const delta = value === null || previous === null ? null : value - previous;
   return { value, delta, spark: weeklySeries(days, today, measure) };
 }
@@ -82,14 +85,8 @@ function trend(days: readonly DailyActivity[], today: string, measure: Measure):
 function weeklySeries(days: readonly DailyActivity[], today: string, measure: Measure) {
   return Array.from({ length: SPARK_WEEKS }, (_, index) => {
     const weeksBack = SPARK_WEEKS - 1 - index;
-    return measure(inWindow(days, addDays(today, -weeksBack * WEEK_DAYS), WEEK_DAYS));
+    return measure(withinDays(days, addDays(today, -weeksBack * WEEK_DAYS), WEEK_DAYS));
   });
-}
-
-/** Os dias de `length` dias terminando em `end`, inclusive. */
-function inWindow(days: readonly DailyActivity[], end: string, length: number): DailyActivity[] {
-  const start = addDays(end, -(length - 1));
-  return days.filter((day) => day.date >= start && day.date <= end);
 }
 
 function sumOf(days: readonly DailyActivity[], pick: (day: DailyActivity) => number): number {

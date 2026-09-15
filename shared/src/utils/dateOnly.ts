@@ -43,3 +43,17 @@ export function localDateOf(instant: Date): string {
   const day = String(instant.getDate()).padStart(2, "0");
   return `${instant.getFullYear()}-${month}-${day}`;
 }
+
+/**
+ * Os itens dos `length` dias terminando em `end`, inclusive.
+ *
+ * @example withinDays(days, "2026-09-15", 30) // de 17/08 a 15/09
+ */
+export function withinDays<Item extends { date: string }>(
+  items: readonly Item[],
+  end: string,
+  length: number,
+): Item[] {
+  const start = addDays(end, -(length - 1));
+  return items.filter((item) => item.date >= start && item.date <= end);
+}

@@ -1,3 +1,5 @@
+import { foldForSearch } from "./texto";
+
 /**
  * Leitura das respostas numéricas da Anamnese.
  *
@@ -183,14 +185,6 @@ export function filtrarEntradaNumerica(bruto: string): string {
  */
 const NEGATIVE_ANSWER = /^(nao|nenhum|nenhuma|nada|n\/a|-+)( uso| tomo| utilizo| faco uso)?[.!]*$/;
 
-function normalizeAnswer(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase()
-    .trim();
-}
-
 /**
  * A resposta "Usa algum medicamento contínuo?" declara medicação?
  *
@@ -205,5 +199,5 @@ function normalizeAnswer(text: string): string {
 export function declaresContinuousMedication(answer: unknown): boolean {
   const text = lerRespostaTexto(answer, "medications");
   if (!text) return false;
-  return !NEGATIVE_ANSWER.test(normalizeAnswer(text));
+  return !NEGATIVE_ANSWER.test(foldForSearch(text));
 }

@@ -45,7 +45,7 @@ export function dailyActivities(input: DailyActivityInput): DailyActivity[] {
   return Array.from({ length }, (_, index) => {
     const date = addDays(input.from, index);
     const logs = logsByDate.get(date) ?? [];
-    const planned = plannedMeals(input, date);
+    const planned = plannedMealsOn(input.plan, input.meals, date);
     const loggedIds = new Set(logs.map((log) => log.diet_meal_id));
     return {
       date,
@@ -57,15 +57,20 @@ export function dailyActivities(input: DailyActivityInput): DailyActivity[] {
   });
 }
 
-function plannedMeals(
-  input: DailyActivityInput,
+/**
+ * As refeições do plano que valem no dia; nenhuma sem plano ou antes do início dele.
+ *
+ * @example plannedMealsOn(plan, meals, "2026-09-15").length // 4
+ */
+export function plannedMealsOn<Meal extends Pick<DietMeal, "day_of_week">>(
+  plan: DailyActivityInput["plan"],
+  meals: readonly Meal[],
   date: string,
-): Pick<DietMeal, "id" | "day_of_week">[] {
-  const { plan } = input;
+): Meal[] {
   if (!plan) return [];
   if (plan.start_date && date < plan.start_date) return [];
   const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
-  return mealsOfDay(input.meals, plan.plan_type, weekday);
+  return mealsOfDay(meals, plan.plan_type, weekday);
 }
 
 function countBy(values: readonly string[]): Map<string, number> {

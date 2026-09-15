@@ -50,6 +50,7 @@ export * from "./utils/diarioAlimentar";
 export * from "./utils/heartRateZones";
 export * from "./utils/mealsOfDay";
 export * from "./utils/nome";
+export * from "./utils/nutritionPeriod";
 export * from "./utils/periodizacao";
 export * from "./utils/preparo";
 export * from "./utils/progressSummary";

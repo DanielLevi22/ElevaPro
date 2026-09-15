@@ -37,6 +37,23 @@ export const EXERCISE_MUSCLE_GROUPS = [
   "cardio",
 ] as const;
 
+/**
+ * O nome de cada grupo como a pessoa lê. Mora ao lado da lista porque o painel do
+ * especialista e a evolução do aluno (#312) mostram o mesmo grupo, e o banco guarda
+ * o identificador sem acento.
+ */
+export const MUSCLE_GROUP_LABELS: Record<(typeof EXERCISE_MUSCLE_GROUPS)[number], string> = {
+  peito: "Peito",
+  costas: "Costas",
+  ombro: "Ombro",
+  biceps: "Bíceps",
+  triceps: "Tríceps",
+  pernas: "Pernas",
+  gluteos: "Glúteos",
+  abdomen: "Abdômen",
+  cardio: "Cardio",
+};
+
 /** Onde o exercício dá para ser executado. Fechado por CHECK na 0042. */
 export const EXERCISE_VENUES = ["academia", "casa", "ambos"] as const;
 

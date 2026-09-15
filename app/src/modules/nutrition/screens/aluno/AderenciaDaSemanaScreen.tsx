@@ -1,3 +1,4 @@
+import { withThousands } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Text, View } from 'react-native';
@@ -156,7 +157,7 @@ function GradeDaSemana({
         <BlocoDaSemana
           icone="flame-outline"
           cor={cores.textoGordura}
-          valor={semana.mediaDeCalorias === null ? '—' : milhar(semana.mediaDeCalorias)}
+          valor={semana.mediaDeCalorias === null ? '—' : withThousands(semana.mediaDeCalorias)}
           rotulo="Média kcal"
         />
       </View>
@@ -180,11 +181,6 @@ function GradeDaSemana({
       </View>
     </View>
   );
-}
-
-/** "2.180": o kit separa milhar com ponto. */
-function milhar(valor: number): string {
-  return String(valor).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
 /** "−1,4 kg" entre as duas últimas pesagens; "72,5 kg" com uma só; "—" sem nenhuma. */
