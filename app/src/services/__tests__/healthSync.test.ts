@@ -10,6 +10,8 @@ const mockGetRange = jest.fn();
 jest.mock('@elevapro/shared', () => ({
   // A regra de verdade: o teste confere a nota que o aluno veria, e não um dublê dela.
   computeReadiness: jest.requireActual('@elevapro/shared').computeReadiness,
+  addDays: jest.requireActual('@elevapro/shared').addDays,
+  localDateOf: jest.requireActual('@elevapro/shared').localDateOf,
   createHealthService: () => ({
     hasCollectionConsent: (studentId: string) => mockHasConsent(studentId),
     upsertDaily: (studentId: string, metric: unknown) => mockUpsertDaily(studentId, metric),
