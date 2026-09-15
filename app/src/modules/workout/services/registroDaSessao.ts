@@ -3,13 +3,17 @@ import {
   numeroDaPrescricao,
   type SaveSessionSetInput,
   type SerieFeita,
+  type SessionVitals,
   type Workout,
   type WorkoutExercise,
   type ZoneShare,
 } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { registrarAviso, registrarFalha } from '@/lib/registro';
+import type { CardioModality } from '../cardioModalities';
+import type { CardioSessionState } from '../store/cardioSessionMachine';
 import type { EstadoDaSessao } from '../store/maquinaDaSessao';
+import type { CardioReading } from './cardioMetrics';
 import { heartRateIfConsented, notasSeConsentido } from './consentimento';
 
 const servicoDeTreinos = createWorkoutsService(supabase);
@@ -146,9 +150,10 @@ export async function gravarSessaoDeForca(
   }
 }
 
-export interface SessaoDeCardioParaGravar {
+export interface CardioSessionToSave {
   studentId: string;
-  exerciseName: string;
+  /** O nome da modalidade, gravado em `activity_name`. */
+  activityName: string;
   durationSeconds: number;
   calories: number;
   startedAt: string;
@@ -168,6 +173,54 @@ export interface SessaoDeCardioParaGravar {
   heartRateZones?: ZoneShare | null;
 }
 
+export interface CardioFeedback {
+  studentId: string;
+  perceivedExertion: number;
+  notes: string;
+}
+
+/**
+ * O que vai para o banco a partir da sessão finalizada: o tempo em movimento, o
+ * gasto e só as medidas que a modalidade de fato mede.
+ *
+ * A distância é arredondada ANTES de decidir: 0,4 m de deriva passam por `> 0`
+ * e gravariam `distance_meters: 0`, que a `0049` diz que nunca pode ser escrito
+ * — zero afirma que o aluno não saiu do lugar, e ausência de leitura é nulo.
+ *
+ * @example
+ * const toSave = buildCardioSession(cardioModality('run'), session, reading, feedback, vitals);
+ */
+export function buildCardioSession(
+  modality: CardioModality,
+  session: CardioSessionState,
+  reading: CardioReading,
+  feedback: CardioFeedback,
+  vitals: SessionVitals | null
+): CardioSessionToSave {
+  const { startedAt, finishedAt } = session;
+  if (startedAt === null || finishedAt === null) {
+    throw new Error(
+      `buildCardioSession: sessão sem startedAt/finishedAt (${startedAt}, ${finishedAt}); esperado os dois instantes`
+    );
+  }
+  const meters = Math.round(reading.distanceMeters);
+  return {
+    studentId: feedback.studentId,
+    activityName: modality.activityName,
+    durationSeconds: Math.round(reading.elapsedMs / 1000),
+    calories: reading.calories,
+    startedAt: new Date(startedAt).toISOString(),
+    completedAt: new Date(finishedAt).toISOString(),
+    perceivedExertion: feedback.perceivedExertion,
+    notes: feedback.notes,
+    distanceMeters: modality.usesGps && meters > 0 ? meters : null,
+    avgPaceSecondsPerKm: modality.usesGps ? reading.paceSecondsPerKm : null,
+    avgCadenceSpm: modality.countsSteps ? reading.cadenceSpm : null,
+    avgHeartRate: vitals?.avgHeartRate ?? null,
+    heartRateZones: vitals?.zones ?? null,
+  };
+}
+
 /**
  * Grava a sessão de cardio e, com consentimento, a FC média em tabela própria.
  *
@@ -176,10 +229,10 @@ export interface SessaoDeCardioParaGravar {
  * `specialist_id` recebendo o id do **aluno**.
  *
  * @example
- * await gravarSessaoDeCardio(corrida, { mascarado: isMasquerading });
+ * await saveCardioSession(buildCardioSession(…), { mascarado: isMasquerading });
  */
-export async function gravarSessaoDeCardio(
-  sessao: SessaoDeCardioParaGravar,
+export async function saveCardioSession(
+  sessao: CardioSessionToSave,
   { mascarado }: Opcoes
 ): Promise<void> {
   if (mascarado) return;
@@ -197,7 +250,7 @@ export async function gravarSessaoDeCardio(
       session_type: 'cardio',
       duration_seconds: sessao.durationSeconds,
       active_calories: Math.round(sessao.calories),
-      activity_name: sessao.exerciseName,
+      activity_name: sessao.activityName,
       // Execução de contrato, como duração e calorias: exigir consentimento
       // aqui desligaria o acompanhamento de desempenho de quem revoga.
       distance_meters: sessao.distanceMeters ?? null,
@@ -223,7 +276,7 @@ export async function gravarSessaoDeCardio(
  */
 async function saveVitalsIfConsented(
   sessionId: string,
-  session: SessaoDeCardioParaGravar
+  session: CardioSessionToSave
 ): Promise<void> {
   const avgHeartRate = await heartRateIfConsented(session.studentId, session.avgHeartRate ?? null);
   if (avgHeartRate === null) return;
