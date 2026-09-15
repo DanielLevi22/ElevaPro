@@ -79,6 +79,7 @@ interface ActionPayloads {
   finish: { now: number };
   saved: NoPayload;
   discard: NoPayload;
+  restart: NoPayload;
 }
 
 type ActionType = keyof ActionPayloads;
@@ -245,6 +246,9 @@ const TRANSITIONS: {
   finish: (state, { now }) => finish(state, now),
   saved: (state) => (state.moment === 'feedback' ? { ...state, moment: 'summary' } : state),
   discard: (state) => (state.moment === 'feedback' ? initialCardioSession() : state),
+  // Só do resumo: a sessão já está gravada. No meio dela, recomeçar apagaria o
+  // que foi medido sem a pergunta do "Sair sem salvar?".
+  restart: (state) => (state.moment === 'summary' ? initialCardioSession() : state),
 };
 
 function applyTransition<T extends ActionType>(

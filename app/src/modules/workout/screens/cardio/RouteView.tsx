@@ -105,7 +105,7 @@ function TraceArea({ modality, points, hasLocation, onClose }: RouteViewProps) {
   return (
     <View className="h-[18.875rem] border-b border-glass-border bg-glass">
       {points.length >= 2 ? (
-        <RouteTrace points={points} className="absolute inset-x-12 bottom-14 top-14" />
+        <RouteTrace points={points} className="absolute inset-x-12 bottom-[5.5rem] top-[6.5rem]" />
       ) : (
         <View className="absolute inset-0 items-center justify-center px-10">
           <Text className="text-center text-legenda text-placeholder">

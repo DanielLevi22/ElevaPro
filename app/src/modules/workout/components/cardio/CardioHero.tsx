@@ -26,6 +26,8 @@ interface CardioHeroProps {
 type Measure = (designUnits: number) => number;
 
 const BOX = { width: 230, height: 150 } as const;
+/** O maior halo do kit é de 26 (a bola da natação); a folga cobre o blur inteiro. */
+const HALO_ROOM = 32;
 const HORIZONTAL = { start: { x: 0, y: 0.5 }, end: { x: 1, y: 0.5 } } as const;
 const VERTICAL = { start: { x: 0.5, y: 0 }, end: { x: 0.5, y: 1 } } as const;
 
@@ -33,14 +35,21 @@ export function CardioHero({ kind, scale = 1 }: CardioHeroProps) {
   const escalar = useEscala();
   const measure: Measure = (units) => escalar(units) * scale;
 
+  // A folga em volta da caixa é onde o halo mora. No Android o `boxShadow` de um
+  // filho é recortado na borda do pai, e sem ela o brilho das rodas saía cortado
+  // num retângulo. A margem negativa devolve o espaço: no layout, a caixa continua
+  // com o tamanho do kit.
+  const room = measure(HALO_ROOM);
   return (
-    <View
-      className="items-center justify-center"
-      style={{ width: measure(BOX.width), height: measure(BOX.height) }}
-    >
-      {kind === 'bike' ? <Bike measure={measure} /> : null}
-      {kind === 'treadmill' ? <Treadmill measure={measure} /> : null}
-      {kind === 'swim' ? <Swim measure={measure} /> : null}
+    <View style={{ padding: room, margin: -room }}>
+      <View
+        className="items-center justify-center"
+        style={{ width: measure(BOX.width), height: measure(BOX.height) }}
+      >
+        {kind === 'bike' ? <Bike measure={measure} /> : null}
+        {kind === 'treadmill' ? <Treadmill measure={measure} /> : null}
+        {kind === 'swim' ? <Swim measure={measure} /> : null}
+      </View>
     </View>
   );
 }
