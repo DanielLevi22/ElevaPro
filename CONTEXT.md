@@ -140,7 +140,10 @@ Um exercício dentro de uma WorkoutSession, com a carga e as repetições reais.
 
 **Assessment**:
 Avaliação física de um aluno numa data: peso, medidas e composição corporal.
-Medida pelo especialista, com fita.
+Tem duas origens, e uma série nunca mistura as duas (ADR-0030):
+- **do especialista** — medida com fita; imutável, o remédio para erro é medir de novo.
+- **declarada** — digitada pelo próprio Praticante, que corrige e apaga. Só quem não
+  tem especialista ativo declara: com especialista, quem mede é ele.
 _Avoid_: medição
 
 **Anamnese**:
@@ -156,8 +159,8 @@ _Avoid_: análise de foto, scan corporal
 
 **Escala**:
 A altura e o peso que calibram um Body scan — sem eles a estimativa seria chute.
-Vem da Assessment quando existe; da Anamnese quando não. O scan registra qual
-das duas usou.
+Vem da Assessment do especialista quando existe; da declarada quando não; da
+Anamnese por último. O scan registra qual das três usou.
 _Avoid_: régua, referência, calibração
 
 **Enquadramento**:
