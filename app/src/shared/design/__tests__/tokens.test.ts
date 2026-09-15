@@ -56,6 +56,13 @@ describe('hslParaHex', () => {
     expect(hslParaHex(metrica.gordura)).toBe('#fbbf24');
   });
 
+  it('reproduz as cores de batimento, ritmo e cadência do kit de cardio', () => {
+    // Do `cardio-flow-glass.html`: --hr, --pace e --cad.
+    expect(hslParaHex(metrica.batimento)).toBe('#f87171');
+    expect(hslParaHex(metrica.ritmo)).toBe('#38bdf8');
+    expect(hslParaHex(metrica.cadencia)).toBe('#c084fc');
+  });
+
   it('reproduz o fundo do kit de vidro, que não é preto puro', () => {
     // O fluxo chapado usa #000 e o de vidro usa #07080a; o app é vidro.
     expect(hslParaHex(paleta.escuro.hsl.background)).toBe('#07080a');

@@ -57,6 +57,11 @@ export const metrica = {
   proteina: '158.1 64.4% 51.6%',
   carboidrato: '82.7 78% 55.5%',
   gordura: '43.3 96.4% 56.3%',
+  // Do fluxo de cardio (issue #304): batimento, ritmo e cadência têm cor própria
+  // no ícone, no bloco e na zona de esforço, pelo mesmo critério das outras.
+  batimento: '0 90.6% 70.8%',
+  ritmo: '198.4 93.2% 59.6%',
+  cadencia: '270 95.2% 75.3%',
 } as const satisfies Record<string, TripleHsl>;
 
 /**
@@ -148,6 +153,14 @@ type TokensLiterais = {
   textoCarboidrato: CorLiteral;
   textoGordura: CorLiteral;
   /**
+   * Texto de batimento, ritmo e cadência no cardio. Mesmo motivo do texto de
+   * macro: a cor de métrica não passa AA como texto sobre o vidro claro, e o kit
+   * troca por um tom escuro só no claro (`--hr-t`, `--pace-t`, `--cad-t`).
+   */
+  textoBatimento: CorLiteral;
+  textoRitmo: CorLiteral;
+  textoCadencia: CorLiteral;
+  /**
    * O check sobre a cor de métrica — refeição feita, item comprado. **Igual nos
    * dois temas**, como o `sobreImagem`: o verde não muda de tema, então o que
    * fica em cima dele também não. O kit escreve `#06281a` à mão.
@@ -215,6 +228,9 @@ const escuro: Paleta = {
     textoProteina: '#34d399',
     textoCarboidrato: '#a3e635',
     textoGordura: '#fbbf24',
+    textoBatimento: '#f87171',
+    textoRitmo: '#38bdf8',
+    textoCadencia: '#c084fc',
     sobreMetrica: '#06281a',
   },
 };
@@ -270,6 +286,9 @@ const claro: Paleta = {
     textoProteina: '#0b7a52',
     textoCarboidrato: '#4e7a0b',
     textoGordura: '#8a5e03',
+    textoBatimento: '#b91c1c',
+    textoRitmo: '#0369a1',
+    textoCadencia: '#7e22ce',
     sobreMetrica: '#06281a',
   },
 };
