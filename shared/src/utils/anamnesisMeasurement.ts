@@ -21,7 +21,9 @@ interface MeasurementQuestion extends AdaptiveQuestion {
   range: { min: number; max: number };
 }
 
-const CIRCUMFERENCE_RANGE = { min: 10, max: 250 };
+/** Faixas plausíveis: fora delas é digitação errada, e não medida. */
+export const CIRCUMFERENCE_RANGE = { min: 10, max: 250 };
+export const FAT_RANGE = { min: 3, max: 70 };
 const WHY_WE_ASK =
   "Opcional. Vira o ponto de partida da sua evolução de medidas, e você pode registrar de novo quando quiser.";
 
@@ -31,7 +33,7 @@ const QUESTION_BASES: Pick<MeasurementQuestion, "id" | "text" | "unit" | "column
     text: "Sabe o seu percentual de gordura?",
     unit: "%",
     column: "body_fat_pct",
-    range: { min: 3, max: 70 },
+    range: FAT_RANGE,
   },
   {
     id: "measure_chest",

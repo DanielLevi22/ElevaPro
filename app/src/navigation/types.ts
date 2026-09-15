@@ -129,6 +129,16 @@ export const ROUTES = {
     HOME: '/(tabs)/progress',
     /** A evolução da carga máxima de cada exercício. */
     LOADS: '/(tabs)/progress/loads',
+    /** Composição corporal: peso, gordura, massa magra e IMC por origem. */
+    BODY: '/(tabs)/progress/body',
+    /** As 8 circunferências e a silhueta comparada. */
+    CIRCUMFERENCES: '/(tabs)/progress/circumferences',
+    /** O que mudou entre dois registros da mesma origem. */
+    COMPARE: '/(tabs)/progress/compare',
+    /** Nova medida declarada, ou a correção de uma (com `id`). */
+    MEASUREMENT_FORM: '/(tabs)/progress/measurement',
+    /** O histórico das medidas, com o caminho de correção da declarada. */
+    MEASUREMENTS: '/(tabs)/progress/measurements',
   },
 
   // Saúde em vidro (#308): dentro das abas, com a tab bar, como o kit desenha.

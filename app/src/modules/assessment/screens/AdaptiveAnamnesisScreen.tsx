@@ -1,8 +1,4 @@
-import type {
-  AdaptiveQuestion,
-  PersonaTrack,
-  UnlockCard,
-} from '@elevapro/shared/data/anamnesisAdaptive';
+import type { PersonaTrack, UnlockCard } from '@elevapro/shared/data/anamnesisAdaptive';
 import {
   getPrecisionScore,
   getQuestionPrecisionDelta,
@@ -19,7 +15,6 @@ import {
   SafeAreaView,
   ScrollView,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
