@@ -3,10 +3,15 @@ import { Tabs, useRouter } from 'expo-router';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { TabBar } from '@/components/navigation/TabBar';
+import { comOpacidade, useCores, useEscala } from '@/shared/design';
 
 export default function TabLayout() {
   const { accountType, abilities, isMasquerading } = useAuthStore();
   const router = useRouter();
+  const exitStudentView = () => {
+    useAuthStore.getState().exitStudentView();
+    router.push('/(tabs)/students');
+  };
 
   // LOG DEBUG
   // console.log('Tabs Layout Render:', { accountType, isMasquerading, hasAbilities: !!abilities });
@@ -93,6 +98,9 @@ export default function TabLayout() {
           }}
         />
 
+        {/* A saúde abre pela tela inicial e pelo perfil, não por aba própria. */}
+        <Tabs.Screen name="saude" options={{ title: 'Saúde', href: null }} />
+
         {/* Personal Trainer only */}
         <Tabs.Screen
           name="students"
@@ -106,45 +114,46 @@ export default function TabLayout() {
         />
       </Tabs>
 
-      {/* Masquerade Mode Overlay - Floating Exit Button */}
-      {isStudent && isMasquerading && (
-        <View
-          style={{
-            position: 'absolute',
-            bottom: 120, // Increased bottom margin to clear the floating tab bar
-            right: 20,
-            zIndex: 999,
-          }}
-        >
-          <TouchableOpacity
-            onPress={() => {
-              useAuthStore.getState().exitStudentView();
-              router.push('/(tabs)/students');
-            }}
-            style={{
-              backgroundColor: '#FF4444',
-              paddingHorizontal: 20,
-              paddingVertical: 12,
-              borderRadius: 30,
-              flexDirection: 'row',
-              alignItems: 'center',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 4.65,
-              elevation: 8,
-            }}
-          >
-            <MaterialCommunityIcons
-              name="eye-off"
-              size={20}
-              color="white"
-              style={{ marginRight: 8 }}
-            />
-            <Text style={{ color: 'white', fontWeight: 'bold' }}>Sair da Visão do Aluno</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {/* Visão do aluno: o botão flutuante de volta ao painel do especialista. */}
+      {isStudent && isMasquerading && <ExitStudentViewButton onExit={exitStudentView} />}
     </>
+  );
+}
+
+const EXIT_ICON = 20;
+
+/**
+ * Sair da visão do aluno. Fica acima da tab bar flutuante, na cor destrutiva: é o
+ * que devolve o especialista ao próprio painel, e não pode sumir no meio da tela do
+ * aluno.
+ */
+function ExitStudentViewButton({ onExit }: { onExit: () => void }) {
+  const cores = useCores();
+  const escalar = useEscala();
+  return (
+    <View className="absolute bottom-[7.5rem] right-5 z-50">
+      <TouchableOpacity
+        onPress={onExit}
+        accessibilityRole="button"
+        className="flex-row items-center gap-2 rounded-full bg-destructive px-5 py-3"
+        style={{
+          boxShadow: [
+            {
+              offsetX: 0,
+              offsetY: escalar(4),
+              blurRadius: escalar(10),
+              color: comOpacidade(cores.sombra, 0.3),
+            },
+          ],
+        }}
+      >
+        <MaterialCommunityIcons
+          name="eye-off"
+          size={escalar(EXIT_ICON)}
+          color={cores.destructiveForeground}
+        />
+        <Text className="font-bold text-destructive-foreground">Sair da Visão do Aluno</Text>
+      </TouchableOpacity>
+    </View>
   );
 }

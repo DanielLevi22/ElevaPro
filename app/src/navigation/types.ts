@@ -121,8 +121,21 @@ export const ROUTES = {
     SESSION_HISTORY: '/student/session-history',
     /** A própria análise corporal. A gêmea em (tabs)/students/ é do especialista. */
     POSTURE_ANALYSIS: '/student/posture-analysis',
-    /** Sono, FC de repouso, passos e calorias do relógio, com a linha de base. */
-    HEALTH: '/student/saude',
+  },
+
+  // Saúde em vidro (#308): dentro das abas, com a tab bar, como o kit desenha.
+  HEALTH: {
+    /** Saúde do dia: a prontidão, sono, FC de repouso, passos e calorias contra a média. */
+    //
+    // `hoje`, e não `index`: com o Metro já rodando, o typegen tipa a pasta nova como
+    // `/saude/index` e um Metro novo como `/saude`. Um nome próprio sai igual nos dois.
+    TODAY: '/(tabs)/saude/hoje',
+    /** Meu relógio: a fonte, a última leitura de cada métrica, sincronizar e desconectar. */
+    WATCH: '/(tabs)/saude/relogio',
+    /** O que você autoriza: o que chega de cada tipo, e o caminho para o sistema. */
+    PERMISSIONS: '/(tabs)/saude/permissoes',
+    /** Health check: o que falta para o app acompanhar tudo. */
+    CHECK: '/(tabs)/saude/diagnostico',
   },
 } as const;
 
