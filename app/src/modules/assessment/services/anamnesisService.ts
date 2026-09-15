@@ -1,4 +1,6 @@
+import { createAdaptiveAnamnesisService } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
+import { registrarFalha } from '@/lib/registro';
 import { AnamnesisResponseValue, StudentAnamnesis } from '../types/assessment';
 
 export const AnamnesisService = {
@@ -36,25 +38,33 @@ export const AnamnesisService = {
     }
   },
 
+  /**
+   * Grava a anamnese adaptativa do Praticante e, na conclusão, a primeira medida
+   * declarada com as medidas que ele respondeu (#312).
+   *
+   * `selfGuided` é verdadeiro porque só o Praticante abre esta anamnese (a rota
+   * escolhe pelo papel); quem confere a Guidance de verdade é a RLS da 0056.
+   *
+   * @example await AnamnesisService.saveAdaptiveAnamnesis(user.id, respostas, true);
+   */
   async saveAdaptiveAnamnesis(
     studentId: string,
     responses: Record<string, string | number | string[] | boolean>,
     isComplete: boolean = false
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase.from('student_anamnesis').upsert(
-        {
-          student_id: studentId,
-          responses,
-          completed_at: isComplete ? new Date().toISOString() : null,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'student_id' }
-      );
-      if (error) return { success: false, error: error.message };
+      await createAdaptiveAnamnesisService(supabase).save({
+        studentId,
+        answers: responses,
+        completed: isComplete,
+        selfGuided: true,
+      });
       return { success: true };
-    } catch (err: unknown) {
-      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    } catch {
+      // Sem o erro no log: o do PostgREST pode trazer a linha, e ela carrega medida
+      // e histórico de saúde (Art. 6°, VII).
+      registrarFalha('anamnesis.save_adaptive');
+      return { success: false, error: 'Não foi possível salvar a anamnese.' };
     }
   },
 
