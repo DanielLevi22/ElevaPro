@@ -5,7 +5,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -13,9 +12,9 @@ import { BotaoFixoNoRodape } from '@/components/ui/BotaoFixoNoRodape';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
-import { Vidro } from '@/components/ui/Vidro';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
 import { EscalaDePse } from './EscalaDePse';
+import { NotesField } from './NotesField';
 
 /**
  * "Como foi o treino?" — a PSE, a sensação e as observações, em tela cheia.
@@ -83,7 +82,11 @@ export function TelaDeFeedback({
         <EscalaDePse pse={pse} onMudar={setPse} />
 
         <TituloDeSecao estilo="rotulo">Observações</TituloDeSecao>
-        <Observacoes notas={notas} onMudar={setNotas} />
+        <NotesField
+          notes={notas}
+          onChange={setNotas}
+          placeholder="Ex.: o ombro direito incomodou na última série. Reduzi a carga."
+        />
         {corrigindo && onApagarObservacao && notas.trim().length > 0 ? (
           <TouchableOpacity
             onPress={onApagarObservacao}
@@ -130,24 +133,5 @@ function Cabecalho({ corrigindo }: { corrigindo: boolean }) {
           : 'Seu personal vê este feedback.'}
       </Text>
     </View>
-  );
-}
-
-function Observacoes({ notas, onMudar }: { notas: string; onMudar: (notas: string) => void }) {
-  const cores = useCores();
-
-  return (
-    <Vidro className="min-h-[5.5rem] p-3.5">
-      <TextInput
-        value={notas}
-        onChangeText={onMudar}
-        multiline
-        textAlignVertical="top"
-        placeholder="Ex.: o ombro direito incomodou na última série. Reduzi a carga."
-        placeholderTextColor={cores.placeholder}
-        accessibilityLabel="Observações para o seu personal"
-        className="min-h-[3.75rem] text-[0.84375rem] leading-snug text-foreground"
-      />
-    </Vidro>
   );
 }

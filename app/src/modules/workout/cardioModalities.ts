@@ -1,3 +1,4 @@
+import type { Ionicons } from '@expo/vector-icons';
 import type { CardioModalityId } from './store/cardioSessionMachine';
 
 /** Medida que aparece ao vivo, conforme o que a modalidade consegue medir. */
@@ -24,6 +25,8 @@ export interface CardioModality {
   /** O contador de passos do aparelho dá a cadência. */
   countsSteps: boolean;
   heroKind: CardioHeroKind;
+  /** O ícone do cartão e do cabeçalho: o `footprints`, `zap`, `bike`, `activity` e `waves` do kit. */
+  icon: keyof typeof Ionicons.glyphMap;
   liveMetrics: readonly LiveMetric[];
 }
 
@@ -42,6 +45,7 @@ export const CARDIO_MODALITIES: readonly CardioModality[] = [
     usesGps: true,
     countsSteps: true,
     heroKind: 'treadmill',
+    icon: 'footsteps',
     liveMetrics: ['calories', 'distance', 'pace', 'cadence', 'laps'],
   },
   {
@@ -51,6 +55,7 @@ export const CARDIO_MODALITIES: readonly CardioModality[] = [
     usesGps: true,
     countsSteps: true,
     heroKind: 'treadmill',
+    icon: 'flash',
     liveMetrics: ['calories', 'distance', 'pace', 'cadence', 'laps'],
   },
   {
@@ -60,6 +65,7 @@ export const CARDIO_MODALITIES: readonly CardioModality[] = [
     usesGps: true,
     countsSteps: false,
     heroKind: 'bike',
+    icon: 'bicycle',
     liveMetrics: ['calories', 'distance', 'speed', 'laps'],
   },
   {
@@ -69,6 +75,7 @@ export const CARDIO_MODALITIES: readonly CardioModality[] = [
     usesGps: false,
     countsSteps: false,
     heroKind: 'treadmill',
+    icon: 'pulse',
     liveMetrics: ['calories', 'intensity', 'laps'],
   },
   {
@@ -78,6 +85,7 @@ export const CARDIO_MODALITIES: readonly CardioModality[] = [
     usesGps: false,
     countsSteps: false,
     heroKind: 'swim',
+    icon: 'water',
     liveMetrics: ['calories', 'intensity', 'laps'],
   },
 ];

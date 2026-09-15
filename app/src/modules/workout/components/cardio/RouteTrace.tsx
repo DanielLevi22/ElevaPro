@@ -1,6 +1,7 @@
 import { View } from 'react-native';
 import Svg, { Circle, Polyline } from 'react-native-svg';
-import type { Posicao } from '../services/percurso';
+import { useCores } from '@/shared/design';
+import type { Posicao } from '../../services/percurso';
 
 /**
  * Desenha o percurso da corrida, sem mapa de fundo.
@@ -11,12 +12,12 @@ import type { Posicao } from '../services/percurso';
  * é a única tela do produto em que o percurso pode ser visto (issue #278).
  */
 
-const LADO = 100;
+const SIDE = 100;
 /** Margem para o traço não encostar na borda do viewBox. */
-const FOLGA = 6;
+const MARGIN = 6;
 
-interface TracadoDaCorridaProps {
-  pontos: Posicao[];
+interface RouteTraceProps {
+  points: Posicao[];
   className?: string;
 }
 
@@ -27,7 +28,7 @@ interface TracadoDaCorridaProps {
  * latitude e longitude pelo mesmo fator entortaria o traçado — em Fortaleza o
  * erro é pequeno, no Sul do país é visível. O `cos` da latitude média corrige.
  */
-function projetar(pontos: Posicao[]): string {
+function project(pontos: Posicao[]): string {
   const latitudes = pontos.map((p) => p.latitude);
   const longitudes = pontos.map((p) => p.longitude);
 
@@ -43,7 +44,7 @@ function projetar(pontos: Posicao[]): string {
   // Escala única para os dois eixos: é o que mantém a proporção. Um percurso
   // reto — de ida e volta pela mesma avenida — tem um dos lados perto de zero, e
   // escalar cada eixo por conta esticaria essa linha até virar um retângulo.
-  const util = LADO - FOLGA * 2;
+  const util = SIDE - MARGIN * 2;
   const escala = util / Math.max(alturaGraus, larguraGraus, Number.EPSILON);
 
   const sobraX = (util - larguraGraus * escala) / 2;
@@ -51,9 +52,9 @@ function projetar(pontos: Posicao[]): string {
 
   return pontos
     .map((ponto) => {
-      const x = FOLGA + sobraX + (ponto.longitude - lonMin) * encolhimento * escala;
+      const x = MARGIN + sobraX + (ponto.longitude - lonMin) * encolhimento * escala;
       // O eixo Y do SVG cresce para baixo e a latitude cresce para o norte.
-      const y = FOLGA + sobraY + (latMax - ponto.latitude) * escala;
+      const y = MARGIN + sobraY + (latMax - ponto.latitude) * escala;
       // Uma casa decimal basta num viewBox de 100: a segunda casa é um
       // milésimo do lado do desenho, abaixo de um pixel em qualquer tela.
       return `${x.toFixed(1)},${y.toFixed(1)}`;
@@ -61,27 +62,28 @@ function projetar(pontos: Posicao[]): string {
     .join(' ');
 }
 
-export function TracadoDaCorrida({ pontos, className }: TracadoDaCorridaProps) {
+export function RouteTrace({ points, className }: RouteTraceProps) {
+  const cores = useCores();
   // Dois pontos são o mínimo para haver linha. Abaixo disso não há percurso —
   // e um marcador sozinho no meio da tela seria a posição de partida do aluno
   // desenhada sem motivo nenhum.
-  if (pontos.length < 2) return null;
+  if (points.length < 2) return null;
 
-  const caminho = projetar(pontos);
+  const caminho = project(points);
   const [inicioX, inicioY] = caminho.split(' ')[0].split(',').map(Number);
 
   return (
     <View className={className}>
-      <Svg viewBox={`0 0 ${LADO} ${LADO}`} width="100%" height="100%">
+      <Svg viewBox={`0 0 ${SIDE} ${SIDE}`} width="100%" height="100%">
         <Polyline
           points={caminho}
           fill="none"
-          stroke="#FF6B35"
+          stroke={cores.primary}
           strokeWidth={3}
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-        <Circle cx={inicioX} cy={inicioY} r={4} fill="#FF6B35" />
+        <Circle cx={inicioX} cy={inicioY} r={4} fill={cores.primary} />
       </Svg>
     </View>
   );
