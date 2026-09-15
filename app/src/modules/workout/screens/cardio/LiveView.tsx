@@ -32,6 +32,8 @@ export interface LiveViewProps {
 }
 
 const HOUR_MS = 3_600_000;
+/** Os lugares vazios de uma fila de três: no máximo dois. */
+const EMPTY_SLOTS = ['vazio-1', 'vazio-2'] as const;
 
 /**
  * Telas 4 e 5 do kit: a sessão ao vivo e a pausa.
@@ -71,8 +73,8 @@ export function LiveView(props: LiveViewProps) {
               <MetricTile key={metric} {...tile} />
             ))}
             {/* Fila incompleta guarda o lugar: um bloco sozinho não estica. */}
-            {Array.from({ length: 3 - row.length }, (_, gap) => (
-              <View key={`gap-${gap}`} className="flex-1" />
+            {EMPTY_SLOTS.slice(0, 3 - row.length).map((slot) => (
+              <View key={slot} className="flex-1" />
             ))}
           </View>
         ))}
