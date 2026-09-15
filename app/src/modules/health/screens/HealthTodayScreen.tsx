@@ -47,13 +47,13 @@ export function HealthTodayScreen({ studentId, hasSpecialist }: HealthTodayScree
   return (
     <GlassScreen glow={HEALTH_GLOW} refresh={{ refreshing: false, onRefresh: refresh }}>
       <View className="flex-row items-center gap-3 pt-1.5">
-        <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={router.back} />
+        <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={router.back} />
         <View className="min-w-0 flex-1 flex-row items-center gap-[0.5625rem]">
           <Text className="text-[1.3125rem] font-bold tracking-tight text-hero">Saúde do dia</Text>
           {health.source === 'device' ? <Chip tom="evolucao">Live</Chip> : null}
           {health.source === 'mock' ? <Chip tom="aviso">Simulado</Chip> : null}
         </View>
-        <BotaoRedondo icone="refresh" rotulo="Atualizar" onPress={refresh} />
+        <BotaoRedondo icone="refresh-cw" rotulo="Atualizar" onPress={refresh} />
       </View>
 
       <ReadinessCard readiness={today.readiness} />

@@ -31,7 +31,7 @@ export function TopoDaSessao({ titulo, tempo, voz, onFechar }: TopoDaSessaoProps
 
   return (
     <View className="flex-row items-center gap-3">
-      <BotaoRedondo icone="close" rotulo="Encerrar o treino" onPress={onFechar} />
+      <BotaoRedondo icone="x" rotulo="Encerrar o treino" onPress={onFechar} />
       <View className="min-w-0 flex-1">
         <Text numberOfLines={1} className="text-base font-bold tracking-tight text-hero">
           {titulo}
@@ -46,7 +46,7 @@ export function TopoDaSessao({ titulo, tempo, voz, onFechar }: TopoDaSessaoProps
         </View>
       </View>
       <BotaoRedondo
-        icone={voz.mudo ? 'volume-mute' : 'volume-high'}
+        icone={voz.mudo ? 'volume-x' : 'volume-2'}
         rotulo={voz.mudo ? 'Ligar a voz do treino' : 'Silenciar a voz do treino'}
         onPress={voz.alternarMudo}
       />

@@ -61,8 +61,8 @@ export function SummaryView(props: SummaryViewProps) {
       }
     >
       <View className="flex-row justify-between pt-1.5">
-        <BotaoRedondo icone="chevron-back" rotulo="Voltar ao cardio" onPress={onBack} />
-        <BotaoRedondo icone="share-outline" rotulo="Compartilhar" onPress={onShare} />
+        <BotaoRedondo icone="chevron-left" rotulo="Voltar ao cardio" onPress={onBack} />
+        <BotaoRedondo icone="share" rotulo="Compartilhar" onPress={onShare} />
       </View>
       <View className="items-start pt-[1.375rem]">
         <Chip tom="destaque">Cardio finalizado</Chip>

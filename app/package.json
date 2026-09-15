@@ -56,6 +56,7 @@
     "expo-status-bar": "~57.0.1",
     "expo-task-manager": "~57.0.14",
     "expo-web-browser": "~57.0.2",
+    "lucide-react-native": "1.46.0",
     "metro": "^0.84.4",
     "metro-config": "^0.80.12",
     "nativewind": "^4.2.1",

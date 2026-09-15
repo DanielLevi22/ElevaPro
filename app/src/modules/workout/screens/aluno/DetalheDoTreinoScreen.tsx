@@ -69,7 +69,7 @@ function CabecalhoDoTreino({ treino }: { treino: Workout }) {
 
   return (
     <>
-      <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={router.back} />
+      <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={router.back} />
       <View className="mt-[3.625rem]">
         <View className="mb-2.5 flex-row flex-wrap gap-1.5">
           {gruposDoTreino(treino).map((grupo) => (

@@ -51,12 +51,12 @@ export function SelectModalityView({
   return (
     <GlassScreen glow={CARDIO_GLOW}>
       <View className="flex-row items-center gap-3 pt-1.5">
-        <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={onBack} />
+        <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={onBack} />
         <View className="min-w-0 flex-1">
           <Text className="text-[1.6875rem] font-bold tracking-tight text-hero">Cardio</Text>
           <Text className="mt-px text-[0.78125rem] text-hero-secondary">Escolha sua atividade</Text>
         </View>
-        <BotaoRedondo icone="time-outline" rotulo="Histórico de sessões" onPress={onHistory} />
+        <BotaoRedondo icone="history" rotulo="Histórico de sessões" onPress={onHistory} />
       </View>
 
       {last && lastCardio ? (

@@ -72,7 +72,7 @@ export function MyWatchScreen({ studentId }: MyWatchScreenProps) {
       }
     >
       <View className="flex-row items-center gap-3 pt-1.5">
-        <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={router.back} />
+        <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={router.back} />
         <Text className="flex-1 text-[1.3125rem] font-bold tracking-tight text-hero">
           Meu relógio
         </Text>

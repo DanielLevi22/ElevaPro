@@ -174,6 +174,22 @@ type TokensLiterais = {
    * fica em cima dele também não. O kit escreve `#06281a` à mão.
    */
   sobreMetrica: CorLiteral;
+  /**
+   * O perigo do kit de saúde (`--danger`): o cadeado e o botão de retirar uma
+   * autorização. Rosa, e não o `destructive`: é a cor que o desenho dá à ação que
+   * interrompe um tratamento, e o vermelho do `destructive` não passa AA como
+   * texto pequeno sobre o vidro claro. Como no texto de métrica, `textoPerigo`
+   * escurece só no claro (`--danger-t`), e `sobrePerigo` é o texto do botão,
+   * igual nos dois temas.
+   */
+  perigo: CorLiteral;
+  textoPerigo: CorLiteral;
+  sobrePerigo: CorLiteral;
+  /**
+   * O véu atrás de uma folha (`--sheet-scrim`). No escuro é preto a 80%; no claro
+   * é o cinza do texto a 45%, porque preto sobre a tela clara lê como apagão.
+   */
+  veuDaFolha: CorLiteral;
 };
 
 /**
@@ -205,6 +221,9 @@ export const illustration = {
   crownLight: '#c3c8d0',
   crownShade: '#6e747e',
   crownDeep: '#666c76',
+  /** O arco do cadeado: o topo que pega a luz e as laterais. */
+  shackleTop: '#d8dce3',
+  shackleSide: '#b7bcc5',
   /** Os extremos do `color-mix` que clareia e escurece a primária na esfera. */
   white: '#ffffff',
   black: '#000000',
@@ -281,6 +300,10 @@ const escuro: Paleta = {
     textoPassos: '#34d399',
     textoCalorias: '#fb923c',
     sobreMetrica: '#06281a',
+    perigo: '#fb7185',
+    textoPerigo: '#fb7185',
+    sobrePerigo: '#2a0410',
+    veuDaFolha: 'rgba(0, 0, 0, 0.8)',
   },
 };
 
@@ -342,6 +365,10 @@ const claro: Paleta = {
     textoPassos: '#0b7a52',
     textoCalorias: '#c2410c',
     sobreMetrica: '#06281a',
+    perigo: '#fb7185',
+    textoPerigo: '#be123c',
+    sobrePerigo: '#2a0410',
+    veuDaFolha: 'rgba(60, 60, 67, 0.45)',
   },
 };
 

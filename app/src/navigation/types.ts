@@ -136,6 +136,8 @@ export const ROUTES = {
     PERMISSIONS: '/(tabs)/saude/permissoes',
     /** Health check: o que falta para o app acompanhar tudo. */
     CHECK: '/(tabs)/saude/diagnostico',
+    /** Minhas autorizações: cada finalidade com o aceite, e a retirada. */
+    AUTHORIZATIONS: '/(tabs)/saude/autorizacoes',
   },
 } as const;
 

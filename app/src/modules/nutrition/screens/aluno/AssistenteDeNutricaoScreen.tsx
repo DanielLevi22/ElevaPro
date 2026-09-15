@@ -109,7 +109,7 @@ function CabecalhoDoAssistente({ onVoltar }: { onVoltar: () => void }) {
 
   return (
     <View className="flex-row items-center gap-3 pt-1.5">
-      <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={onVoltar} />
+      <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={onVoltar} />
       <View className="min-w-0 flex-1 flex-row items-center gap-2.5">
         <View className="h-9 w-9 shrink-0 items-center justify-center rounded-full border-[0.09375rem] border-primary bg-primary/20">
           <Ionicons name="sparkles" size={escalar(17)} color={cores.primary} />

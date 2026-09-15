@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
 import { TabBar } from '../TabBar';
 
@@ -11,7 +11,20 @@ jest.mock('expo-router', () => ({
 // O wrapper do NativeWind para safe-area-context quebra ao envolver os ícones
 // sob o mock de jest.setup. Nada aqui depende de como o ícone renderiza.
 jest.mock('@expo/vector-icons', () => ({ MaterialCommunityIcons: 'MaterialCommunityIcons' }));
-jest.mock('react-native-svg', () => ({ __esModule: true, default: 'Svg', Path: 'Path' }));
+// Os ícones do Lucide desenham com os elementos do SVG que o desenho pede, e leem o
+// pacote pelas chaves: o mock lista cada elemento como um componente com o nome dele.
+jest.mock('react-native-svg', () => ({
+  __esModule: true,
+  default: 'Svg',
+  Svg: 'Svg',
+  Path: 'Path',
+  Circle: 'Circle',
+  Ellipse: 'Ellipse',
+  Line: 'Line',
+  Polygon: 'Polygon',
+  Polyline: 'Polyline',
+  Rect: 'Rect',
+}));
 jest.mock('react-native-gesture-handler', () => ({
   Gesture: {
     Pan: () => {
@@ -37,6 +50,8 @@ const buildProps = (): BottomTabBarProps => {
     { key: 'workouts-1', name: 'workouts', params: undefined },
     { key: 'progress-1', name: 'progress', params: undefined },
     { key: 'nutrition-1', name: 'nutrition', params: undefined },
+    { key: 'saude-1', name: 'saude', params: undefined },
+    { key: 'ranking-1', name: 'ranking', params: undefined },
   ];
 
   return {
@@ -58,6 +73,15 @@ const buildProps = (): BottomTabBarProps => {
 describe('TabBar', () => {
   beforeEach(() => {
     jest.requireMock('expo-router').usePathname.mockReturnValue('/workouts');
+  });
+
+  it('o aluno tem a aba Saúde, que abre a saúde e o relógio', () => {
+    const props = buildProps();
+    const { getByLabelText } = render(<TabBar {...props} />);
+
+    fireEvent.press(getByLabelText('Saúde'));
+
+    expect(props.navigation.navigate).toHaveBeenCalledWith('saude', undefined);
   });
 
   it('não captura toque fora da barra visível', () => {

@@ -190,6 +190,7 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
           <HealthDataConsentGate
             studentId={session?.user?.id ?? null}
             isStudent={accountType === 'student' || accountType === 'member'}
+            hasSpecialist={accountType === 'student'}
           />
         </ThemeProvider>
       </QueryClientProvider>

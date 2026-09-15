@@ -28,7 +28,7 @@ export function CabecalhoSobreFoto({
 }: CabecalhoSobreFotoProps) {
   return (
     <View className="flex-row items-center gap-3">
-      {onVoltar ? <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={onVoltar} /> : null}
+      {onVoltar ? <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={onVoltar} /> : null}
       <View className="min-w-0 flex-1">
         <Text
           numberOfLines={1}

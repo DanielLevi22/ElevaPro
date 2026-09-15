@@ -71,6 +71,10 @@
     --texto-passos: #0b7a52;
     --texto-calorias: #c2410c;
     --sobre-metrica: #06281a;
+    --perigo: #fb7185;
+    --texto-perigo: #be123c;
+    --sobre-perigo: #2a0410;
+    --veu-da-folha: rgba(60, 60, 67, 0.45);
   }
 
   .dark:root {
@@ -123,5 +127,9 @@
     --texto-passos: #34d399;
     --texto-calorias: #fb923c;
     --sobre-metrica: #06281a;
+    --perigo: #fb7185;
+    --texto-perigo: #fb7185;
+    --sobre-perigo: #2a0410;
+    --veu-da-folha: rgba(0, 0, 0, 0.8);
   }
 }

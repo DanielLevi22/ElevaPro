@@ -114,7 +114,7 @@ function TraceArea({ modality, points, hasLocation, onClose }: RouteViewProps) {
         </View>
       )}
       <View className="absolute left-[1.125rem] right-[1.125rem] top-14 flex-row justify-between">
-        <BotaoRedondo icone="chevron-back" rotulo="Voltar à sessão" onPress={onClose} />
+        <BotaoRedondo icone="chevron-left" rotulo="Voltar à sessão" onPress={onClose} />
       </View>
       <View className="absolute bottom-[2.375rem] left-[1.125rem] right-[1.125rem] flex-row gap-2">
         <Chip tom="destaque">{`${modality.activityName} ao ar livre`}</Chip>

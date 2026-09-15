@@ -4,6 +4,10 @@ module.exports = {
   moduleNameMapper: {
     // `expo/fetch` delega ao `global.fetch`, que e o que as suites mockam.
     '^expo/fetch$': '<rootDir>/__mocks__/expo-fetch.ts',
+    // O Lucide publica o ESM em `.mjs`, que o babel-jest não transforma: sob o Jest
+    // vale o build CommonJS do próprio pacote, ícone por ícone como o app importa.
+    '^lucide-react-native/icons/(.*)$':
+      '<rootDir>/node_modules/lucide-react-native/dist/cjs/icons/$1.js',
     '^@/nutrition$': '<rootDir>/src/modules/nutrition',
     '^@/workout$': '<rootDir>/src/modules/workout',
     '^@/students$': '<rootDir>/src/modules/students',

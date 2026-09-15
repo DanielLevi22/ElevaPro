@@ -39,6 +39,8 @@ interface PedestalProps {
   size?: number;
   /** Quanto o objeto sobe acima do chão, no desenho. */
   lift?: number;
+  /** A cor da luz e do tracejo no chão (`glow` do kit). A primária, se omitida. */
+  glow?: string;
   children: ReactNode;
 }
 
@@ -72,9 +74,11 @@ const RING_DASH = '3 3';
  * de contato do chão já assenta o objeto, e o iOS nem tem esse filtro.
  */
 
-export function Pedestal({ size = 230, lift = 0, children }: PedestalProps) {
+export function Pedestal({ size = 230, lift = 0, glow, children }: PedestalProps) {
   const escalar = useEscala();
+  const cores = useCores();
   const side = escalar(size);
+  const color = glow ?? cores.primary;
 
   return (
     <View
@@ -83,9 +87,9 @@ export function Pedestal({ size = 230, lift = 0, children }: PedestalProps) {
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
-      <FloorGlow side={side} />
+      <FloorGlow side={side} color={color} />
       <ContactShadow side={side} />
-      <DashedRing side={side} />
+      <DashedRing side={side} color={color} />
       <View style={{ transform: [{ translateY: -escalar(lift) }] }}>{children}</View>
     </View>
   );
@@ -110,8 +114,7 @@ function useSvgId(prefix: string): string {
   return `${prefix}${useId().replace(/:/g, '')}`;
 }
 
-function FloorGlow({ side }: { side: number }) {
-  const cores = useCores();
+function FloorGlow({ side, color }: { side: number; color: string }) {
   const id = useSvgId('pedestalGlow');
   const width = side * GLOW.reachX * 2;
   const height = side * GLOW.reachY * 2;
@@ -128,7 +131,7 @@ function FloorGlow({ side }: { side: number }) {
               <Stop
                 key={fraction}
                 offset={index / (GLOW.profile.length - 1)}
-                stopColor={cores.primary}
+                stopColor={color}
                 stopOpacity={GLOW.peak * fraction}
               />
             ))}
@@ -177,8 +180,7 @@ function ContactShadow({ side }: { side: number }) {
   );
 }
 
-function DashedRing({ side }: { side: number }) {
-  const cores = useCores();
+function DashedRing({ side, color }: { side: number; color: string }) {
   const width = side * RING.width;
   const height = side * RING.height;
 
@@ -191,7 +193,7 @@ function DashedRing({ side }: { side: number }) {
           rx={width / 2 - 0.5}
           ry={height / 2 - 0.5}
           fill="none"
-          stroke={cores.primary}
+          stroke={color}
           strokeOpacity={RING.alpha}
           strokeWidth={1}
           strokeDasharray={RING_DASH}

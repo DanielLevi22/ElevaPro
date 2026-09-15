@@ -1,9 +1,17 @@
-import type { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useGlobalSearchParams, usePathname } from 'expo-router';
 // O expo-router publica o compat como `expo-router/react-navigation`, mas sem
 // shim para os subpacotes — o de bottom-tabs só resolve pelo caminho de build.
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
+import type { LucideIcon } from 'lucide-react-native';
+import Apple from 'lucide-react-native/icons/apple';
+import Dumbbell from 'lucide-react-native/icons/dumbbell';
+import House from 'lucide-react-native/icons/house';
+import LayoutDashboard from 'lucide-react-native/icons/layout-dashboard';
+import Trophy from 'lucide-react-native/icons/trophy';
+import Users from 'lucide-react-native/icons/users';
+import UtensilsCrossed from 'lucide-react-native/icons/utensils-crossed';
+import Watch from 'lucide-react-native/icons/watch';
 import { useColorScheme } from 'nativewind';
 import { Platform, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
@@ -16,15 +24,16 @@ import { ItemDaAba } from './ItemDaAba';
 import { isImmersiveRoute } from './immersiveRoutes';
 
 type Route = BottomTabBarProps['state']['routes'][number];
-type Icone = keyof typeof MaterialCommunityIcons.glyphMap;
 
 /**
  * A tab bar do kit de vidro: faixa inteira no rodapé, fundo translúcido com
  * blur, fio de cima e as abas com ícone e rótulo.
  *
- * O kit tem cinco abas e nenhum botão central. Aqui são quatro e o "+" no meio
+ * O kit tem cinco abas e nenhum botão central. Aqui o "+" fica no meio
  * (`BotaoDeAcoes`), por decisão de produto (#295); o Perfil, a quinta aba do
- * kit, segue pelo menu do "+". As abas são as do kit para cada papel — o aluno
+ * kit, segue pelo menu do "+". O aluno tem cinco abas (Saúde entrou na #308) e o
+ * especialista quatro: cada lado do "+" ocupa metade da barra, para ele ficar no
+ * centro com dois itens de um lado e três do outro. As abas são as do kit para cada papel — o aluno
  * vê Ranking, e não Progresso, que abre pelo bloco de métricas da tela inicial.
  *
  * @example
@@ -32,26 +41,25 @@ type Icone = keyof typeof MaterialCommunityIcons.glyphMap;
  */
 interface Aba {
   rotulo: string;
-  icone: Icone;
-  iconeAtivo: Icone;
+  Icone: LucideIcon;
 }
 
 const DO_ALUNO: Record<string, Aba> = {
-  index: { rotulo: 'Início', icone: 'home-outline', iconeAtivo: 'home' },
-  workouts: { rotulo: 'Treinos', icone: 'dumbbell', iconeAtivo: 'dumbbell' },
-  nutrition: {
-    rotulo: 'Nutrição',
-    icone: 'silverware-fork-knife',
-    iconeAtivo: 'silverware-fork-knife',
-  },
-  ranking: { rotulo: 'Ranking', icone: 'trophy-outline', iconeAtivo: 'trophy' },
+  index: { rotulo: 'Início', Icone: House },
+  workouts: { rotulo: 'Treinos', Icone: Dumbbell },
+  nutrition: { rotulo: 'Nutrição', Icone: UtensilsCrossed },
+  // A saúde e o relógio ganharam aba própria (#308): é onde o aluno vê a
+  // prontidão e resolve o que falta no relógio, e escondido na tela inicial ficava
+  // a um bloco de distância de quem mais precisa dele.
+  saude: { rotulo: 'Saúde', Icone: Watch },
+  ranking: { rotulo: 'Ranking', Icone: Trophy },
 };
 
 const DO_ESPECIALISTA: Record<string, Aba> = {
-  index: { rotulo: 'Painel', icone: 'view-dashboard-outline', iconeAtivo: 'view-dashboard' },
-  students: { rotulo: 'Alunos', icone: 'account-group-outline', iconeAtivo: 'account-group' },
-  workouts: { rotulo: 'Treinos', icone: 'dumbbell', iconeAtivo: 'dumbbell' },
-  nutrition: { rotulo: 'Nutrição', icone: 'food-apple-outline', iconeAtivo: 'food-apple' },
+  index: { rotulo: 'Painel', Icone: LayoutDashboard },
+  students: { rotulo: 'Alunos', Icone: Users },
+  workouts: { rotulo: 'Treinos', Icone: Dumbbell },
+  nutrition: { rotulo: 'Nutrição', Icone: Apple },
 };
 
 /** O kit desfoca o que passa por baixo com `blur(24px)`. */
@@ -87,7 +95,8 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     <ItemDaAba
       key={rota.key}
       rotulo={abas[rota.name].rotulo}
-      {...iconeEEstado(abas[rota.name], state.routes[state.index].key === rota.key)}
+      Icone={abas[rota.name].Icone}
+      ativo={state.routes[state.index].key === rota.key}
       onPress={() => abrir(navigation, rota, state.routes[state.index].key === rota.key)}
       onLongPress={() => navigation.emit({ type: 'tabLongPress', target: rota.key })}
     />
@@ -104,20 +113,20 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         className="flex-row items-start justify-around px-2 pt-3"
         style={[{ paddingBottom: insets.bottom }, estiloDasAbas]}
       >
-        {rotas.slice(0, 2).map(aba)}
+        <View pointerEvents="box-none" className="flex-1 flex-row items-start">
+          {rotas.slice(0, 2).map(aba)}
+        </View>
         <BotaoDeAcoes
           comCardio={ehAluno}
           arrastando={arrastando}
           onAcao={(acao) => executar(navigation, acao)}
         />
-        {rotas.slice(2, 4).map(aba)}
+        <View pointerEvents="box-none" className="flex-1 flex-row items-start">
+          {rotas.slice(2).map(aba)}
+        </View>
       </Animated.View>
     </View>
   );
-}
-
-function iconeEEstado(aba: Aba, ativo: boolean) {
-  return { icone: ativo ? aba.iconeAtivo : aba.icone, ativo };
 }
 
 function abrir(navigation: BottomTabBarProps['navigation'], rota: Route, ativa: boolean) {

@@ -108,7 +108,7 @@ export function WatchPermissionsScreen() {
       }
     >
       <View className="flex-row items-center gap-3 pt-1.5">
-        <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={router.back} />
+        <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={router.back} />
         <View className="min-w-0 flex-1">
           <Text className="text-micro font-bold uppercase tracking-wide text-hero-secondary">
             {label}

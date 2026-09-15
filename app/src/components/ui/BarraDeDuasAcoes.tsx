@@ -38,21 +38,33 @@ interface Acao {
 interface BarraDeDuasAcoesProps {
   secundaria: Acao;
   principal: Acao;
+  /**
+   * Tela sem tab bar (o onboarding): a barra fica nos 62 do kit acima do inset,
+   * sem o respiro do "+", que ali não existe.
+   */
+  semAbas?: boolean;
 }
 
 const ACIMA_DO_INSET = 84;
+const ACIMA_DO_INSET_SEM_ABAS = 62;
 const TAMANHO_DO_ICONE = 15;
 /** `0 10px 26px -10px` da primária a 80%. */
 const BRILHO_DA_PRINCIPAL = { y: 10, blur: 26, espalhamento: -10 } as const;
 
-export function BarraDeDuasAcoes({ secundaria, principal }: BarraDeDuasAcoesProps) {
+export function BarraDeDuasAcoes({
+  secundaria,
+  principal,
+  semAbas = false,
+}: BarraDeDuasAcoesProps) {
   const escalar = useEscala();
   const insets = useSafeAreaInsets();
 
   return (
     <View
       className="absolute left-[1.125rem] right-[1.125rem] flex-row gap-[0.5625rem]"
-      style={{ bottom: insets.bottom + escalar(ACIMA_DO_INSET) }}
+      style={{
+        bottom: insets.bottom + escalar(semAbas ? ACIMA_DO_INSET_SEM_ABAS : ACIMA_DO_INSET),
+      }}
     >
       <BotaoDaBarra acao={secundaria} tom="vidro" />
       <BotaoDaBarra acao={principal} tom="principal" />

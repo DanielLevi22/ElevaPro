@@ -113,7 +113,7 @@ export function AjusteDoExercicio({
             <Text numberOfLines={1} className="flex-1 text-h2 font-bold text-foreground">
               {item.exercise?.name ?? 'Exercício'}
             </Text>
-            <BotaoRedondo icone="close" rotulo="Fechar sem ajustar" onPress={onFechar} />
+            <BotaoRedondo icone="x" rotulo="Fechar sem ajustar" onPress={onFechar} />
           </View>
           <View className="flex-row gap-2.5">
             <Campo rotulo="Séries" valor={campos.series} onMudar={mudar('series')} numerico />

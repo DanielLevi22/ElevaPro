@@ -92,7 +92,10 @@ o que a mudança já alcança.
   o `metro.config.js` desliga o inline do `rem` para ele resolver em runtime. Em prop
   numérica (`size` de ícone), `useEscala()`. Fio de `0.5px` e borda de `1px` seguem
   em pixel: são constante do aparelho, e engrossariam numa tela grande.
-- Ícones: só `@expo/vector-icons`.
+- Ícones: `@expo/vector-icons`, e Lucide (`lucide-react-native`) na navegação — barra
+  de abas, menu do + e botão redondo de cabeçalho —, onde o kit desenha o traço fino.
+  Import ícone por ícone (`lucide-react-native/icons/house`): o Metro não faz
+  tree-shaking, e o import do pacote leva os ~1.800 ícones para o bundle.
 - Rotas: `router.push(ROUTES.X)` — nunca string literal solta.
 
 **Web:**

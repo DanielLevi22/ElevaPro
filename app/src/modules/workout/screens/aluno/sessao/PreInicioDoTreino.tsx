@@ -62,7 +62,7 @@ export function PreInicioDoTreino({
         // Fora da rolagem, no mesmo lugar do topo das outras telas (`pt-14`,
         // `px-4`): dentro dela ele desceria junto com o conteúdo centralizado.
         <View className="absolute left-4 top-14">
-          <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={onVoltar} />
+          <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={onVoltar} />
         </View>
       }
     >
