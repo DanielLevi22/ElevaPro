@@ -49,13 +49,17 @@ export function useCardioRecording(input: RecordingInput): CardioRecording {
     const { startedAt, finishedAt } = session;
     setSaving(true);
     try {
-      const read = await vitalsIfConsented(studentId, () =>
-        readSessionVitals(
-          new Date(startedAt),
-          new Date(finishedAt),
-          input.profile?.maxHeartRate ?? null
-        )
-      );
+      // Mascarado, o aparelho é o do especialista: o relógio lido seria o dele, e
+      // não o do aluno. Nada é gravado nesse modo, e nada é lido também.
+      const read = input.masquerading
+        ? null
+        : await vitalsIfConsented(studentId, () =>
+            readSessionVitals(
+              new Date(startedAt),
+              new Date(finishedAt),
+              input.profile?.maxHeartRate ?? null
+            )
+          );
       const feedback = { studentId, perceivedExertion, notes };
       const toSave = buildCardioSession(modality, session, input.reading, feedback, read);
       await saveCardioSession(toSave, { mascarado: input.masquerading });

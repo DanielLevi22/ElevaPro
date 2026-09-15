@@ -30,6 +30,11 @@ const DEFAULT_GOAL = 30;
 /** Cinco horas: acima disso é engano de digitação, não meta. */
 const MAX_GOAL = 300;
 
+function isValidGoal(digits: string): boolean {
+  const minutes = Number.parseInt(digits, 10);
+  return minutes > 0 && minutes <= MAX_GOAL;
+}
+
 /** "Você pode continuar pedalando" — o verbo de cada modalidade. */
 const KEEP_GOING: Record<CardioModalityId, string> = {
   walk: 'caminhando',
@@ -57,9 +62,10 @@ export function GoalView({ modality, goalMinutes, weightKg, onBack, onConfirm }:
   const type = (text: string) => {
     const digits = text.replace(/\D/g, '');
     setTyped(digits);
-    const minutes = Number.parseInt(digits, 10);
-    if (minutes > 0 && minutes <= MAX_GOAL) setDraft(minutes);
+    if (isValidGoal(digits)) setDraft(Number.parseInt(digits, 10));
   };
+  // "0" ou "900" digitados não podem confirmar em silêncio a meta anterior.
+  const typedInvalid = typed !== '' && !isValidGoal(typed);
 
   return (
     <GlassScreen
@@ -71,6 +77,7 @@ export function GoalView({ modality, goalMinutes, weightKg, onBack, onConfirm }:
           principal={{
             rotulo: 'Confirmar meta',
             icone: 'checkmark',
+            desabilitada: typedInvalid,
             onPress: () => onConfirm(draft),
           }}
         />
