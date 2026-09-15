@@ -71,7 +71,9 @@ export default function CardioSessionScreen() {
   const pesoKg = usePesoDoAluno(user?.id);
   const cronometro = useCronometroDaSessao({ met, pesoKg, metaEmMinutos });
   const intensidade = useIntensidadeDoMovimento(cronometro.emAndamento);
-  const rastreio = useRastreioDaCorrida();
+  // Esta tela antiga mede tudo, como sempre fez; a sessão em vidro passa a
+  // decidir pela modalidade.
+  const rastreio = useRastreioDaCorrida({ usesGps: true, countsSteps: true });
 
   const iniciar = useCallback(() => {
     cronometro.iniciar();
