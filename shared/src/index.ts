@@ -49,6 +49,7 @@ export * from "./utils/nome";
 export * from "./utils/periodizacao";
 export * from "./utils/preparo";
 export * from "./utils/pse";
+export * from "./utils/readiness";
 export * from "./utils/respostasDaNutricao";
 export * from "./utils/sessao";
 export * from "./utils/texto";
