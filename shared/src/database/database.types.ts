@@ -611,6 +611,8 @@ export type Database = {
           created_at: string;
           date: string;
           id: string;
+          readiness_score: number | null;
+          readiness_version: number | null;
           resting_heart_rate: number | null;
           sleep_minutes: number | null;
           steps: number;
@@ -622,6 +624,8 @@ export type Database = {
           created_at?: string;
           date: string;
           id?: string;
+          readiness_score?: number | null;
+          readiness_version?: number | null;
           resting_heart_rate?: number | null;
           sleep_minutes?: number | null;
           steps?: number;
@@ -633,6 +637,8 @@ export type Database = {
           created_at?: string;
           date?: string;
           id?: string;
+          readiness_score?: number | null;
+          readiness_version?: number | null;
           resting_heart_rate?: number | null;
           sleep_minutes?: number | null;
           steps?: number;

@@ -240,7 +240,10 @@ DECLARE
 BEGIN
   SELECT array_agg(esperado ORDER BY esperado) INTO ausentes
   FROM unnest(ARRAY['health_daily_metrics_sleep_minutes_plausible',
-                    'health_daily_metrics_resting_hr_plausible']) AS esperado
+                    'health_daily_metrics_resting_hr_plausible',
+                    'health_daily_metrics_readiness_with_version',
+                    'health_daily_metrics_readiness_score_range',
+                    'health_daily_metrics_readiness_version_positive']) AS esperado
   WHERE NOT EXISTS (
     SELECT 1 FROM pg_constraint c
     JOIN pg_class t ON t.oid = c.conrelid
@@ -252,7 +255,7 @@ BEGIN
       array_to_string(ausentes, ', ');
   END IF;
 
-  RAISE NOTICE 'ok  sono e FC de repouso com faixa de plausibilidade no banco';
+  RAISE NOTICE 'ok  sono, FC de repouso e prontidão com faixa no banco, e a nota sempre com a versão';
 END $$;
 
 -- ── Toda tabela de Art. 11 confere o consentimento; nenhuma de Art. 7° confere ──
@@ -386,6 +389,22 @@ BEGIN
       misplaced;
   END IF;
 
+  -- A prontidão (0055) é dado de saúde derivado pelo mesmo critério: uma cópia da
+  -- nota em `profiles` ou num resumo de treino ficaria sob a política da execução
+  -- de contrato, e o especialista seguiria lendo depois da revogação.
+  SELECT string_agg(format('%s.%s', table_name, column_name), ', ' ORDER BY table_name)
+    INTO misplaced
+  FROM information_schema.columns
+  WHERE table_schema = 'public'
+    AND column_name ~* 'readiness'
+    AND table_name <> 'health_daily_metrics';
+
+  IF misplaced IS NOT NULL THEN
+    RAISE EXCEPTION
+      'PRONTIDÃO FORA DA TABELA DE SAÚDE: % está numa tabela cuja RLS não consulta consentimento. A nota mora em health_daily_metrics (0055)',
+      misplaced;
+  END IF;
+
   SELECT string_agg(column_name, ', ' ORDER BY column_name)
     INTO series
   FROM information_schema.columns
@@ -399,7 +418,7 @@ BEGIN
       series;
   END IF;
 
-  RAISE NOTICE 'ok  FC e zonas só em tabela de saúde, e só o derivado';
+  RAISE NOTICE 'ok  FC, zonas e prontidão só em tabela de saúde, e só o derivado';
 END $$;
 
 -- ── Feedback de treino e observação de refeição ──────────────────────────────
@@ -662,10 +681,23 @@ BEGIN
   UPDATE public.profiles SET account_type = 'admin' WHERE id = admin;
 
   INSERT INTO public.health_daily_metrics
-    (student_id, date, steps, active_calories, sleep_minutes, resting_heart_rate)
+    (student_id, date, steps, active_calories, sleep_minutes, resting_heart_rate,
+     readiness_score, readiness_version)
   VALUES
-    (aluno_a, current_date, 8421, 512, 431, 58),
-    (aluno_b, current_date, 3110, 197, 388, 66);
+    (aluno_a, current_date, 8421, 512, 431, 58, 82, 1),
+    (aluno_b, current_date, 3110, 197, 388, 66, 61, 1);
+
+  -- LGPD, Art. 11 e ADR-0029. A nota sem a versão da regra é número sem régua:
+  -- 70 de uma regra e 70 de outra não dizem a mesma coisa, e o especialista
+  -- compararia as duas. O banco recusa uma sem a outra.
+  BEGIN
+    INSERT INTO public.health_daily_metrics
+      (student_id, date, steps, active_calories, readiness_score)
+    VALUES (aluno_b, current_date - 1, 0, 0, 70);
+    RAISE EXCEPTION 'NOTA SEM RÉGUA: health_daily_metrics aceitou readiness_score sem readiness_version';
+  EXCEPTION WHEN check_violation THEN
+    NULL;
+  END;
 
   INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
   VALUES (aluno_a, espec, 'personal_training', 'active');
@@ -705,6 +737,13 @@ BEGIN
     RAISE EXCEPTION 'especialista não lê sono/FC de repouso do aluno A (viu %)', visiveis;
   END IF;
 
+  SELECT count(*) INTO visiveis
+    FROM public.health_daily_metrics
+   WHERE student_id = aluno_a AND readiness_score IS NOT NULL;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'especialista não lê a prontidão do aluno A (viu %)', visiveis;
+  END IF;
+
   -- Ler é tudo que o especialista pode. A métrica é medida do aparelho, e o
   -- remédio para medida inexata é medir de novo, não digitar outro número
   -- (Art. 6°, V) — mesma doutrina de `body_scans` na 0038.
@@ -727,6 +766,15 @@ BEGIN
     FROM public.health_daily_metrics WHERE student_id = aluno_a;
   IF vazou <> 0 THEN
     RAISE EXCEPTION 'CONSENTIMENTO IGNORADO: aluno A revogou e o especialista ainda lê % dia(s)', vazou;
+  END IF;
+
+  -- A nota (0055) sai pela mesma porta: afirmado sobre a coluna, e não só sobre
+  -- a linha, para uma política futura por coluna não abrir a prontidão sozinha.
+  SELECT count(*) INTO vazou
+    FROM public.health_daily_metrics
+   WHERE student_id = aluno_a AND readiness_score IS NOT NULL;
+  IF vazou <> 0 THEN
+    RAISE EXCEPTION 'PRONTIDÃO SEM CONSENTIMENTO: aluno A revogou e o especialista ainda lê a nota de % dia(s)', vazou;
   END IF;
 
   -- E o próprio aluno continua vendo o que já foi coletado: revogar interrompe

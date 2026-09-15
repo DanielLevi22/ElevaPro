@@ -1,4 +1,4 @@
-import { date, integer, pgTable, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { date, integer, pgTable, smallint, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { profiles } from "./auth";
 
 /**
@@ -23,6 +23,10 @@ export const healthDailyMetrics = pgTable(
     // que `hasRecords` corrigiu na leitura do Health Connect.
     sleep_minutes: integer("sleep_minutes"),
     resting_heart_rate: integer("resting_heart_rate"),
+    // A prontidão do dia e a versão da regra que a calculou (0055, ADR-0029).
+    // Nulas juntas: nota sem versão é número sem régua.
+    readiness_score: smallint("readiness_score"),
+    readiness_version: smallint("readiness_version"),
     synced_at: timestamp("synced_at", { withTimezone: true }).notNull().defaultNow(),
     created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

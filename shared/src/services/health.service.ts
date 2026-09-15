@@ -82,8 +82,13 @@ export interface Finalidade {
  *   `0054`: as zonas são dado de saúde novo guardado, e a idade passa a servir a
  *   uma finalidade que o texto não mencionava. O texto diz também o que continua
  *   fora: a série de batimentos é lida no aparelho e não é guardada.
+ * - `1.7` (2026-09-14) — acrescenta **a prontidão do dia**, a nota de 0 a 100
+ *   calculada do sono e da FC de repouso contra a média do próprio aluno. Issue
+ *   #308, migration `0055` e ADR-0029: a nota é dado de saúde derivado e gravado,
+ *   e inferir recuperação é finalidade que o texto não cobria — guardar a duração
+ *   do sono não é o mesmo que dizer se a pessoa está pronta para treinar.
  */
-export const POLICY_VERSION = "1.6";
+export const POLICY_VERSION = "1.7";
 
 /** Coleta de dados de saúde: avaliação, anamnese, métricas diárias, body scan. */
 export const SAUDE: Finalidade = { tipo: CONSENT_HEALTH_COLLECTION, versao: POLICY_VERSION };
@@ -209,6 +214,10 @@ export const createHealthService = (supabase: SupabaseClient) => ({
     if (metric.resting_heart_rate !== undefined) {
       payload.resting_heart_rate = metric.resting_heart_rate;
     }
+    if (metric.readiness !== undefined) {
+      payload.readiness_score = metric.readiness?.score ?? null;
+      payload.readiness_version = metric.readiness?.version ?? null;
+    }
 
     const { error } = await supabase
       .from("health_daily_metrics")
@@ -227,7 +236,7 @@ export const createHealthService = (supabase: SupabaseClient) => ({
       // `select("*")` faz dado de saúde sair do banco para camadas que não
       // pediram por ele — e passa a carregar coluna nova sozinho.
       .select(
-        "id, student_id, date, steps, active_calories, sleep_minutes, resting_heart_rate, synced_at",
+        "id, student_id, date, steps, active_calories, sleep_minutes, resting_heart_rate, readiness_score, readiness_version, synced_at",
       )
       .eq("student_id", studentId)
       .gte("date", startDate)
@@ -242,7 +251,7 @@ export const createHealthService = (supabase: SupabaseClient) => ({
     const { data, error } = await supabase
       .from("health_daily_metrics")
       .select(
-        "id, student_id, date, steps, active_calories, sleep_minutes, resting_heart_rate, synced_at",
+        "id, student_id, date, steps, active_calories, sleep_minutes, resting_heart_rate, readiness_score, readiness_version, synced_at",
       )
       .eq("student_id", studentId)
       .eq("date", date)

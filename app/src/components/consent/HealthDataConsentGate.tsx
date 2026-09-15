@@ -36,6 +36,9 @@ interface HealthDataConsentGateProps {
 
 const ITENS_ARMAZENADOS = [
   'Passos e calorias do dia',
+  // A 1.7 existe por esta linha: a prontidão é inferência gravada (ADR-0029). O
+  // sono e a FC de repouso, da 1.3, faltavam na lista e entram junto.
+  'Duração do sono e frequência cardíaca de repouso, e a prontidão do dia calculada deles contra a sua própria média',
   'Treinos executados, com séries e cargas',
   // A 1.6 existe por esta linha: as zonas passaram a ser guardadas, e a idade da
   // anamnese passou a calculá-las.
