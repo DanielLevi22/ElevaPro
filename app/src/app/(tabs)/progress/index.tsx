@@ -6,7 +6,12 @@ export default function ProgressRoute() {
   const { user } = useAuthStore();
   const { segment } = useLocalSearchParams<{ segment?: string }>();
   if (!user?.id) return null;
-  return <ProgressScreen studentId={user.id} initialSegment={segmentFrom(segment)} />;
+  const initialSegment = segmentFrom(segment);
+  // A aba fica montada: sem a chave, um link com outro segmento chegaria à tela aberta
+  // e não mudaria nada. Os dados estão no cache, e remontar não busca de novo.
+  return (
+    <ProgressScreen key={initialSegment} studentId={user.id} initialSegment={initialSegment} />
+  );
 }
 
 /** `?segment=training` abre direto no Treino; valor desconhecido abre o Geral. */
