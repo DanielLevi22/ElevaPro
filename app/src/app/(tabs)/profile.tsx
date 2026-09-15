@@ -6,12 +6,12 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
-import { MinhasAutorizacoes } from '@/components/consent/MinhasAutorizacoes';
 import { showConfirm } from '@/components/ui/appAlert';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { SeletorDeTema } from '@/components/ui/SeletorDeTema';
 import { colors as brandColors } from '@/constants/colors';
-import { useCores } from '@/shared/design';
+import { ROUTES } from '@/navigation/types';
+import { useCores, useEscala } from '@/shared/design';
 
 const authService = createAuthService(supabase);
 
@@ -33,6 +33,7 @@ const PLACEHOLDER_XP = 0;
 
 export default function ProfileScreen() {
   const cores = useCores();
+  const escalar = useEscala();
   const { signOut, user } = useAuthStore();
   const [profile, setProfile] = useState<Profile | null>(null);
   const router = useRouter();
@@ -200,8 +201,30 @@ export default function ProfileScreen() {
 
           {/* O caminho de volta do consentimento (Art. 8°, §5°): gratuito e
               facilitado, e no lugar em que a tela de introdução da Análise de
-              Técnica diz que ele está. */}
-          <MinhasAutorizacoes studentId={user?.id ?? null} />
+              Técnica e o aceite de saúde dizem que ele está. */}
+          {profile?.account_type !== 'specialist' && (
+            <TouchableOpacity
+              onPress={() => router.push(ROUTES.HEALTH.AUTHORIZATIONS)}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              className="mb-8 flex-row items-center gap-4 rounded-3xl border border-border bg-card p-5"
+            >
+              <View className="h-10 w-10 items-center justify-center rounded-full bg-muted">
+                <Ionicons
+                  name="shield-checkmark-outline"
+                  size={escalar(20)}
+                  color={cores.primaryText}
+                />
+              </View>
+              <View className="flex-1">
+                <Text className="font-bold text-foreground">Minhas autorizações</Text>
+                <Text className="mt-0.5 text-xs text-muted-foreground">
+                  O que você autorizou, e como retirar
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={escalar(18)} color={cores.placeholder} />
+            </TouchableOpacity>
+          )}
 
           {/* Info Section */}
           <View className="mb-8">
