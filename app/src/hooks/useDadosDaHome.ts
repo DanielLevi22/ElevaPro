@@ -69,9 +69,9 @@ export function useDadosDaHome(): DadosDaHome {
 }
 
 /** Cada módulo que a tela inicial lê, pela porta pública dele. */
-function useFontesDaHome(alunoId: string | undefined) {
+function useFontesDaHome(studentId: string | undefined) {
   return {
-    atividade: useDailyActivity(alunoId),
+    activity: useDailyActivity(studentId),
     gamificacao: useGamificationStore(),
     saude: useHealthData(),
     alunos: useStudentStore(),
@@ -96,7 +96,7 @@ function useCarregamentoDaHome(
   const [perfil, setPerfil] = useState<ProfileSummary | null>(null);
   const { fetchDailyData } = fontes.gamificacao;
   const { refetch: recarregarSaude } = fontes.saude;
-  const { reload: recarregarAtividade } = fontes.atividade;
+  const { reload: reloadActivity } = fontes.activity;
   const { fetchStudents } = fontes.alunos;
   const { fetchWorkouts } = fontes.treinos;
 
@@ -111,7 +111,7 @@ function useCarregamentoDaHome(
       fetchDailyData(getLocalDateISOString()),
       fetchWorkouts(userId),
       recarregarSaude(),
-      recarregarAtividade(),
+      reloadActivity(),
     ]);
   }, [
     userId,
@@ -120,7 +120,7 @@ function useCarregamentoDaHome(
     fetchWorkouts,
     fetchDailyData,
     recarregarSaude,
-    recarregarAtividade,
+    reloadActivity,
   ]);
 
   useFocusEffect(
@@ -142,14 +142,14 @@ function montarAluno(
   treinoSugerido: TreinoSugerido | null,
   recarregar: () => Promise<void>
 ): DadosDaHomeDoAluno {
-  const { gamificacao, saude, avaliacao, atividade } = fontes;
+  const { gamificacao, saude, avaliacao, activity } = fontes;
   return {
     perfil,
     treinoSugerido,
     saude,
     metaDoDia: gamificacao.dailyGoal,
     ofensiva: gamificacao.streak,
-    sequencia: atividade.streak.current,
+    streakDays: activity.streak.current,
     mostrarConfete: gamificacao.showConfetti,
     // Só a contagem sai daqui: a tela mostra o estado, não as respostas.
     anamnese: {

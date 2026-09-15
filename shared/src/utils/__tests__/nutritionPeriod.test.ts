@@ -54,7 +54,8 @@ describe("summarizeNutrition — números das 12 semanas", () => {
 });
 
 describe("summarizeNutrition — séries", () => {
-  it("dá a aderência das últimas 8 semanas, nula na semana sem plano", () => {
+  // As colunas cobrem o mesmo período dos números de cima: 12 semanas, e não 8.
+  it("dá a aderência de cada uma das 12 semanas, nula na semana sem plano", () => {
     const days = [
       day("2026-09-15", { plannedMeals: 2, doneMeals: 1 }),
       day("2026-09-08", { plannedMeals: 2, doneMeals: 2 }),
@@ -62,7 +63,8 @@ describe("summarizeNutrition — séries", () => {
 
     const { weeklyAdherence } = summarizeNutrition(days, TODAY);
 
-    expect(weeklyAdherence).toEqual([null, null, null, null, null, null, 100, 50]);
+    expect(weeklyAdherence).toHaveLength(12);
+    expect(weeklyAdherence.slice(-3)).toEqual([null, 100, 50]);
   });
 
   it("dá a média diária de calorias de cada uma das 12 semanas", () => {

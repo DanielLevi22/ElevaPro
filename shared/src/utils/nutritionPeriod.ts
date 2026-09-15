@@ -1,4 +1,5 @@
-import { addDays, withinDays } from "./dateOnly";
+import { withinDays } from "./dateOnly";
+import { type Trend, trendOver, type WindowMeasure, weeklyValues } from "./periodTrend";
 import { mealAdherence } from "./progressSummary";
 
 /**
@@ -20,18 +21,11 @@ export interface DailyIntake {
   fat: number;
 }
 
-export interface PeriodNumber {
-  value: number | null;
-  delta: number | null;
-  /** Oito semanas, da mais antiga à atual; `null` é semana sem dado. */
-  spark: (number | null)[];
-}
-
 export interface NutritionPeriod {
-  adherence: PeriodNumber;
-  calories: PeriodNumber;
-  protein: PeriodNumber;
-  /** A aderência de cada uma das últimas 8 semanas. */
+  adherence: Trend;
+  calories: Trend;
+  protein: Trend;
+  /** A aderência de cada uma das 12 semanas. */
   weeklyAdherence: (number | null)[];
   /** A média diária de calorias de cada uma das 12 semanas. */
   weeklyCalories: (number | null)[];
@@ -39,10 +33,9 @@ export interface NutritionPeriod {
 }
 
 const PERIOD_WEEKS = 12;
-const COLUMN_WEEKS = 8;
-const WEEK_DAYS = 7;
+const PERIOD_DAYS = PERIOD_WEEKS * 7;
 
-type Measure = (days: readonly DailyIntake[]) => number | null;
+type Measure = WindowMeasure<DailyIntake>;
 
 /** Dia sem nada registrado não é dia de zero caloria: fica fora da média. */
 function averageOf(pick: (day: DailyIntake) => number): Measure {
@@ -57,33 +50,20 @@ const averageCalories = averageOf((day) => day.calories);
 const averageProtein = averageOf((day) => day.protein);
 
 /**
+ * Os números da nutrição das últimas 12 semanas contra as 12 anteriores, as séries
+ * semanais dos dois gráficos e os macros médios do período.
+ *
  * @example summarizeNutrition(days, "2026-09-15").calories.value // 2180
  */
 export function summarizeNutrition(days: readonly DailyIntake[], today: string): NutritionPeriod {
-  const current = withinDays(days, today, PERIOD_WEEKS * WEEK_DAYS);
   return {
-    adherence: periodNumber(days, today, mealAdherence),
-    calories: periodNumber(days, today, averageCalories),
-    protein: periodNumber(days, today, averageProtein),
-    weeklyAdherence: weekly(days, today, COLUMN_WEEKS, mealAdherence),
-    weeklyCalories: weekly(days, today, PERIOD_WEEKS, averageCalories),
-    macros: macrosOf(current),
+    adherence: trendOver(days, today, PERIOD_DAYS, mealAdherence),
+    calories: trendOver(days, today, PERIOD_DAYS, averageCalories),
+    protein: trendOver(days, today, PERIOD_DAYS, averageProtein),
+    weeklyAdherence: weeklyValues(days, today, PERIOD_WEEKS, mealAdherence),
+    weeklyCalories: weeklyValues(days, today, PERIOD_WEEKS, averageCalories),
+    macros: macrosOf(withinDays(days, today, PERIOD_DAYS)),
   };
-}
-
-function periodNumber(days: readonly DailyIntake[], today: string, measure: Measure): PeriodNumber {
-  const length = PERIOD_WEEKS * WEEK_DAYS;
-  const value = measure(withinDays(days, today, length));
-  const previous = measure(withinDays(days, addDays(today, -length), length));
-  const delta = value === null || previous === null ? null : value - previous;
-  return { value, delta, spark: weekly(days, today, COLUMN_WEEKS, measure) };
-}
-
-function weekly(days: readonly DailyIntake[], today: string, weeks: number, measure: Measure) {
-  return Array.from({ length: weeks }, (_, index) => {
-    const end = addDays(today, -(weeks - 1 - index) * WEEK_DAYS);
-    return measure(withinDays(days, end, WEEK_DAYS));
-  });
 }
 
 function macrosOf(days: readonly DailyIntake[]): NutritionPeriod["macros"] {

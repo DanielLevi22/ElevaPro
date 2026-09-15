@@ -1,4 +1,4 @@
-import { type ConsistencyDay, MESES_CURTOS } from '@elevapro/shared';
+import { type ConsistencyDay, shortMonthOf } from '@elevapro/shared';
 import { Text, View } from 'react-native';
 import { type Cores, comOpacidade, useCores, useEscala } from '@/shared/design';
 
@@ -10,8 +10,8 @@ import { type Cores, comOpacidade, useCores, useEscala } from '@/shared/design';
  *     tons: trilho, primária a 26%, a 55% e cheia com brilho de 8px
  *     legenda "Menos ■■■■ Mais", 10
  *
- * Dia que ainda não chegou fica apagado, e não com o tom de "nada": um quadrado
- * de nada no sábado que vem leria como sábado perdido.
+ * Dia que ainda não chegou fica apagado, e não com o tom de "nada": um quadrado de
+ * nada no sábado que vem leria como sábado perdido.
  *
  * @example <ConsistencyGrid weeks={consistencyWeeks(days, today)} />
  */
@@ -34,10 +34,7 @@ const GLOW_BLUR = 8;
 const GLOW_SPREAD = -2;
 
 export function ConsistencyGrid({ weeks }: ConsistencyGridProps) {
-  const cores = useCores();
-  const escalar = useEscala();
-  const shades = levelShades(cores);
-
+  const shades = levelShades(useCores());
   return (
     <View accessible accessibilityLabel={describe(weeks)}>
       <View className="flex-row gap-1.5">
@@ -51,47 +48,58 @@ export function ConsistencyGrid({ weeks }: ConsistencyGridProps) {
         <View className="flex-1 gap-[0.21875rem]">
           {WEEKDAYS.map((day, weekday) => (
             <View key={day.key} className="flex-row gap-[0.21875rem]">
-              {weeks.map((week) => {
-                const cell = week[weekday];
-                return (
-                  <View
-                    key={cell.date}
-                    className="aspect-square flex-1 rounded-[0.1875rem]"
-                    style={{
-                      backgroundColor: shades[cell.level],
-                      opacity: cell.future ? FUTURE_OPACITY : 1,
-                      boxShadow:
-                        cell.level === 3
-                          ? [
-                              {
-                                offsetX: 0,
-                                offsetY: 0,
-                                blurRadius: escalar(GLOW_BLUR),
-                                spreadDistance: escalar(GLOW_SPREAD),
-                                color: cores.primary,
-                              },
-                            ]
-                          : undefined,
-                    }}
-                  />
-                );
-              })}
+              {weeks.map((week) => (
+                <DayCell key={week[weekday].date} cell={week[weekday]} shades={shades} />
+              ))}
             </View>
           ))}
         </View>
       </View>
-      <View className="ml-[1.375rem] mt-[0.4375rem] flex-row">
-        {weeks.map((week, index) => (
+      <MonthLabels weeks={weeks} />
+      <Legend shades={shades} />
+    </View>
+  );
+}
+
+function DayCell({ cell, shades }: { cell: ConsistencyDay; shades: string[] }) {
+  const cores = useCores();
+  const escalar = useEscala();
+  const glow = {
+    offsetX: 0,
+    offsetY: 0,
+    blurRadius: escalar(GLOW_BLUR),
+    spreadDistance: escalar(GLOW_SPREAD),
+    color: cores.primary,
+  };
+  return (
+    <View
+      className="aspect-square flex-1 rounded-[0.1875rem]"
+      style={{
+        backgroundColor: shades[cell.level],
+        opacity: cell.future ? FUTURE_OPACITY : 1,
+        boxShadow: cell.level === 3 ? [glow] : undefined,
+      }}
+    />
+  );
+}
+
+/** A primeira semana e a semana em que um mês começa levam o nome do mês. */
+function MonthLabels({ weeks }: ConsistencyGridProps) {
+  return (
+    <View className="ml-[1.375rem] mt-[0.4375rem] flex-row">
+      {weeks.map((week, index) => {
+        const month = shortMonthOf(week[0].date);
+        const starts = index === 0 || month !== shortMonthOf(weeks[index - 1][0].date);
+        return (
           <Text
             key={week[0].date}
             numberOfLines={1}
             className="flex-1 overflow-visible text-[0.59375rem] font-bold text-placeholder"
           >
-            {startsMonth(weeks, index) ? MESES_CURTOS[Number(week[0].date.slice(5, 7)) - 1] : ''}
+            {starts ? month : ''}
           </Text>
-        ))}
-      </View>
-      <Legend shades={shades} />
+        );
+      })}
     </View>
   );
 }
@@ -120,12 +128,6 @@ function levelShades(cores: Cores): string[] {
     comOpacidade(cores.primary, 0.55),
     cores.primary,
   ];
-}
-
-/** A primeira semana do heatmap e a semana em que um mês começa levam o rótulo. */
-function startsMonth(weeks: ConsistencyDay[][], index: number): boolean {
-  if (index === 0) return true;
-  return weeks[index][0].date.slice(5, 7) !== weeks[index - 1][0].date.slice(5, 7);
 }
 
 /** O leitor de tela não lê 91 quadrados: lê quantos dias tiveram atividade. */

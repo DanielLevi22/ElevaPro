@@ -25,8 +25,6 @@ export { default as DietDetailsScreen } from '../screens/DietDetailsScreen';
 export { MemberNutritionScreen } from '../screens/MemberNutritionScreen';
 export { default as NutritionScreen } from '../screens/NutritionScreen';
 export { StudentNutritionScreen } from '../screens/StudentNutritionScreen';
-// O que o dia rende: a nutrição em números do hub de Progresso usa a mesma regra (#312).
-export { consumoDoDia, metaDoDia } from '../services/consumoDoDia';
 // Store
 export { useNutritionStore } from '../store/nutritionStore';
 

@@ -1,3 +1,5 @@
+import { MESES_CURTOS } from "./calendario";
+
 /**
  * Conta com data sem hora (`"2026-09-15"`), sem passar pelo fuso do aparelho.
  *
@@ -9,6 +11,8 @@
 const MS_PER_DAY = 86_400_000;
 
 /**
+ * A data `days` dias depois, ou antes com negativo, atravessando mês e ano.
+ *
  * @example addDays("2026-09-01", -1) // "2026-08-31"
  */
 export function addDays(date: string, days: number): string {
@@ -25,12 +29,30 @@ export function daysBetween(from: string, to: string): number {
 }
 
 /**
+ * O dia da semana com domingo = 0, como `getUTCDay` e como `diet_meals.day_of_week`.
+ *
+ * @example weekdayOf("2026-09-13") // 0 (domingo)
+ */
+export function weekdayOf(date: string): number {
+  return new Date(`${date}T00:00:00Z`).getUTCDay();
+}
+
+/**
+ * O mês curto como o kit escreve nos eixos dos gráficos.
+ *
+ * @example shortMonthOf("2026-09-15") // "set"
+ */
+export function shortMonthOf(date: string): string {
+  return MESES_CURTOS[Number(date.slice(5, 7)) - 1];
+}
+
+/**
  * O dia da semana com segunda = 0 e domingo = 6, a ordem do calendário brasileiro.
  *
  * @example weekdayFromMonday("2026-09-14") // 0 (segunda)
  */
 export function weekdayFromMonday(date: string): number {
-  return (new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7;
+  return (weekdayOf(date) + 6) % 7;
 }
 
 /**

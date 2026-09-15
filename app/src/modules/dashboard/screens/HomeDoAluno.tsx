@@ -71,7 +71,7 @@ export function HomeDoAluno({ dados }: { dados: DadosDaHomeDoAluno }) {
           <CabecalhoDaHome
             perfil={dados.perfil}
             ofensiva={dados.ofensiva}
-            sequencia={dados.sequencia}
+            streakDays={dados.streakDays}
           />
           <MetaDoDia dados={dados} />
           {/* O conteúdo começa no topo da tela (sem safe area), então o `y` no

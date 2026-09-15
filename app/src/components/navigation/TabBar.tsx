@@ -5,6 +5,7 @@ import { useGlobalSearchParams, usePathname } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
 import type { LucideIcon } from 'lucide-react-native';
 import Apple from 'lucide-react-native/icons/apple';
+import ChartNoAxesColumn from 'lucide-react-native/icons/chart-no-axes-column';
 import Dumbbell from 'lucide-react-native/icons/dumbbell';
 import House from 'lucide-react-native/icons/house';
 import LayoutDashboard from 'lucide-react-native/icons/layout-dashboard';
@@ -31,10 +32,9 @@ type Route = BottomTabBarProps['state']['routes'][number];
  *
  * O kit tem cinco abas e nenhum botão central. Aqui o "+" fica no meio
  * (`BotaoDeAcoes`), por decisão de produto (#295); o Perfil, a quinta aba do
- * kit, segue pelo menu do "+". O aluno tem cinco abas (Saúde entrou na #308) e o
- * especialista quatro: cada lado do "+" ocupa metade da barra, para ele ficar no
- * centro com dois itens de um lado e três do outro. As abas são as do kit para cada papel — o aluno
- * vê Ranking, e não Progresso, que abre pelo bloco de métricas da tela inicial.
+ * kit, segue pelo menu do "+". O aluno tem seis abas (Saúde entrou na #308 e
+ * Progresso na #312) e o especialista quatro: cada lado do "+" ocupa metade da
+ * barra e leva metade das abas, para ele ficar no centro.
  *
  * @example
  * <Tabs tabBar={(props) => <TabBar {...props} />} />
@@ -48,6 +48,9 @@ const DO_ALUNO: Record<string, Aba> = {
   index: { rotulo: 'Início', Icone: House },
   workouts: { rotulo: 'Treinos', Icone: Dumbbell },
   nutrition: { rotulo: 'Nutrição', Icone: UtensilsCrossed },
+  // As métricas ganharam aba (#312), com o ícone do kit: antes só se chegava a elas
+  // pelo bloco da tela inicial, e o hub de Progresso é tela de voltar todo dia.
+  progress: { rotulo: 'Progresso', Icone: ChartNoAxesColumn },
   // A saúde e o relógio ganharam aba própria (#308): é onde o aluno vê a
   // prontidão e resolve o que falta no relógio, e escondido na tela inicial ficava
   // a um bloco de distância de quem mais precisa dele.
@@ -80,6 +83,8 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const rotas = Object.keys(abas)
     .map((nome) => state.routes.find((r: Route) => r.name === nome))
     .filter((r): r is Route => r !== undefined);
+
+  const metade = Math.ceil(rotas.length / 2);
 
   const opcoes = descriptors[state.routes[state.index].key].options as {
     tabBarStyle?: { display?: string };
@@ -114,7 +119,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         style={[{ paddingBottom: insets.bottom }, estiloDasAbas]}
       >
         <View pointerEvents="box-none" className="flex-1 flex-row items-start">
-          {rotas.slice(0, 2).map(aba)}
+          {rotas.slice(0, metade).map(aba)}
         </View>
         <BotaoDeAcoes
           comCardio={ehAluno}
@@ -122,7 +127,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           onAcao={(acao) => executar(navigation, acao)}
         />
         <View pointerEvents="box-none" className="flex-1 flex-row items-start">
-          {rotas.slice(2).map(aba)}
+          {rotas.slice(metade).map(aba)}
         </View>
       </Animated.View>
     </View>

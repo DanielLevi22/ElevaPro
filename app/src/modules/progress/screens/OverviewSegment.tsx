@@ -1,4 +1,4 @@
-import { consistencyWeeks, summarizeProgress, type TrendNumber } from '@elevapro/shared';
+import { consistencyWeeks, type ProgressSummary, summarizeProgress } from '@elevapro/shared';
 import { useRouter } from 'expo-router';
 import { type ReactNode, useMemo } from 'react';
 import { View } from 'react-native';
@@ -10,7 +10,7 @@ import { ConsistencyGrid } from '../components/ConsistencyGrid';
 import { ProgressHeader } from '../components/ProgressHeader';
 import { ShortcutRow } from '../components/ShortcutRow';
 import { StreakCard } from '../components/StreakCard';
-import { judgementOf, TrendDelta } from '../components/TrendDelta';
+import { trendDelta } from '../components/TrendDelta';
 import { TrendStat } from '../components/TrendStat';
 
 /**
@@ -29,7 +29,6 @@ interface OverviewSegmentProps {
 }
 
 export function OverviewSegment({ activity, segments, onOpenTraining }: OverviewSegmentProps) {
-  const router = useRouter();
   const { days, today, streak } = activity;
   const summary = useMemo(() => summarizeProgress(days, today), [days, today]);
   const weeks = useMemo(() => consistencyWeeks(days, today), [days, today]);
@@ -39,42 +38,59 @@ export function OverviewSegment({ activity, segments, onOpenTraining }: Overview
       <ProgressHeader size="segment" eyebrow="Últimos 30 dias" title="Seu progresso" />
       <View className="mt-4">{segments}</View>
       <StreakCard standing={streak} />
-
-      <View className="mt-3 flex-row gap-2.5">
-        <TrendStat
-          icon="barbell"
-          tone="brand"
-          label="Treinos"
-          value={String(summary.workouts.value ?? 0)}
-          spark={summary.workouts.spark}
-          delta={deltaOf(summary.workouts)}
-        />
-        <TrendStat
-          icon="restaurant"
-          tone="green"
-          label="Aderência"
-          value={summary.adherence.value === null ? '—' : String(summary.adherence.value)}
-          unit={summary.adherence.value === null ? undefined : '%'}
-          spark={summary.adherence.spark}
-          delta={deltaOf(summary.adherence, 'pts')}
-        />
-        <TrendStat
-          icon="star"
-          tone="purple"
-          label="Dias top"
-          value={String(summary.topDays.value ?? 0)}
-          spark={summary.topDays.spark}
-          delta={deltaOf(summary.topDays)}
-        />
-      </View>
-
+      <SummaryStats summary={summary} />
       <TituloDeSecao estilo="rotulo" acao="13 semanas">
         Consistência
       </TituloDeSecao>
       <Vidro className="p-[0.9375rem]">
         <ConsistencyGrid weeks={weeks} />
       </Vidro>
+      <Shortcuts onOpenTraining={onOpenTraining} />
+    </>
+  );
+}
 
+function SummaryStats({ summary }: { summary: ProgressSummary }) {
+  const { workouts, adherence, topDays } = summary;
+  return (
+    <View className="mt-3 flex-row gap-2.5">
+      <TrendStat
+        icon="barbell"
+        tone="brand"
+        label="Treinos"
+        value={String(workouts.value ?? 0)}
+        spark={workouts.spark}
+        delta={trendDelta(workouts)}
+      />
+      <TrendStat
+        icon="restaurant"
+        tone="green"
+        label="Aderência"
+        value={adherence.value === null ? '—' : String(adherence.value)}
+        unit={adherence.value === null ? undefined : '%'}
+        spark={adherence.spark}
+        delta={trendDelta(adherence, 'pts')}
+      />
+      <TrendStat
+        icon="star"
+        tone="purple"
+        label="Dias top"
+        value={String(topDays.value ?? 0)}
+        spark={topDays.spark}
+        delta={trendDelta(topDays)}
+      />
+    </View>
+  );
+}
+
+/**
+ * Composição, circunferências e relatório entram aqui quando as telas existirem:
+ * atalho para rota que não existe é pior que atalho que falta.
+ */
+function Shortcuts({ onOpenTraining }: { onOpenTraining: () => void }) {
+  const router = useRouter();
+  return (
+    <>
       <TituloDeSecao estilo="rotulo">Atalhos</TituloDeSecao>
       <ShortcutRow
         icon="stats-chart"
@@ -96,10 +112,4 @@ export function OverviewSegment({ activity, segments, onOpenTraining }: Overview
       />
     </>
   );
-}
-
-/** Sem valor dos dois lados não há variação para mostrar, e a pílula some. */
-function deltaOf(trend: TrendNumber, unit?: string) {
-  if (trend.delta === null) return undefined;
-  return <TrendDelta value={trend.delta} unit={unit} judgement={judgementOf(trend.delta)} />;
 }

@@ -4,7 +4,7 @@ import {
   foldForSearch,
   formatarCarga,
   formatarVolume,
-  MESES_CURTOS,
+  shortMonthOf,
 } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -18,6 +18,7 @@ import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import { useCores, useEscala } from '@/shared/design';
 import { CardTitle } from '../components/CardTitle';
+import { EmptyCard } from '../components/ChartCard';
 import { AreaChart } from '../components/charts/AreaChart';
 import { evenLabels } from '../components/charts/geometry';
 import { ProgressHeader } from '../components/ProgressHeader';
@@ -76,7 +77,11 @@ export function ExerciseLoadsScreen({ studentId }: ExerciseLoadsScreenProps) {
           autoFocus
         />
       ) : null}
-      {selected ? <SelectedExercise exercise={selected} /> : loading ? null : <NoExercises />}
+      {selected ? (
+        <SelectedExercise exercise={selected} />
+      ) : loading ? null : (
+        <EmptyCard>{`Nenhum exercício com carga nas últimas ${WEEKS} semanas.`}</EmptyCard>
+      )}
       {exercises.length > 0 ? (
         <TituloDeSecao estilo="rotulo" acao={`${WEEKS} semanas`}>
           Todos os exercícios
@@ -94,10 +99,6 @@ export function ExerciseLoadsScreen({ studentId }: ExerciseLoadsScreenProps) {
 }
 
 function SelectedExercise({ exercise }: { exercise: ExerciseProgress }) {
-  const labels = evenLabels(
-    exercise.series.map((point) => MESES_CURTOS[Number(point.date.slice(5, 7)) - 1]),
-    MAX_LABELS
-  );
   return (
     <Vidro classeExterna="mt-3.5" className="p-4">
       <CardTitle note="Carga máxima por sessão">{exercise.name}</CardTitle>
@@ -113,28 +114,45 @@ function SelectedExercise({ exercise }: { exercise: ExerciseProgress }) {
           />
         )}
       </View>
-      {exercise.series.length > 1 ? (
-        <AreaChart
-          series={[{ values: exercise.series.map((point) => point.max), tone: 'brand' }]}
-          labels={labels}
-          format={(kilograms) => formatarCarga(kilograms).replace(' kg', '')}
-          suffix=" kg"
-          accessibilityLabel={`${exercise.name}: carga máxima de ${formatarCarga(exercise.series[0].max)} para ${formatarCarga(exercise.currentMax)}`}
-        />
-      ) : (
-        <Text className="text-[0.75rem] text-placeholder">
-          A curva aparece a partir da segunda sessão.
-        </Text>
-      )}
-      <View className="mt-3 flex-row gap-4 border-t border-glass-border pt-3">
-        <Figure
-          label="Melhor série"
-          value={`${formatarCarga(exercise.bestSet.weight)}${exercise.bestSet.reps ? ` × ${exercise.bestSet.reps}` : ''}`}
-        />
-        <Figure label="Volume" value={formatarVolume(exercise.volume)} />
-        <Figure label="Sessões" value={String(exercise.sessions)} />
-      </View>
+      <MaxLoadCurve exercise={exercise} />
+      <Figures exercise={exercise} />
     </Vidro>
+  );
+}
+
+/** A curva da máxima por sessão; com uma sessão só, não há curva a desenhar. */
+function MaxLoadCurve({ exercise }: { exercise: ExerciseProgress }) {
+  if (exercise.series.length < 2) {
+    return (
+      <Text className="text-[0.75rem] text-placeholder">
+        A curva aparece a partir da segunda sessão.
+      </Text>
+    );
+  }
+  return (
+    <AreaChart
+      values={exercise.series.map((point) => point.max)}
+      tone="brand"
+      labels={evenLabels(
+        exercise.series.map((point) => shortMonthOf(point.date)),
+        MAX_LABELS
+      )}
+      format={(kilograms) => formatarCarga(kilograms).replace(' kg', '')}
+      suffix=" kg"
+      accessibilityLabel={`${exercise.name}: carga máxima de ${formatarCarga(exercise.series[0].max)} para ${formatarCarga(exercise.currentMax)}`}
+    />
+  );
+}
+
+/** Melhor série, volume e sessões, abaixo da curva. */
+function Figures({ exercise }: { exercise: ExerciseProgress }) {
+  const { weight, reps } = exercise.bestSet;
+  return (
+    <View className="mt-3 flex-row gap-4 border-t border-glass-border pt-3">
+      <Figure label="Melhor série" value={`${formatarCarga(weight)}${reps ? ` × ${reps}` : ''}`} />
+      <Figure label="Volume" value={formatarVolume(exercise.volume)} />
+      <Figure label="Sessões" value={String(exercise.sessions)} />
+    </View>
   );
 }
 
@@ -185,16 +203,6 @@ function ExerciseRow({ exercise, onPress }: { exercise: ExerciseProgress; onPres
         )}
       </Vidro>
     </TouchableOpacity>
-  );
-}
-
-function NoExercises() {
-  return (
-    <Vidro classeExterna="mt-3.5" className="items-center p-6">
-      <Text className="text-center text-[0.8125rem] text-muted-foreground">
-        Nenhum exercício com carga nas últimas {WEEKS} semanas.
-      </Text>
-    </Vidro>
   );
 }
 

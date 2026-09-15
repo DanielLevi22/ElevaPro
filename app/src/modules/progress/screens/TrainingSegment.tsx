@@ -2,9 +2,8 @@ import { type Stimulus, summarizeTrainingLoad, type TrainingLoadSummary } from '
 import { useRouter } from 'expo-router';
 import { type ReactNode, useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
-import { Vidro } from '@/components/ui/Vidro';
 import { ROUTES } from '@/navigation/types';
-import { CardTitle } from '../components/CardTitle';
+import { ChartCard, EmptyCard } from '../components/ChartCard';
 import { AreaChart } from '../components/charts/AreaChart';
 import { Donut, type DonutSlice } from '../components/charts/Donut';
 import { evenLabels } from '../components/charts/geometry';
@@ -20,8 +19,8 @@ import { useTrainingSets } from '../hooks/useTrainingSets';
  * Tela 2 do kit de métricas: a evolução em números, no segmento Treino.
  *
  * Carga por semana, volume por grupo com o período anterior e estímulo pela faixa
- * de repetições, no período escolhido. Sem a meta do ciclo do kit: nada no banco
- * a guarda (#312).
+ * de repetições, no período escolhido. Sem a meta do ciclo do kit: nada no banco a
+ * guarda (#312).
  *
  * @example <TrainingSegment studentId={user.id} segments={<GlassSegmented … />} />
  */
@@ -30,25 +29,20 @@ interface TrainingSegmentProps {
   segments: ReactNode;
 }
 
-/** O período e o anterior a ele, para a variação. */
-const DAYS_PER_PERIOD_WEEK = 7 * 2;
+/** Cada semana do período lê duas: a dela e a do período anterior, para a variação. */
+const DAYS_READ_PER_WEEK = 7 * 2;
 const MAX_LABELS = 6;
 
-const STIMULUS_LABELS: Record<Stimulus, string> = {
-  hypertrophy: 'Hipertrofia',
-  strength: 'Força',
-  endurance: 'Resistência',
-};
-const STIMULUS_TONES: Record<Stimulus, DonutSlice['tone']> = {
-  hypertrophy: 'brand',
-  strength: 'blue',
-  endurance: 'purple',
+const STIMULUS: Record<Stimulus, { label: string; tone: DonutSlice['tone'] }> = {
+  hypertrophy: { label: 'Hipertrofia', tone: 'brand' },
+  strength: { label: 'Força', tone: 'blue' },
+  endurance: { label: 'Resistência', tone: 'purple' },
 };
 
 export function TrainingSegment({ studentId, segments }: TrainingSegmentProps) {
   const router = useRouter();
   const [weeks, setWeeks] = useState<PeriodWeeks>(12);
-  const { sets, today, loading } = useTrainingSets(studentId, weeks * DAYS_PER_PERIOD_WEEK);
+  const { sets, today, loading } = useTrainingSets(studentId, weeks * DAYS_READ_PER_WEEK);
   const load = useMemo(() => summarizeTrainingLoad(sets, today, weeks), [sets, today, weeks]);
 
   return (
@@ -56,7 +50,13 @@ export function TrainingSegment({ studentId, segments }: TrainingSegmentProps) {
       <ProgressHeader size="page" eyebrow="Sua evolução" title="Em números" />
       <View className="mt-4">{segments}</View>
       <PeriodChips value={weeks} onChange={setWeeks} />
-      {load.total === 0 && !loading ? <EmptyPeriod /> : <LoadCards load={load} weeks={weeks} />}
+      {load.total === 0 && !loading ? (
+        <EmptyCard>
+          Nenhuma série com carga neste período. As séries concluídas no treino aparecem aqui.
+        </EmptyCard>
+      ) : (
+        <LoadCards load={load} weeks={weeks} />
+      )}
       <View className="mt-3">
         <ShortcutRow
           icon="barbell-outline"
@@ -70,64 +70,53 @@ export function TrainingSegment({ studentId, segments }: TrainingSegmentProps) {
 }
 
 function LoadCards({ load, weeks }: { load: TrainingLoadSummary; weeks: number }) {
-  const unit = loadUnit(Math.max(...load.weekly.map((week) => week.kilograms), load.total));
-  const labels = evenLabels(
-    load.weekly.map((_, index) => `S${index + 1}`),
-    MAX_LABELS
-  );
   return (
     <>
-      <Vidro classeExterna="mt-3" className="p-4">
-        <CardTitle note="Soma de carga × repetições por semana">Carga total levantada</CardTitle>
-        <View className="mb-2.5 flex-row items-baseline gap-2">
-          <Text className="font-display-black text-[1.875rem] tracking-tight text-foreground">
-            {formatLoad(load.total, unit)}
-          </Text>
-          {load.deltaPercent === null ? null : (
-            <TrendDelta
-              value={load.deltaPercent}
-              unit="% vs. anterior"
-              judgement={judgementOf(load.deltaPercent)}
-            />
-          )}
-        </View>
-        <AreaChart
-          series={[{ values: load.weekly.map((week) => week.kilograms), tone: 'brand' }]}
-          labels={labels}
-          format={(kilograms) => formatLoad(kilograms, unit, false)}
-          suffix={` ${unit}`}
-          accessibilityLabel={`Carga por semana nas últimas ${weeks} semanas, total ${formatLoad(load.total, unit)}`}
-        />
-      </Vidro>
+      <WeeklyLoadCard load={load} weeks={weeks} />
       {load.byMuscle.length > 0 ? (
-        <Vidro classeExterna="mt-3" className="p-4">
-          <CardTitle note="Carga × repetições no período">Volume por grupo muscular</CardTitle>
+        <ChartCard title="Volume por grupo muscular" note="Carga × repetições no período">
           <MuscleBars data={load.byMuscle} />
-        </Vidro>
+        </ChartCard>
       ) : null}
       {load.stimulus.length > 0 ? (
-        <Vidro classeExterna="mt-3" className="p-4">
-          <CardTitle note="Séries pela faixa de repetições">Distribuição dos estímulos</CardTitle>
+        <ChartCard title="Distribuição dos estímulos" note="Séries pela faixa de repetições">
           <Donut
             unit="séries"
-            slices={load.stimulus.map((item) => ({
-              label: STIMULUS_LABELS[item.kind],
-              value: item.sets,
-              tone: STIMULUS_TONES[item.kind],
-            }))}
+            slices={load.stimulus.map((item) => ({ ...STIMULUS[item.kind], value: item.sets }))}
           />
-        </Vidro>
+        </ChartCard>
       ) : null}
     </>
   );
 }
 
-function EmptyPeriod() {
+function WeeklyLoadCard({ load, weeks }: { load: TrainingLoadSummary; weeks: number }) {
+  const unit = loadUnit(Math.max(...load.weekly.map((week) => week.kilograms), load.total));
   return (
-    <Vidro classeExterna="mt-3" className="items-center p-6">
-      <Text className="text-center text-[0.8125rem] text-muted-foreground">
-        Nenhuma série com carga neste período. As séries concluídas no treino aparecem aqui.
-      </Text>
-    </Vidro>
+    <ChartCard title="Carga total levantada" note="Soma de carga × repetições por semana">
+      <View className="mb-2.5 flex-row items-baseline gap-2">
+        <Text className="font-display-black text-[1.875rem] tracking-tight text-foreground">
+          {formatLoad(load.total, unit)}
+        </Text>
+        {load.deltaPercent === null ? null : (
+          <TrendDelta
+            value={load.deltaPercent}
+            unit="% vs. anterior"
+            judgement={judgementOf(load.deltaPercent)}
+          />
+        )}
+      </View>
+      <AreaChart
+        values={load.weekly.map((week) => week.kilograms)}
+        tone="brand"
+        labels={evenLabels(
+          load.weekly.map((_, index) => `S${index + 1}`),
+          MAX_LABELS
+        )}
+        format={(kilograms) => formatLoad(kilograms, unit, false)}
+        suffix={` ${unit}`}
+        accessibilityLabel={`Carga por semana nas últimas ${weeks} semanas, total ${formatLoad(load.total, unit)}`}
+      />
+    </ChartCard>
   );
 }

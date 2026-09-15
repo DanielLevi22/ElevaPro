@@ -1,4 +1,5 @@
 import { addDays, withinDays } from "./dateOnly";
+import { weeklyValues } from "./periodTrend";
 import { volumeDasSeries } from "./sessao";
 
 /**
@@ -57,6 +58,9 @@ const STRENGTH_MAX_REPS = 6;
 const HYPERTROPHY_MAX_REPS = 12;
 
 /**
+ * A carga do período escolhido contra o anterior de mesmo tamanho, por semana, por
+ * grupo muscular e por faixa de repetições: os três cartões da evolução em números.
+ *
  * @example summarizeTrainingLoad(sets, "2026-09-15", 12).total // 42600
  */
 export function summarizeTrainingLoad(
@@ -112,13 +116,10 @@ function stimulusOf(reps: number | null): Stimulus | null {
 }
 
 function weeklyLoad(sets: readonly CompletedSet[], today: string, weeks: number): WeeklyLoad[] {
-  return Array.from({ length: weeks }, (_, index) => {
-    const end = addDays(today, -(weeks - 1 - index) * WEEK_DAYS);
-    return {
-      weekStart: addDays(end, -(WEEK_DAYS - 1)),
-      kilograms: volumeOf(withinDays(sets, end, WEEK_DAYS)),
-    };
-  });
+  return weeklyValues(sets, today, weeks, volumeOf).map((kilograms, index) => ({
+    weekStart: addDays(today, -(weeks - index) * WEEK_DAYS + 1),
+    kilograms: kilograms ?? 0,
+  }));
 }
 
 /**

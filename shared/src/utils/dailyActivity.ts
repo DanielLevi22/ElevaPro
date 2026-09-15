@@ -1,5 +1,5 @@
 import type { DietMeal, DietPlan, MealLog } from "../types/nutrition.types";
-import { addDays, daysBetween } from "./dateOnly";
+import { addDays, daysBetween, weekdayOf } from "./dateOnly";
 import { mealsOfDay } from "./mealsOfDay";
 
 /**
@@ -33,6 +33,9 @@ export interface DailyActivityInput {
 }
 
 /**
+ * Um registro por dia do intervalo, com o que aconteceu nele: é a base das contas
+ * de sequência, aderência e consistência.
+ *
  * @example
  * dailyActivities({ from: "2026-06-15", to: "2026-09-15", sessionDates, plan, meals, mealLogs })
  */
@@ -69,8 +72,7 @@ export function plannedMealsOn<Meal extends Pick<DietMeal, "day_of_week">>(
 ): Meal[] {
   if (!plan) return [];
   if (plan.start_date && date < plan.start_date) return [];
-  const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
-  return mealsOfDay(meals, plan.plan_type, weekday);
+  return mealsOfDay(meals, plan.plan_type, weekdayOf(date));
 }
 
 function countBy(values: readonly string[]): Map<string, number> {

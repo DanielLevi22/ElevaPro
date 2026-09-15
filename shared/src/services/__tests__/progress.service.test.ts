@@ -142,3 +142,86 @@ describe("progressService — esboço do plano ativo", () => {
     });
   });
 });
+
+describe("progressService — fontes da nutrição em números", () => {
+  const PLAN_ROW = {
+    plan_type: "unique",
+    start_date: "2026-09-01",
+    target_calories: 2100,
+    target_protein: null,
+    target_carbs: null,
+    target_fat: null,
+    meals: [
+      {
+        id: "cafe",
+        day_of_week: null,
+        items: [
+          {
+            id: "i1",
+            quantity: 100,
+            food: { serving_size: 100, calories: 350, protein: 12, carbs: 60, fat: 5 },
+          },
+        ],
+      },
+    ],
+  };
+  const LOG = {
+    logged_date: "2026-09-15",
+    diet_meal_id: "cafe",
+    completed: true,
+    actual_items: null,
+  };
+
+  it("devolve o plano ativo com as metas, as refeições com os itens e os registros do intervalo", async () => {
+    const { supabase } = criarSupabaseFake([{ data: PLAN_ROW }, { data: [LOG] }]);
+
+    const sources = await createProgressService(supabase).getNutritionSources(
+      "aluno-1",
+      "2026-04-01",
+      "2026-09-15",
+    );
+
+    expect(sources.plan).toEqual({
+      plan_type: "unique",
+      start_date: "2026-09-01",
+      target_calories: 2100,
+      target_protein: null,
+      target_carbs: null,
+      target_fat: null,
+    });
+    expect(sources.meals).toEqual([{ id: "cafe", day_of_week: null }]);
+    expect(sources.items.cafe).toHaveLength(1);
+    expect(sources.logs).toEqual([LOG]);
+  });
+
+  // Duas leituras numa ida: o plano com refeições e itens embutidos, e os registros.
+  // Nada de `select("*")`: são tabelas de Art. 11, e a conta usa só quantidade e macro.
+  it("pede só as colunas da conta, e os registros do aluno no intervalo", async () => {
+    const { supabase, chamadas } = criarSupabaseFake([{ data: null }, { data: [] }]);
+
+    await createProgressService(supabase).getNutritionSources(
+      "aluno-1",
+      "2026-04-01",
+      "2026-09-15",
+    );
+
+    expect(chamadas.map((c) => c.tabela)).toEqual(["diet_plans", "meal_logs"]);
+    expect(chamadas.every((c) => !c.select?.includes("*"))).toBe(true);
+    expect(chamadas[1].filtros).toMatchObject({
+      student_id: "aluno-1",
+      logged_date: "2026-09-15",
+    });
+  });
+
+  it("sem plano ativo, não há refeição nem item, e os registros ainda vêm", async () => {
+    const { supabase } = criarSupabaseFake([{ data: null }, { data: [LOG] }]);
+
+    const sources = await createProgressService(supabase).getNutritionSources(
+      "aluno-1",
+      "2026-04-01",
+      "2026-09-15",
+    );
+
+    expect(sources).toMatchObject({ plan: null, meals: [], items: {}, logs: [LOG] });
+  });
+});

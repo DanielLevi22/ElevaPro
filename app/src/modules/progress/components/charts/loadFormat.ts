@@ -12,6 +12,8 @@ export type LoadUnit = 't' | 'kg';
 const KILOS_PER_TONNE = 1000;
 
 /**
+ * Tonelada quando o maior valor da lista chega a uma, quilo quando não.
+ *
  * @example loadUnit(11400) // "t"
  */
 export function loadUnit(largest: number): LoadUnit {
@@ -19,6 +21,9 @@ export function loadUnit(largest: number): LoadUnit {
 }
 
 /**
+ * A carga na unidade da lista; sem a unidade quando o número vai ao lado de outro
+ * que já a mostra.
+ *
  * @example formatLoad(11400, "t") // "11,4 t"
  * @example formatLoad(1600, "t", false) // "1,6"
  */

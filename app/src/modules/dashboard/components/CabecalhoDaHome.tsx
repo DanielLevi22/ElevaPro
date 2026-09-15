@@ -15,19 +15,19 @@ import { getLocalDateISOString } from '@/utils/dateUtils';
  * sequência — e não enfeite.
  *
  * @example
- * <CabecalhoDaHome perfil={perfil} ofensiva={ofensiva} sequencia={12} />
+ * <CabecalhoDaHome perfil={perfil} ofensiva={ofensiva} streakDays={12} />
  */
 interface CabecalhoDaHomeProps {
   perfil: ProfileSummary | null;
   /** Só o congelamento sai daqui. */
   ofensiva: StudentStreak | null;
-  /** Os dias seguidos, calculados da atividade (#312). */
-  sequencia: number;
+  /** Os dias seguidos, calculados da activity (#312). */
+  streakDays: number;
 }
 
 const TAMANHO_DO_FLOCO = 11;
 
-export function CabecalhoDaHome({ perfil, ofensiva, sequencia }: CabecalhoDaHomeProps) {
+export function CabecalhoDaHome({ perfil, ofensiva, streakDays }: CabecalhoDaHomeProps) {
   const cores = useCores();
   const escalar = useEscala();
   const congelamentos = ofensiva?.freeze_available ?? 0;
@@ -51,7 +51,7 @@ export function CabecalhoDaHome({ perfil, ofensiva, sequencia }: CabecalhoDaHome
           </View>
         ) : null}
         <StreakCounter
-          streak={sequencia}
+          streak={streakDays}
           // Data local, e não `toISOString()`: em UTC, depois das 21h em
           // Brasília a comparação já olhava para amanhã.
           frozen={ofensiva?.last_freeze_date === getLocalDateISOString()}

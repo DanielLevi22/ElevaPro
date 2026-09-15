@@ -13,10 +13,11 @@ import { useCores, useEscala } from '@/shared/design';
  *     rótulo 10,5 / 800 / .14em na primária; número 46 / 800; "dias" 18 / 700
  *     esfera 0,44 com a chama; nota em glass-strong, padding 12, raio 14
  *
- * A frase sai da sequência de verdade, de `student_streaks` (issue #312). A tela
- * antiga contava os dias da semana com meta batida e chamava isso de sequência.
+ * A sequência é calculada das sessões concluídas e das refeições registradas
+ * (`activityStreak`), e não lida de `student_streaks`, que nada grava (#312). A
+ * tela antiga contava os dias da semana com meta batida e chamava isso de sequência.
  *
- * @example <StreakCard standing={streakStanding(streak)} />
+ * @example <StreakCard standing={activityStreak(days, today)} />
  */
 interface StreakCardProps {
   standing: StreakStanding;

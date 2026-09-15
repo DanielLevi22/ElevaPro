@@ -1,2 +1,2 @@
 export { ExerciseLoadsScreen } from './screens/ExerciseLoadsScreen';
-export { ProgressScreen } from './screens/ProgressScreen';
+export { PROGRESS_SEGMENTS, ProgressScreen, type ProgressSegment } from './screens/ProgressScreen';

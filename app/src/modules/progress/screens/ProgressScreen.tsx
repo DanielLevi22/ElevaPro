@@ -11,9 +11,13 @@ import { TrainingSegment } from './TrainingSegment';
  * A aba Progresso: o hub (tela 1), a nutrição em números (tela 7) e a evolução em
  * números (tela 2), trocados pelo segmento sem sair da aba, como o kit desenha.
  *
- * @example <ProgressScreen studentId={user.id} />
+ * `initialSegment` é o que abre um segmento de fora da aba: o "Ver detalhes" do
+ * relatório do período leva ao Treino (#312).
+ *
+ * @example <ProgressScreen studentId={user.id} initialSegment="training" />
  */
-type ProgressSegment = 'overview' | 'nutrition' | 'training';
+export const PROGRESS_SEGMENTS = ['overview', 'nutrition', 'training'] as const;
+export type ProgressSegment = (typeof PROGRESS_SEGMENTS)[number];
 
 interface ProgressScreenProps {
   studentId: string;

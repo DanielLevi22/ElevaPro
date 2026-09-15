@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { DietMeal, DietPlan, MealLog } from "../types/nutrition.types";
+import type { DietMeal, DietPlan, ItemRegistrado, MealLog } from "../types/nutrition.types";
 import { localDateOf } from "../utils/dateOnly";
 import type { CompletedSet } from "../utils/trainingProgress";
 
@@ -62,7 +62,46 @@ interface PlanOutlineRow extends Pick<DietPlan, "plan_type" | "start_date"> {
   meals: Pick<DietMeal, "id" | "day_of_week">[] | null;
 }
 
+/** O plano, as refeições com os itens e os registros: o que a soma do dia usa. */
+export interface NutritionSources {
+  plan: Pick<
+    DietPlan,
+    | "plan_type"
+    | "start_date"
+    | "target_calories"
+    | "target_protein"
+    | "target_carbs"
+    | "target_fat"
+  > | null;
+  meals: Pick<DietMeal, "id" | "day_of_week">[];
+  /** Os itens do plano por refeição, só com quantidade e macro do alimento. */
+  items: Record<string, ItemRegistrado[]>;
+  logs: Pick<MealLog, "logged_date" | "diet_meal_id" | "completed" | "actual_items">[];
+}
+
+interface NutritionPlanRow extends NonNullable<NutritionSources["plan"]> {
+  meals: (Pick<DietMeal, "id" | "day_of_week"> & { items: ItemRegistrado[] | null })[] | null;
+}
+
 export const createProgressService = (supabase: SupabaseClient) => ({
+  /**
+   * O plano ativo com metas, refeições e itens, e os registros de refeição do
+   * intervalo: o que a nutrição em números precisa para somar cada dia.
+   *
+   * @example const sources = await service.getNutritionSources(aluno.id, "2026-03-31", "2026-09-15");
+   */
+  getNutritionSources: async (
+    studentId: string,
+    from: string,
+    to: string,
+  ): Promise<NutritionSources> => {
+    const [plan, logs] = await Promise.all([
+      readNutritionPlan(supabase, studentId),
+      readMealLogs(supabase, studentId, from, to),
+    ]);
+    return { ...splitPlan(plan), logs };
+  },
+
   /**
    * O tipo, o início e as refeições do plano ativo, sem alimento nem macro: a
    * aderência só precisa saber quantas refeições valem em cada dia.
@@ -154,6 +193,42 @@ function flattenSession(session: SessionRow): CompletedSet[] {
         weight: item.weight_actual,
       }));
   });
+}
+
+/** O plano ativo com metas, refeições e itens; só quantidade e macro do alimento. */
+async function readNutritionPlan(supabase: SupabaseClient, studentId: string) {
+  const { data, error } = await supabase
+    .from("diet_plans")
+    .select(
+      "plan_type, start_date, target_calories, target_protein, target_carbs, target_fat, meals:diet_meals(id, day_of_week, items:diet_meal_items(id, quantity, food:foods(serving_size, calories, protein, carbs, fat)))",
+    )
+    .eq("student_id", studentId)
+    .eq("status", "active")
+    .maybeSingle();
+  if (error) throw error;
+  return data as NutritionPlanRow | null;
+}
+
+/** Os registros de refeição do intervalo, com os itens trocados ou acrescentados. */
+async function readMealLogs(supabase: SupabaseClient, studentId: string, from: string, to: string) {
+  const { data, error } = await supabase
+    .from("meal_logs")
+    .select("logged_date, diet_meal_id, completed, actual_items")
+    .eq("student_id", studentId)
+    .gte("logged_date", from)
+    .lte("logged_date", to);
+  if (error) throw error;
+  return (data ?? []) as NutritionSources["logs"];
+}
+
+function splitPlan(row: NutritionPlanRow | null): Omit<NutritionSources, "logs"> {
+  if (!row) return { plan: null, meals: [], items: {} };
+  const { meals, ...plan } = row;
+  return {
+    plan,
+    meals: (meals ?? []).map(({ id, day_of_week }) => ({ id, day_of_week })),
+    items: Object.fromEntries((meals ?? []).map((meal) => [meal.id, meal.items ?? []])),
+  };
 }
 
 type Page<T> = PromiseLike<{ data: T[] | null; error: unknown }>;

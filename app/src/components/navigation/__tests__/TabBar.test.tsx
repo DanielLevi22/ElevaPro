@@ -84,6 +84,16 @@ describe('TabBar', () => {
     expect(props.navigation.navigate).toHaveBeenCalledWith('saude', undefined);
   });
 
+  // As métricas ganharam aba própria (#312): antes só se chegava a elas pela tela inicial.
+  it('o aluno tem a aba Progresso, que abre as métricas', () => {
+    const props = buildProps();
+    const { getByLabelText } = render(<TabBar {...props} />);
+
+    fireEvent.press(getByLabelText('Progresso'));
+
+    expect(props.navigation.navigate).toHaveBeenCalledWith('progress', undefined);
+  });
+
   it('não captura toque fora da barra visível', () => {
     const tree = render(<TabBar {...buildProps()} />).toJSON();
 

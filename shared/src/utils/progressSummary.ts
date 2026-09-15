@@ -1,44 +1,33 @@
 import type { DailyActivity } from "./dailyActivity";
-import { addDays, weekdayFromMonday, withinDays } from "./dateOnly";
+import { addDays, weekdayFromMonday } from "./dateOnly";
+import { type Trend, trendOver, type WindowMeasure } from "./periodTrend";
 
 /**
  * Os números do hub de Progresso (issue #312): treinos, aderência e dias top
- * dos últimos 30 dias contra os 30 anteriores, a série de 8 semanas, o heatmap e
- * a sequência.
+ * dos últimos 30 dias contra os 30 anteriores, o heatmap e a sequência.
  *
  * Mora no `shared` porque é regra, não desenho: o relatório do período lê as
  * mesmas contas, e uma tela não pode dizer 34 treinos onde a outra diz 33.
  */
 
-/** Um número do hub: o valor do período, a diferença para o anterior e a série. */
-export interface TrendNumber {
-  value: number | null;
-  delta: number | null;
-  /** Oito semanas, da mais antiga à atual; `null` é semana sem o que medir. */
-  spark: (number | null)[];
-}
-
 export interface ProgressSummary {
-  workouts: TrendNumber;
-  adherence: TrendNumber;
-  topDays: TrendNumber;
+  workouts: Trend;
+  adherence: Trend;
+  topDays: Trend;
 }
 
 const PERIOD_DAYS = 30;
-const SPARK_WEEKS = 8;
 const WEEK_DAYS = 7;
 const PERCENT = 100;
 
-/** Como cada número sai de uma janela de dias; `null` é não haver o que medir. */
-type Measure = (days: readonly DailyActivity[]) => number | null;
-
-const countWorkouts: Measure = (days) => sumOf(days, (day) => day.workouts);
+const countWorkouts: WindowMeasure<DailyActivity> = (days) =>
+  days.reduce((total, day) => total + day.workouts, 0);
 
 /**
  * Refeições feitas sobre planejadas, a regra da aderência da semana (#298). Sem
  * refeição planejada é `null`, e não 0%.
  *
- * @example mealAdherence([{ plannedMeals: 5, doneMeals: 4, … }]) // 80
+ * @example mealAdherence([{ plannedMeals: 5, doneMeals: 4 }]) // 80
  */
 export const mealAdherence = (
   days: readonly Pick<DailyActivity, "plannedMeals" | "doneMeals">[],
@@ -59,38 +48,22 @@ function isTopDay(day: DailyActivity): boolean {
   return day.workouts > 0 && mealsMet(day);
 }
 
-const countTopDays: Measure = (days) => days.filter(isTopDay).length;
+const countTopDays: WindowMeasure<DailyActivity> = (days) => days.filter(isTopDay).length;
 
 /**
+ * Os três números do hub nos últimos 30 dias, contra os 30 anteriores, com a
+ * série de 8 semanas de cada um.
+ *
  * @example
  * const { workouts } = summarizeProgress(days, "2026-09-15");
  * workouts.value // sessões de 17/08 a 15/09
  */
 export function summarizeProgress(days: readonly DailyActivity[], today: string): ProgressSummary {
   return {
-    workouts: trend(days, today, countWorkouts),
-    adherence: trend(days, today, mealAdherence),
-    topDays: trend(days, today, countTopDays),
+    workouts: trendOver(days, today, PERIOD_DAYS, countWorkouts),
+    adherence: trendOver(days, today, PERIOD_DAYS, mealAdherence),
+    topDays: trendOver(days, today, PERIOD_DAYS, countTopDays),
   };
-}
-
-function trend(days: readonly DailyActivity[], today: string, measure: Measure): TrendNumber {
-  const value = measure(withinDays(days, today, PERIOD_DAYS));
-  const previous = measure(withinDays(days, addDays(today, -PERIOD_DAYS), PERIOD_DAYS));
-  const delta = value === null || previous === null ? null : value - previous;
-  return { value, delta, spark: weeklySeries(days, today, measure) };
-}
-
-/** Semanas de sete dias terminando hoje, da mais antiga à atual. */
-function weeklySeries(days: readonly DailyActivity[], today: string, measure: Measure) {
-  return Array.from({ length: SPARK_WEEKS }, (_, index) => {
-    const weeksBack = SPARK_WEEKS - 1 - index;
-    return measure(withinDays(days, addDays(today, -weeksBack * WEEK_DAYS), WEEK_DAYS));
-  });
-}
-
-function sumOf(days: readonly DailyActivity[], pick: (day: DailyActivity) => number): number {
-  return days.reduce((total, day) => total + pick(day), 0);
 }
 
 /** 0 nada; 1 refeição registrada; 2 treino ou plano cumprido; 3 os dois, o dia top. */

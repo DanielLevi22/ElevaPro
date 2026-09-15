@@ -1,4 +1,4 @@
-import { formatarDecimal } from '@elevapro/shared';
+import { formatarDecimal, type Trend } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
 import { comOpacidade, useCores, useEscala } from '@/shared/design';
@@ -56,6 +56,20 @@ export function TrendDelta({ value, unit, judgement }: TrendDeltaProps) {
 export function judgementOf(delta: number): TrendDeltaProps['judgement'] {
   if (delta === 0) return 'neutral';
   return delta > 0 ? 'good' : 'bad';
+}
+
+/**
+ * A pílula da variação de uma tendência, ou nada quando não há o que comparar.
+ *
+ * `judged` diz se a cor vale para esta grandeza: treinos e aderência sim; calorias,
+ * proteína e medidas não, porque a direção boa depende do objetivo (#312).
+ *
+ * @example trendDelta(summary.adherence, 'pts') // <TrendDelta value={3} unit="pts" judgement="good" />
+ */
+export function trendDelta(trend: Trend, unit?: string, judged = true) {
+  if (trend.delta === null) return undefined;
+  const judgement = judged ? judgementOf(trend.delta) : 'neutral';
+  return <TrendDelta value={trend.delta} unit={unit} judgement={judgement} />;
 }
 
 function iconFor(value: number): keyof typeof Ionicons.glyphMap {

@@ -17,8 +17,8 @@ const mockBuscarDoDia = jest.fn().mockResolvedValue(undefined);
 const mockBuscarTreinos = jest.fn().mockResolvedValue(undefined);
 const mockBuscarAlunos = jest.fn().mockResolvedValue(undefined);
 const mockRecarregarSaude = jest.fn().mockResolvedValue(undefined);
-const mockRecarregarAtividade = jest.fn().mockResolvedValue(undefined);
-const mockAtividadeDe = jest.fn();
+const mockReloadActivity = jest.fn().mockResolvedValue(undefined);
+const mockActivityOf = jest.fn();
 const mockResumoDoPerfil = jest
   .fn()
   .mockResolvedValue({ id: 'u1', full_name: 'Ana Souza', avatar_url: null });
@@ -89,9 +89,9 @@ jest.mock('@/hooks/useHealthData', () => ({
 }));
 
 jest.mock('@/hooks/useDailyActivity', () => ({
-  useDailyActivity: (alunoId: string | undefined) => {
-    mockAtividadeDe(alunoId);
-    return { streak: { current: 7, best: 9, toTie: 2 }, reload: mockRecarregarAtividade };
+  useDailyActivity: (studentId: string | undefined) => {
+    mockActivityOf(studentId);
+    return { streak: { current: 7, best: 9, toTie: 2 }, reload: mockReloadActivity };
   },
 }));
 
@@ -111,17 +111,17 @@ describe('useDadosDaHome', () => {
     expect(mockBuscarDoDia).toHaveBeenCalledWith('2026-09-12');
     expect(mockBuscarTreinos).toHaveBeenCalledWith('u1');
     expect(mockRecarregarSaude).toHaveBeenCalled();
-    expect(mockRecarregarAtividade).toHaveBeenCalled();
+    expect(mockReloadActivity).toHaveBeenCalled();
     expect(mockBuscarAlunos).not.toHaveBeenCalled();
   });
 
-  // A sequência sai da atividade calculada, e não de `student_streaks`, que ninguém grava (#312).
-  it('no aluno, a sequência é a da atividade dele', async () => {
+  // A sequência sai da activity calculada, e não de `student_streaks`, que ninguém grava (#312).
+  it('no aluno, a sequência é a da activity dele', async () => {
     const { result } = renderHook(() => useDadosDaHome());
 
     await waitFor(() => expect(result.current.aluno.perfil).not.toBeNull());
-    expect(mockAtividadeDe).toHaveBeenCalledWith('u1');
-    expect(result.current.aluno.sequencia).toBe(7);
+    expect(mockActivityOf).toHaveBeenCalledWith('u1');
+    expect(result.current.aluno.streakDays).toBe(7);
   });
 
   it('no especialista busca alunos e treinos — e não a meta do dia de aluno', async () => {
@@ -132,8 +132,8 @@ describe('useDadosDaHome', () => {
     expect(mockBuscarAlunos).toHaveBeenCalledWith('u1');
     expect(mockBuscarTreinos).toHaveBeenCalledWith('u1');
     expect(mockBuscarDoDia).not.toHaveBeenCalled();
-    expect(mockAtividadeDe).not.toHaveBeenCalledWith('u1');
-    expect(mockRecarregarAtividade).not.toHaveBeenCalled();
+    expect(mockActivityOf).not.toHaveBeenCalledWith('u1');
+    expect(mockReloadActivity).not.toHaveBeenCalled();
   });
 
   it('pede o perfil ao serviço compartilhado, que traz só nome e avatar', async () => {
