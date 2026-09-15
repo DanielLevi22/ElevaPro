@@ -184,9 +184,10 @@ export default function HealthConnectScreen() {
               passos, calorias, quanto você dormiu, sua frequência cardíaca de repouso e a
               frequência cardíaca das suas corridas
             </Text>
-            , para acompanhar sua atividade entre os treinos. Da corrida guardamos só a média e o
-            tempo em cada zona de esforço, calculadas com a idade da sua anamnese; os batimentos um
-            a um são lidos no seu aparelho e descartados.
+            , para acompanhar sua atividade entre os treinos. Do sono e da FC de repouso calculamos
+            a prontidão do dia, comparando com a sua própria média. Da corrida guardamos só a média
+            e o tempo em cada zona de esforço, calculadas com a idade da sua anamnese; os batimentos
+            um a um são lidos no seu aparelho e descartados.
           </Text>
 
           {/*
