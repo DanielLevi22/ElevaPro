@@ -107,6 +107,12 @@ module.exports = {
           carboidrato: literal('texto-carboidrato'),
           gordura: literal('texto-gordura'),
         },
+        /** Texto de batimento, ritmo e cadência do cardio, pelo mesmo motivo. */
+        'texto-cardio': {
+          batimento: literal('texto-batimento'),
+          ritmo: literal('texto-ritmo'),
+          cadencia: literal('texto-cadencia'),
+        },
         metrica: {
           passos: comAlfa('metrica-passos'),
           calorias: comAlfa('metrica-calorias'),
@@ -114,6 +120,9 @@ module.exports = {
           proteina: comAlfa('metrica-proteina'),
           carboidrato: comAlfa('metrica-carboidrato'),
           gordura: comAlfa('metrica-gordura'),
+          batimento: comAlfa('metrica-batimento'),
+          ritmo: comAlfa('metrica-ritmo'),
+          cadencia: comAlfa('metrica-cadencia'),
         },
       },
       // Em `rem` pelo mesmo motivo da escala de texto: o raio é medida do

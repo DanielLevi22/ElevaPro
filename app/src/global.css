@@ -16,6 +16,9 @@
     --metrica-proteina: 158.1 64.4% 51.6%;
     --metrica-carboidrato: 82.7 78% 55.5%;
     --metrica-gordura: 43.3 96.4% 56.3%;
+    --metrica-batimento: 0 90.6% 70.8%;
+    --metrica-ritmo: 198.4 93.2% 59.6%;
+    --metrica-cadencia: 270 95.2% 75.3%;
   }
 
   :root {
@@ -61,6 +64,9 @@
     --texto-proteina: #0b7a52;
     --texto-carboidrato: #4e7a0b;
     --texto-gordura: #8a5e03;
+    --texto-batimento: #b91c1c;
+    --texto-ritmo: #0369a1;
+    --texto-cadencia: #7e22ce;
     --sobre-metrica: #06281a;
   }
 
@@ -107,6 +113,9 @@
     --texto-proteina: #34d399;
     --texto-carboidrato: #a3e635;
     --texto-gordura: #fbbf24;
+    --texto-batimento: #f87171;
+    --texto-ritmo: #38bdf8;
+    --texto-cadencia: #c084fc;
     --sobre-metrica: #06281a;
   }
 }

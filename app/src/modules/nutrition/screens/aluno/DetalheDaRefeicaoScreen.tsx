@@ -8,6 +8,7 @@ import { BarraDeDuasAcoes } from '@/components/ui/BarraDeDuasAcoes';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { Chip } from '@/components/ui/Chip';
 import { DadoComIcone } from '@/components/ui/DadoComIcone';
+import { GlassScreen } from '@/components/ui/GlassScreen';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import { ROUTES } from '@/navigation/types';
@@ -15,7 +16,6 @@ import { useCores, useEscala } from '@/shared/design';
 import { TresMacros } from '../../components/aluno/AnelDeMacro';
 import { iconeDaRefeicao } from '../../components/aluno/IconeDaRefeicao';
 import { LinhaDoAlimento } from '../../components/aluno/LinhaDoAlimento';
-import { TelaDaNutricao } from '../../components/aluno/TelaDaNutricao';
 import { type RefeicaoAberta, useRefeicaoDoDia } from '../../hooks/useRefeicaoDoDia';
 import {
   type ItemDoPrato,
@@ -65,10 +65,10 @@ export function DetalheDaRefeicaoScreen({
   if (!aberta.refeicao) return <SemRefeicao naoEncontrada={aberta.naoEncontrada} />;
 
   return (
-    <TelaDaNutricao
-      semRespiroNoTopo
-      folgaNoFim="rodape"
-      sobreposicao={
+    <GlassScreen
+      flushTop
+      bottomSpace="actionBar"
+      overlay={
         <BarraDeDuasAcoes
           secundaria={{
             rotulo: trocando ? 'Pronto' : 'Ajustar',
@@ -100,14 +100,14 @@ export function DetalheDaRefeicaoScreen({
           onTrocar={(item) => router.push(ROUTES.NUTRITION.SWAP(refeicaoId, item.id, data))}
         />
       </View>
-    </TelaDaNutricao>
+    </GlassScreen>
   );
 }
 
 function SemRefeicao({ naoEncontrada }: { naoEncontrada: boolean }) {
   const cores = useCores();
   return (
-    <TelaDaNutricao>
+    <GlassScreen>
       {naoEncontrada ? (
         <Text className="px-6 py-16 text-center text-legenda text-muted-foreground">
           Essa refeição não está no seu plano atual.
@@ -115,7 +115,7 @@ function SemRefeicao({ naoEncontrada }: { naoEncontrada: boolean }) {
       ) : (
         <ActivityIndicator className="mt-16" color={cores.primary} />
       )}
-    </TelaDaNutricao>
+    </GlassScreen>
   );
 }
 

@@ -25,6 +25,9 @@ export type TomDeMetrica =
   | 'proteina'
   | 'carboidrato'
   | 'gordura'
+  | 'batimento'
+  | 'ritmo'
+  | 'cadencia'
   | 'marca';
 
 interface CaixaDeIconeProps {
@@ -42,6 +45,9 @@ const FUNDO: Record<TomDeMetrica, string> = {
   proteina: 'bg-metrica-proteina/20',
   carboidrato: 'bg-metrica-carboidrato/20',
   gordura: 'bg-metrica-gordura/20',
+  batimento: 'bg-metrica-batimento/20',
+  ritmo: 'bg-metrica-ritmo/20',
+  cadencia: 'bg-metrica-cadencia/20',
   marca: 'bg-primary/20',
 };
 
@@ -56,6 +62,9 @@ const COR_DO_ICONE: Record<TomDeMetrica, NomeDeCor> = {
   proteina: 'metricaProteina',
   carboidrato: 'metricaCarboidrato',
   gordura: 'metricaGordura',
+  batimento: 'metricaBatimento',
+  ritmo: 'metricaRitmo',
+  cadencia: 'metricaCadencia',
   marca: 'primary',
 };
 

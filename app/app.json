@@ -12,7 +12,8 @@
       "infoPlist": {
         "NSHealthShareUsageDescription": "Lemos do seu relógio passos, calorias, duração do sono, frequência cardíaca de repouso e a frequência cardíaca das suas corridas, guardando só a média e o tempo em cada zona, para acompanhar sua atividade entre os treinos. Você escolhe o que compartilhar e pode desligar quando quiser.",
         "NSLocationWhenInUseUsageDescription": "Usamos o GPS durante a corrida para medir distância e ritmo. O caminho percorrido é desenhado na tela e descartado ao fim da sessão — ele não é salvo nem enviado para ninguém.",
-        "NSMotionUsageDescription": "Usamos o contador de passos do aparelho durante a corrida para calcular sua cadência."
+        "NSMotionUsageDescription": "Usamos o contador de passos do aparelho durante a corrida para calcular sua cadência.",
+        "LSApplicationQueriesSchemes": ["music", "spotify"]
       },
       "bundleIdentifier": "com.elevapro.app"
     },

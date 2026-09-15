@@ -1,8 +1,12 @@
 import { POLICY_VERSION, type Workout, type WorkoutExercise } from '@elevapro/shared';
+import { cardioModality } from '../../cardioModalities';
+import { initialCardioSession } from '../../store/cardioSessionMachine';
+import type { CardioReading } from '../cardioMetrics';
 import {
-  gravarSessaoDeCardio,
+  buildCardioSession,
   gravarSessaoDeForca,
   montarSessaoDeForca,
+  saveCardioSession,
 } from '../registroDaSessao';
 
 // Mock global de jest.setup.ts: o serviço do `shared` recebe este cliente.
@@ -148,10 +152,10 @@ describe('gravarSessaoDeForca', () => {
   });
 });
 
-describe('gravarSessaoDeCardio', () => {
+describe('saveCardioSession', () => {
   const corrida = {
     studentId: 's1',
-    exerciseName: 'Corrida',
+    activityName: 'Corrida',
     durationSeconds: 1800,
     calories: 300.4,
     startedAt: '2026-09-13T10:00:00Z',
@@ -163,7 +167,7 @@ describe('gravarSessaoDeCardio', () => {
   it('grava cardio sem tocar em `workouts` e sem prescrição', async () => {
     const { tabelas, gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await gravarSessaoDeCardio(corrida, DO_ALUNO);
+    await saveCardioSession(corrida, DO_ALUNO);
 
     expect(tabelas).not.toContain('workouts');
     expect(gravadoEm('workout_sessions')).toMatchObject({
@@ -179,7 +183,7 @@ describe('gravarSessaoDeCardio', () => {
   it('guarda em `notes` só o que o aluno digitou, nunca o resumo gerado', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await gravarSessaoDeCardio({ ...corrida, notes: 'senti dor no joelho' }, DO_ALUNO);
+    await saveCardioSession({ ...corrida, notes: 'senti dor no joelho' }, DO_ALUNO);
 
     expect(gravadoEm('workout_sessions')).toMatchObject({
       notes: 'senti dor no joelho',
@@ -190,7 +194,7 @@ describe('gravarSessaoDeCardio', () => {
   it('grava distância, ritmo e cadência da corrida na própria sessão', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await gravarSessaoDeCardio(
+    await saveCardioSession(
       { ...corrida, distanceMeters: 9620, avgPaceSecondsPerKm: 374, avgCadenceSpm: 179 },
       DO_ALUNO
     );
@@ -206,7 +210,7 @@ describe('gravarSessaoDeCardio', () => {
   it('grava a corrida sem as medidas quando não houve leitura de GPS', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await gravarSessaoDeCardio(corrida, DO_ALUNO);
+    await saveCardioSession(corrida, DO_ALUNO);
 
     expect(gravadoEm('workout_sessions')).toMatchObject({
       distance_meters: null,
@@ -220,7 +224,7 @@ describe('gravarSessaoDeCardio', () => {
   it('grava a frequência cardíaca em tabela própria, não na sessão', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await gravarSessaoDeCardio({ ...corrida, avgHeartRate: 164, heartRateZones: ZONES }, DO_ALUNO);
+    await saveCardioSession({ ...corrida, avgHeartRate: 164, heartRateZones: ZONES }, DO_ALUNO);
 
     expect(gravadoEm('workout_session_vitals')).toEqual({
       session_id: 'sessao-1',
@@ -245,7 +249,7 @@ describe('gravarSessaoDeCardio', () => {
     );
 
     await expect(
-      gravarSessaoDeCardio({ ...corrida, avgHeartRate: 164 }, DO_ALUNO)
+      saveCardioSession({ ...corrida, avgHeartRate: 164 }, DO_ALUNO)
     ).resolves.toBeUndefined();
     expect(tabelas).toContain('workout_sessions');
   });
@@ -256,7 +260,7 @@ describe('gravarSessaoDeCardio', () => {
   it('sem consentimento vigente, nem a média nem as zonas são gravadas', async () => {
     const { tabelas, gravadoEm } = supabaseQueRegistra({ consentiu: false });
 
-    await gravarSessaoDeCardio({ ...corrida, avgHeartRate: 164, heartRateZones: ZONES }, DO_ALUNO);
+    await saveCardioSession({ ...corrida, avgHeartRate: 164, heartRateZones: ZONES }, DO_ALUNO);
 
     if (tabelas.includes('workout_session_vitals')) {
       throw new Error(
@@ -269,7 +273,7 @@ describe('gravarSessaoDeCardio', () => {
   it('não grava linha de batimento quando o relógio não mediu', async () => {
     const { tabelas } = supabaseQueRegistra({ consentiu: true });
 
-    await gravarSessaoDeCardio({ ...corrida, avgHeartRate: null }, DO_ALUNO);
+    await saveCardioSession({ ...corrida, avgHeartRate: null }, DO_ALUNO);
 
     expect(tabelas).not.toContain('workout_session_vitals');
   });
@@ -279,13 +283,94 @@ describe('gravarSessaoDeCardio', () => {
   it('descarta as observações quando não há consentimento vigente', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: false });
 
-    await gravarSessaoDeCardio({ ...corrida, notes: 'voltei da cirurgia' }, DO_ALUNO);
+    await saveCardioSession({ ...corrida, notes: 'voltei da cirurgia' }, DO_ALUNO);
 
     expect(gravadoEm('workout_sessions')).toMatchObject({
       notes: null,
       session_type: 'cardio',
       duration_seconds: 1800,
     });
+  });
+});
+
+describe('buildCardioSession', () => {
+  const START = Date.UTC(2026, 8, 13, 10, 0, 0);
+  const END = Date.UTC(2026, 8, 13, 10, 35, 0);
+  const finished = {
+    ...initialCardioSession(),
+    moment: 'feedback' as const,
+    startedAt: START,
+    finishedAt: END,
+  };
+  const reading: CardioReading = {
+    elapsedMs: 30 * 60_000 + 400,
+    calories: 222.6,
+    distanceMeters: 5420.4,
+    paceSecondsPerKm: 332,
+    cadenceSpm: 172,
+    laps: 2,
+  };
+  const feedback = { studentId: 's1', perceivedExertion: 6, notes: 'pesou' };
+
+  it('grava o tempo em movimento, e não o relógio de parede com as pausas', () => {
+    const saved = buildCardioSession(cardioModality('run'), finished, reading, feedback, null);
+
+    expect(saved).toMatchObject({
+      activityName: 'Corrida',
+      durationSeconds: 1800,
+      startedAt: '2026-09-13T10:00:00.000Z',
+      completedAt: '2026-09-13T10:35:00.000Z',
+      distanceMeters: 5420,
+      avgPaceSecondsPerKm: 332,
+      avgCadenceSpm: 172,
+      perceivedExertion: 6,
+      notes: 'pesou',
+    });
+  });
+
+  // Arredonda antes de decidir: 0,4 m de deriva passam por `> 0` e gravariam
+  // `distance_meters: 0`, que a `0049` diz que nunca pode ser escrito.
+  it('deriva de GPS abaixo de um metro vira nulo, e não zero', () => {
+    const saved = buildCardioSession(
+      cardioModality('run'),
+      finished,
+      { ...reading, distanceMeters: 0.4 },
+      feedback,
+      null
+    );
+
+    expect(saved.distanceMeters).toBeNull();
+  });
+
+  // O elíptico não pede GPS nem conta passos: qualquer número ali seria resto de
+  // outra sessão, e não medida desta.
+  it('a modalidade sem percurso não grava distância, ritmo nem cadência', () => {
+    const saved = buildCardioSession(
+      cardioModality('elliptical'),
+      finished,
+      reading,
+      feedback,
+      null
+    );
+
+    expect(saved).toMatchObject({
+      distanceMeters: null,
+      avgPaceSecondsPerKm: null,
+      avgCadenceSpm: null,
+    });
+  });
+
+  it('leva a média e as zonas lidas do relógio', () => {
+    const vitals = { avgHeartRate: 151, zones: ZONES };
+    const saved = buildCardioSession(cardioModality('bike'), finished, reading, feedback, vitals);
+
+    expect(saved).toMatchObject({ avgHeartRate: 151, heartRateZones: ZONES, avgCadenceSpm: null });
+  });
+
+  it('recusa a sessão que não foi iniciada e finalizada', () => {
+    expect(() =>
+      buildCardioSession(cardioModality('run'), initialCardioSession(), reading, feedback, null)
+    ).toThrow('startedAt');
   });
 });
 

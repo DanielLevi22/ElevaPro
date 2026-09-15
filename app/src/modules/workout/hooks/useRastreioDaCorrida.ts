@@ -2,6 +2,7 @@ import * as Location from 'expo-location';
 import { Pedometer } from 'expo-sensors';
 import * as TaskManager from 'expo-task-manager';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { coresDoTema } from '@/shared/design';
 import { medirPercurso, type Percurso, type Posicao } from '../services/percurso';
 
 /**
@@ -77,11 +78,19 @@ const PRECISAO_DA_CORRIDA: Location.LocationTaskOptions = {
   foregroundService: {
     notificationTitle: 'Corrida em andamento',
     notificationBody: 'Medindo distância e ritmo.',
-    notificationColor: '#FF6B35',
+    // A notificação mora na bandeja do sistema, fora do tema do app: vale a cor
+    // primária da marca, que é a mesma nos dois temas.
+    notificationColor: coresDoTema('escuro').primary,
   },
 };
 
-export function useRastreioDaCorrida(): RastreioDaCorrida {
+/** O que a modalidade mede: o percurso pelo GPS e a cadência pelos passos. */
+interface Medicoes {
+  usesGps: boolean;
+  countsSteps: boolean;
+}
+
+export function useRastreioDaCorrida({ usesGps, countsSteps }: Medicoes): RastreioDaCorrida {
   const [percurso, setPercurso] = useState<Percurso>({
     distanceMeters: 0,
     paceSecondsPerKm: null,
@@ -98,6 +107,7 @@ export function useRastreioDaCorrida(): RastreioDaCorrida {
   const passosDaSessao = useRef(0);
   const inicioDosPassos = useRef<number | null>(null);
   const releitura = useRef<ReturnType<typeof setInterval> | null>(null);
+  const iniciada = useRef(false);
 
   const recalcular = useCallback(() => {
     setPontos([...posicoesRecebidas]);
@@ -115,24 +125,14 @@ export function useRastreioDaCorrida(): RastreioDaCorrida {
     setAvgCadenceSpm(persistivel ? cadencia : null);
   }, []);
 
-  const iniciar = useCallback(async () => {
-    // Primeiro início da tela: zera o que sobrou. `posicoesRecebidas` é de
-    // módulo, e uma sessão abandonada pelo botão voltar deixa pontos ali — na
-    // corrida seguinte eles entrariam no cálculo e no desenho. O intervalo
-    // enorme entre os dois grupos não é filtrado pela velocidade, porque
-    // dividir metros por horas dá um número plausível.
-    if (inicioDosPassos.current === null) posicoesRecebidas.length = 0;
-
+  const iniciarLocalizacao = useCallback(async () => {
     // Só primeiro plano. A permissão de background saiu com a #278: o
     // rastreador de corrida roda em serviço de primeiro plano iniciado pelo
     // aluno, que é o desenho que o Android prevê para este caso e dispensa a
     // declaração de background na Play Store.
     const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      setTemLocalizacao(false);
-      return;
-    }
-    setTemLocalizacao(true);
+    setTemLocalizacao(status === 'granted');
+    if (status !== 'granted') return;
 
     try {
       await Location.startLocationUpdatesAsync(TAREFA_DE_LOCALIZACAO, PRECISAO_DA_CORRIDA);
@@ -140,7 +140,7 @@ export function useRastreioDaCorrida(): RastreioDaCorrida {
       // Sem serviço de primeiro plano o rastreio segue enquanto a tela estiver
       // aberta. Medir menos é melhor que não medir, e melhor ainda que pedir a
       // permissão de background só para cobrir este caso.
-      const inscricao = await Location.watchPositionAsync(
+      inscricaoDeLocalizacao.current = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.BestForNavigation, distanceInterval: 5 },
         ({ coords, timestamp }) => {
           posicoesRecebidas.push({
@@ -151,9 +151,10 @@ export function useRastreioDaCorrida(): RastreioDaCorrida {
           });
         }
       );
-      inscricaoDeLocalizacao.current = inscricao;
     }
+  }, []);
 
+  const iniciarPassos = useCallback(async () => {
     // `isAvailableAsync` responde pelo sensor, não pela autorização: sem pedir
     // ACTIVITY_RECOGNITION no Android ele diz que sim, o `watchStepCount` nunca
     // dispara, e a cadência fica zerada para sempre.
@@ -161,15 +162,28 @@ export function useRastreioDaCorrida(): RastreioDaCorrida {
     // Retomar não reinscreve: duas inscrições disputariam `passosDaSessao`, e
     // `inicioDosPassos` continua no primeiro início, então a média sairia
     // errada nos dois sentidos.
-    if (granted && inscricaoDePassos.current === null && (await Pedometer.isAvailableAsync())) {
-      inicioDosPassos.current ??= Date.now();
-      inscricaoDePassos.current = Pedometer.watchStepCount(({ steps }) => {
-        passosDaSessao.current = steps;
-      });
-    }
+    if (!granted || inscricaoDePassos.current !== null) return;
+    if (!(await Pedometer.isAvailableAsync())) return;
+    inicioDosPassos.current ??= Date.now();
+    inscricaoDePassos.current = Pedometer.watchStepCount(({ steps }) => {
+      passosDaSessao.current = steps;
+    });
+  }, []);
 
-    releitura.current = setInterval(recalcular, 3000);
-  }, [recalcular]);
+  const iniciar = useCallback(async () => {
+    // Primeiro início da sessão: zera o que sobrou. `posicoesRecebidas` é de
+    // módulo, e uma sessão abandonada pelo botão voltar deixa pontos ali — na
+    // corrida seguinte eles entrariam no cálculo e no desenho. Retomar depois de
+    // uma pausa não zera: o percurso é o mesmo.
+    if (!iniciada.current) posicoesRecebidas.length = 0;
+    iniciada.current = true;
+
+    // A modalidade decide o que é medido. Sem percurso não há por que pedir a
+    // localização (Art. 6°, III), e sem passos não há cadência.
+    if (usesGps) await iniciarLocalizacao();
+    if (countsSteps) await iniciarPassos();
+    if (usesGps || countsSteps) releitura.current = setInterval(recalcular, 3000);
+  }, [usesGps, countsSteps, iniciarLocalizacao, iniciarPassos, recalcular]);
 
   const pausar = useCallback(async () => {
     if (releitura.current) clearInterval(releitura.current);
@@ -198,6 +212,7 @@ export function useRastreioDaCorrida(): RastreioDaCorrida {
     posicoesRecebidas.length = 0;
     passosDaSessao.current = 0;
     inicioDosPassos.current = null;
+    iniciada.current = false;
   }, [pausar]);
 
   // Sair da tela encerra tudo. Sem isto, o serviço de primeiro plano, a

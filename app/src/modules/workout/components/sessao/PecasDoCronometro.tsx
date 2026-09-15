@@ -212,8 +212,11 @@ interface ControlesDoCronometroProps {
   /** O rótulo do play quando está parado: "Iniciar" na série, "Retomar" no descanso. */
   rotuloParado: string;
   onAlternar: () => void;
-  /** A saída discreta sob os botões: "Voltar à lista", "Pular descanso". */
-  saida: { rotulo: string; onPress: () => void };
+  /**
+   * A saída discreta sob os botões: "Voltar à lista", "Pular descanso". O cardio
+   * ao vivo não tem: finalizar já é um dos botões.
+   */
+  saida?: { rotulo: string; onPress: () => void };
 }
 
 const TAMANHO_DO_PLAY = 30;
@@ -259,9 +262,11 @@ export function ControlesDoCronometro({
         </View>
         <BotaoLateral {...direita} />
       </View>
-      <TouchableOpacity onPress={saida.onPress} accessibilityRole="button" className="mt-4 py-2">
-        <Text className="text-legenda font-semibold text-hero-secondary">{saida.rotulo}</Text>
-      </TouchableOpacity>
+      {saida ? (
+        <TouchableOpacity onPress={saida.onPress} accessibilityRole="button" className="mt-4 py-2">
+          <Text className="text-legenda font-semibold text-hero-secondary">{saida.rotulo}</Text>
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 }

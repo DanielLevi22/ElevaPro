@@ -14,15 +14,17 @@ import { useBrilho, useCores, useEscala } from '@/shared/design';
  * brilho é **o resultado do filtro desenhado à mão** — ver `CAMADAS_DO_BRILHO`.
  *
  * O descanso do fluxo de treino usa o mesmo anel, mais fino, com o trilho
- * pontilhado e um ponto brilhando na ponta do arco. É variação, e não
- * componente novo: a geometria e o brilho são os mesmos, só medidos de outro
- * jeito.
+ * pontilhado e um ponto brilhando na ponta do arco. O mostrador da sessão de
+ * cardio é o mesmo anel aberto: 76% da volta, começando embaixo à esquerda. As
+ * duas são variação, e não componente novo: a geometria e o brilho são os
+ * mesmos, só medidos de outro jeito.
  *
  * @example
  * <Anel valor={68} meta={100} rotulo="68%" sub="Meta do dia" />
  * <Anel valor={45} meta={90} rotulo="00:45" tamanho={166} espessura={5} brilho={10} pontilhado ponto>
  *   <RelogioDoDescanso />
  * </Anel>
+ * <Anel valor={18} meta={30} rotulo="18:36" tamanho={222} espessura={15} arco={ARCO_DO_MOSTRADOR} ponto />
  */
 interface AnelProps {
   valor: number;
@@ -41,6 +43,12 @@ interface AnelProps {
   pontilhado?: boolean;
   /** O ponto com brilho próprio na ponta do arco. */
   ponto?: boolean;
+  /**
+   * Quanto da volta o anel ocupa, de 0 a 1. Abaixo de 1 o anel abre embaixo, como
+   * o mostrador do cardio (`sweep = 0.76`, girado 135°): trilho e arco começam no
+   * mesmo lugar e o vão fica centrado na base.
+   */
+  arco?: number;
   /** O miolo, quando não é só o rótulo: o relógio do descanso tem três linhas. */
   children?: ReactNode;
 }
@@ -105,6 +113,17 @@ const FRACAO_DO_ROTULO = 0.26;
 
 const VOLTA_COMPLETA = 100;
 
+/** O mostrador do kit de cardio: 76% da volta. */
+export const ARCO_DO_MOSTRADOR = 0.76;
+
+/**
+ * Onde o traço começa, em graus a partir das três horas. O anel fechado começa no
+ * topo; o aberto, onde o kit o põe (`rotate(135deg)`), com o vão embaixo.
+ */
+function inicioDoTraco(arco: number): number {
+  return arco >= 1 ? -90 : 135;
+}
+
 export function Anel({
   valor,
   meta,
@@ -116,6 +135,7 @@ export function Anel({
   brilho = BRILHO_PADRAO,
   pontilhado = false,
   ponto = false,
+  arco = 1,
   children,
 }: AnelProps) {
   const cores = useCores();
@@ -124,7 +144,7 @@ export function Anel({
   const camadas = camadasPara(espessura, brilho);
   // A tela do SVG cresce para caber o brilho, e o anel continua ocupando `lado`.
   const margem = escalar(camadas[0][0] - espessura / 2);
-  const geometria = geometriaDoAnel(lado, margem, escalar(espessura), valor, meta);
+  const geometria = geometriaDoAnel(lado, margem, escalar(espessura), { valor, meta, arco });
   const traco = cor ?? cores.primary;
 
   return (
@@ -142,7 +162,7 @@ export function Anel({
           position: 'absolute',
           top: -margem,
           left: -margem,
-          transform: [{ rotate: '-90deg' }],
+          transform: [{ rotate: `${geometria.inicio}deg` }],
         }}
       >
         <Tracos
@@ -188,14 +208,25 @@ interface GeometriaDoAnel {
   tracejado: string;
   /** Fração preenchida, de 0 a 1 — onde fica a ponta do arco. */
   fracao: number;
+  /** `strokeDasharray` do trilho: a volta inteira, ou só o trecho do arco aberto. */
+  trilho: string | undefined;
+  /** Quanto da volta o anel ocupa. */
+  arco: number;
+  /** Ângulo de partida do traço, em graus a partir das três horas. */
+  inicio: number;
+}
+
+interface MedidaDoAnel {
+  valor: number;
+  meta: number;
+  arco: number;
 }
 
 function geometriaDoAnel(
   lado: number,
   margem: number,
   espessura: number,
-  valor: number,
-  meta: number
+  { valor, meta, arco }: MedidaDoAnel
 ): GeometriaDoAnel {
   const raio = (lado - espessura) / 2;
   const perimetro = 2 * Math.PI * raio;
@@ -204,8 +235,11 @@ function geometriaDoAnel(
     centro: lado / 2 + margem,
     raio,
     espessura,
-    tracejado: `${fracao * perimetro} ${perimetro}`,
+    tracejado: `${fracao * perimetro * arco} ${perimetro}`,
     fracao,
+    trilho: arco >= 1 ? undefined : `${perimetro * arco} ${perimetro}`,
+    arco,
+    inicio: inicioDoTraco(arco),
   };
 }
 
@@ -240,8 +274,8 @@ function Tracos({ geometria, camadas, traco, trilho, pontilhado }: TracosProps) 
         {...circulo}
         stroke={trilho}
         strokeWidth={espessura}
-        strokeLinecap={pontilhado ? 'round' : undefined}
-        strokeDasharray={pontilhado ? PONTILHADO.map(escalar).join(' ') : undefined}
+        strokeLinecap={pontilhado || geometria.trilho ? 'round' : undefined}
+        strokeDasharray={pontilhado ? PONTILHADO.map(escalar).join(' ') : geometria.trilho}
       />
       <Circle
         {...circulo}
@@ -258,7 +292,7 @@ function Tracos({ geometria, camadas, traco, trilho, pontilhado }: TracosProps) 
  * O ponto na ponta do arco, fora do SVG: o brilho dele é `boxShadow`, que o
  * React Native desenha de verdade, em vez de mais camadas empilhadas.
  *
- * A posição é calculada sem o giro do SVG — o ângulo já parte do topo.
+ * A posição é calculada sem o giro do SVG — o ângulo já parte do início do traço.
  */
 function PontoDaPonta({
   geometria,
@@ -272,7 +306,8 @@ function PontoDaPonta({
   const escalar = useEscala();
   const brilho = useBrilho();
   const raioDoPonto = escalar(RAIO_DO_PONTO);
-  const angulo = (geometria.fracao * 2 - 0.5) * Math.PI;
+  const graus = geometria.inicio + 360 * geometria.arco * geometria.fracao;
+  const angulo = (graus * Math.PI) / 180;
   const centro = geometria.centro - margem;
 
   return (

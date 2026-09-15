@@ -204,7 +204,13 @@ Dados que foram explicitamente rejeitados do schema por violar o princípio da n
 - **A série de batimentos da corrida continua não gravada** (lote do cardio em vidro) — com a
   capacidade `workoutHeartRate`, a série da janela da sessão é lida no aparelho,
   vira média e percentual por zona, e morre ali. O que muda em relação à `0049` é
-  só o derivado guardado, não a série
+  só o derivado guardado, não a série. Sem consentimento vigente a série nem é
+  lida: o portão (`vitalsIfConsented`) vem antes da consulta ao relógio, porque
+  ler para descartar ainda é tratamento
+- **Leituras do acelerômetro da sessão ao vivo** (lote do cardio em vidro) — as
+  dezesseis últimas magnitudes desenham as barras de intensidade e morrem com a
+  tela. Não são gravadas, não vão ao log e não se confundem com a PSE, que é o
+  que o aluno declara
 - **Medicação declarada fora da anamnese** — o cardio lê a resposta "Usa algum
   medicamento contínuo?" só para decidir, no aparelho, se as zonas ganham o aviso
   de que medicação pode alterar a FC. O texto não é gravado em outra tabela, não

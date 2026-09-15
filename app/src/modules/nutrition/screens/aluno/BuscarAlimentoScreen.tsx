@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
+import { GlassScreen } from '@/components/ui/GlassScreen';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
@@ -14,7 +15,6 @@ import { CategoriasDoCatalogo } from '../../components/aluno/CategoriasDoCatalog
 import { ConfirmacaoDoRegistro } from '../../components/aluno/ConfirmacaoDoRegistro';
 import { LinhaDoAlimento } from '../../components/aluno/LinhaDoAlimento';
 import { SugestoesDoAssistente } from '../../components/aluno/SugestoesDoAssistente';
-import { TelaDaNutricao } from '../../components/aluno/TelaDaNutricao';
 import { type BuscaDeAlimento, useBuscaDeAlimento } from '../../hooks/useBuscaDeAlimento';
 import { useSugestoesDoDia } from '../../hooks/useSugestoesDoDia';
 import { numeroDoBanco } from '../../services/consumoDoDia';
@@ -60,8 +60,8 @@ export function BuscarAlimentoScreen({
   const [todas, setTodas] = useState(false);
 
   return (
-    <TelaDaNutricao
-      sobreposicao={<BotaoDoAssistente onPress={() => router.push(ROUTES.NUTRITION.ASSISTANT)} />}
+    <GlassScreen
+      overlay={<BotaoDoAssistente onPress={() => router.push(ROUTES.NUTRITION.ASSISTANT)} />}
     >
       <Saudacao
         primeiroNome={primeiroNome}
@@ -89,7 +89,7 @@ export function BuscarAlimentoScreen({
       <SugestoesDoAssistente sugestoes={sugestoes} />
       <Resultados busca={busca} />
       <ConfirmacaoDoRegistro registro={busca.registro} />
-    </TelaDaNutricao>
+    </GlassScreen>
   );
 }
 

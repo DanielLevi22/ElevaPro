@@ -57,6 +57,11 @@ export const metrica = {
   proteina: '158.1 64.4% 51.6%',
   carboidrato: '82.7 78% 55.5%',
   gordura: '43.3 96.4% 56.3%',
+  // Do fluxo de cardio (issue #304): batimento, ritmo e cadência têm cor própria
+  // no ícone, no bloco e na zona de esforço, pelo mesmo critério das outras.
+  batimento: '0 90.6% 70.8%',
+  ritmo: '198.4 93.2% 59.6%',
+  cadencia: '270 95.2% 75.3%',
 } as const satisfies Record<string, TripleHsl>;
 
 /**
@@ -148,12 +153,49 @@ type TokensLiterais = {
   textoCarboidrato: CorLiteral;
   textoGordura: CorLiteral;
   /**
+   * Texto de batimento, ritmo e cadência no cardio. Mesmo motivo do texto de
+   * macro: a cor de métrica não passa AA como texto sobre o vidro claro, e o kit
+   * troca por um tom escuro só no claro (`--hr-t`, `--pace-t`, `--cad-t`).
+   */
+  textoBatimento: CorLiteral;
+  textoRitmo: CorLiteral;
+  textoCadencia: CorLiteral;
+  /**
    * O check sobre a cor de métrica — refeição feita, item comprado. **Igual nos
    * dois temas**, como o `sobreImagem`: o verde não muda de tema, então o que
    * fica em cima dele também não. O kit escreve `#06281a` à mão.
    */
   sobreMetrica: CorLiteral;
 };
+
+/**
+ * Os tons dos objetos-herói do kit (`hero-objects.js`): o metal escovado da
+ * bicicleta e da esteira, o deque e a tela apagada do painel.
+ *
+ * Não é superfície nem grandeza: é a matéria de uma ilustração, e por isso é
+ * **igual nos dois temas** — o alumínio da bicicleta não fica escuro no claro.
+ * Entra como família para a cor morar aqui, e não como hexadecimal à mão no
+ * desenho do palco.
+ */
+export const illustration = {
+  metalHighlight: '#d7dbe1',
+  metalLight: '#c9ced6',
+  metalMid: '#8e949e',
+  metalShade: '#6b7079',
+  metalDark: '#5d636d',
+  metalDeep: '#4a4f58',
+  deckTop: '#3a3f47',
+  deckBottom: '#15171b',
+  screenLit: '#2b2f36',
+  screenOff: '#0a0b0d',
+  /** Os extremos do `color-mix` que clareia e escurece a primária na esfera. */
+  white: '#ffffff',
+  black: '#000000',
+  /** O preto da sombra de palco: a mesma nos dois temas, como no kit. */
+  stageShadow: 'rgb(0, 0, 0)',
+  /** O lado da roda que não recebe a luz: branco a 12%. */
+  wheelUnlit: 'rgba(255, 255, 255, 0.12)',
+} as const satisfies Record<string, CorLiteral>;
 
 export type Tema = 'claro' | 'escuro';
 
@@ -215,6 +257,9 @@ const escuro: Paleta = {
     textoProteina: '#34d399',
     textoCarboidrato: '#a3e635',
     textoGordura: '#fbbf24',
+    textoBatimento: '#f87171',
+    textoRitmo: '#38bdf8',
+    textoCadencia: '#c084fc',
     sobreMetrica: '#06281a',
   },
 };
@@ -270,6 +315,9 @@ const claro: Paleta = {
     textoProteina: '#0b7a52',
     textoCarboidrato: '#4e7a0b',
     textoGordura: '#8a5e03',
+    textoBatimento: '#b91c1c',
+    textoRitmo: '#0369a1',
+    textoCadencia: '#7e22ce',
     sobreMetrica: '#06281a',
   },
 };

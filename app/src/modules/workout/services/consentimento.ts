@@ -1,4 +1,4 @@
-import { createHealthService } from '@elevapro/shared';
+import { createHealthService, type SessionVitals } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 
 const healthService = createHealthService(supabase);
@@ -67,4 +67,26 @@ export async function heartRateIfConsented(
 ): Promise<number | null> {
   if (batimento === null) return null;
   return (await temConsentimento(studentId)) ? batimento : null;
+}
+
+/**
+ * A média e as zonas da sessão, lidas do relógio só com consentimento vigente.
+ *
+ * O portão vem **antes** da leitura: sem consentimento o relógio nem é
+ * consultado, porque ler para descartar ainda é tratar dado de Art. 11. Falha do
+ * relógio devolve `null` — a sessão é gravada sem batimento, como sem relógio.
+ *
+ * @example
+ * const vitals = await vitalsIfConsented(alunoId, () => readSessionVitals(inicio, fim, fcMaxima));
+ */
+export async function vitalsIfConsented(
+  studentId: string,
+  readWatch: () => Promise<SessionVitals | null>
+): Promise<SessionVitals | null> {
+  if (!(await temConsentimento(studentId))) return null;
+  try {
+    return await readWatch();
+  } catch {
+    return null;
+  }
 }
