@@ -1,4 +1,4 @@
-import type { DietMeal } from '@elevapro/shared';
+import { type DietMeal, mealsOfDay } from '@elevapro/shared';
 import { useEffect, useState } from 'react';
 import { showAlert } from '@/components/ui/appAlert';
 import { getLocalDateISOString } from '@/utils/dateUtils';
@@ -12,7 +12,6 @@ import {
   macrosDosItens,
   metaDoDia,
 } from '../services/consumoDoDia';
-import { refeicoesDoDia } from '../services/refeicoesDoDia';
 import { useNutritionStore } from '../store/nutritionStore';
 import { motivoParaNaoMarcar } from './usePlanoDoDia';
 
@@ -56,7 +55,7 @@ export function useRefeicaoDoDia(
   }, [alunoId, data, buscou]);
 
   const itens = itensDaRefeicao(registros[refeicaoId], itensDoPlano[refeicaoId]);
-  const doDia = refeicoesDoDia(refeicoes, plano?.plan_type, diaDaSemana(data));
+  const doDia = mealsOfDay(refeicoes, plano?.plan_type, diaDaSemana(data));
   const feita = registros[refeicaoId]?.completed ?? false;
 
   const marcar = () => {

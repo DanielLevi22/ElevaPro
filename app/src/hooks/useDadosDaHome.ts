@@ -8,6 +8,7 @@ import { supabase } from '@elevapro/supabase';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { useAuthStore } from '@/auth';
+import { useDailyActivity } from '@/hooks/useDailyActivity';
 import { useHealthData } from '@/hooks/useHealthData';
 import { useAssessmentStore } from '@/modules/assessment';
 import type {
@@ -44,8 +45,8 @@ const servicoDeAuth = createAuthService(supabase);
 
 export function useDadosDaHome(): DadosDaHome {
   const { user, accountType, isMasquerading } = useAuthStore();
-  const fontes = useFontesDaHome();
   const ehEspecialista = accountType === 'specialist';
+  const fontes = useFontesDaHome(ehEspecialista ? undefined : user?.id);
   const { perfil, recarregar } = useCarregamentoDaHome(user?.id, ehEspecialista, fontes);
 
   const treinoSugerido = useMemo(
@@ -68,8 +69,9 @@ export function useDadosDaHome(): DadosDaHome {
 }
 
 /** Cada módulo que a tela inicial lê, pela porta pública dele. */
-function useFontesDaHome() {
+function useFontesDaHome(alunoId: string | undefined) {
   return {
+    atividade: useDailyActivity(alunoId),
     gamificacao: useGamificationStore(),
     saude: useHealthData(),
     alunos: useStudentStore(),
@@ -94,6 +96,7 @@ function useCarregamentoDaHome(
   const [perfil, setPerfil] = useState<ProfileSummary | null>(null);
   const { fetchDailyData } = fontes.gamificacao;
   const { refetch: recarregarSaude } = fontes.saude;
+  const { reload: recarregarAtividade } = fontes.atividade;
   const { fetchStudents } = fontes.alunos;
   const { fetchWorkouts } = fontes.treinos;
 
@@ -108,8 +111,17 @@ function useCarregamentoDaHome(
       fetchDailyData(getLocalDateISOString()),
       fetchWorkouts(userId),
       recarregarSaude(),
+      recarregarAtividade(),
     ]);
-  }, [userId, ehEspecialista, fetchStudents, fetchWorkouts, fetchDailyData, recarregarSaude]);
+  }, [
+    userId,
+    ehEspecialista,
+    fetchStudents,
+    fetchWorkouts,
+    fetchDailyData,
+    recarregarSaude,
+    recarregarAtividade,
+  ]);
 
   useFocusEffect(
     useCallback(() => {
@@ -130,13 +142,14 @@ function montarAluno(
   treinoSugerido: TreinoSugerido | null,
   recarregar: () => Promise<void>
 ): DadosDaHomeDoAluno {
-  const { gamificacao, saude, avaliacao } = fontes;
+  const { gamificacao, saude, avaliacao, atividade } = fontes;
   return {
     perfil,
     treinoSugerido,
     saude,
     metaDoDia: gamificacao.dailyGoal,
     ofensiva: gamificacao.streak,
+    sequencia: atividade.streak.current,
     mostrarConfete: gamificacao.showConfetti,
     // Só a contagem sai daqui: a tela mostra o estado, não as respostas.
     anamnese: {

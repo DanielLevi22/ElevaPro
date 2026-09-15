@@ -39,7 +39,13 @@ export interface DadosDaHomeDoAluno {
   treinoSugerido: TreinoSugerido | null;
   saude: SaudeDoDia;
   metaDoDia: DailyGoal | null;
+  /** Só o congelamento: a contagem é a `sequencia`. */
   ofensiva: StudentStreak | null;
+  /**
+   * Dias seguidos com treino ou refeição registrada, calculados das sessões e dos
+   * registros (#312). `student_streaks` não tem quem grave nela.
+   */
+  sequencia: number;
   mostrarConfete: boolean;
   anamnese: EstadoDaAnamnese;
   carregando: boolean;

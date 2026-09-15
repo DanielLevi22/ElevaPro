@@ -1,9 +1,10 @@
-import type { DailyGoal, StudentStreak } from "../types/gamification.types";
+import type { DailyActivity } from "./dailyActivity";
 import { addDays, weekdayFromMonday } from "./dateOnly";
 
 /**
  * Os números do hub de Progresso (issue #312): treinos, aderência e dias top
- * dos últimos 30 dias contra os 30 anteriores, com a série de 8 semanas.
+ * dos últimos 30 dias contra os 30 anteriores, a série de 8 semanas, o heatmap e
+ * a sequência.
  *
  * Mora no `shared` porque é regra, não desenho: o relatório do período lê as
  * mesmas contas, e uma tela não pode dizer 34 treinos onde a outra diz 33.
@@ -13,7 +14,7 @@ import { addDays, weekdayFromMonday } from "./dateOnly";
 export interface TrendNumber {
   value: number | null;
   delta: number | null;
-  /** Oito semanas, da mais antiga à atual; `null` é semana sem meta. */
+  /** Oito semanas, da mais antiga à atual; `null` é semana sem o que medir. */
   spark: (number | null)[];
 }
 
@@ -29,75 +30,73 @@ const WEEK_DAYS = 7;
 const PERCENT = 100;
 
 /** Como cada número sai de uma janela de dias; `null` é não haver o que medir. */
-type Measure = (goals: readonly DailyGoal[]) => number | null;
+type Measure = (days: readonly DailyActivity[]) => number | null;
 
-const countWorkouts: Measure = (goals) => sumOf(goals, (goal) => goal.workout_completed);
+const countWorkouts: Measure = (days) => sumOf(days, (day) => day.workouts);
 
 /**
- * Refeições feitas sobre planejadas. Limitada a 100: comer além do plano não é
- * aderir mais a ele. Sem refeição planejada é `null`, e não 0%.
+ * Refeições feitas sobre planejadas, a regra da aderência da semana (#298). Sem
+ * refeição planejada é `null`, e não 0%.
+ *
+ * @example mealAdherence([{ plannedMeals: 5, doneMeals: 4, … }]) // 80
  */
-const mealAdherence: Measure = (goals) => {
-  const target = sumOf(goals, (goal) => goal.meals_target);
-  if (target === 0) return null;
-  const done = sumOf(goals, (goal) => Math.min(goal.meals_completed, goal.meals_target));
-  return Math.round((done / target) * PERCENT);
+export const mealAdherence: Measure = (days) => {
+  const planned = sumOf(days, (day) => day.plannedMeals);
+  if (planned === 0) return null;
+  return Math.round((sumOf(days, (day) => day.doneMeals) / planned) * PERCENT);
 };
 
-/** O dia em que as duas metas existiam e foram batidas. */
-function isTopDay(goal: DailyGoal): boolean {
-  return workoutMet(goal) && mealsMet(goal);
+/** O plano do dia existia e foi cumprido inteiro. */
+function mealsMet(day: DailyActivity): boolean {
+  return day.plannedMeals > 0 && day.doneMeals >= day.plannedMeals;
 }
 
-function workoutMet(goal: DailyGoal): boolean {
-  return goal.workout_target > 0 && goal.workout_completed >= goal.workout_target;
+/** Sessão concluída e plano do dia cumprido. */
+function isTopDay(day: DailyActivity): boolean {
+  return day.workouts > 0 && mealsMet(day);
 }
 
-function mealsMet(goal: DailyGoal): boolean {
-  return goal.meals_target > 0 && goal.meals_completed >= goal.meals_target;
-}
-
-const countTopDays: Measure = (goals) => goals.filter(isTopDay).length;
+const countTopDays: Measure = (days) => days.filter(isTopDay).length;
 
 /**
  * @example
- * const { workouts } = summarizeProgress(history, "2026-09-15");
- * workouts.value // treinos de 17/08 a 15/09
+ * const { workouts } = summarizeProgress(days, "2026-09-15");
+ * workouts.value // sessões de 17/08 a 15/09
  */
-export function summarizeProgress(goals: readonly DailyGoal[], today: string): ProgressSummary {
+export function summarizeProgress(days: readonly DailyActivity[], today: string): ProgressSummary {
   return {
-    workouts: trend(goals, today, countWorkouts),
-    adherence: trend(goals, today, mealAdherence),
-    topDays: trend(goals, today, countTopDays),
+    workouts: trend(days, today, countWorkouts),
+    adherence: trend(days, today, mealAdherence),
+    topDays: trend(days, today, countTopDays),
   };
 }
 
-function trend(goals: readonly DailyGoal[], today: string, measure: Measure): TrendNumber {
-  const value = measure(inWindow(goals, today, PERIOD_DAYS));
-  const previous = measure(inWindow(goals, addDays(today, -PERIOD_DAYS), PERIOD_DAYS));
+function trend(days: readonly DailyActivity[], today: string, measure: Measure): TrendNumber {
+  const value = measure(inWindow(days, today, PERIOD_DAYS));
+  const previous = measure(inWindow(days, addDays(today, -PERIOD_DAYS), PERIOD_DAYS));
   const delta = value === null || previous === null ? null : value - previous;
-  return { value, delta, spark: weeklySeries(goals, today, measure) };
+  return { value, delta, spark: weeklySeries(days, today, measure) };
 }
 
 /** Semanas de sete dias terminando hoje, da mais antiga à atual. */
-function weeklySeries(goals: readonly DailyGoal[], today: string, measure: Measure) {
+function weeklySeries(days: readonly DailyActivity[], today: string, measure: Measure) {
   return Array.from({ length: SPARK_WEEKS }, (_, index) => {
     const weeksBack = SPARK_WEEKS - 1 - index;
-    return measure(inWindow(goals, addDays(today, -weeksBack * WEEK_DAYS), WEEK_DAYS));
+    return measure(inWindow(days, addDays(today, -weeksBack * WEEK_DAYS), WEEK_DAYS));
   });
 }
 
 /** Os dias de `length` dias terminando em `end`, inclusive. */
-function inWindow(goals: readonly DailyGoal[], end: string, length: number): DailyGoal[] {
+function inWindow(days: readonly DailyActivity[], end: string, length: number): DailyActivity[] {
   const start = addDays(end, -(length - 1));
-  return goals.filter((goal) => goal.date >= start && goal.date <= end);
+  return days.filter((day) => day.date >= start && day.date <= end);
 }
 
-function sumOf(goals: readonly DailyGoal[], pick: (goal: DailyGoal) => number): number {
-  return goals.reduce((total, goal) => total + (pick(goal) ?? 0), 0);
+function sumOf(days: readonly DailyActivity[], pick: (day: DailyActivity) => number): number {
+  return days.reduce((total, day) => total + pick(day), 0);
 }
 
-/** 0 nada; 1 algo feito; 2 uma meta batida; 3 as duas, o dia top. */
+/** 0 nada; 1 refeição registrada; 2 treino ou plano cumprido; 3 os dois, o dia top. */
 export type ConsistencyLevel = 0 | 1 | 2 | 3;
 
 export interface ConsistencyDay {
@@ -111,10 +110,13 @@ const CONSISTENCY_WEEKS = 13;
 /**
  * As semanas do heatmap, de segunda a domingo, com a semana de hoje por último.
  *
- * @example consistencyWeeks(history, "2026-09-15")[12][0].date // "2026-09-14"
+ * @example consistencyWeeks(days, "2026-09-15")[12][0].date // "2026-09-14"
  */
-export function consistencyWeeks(goals: readonly DailyGoal[], today: string): ConsistencyDay[][] {
-  const byDate = new Map(goals.map((goal) => [goal.date, goal]));
+export function consistencyWeeks(
+  days: readonly DailyActivity[],
+  today: string,
+): ConsistencyDay[][] {
+  const byDate = new Map(days.map((day) => [day.date, day]));
   const firstMonday = addDays(
     today,
     -weekdayFromMonday(today) - (CONSISTENCY_WEEKS - 1) * WEEK_DAYS,
@@ -127,11 +129,11 @@ export function consistencyWeeks(goals: readonly DailyGoal[], today: string): Co
   );
 }
 
-function levelOf(goal: DailyGoal | undefined): ConsistencyLevel {
-  if (!goal) return 0;
-  if (isTopDay(goal)) return 3;
-  if (workoutMet(goal) || mealsMet(goal)) return 2;
-  return goal.workout_completed > 0 || goal.meals_completed > 0 ? 1 : 0;
+function levelOf(day: DailyActivity | undefined): ConsistencyLevel {
+  if (!day) return 0;
+  if (isTopDay(day)) return 3;
+  if (day.workouts > 0 || mealsMet(day)) return 2;
+  return day.loggedMeals > 0 ? 1 : 0;
 }
 
 export interface StreakStanding {
@@ -142,12 +144,36 @@ export interface StreakStanding {
 }
 
 /**
- * @example streakStanding(streak) // { current: 12, best: 18, toTie: 6 }
+ * A sequência de dias com treino concluído ou refeição registrada.
+ *
+ * Calculada, e não lida de `student_streaks`: nada grava naquela tabela (#312).
+ * Hoje sem nada ainda não quebra a sequência, porque o dia não acabou.
+ *
+ * @example activityStreak(days, "2026-09-15") // { current: 12, best: 18, toTie: 6 }
  */
-export function streakStanding(
-  streak: Pick<StudentStreak, "current_streak" | "longest_streak"> | null,
-): StreakStanding {
-  const current = streak?.current_streak ?? 0;
-  const best = Math.max(streak?.longest_streak ?? 0, current);
+export function activityStreak(days: readonly DailyActivity[], today: string): StreakStanding {
+  const active = new Set(days.filter(isActive).map((day) => day.date));
+  let cursor = active.has(today) ? today : addDays(today, -1);
+  let current = 0;
+  while (active.has(cursor)) {
+    current++;
+    cursor = addDays(cursor, -1);
+  }
+  const best = Math.max(longestRun(active), current);
   return { current, best, toTie: best - current };
+}
+
+function isActive(day: DailyActivity): boolean {
+  return day.workouts > 0 || day.loggedMeals > 0;
+}
+
+function longestRun(active: ReadonlySet<string>): number {
+  let best = 0;
+  for (const date of active) {
+    if (active.has(addDays(date, -1))) continue;
+    let length = 1;
+    while (active.has(addDays(date, length))) length++;
+    best = Math.max(best, length);
+  }
+  return best;
 }
