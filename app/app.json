@@ -4,7 +4,7 @@
     "slug": "elevapro",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./src/assets/images/icon.png",
+    "icon": "./src/assets/images/eleva-pro-icon-coach-ai-male-v1.png",
     "scheme": "elevapro",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -19,8 +19,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./src/assets/images/eleva-pro-icon-coach-ai-male-v1.png",
+        "backgroundColor": "#0A0A0A"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.elevapro.app",
