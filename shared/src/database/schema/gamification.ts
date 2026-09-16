@@ -3,6 +3,7 @@ import {
   date,
   integer,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   unique,
@@ -55,3 +56,21 @@ export const achievements = pgTable("achievements", {
   points: integer("points").notNull().default(0),
   earned_at: timestamp("earned_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/**
+ * Pontos da semana por aluno, gravados só pelo trigger de `workout_sessions`
+ * (migration 0059). O cliente lê a própria linha; o placar com outras pessoas
+ * sai só pela RPC `get_leaderboard`.
+ */
+export const rankingScores = pgTable(
+  "ranking_scores",
+  {
+    student_id: uuid("student_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    week_start_date: date("week_start_date").notNull(),
+    points: integer("points").notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.student_id, table.week_start_date] })],
+);

@@ -3,7 +3,11 @@ import { profiles, serviceTypeEnum } from "./auth";
 
 export const linkStatusEnum = pgEnum("link_status", ["active", "inactive"]);
 
-export const consentTypeEnum = pgEnum("consent_type", ["health_data_collection"]);
+export const consentTypeEnum = pgEnum("consent_type", [
+  "health_data_collection",
+  "technique_analysis",
+  "ranking",
+]);
 
 export const studentSpecialists = pgTable("student_specialists", {
   id: uuid("id").primaryKey().defaultRandom(),
