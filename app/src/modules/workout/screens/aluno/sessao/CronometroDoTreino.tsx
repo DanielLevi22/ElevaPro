@@ -38,7 +38,7 @@ export function CronometroDoTreino(props: PropsDoMomento) {
   const progresso = progressoDaSessao(sessao);
 
   return (
-    <TelaDeVidroComFoto imagem={fotoDoGrupo(treino.muscle_group)}>
+    <TelaDeVidroComFoto image={fotoDoGrupo(treino.muscle_group)}>
       <TopoDaSessao
         titulo={treino.title}
         tempo={formatarDuracao(tempoDaSessao(sessao, agora))}

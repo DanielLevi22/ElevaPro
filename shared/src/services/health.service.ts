@@ -16,9 +16,9 @@ export const CONSENT_RANKING = "ranking";
  * amarrá-las: mudar o texto da Análise de Técnica pediria reconsentimento do
  * body scan, e reconsentimento pedido à toa é o que ensina a aceitar sem ler.
  */
-export interface Finalidade {
-  tipo: string;
-  versao: string;
+export interface ConsentPurpose {
+  type: string;
+  version: string;
 }
 
 /**
@@ -98,25 +98,35 @@ export interface Finalidade {
 export const POLICY_VERSION = "1.8";
 
 /** Coleta de dados de saúde: avaliação, anamnese, métricas diárias, body scan. */
-export const SAUDE: Finalidade = { tipo: CONSENT_HEALTH_COLLECTION, versao: POLICY_VERSION };
+export const HEALTH_PURPOSE: ConsentPurpose = {
+  type: CONSENT_HEALTH_COLLECTION,
+  version: POLICY_VERSION,
+};
 
 /**
  * Análise de Técnica: a câmera lendo o corpo durante a série.
  *
- * Finalidade separada da `SAUDE`, e não um parágrafo novo dentro dela, porque
+ * Finalidade separada da `HEALTH_PURPOSE`, e não um parágrafo novo dentro dela, porque
  * o Art. 8°, §4° anula autorização genérica e porque empacotá-las faria a
  * recusa de uma custar a outra — ver a migration 0041. Começa em `1.0`: é
  * texto novo, não revisão de texto existente.
  */
-export const TECNICA: Finalidade = { tipo: CONSENT_TECHNIQUE_ANALYSIS, versao: "1.0" };
+export const TECHNIQUE_PURPOSE: ConsentPurpose = {
+  type: CONSENT_TECHNIQUE_ANALYSIS,
+  version: "1.0",
+};
 
 /**
  * Participar do ranking: o primeiro nome e a inicial do sobrenome aparecem para
  * outros participantes. Não é dado de saúde, mas expor o nome a quem não tem
- * vínculo não é execução de contrato (Art. 7°, I), e por isso tem finalidade
- * própria, pelo mesmo motivo da `TECNICA` — ver a migration 0058.
+ * vínculo não é execução de contrato (Art. 7°, V): pede consentimento (Art. 7°, I), com
+ * finalidade própria, pelo mesmo motivo da `TECHNIQUE_PURPOSE` — ver a migration 0058.
+ *
+ * A versão tem par no banco, `private.ranking_consent_version()` (0059), que a
+ * compara: subir uma sem a outra deixa o app e o placar discordando sobre quem
+ * participa.
  */
-export const RANKING: Finalidade = { tipo: CONSENT_RANKING, versao: "1.0" };
+export const RANKING_PURPOSE: ConsentPurpose = { type: CONSENT_RANKING, version: "1.0" };
 
 export type ConsentState = "granted" | "outdated" | "revoked" | "missing";
 
@@ -129,13 +139,13 @@ export interface ConsentStatus {
 async function readConsentStatus(
   supabase: SupabaseClient,
   studentId: string,
-  finalidade: Finalidade,
+  purpose: ConsentPurpose,
 ): Promise<ConsentStatus> {
   const { data, error } = await supabase
     .from("student_consents")
     .select("given_at, revoked_at, policy_version")
     .eq("student_id", studentId)
-    .eq("consent_type", finalidade.tipo)
+    .eq("consent_type", purpose.type)
     .maybeSingle();
 
   if (error) throw error;
@@ -143,7 +153,7 @@ async function readConsentStatus(
   const found = { givenAt: data.given_at, policyVersion: data.policy_version };
   // Retirado vale mais que a versão: quem retirou não está "pendente de aceitar".
   if (data.revoked_at) return { state: "revoked", ...found };
-  if (data.policy_version !== finalidade.versao) return { state: "outdated", ...found };
+  if (data.policy_version !== purpose.version) return { state: "outdated", ...found };
   return { state: "granted", ...found };
 }
 
@@ -172,9 +182,9 @@ export const createHealthService = (supabase: SupabaseClient) => ({
    */
   hasCollectionConsent: async (
     studentId: string,
-    finalidade: Finalidade = SAUDE,
+    purpose: ConsentPurpose = HEALTH_PURPOSE,
   ): Promise<boolean> =>
-    (await readConsentStatus(supabase, studentId, finalidade)).state === "granted",
+    (await readConsentStatus(supabase, studentId, purpose)).state === "granted",
 
   /**
    * Em que pé está o aceite, para o health check dizer ao Student o que fazer:
@@ -184,8 +194,10 @@ export const createHealthService = (supabase: SupabaseClient) => ({
    * @example
    * const { state, givenAt } = await health.getConsentStatus(userId);
    */
-  getConsentStatus: (studentId: string, finalidade: Finalidade = SAUDE): Promise<ConsentStatus> =>
-    readConsentStatus(supabase, studentId, finalidade),
+  getConsentStatus: (
+    studentId: string,
+    purpose: ConsentPurpose = HEALTH_PURPOSE,
+  ): Promise<ConsentStatus> => readConsentStatus(supabase, studentId, purpose),
 
   /**
    * Registra o consentimento de coleta na versão vigente. Reativa um
@@ -199,15 +211,15 @@ export const createHealthService = (supabase: SupabaseClient) => ({
    */
   grantCollectionConsent: async (
     studentId: string,
-    finalidade: Finalidade = SAUDE,
+    purpose: ConsentPurpose = HEALTH_PURPOSE,
   ): Promise<void> => {
     const { error } = await supabase.from("student_consents").upsert(
       {
         student_id: studentId,
-        consent_type: finalidade.tipo,
+        consent_type: purpose.type,
         given_at: new Date().toISOString(),
         revoked_at: null,
-        policy_version: finalidade.versao,
+        policy_version: purpose.version,
       },
       { onConflict: "student_id,consent_type" },
     );
@@ -217,13 +229,13 @@ export const createHealthService = (supabase: SupabaseClient) => ({
   /** Interrompe a coleta. Não apaga o histórico — ver docs/LGPD_COMPLIANCE.md. */
   revokeCollectionConsent: async (
     studentId: string,
-    finalidade: Finalidade = SAUDE,
+    purpose: ConsentPurpose = HEALTH_PURPOSE,
   ): Promise<void> => {
     const { error } = await supabase
       .from("student_consents")
       .update({ revoked_at: new Date().toISOString() })
       .eq("student_id", studentId)
-      .eq("consent_type", finalidade.tipo);
+      .eq("consent_type", purpose.type);
     if (error) throw error;
   },
 

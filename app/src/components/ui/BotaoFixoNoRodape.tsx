@@ -17,7 +17,7 @@ import { BotaoDeDestaque } from './BotaoDeDestaque';
  * da barra com o brilho dele, e com os 66 do kit o botão encostava nele.
  *
  * @example
- * <TelaDeVidroComFoto folgaNoFim="botaoFixo" sobreposicao={<BotaoFixoNoRodape rotulo="Iniciar treino" icone="play" onPress={iniciar} />} />
+ * <TelaDeVidroComFoto bottomSpace="fixedButton" overlay={<BotaoFixoNoRodape rotulo="Iniciar treino" icone="play" onPress={iniciar} />} />
  */
 interface BotaoFixoNoRodapeProps {
   rotulo: string;

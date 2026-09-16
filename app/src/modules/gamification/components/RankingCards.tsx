@@ -3,19 +3,20 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
 import { Vidro } from '@/components/ui/Vidro';
 import { useCores, useEscala } from '@/shared/design';
+import type { RankingViewer } from '../types';
 
 /**
  * Os cartões de vidro da tela do ranking que não são o placar: o prazo, o
  * convite, e o recado quando não há placar para mostrar.
  */
 
-/** "Encerra em 2 dias e 14 horas", com o relógio no âmbar do kit. */
+/** "Encerra em 2 dias e 14 horas", com o relógio no tom de atenção. */
 export function DeadlineCard({ label }: { label: string }) {
-  const cores = useCores();
-  const escalar = useEscala();
+  const colors = useCores();
+  const scale = useEscala();
   return (
     <Vidro classeExterna="mt-[1.125rem]" className="flex-row items-center gap-2.5 px-4 py-3.5">
-      <Ionicons name="time-outline" size={escalar(16)} color={cores.metricaGordura} />
+      <Ionicons name="time-outline" size={scale(16)} color={colors.warning} />
       <Text className="text-[0.84375rem] font-semibold text-foreground">{label}</Text>
     </Vidro>
   );
@@ -28,11 +29,11 @@ export function DeadlineCard({ label }: { label: string }) {
  * quem, e que dá para sair.
  */
 export function RankingInvite({ onJoin, busy }: { onJoin: () => void; busy: boolean }) {
-  const cores = useCores();
-  const escalar = useEscala();
+  const colors = useCores();
+  const scale = useEscala();
   return (
     <Vidro classeExterna="mt-[1.625rem]" className="items-center gap-3 p-5">
-      <MaterialCommunityIcons name="trophy-outline" size={escalar(34)} color={cores.primary} />
+      <MaterialCommunityIcons name="trophy-outline" size={scale(34)} color={colors.primary} />
       <Text className="text-center text-h2 font-bold tracking-tight text-foreground">
         Participe do ranking
       </Text>
@@ -51,23 +52,23 @@ export function RankingInvite({ onJoin, busy }: { onJoin: () => void; busy: bool
   );
 }
 
-/** Placar vazio ou falho, com o que fazer em cada caso. */
-export function LeaderboardNotice({
-  failed,
-  isSpecialist,
-  onRetry,
-}: {
+const EMPTY_TEXT: Record<RankingViewer['kind'], string> = {
+  specialist: 'Nenhum aluno pontuou esta semana.',
+  participant: 'Ninguém pontuou esta semana. Conclua um treino para abrir o placar.',
+};
+
+interface LeaderboardNoticeProps {
   failed: boolean;
-  isSpecialist: boolean;
+  emptyFor: RankingViewer['kind'];
   onRetry: () => void;
-}) {
-  const empty = isSpecialist
-    ? 'Nenhum aluno pontuou esta semana.'
-    : 'Ninguém pontuou esta semana. Conclua um treino para abrir o placar.';
+}
+
+/** Placar vazio ou falho, com o que fazer em cada caso. */
+export function LeaderboardNotice({ failed, emptyFor, onRetry }: LeaderboardNoticeProps) {
   return (
     <Vidro classeExterna="mt-[1.625rem]" className="items-center gap-3 p-5">
       <Text className="text-center text-legenda text-muted-foreground">
-        {failed ? 'Não consegui carregar o placar.' : empty}
+        {failed ? 'Não consegui carregar o placar.' : EMPTY_TEXT[emptyFor]}
       </Text>
       {failed ? (
         <TouchableOpacity onPress={onRetry} accessibilityRole="button">

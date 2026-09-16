@@ -144,7 +144,7 @@ _Avoid_: leaderboard (na UI), competição, liga
 **Pontos**:
 O que uma WorkoutSession concluída vale no Ranking: 100, até duas por dia. Só treino
 pontua.
-_Avoid_: XP, score, pontuação (na UI)
+_Avoid_ (na UI): XP, score, pontuação
 
 ### Avaliação
 

@@ -85,9 +85,9 @@ export function CompartilharTreino({
 
   return (
     <TelaDeVidroComFoto
-      imagem={fotoDoGrupo(treino.muscle_group)}
-      folgaNoFim="botaoFixo"
-      sobreposicao={
+      image={fotoDoGrupo(treino.muscle_group)}
+      bottomSpace="fixedButton"
+      overlay={
         <BotaoFixoNoRodape
           rotulo={`Compartilhar ${nomeDoFormato.toLowerCase()}`}
           icone="share-outline"

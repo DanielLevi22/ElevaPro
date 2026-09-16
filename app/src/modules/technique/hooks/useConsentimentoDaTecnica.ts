@@ -1,11 +1,11 @@
-import { createHealthService, TECNICA } from '@elevapro/shared';
+import { createHealthService, TECHNIQUE_PURPOSE } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { useCallback, useEffect, useState } from 'react';
 
 /**
  * O portão que antecede a câmera.
  *
- * Análise de Técnica tem consentimento **próprio** (`TECNICA`), e não o do body
+ * Análise de Técnica tem consentimento **próprio** (`TECHNIQUE_PURPOSE`), e não o do body
  * scan: são finalidades distintas e o Art. 8°, §4° anula autorização genérica.
  * Empacotadas juntas, recusar a câmera contínua custaria ao aluno a avaliação
  * física e o acompanhamento de passos — e consentimento cuja recusa cobra
@@ -30,7 +30,10 @@ export function useConsentimentoDaTecnica(studentId: string | null): Consentimen
     if (!studentId) return;
 
     try {
-      const tem = await createHealthService(supabase).hasCollectionConsent(studentId, TECNICA);
+      const tem = await createHealthService(supabase).hasCollectionConsent(
+        studentId,
+        TECHNIQUE_PURPOSE
+      );
       setEstado(tem ? 'concedido' : 'ausente');
     } catch (e) {
       // Falha de consulta não é consentimento: some com a dúvida para o lado
@@ -49,7 +52,7 @@ export function useConsentimentoDaTecnica(studentId: string | null): Consentimen
     if (!studentId) return;
 
     try {
-      await createHealthService(supabase).grantCollectionConsent(studentId, TECNICA);
+      await createHealthService(supabase).grantCollectionConsent(studentId, TECHNIQUE_PURPOSE);
       setEstado('concedido');
       setErro(null);
     } catch (e) {

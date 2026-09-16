@@ -1,10 +1,10 @@
 import {
+  type ConsentPurpose,
   type ConsentStatus,
   dataCurtaDoInstante,
-  type Finalidade,
-  RANKING,
-  SAUDE,
-  TECNICA,
+  HEALTH_PURPOSE,
+  RANKING_PURPOSE,
+  TECHNIQUE_PURPOSE,
 } from '@elevapro/shared';
 import type { Ionicons } from '@expo/vector-icons';
 
@@ -17,14 +17,14 @@ import type { Ionicons } from '@expo/vector-icons';
  * avaliação física.
  */
 export interface Authorization {
-  purpose: Finalidade;
+  purpose: ConsentPurpose;
   title: string;
   description: string;
 }
 
 export const AUTHORIZATIONS: readonly Authorization[] = [
   {
-    purpose: SAUDE,
+    purpose: HEALTH_PURPOSE,
     title: 'Dados de saúde',
     // O que o Student retira precisa estar escrito aqui, senão ele decide sobre uma
     // lista que não corresponde ao que é coletado.
@@ -32,12 +32,12 @@ export const AUTHORIZATIONS: readonly Authorization[] = [
       'Avaliação física, anamnese, body scan, passos e calorias, sono e frequência cardíaca de repouso, a prontidão do dia calculada deles, a frequência cardíaca média e o tempo em cada zona das corridas, as refeições registradas, a água do dia e as medidas corporais que você ou seu especialista registram.',
   },
   {
-    purpose: TECNICA,
+    purpose: TECHNIQUE_PURPOSE,
     title: 'Análise de Técnica',
     description: 'A câmera lê seu corpo durante a série. Nada é gravado.',
   },
   {
-    purpose: RANKING,
+    purpose: RANKING_PURPOSE,
     title: 'Ranking',
     description:
       'Seu primeiro nome, a inicial do sobrenome e seus pontos da semana aparecem para outros participantes do ranking.',
@@ -67,7 +67,7 @@ export function authorizationFooter(
   if (state === 'granted' && givenAt) {
     return { text: `${acceptedOn(givenAt)} · versão ${policyVersion}`, action: 'revoke' };
   }
-  const asksHere = authorization.purpose.tipo === SAUDE.tipo;
+  const asksHere = authorization.purpose.type === HEALTH_PURPOSE.type;
   const action = asksHere ? 'authorize' : null;
   const ask = asksHere ? '' : ' O app pede quando você abrir a tela que precisa.';
   if (state === 'outdated' && givenAt) {
@@ -104,24 +104,25 @@ export function revokeEffects(
   authorization: Authorization,
   hasSpecialist: boolean
 ): RevokeEffect[] {
-  if (authorization.purpose.tipo === RANKING.tipo) {
-    return [
-      { icon: 'eye-off-outline', text: 'Seu nome sai do placar na hora' },
-      {
-        icon: 'barbell-outline',
-        text: 'Seus treinos seguem contando pontos, visíveis só para você',
-      },
-    ];
-  }
-  if (authorization.purpose.tipo === TECNICA.tipo) {
-    return [
-      { icon: 'videocam-off-outline', text: 'A câmera deixa de ler seu corpo durante a série' },
-      {
-        icon: 'barbell-outline',
-        text: 'Seus treinos seguem iguais; a análise pede de novo antes de abrir a câmera',
-      },
-    ];
-  }
+  return EFFECTS_BY_PURPOSE[authorization.purpose.type] ?? healthRevokeEffects(hasSpecialist);
+}
+
+/** O que para em cada finalidade que não depende de haver especialista. */
+const EFFECTS_BY_PURPOSE: Record<string, RevokeEffect[]> = {
+  [RANKING_PURPOSE.type]: [
+    { icon: 'eye-off-outline', text: 'Seu nome sai do placar na hora' },
+    { icon: 'barbell-outline', text: 'Seus treinos seguem contando pontos, visíveis só para você' },
+  ],
+  [TECHNIQUE_PURPOSE.type]: [
+    { icon: 'videocam-off-outline', text: 'A câmera deixa de ler seu corpo durante a série' },
+    {
+      icon: 'barbell-outline',
+      text: 'Seus treinos seguem iguais; a análise pede de novo antes de abrir a câmera',
+    },
+  ],
+};
+
+function healthRevokeEffects(hasSpecialist: boolean): RevokeEffect[] {
   return [
     { icon: 'watch-outline', text: 'O relógio para de enviar passos, sono e FC' },
     ...(hasSpecialist

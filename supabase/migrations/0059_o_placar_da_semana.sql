@@ -185,8 +185,21 @@ GROUP BY student_id, week_start;
 
 -- ── A leitura do placar ──────────────────────────────────────────────────────
 
--- Sem comparar `policy_version`, pelo motivo da 0043: o cliente compara e pede
--- o aceite do texto novo; o banco não sabe qual versão o build conhece.
+-- A versão do texto do aceite do ranking, a mesma de `RANKING_PURPOSE` no
+-- `shared`. Diferente da saúde (0043), aqui o banco **compara**: o que o aceite
+-- autoriza é aparecer para os outros, e quem aceitou um texto antigo não pode
+-- seguir no placar enquanto o app lhe mostra o convite de novo. Subir a versão
+-- é mudar as duas pontas no mesmo PR.
+CREATE FUNCTION private.ranking_consent_version()
+RETURNS text
+LANGUAGE sql
+IMMUTABLE
+SET search_path = ''
+AS $$
+  SELECT '1.0'::text;
+$$;
+--> statement-breakpoint
+
 CREATE FUNCTION private.has_ranking_consent(p_student_id uuid)
 RETURNS boolean
 LANGUAGE sql
@@ -200,6 +213,7 @@ AS $$
       AND sc.consent_type = 'ranking'
       AND sc.given_at IS NOT NULL
       AND sc.revoked_at IS NULL
+      AND sc.policy_version = private.ranking_consent_version()
   );
 $$;
 --> statement-breakpoint
@@ -224,14 +238,69 @@ AS $$
 $$;
 --> statement-breakpoint
 
--- As linhas do placar de um grupo de pessoas: os 50 primeiros e quem consulta,
--- se ficou de fora. A posição da semana anterior é contada no mesmo grupo.
+-- Os participantes do global. Só responde a quem também participa: o aceite
+-- diz que o nome aparece para outros participantes (reciprocidade).
+CREATE FUNCTION private.global_leaderboard_pool(p_me uuid)
+RETURNS uuid[]
+LANGUAGE plpgsql
+SECURITY DEFINER
+STABLE
+SET search_path = ''
+AS $$
+BEGIN
+  IF NOT private.has_ranking_consent(p_me) THEN
+    RAISE EXCEPTION 'ranking_consent_required: quem não participa do ranking não lê o placar'
+      USING ERRCODE = '42501';
+  END IF;
+
+  RETURN (
+    SELECT array_agg(sc.student_id)
+    FROM public.student_consents sc
+    WHERE sc.consent_type = 'ranking'
+      AND sc.given_at IS NOT NULL
+      AND sc.revoked_at IS NULL
+      AND sc.policy_version = private.ranking_consent_version()
+  );
+END;
+$$;
+--> statement-breakpoint
+
+-- Os alunos com vínculo ativo do especialista, com ou sem opt-in: o vínculo já
+-- lhe dá acesso ao perfil deles.
+CREATE FUNCTION private.my_students_leaderboard_pool(p_me uuid)
+RETURNS uuid[]
+LANGUAGE plpgsql
+SECURITY DEFINER
+STABLE
+SET search_path = ''
+AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles WHERE id = p_me AND account_type = 'specialist'
+  ) THEN
+    RAISE EXCEPTION 'my_students é o placar do especialista; a conta % não é especialista', p_me
+      USING ERRCODE = '42501';
+  END IF;
+
+  RETURN (
+    SELECT array_agg(DISTINCT ss.student_id)
+    FROM public.student_specialists ss
+    WHERE ss.specialist_id = p_me AND ss.status = 'active'
+  );
+END;
+$$;
+--> statement-breakpoint
+
+-- As linhas do placar de um grupo: os 50 primeiros e quem consulta, se ficou de
+-- fora. A posição da semana anterior é contada no mesmo grupo.
+--
+-- `p_my_students` liga as duas diferenças do placar do especialista, que andam
+-- juntas: aluno sem ponto também aparece, e com o nome inteiro.
 CREATE FUNCTION private.leaderboard_rows(
   p_pool uuid[],
   p_week date,
   p_me uuid,
-  p_with_zero boolean,
-  p_full_names boolean
+  p_my_students boolean
 )
 RETURNS TABLE (
   student_id uuid,
@@ -252,7 +321,7 @@ AS $$
     LEFT JOIN public.ranking_scores rs
       ON rs.student_id = p.id AND rs.week_start_date = p_week
     WHERE p.id = ANY (p_pool)
-      AND (rs.points IS NOT NULL OR p_with_zero OR p.id = p_me)
+      AND (rs.points IS NOT NULL OR p_my_students OR p.id = p_me)
   ),
   ranked AS (
     SELECT cw.*,
@@ -268,7 +337,7 @@ AS $$
       AND rs.student_id = ANY (p_pool)
   )
   SELECT r.id,
-         private.ranking_display_name(r.full_name, p_full_names OR r.id = p_me),
+         private.ranking_display_name(r.full_name, p_my_students OR r.id = p_me),
          r.points,
          r.position,
          pw.position,
@@ -280,22 +349,22 @@ AS $$
 $$;
 --> statement-breakpoint
 
+REVOKE EXECUTE ON FUNCTION private.ranking_consent_version() FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION private.has_ranking_consent(uuid) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION private.ranking_display_name(text, boolean) FROM PUBLIC, anon, authenticated;
-REVOKE EXECUTE ON FUNCTION private.leaderboard_rows(uuid[], date, uuid, boolean, boolean) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION private.global_leaderboard_pool(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION private.my_students_leaderboard_pool(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION private.leaderboard_rows(uuid[], date, uuid, boolean) FROM PUBLIC, anon, authenticated;
 --> statement-breakpoint
 
 -- O placar da semana, e a única forma de ler a pontuação de outra pessoa.
 --
--- `global`: os participantes, com consentimento `ranking` vigente, e só para
--- quem também participa. Quem não entrou não vê a lista (reciprocidade), e o
--- especialista não participa: o texto do aceite diz que o nome aparece para
--- outros participantes, e não para profissionais do app.
+-- `global`: os participantes, e só para quem também participa. O especialista
+-- não participa, então não lê (ADR-0032).
+-- `my_students`: os alunos com vínculo ativo de quem consulta.
 --
--- `my_students`: os alunos com vínculo ativo de quem consulta, com o nome
--- inteiro e mesmo sem ponto, porque o vínculo já dá acesso ao perfil.
---
--- Nunca devolve foto, e-mail nem especialista.
+-- Nunca devolve foto, e-mail nem especialista. Sem `p_week_start`, a semana
+-- corrente no relógio do banco — o mesmo que gravou os pontos.
 --
 -- @example
 -- supabase.rpc('get_leaderboard', { p_scope: 'global' })
@@ -316,52 +385,26 @@ AS $$
 DECLARE
   v_me uuid := (SELECT auth.uid());
   v_week date := COALESCE(p_week_start, private.ranking_week_start(now()));
-  v_pool uuid[];
 BEGIN
   IF v_me IS NULL THEN
     RAISE EXCEPTION 'get_leaderboard exige sessão autenticada' USING ERRCODE = '42501';
   END IF;
-
+  IF p_scope NOT IN ('global', 'my_students') THEN
+    RAISE EXCEPTION 'p_scope "%" inválido; esperado "global" ou "my_students"', p_scope
+      USING ERRCODE = '22023';
+  END IF;
   IF extract(isodow FROM v_week) <> 1 THEN
     RAISE EXCEPTION 'p_week_start "%" não é uma segunda-feira; esperado o início da semana', v_week
       USING ERRCODE = '22023';
   END IF;
 
-  IF p_scope = 'global' THEN
-    IF NOT private.has_ranking_consent(v_me) THEN
-      RAISE EXCEPTION 'ranking_consent_required: quem não participa do ranking não lê o placar'
-        USING ERRCODE = '42501';
-    END IF;
-
-    SELECT array_agg(sc.student_id) INTO v_pool
-    FROM public.student_consents sc
-    WHERE sc.consent_type = 'ranking'
-      AND sc.given_at IS NOT NULL
-      AND sc.revoked_at IS NULL;
-
-    RETURN QUERY SELECT * FROM private.leaderboard_rows(v_pool, v_week, v_me, false, false);
-    RETURN;
-  END IF;
-
-  IF p_scope = 'my_students' THEN
-    IF NOT EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE id = v_me AND account_type = 'specialist'
-    ) THEN
-      RAISE EXCEPTION 'my_students é o placar do especialista; a conta % não é especialista', v_me
-        USING ERRCODE = '42501';
-    END IF;
-
-    SELECT array_agg(DISTINCT ss.student_id) INTO v_pool
-    FROM public.student_specialists ss
-    WHERE ss.specialist_id = v_me AND ss.status = 'active';
-
-    RETURN QUERY SELECT * FROM private.leaderboard_rows(v_pool, v_week, v_me, true, true);
-    RETURN;
-  END IF;
-
-  RAISE EXCEPTION 'p_scope "%" inválido; esperado "global" ou "my_students"', p_scope
-    USING ERRCODE = '22023';
+  RETURN QUERY SELECT * FROM private.leaderboard_rows(
+    CASE p_scope
+      WHEN 'global' THEN private.global_leaderboard_pool(v_me)
+      ELSE private.my_students_leaderboard_pool(v_me)
+    END,
+    v_week, v_me, p_scope = 'my_students'
+  );
 END;
 $$;
 --> statement-breakpoint

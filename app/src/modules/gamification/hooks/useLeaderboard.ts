@@ -41,7 +41,9 @@ export function useLeaderboard(scope: LeaderboardScope, enabled: boolean): Leade
     failed: query.isError,
     refreshing: query.isRefetching,
     refresh: () => {
-      query.refetch();
+      // `refetch` passa por cima de `enabled`: puxar a tela sem o aceite pediria
+      // ao banco o placar que ele recusa.
+      if (enabled) query.refetch();
     },
   };
 }

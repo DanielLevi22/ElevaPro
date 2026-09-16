@@ -2,11 +2,13 @@ import { useAuthStore } from '@/auth';
 import { RankingScreen } from '@/modules/gamification';
 
 /**
- * A aba Ranking: o placar global para quem pratica e o dos alunos para o
- * especialista. Sem usuário não há placar a pedir.
+ * A aba Ranking. O CASL decide qual placar abre: quem pode entrar no ranking vê
+ * o global; quem só lê o placar (o especialista) vê o dos alunos.
  */
 export default function RankingRoute() {
-  const { user, accountType } = useAuthStore();
-  if (!user?.id) return null;
-  return <RankingScreen userId={user.id} isSpecialist={accountType === 'specialist'} />;
+  const { user, abilities } = useAuthStore();
+  if (!user?.id || !abilities?.can('read', 'Leaderboard')) return null;
+  return (
+    <RankingScreen userId={user.id} canParticipate={abilities.can('manage', 'RankingConsent')} />
+  );
 }

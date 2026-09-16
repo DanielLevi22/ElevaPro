@@ -56,11 +56,11 @@ export function PreInicioDoTreino({
 
   return (
     <TelaDeVidroComFoto
-      imagem={fotoDoGrupo(treino.muscle_group)}
-      centralizado
-      sobreposicao={
+      image={fotoDoGrupo(treino.muscle_group)}
+      centered
+      overlay={
         // Fora da rolagem, no mesmo lugar do topo das outras telas (`pt-14`,
-        // `px-4`): dentro dela ele desceria junto com o conteúdo centralizado.
+        // `px-4`): dentro dela ele desceria junto com o conteúdo centered.
         <View className="absolute left-4 top-14">
           <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={onVoltar} />
         </View>

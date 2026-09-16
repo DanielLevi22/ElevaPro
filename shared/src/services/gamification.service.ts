@@ -8,7 +8,7 @@ import type {
 } from "../types/gamification.types";
 
 /** O que a RPC `get_leaderboard` devolve; `previous_rank` é nulo para quem é novo. */
-interface LeaderboardRow {
+interface LeaderboardRpcRow {
   student_id: string;
   display_name: string;
   points: number;
@@ -17,7 +17,7 @@ interface LeaderboardRow {
   is_me: boolean;
 }
 
-function toLeaderboardEntry(row: LeaderboardRow): LeaderboardEntry {
+function toLeaderboardEntry(row: LeaderboardRpcRow): LeaderboardEntry {
   return {
     studentId: row.student_id,
     displayName: row.display_name,
@@ -127,6 +127,6 @@ export const createGamificationService = (supabase: SupabaseClient) => ({
   fetchLeaderboard: async (scope: LeaderboardScope): Promise<LeaderboardEntry[]> => {
     const { data, error } = await supabase.rpc("get_leaderboard", { p_scope: scope });
     if (error) throw error;
-    return ((data ?? []) as LeaderboardRow[]).map(toLeaderboardEntry);
+    return ((data ?? []) as LeaderboardRpcRow[]).map(toLeaderboardEntry);
   },
 });

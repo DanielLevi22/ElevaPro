@@ -1,7 +1,8 @@
-import { type ConsentStatus, createHealthService, type Finalidade } from '@elevapro/shared';
+import { type ConsentPurpose, type ConsentStatus, createHealthService } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { avisandoSeFalhar } from '@/lib/registro';
+import { CONSENT_STATUS_KEY, consentStatusKey } from '@/shared/consentQueryKeys';
 import { AUTHORIZATIONS, type Authorization } from '../services/authorizations';
 
 const healthService = createHealthService(supabase);
@@ -23,12 +24,12 @@ export interface AuthorizationItem {
  */
 export function useAuthorizations(studentId: string): {
   items: AuthorizationItem[];
-  revoke: (purpose: Finalidade) => Promise<void>;
+  revoke: (purpose: ConsentPurpose) => Promise<void>;
 } {
   const queryClient = useQueryClient();
   const results = useQueries({
     queries: AUTHORIZATIONS.map((authorization) => ({
-      queryKey: ['consentStatus', studentId, authorization.purpose.tipo],
+      queryKey: consentStatusKey(studentId, authorization.purpose),
       queryFn: () =>
         avisandoSeFalhar('health.read_consent', () =>
           healthService.getConsentStatus(studentId, authorization.purpose)
@@ -36,9 +37,9 @@ export function useAuthorizations(studentId: string): {
     })),
   });
 
-  const revoke = async (purpose: Finalidade) => {
+  const revoke = async (purpose: ConsentPurpose) => {
     await healthService.revokeCollectionConsent(studentId, purpose);
-    await queryClient.invalidateQueries({ queryKey: ['consentStatus'] });
+    await queryClient.invalidateQueries({ queryKey: [CONSENT_STATUS_KEY] });
   };
 
   return {

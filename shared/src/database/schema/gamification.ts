@@ -1,6 +1,7 @@
 import {
   boolean,
   date,
+  index,
   integer,
   pgTable,
   primaryKey,
@@ -72,5 +73,9 @@ export const rankingScores = pgTable(
     points: integer("points").notNull(),
     updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [primaryKey({ columns: [table.student_id, table.week_start_date] })],
+  (table) => [
+    primaryKey({ columns: [table.student_id, table.week_start_date] }),
+    // O placar ordena a semana inteira por pontos.
+    index("ranking_scores_week_points_idx").on(table.week_start_date, table.points.desc()),
+  ],
 );

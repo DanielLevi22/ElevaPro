@@ -43,7 +43,7 @@ export function FasesDaPeriodizacaoScreen({
   }
 
   return (
-    <TelaDeVidroComFoto imagem={fotoDoObjetivo(periodizacao.objective)}>
+    <TelaDeVidroComFoto image={fotoDoObjetivo(periodizacao.objective)}>
       <CabecalhoSobreFoto
         sobrelinha="Periodização"
         titulo={periodizacao.name}

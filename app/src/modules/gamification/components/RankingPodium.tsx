@@ -10,7 +10,7 @@ import { initialOf, type PodiumSlot } from '../utils/leaderboardView';
 /**
  * O pódio do ranking sobre a foto: 2º, 1º e 3º, com a inicial no lugar da foto.
  *
- * O primeiro tem a borda e o brilho da primária e a coroa; o degrau dele leva o
+ * O primeiro tem a borda e o brilho da primária e a coroa no tom de atenção; o degrau dele leva o
  * gradiente da primária. Degrau sem ninguém fica vazio, sem nome.
  *
  * @example <RankingPodium slots={view.podium} />
@@ -53,9 +53,9 @@ function PodiumColumn({ slot }: { slot: PodiumSlot }) {
 }
 
 function PodiumAvatar({ name, first }: { name: string; first: boolean }) {
-  const cores = useCores();
-  const escalar = useEscala();
-  const brilho = useBrilho();
+  const colors = useCores();
+  const scale = useEscala();
+  const glow = useBrilho();
 
   return (
     <>
@@ -66,7 +66,7 @@ function PodiumAvatar({ name, first }: { name: string; first: boolean }) {
             ? 'h-[3.625rem] w-[3.625rem] border-[0.15625rem] border-primary'
             : 'h-12 w-12 border-2 border-hero-chip-border'
         )}
-        style={first ? { boxShadow: brilho({ blur: 22 }) } : undefined}
+        style={first ? { boxShadow: glow({ blur: 22 }) } : undefined}
       >
         <Text
           className={cn('font-bold text-hero', first ? 'text-[1.3125rem]' : 'text-[1.0625rem]')}
@@ -75,20 +75,21 @@ function PodiumAvatar({ name, first }: { name: string; first: boolean }) {
         </Text>
       </View>
       {first ? (
-        <MaterialCommunityIcons
-          name="crown"
-          size={escalar(18)}
-          color={cores.metricaGordura}
-          style={{ marginBottom: escalar(6) }}
-          accessibilityLabel="Primeiro lugar"
-        />
+        <View className="mb-[0.375rem]">
+          <MaterialCommunityIcons
+            name="crown"
+            size={scale(18)}
+            color={colors.warning}
+            accessibilityLabel="Primeiro lugar"
+          />
+        </View>
       ) : null}
     </>
   );
 }
 
 function PodiumStep({ step, label }: { step: 1 | 2 | 3; label: string }) {
-  const cores = useCores();
+  const colors = useCores();
   return (
     <Vidro
       classeExterna="w-full rounded-b-none rounded-t-2xl"
@@ -96,7 +97,7 @@ function PodiumStep({ step, label }: { step: 1 | 2 | 3; label: string }) {
     >
       {step === 1 ? (
         <LinearGradient
-          colors={[comOpacidade(cores.primary, 0.34), comOpacidade(cores.primary, 0.12)]}
+          colors={[comOpacidade(colors.primary, 0.34), comOpacidade(colors.primary, 0.12)]}
           start={{ x: 0, y: 0 }}
           end={{ x: 0.35, y: 1 }}
           className="absolute inset-0"

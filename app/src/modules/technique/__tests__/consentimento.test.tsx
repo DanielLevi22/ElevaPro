@@ -109,10 +109,10 @@ describe('Análise de Técnica — consentimento antes da câmera', () => {
 
     await waitFor(() => expect(mockTemConsentimento).toHaveBeenCalled());
 
-    const finalidade = mockTemConsentimento.mock.calls[0][1] as { tipo: string };
-    if (finalidade?.tipo !== 'technique_analysis') {
+    const purpose = mockTemConsentimento.mock.calls[0][1] as { type: string };
+    if (purpose?.type !== 'technique_analysis') {
       throw new Error(
-        `AUTORIZAÇÃO GENÉRICA: a tela aceitou o consentimento "${finalidade?.tipo}" para uma finalidade que não é a dele (Art. 8°, §4°)`
+        `AUTORIZAÇÃO GENÉRICA: a tela aceitou o consentimento "${purpose?.type}" para uma finalidade que não é a dele (Art. 8°, §4°)`
       );
     }
   });

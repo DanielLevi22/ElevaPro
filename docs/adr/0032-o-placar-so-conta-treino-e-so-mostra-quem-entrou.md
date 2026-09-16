@@ -44,5 +44,9 @@ primeiro nome e a inicial do sobrenome, e nunca a foto.
 
 - Abrir o global a especialistas, ou mostrar o nome inteiro, exige texto de aceite novo e
   reconsentimento de todos os participantes.
+- Diferente do aceite de saúde (0043), o banco **compara a versão** do aceite do ranking
+  (`private.ranking_consent_version()`): quem aceitou um texto antigo sai do placar no mesmo
+  instante em que o app lhe mostra o convite de novo. Subir a versão é mudar
+  `RANKING_PURPOSE` e essa função no mesmo PR.
 - A issue #320 falava em "Meus alunos / Geral" para o especialista, e em subir a
   `POLICY_VERSION` para 1.9. Os dois ficaram de fora pelos motivos acima.

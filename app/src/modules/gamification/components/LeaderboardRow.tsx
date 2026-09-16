@@ -2,6 +2,7 @@ import { type LeaderboardEntry, withThousands } from '@elevapro/shared';
 import { Text, View } from 'react-native';
 import { Chip } from '@/components/ui/Chip';
 import { Vidro } from '@/components/ui/Vidro';
+import { cn } from '@/lib/utils';
 import { initialOf, type RankChange, rankChange } from '../utils/leaderboardView';
 
 /**
@@ -14,9 +15,13 @@ interface LeaderboardRowProps {
   entry: LeaderboardEntry;
 }
 
-/** Classe literal por tom: montar `text-${tom}` gera classe que não existe no CSS. */
+/**
+ * Classe literal por tom: montar `text-${tom}` gera classe que não existe no CSS.
+ * Sucesso e perigo no par de texto, que escurece no tema claro: o `success` puro
+ * não passa AA sobre o vidro claro.
+ */
 const CHANGE_COLOR: Record<RankChange['tone'], string> = {
-  up: 'text-metrica-passos',
+  up: 'text-texto-saude-passos',
   down: 'text-texto-perigo',
   same: 'text-placeholder',
   new: 'text-placeholder',
@@ -62,7 +67,7 @@ export function LeaderboardRow({ entry }: LeaderboardRowProps) {
           {withThousands(entry.points)} pts
         </Text>
       </View>
-      <Text className={`text-[0.75rem] font-bold ${CHANGE_COLOR[change.tone]}`}>
+      <Text className={cn('text-[0.75rem] font-bold', CHANGE_COLOR[change.tone])}>
         {change.label}
       </Text>
     </Vidro>

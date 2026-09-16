@@ -42,9 +42,9 @@ export function DetalheDoTreinoScreen({ treinoId, alunoId, modo }: DetalheDoTrei
 
   return (
     <TelaDeVidroComFoto
-      imagem={fotoDoGrupo(treino.muscle_group)}
-      folgaNoFim="botaoFixo"
-      sobreposicao={
+      image={fotoDoGrupo(treino.muscle_group)}
+      bottomSpace="fixedButton"
+      overlay={
         exercicios.length > 0 ? (
           <IniciarTreino treino={treino} alunoId={alunoId} modo={modo} />
         ) : null

@@ -58,7 +58,7 @@ export function TreinosDaFaseScreen({
   const abrir = (treino: Workout) => router.push(comModo(ROUTES.WORKOUTS.DETAILS(treino.id), modo));
 
   return (
-    <TelaDeVidroComFoto imagem={fotoDoGrupo(proximo?.muscle_group)}>
+    <TelaDeVidroComFoto image={fotoDoGrupo(proximo?.muscle_group)}>
       <CabecalhoSobreFoto
         sobrelinha={sobrelinhaDaFase(dados.numeroDaFase, fase.name)}
         titulo={ativa ? 'Próximo treino' : 'Treinos da fase'}

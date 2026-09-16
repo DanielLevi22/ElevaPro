@@ -1,4 +1,9 @@
-import { type ConsentStatus, RANKING, SAUDE, TECNICA } from '@elevapro/shared';
+import {
+  type ConsentStatus,
+  HEALTH_PURPOSE,
+  RANKING_PURPOSE,
+  TECHNIQUE_PURPOSE,
+} from '@elevapro/shared';
 import { AUTHORIZATIONS, authorizationFooter, revokeEffects } from '../authorizations';
 
 const health = AUTHORIZATIONS[0];
@@ -11,10 +16,10 @@ function status(state: ConsentStatus['state'], policyVersion = '1.7'): ConsentSt
 
 describe('autorizações', () => {
   it('lista as três finalidades, separadas e na ordem da tela', () => {
-    expect(AUTHORIZATIONS.map((item) => item.purpose.tipo)).toEqual([
-      SAUDE.tipo,
-      TECNICA.tipo,
-      RANKING.tipo,
+    expect(AUTHORIZATIONS.map((item) => item.purpose.type)).toEqual([
+      HEALTH_PURPOSE.type,
+      TECHNIQUE_PURPOSE.type,
+      RANKING_PURPOSE.type,
     ]);
   });
 
