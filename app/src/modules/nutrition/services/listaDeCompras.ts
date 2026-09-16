@@ -71,7 +71,7 @@ export function listaDeCompras({
   itensDoPlano,
   dias,
 }: EntradaDaLista): GrupoDeCompras[] {
-  // Mesma leitura do `refeicoesDoDia`: só 'unique' é dia que se repete. Plano
+  // Mesma leitura do `mealsOfDay`: só 'unique' é dia que se repete. Plano
   // sem tipo, com refeições por dia, é semana — tratá-lo como único voltava a
   // comprar sete vezes mais.
   const fator = tipoDoPlano === 'unique' ? dias : dias / DIAS_DA_SEMANA;

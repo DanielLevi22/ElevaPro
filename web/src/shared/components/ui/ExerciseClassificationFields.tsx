@@ -5,8 +5,8 @@ import {
   EXERCISE_MUSCLE_GROUPS,
   EXERCISE_VENUES,
   type ExerciseCategory,
-  type ExerciseMuscleGroup,
   type ExerciseVenue,
+  MUSCLE_GROUP_LABELS,
 } from "@elevapro/shared";
 
 /**
@@ -23,19 +23,6 @@ import {
  *   onChange={(campo, valor) => setFormData({ ...formData, [campo]: valor })}
  * />
  */
-
-/** Rótulo humano para o valor que o banco guarda. */
-const MUSCLE_GROUP_LABELS: Record<ExerciseMuscleGroup, string> = {
-  peito: "Peito",
-  costas: "Costas",
-  ombro: "Ombro",
-  biceps: "Bíceps",
-  triceps: "Tríceps",
-  pernas: "Pernas",
-  gluteos: "Glúteos",
-  abdomen: "Abdômen",
-  cardio: "Cardio",
-};
 
 const VENUE_LABELS: Record<ExerciseVenue, string> = {
   academia: "Só na academia",

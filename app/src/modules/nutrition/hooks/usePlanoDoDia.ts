@@ -1,4 +1,4 @@
-import type { DietMeal, DietMealItem, MealLog } from '@elevapro/shared';
+import { type DietMeal, type DietMealItem, type MealLog, mealsOfDay } from '@elevapro/shared';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { showAlert } from '@/components/ui/appAlert';
@@ -13,7 +13,6 @@ import {
   macrosDosItens,
   metaDoDia,
 } from '../services/consumoDoDia';
-import { refeicoesDoDia } from '../services/refeicoesDoDia';
 import { useNutritionStore } from '../store/nutritionStore';
 
 /** Uma refeição do dia pronta para a linha: o que comeu, ou o que o plano manda. */
@@ -73,7 +72,7 @@ export function usePlanoDoDia(
     }, [recarregar])
   );
 
-  const doDia = [...refeicoesDoDia(refeicoes, plano?.plan_type, diaDaSemana(data))].sort(
+  const doDia = [...mealsOfDay(refeicoes, plano?.plan_type, diaDaSemana(data))].sort(
     (a, b) => (a.meal_order ?? 0) - (b.meal_order ?? 0)
   );
 

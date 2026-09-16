@@ -1,3 +1,4 @@
+import { withThousands } from '@elevapro/shared';
 import { fetchBff, lerRespostaBff } from '@/shared/bff';
 import type { GrupoDeCompras } from './listaDeCompras';
 
@@ -27,7 +28,7 @@ export function pedidoDoPreco(grupos: GrupoDeCompras[]): CategoriaDoPreco[] {
  */
 export function textoDoPreco(total: number | null): string | null {
   if (total === null) return null;
-  const reais = String(Math.round(total)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const reais = withThousands(Math.round(total));
   return `≈ R$ ${reais}`;
 }
 

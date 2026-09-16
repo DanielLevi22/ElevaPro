@@ -1,4 +1,10 @@
-import { computeReadiness, createHealthService, type HealthMetricInput } from '@elevapro/shared';
+import {
+  addDays,
+  computeReadiness,
+  createHealthService,
+  type HealthMetricInput,
+  localDateOf,
+} from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { registrarFalha } from '@/lib/registro';
 
@@ -6,19 +12,11 @@ const healthService = createHealthService(supabase);
 
 /** ISO date local (YYYY-MM-DD). toISOString() usaria UTC e viraria o dia cedo demais. */
 export function localDateKey(reference: Date = new Date()): string {
-  const year = reference.getFullYear();
-  const month = String(reference.getMonth() + 1).padStart(2, '0');
-  const day = String(reference.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return localDateOf(reference);
 }
 
 /** A base da prontidão: os 14 dias anteriores ao dia gravado (ADR-0029). */
 const BASELINE_DAYS = 14;
-
-function shiftDays(dateKey: string, days: number): string {
-  const [year, month, day] = dateKey.split('-').map(Number);
-  return localDateKey(new Date(year, month - 1, day + days));
-}
 
 /**
  * O dia com a prontidão calculada, quando esta leitura trouxe sono e FC de repouso.
@@ -36,8 +34,8 @@ async function withReadiness(
   try {
     const baseline = await healthService.getRange(
       studentId,
-      shiftDays(metric.date, -BASELINE_DAYS),
-      shiftDays(metric.date, -1)
+      addDays(metric.date, -BASELINE_DAYS),
+      addDays(metric.date, -1)
     );
     const readiness = computeReadiness(
       { sleepMinutes: sleep_minutes, restingHeartRate: resting_heart_rate },

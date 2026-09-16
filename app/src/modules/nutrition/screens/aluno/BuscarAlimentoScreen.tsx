@@ -2,11 +2,11 @@ import type { Food } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { GlassScreen } from '@/components/ui/GlassScreen';
+import { GlassSearchField } from '@/components/ui/GlassSearchField';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
-import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/navigation/types';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
@@ -134,21 +134,12 @@ function CampoDeBusca({ busca }: { busca: BuscaDeAlimento }) {
 
   return (
     <View className="mt-4 flex-row gap-2.5">
-      <Vidro
-        classeExterna="flex-1 rounded-2xl"
-        className="h-12 flex-row items-center gap-[0.5625rem] rounded-2xl px-3.5"
-      >
-        <Ionicons name="search" size={escalar(17)} color={cores.placeholder} />
-        <TextInput
-          value={busca.consulta}
-          onChangeText={busca.digitar}
-          placeholder="Buscar alimento…"
-          placeholderTextColor={cores.placeholder}
-          returnKeyType="search"
-          accessibilityLabel="Buscar alimento"
-          className="flex-1 text-[0.84375rem] text-foreground"
-        />
-      </Vidro>
+      <GlassSearchField
+        value={busca.consulta}
+        onChangeText={busca.digitar}
+        placeholder="Buscar alimento…"
+        className="flex-1"
+      />
       <TouchableOpacity
         onPress={busca.alternarMaisProteina}
         accessibilityRole="button"

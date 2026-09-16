@@ -1,6 +1,11 @@
-import type { DietMeal, DietMealItem, DietPlanType, MealLog } from '@elevapro/shared';
+import {
+  type DietMeal,
+  type DietMealItem,
+  type DietPlanType,
+  type MealLog,
+  mealsOfDay,
+} from '@elevapro/shared';
 import { consumoDoDia, percentualDaMeta } from './consumoDoDia';
-import { refeicoesDoDia } from './refeicoesDoDia';
 
 export interface DiaDeAderencia {
   /** `YYYY-MM-DD`, no calendário do aluno. */
@@ -69,7 +74,7 @@ interface ContagemDoDia {
 }
 
 function contarDia(entrada: EntradaDaAderencia, data: string, indice: number): ContagemDoDia {
-  const planejadas = refeicoesDoDia(entrada.refeicoes, entrada.tipoDoPlano, diaDaSemana(data));
+  const planejadas = mealsOfDay(entrada.refeicoes, entrada.tipoDoPlano, diaDaSemana(data));
   const doDia = registrosDoDia(entrada.registros, data);
   const feitas = planejadas.filter((r) => doDia[r.id]?.completed).length;
   const conta = data <= entrada.hoje && planejadas.length > 0;

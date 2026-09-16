@@ -10,6 +10,7 @@ import MicOff from 'lucide-react-native/icons/mic-off';
 import Music from 'lucide-react-native/icons/music';
 import Plus from 'lucide-react-native/icons/plus';
 import RefreshCw from 'lucide-react-native/icons/refresh-cw';
+import Search from 'lucide-react-native/icons/search';
 import Share from 'lucide-react-native/icons/share';
 import Volume2 from 'lucide-react-native/icons/volume-2';
 import VolumeX from 'lucide-react-native/icons/volume-x';
@@ -52,6 +53,7 @@ const ICONES = {
   mic: Mic,
   'mic-off': MicOff,
   plus: Plus,
+  search: Search,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IconeRedondo = keyof typeof ICONES;

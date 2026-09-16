@@ -1,0 +1,81 @@
+import { MESES_CURTOS } from "./calendario";
+
+/**
+ * Conta com data sem hora (`"2026-09-15"`), sem passar pelo fuso do aparelho.
+ *
+ * `new Date("2026-09-15")` é lido como meia-noite UTC e, em fuso negativo, volta
+ * um dia ao virar data local. Aqui a data é só calendário: a conta é feita em UTC
+ * de ponta a ponta, e nunca encosta no fuso.
+ */
+
+const MS_PER_DAY = 86_400_000;
+
+/**
+ * A data `days` dias depois, ou antes com negativo, atravessando mês e ano.
+ *
+ * @example addDays("2026-09-01", -1) // "2026-08-31"
+ */
+export function addDays(date: string, days: number): string {
+  return new Date(Date.parse(`${date}T00:00:00Z`) + days * MS_PER_DAY).toISOString().slice(0, 10);
+}
+
+/**
+ * Dias de `from` até `to`; negativo quando `to` vem antes.
+ *
+ * @example daysBetween("2026-09-01", "2026-09-15") // 14
+ */
+export function daysBetween(from: string, to: string): number {
+  return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / MS_PER_DAY);
+}
+
+/**
+ * O dia da semana com domingo = 0, como `getUTCDay` e como `diet_meals.day_of_week`.
+ *
+ * @example weekdayOf("2026-09-13") // 0 (domingo)
+ */
+export function weekdayOf(date: string): number {
+  return new Date(`${date}T00:00:00Z`).getUTCDay();
+}
+
+/**
+ * O mês curto como o kit escreve nos eixos dos gráficos.
+ *
+ * @example shortMonthOf("2026-09-15") // "set"
+ */
+export function shortMonthOf(date: string): string {
+  return MESES_CURTOS[Number(date.slice(5, 7)) - 1];
+}
+
+/**
+ * O dia da semana com segunda = 0 e domingo = 6, a ordem do calendário brasileiro.
+ *
+ * @example weekdayFromMonday("2026-09-14") // 0 (segunda)
+ */
+export function weekdayFromMonday(date: string): number {
+  return (weekdayOf(date) + 6) % 7;
+}
+
+/**
+ * A data local do instante, no fuso do aparelho: é o dia em que a pessoa treinou.
+ *
+ * @example localDateOf(new Date(2026, 8, 15, 23, 30)) // "2026-09-15"
+ */
+export function localDateOf(instant: Date): string {
+  const month = String(instant.getMonth() + 1).padStart(2, "0");
+  const day = String(instant.getDate()).padStart(2, "0");
+  return `${instant.getFullYear()}-${month}-${day}`;
+}
+
+/**
+ * Os itens dos `length` dias terminando em `end`, inclusive.
+ *
+ * @example withinDays(days, "2026-09-15", 30) // de 17/08 a 15/09
+ */
+export function withinDays<Item extends { date: string }>(
+  items: readonly Item[],
+  end: string,
+  length: number,
+): Item[] {
+  const start = addDays(end, -(length - 1));
+  return items.filter((item) => item.date >= start && item.date <= end);
+}

@@ -197,6 +197,24 @@ export const HEALTH_GLOW: ReceitaDoBrilho = {
   pico: { escuro: 0.18 * 0.756, claro: 0.12 * 0.756 },
 };
 
+/**
+ * A luz do fluxo de métricas (#312): o cone do cardio, 20 mais baixo e mais fraco.
+ *
+ *     left:-20%; right:-20%; top:-40px; height:440px;
+ *     radial-gradient(50% 50% at 50% 50%, primary/.17 0%, transparent 70%);
+ *     filter: blur(34px)          (claro: primary/.12)
+ *
+ * O centro cai a 180 (−40 + 220). A caixa é 20 mais baixa que a do cardio e o blur
+ * é o mesmo, então o perfil e a atenuação medidos lá valem a menos de 1%; o alcance
+ * vertical encolhe na mesma proporção do raio do cone (220 contra 230).
+ */
+export const PROGRESS_GLOW: ReceitaDoBrilho = {
+  ...CARDIO_GLOW,
+  centro: 180,
+  alcanceVertical: Math.round((206 * 220) / 230),
+  pico: { escuro: 0.17 * 0.756, claro: 0.12 * 0.756 },
+};
+
 interface BrilhoAmbienteProps {
   /**
    * Onde fica o **topo dos blocos de métrica**, em dp a partir do topo da tela.

@@ -1,4 +1,4 @@
-import type { DietMeal, DietMealItem, DietPlan, ItemRegistrado, MealLog } from '@elevapro/shared';
+import type { DietMeal, DietPlan, ItemRegistrado, MealLog } from '@elevapro/shared';
 
 /** Calorias e macros em gramas, na unidade que as telas mostram. */
 export interface Macros {
@@ -29,11 +29,11 @@ export function numeroDoBanco(valor: number | string | null | undefined): number
  * @example itensDaRefeicao(logs[refeicao.id], itensDoPlano[refeicao.id])
  */
 export function itensDaRefeicao(
-  registro: MealLog | undefined,
-  doPlano: DietMealItem[] | undefined
+  registro: Pick<MealLog, 'actual_items'> | undefined,
+  doPlano: readonly ItemDoPrato[] | undefined
 ): ItemDoPrato[] {
   if (Array.isArray(registro?.actual_items)) return registro.actual_items as ItemDoPrato[];
-  return doPlano ?? [];
+  return [...(doPlano ?? [])];
 }
 
 /**
@@ -73,9 +73,9 @@ export function somarMacros(a: Macros, b: Macros): Macros {
  * @example consumoDoDia(refeicoesDoDia(meals, tipo, dia), dailyLogs, mealItems)
  */
 export function consumoDoDia(
-  refeicoes: DietMeal[],
-  registros: Record<string, MealLog>,
-  itensDoPlano: Record<string, DietMealItem[]>
+  refeicoes: readonly Pick<DietMeal, 'id'>[],
+  registros: Readonly<Record<string, Pick<MealLog, 'completed' | 'actual_items'>>>,
+  itensDoPlano: Readonly<Record<string, readonly ItemDoPrato[]>>
 ): Macros {
   return refeicoes
     .map((refeicao) => {
@@ -97,11 +97,11 @@ export function consumoDoDia(
  */
 export function metaDoDia(
   plano: Pick<DietPlan, 'target_calories' | 'target_protein' | 'target_carbs' | 'target_fat'>,
-  refeicoes: DietMeal[],
-  itensDoPlano: Record<string, DietMealItem[]>
+  refeicoes: readonly Pick<DietMeal, 'id'>[],
+  itensDoPlano: Readonly<Record<string, readonly ItemDoPrato[]>>
 ): Macros {
   const prescrito = refeicoes
-    .map((refeicao) => macrosDosItens(itensDoPlano[refeicao.id] ?? []))
+    .map((refeicao) => macrosDosItens([...(itensDoPlano[refeicao.id] ?? [])]))
     .reduce(somarMacros, MACROS_ZERADOS);
   return {
     calorias: numeroDoBanco(plano.target_calories) || prescrito.calorias,
