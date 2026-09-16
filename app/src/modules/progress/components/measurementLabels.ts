@@ -1,4 +1,4 @@
-import { type MeasurementSource, shortMonthOf } from '@elevapro/shared';
+import { localDateOf, type MeasurementSource, shortMonthOf } from '@elevapro/shared';
 
 /**
  * Os textos das telas de corpo que dependem da origem e da data.
@@ -24,4 +24,17 @@ export function chipDate(instant: string): string {
 export function shortDate(instant: string): string {
   const date = instant.slice(0, 10);
   return `${Number(date.slice(8, 10))} ${shortMonthOf(date)}`;
+}
+
+/**
+ * A data de um instante do banco, no dia local de quem lê.
+ *
+ * `chipDate` fatia a string, que é o certo para `assessed_at` (gravado ao meio-dia
+ * UTC). Um `created_at` de verdade fatiado em UTC mostra o dia seguinte para quem
+ * escreveu à noite em fuso negativo.
+ *
+ * @example localChipDate("2026-09-16T02:15:00Z") // "15 set 2026" no Brasil
+ */
+export function localChipDate(instant: string): string {
+  return chipDate(localDateOf(new Date(instant)));
 }

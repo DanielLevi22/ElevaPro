@@ -12,8 +12,10 @@ import { mealsOfDay } from "./mealsOfDay";
 
 export interface DailyActivity {
   date: string;
-  /** WorkoutSessions concluídas no dia. */
+  /** WorkoutSessions concluídas no dia, de qualquer tipo — cardio incluído. */
   workouts: number;
+  /** Das concluídas, as de cardio. O relatório mostra as duas lado a lado. */
+  cardioSessions: number;
   /** Refeições do plano para o dia; zero sem plano ou antes do início dele. */
   plannedMeals: number;
   /** Das planejadas, as registradas como feitas. */
@@ -25,8 +27,8 @@ export interface DailyActivity {
 export interface DailyActivityInput {
   from: string;
   to: string;
-  /** O dia local de cada sessão concluída; repete quando há duas no mesmo dia. */
-  sessionDates: readonly string[];
+  /** Cada sessão concluída, com o dia local e se foi cardio. */
+  sessions: readonly { date: string; cardio: boolean }[];
   plan: Pick<DietPlan, "plan_type" | "start_date"> | null;
   meals: readonly Pick<DietMeal, "id" | "day_of_week">[];
   mealLogs: readonly Pick<MealLog, "logged_date" | "diet_meal_id" | "completed">[];
@@ -37,10 +39,13 @@ export interface DailyActivityInput {
  * de sequência, aderência e consistência.
  *
  * @example
- * dailyActivities({ from: "2026-06-15", to: "2026-09-15", sessionDates, plan, meals, mealLogs })
+ * dailyActivities({ from: "2026-06-15", to: "2026-09-15", sessions, plan, meals, mealLogs })
  */
 export function dailyActivities(input: DailyActivityInput): DailyActivity[] {
-  const workoutsByDate = countBy(input.sessionDates);
+  const workoutsByDate = countBy(input.sessions.map((session) => session.date));
+  const cardioByDate = countBy(
+    input.sessions.filter((session) => session.cardio).map((session) => session.date),
+  );
   const doneLogs = input.mealLogs.filter((log) => log.completed);
   const logsByDate = groupBy(doneLogs, (log) => log.logged_date);
   const length = daysBetween(input.from, input.to) + 1;
@@ -53,6 +58,7 @@ export function dailyActivities(input: DailyActivityInput): DailyActivity[] {
     return {
       date,
       workouts: workoutsByDate.get(date) ?? 0,
+      cardioSessions: cardioByDate.get(date) ?? 0,
       plannedMeals: planned.length,
       doneMeals: planned.filter((meal) => loggedIds.has(meal.id)).length,
       loggedMeals: logs.length,

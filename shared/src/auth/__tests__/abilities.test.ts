@@ -27,14 +27,21 @@ const SUBJECTS: Subject[] = [
   "HealthMetric",
   "Hydration",
   "DeclaredMeasurement",
+  "SpecialistNote",
   "all",
 ];
 
 /** O que cada papel pode GERENCIAR (`manage`). Tudo que não está aqui é negado. */
 const GERENCIA: Record<string, Subject[]> = {
   admin: SUBJECTS,
-  "specialist:personal_training": ["Client", "Workout", "Exercise", "Periodization"],
-  "specialist:nutrition_consulting": ["Client", "Diet", "Food"],
+  "specialist:personal_training": [
+    "Client",
+    "Workout",
+    "Exercise",
+    "Periodization",
+    "SpecialistNote",
+  ],
+  "specialist:nutrition_consulting": ["Client", "Diet", "Food", "SpecialistNote"],
   student: ["HealthMetric", "Hydration"],
   member: [
     "Workout",
@@ -64,7 +71,7 @@ const LE: Record<string, Subject[]> = {
     "Periodization",
     "DeclaredMeasurement",
   ],
-  student: ["Workout", "Diet", "Exercise", "Profile"],
+  student: ["Workout", "Diet", "Exercise", "Profile", "SpecialistNote"],
   member: ["Profile"],
 };
 
@@ -104,6 +111,16 @@ describe("defineAbilitiesFor — tabela de permissões", () => {
           expect(defineAbilitiesFor(CONTEXTOS[papel]).can("read", subject)).toBe(true);
         });
       }
+    }
+  });
+
+  // LGPD, Art. 11 + ADR-0028. O Praticante não tem especialista, então não existe
+  // nota sobre ele: conceder a leitura abriria um cartão que só poderia mostrar o
+  // que outra pessoa escreveu — e a tela do relatório decide por esta linha.
+  it("o Praticante não lê nota de especialista", () => {
+    const ability = defineAbilitiesFor(CONTEXTOS.member);
+    if (ability.can("read", "SpecialistNote")) {
+      throw new Error("NOTA NO PRATICANTE: conta sem especialista recebeu leitura da nota clínica");
     }
   });
 

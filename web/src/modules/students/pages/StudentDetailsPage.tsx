@@ -4,6 +4,7 @@ import type { Student } from "@elevapro/shared";
 import { useParams } from "next/navigation";
 import { useStudents } from "@/shared/hooks/useStudents";
 import { formatDate } from "@/shared/utils/formatDate";
+import { SpecialistNotes } from "../components/SpecialistNotes";
 
 const SERVICE_LABEL: Record<string, string> = {
   personal_training: "Personal Training",
@@ -37,14 +38,17 @@ export default function StudentDetailsPage() {
   if (!student) return null;
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <InfoCard label="Membro desde" value={formatDate(student.link_created_at, "monthYear")} />
-      <InfoCard
-        label="Serviço"
-        value={SERVICE_LABEL[student.service_type] ?? student.service_type}
-      />
-      <InfoCard label="Vínculo" value={LINK_LABEL[student.link_status] ?? student.link_status} />
-      <InfoCard label="E-mail" value={student.email} />
-    </div>
+    <>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <InfoCard label="Membro desde" value={formatDate(student.link_created_at, "monthYear")} />
+        <InfoCard
+          label="Serviço"
+          value={SERVICE_LABEL[student.service_type] ?? student.service_type}
+        />
+        <InfoCard label="Vínculo" value={LINK_LABEL[student.link_status] ?? student.link_status} />
+        <InfoCard label="E-mail" value={student.email} />
+      </div>
+      <SpecialistNotes studentId={student.id} studentName={student.full_name} />
+    </>
   );
 }

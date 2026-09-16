@@ -146,6 +146,12 @@ Tem duas origens, e uma série nunca mistura as duas (ADR-0030):
   tem especialista ativo declara: com especialista, quem mede é ele.
 _Avoid_: medição
 
+**Nota do especialista**:
+O que o profissional escreve sobre o progresso do Aluno, numa data. Registro
+dele: o Aluno lê no relatório do período, e não escreve nem apaga. O Praticante
+não tem nenhuma.
+_Avoid_: observação, comentário, feedback
+
 **Anamnese**:
 Questionário respondido pelo próprio aluno sobre histórico, rotina e objetivo.
 É declaração, não medição.
@@ -156,6 +162,13 @@ Estimativa de composição corporal a partir de foto, sempre calibrada por uma
 Escala. O valor está na diferença entre dois scans, não no número absoluto de um
 só. A imagem nunca é guardada — só o resultado derivado.
 _Avoid_: análise de foto, scan corporal
+
+**Relatório do período**:
+Os últimos 90 dias do Student num lugar só: treinos, aderência, cardio, medidas,
+recordes de carga, sequência e a última Nota do especialista. Não calcula nada
+por conta própria — repete o que cada tela já mostra — e pode virar PDF no
+aparelho.
+_Avoid_: resumo, dashboard, extrato
 
 **Escala**:
 A altura e o peso que calibram um Body scan — sem eles a estimativa seria chute.

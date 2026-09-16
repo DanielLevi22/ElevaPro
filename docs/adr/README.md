@@ -34,6 +34,7 @@
 | [ADR-0026](0026-o-cardio-e-atividade-e-o-relogio-e-uma-fonte-so.md) | O cardio é atividade, a prescrição é opcional, e o relógio é uma fonte só | proposed |
 | [ADR-0029](0029-a-prontidao-e-gravada-com-a-versao-da-regra.md) | A prontidão do dia é gravada, com a versão da regra que a calculou | accepted |
 | [ADR-0030](0030-a-medida-declarada-mora-na-mesma-tabela-com-a-origem.md) | A medida declarada mora na mesma tabela da avaliação, com a origem ao lado | accepted |
+| [ADR-0031](0031-a-nota-do-especialista-e-de-quem-escreveu.md) | A nota do especialista é de quem escreveu, e o aluno só lê | accepted |
 | [ADR-0025](0025-a-cor-do-mobile-vem-do-design-e-a-superficie-e-ios.md) | A cor do mobile vem do design, e a superfície é iOS | accepted |
 
 ### Segurança e acesso

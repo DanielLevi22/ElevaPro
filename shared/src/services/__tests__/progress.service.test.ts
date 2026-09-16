@@ -69,14 +69,18 @@ describe("progressService — séries concluídas", () => {
 describe("progressService — histórico de atividade", () => {
   it("devolve o dia local de cada sessão concluída e as refeições registradas como feitas", async () => {
     const { supabase } = criarSupabaseFake([
-      { data: [{ completed_at: new Date(2026, 8, 15, 23, 30).toISOString() }] },
+      {
+        data: [
+          { completed_at: new Date(2026, 8, 15, 23, 30).toISOString(), session_type: "cardio" },
+        ],
+      },
       { data: [{ logged_date: "2026-09-15", diet_meal_id: "cafe" }] },
     ]);
 
     const history = await createProgressService(supabase).listActivityHistory("aluno-1");
 
     expect(history).toEqual({
-      sessionDates: ["2026-09-15"],
+      sessions: [{ date: "2026-09-15", cardio: true }],
       mealLogs: [{ logged_date: "2026-09-15", diet_meal_id: "cafe", completed: true }],
     });
   });
@@ -85,17 +89,20 @@ describe("progressService — histórico de atividade", () => {
   // 1.000 linhas: sem paginar, quem registra quatro refeições por dia perdia o
   // recorde depois de oito meses, sem aviso.
   it("lê página por página até a última vir incompleta", async () => {
-    const fullPage = Array.from({ length: 1000 }, () => ({ completed_at: "2026-09-15T12:00:00Z" }));
+    const fullPage = Array.from({ length: 1000 }, () => ({
+      completed_at: "2026-09-15T12:00:00Z",
+      session_type: "strength",
+    }));
     // As duas leituras saem juntas: a segunda página das sessões é a terceira consulta.
     const { supabase, chamadas } = criarSupabaseFake([
       { data: fullPage },
       { data: [] },
-      { data: [{ completed_at: "2026-09-14T12:00:00Z" }] },
+      { data: [{ completed_at: "2026-09-14T12:00:00Z", session_type: "strength" }] },
     ]);
 
     const history = await createProgressService(supabase).listActivityHistory("aluno-1");
 
-    expect(history.sessionDates).toHaveLength(1001);
+    expect(history.sessions).toHaveLength(1001);
     expect(chamadas[2].metodos.find((m) => m.nome === "range")?.args).toEqual([1000, 1999]);
   });
 
@@ -105,10 +112,45 @@ describe("progressService — histórico de atividade", () => {
     await createProgressService(supabase).listActivityHistory("aluno-1");
 
     expect(chamadas.map((c) => [c.tabela, c.select])).toEqual([
-      ["workout_sessions", "completed_at"],
+      ["workout_sessions", "completed_at, session_type"],
       ["meal_logs", "logged_date, diet_meal_id"],
     ]);
     expect(chamadas[1].filtros).toMatchObject({ student_id: "aluno-1", completed: true });
+  });
+});
+
+describe("progressService — contexto do relatório", () => {
+  it("lê o ciclo ativo e o especialista que acompanha", async () => {
+    const { supabase, chamadas } = criarSupabaseFake([
+      { data: { name: "Base" } },
+      { data: { specialist: { full_name: "Marina Dias" } } },
+    ]);
+
+    const context = await createProgressService(supabase).getPeriodContext("aluno-1");
+
+    expect(context).toEqual({ periodization: "Base", specialist: "Marina Dias" });
+    expect(chamadas[0].filtros).toMatchObject({ student_id: "aluno-1", status: "active" });
+  });
+
+  // O cardio sai da mesma lista de dias que os treinos: contado aqui também, os
+  // dois cartões do relatório somariam a mesma sessão duas vezes (#312).
+  it("não conta sessão nenhuma", async () => {
+    const { supabase, chamadas } = criarSupabaseFake([{ data: null }, { data: null }]);
+
+    await createProgressService(supabase).getPeriodContext("aluno-1");
+
+    if (chamadas.some((chamada) => chamada.tabela === "workout_sessions")) {
+      throw new Error("CONTAGEM DUPLICADA: o contexto do relatório voltou a ler sessões");
+    }
+  });
+
+  it("sem periodização ativa, o subtítulo não tem o que dizer", async () => {
+    const { supabase } = criarSupabaseFake([{ data: null }, { data: null }]);
+
+    await expect(createProgressService(supabase).getPeriodContext("aluno-1")).resolves.toEqual({
+      periodization: null,
+      specialist: null,
+    });
   });
 });
 

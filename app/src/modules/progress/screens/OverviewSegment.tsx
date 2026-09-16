@@ -119,6 +119,12 @@ function Shortcuts({ onOpenTraining }: { onOpenTraining: () => void }) {
         subtitle="Corrigir o que você registrou"
         onPress={() => router.push(ROUTES.STUDENT.SESSION_HISTORY)}
       />
+      <ShortcutRow
+        icon="document-text-outline"
+        title="Relatório do período"
+        subtitle="Os últimos 90 dias, com exportação em PDF"
+        onPress={() => router.push(ROUTES.PROGRESS.REPORT)}
+      />
     </>
   );
 }

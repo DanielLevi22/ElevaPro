@@ -904,6 +904,48 @@ export type Database = {
         };
         Relationships: [];
       };
+      specialist_notes: {
+        Row: {
+          body: string;
+          created_at: string;
+          id: string;
+          specialist_id: string | null;
+          student_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          body: string;
+          created_at?: string;
+          id?: string;
+          specialist_id?: string | null;
+          student_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          body?: string;
+          created_at?: string;
+          id?: string;
+          specialist_id?: string | null;
+          student_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "specialist_notes_specialist_id_fkey";
+            columns: ["specialist_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "specialist_notes_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       specialist_services: {
         Row: {
           created_at: string;

@@ -4,6 +4,7 @@ import Camera from 'lucide-react-native/icons/camera';
 import ChevronDown from 'lucide-react-native/icons/chevron-down';
 import ChevronLeft from 'lucide-react-native/icons/chevron-left';
 import Clock from 'lucide-react-native/icons/clock';
+import Download from 'lucide-react-native/icons/download';
 import Heart from 'lucide-react-native/icons/heart';
 import Mic from 'lucide-react-native/icons/mic';
 import MicOff from 'lucide-react-native/icons/mic-off';
@@ -44,6 +45,8 @@ const ICONES = {
   music: Music,
   'refresh-cw': RefreshCw,
   share: Share,
+  /** O "baixar" que o kit desenha no cabeçalho do relatório (#312). */
+  download: Download,
   history: Clock,
   camera: Camera,
   heart: Heart,

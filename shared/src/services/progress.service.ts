@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DietMeal, DietPlan, ItemRegistrado, MealLog } from "../types/nutrition.types";
 import { localDateOf } from "../utils/dateOnly";
+import { firstOfEmbed } from "../utils/postgrest";
 import type { CompletedSet } from "../utils/trainingProgress";
 
 /**
@@ -48,7 +49,8 @@ const PAGE_SIZE = 1000;
 
 export interface ActivityHistory {
   /** O dia local de cada sessão concluída, repetido quando há duas no dia. */
-  sessionDates: string[];
+  /** O dia local de cada sessão concluída, com o tipo: cardio conta à parte. */
+  sessions: { date: string; cardio: boolean }[];
   mealLogs: Pick<MealLog, "logged_date" | "diet_meal_id" | "completed">[];
 }
 
@@ -132,10 +134,10 @@ export const createProgressService = (supabase: SupabaseClient) => ({
    */
   listActivityHistory: async (studentId: string): Promise<ActivityHistory> => {
     const [sessions, meals] = await Promise.all([
-      readAllPages<{ completed_at: string }>((from, to) =>
+      readAllPages<{ completed_at: string; session_type: string | null }>((from, to) =>
         supabase
           .from("workout_sessions")
-          .select("completed_at")
+          .select("completed_at, session_type")
           .eq("student_id", studentId)
           .not("completed_at", "is", null)
           .order("completed_at", { ascending: true })
@@ -152,8 +154,52 @@ export const createProgressService = (supabase: SupabaseClient) => ({
       ),
     ]);
     return {
-      sessionDates: sessions.map((row) => localDateOf(new Date(row.completed_at))),
+      sessions: sessions.map((row) => ({
+        date: localDateOf(new Date(row.completed_at)),
+        cardio: row.session_type === "cardio",
+      })),
       mealLogs: meals.map((row) => ({ ...row, completed: true })),
+    };
+  },
+
+  /**
+   * O subtítulo do relatório: o nome da periodização ativa e o do especialista que
+   * acompanha (issue #312, tela 8).
+   *
+   * As duas leituras são independentes e vão juntas: em série, a tela esperaria
+   * duas viagens para mostrar uma linha de texto.
+   *
+   * O cardio **não** é contado aqui: ele sai da mesma lista de dias que os treinos
+   * (`dailyActivities`), senão os dois cartões somariam a mesma sessão duas vezes.
+   *
+   * @example const { periodization, specialist } = await service.getPeriodContext(id);
+   */
+  getPeriodContext: async (
+    studentId: string,
+  ): Promise<{ periodization: string | null; specialist: string | null }> => {
+    const [plan, link] = await Promise.all([
+      supabase
+        .from("training_periodizations")
+        .select("name")
+        .eq("student_id", studentId)
+        .eq("status", "active")
+        .limit(1)
+        .maybeSingle(),
+      // Só o nome: a `profiles_read_own_and_linked` (0016) deixa o aluno ler o
+      // perfil de quem o acompanha, e o relatório não precisa de mais que isso.
+      supabase
+        .from("student_specialists")
+        .select("specialist:profiles!student_specialists_specialist_id_profiles_id_fk(full_name)")
+        .eq("student_id", studentId)
+        .eq("status", "active")
+        .limit(1)
+        .maybeSingle(),
+    ]);
+    if (plan.error) throw plan.error;
+    if (link.error) throw link.error;
+    return {
+      periodization: (plan.data as { name: string } | null)?.name ?? null,
+      specialist: nameOf(link.data),
     };
   },
 
@@ -178,7 +224,7 @@ export const createProgressService = (supabase: SupabaseClient) => ({
 function flattenSession(session: SessionRow): CompletedSet[] {
   const date = localDateOf(new Date(session.completed_at));
   return (session.exercises ?? []).flatMap((row) => {
-    const exercise = Array.isArray(row.exercise) ? row.exercise[0] : row.exercise;
+    const exercise = firstOfEmbed(row.exercise);
     const exercise_id = row.exercise_id;
     if (!exercise_id || !exercise) return [];
     return (row.sets ?? [])
@@ -248,4 +294,9 @@ async function readAllPages<T>(page: (from: number, to: number) => Page<T>): Pro
 function startOfLocalDay(date: string): string {
   const [year, month, day] = date.split("-").map(Number);
   return new Date(year, month - 1, day).toISOString();
+}
+
+function nameOf(row: unknown): string | null {
+  const embed = (row as { specialist?: { full_name: string | null }[] } | null)?.specialist;
+  return firstOfEmbed(embed)?.full_name ?? null;
 }

@@ -279,7 +279,7 @@ DO $$
 DECLARE
   saude       text[] := ARRAY['health_daily_metrics','meal_logs','physical_assessments',
                               'student_anamnesis','body_scans','workout_session_vitals',
-                              'hydration_daily'];
+                              'hydration_daily','specialist_notes'];
   contrato    text[] := ARRAY['profiles','specialist_services','workout_sessions',
                               'workout_session_sets','workout_session_exercises',
                               'achievements','daily_goals','student_streaks'];
@@ -316,7 +316,7 @@ BEGIN
       array_to_string(sobrando, ', ');
   END IF;
 
-  RAISE NOTICE 'ok  Art. 11 confere consentimento em 7 tabelas; Art. 7° não confere em 8';
+  RAISE NOTICE 'ok  Art. 11 confere consentimento em 8 tabelas; Art. 7° não confere em 8';
 END $$;
 
 -- ── Nenhuma coordenada, em tabela nenhuma (0049) ─────────────────────────────
@@ -1665,6 +1665,189 @@ BEGIN
 
   RESET ROLE;
   RAISE NOTICE 'ok  medida declarada: só o Praticante declara, com consentimento; corrige e apaga só a dele';
+END $$;
+
+ROLLBACK;
+
+-- ── A nota do especialista (0057) ────────────────────────────────────────────
+-- A nota que o especialista escreve sobre o progresso do Aluno (issue #312 §4).
+-- O /lgpd-check decidiu, e cada ponto é travado aqui por comportamento:
+--
+--   1. o Aluno lê a própria nota, sempre — inclusive depois de revogar;
+--   2. o autor lê, corrige e apaga a nota dele;
+--   3. outro especialista do mesmo aluno não lê nada;
+--   4. revogado o consentimento, o autor para de ler (Art. 11, I);
+--   5. ninguém reescreve nota alheia, e o aluno não escreve nota clínica nenhuma.
+
+BEGIN;
+
+DO $$
+DECLARE
+  aluno    uuid := gen_random_uuid();
+  revogou  uuid := gen_random_uuid();
+  autor    uuid := gen_random_uuid();
+  outro    uuid := gen_random_uuid();
+  estranho uuid := gen_random_uuid();
+  encerrou uuid := gen_random_uuid();
+  nota     uuid;
+  nota_rev uuid;
+  afetadas int;
+  visiveis int;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (aluno,   '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-na@elevapro.local', '{"full_name":"A","account_type":"student"}'::jsonb),
+    (revogou, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-nr@elevapro.local', '{"full_name":"R","account_type":"student"}'::jsonb),
+    (autor,   '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-n1@elevapro.local', '{"full_name":"E1","account_type":"specialist"}'::jsonb),
+    (outro,   '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-n2@elevapro.local', '{"full_name":"E2","account_type":"specialist"}'::jsonb),
+    (estranho,'00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-n3@elevapro.local', '{"full_name":"E3","account_type":"specialist"}'::jsonb),
+    (encerrou,'00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-n4@elevapro.local', '{"full_name":"E4","account_type":"specialist"}'::jsonb);
+
+  INSERT INTO public.student_consents (student_id, consent_type, given_at, policy_version)
+  VALUES (aluno, 'health_data_collection', now(), '1.8'),
+         (revogou, 'health_data_collection', now(), '1.8');
+
+  -- Os dois especialistas atendem o mesmo aluno: sem isso, "o outro não lê"
+  -- passaria pelo vínculo, e não pela autoria, que é o que esta trava protege.
+  INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
+  VALUES (aluno, autor, 'personal_training', 'active'),
+         (aluno, outro, 'nutrition_consulting', 'active'),
+         (revogou, autor, 'personal_training', 'active'),
+         -- O que já foi embora: a nota que ele escreveu não o segue.
+         (aluno, encerrou, 'personal_training', 'inactive');
+
+  SET LOCAL ROLE authenticated;
+
+  -- 2. O autor escreve a nota do aluno que ele acompanha.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', autor, 'role', 'authenticated')::text, true);
+  INSERT INTO public.specialist_notes (student_id, specialist_id, body)
+  VALUES (aluno, autor, 'Progresso consistente na semana.')
+  RETURNING id INTO nota;
+
+  INSERT INTO public.specialist_notes (student_id, specialist_id, body)
+  VALUES (revogou, autor, 'Nota do aluno que vai revogar.')
+  RETURNING id INTO nota_rev;
+
+  -- 2. O autor lê e corrige a própria nota. Sem este positivo, a trava toda
+  -- passaria com uma política que não deixa ninguém ler nada.
+  SELECT count(*) INTO visiveis FROM public.specialist_notes WHERE id = nota;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'o autor não lê a nota que escreveu (viu %)', visiveis;
+  END IF;
+
+  UPDATE public.specialist_notes SET body = 'Progresso consistente, com ajuste de volume.'
+  WHERE id = nota;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 1 THEN
+    RAISE EXCEPTION 'o autor não corrige a própria nota: % linha(s)', afetadas;
+  END IF;
+
+  -- 5. E não escreve no nome de outro especialista.
+  BEGIN
+    INSERT INTO public.specialist_notes (student_id, specialist_id, body)
+    VALUES (aluno, outro, 'Nota assinada por quem não escreveu.');
+    RAISE EXCEPTION 'AUTORIA FALSIFICADA: especialista gravou nota no nome de outro';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- 3. O outro especialista do mesmo aluno não lê a nota do colega.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', outro, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO visiveis FROM public.specialist_notes WHERE student_id = aluno;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'NOTA LIDA POR OUTRO ESPECIALISTA: o não-autor viu % nota(s)', visiveis;
+  END IF;
+
+  -- 5. Nem reescreve nem apaga.
+  UPDATE public.specialist_notes SET body = 'reescrita' WHERE id = nota;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 0 THEN
+    RAISE EXCEPTION 'NOTA REESCRITA POR QUEM NÃO ESCREVEU: % linha(s)', afetadas;
+  END IF;
+  DELETE FROM public.specialist_notes WHERE id = nota;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 0 THEN
+    RAISE EXCEPTION 'NOTA APAGADA POR QUEM NÃO ESCREVEU: % linha(s)', afetadas;
+  END IF;
+
+  -- 3. Especialista sem vínculo nenhum com o aluno não lê, nem escreve.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', estranho, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO visiveis FROM public.specialist_notes WHERE student_id = aluno;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'NOTA LIDA SEM VÍNCULO: especialista de fora viu % nota(s)', visiveis;
+  END IF;
+  BEGIN
+    INSERT INTO public.specialist_notes (student_id, specialist_id, body)
+    VALUES (aluno, estranho, 'Nota de quem não acompanha este aluno.');
+    RAISE EXCEPTION 'NOTA ESCRITA SEM VÍNCULO: especialista de fora gravou nota';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- 3. E o que encerrou o vínculo perde o alcance junto com ele.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', encerrou, 'role', 'authenticated')::text, true);
+  BEGIN
+    INSERT INTO public.specialist_notes (student_id, specialist_id, body)
+    VALUES (aluno, encerrou, 'Nota depois do fim do vínculo.');
+    RAISE EXCEPTION 'NOTA ESCRITA APÓS O FIM DO VÍNCULO: o ex-especialista gravou nota';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- 1. O aluno lê a nota sobre ele.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', aluno, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO visiveis FROM public.specialist_notes WHERE student_id = aluno;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'o aluno não lê a nota escrita sobre ele (viu %)', visiveis;
+  END IF;
+
+  -- 5. E não escreve nota clínica nenhuma: o registro é do profissional.
+  BEGIN
+    INSERT INTO public.specialist_notes (student_id, specialist_id, body)
+    VALUES (aluno, aluno, 'Nota que o aluno escreveu sobre si.');
+    RAISE EXCEPTION 'ALUNO ESCREVE NOTA CLÍNICA: o registro do profissional aceitou linha do titular';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- 4. Revogado o consentimento, o autor para de ler — e o aluno continua lendo.
+  RESET ROLE;
+  UPDATE public.student_consents SET revoked_at = now()
+  WHERE student_id = revogou AND consent_type = 'health_data_collection';
+
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', autor, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO visiveis FROM public.specialist_notes WHERE student_id = revogou;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'NOTA SOBREVIVE À REVOGAÇÃO: o autor leu % nota(s) de quem revogou (Art. 11, I)', visiveis;
+  END IF;
+
+  -- 4. E também não apaga: o Postgres exige a política de SELECT para a linha do
+  -- WHERE, então perder a leitura é perder o alcance inteiro. A nota fica com o
+  -- aluno, que segue lendo, e sai pelo CASCADE da conta dele.
+  DELETE FROM public.specialist_notes WHERE id = nota_rev;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 0 THEN
+    RAISE EXCEPTION 'NOTA ALCANÇADA APÓS REVOGAÇÃO: o autor apagou % nota(s) de quem revogou', afetadas;
+  END IF;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', revogou, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO visiveis FROM public.specialist_notes WHERE student_id = revogou;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'o aluno que revogou perdeu a própria nota (viu %)', visiveis;
+  END IF;
+
+  RESET ROLE;
+  RAISE NOTICE 'ok  nota do especialista: só o autor escreve e corrige, o aluno lê, a revogação fecha';
 END $$;
 
 ROLLBACK;

@@ -71,6 +71,7 @@ Dados referentes à saúde exigem **base legal específica** e proteção refor�
 | Circunferências corporais | `physical_assessments` | Tutela da saúde + Consentimento | Acompanhamento de medidas |
 | **Medida declarada pelo aluno** — peso, altura, % gordura e circunferências digitados por ele | `physical_assessments` com `measured_by = 'self'` (desde a `0056`, #312) | Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I) | Dar ao Praticante, que não tem especialista, composição e medidas para acompanhar. Nasce da anamnese do Praticante (a primeira) ou do formulário. Só grava quem não tem especialista ativo, e com consentimento **presente** (`has_health_consent`, o helper estrito): diferente do acervo do especialista, não existe declaração anterior ao portão. Sem dobra cutânea, que é medida de especialista. O texto do consentimento cita a medida desde a `POLICY_VERSION` 1.8 |
 | Origem da medida | `physical_assessments.measured_by` | Mesma base da avaliação | Dizer a quem lê se o número veio da fita ou da declaração. As telas nunca comparam uma com a outra (ADR-0030) |
+| **Nota do especialista sobre o progresso** — texto livre escrito pelo profissional | `specialist_notes` (desde a `0057`, #312) | Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I) | Registro do acompanhamento: o que evoluiu, o que ajustar. Escrita só pelo autor, no web; lida pelo Aluno (sempre) e pelo autor com vínculo ativo e consentimento. **Outro especialista do mesmo aluno não lê.** Limite de 2.000 caracteres para o campo aberto não virar prontuário. O Praticante não tem especialista, e nem leitura pelo CASL |
 | Histórico de saúde (anamnese) | `student_anamnesis.responses` | Consentimento explícito (Art. 11, I) | Informar o especialista sobre limitações, lesões, medicamentos |
 | Altura e peso declarados | `student_anamnesis.responses` (campos `height`, `weight`) | Tutela da saúde (Art. 11, II, f) + Consentimento | **Origem secundária da Escala**: calibram o Body scan quando não há avaliação física. Lidos por campo nomeado no banco, nunca `responses` inteiro |
 | Origem da Escala | `body_scans.scale_source` | Tutela da saúde + Consentimento | Registrar se a altura que calibrou o scan foi medida com fita (`assessment`), declarada numa medida (`self`, desde a `0056`) ou declarada na anamnese — o especialista precisa saber se pondera ou confia no número |
@@ -244,6 +245,9 @@ Para cada tipo de tratamento, deve existir uma base legal documentada. Não exis
 | Dados de gamificação | Execução de contrato | Art. 7°, V |
 | Histórico de mensagens | Execução de contrato | Art. 7°, V |
 | Member cria plano alimentar próprio (sem especialista) | Consentimento explícito | Art. 11, I |
+| **Medida corporal declarada pelo próprio aluno** (`measured_by = 'self'`, ADR-0030) | Tutela da saúde + Consentimento — e aqui o **presente**, não só a ausência de revogação: a declaração nasce depois do portão | Art. 11, II, f + I |
+| **Nota do especialista sobre o progresso** (`specialist_notes`, ADR-0031) | Tutela da saúde + Consentimento. Lida pelo autor com vínculo ativo; para o titular, a leitura é do próprio dado e não depende do consentimento seguir vigente | Art. 11, II, f + I |
+| **Exportação do relatório em PDF, no aparelho** | Mesma base dos dados que ele repete — não há tratamento novo: nada passa pelo servidor, e o arquivo é apagado depois de compartilhado | Art. 11, II, f + I |
 | Sinal derivado de inatividade para o especialista vinculado (briefing) | Mesma base do dado de origem — Execução de contrato para `workout_sessions`, Consentimento explícito para a data de conclusão da anamnese | Art. 7°, V + Art. 11, I |
 | **Processamento local contínuo da imagem do corpo durante a captura** (ADR-0022) | Tutela da saúde + Consentimento explícito | Art. 11, II, f + I |
 | **Processamento local contínuo da imagem do corpo durante o exercício** (Análise de Técnica) | Tutela da saúde + Consentimento explícito **próprio da finalidade** (`technique_analysis`) | Art. 11, II, f + I; Art. 8°, §4° |
@@ -377,6 +381,17 @@ inferência sobre saúde de titular identificado.
 - [ ] Rate limiting nas APIs de autenticação
 - [ ] Alertas de acesso suspeito (muitas tentativas de login)
 
+**Exportação em PDF do relatório (desde a `#312`).** O arquivo é gerado **no
+aparelho** (`expo-print`) e entregue pela folha de compartilhar do sistema: nada
+passa pelo servidor. Três regras, travadas por teste em
+`app/src/modules/progress/services/__tests__/reportPdf.test.ts`:
+
+- o PDF leva **só o que a tela mostra** — sem e-mail e sem identificador interno,
+  porque ele sai do controle do app no instante em que é compartilhado;
+- a tela **avisa antes de gerar** que o arquivo tem dados de saúde e que quem o
+  receber poderá lê-lo;
+- o arquivo temporário é **apagado** depois da folha fechar, compartilhado ou não.
+
 ### 4.8 Prevenção (Art. 6°, VIII)
 > Adotar medidas para prevenir danos antes que aconteçam.
 
@@ -414,7 +429,7 @@ A LGPD garante direitos aos titulares que o sistema precisa implementar. Abaixo 
 |---------|-----------------|--------|
 | Acesso aos dados | Tela "Meus Dados" (mobile + web) | Pendente |
 | Correção (Art. 18, III) | Perfil · anamnese (reabre o questionário) · adesão à refeição (alterna e substitui) · **feedback de sessão** (`perceived_exertion` e `notes`, no histórico do mobile — desde 2026-08-28) | **Coberto para o que o titular declarou**, e desde a `0056` isso inclui a **medida declarada** (`physical_assessments` com `measured_by = 'self'`, no histórico de medidas do mobile), corrigível mesmo depois de contratar um especialista. Fora: medida do evento — datas, séries, duração, calorias, `body_scans` e a avaliação **do especialista**. O remédio para medida inexata é medir de novo, não digitar outro número (Art. 6°, V). Desde a `0038` isso deixou de ser só política e virou schema: `body_scans` não tem política de UPDATE para nenhum papel do cliente, e a `verify-rls.sql` conta as linhas afetadas para provar. Pendente: tela "Meus Dados" reunindo os caminhos num lugar só |
-| Exclusão (Art. 18, VI) | Por item: **observação da sessão** (apaga o texto, a sessão fica) · **análise corporal** (`body_scans`, apaga a análise) — desde 2026-08-28 · **medida declarada** (formulário da medida, sem exigir consentimento: quem revogou continua apagando) — desde a `0056` | **Parcial, por item.** A sessão de treino em si não é apagável: é execução de contrato (Art. 7°, V) e o inciso VI alcança o que foi tratado com consentimento. Pendente: fluxo "Excluir minha conta", que elimina tudo por `ON DELETE CASCADE` |
+| Exclusão (Art. 18, VI) | Por item: **observação da sessão** (apaga o texto, a sessão fica) · **análise corporal** (`body_scans`, apaga a análise) — desde 2026-08-28 · **medida declarada** (formulário da medida, sem exigir consentimento: quem revogou continua apagando) — desde a `0056`. **A nota do especialista não é apagável pelo titular**: é registro do profissional, e apagá-la reescreve o acompanhamento dele (mesma razão da imutabilidade da avaliação). Os caminhos do aluno são revogar o consentimento, que fecha o acesso do especialista, e excluir a conta, que elimina por cascata | **Parcial, por item.** A sessão de treino em si não é apagável: é execução de contrato (Art. 7°, V) e o inciso VI alcança o que foi tratado com consentimento. Pendente: fluxo "Excluir minha conta", que elimina tudo por `ON DELETE CASCADE` |
 | Portabilidade | Exportar dados em JSON/PDF | Pendente |
 | Revogação do consentimento | **Minhas autorizações** (perfil → `saude/autorizacoes`, mobile): cada finalidade com data e versão do aceite, e a retirada por finalidade, confirmada numa folha que diz o que para — desde 2026-09-15 (#308) | **Coberto no mobile.** A folha lista só o efeito real (relógio, anotação e FC da sessão, água, body scan e IA, acesso do especialista); treino e refeição continuam, e a trava `EFEITO INVENTADO NA RETIRADA` impede o texto de prometer o contrário. Pendente: o mesmo no web |
 | Oposição ao tratamento | Configurações granulares de privacidade | Pendente |
@@ -466,7 +481,7 @@ banco. O critério é a **base legal**, não o vínculo.
 
 | Base legal | Tabelas | Revogar o consentimento… | Migration |
 |---|---|---|---|
-| Art. 11 (tutela da saúde **+** consentimento) | `health_daily_metrics`, `meal_logs`, `physical_assessments`, `student_anamnesis`, `body_scans`, `workout_session_vitals` | **fecha** o acesso do especialista | 0043, 0044, 0045, 0049 |
+| Art. 11 (tutela da saúde **+** consentimento) | `health_daily_metrics`, `meal_logs`, `physical_assessments`, `student_anamnesis`, `body_scans`, `workout_session_vitals`, `specialist_notes` | **fecha** o acesso do especialista | 0043, 0044, 0045, 0049, 0057 |
 | Art. 11, só do titular | `hydration_daily` | não há acesso do especialista a fechar; **revogar interrompe a gravação**, que a política de INSERT e UPDATE recusa sem consentimento | 0052 |
 | Art. 7°, V (execução de contrato) | `profiles`, `specialist_services`, `workout_sessions`, `workout_session_sets`, `workout_session_exercises`, `achievements`, `daily_goals`, `student_streaks` | não alcança — o caminho é encerrar o vínculo | — |
 
@@ -521,6 +536,7 @@ A LGPD exige que dados sejam eliminados quando deixam de ser necessários (Art. 
 |------|------------------|---------------|
 | Dados de perfil | Enquanto a conta estiver ativa | Necessário para o serviço |
 | Avaliações físicas | Enquanto existir vínculo com especialista | Histórico clínico necessário ao especialista |
+| Nota do especialista (`specialist_notes`) | Enquanto a conta do aluno existir | É o registro do acompanhamento, e some junto com a conta por `ON DELETE CASCADE`. A conta do especialista apagada deixa a nota sem autor (`SET NULL`) em vez de levar o histórico do aluno junto |
 | Medida declarada (`measured_by = 'self'`) | Enquanto a conta estiver ativa, ou até o aluno apagar | É o acompanhamento do próprio Praticante e não depende de vínculo. Apagável por item pelo titular; `ON DELETE CASCADE` a partir de `profiles` elimina o resto junto com a conta |
 | Anamnese | Enquanto a conta estiver ativa | Auto-relato do aluno |
 | Histórico de treinos | Enquanto a conta estiver ativa | Histórico de evolução |

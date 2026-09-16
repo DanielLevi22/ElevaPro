@@ -14,7 +14,11 @@ describe("dailyActivities", () => {
     const days = dailyActivities({
       from: "2026-09-14",
       to: "2026-09-15",
-      sessionDates: ["2026-09-15", "2026-09-15", "2026-09-10"],
+      sessions: [
+        { date: "2026-09-15", cardio: false },
+        { date: "2026-09-15", cardio: true },
+        { date: "2026-09-10", cardio: false },
+      ],
       plan: null,
       meals: [],
       mealLogs: [],
@@ -26,11 +30,30 @@ describe("dailyActivities", () => {
     ]);
   });
 
+  // O relatório mostra treinos e cardio lado a lado. Com o cardio só dentro de
+  // `workouts`, os dois cartões somavam a mesma sessão duas vezes (#312).
+  it("conta o cardio à parte, sem tirá-lo do total de sessões", () => {
+    const days = dailyActivities({
+      from: "2026-09-15",
+      to: "2026-09-15",
+      sessions: [
+        { date: "2026-09-15", cardio: false },
+        { date: "2026-09-15", cardio: true },
+      ],
+      plan: null,
+      meals: [],
+      mealLogs: [],
+    });
+
+    expect(days[0].workouts).toBe(2);
+    expect(days[0].cardioSessions).toBe(1);
+  });
+
   it("conta as refeições do plano no dia e as feitas entre elas", () => {
     const [day] = dailyActivities({
       from: "2026-09-15",
       to: "2026-09-15",
-      sessionDates: [],
+      sessions: [],
       plan: PLAN,
       meals: MEALS,
       mealLogs: [
@@ -48,7 +71,7 @@ describe("dailyActivities", () => {
     const [tuesday] = dailyActivities({
       from: "2026-09-15",
       to: "2026-09-15",
-      sessionDates: [],
+      sessions: [],
       plan: { ...PLAN, plan_type: "cyclic" },
       meals: [meal("ter", 2), meal("qua", 3)],
       mealLogs: [],
@@ -62,7 +85,7 @@ describe("dailyActivities", () => {
     const [day] = dailyActivities({
       from: "2026-08-31",
       to: "2026-08-31",
-      sessionDates: [],
+      sessions: [],
       plan: PLAN,
       meals: MEALS,
       mealLogs: [],
@@ -76,7 +99,7 @@ describe("dailyActivities", () => {
     const [day] = dailyActivities({
       from: "2026-09-15",
       to: "2026-09-15",
-      sessionDates: [],
+      sessions: [],
       plan: null,
       meals: [],
       mealLogs: [{ logged_date: "2026-09-15", diet_meal_id: "de-outro-plano", completed: true }],

@@ -43,10 +43,19 @@ const RAIZ_VERIFICADA = "app/src/";
 const EXTENSOES = new Set([".ts", ".tsx"]);
 
 /**
- * O único lugar onde cor literal pode morar: a fonte dos tokens. Tudo o mais
- * deriva dela.
+ * Onde cor literal pode morar.
+ *
+ * `tokens.ts` é a fonte de onde todo o resto deriva.
+ *
+ * O PDF do relatório (#312) é a segunda entrada, e por outro motivo: ele não é
+ * tela. É papel — sai do app, não tem tema claro nem escuro para acompanhar, e o
+ * cinza dele é escolhido para ler impresso em branco. Token de interface ali
+ * levaria o fundo escuro do app para uma folha A4.
  */
-const ALLOWLIST = new Set(["app/src/shared/design/tokens.ts"]);
+const ALLOWLIST = new Set([
+  "app/src/shared/design/tokens.ts",
+  "app/src/modules/progress/services/reportPdf.ts",
+]);
 
 /** `#rgb`, `#rrggbb` ou `#rrggbbaa`, com fronteira para não pegar `#1` de rota. */
 const HEX = /#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/g;
