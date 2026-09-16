@@ -87,8 +87,14 @@ export interface Finalidade {
  *   #308, migration `0055` e ADR-0029: a nota é dado de saúde derivado e gravado,
  *   e inferir recuperação é finalidade que o texto não cobria — guardar a duração
  *   do sono não é o mesmo que dizer se a pessoa está pronta para treinar.
+ * - `1.8` (2026-09-15) — acrescenta **a medida corporal registrada pelo próprio
+ *   aluno** e **as notas do especialista sobre o progresso**. Issue #312 e
+ *   migration `0056`: o aluno sem especialista passou a declarar peso, gordura e
+ *   medidas, e a lista nunca tinha dito que a medida corporal é guardada; a nota
+ *   é texto do especialista sobre a saúde do aluno, e aparece só no texto de quem
+ *   tem especialista. As duas entram juntas para a base reconsentir uma vez.
  */
-export const POLICY_VERSION = "1.7";
+export const POLICY_VERSION = "1.8";
 
 /** Coleta de dados de saúde: avaliação, anamnese, métricas diárias, body scan. */
 export const SAUDE: Finalidade = { tipo: CONSENT_HEALTH_COLLECTION, versao: POLICY_VERSION };

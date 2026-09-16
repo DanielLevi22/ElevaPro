@@ -1,3 +1,5 @@
+import { MEASUREMENT_QUESTIONS } from "../utils/anamnesisMeasurement";
+
 export type PersonaTrack = "beginner" | "returning" | "intermediate" | "advanced";
 
 export interface AdaptiveQuestion {
@@ -376,7 +378,29 @@ export const UNLOCK_CARDS: UnlockCard[] = [
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
 
-export function getTrackQuestions(track: PersonaTrack): AdaptiveQuestion[] {
+/**
+ * As perguntas da trilha escolhida.
+ *
+ * `withMeasurements` acrescenta as medidas de partida logo depois da altura, e só
+ * a anamnese do Praticante liga: com especialista, quem mede é ele (#312).
+ *
+ * @example getTrackQuestions("beginner", { withMeasurements: true })
+ */
+export function getTrackQuestions(
+  track: PersonaTrack,
+  options: { withMeasurements?: boolean } = {},
+): AdaptiveQuestion[] {
+  const questions = questionsOfTrack(track);
+  if (!options.withMeasurements) return questions;
+  const afterHeight = questions.findIndex((question) => question.id === "height") + 1;
+  return [
+    ...questions.slice(0, afterHeight),
+    ...MEASUREMENT_QUESTIONS,
+    ...questions.slice(afterHeight),
+  ];
+}
+
+function questionsOfTrack(track: PersonaTrack): AdaptiveQuestion[] {
   switch (track) {
     case "beginner":
       return BASE_QUESTIONS;

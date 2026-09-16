@@ -766,6 +766,7 @@ export type Database = {
           created_at: string;
           height_cm: number;
           id: string;
+          measured_by: Database["public"]["Enums"]["measurement_source"];
           muscle_mass_kg: number | null;
           notes: string | null;
           skinfold_abdomen: number | null;
@@ -799,6 +800,7 @@ export type Database = {
           created_at?: string;
           height_cm: number;
           id?: string;
+          measured_by?: Database["public"]["Enums"]["measurement_source"];
           muscle_mass_kg?: number | null;
           notes?: string | null;
           skinfold_abdomen?: number | null;
@@ -832,6 +834,7 @@ export type Database = {
           created_at?: string;
           height_cm?: number;
           id?: string;
+          measured_by?: Database["public"]["Enums"]["measurement_source"];
           muscle_mass_kg?: number | null;
           notes?: string | null;
           skinfold_abdomen?: number | null;
@@ -1602,7 +1605,8 @@ export type Database = {
       diet_plan_status: "active" | "finished";
       diet_plan_type: "unique" | "cyclic";
       link_status: "active" | "inactive";
-      scale_source: "assessment" | "anamnese";
+      measurement_source: "specialist" | "self";
+      scale_source: "assessment" | "anamnese" | "self";
       service_type: "personal_training" | "nutrition_consulting";
       training_status: "planned" | "active" | "completed";
       workout_difficulty: "beginner" | "intermediate" | "advanced";
@@ -1739,7 +1743,8 @@ export const Constants = {
       diet_plan_status: ["active", "finished"],
       diet_plan_type: ["unique", "cyclic"],
       link_status: ["active", "inactive"],
-      scale_source: ["assessment", "anamnese"],
+      measurement_source: ["specialist", "self"],
+      scale_source: ["assessment", "anamnese", "self"],
       service_type: ["personal_training", "nutrition_consulting"],
       training_status: ["planned", "active", "completed"],
       workout_difficulty: ["beginner", "intermediate", "advanced"],

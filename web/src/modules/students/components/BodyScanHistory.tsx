@@ -1,5 +1,17 @@
-import type { BodyScanDelta, BodyScanRecord, ComparableField } from "@elevapro/shared";
+import type { BodyScanDelta, BodyScanRecord, ComparableField, ScaleSource } from "@elevapro/shared";
 import { MedidasDoScan } from "./MedidasDoScan";
+
+/**
+ * De onde vieram o peso e a altura que calibraram o scan (`scale_source`).
+ *
+ * O especialista pondera o número conforme a origem: a fita é dele, a declarada é do
+ * aluno, e a da anamnese é a mais antiga das três (ADR-0030).
+ */
+const ESCALA_LABEL: Record<ScaleSource, string> = {
+  assessment: "medido",
+  self: "declarado pelo aluno",
+  anamnese: "declarado na anamnese",
+};
 
 const LABELS: Record<ComparableField, string> = {
   weight_kg: "Peso",
@@ -90,6 +102,7 @@ export function BodyScanHistory({ scans, deltas }: BodyScanHistoryProps) {
   }
 
   const latest = scans[0];
+  const escala = ESCALA_LABEL[latest.scale_source ?? "assessment"];
 
   return (
     <div className="space-y-8">
@@ -162,13 +175,14 @@ export function BodyScanHistory({ scans, deltas }: BodyScanHistoryProps) {
           ))}
         </div>
 
-        {/* Peso e altura vêm da avaliação física, não da imagem; gordura e massa
-            magra são estimativas do modelo. A origem fica escrita para o
-            especialista não misturar as duas coisas (ADR-0010). */}
+        {/* Peso e altura vêm da Escala, não da imagem; gordura e massa magra são
+            estimativas do modelo. A origem fica escrita para o especialista não
+            misturar as duas coisas (ADR-0010), e desde a 0056 ela diz também se a
+            Escala foi a fita dele ou o que o aluno declarou (ADR-0030). */}
         <div className="grid grid-cols-4 gap-4 mt-4">
           {[
-            { label: "Peso", value: latest.weight_kg, unidade: "kg", origem: "medido" },
-            { label: "Altura", value: latest.height_cm, unidade: "cm", origem: "medido" },
+            { label: "Peso", value: latest.weight_kg, unidade: "kg", origem: escala },
+            { label: "Altura", value: latest.height_cm, unidade: "cm", origem: escala },
             { label: "Gordura", value: latest.body_fat_pct, unidade: "%", origem: "estimado" },
             { label: "IMC", value: latest.bmi, unidade: "", origem: "calculado" },
           ].map((m) => (

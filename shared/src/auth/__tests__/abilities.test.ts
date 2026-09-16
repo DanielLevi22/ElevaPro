@@ -26,6 +26,7 @@ const SUBJECTS: Subject[] = [
   "Periodization",
   "HealthMetric",
   "Hydration",
+  "DeclaredMeasurement",
   "all",
 ];
 
@@ -35,18 +36,33 @@ const GERENCIA: Record<string, Subject[]> = {
   "specialist:personal_training": ["Client", "Workout", "Exercise", "Periodization"],
   "specialist:nutrition_consulting": ["Client", "Diet", "Food"],
   student: ["HealthMetric", "Hydration"],
-  member: ["Workout", "Diet", "Exercise", "Food", "HealthMetric", "Hydration"],
+  member: [
+    "Workout",
+    "Diet",
+    "Exercise",
+    "Food",
+    "HealthMetric",
+    "Hydration",
+    "DeclaredMeasurement",
+  ],
 };
 
 /** O que cada papel pode LER além do que gerencia. */
 const LE: Record<string, Subject[]> = {
-  "specialist:personal_training": ["Analytics", "Profile", "HealthMetric", "Diet"],
+  "specialist:personal_training": [
+    "Analytics",
+    "Profile",
+    "HealthMetric",
+    "Diet",
+    "DeclaredMeasurement",
+  ],
   "specialist:nutrition_consulting": [
     "Analytics",
     "Profile",
     "HealthMetric",
     "Workout",
     "Periodization",
+    "DeclaredMeasurement",
   ],
   student: ["Workout", "Diet", "Exercise", "Profile"],
   member: ["Profile"],
@@ -107,6 +123,16 @@ describe("defineAbilitiesFor — tabela de permissões", () => {
     expect(defineAbilitiesFor({ accountType: "member" }).can("manage", "Periodization")).toBe(
       false,
     );
+  });
+
+  // A medida declarada (0056): declarar é do Praticante, e com especialista quem mede
+  // é ele. Mas o que o aluno declarou antes do vínculo continua dele para corrigir e
+  // apagar (Art. 18, III e VI) — a RLS confere a Guidance de verdade no banco.
+  it("student não declara medida, mas corrige e apaga a que declarou", () => {
+    const ability = defineAbilitiesFor({ accountType: "student" });
+    expect(ability.can("create", "DeclaredMeasurement")).toBe(false);
+    expect(ability.can("update", "DeclaredMeasurement")).toBe(true);
+    expect(ability.can("delete", "DeclaredMeasurement")).toBe(true);
   });
 
   it("admin gerencia tudo pelo curinga", () => {

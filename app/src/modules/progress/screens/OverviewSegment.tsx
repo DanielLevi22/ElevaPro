@@ -83,10 +83,7 @@ function SummaryStats({ summary }: { summary: ProgressSummary }) {
   );
 }
 
-/**
- * Composição, circunferências e relatório entram aqui quando as telas existirem:
- * atalho para rota que não existe é pior que atalho que falta.
- */
+/** O relatório do período entra aqui quando a tela existir: atalho para rota que não existe é pior que atalho que falta. */
 function Shortcuts({ onOpenTraining }: { onOpenTraining: () => void }) {
   const router = useRouter();
   return (
@@ -103,6 +100,18 @@ function Shortcuts({ onOpenTraining }: { onOpenTraining: () => void }) {
         title="Evolução de cargas"
         subtitle="A carga máxima de cada exercício"
         onPress={() => router.push(ROUTES.PROGRESS.LOADS)}
+      />
+      <ShortcutRow
+        icon="scale-outline"
+        title="Composição corporal"
+        subtitle="Peso, gordura e massa magra"
+        onPress={() => router.push(ROUTES.PROGRESS.BODY)}
+      />
+      <ShortcutRow
+        icon="resize-outline"
+        title="Circunferências"
+        subtitle="8 medidas acompanhadas"
+        onPress={() => router.push(ROUTES.PROGRESS.CIRCUMFERENCES)}
       />
       <ShortcutRow
         icon="time-outline"

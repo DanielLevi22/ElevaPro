@@ -1512,3 +1512,159 @@ BEGIN
 END $$;
 
 ROLLBACK;
+
+-- ── A medida declarada (0056) ────────────────────────────────────────────────
+-- `physical_assessments` passa a guardar a medida do especialista e a declarada
+-- pelo próprio aluno (issue #312). O /lgpd-check decidiu, e cada ponto é travado
+-- aqui por comportamento:
+--
+--   1. só o Praticante (sem especialista ativo) declara, e só com consentimento
+--      vigente no banco (Art. 11, I);
+--   2. o aluno corrige e apaga só o que declarou (Art. 18, III e VI); a medida do
+--      especialista continua imutável para ele (Art. 6°, V);
+--   3. ninguém grava a origem errada: o aluno não grava `specialist`, o
+--      especialista não grava `self`, e a declarada não tem especialista;
+--   4. o aluno não grava medida no nome de outro aluno (Art. 6°, VII);
+--   5. o especialista vinculado e com consentimento lê a declarada.
+
+BEGIN;
+
+DO $$
+DECLARE
+  praticante uuid := gen_random_uuid();
+  aluno      uuid := gen_random_uuid();
+  sem_aceite uuid := gen_random_uuid();
+  espec      uuid := gen_random_uuid();
+  medida_do_espec uuid;
+  afetadas   int;
+  visiveis   int;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (praticante, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-ma@elevapro.local', '{"full_name":"P","account_type":"student"}'::jsonb),
+    (aluno,      '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-mb@elevapro.local', '{"full_name":"A","account_type":"student"}'::jsonb),
+    (sem_aceite, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-mc@elevapro.local', '{"full_name":"S","account_type":"student"}'::jsonb),
+    (espec,      '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-me@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb);
+
+  INSERT INTO public.student_consents (student_id, consent_type, given_at, policy_version)
+  VALUES
+    (praticante, 'health_data_collection', now(), '1.8'),
+    (aluno,      'health_data_collection', now(), '1.8');
+
+  INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
+  VALUES (aluno, espec, 'personal_training', 'active');
+
+  -- Uma medida do especialista, gravada como ele grava, para o aluno tentar mexer.
+  INSERT INTO public.physical_assessments (student_id, specialist_id, weight_kg, height_cm, measured_by)
+  VALUES (aluno, espec, 80, 180, 'specialist')
+  RETURNING id INTO medida_do_espec;
+
+  -- A declarada não tem especialista, nem gravada pelo dono do banco.
+  BEGIN
+    INSERT INTO public.physical_assessments (student_id, specialist_id, weight_kg, height_cm, measured_by)
+    VALUES (praticante, espec, 70, 170, 'self');
+    RAISE EXCEPTION 'ORIGEM FALSIFICADA: medida declarada gravada com especialista';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
+  SET LOCAL ROLE authenticated;
+
+  -- 1 e 2. O Praticante com consentimento declara e corrige o que declarou.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', praticante, 'role', 'authenticated')::text, true);
+  INSERT INTO public.physical_assessments (student_id, weight_kg, height_cm, measured_by)
+  VALUES (praticante, 72, 175, 'self');
+  UPDATE public.physical_assessments SET weight_kg = 71.5 WHERE student_id = praticante;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 1 THEN
+    RAISE EXCEPTION 'o Praticante não corrige a medida que declarou (Art. 18, III): % linha(s)', afetadas;
+  END IF;
+
+  -- 3. O aluno não se passa por especialista.
+  BEGIN
+    INSERT INTO public.physical_assessments (student_id, weight_kg, height_cm, measured_by)
+    VALUES (praticante, 72, 175, 'specialist');
+    RAISE EXCEPTION 'ORIGEM FALSIFICADA: aluno gravou medida como se fosse do especialista';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- 4. Nem no nome de outro aluno.
+  BEGIN
+    INSERT INTO public.physical_assessments (student_id, weight_kg, height_cm, measured_by)
+    VALUES (sem_aceite, 60, 160, 'self');
+    RAISE EXCEPTION 'REGISTRO ALHEIO: Praticante gravou medida no nome de outro aluno';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- 2. E apaga o que declarou.
+  DELETE FROM public.physical_assessments WHERE student_id = praticante;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 1 THEN
+    RAISE EXCEPTION 'o Praticante não apaga a medida que declarou (Art. 18, VI): % linha(s)', afetadas;
+  END IF;
+
+  -- 1. Com especialista ativo, quem mede é ele.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', aluno, 'role', 'authenticated')::text, true);
+  BEGIN
+    INSERT INTO public.physical_assessments (student_id, weight_kg, height_cm, measured_by)
+    VALUES (aluno, 81, 180, 'self');
+    RAISE EXCEPTION 'DECLARAÇÃO DO ALUNO ACOMPANHADO: aluno com especialista ativo declarou medida';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- 2. A medida do especialista continua imutável para o aluno.
+  UPDATE public.physical_assessments SET weight_kg = 60 WHERE id = medida_do_espec;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 0 THEN
+    RAISE EXCEPTION 'HISTÓRICO CLÍNICO REESCRITO: aluno alterou medida do especialista';
+  END IF;
+  DELETE FROM public.physical_assessments WHERE id = medida_do_espec;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 0 THEN
+    RAISE EXCEPTION 'HISTÓRICO CLÍNICO APAGADO: aluno apagou medida do especialista';
+  END IF;
+
+  -- 1. Sem consentimento, o banco recusa a coleta.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', sem_aceite, 'role', 'authenticated')::text, true);
+  BEGIN
+    INSERT INTO public.physical_assessments (student_id, weight_kg, height_cm, measured_by)
+    VALUES (sem_aceite, 60, 160, 'self');
+    RAISE EXCEPTION 'COLETA SEM CONSENTIMENTO: medida declarada gravada por quem não autorizou (Art. 11, I)';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- 3. O especialista não grava linha `self` que o aluno depois corrigiria como sua.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+  BEGIN
+    INSERT INTO public.physical_assessments (student_id, weight_kg, height_cm, measured_by)
+    VALUES (aluno, 79, 180, 'self');
+    RAISE EXCEPTION 'ORIGEM FALSIFICADA: especialista gravou medida como declarada pelo aluno';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  RESET ROLE;
+
+  -- 5. O especialista vinculado lê a medida que o aluno declarou antes do vínculo.
+  INSERT INTO public.physical_assessments (student_id, weight_kg, height_cm, measured_by)
+  VALUES (aluno, 78, 180, 'self');
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO visiveis FROM public.physical_assessments
+  WHERE student_id = aluno AND measured_by = 'self';
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'o especialista vinculado não lê a medida declarada pelo aluno (viu %)', visiveis;
+  END IF;
+
+  RESET ROLE;
+  RAISE NOTICE 'ok  medida declarada: só o Praticante declara, com consentimento; corrige e apaga só a dele';
+END $$;
+
+ROLLBACK;

@@ -13,12 +13,13 @@ import { clienteDoTitular } from "@/lib/supabase-titular";
 import { aiProviders } from "@/modules/ai/ai.config";
 import type { ContentBlock, ProviderTurnOptions } from "@/modules/ai/providers/types";
 import { carregarContextoDoScan } from "@/modules/ai/services/contextoDoScan";
-import { type FonteDaEscala, resolverEscala } from "@/modules/ai/services/escala";
+import { type FonteDaEscala, resolveScale } from "@/modules/ai/services/escala";
 import {
   descreverFatosMedidos,
   type MedidasPorPose,
   medidasParaOScan,
 } from "@/modules/ai/services/fatosMedidos";
+import { loadScaleSources } from "@/modules/ai/services/scaleSources";
 
 // Na Vercel uma rota sem isto morre no default de poucos segundos. Uma conversa
 // com uso de ferramenta passa disso com folga, e localmente não existe teto —
@@ -206,38 +207,12 @@ export async function POST(request: NextRequest) {
   // A mesma função que o portão de elegibilidade usa. Com a precedência escrita
   // em dois lugares, o portão libera e esta rota recusa — que é exatamente o
   // beco que a issue fecha, com outro nome.
-  const [avaliacaoRes, anamneseRes] = await Promise.all([
-    client
-      .from("physical_assessments")
-      .select("height_cm, weight_kg")
-      .eq("student_id", userId)
-      .order("assessed_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    // Os dois campos extraídos no banco: `responses` inteiro traria lesão e
-    // medicação junto, para ler altura (Art. 6º, III).
-    client
-      .from("student_anamnesis")
-      .select("responses->height, responses->weight")
-      .eq("student_id", userId)
-      .maybeSingle(),
-  ]);
-
+  const loaded = await loadScaleSources(client, userId);
   // Erro não é ausência: engolir aqui faria "falhou a consulta" virar "não tem
   // avaliação", e o aluno seria mandado preencher o que já preencheu.
-  if (avaliacaoRes.error || anamneseRes.error) {
-    return NextResponse.json({ error: "scale_lookup_failed" }, { status: 503 });
-  }
+  if (!loaded.ok) return NextResponse.json({ error: "scale_lookup_failed" }, { status: 503 });
 
-  const escala = resolverEscala({
-    avaliacao: avaliacaoRes.data
-      ? {
-          height_cm: Number(avaliacaoRes.data.height_cm),
-          weight_kg: Number(avaliacaoRes.data.weight_kg),
-        }
-      : null,
-    anamnese: anamneseRes.data as Record<string, unknown> | null,
-  });
+  const escala = resolveScale(loaded.sources);
 
   // Sem Escala o modelo voltaria a chutar. Recusar é a única saída honesta — e
   // o portão da entrada já deveria ter evitado o aluno chegar até aqui.

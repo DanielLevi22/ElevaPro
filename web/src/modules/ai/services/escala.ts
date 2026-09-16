@@ -1,4 +1,4 @@
-import { lerRespostaNumerica } from "@elevapro/shared";
+import { lerRespostaNumerica, type ScaleSource } from "@elevapro/shared";
 
 /**
  * A Escala de um Body scan: a altura e o peso que calibram a estimativa.
@@ -13,8 +13,15 @@ import { lerRespostaNumerica } from "@elevapro/shared";
  * aluno passar pelo portão para ser recusado depois de tirar três fotos.
  */
 
-/** De onde vieram altura e peso. O scan grava isto: o número sozinho mentiria. */
-export type FonteDaEscala = "assessment" | "anamnese";
+/**
+ * De onde vieram altura e peso. O scan grava isto: o número sozinho mentiria.
+ * `assessment` é a fita do especialista; `self`, a medida que o aluno declarou
+ * (0056); `anamnese`, o que ele respondeu no cadastro.
+ *
+ * O tipo mora no shared porque a coluna `body_scans.scale_source` é a mesma que o
+ * painel do especialista rotula.
+ */
+export type FonteDaEscala = ScaleSource;
 
 /**
  * Por que não há Escala. Cada motivo leva a uma ação diferente do aluno, e um
@@ -26,30 +33,36 @@ export type Escala =
   | { ok: true; heightCm: number; weightKg: number; fonte: FonteDaEscala }
   | { ok: false; motivo: MotivoSemEscala };
 
-export interface Avaliacao {
+export interface ScaleAssessment {
   height_cm: number;
   weight_kg: number;
 }
 
-export interface EntradaDaEscala {
-  /** Última avaliação física do aluno, ou `null` quando não há nenhuma. */
-  avaliacao: Avaliacao | null;
+export interface ScaleCandidates {
+  /** A última medida do especialista, ou `null` quando não há nenhuma. */
+  specialistAssessment: ScaleAssessment | null;
+  /** A última medida declarada pelo aluno, ou `null` quando não há nenhuma. */
+  declaredAssessment: ScaleAssessment | null;
   /** As respostas da anamnese, já achatadas. */
   anamnese: Record<string, unknown> | null;
 }
 
-export function resolverEscala({ avaliacao, anamnese }: EntradaDaEscala): Escala {
+/**
+ * A Escala do scan, pela ordem de confiança: a fita do especialista, a medida que o
+ * aluno declarou, e a anamnese.
+ *
+ * @example resolveScale({ specialistAssessment: null, declaredAssessment, anamnese }).fonte // "self"
+ */
+export function resolveScale({
+  specialistAssessment,
+  declaredAssessment,
+  anamnese,
+}: ScaleCandidates): Escala {
   // Fonte única, inteira. Misturar a altura medida com o peso declarado produz
   // um IMC que não é nem uma coisa nem outra — e a origem gravada no scan não
   // conseguiria descrever o que aconteceu.
-  if (avaliacao) {
-    return {
-      ok: true,
-      heightCm: avaliacao.height_cm,
-      weightKg: avaliacao.weight_kg,
-      fonte: "assessment",
-    };
-  }
+  if (specialistAssessment) return fromAssessment(specialistAssessment, "assessment");
+  if (declaredAssessment) return fromAssessment(declaredAssessment, "self");
 
   const respostas = anamnese ?? {};
 
@@ -68,6 +81,10 @@ export function resolverEscala({ avaliacao, anamnese }: EntradaDaEscala): Escala
   return { ok: true, heightCm: altura.valor, weightKg: peso.valor, fonte: "anamnese" };
 }
 
+function fromAssessment(assessment: ScaleAssessment, fonte: "assessment" | "self"): Escala {
+  return { ok: true, heightCm: assessment.height_cm, weightKg: assessment.weight_kg, fonte };
+}
+
 /** O que o portão responde ao app. Nunca carrega o valor da medida. */
 export type Elegibilidade =
   | { podeEscanear: true; fonte: FonteDaEscala }
@@ -83,16 +100,15 @@ export type Elegibilidade =
  * Existe para o aluno descobrir na entrada, e não depois de tirar três fotos,
  * que falta alguma coisa — que é o beco que esta issue inteira fecha.
  */
-export function decidirElegibilidade({
+export function decideScanEligibility({
   temConsentimento,
-  avaliacao,
-  anamnese,
-}: EntradaDaEscala & { temConsentimento: boolean }): Elegibilidade {
+  ...entrada
+}: ScaleCandidates & { temConsentimento: boolean }): Elegibilidade {
   // Antes da escala, de propósito: sem base legal o dado de saúde não deve nem
   // ser lido para decidir se o aluno pode escanear (Art. 11, I).
   if (!temConsentimento) return { podeEscanear: false, motivo: "consentimento" };
 
-  const escala = resolverEscala({ avaliacao, anamnese });
+  const escala = resolveScale(entrada);
   if (!escala.ok) return { podeEscanear: false, motivo: escala.motivo };
 
   return { podeEscanear: true, fonte: escala.fonte };

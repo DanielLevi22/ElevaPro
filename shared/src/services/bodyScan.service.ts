@@ -16,7 +16,7 @@ import type {
  * `PHYSICAL_ASSESSMENT_COLUMNS`.
  */
 const BODY_SCAN_COLUMNS =
-  "id, student_id, scanned_at, height_cm, weight_kg, body_fat_pct, lean_mass_kg, bmi, circ_chest, circ_waist, circ_hips, circ_arms, circ_thighs, circ_calves, circ_neck, circ_shoulders, posture_symmetry_score, posture_muscle_score, posture_overall_score, posture_feedback, recommendations, framing_mark_top, framing_mark_bottom, framing_pitch, framing_roll, framing_level_sensor, framing_camera, px_per_cm_front, px_per_cm_back, px_per_cm_side, shoulder_drop_cm, shoulder_tilt_deg, hip_drop_cm, hip_tilt_deg, axis_deviation_cm, trunk_rotated, plumb_shoulder_cm, plumb_hip_cm, plumb_knee_cm, quality_backlit, quality_low_light, quality_blown_out, framing_confirmed, created_at" as const;
+  "id, student_id, scanned_at, height_cm, weight_kg, scale_source, body_fat_pct, lean_mass_kg, bmi, circ_chest, circ_waist, circ_hips, circ_arms, circ_thighs, circ_calves, circ_neck, circ_shoulders, posture_symmetry_score, posture_muscle_score, posture_overall_score, posture_feedback, recommendations, framing_mark_top, framing_mark_bottom, framing_pitch, framing_roll, framing_level_sensor, framing_camera, px_per_cm_front, px_per_cm_back, px_per_cm_side, shoulder_drop_cm, shoulder_tilt_deg, hip_drop_cm, hip_tilt_deg, axis_deviation_cm, trunk_rotated, plumb_shoulder_cm, plumb_hip_cm, plumb_knee_cm, quality_backlit, quality_low_light, quality_blown_out, framing_confirmed, created_at" as const;
 
 const COMPARABLE_FIELDS: ComparableField[] = [
   "weight_kg",

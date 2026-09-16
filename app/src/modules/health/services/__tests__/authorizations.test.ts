@@ -64,6 +64,13 @@ describe('autorizações', () => {
     expect(effects.some((text) => /treinos e as refeições continuam/i.test(text))).toBe(true);
   });
 
+  // A medida declarada consulta o aceite no banco (0056): quem retira precisa saber
+  // que o registro de medida para junto com a água e as anotações.
+  it('retirar a saúde diz que as medidas deixam de ser guardadas', () => {
+    const effects = revokeEffects(health, false).map((effect) => effect.text);
+    expect(effects.some((text) => /medidas/i.test(text))).toBe(true);
+  });
+
   it('só o Aluno lê que o especialista perde o acesso', () => {
     const withSpecialist = revokeEffects(health, true).map((effect) => effect.text);
     const selfGuided = revokeEffects(health, false).map((effect) => effect.text);

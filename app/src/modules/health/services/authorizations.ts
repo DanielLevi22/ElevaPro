@@ -28,7 +28,7 @@ export const AUTHORIZATIONS: readonly Authorization[] = [
     // O que o Student retira precisa estar escrito aqui, senão ele decide sobre uma
     // lista que não corresponde ao que é coletado.
     description:
-      'Avaliação física, anamnese, body scan, passos e calorias, sono e frequência cardíaca de repouso, a prontidão do dia calculada deles, a frequência cardíaca média e o tempo em cada zona das corridas, as refeições registradas e a água do dia.',
+      'Avaliação física, anamnese, body scan, passos e calorias, sono e frequência cardíaca de repouso, a prontidão do dia calculada deles, a frequência cardíaca média e o tempo em cada zona das corridas, as refeições registradas, a água do dia e as medidas corporais que você ou seu especialista registram.',
   },
   {
     purpose: TECNICA,
@@ -86,7 +86,7 @@ export interface RevokeEffect {
  *
  * Retirar a saúde fecha o que consulta o aceite — a leitura do relógio
  * (`healthSync`), a anotação e a FC da sessão (`consentimento.ts`), a água (a RLS da
- * 0052), o body scan e as
+ * 0052), a medida declarada e a do especialista (a RLS da 0056), o body scan e as
  * rotas de inteligência artificial (`authorizeStudentWithHealthConsent`) e a leitura
  * do especialista (a RLS das tabelas do Art. 11). Treino e refeição não consultam, e
  * o kit prometia que paravam (#308).
@@ -118,7 +118,7 @@ export function revokeEffects(
       : []),
     {
       icon: 'create-outline',
-      text: 'As anotações, a FC dos treinos e a água do dia deixam de ser guardadas; os treinos e as refeições continuam registrados',
+      text: 'As anotações, a FC dos treinos, a água do dia e as medidas novas deixam de ser guardadas; os treinos e as refeições continuam registrados',
     },
     {
       icon: 'sparkles-outline',
