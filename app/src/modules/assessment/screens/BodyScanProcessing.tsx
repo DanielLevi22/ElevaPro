@@ -1,269 +1,302 @@
-import { createHealthService, type EtapaDaAnalise } from '@elevapro/shared';
-import { supabase } from '@elevapro/supabase';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Text, TouchableOpacity, View } from 'react-native';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { colors } from '@/constants/colors';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Text, View } from 'react-native';
+import { BarraDeDuasAcoes } from '@/components/ui/BarraDeDuasAcoes';
+import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
+import { HEALTH_GLOW } from '@/components/ui/BrilhoAmbiente';
+import { GlassScreen } from '@/components/ui/GlassScreen';
+import { ReferenceBody } from '@/components/ui/ReferenceBody';
+import { Vidro } from '@/components/ui/Vidro';
+import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/modules/auth/store/authStore';
 import { ROUTES } from '@/navigation/types';
+import { useBrilho, useCores, useEscala } from '@/shared/design';
+import { analysisSteps, type StepState } from '../services/captureProgress';
+import { grantScanConsent } from '../services/scanConsent';
 import { useAssessmentStore } from '../store/assessmentStore';
 import { AssessmentStatus } from '../types/assessment';
+
+/**
+ * Tela 5 do kit de body scan: a análise em andamento, e o que fazer quando ela
+ * falha ou pede autorização (#316).
+ *
+ * @example <BodyScanProcessing />
+ */
+export default function BodyScanProcessing() {
+  const router = useRouter();
+  const { submitScan, status, errorMessage, etapaDaAnalise, lastScanId } = useAssessmentStore();
+  const openResult = useOpenResult();
+  const opened = useRef<string | null>(null);
+  useSubmitOnce();
+
+  // Chegando o id, a tela sai sozinha, uma vez. O botão fica para quando a
+  // navegação falhar: uma tela que só sai por navegação fica presa quando ela
+  // falha — foi assim que uma análise de 14 s deixou o aluno no "Analisando...".
+  useEffect(() => {
+    if (status !== AssessmentStatus.COMPLETED || !lastScanId) return;
+    if (opened.current === lastScanId) return;
+    opened.current = lastScanId;
+    openResult(lastScanId);
+  }, [status, lastScanId, openResult]);
+
+  if (status === AssessmentStatus.COMPLETED && lastScanId) {
+    return (
+      <Outcome
+        title="Análise pronta"
+        action={{
+          label: 'Ver resultado',
+          icon: 'eye-outline',
+          onPress: () => openResult(lastScanId),
+        }}
+        onBack={router.back}
+      >
+        <Paragraph>Suas medidas foram calculadas e as fotos, apagadas do celular.</Paragraph>
+      </Outcome>
+    );
+  }
+
+  if (status === AssessmentStatus.ERROR) {
+    return (
+      <Outcome
+        title="A análise não completou"
+        action={{ label: 'Tentar de novo', icon: 'refresh', onPress: submitScan }}
+        onBack={router.back}
+      >
+        <FailureMessage text={errorMessage} />
+      </Outcome>
+    );
+  }
+
+  if (status === AssessmentStatus.NEEDS_CONSENT) return <ConsentOutcome />;
+
+  return (
+    <GlassScreen glow={HEALTH_GLOW} bottomSpace="tab">
+      <View className="flex-row justify-end pt-1.5">
+        {/* Volta para a grade com as fotos: fechar não é desistir do scan. */}
+        <BotaoRedondo icone="x" rotulo="Fechar" onPress={router.back} />
+      </View>
+      <View className="mt-6 items-center">
+        <ScanningBody />
+        <Text
+          accessibilityRole="header"
+          className="mt-[1.625rem] font-display-black text-[1.4375rem] tracking-tight text-hero"
+        >
+          Analisando suas fotos
+        </Text>
+        <Text className="mt-[0.4375rem] max-w-[16.875rem] text-center text-[0.8125rem] leading-[1.22rem] text-hero-secondary">
+          Costuma levar cerca de meio minuto. Não feche o app — as fotos não são guardadas depois da
+          análise.
+        </Text>
+      </View>
+      <Vidro classeExterna="mt-[1.375rem]" className="gap-[0.6875rem] p-[0.9375rem]">
+        {analysisSteps(etapaDaAnalise).map((step) => (
+          <StepRow key={step.label} label={step.label} state={step.state} />
+        ))}
+      </Vidro>
+    </GlassScreen>
+  );
+}
+
+/**
+ * Manda as fotos uma vez, ao abrir. O efeito não depende das fotos: no sucesso
+ * elas são zeradas, e um efeito que as lesse rodaria de novo e mandaria o aluno
+ * de volta à introdução por "não haver fotos".
+ */
+function useSubmitOnce() {
+  const router = useRouter();
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    const { capturedImages, submitScan } = useAssessmentStore.getState();
+    if (Object.keys(capturedImages).length === 0) {
+      router.back();
+      return;
+    }
+    void submitScan();
+  }, [router]);
+}
+
+/**
+ * Fecha o fluxo do scan e abre a leitura dentro de Progresso, onde o histórico
+ * mora. Fechar antes de abrir tira a grade e o preparo da pilha: voltar da
+ * leitura não pode cair numa captura que já acabou.
+ */
+function useOpenResult() {
+  const router = useRouter();
+  return (scanId: string) => {
+    if (router.canDismiss()) router.dismissAll();
+    router.push(ROUTES.PROGRESS.SCAN(scanId));
+  };
+}
+
+const BODY_HEIGHT = 250;
+
+/** O corpo com o anel tracejado, a luz e a linha de varredura do kit. */
+function ScanningBody() {
+  const brilho = useBrilho();
+  return (
+    <View className="items-center justify-center">
+      <View className="absolute h-[13.25rem] w-[13.25rem] rounded-full border border-dashed border-primary/45" />
+      <View className="absolute h-[10.25rem] w-[10.25rem] rounded-full bg-primary/10" />
+      <ReferenceBody height={BODY_HEIGHT} />
+      <View
+        className="absolute left-[14%] right-[14%] top-[42%] h-[0.15625rem] rounded-full bg-primary"
+        style={{ boxShadow: brilho({ blur: 22 }) }}
+      />
+    </View>
+  );
+}
+
+const STEP_ICON = 12;
+
+function StepRow({ label, state }: { label: string; state: StepState }) {
+  const cores = useCores();
+  const escalar = useEscala();
+  return (
+    <View className="flex-row items-center gap-[0.6875rem]">
+      <View
+        className={cn(
+          'h-[1.375rem] w-[1.375rem] items-center justify-center rounded-full',
+          state === 'done' ? 'bg-primary' : null,
+          state === 'doing' ? 'border-[0.09375rem] border-primary bg-primary/20' : null,
+          state === 'pending' ? 'bg-glass-strong' : null
+        )}
+      >
+        {state === 'done' ? (
+          <Ionicons name="checkmark" size={escalar(STEP_ICON)} color={cores.primaryForeground} />
+        ) : null}
+        {state === 'doing' ? <ActivityIndicator size="small" color={cores.primaryText} /> : null}
+      </View>
+      <Text
+        className={cn(
+          'flex-1 text-[0.78125rem]',
+          state === 'pending' ? 'text-placeholder' : 'text-foreground',
+          state === 'doing' ? 'font-bold' : 'font-medium'
+        )}
+      >
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+interface OutcomeProps {
+  title: string;
+  action: {
+    label: string;
+    icon: 'eye-outline' | 'refresh' | 'shield-checkmark-outline';
+    onPress: () => void;
+    busy?: boolean;
+  };
+  onBack: () => void;
+  backLabel?: string;
+  children: ReactNode;
+}
+
+/** O fim da espera que não é a análise em andamento: pronta, falha ou autorização. */
+function Outcome({ title, action, onBack, backLabel = 'Voltar', children }: OutcomeProps) {
+  return (
+    <GlassScreen
+      glow={HEALTH_GLOW}
+      bottomSpace="actionBar"
+      overlay={
+        <BarraDeDuasAcoes
+          semAbas
+          secundaria={{ rotulo: backLabel, icone: 'chevron-back', onPress: onBack }}
+          principal={{
+            rotulo: action.label,
+            icone: action.icon,
+            onPress: action.onPress,
+            desabilitada: action.busy,
+          }}
+        />
+      }
+    >
+      <View className="mt-10 items-center">
+        <ReferenceBody height={180} />
+        <Text
+          accessibilityRole="header"
+          className="mt-6 text-center font-display-black text-[1.4375rem] tracking-tight text-hero"
+        >
+          {title}
+        </Text>
+      </View>
+      {children}
+    </GlassScreen>
+  );
+}
+
+function Paragraph({ children }: { children: string }) {
+  return (
+    <Text className="mt-3 text-center text-[0.875rem] leading-[1.35rem] text-hero-secondary">
+      {children}
+    </Text>
+  );
+}
 
 /**
  * A frase do aluno e o diagnóstico de quem conserta, com pesos diferentes.
  *
  * `mensagemDeErroBff` devolve as duas no mesmo texto, separadas por linha em
- * branco. Renderizadas juntas e com o mesmo estilo, o aluno lia
- * "java.io.IOException: unexpected end of stream" como se fosse instrução do
- * que ele deveria fazer — e a frase que realmente diz o que fazer se perdia no
- * meio. O bloco `[dev]` só existe em desenvolvimento.
+ * branco. Com o mesmo estilo, o aluno lia "java.io.IOException" como instrução
+ * do que fazer. O bloco `[dev]` só existe em desenvolvimento.
  */
-function MensagemDaFalha({ texto }: { texto: string | null }) {
-  const [mensagem, ...diagnostico] = (
-    texto ?? 'Não consegui completar a análise. Tente de novo.'
+function FailureMessage({ text }: { text: string | null }) {
+  const [message, ...diagnosis] = (
+    text ?? 'Não consegui completar a análise. Tente de novo.'
   ).split('\n\n');
-
   return (
     <>
-      <Text className="text-zinc-200 text-base text-center mt-4 leading-6">{mensagem}</Text>
-      {diagnostico.length > 0 && (
-        <View className="mt-4 w-full rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-3">
-          <Text className="text-zinc-400 text-xs leading-5">{diagnostico.join('\n\n')}</Text>
-        </View>
-      )}
+      <Paragraph>{message}</Paragraph>
+      {diagnosis.length > 0 ? (
+        <Vidro classeExterna="mt-4" className="p-3.5">
+          <Text className="text-xs leading-5 text-muted-foreground">{diagnosis.join('\n\n')}</Text>
+        </Vidro>
+      ) : null}
+      {/* As fotos continuam no aparelho até a análise sair: repetir a captura
+          depois de esperar é o que fazia o aluno desistir. */}
+      <Paragraph>Suas fotos foram mantidas — não precisa tirar de novo.</Paragraph>
     </>
   );
 }
 
-/** O que cada etapa do fluxo significa para quem está esperando. */
-const TEXTO_DA_ETAPA: Record<EtapaDaAnalise, string> = {
-  lendo: 'Lendo as suas três fotos.',
-  proporcoes: 'Calculando as proporções do seu corpo.',
-  postura: 'Analisando a sua postura.',
-  recomendacoes: 'Escrevendo as recomendações.',
-};
-
-export default function BodyScanProcessing() {
+function ConsentOutcome() {
   const router = useRouter();
-  const { capturedImages, submitScan, status, errorMessage, etapaDaAnalise } = useAssessmentStore();
+  const submitScan = useAssessmentStore((s) => s.submitScan);
   const [granting, setGranting] = useState(false);
 
-  useEffect(() => {
-    let mounted = true;
-
-    const process = async () => {
-      if (Object.keys(capturedImages).length === 0) {
-        // No images? Go back
-        router.replace('/assessment/body-scan');
-        return;
-      }
-
-      await submitScan();
-
-      // A tela navegava para o resultado mesmo quando a análise falhava, e o
-      // aluno via um resultado vazio sem saber por quê.
-      if (useAssessmentStore.getState().status !== AssessmentStatus.COMPLETED) return;
-
-      if (!mounted) return;
-
-      // O destino é a rota do PRÓPRIO aluno, não a de `(tabs)/students/`, que é
-      // a aba do especialista — `href: null` para quem é `student` ou `member`.
-      // Mandar o aluno para lá não navegava: a análise terminava com sucesso e
-      // ele ficava preso no "Analisando...".
-      //
-      // Sempre a própria: o BFF usa `authorizeStudent` e deriva o id do token,
-      // então não existe escaneamento de terceiro para desviar daqui.
-      //
-      // Sem `as never`: o cast fazia destino inexistente deixar de ser erro de
-      // compilação e virar navegação que não acontece, sem erro e sem log.
-      router.replace(ROUTES.STUDENT.POSTURE_ANALYSIS);
-    };
-
-    process();
-
-    return () => {
-      mounted = false;
-    };
-  }, [capturedImages, submitScan, router]);
-
-  const handleGrantConsent = async () => {
+  const grant = async () => {
     const userId = useAuthStore.getState().session?.user?.id;
     if (!userId) return;
     setGranting(true);
     try {
-      await createHealthService(supabase).grantCollectionConsent(userId);
+      if (!(await grantScanConsent(userId))) return;
       await submitScan();
     } finally {
       setGranting(false);
     }
   };
 
-  // Sucesso tem tela própria, e não é luxo: sem ela a única saída daqui é a
-  // navegação, e foi assim que uma análise concluída em 14s deixou o aluno
-  // preso no "Analisando..." — a rota de destino era de uma aba que ele não
-  // tem. Uma tela que só sai por navegação fica presa quando a navegação falha.
-  if (status === AssessmentStatus.COMPLETED) {
-    return (
-      <View className="flex-1 bg-black items-center justify-center px-8">
-        <LinearGradient
-          colors={[colors.background.primary, '#1a1a2e', '#000000']}
-          style={{ position: 'absolute', width: '100%', height: '100%' }}
-        />
-        <Animated.View entering={FadeInUp.springify()} className="items-center">
-          <Text className="text-white text-2xl font-black text-center">Análise pronta</Text>
-          <Text className="text-zinc-400 text-sm text-center mt-4 leading-relaxed">
-            Suas medidas foram calculadas.
-          </Text>
-
-          <TouchableOpacity
-            onPress={() => router.replace(ROUTES.STUDENT.POSTURE_ANALYSIS)}
-            className="mt-8 bg-primary px-8 py-4 rounded-2xl w-full items-center"
-          >
-            <Text className="text-black font-black uppercase tracking-widest text-xs">
-              Ver resultado
-            </Text>
-          </TouchableOpacity>
-        </Animated.View>
-      </View>
-    );
-  }
-
-  if (status === AssessmentStatus.ERROR) {
-    return (
-      <View className="flex-1 bg-black items-center justify-center px-8">
-        <LinearGradient
-          colors={[colors.background.primary, '#1a1a2e', '#000000']}
-          style={{ position: 'absolute', width: '100%', height: '100%' }}
-        />
-        <Animated.View entering={FadeInUp.springify()} className="items-center">
-          <Text className="text-white text-2xl font-black text-center">
-            A análise não completou
-          </Text>
-          <MensagemDaFalha texto={errorMessage} />
-          {/* As fotos continuam no store: repetir a captura depois de esperar
-              a análise é o que fazia o aluno desistir. */}
-          <Text className="text-zinc-400 text-sm text-center mt-4">
-            Suas fotos foram mantidas — não precisa tirar de novo.
-          </Text>
-
-          <TouchableOpacity
-            onPress={() => submitScan()}
-            className="mt-8 bg-primary px-8 py-4 rounded-2xl w-full items-center"
-          >
-            <Text className="text-black font-black uppercase tracking-widest text-xs">
-              Tentar de novo
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => router.back()} className="mt-4 py-3">
-            <Text className="text-zinc-500 text-xs uppercase tracking-widest">Voltar</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      </View>
-    );
-  }
-
-  if (status === AssessmentStatus.NEEDS_CONSENT) {
-    return (
-      <View className="flex-1 bg-black items-center justify-center px-8">
-        <LinearGradient
-          colors={[colors.background.primary, '#1a1a2e', '#000000']}
-          style={{ position: 'absolute', width: '100%', height: '100%' }}
-        />
-        <Animated.View entering={FadeInUp.springify()} className="items-center">
-          <Text className="text-white text-2xl font-black text-center">
-            Falta o seu consentimento
-          </Text>
-          <Text className="text-zinc-400 text-sm text-center mt-4 leading-relaxed">
-            Para analisar suas fotos, precisamos da sua autorização para tratar dados de saúde. As
-            imagens vão para um serviço de inteligência artificial externo e não são guardadas — só
-            o resultado fica salvo.
-          </Text>
-          <Text className="text-zinc-500 text-xs text-center mt-3">
-            Você pode revogar essa autorização quando quiser, no seu perfil.
-          </Text>
-
-          <TouchableOpacity
-            onPress={handleGrantConsent}
-            disabled={granting}
-            className="mt-8 bg-primary px-8 py-4 rounded-2xl w-full items-center"
-          >
-            {granting ? (
-              <ActivityIndicator color="#000" />
-            ) : (
-              <Text className="text-black font-black uppercase tracking-widest text-xs">
-                Autorizar e analisar
-              </Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => router.back()} className="mt-4 py-3">
-            <Text className="text-zinc-500 text-xs uppercase tracking-widest">Agora não</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      </View>
-    );
-  }
-
   return (
-    <View className="flex-1 bg-black items-center justify-center">
-      <LinearGradient
-        colors={[colors.background.primary, '#1a1a2e', '#000000']}
-        style={{ position: 'absolute', width: '100%', height: '100%' }}
-      />
-
-      <Animated.View entering={FadeInUp.springify()} className="items-center">
-        <View className="w-24 h-24 bg-primary/20 rounded-full items-center justify-center mb-6 border border-primary/40 shadow-[0_0_30px_rgba(255,107,53,0.3)]">
-          <ActivityIndicator size="large" color={colors.primary.start} />
-        </View>
-
-        <Text className="text-white text-2xl font-black font-display mb-2">Analisando...</Text>
-        {/* A etapa vem do fluxo do BFF: é a seção que o modelo acabou de
-            escrever. Antes esta linha dizia "construindo seu modelo 3D",
-            que não existe — e não mudava nunca, então trinta segundos de
-            espera eram indistinguíveis de tela travada. */}
-        <Text className="text-zinc-300 text-center px-10 text-base">
-          {TEXTO_DA_ETAPA[etapaDaAnalise ?? 'lendo']}
-        </Text>
-        <Text className="text-zinc-500 text-center px-10 text-xs mt-2">
-          Costuma levar cerca de meio minuto.
-        </Text>
-      </Animated.View>
-
-      <Animated.View
-        entering={FadeInDown.delay(500)}
-        className="mt-10 flex-row gap-4 flex-wrap justify-center px-6"
-      >
-        {capturedImages.front && (
-          <View className="items-center gap-1">
-            <Image
-              source={{ uri: capturedImages.front }}
-              className="w-16 h-24 rounded-lg border-2 border-primary/50"
-            />
-            <Text className="text-zinc-500 text-[10px]">Frente</Text>
-          </View>
-        )}
-        {capturedImages.back && (
-          <View className="items-center gap-1">
-            <Image
-              source={{ uri: capturedImages.back }}
-              className="w-16 h-24 rounded-lg border-2 border-primary/50"
-            />
-            <Text className="text-zinc-500 text-[10px]">Costas</Text>
-          </View>
-        )}
-        {capturedImages.side && (
-          <View className="items-center gap-1">
-            <Image
-              source={{ uri: capturedImages.side }}
-              className="w-16 h-24 rounded-lg border-2 border-primary/50"
-            />
-            <Text className="text-zinc-500 text-[10px]">Lateral</Text>
-          </View>
-        )}
-      </Animated.View>
-    </View>
+    <Outcome
+      title="Falta a sua autorização"
+      action={{
+        label: 'Autorizar e analisar',
+        icon: 'shield-checkmark-outline',
+        onPress: grant,
+        busy: granting,
+      }}
+      onBack={router.back}
+      backLabel="Agora não"
+    >
+      <Paragraph>
+        Para analisar suas fotos, precisamos da sua autorização para tratar dados de saúde. As
+        imagens vão para um serviço de inteligência artificial externo e não são guardadas — só o
+        resultado fica salvo.
+      </Paragraph>
+      <Paragraph>Você pode revogar essa autorização quando quiser, no seu perfil.</Paragraph>
+    </Outcome>
   );
 }

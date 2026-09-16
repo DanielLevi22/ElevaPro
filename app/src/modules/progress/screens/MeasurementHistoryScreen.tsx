@@ -5,11 +5,11 @@ import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { PROGRESS_GLOW } from '@/components/ui/BrilhoAmbiente';
 import { GlassScreen } from '@/components/ui/GlassScreen';
 import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
+import { ProgressHeader } from '@/components/ui/ProgressHeader';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { ROUTES } from '@/navigation/types';
 import { EmptyCard } from '../components/ChartCard';
 import { chipDate } from '../components/measurementLabels';
-import { ProgressHeader } from '../components/ProgressHeader';
 import { SourceChips } from '../components/SourceChips';
 import { useMeasurements } from '../hooks/useMeasurements';
 

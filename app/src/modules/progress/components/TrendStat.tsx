@@ -2,10 +2,10 @@ import type { Ionicons as IoniconsType } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
+import { type ChartTone, toneColors } from '@/components/ui/charts/tones';
 import { Vidro } from '@/components/ui/Vidro';
 import { comOpacidade, useCores, useEscala } from '@/shared/design';
 import { Sparkline } from './charts/Sparkline';
-import { type ChartTone, toneColors } from './tones';
 
 /**
  * O cartão de número do kit de métricas (`Stat`): ícone tingido, valor, rótulo,

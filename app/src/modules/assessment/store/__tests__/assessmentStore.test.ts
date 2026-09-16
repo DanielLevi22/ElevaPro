@@ -44,6 +44,19 @@ jest.mock('../../services/aiBodyScan', () => {
   };
 });
 
+const mockList = jest.fn();
+jest.mock('@elevapro/shared', () => ({
+  ...jest.requireActual('@elevapro/shared'),
+  createBodyScanService: () => ({ list: (...args: unknown[]) => mockList(...args) }),
+}));
+
+const mockDiscardPhotos = jest.fn();
+const mockSweepLeftoverPhotos = jest.fn();
+jest.mock('../../services/capturedPhotos', () => ({
+  discardPhotos: (...args: unknown[]) => mockDiscardPhotos(...args),
+  sweepLeftoverPhotos: () => mockSweepLeftoverPhotos(),
+}));
+
 jest.mock('../../services/anamnesisService', () => ({
   AnamnesisService: { saveAnamnesis: jest.fn(), getAnamnesis: jest.fn() },
 }));
@@ -58,7 +71,7 @@ describe('assessmentStore', () => {
     const state = useAssessmentStore.getState();
     expect(state.status).toBe(AssessmentStatus.IDLE);
     expect(state.studentId).toBeNull();
-    expect(state.lastResult).toBeNull();
+    expect(state.lastScanId).toBeNull();
   });
 
   it('should set studentId', () => {
@@ -74,6 +87,7 @@ describe('assessmentStore', () => {
 
     expect(useAssessmentStore.getState().status).toBe(AssessmentStatus.SCANNING);
     expect(useAssessmentStore.getState().studentId).toBe('student-123');
+    expect(mockSweepLeftoverPhotos).toHaveBeenCalled();
   });
 
   it('should set captured images', () => {
@@ -88,11 +102,9 @@ describe('assessmentStore', () => {
 
   it('should handle successful submitScan', async () => {
     const mockResult = {
-      id: 'result-1',
+      scanId: 'scan-1',
       metrics: { height: 180, weight: 80, bodyFat: 15, leanMass: 65, bmi: 24.7 },
       segments: { chest: 100, waist: 80, hips: 95, arms: 35, thighs: 55 },
-      imageUrl: 'test-url',
-      date: new Date().toISOString(),
     };
     (AIBodyScanService.analyzeImages as jest.Mock).mockResolvedValue(mockResult);
 
@@ -108,8 +120,7 @@ describe('assessmentStore', () => {
 
     const state = useAssessmentStore.getState();
     expect(state.status).toBe(AssessmentStatus.COMPLETED);
-    expect(state.lastResult).toEqual(mockResult);
-    expect(state.history[0]).toEqual(mockResult);
+    expect(state.lastScanId).toBe('scan-1');
   });
 
   it('should handle submitScan error', async () => {
@@ -166,7 +177,7 @@ describe('submitScan — sem régua', () => {
 
     const state = useAssessmentStore.getState();
     expect(state.status).not.toBe(AssessmentStatus.COMPLETED);
-    expect(state.lastResult).toBeNull();
+    expect(state.lastScanId).toBeNull();
   });
 });
 
@@ -217,11 +228,9 @@ describe('submitScan — mensagens de falha', () => {
     expect(useAssessmentStore.getState().errorMessage).not.toBeNull();
 
     (AIBodyScanService.analyzeImages as jest.Mock).mockResolvedValue({
-      id: '1',
-      date: '2026-08-12',
+      scanId: 'scan-1',
       metrics: { height: 175, weight: 70, bodyFat: 18, leanMass: 35, bmi: 22.9 },
       segments: { chest: 100, waist: 82, hips: 95, arms: 38, thighs: 55 },
-      imageUrl: '',
     });
     await useAssessmentStore.getState().submitScan();
 
@@ -312,5 +321,98 @@ describe('submitScan — o erro que o aluno lê', () => {
     }
 
     expect(useAssessmentStore.getState().errorMessage).not.toContain('vercel.app');
+  });
+});
+
+describe('submitScan — as fotos no aparelho (#316)', () => {
+  const FOTOS = {
+    front: 'file:///cache/body-scan-1.jpg',
+    back: 'file:///cache/body-scan-2.jpg',
+    side: 'file:///cache/body-scan-3.jpg',
+  };
+  const RESULTADO = {
+    metrics: { height: 175, weight: 70, bodyFat: 18, leanMass: 57, bmi: 22.9 },
+    segments: { chest: 100, waist: 82, hips: 95, arms: 38, thighs: 55 },
+  };
+
+  beforeEach(() => {
+    useAssessmentStore.getState().reset();
+    jest.clearAllMocks();
+    const store = useAssessmentStore.getState();
+    store.setCapturedImage('front', FOTOS.front);
+    store.setCapturedImage('back', FOTOS.back);
+    store.setCapturedImage('side', FOTOS.side);
+  });
+
+  // LGPD, Art. 6°, III e Art. 16. A tela diz "as três fotos foram descartadas
+  // depois da análise". Com a análise gravada a foto não serve para mais nada,
+  // e mantê-la é guardar imagem do corpo inteiro que o aluno leu que não fica.
+  it('depois do sucesso nenhuma foto da captura sobra', async () => {
+    (AIBodyScanService.analyzeImages as jest.Mock).mockResolvedValue({
+      ...RESULTADO,
+      scanId: 'scan-9',
+    });
+
+    await useAssessmentStore.getState().submitScan();
+
+    const apagadas = mockDiscardPhotos.mock.calls.flatMap(([uris]) => uris as string[]);
+    const sobraram = Object.values(FOTOS).filter((uri) => !apagadas.includes(uri));
+    if (sobraram.length > 0) {
+      throw new Error(`FOTO DO CORPO FICOU NO APARELHO: ${sobraram.join(', ')}`);
+    }
+    expect(useAssessmentStore.getState().capturedImages).toEqual({});
+  });
+
+  it('análise sem gravação é falha, e as fotos ficam para tentar de novo', async () => {
+    (AIBodyScanService.analyzeImages as jest.Mock).mockResolvedValue({
+      ...RESULTADO,
+      persisted: false,
+    });
+
+    await useAssessmentStore.getState().submitScan();
+
+    const state = useAssessmentStore.getState();
+    expect(state.status).toBe(AssessmentStatus.ERROR);
+    expect(state.errorMessage).toContain('fotos foram mantidas');
+    expect(state.capturedImages).toEqual(FOTOS);
+    expect(mockDiscardPhotos).not.toHaveBeenCalled();
+  });
+
+  it('BFF anterior ao id: a análise gravada é a mais recente', async () => {
+    useAssessmentStore.getState().setStudentId('aluno-1');
+    mockList.mockResolvedValue([{ id: 'scan-recente' }]);
+    (AIBodyScanService.analyzeImages as jest.Mock).mockResolvedValue({
+      ...RESULTADO,
+      persisted: true,
+    });
+
+    await useAssessmentStore.getState().submitScan();
+
+    expect(useAssessmentStore.getState().lastScanId).toBe('scan-recente');
+    expect(mockList).toHaveBeenCalledWith('aluno-1', 1);
+  });
+
+  it('falha da análise mantém as fotos', async () => {
+    (AIBodyScanService.analyzeImages as jest.Mock).mockRejectedValue(
+      new BodyScanAnalysisError('ai_unavailable')
+    );
+
+    await useAssessmentStore.getState().submitScan();
+
+    expect(useAssessmentStore.getState().capturedImages).toEqual(FOTOS);
+    expect(mockDiscardPhotos).not.toHaveBeenCalled();
+  });
+
+  it('refazer apaga as três e zera a captura', async () => {
+    await useAssessmentStore.getState().discardCapture();
+
+    expect(mockDiscardPhotos).toHaveBeenCalledWith(Object.values(FOTOS));
+    expect(useAssessmentStore.getState().capturedImages).toEqual({});
+  });
+
+  it('refazer uma pose apaga a foto que ela substitui', () => {
+    useAssessmentStore.getState().setCapturedImage('back', 'file:///cache/body-scan-4.jpg');
+
+    expect(mockDiscardPhotos).toHaveBeenCalledWith([FOTOS.back]);
   });
 });

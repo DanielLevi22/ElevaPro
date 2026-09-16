@@ -1,7 +1,7 @@
 import { Text, View } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
+import { type ChartTone, toneColors } from '@/components/ui/charts/tones';
 import { useCores, useEscala } from '@/shared/design';
-import { type ChartTone, toneColors } from '../tones';
 
 /**
  * A rosca do kit (`Donut`): uma fatia por categoria, o total no meio e a legenda

@@ -11,8 +11,8 @@ import Svg, {
   Stop,
   Text as SvgText,
 } from 'react-native-svg';
+import { type ChartTone, toneColors } from '@/components/ui/charts/tones';
 import { useCores, useEscala } from '@/shared/design';
-import { type ChartTone, toneColors } from '../tones';
 import { type Point, smoothPath } from './geometry';
 
 /**

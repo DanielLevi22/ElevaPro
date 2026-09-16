@@ -2,15 +2,15 @@ import { consistencyWeeks, type ProgressSummary, summarizeProgress } from '@elev
 import { useRouter } from 'expo-router';
 import { type ReactNode, useMemo } from 'react';
 import { View } from 'react-native';
+import { ProgressHeader } from '@/components/ui/ProgressHeader';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
+import { trendDelta } from '@/components/ui/TrendDelta';
 import { Vidro } from '@/components/ui/Vidro';
 import type { DailyActivityState } from '@/hooks/useDailyActivity';
 import { ROUTES } from '@/navigation/types';
 import { ConsistencyGrid } from '../components/ConsistencyGrid';
-import { ProgressHeader } from '../components/ProgressHeader';
 import { ShortcutRow } from '../components/ShortcutRow';
 import { StreakCard } from '../components/StreakCard';
-import { trendDelta } from '../components/TrendDelta';
 import { TrendStat } from '../components/TrendStat';
 
 /**

@@ -76,6 +76,8 @@ interface BodyScanPayload extends ModelPayload {
   quality: VereditosDaCaptura;
   /** Falso quando a análise deu certo mas a gravação falhou — estados distintos. */
   persisted?: boolean;
+  /** A linha gravada em `body_scans`. Ausente quando a gravação falhou. */
+  scanId?: string;
 }
 
 /**
@@ -337,8 +339,9 @@ export async function POST(request: NextRequest) {
     // delta é onde está o valor. O `student_id` vem do token, nunca do corpo.
     // A imagem não é gravada — só o derivado (ADR-0010).
     const segments = modelResult.segments ?? {};
+    let saved: { id: string };
     try {
-      await createBodyScanService(client).save(userId, {
+      saved = await createBodyScanService(client).save(userId, {
         height_cm: scale.heightCm,
         weight_kg: scale.weightKg,
         scale_source: scaleSource,
@@ -384,7 +387,9 @@ export async function POST(request: NextRequest) {
       return { ...result, persisted: false };
     }
 
-    return { ...result, persisted: true };
+    // O id deixa o app abrir a análise gravada pela linha do banco, e não pela
+    // mais recente da lista — que, depois de uma gravação falha, é a anterior (#316).
+    return { ...result, persisted: true, scanId: saved.id };
   };
 
   // Daqui em diante a resposta é um fluxo NDJSON, e não mais um JSON único.

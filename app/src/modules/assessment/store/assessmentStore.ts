@@ -1,4 +1,4 @@
-import type { BodyScanDelta, BodyScanRecord, EtapaDaAnalise } from '@elevapro/shared';
+import type { BodyScanRecord, EtapaDaAnalise } from '@elevapro/shared';
 import { achatarRespostas, createBodyScanService } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { createMMKV } from 'react-native-mmkv';
@@ -13,13 +13,17 @@ import {
   BodyScanScaleError,
 } from '../services/aiBodyScan';
 import { AnamnesisService } from '../services/anamnesisService';
+import { discardPhotos, sweepLeftoverPhotos } from '../services/capturedPhotos';
 import type { AvisoDeQualidade } from '../services/portao';
 import {
   AnamnesisResponseValue,
   AssessmentStatus,
-  BodyScanResult,
+  type BodyScanResult,
   CaptureFraming,
 } from '../types/assessment';
+
+/** Quantas análises o histórico carrega. */
+const HISTORY_LIMIT = 100;
 
 const storage = createMMKV();
 
@@ -36,7 +40,7 @@ const clientStorage: StateStorage = {
   },
 };
 
-interface QualidadeDaCaptura {
+export interface QualidadeDaCaptura {
   backlit: boolean;
   lowLight: boolean;
   blownOut: boolean;
@@ -54,8 +58,13 @@ const QUALIDADE_LIMPA: QualidadeDaCaptura = {
 interface AssessmentState {
   status: AssessmentStatus;
   studentId: string | null;
-  lastResult: BodyScanResult | null;
-  history: BodyScanResult[];
+  /**
+   * A análise que acabou de sair, pelo id da linha em `body_scans`.
+   *
+   * O resultado não mora mais aqui: as telas leem a linha gravada, a mesma que o
+   * histórico abre. Duas fontes para a mesma análise é como uma delas mente (#316).
+   */
+  lastScanId: string | null;
   capturedImages: {
     front?: string;
     back?: string;
@@ -69,6 +78,13 @@ interface AssessmentState {
   setStudentId: (id: string) => void;
   startScan: () => Promise<void>;
   setCapturedImage: (type: 'front' | 'back' | 'side', uri: string) => void;
+  /**
+   * Apaga as fotos deste scan do aparelho e zera o que foi medido nelas.
+   *
+   * É o "Refazer" da grade e a saída do fluxo sem analisar: a foto só existe
+   * enquanto serve para a análise (#316 §3).
+   */
+  discardCapture: () => Promise<void>;
   /**
    * O que o aparelho mediu em cada foto, em pixels e graus.
    *
@@ -148,21 +164,34 @@ interface AssessmentState {
   deleteScan: (scanId: string, studentId: string) => Promise<void>;
   /** Texto pronto para a tela. Null quando não houve falha. */
   errorMessage: string | null;
-  scanDeltas: BodyScanDelta[];
   reset: () => void;
 }
 
+/** A análise saiu, mas a linha não foi gravada: sem ela não há resultado para abrir. */
+const SAVE_FAILED_MESSAGE =
+  'A análise terminou, mas não consegui salvar o resultado. Tente de novo — suas fotos foram mantidas.';
+
 /**
- * O que o aluno lê quando a análise não sai.
+ * O id da análise gravada.
  *
- * Antes, quatro causas diferentes viravam a mesma frase: o store só reconhecia
- * consentimento e falha de análise, e substituía todo o resto pela genérica —
- * inclusive a falta de altura, que o serviço já sabia nomear. O aluno via
- * "tente de novo" num caminho que nunca podia funcionar.
+ * O BFF anterior à #316 grava e responde `persisted: true` sem o id. Com ele, a
+ * análise gravada é a mais recente da lista — só `persisted: false` diz que ela
+ * não existe, e aí a mais recente seria a anterior, com cara de nova.
+ */
+async function savedScanId(
+  result: BodyScanResult,
+  studentId: string | null
+): Promise<string | null> {
+  if (result.scanId) return result.scanId;
+  if (result.persisted !== true || !studentId) return null;
+  const [latest] = await createBodyScanService(supabase).list(studentId, 1);
+  return latest?.id ?? null;
+}
+
+/**
+ * Traduz a causa técnica para o próximo passo que o aluno consegue tomar.
  *
- * As outras cinco superfícies de IA do produto já passam pelo tradutor
- * compartilhado desde 2026-08-28. Esta ficou de fora, e é a que este bloco
- * finalmente liga.
+ * @example mensagemDaFalha(new BodyScanScaleError())
  */
 function mensagemDaFalha(error: unknown): string {
   // Falta de escala não é falha de análise: é dado que falta, e o remédio é
@@ -184,10 +213,8 @@ export const useAssessmentStore = create<AssessmentState>()(
     (set, get) => ({
       status: AssessmentStatus.IDLE,
       studentId: null,
-      lastResult: null,
-      history: [],
+      lastScanId: null,
       scanHistory: [],
-      scanDeltas: [],
       errorMessage: null,
       capturedImages: {},
       captureFraming: null,
@@ -198,6 +225,9 @@ export const useAssessmentStore = create<AssessmentState>()(
       setStudentId: (id: string) => set({ studentId: id }),
 
       startScan: async () => {
+        // Antes de a primeira foto nova existir: o que sobrou de um scan
+        // interrompido não tem mais caminho no store, só o nome no cache.
+        await sweepLeftoverPhotos();
         // Zera medidas, escala de referência e ressalvas: sem isto o scan novo
         // herdaria o contraluz do anterior e mediria contra uma distância que
         // o aluno não repetiu.
@@ -211,12 +241,23 @@ export const useAssessmentStore = create<AssessmentState>()(
       },
 
       setCapturedImage: (type: 'front' | 'back' | 'side', uri: string) => {
-        console.log('[AssessmentStore] Setting captured image:', type, uri);
-        set((state) => {
-          const newImages = { ...state.capturedImages, [type]: uri };
-          console.log('[AssessmentStore] Updated images:', newImages);
-          return { capturedImages: newImages };
+        // Refazer uma pose troca a foto: a anterior sai do disco na hora. Sem
+        // log do caminho — o nome do arquivo marca quando a pessoa se fotografou.
+        const replaced = get().capturedImages[type];
+        if (replaced && replaced !== uri) void discardPhotos([replaced]);
+        set((state) => ({ capturedImages: { ...state.capturedImages, [type]: uri } }));
+      },
+
+      discardCapture: async () => {
+        const photos = Object.values(get().capturedImages);
+        set({
+          capturedImages: {},
+          medidas: {},
+          ocupacaoDeReferencia: null,
+          qualidade: QUALIDADE_LIMPA,
+          captureFraming: null,
         });
+        await discardPhotos(photos);
       },
 
       setCaptureFraming: (framing: CaptureFraming) => set({ captureFraming: framing }),
@@ -260,11 +301,16 @@ export const useAssessmentStore = create<AssessmentState>()(
             (etapa) => set({ etapaDaAnalise: etapa })
           );
 
-          set((state) => ({
-            status: AssessmentStatus.COMPLETED,
-            lastResult: result,
-            history: [result, ...state.history],
-          }));
+          // Sem a linha gravada não há o que abrir: as telas leem do banco. As
+          // fotos ficam para o "Tentar de novo", como a tela de falha promete.
+          const scanId = await savedScanId(result, get().studentId);
+          if (!scanId) {
+            set({ status: AssessmentStatus.ERROR, errorMessage: SAVE_FAILED_MESSAGE });
+            return;
+          }
+          const photos = Object.values(get().capturedImages);
+          set({ status: AssessmentStatus.COMPLETED, lastScanId: scanId, capturedImages: {} });
+          await discardPhotos(photos);
         } catch (error) {
           // Falta de consentimento não é falha: leva a uma tela que resolve,
           // não à mesma mensagem de erro genérica.
@@ -344,27 +390,26 @@ export const useAssessmentStore = create<AssessmentState>()(
        * e o delta é onde está o valor da feature (ADR-0010).
        */
       loadHistory: async (studentId: string) => {
-        const service = createBodyScanService(supabase);
-        const [scans, comparison] = await Promise.all([
-          service.list(studentId),
-          service.latestWithComparison(studentId),
-        ]);
-        set({ scanHistory: scans, scanDeltas: comparison.deltas });
+        // Cem, e não os dez do padrão: a lista é o caminho para apagar (Art. 18, VI),
+        // e análise fora dela ficaria sem lixeira.
+        const scans = await createBodyScanService(supabase).list(studentId, HISTORY_LIMIT);
+        set({ scanHistory: scans });
       },
 
       deleteScan: async (scanId: string, studentId: string) => {
         const service = createBodyScanService(supabase);
         await service.deleteOwn(scanId);
-        // Recarrega em vez de filtrar em memória: apagar a análise mais recente
-        // muda a comparação, e um `scanDeltas` que sobreviva ao seu scan mostra
-        // ao aluno uma variação contra uma medida que não existe mais.
+        // Recarrega em vez de filtrar em memória: apagar uma análise muda a
+        // comparação da seguinte, e a lista velha mostraria uma variação contra
+        // uma medida que não existe mais.
         await get().loadHistory(studentId);
       },
 
       reset: () => {
+        void discardPhotos(Object.values(get().capturedImages));
         set({
           status: AssessmentStatus.IDLE,
-          lastResult: null,
+          lastScanId: null,
           capturedImages: {},
           captureFraming: null,
           studentId: null,
@@ -372,7 +417,6 @@ export const useAssessmentStore = create<AssessmentState>()(
           currentSectionIndex: 0,
           isAnamnesisSubmitted: false,
           scanHistory: [],
-          scanDeltas: [],
           errorMessage: null,
         });
       },

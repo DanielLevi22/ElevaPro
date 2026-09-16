@@ -13,7 +13,9 @@ import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { PROGRESS_GLOW } from '@/components/ui/BrilhoAmbiente';
 import { GlassScreen } from '@/components/ui/GlassScreen';
 import { InfoNote } from '@/components/ui/InfoNote';
+import { ProgressHeader } from '@/components/ui/ProgressHeader';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
+import { TrendDelta } from '@/components/ui/TrendDelta';
 import { Vidro } from '@/components/ui/Vidro';
 import { ROUTES } from '@/navigation/types';
 import { useCores, useEscala } from '@/shared/design';
@@ -21,9 +23,7 @@ import { CardTitle } from '../components/CardTitle';
 import { EmptyCard } from '../components/ChartCard';
 import { RadarChart } from '../components/charts/RadarChart';
 import { shortDate } from '../components/measurementLabels';
-import { ProgressHeader } from '../components/ProgressHeader';
 import { SourceChips } from '../components/SourceChips';
-import { TrendDelta } from '../components/TrendDelta';
 import { useMeasurements } from '../hooks/useMeasurements';
 
 /**

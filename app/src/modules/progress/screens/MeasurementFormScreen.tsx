@@ -13,13 +13,13 @@ import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { PROGRESS_GLOW } from '@/components/ui/BrilhoAmbiente';
 import { GlassScreen } from '@/components/ui/GlassScreen';
 import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
+import { ProgressHeader } from '@/components/ui/ProgressHeader';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import { localDateKey } from '@/services/healthSync';
 import { EmptyCard } from '../components/ChartCard';
 import { MeasureField } from '../components/MeasureField';
 import { chipDate } from '../components/measurementLabels';
-import { ProgressHeader } from '../components/ProgressHeader';
 import { useMeasurementMutations, useMeasurements } from '../hooks/useMeasurements';
 
 /**

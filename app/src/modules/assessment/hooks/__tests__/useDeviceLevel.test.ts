@@ -55,7 +55,7 @@ describe('useDeviceLevel', () => {
 
     emitir(0, 0);
 
-    await waitFor(() => expect(result.current.nivelado).toBe(true));
+    await waitFor(() => expect(result.current.isLevel).toBe(true));
     expect(result.current.pitch).toBe(0);
     expect(result.current.roll).toBe(0);
   });
@@ -71,7 +71,7 @@ describe('useDeviceLevel', () => {
     // Esperar por `nivelado === false` passaria de imediato: é o estado
     // inicial. O pitch só chega pelo listener, então é ele que prova a leitura.
     await waitFor(() => expect(result.current.pitch).toBe(-20));
-    expect(result.current.nivelado).toBe(false);
+    expect(result.current.isLevel).toBe(false);
   });
 
   it('recusa torção lateral além da tolerância', async () => {
@@ -81,7 +81,7 @@ describe('useDeviceLevel', () => {
     emitir(15, 0);
 
     await waitFor(() => expect(result.current.roll).toBe(15));
-    expect(result.current.nivelado).toBe(false);
+    expect(result.current.isLevel).toBe(false);
   });
 
   it('sem sensor, libera o disparo em vez de prender o aluno', async () => {
@@ -92,8 +92,8 @@ describe('useDeviceLevel', () => {
     // `nivelado` verdadeiro com `disponivel` falso é a combinação que diz
     // "não dá para verificar" — a tela usa isso para não prometer conferência.
     // Só o ramo sem sensor produz `nivelado: true`, então é ele que se espera.
-    await waitFor(() => expect(result.current.nivelado).toBe(true));
-    expect(result.current.disponivel).toBe(false);
+    await waitFor(() => expect(result.current.isLevel).toBe(true));
+    expect(result.current.isAvailable).toBe(false);
     expect(Accelerometer.addListener).not.toHaveBeenCalled();
   });
 
@@ -109,7 +109,7 @@ describe('useDeviceLevel', () => {
     const listener = (Accelerometer.addListener as jest.Mock).mock.calls[0][0];
     listener(gravidade(3, 0));
 
-    await waitFor(() => expect(result.current.disponivel).toBe(true));
+    await waitFor(() => expect(result.current.isAvailable).toBe(true));
     expect(result.current.roll).toBe(3);
   });
 
@@ -123,11 +123,11 @@ describe('useDeviceLevel', () => {
     const listener = (Accelerometer.addListener as jest.Mock).mock.calls[0][0];
     listener({ x: 0.17, y: 9.18, z: 1.49 });
 
-    await waitFor(() => expect(result.current.disponivel).toBe(true));
+    await waitFor(() => expect(result.current.isAvailable).toBe(true));
     expect(Math.abs(result.current.roll)).toBeLessThan(2);
     // Apoiado, ele fica naturalmente perto de 9° para trás — dentro da
     // tolerância de pitch, que é folgada justamente por isso.
     expect(result.current.pitch).toBeCloseTo(9.2, 0);
-    expect(result.current.nivelado).toBe(true);
+    expect(result.current.isLevel).toBe(true);
   });
 });

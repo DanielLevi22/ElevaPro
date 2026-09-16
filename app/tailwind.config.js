@@ -118,6 +118,12 @@ module.exports = {
           ritmo: literal('texto-ritmo'),
           cadencia: literal('texto-cadencia'),
         },
+        /** Texto de sono, passos e calorias: o "tudo certo" do body scan é o verde dos passos (#316). */
+        'texto-saude': {
+          sono: literal('texto-sono'),
+          passos: literal('texto-passos'),
+          calorias: literal('texto-calorias'),
+        },
         metrica: {
           passos: comAlfa('metrica-passos'),
           calorias: comAlfa('metrica-calorias'),

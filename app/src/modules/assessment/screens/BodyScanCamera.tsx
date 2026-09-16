@@ -1,17 +1,31 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import Volume2 from 'lucide-react-native/icons/volume-2';
+import VolumeX from 'lucide-react-native/icons/volume-x';
+import X from 'lucide-react-native/icons/x';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Text, TouchableOpacity, Vibration, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { showAlert } from '@/components/ui/appAlert';
 import { useVoiceCoach } from '@/hooks/useVoiceCoach';
 import BodyScanPoseView, {
   type BodyScanPoseRef,
   type FatosDeVisao,
 } from '../../../../modules/body-scan-pose';
-import { MarcasDoEnquadramento } from '../components/MarcasDoEnquadramento';
+import {
+  CameraMeasuringOverlay,
+  CameraPermission,
+  CameraRoundButton,
+  CameraShade,
+  CaptureBar,
+  InstructionCard,
+  StatusChips,
+} from '../components/CameraChrome';
+import { CaptureGuide } from '../components/CaptureGuide';
 import { useDeviceLevel } from '../hooks/useDeviceLevel';
+import { cameraChips } from '../services/captureProgress';
+import { measureCapturedPhoto } from '../services/measuredCapture';
 import {
   type AvisoDeQualidade,
   avaliarPortao,
@@ -19,6 +33,7 @@ import {
   type Portao,
   type Vista,
 } from '../services/portao';
+import { POSES, poseNumber, poseTitle } from '../services/poses';
 import { useAssessmentStore } from '../store/assessmentStore';
 
 /**
@@ -37,8 +52,6 @@ const MARCA_BASE = 0.9;
  * não é tempo para caminhar, é tempo para parar de se mexer.
  */
 const CONTAGEM_SEGUNDOS = 5;
-
-const TITULOS: Record<Vista, string> = { front: 'Frente', back: 'Costas', side: 'Lateral' };
 
 /**
  * Quanto tempo preso antes de oferecer a saída manual.
@@ -62,10 +75,11 @@ export default function BodyScanCamera() {
   const [permissao, pedirPermissao] = useCameraPermissions();
   const camera = useRef<BodyScanPoseRef>(null);
   const router = useRouter();
+  const capturedImages = useAssessmentStore((s) => s.capturedImages);
   const params = useLocalSearchParams();
   const target = params.target as Vista;
 
-  const nivel = useDeviceLevel();
+  const deviceLevel = useDeviceLevel();
   const { speak } = useVoiceCoach();
   const vozMuda = useAssessmentStore((s) => s.vozMuda);
   const setVozMuda = useAssessmentStore((s) => s.setVozMuda);
@@ -98,8 +112,8 @@ export default function BodyScanCamera() {
    * enxergaria a inclinação de quando a tela montou. O sensor emite 5x por
    * segundo e não deve provocar re-render nenhum.
    */
-  const nivelRef = useRef(nivel);
-  nivelRef.current = nivel;
+  const deviceLevelRef = useRef(deviceLevel);
+  deviceLevelRef.current = deviceLevel;
 
   /** A última instrução dita. É por ela que a voz não repete a mesma frase. */
   const ultimaFalada = useRef<IdDaInstrucao | null>(null);
@@ -138,7 +152,7 @@ export default function BodyScanCamera() {
 
   const aoFatos = useCallback(
     (evento: { nativeEvent: FatosDeVisao }) => {
-      const { pitch, roll, disponivel } = nivelRef.current;
+      const { pitch, roll, isAvailable } = deviceLevelRef.current;
 
       const resultado = avaliarPortao(
         {
@@ -146,7 +160,7 @@ export default function BodyScanCamera() {
           vistaPedida: target,
           pitch,
           roll,
-          nivelDisponivel: disponivel,
+          nivelDisponivel: isAvailable,
         },
         {
           ultimaFalada: ultimaFalada.current,
@@ -199,7 +213,15 @@ export default function BodyScanCamera() {
         // análise cair no método antigo, que reintroduziria dois métodos na
         // mesma série. Guardar primeiro deixaria a foto num meio-estado, válida
         // no store e inútil para a análise.
-        const medida = await camera.current?.medir(uri, target === 'side').catch(() => null);
+        const medida = await measureCapturedPhoto(
+          uri,
+          target === 'side',
+          {
+            measure: (photoUri, isSide) =>
+              camera.current?.medir(photoUri, isSide) ?? Promise.resolve(null),
+          },
+          { manualFallback: semEnquadramento }
+        );
         setMedindo(false);
 
         Haptics.notificationAsync(
@@ -244,9 +266,9 @@ export default function BodyScanCamera() {
         setCaptureFraming({
           markTop: MARCA_TOPO,
           markBottom: MARCA_BASE,
-          pitch: nivelRef.current.pitch,
-          roll: nivelRef.current.roll,
-          levelSensor: nivelRef.current.disponivel,
+          pitch: deviceLevelRef.current.pitch,
+          roll: deviceLevelRef.current.roll,
+          levelSensor: deviceLevelRef.current.isAvailable,
           camera: lenteFrontal ? 'front' : 'back',
         });
 
@@ -340,23 +362,11 @@ export default function BodyScanCamera() {
   if (!permissao) return <View className="flex-1 bg-black" />;
 
   if (!permissao.granted) {
-    return (
-      <View className="flex-1 justify-center items-center bg-black px-8">
-        <Text className="text-white text-center mb-6">
-          Preciso da câmera para te posicionar e medir o enquadramento.
-        </Text>
-        <TouchableOpacity
-          className="bg-primary px-8 py-4 rounded-full"
-          onPress={pedirPermissao}
-          accessibilityRole="button"
-        >
-          <Text className="text-black font-bold">Permitir câmera</Text>
-        </TouchableOpacity>
-      </View>
-    );
+    return <CameraPermission onAllow={pedirPermissao} onClose={router.back} />;
   }
 
   const instrucao = portao?.instrucao ?? null;
+  const capturedCount = Object.keys(capturedImages).length;
 
   return (
     <View className="flex-1 bg-black">
@@ -371,89 +381,76 @@ export default function BodyScanCamera() {
         onEstado={(e) => setEstado(e.nativeEvent.estado)}
       />
 
-      <MarcasDoEnquadramento
-        topo={MARCA_TOPO}
-        base={MARCA_BASE}
-        proximidade={portao?.proximidade ?? 'longe'}
+      <CameraShade />
+      <CaptureGuide
+        top={MARCA_TOPO}
+        bottom={MARCA_BASE}
+        proximity={portao?.proximidade ?? 'longe'}
       />
 
-      {medindo && (
-        <View className="absolute inset-0 items-center justify-center bg-black/70">
-          <Text className="text-white text-2xl font-black">Foto tirada</Text>
-          <Text className="text-zinc-300 text-base mt-2">Medindo…</Text>
-        </View>
-      )}
-
-      <View className="absolute top-12 left-0 right-0 items-center px-6">
-        <View className="bg-black/50 px-6 py-3 rounded-full border border-white/20">
-          <Text className="text-white font-bold text-lg">{TITULOS[target] ?? 'Foto'}</Text>
-        </View>
-
-        {/* Uma instrução por vez. Silêncio — aqui, ausência de caixa — significa
-            que está bom, e é informação tanto quanto a frase. */}
-        {instrucao !== null && (
-          <View className="mt-4 bg-amber-500/20 border border-amber-500/40 px-5 py-3 rounded-2xl">
-            <Text className="text-amber-200 text-sm font-bold text-center">{instrucao.texto}</Text>
-          </View>
-        )}
-
-        {portao === null && (
-          <Text className="text-white/70 text-xs mt-4 text-center">{estado}</Text>
-        )}
-      </View>
-
-      <View className="absolute top-12 right-5 gap-3">
-        <TouchableOpacity
-          onPress={() => setVozMuda(!vozMuda)}
-          className="w-12 h-12 rounded-full bg-black/50 border border-white/20 items-center justify-center"
-          accessibilityRole="button"
-          accessibilityLabel={vozMuda ? 'Ligar a voz' : 'Desligar a voz'}
-        >
-          <Ionicons
-            name={vozMuda ? 'volume-mute-outline' : 'volume-high-outline'}
-            size={22}
-            color="white"
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => setLenteFrontal(!lenteFrontal)}
-          disabled={contagem !== null}
-          className="w-12 h-12 rounded-full bg-black/50 border border-white/20 items-center justify-center"
-          accessibilityRole="button"
-          accessibilityLabel={lenteFrontal ? 'Usar câmera traseira' : 'Usar câmera frontal'}
-        >
-          <Ionicons name="camera-reverse-outline" size={22} color="white" />
-        </TouchableOpacity>
-      </View>
-
+      {/* O número grande continua além do anel: o aluno está a metros da tela,
+          e o anel do kit não se lê dessa distância. */}
       {contagem !== null && (
         <View pointerEvents="none" className="absolute inset-0 items-center justify-center">
-          <Text className="text-white text-[120px] font-black">{contagem}</Text>
-          <Text className="text-emerald-300 text-base font-bold">fique parado</Text>
+          <Text className="font-display-black text-[7.5rem] text-sobre-imagem">{contagem}</Text>
+          <Text className="text-base font-bold text-metrica-passos">fique parado</Text>
         </View>
       )}
 
-      <View className="absolute bottom-12 w-full items-center">
-        {/* A saída de emergência só aparece depois de a espera se provar longa.
-            Antes disso ela seria um convite a pular o portão. */}
-        {ofereceSaida && contagem === null && (
-          <TouchableOpacity
-            onPress={() => disparar(true)}
-            className="bg-amber-500/25 border border-amber-500/50 px-6 py-3 rounded-full"
-            accessibilityRole="button"
-          >
-            <Text className="text-amber-200 font-bold">Tirar assim mesmo</Text>
-          </TouchableOpacity>
-        )}
+      <SafeAreaView pointerEvents="box-none" className="absolute inset-0" edges={['top', 'bottom']}>
+        <View pointerEvents="box-none" className="flex-1 px-[1.125rem] pb-[1.125rem] pt-[0.375rem]">
+          <View className="flex-row items-center gap-3">
+            <CameraRoundButton icon={X} label="Fechar a câmera" onPress={router.back} />
+            <View className="flex-1 items-center">
+              <Text className="text-[0.65625rem] font-extrabold uppercase tracking-[0.18em] text-primary">
+                Foto {poseNumber(target)} de {POSES.length}
+              </Text>
+              <Text className="mt-px text-[0.9375rem] font-bold text-sobre-imagem">
+                {poseTitle(target)}
+              </Text>
+            </View>
+            <CameraRoundButton
+              icon={vozMuda ? VolumeX : Volume2}
+              label={vozMuda ? 'Ligar a voz' : 'Desligar a voz'}
+              onPress={() => setVozMuda(!vozMuda)}
+            />
+          </View>
 
-        <TouchableOpacity
-          className="mt-6 bg-black/50 px-6 py-3 rounded-full"
-          onPress={() => router.back()}
-        >
-          <Text className="text-white font-semibold">Cancelar</Text>
-        </TouchableOpacity>
-      </View>
+          <StatusChips chips={cameraChips(portao, deviceLevel)} />
+          {portao === null && (
+            <Text className="mt-3 text-center text-xs text-sobre-imagem-secundario">{estado}</Text>
+          )}
+
+          <View pointerEvents="none" className="flex-1" />
+
+          {/* Uma instrução por vez. Silêncio — aqui, ausência de cartão —
+            significa que está bom, e é informação tanto quanto a frase. */}
+          {instrucao !== null && <InstructionCard text={instrucao.texto} />}
+
+          {/* A saída de emergência só aparece depois de a espera se provar longa.
+            Antes disso ela seria um convite a pular o portão. */}
+          {ofereceSaida && contagem === null && (
+            <TouchableOpacity
+              onPress={() => disparar(true)}
+              className="mt-3 items-center self-center rounded-full border border-metrica-gordura/50 bg-metrica-gordura/25 px-6 py-3"
+              accessibilityRole="button"
+            >
+              <Text className="font-bold text-sobre-imagem">Tirar assim mesmo</Text>
+            </TouchableOpacity>
+          )}
+
+          <CaptureBar
+            photosDone={capturedCount}
+            countdown={contagem}
+            measuring={medindo}
+            onSwitchLens={() => setLenteFrontal(!lenteFrontal)}
+            lensLabel={lenteFrontal ? 'Usar câmera traseira' : 'Usar câmera frontal'}
+            lensLocked={contagem !== null}
+          />
+        </View>
+      </SafeAreaView>
+
+      {medindo ? <CameraMeasuringOverlay /> : null}
     </View>
   );
 }

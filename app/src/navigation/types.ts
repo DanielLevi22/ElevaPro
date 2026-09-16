@@ -71,7 +71,6 @@ export const ROUTES = {
       `/(tabs)/students/${id}/assessment`,
     ANALYTICS: (id: string): `/(tabs)/students/${string}/analytics` =>
       `/(tabs)/students/${id}/analytics`,
-    POSTURE_ANALYSIS: `/(tabs)/students/posture-analysis`,
   },
 
   // Workout Flows
@@ -119,8 +118,9 @@ export const ROUTES = {
     ANAMNESIS: '/student/anamnesis',
     /** Histórico das próprias sessões, com o caminho de correção (Art. 18, III). */
     SESSION_HISTORY: '/student/session-history',
-    /** A própria análise corporal. A gêmea em (tabs)/students/ é do especialista. */
-    POSTURE_ANALYSIS: '/student/posture-analysis',
+    /** A antiga postura agora Ã© a leitura da anÃ¡lise, dentro de Progresso (#316). */
+    POSTURE_ANALYSIS: (id: string) =>
+      ({ pathname: '/(tabs)/progress/scans/[id]', params: { id } }) as const,
   },
 
   // Métricas em vidro (#312): o hub e o que se abre dele, dentro da aba Progresso.
@@ -141,6 +141,21 @@ export const ROUTES = {
     MEASUREMENTS: '/(tabs)/progress/measurements',
     /** O relatório dos últimos 90 dias, com a exportação em PDF. */
     REPORT: '/(tabs)/progress/report',
+    /**
+     * O histórico de body scans (#316). Arquivo simples com a pasta `scans/`
+     * irmã: `scans/index` sai tipado como `/scans/index`, que o roteador não serve.
+     */
+    SCANS: '/(tabs)/progress/scans',
+    /**
+     * A leitura de uma análise: confiança, notas, achados e recomendação.
+     *
+     * Em objeto, e não em texto: o typegen de um Metro já aberto tipa `[id]`
+     * novo como segmento literal, e a forma com `params` passa nos dois casos.
+     */
+    SCAN: (id: string) => ({ pathname: '/(tabs)/progress/scans/[id]', params: { id } }) as const,
+    /** As medidas estimadas de uma análise, contra a anterior. */
+    SCAN_MEASURES: (id: string) =>
+      ({ pathname: '/(tabs)/progress/scan-measures/[id]', params: { id } }) as const,
   },
 
   // Saúde em vidro (#308): dentro das abas, com a tab bar, como o kit desenha.

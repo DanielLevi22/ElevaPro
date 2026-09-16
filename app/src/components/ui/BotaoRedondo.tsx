@@ -11,8 +11,11 @@ import MicOff from 'lucide-react-native/icons/mic-off';
 import Music from 'lucide-react-native/icons/music';
 import Plus from 'lucide-react-native/icons/plus';
 import RefreshCw from 'lucide-react-native/icons/refresh-cw';
+import Ruler from 'lucide-react-native/icons/ruler';
 import Search from 'lucide-react-native/icons/search';
 import Share from 'lucide-react-native/icons/share';
+// No lucide 1.46 o `trash-2` do kit é apelido do arquivo `trash`.
+import Trash2 from 'lucide-react-native/icons/trash';
 import Volume2 from 'lucide-react-native/icons/volume-2';
 import VolumeX from 'lucide-react-native/icons/volume-x';
 import X from 'lucide-react-native/icons/x';
@@ -57,6 +60,9 @@ const ICONES = {
   'mic-off': MicOff,
   plus: Plus,
   search: Search,
+  /** Apagar uma análise do body scan e a régua da medida com fita (#316). */
+  'trash-2': Trash2,
+  ruler: Ruler,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IconeRedondo = keyof typeof ICONES;
