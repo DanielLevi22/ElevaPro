@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Text, View } from 'react-native';
 import { BarraDeDuasAcoes } from '@/components/ui/BarraDeDuasAcoes';
+import { BotaoFixoNoRodape } from '@/components/ui/BotaoFixoNoRodape';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { PROGRESS_GLOW } from '@/components/ui/BrilhoAmbiente';
 import { GlassScreen } from '@/components/ui/GlassScreen';
@@ -49,23 +50,26 @@ export function CircumferencesScreen({ studentId, canDeclare }: CircumferencesSc
   const latest = series.at(-1);
   const baseline = baselineBefore(series);
   const editable = latest?.measured_by === 'self';
-  const actions = canDeclare ? (
+  const register = {
+    rotulo: 'Registrar medida',
+    icone: 'add' as const,
+    onPress: () => router.push(ROUTES.PROGRESS.MEASUREMENT_FORM),
+  };
+  // "Editar" só existe com um registro declarado aberto: a medida do especialista
+  // não se corrige, e um botão desabilitado ali promete o que nunca vai acontecer.
+  const actions = !canDeclare ? undefined : editable && latest ? (
     <BarraDeDuasAcoes
       secundaria={{
         rotulo: 'Editar',
         icone: 'pencil',
-        desabilitada: !editable,
         onPress: () =>
-          latest &&
           router.push({ pathname: ROUTES.PROGRESS.MEASUREMENT_FORM, params: { id: latest.id } }),
       }}
-      principal={{
-        rotulo: 'Registrar medida',
-        icone: 'add',
-        onPress: () => router.push(ROUTES.PROGRESS.MEASUREMENT_FORM),
-      }}
+      principal={register}
     />
-  ) : undefined;
+  ) : (
+    <BotaoFixoNoRodape rotulo={register.rotulo} icone={register.icone} onPress={register.onPress} />
+  );
 
   return (
     <GlassScreen
@@ -122,7 +126,7 @@ function SilhouetteCard({
     if (current?.value == null || previous?.value == null) return [];
     return [
       {
-        label: current.label === 'Panturrilha' ? 'Pantur.' : current.label,
+        label: current.short,
         now: current.value,
         before: previous.value,
       },

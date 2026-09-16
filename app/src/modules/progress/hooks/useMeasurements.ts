@@ -9,6 +9,7 @@ import {
 import { supabase } from '@elevapro/supabase';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
+import { useAuthStore } from '@/auth';
 import { avisandoSeFalhar } from '@/lib/registro';
 
 const measurements = createMeasurementService(supabase);
@@ -52,6 +53,29 @@ export function useMeasurements(studentId: string): MeasurementsState {
   );
   const series = useMemo(() => (source ? seriesOf(all, source) : []), [all, source]);
   return { series, source, sources, setSource, all, loading: isLoading };
+}
+
+/**
+ * Quem pode declarar a própria medida hoje (#312).
+ *
+ * São duas perguntas, e as duas precisam de sim: o CASL diz se a medida declarada é
+ * desta conta, e o vínculo diz se hoje quem mede é o especialista. O Aluno que encerra
+ * o especialista volta a declarar, e é por isso que a conta sozinha não responde.
+ *
+ * @example const { canDeclare } = useCanDeclare(user.id);
+ */
+export function useCanDeclare(studentId: string): { canDeclare: boolean } {
+  const abilities = useAuthStore((estado) => estado.abilities);
+  const ownsDeclared = abilities?.can('update', 'DeclaredMeasurement') ?? false;
+  const { data: hasSpecialist } = useQuery({
+    queryKey: ['has_active_specialist', studentId],
+    queryFn: () =>
+      avisandoSeFalhar('progress.read_specialist_link', () =>
+        measurements.hasActiveSpecialist(studentId)
+      ),
+    enabled: ownsDeclared,
+  });
+  return { canDeclare: ownsDeclared && hasSpecialist === false };
 }
 
 /**

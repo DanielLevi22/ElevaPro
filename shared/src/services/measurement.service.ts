@@ -55,6 +55,22 @@ export const createMeasurementService = (supabase: SupabaseClient) => ({
   },
 
   /**
+   * Tem especialista com vínculo ativo? É quem decide se a declaração é permitida
+   * (0056): com especialista, quem mede é ele, e o banco recusa a linha `self`.
+   *
+   * @example if (!(await service.hasActiveSpecialist(aluno.id))) mostrarBotaoDeDeclarar();
+   */
+  hasActiveSpecialist: async (studentId: string): Promise<boolean> => {
+    const { count, error } = await supabase
+      .from("student_specialists")
+      .select("id", { count: "exact", head: true })
+      .eq("student_id", studentId)
+      .eq("status", "active");
+    if (error) throw error;
+    return (count ?? 0) > 0;
+  },
+
+  /**
    * Grava a medida que o próprio aluno declarou.
    *
    * @example await service.declareMeasurement(aluno.id, { weight_kg: 78.4, height_cm: 180 });

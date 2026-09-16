@@ -55,6 +55,8 @@ export function parseMeasurementForm(
     keyof typeof OPTIONAL_RANGES,
     { min: number; max: number },
   ][]) {
+    // O nome do campo entra só como rótulo: circunferência e gordura não têm faixa
+    // embutida no leitor (lá só peso e altura têm), e a daqui é conferida abaixo.
     const read = lerRespostaNumerica(values[field], field);
     if (!read.ok && read.motivo === "ausente") continue;
     if (!read.ok || read.valor < range.min || read.valor > range.max)

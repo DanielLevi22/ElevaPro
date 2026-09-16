@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Avaliacao, EntradaDaEscala } from "./escala";
+import type { ScaleAssessment, ScaleCandidates } from "./escala";
 
 /**
  * O que a Escala do Body scan lê do banco: a última medida do especialista, a
@@ -9,7 +9,7 @@ import type { Avaliacao, EntradaDaEscala } from "./escala";
  * com a leitura escrita em dois lugares, um passava a ver a medida declarada e o
  * outro não, e o portão liberava o que a análise recusava.
  */
-export type ScaleSources = { ok: true; sources: EntradaDaEscala } | { ok: false };
+export type ScaleSources = { ok: true; sources: ScaleCandidates } | { ok: false };
 
 type MeasurementRow = { height_cm: number | string; weight_kg: number | string } | null;
 
@@ -60,7 +60,7 @@ function latestMeasurement(
 }
 
 /** O `numeric` do Postgres chega como texto pelo PostgREST. */
-function toAssessment(row: MeasurementRow): Avaliacao | null {
+function toAssessment(row: MeasurementRow): ScaleAssessment | null {
   if (!row) return null;
   return { height_cm: Number(row.height_cm), weight_kg: Number(row.weight_kg) };
 }

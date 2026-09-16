@@ -1,8 +1,10 @@
 import { useAuthStore } from '@/auth';
-import { CompareMeasurementsScreen } from '@/modules/progress';
+import { CompareMeasurementsScreen, useCanDeclare } from '@/modules/progress';
 
 export default function CompareMeasurementsRoute() {
-  const { user, accountType } = useAuthStore();
+  const { user } = useAuthStore();
+  // Quem não declara é quem tem especialista: o texto fala dele junto.
+  const { canDeclare } = useCanDeclare(user?.id ?? '');
   if (!user?.id) return null;
-  return <CompareMeasurementsScreen studentId={user.id} hasSpecialist={accountType !== 'member'} />;
+  return <CompareMeasurementsScreen studentId={user.id} hasSpecialist={!canDeclare} />;
 }

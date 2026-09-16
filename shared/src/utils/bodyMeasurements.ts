@@ -91,6 +91,8 @@ export type CircumferenceKey =
 export interface Circumference {
   key: CircumferenceKey;
   label: string;
+  /** O rótulo que cabe no eixo do radar, onde "Panturrilha" não entra. */
+  short: string;
   value: number | null;
 }
 
@@ -100,6 +102,7 @@ type CircumferenceColumn = Extract<keyof PhysicalAssessment, `circ_${string}`>;
 const CIRCUMFERENCE_COLUMNS: {
   key: CircumferenceKey;
   label: string;
+  short?: string;
   columns: CircumferenceColumn[];
 }[] = [
   { key: "chest", label: "Peito", columns: ["circ_chest"] },
@@ -107,7 +110,12 @@ const CIRCUMFERENCE_COLUMNS: {
   { key: "hip", label: "Quadril", columns: ["circ_hip"] },
   { key: "arm", label: "Braço", columns: ["circ_right_arm", "circ_left_arm"] },
   { key: "thigh", label: "Coxa", columns: ["circ_right_thigh", "circ_left_thigh"] },
-  { key: "calf", label: "Panturrilha", columns: ["circ_right_calf", "circ_left_calf"] },
+  {
+    key: "calf",
+    label: "Panturrilha",
+    short: "Pantur.",
+    columns: ["circ_right_calf", "circ_left_calf"],
+  },
   { key: "shoulder", label: "Ombro", columns: ["circ_shoulder"] },
   { key: "neck", label: "Pescoço", columns: ["circ_neck"] },
 ];
@@ -119,14 +127,14 @@ const CIRCUMFERENCE_COLUMNS: {
  * @example circumferences(latest).find((item) => item.key === "arm")?.value // 37.5
  */
 export function circumferences(record: PhysicalAssessment): Circumference[] {
-  return CIRCUMFERENCE_COLUMNS.map(({ key, label, columns }) => {
+  return CIRCUMFERENCE_COLUMNS.map(({ key, label, short, columns }) => {
     const sides = columns
       .map((column) => numberOf(record[column]))
       .filter((value): value is number => value !== null);
     const value = sides.length
       ? oneDecimal(sides.reduce((sum, side) => sum + side, 0) / sides.length)
       : null;
-    return { key, label, value };
+    return { key, label, short: short ?? label, value };
   });
 }
 
@@ -154,8 +162,38 @@ export interface MeasurementDifference {
   delta: number;
 }
 
-/** Campo, rótulo, unidade, valor antes e valor depois. */
-type DifferenceRow = [MeasurementDifference["key"], string, string, number | null, number | null];
+/** Um campo do registro com o valor que ele tem. */
+export interface MeasurementValue {
+  key: MeasurementDifference["key"];
+  label: string;
+  unit: string;
+  value: number;
+}
+
+/** Campo, rótulo, unidade e valor — a mesma ordem de campos em toda tela de corpo. */
+type ValueRow = [MeasurementDifference["key"], string, string, number | null];
+
+function valueRows(record: PhysicalAssessment): ValueRow[] {
+  const { weight, fatPercent, leanMass, bmi } = bodyComposition(record);
+  return [
+    ["weight", "Peso", "kg", weight],
+    ["fat", "Gordura", "%", fatPercent],
+    ["lean", "Massa magra", "kg", leanMass],
+    ["bmi", "IMC", "", bmi],
+    ...circumferences(record).map((item): ValueRow => [item.key, item.label, "cm", item.value]),
+  ];
+}
+
+/**
+ * Os campos preenchidos do registro, na ordem das telas de corpo.
+ *
+ * @example measurementValues(latest) // [{ key: "weight", value: 78.4, unit: "kg", … }]
+ */
+export function measurementValues(record: PhysicalAssessment): MeasurementValue[] {
+  return valueRows(record).flatMap(([key, label, unit, value]) =>
+    value === null ? [] : [{ key, label, unit, value: oneDecimal(value) }],
+  );
+}
 
 /**
  * A diferença de cada campo que existe nos dois registros, sem julgar a direção:
@@ -167,24 +205,9 @@ export function measurementDifferences(
   before: PhysicalAssessment,
   after: PhysicalAssessment,
 ): MeasurementDifference[] {
-  const [a, b] = [bodyComposition(before), bodyComposition(after)];
-  const composition: DifferenceRow[] = [
-    ["weight", "Peso", "kg", a.weight, b.weight],
-    ["fat", "Gordura", "%", a.fatPercent, b.fatPercent],
-    ["lean", "Massa magra", "kg", a.leanMass, b.leanMass],
-    ["bmi", "IMC", "", a.bmi, b.bmi],
-  ];
-  const beforeCirc = circumferences(before);
-  const measures = circumferences(after).map(
-    (item, index): DifferenceRow => [
-      item.key,
-      item.label,
-      "cm",
-      beforeCirc[index].value,
-      item.value,
-    ],
-  );
-  return [...composition, ...measures].flatMap(([key, label, unit, from, to]) =>
-    from === null || to === null ? [] : [{ key, label, unit, delta: oneDecimal(to - from) }],
-  );
+  const rowsBefore = valueRows(before);
+  return valueRows(after).flatMap(([key, label, unit, to], index) => {
+    const from = rowsBefore[index][3];
+    return from === null || to === null ? [] : [{ key, label, unit, delta: oneDecimal(to - from) }];
+  });
 }

@@ -3,7 +3,10 @@ import { filtrarEntradaNumerica } from '@elevapro/shared/utils/anamnese';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useCores } from '@/shared/design';
+import { useCores, useEscala } from '@/shared/design';
+
+/** O tique dentro da caixinha de escolha múltipla. */
+const TAMANHO_DO_CHECK = 10;
 
 /** O valor de uma resposta da anamnese adaptativa, antes de ir ao banco. */
 export type AnamnesisValue = string | number | string[] | boolean;
@@ -27,15 +30,16 @@ export function AdaptiveQuestionField({
   onChange: (v: AnamnesisValue) => void;
 }) {
   const cores = useCores();
-  // O que esta na tela enquanto o aluno digita, que nao e o que o pai guardou.
-  // O pai recebe o numero ja convertido; se o campo lesse de la, a virgula
-  // sumiria no instante em que fosse digitada e o decimal ficaria impossivel.
-  const [digitado, setDigitado] = useState<string | null>(null);
+  const escalar = useEscala();
+  // O que está na tela enquanto o aluno digita, que não é o que o pai guardou.
+  // O pai recebe o número já convertido; se o campo lesse de lá, a vírgula sumiria
+  // no instante em que fosse digitada e o decimal ficaria impossível.
+  const [typed, setTyped] = useState<string | null>(null);
 
   if (question.type === 'text') {
     return (
       <TextInput
-        className="bg-zinc-800/60 border border-white/10 rounded-xl text-white text-sm px-4 py-3 min-h-20"
+        className="min-h-20 rounded-xl border border-glass-border bg-glass-strong px-4 py-3 text-sm text-foreground"
         value={(value as string) ?? ''}
         onChangeText={onChange}
         placeholder={question.placeholder ?? 'Sua resposta...'}
@@ -50,19 +54,19 @@ export function AdaptiveQuestionField({
     return (
       <View className="relative">
         <TextInput
-          className="bg-zinc-800/60 border border-white/10 rounded-xl text-white text-sm px-4 py-3 pr-16"
-          value={digitado ?? (value !== undefined && value !== '' ? String(value) : '')}
-          onChangeText={(bruto) => {
+          className="rounded-xl border border-glass-border bg-glass-strong px-4 py-3 pr-16 text-sm text-foreground"
+          value={typed ?? (value !== undefined && value !== '' ? String(value) : '')}
+          onChangeText={(raw) => {
             // Antes era `onChange(Number(t))` cru: qualquer letra virava `NaN`
             // e ia parar no banco como resposta da pergunta.
-            const texto = filtrarEntradaNumerica(bruto);
-            setDigitado(texto);
-            if (texto === '') {
+            const text = filtrarEntradaNumerica(raw);
+            setTyped(text);
+            if (text === '') {
               onChange('');
               return;
             }
-            const numero = Number(texto.replace(',', '.'));
-            if (Number.isFinite(numero)) onChange(numero);
+            const parsed = Number(text.replace(',', '.'));
+            if (Number.isFinite(parsed)) onChange(parsed);
           }}
           placeholder={question.placeholder ?? '0'}
           placeholderTextColor={cores.placeholder}
@@ -70,7 +74,7 @@ export function AdaptiveQuestionField({
         />
         {question.unit && (
           <View className="absolute right-4 top-0 bottom-0 justify-center">
-            <Text className="text-zinc-500 text-sm font-medium">{question.unit}</Text>
+            <Text className="text-sm font-medium text-placeholder">{question.unit}</Text>
           </View>
         )}
       </View>
@@ -85,10 +89,12 @@ export function AdaptiveQuestionField({
             key={String(opt)}
             onPress={() => onChange(opt)}
             className={`flex-1 py-3 rounded-xl border items-center ${
-              value === opt ? 'bg-white border-white' : 'bg-zinc-900 border-white/10'
+              value === opt ? 'border-primary bg-primary' : 'border-glass-border bg-glass'
             }`}
           >
-            <Text className={`text-sm font-bold ${value === opt ? 'text-black' : 'text-zinc-400'}`}>
+            <Text
+              className={`text-sm font-bold ${value === opt ? 'text-primary-foreground' : 'text-muted-foreground'}`}
+            >
               {opt ? 'Sim' : 'Não'}
             </Text>
           </TouchableOpacity>
@@ -105,11 +111,11 @@ export function AdaptiveQuestionField({
             key={opt}
             onPress={() => onChange(opt)}
             className={`w-full px-5 py-3 rounded-xl border ${
-              value === opt ? 'bg-white border-white' : 'bg-zinc-900 border-white/10'
+              value === opt ? 'border-primary bg-primary' : 'border-glass-border bg-glass'
             }`}
           >
             <Text
-              className={`text-sm font-medium ${value === opt ? 'text-black' : 'text-zinc-300'}`}
+              className={`text-sm font-medium ${value === opt ? 'text-primary-foreground' : 'text-foreground'}`}
             >
               {opt}
             </Text>
@@ -132,18 +138,24 @@ export function AdaptiveQuestionField({
               key={opt}
               onPress={() => toggle(opt)}
               className={`w-full px-5 py-3 rounded-xl border flex-row items-center gap-3 ${
-                isSelected ? 'bg-white border-white' : 'bg-zinc-900 border-white/10'
+                isSelected ? 'border-primary bg-primary' : 'border-glass-border bg-glass'
               }`}
             >
               <View
                 className={`w-4 h-4 rounded border items-center justify-center ${
-                  isSelected ? 'bg-black border-black' : 'border-zinc-600'
+                  isSelected ? 'border-foreground bg-foreground' : 'border-muted-foreground'
                 }`}
               >
-                {isSelected && <Ionicons name="checkmark" size={10} color={cores.sobreImagem} />}
+                {isSelected && (
+                  <Ionicons
+                    name="checkmark"
+                    size={escalar(TAMANHO_DO_CHECK)}
+                    color={cores.primary}
+                  />
+                )}
               </View>
               <Text
-                className={`text-sm font-medium flex-1 ${isSelected ? 'text-black' : 'text-zinc-300'}`}
+                className={`text-sm font-medium flex-1 ${isSelected ? 'text-primary-foreground' : 'text-foreground'}`}
               >
                 {opt}
               </Text>

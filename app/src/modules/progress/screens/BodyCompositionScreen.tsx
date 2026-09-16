@@ -75,7 +75,22 @@ export function BodyCompositionScreen({ studentId, canDeclare }: BodyComposition
             onToggle={setSource}
           />
           <CompositionStats series={series} />
-          <WeightTrend series={series} />
+          <TrendCard
+            series={series}
+            pick={(record) => bodyComposition(record).weight}
+            title="Tendência do peso"
+            note="Peso a cada registro"
+            suffix=" kg"
+            tone="brand"
+          />
+          <TrendCard
+            series={series}
+            pick={(record) => bodyComposition(record).fatPercent}
+            title="Tendência da gordura"
+            note="Percentual a cada registro"
+            suffix="%"
+            tone="amber"
+          />
           <WeightSplit latest={latest} />
           <View className="mt-3">
             <ShortcutRow
@@ -175,24 +190,36 @@ function CompositionStats({ series }: { series: readonly PhysicalAssessment[] })
   );
 }
 
-function WeightTrend({ series }: { series: readonly PhysicalAssessment[] }) {
+interface TrendCardProps {
+  series: readonly PhysicalAssessment[];
+  pick: (record: PhysicalAssessment) => number | null;
+  title: string;
+  note: string;
+  suffix: string;
+  tone: 'brand' | 'amber';
+}
+
+/** A série de um número ao longo dos registros; sem dois pontos não há tendência. */
+function TrendCard({ series, pick, title, note, suffix, tone }: TrendCardProps) {
   const points = series.flatMap((record) => {
-    const weight = bodyComposition(record).weight;
-    return weight === null ? [] : [{ weight, date: record.assessed_at }];
+    const value = pick(record);
+    return value === null ? [] : [{ value, date: record.assessed_at }];
   });
   if (points.length < 2) return null;
+  const first = formatarDecimal(points[0].value);
+  const last = formatarDecimal(points[points.length - 1].value);
   return (
-    <ChartCard title="Tendência" note="Peso a cada registro">
+    <ChartCard title={title} note={note}>
       <AreaChart
-        values={points.map((point) => point.weight)}
-        tone="brand"
+        values={points.map((point) => point.value)}
+        tone={tone}
         labels={evenLabels(
           points.map((point) => shortDate(point.date)),
           4
         )}
         format={formatarDecimal}
-        suffix=" kg"
-        accessibilityLabel={`Peso de ${formatarDecimal(points[0].weight)} para ${formatarDecimal(points[points.length - 1].weight)} kg`}
+        suffix={suffix}
+        accessibilityLabel={`${title}: de ${first} para ${last}${suffix}`}
       />
     </ChartCard>
   );

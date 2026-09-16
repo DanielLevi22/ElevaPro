@@ -12,20 +12,15 @@ export const SOURCE_LABEL: Record<MeasurementSource, string> = {
 };
 
 /**
- * A data como o kit escreve nos chips: "12 ago 2026".
+ * A data como o kit escreve nos chips: "12 ago 2026", e sem o ano nos subtítulos.
  *
  * @example chipDate("2026-08-12T10:00:00Z") // "12 ago 2026"
- */
-export function chipDate(instant: string): string {
-  const date = instant.slice(0, 10);
-  return `${Number(date.slice(8, 10))} ${shortMonthOf(date)} ${date.slice(0, 4)}`;
-}
-
-/**
- * A data curta dos subtítulos: "12 ago".
- *
  * @example shortDate("2026-08-12T10:00:00Z") // "12 ago"
  */
+export function chipDate(instant: string): string {
+  return `${shortDate(instant)} ${instant.slice(0, 4)}`;
+}
+
 export function shortDate(instant: string): string {
   const date = instant.slice(0, 10);
   return `${Number(date.slice(8, 10))} ${shortMonthOf(date)}`;

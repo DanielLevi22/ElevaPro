@@ -1,9 +1,9 @@
 import { useAuthStore } from '@/auth';
-import { BodyCompositionScreen } from '@/modules/progress';
+import { BodyCompositionScreen, useCanDeclare } from '@/modules/progress';
 
 export default function BodyCompositionRoute() {
-  const { user, accountType } = useAuthStore();
+  const { user } = useAuthStore();
+  const { canDeclare } = useCanDeclare(user?.id ?? '');
   if (!user?.id) return null;
-  // `member` é o Praticante até a migração do ADR-0028; a RLS confere no banco.
-  return <BodyCompositionScreen studentId={user.id} canDeclare={accountType === 'member'} />;
+  return <BodyCompositionScreen studentId={user.id} canDeclare={canDeclare} />;
 }

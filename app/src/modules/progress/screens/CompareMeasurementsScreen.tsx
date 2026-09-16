@@ -3,7 +3,9 @@ import {
   daysBetween,
   formatarDecimal,
   type MeasurementDifference,
+  type MeasurementValue,
   measurementDifferences,
+  measurementValues,
 } from '@elevapro/shared';
 import { useRouter } from 'expo-router';
 import { Text, View } from 'react-native';
@@ -75,25 +77,53 @@ export function CompareMeasurementsScreen({
           <InfoNote icon="shield-checkmark-outline" className="mt-3">
             {`Os dois registros são "${SOURCE_LABEL[source].toLowerCase()}": comparar a mesma origem é o que torna a diferença confiável.`}
           </InfoNote>
-          <Differences items={measurementDifferences(baseline, latest)} />
+          <FieldRows
+            title="Diferenças"
+            items={measurementDifferences(baseline, latest).map(withSignedText)}
+          />
           <InfoNote icon="information-circle-outline" className="mt-1">
             {hasSpecialist
               ? 'Não pintamos variação de bom ou ruim: se perder cintura é o objetivo, quem sabe é você e seu especialista.'
               : 'Não pintamos variação de bom ou ruim: se perder cintura é o objetivo, quem sabe é você.'}
           </InfoNote>
         </>
+      ) : latest ? (
+        // Com um registro só não há diferença, mas esconder os números seria esconder a
+        // medida que o aluno acabou de registrar.
+        <>
+          <EmptyCard>A comparação aparece a partir da segunda medida da mesma origem.</EmptyCard>
+          <FieldRows title="Este registro" items={measurementValues(latest).map(withPlainText)} />
+        </>
       ) : loading ? null : (
-        <EmptyCard>A comparação aparece a partir da segunda medida da mesma origem.</EmptyCard>
+        <EmptyCard>Nenhuma medida registrada ainda.</EmptyCard>
       )}
     </GlassScreen>
   );
 }
 
-function Differences({ items }: { items: MeasurementDifference[] }) {
+/** Um campo e o número dele: a diferença com sinal, ou o valor do registro. */
+interface FieldRow {
+  key: string;
+  label: string;
+  unit: string;
+  text: string;
+}
+
+const withSignedText = (item: MeasurementDifference): FieldRow => ({
+  ...item,
+  text: `${item.delta > 0 ? '+' : item.delta < 0 ? '−' : ''}${formatarDecimal(Math.abs(item.delta))}`,
+});
+
+const withPlainText = (item: MeasurementValue): FieldRow => ({
+  ...item,
+  text: formatarDecimal(item.value),
+});
+
+function FieldRows({ title, items }: { title: string; items: FieldRow[] }) {
   return (
     <>
       <TituloDeSecao estilo="rotulo" acao={`${items.length} campos`}>
-        Diferenças
+        {title}
       </TituloDeSecao>
       {items.map((item) => (
         <Vidro
@@ -105,7 +135,7 @@ function Differences({ items }: { items: MeasurementDifference[] }) {
             {item.label}
           </Text>
           <Text className="font-display-black text-[1.0625rem] tracking-tight text-muted-foreground">
-            {`${item.delta > 0 ? '+' : item.delta < 0 ? '−' : ''}${formatarDecimal(Math.abs(item.delta))}`}
+            {item.text}
             {item.unit ? (
               <Text className="text-[0.6875rem] font-bold">{` ${item.unit}`}</Text>
             ) : null}

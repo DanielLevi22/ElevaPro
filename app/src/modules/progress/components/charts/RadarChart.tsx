@@ -24,7 +24,7 @@ import { useCores, useEscala } from '@/shared/design';
  *
  * @example <RadarChart axes={[{ label: 'Peito', now: 104, before: 102 }]} accessibilityLabel="…" />
  */
-export interface RadarAxis {
+interface RadarAxis {
   label: string;
   now: number;
   before: number;

@@ -13,7 +13,8 @@ describe('AnamnesisService.saveAdaptiveAnamnesis', () => {
 
     const result = await AnamnesisService.saveAdaptiveAnamnesis('aluno-1', { weight: 78 }, true);
 
-    expect(result).toEqual({ success: true });
+    // O que o serviço fez com a medida volta para a tela contar ao aluno (#312).
+    expect(result).toEqual({ success: true, startingMeasure: 'created' });
     expect(mockSave).toHaveBeenCalledWith({
       studentId: 'aluno-1',
       answers: { weight: 78 },

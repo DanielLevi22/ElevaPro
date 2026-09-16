@@ -1,3 +1,4 @@
+export { useCanDeclare } from './hooks/useMeasurements';
 export { BodyCompositionScreen } from './screens/BodyCompositionScreen';
 export { CircumferencesScreen } from './screens/CircumferencesScreen';
 export { CompareMeasurementsScreen } from './screens/CompareMeasurementsScreen';

@@ -13,7 +13,7 @@ import { clienteDoTitular } from "@/lib/supabase-titular";
 import { aiProviders } from "@/modules/ai/ai.config";
 import type { ContentBlock, ProviderTurnOptions } from "@/modules/ai/providers/types";
 import { carregarContextoDoScan } from "@/modules/ai/services/contextoDoScan";
-import { type FonteDaEscala, resolverEscala } from "@/modules/ai/services/escala";
+import { type FonteDaEscala, resolveScale } from "@/modules/ai/services/escala";
 import {
   descreverFatosMedidos,
   type MedidasPorPose,
@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
   // avaliação", e o aluno seria mandado preencher o que já preencheu.
   if (!loaded.ok) return NextResponse.json({ error: "scale_lookup_failed" }, { status: 503 });
 
-  const escala = resolverEscala(loaded.sources);
+  const escala = resolveScale(loaded.sources);
 
   // Sem Escala o modelo voltaria a chutar. Recusar é a única saída honesta — e
   // o portão da entrada já deveria ter evitado o aluno chegar até aqui.

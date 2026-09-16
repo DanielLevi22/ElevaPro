@@ -95,12 +95,17 @@ export interface VereditosDaCaptura {
   framing_confirmed: boolean | null;
 }
 
+/** De onde vieram o peso e a altura que calibram o scan (ADR-0030). */
+export type ScaleSource = "assessment" | "self" | "anamnese";
+
 export interface BodyScanRecord extends MedidasDoAparelho {
   id: string;
   student_id: string;
   scanned_at: string;
   height_cm: number | null;
   weight_kg: number | null;
+  /** A origem da Escala. Null em scans anteriores à `0037`, que rotulavam tudo como medido. */
+  scale_source: ScaleSource | null;
   body_fat_pct: number | null;
   lean_mass_kg: number | null;
   bmi: number | null;
@@ -136,7 +141,7 @@ export interface BodyScanInput extends MedidasDoAparelho {
    * pelo aluno na anamnese. Sem isto a tela rotula toda altura como "medido",
    * o que passa a mentir assim que a anamnese vira fonte.
    */
-  scale_source?: "assessment" | "self" | "anamnese";
+  scale_source?: ScaleSource;
   body_fat_pct: number | null;
   lean_mass_kg: number | null;
   bmi: number | null;

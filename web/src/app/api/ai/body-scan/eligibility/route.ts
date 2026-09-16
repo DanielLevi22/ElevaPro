@@ -2,7 +2,7 @@ import { createHealthService } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeStudent } from "@/lib/api-auth";
 import { clienteDoTitular } from "@/lib/supabase-titular";
-import { decidirElegibilidade } from "@/modules/ai/services/escala";
+import { decideScanEligibility } from "@/modules/ai/services/escala";
 import { loadScaleSources } from "@/modules/ai/services/scaleSources";
 
 /**
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
   // Sem consentimento nada de saúde é lido — nem para decidir se pode escanear.
   if (!temConsentimento) {
     return NextResponse.json(
-      decidirElegibilidade({
+      decideScanEligibility({
         temConsentimento: false,
         specialistAssessment: null,
         declaredAssessment: null,
@@ -51,5 +51,5 @@ export async function GET(request: NextRequest) {
   const loaded = await loadScaleSources(client, userId);
   if (!loaded.ok) return NextResponse.json({ error: "scale_lookup_failed" }, { status: 503 });
 
-  return NextResponse.json(decidirElegibilidade({ temConsentimento: true, ...loaded.sources }));
+  return NextResponse.json(decideScanEligibility({ temConsentimento: true, ...loaded.sources }));
 }

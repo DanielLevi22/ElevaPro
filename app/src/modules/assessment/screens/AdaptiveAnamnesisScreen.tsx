@@ -122,10 +122,13 @@ function UnlockScreen({ card, onContinue }: { card: UnlockCard; onContinue: () =
 
 function CompletionScreen({
   score,
+  startedMeasures,
   onStartCoach,
   onRetake,
 }: {
   score: number;
+  /** A anamnese gravou a primeira medida declarada, e a tela diz onde achá-la. */
+  startedMeasures: boolean;
   onStartCoach: () => void;
   onRetake: () => void;
 }) {
@@ -156,6 +159,12 @@ function CompletionScreen({
               : 'Você pode continuar e responder mais no chat com o coach.'}
         </Text>
       </View>
+      {startedMeasures ? (
+        <Text className="max-w-xs text-center text-xs leading-relaxed text-muted-foreground">
+          Suas medidas viraram o primeiro registro em Progresso → Composição corporal, e você pode
+          corrigir ou apagar quando quiser.
+        </Text>
+      ) : null}
       <View className="w-full gap-2.5">
         <TouchableOpacity
           onPress={onStartCoach}
@@ -179,6 +188,16 @@ function CompletionScreen({
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
+/** Pergunta ainda sem resposta: vazio, nulo ou lista sem item. */
+function semResposta(value: AnamnesisValue | undefined): boolean {
+  return (
+    value === undefined ||
+    value === '' ||
+    value === null ||
+    (Array.isArray(value) && value.length === 0)
+  );
+}
+
 export default function AdaptiveAnamnesisScreen() {
   const cores = useCores();
   const router = useRouter();
@@ -189,6 +208,9 @@ export default function AdaptiveAnamnesisScreen() {
   const [saving, setSaving] = useState(false);
   const [forceRetake, setForceRetake] = useState(false);
   const [sessionDone, setSessionDone] = useState(false);
+  // O aluno precisa saber que a anamnese registrou uma medida de saúde por ele
+  // (Art. 6°, VI): a tela final diz, e aponta onde ela vive.
+  const [startedMeasures, setStartedMeasures] = useState(false);
   const [track, setTrack] = useState<PersonaTrack | null>(null);
   const [step, setStep] = useState(0);
   const [responses, setResponses] = useState<Record<string, AnamnesisValue>>({});
@@ -220,18 +242,14 @@ export default function AdaptiveAnamnesisScreen() {
 
         if (savedTrack && !anamnesis.completedAt) {
           const t = savedTrack as PersonaTrack;
-          const qs = getTrackQuestions(t, { withMeasurements: true });
-          const firstUnanswered = qs.findIndex((q) => {
-            const val = normalized[q.id];
-            return (
-              val === undefined ||
-              val === '' ||
-              val === null ||
-              (Array.isArray(val) && val.length === 0)
-            );
-          });
+          // A retomada procura entre as perguntas guardadas: a medida não fica em
+          // `responses` (vira Assessment), e voltaria a parecer sem resposta sempre.
+          const pending = getTrackQuestions(t).find((q) => semResposta(normalized[q.id]));
+          const index = pending
+            ? getTrackQuestions(t, { withMeasurements: true }).findIndex((q) => q.id === pending.id)
+            : -1;
           setTrack(t);
-          if (firstUnanswered > 0) setStep(firstUnanswered);
+          if (index > 0) setStep(index);
         }
       } else if (savedTrack) {
         setTrack(savedTrack as PersonaTrack);
@@ -246,7 +264,10 @@ export default function AdaptiveAnamnesisScreen() {
   // de partida servem: com especialista, quem mede é ele (#312).
   const questions = track ? getTrackQuestions(track, { withMeasurements: true }) : [];
   const currentQ = questions[step];
-  const precision = questions.length > 0 ? getPrecisionScore(questions, responses) : 30;
+  // A precisão conta só o que fica guardado: a medida de partida sai de `responses`
+  // ao salvar, e contá-la faria o selo cair sozinho na volta (#312).
+  const scored = track ? getTrackQuestions(track) : [];
+  const precision = scored.length > 0 ? getPrecisionScore(scored, responses) : 30;
   const isLastStep = step === questions.length - 1;
   const progressPct = questions.length > 0 ? Math.round(((step + 1) / questions.length) * 100) : 0;
   const barColor = precisionColor(cores, precision, cores.metricaSono);
@@ -263,8 +284,9 @@ export default function AdaptiveAnamnesisScreen() {
   const handleNext = async () => {
     if (!studentId || !track || saving) return;
     setSaving(true);
-    await AnamnesisService.saveAdaptiveAnamnesis(studentId, responses, isLastStep);
+    const saved = await AnamnesisService.saveAdaptiveAnamnesis(studentId, responses, isLastStep);
     setSaving(false);
+    if (saved.startingMeasure === 'created') setStartedMeasures(true);
 
     const unlock = UNLOCK_CARDS.find((u) => u.afterQuestionId === currentQ.id);
     if (unlock && !isLastStep) {
@@ -310,6 +332,7 @@ export default function AdaptiveAnamnesisScreen() {
       <SafeAreaView className="flex-1 bg-black">
         <CompletionScreen
           score={precision}
+          startedMeasures={startedMeasures}
           onStartCoach={() => router.replace('/(tabs)')}
           onRetake={handleRetake}
         />

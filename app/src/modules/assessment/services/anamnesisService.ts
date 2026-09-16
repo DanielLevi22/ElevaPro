@@ -1,4 +1,4 @@
-import { createAdaptiveAnamnesisService } from '@elevapro/shared';
+import { createAdaptiveAnamnesisService, type StartingMeasureOutcome } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { registrarFalha } from '@/lib/registro';
 import { AnamnesisResponseValue, StudentAnamnesis } from '../types/assessment';
@@ -51,15 +51,15 @@ export const AnamnesisService = {
     studentId: string,
     responses: Record<string, string | number | string[] | boolean>,
     isComplete: boolean = false
-  ): Promise<{ success: boolean; error?: string }> {
+  ): Promise<{ success: boolean; startingMeasure?: StartingMeasureOutcome; error?: string }> {
     try {
-      await createAdaptiveAnamnesisService(supabase).save({
+      const startingMeasure = await createAdaptiveAnamnesisService(supabase).save({
         studentId,
         answers: responses,
         completed: isComplete,
         selfGuided: true,
       });
-      return { success: true };
+      return { success: true, startingMeasure };
     } catch {
       // Sem o erro no log: o do PostgREST pode trazer a linha, e ela carrega medida
       // e histórico de saúde (Art. 6°, VII).

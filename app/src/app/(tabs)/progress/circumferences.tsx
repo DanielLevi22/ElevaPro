@@ -1,8 +1,9 @@
 import { useAuthStore } from '@/auth';
-import { CircumferencesScreen } from '@/modules/progress';
+import { CircumferencesScreen, useCanDeclare } from '@/modules/progress';
 
 export default function CircumferencesRoute() {
-  const { user, accountType } = useAuthStore();
+  const { user } = useAuthStore();
+  const { canDeclare } = useCanDeclare(user?.id ?? '');
   if (!user?.id) return null;
-  return <CircumferencesScreen studentId={user.id} canDeclare={accountType === 'member'} />;
+  return <CircumferencesScreen studentId={user.id} canDeclare={canDeclare} />;
 }

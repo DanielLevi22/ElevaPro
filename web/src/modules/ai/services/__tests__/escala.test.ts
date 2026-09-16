@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decidirElegibilidade, resolverEscala } from "../escala";
+import { decideScanEligibility, resolveScale } from "../escala";
 
 const AVALIACAO = { height_cm: 178, weight_kg: 82.5 };
 
@@ -11,7 +11,7 @@ describe("precedência da Escala", () => {
     const anamnese = { height: 170, weight: 70 };
 
     expect(
-      resolverEscala({ specialistAssessment: AVALIACAO, declaredAssessment: null, anamnese }),
+      resolveScale({ specialistAssessment: AVALIACAO, declaredAssessment: null, anamnese }),
     ).toEqual({
       ok: true,
       heightCm: 178,
@@ -28,7 +28,7 @@ describe("a medida declarada entre as duas", () => {
     const declarada = { height_cm: 176, weight_kg: 79 };
 
     expect(
-      resolverEscala({
+      resolveScale({
         specialistAssessment: null,
         declaredAssessment: declarada,
         anamnese: { height: 170, weight: 70 },
@@ -38,7 +38,7 @@ describe("a medida declarada entre as duas", () => {
 
   it("a medida do especialista vence a declarada", () => {
     expect(
-      resolverEscala({
+      resolveScale({
         specialistAssessment: AVALIACAO,
         declaredAssessment: { height_cm: 176, weight_kg: 79 },
         anamnese: null,
@@ -55,7 +55,7 @@ describe("a Anamnese como terceira fonte", () => {
     const anamnese = { height: 170, weight: 70 };
 
     expect(
-      resolverEscala({ specialistAssessment: null, declaredAssessment: null, anamnese }),
+      resolveScale({ specialistAssessment: null, declaredAssessment: null, anamnese }),
     ).toEqual({
       ok: true,
       heightCm: 170,
@@ -73,7 +73,7 @@ describe("a Anamnese como terceira fonte", () => {
     };
 
     expect(
-      resolverEscala({ specialistAssessment: null, declaredAssessment: null, anamnese }),
+      resolveScale({ specialistAssessment: null, declaredAssessment: null, anamnese }),
     ).toEqual({
       ok: true,
       heightCm: 170,
@@ -97,7 +97,7 @@ describe("recusa da Escala", () => {
 
   it.each(casos)("%s recusa como %s", (_titulo, motivo, anamnese) => {
     expect(
-      resolverEscala({ specialistAssessment: null, declaredAssessment: null, anamnese }),
+      resolveScale({ specialistAssessment: null, declaredAssessment: null, anamnese }),
     ).toEqual({ ok: false, motivo });
   });
 
@@ -107,7 +107,7 @@ describe("recusa da Escala", () => {
     const anamnese = { height: "abc", weight: "abc" };
 
     expect(
-      resolverEscala({ specialistAssessment: null, declaredAssessment: null, anamnese }),
+      resolveScale({ specialistAssessment: null, declaredAssessment: null, anamnese }),
     ).toEqual({
       ok: false,
       motivo: "altura_invalida",
@@ -122,7 +122,7 @@ describe("decisão do portão de elegibilidade", () => {
   // ser lido para decidir se o aluno pode escanear (Art. 11, I).
   it("recusa por consentimento sem sequer olhar a escala", () => {
     expect(
-      decidirElegibilidade({
+      decideScanEligibility({
         temConsentimento: false,
         specialistAssessment: AVALIACAO,
         declaredAssessment: null,
@@ -133,7 +133,7 @@ describe("decisão do portão de elegibilidade", () => {
 
   it("libera quando há consentimento e escala, dizendo a fonte", () => {
     expect(
-      decidirElegibilidade({
+      decideScanEligibility({
         temConsentimento: true,
         specialistAssessment: AVALIACAO,
         declaredAssessment: null,
@@ -144,7 +144,7 @@ describe("decisão do portão de elegibilidade", () => {
 
   it("repassa o motivo da escala quando ela recusa", () => {
     expect(
-      decidirElegibilidade({
+      decideScanEligibility({
         temConsentimento: true,
         specialistAssessment: null,
         declaredAssessment: null,
@@ -157,7 +157,7 @@ describe("decisão do portão de elegibilidade", () => {
   // viria a escala. O valor da medida não tem uso nenhum na decisão de abrir a
   // câmera, e mandá-lo seria dado de saúde atravessando a fronteira à toa.
   it("nunca devolve altura nem peso no payload", () => {
-    const liberado = decidirElegibilidade({
+    const liberado = decideScanEligibility({
       temConsentimento: true,
       specialistAssessment: AVALIACAO,
       declaredAssessment: null,

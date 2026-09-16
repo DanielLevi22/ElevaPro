@@ -16,6 +16,7 @@ import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import { localDateKey } from '@/services/healthSync';
+import { EmptyCard } from '../components/ChartCard';
 import { MeasureField } from '../components/MeasureField';
 import { chipDate } from '../components/measurementLabels';
 import { ProgressHeader } from '../components/ProgressHeader';
@@ -34,6 +35,8 @@ interface MeasurementFormScreenProps {
   studentId: string;
   /** Com um id, corrige a medida declarada; sem, registra uma nova. */
   editingId?: string;
+  /** Sem isto só se corrige o que já foi declarado: com especialista, quem mede é ele. */
+  canDeclare: boolean;
 }
 
 type FormValues = Partial<Record<MeasurementFormField, string>>;
@@ -52,13 +55,37 @@ const ERROR_TEXT = {
 const showRefused = () =>
   showAlert({ title: 'Não foi possível salvar', message: ERROR_TEXT.refused, type: 'error' });
 
-export function MeasurementFormScreen({ studentId, editingId }: MeasurementFormScreenProps) {
+export function MeasurementFormScreen({
+  studentId,
+  editingId,
+  canDeclare,
+}: MeasurementFormScreenProps) {
   const { all, loading } = useMeasurements(studentId);
   // O formulário nasce com a medida: montado antes da consulta, abriria vazio e o
   // estado inicial não voltaria a ler.
   if (loading) return null;
   const editing = all.find((record) => record.id === editingId && record.measured_by === 'self');
+  if (!editing && !canDeclare) return <DeclarationClosed />;
   return <MeasurementForm studentId={studentId} editing={editing} all={all} />;
+}
+
+/** Com especialista ativo o banco recusa a declaração, e a tela diz por quê antes de tentar. */
+function DeclarationClosed() {
+  const router = useRouter();
+  return (
+    <GlassScreen glow={PROGRESS_GLOW}>
+      <ProgressHeader
+        size="page"
+        eyebrow="Medida"
+        title="Quem mede é o seu especialista"
+        leading={<BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={router.back} />}
+      />
+      <EmptyCard>
+        Enquanto você acompanha com um especialista, a medida vem da avaliação dele. O que você
+        declarou antes continua seu, e você pode corrigir ou apagar pelo histórico.
+      </EmptyCard>
+    </GlassScreen>
+  );
 }
 
 interface MeasurementFormProps {
