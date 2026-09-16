@@ -26,7 +26,7 @@ const RULES = [
   'Cada treino concluído vale 100 pontos, até 2 treinos por dia.',
   'A semana vai de segunda a domingo, no horário de Brasília, e o placar recomeça toda segunda.',
   'Refeições, água e medidas não contam pontos.',
-  'A seta mostra quantas posições você andou desde a semana passada.',
+  'O número à direita de cada linha mostra quantas posições a pessoa andou desde a semana passada.',
 ];
 
 export function HowRankingWorksSheet({
