@@ -6,6 +6,7 @@ import ChevronLeft from 'lucide-react-native/icons/chevron-left';
 import Clock from 'lucide-react-native/icons/clock';
 import Download from 'lucide-react-native/icons/download';
 import Heart from 'lucide-react-native/icons/heart';
+import Info from 'lucide-react-native/icons/info';
 import Mic from 'lucide-react-native/icons/mic';
 import MicOff from 'lucide-react-native/icons/mic-off';
 import Music from 'lucide-react-native/icons/music';
@@ -33,7 +34,7 @@ import { useCores, useEscala } from '@/shared/design';
  * <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={router.back} />
  *
  * Os ícones são os do Lucide, com os nomes que o kit usa: o botão é navegação, e
- * a navegação segue o traço fino do desenho (ver `ICONES`).
+ * a navegação segue o traço fino do desenho (ver `ICONS`).
  */
 
 /**
@@ -41,7 +42,7 @@ import { useCores, useEscala } from '@/shared/design';
  * não o pacote inteiro: o nome é o que a tela escreve, e cada ícone novo entra
  * aqui de propósito.
  */
-const ICONES = {
+const ICONS = {
   'chevron-left': ChevronLeft,
   'chevron-down': ChevronDown,
   x: X,
@@ -63,11 +64,13 @@ const ICONES = {
   /** Apagar uma análise do body scan e a régua da medida com fita (#316). */
   'trash-2': Trash2,
   ruler: Ruler,
+  /** "Como funciona" do ranking (#320). */
+  info: Info,
 } as const satisfies Record<string, LucideIcon>;
 
-export type IconeRedondo = keyof typeof ICONES;
+export type RoundIcon = keyof typeof ICONS;
 interface BotaoRedondoProps {
-  icone: IconeRedondo;
+  icone: RoundIcon;
   /** O ícone preenchido na cor dele: o coração da refeição favorita. */
   preenchido?: boolean;
   /** Obrigatório: sem texto, o leitor de tela só anunciaria "botão". */
@@ -82,7 +85,7 @@ const TRACO = 1.5;
 const FRACAO_DO_ICONE = 0.47;
 
 export function BotaoRedondo({ icone, rotulo, onPress, preenchido = false }: BotaoRedondoProps) {
-  const Icone = ICONES[icone];
+  const Icone = ICONS[icone];
   const cores = useCores();
   const escalar = useEscala();
 

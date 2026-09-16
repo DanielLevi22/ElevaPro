@@ -282,7 +282,8 @@ DECLARE
                               'hydration_daily','specialist_notes'];
   contrato    text[] := ARRAY['profiles','specialist_services','workout_sessions',
                               'workout_session_sets','workout_session_exercises',
-                              'achievements','daily_goals','student_streaks'];
+                              'achievements','daily_goals','student_streaks',
+                              'ranking_scores'];
   faltando    text[];
   sobrando    text[];
 BEGIN
@@ -316,7 +317,7 @@ BEGIN
       array_to_string(sobrando, ', ');
   END IF;
 
-  RAISE NOTICE 'ok  Art. 11 confere consentimento em 8 tabelas; Art. 7° não confere em 8';
+  RAISE NOTICE 'ok  Art. 11 confere consentimento em 8 tabelas; Art. 7° não confere em 9';
 END $$;
 
 -- ── Nenhuma coordenada, em tabela nenhuma (0049) ─────────────────────────────
@@ -1848,6 +1849,273 @@ BEGIN
 
   RESET ROLE;
   RAISE NOTICE 'ok  nota do especialista: só o autor escreve e corrige, o aluno lê, a revogação fecha';
+END $$;
+
+ROLLBACK;
+
+-- ── O placar da semana (0058, 0059) ──────────────────────────────────────────
+-- O ranking com a tabela de pontos e o opt-in (issue #320). O /lgpd-check
+-- decidiu, e cada ponto é travado aqui por comportamento:
+--
+--   1. o ponto sai só do treino concluído: 100 por sessão, até 2 por dia, nada
+--      no futuro, e nenhuma refeição, água ou meta de dieta pontua (Art. 11);
+--   2. o aluno não grava a própria pontuação (Art. 6°, V);
+--   3. o global mostra só quem consentiu na versão vigente, com nome abreviado e
+--      sem foto (Art. 7°, I; Art. 6°, III), e só para quem também participa;
+--   4. revogar tira a pessoa do global na mesma consulta (Art. 8°, §5°);
+--   5. o placar de alunos é só do especialista, e só dos vínculos ativos
+--      (Art. 6°, VII);
+--   6. excluir a conta apaga os pontos (Art. 16; Art. 18, VI).
+
+-- 1 e 3, pela estrutura: nenhuma outra tabela alimenta o placar, e a leitura não
+-- tem por onde devolver foto ou e-mail.
+DO $$
+DECLARE
+  sources  text[];
+  leaked_columns  text[];
+BEGIN
+  SELECT array_agg(DISTINCT c.relname::text ORDER BY c.relname::text) INTO sources
+  FROM pg_trigger t
+  JOIN pg_class c ON c.oid = t.tgrelid
+  JOIN pg_proc f ON f.oid = t.tgfoid
+  WHERE NOT t.tgisinternal
+    AND f.prosrc ~ 'ranking';
+
+  -- Refeição e água no placar diriam a desconhecidos quem segue a dieta.
+  IF sources IS DISTINCT FROM ARRAY['workout_sessions'] THEN
+    RAISE EXCEPTION 'PLACAR COM DADO DE SAÚDE: tabelas que alimentam o ranking: % (esperado só workout_sessions)',
+      COALESCE(array_to_string(sources, ', '), 'nenhuma');
+  END IF;
+
+  SELECT array_agg(a) INTO leaked_columns
+  FROM pg_proc f, unnest(f.proargnames) AS a
+  WHERE f.proname = 'get_leaderboard'
+    AND a ~ 'avatar|email|photo|specialist';
+
+  IF leaked_columns IS NOT NULL THEN
+    RAISE EXCEPTION 'PLACAR EXPÕE MAIS QUE O NOME: get_leaderboard devolve %', array_to_string(leaked_columns, ', ');
+  END IF;
+
+  IF has_function_privilege('anon', 'public.get_leaderboard(text, date)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'PLACAR PÚBLICO: a chave anônima executa get_leaderboard';
+  END IF;
+
+  RAISE NOTICE 'ok  placar: só o treino pontua, a leitura não devolve foto, anon não lê';
+END $$;
+
+BEGIN;
+
+DO $$
+DECLARE
+  ana         uuid := gen_random_uuid();
+  bia         uuid := gen_random_uuid();
+  outsider    uuid := gen_random_uuid();
+  leaver      uuid := gen_random_uuid();
+  stranger    uuid := gen_random_uuid();
+  mononym     uuid := gen_random_uuid();
+  stale       uuid := gen_random_uuid();
+  specialist  uuid := gen_random_uuid();
+  specialist2 uuid := gen_random_uuid();
+  -- Calculadas antes de trocar de papel: `private` não é do cliente.
+  this_week   date := private.ranking_week_start(now());
+  week        date := this_week - 7;
+  -- Terça às 10h da semana passada, no horário de Brasília.
+  tuesday     timestamptz := ((week + 1)::timestamp + time '10:00') AT TIME ZONE 'America/Sao_Paulo';
+  ana_points  int;
+  affected    int;
+  names       text[];
+  ids         uuid[];
+  entry       record;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (ana,         '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-ra@elevapro.local', '{"full_name":"Ana Clara Dias","account_type":"student"}'::jsonb),
+    (bia,         '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-rb@elevapro.local', '{"full_name":"Beatriz Souza Lima","account_type":"student"}'::jsonb),
+    (outsider,    '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-rf@elevapro.local', '{"full_name":"Fora do Placar","account_type":"student"}'::jsonb),
+    (leaver,      '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-rs@elevapro.local', '{"full_name":"Saiu Depois","account_type":"student"}'::jsonb),
+    (stranger,    '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-rx@elevapro.local', '{"full_name":"Aluno Alheio","account_type":"student"}'::jsonb),
+    (mononym,     '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-rm@elevapro.local', '{"full_name":"Madonna","account_type":"student"}'::jsonb),
+    (stale,       '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-rv@elevapro.local', '{"full_name":"Versao Antiga","account_type":"student"}'::jsonb),
+    (specialist,  '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-re@elevapro.local', '{"full_name":"E1","account_type":"specialist"}'::jsonb),
+    (specialist2, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-re2@elevapro.local', '{"full_name":"E2","account_type":"specialist"}'::jsonb);
+
+  -- O `stale` aceitou um texto que não é mais o vigente.
+  INSERT INTO public.student_consents (student_id, consent_type, given_at, policy_version)
+  VALUES (ana, 'ranking', now(), private.ranking_consent_version()),
+         (bia, 'ranking', now(), private.ranking_consent_version()),
+         (leaver, 'ranking', now(), private.ranking_consent_version()),
+         (stranger, 'ranking', now(), private.ranking_consent_version()),
+         (mononym, 'ranking', now(), private.ranking_consent_version()),
+         (stale, 'ranking', now(), '0.9');
+
+  -- O stranger foi aluno do specialist e hoje é do specialist2: o vínculo
+  -- encerrado não conta.
+  INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
+  VALUES (ana, specialist, 'personal_training', 'active'),
+         (outsider, specialist, 'personal_training', 'active'),
+         (stranger, specialist, 'personal_training', 'inactive'),
+         (stranger, specialist2, 'personal_training', 'active');
+
+  SET LOCAL ROLE authenticated;
+
+  -- 1. Três sessões no mesmo dia valem 200, não 300; a de outro dia soma 100 à
+  -- parte; a sessão com data no futuro e a que não foi concluída não valem nada.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', ana, 'role', 'authenticated')::text, true);
+  INSERT INTO public.workout_sessions (student_id, started_at, completed_at)
+  VALUES (ana, tuesday - interval '1 hour', tuesday),
+         (ana, tuesday, tuesday + interval '5 minutes'),
+         (ana, tuesday, tuesday + interval '10 minutes'),
+         (ana, tuesday + interval '1 day', tuesday + interval '1 day'),
+         (ana, tuesday + interval '2 days', NULL),
+         (ana, now(), now() + interval '8 days');
+
+  SELECT rs.points INTO ana_points FROM public.ranking_scores rs
+  WHERE rs.student_id = ana AND rs.week_start_date = week;
+  IF ana_points IS DISTINCT FROM 300 THEN
+    RAISE EXCEPTION 'PLACAR INFLÁVEL: 3 sessões num dia, 1 no outro e 1 sem conclusão deram % pontos (esperado 300)', ana_points;
+  END IF;
+
+  SELECT count(*) INTO affected FROM public.ranking_scores rs
+  WHERE rs.student_id = ana AND rs.week_start_date > this_week;
+  IF affected <> 0 THEN
+    RAISE EXCEPTION 'PONTO ANTECIPADO: sessão com data no futuro pontuou em % semana(s)', affected;
+  END IF;
+
+  -- 2. O aluno não grava, não corrige e não apaga a própria pontuação.
+  BEGIN
+    INSERT INTO public.ranking_scores (student_id, week_start_date, points)
+    VALUES (ana, this_week, 99999);
+    RAISE EXCEPTION 'PONTUAÇÃO FORJADA: o aluno inseriu a própria linha no placar';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  BEGIN
+    UPDATE public.ranking_scores SET points = 99999 WHERE student_id = ana;
+    RAISE EXCEPTION 'PONTUAÇÃO FORJADA: o aluno alterou os próprios pontos';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  BEGIN
+    DELETE FROM public.ranking_scores WHERE student_id = ana;
+    RAISE EXCEPTION 'PONTUAÇÃO APAGADA PELO CLIENTE: o aluno apagou a própria linha';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- As outras pessoas pontuam uma vez na mesma semana; a Bia também na anterior.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', bia, 'role', 'authenticated')::text, true);
+  INSERT INTO public.workout_sessions (student_id, started_at, completed_at)
+  VALUES (bia, tuesday, tuesday),
+         (bia, tuesday - interval '7 days', tuesday - interval '7 days');
+
+  FOR entry IN SELECT unnest(ARRAY[outsider, leaver, stranger, mononym, stale]) AS id LOOP
+    PERFORM set_config('request.jwt.claims',
+      json_build_object('sub', entry.id, 'role', 'authenticated')::text, true);
+    INSERT INTO public.workout_sessions (student_id, started_at, completed_at)
+    VALUES (entry.id, tuesday, tuesday);
+  END LOOP;
+
+  -- A linha é do dono: a Ana lê a dela e não a da Bia.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', ana, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO affected FROM public.ranking_scores rs WHERE rs.student_id = ana;
+  IF affected = 0 THEN
+    RAISE EXCEPTION 'a aluna não lê a própria pontuação';
+  END IF;
+  SELECT count(*) INTO affected FROM public.ranking_scores rs WHERE rs.student_id = bia;
+  IF affected <> 0 THEN
+    RAISE EXCEPTION 'PONTUAÇÃO ALHEIA LIDA PELA TABELA: a aluna leu % linha(s) de outra pessoa', affected;
+  END IF;
+
+  -- 3. O global da Ana: quem consentiu na versão vigente, com nome abreviado (o
+  -- de uma palavra fica como está), e o dela inteiro.
+  SELECT array_agg(g.display_name ORDER BY g.display_name) INTO names
+  FROM public.get_leaderboard('global', week) g;
+  IF names IS DISTINCT FROM ARRAY['Aluno A.', 'Ana Clara Dias', 'Beatriz L.', 'Madonna', 'Saiu D.'] THEN
+    RAISE EXCEPTION 'PLACAR SEM CONSENTIMENTO VIGENTE OU COM NOME INTEIRO: o global mostrou %', names;
+  END IF;
+
+  -- A posição da semana anterior: a Bia era a única, a Ana é nova.
+  SELECT * INTO entry FROM public.get_leaderboard('global', week) g WHERE g.student_id = bia;
+  IF entry.previous_rank IS DISTINCT FROM 1 OR entry.rank IS DISTINCT FROM 2 OR entry.is_me THEN
+    RAISE EXCEPTION 'posição da Bia errada: rank %, anterior %, is_me %', entry.rank, entry.previous_rank, entry.is_me;
+  END IF;
+  SELECT * INTO entry FROM public.get_leaderboard('global', week) g WHERE g.student_id = ana;
+  IF entry.rank IS DISTINCT FROM 1 OR entry.previous_rank IS NOT NULL OR NOT entry.is_me THEN
+    RAISE EXCEPTION 'posição da Ana errada: rank %, anterior %, is_me %', entry.rank, entry.previous_rank, entry.is_me;
+  END IF;
+
+  -- 3. Quem não participa não lê o global — nem quem aceitou um texto antigo.
+  FOR entry IN SELECT unnest(ARRAY[outsider, stale]) AS id LOOP
+    PERFORM set_config('request.jwt.claims',
+      json_build_object('sub', entry.id, 'role', 'authenticated')::text, true);
+    BEGIN
+      PERFORM * FROM public.get_leaderboard('global', week);
+      RAISE EXCEPTION 'PLACAR SEM RECIPROCIDADE: quem não tem o aceite vigente leu o global';
+    EXCEPTION WHEN insufficient_privilege THEN NULL;
+    END;
+  END LOOP;
+
+  -- 3. Nem o especialista, que não é participante.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', specialist, 'role', 'authenticated')::text, true);
+  BEGIN
+    PERFORM * FROM public.get_leaderboard('global', week);
+    RAISE EXCEPTION 'PLACAR PARA QUEM NÃO PARTICIPA: o especialista leu o global';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- 5. O especialista vê os vínculos ativos, com ou sem opt-in, e nenhum outro.
+  SELECT array_agg(g.student_id ORDER BY g.student_id) INTO ids
+  FROM public.get_leaderboard('my_students', week) g;
+  IF ids IS DISTINCT FROM (SELECT array_agg(x ORDER BY x) FROM unnest(ARRAY[ana, outsider]) x) THEN
+    RAISE EXCEPTION 'PLACAR DE ALUNO ALHEIO: o especialista viu % (esperado só os vínculos ativos)', ids;
+  END IF;
+
+  SELECT count(*) INTO affected FROM public.ranking_scores rs WHERE rs.student_id = stranger;
+  IF affected <> 0 THEN
+    RAISE EXCEPTION 'PONTUAÇÃO LIDA APÓS O FIM DO VÍNCULO: o ex-especialista leu % linha(s)', affected;
+  END IF;
+
+  -- 5. O aluno não pede o placar de alunos.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', ana, 'role', 'authenticated')::text, true);
+  BEGIN
+    PERFORM * FROM public.get_leaderboard('my_students', week);
+    RAISE EXCEPTION 'PLACAR DE ESPECIALISTA NA MÃO DO ALUNO: my_students respondeu a uma aluna';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- 4. Revogar tira a pessoa do global na hora.
+  RESET ROLE;
+  UPDATE public.student_consents SET revoked_at = now()
+  WHERE student_id = leaver AND consent_type = 'ranking';
+
+  SET LOCAL ROLE authenticated;
+  SELECT count(*) INTO affected FROM public.get_leaderboard('global', week) g WHERE g.student_id = leaver;
+  IF affected <> 0 THEN
+    RAISE EXCEPTION 'REVOGAÇÃO SEM EFEITO NO PLACAR: quem saiu do ranking continua no global';
+  END IF;
+
+  -- 6. Excluir a conta leva os pontos junto, sem o trigger tropeçar na cascata.
+  -- A eliminação parte de `profiles` (LGPD_COMPLIANCE.md §5): `auth.users` não
+  -- tem FK para o perfil.
+  RESET ROLE;
+  DELETE FROM public.profiles WHERE id = bia;
+  SELECT count(*) INTO affected FROM public.ranking_scores rs WHERE rs.student_id = bia;
+  IF affected <> 0 THEN
+    RAISE EXCEPTION 'PONTOS SOBREVIVEM À CONTA: % linha(s) da conta excluída ficaram', affected;
+  END IF;
+
+  RAISE NOTICE 'ok  placar: só o trigger pontua, o global só com aceite vigente, a conta apagada leva os pontos';
 END $$;
 
 ROLLBACK;

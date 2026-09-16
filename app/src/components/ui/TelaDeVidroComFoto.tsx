@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { type ImageSourcePropType, ScrollView } from 'react-native';
+import { type ImageSourcePropType, RefreshControl, ScrollView } from 'react-native';
 import { cn } from '@/lib/utils';
+import { useCores } from '@/shared/design';
 import { AlvoDoVidro } from './AlvoDoVidro';
 import { BrilhoAmbiente } from './BrilhoAmbiente';
 import { FundoDeFoto, RECEITA_DA_HOME } from './FundoDeFoto';
@@ -19,55 +20,72 @@ import { ScreenLayout } from './ScreenLayout';
  * rolagem tem puxar-para-atualizar.
  *
  * @example
- * <TelaDeVidroComFoto imagem={fotoDoGrupo('Costas')}>…</TelaDeVidroComFoto>
+ * <TelaDeVidroComFoto image={fotoDoGrupo('Costas')}>…</TelaDeVidroComFoto>
  */
 interface TelaDeVidroComFotoProps {
-  imagem: ImageSourcePropType;
+  image: ImageSourcePropType;
   children: ReactNode;
   /** O que flutua fixo sobre a rolagem, como o botão de ação do detalhe. */
-  sobreposicao?: ReactNode;
+  overlay?: ReactNode;
   /**
    * Espaço no fim da rolagem, para o último cartão não ficar atrás do que
    * flutua no rodapé: a tab bar, ou a tab bar e o botão fixo acima dela.
    */
-  folgaNoFim?: 'tab' | 'botaoFixo';
+  bottomSpace?: 'tab' | 'fixedButton';
   /** Conteúdo no meio da altura, como o pré-início do treino. */
-  centralizado?: boolean;
+  centered?: boolean;
+  /** Puxar para atualizar, no formato da `GlassScreen`: o placar do ranking (#320). */
+  refresh?: { refreshing: boolean; onRefresh: () => void };
 }
 
 /**
  * O kit: 120 de respiro sob a tab bar; 150 quando o botão fixo está por cima
  * dela, mais os 22 que o botão subiu para não encostar no "+" central.
  */
-const FOLGA = { tab: 'px-4 pb-[7.5rem] pt-14', botaoFixo: 'px-4 pb-[10.75rem] pt-14' } as const;
+const BOTTOM_SPACE = {
+  tab: 'px-4 pb-[7.5rem] pt-14',
+  fixedButton: 'px-4 pb-[10.75rem] pt-14',
+} as const;
 
 export function TelaDeVidroComFoto({
-  imagem,
+  image,
   children,
-  sobreposicao,
-  folgaNoFim = 'tab',
-  centralizado = false,
+  overlay,
+  bottomSpace = 'tab',
+  centered = false,
+  refresh,
 }: TelaDeVidroComFotoProps) {
+  const colors = useCores();
+
   return (
     <ScreenLayout useSafeArea={false}>
       <AlvoDoVidro
         fundo={
           <>
-            <FundoDeFoto imagem={imagem} receita={RECEITA_DA_HOME} />
+            <FundoDeFoto imagem={image} receita={RECEITA_DA_HOME} />
             <BrilhoAmbiente />
           </>
         }
       >
         <ScrollView
           contentContainerClassName={cn(
-            FOLGA[folgaNoFim],
-            centralizado ? 'flex-grow justify-center' : null
+            BOTTOM_SPACE[bottomSpace],
+            centered ? 'flex-grow justify-center' : null
           )}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            refresh ? (
+              <RefreshControl
+                refreshing={refresh.refreshing}
+                onRefresh={refresh.onRefresh}
+                tintColor={colors.primary}
+              />
+            ) : undefined
+          }
         >
           {children}
         </ScrollView>
-        {sobreposicao}
+        {overlay}
       </AlvoDoVidro>
     </ScreenLayout>
   );

@@ -1,16 +1,35 @@
-import { type ConsentStatus, SAUDE, TECNICA } from '@elevapro/shared';
+import {
+  type ConsentStatus,
+  HEALTH_PURPOSE,
+  RANKING_PURPOSE,
+  TECHNIQUE_PURPOSE,
+} from '@elevapro/shared';
 import { AUTHORIZATIONS, authorizationFooter, revokeEffects } from '../authorizations';
 
 const health = AUTHORIZATIONS[0];
 const technique = AUTHORIZATIONS[1];
+const ranking = AUTHORIZATIONS[2];
 
 function status(state: ConsentStatus['state'], policyVersion = '1.7'): ConsentStatus {
   return { state, givenAt: '2026-08-28T10:00:00Z', policyVersion };
 }
 
 describe('autorizações', () => {
-  it('lista as duas finalidades, separadas e na ordem da tela', () => {
-    expect(AUTHORIZATIONS.map((item) => item.purpose.tipo)).toEqual([SAUDE.tipo, TECNICA.tipo]);
+  it('lista as três finalidades, separadas e na ordem da tela', () => {
+    expect(AUTHORIZATIONS.map((item) => item.purpose.type)).toEqual([
+      HEALTH_PURPOSE.type,
+      TECHNIQUE_PURPOSE.type,
+      RANKING_PURPOSE.type,
+    ]);
+  });
+
+  // O ranking pede na própria aba, como a técnica; aqui só se sai dele.
+  it('o ranking sem aceite diz onde pede, e o aceite oferece sair', () => {
+    expect(authorizationFooter(ranking, status('missing')).action).toBeNull();
+    expect(authorizationFooter(ranking, status('granted', '1.0')).action).toBe('revoke');
+    expect(revokeEffects(ranking, true).map((effect) => effect.text)).toContain(
+      'Seu nome sai do placar na hora'
+    );
   });
 
   it('o aceite vigente diz a data e a versão, e só ele oferece a retirada', () => {

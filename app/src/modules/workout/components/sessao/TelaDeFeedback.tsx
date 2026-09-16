@@ -63,9 +63,9 @@ export function TelaDeFeedback({
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <TelaDeVidroComFoto
-        imagem={imagem}
-        folgaNoFim="botaoFixo"
-        sobreposicao={
+        image={imagem}
+        bottomSpace="fixedButton"
+        overlay={
           <BotaoFixoNoRodape
             icone="checkmark"
             rotulo={corrigindo ? 'Salvar correção' : 'Salvar e finalizar'}

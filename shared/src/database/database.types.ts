@@ -904,6 +904,35 @@ export type Database = {
         };
         Relationships: [];
       };
+      ranking_scores: {
+        Row: {
+          points: number;
+          student_id: string;
+          updated_at: string;
+          week_start_date: string;
+        };
+        Insert: {
+          points: number;
+          student_id: string;
+          updated_at?: string;
+          week_start_date: string;
+        };
+        Update: {
+          points?: number;
+          student_id?: string;
+          updated_at?: string;
+          week_start_date?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ranking_scores_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       specialist_notes: {
         Row: {
           body: string;
@@ -1619,6 +1648,17 @@ export type Database = {
         Args: { p_chave: string; p_session_id: string; p_valor: Json };
         Returns: undefined;
       };
+      get_leaderboard: {
+        Args: { p_scope: string; p_week_start?: string };
+        Returns: {
+          display_name: string;
+          is_me: boolean;
+          points: number;
+          previous_rank: number;
+          rank: number;
+          student_id: string;
+        }[];
+      };
       link_student_by_code: { Args: { p_code: string }; Returns: Json };
       reivindicar_proposta: {
         Args: { p_chave: string; p_session_id: string };
@@ -1635,7 +1675,7 @@ export type Database = {
     Enums: {
       account_status: "active" | "inactive" | "invited";
       account_type: "admin" | "specialist" | "student" | "member";
-      consent_type: "health_data_collection" | "technique_analysis";
+      consent_type: "health_data_collection" | "technique_analysis" | "ranking";
       day_of_week:
         | "monday"
         | "tuesday"
@@ -1780,7 +1820,7 @@ export const Constants = {
     Enums: {
       account_status: ["active", "inactive", "invited"],
       account_type: ["admin", "specialist", "student", "member"],
-      consent_type: ["health_data_collection", "technique_analysis"],
+      consent_type: ["health_data_collection", "technique_analysis", "ranking"],
       day_of_week: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
       diet_plan_status: ["active", "finished"],
       diet_plan_type: ["unique", "cyclic"],

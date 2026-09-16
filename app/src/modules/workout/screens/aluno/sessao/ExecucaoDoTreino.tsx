@@ -58,7 +58,7 @@ export function ExecucaoDoTreino({
   const aSeguir = outros.filter((i) => !exercicioConcluido(sessao, i));
 
   return (
-    <TelaDeVidroComFoto imagem={fotoDoGrupo(treino.muscle_group)}>
+    <TelaDeVidroComFoto image={fotoDoGrupo(treino.muscle_group)}>
       <TopoDaSessao
         titulo={treino.title}
         tempo={formatarDuracao(tempoDaSessao(sessao, agora))}

@@ -81,7 +81,7 @@ export function AuthorizationsScreen({ studentId, hasSpecialist }: Authorization
       <TituloDeSecao estilo="rotulo">Finalidades</TituloDeSecao>
       {items.map((item) => (
         <AuthorizationCard
-          key={item.authorization.purpose.tipo}
+          key={item.authorization.purpose.type}
           item={item}
           onRevoke={() => setChosen(item.authorization)}
         />

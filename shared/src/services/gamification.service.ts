@@ -3,8 +3,30 @@ import type {
   Achievement,
   DailyGoal,
   LeaderboardEntry,
+  LeaderboardScope,
   StudentStreak,
 } from "../types/gamification.types";
+
+/** O que a RPC `get_leaderboard` devolve; `previous_rank` é nulo para quem é novo. */
+interface LeaderboardRpcRow {
+  student_id: string;
+  display_name: string;
+  points: number;
+  rank: number;
+  previous_rank: number | null;
+  is_me: boolean;
+}
+
+function toLeaderboardEntry(row: LeaderboardRpcRow): LeaderboardEntry {
+  return {
+    studentId: row.student_id,
+    displayName: row.display_name,
+    points: row.points,
+    rank: row.rank,
+    previousRank: row.previous_rank,
+    isMe: row.is_me,
+  };
+}
 
 export const createGamificationService = (supabase: SupabaseClient) => ({
   getDailyGoal: async (date: string, studentId?: string): Promise<DailyGoal | null> => {
@@ -91,91 +113,20 @@ export const createGamificationService = (supabase: SupabaseClient) => ({
     if (error) throw error;
   },
 
-  fetchLeaderboard: async (
-    startDate: string,
-    scope: "global" | "my_students",
-    specialistId?: string,
-  ): Promise<LeaderboardEntry[]> => {
-    if (scope === "my_students" && specialistId) {
-      const { data: linkedData, error: linkError } = await supabase
-        .from("student_specialists")
-        .select(`student_id, student:profiles!student_id (id, full_name, avatar_url)`)
-        .eq("specialist_id", specialistId)
-        .eq("status", "active");
-      if (linkError) throw linkError;
-      if (!linkedData || linkedData.length === 0) return [];
-
-      type StudentProfile = {
-        id: string;
-        full_name: string;
-        avatar_url: string | null;
-      };
-      const students = linkedData
-        .map((d) => d.student as unknown as StudentProfile)
-        .filter(Boolean);
-      const studentIds = students.map((s) => s.id);
-
-      const { data: scores, error: scoresError } = await supabase
-        .from("ranking_scores")
-        .select("student_id, points")
-        .gte("week_start_date", startDate)
-        .in("student_id", studentIds);
-      if (scoresError) throw scoresError;
-
-      const scoreMap = new Map<string, number>();
-      scores?.forEach((s) => {
-        scoreMap.set(s.student_id, (scoreMap.get(s.student_id) ?? 0) + s.points);
-      });
-
-      return students
-        .map((s) => ({
-          student_id: s.id,
-          name: s.full_name || "Aluno",
-          points: scoreMap.get(s.id) ?? 0,
-          avatar_url: s.avatar_url ?? undefined,
-          rank: 0,
-        }))
-        .sort((a, b) => b.points - a.points)
-        .map((entry, i) => ({ ...entry, rank: i + 1 }));
-    }
-
-    // global
-    const { data: scores, error: scoresError } = await supabase
-      .from("ranking_scores")
-      .select("student_id, points")
-      .gte("week_start_date", startDate);
-    if (scoresError) throw scoresError;
-    if (!scores || scores.length === 0) return [];
-
-    const scoreMap = new Map<string, number>();
-    scores.forEach((s) => {
-      scoreMap.set(s.student_id, (scoreMap.get(s.student_id) ?? 0) + s.points);
-    });
-
-    const sortedScores = Array.from(scoreMap.entries())
-      .map(([student_id, points]) => ({ student_id, points }))
-      .sort((a, b) => b.points - a.points)
-      .slice(0, 50);
-
-    const { data: profiles, error: profilesError } = await supabase
-      .from("profiles")
-      .select("id, full_name, avatar_url")
-      .in(
-        "id",
-        sortedScores.map((s) => s.student_id),
-      );
-    if (profilesError) throw profilesError;
-
-    const profileMap = new Map(profiles?.map((p) => [p.id, p]));
-    return sortedScores.map((score, i) => {
-      const profile = profileMap.get(score.student_id);
-      return {
-        student_id: score.student_id,
-        name: profile?.full_name || "Aluno",
-        points: score.points,
-        avatar_url: profile?.avatar_url ?? undefined,
-        rank: i + 1,
-      };
-    });
+  /**
+   * O placar da semana corrente. A semana, o grupo e o nome abreviado são
+   * decididos no banco, porque a RLS não deixa o cliente ler o perfil de quem
+   * não é vinculado — e não deve deixar.
+   *
+   * O `global` recusa com 42501 quem não participa do ranking: confira o
+   * consentimento `RANKING` antes de chamar.
+   *
+   * @example
+   * const entries = await gamification.fetchLeaderboard("global");
+   */
+  fetchLeaderboard: async (scope: LeaderboardScope): Promise<LeaderboardEntry[]> => {
+    const { data, error } = await supabase.rpc("get_leaderboard", { p_scope: scope });
+    if (error) throw error;
+    return ((data ?? []) as LeaderboardRpcRow[]).map(toLeaderboardEntry);
   },
 });

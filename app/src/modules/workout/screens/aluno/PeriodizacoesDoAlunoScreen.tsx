@@ -48,7 +48,7 @@ export function PeriodizacoesDoAlunoScreen({ alunoId }: { alunoId: string }) {
   );
 
   return (
-    <TelaDeVidroComFoto imagem={fotoDoGrupo('braços')}>
+    <TelaDeVidroComFoto image={fotoDoGrupo('braços')}>
       <CabecalhoSobreFoto sobrelinha="Meus treinos" titulo="Periodizações" />
       <ConteudoDaLista carregando={carregando} falhou={falhou} vazio={resumos.length === 0}>
         {ativo ? (

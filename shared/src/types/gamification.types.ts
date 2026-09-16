@@ -31,13 +31,22 @@ export interface StudentStreak {
   last_freeze_date: string | null;
 }
 
+/**
+ * Uma linha do placar da semana, como a RPC `get_leaderboard` devolve.
+ *
+ * Sem foto: o global mostra só a inicial, e o nome de quem não é o próprio
+ * usuário vem abreviado ("Ana C."). Ver a migration 0059.
+ */
 export interface LeaderboardEntry {
-  student_id: string;
-  name: string;
+  studentId: string;
+  displayName: string;
   points: number;
-  avatar_url: string | undefined;
+  /** Empates dividem a posição. */
   rank: number;
+  /** A posição na semana anterior; `null` para quem não pontuou nela. */
+  previousRank: number | null;
+  isMe: boolean;
 }
 
-export type LeaderboardPeriod = "weekly" | "monthly" | "custom";
+/** `global` é o placar dos participantes; `my_students`, o do especialista. */
 export type LeaderboardScope = "global" | "my_students";

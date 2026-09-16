@@ -1,0 +1,12 @@
+-- O ranking ganha consentimento próprio (issue #320).
+--
+-- O ranking global mostra o nome de quem pontuou para outras pessoas do app, que
+-- não têm vínculo nenhum com ela, e quase todas são Praticantes. Pontuar é
+-- execução de contrato (Art. 7°, V); expor o nome a desconhecidos não é, e
+-- precisa de autorização para essa finalidade (Art. 7°, I; Art. 8°, §4°). Por
+-- isso é um valor novo, no mesmo padrão da 0041, e não um parágrafo a mais no
+-- consentimento de saúde: quem recusa o placar não perde nada além dele.
+--
+-- `ADD VALUE` fica sozinho nesta migration: o valor novo não pode ser usado na
+-- transação que o cria, e a 0059 é quem o lê.
+ALTER TYPE public.consent_type ADD VALUE IF NOT EXISTS 'ranking';
