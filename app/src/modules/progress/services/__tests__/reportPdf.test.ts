@@ -1,6 +1,6 @@
-import { type ReportPdfData, reportHtml } from '../reportPdf';
+import { type ReportSheet, reportHtml } from '../reportPdf';
 
-const DADOS: ReportPdfData = {
+const FOLHA: ReportSheet = {
   studentName: 'Ana Souza',
   period: '17 jun → 15 set 2026',
   subtitle: 'Base de força · com Marina Dias',
@@ -11,20 +11,26 @@ const DADOS: ReportPdfData = {
     cardioSessions: 6,
     measurements: 3,
   },
-  records: [{ exerciseId: 'supino', name: 'Supino reto', weight: 95, date: '12 ago' }],
+  // A data vem como `LoadRecord` a carrega, do dia local da série: ISO, e não já
+  // formatada. Era isso que a fixture antiga escondia — o PDF imprimia o ISO cru.
+  records: [{ exerciseId: 'supino', name: 'Supino reto', weight: 95.5, date: '2026-08-12' }],
   streak: { current: 12, best: 18 },
   composition: { weightDelta: -1.4, fatDelta: -1.5, source: 'declarada por você' },
   note: { body: 'Boa evolução na puxada.', author: 'Marina Dias', date: '10 set' },
+  formatDate: (date) => `${Number(date.slice(8, 10))} ago`,
 };
 
 describe('reportHtml', () => {
   it('leva para o papel o que a tela mostra', () => {
-    const html = reportHtml(DADOS);
+    const html = reportHtml(FOLHA);
 
     expect(html).toContain('Ana Souza');
     expect(html).toContain('34');
     expect(html).toContain('88%');
     expect(html).toContain('Supino reto');
+    // Como a tela escreve: vírgula decimal e a data por extenso, nunca o ISO.
+    expect(html).toContain('95,5 kg em 12 ago');
+    expect(html).not.toContain('2026-08-12');
     expect(html).toContain('Boa evolução na puxada.');
     expect(html).toContain('−1,4 kg');
   });
@@ -34,14 +40,14 @@ describe('reportHtml', () => {
   // numa folha que o aluno manda para quem quiser.
   it('não carrega e-mail nem identificador interno', () => {
     const html = reportHtml({
-      ...DADOS,
+      ...FOLHA,
       studentName: 'Ana Souza',
       records: [
         {
           exerciseId: '3f1c0a52-6d21-4a3e-9c88-1b2d3e4f5a6b',
           name: 'Supino reto',
           weight: 95,
-          date: '12 ago',
+          date: '2026-08-12',
         },
       ],
     });
@@ -52,11 +58,11 @@ describe('reportHtml', () => {
   });
 
   it('avisa, no próprio arquivo, que ele carrega dado de saúde', () => {
-    expect(reportHtml(DADOS)).toContain('dados de saúde');
+    expect(reportHtml(FOLHA)).toContain('dados de saúde');
   });
 
   it('sem nota no período, o PDF não tem a seção', () => {
-    const html = reportHtml({ ...DADOS, note: null });
+    const html = reportHtml({ ...FOLHA, note: null });
 
     expect(html).not.toContain('Nota do especialista');
   });
@@ -65,7 +71,7 @@ describe('reportHtml', () => {
   // nota com `<` quebraria o documento inteiro.
   it('escapa o que veio de texto livre', () => {
     const html = reportHtml({
-      ...DADOS,
+      ...FOLHA,
       note: { body: '<script>alert(1)</script>', author: null, date: '10 set' },
     });
 
@@ -74,7 +80,7 @@ describe('reportHtml', () => {
   });
 
   it('sem aderência no período, mostra travessão e não zero', () => {
-    const html = reportHtml({ ...DADOS, panel: { ...DADOS.panel, adherence: null } });
+    const html = reportHtml({ ...FOLHA, panel: { ...FOLHA.panel, adherence: null } });
 
     expect(html).toContain('<div class="value">—</div>');
     expect(html).not.toContain('<div class="value">0%</div>');

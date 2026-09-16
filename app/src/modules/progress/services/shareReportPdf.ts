@@ -5,7 +5,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { registrarFalha } from '@/lib/registro';
-import { type ReportPdfData, reportHtml } from './reportPdf';
+import { type ReportSheet, reportHtml } from './reportPdf';
 
 /**
  * Gera o PDF do relatório no aparelho e abre a folha de compartilhar (#312 §5).
@@ -14,15 +14,15 @@ import { type ReportPdfData, reportHtml } from './reportPdf';
  * PDF com peso, gordura e a nota do especialista não fica no diretório de cache
  * esperando a próxima limpeza do sistema.
  *
- * @example await sharePeriodReport(dadosDoRelatorio);
+ * @example await sharePeriodReport(folhaDoRelatorio);
  */
-export async function sharePeriodReport(data: ReportPdfData): Promise<boolean> {
+export async function sharePeriodReport(sheet: ReportSheet): Promise<boolean> {
   let uri: string | null = null;
   try {
-    const file = await Print.printToFileAsync({ html: reportHtml(data) });
+    const file = await Print.printToFileAsync({ html: reportHtml(sheet) });
     // O `expo-print` nomeia o arquivo com um uuid. Quem recebe lê o nome antes de
     // abrir, e o nome também não carrega identificador nenhum.
-    uri = await comNomeLegivel(file.uri);
+    uri = await withReadableName(file.uri);
     if (!(await Sharing.isAvailableAsync())) return false;
     await Sharing.shareAsync(uri, {
       mimeType: 'application/pdf',
@@ -36,22 +36,22 @@ export async function sharePeriodReport(data: ReportPdfData): Promise<boolean> {
     registrarFalha('progress.share_report');
     return false;
   } finally {
-    if (uri) await apagar(uri);
+    if (uri) await discard(uri);
   }
 }
 
-const NOME_DO_ARQUIVO = 'relatorio-do-periodo.pdf';
+const FILE_NAME = 'relatorio-do-periodo.pdf';
 
-async function comNomeLegivel(uri: string): Promise<string> {
-  const destino = `${FileSystem.cacheDirectory}${NOME_DO_ARQUIVO}`;
+async function withReadableName(uri: string): Promise<string> {
+  const target = `${FileSystem.cacheDirectory}${FILE_NAME}`;
   // O de ontem pode ter sobrado se o sistema matou o app no meio da folha.
-  await FileSystem.deleteAsync(destino, { idempotent: true });
-  await FileSystem.moveAsync({ from: uri, to: destino });
-  return destino;
+  await FileSystem.deleteAsync(target, { idempotent: true });
+  await FileSystem.moveAsync({ from: uri, to: target });
+  return target;
 }
 
 /** A limpeza nunca derruba o compartilhamento: o arquivo pode já ter sumido. */
-async function apagar(uri: string): Promise<void> {
+async function discard(uri: string): Promise<void> {
   try {
     await FileSystem.deleteAsync(uri, { idempotent: true });
   } catch {

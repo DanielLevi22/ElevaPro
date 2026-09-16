@@ -30,8 +30,8 @@ import { sharePeriodReport } from '../services/shareReportPdf';
  */
 interface PeriodReportScreenProps {
   studentId: string;
-  /** O nome que vai no papel; nunca o e-mail nem o id (§5). */
-  studentName: string;
+  /** O nome que vai no papel; nunca o e-mail nem o id (§5). Nulo sai sem nome. */
+  studentName: string | null;
 }
 
 export function PeriodReportScreen({ studentId, studentName }: PeriodReportScreenProps) {
@@ -39,7 +39,7 @@ export function PeriodReportScreen({ studentId, studentName }: PeriodReportScree
   const { report, periodization, specialist, note, loading } = usePeriodReport(studentId);
   const [exporting, setExporting] = useState(false);
 
-  const exportar = async () => {
+  const exportSheet = async () => {
     if (!report) return;
     setExporting(true);
     const shared = await sharePeriodReport({
@@ -55,6 +55,7 @@ export function PeriodReportScreen({ studentId, studentName }: PeriodReportScree
       note: note
         ? { body: note.body, author: note.author_name, date: localChipDate(note.created_at) }
         : null,
+      formatDate: shortDate,
     });
     setExporting(false);
     if (!shared) {
@@ -68,21 +69,21 @@ export function PeriodReportScreen({ studentId, studentName }: PeriodReportScree
 
   // O aviso antes de gerar, e não depois: o arquivo sai do controle do app no
   // instante em que a folha de compartilhar entrega (§5).
-  const confirmarExportacao = () =>
+  const confirmExport = () =>
     showConfirm({
       title: 'Exportar em PDF?',
       message:
         'O arquivo leva peso, medidas e o que o seu especialista escreveu. Quem receber poderá ler tudo.',
       confirmText: 'Exportar',
-      onConfirm: exportar,
+      onConfirm: exportSheet,
     });
 
   return (
     <GlassScreen
       glow={PROGRESS_GLOW}
-      bottomSpace="actionBar"
+      bottomSpace={report && !report.empty ? 'actionBar' : 'tab'}
       overlay={
-        report ? (
+        report && !report.empty ? (
           <BarraDeDuasAcoes
             secundaria={{
               rotulo: 'Ver detalhes',
@@ -94,7 +95,7 @@ export function PeriodReportScreen({ studentId, studentName }: PeriodReportScree
               rotulo: exporting ? 'Gerando' : 'Exportar PDF',
               icone: 'download-outline',
               desabilitada: exporting,
-              onPress: confirmarExportacao,
+              onPress: confirmExport,
             }}
           />
         ) : undefined
@@ -106,12 +107,12 @@ export function PeriodReportScreen({ studentId, studentName }: PeriodReportScree
         title="Relatório do período"
         leading={<BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={router.back} />}
         trailing={
-          report ? (
-            <BotaoRedondo icone="share" rotulo="Exportar PDF" onPress={confirmarExportacao} />
+          report && !report.empty ? (
+            <BotaoRedondo icone="download" rotulo="Exportar PDF" onPress={confirmExport} />
           ) : undefined
         }
       />
-      {report ? (
+      {report && !report.empty ? (
         <>
           <Text className="mt-1 text-[0.78125rem] text-hero-secondary">
             {[periodLabel(report), subtitle(periodization, specialist)].filter(Boolean).join(' · ')}

@@ -88,7 +88,7 @@ describe("specialistNoteService — escrita", () => {
   });
 
   it("corrigir move o updated_at junto com o texto", async () => {
-    const { supabase, chamadas } = criarSupabaseFake({ data: null });
+    const { supabase, chamadas } = criarSupabaseFake({ data: null, count: 1 });
 
     await createSpecialistNoteService(supabase).editNote("n1", "Outro texto.");
 
@@ -98,12 +98,24 @@ describe("specialistNoteService — escrita", () => {
   });
 
   it("apaga pelo id, e a autoria quem confere é a RLS", async () => {
-    const { supabase, chamadas } = criarSupabaseFake({ data: null });
+    const { supabase, chamadas } = criarSupabaseFake({ data: null, count: 1 });
 
     await createSpecialistNoteService(supabase).deleteNote("n1");
 
     expect(chamadas[0].metodos.map((m) => m.nome)).toContain("delete");
     expect(chamadas[0].filtros.id).toBe("n1");
+  });
+
+  // A RLS devolve zero linha em vez de erro. Sem esta checagem, corrigir a nota de
+  // outro especialista terminava "com sucesso" e a tela seguia mostrando o texto
+  // novo que o banco nunca guardou.
+  it("a recusa silenciosa da RLS vira erro, ao corrigir e ao apagar", async () => {
+    const service = createSpecialistNoteService(criarSupabaseFake({ count: 0 }).supabase);
+
+    await expect(service.editNote("n1", "Outro texto.")).rejects.toThrow(/corrigir a nota/);
+    await expect(
+      createSpecialistNoteService(criarSupabaseFake({ count: 0 }).supabase).deleteNote("n1"),
+    ).rejects.toThrow(/apagar a nota/);
   });
 
   it("propaga a recusa do banco", async () => {

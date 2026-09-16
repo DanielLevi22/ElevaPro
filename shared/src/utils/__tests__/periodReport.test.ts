@@ -10,6 +10,7 @@ const TO = "2026-09-15";
 const day = (date: string, extra: Partial<DailyActivity> = {}): DailyActivity => ({
   date,
   workouts: 0,
+  cardioSessions: 0,
   plannedMeals: 0,
   doneMeals: 0,
   loggedMeals: 0,
@@ -115,7 +116,13 @@ describe("summarizePeriod", () => {
     const days = [
       day("2026-06-10", { workouts: 1, plannedMeals: 4, doneMeals: 4 }),
       day("2026-06-20", { workouts: 1, plannedMeals: 4, doneMeals: 3, loggedMeals: 3 }),
-      day("2026-07-02", { workouts: 2, plannedMeals: 4, doneMeals: 4, loggedMeals: 4 }),
+      day("2026-07-02", {
+        workouts: 2,
+        cardioSessions: 1,
+        plannedMeals: 4,
+        doneMeals: 4,
+        loggedMeals: 4,
+      }),
     ];
 
     const report = summarizePeriod({
@@ -125,13 +132,14 @@ describe("summarizePeriod", () => {
       days,
       sets: [set("2026-05-01", 60), set("2026-07-01", 70)],
       measurements: [measurement("2026-07-01T12:00:00Z", { weight_kg: 80 })],
-      cardioSessions: 6,
     });
 
-    expect(report.panel.workouts).toBe(3);
+    // Três sessões dentro do período, uma delas de cardio: o cartão de treinos
+    // mostra as de força, e o de cardio a outra — nunca a mesma nos dois.
+    expect(report.panel.workouts).toBe(2);
+    expect(report.panel.cardioSessions).toBe(1);
     expect(report.panel.adherence).toBe(88);
     expect(report.panel.measurements).toBe(1);
-    expect(report.panel.cardioSessions).toBe(6);
     expect(report.records).toHaveLength(1);
   });
 
@@ -143,7 +151,6 @@ describe("summarizePeriod", () => {
       days: [day("2026-07-02", { workouts: 1 })],
       sets: [],
       measurements: [],
-      cardioSessions: 0,
     });
 
     expect(report.panel.adherence).toBeNull();

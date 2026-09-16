@@ -245,6 +245,9 @@ Para cada tipo de tratamento, deve existir uma base legal documentada. Não exis
 | Dados de gamificação | Execução de contrato | Art. 7°, V |
 | Histórico de mensagens | Execução de contrato | Art. 7°, V |
 | Member cria plano alimentar próprio (sem especialista) | Consentimento explícito | Art. 11, I |
+| **Medida corporal declarada pelo próprio aluno** (`measured_by = 'self'`, ADR-0030) | Tutela da saúde + Consentimento — e aqui o **presente**, não só a ausência de revogação: a declaração nasce depois do portão | Art. 11, II, f + I |
+| **Nota do especialista sobre o progresso** (`specialist_notes`, ADR-0031) | Tutela da saúde + Consentimento. Lida pelo autor com vínculo ativo; para o titular, a leitura é do próprio dado e não depende do consentimento seguir vigente | Art. 11, II, f + I |
+| **Exportação do relatório em PDF, no aparelho** | Mesma base dos dados que ele repete — não há tratamento novo: nada passa pelo servidor, e o arquivo é apagado depois de compartilhado | Art. 11, II, f + I |
 | Sinal derivado de inatividade para o especialista vinculado (briefing) | Mesma base do dado de origem — Execução de contrato para `workout_sessions`, Consentimento explícito para a data de conclusão da anamnese | Art. 7°, V + Art. 11, I |
 | **Processamento local contínuo da imagem do corpo durante a captura** (ADR-0022) | Tutela da saúde + Consentimento explícito | Art. 11, II, f + I |
 | **Processamento local contínuo da imagem do corpo durante o exercício** (Análise de Técnica) | Tutela da saúde + Consentimento explícito **próprio da finalidade** (`technique_analysis`) | Art. 11, II, f + I; Art. 8°, §4° |

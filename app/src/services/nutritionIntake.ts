@@ -30,7 +30,7 @@ export function intakeByDay(sources: NutritionSources, from: string, to: string)
   const activity = dailyActivities({
     from,
     to,
-    sessionDates: [],
+    sessions: [],
     ...sources,
     mealLogs: sources.logs,
   });

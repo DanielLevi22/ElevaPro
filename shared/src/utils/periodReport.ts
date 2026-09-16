@@ -22,7 +22,7 @@ import type { CompletedSet } from "./trainingProgress";
 export const ADHERENCE_GOAL = 90;
 
 export interface PeriodPanel {
-  /** Sessões concluídas no período. */
+  /** Sessões de força concluídas: o cardio vai no número ao lado, e não nos dois. */
   workouts: number;
   /** Refeições feitas sobre planejadas; `null` sem plano no período. */
   adherence: number | null;
@@ -50,6 +50,8 @@ export interface CompositionChange {
 export interface PeriodReport {
   from: string;
   to: string;
+  /** Nada aconteceu na janela: nem treino, nem refeição, nem medida. */
+  empty: boolean;
   panel: PeriodPanel;
   records: LoadRecord[];
   streak: StreakStanding;
@@ -59,19 +61,18 @@ export interface PeriodReport {
 export interface PeriodReportInput {
   from: string;
   to: string;
-  /** Hoje, para o ritmo e a sequência: o período pode terminar no futuro. */
+  /** Hoje, para a sequência: ela conta os dias seguidos até agora, não até `to`. */
   today: string;
   days: readonly DailyActivity[];
   sets: readonly CompletedSet[];
   measurements: readonly PhysicalAssessment[];
-  cardioSessions: number;
 }
 
 /**
  * O relatório inteiro, de uma passada.
  *
  * @example
- * const report = summarizePeriod({ from: "2026-06-17", to: "2026-09-15", today, days, sets, measurements, cardioSessions: 6 });
+ * const report = summarizePeriod({ from: "2026-06-17", to: "2026-09-15", today, days, sets, measurements });
  * report.panel.workouts // 34
  */
 export function summarizePeriod(input: PeriodReportInput): PeriodReport {
@@ -79,16 +80,27 @@ export function summarizePeriod(input: PeriodReportInput): PeriodReport {
   const inPeriod = input.measurements.filter(
     (record) => dayOf(record.assessed_at) >= input.from && dayOf(record.assessed_at) <= input.to,
   );
+  const panel = {
+    // Força e cardio saem da mesma lista de dias: contados por consultas
+    // diferentes, a soma dos dois cartões passava do que aconteceu de verdade.
+    workouts: days.reduce((total, day) => total + day.workouts - day.cardioSessions, 0),
+    adherence: mealAdherence(days),
+    goal: ADHERENCE_GOAL,
+    cardioSessions: days.reduce((total, day) => total + day.cardioSessions, 0),
+    measurements: inPeriod.length,
+  };
   return {
     from: input.from,
     to: input.to,
-    panel: {
-      workouts: days.reduce((total, day) => total + day.workouts, 0),
-      adherence: mealAdherence(days),
-      goal: ADHERENCE_GOAL,
-      cardioSessions: input.cardioSessions,
-      measurements: inPeriod.length,
-    },
+    // Zero em tudo não é um relatório de zeros: é não ter o que relatar, e a tela
+    // diz isso em vez de desenhar quatro cartões vazios.
+    empty:
+      panel.workouts === 0 &&
+      panel.cardioSessions === 0 &&
+      panel.measurements === 0 &&
+      panel.adherence === null &&
+      days.every((day) => day.loggedMeals === 0),
+    panel,
     records: loadRecords(input.sets, input.from, input.to),
     streak: activityStreak(input.days, input.today),
     composition: compositionChange(input.measurements, input.from, input.to),

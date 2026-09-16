@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DietMeal, DietPlan, ItemRegistrado, MealLog } from "../types/nutrition.types";
 import { localDateOf } from "../utils/dateOnly";
+import { firstOfEmbed } from "../utils/postgrest";
 import type { CompletedSet } from "../utils/trainingProgress";
 
 /**
@@ -48,7 +49,8 @@ const PAGE_SIZE = 1000;
 
 export interface ActivityHistory {
   /** O dia local de cada sessão concluída, repetido quando há duas no dia. */
-  sessionDates: string[];
+  /** O dia local de cada sessão concluída, com o tipo: cardio conta à parte. */
+  sessions: { date: string; cardio: boolean }[];
   mealLogs: Pick<MealLog, "logged_date" | "diet_meal_id" | "completed">[];
 }
 
@@ -132,10 +134,10 @@ export const createProgressService = (supabase: SupabaseClient) => ({
    */
   listActivityHistory: async (studentId: string): Promise<ActivityHistory> => {
     const [sessions, meals] = await Promise.all([
-      readAllPages<{ completed_at: string }>((from, to) =>
+      readAllPages<{ completed_at: string; session_type: string | null }>((from, to) =>
         supabase
           .from("workout_sessions")
-          .select("completed_at")
+          .select("completed_at, session_type")
           .eq("student_id", studentId)
           .not("completed_at", "is", null)
           .order("completed_at", { ascending: true })
@@ -152,38 +154,30 @@ export const createProgressService = (supabase: SupabaseClient) => ({
       ),
     ]);
     return {
-      sessionDates: sessions.map((row) => localDateOf(new Date(row.completed_at))),
+      sessions: sessions.map((row) => ({
+        date: localDateOf(new Date(row.completed_at)),
+        cardio: row.session_type === "cardio",
+      })),
       mealLogs: meals.map((row) => ({ ...row, completed: true })),
     };
   },
 
   /**
-   * O contexto do relatório do período: as sessões de cardio do intervalo, o nome
-   * da periodização ativa e o do especialista que acompanha (issue #312, tela 8).
+   * O subtítulo do relatório: o nome da periodização ativa e o do especialista que
+   * acompanha (issue #312, tela 8).
    *
-   * As leituras são independentes e vão juntas: em série, a tela esperaria três
-   * viagens para mostrar um subtítulo e um número.
+   * As duas leituras são independentes e vão juntas: em série, a tela esperaria
+   * duas viagens para mostrar uma linha de texto.
    *
-   * @example const { cardioSessions, periodization } = await service.getPeriodContext(id, from, to);
+   * O cardio **não** é contado aqui: ele sai da mesma lista de dias que os treinos
+   * (`dailyActivities`), senão os dois cartões somariam a mesma sessão duas vezes.
+   *
+   * @example const { periodization, specialist } = await service.getPeriodContext(id);
    */
   getPeriodContext: async (
     studentId: string,
-    from: string,
-    to: string,
-  ): Promise<{
-    cardioSessions: number;
-    periodization: string | null;
-    specialist: string | null;
-  }> => {
-    const [cardio, plan, link] = await Promise.all([
-      supabase
-        .from("workout_sessions")
-        .select("id", { count: "exact", head: true })
-        .eq("student_id", studentId)
-        .eq("session_type", "cardio")
-        .not("completed_at", "is", null)
-        .gte("completed_at", from)
-        .lte("completed_at", `${to}T23:59:59Z`),
+  ): Promise<{ periodization: string | null; specialist: string | null }> => {
+    const [plan, link] = await Promise.all([
       supabase
         .from("training_periodizations")
         .select("name")
@@ -201,11 +195,9 @@ export const createProgressService = (supabase: SupabaseClient) => ({
         .limit(1)
         .maybeSingle(),
     ]);
-    if (cardio.error) throw cardio.error;
     if (plan.error) throw plan.error;
     if (link.error) throw link.error;
     return {
-      cardioSessions: cardio.count ?? 0,
       periodization: (plan.data as { name: string } | null)?.name ?? null,
       specialist: nameOf(link.data),
     };
@@ -232,7 +224,7 @@ export const createProgressService = (supabase: SupabaseClient) => ({
 function flattenSession(session: SessionRow): CompletedSet[] {
   const date = localDateOf(new Date(session.completed_at));
   return (session.exercises ?? []).flatMap((row) => {
-    const exercise = Array.isArray(row.exercise) ? row.exercise[0] : row.exercise;
+    const exercise = firstOfEmbed(row.exercise);
     const exercise_id = row.exercise_id;
     if (!exercise_id || !exercise) return [];
     return (row.sets ?? [])
@@ -304,9 +296,7 @@ function startOfLocalDay(date: string): string {
   return new Date(year, month - 1, day).toISOString();
 }
 
-/** O embed do PostgREST chega como objeto ou lista, conforme a cardinalidade inferida. */
 function nameOf(row: unknown): string | null {
-  const embed = (row as { specialist?: unknown } | null)?.specialist;
-  const first = Array.isArray(embed) ? embed[0] : embed;
-  return (first as { full_name?: string | null } | undefined)?.full_name ?? null;
+  const embed = (row as { specialist?: { full_name: string | null }[] } | null)?.specialist;
+  return firstOfEmbed(embed)?.full_name ?? null;
 }

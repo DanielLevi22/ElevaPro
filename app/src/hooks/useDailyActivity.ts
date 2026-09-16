@@ -57,7 +57,7 @@ export function useDailyActivity(studentId: string | undefined): DailyActivitySt
     if (!data) return [];
     const [history, outline] = data;
     const earliest = [
-      ...history.sessionDates,
+      ...history.sessions.map((session) => session.date),
       ...history.mealLogs.map((log) => log.logged_date),
     ].reduce((oldest, date) => (date < oldest ? date : oldest), addDays(today, -(MIN_DAYS - 1)));
     return dailyActivities({ from: earliest, to: today, ...history, ...outline });

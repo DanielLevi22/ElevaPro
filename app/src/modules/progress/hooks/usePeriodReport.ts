@@ -48,11 +48,9 @@ export function usePeriodReport(studentId: string): PeriodReportState {
   const from = addDays(today, -(REPORT_DAYS - 1));
 
   const { data: context, isLoading: loadingContext } = useQuery({
-    queryKey: ['periodContext', studentId, from, today],
+    queryKey: ['periodContext', studentId],
     queryFn: () =>
-      avisandoSeFalhar('progress.read_period_context', () =>
-        progress.getPeriodContext(studentId, from, today)
-      ),
+      avisandoSeFalhar('progress.read_period_context', () => progress.getPeriodContext(studentId)),
   });
 
   // O Praticante não tem especialista, e nem lê nota (CASL): sem isto, a tela
@@ -81,7 +79,6 @@ export function usePeriodReport(studentId: string): PeriodReportState {
           days,
           sets,
           measurements,
-          cardioSessions: context?.cardioSessions ?? 0,
         }),
     periodization: context?.periodization ?? null,
     specialist: context?.specialist ?? null,

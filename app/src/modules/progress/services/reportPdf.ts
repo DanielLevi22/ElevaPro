@@ -11,9 +11,9 @@ import type { LoadRecord, PeriodPanel } from '@elevapro/shared';
  * é um dado que a folha de papel não precisa carregar para lugar nenhum.
  */
 
-export interface ReportPdfData {
+export interface ReportSheet {
   /** O nome que o aluno já vê no app; nunca o e-mail nem o id. */
-  studentName: string;
+  studentName: string | null;
   period: string;
   subtitle: string | null;
   panel: PeriodPanel;
@@ -21,6 +21,12 @@ export interface ReportPdfData {
   streak: { current: number; best: number };
   composition: { weightDelta: number | null; fatDelta: number | null; source: string } | null;
   note: { body: string; author: string | null; date: string } | null;
+  /**
+   * Como escrever a data de um recorde. Vem de fora porque o formato é da tela, e
+   * o papel repete o que ela mostra: `2026-08-12` cru no PDF era a data que o
+   * aluno nunca viu em lugar nenhum.
+   */
+  formatDate: (date: string) => string;
 }
 
 const escapeHtml = (text: string): string =>
@@ -35,8 +41,11 @@ const escapeHtml = (text: string): string =>
     return named[char] ?? char;
   });
 
+/** Vírgula decimal, como a tela escreve — o papel não muda de idioma. */
+const decimal = (value: number): string => value.toString().replace('.', ',');
+
 const signed = (value: number, unit: string): string =>
-  `${value > 0 ? '+' : value < 0 ? '−' : ''}${Math.abs(value).toString().replace('.', ',')} ${unit}`;
+  `${value > 0 ? '+' : value < 0 ? '−' : ''}${decimal(Math.abs(value))} ${unit}`;
 
 /**
  * O HTML do relatório. Separado da impressão para o teste poder afirmar o que o
@@ -44,8 +53,8 @@ const signed = (value: number, unit: string): string =>
  *
  * @example reportHtml({ studentName: 'Ana', … })
  */
-export function reportHtml(data: ReportPdfData): string {
-  const { panel } = data;
+export function reportHtml(sheet: ReportSheet): string {
+  const { panel } = sheet;
   return `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8" /><style>
   body { font-family: -apple-system, Roboto, sans-serif; color: #111; padding: 32px; }
@@ -61,8 +70,11 @@ export function reportHtml(data: ReportPdfData): string {
   footer { margin-top: 32px; font-size: 10px; color: #888; }
 </style></head><body>
   <h1>Relatório do período</h1>
-  <div class="sub">${escapeHtml(data.studentName)} · ${escapeHtml(data.period)}</div>
-  ${data.subtitle ? `<div class="sub">${escapeHtml(data.subtitle)}</div>` : ''}
+  <div class="sub">${[sheet.studentName, sheet.period]
+    .filter((part): part is string => Boolean(part))
+    .map(escapeHtml)
+    .join(' · ')}</div>
+  ${sheet.subtitle ? `<div class="sub">${escapeHtml(sheet.subtitle)}</div>` : ''}
   <div class="grid">
     <div class="card"><div class="label">Treinos</div><div class="value">${panel.workouts}</div></div>
     <div class="card"><div class="label">Aderência</div><div class="value">${
@@ -73,31 +85,31 @@ export function reportHtml(data: ReportPdfData): string {
   </div>
   <h2>Destaques</h2>
   <ul>
-    <li>Sequência atual de ${data.streak.current} dia(s), com recorde de ${data.streak.best}.</li>
-    ${data.records
+    <li>Sequência atual de ${sheet.streak.current} dia(s), com recorde de ${sheet.streak.best}.</li>
+    ${sheet.records
       .map(
         (record) =>
-          `<li>Recorde em ${escapeHtml(record.name)}: ${record.weight} kg em ${escapeHtml(record.date)}.</li>`
+          `<li>Recorde em ${escapeHtml(record.name)}: ${decimal(record.weight)} kg em ${escapeHtml(sheet.formatDate(record.date))}.</li>`
       )
       .join('')}
     ${
-      data.composition
-        ? `<li>Variação (${escapeHtml(data.composition.source)}): ${
-            data.composition.weightDelta === null
+      sheet.composition
+        ? `<li>Variação (${escapeHtml(sheet.composition.source)}): ${
+            sheet.composition.weightDelta === null
               ? 'peso sem registro'
-              : `peso ${signed(data.composition.weightDelta, 'kg')}`
+              : `peso ${signed(sheet.composition.weightDelta, 'kg')}`
           }${
-            data.composition.fatDelta === null
+            sheet.composition.fatDelta === null
               ? ''
-              : `, gordura ${signed(data.composition.fatDelta, 'pts')}`
+              : `, gordura ${signed(sheet.composition.fatDelta, 'pts')}`
           }.</li>`
         : ''
     }
   </ul>
   ${
-    data.note
-      ? `<h2>Nota do especialista</h2><div class="note">${escapeHtml(data.note.body)}</div>
-         <div class="sub">${escapeHtml(data.note.author ?? 'Especialista')} · ${escapeHtml(data.note.date)}</div>`
+    sheet.note
+      ? `<h2>Nota do especialista</h2><div class="note">${escapeHtml(sheet.note.body)}</div>
+         <div class="sub">${escapeHtml(sheet.note.author ?? 'Especialista')} · ${escapeHtml(sheet.note.date)}</div>`
       : ''
   }
   <footer>Documento com dados de saúde, gerado no aparelho pelo Eleva Pro. Quem receber este arquivo poderá lê-lo.</footer>

@@ -61,6 +61,7 @@ export * from "./utils/nutritionPeriod";
 export * from "./utils/periodizacao";
 export * from "./utils/periodReport";
 export * from "./utils/periodTrend";
+export * from "./utils/postgrest";
 export * from "./utils/preparo";
 export * from "./utils/progressSummary";
 export * from "./utils/pse";

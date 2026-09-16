@@ -1687,6 +1687,8 @@ DECLARE
   revogou  uuid := gen_random_uuid();
   autor    uuid := gen_random_uuid();
   outro    uuid := gen_random_uuid();
+  estranho uuid := gen_random_uuid();
+  encerrou uuid := gen_random_uuid();
   nota     uuid;
   nota_rev uuid;
   afetadas int;
@@ -1701,7 +1703,11 @@ BEGIN
     (autor,   '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
      'verify-n1@elevapro.local', '{"full_name":"E1","account_type":"specialist"}'::jsonb),
     (outro,   '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
-     'verify-n2@elevapro.local', '{"full_name":"E2","account_type":"specialist"}'::jsonb);
+     'verify-n2@elevapro.local', '{"full_name":"E2","account_type":"specialist"}'::jsonb),
+    (estranho,'00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-n3@elevapro.local', '{"full_name":"E3","account_type":"specialist"}'::jsonb),
+    (encerrou,'00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-n4@elevapro.local', '{"full_name":"E4","account_type":"specialist"}'::jsonb);
 
   INSERT INTO public.student_consents (student_id, consent_type, given_at, policy_version)
   VALUES (aluno, 'health_data_collection', now(), '1.8'),
@@ -1712,7 +1718,9 @@ BEGIN
   INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
   VALUES (aluno, autor, 'personal_training', 'active'),
          (aluno, outro, 'nutrition_consulting', 'active'),
-         (revogou, autor, 'personal_training', 'active');
+         (revogou, autor, 'personal_training', 'active'),
+         -- O que já foi embora: a nota que ele escreveu não o segue.
+         (aluno, encerrou, 'personal_training', 'inactive');
 
   SET LOCAL ROLE authenticated;
 
@@ -1726,6 +1734,20 @@ BEGIN
   INSERT INTO public.specialist_notes (student_id, specialist_id, body)
   VALUES (revogou, autor, 'Nota do aluno que vai revogar.')
   RETURNING id INTO nota_rev;
+
+  -- 2. O autor lê e corrige a própria nota. Sem este positivo, a trava toda
+  -- passaria com uma política que não deixa ninguém ler nada.
+  SELECT count(*) INTO visiveis FROM public.specialist_notes WHERE id = nota;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'o autor não lê a nota que escreveu (viu %)', visiveis;
+  END IF;
+
+  UPDATE public.specialist_notes SET body = 'Progresso consistente, com ajuste de volume.'
+  WHERE id = nota;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 1 THEN
+    RAISE EXCEPTION 'o autor não corrige a própria nota: % linha(s)', afetadas;
+  END IF;
 
   -- 5. E não escreve no nome de outro especialista.
   BEGIN
@@ -1754,6 +1776,30 @@ BEGIN
   IF afetadas <> 0 THEN
     RAISE EXCEPTION 'NOTA APAGADA POR QUEM NÃO ESCREVEU: % linha(s)', afetadas;
   END IF;
+
+  -- 3. Especialista sem vínculo nenhum com o aluno não lê, nem escreve.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', estranho, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO visiveis FROM public.specialist_notes WHERE student_id = aluno;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'NOTA LIDA SEM VÍNCULO: especialista de fora viu % nota(s)', visiveis;
+  END IF;
+  BEGIN
+    INSERT INTO public.specialist_notes (student_id, specialist_id, body)
+    VALUES (aluno, estranho, 'Nota de quem não acompanha este aluno.');
+    RAISE EXCEPTION 'NOTA ESCRITA SEM VÍNCULO: especialista de fora gravou nota';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- 3. E o que encerrou o vínculo perde o alcance junto com ele.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', encerrou, 'role', 'authenticated')::text, true);
+  BEGIN
+    INSERT INTO public.specialist_notes (student_id, specialist_id, body)
+    VALUES (aluno, encerrou, 'Nota depois do fim do vínculo.');
+    RAISE EXCEPTION 'NOTA ESCRITA APÓS O FIM DO VÍNCULO: o ex-especialista gravou nota';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
 
   -- 1. O aluno lê a nota sobre ele.
   PERFORM set_config('request.jwt.claims',

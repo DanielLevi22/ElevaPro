@@ -4,6 +4,7 @@ import {
   type SpecialistNote,
   type SpecialistNoteWithAuthor,
 } from "../types/specialistNote.types";
+import { firstOfEmbed } from "../utils/postgrest";
 
 /**
  * A nota do especialista sobre o progresso do Aluno (issue #312 §4).
@@ -86,11 +87,12 @@ export const createSpecialistNoteService = (supabase: SupabaseClient) => ({
    * @example await service.editNote(nota.id, "Novo texto.");
    */
   editNote: async (id: string, body: string): Promise<void> => {
-    const { error } = await supabase
+    const { error, count } = await supabase
       .from("specialist_notes")
-      .update({ body: body.trim(), updated_at: new Date().toISOString() })
+      .update({ body: body.trim(), updated_at: new Date().toISOString() }, { count: "exact" })
       .eq("id", id);
     if (error) throw error;
+    recusaSilenciosa(count, "corrigir");
   },
 
   /**
@@ -99,16 +101,31 @@ export const createSpecialistNoteService = (supabase: SupabaseClient) => ({
    * @example await service.deleteNote(nota.id);
    */
   deleteNote: async (id: string): Promise<void> => {
-    const { error } = await supabase.from("specialist_notes").delete().eq("id", id);
+    const { error, count } = await supabase
+      .from("specialist_notes")
+      .delete({ count: "exact" })
+      .eq("id", id);
     if (error) throw error;
+    recusaSilenciosa(count, "apagar");
   },
 });
 
-/** O embed do PostgREST chega como objeto ou lista, conforme a cardinalidade inferida. */
 function withAuthorName(row: unknown): SpecialistNoteWithAuthor {
   const { author, ...note } = row as SpecialistNote & {
     author?: { full_name: string | null } | { full_name: string | null }[] | null;
   };
-  const first = Array.isArray(author) ? author[0] : author;
-  return { ...note, author_name: first?.full_name ?? null };
+  return { ...note, author_name: firstOfEmbed(author)?.full_name ?? null };
+}
+
+/**
+ * A RLS não recusa: ela não devolve linha. Sem isto, corrigir a nota de outro
+ * especialista, ou a própria depois da revogação, resolvia sem erro nenhum e a
+ * tela dizia que salvou.
+ */
+function recusaSilenciosa(count: number | null, acao: string): void {
+  if (count === 0) {
+    throw new Error(
+      `Não foi possível ${acao} a nota: ela é de outro especialista, ou o acesso a este aluno terminou.`,
+    );
+  }
 }
