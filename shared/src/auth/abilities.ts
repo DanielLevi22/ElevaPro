@@ -39,6 +39,8 @@ export type Subject =
   | "Hydration"
   /** A medida corporal declarada pelo próprio aluno (0056); a do especialista não é editável. */
   | "DeclaredMeasurement"
+  /** A nota que o especialista escreve sobre o progresso do Aluno (0057). */
+  | "SpecialistNote"
   | "all";
 
 export type AppAbility = MongoAbility<[Action, Subject]>;
@@ -69,6 +71,9 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
     can("manage", "Client");
     // O vinculado lê a medida que o aluno declarou antes do vínculo (0056).
     can("read", "DeclaredMeasurement");
+    // A nota é do autor: quem escreveu lê, corrige e apaga. A RLS (0057) é quem
+    // confere a autoria linha a linha — aqui só se decide o que a tela oferece.
+    can("manage", "SpecialistNote");
     can("read", "Analytics");
     can("read", "Profile");
     can("update", "Profile");
@@ -104,6 +109,9 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
     // Com especialista quem mede é ele, e o banco recusa a declaração (0056). O que o
     // aluno declarou antes do vínculo continua dele para corrigir e apagar.
     can(["update", "delete"], "DeclaredMeasurement");
+    // A nota é registro do profissional: o aluno lê o que escreveram sobre ele, e
+    // não escreve nem apaga (0057).
+    can("read", "SpecialistNote");
   }
 
   // member: usuário independente — cria e gerencia os próprios planos (sem specialist).

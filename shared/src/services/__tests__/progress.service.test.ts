@@ -112,6 +112,39 @@ describe("progressService — histórico de atividade", () => {
   });
 });
 
+describe("progressService — contexto do relatório", () => {
+  it("conta só o cardio concluído dentro do intervalo, sem trazer linha", async () => {
+    const { supabase, chamadas } = criarSupabaseFake([
+      { count: 6 },
+      { data: { name: "Base" } },
+      { data: { specialist: { full_name: "Marina Dias" } } },
+    ]);
+
+    const context = await createProgressService(supabase).getPeriodContext(
+      "aluno-1",
+      "2026-06-17",
+      "2026-09-15",
+    );
+
+    expect(context).toEqual({
+      cardioSessions: 6,
+      periodization: "Base",
+      specialist: "Marina Dias",
+    });
+    expect(chamadas[0].tabela).toBe("workout_sessions");
+    expect(chamadas[0].metodos[0].args[1]).toMatchObject({ head: true, count: "exact" });
+    expect(chamadas[0].filtros).toMatchObject({ student_id: "aluno-1", session_type: "cardio" });
+  });
+
+  it("sem periodização ativa, o subtítulo não tem o que dizer", async () => {
+    const { supabase } = criarSupabaseFake([{ count: 0 }, { data: null }, { data: null }]);
+
+    await expect(
+      createProgressService(supabase).getPeriodContext("aluno-1", "a", "b"),
+    ).resolves.toEqual({ cardioSessions: 0, periodization: null, specialist: null });
+  });
+});
+
 describe("progressService — esboço do plano ativo", () => {
   it("devolve o tipo, o início e as refeições com o dia da semana, numa consulta", async () => {
     const { supabase, chamadas } = criarSupabaseFake({

@@ -158,6 +158,60 @@ export const createProgressService = (supabase: SupabaseClient) => ({
   },
 
   /**
+   * O contexto do relatório do período: as sessões de cardio do intervalo, o nome
+   * da periodização ativa e o do especialista que acompanha (issue #312, tela 8).
+   *
+   * As leituras são independentes e vão juntas: em série, a tela esperaria três
+   * viagens para mostrar um subtítulo e um número.
+   *
+   * @example const { cardioSessions, periodization } = await service.getPeriodContext(id, from, to);
+   */
+  getPeriodContext: async (
+    studentId: string,
+    from: string,
+    to: string,
+  ): Promise<{
+    cardioSessions: number;
+    periodization: string | null;
+    specialist: string | null;
+  }> => {
+    const [cardio, plan, link] = await Promise.all([
+      supabase
+        .from("workout_sessions")
+        .select("id", { count: "exact", head: true })
+        .eq("student_id", studentId)
+        .eq("session_type", "cardio")
+        .not("completed_at", "is", null)
+        .gte("completed_at", from)
+        .lte("completed_at", `${to}T23:59:59Z`),
+      supabase
+        .from("training_periodizations")
+        .select("name")
+        .eq("student_id", studentId)
+        .eq("status", "active")
+        .limit(1)
+        .maybeSingle(),
+      // Só o nome: a `profiles_read_own_and_linked` (0016) deixa o aluno ler o
+      // perfil de quem o acompanha, e o relatório não precisa de mais que isso.
+      supabase
+        .from("student_specialists")
+        .select("specialist:profiles!student_specialists_specialist_id_profiles_id_fk(full_name)")
+        .eq("student_id", studentId)
+        .eq("status", "active")
+        .limit(1)
+        .maybeSingle(),
+    ]);
+    if (cardio.error) throw cardio.error;
+    if (plan.error) throw plan.error;
+    if (link.error) throw link.error;
+    return {
+      cardioSessions: cardio.count ?? 0,
+      periodization: (plan.data as { name: string } | null)?.name ?? null,
+      specialist: nameOf(link.data),
+    };
+  },
+
+  /**
    * As séries concluídas das sessões terminadas desde `since`, no dia local.
    *
    * @example
@@ -248,4 +302,11 @@ async function readAllPages<T>(page: (from: number, to: number) => Page<T>): Pro
 function startOfLocalDay(date: string): string {
   const [year, month, day] = date.split("-").map(Number);
   return new Date(year, month - 1, day).toISOString();
+}
+
+/** O embed do PostgREST chega como objeto ou lista, conforme a cardinalidade inferida. */
+function nameOf(row: unknown): string | null {
+  const embed = (row as { specialist?: unknown } | null)?.specialist;
+  const first = Array.isArray(embed) ? embed[0] : embed;
+  return (first as { full_name?: string | null } | undefined)?.full_name ?? null;
 }

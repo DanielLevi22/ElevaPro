@@ -139,6 +139,8 @@ export const ROUTES = {
     MEASUREMENT_FORM: '/(tabs)/progress/measurement',
     /** O histórico das medidas, com o caminho de correção da declarada. */
     MEASUREMENTS: '/(tabs)/progress/measurements',
+    /** O relatório dos últimos 90 dias, com a exportação em PDF. */
+    REPORT: '/(tabs)/progress/report',
   },
 
   // Saúde em vidro (#308): dentro das abas, com a tab bar, como o kit desenha.
