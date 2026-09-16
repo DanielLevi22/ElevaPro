@@ -136,6 +136,16 @@ _Avoid_: treino avulso, sessão extra
 **WorkoutSessionItem**:
 Um exercício dentro de uma WorkoutSession, com a carga e as repetições reais.
 
+**Ranking**:
+A competição semanal entre Students, de segunda a domingo no horário de Brasília. O
+placar global é de quem entrou (opt-in); o do especialista são os alunos dele.
+_Avoid_: leaderboard (na UI), competição, liga
+
+**Pontos**:
+O que uma WorkoutSession concluída vale no Ranking: 100, até duas por dia. Só treino
+pontua.
+_Avoid_: XP, score, pontuação (na UI)
+
 ### Avaliação
 
 **Assessment**:

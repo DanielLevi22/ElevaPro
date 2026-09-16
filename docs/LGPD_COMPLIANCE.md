@@ -57,6 +57,8 @@ Qualquer dado que identifica ou pode identificar uma pessoa.
 | Status da conta | `profiles.account_status` | Execução de contrato | Gestão de ciclo de vida do usuário |
 | Anotação administrativa | `profiles.admin_notes` | Legítimo interesse (Art. 7°, IX) | Registro do suporte sobre a conta — por que foi suspensa, o que ficou combinado. Escrita pelo admin, não coletada do titular. **Não é dado de saúde.** Entra no direito de acesso (Art. 18, II): é dado pessoal do titular, ainda que escrito por terceiro |
 | Tipo de serviço | `specialist_services.service_type` | Execução de contrato | Definir quais funcionalidades o especialista acessa |
+| **Pontos da semana** | `ranking_scores` (desde a `0059`, #320) | Execução de contrato (Art. 7°, V) | O placar do ranking. **Derivado só do treino**: 100 por sessão concluída, até 2 por dia, gravado por trigger de `workout_sessions` — o cliente não escreve. Refeição, água e medida não pontuam, porque o placar mostraria a adesão à dieta (Art. 11). O dono e o especialista vinculado leem a linha |
+| **Participação no ranking global** | `student_consents` com `consent_type = 'ranking'` (desde a `0058`, #320) | **Consentimento (Art. 7°, I)**, finalidade própria (Art. 8°, §4°) | Mostrar a outros participantes o primeiro nome, a inicial do sobrenome e os pontos da semana. Só quem consentiu aparece e só quem consentiu vê (reciprocidade); o especialista não participa. A leitura sai só pela RPC `get_leaderboard`, que não devolve foto nem e-mail. Revogar tira a pessoa do placar na mesma consulta |
 | Marca de correção do feedback | `workout_sessions.feedback_edited_at` | Execução de contrato (Art. 7°, V) | Carimbo de tempo, não conteúdo: informa ao especialista que a declaração do aluno foi corrigida e quando. Sem ele a correção seria indistinguível de o aluno ter escrito aquilo desde o começo. **Não guarda a versão anterior** — a versão errada é o dado inexato que o Art. 6°, V manda corrigir, e preservá-la contraria o próprio direito exercido |
 
 ### 2.2 Dados pessoais sensíveis (Art. 5°, II)
@@ -243,6 +245,7 @@ Para cada tipo de tratamento, deve existir uma base legal documentada. Não exis
 | Prescrição de dietas | Tutela da saúde + Execução de contrato | Art. 11, II, f |
 | Logs de acesso ao sistema | Legítimo interesse (segurança) | Art. 7°, IX |
 | Dados de gamificação | Execução de contrato | Art. 7°, V |
+| **Mostrar nome e pontos a outros participantes do ranking** (#320) | Consentimento, com finalidade e versão próprias (`RANKING`, `1.0`), no padrão da Análise de Técnica: recusar o placar não custa nada além dele | Art. 7°, I; Art. 8°, §4° |
 | Histórico de mensagens | Execução de contrato | Art. 7°, V |
 | Member cria plano alimentar próprio (sem especialista) | Consentimento explícito | Art. 11, I |
 | **Medida corporal declarada pelo próprio aluno** (`measured_by = 'self'`, ADR-0030) | Tutela da saúde + Consentimento — e aqui o **presente**, não só a ausência de revogação: a declaração nasce depois do portão | Art. 11, II, f + I |
@@ -483,7 +486,7 @@ banco. O critério é a **base legal**, não o vínculo.
 |---|---|---|---|
 | Art. 11 (tutela da saúde **+** consentimento) | `health_daily_metrics`, `meal_logs`, `physical_assessments`, `student_anamnesis`, `body_scans`, `workout_session_vitals`, `specialist_notes` | **fecha** o acesso do especialista | 0043, 0044, 0045, 0049, 0057 |
 | Art. 11, só do titular | `hydration_daily` | não há acesso do especialista a fechar; **revogar interrompe a gravação**, que a política de INSERT e UPDATE recusa sem consentimento | 0052 |
-| Art. 7°, V (execução de contrato) | `profiles`, `specialist_services`, `workout_sessions`, `workout_session_sets`, `workout_session_exercises`, `achievements`, `daily_goals`, `student_streaks` | não alcança — o caminho é encerrar o vínculo | — |
+| Art. 7°, V (execução de contrato) | `profiles`, `specialist_services`, `workout_sessions`, `workout_session_sets`, `workout_session_exercises`, `achievements`, `daily_goals`, `student_streaks`, `ranking_scores` | não alcança — o caminho é encerrar o vínculo | — |
 
 A segunda linha é decisão, não omissão: revogar o consentimento de dados de
 saúde não pode desligar a prescrição de treino nem apagar o aluno do painel.
@@ -547,6 +550,7 @@ A LGPD exige que dados sejam eliminados quando deixam de ser necessários (Art. 
 | Água do dia (`hydration_daily`) | Enquanto a conta estiver ativa | A média da semana é a finalidade. Sem DELETE pelo app: a correção é gravar outro total (Art. 18, III), e a eliminação é o `ON DELETE CASCADE` a partir de `profiles` |
 | Conversa com o coach de IA (`ai_chat_sessions`, `ai_chat_messages`) | Enquanto a conta do aluno estiver ativa | É o registro da prescrição assistida. `ON DELETE CASCADE` a partir de `profiles` elimina junto com a conta |
 | Análise corporal por imagem (`body_scans`) | Enquanto a conta estiver ativa | A comparação entre escaneamentos é a finalidade, e ela precisa do histórico. **A imagem não é guardada** — as colunas de URL de foto foram removidas na `0026`, para que ninguém as preencha por engano — só o resultado derivado, que é a maior minimização possível para um dado biométrico (`ADR-0010`). **No aparelho, a foto também sai** (#316): as três fotos da câmera (`body-scan-<instante>.jpg` no cache) e a cópia reduzida que a análise grava em `ImageManipulator/` são apagadas assim que a análise é gravada, ao refazer e ao sair do fluxo sem analisar; na falha ficam só para o "Tentar de novo". Começar um scan varre o que sobrou de um scan interrompido, porque o store não é persistido e só o nome do arquivo ainda leva até a foto. Travas em `capturedPhotos.test.ts` e `assessmentStore.test.ts`. `ON DELETE CASCADE` a partir de `profiles` elimina junto com a conta |
+| Pontos da semana (`ranking_scores`) | Enquanto a conta estiver ativa | O ranking lê só a semana corrente e a anterior; as outras ficam para o próprio aluno. `ON DELETE CASCADE` a partir de `profiles`, e o trigger não regrava o placar de uma conta que está sendo apagada (trava em `verify-rls.sql`) |
 | Logs de autenticação | 90 dias | Segurança — detecção de acessos suspeitos |
 | Dados após exclusão de conta | 0 dias (eliminar ou anonimizar) | Princípio da necessidade |
 
@@ -684,6 +688,7 @@ Corrigido pelas migrations `0016`–`0020` (PRD
 | Saúde | `student_anamnesis`, `physical_assessments`, `body_scans`, `workout_sessions`, `workout_session_exercises` | ✅ | 0017 |
 | Prescrição e catálogo | `workouts`, `workout_exercises`, `training_periodizations`, `training_plans`, `exercises`, `specialist_services` | ✅ | 0018 |
 | Gamificação | `achievements`, `daily_goals`, `student_streaks` | ✅ | 0019 |
+| Ranking | `ranking_scores` | ✅ só leitura para o cliente | 0059 |
 | Nutrição | `diet_plans`, `diet_meals`, `diet_meal_items`, `meal_logs`, `foods` | ✅ | 0013 |
 | Saúde diária | `health_daily_metrics` | ✅ | 0015 |
 | IA | `ai_chat_sessions`, `ai_chat_messages` | ✅ | 0003 |
@@ -899,7 +904,8 @@ modelo. Fechado pelo PRD
 |---------------|-------------------|
 | `phone` removido do tipo `LeaderboardEntry` e de todas as queries do leaderboard | Necessidade (Art. 6°, III) — telefone não é necessário para ranking |
 | Botão WhatsApp removido da tela de ranking (não existe base legal para exposição de telefone no leaderboard) | Finalidade (Art. 6°, I) |
-| Leaderboard global expõe apenas `full_name`, `avatar_url` e pontuação — sem dados de contato | Necessidade + Finalidade |
+| Leaderboard global expõe apenas o primeiro nome, a inicial do sobrenome e a pontuação — sem foto e sem contato (#320) | Necessidade + Finalidade |
+| Ranking global é **opt-in** com reciprocidade: só aparece e só vê quem consentiu (`consent_type = 'ranking'`, #320) | Consentimento (Art. 7°, I) |
 | `daily_goals`, `student_streaks`, `achievements`: base legal Execução de Contrato (Art. 7°, V) | Base legal documentada |
 
 **Decisões pendentes de implementação:**
@@ -907,8 +913,8 @@ modelo. Fechado pelo PRD
 | Item | Ação necessária |
 |------|----------------|
 | ~~RLS nas tabelas de gamificação (`daily_goals`, `student_streaks`, `achievements`)~~ | ✅ Feito na migration `0019` — aluno lê e escreve o próprio; especialista com vínculo `active` só lê |
-| `ranking_scores` não existe no schema Drizzle nem nas migrations | Criar tabela com RLS antes de usar o leaderboard em produção |
-| Leaderboard global mostra `full_name` de todos os alunos ranqueados — verificar se há consentimento necessário para participação pública | Avaliar se `ranking_scores` deve ser opt-in (consentimento) ou opt-out |
+| ~~`ranking_scores` não existe no schema Drizzle nem nas migrations~~ | ✅ Criada na `0059` (#320), com RLS de leitura, escrita só por trigger e travas em `verify-rls.sql` |
+| ~~Leaderboard global mostra `full_name` de todos os alunos ranqueados~~ | ✅ Opt-in na `0058` (#320); a RPC abrevia o nome e não devolve foto |
 
 ---
 
@@ -919,7 +925,7 @@ modelo. Fechado pelo PRD
 | Consentimento explícito (`HealthDataConsentModal`) antes do primeiro `diet_plans` INSERT por member | Base legal Art. 11, I |
 | Leitura de `workout_sessions` coberta pelo RLS existente do módulo Workouts | Segurança |
 | Leitura de `student_specialists` + `profiles.full_name` coberta pelo RLS do módulo Students | Segurança |
-| `ranking_scores` (leaderboard) não expõe dados de contato após remoção do `phone` | Necessidade |
+| `ranking_scores` (leaderboard) não expõe dados de contato; a leitura com outros participantes sai só pela `get_leaderboard` (#320) | Necessidade |
 
 **Itens pendentes de lançamento:**
 
