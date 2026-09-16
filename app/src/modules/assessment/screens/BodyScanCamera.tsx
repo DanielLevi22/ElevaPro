@@ -383,7 +383,6 @@ export default function BodyScanCamera() {
 
       <CameraShade />
       <CaptureGuide
-        pose={target}
         top={MARCA_TOPO}
         bottom={MARCA_BASE}
         proximity={portao?.proximidade ?? 'longe'}
