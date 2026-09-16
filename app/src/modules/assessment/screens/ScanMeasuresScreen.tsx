@@ -12,7 +12,7 @@ import { Vidro } from '@/components/ui/Vidro';
 import { ROUTES } from '@/navigation/types';
 import { ScanGeometry } from '../components/ScanGeometry';
 import { ScanMissing } from '../components/ScanMissing';
-import { useScanHistory } from '../hooks/useScanHistory';
+import { useScan } from '../hooks/useScanHistory';
 import { type MeasureRow, previousScan, scanMeasures } from '../services/scanView';
 
 /**
@@ -27,10 +27,9 @@ import { type MeasureRow, previousScan, scanMeasures } from '../services/scanVie
  */
 export function ScanMeasuresScreen({ studentId, scanId }: { studentId: string; scanId: string }) {
   const router = useRouter();
-  const { scans, loading } = useScanHistory(studentId);
-  const scan = scans.find((item) => item.id === scanId);
+  const { scan, scans, missing } = useScan(studentId, scanId);
 
-  if (!scan) return loading ? null : <ScanMissing />;
+  if (!scan) return missing ? <ScanMissing /> : null;
   const measures = scanMeasures(scan, previousScan(scans, scanId));
 
   return (

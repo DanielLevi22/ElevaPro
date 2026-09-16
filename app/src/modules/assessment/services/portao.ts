@@ -30,7 +30,6 @@ export type {
   Proximidade,
   Vista,
 };
-export { levelWithinTolerance };
 
 /**
  * Marcas do Enquadramento, em fração da altura do frame. São as mesmas de
@@ -133,6 +132,35 @@ const CONTRASTE_MINIMO = 0.5;
 
 /** Problemas que exigem uma mudança grande: ainda não é questão de ajustar. */
 const LONGE: ReadonlySet<IdDaInstrucao> = new Set(['sem-corpo', 'vista-errada', 'aproxime-muito']);
+
+/**
+ * Do que cada instrução trata, para os chips da câmera acenderem pela mesma
+ * instrução que o portão escolheu. Mora aqui, junto com `LONGE`: instrução nova
+ * se classifica num lugar só (#316).
+ */
+export type InstructionConcern = 'distance' | 'frame' | 'other';
+
+const CONCERN: Record<IdDaInstrucao, InstructionConcern> = {
+  aproxime: 'distance',
+  'aproxime-muito': 'distance',
+  afaste: 'distance',
+  'passo-a-frente': 'distance',
+  'passo-atras': 'distance',
+  'sem-corpo': 'frame',
+  'cabeca-cortada': 'frame',
+  'pes-cortados': 'frame',
+  'suba-o-celular': 'frame',
+  'baixe-o-celular': 'frame',
+  'va-para-esquerda': 'other',
+  'va-para-direita': 'other',
+  'vista-errada': 'other',
+  nivel: 'other',
+};
+
+/** @example instructionConcern('afaste') // "distance" */
+export function instructionConcern(id: IdDaInstrucao): InstructionConcern {
+  return CONCERN[id];
+}
 
 /**
  * Quanto tempo a mesma instrução fica calada antes de ser dita de novo.

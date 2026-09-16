@@ -1,5 +1,3 @@
-import { createHealthService } from '@elevapro/shared';
-import { supabase } from '@elevapro/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
@@ -10,12 +8,12 @@ import { HEALTH_GLOW } from '@/components/ui/BrilhoAmbiente';
 import { GlassScreen } from '@/components/ui/GlassScreen';
 import { ReferenceBody } from '@/components/ui/ReferenceBody';
 import { Vidro } from '@/components/ui/Vidro';
-import { registrarFalha } from '@/lib/registro';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/modules/auth/store/authStore';
 import { ROUTES } from '@/navigation/types';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
 import { analysisSteps, type StepState } from '../services/captureProgress';
+import { grantScanConsent } from '../services/scanConsent';
 import { useAssessmentStore } from '../store/assessmentStore';
 import { AssessmentStatus } from '../types/assessment';
 
@@ -274,11 +272,8 @@ function ConsentOutcome() {
     if (!userId) return;
     setGranting(true);
     try {
-      await createHealthService(supabase).grantCollectionConsent(userId);
+      if (!(await grantScanConsent(userId))) return;
       await submitScan();
-    } catch {
-      // Sem o erro: o do PostgREST pode carregar o payload do consentimento.
-      registrarFalha('body_scan.grant_consent');
     } finally {
       setGranting(false);
     }

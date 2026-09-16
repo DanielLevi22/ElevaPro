@@ -1,34 +1,6 @@
 import { Accelerometer } from 'expo-sensors';
 import { useEffect, useState } from 'react';
-
-/**
- * Torção máxima no eixo da lente. Apertado de propósito.
- *
- * Roll entra 1:1 na inclinação de ombro e quadril: a imagem inteira gira junto
- * com o aparelho, então a torção vira desnível aparente na mesma medida. E o
- * sinal real é dessa ordem — 0,6° a 2,3° nos scans do aparelho de teste. Com
- * folga, o resíduo não muda só o valor: muda o LADO reportado, que é o erro que
- * aponta errado com cara de certo.
- *
- * 1,5° e não 3° porque é comprovadamente alcançável: o aparelho apoiado sem
- * nenhum cuidado especial mediu 1,10°. Apertar aqui sai mais barato que
- * corrigir depois — girar o celular um pouco é fácil, e dispensa uma conta cujo
- * sinal ninguém consegue verificar sem experimento.
- */
-const ROLL_MAXIMO = 1.5;
-
-/**
- * Inclinação máxima para frente ou para trás.
- *
- * Mais folgada que o roll porque custa outra coisa: pitch encurta o corpo por
- * perspectiva, e a 12° o erro na régua altura→pixel é de 2%. Não gira o
- * horizonte, então não contamina ângulo nenhum.
- *
- * 12° e não 6° porque 6° não é alcançável na prática: um celular apoiado fica
- * naturalmente perto de 9° para trás — medido no aparelho de teste, que ficava
- * barrado por uma tolerância escolhida quando a trava nunca chegava a rodar.
- */
-const PITCH_MAXIMO = 12;
+import { levelWithinTolerance } from '../services/levelTolerance';
 
 const RAD_PARA_GRAUS = 180 / Math.PI;
 
@@ -43,12 +15,12 @@ export interface DeviceLevel {
    * mesmo tanto.
    */
   roll: number;
-  nivelado: boolean;
+  isLevel: boolean;
   /** Falso quando o aparelho não tem o sensor — aí o guia não pode barrar nada. */
-  disponivel: boolean;
+  isAvailable: boolean;
 }
 
-const INICIAL: DeviceLevel = { pitch: 0, roll: 0, nivelado: false, disponivel: false };
+const INITIAL_LEVEL: DeviceLevel = { pitch: 0, roll: 0, isLevel: false, isAvailable: false };
 
 /**
  * Inclinação do aparelho, para o guia de captura poder validar de verdade.
@@ -62,24 +34,24 @@ const INICIAL: DeviceLevel = { pitch: 0, roll: 0, nivelado: false, disponivel: f
  * todas as medidas derivadas — daí barrar o disparo em vez de só avisar.
  *
  * @example
- * const { nivelado, pitch } = useDeviceLevel();
- * <TouchableOpacity disabled={!nivelado} onPress={tirarFoto} />
+ * const { isLevel, pitch } = useDeviceLevel();
+ * <TouchableOpacity disabled={!isLevel} onPress={takePhoto} />
  */
 export function useDeviceLevel(): DeviceLevel {
-  const [level, setLevel] = useState<DeviceLevel>(INICIAL);
+  const [level, setLevel] = useState<DeviceLevel>(INITIAL_LEVEL);
 
   useEffect(() => {
     let subscription: { remove: () => void } | undefined;
     let cancelado = false;
 
     const iniciar = async () => {
-      const disponivel = await Accelerometer.isAvailableAsync();
+      const isAvailable = await Accelerometer.isAvailableAsync();
       if (cancelado) return;
 
-      if (!disponivel) {
+      if (!isAvailable) {
         // Sem sensor não dá para exigir nivelamento: barrar o disparo deixaria
         // o aluno preso numa tela sem saída.
-        setLevel({ ...INICIAL, nivelado: true, disponivel: false });
+        setLevel({ ...INITIAL_LEVEL, isLevel: true, isAvailable: false });
         return;
       }
 
@@ -111,8 +83,8 @@ export function useDeviceLevel(): DeviceLevel {
         setLevel({
           pitch: Number(pitch.toFixed(1)),
           roll: Number(roll.toFixed(1)),
-          nivelado: Math.abs(pitch) <= PITCH_MAXIMO && Math.abs(roll) <= ROLL_MAXIMO,
-          disponivel: true,
+          isLevel: levelWithinTolerance(pitch, roll),
+          isAvailable: true,
         });
       });
     };

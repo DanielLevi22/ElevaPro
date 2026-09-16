@@ -1,5 +1,3 @@
-import { createHealthService } from '@elevapro/shared';
-import { supabase } from '@elevapro/supabase';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
@@ -10,7 +8,6 @@ import { Bullet } from '@/components/ui/Bullet';
 import { Chip } from '@/components/ui/Chip';
 import { GlassScreen } from '@/components/ui/GlassScreen';
 import { Vidro } from '@/components/ui/Vidro';
-import { registrarFalha } from '@/lib/registro';
 import { useAuthStore } from '@/modules/auth/store/authStore';
 import { ROUTES } from '@/navigation/types';
 import { HowItWorksSheet } from '../components/HowItWorksSheet';
@@ -21,6 +18,7 @@ import {
   consultarElegibilidade,
   type Elegibilidade,
 } from '../services/elegibilidade';
+import { grantScanConsent } from '../services/scanConsent';
 import { useAssessmentStore } from '../store/assessmentStore';
 
 /**
@@ -149,15 +147,11 @@ function useEligibility() {
    */
   const grantConsent = async (): Promise<boolean> => {
     if (!userId) return false;
-    try {
-      await createHealthService(supabase).grantCollectionConsent(userId);
+    if (await grantScanConsent(userId)) {
       setEligibility({ podeEscanear: true });
       return true;
-    } catch {
-      // Sem o erro: o do PostgREST pode carregar o payload do consentimento.
-      registrarFalha('body_scan.grant_consent');
-      return false;
     }
+    return false;
   };
 
   return { gate, grantConsent };

@@ -118,6 +118,9 @@ export const ROUTES = {
     ANAMNESIS: '/student/anamnesis',
     /** Histórico das próprias sessões, com o caminho de correção (Art. 18, III). */
     SESSION_HISTORY: '/student/session-history',
+    /** A antiga postura agora Ã© a leitura da anÃ¡lise, dentro de Progresso (#316). */
+    POSTURE_ANALYSIS: (id: string) =>
+      ({ pathname: '/(tabs)/progress/scans/[id]', params: { id } }) as const,
   },
 
   // Métricas em vidro (#312): o hub e o que se abre dele, dentro da aba Progresso.

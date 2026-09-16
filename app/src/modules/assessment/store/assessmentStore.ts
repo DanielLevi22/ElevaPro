@@ -167,20 +167,8 @@ interface AssessmentState {
   reset: () => void;
 }
 
-/**
- * O que o aluno lê quando a análise não sai.
- *
- * Antes, quatro causas diferentes viravam a mesma frase: o store só reconhecia
- * consentimento e falha de análise, e substituía todo o resto pela genérica —
- * inclusive a falta de altura, que o serviço já sabia nomear. O aluno via
- * "tente de novo" num caminho que nunca podia funcionar.
- *
- * As outras cinco superfícies de IA do produto já passam pelo tradutor
- * compartilhado desde 2026-08-28. Esta ficou de fora, e é a que este bloco
- * finalmente liga.
- */
 /** A análise saiu, mas a linha não foi gravada: sem ela não há resultado para abrir. */
-const MENSAGEM_SEM_GRAVACAO =
+const SAVE_FAILED_MESSAGE =
   'A análise terminou, mas não consegui salvar o resultado. Tente de novo — suas fotos foram mantidas.';
 
 /**
@@ -190,13 +178,21 @@ const MENSAGEM_SEM_GRAVACAO =
  * análise gravada é a mais recente da lista — só `persisted: false` diz que ela
  * não existe, e aí a mais recente seria a anterior, com cara de nova.
  */
-async function savedScanId(result: BodyScanResult, studentId: string | null) {
+async function savedScanId(
+  result: BodyScanResult,
+  studentId: string | null
+): Promise<string | null> {
   if (result.scanId) return result.scanId;
   if (result.persisted !== true || !studentId) return null;
   const [latest] = await createBodyScanService(supabase).list(studentId, 1);
   return latest?.id ?? null;
 }
 
+/**
+ * Traduz a causa técnica para o próximo passo que o aluno consegue tomar.
+ *
+ * @example mensagemDaFalha(new BodyScanScaleError())
+ */
 function mensagemDaFalha(error: unknown): string {
   // Falta de escala não é falha de análise: é dado que falta, e o remédio é
   // preencher a anamnese. "Tente de novo" aqui é um botão que não funciona.
@@ -309,7 +305,7 @@ export const useAssessmentStore = create<AssessmentState>()(
           // fotos ficam para o "Tentar de novo", como a tela de falha promete.
           const scanId = await savedScanId(result, get().studentId);
           if (!scanId) {
-            set({ status: AssessmentStatus.ERROR, errorMessage: MENSAGEM_SEM_GRAVACAO });
+            set({ status: AssessmentStatus.ERROR, errorMessage: SAVE_FAILED_MESSAGE });
             return;
           }
           const photos = Object.values(get().capturedImages);

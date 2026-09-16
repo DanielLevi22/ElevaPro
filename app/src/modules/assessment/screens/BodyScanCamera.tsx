@@ -6,7 +6,7 @@ import VolumeX from 'lucide-react-native/icons/volume-x';
 import X from 'lucide-react-native/icons/x';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Text, TouchableOpacity, Vibration, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { showAlert } from '@/components/ui/appAlert';
 import { useVoiceCoach } from '@/hooks/useVoiceCoach';
 import BodyScanPoseView, {
@@ -14,6 +14,7 @@ import BodyScanPoseView, {
   type FatosDeVisao,
 } from '../../../../modules/body-scan-pose';
 import {
+  CameraMeasuringOverlay,
   CameraPermission,
   CameraRoundButton,
   CameraShade,
@@ -24,6 +25,7 @@ import {
 import { CaptureGuide } from '../components/CaptureGuide';
 import { useDeviceLevel } from '../hooks/useDeviceLevel';
 import { cameraChips } from '../services/captureProgress';
+import { measureCapturedPhoto } from '../services/measuredCapture';
 import {
   type AvisoDeQualidade,
   avaliarPortao,
@@ -31,6 +33,7 @@ import {
   type Portao,
   type Vista,
 } from '../services/portao';
+import { POSES, poseNumber, poseTitle } from '../services/poses';
 import { useAssessmentStore } from '../store/assessmentStore';
 
 /**
@@ -49,8 +52,6 @@ const MARCA_BASE = 0.9;
  * não é tempo para caminhar, é tempo para parar de se mexer.
  */
 const CONTAGEM_SEGUNDOS = 5;
-
-const TITULOS: Record<Vista, string> = { front: 'Frente', back: 'Costas', side: 'Perfil direito' };
 
 /**
  * Quanto tempo preso antes de oferecer a saída manual.
@@ -74,12 +75,11 @@ export default function BodyScanCamera() {
   const [permissao, pedirPermissao] = useCameraPermissions();
   const camera = useRef<BodyScanPoseRef>(null);
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const capturedImages = useAssessmentStore((s) => s.capturedImages);
   const params = useLocalSearchParams();
   const target = params.target as Vista;
 
-  const nivel = useDeviceLevel();
+  const deviceLevel = useDeviceLevel();
   const { speak } = useVoiceCoach();
   const vozMuda = useAssessmentStore((s) => s.vozMuda);
   const setVozMuda = useAssessmentStore((s) => s.setVozMuda);
@@ -112,8 +112,8 @@ export default function BodyScanCamera() {
    * enxergaria a inclinação de quando a tela montou. O sensor emite 5x por
    * segundo e não deve provocar re-render nenhum.
    */
-  const nivelRef = useRef(nivel);
-  nivelRef.current = nivel;
+  const deviceLevelRef = useRef(deviceLevel);
+  deviceLevelRef.current = deviceLevel;
 
   /** A última instrução dita. É por ela que a voz não repete a mesma frase. */
   const ultimaFalada = useRef<IdDaInstrucao | null>(null);
@@ -152,7 +152,7 @@ export default function BodyScanCamera() {
 
   const aoFatos = useCallback(
     (evento: { nativeEvent: FatosDeVisao }) => {
-      const { pitch, roll, disponivel } = nivelRef.current;
+      const { pitch, roll, isAvailable } = deviceLevelRef.current;
 
       const resultado = avaliarPortao(
         {
@@ -160,7 +160,7 @@ export default function BodyScanCamera() {
           vistaPedida: target,
           pitch,
           roll,
-          nivelDisponivel: disponivel,
+          nivelDisponivel: isAvailable,
         },
         {
           ultimaFalada: ultimaFalada.current,
@@ -213,7 +213,15 @@ export default function BodyScanCamera() {
         // análise cair no método antigo, que reintroduziria dois métodos na
         // mesma série. Guardar primeiro deixaria a foto num meio-estado, válida
         // no store e inútil para a análise.
-        const medida = await camera.current?.medir(uri, target === 'side').catch(() => null);
+        const medida = await measureCapturedPhoto(
+          uri,
+          target === 'side',
+          {
+            measure: (photoUri, isSide) =>
+              camera.current?.medir(photoUri, isSide) ?? Promise.resolve(null),
+          },
+          { manualFallback: semEnquadramento }
+        );
         setMedindo(false);
 
         Haptics.notificationAsync(
@@ -258,9 +266,9 @@ export default function BodyScanCamera() {
         setCaptureFraming({
           markTop: MARCA_TOPO,
           markBottom: MARCA_BASE,
-          pitch: nivelRef.current.pitch,
-          roll: nivelRef.current.roll,
-          levelSensor: nivelRef.current.disponivel,
+          pitch: deviceLevelRef.current.pitch,
+          roll: deviceLevelRef.current.roll,
+          levelSensor: deviceLevelRef.current.isAvailable,
           camera: lenteFrontal ? 'front' : 'back',
         });
 
@@ -358,7 +366,7 @@ export default function BodyScanCamera() {
   }
 
   const instrucao = portao?.instrucao ?? null;
-  const fotosFeitas = Object.keys(capturedImages).length;
+  const capturedCount = Object.keys(capturedImages).length;
 
   return (
     <View className="flex-1 bg-black">
@@ -390,69 +398,60 @@ export default function BodyScanCamera() {
         </View>
       )}
 
-      <View
-        pointerEvents="box-none"
-        className="absolute inset-0 px-[1.125rem]"
-        style={{ paddingTop: insets.top + 6, paddingBottom: insets.bottom + 18 }}
-      >
-        <View className="flex-row items-center gap-3">
-          <CameraRoundButton icon={X} label="Fechar a câmera" onPress={router.back} />
-          <View className="flex-1 items-center">
-            <Text className="text-[0.65625rem] font-extrabold uppercase tracking-[0.18em] text-primary">
-              Foto {NUMERO_DA_POSE[target]} de 3
-            </Text>
-            <Text className="mt-px text-[0.9375rem] font-bold text-sobre-imagem">
-              {TITULOS[target] ?? 'Foto'}
-            </Text>
+      <SafeAreaView pointerEvents="box-none" className="absolute inset-0" edges={['top', 'bottom']}>
+        <View pointerEvents="box-none" className="flex-1 px-[1.125rem] pb-[1.125rem] pt-[0.375rem]">
+          <View className="flex-row items-center gap-3">
+            <CameraRoundButton icon={X} label="Fechar a câmera" onPress={router.back} />
+            <View className="flex-1 items-center">
+              <Text className="text-[0.65625rem] font-extrabold uppercase tracking-[0.18em] text-primary">
+                Foto {poseNumber(target)} de {POSES.length}
+              </Text>
+              <Text className="mt-px text-[0.9375rem] font-bold text-sobre-imagem">
+                {poseTitle(target)}
+              </Text>
+            </View>
+            <CameraRoundButton
+              icon={vozMuda ? VolumeX : Volume2}
+              label={vozMuda ? 'Ligar a voz' : 'Desligar a voz'}
+              onPress={() => setVozMuda(!vozMuda)}
+            />
           </View>
-          <CameraRoundButton
-            icon={vozMuda ? VolumeX : Volume2}
-            label={vozMuda ? 'Ligar a voz' : 'Desligar a voz'}
-            onPress={() => setVozMuda(!vozMuda)}
+
+          <StatusChips chips={cameraChips(portao, deviceLevel)} />
+          {portao === null && (
+            <Text className="mt-3 text-center text-xs text-sobre-imagem-secundario">{estado}</Text>
+          )}
+
+          <View pointerEvents="none" className="flex-1" />
+
+          {/* Uma instrução por vez. Silêncio — aqui, ausência de cartão —
+            significa que está bom, e é informação tanto quanto a frase. */}
+          {instrucao !== null && <InstructionCard text={instrucao.texto} />}
+
+          {/* A saída de emergência só aparece depois de a espera se provar longa.
+            Antes disso ela seria um convite a pular o portão. */}
+          {ofereceSaida && contagem === null && (
+            <TouchableOpacity
+              onPress={() => disparar(true)}
+              className="mt-3 items-center self-center rounded-full border border-metrica-gordura/50 bg-metrica-gordura/25 px-6 py-3"
+              accessibilityRole="button"
+            >
+              <Text className="font-bold text-sobre-imagem">Tirar assim mesmo</Text>
+            </TouchableOpacity>
+          )}
+
+          <CaptureBar
+            photosDone={capturedCount}
+            countdown={contagem}
+            measuring={medindo}
+            onSwitchLens={() => setLenteFrontal(!lenteFrontal)}
+            lensLabel={lenteFrontal ? 'Usar câmera traseira' : 'Usar câmera frontal'}
+            lensLocked={contagem !== null}
           />
         </View>
+      </SafeAreaView>
 
-        <StatusChips chips={cameraChips(portao, nivel)} />
-        {portao === null && (
-          <Text className="mt-3 text-center text-xs text-sobre-imagem-secundario">{estado}</Text>
-        )}
-
-        <View pointerEvents="none" className="flex-1" />
-
-        {/* Uma instrução por vez. Silêncio — aqui, ausência de cartão —
-            significa que está bom, e é informação tanto quanto a frase. */}
-        {instrucao !== null && <InstructionCard text={instrucao.texto} />}
-
-        {/* A saída de emergência só aparece depois de a espera se provar longa.
-            Antes disso ela seria um convite a pular o portão. */}
-        {ofereceSaida && contagem === null && (
-          <TouchableOpacity
-            onPress={() => disparar(true)}
-            className="mt-3 items-center self-center rounded-full border border-metrica-gordura/50 bg-metrica-gordura/25 px-6 py-3"
-            accessibilityRole="button"
-          >
-            <Text className="font-bold text-sobre-imagem">Tirar assim mesmo</Text>
-          </TouchableOpacity>
-        )}
-
-        <CaptureBar
-          photosDone={fotosFeitas}
-          countdown={contagem}
-          measuring={medindo}
-          onSwitchLens={() => setLenteFrontal(!lenteFrontal)}
-          lensLabel={lenteFrontal ? 'Usar câmera traseira' : 'Usar câmera frontal'}
-          lensLocked={contagem !== null}
-        />
-      </View>
-
-      {medindo && (
-        <View className="absolute inset-0 items-center justify-center bg-black/70">
-          <Text className="font-display-black text-2xl text-sobre-imagem">Foto tirada</Text>
-          <Text className="mt-2 text-base text-sobre-imagem-secundario">Medindo…</Text>
-        </View>
-      )}
+      {medindo ? <CameraMeasuringOverlay /> : null}
     </View>
   );
 }
-
-const NUMERO_DA_POSE: Record<Vista, number> = { front: 1, back: 2, side: 3 };

@@ -6,6 +6,7 @@ import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { cn } from '@/lib/utils';
 import { comOpacidade, illustration, useBrilho, useCores, useEscala } from '@/shared/design';
 import type { CameraChip } from '../services/captureProgress';
+import { TONE_STYLE } from './toneStyle';
 
 /**
  * Os controles da câmera guiada (#316, tela 4), sobre a imagem da câmera.
@@ -60,28 +61,32 @@ const CHIP_ICON = 11;
 
 /** Nível, distância e corpo inteiro: o chip apagado é o que falta resolver. */
 export function StatusChips({ chips }: { chips: CameraChip[] }) {
-  const cores = useCores();
-  const escalar = useEscala();
   return (
     <View className="mt-3.5 flex-row justify-center gap-2">
       {chips.map((chip) => (
-        <View
-          key={chip.label}
-          className={cn(
-            'flex-row items-center gap-[0.3125rem] rounded-full border px-2.5 py-[0.3125rem]',
-            chip.ok
-              ? 'border-metrica-passos/45 bg-metrica-passos/20'
-              : 'border-metrica-gordura/50 bg-metrica-gordura/20'
-          )}
-        >
-          <Ionicons
-            name={chip.ok ? 'checkmark' : 'ellipsis-horizontal'}
-            size={escalar(CHIP_ICON)}
-            color={chip.ok ? cores.metricaPassos : cores.metricaGordura}
-          />
-          <Text className="text-[0.625rem] font-bold text-sobre-imagem">{chip.label}</Text>
-        </View>
+        <StatusChip key={chip.label} chip={chip} />
       ))}
+    </View>
+  );
+}
+
+function StatusChip({ chip }: { chip: CameraChip }) {
+  const cores = useCores();
+  const escalar = useEscala();
+  const tone = TONE_STYLE[chip.ok ? 'ok' : 'attention'];
+  return (
+    <View
+      className={cn(
+        'flex-row items-center gap-[0.3125rem] rounded-full border px-2.5 py-[0.3125rem]',
+        tone.chip
+      )}
+    >
+      <Ionicons
+        name={chip.ok ? 'checkmark' : 'ellipsis-horizontal'}
+        size={escalar(CHIP_ICON)}
+        color={tone.icon(cores)}
+      />
+      <Text className="text-[0.625rem] font-bold text-sobre-imagem">{chip.label}</Text>
     </View>
   );
 }
@@ -195,6 +200,21 @@ export function CameraShade() {
       locations={SHADE_STOPS}
       className="absolute inset-0"
     />
+  );
+}
+
+/** Retorno enquanto o aparelho mede a foto, sem esconder a cÃ¢mera por completo. */
+export function CameraMeasuringOverlay() {
+  const glass = useDarkGlass();
+  const cores = useCores();
+  return (
+    <View pointerEvents="auto" className="absolute inset-0 items-center justify-center bg-black/45">
+      <View className="items-center rounded-[1.375rem] border px-6 py-5" style={glass}>
+        <ActivityIndicator color={cores.primary} />
+        <Text className="mt-3 font-display-black text-2xl text-sobre-imagem">Foto tirada</Text>
+        <Text className="mt-2 text-base text-sobre-imagem-secundario">Medindoâ€¦</Text>
+      </View>
+    </View>
   );
 }
 

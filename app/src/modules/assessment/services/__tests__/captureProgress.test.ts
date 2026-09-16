@@ -83,7 +83,7 @@ describe('captureChecks', () => {
 });
 
 describe('cameraChips', () => {
-  const NIVEL = { pitch: 8, roll: 0.6, disponivel: true };
+  const NIVEL = { pitch: 8, roll: 0.6, isAvailable: true };
 
   it('corpo cortado apaga "corpo inteiro" e mantém a distância', () => {
     const [, distancia, corpo] = cameraChips(
@@ -111,7 +111,7 @@ describe('cameraChips', () => {
   });
 
   it('aparelho sem sensor não afirma o nível', () => {
-    const [nivel] = cameraChips(portao(null), { pitch: 0, roll: 0, disponivel: false });
+    const [nivel] = cameraChips(portao(null), { pitch: 0, roll: 0, isAvailable: false });
     expect(nivel.ok).toBe(false);
     expect(nivel.label).not.toMatch(/\d/);
   });

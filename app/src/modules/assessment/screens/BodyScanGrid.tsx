@@ -14,8 +14,9 @@ import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/navigation/types';
 import { useCores, useEscala } from '@/shared/design';
+import { TONE_STYLE } from '../components/toneStyle';
 import { type CaptureCheck, captureChecks } from '../services/captureProgress';
-import type { Vista } from '../services/portao';
+import { type Pose, POSES as SCAN_POSES } from '../services/poses';
 import { useAssessmentStore } from '../store/assessmentStore';
 
 /**
@@ -32,11 +33,7 @@ import { useAssessmentStore } from '../store/assessmentStore';
 // análise e dobravam o incômodo de se fotografar — o que faz o aluno desistir
 // no meio. O lado direito é instrução, para as análises saírem comparáveis; o
 // portão não confere o lado.
-const POSES: { id: Vista; label: string; hint: string }[] = [
-  { id: 'front', label: 'Frente', hint: 'Braços levemente afastados' },
-  { id: 'back', label: 'Costas', hint: 'De costas, mesma distância' },
-  { id: 'side', label: 'Perfil', hint: 'Lado direito, braços soltos' },
-];
+const POSES = SCAN_POSES;
 
 export default function BodyScanGrid() {
   const router = useRouter();
@@ -150,15 +147,7 @@ function useDiscardOnLeave() {
 
 const CHECK_SIZE = 12;
 
-function PoseCard({
-  pose,
-  done,
-  onPress,
-}: {
-  pose: (typeof POSES)[number];
-  done: boolean;
-  onPress: () => void;
-}) {
+function PoseCard({ pose, done, onPress }: { pose: Pose; done: boolean; onPress: () => void }) {
   const cores = useCores();
   const escalar = useEscala();
   return (
@@ -230,25 +219,20 @@ function CheckRow({ check }: { check: CaptureCheck }) {
   const cores = useCores();
   const escalar = useEscala();
   const ok = check.tone === 'ok';
-  const tint = ok ? cores.textoPassos : cores.textoGordura;
+  const tone = TONE_STYLE[check.tone];
   return (
     <Vidro className="flex-row items-center gap-3 p-3">
-      <View
-        className={cn(
-          'h-8 w-8 items-center justify-center rounded-[0.625rem]',
-          ok ? 'bg-metrica-passos/15' : 'bg-metrica-gordura/15'
-        )}
-      >
-        <Ionicons name={CHECK_ICON[check.key]} size={escalar(ROW_ICON)} color={tint} />
+      <View className={cn('h-8 w-8 items-center justify-center rounded-[0.625rem]', tone.tagFill)}>
+        <Ionicons name={CHECK_ICON[check.key]} size={escalar(ROW_ICON)} color={tone.icon(cores)} />
       </View>
       <View className="min-w-0 flex-1">
         <Text className="text-[0.84375rem] font-semibold text-foreground">{check.title}</Text>
         <Text className="mt-px text-[0.71875rem] text-muted-foreground">{check.detail}</Text>
       </View>
       {ok ? (
-        <Ionicons name="checkmark-circle-outline" size={escalar(17)} color={tint} />
+        <Ionicons name="checkmark-circle-outline" size={escalar(17)} color={tone.icon(cores)} />
       ) : (
-        <Text className="text-[0.65625rem] font-extrabold uppercase tracking-wide text-texto-macro-gordura">
+        <Text className={cn('text-[0.65625rem] font-extrabold uppercase tracking-wide', tone.text)}>
           Atenção
         </Text>
       )}

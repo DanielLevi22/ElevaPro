@@ -1,14 +1,18 @@
 import type { EtapaDaAnalise } from '@elevapro/shared';
+import type { DeviceLevel } from '../hooks/useDeviceLevel';
 import type { QualidadeDaCaptura } from '../store/assessmentStore';
 import type { CaptureFraming } from '../types/assessment';
-import { type IdDaInstrucao, levelWithinTolerance, type Portao } from './portao';
+import { levelWithinTolerance } from './levelTolerance';
+import { instructionConcern, type Portao } from './portao';
+import type { Tone } from './scanView';
 
 /**
  * O que a grade, a câmera e o processamento mostram sobre o andamento do scan
  * (#316, telas 3, 4 e 5). Puro: sem tela, sem câmera e sem rede.
  */
 
-export type CheckTone = 'ok' | 'attention';
+/** A checagem só confirma ou pede atenção: nada ali invalida o scan. */
+export type CheckTone = Extract<Tone, 'ok' | 'attention'>;
 
 export interface CaptureCheck {
   key: 'level' | 'framing' | 'light';
@@ -78,29 +82,7 @@ export interface CameraChip {
   ok: boolean;
 }
 
-interface DeviceLevelReading {
-  pitch: number;
-  roll: number;
-  disponivel: boolean;
-}
-
-/** Instruções que o aluno resolve andando para a frente ou para trás. */
-const DISTANCE: ReadonlySet<IdDaInstrucao> = new Set([
-  'aproxime',
-  'aproxime-muito',
-  'afaste',
-  'passo-a-frente',
-  'passo-atras',
-]);
-
-/** Instruções que dizem que parte do corpo está fora do quadro. */
-const OUT_OF_FRAME: ReadonlySet<IdDaInstrucao> = new Set([
-  'sem-corpo',
-  'cabeca-cortada',
-  'pes-cortados',
-  'suba-o-celular',
-  'baixe-o-celular',
-]);
+type LevelReading = Pick<DeviceLevel, 'pitch' | 'roll' | 'isAvailable'>;
 
 /**
  * Os três chips da câmera: nível, distância e corpo inteiro.
@@ -110,31 +92,30 @@ const OUT_OF_FRAME: ReadonlySet<IdDaInstrucao> = new Set([
  *
  * @example cameraChips(null, { pitch: 0, roll: 0, disponivel: false })[0].ok // false
  */
-export function cameraChips(gate: Portao | null, level: DeviceLevelReading): CameraChip[] {
-  const instruction = gate?.instrucao?.id ?? null;
+export function cameraChips(gate: Portao | null, level: LevelReading): CameraChip[] {
+  const concern = gate?.instrucao ? instructionConcern(gate.instrucao.id) : null;
   return [
     levelChip(level),
-    {
-      label: 'Distância ok',
-      ok: gate !== null && (instruction === null || !DISTANCE.has(instruction)),
-    },
-    {
-      label: 'Corpo inteiro',
-      ok: gate !== null && (instruction === null || !OUT_OF_FRAME.has(instruction)),
-    },
+    { label: 'Distância ok', ok: gate !== null && concern !== 'distance' },
+    { label: 'Corpo inteiro', ok: gate !== null && concern !== 'frame' },
   ];
 }
 
 /** Sem sensor o chip não afirma nível nenhum: o número seria inventado. */
-function levelChip({ pitch, roll, disponivel }: DeviceLevelReading): CameraChip {
-  if (!disponivel) return { label: 'Nível sem sensor', ok: false };
+function levelChip(level: LevelReading): CameraChip {
+  if (!level.isAvailable) return { label: 'Nível sem sensor', ok: false };
   return {
-    label: `Nível ${Math.round(Math.abs(roll))}°`,
-    ok: levelWithinTolerance(pitch, roll),
+    label: `Nível ${Math.round(Math.abs(level.roll))}°`,
+    ok: levelWithinTolerance(level.pitch, level.roll),
   };
 }
 
 export type StepState = 'done' | 'doing' | 'pending';
+
+export interface AnalysisStep {
+  label: string;
+  state: StepState;
+}
 
 const STEPS: readonly { stage: EtapaDaAnalise; label: string }[] = [
   { stage: 'lendo', label: 'Lendo as três fotos' },
@@ -149,13 +130,15 @@ const STEPS: readonly { stage: EtapaDaAnalise; label: string }[] = [
  *
  * @example analysisSteps('postura').map((s) => s.state) // ['done','done','doing','pending']
  */
-export function analysisSteps(stage: EtapaDaAnalise | null) {
+export function analysisSteps(stage: EtapaDaAnalise | null): AnalysisStep[] {
   const current = Math.max(
     0,
     STEPS.findIndex((step) => step.stage === stage)
   );
-  return STEPS.map((step, index) => ({
-    label: step.label,
-    state: (index < current ? 'done' : index === current ? 'doing' : 'pending') as StepState,
-  }));
+  return STEPS.map((step, index) => ({ label: step.label, state: stepState(index, current) }));
+}
+
+function stepState(index: number, current: number): StepState {
+  if (index < current) return 'done';
+  return index === current ? 'doing' : 'pending';
 }

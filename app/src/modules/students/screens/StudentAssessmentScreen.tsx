@@ -6,7 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { colors } from '@/constants/colors';
-import { useCores } from '@/shared/design';
+import { cn } from '@/lib/utils';
+import { useCores, useEscala } from '@/shared/design';
 
 // Reusing the TabButton and helper components - ideally these should be shared, but for now inlining or importing would work.
 // Since I can't easily import internal components from a screen file, I'll redefine TabButton here or imports if I move it to a component.
@@ -30,19 +31,19 @@ const TabButton = ({
   icon: React.ComponentProps<typeof Ionicons>['name'];
 }) => {
   const cores = useCores();
+  const scale = useEscala();
   return (
     <TouchableOpacity
-      className="flex-1 flex-row items-center justify-center z-10 h-full"
+      className="z-10 h-full flex-1 flex-row items-center justify-center gap-2"
       onPress={onPress}
       activeOpacity={0.8}
     >
       <Ionicons
         name={icon}
-        size={18}
+        size={scale(18)}
         color={isActive ? cores.foreground : cores.placeholder}
-        style={{ marginRight: 8 }}
       />
-      <Text className={`font-bold text-sm ${isActive ? 'text-white' : 'text-zinc-500'}`}>
+      <Text className={cn('text-sm font-bold', isActive ? 'text-foreground' : 'text-placeholder')}>
         {label}
       </Text>
     </TouchableOpacity>

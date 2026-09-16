@@ -234,15 +234,12 @@ export interface ScanHistoryView {
  * @example scanHistoryView(scans).chart.values // [20.4, 18.3, 17.2]
  */
 export function scanHistoryView(scans: readonly BodyScanRecord[]): ScanHistoryView {
-  const charted = scans
-    .filter((scan) => scan.body_fat_pct != null)
-    .slice(0, CHART_LIMIT)
-    .reverse();
-  const values = charted.map((scan) => scan.body_fat_pct as number);
-  const labels = charted.map((scan) => shortMonthOf(localDateOf(new Date(scan.scanned_at))));
-
+  const charted = fatPoints(scans).slice(0, CHART_LIMIT).reverse();
   return {
-    chart: { labels, values },
+    chart: {
+      labels: charted.map((point) => shortMonthOf(localDateOf(new Date(point.at)))),
+      values: charted.map((point) => point.fat),
+    },
     change: changeText(charted),
     rows: scans.map((scan) => ({
       id: scan.id,
@@ -253,13 +250,25 @@ export function scanHistoryView(scans: readonly BodyScanRecord[]): ScanHistoryVi
   };
 }
 
-function changeText(charted: readonly BodyScanRecord[]): string | null {
-  if (charted.length < 2) return null;
+interface FatPoint {
+  at: string;
+  fat: number;
+}
+
+/** As análises com gordura estimada, na ordem da lista. */
+function fatPoints(scans: readonly BodyScanRecord[]): FatPoint[] {
+  return scans.flatMap((scan) =>
+    scan.body_fat_pct == null ? [] : [{ at: scan.scanned_at, fat: scan.body_fat_pct }]
+  );
+}
+
+function changeText(charted: readonly FatPoint[]): string | null {
   const first = charted[0];
   const last = charted[charted.length - 1];
-  const change = (last.body_fat_pct as number) - (first.body_fat_pct as number);
+  if (charted.length < 2 || !first || !last) return null;
+  const change = last.fat - first.fat;
   const sign = change > 0 ? '+' : change < 0 ? '−' : '';
-  return `Gordura estimada: ${sign}${formatarDecimal(Math.abs(change))} pontos entre ${scanDate(first.scanned_at, false)} e ${scanDate(last.scanned_at, false)}.`;
+  return `Gordura estimada: ${sign}${formatarDecimal(Math.abs(change))} pontos entre ${scanDate(first.at, false)} e ${scanDate(last.at, false)}.`;
 }
 
 /**

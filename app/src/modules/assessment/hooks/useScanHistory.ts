@@ -1,3 +1,4 @@
+import type { BodyScanRecord } from '@elevapro/shared';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { registrarFalha } from '@/lib/registro';
@@ -13,7 +14,15 @@ import { useAssessmentStore } from '../store/assessmentStore';
  *
  * @example const { scans, loading, remove } = useScanHistory(user.id);
  */
-export function useScanHistory(studentId: string) {
+export interface ScanHistory {
+  /** Do mais recente para o mais antigo. */
+  scans: BodyScanRecord[];
+  loading: boolean;
+  /** Apaga uma análise — Art. 18, VI. Devolve se deu certo. */
+  remove: (scanId: string) => Promise<boolean>;
+}
+
+export function useScanHistory(studentId: string): ScanHistory {
   const scans = useAssessmentStore((s) => s.scanHistory);
   const [loading, setLoading] = useState(true);
 
@@ -30,7 +39,6 @@ export function useScanHistory(studentId: string) {
     }, [studentId])
   );
 
-  /** Apaga uma análise — Art. 18, VI. Devolve se deu certo. */
   const remove = async (scanId: string): Promise<boolean> => {
     try {
       await useAssessmentStore.getState().deleteScan(scanId, studentId);
@@ -42,4 +50,22 @@ export function useScanHistory(studentId: string) {
   };
 
   return { scans, loading, remove };
+}
+
+export interface OneScan extends ScanHistory {
+  /** A análise pedida; `undefined` enquanto carrega ou quando não está na lista. */
+  scan: BodyScanRecord | undefined;
+  /** Carregou e a análise não está: apagada, ou de outra conta. */
+  missing: boolean;
+}
+
+/**
+ * Uma análise do histórico, pelo id — o que a leitura e as medidas abrem.
+ *
+ * @example const { scan, missing } = useScan(user.id, scanId);
+ */
+export function useScan(studentId: string, scanId: string): OneScan {
+  const history = useScanHistory(studentId);
+  const scan = history.scans.find((item) => item.id === scanId);
+  return { ...history, scan, missing: !scan && !history.loading };
 }

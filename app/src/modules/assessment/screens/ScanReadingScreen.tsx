@@ -17,7 +17,7 @@ import { useCores, useEscala } from '@/shared/design';
 import { ConfidenceCard } from '../components/ConfidenceCard';
 import { ScanMissing } from '../components/ScanMissing';
 import { ToneTag } from '../components/ToneTag';
-import { useScanHistory } from '../hooks/useScanHistory';
+import { useScan } from '../hooks/useScanHistory';
 import { type ScanReading, scanReading } from '../services/scanView';
 import { useAssessmentStore } from '../store/assessmentStore';
 
@@ -32,12 +32,11 @@ import { useAssessmentStore } from '../store/assessmentStore';
  */
 export function ScanReadingScreen({ studentId, scanId }: { studentId: string; scanId: string }) {
   const router = useRouter();
-  const { scans, loading, remove } = useScanHistory(studentId);
+  const { scan, missing, remove } = useScan(studentId, scanId);
   const fresh = useAssessmentStore((s) => s.lastScanId === scanId);
   const [confirming, setConfirming] = useState(false);
-  const scan = scans.find((item) => item.id === scanId);
 
-  if (!scan) return loading ? null : <ScanMissing />;
+  if (!scan) return missing ? <ScanMissing /> : null;
   const reading = scanReading(scan);
 
   const erase = async () => {
