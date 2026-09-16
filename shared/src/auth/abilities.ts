@@ -41,6 +41,10 @@ export type Subject =
   | "DeclaredMeasurement"
   /** A nota que o especialista escreve sobre o progresso do Aluno (0057). */
   | "SpecialistNote"
+  /** O placar da semana (0059): o do especialista são os alunos dele. */
+  | "Leaderboard"
+  /** Entrar e sair do ranking global, pelo consentimento `ranking` (0058). */
+  | "RankingConsent"
   | "all";
 
 export type AppAbility = MongoAbility<[Action, Subject]>;
@@ -80,6 +84,9 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
     // Somente leitura: o specialist acompanha a atividade, nunca a edita. O
     // vínculo ativo é conferido pela RLS de health_daily_metrics.
     can("read", "HealthMetric");
+    // Só o placar dos próprios alunos: o global é de quem participa, e o
+    // especialista não participa (0059).
+    can("read", "Leaderboard");
 
     if (context.services?.includes("personal_training")) {
       can("manage", "Workout");
@@ -112,6 +119,8 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
     // A nota é registro do profissional: o aluno lê o que escreveram sobre ele, e
     // não escreve nem apaga (0057).
     can("read", "SpecialistNote");
+    can("read", "Leaderboard");
+    can("manage", "RankingConsent");
   }
 
   // member: usuário independente — cria e gerencia os próprios planos (sem specialist).
@@ -134,7 +143,9 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
       "HealthMetric",
       "Hydration",
       "DeclaredMeasurement",
+      "RankingConsent",
     ]);
+    can("read", "Leaderboard");
   }
 
   return build();

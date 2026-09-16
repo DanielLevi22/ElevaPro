@@ -1,4 +1,4 @@
-import { type ConsentStatus, SAUDE, TECNICA } from '@elevapro/shared';
+import { type ConsentStatus, RANKING, SAUDE, TECNICA } from '@elevapro/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { AuthorizationsScreen } from '../AuthorizationsScreen';
@@ -56,10 +56,12 @@ describe('Minhas autorizações', () => {
   it('oferece um caminho de retirada para cada finalidade autorizada', async () => {
     renderScreen();
 
-    const links = await screen.findAllByLabelText(/^Retirar (Dados de saúde|Análise de Técnica)$/);
-    if (links.length !== 2) {
+    const links = await screen.findAllByLabelText(
+      /^Retirar (Dados de saúde|Análise de Técnica|Ranking)$/
+    );
+    if (links.length !== 3) {
       throw new Error(
-        `REVOGAÇÃO INALCANÇÁVEL: ${links.length} de 2 finalidades oferecem retirada — o Art. 8°, §5° exige procedimento facilitado para cada uma`
+        `REVOGAÇÃO INALCANÇÁVEL: ${links.length} de 3 finalidades oferecem retirada — o Art. 8°, §5° exige procedimento facilitado para cada uma`
       );
     }
   });
@@ -89,11 +91,11 @@ describe('Minhas autorizações', () => {
     expect(mockRevoke).not.toHaveBeenCalled();
   });
 
-  it('consulta as duas finalidades separadamente', async () => {
+  it('consulta as três finalidades separadamente', async () => {
     renderScreen();
 
-    await waitFor(() => expect(mockStatus).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(mockStatus).toHaveBeenCalledTimes(3));
     const types = mockStatus.mock.calls.map((call) => (call[1] as { tipo: string })?.tipo);
-    expect(types.sort()).toEqual([SAUDE.tipo, TECNICA.tipo].sort());
+    expect(types.sort()).toEqual([SAUDE.tipo, TECNICA.tipo, RANKING.tipo].sort());
   });
 });

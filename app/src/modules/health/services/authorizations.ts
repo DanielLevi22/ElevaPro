@@ -2,6 +2,7 @@ import {
   type ConsentStatus,
   dataCurtaDoInstante,
   type Finalidade,
+  RANKING,
   SAUDE,
   TECNICA,
 } from '@elevapro/shared';
@@ -34,6 +35,12 @@ export const AUTHORIZATIONS: readonly Authorization[] = [
     purpose: TECNICA,
     title: 'Análise de Técnica',
     description: 'A câmera lê seu corpo durante a série. Nada é gravado.',
+  },
+  {
+    purpose: RANKING,
+    title: 'Ranking',
+    description:
+      'Seu primeiro nome, a inicial do sobrenome e seus pontos da semana aparecem para outros participantes do ranking.',
   },
 ];
 
@@ -97,6 +104,15 @@ export function revokeEffects(
   authorization: Authorization,
   hasSpecialist: boolean
 ): RevokeEffect[] {
+  if (authorization.purpose.tipo === RANKING.tipo) {
+    return [
+      { icon: 'eye-off-outline', text: 'Seu nome sai do placar na hora' },
+      {
+        icon: 'barbell-outline',
+        text: 'Seus treinos seguem contando pontos, visíveis só para você',
+      },
+    ];
+  }
   if (authorization.purpose.tipo === TECNICA.tipo) {
     return [
       { icon: 'videocam-off-outline', text: 'A câmera deixa de ler seu corpo durante a série' },

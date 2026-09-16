@@ -3,6 +3,7 @@ import type { HealthDailyMetric, HealthMetricInput } from "../types/health.types
 
 export const CONSENT_HEALTH_COLLECTION = "health_data_collection";
 export const CONSENT_TECHNIQUE_ANALYSIS = "technique_analysis";
+export const CONSENT_RANKING = "ranking";
 
 /**
  * Uma finalidade de tratamento e a versão do texto que a descreve.
@@ -108,6 +109,14 @@ export const SAUDE: Finalidade = { tipo: CONSENT_HEALTH_COLLECTION, versao: POLI
  * texto novo, não revisão de texto existente.
  */
 export const TECNICA: Finalidade = { tipo: CONSENT_TECHNIQUE_ANALYSIS, versao: "1.0" };
+
+/**
+ * Participar do ranking: o primeiro nome e a inicial do sobrenome aparecem para
+ * outros participantes. Não é dado de saúde, mas expor o nome a quem não tem
+ * vínculo não é execução de contrato (Art. 7°, I), e por isso tem finalidade
+ * própria, pelo mesmo motivo da `TECNICA` — ver a migration 0058.
+ */
+export const RANKING: Finalidade = { tipo: CONSENT_RANKING, versao: "1.0" };
 
 export type ConsentState = "granted" | "outdated" | "revoked" | "missing";
 

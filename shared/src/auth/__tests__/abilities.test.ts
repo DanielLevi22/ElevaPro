@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { type Action, defineAbilitiesFor, type Subject, type UserContext } from "../abilities";
 
 /**
- * Tabela de permissões: 4 papéis × 15 subjects.
+ * Tabela de permissões: 4 papéis × 17 subjects.
  *
  * Existe porque `abilities.ts` viveu duplicado no mobile e no web até divergir
  * sem ninguém notar — o mobile concedia `manage Periodization` ao `member` e o
@@ -28,6 +28,8 @@ const SUBJECTS: Subject[] = [
   "Hydration",
   "DeclaredMeasurement",
   "SpecialistNote",
+  "Leaderboard",
+  "RankingConsent",
   "all",
 ];
 
@@ -42,7 +44,7 @@ const GERENCIA: Record<string, Subject[]> = {
     "SpecialistNote",
   ],
   "specialist:nutrition_consulting": ["Client", "Diet", "Food", "SpecialistNote"],
-  student: ["HealthMetric", "Hydration"],
+  student: ["HealthMetric", "Hydration", "RankingConsent"],
   member: [
     "Workout",
     "Diet",
@@ -51,6 +53,7 @@ const GERENCIA: Record<string, Subject[]> = {
     "HealthMetric",
     "Hydration",
     "DeclaredMeasurement",
+    "RankingConsent",
   ],
 };
 
@@ -62,6 +65,7 @@ const LE: Record<string, Subject[]> = {
     "HealthMetric",
     "Diet",
     "DeclaredMeasurement",
+    "Leaderboard",
   ],
   "specialist:nutrition_consulting": [
     "Analytics",
@@ -70,9 +74,10 @@ const LE: Record<string, Subject[]> = {
     "Workout",
     "Periodization",
     "DeclaredMeasurement",
+    "Leaderboard",
   ],
-  student: ["Workout", "Diet", "Exercise", "Profile", "SpecialistNote"],
-  member: ["Profile"],
+  student: ["Workout", "Diet", "Exercise", "Profile", "SpecialistNote", "Leaderboard"],
+  member: ["Profile", "Leaderboard"],
 };
 
 const CONTEXTOS: Record<string, UserContext> = {
@@ -150,6 +155,16 @@ describe("defineAbilitiesFor — tabela de permissões", () => {
     expect(ability.can("create", "DeclaredMeasurement")).toBe(false);
     expect(ability.can("update", "DeclaredMeasurement")).toBe(true);
     expect(ability.can("delete", "DeclaredMeasurement")).toBe(true);
+  });
+
+  // LGPD, Art. 7°, I. O aceite do ranking diz que o nome aparece para outros
+  // participantes: o especialista não participa, então não entra nem sai dele.
+  it("o especialista lê o placar, mas não entra no ranking", () => {
+    const ability = defineAbilitiesFor(CONTEXTOS["specialist:personal_training"]);
+    expect(ability.can("read", "Leaderboard")).toBe(true);
+    if (ability.can("create", "RankingConsent")) {
+      throw new Error("ESPECIALISTA NO PLACAR: o profissional recebeu o opt-in do ranking");
+    }
   });
 
   it("admin gerencia tudo pelo curinga", () => {

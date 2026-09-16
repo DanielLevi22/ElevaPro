@@ -6,6 +6,7 @@ import ChevronLeft from 'lucide-react-native/icons/chevron-left';
 import Clock from 'lucide-react-native/icons/clock';
 import Download from 'lucide-react-native/icons/download';
 import Heart from 'lucide-react-native/icons/heart';
+import Info from 'lucide-react-native/icons/info';
 import Mic from 'lucide-react-native/icons/mic';
 import MicOff from 'lucide-react-native/icons/mic-off';
 import Music from 'lucide-react-native/icons/music';
@@ -63,6 +64,8 @@ const ICONES = {
   /** Apagar uma análise do body scan e a régua da medida com fita (#316). */
   'trash-2': Trash2,
   ruler: Ruler,
+  /** "Como funciona" do ranking (#320). */
+  info: Info,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IconeRedondo = keyof typeof ICONES;

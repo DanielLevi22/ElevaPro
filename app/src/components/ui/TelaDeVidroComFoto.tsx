@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { type ImageSourcePropType, ScrollView } from 'react-native';
+import { type ImageSourcePropType, RefreshControl, ScrollView } from 'react-native';
 import { cn } from '@/lib/utils';
+import { useCores } from '@/shared/design';
 import { AlvoDoVidro } from './AlvoDoVidro';
 import { BrilhoAmbiente } from './BrilhoAmbiente';
 import { FundoDeFoto, RECEITA_DA_HOME } from './FundoDeFoto';
@@ -33,6 +34,8 @@ interface TelaDeVidroComFotoProps {
   folgaNoFim?: 'tab' | 'botaoFixo';
   /** Conteúdo no meio da altura, como o pré-início do treino. */
   centralizado?: boolean;
+  /** Puxar para atualizar, no formato da `GlassScreen`: o placar do ranking (#320). */
+  refresh?: { refreshing: boolean; onRefresh: () => void };
 }
 
 /**
@@ -47,7 +50,10 @@ export function TelaDeVidroComFoto({
   sobreposicao,
   folgaNoFim = 'tab',
   centralizado = false,
+  refresh,
 }: TelaDeVidroComFotoProps) {
+  const cores = useCores();
+
   return (
     <ScreenLayout useSafeArea={false}>
       <AlvoDoVidro
@@ -64,6 +70,15 @@ export function TelaDeVidroComFoto({
             centralizado ? 'flex-grow justify-center' : null
           )}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            refresh ? (
+              <RefreshControl
+                refreshing={refresh.refreshing}
+                onRefresh={refresh.onRefresh}
+                tintColor={cores.primary}
+              />
+            ) : undefined
+          }
         >
           {children}
         </ScrollView>
