@@ -5,15 +5,15 @@ import { BarraDeDuasAcoes } from '@/components/ui/BarraDeDuasAcoes';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { PROGRESS_GLOW } from '@/components/ui/BrilhoAmbiente';
 import { GlassScreen } from '@/components/ui/GlassScreen';
+import { ProgressHeader } from '@/components/ui/ProgressHeader';
+import { TrendDelta } from '@/components/ui/TrendDelta';
 import { ROUTES } from '@/navigation/types';
 import { ChartCard, EmptyCard } from '../components/ChartCard';
 import { AreaChart } from '../components/charts/AreaChart';
 import { evenLabels } from '../components/charts/geometry';
 import { shortDate } from '../components/measurementLabels';
-import { ProgressHeader } from '../components/ProgressHeader';
 import { ShortcutRow } from '../components/ShortcutRow';
 import { SourceChips } from '../components/SourceChips';
-import { TrendDelta } from '../components/TrendDelta';
 import { TrendStat } from '../components/TrendStat';
 import { useMeasurements } from '../hooks/useMeasurements';
 

@@ -5,6 +5,7 @@ import { useAuthStore } from '@/modules/auth/store/authStore';
 import { fetchBff, lerRespostaBff } from '@/shared/bff';
 import type { MedidaDaFoto } from '../../../../modules/body-scan-pose';
 import { BodyScanResult, CaptureFraming } from '../types/assessment';
+import { discardPhotos } from './capturedPhotos';
 
 const ROTA = '/api/ai/body-scan';
 
@@ -59,6 +60,11 @@ export class BodyScanAnalysisError extends Error {
   }
 }
 
+/**
+ * A foto reduzida, em base64. O `manipulateAsync` grava a cópia em
+ * `ImageManipulator/` no cache, e ela sai logo depois de lida: o que segue para
+ * a análise é o base64, e a cópia seria mais uma foto do corpo largada (#316).
+ */
 async function resizeToBase64(uri: string): Promise<string | null> {
   try {
     const result = await ImageManipulator.manipulateAsync(uri, [{ resize: { width: 800 } }], {
@@ -66,6 +72,7 @@ async function resizeToBase64(uri: string): Promise<string | null> {
       format: ImageManipulator.SaveFormat.JPEG,
       base64: true,
     });
+    await discardPhotos([result.uri]);
     return result.base64 ?? null;
   } catch {
     return null;
@@ -85,13 +92,13 @@ async function resizeToBase64(uri: string): Promise<string | null> {
 async function lerFluxo(
   response: Response,
   aoProgredir?: (etapa: EtapaDaAnalise) => void
-): Promise<Omit<BodyScanResult, 'id' | 'date' | 'imageUrl'>> {
+): Promise<BodyScanResult> {
   const leitor = response.body?.getReader();
   if (!leitor) throw new BodyScanAnalysisError('sem_fluxo');
 
   const decodificador = new TextDecoder();
   let resto = '';
-  let resultado: Omit<BodyScanResult, 'id' | 'date' | 'imageUrl'> | null = null;
+  let resultado: BodyScanResult | null = null;
 
   while (true) {
     const { done, value } = await leitor.read();
@@ -108,7 +115,7 @@ async function lerFluxo(
       if (linha.t === 'etapa') aoProgredir?.(linha.etapa);
       if (linha.t === 'erro') throw new BodyScanAnalysisError(linha.codigo);
       if (linha.t === 'ok') {
-        resultado = linha.payload as Omit<BodyScanResult, 'id' | 'date' | 'imageUrl'>;
+        resultado = linha.payload as BodyScanResult;
       }
     }
   }
@@ -233,11 +240,6 @@ export const AIBodyScanService = {
       throw new Error('Invalid response from body-scan BFF');
     }
 
-    return {
-      ...data,
-      id: Date.now().toString(),
-      date: new Date().toISOString(),
-      imageUrl: images.front ?? '',
-    };
+    return data;
   },
 };

@@ -2,6 +2,8 @@ import { type Stimulus, summarizeTrainingLoad, type TrainingLoadSummary } from '
 import { useRouter } from 'expo-router';
 import { type ReactNode, useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
+import { ProgressHeader } from '@/components/ui/ProgressHeader';
+import { judgementOf, TrendDelta } from '@/components/ui/TrendDelta';
 import { ROUTES } from '@/navigation/types';
 import { ChartCard, EmptyCard } from '../components/ChartCard';
 import { AreaChart } from '../components/charts/AreaChart';
@@ -10,9 +12,7 @@ import { evenLabels } from '../components/charts/geometry';
 import { formatLoad, loadUnit } from '../components/charts/loadFormat';
 import { MuscleBars } from '../components/charts/MuscleBars';
 import { PeriodChips, type PeriodWeeks } from '../components/PeriodChips';
-import { ProgressHeader } from '../components/ProgressHeader';
 import { ShortcutRow } from '../components/ShortcutRow';
-import { judgementOf, TrendDelta } from '../components/TrendDelta';
 import { useTrainingSets } from '../hooks/useTrainingSets';
 
 /**

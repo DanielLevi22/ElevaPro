@@ -1,13 +1,13 @@
 import { type NutritionPeriod, type Trend, withThousands } from '@elevapro/shared';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
+import { ColumnChart } from '@/components/ui/charts/ColumnChart';
+import { ProgressHeader } from '@/components/ui/ProgressHeader';
+import { trendDelta } from '@/components/ui/TrendDelta';
 import { useNutritionNumbers } from '@/hooks/useNutritionNumbers';
 import { ChartCard, EmptyCard } from '../components/ChartCard';
 import { AreaChart } from '../components/charts/AreaChart';
-import { ColumnChart } from '../components/charts/ColumnChart';
 import { Donut } from '../components/charts/Donut';
-import { ProgressHeader } from '../components/ProgressHeader';
-import { trendDelta } from '../components/TrendDelta';
 import { TrendStat } from '../components/TrendStat';
 
 /**

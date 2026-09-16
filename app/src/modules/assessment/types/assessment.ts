@@ -35,8 +35,13 @@ export interface BodyMetric {
 }
 
 export interface BodyScanResult {
-  id: string;
-  date: string;
+  /**
+   * A linha gravada em `body_scans`. Ausente quando a análise saiu e a gravação
+   * falhou: aí não há resultado para abrir, e a tela trata como falha (#316).
+   */
+  scanId?: string;
+  /** Falso quando a análise saiu e a gravação falhou. */
+  persisted?: boolean;
   metrics: {
     height: number;
     weight: number;
@@ -55,7 +60,6 @@ export interface BodyScanResult {
     neck?: number;
     shoulders?: number;
   };
-  imageUrl: string;
   /**
    * De onde vieram altura e peso — nunca do modelo (`ADR-0010`). A tela usa isto
    * para dizer se a Escala foi medida ou informada, o que muda a confiança nas

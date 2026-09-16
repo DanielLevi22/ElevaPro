@@ -14,15 +14,15 @@ import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { PROGRESS_GLOW } from '@/components/ui/BrilhoAmbiente';
 import { GlassScreen } from '@/components/ui/GlassScreen';
 import { GlassSearchField } from '@/components/ui/GlassSearchField';
+import { ProgressHeader } from '@/components/ui/ProgressHeader';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
+import { judgementOf, TrendDelta } from '@/components/ui/TrendDelta';
 import { Vidro } from '@/components/ui/Vidro';
 import { useCores, useEscala } from '@/shared/design';
 import { CardTitle } from '../components/CardTitle';
 import { EmptyCard } from '../components/ChartCard';
 import { AreaChart } from '../components/charts/AreaChart';
 import { evenLabels } from '../components/charts/geometry';
-import { ProgressHeader } from '../components/ProgressHeader';
-import { judgementOf, TrendDelta } from '../components/TrendDelta';
 import { useTrainingSets } from '../hooks/useTrainingSets';
 
 /**

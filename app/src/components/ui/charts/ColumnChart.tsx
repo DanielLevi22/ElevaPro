@@ -2,7 +2,7 @@ import { useId } from 'react';
 import { View } from 'react-native';
 import Svg, { Defs, G, Line, LinearGradient, Rect, Stop, Text as SvgText } from 'react-native-svg';
 import { useCores, useEscala } from '@/shared/design';
-import { type ChartTone, type ToneColors, toneColors } from '../tones';
+import { type ChartTone, type ToneColors, toneColors } from './tones';
 
 /**
  * O gráfico de colunas do kit (`ColumnChart`): uma coluna por semana, a média do

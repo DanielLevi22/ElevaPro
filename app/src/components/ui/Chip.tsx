@@ -23,8 +23,9 @@ interface ChipProps {
    * `sobreImagem` é o chip sobre foto com véu: branco a 16%, igual nos dois
    * temas — o `neutro` some sobre a foto escura no tema claro.
    * `aviso` é o âmbar do health check: algo limita o acompanhamento, sem ser erro.
+   * `ia` é o roxo do kit para o que a inteligência artificial produziu (#316).
    */
-  tom?: 'destaque' | 'neutro' | 'evolucao' | 'sobreImagem' | 'aviso';
+  tom?: 'destaque' | 'neutro' | 'evolucao' | 'sobreImagem' | 'aviso' | 'ia';
   icone?: keyof typeof Ionicons.glyphMap;
 }
 
@@ -33,6 +34,7 @@ const FUNDO = {
   neutro: 'bg-glass-strong',
   evolucao: 'bg-metrica-passos/20',
   aviso: 'bg-metrica-gordura/20',
+  ia: 'bg-metrica-cadencia/20',
   // O branco a 16% vai em `style`: o token é literal e não aceita `/16`.
   sobreImagem: null,
 } as const;
@@ -42,6 +44,7 @@ const TEXTO = {
   evolucao: 'text-metrica-passos',
   // O âmbar escuro no claro: o da métrica não passa AA como texto sobre o vidro.
   aviso: 'text-texto-macro-gordura',
+  ia: 'text-texto-cardio-cadencia',
   sobreImagem: 'text-sobre-imagem',
 } as const;
 
@@ -54,6 +57,7 @@ const COR_DO_ICONE: Record<NonNullable<ChipProps['tom']>, (cores: Cores) => stri
   neutro: (cores) => cores.placeholder,
   evolucao: (cores) => cores.metricaPassos,
   aviso: (cores) => cores.textoGordura,
+  ia: (cores) => cores.textoCadencia,
   sobreImagem: (cores) => cores.sobreImagemSecundario,
 };
 

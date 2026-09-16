@@ -2,7 +2,7 @@ import { formatarDecimal, type Trend } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
 import { comOpacidade, useCores, useEscala } from '@/shared/design';
-import { toneColors } from './tones';
+import { toneColors } from './charts/tones';
 
 /**
  * A pílula de variação do kit (`Delta`): seta, valor absoluto e unidade.

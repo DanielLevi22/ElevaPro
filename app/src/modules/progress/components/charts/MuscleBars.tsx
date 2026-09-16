@@ -1,8 +1,8 @@
 import { MUSCLE_GROUP_LABELS, type MuscleVolume } from '@elevapro/shared';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text, View } from 'react-native';
+import { type ChartTone, toneColors } from '@/components/ui/charts/tones';
 import { comOpacidade, useCores } from '@/shared/design';
-import { type ChartTone, toneColors } from '../tones';
 import { formatLoad, type LoadUnit, loadUnit } from './loadFormat';
 
 /**

@@ -8,6 +8,7 @@ import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { PROGRESS_GLOW } from '@/components/ui/BrilhoAmbiente';
 import { GlassScreen } from '@/components/ui/GlassScreen';
 import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
+import { ProgressHeader } from '@/components/ui/ProgressHeader';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import { ROUTES } from '@/navigation/types';
@@ -15,7 +16,6 @@ import { AdherenceGoalBar } from '../components/AdherenceGoalBar';
 import { CardTitle } from '../components/CardTitle';
 import { EmptyCard } from '../components/ChartCard';
 import { chipDate, localChipDate, SOURCE_LABEL, shortDate } from '../components/measurementLabels';
-import { ProgressHeader } from '../components/ProgressHeader';
 import { usePeriodReport } from '../hooks/usePeriodReport';
 import { sharePeriodReport } from '../services/shareReportPdf';
 

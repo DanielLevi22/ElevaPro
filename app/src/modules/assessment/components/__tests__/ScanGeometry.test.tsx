@@ -1,6 +1,6 @@
 import type { MedidasGeometricas } from '@elevapro/shared';
 import { fireEvent, render, screen } from '@testing-library/react-native';
-import { MedidasDoScan } from '../MedidasDoScan';
+import { ScanGeometry } from '../ScanGeometry';
 
 function medidas(sobrescreve: Partial<MedidasGeometricas> = {}): MedidasGeometricas {
   return {
@@ -28,13 +28,13 @@ function medidas(sobrescreve: Partial<MedidasGeometricas> = {}): MedidasGeometri
  * referência não comunica nada ao aluno, ou comunica ansiedade.
  */
 function abrir(medidas: MedidasGeometricas) {
-  render(<MedidasDoScan medidas={medidas} />);
+  render(<ScanGeometry medidas={medidas} />);
   fireEvent.press(screen.getByText('Medido no seu aparelho'));
 }
 
 describe('as medidas na tela do aluno', () => {
   it('começa recolhido, mostrando só quantas medidas existem', () => {
-    render(<MedidasDoScan medidas={medidas({ shoulder_drop_cm: 1.8 })} />);
+    render(<ScanGeometry medidas={medidas({ shoulder_drop_cm: 1.8 })} />);
 
     expect(screen.getByText(/1 medidas/)).toBeTruthy();
     expect(screen.queryByText('Desnível dos ombros')).toBeNull();
@@ -67,7 +67,7 @@ describe('as medidas na tela do aluno', () => {
   // Cabeçalho com nove traços afirmaria que houve medição e que ela deu zero —
   // que é um achado, não uma ausência.
   it('some inteira quando nada foi medido', () => {
-    render(<MedidasDoScan medidas={medidas()} />);
+    render(<ScanGeometry medidas={medidas()} />);
 
     expect(screen.queryByText('Medido no seu aparelho')).toBeNull();
   });
