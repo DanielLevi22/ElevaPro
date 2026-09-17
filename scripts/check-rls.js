@@ -44,19 +44,27 @@ function collect(sql) {
   const rlsEnabled = new Set();
   const withPolicy = new Set();
 
-  for (const m of sql.matchAll(/CREATE TABLE\s+(?:IF NOT EXISTS\s+)?"?([a-z0-9_]+)"?/gi)) {
-    created.add(m[1]);
-  }
-  for (const m of sql.matchAll(/DROP TABLE\s+(?:IF EXISTS\s+)?"?([a-z0-9_]+)"?/gi)) {
-    dropped.add(m[1]);
+  const tableName = (schema, table) => `${schema || "public"}.${table}`;
+
+  for (const m of sql.matchAll(
+    /CREATE TABLE\s+(?:IF NOT EXISTS\s+)?(?:"?([a-z0-9_]+)"?\.)?"?([a-z0-9_]+)"?/gi,
+  )) {
+    created.add(tableName(m[1], m[2]));
   }
   for (const m of sql.matchAll(
-    /ALTER TABLE\s+(?:ONLY\s+)?"?([a-z0-9_]+)"?\s+ENABLE ROW LEVEL SECURITY/gi,
+    /DROP TABLE\s+(?:IF EXISTS\s+)?(?:"?([a-z0-9_]+)"?\.)?"?([a-z0-9_]+)"?/gi,
   )) {
-    rlsEnabled.add(m[1]);
+    dropped.add(tableName(m[1], m[2]));
   }
-  for (const m of sql.matchAll(/CREATE POLICY\s+"?[^"]+"?\s+ON\s+"?([a-z0-9_]+)"?/gi)) {
-    withPolicy.add(m[1]);
+  for (const m of sql.matchAll(
+    /ALTER TABLE\s+(?:ONLY\s+)?(?:"?([a-z0-9_]+)"?\.)?"?([a-z0-9_]+)"?\s+ENABLE ROW LEVEL SECURITY/gi,
+  )) {
+    rlsEnabled.add(tableName(m[1], m[2]));
+  }
+  for (const m of sql.matchAll(
+    /CREATE POLICY\s+"?[a-z0-9_]+"?\s+ON\s+(?:"?([a-z0-9_]+)"?\.)?"?([a-z0-9_]+)"?/gi,
+  )) {
+    withPolicy.add(tableName(m[1], m[2]));
   }
 
   for (const t of dropped) created.delete(t);

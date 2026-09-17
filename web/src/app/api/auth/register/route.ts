@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(request: Request) {
+  const limited = await enforceRateLimit(request, "registration");
+  if (limited) return limited;
+
   const { email, password, full_name, service_types } = await request.json();
 
   if (!email || !password || !full_name || !service_types?.length) {

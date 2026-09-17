@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { enforceRateLimit } from "./rate-limit";
 import { assertServerEnv, instrucaoDeAmbiente, ServerEnvError } from "./server-env";
 
 /**
@@ -37,6 +38,9 @@ export function rotaDeIA<Ctx>(handler: Handler<Ctx>): Handler<Ctx> {
       // Antes do handler: sem os segredos não há chamada possível, e falhar
       // aqui nomeia a variável em vez de deixar o SDK falhar por ela.
       assertServerEnv();
+
+      const limited = await enforceRateLimit(request, "ai");
+      if (limited) return limited;
 
       return await handler(request, contexto);
     } catch (erro) {

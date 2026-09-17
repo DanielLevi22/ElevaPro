@@ -1,4 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("../rate-limit", () => ({ enforceRateLimit: vi.fn().mockResolvedValue(null) }));
+
 import { rotaDeIA } from "../ai-route";
 
 const CONTEXTO = { params: Promise.resolve({}) };

@@ -55,6 +55,7 @@ const webEnvMap = {
   SUPABASE_SERVICE_ROLE_KEY: "SUPABASE_SERVICE_ROLE_KEY", // server-side only, sem prefixo NEXT_PUBLIC_
   DATABASE_URL: "DATABASE_URL",
   ANTHROPIC_API_KEY: "ANTHROPIC_API_KEY", // server-side only — usada por todas as rotas /api/ai/*
+  RATE_LIMIT_HMAC_KEY: "RATE_LIMIT_HMAC_KEY", // server-side only — pseudonimiza origem do limitador
 };
 
 // ─── Geração dos arquivos ──────────────────────────────────────────────────

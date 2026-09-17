@@ -378,10 +378,15 @@ inferência sobre saúde de titular identificado.
 - [ ] Aluno só acessa seus próprios dados
 - [ ] Admin não acessa dados de saúde de alunos sem necessidade
 - [ ] Tokens de sessão não devem aparecer em logs
+- [x] APIs públicas e de IA com limite durável no banco: `private.rate_limit_buckets`
+  recebe somente HMAC da origem, não IP, e-mail, token, corpo ou dado de saúde;
+  cliente não tem privilégio nem de schema/tabela nem da RPC, e as linhas expiram
+  em no máximo 24 horas (`0060`, issue #322)
 
 **Requisitos recomendados (antes do lançamento):**
 - [ ] MFA disponível para especialistas (Supabase suporta nativamente)
-- [ ] Rate limiting nas APIs de autenticação
+- [x] Rate limiting nas APIs de autenticação e IA (cadastro: 5/h por origem;
+  IA: 20/min por origem; a política de borda/WAF continua necessária antes do lançamento)
 - [ ] Alertas de acesso suspeito (muitas tentativas de login)
 
 **Exportação em PDF do relatório (desde a `#312`).** O arquivo é gerado **no

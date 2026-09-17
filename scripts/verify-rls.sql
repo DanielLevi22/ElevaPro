@@ -101,6 +101,42 @@ BEGIN
   RAISE NOTICE 'ok  helpers com EXECUTE correto e bucket assessments privado';
 END $$;
 
+-- O limitador guarda somente HMACs de origem e vive fora do schema exposto.
+-- Esta prova afirma as duas portas: cliente não lê a tabela e tampouco chama a
+-- função SECURITY DEFINER que a altera. O BFF usa service_role para a RPC.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_tables
+    WHERE schemaname = 'private' AND tablename = 'rate_limit_buckets' AND rowsecurity
+  ) THEN
+    RAISE EXCEPTION 'private.rate_limit_buckets ausente ou sem RLS';
+  END IF;
+
+  IF has_schema_privilege('anon', 'private', 'USAGE')
+    OR has_schema_privilege('authenticated', 'private', 'USAGE')
+    OR has_table_privilege('anon', 'private.rate_limit_buckets', 'SELECT')
+    OR has_table_privilege('authenticated', 'private.rate_limit_buckets', 'SELECT') THEN
+    RAISE EXCEPTION 'cliente tem acesso ao armazenamento privado do limitador';
+  END IF;
+
+  IF has_function_privilege(
+    'anon', 'public.consume_rate_limit(text, text, integer, integer, integer)', 'EXECUTE'
+  ) OR has_function_privilege(
+    'authenticated', 'public.consume_rate_limit(text, text, integer, integer, integer)', 'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'cliente pode executar public.consume_rate_limit';
+  END IF;
+
+  IF NOT has_function_privilege(
+    'service_role', 'public.consume_rate_limit(text, text, integer, integer, integer)', 'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'service_role não pode executar public.consume_rate_limit';
+  END IF;
+
+  RAISE NOTICE 'ok  limitador privado: RLS, schema e EXECUTE fechados ao cliente';
+END $$;
+
 -- ── Privilégio de coluna em workout_sessions (0036) ──────────────────────────
 -- A RLS decide quais LINHAS; o GRANT decide quais COLUNAS. Sem esta guarda, o
 -- botão de corrigir a observação é um botão de reescrever o histórico de
