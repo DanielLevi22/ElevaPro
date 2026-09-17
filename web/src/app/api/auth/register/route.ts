@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
   // Falhar aqui deixa a conta pela metade: existe, entra, e não lê dieta nem
   // treino. Melhor recusar o cadastro do que entregar isso ao usuário.
   if (servicesError) {
-    console.error("[register] specialist_services insert error:", servicesError);
+    logger.error("registration.specialist_services_failed", { error: servicesError });
     await supabaseAdmin.auth.admin.deleteUser(userId);
     return NextResponse.json(
       { error: "Não foi possível concluir o cadastro. Tente novamente." },

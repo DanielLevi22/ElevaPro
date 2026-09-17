@@ -382,6 +382,11 @@ inferência sobre saúde de titular identificado.
   recebe somente HMAC da origem, não IP, e-mail, token, corpo ou dado de saúde;
   cliente não tem privilégio nem de schema/tabela nem da RPC, e as linhas expiram
   em no máximo 24 horas (`0060`, issue #322)
+- [x] Fundação do logger do BFF: `web/src/lib/logger.ts` emite JSON técnico e
+  redige por chave credencial, conteúdo e dado pessoal/sensível antes de escrever;
+  `logger.test.ts` prova a ausência inclusive em objetos aninhados e erros. A
+  migração dos logs legados de web/mobile continua pendente, portanto `OBS-01`
+  permanece **não verificado** na matriz (`#322`)
 
 **Requisitos recomendados (antes do lançamento):**
 - [ ] MFA disponível para especialistas (Supabase suporta nativamente)
