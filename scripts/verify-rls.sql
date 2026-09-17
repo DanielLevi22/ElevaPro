@@ -169,6 +169,29 @@ BEGIN
   RAISE NOTICE 'ok  trilha append-only: cliente sem leitura, BFF sem DML e RPC restrita';
 END $$;
 
+-- Retenção não pode depender de uma próxima ação do usuário. `pg_cron` executa
+-- a limpeza diariamente, e a função privada não pode virar uma ferramenta de
+-- DELETE para o cliente ou o BFF.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM cron.job
+    WHERE jobname = 'purge-security-audit-events'
+      AND schedule = '17 3 * * *'
+      AND command = 'SELECT private.purge_expired_security_audit_events()'
+  ) THEN
+    RAISE EXCEPTION 'job diário de retenção da trilha de auditoria está ausente ou divergente';
+  END IF;
+
+  IF has_function_privilege('anon', 'private.purge_expired_security_audit_events()', 'EXECUTE')
+    OR has_function_privilege('authenticated', 'private.purge_expired_security_audit_events()', 'EXECUTE')
+    OR has_function_privilege('service_role', 'private.purge_expired_security_audit_events()', 'EXECUTE') THEN
+    RAISE EXCEPTION 'papel da aplicação pode disparar a remoção da trilha de auditoria';
+  END IF;
+
+  RAISE NOTICE 'ok  retenção diária da trilha agendada e função de remoção privada';
+END $$;
+
 -- ── Privilégio de coluna em workout_sessions (0036) ──────────────────────────
 -- A RLS decide quais LINHAS; o GRANT decide quais COLUNAS. Sem esta guarda, o
 -- botão de corrigir a observação é um botão de reescrever o histórico de

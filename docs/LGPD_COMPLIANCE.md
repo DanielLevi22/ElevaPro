@@ -402,8 +402,10 @@ inferência sobre saúde de titular identificado.
 - [x] Rate limiting nas APIs de autenticação e IA (cadastro: 5/h por origem;
   IA: 20/min por origem; a política de borda/WAF continua necessária antes do lançamento)
 - [ ] Alertas de acesso suspeito (muitas tentativas de login)
-- [ ] Agendar limpeza diária e independente da trilha de auditoria: a remoção na
-  próxima escrita não é prova suficiente quando não há evento por mais de 365 dias
+- [x] Limpeza diária e independente da trilha de auditoria: `pg_cron` executa
+  `private.purge_expired_security_audit_events()` às 03:17 UTC; a migration falha
+  se o módulo não estiver habilitado, e `verify-rls.sql` confere agenda e privilégios
+  (`0062`, issue #322)
 
 **Exportação em PDF do relatório (desde a `#312`).** O arquivo é gerado **no
 aparelho** (`expo-print`) e entregue pela folha de compartilhar do sistema: nada
