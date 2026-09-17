@@ -396,6 +396,10 @@ inferência sobre saúde de titular identificado.
   válido, devolve-o em `X-Request-Id` e o associa aos logs/eventos quando houver.
   São 32 caracteres hexadecimais aleatórios, sem IP, conta, URL ou conteúdo; segue
   a retenção do log/evento correspondente (`#322`)
+- [x] Concessão, reconsentimento e revogação de `student_consents` geram evento
+  append-only no banco com titular, finalidade e versão da política. O trigger
+  roda na mesma transação sob RLS e nunca recebe respostas, métricas ou corpo de
+  requisição; a evidência fica por 365 dias (`0063`, issue #322)
 
 **Requisitos recomendados (antes do lançamento):**
 - [ ] MFA disponível para especialistas (Supabase suporta nativamente)

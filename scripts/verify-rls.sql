@@ -169,6 +169,36 @@ BEGIN
   RAISE NOTICE 'ok  trilha append-only: cliente sem leitura, BFF sem DML e RPC restrita';
 END $$;
 
+-- Consentimento é escrito pelo cliente sob RLS. Sem trigger, a evidência seria
+-- uma segunda chamada opcional e justamente a revogação poderia desaparecer da
+-- investigação. A função registra só tipo+versão, nunca resposta de saúde.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgname = 'student_consents_audit_change' AND tgrelid = 'public.student_consents'::regclass
+      AND NOT tgisinternal
+  ) THEN
+    RAISE EXCEPTION 'student_consents não possui trigger de auditoria';
+  END IF;
+
+  IF has_function_privilege('anon', 'private.audit_student_consent_change()', 'EXECUTE')
+    OR has_function_privilege('authenticated', 'private.audit_student_consent_change()', 'EXECUTE')
+    OR has_function_privilege('service_role', 'private.audit_student_consent_change()', 'EXECUTE') THEN
+    RAISE EXCEPTION 'papel da aplicação pode chamar a função de auditoria de consentimento';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'private' AND table_name = 'security_audit_events'
+      AND column_name IN ('body', 'content', 'payload', 'responses')
+  ) THEN
+    RAISE EXCEPTION 'TRILHA SENSÍVEL: auditoria ganhou coluna de conteúdo de consentimento';
+  END IF;
+
+  RAISE NOTICE 'ok  consentimento gera evento no banco sem guardar conteúdo sensível';
+END $$;
+
 -- Retenção não pode depender de uma próxima ação do usuário. `pg_cron` executa
 -- a limpeza diariamente, e a função privada não pode virar uma ferramenta de
 -- DELETE para o cliente ou o BFF.
@@ -755,6 +785,7 @@ DECLARE
   visiveis int;
   vazou    int;
   afetadas int;
+  eventos_auditados int;
 BEGIN
   INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
   VALUES
@@ -801,6 +832,20 @@ BEGIN
   VALUES
     (aluno_a, 'health_data_collection', now(), '1.2'),
     (aluno_b, 'health_data_collection', now(), '1.2');
+
+  -- A concessão deixa prova no mesmo commit, sem repetir a resposta que a
+  -- finalidade autorizou tratar. Duas linhas, dois eventos: se o trigger virar
+  -- uma chamada opcional, a contagem denuncia a lacuna.
+  SELECT count(*) INTO eventos_auditados
+    FROM private.security_audit_events
+   WHERE event_type = 'privacy.consent.granted'
+     AND outcome = 'succeeded'
+     AND subject_id IN (aluno_a, aluno_b)
+     AND resource_type = 'consent'
+     AND resource_id = 'health_data_collection:1.2';
+  IF eventos_auditados <> 2 THEN
+    RAISE EXCEPTION 'AUDITORIA AUSENTE: concessões de consentimento geraram % eventos, esperados 2', eventos_auditados;
+  END IF;
 
   SET LOCAL ROLE authenticated;
 
@@ -851,6 +896,16 @@ BEGIN
   RESET ROLE;
   UPDATE public.student_consents SET revoked_at = now()
    WHERE student_id = aluno_a AND consent_type = 'health_data_collection';
+  SELECT count(*) INTO eventos_auditados
+    FROM private.security_audit_events
+   WHERE event_type = 'privacy.consent.revoked'
+     AND outcome = 'succeeded'
+     AND subject_id = aluno_a
+     AND resource_type = 'consent'
+     AND resource_id = 'health_data_collection:1.2';
+  IF eventos_auditados <> 1 THEN
+    RAISE EXCEPTION 'AUDITORIA AUSENTE: revogação de consentimento gerou % eventos, esperado 1', eventos_auditados;
+  END IF;
   SET LOCAL ROLE authenticated;
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', espec, 'role', 'authenticated')::text, true);
