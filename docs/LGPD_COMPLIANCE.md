@@ -400,6 +400,10 @@ inferência sobre saúde de titular identificado.
   append-only no banco com titular, finalidade e versão da política. O trigger
   roda na mesma transação sob RLS e nunca recebe respostas, métricas ou corpo de
   requisição; a evidência fica por 365 dias (`0063`, issue #322)
+- [x] Concessão e encerramento de `student_specialists` geram evento append-only
+  no banco com ator, titular e UUID opaco do vínculo. O trigger cobre app, RPC e
+  BFF na própria transação, não duplica dados protegidos pelo vínculo e preserva
+  a evidência por 365 dias (`0064`, issue #322)
 
 **Requisitos recomendados (antes do lançamento):**
 - [ ] MFA disponível para especialistas (Supabase suporta nativamente)

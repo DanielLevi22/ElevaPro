@@ -169,6 +169,30 @@ BEGIN
   RAISE NOTICE 'ok  trilha append-only: cliente sem leitura, BFF sem DML e RPC restrita';
 END $$;
 
+-- Vínculo é a fronteira de autorização do Specialist. O evento precisa nascer
+-- com a alteração, pois app, RPC e BFF gravam por caminhos distintos. Só IDs
+-- opacos entram na evidência: o vínculo não é licença para duplicar o dado que
+-- ele protege.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgname = 'student_specialists_audit_change'
+      AND tgrelid = 'public.student_specialists'::regclass
+      AND NOT tgisinternal
+  ) THEN
+    RAISE EXCEPTION 'student_specialists não possui trigger de auditoria';
+  END IF;
+
+  IF has_function_privilege('anon', 'private.audit_student_specialist_link_change()', 'EXECUTE')
+    OR has_function_privilege('authenticated', 'private.audit_student_specialist_link_change()', 'EXECUTE')
+    OR has_function_privilege('service_role', 'private.audit_student_specialist_link_change()', 'EXECUTE') THEN
+    RAISE EXCEPTION 'papel da aplicação pode chamar a função de auditoria de vínculo';
+  END IF;
+
+  RAISE NOTICE 'ok  vínculo gera evento no banco sem expor dados do aluno';
+END $$;
+
 -- Consentimento é escrito pelo cliente sob RLS. Sem trigger, a evidência seria
 -- uma segunda chamada opcional e justamente a revogação poderia desaparecer da
 -- investigação. A função registra só tipo+versão, nunca resposta de saúde.
@@ -286,6 +310,8 @@ DECLARE
   aluno_b  uuid := gen_random_uuid();
   espec    uuid := gen_random_uuid();
   visiveis int;
+  eventos_auditados int;
+  vinculo_id uuid;
 BEGIN
   INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
   VALUES
@@ -303,7 +329,22 @@ BEGIN
          (aluno_b, '{"verificacao":true}'::jsonb, now());
 
   INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
-  VALUES (aluno_a, espec, 'personal_training', 'active');
+  VALUES (aluno_a, espec, 'personal_training', 'active')
+  RETURNING id INTO vinculo_id;
+
+  -- A criação do vínculo que libera acesso produz uma única evidência, com
+  -- especialista como ator no caminho interno de provisionamento.
+  SELECT count(*) INTO eventos_auditados
+    FROM private.security_audit_events
+   WHERE event_type = 'authorization.specialist_student_link.granted'
+     AND outcome = 'succeeded'
+     AND actor_id = espec
+     AND subject_id = aluno_a
+     AND resource_type = 'specialist_student_link'
+     AND resource_id = vinculo_id::text;
+  IF eventos_auditados <> 1 THEN
+    RAISE EXCEPTION 'AUDITORIA AUSENTE: criação do vínculo gerou % eventos, esperado 1', eventos_auditados;
+  END IF;
 
   -- A partir daqui a sessão é um usuário comum, não o dono do banco.
   SET LOCAL ROLE authenticated;
@@ -344,8 +385,36 @@ BEGIN
     RAISE EXCEPTION 'VAZAMENTO: especialista lê % anamnese(s) do aluno B, sem vínculo', visiveis;
   END IF;
 
+  -- Art. 6º, VII: encerrar o vínculo remove o acesso e registra quem fez isso.
+  -- A prova junta a consequência de autorização e a evidência que permite
+  -- investigá-la; uma sem a outra não torna o controle auditável.
   RESET ROLE;
-  RAISE NOTICE 'ok  isolamento entre alunos e por vínculo, e escalonamento recusado';
+  UPDATE public.student_specialists
+     SET status = 'inactive', ended_by = espec, ended_at = now()
+   WHERE id = vinculo_id;
+
+  SELECT count(*) INTO eventos_auditados
+    FROM private.security_audit_events
+   WHERE event_type = 'authorization.specialist_student_link.revoked'
+     AND outcome = 'succeeded'
+     AND actor_id = espec
+     AND subject_id = aluno_a
+     AND resource_type = 'specialist_student_link'
+     AND resource_id = vinculo_id::text;
+  IF eventos_auditados <> 1 THEN
+    RAISE EXCEPTION 'AUDITORIA AUSENTE: encerramento do vínculo gerou % eventos, esperado 1', eventos_auditados;
+  END IF;
+
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_a;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'VÍNCULO ENCERRADO, ACESSO ATIVO: especialista lê % anamnese(s) após revogação', visiveis;
+  END IF;
+
+  RESET ROLE;
+  RAISE NOTICE 'ok  isolamento por vínculo, escalonamento recusado e eventos de concessão/revogação';
 END $$;
 
 -- ── Faixas de plausibilidade do relógio (0046) ───────────────────────────────
