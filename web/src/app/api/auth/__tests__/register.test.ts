@@ -13,6 +13,10 @@ const createUser = vi.fn();
 const deleteUser = vi.fn();
 const insert = vi.fn();
 const from = vi.fn((_table: string) => ({ insert }));
+const { enforceRateLimit, recordSecurityAuditEvent } = vi.hoisted(() => ({
+  enforceRateLimit: vi.fn().mockResolvedValue(null),
+  recordSecurityAuditEvent: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock("@/lib/supabase-admin", () => ({
   supabaseAdmin: {
@@ -25,6 +29,9 @@ vi.mock("@/lib/supabase-admin", () => ({
     from: (table: string) => from(table),
   },
 }));
+
+vi.mock("@/lib/rate-limit", () => ({ enforceRateLimit }));
+vi.mock("@/lib/security-audit", () => ({ recordSecurityAuditEvent }));
 
 function request(body: Record<string, unknown>): Request {
   return {
@@ -43,6 +50,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   createUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
   insert.mockResolvedValue({ error: null });
+  enforceRateLimit.mockResolvedValue(null);
+  recordSecurityAuditEvent.mockResolvedValue(undefined);
 });
 
 describe("POST /api/auth/register", () => {

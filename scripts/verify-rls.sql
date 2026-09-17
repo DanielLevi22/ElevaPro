@@ -137,6 +137,38 @@ BEGIN
   RAISE NOTICE 'ok  limitador privado: RLS, schema e EXECUTE fechados ao cliente';
 END $$;
 
+-- A trilha não pode ser alterada pelo cliente nem pelo BFF: service_role ganha
+-- somente EXECUTE na função com assinatura mínima, nunca DML direto na tabela.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_tables
+    WHERE schemaname = 'private' AND tablename = 'security_audit_events' AND rowsecurity
+  ) THEN
+    RAISE EXCEPTION 'private.security_audit_events ausente ou sem RLS';
+  END IF;
+
+  IF has_table_privilege('anon', 'private.security_audit_events', 'SELECT')
+    OR has_table_privilege('authenticated', 'private.security_audit_events', 'SELECT')
+    OR has_table_privilege('service_role', 'private.security_audit_events', 'INSERT')
+    OR has_table_privilege('service_role', 'private.security_audit_events', 'UPDATE')
+    OR has_table_privilege('service_role', 'private.security_audit_events', 'DELETE') THEN
+    RAISE EXCEPTION 'trilha de auditoria tem leitura de cliente ou escrita direta pelo BFF';
+  END IF;
+
+  IF has_function_privilege(
+    'anon', 'public.record_security_audit_event(text, text, uuid, uuid, text, text, text, text)', 'EXECUTE'
+  ) OR has_function_privilege(
+    'authenticated', 'public.record_security_audit_event(text, text, uuid, uuid, text, text, text, text)', 'EXECUTE'
+  ) OR NOT has_function_privilege(
+    'service_role', 'public.record_security_audit_event(text, text, uuid, uuid, text, text, text, text)', 'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'EXECUTE de record_security_audit_event não está restrito a service_role';
+  END IF;
+
+  RAISE NOTICE 'ok  trilha append-only: cliente sem leitura, BFF sem DML e RPC restrita';
+END $$;
+
 -- ── Privilégio de coluna em workout_sessions (0036) ──────────────────────────
 -- A RLS decide quais LINHAS; o GRANT decide quais COLUNAS. Sem esta guarda, o
 -- botão de corrigir a observação é um botão de reescrever o histórico de

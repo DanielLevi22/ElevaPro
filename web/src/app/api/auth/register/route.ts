@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { enforceRateLimit } from "@/lib/rate-limit";
+import { recordSecurityAuditEvent } from "@/lib/security-audit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(request: Request) {
@@ -60,6 +61,15 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+
+  await recordSecurityAuditEvent({
+    eventType: "identity.registration.succeeded",
+    outcome: "succeeded",
+    actorId: userId,
+    subjectId: userId,
+    resourceType: "account",
+    resourceId: userId,
+  });
 
   return NextResponse.json({ success: true });
 }

@@ -387,12 +387,19 @@ inferência sobre saúde de titular identificado.
   `logger.test.ts` prova a ausência inclusive em objetos aninhados e erros. A
   migração dos logs legados de web/mobile continua pendente, portanto `OBS-01`
   permanece **não verificado** na matriz (`#322`)
+- [x] Fundação de auditoria de segurança: `private.security_audit_events` recebe
+  metadados mínimos de eventos de alto impacto sob legítimo interesse (Art. 7º,
+  IX), sem corpo, credencial, nome, e-mail ou dado de saúde. A conta apagada
+  desidentifica ator/titular por `ON DELETE SET NULL`; a retenção alvo é 365 dias
+  e a função remove linhas vencidas a cada nova escrita (`0061`, issue #322)
 
 **Requisitos recomendados (antes do lançamento):**
 - [ ] MFA disponível para especialistas (Supabase suporta nativamente)
 - [x] Rate limiting nas APIs de autenticação e IA (cadastro: 5/h por origem;
   IA: 20/min por origem; a política de borda/WAF continua necessária antes do lançamento)
 - [ ] Alertas de acesso suspeito (muitas tentativas de login)
+- [ ] Agendar limpeza diária e independente da trilha de auditoria: a remoção na
+  próxima escrita não é prova suficiente quando não há evento por mais de 365 dias
 
 **Exportação em PDF do relatório (desde a `#312`).** O arquivo é gerado **no
 aparelho** (`expo-print`) e entregue pela folha de compartilhar do sistema: nada
