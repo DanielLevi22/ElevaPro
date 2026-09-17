@@ -2,6 +2,7 @@ import { createHmac } from "node:crypto";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { traceIdForRequest } from "@/lib/trace";
 
 type RateLimitPolicy = {
   limit: number;
@@ -50,6 +51,7 @@ function requestSubject(request: Request): string | null {
 export async function enforceRateLimit(
   request: Request,
   policyName: keyof typeof POLICIES,
+  traceId = traceIdForRequest(request),
 ): Promise<NextResponse | null> {
   const subject = requestSubject(request);
   if (!subject) {
@@ -72,7 +74,11 @@ export async function enforceRateLimit(
 
     const responseData: unknown = result;
     if (error || !Array.isArray(responseData) || responseData.length !== 1) {
-      logger.error("rate_limit.unavailable", { policy: policyName, code: error?.code });
+      logger.error("rate_limit.unavailable", {
+        policy: policyName,
+        code: error?.code,
+        trace_id: traceId,
+      });
       return NextResponse.json({ error: "rate_limit_unavailable" }, { status: 503 });
     }
 
@@ -93,6 +99,7 @@ export async function enforceRateLimit(
     logger.error("rate_limit.unavailable", {
       policy: policyName,
       error: error instanceof Error ? error.name : "unknown",
+      trace_id: traceId,
     });
     return NextResponse.json({ error: "rate_limit_unavailable" }, { status: 503 });
   }

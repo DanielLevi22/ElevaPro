@@ -37,6 +37,7 @@ describe("rotaDeIA", () => {
     const resposta = await rota(req(), CONTEXTO);
 
     expect(resposta.status).toBe(200);
+    expect(resposta.headers.get("X-Request-Id")).toMatch(/^[0-9a-f]{32}$/);
     await expect(resposta.json()).resolves.toEqual({ reply: "oi" });
   });
 

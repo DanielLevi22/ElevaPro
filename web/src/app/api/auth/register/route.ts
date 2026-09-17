@@ -3,15 +3,20 @@ import { logger } from "@/lib/logger";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { recordSecurityAuditEvent } from "@/lib/security-audit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { attachTraceId, traceIdForRequest } from "@/lib/trace";
 
 export async function POST(request: Request) {
-  const limited = await enforceRateLimit(request, "registration");
-  if (limited) return limited;
+  const traceId = traceIdForRequest(request);
+  const limited = await enforceRateLimit(request, "registration", traceId);
+  if (limited) return attachTraceId(limited, traceId);
 
   const { email, password, full_name, service_types } = await request.json();
 
   if (!email || !password || !full_name || !service_types?.length) {
-    return NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 });
+    return attachTraceId(
+      NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 }),
+      traceId,
+    );
   }
 
   // Create auth user (auto-confirmed so immediate sign-in works)
@@ -28,11 +33,14 @@ export async function POST(request: Request) {
       authError.code === "email_exists"
         ? "Este e-mail já possui uma conta."
         : authError.message;
-    return NextResponse.json({ error: msg }, { status: 400 });
+    return attachTraceId(NextResponse.json({ error: msg }, { status: 400 }), traceId);
   }
 
   if (!data.user) {
-    return NextResponse.json({ error: "Erro ao criar usuário." }, { status: 500 });
+    return attachTraceId(
+      NextResponse.json({ error: "Erro ao criar usuário." }, { status: 500 }),
+      traceId,
+    );
   }
 
   const userId = data.user.id;
@@ -56,9 +64,12 @@ export async function POST(request: Request) {
   if (servicesError) {
     logger.error("registration.specialist_services_failed", { error: servicesError });
     await supabaseAdmin.auth.admin.deleteUser(userId);
-    return NextResponse.json(
-      { error: "Não foi possível concluir o cadastro. Tente novamente." },
-      { status: 500 },
+    return attachTraceId(
+      NextResponse.json(
+        { error: "Não foi possível concluir o cadastro. Tente novamente." },
+        { status: 500 },
+      ),
+      traceId,
     );
   }
 
@@ -69,7 +80,8 @@ export async function POST(request: Request) {
     subjectId: userId,
     resourceType: "account",
     resourceId: userId,
+    traceId,
   });
 
-  return NextResponse.json({ success: true });
+  return attachTraceId(NextResponse.json({ success: true }), traceId);
 }

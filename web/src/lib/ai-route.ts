@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { logger } from "./logger";
 import { enforceRateLimit } from "./rate-limit";
 import { assertServerEnv, instrucaoDeAmbiente, ServerEnvError } from "./server-env";
+import { attachTraceId, traceIdForRequest } from "./trace";
 
 /**
  * O invólucro que impede uma rota de IA de morrer em HTML.
@@ -35,27 +36,35 @@ type Handler<Ctx> = (request: NextRequest, contexto: Ctx) => Promise<Response>;
 
 export function rotaDeIA<Ctx>(handler: Handler<Ctx>): Handler<Ctx> {
   return async (request, contexto) => {
+    const traceId = traceIdForRequest(request);
     try {
       // Antes do handler: sem os segredos não há chamada possível, e falhar
       // aqui nomeia a variável em vez de deixar o SDK falhar por ela.
       assertServerEnv();
 
-      const limited = await enforceRateLimit(request, "ai");
-      if (limited) return limited;
+      const limited = await enforceRateLimit(request, "ai", traceId);
+      if (limited) return attachTraceId(limited, traceId);
 
-      return await handler(request, contexto);
+      return attachTraceId(await handler(request, contexto), traceId);
     } catch (erro) {
       if (erro instanceof ServerEnvError) {
         // O log carrega quais faltam; a resposta não — nome de variável de
         // ambiente não é informação de cliente.
         logger.error("ai.route.misconfigured", {
           missing_environment: instrucaoDeAmbiente(erro.faltando),
+          trace_id: traceId,
         });
-        return NextResponse.json({ error: "server_misconfigured" }, { status: 503 });
+        return attachTraceId(
+          NextResponse.json({ error: "server_misconfigured" }, { status: 503 }),
+          traceId,
+        );
       }
 
-      logger.error("ai.route.failed", { error: erro });
-      return NextResponse.json({ error: "ai_unavailable" }, { status: 503 });
+      logger.error("ai.route.failed", { error: erro, trace_id: traceId });
+      return attachTraceId(
+        NextResponse.json({ error: "ai_unavailable" }, { status: 503 }),
+        traceId,
+      );
     }
   };
 }

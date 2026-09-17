@@ -21,6 +21,7 @@ describe("security audit", () => {
       outcome: "denied",
       resourceType: "rate_limit_policy",
       resourceId: "ai",
+      traceId: "a".repeat(32),
     });
 
     expect(rpc).toHaveBeenCalledWith("record_security_audit_event", {
@@ -31,7 +32,7 @@ describe("security audit", () => {
       p_resource_type: "rate_limit_policy",
       p_resource_id: "ai",
       p_origin: "bff",
-      p_trace_id: null,
+      p_trace_id: "a".repeat(32),
     });
   });
 

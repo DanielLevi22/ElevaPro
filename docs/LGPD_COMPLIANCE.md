@@ -392,6 +392,10 @@ inferência sobre saúde de titular identificado.
   IX), sem corpo, credencial, nome, e-mail ou dado de saúde. A conta apagada
   desidentifica ator/titular por `ON DELETE SET NULL`; a retenção alvo é 365 dias
   e a função remove linhas vencidas a cada nova escrita (`0061`, issue #322)
+- [x] Correlação técnica: o BFF gera ou reaproveita somente o `trace-id` W3C
+  válido, devolve-o em `X-Request-Id` e o associa aos logs/eventos quando houver.
+  São 32 caracteres hexadecimais aleatórios, sem IP, conta, URL ou conteúdo; segue
+  a retenção do log/evento correspondente (`#322`)
 
 **Requisitos recomendados (antes do lançamento):**
 - [ ] MFA disponível para especialistas (Supabase suporta nativamente)

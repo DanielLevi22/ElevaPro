@@ -35,6 +35,7 @@ vi.mock("@/lib/security-audit", () => ({ recordSecurityAuditEvent }));
 
 function request(body: Record<string, unknown>): Request {
   return {
+    headers: new Headers(),
     json: async () => body,
   } as unknown as Request;
 }
