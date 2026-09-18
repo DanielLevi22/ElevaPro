@@ -1,6 +1,5 @@
 import { passwordValidationError, userFacingAuthError } from "@elevapro/shared";
 import { NextResponse } from "next/server";
-import { logger } from "@/lib/logger";
 import {
   guardPublicRegistration,
   readPublicRegistrationJson,
@@ -8,6 +7,7 @@ import {
 import { recordSecurityAuditEvent } from "@/lib/security-audit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { attachTraceId } from "@/lib/trace";
+import { memberRegistrationRequestSchema } from "@/modules/auth/services";
 
 export async function POST(request: Request) {
   const guard = await guardPublicRegistration(request);
@@ -17,18 +17,14 @@ export async function POST(request: Request) {
   const parsed = await readPublicRegistrationJson(request, traceId);
   if (parsed.response) return parsed.response;
 
-  const { email, password, full_name } = parsed.body as {
-    email?: string;
-    full_name?: string;
-    password?: string;
-  };
-
-  if (!email || !password || !full_name) {
+  const registration = memberRegistrationRequestSchema.safeParse(parsed.body);
+  if (!registration.success) {
     return attachTraceId(
-      NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 }),
+      NextResponse.json({ error: "Dados de cadastro inválidos." }, { status: 400 }),
       traceId,
     );
   }
+  const { email, password, full_name } = registration.data;
   const passwordError = passwordValidationError(password);
   if (passwordError) {
     return attachTraceId(NextResponse.json({ error: passwordError }, { status: 400 }), traceId);
@@ -53,26 +49,6 @@ export async function POST(request: Request) {
   if (!data.user) {
     return attachTraceId(
       NextResponse.json({ error: "Erro ao criar usuário." }, { status: 500 }),
-      traceId,
-    );
-  }
-
-  const { error: profileError } = await supabaseAdmin.from("profiles" as never).insert({
-    id: data.user.id,
-    email,
-    full_name,
-    account_type: "member",
-    account_status: "active",
-  } as never);
-
-  if (profileError) {
-    logger.error("registration.student_profile_failed", { error: profileError, trace_id: traceId });
-    await supabaseAdmin.auth.admin.deleteUser(data.user.id);
-    return attachTraceId(
-      NextResponse.json(
-        { error: "Não foi possível concluir o cadastro. Tente novamente." },
-        { status: 500 },
-      ),
       traceId,
     );
   }

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "../register/route";
+import { POST as studentPost } from "../register/student/route";
 
 /**
  * O cadastro de especialista precisa terminar com linha em
@@ -57,6 +58,20 @@ beforeEach(() => {
 });
 
 describe("POST /api/auth/register", () => {
+  it("conclui cadastro member sem inserir o perfil novamente", async () => {
+    const response = await studentPost(
+      request({
+        email: "member@elevapro.local",
+        password: "Senha-123456",
+        full_name: "Novo Member",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(from).not.toHaveBeenCalledWith("profiles");
+    expect(deleteUser).not.toHaveBeenCalled();
+  });
+
   it("grava um serviço por tipo escolhido", async () => {
     const res = await POST(request(VALID));
 
@@ -87,6 +102,22 @@ describe("POST /api/auth/register", () => {
 
   it("exige os campos obrigatórios", async () => {
     const res = await POST(request({ ...VALID, service_types: [] }));
+
+    expect(res.status).toBe(400);
+    expect(createUser).not.toHaveBeenCalled();
+  });
+
+  it("recusa formato de serviços inválido antes de criar a conta", async () => {
+    const res = await POST(request({ ...VALID, service_types: "personal_training" }));
+
+    expect(res.status).toBe(400);
+    expect(createUser).not.toHaveBeenCalled();
+  });
+
+  it("recusa formato inválido do cadastro member antes de criar a conta", async () => {
+    const res = await studentPost(
+      request({ email: ["novo@elevapro.local"], password: "Senha-123456", full_name: "Novo" }),
+    );
 
     expect(res.status).toBe(400);
     expect(createUser).not.toHaveBeenCalled();

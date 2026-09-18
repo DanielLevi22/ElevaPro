@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { authenticatedUserId } from "./api-auth";
 import { logger } from "./logger";
 import { enforceRateLimit } from "./rate-limit";
 import { enforceRequestBodyLimit, requestBodyLimits } from "./request-body-limit";
@@ -33,8 +34,8 @@ import { attachTraceId, traceIdForRequest } from "./trace";
  * contexto vazio, rota dinâmica infere o seu `{ params }`, e as duas mantêm a
  * assinatura que o Next espera.
  */
-type Handler<Ctx> = (request: NextRequest, contexto: Ctx) => Promise<Response>;
-type WrappedHandler<Ctx> = (request: NextRequest, contexto?: Ctx) => Promise<Response>;
+type Handler<Ctx> = (request: NextRequest, context: Ctx) => Promise<Response>;
+type WrappedHandler<Ctx> = (request: NextRequest, context?: Ctx) => Promise<Response>;
 
 type AiRouteOptions = {
   maximumBodyBytes?: number;
@@ -50,14 +51,15 @@ export function withAiRoute<Ctx>(
   handler: Handler<Ctx>,
   options: AiRouteOptions = {},
 ): WrappedHandler<Ctx> {
-  return async (request, contexto) => {
+  return async (request, context) => {
     const traceId = traceIdForRequest(request);
     try {
       // Antes do handler: sem os segredos não há chamada possível, e falhar
       // aqui nomeia a variável em vez de deixar o SDK falhar por ela.
       assertServerEnv();
 
-      const limited = await enforceRateLimit(request, "ai", traceId);
+      const rateLimitUserId = await authenticatedUserId(request);
+      const limited = await enforceRateLimit(request, "ai", traceId, rateLimitUserId);
       if (limited) return attachTraceId(limited, traceId);
 
       const oversized = await enforceRequestBodyLimit(
@@ -66,13 +68,13 @@ export function withAiRoute<Ctx>(
       );
       if (oversized) return attachTraceId(oversized, traceId);
 
-      return attachTraceId(await handler(request, contexto as Ctx), traceId);
-    } catch (erro) {
-      if (erro instanceof ServerEnvError) {
+      return attachTraceId(await handler(request, context as Ctx), traceId);
+    } catch (error) {
+      if (error instanceof ServerEnvError) {
         // O log carrega quais faltam; a resposta não — nome de variável de
         // ambiente não é informação de cliente.
         logger.error("ai.route.misconfigured", {
-          missing_environment: instrucaoDeAmbiente(erro.faltando),
+          missing_environment: instrucaoDeAmbiente(error.faltando),
           trace_id: traceId,
         });
         return attachTraceId(
@@ -81,7 +83,7 @@ export function withAiRoute<Ctx>(
         );
       }
 
-      logger.error("ai.route.failed", { error: erro, trace_id: traceId });
+      logger.error("ai.route.failed", { error, trace_id: traceId });
       return attachTraceId(
         NextResponse.json({ error: "ai_unavailable" }, { status: 503 }),
         traceId,

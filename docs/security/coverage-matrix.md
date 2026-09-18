@@ -57,7 +57,7 @@ o preview.
 
 | ID | Evidência reexecutável (positivo e negativo) | O que falta para `verificado` |
 | --- | --- | --- |
-| API-01 | As 20 rotas de `/api/ai/**` passam pelo `rotaDeIA`: limite de corpo e rate limit durável antes do handler (`web/src/lib/__tests__/ai-route.test.ts`, `request-body-limit.test.ts`) | As outras 7 rotas não têm limite; falta inventário de schema e autorização por rota |
+| API-01 | As 20 rotas de `/api/ai/**` passam pelo `withAiRoute`: limite de corpo e rate limit durável antes do handler; usuário autenticado é limitado pelo pseudônimo do ator e tentativa anônima pela origem (`web/src/lib/__tests__/ai-route.test.ts`, `rate-limit.test.ts`, `request-body-limit.test.ts`) | As outras 7 rotas não têm limite; falta inventário de schema e autorização por rota |
 | API-02 | Cadastro: corpo acima de 32 KiB → 413 antes do Auth e 6ª tentativa por origem → 429 (`web/src/app/api/auth/__tests__/register.test.ts`, `web/src/lib/__tests__/rate-limit.test.ts`); política de senha em `shared/src/auth/password-policy` | **Enumeração aberta:** a resposta diz que o e-mail já tem conta; o limite de 5/h só atenua. Decisão de UX pendente |
 | API-04 | Erro de banco e de modelo sai do BFF só como `name`/`code` (`logger.test.ts`, "não deixa e-mail escapar pelo details") | Limites e cancelamento do SSE sem teste; CSP/HSTS ausentes em `web/next.config.ts` |
 | DB-02 | `scripts/verify-rls.sql`: funções de trigger/event trigger sem `EXECUTE` para papéis da aplicação, `search_path` fixo e RPCs de limite/trilha só para `service_role` (`0060`, `0061`, `0066`, `0070`) | Inventário completo de funções e ownership |
@@ -65,8 +65,7 @@ o preview.
 | OBS-01 | `web/src/lib/logger.ts` redige credencial, e-mail em qualquer valor, medidas e corpo de erro do banco; as rotas da API não usam mais `console.*` (`logger.test.ts`) | Logs de `web/src` fora da API, mobile e crash reporting |
 | OBS-02 | `rate_limit.decision` emite política, `allowed`/`denied`, saldo e `trace_id`, sem origem ou dados pessoais (`rate-limit.test.ts`) | Exportador/alerta operacional fora deste corte |
 
-Não entraram neste corte e continuam abertos: rate limit por ator autenticado nas rotas de IA
-(hoje é por origem) e os demais IDs.
+Não entraram neste corte e continuam abertos os demais IDs não verificados da matriz.
 
 ## Evidência mínima por estado
 

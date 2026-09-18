@@ -8,6 +8,7 @@ import {
 import { recordSecurityAuditEvent } from "@/lib/security-audit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { attachTraceId } from "@/lib/trace";
+import { specialistRegistrationRequestSchema } from "@/modules/auth/services";
 
 export async function POST(request: Request) {
   const guard = await guardPublicRegistration(request);
@@ -17,19 +18,14 @@ export async function POST(request: Request) {
   const parsed = await readPublicRegistrationJson(request, traceId);
   if (parsed.response) return parsed.response;
 
-  const { email, password, full_name, service_types } = parsed.body as {
-    email?: string;
-    full_name?: string;
-    password?: string;
-    service_types?: string[];
-  };
-
-  if (!email || !password || !full_name || !service_types?.length) {
+  const registration = specialistRegistrationRequestSchema.safeParse(parsed.body);
+  if (!registration.success) {
     return attachTraceId(
-      NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 }),
+      NextResponse.json({ error: "Dados de cadastro inválidos." }, { status: 400 }),
       traceId,
     );
   }
+  const { email, password, full_name, service_types } = registration.data;
 
   const passwordError = passwordValidationError(password);
   if (passwordError) {
@@ -67,7 +63,7 @@ export async function POST(request: Request) {
   // novo, batia em chave duplicada, e o `if (!profileError)` abaixo pulava os
   // serviços — então todo especialista nascia sem nenhum, e o CASL negava
   // dietas com "Conta specialist com serviços [nenhum]".
-  const serviceRows = (service_types as string[]).map((service_type) => ({
+  const serviceRows = service_types.map((service_type) => ({
     specialist_id: userId,
     service_type,
   }));

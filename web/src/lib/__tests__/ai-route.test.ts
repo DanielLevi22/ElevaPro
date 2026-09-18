@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../rate-limit", () => ({ enforceRateLimit: vi.fn().mockResolvedValue(null) }));
+vi.mock("../api-auth", () => ({ authenticatedUserId: vi.fn().mockResolvedValue(null) }));
 
 import { withAiRoute } from "../ai-route";
 

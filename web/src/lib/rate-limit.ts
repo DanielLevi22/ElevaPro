@@ -60,8 +60,9 @@ export async function enforceRateLimit(
   request: Request,
   policyName: keyof typeof POLICIES,
   traceId = traceIdForRequest(request),
+  authenticatedUserId?: string | null,
 ): Promise<NextResponse | null> {
-  const subject = requestSubject(request);
+  const subject = authenticatedUserId ? `account:${authenticatedUserId}` : requestSubject(request);
   if (!subject) {
     return NextResponse.json({ error: "rate_limit_identity_unavailable" }, { status: 503 });
   }

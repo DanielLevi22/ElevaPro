@@ -60,6 +60,23 @@ describe("rate limit", () => {
     expect(allowedMetric).not.toContain("203.0.113.7");
   });
 
+  it("prioriza o ator autenticado em vez da origem para IA", async () => {
+    rpc.mockResolvedValue({
+      data: [{ allowed: true, remaining: 19, retry_after_seconds: 42 }],
+      error: null,
+    });
+    const request = new Request("https://elevapro.test/api/ai/coach", {
+      headers: { "x-vercel-id": "gru1::test", "x-vercel-forwarded-for": "203.0.113.7" },
+    });
+
+    await enforceRateLimit(request, "ai", undefined, "user-123");
+
+    expect(rpc).toHaveBeenCalledWith(
+      "consume_rate_limit",
+      expect.objectContaining({ p_subject_hash: pseudonymizeRateLimitSubject("account:user-123") }),
+    );
+  });
+
   it("devolve 429 e Retry-After quando a cota acabou", async () => {
     rpc.mockResolvedValue({
       data: [{ allowed: false, remaining: 0, retry_after_seconds: 17 }],
