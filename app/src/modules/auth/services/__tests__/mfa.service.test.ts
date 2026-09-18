@@ -92,6 +92,13 @@ describe('mfa.service', () => {
     expect(mockMfa.verify).not.toHaveBeenCalled();
   });
 
+  it('recusa código inválido, expirado ou reutilizado sem revelar o motivo', async () => {
+    mockMfa.challenge.mockResolvedValue({ data: { id: 'challenge-1' }, error: null });
+    mockMfa.verify.mockResolvedValue({ error: new Error('verification rejected') });
+
+    await expect(verifyTotp('factor-1', '123456')).rejects.toThrow('verification rejected');
+  });
+
   it('confirma o código somente no desafio criado para o fator', async () => {
     mockMfa.challenge.mockResolvedValue({ data: { id: 'challenge-1' }, error: null });
     mockMfa.verify.mockResolvedValue({ error: null });

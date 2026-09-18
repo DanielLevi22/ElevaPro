@@ -4,6 +4,8 @@ import { supabase } from "@elevapro/supabase";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { isAdminSessionAllowed } from "@/lib/mfa/admin-access";
+import { hasCurrentMfaAssurance } from "@/modules/auth";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -43,6 +45,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
       if (profile?.account_type !== "admin") {
         router.push("/dashboard");
+        return;
+      }
+
+      if (!isAdminSessionAllowed(profile.account_type, await hasCurrentMfaAssurance())) {
+        router.replace("/auth/mfa");
         return;
       }
 
