@@ -1,6 +1,8 @@
 import { lerAnaliseDoPrato } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
+import { withAiRoute } from "@/lib/ai-route";
 import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
+import { requestBodyLimits } from "@/lib/request-body-limit";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { responderEmUmTurno } from "@/modules/ai/providers/turnoUnico";
 
@@ -21,7 +23,7 @@ const SYSTEM_PROMPT = `Você é um analista nutricional. Analise o prato na imag
 Separe o prato nos componentes que dá para ver, com as gramas estimadas de cada um. Os totais do prato são a soma dos componentes.
 Se não for claro, estime com confidence menor. Nunca retorne texto fora do JSON.`;
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   // A rota não lê nada do banco: só o modelo olha a foto. A checagem existe
   // para não deixar o endpoint de IA aberto a qualquer portador de token.
   const auth = await authorizeStudentWithHealthConsent(request);
@@ -64,3 +66,5 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json(analise);
 }
+
+export const POST = withAiRoute(handlePost, { maximumBodyBytes: requestBodyLimits.image });

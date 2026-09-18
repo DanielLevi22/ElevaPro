@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { withAiRoute } from "@/lib/ai-route";
 import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { StudentCoachOrchestrator } from "@/modules/ai/orchestrators/student-coach.orchestrator";
@@ -22,7 +23,7 @@ import type { PlanProposalData, SseEvent } from "@/modules/ai/types";
 // plano Hobby; no Pro dá para subir até 300.
 export const maxDuration = 60;
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   const auth = await authorizeStudentWithHealthConsent(request);
   if (!auth.ok) return auth.response;
   const studentId = auth.caller.id;
@@ -127,3 +128,5 @@ export async function POST(request: NextRequest) {
     },
   });
 }
+
+export const POST = withAiRoute(handlePost);

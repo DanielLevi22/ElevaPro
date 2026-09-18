@@ -1,12 +1,16 @@
 ---
 name: lgpd-check
-description: Revisão de conformidade LGPD do Eleva Pro. Use ao criar ou alterar tabela e campo do Supabase, ao tratar dado de saúde (physical_assessments, student_anamnesis, workout_sessions, diet_logs, health_daily_metrics), e ao implementar onboarding, consentimento, exportação ou exclusão de dados. Produz parecer por bloco com base legal, finalidade e minimização.
+description: Revisão LGPD e de controles auditáveis do Eleva Pro. Use para dados pessoais ou de saúde, onboarding, consentimento, direitos do titular, autenticação, autorização, logs, auditoria, incidentes e integrações que tratem dados.
 metadata:
   author: Daniel Levi
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Skill: /lgpd-check
+
+Revisa um tratamento de dados até existir evidência de que ele é necessário, autorizado,
+restrito e investigável. Não é parecer jurídico: base legal nova, compartilhamento novo,
+alto risco ou incidente exigem validação do responsável jurídico/encarregado.
 
 ## Quando usar
 
@@ -15,6 +19,10 @@ Invocar este skill sempre que for:
 - Adicionar campos que coletam dados pessoais ou de saúde
 - Implementar features de onboarding, formulários, exportação ou exclusão de dados
 - Revisar uma feature existente para compliance antes de lançar
+- Alterar autenticação, convite, recuperação de conta, papel, vínculo Specialist–Student,
+  RLS, função `SECURITY DEFINER` ou acesso administrativo
+- Criar ou alterar logs, analytics, crash reporting, trilha de auditoria, webhook,
+  integração, armazenamento de arquivo, IA ou resposta a incidente que trate dados
 
 ---
 
@@ -27,9 +35,19 @@ Antes de qualquer análise, perguntar (se não estiver claro):
 - Qual é a finalidade do dado sendo coletado?
 - Quem vai acessar esse dado (specialist, student, admin)?
 
-### 2. Ler o documento base
+Também identifique: por quanto tempo ele ficará, quais operadores/integrações o recebem,
+qual evento comprova a operação e qual é o dano se a autorização falhar. Descubra no repo
+o que já existe antes de perguntar; só peça a decisão que muda finalidade, destinatário ou
+retenção.
+
+### 2. Ler os documentos base
 
 Ler `docs/LGPD_COMPLIANCE.md` para ter o mapa de dados e bases legais atualizados.
+
+Quando a mudança tocar qualquer gatilho de segurança/auditoria acima, ler também
+[`references/security-and-auditability.md`](references/security-and-auditability.md) e
+`docs/research/security-and-auditability-baseline.md`. Para fato legal ou regulatório que
+possa ter mudado, confirmar na fonte oficial antes de declarar conformidade.
 
 ### 3. Executar a revisão estruturada
 
@@ -43,7 +61,7 @@ Para cada item abaixo, responder ✅ Conforme / ❌ Não conforme / ⚠️ Aten�
 
 #### Bloco B — Base Legal (Art. 7° ou Art. 11)
 - [ ] Existe base legal documentada para cada novo dado coletado?
-- [ ] Se dado de saúde (peso, gordura, circunferências, anamnese, treinos, dieta) → base é Tutela da Saúde (Art. 11, II, f) + Consentimento ou Consentimento Explícito (Art. 11, I)?
+- [ ] Se dado de saúde, a hipótese do Art. 11 foi validada para esta finalidade? Não presumir que tutela da saúde cubra automaticamente um fluxo de personal trainer; consentimento explícito, específico e revogável é necessário quando ele for a base escolhida.
 - [ ] Se dado comum (nome, e-mail, tipo de conta) → base é Execução de Contrato (Art. 7°, V)?
 - [ ] Consentimento, quando usado, é livre / informado / inequívoco / específico / revogável?
 
@@ -64,6 +82,14 @@ Para cada item abaixo, responder ✅ Conforme / ❌ Não conforme / ⚠️ Aten�
 - [ ] Esses dados aparecerão em algum log de aplicação? (Dados sensíveis não podem ser logados em texto claro)
 - [ ] O onboarding informa o usuário sobre coleta desses dados?
 - [ ] A Política de Privacidade cobre esses dados?
+
+#### Bloco F — Segurança e Auditabilidade (Arts. 6°, VII e X; 46)
+- [ ] A mudança preserva o menor privilégio: autenticação, CASL e RLS/grants impedem o acesso fora do papel, vínculo e consentimento aplicáveis?
+- [ ] Segredo, token, corpo de requisição e valor de saúde não atravessam URL, analytics, crash reporter, log ou trilha de auditoria?
+- [ ] A operação de alto impacto deixa evento mínimo e correlacionável: ator confiável, recurso opaco, ação, resultado, instante do servidor e `trace_id` quando houver?
+- [ ] O evento é escrito fora do controle do cliente, resiste a alteração/apagamento pelo ator e sua leitura também é restrita?
+- [ ] Retenção, exportação, eliminação/anonimização e restauração de backup foram definidos para o dado e para a evidência?
+- [ ] A implementação tem teste positivo e negativo de autorização, e o runbook/alerta existe se a falha puder causar incidente?
 
 ### 4. Gerar o output
 
@@ -90,6 +116,11 @@ Apresentar o resultado em formato estruturado:
 - [ ] Adicionar [campo/tabela] ao mapa de dados (Seção 2.x)
 - [ ] Documentar base legal para [tratamento]
 - [ ] Atualizar checklist pré-lançamento se necessário
+
+### Evidências de segurança e auditoria
+- [ ] Evento auditável: [evento / metadados mínimos / quem pode ler]
+- [ ] Controle de acesso: [RLS, MFA/AAL ou autorização de BFF] — [teste positivo e negativo]
+- [ ] Retenção e resposta a incidente: [prazo, responsável, runbook ou motivo de não se aplicar]
 ```
 
 ### 5. Escrever os testes de trava LGPD — obrigatório
@@ -125,6 +156,9 @@ restrição sem saber que ela é jurídica.
 | Campo que não pode ser logado nem retornado | teste do service, afirmando ausência |
 | Dado que não atravessa fronteira para o cliente | teste do service, sobre o payload |
 | Retenção, eliminação, cascata | `verify-rls.sql` ou teste de migration |
+| Evento auditável sem conteúdo sensível | teste do serviço/rota que inspeciona o payload do evento |
+| Autenticação reforçada ou ação sensível | teste de rota/RLS que recusa sessão sem AAL exigido |
+| Webhook ou integração | teste de assinatura, validade temporal e idempotência |
 
 **Prova negativa obrigatória.** Teste que passa sem poder falhar não é trava, é
 decoração — e é pior que nada, porque dá confiança falsa. Antes de dar a revisão
@@ -152,6 +186,10 @@ Se novos dados foram identificados como conformes, atualizar `docs/LGPD_COMPLIAN
 - Seção 2.1 (dados comuns) ou 2.2 (dados sensíveis) com o novo campo
 - Seção 3 com a base legal do novo tratamento
 - Seção 7 com a política de retenção se aplicável
+
+Atualize também `docs/research/security-and-auditability-baseline.md` quando a decisão
+altere o baseline, e crie/atualize ADR se o trade-off for difícil de reverter. A spec da
+feature continua na issue, conforme ADR-0013.
 
 ---
 

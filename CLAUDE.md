@@ -60,6 +60,7 @@ o que a mudança já alcança.
 - Funções: 4–20 linhas. Arquivos: < 500 linhas. Uma responsabilidade por módulo (SRP).
 - Nomes específicos — evitar `data`, `handler`, `Manager` (< 5 grep hits no codebase).
 - Tipos explícitos. **Nunca `any`** — use interface ou `unknown`.
+- **Módulos de validação:** separe constantes, mensagens, schemas, tipos inferidos e funções de validação em arquivos por responsabilidade. Exponha apenas o necessário por um `index.ts`; telas e rotas não importam detalhes internos.
 - Zero duplicação. Early returns. Máx 2 níveis de indentação.
 - Mensagens de exceção incluem o valor ofensor e o formato esperado.
 - Comentários: escreva o **porquê**, nunca o quê. Preserve em refatorações.

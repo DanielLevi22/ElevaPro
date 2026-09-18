@@ -1,5 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { authenticatedUserId } from "./api-auth";
+import { logger } from "./logger";
+import { enforceRateLimit } from "./rate-limit";
+import { enforceRequestBodyLimit, requestBodyLimits } from "./request-body-limit";
 import { assertServerEnv, instrucaoDeAmbiente, ServerEnvError } from "./server-env";
+import { attachTraceId, traceIdForRequest } from "./trace";
 
 /**
  * O invólucro que impede uma rota de IA de morrer em HTML.
@@ -29,26 +34,60 @@ import { assertServerEnv, instrucaoDeAmbiente, ServerEnvError } from "./server-e
  * contexto vazio, rota dinâmica infere o seu `{ params }`, e as duas mantêm a
  * assinatura que o Next espera.
  */
-type Handler<Ctx> = (request: NextRequest, contexto: Ctx) => Promise<Response>;
+type Handler<Ctx> = (request: NextRequest, context: Ctx) => Promise<Response>;
+type WrappedHandler<Ctx> = (request: NextRequest, context?: Ctx) => Promise<Response>;
 
-export function rotaDeIA<Ctx>(handler: Handler<Ctx>): Handler<Ctx> {
-  return async (request, contexto) => {
+type AiRouteOptions = {
+  maximumBodyBytes?: number;
+};
+
+/**
+ * Aplica as proteções de borda comuns antes de executar uma rota de IA.
+ *
+ * @example
+ * export const POST = withAiRoute((request) => responder(request));
+ */
+export function withAiRoute<Ctx>(
+  handler: Handler<Ctx>,
+  options: AiRouteOptions = {},
+): WrappedHandler<Ctx> {
+  return async (request, context) => {
+    const traceId = traceIdForRequest(request);
     try {
       // Antes do handler: sem os segredos não há chamada possível, e falhar
       // aqui nomeia a variável em vez de deixar o SDK falhar por ela.
       assertServerEnv();
 
-      return await handler(request, contexto);
-    } catch (erro) {
-      if (erro instanceof ServerEnvError) {
+      const rateLimitUserId = await authenticatedUserId(request);
+      const limited = await enforceRateLimit(request, "ai", traceId, rateLimitUserId);
+      if (limited) return attachTraceId(limited, traceId);
+
+      const oversized = await enforceRequestBodyLimit(
+        request,
+        options.maximumBodyBytes ?? requestBodyLimits.default,
+      );
+      if (oversized) return attachTraceId(oversized, traceId);
+
+      return attachTraceId(await handler(request, context as Ctx), traceId);
+    } catch (error) {
+      if (error instanceof ServerEnvError) {
         // O log carrega quais faltam; a resposta não — nome de variável de
         // ambiente não é informação de cliente.
-        console.error("[ia] configuração de servidor ausente", instrucaoDeAmbiente(erro.faltando));
-        return NextResponse.json({ error: "server_misconfigured" }, { status: 503 });
+        logger.error("ai.route.misconfigured", {
+          missing_environment: instrucaoDeAmbiente(error.faltando),
+          trace_id: traceId,
+        });
+        return attachTraceId(
+          NextResponse.json({ error: "server_misconfigured" }, { status: 503 }),
+          traceId,
+        );
       }
 
-      console.error("[ia] rota falhou", erro);
-      return NextResponse.json({ error: "ai_unavailable" }, { status: 503 });
+      logger.error("ai.route.failed", { error, trace_id: traceId });
+      return attachTraceId(
+        NextResponse.json({ error: "ai_unavailable" }, { status: 503 }),
+        traceId,
+      );
     }
   };
 }

@@ -378,11 +378,57 @@ inferência sobre saúde de titular identificado.
 - [ ] Aluno só acessa seus próprios dados
 - [ ] Admin não acessa dados de saúde de alunos sem necessidade
 - [ ] Tokens de sessão não devem aparecer em logs
+- [x] APIs públicas e de IA com limite durável no banco: `private.rate_limit_buckets`
+  recebe somente HMAC da origem, não IP, e-mail, token, corpo ou dado de saúde;
+  cliente não tem privilégio nem de schema/tabela nem da RPC, e as linhas expiram
+  em no máximo 24 horas (`0060`, issue #322)
+- [x] Fundação do logger do BFF: `web/src/lib/logger.ts` emite JSON técnico e
+  redige por chave credencial, conteúdo e dado pessoal/sensível antes de escrever;
+  `logger.test.ts` prova a ausência inclusive em objetos aninhados e erros. A
+  migração dos logs legados de web/mobile continua pendente, portanto `OBS-01`
+  permanece **não verificado** na matriz (`#322`)
+- [x] Fundação de auditoria de segurança: `private.security_audit_events` recebe
+  metadados mínimos de eventos de alto impacto sob legítimo interesse (Art. 7º,
+  IX), sem corpo, credencial, nome, e-mail ou dado de saúde. Ator, titular e o
+  recurso que é o próprio titular são gravados só como HMAC-SHA-256 com a chave
+  `audit_pseudonym_key`, gerada no Vault e que nunca sai do banco: o BFF manda o
+  UUID para a RPC e só o pseudônimo é gravado; UUID em `resource_id` é recusado.
+  Sem a chave o pseudônimo não se reassocia (Art. 13, § 4º); ela é a única forma
+  de uma investigação reidentificar, e quem restaura o banco em outro projeto
+  precisa levá-la. A trilha não tem FK para a conta: apagar a conta não apaga o
+  evento, que expira pela retenção de 365 dias; a função remove linhas vencidas a
+  cada nova escrita (`0061`, `0070`, issue #322)
+- [x] Correlação técnica: o BFF gera ou reaproveita somente o `trace-id` W3C
+  válido, devolve-o em `X-Request-Id` e o associa aos logs/eventos quando houver.
+  São 32 caracteres hexadecimais aleatórios, sem IP, conta, URL ou conteúdo; segue
+  a retenção do log/evento correspondente (`#322`)
+- [x] Concessão, reconsentimento e revogação de `student_consents` geram evento
+  append-only no banco com titular, finalidade e versão da política. O trigger
+  roda na mesma transação sob RLS e nunca recebe respostas, métricas ou corpo de
+  requisição; a evidência fica por 365 dias (`0063`, issue #322)
+- [x] Concessão e encerramento de `student_specialists` geram evento append-only
+  no banco com ator, titular e UUID opaco do vínculo. O trigger cobre app, RPC e
+  BFF na própria transação, não duplica dados protegidos pelo vínculo e preserva
+  a evidência por 365 dias (`0064`, issue #322)
+- [x] Mudanças de `profiles.account_type` e `profiles.account_status` geram
+  eventos append-only no banco. O tipo do evento informa apenas a autorização
+  resultante e a trilha mantém IDs opacos; a prova de RLS também confirma que a
+  auto-promoção direta continua recusada (`0065`, issue #322)
+- [x] Funções de trigger/event trigger não são expostas como RPC: `handle_new_user`,
+  `rls_auto_enable` e os triggers internos não têm `EXECUTE` para papéis da
+  aplicação; apenas `set_own_account_type` continua acessível a `authenticated`.
+  Os `search_path` sinalizados pelo diagnóstico Supabase foram fixados (`0066`,
+  issue #322)
 
 **Requisitos recomendados (antes do lançamento):**
 - [ ] MFA disponível para especialistas (Supabase suporta nativamente)
-- [ ] Rate limiting nas APIs de autenticação
+- [x] Rate limiting nas APIs de autenticação e IA (cadastro: 5/h por origem;
+  IA: 20/min por origem; a política de borda/WAF continua necessária antes do lançamento)
 - [ ] Alertas de acesso suspeito (muitas tentativas de login)
+- [x] Limpeza diária e independente da trilha de auditoria: `pg_cron` executa
+  `private.purge_expired_security_audit_events()` às 03:17 UTC; a migration falha
+  se o módulo não estiver habilitado, e `verify-rls.sql` confere agenda e privilégios
+  (`0062`, issue #322)
 
 **Exportação em PDF do relatório (desde a `#312`).** O arquivo é gerado **no
 aparelho** (`expo-print`) e entregue pela folha de compartilhar do sistema: nada

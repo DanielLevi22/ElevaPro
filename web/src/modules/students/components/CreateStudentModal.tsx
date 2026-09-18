@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_REQUIREMENTS_HINT,
+  passwordValidationError,
+  userFacingAuthError,
+} from "@elevapro/shared";
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
 import { Dialog } from "@/shared/components/ui/Dialog";
@@ -39,11 +45,17 @@ export function CreateStudentModal({ isOpen, onClose }: CreateStudentModalProps)
     e.preventDefault();
     setError(null);
 
+    const passwordError = passwordValidationError(password);
+    if (passwordError) {
+      setError(passwordError);
+      return;
+    }
+
     try {
       await createStudent.mutateAsync({ fullName, email, password });
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao criar aluno");
+      setError(userFacingAuthError(err));
     }
   };
 
@@ -109,17 +121,13 @@ export function CreateStudentModal({ isOpen, onClose }: CreateStudentModalProps)
           />
         </FormField>
 
-        <FormField
-          label="Senha"
-          htmlFor="password"
-          hint="O aluno usará essa senha para entrar no app"
-        >
+        <FormField label="Senha" htmlFor="password" hint={PASSWORD_REQUIREMENTS_HINT}>
           <Input
             id="password"
             type="password"
             required
-            minLength={6}
-            placeholder="Mínimo 6 caracteres"
+            minLength={PASSWORD_MIN_LENGTH}
+            placeholder={PASSWORD_REQUIREMENTS_HINT}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />

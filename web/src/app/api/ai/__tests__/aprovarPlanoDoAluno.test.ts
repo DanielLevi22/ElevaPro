@@ -28,7 +28,7 @@ let gravado: PlanProposalData | null;
 let falharAoGravar: boolean;
 let apagados: string[];
 
-vi.mock("@/lib/ai-route", () => ({ rotaDeIA: (handler: unknown) => handler }));
+vi.mock("@/lib/ai-route", () => ({ withAiRoute: (handler: unknown) => handler }));
 
 vi.mock("@/lib/api-auth", () => ({
   authorizeStudent: async () => ({ ok: true, caller: { id: "aluno-1", accountType: "student" } }),

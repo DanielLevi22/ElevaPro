@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ToolCallHandler } from "@/modules/ai/orchestrators/base.orchestrator";
 import type { PlanProposalData, SseEvent } from "@/modules/ai/types";
 
+vi.mock("@/lib/ai-route", () => ({ withAiRoute: (handler: unknown) => handler }));
+
 /**
  * O que `propose_plan` deixa guardado no servidor.
  *

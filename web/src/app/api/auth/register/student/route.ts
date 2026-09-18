@@ -1,47 +1,41 @@
+import { passwordValidationError } from "@elevapro/shared";
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import {
+  guardPublicRegistration,
+  readPublicRegistrationJson,
+} from "@/lib/public-registration-guard";
+import { attachTraceId } from "@/lib/trace";
+import {
+  memberRegistrationRequestSchema,
+  provisionMemberRegistration,
+} from "@/modules/auth/services";
 
 export async function POST(request: Request) {
-  const { email, password, full_name } = await request.json();
+  const guard = await guardPublicRegistration(request);
+  if (guard.response) return guard.response;
+  const { traceId } = guard;
 
-  if (!email || !password || !full_name) {
-    return NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 });
+  const parsed = await readPublicRegistrationJson(request, traceId);
+  if (parsed.response) return parsed.response;
+
+  const registration = memberRegistrationRequestSchema.safeParse(parsed.body);
+  if (!registration.success) {
+    return attachTraceId(
+      NextResponse.json({ error: "Dados de cadastro inválidos." }, { status: 400 }),
+      traceId,
+    );
   }
-  if (password.length < 8) {
-    return NextResponse.json({ error: "Senha deve ter no mínimo 8 caracteres" }, { status: 400 });
-  }
-
-  const { data, error: authError } = await supabaseAdmin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { full_name, account_type: "member" },
-  });
-
-  if (authError) {
-    const msg =
-      authError.message.toLowerCase().includes("already registered") ||
-      authError.code === "email_exists"
-        ? "Este e-mail já possui uma conta."
-        : authError.message;
-    return NextResponse.json({ error: msg }, { status: 400 });
+  const { password } = registration.data;
+  const passwordError = passwordValidationError(password);
+  if (passwordError) {
+    return attachTraceId(NextResponse.json({ error: passwordError }, { status: 400 }), traceId);
   }
 
-  if (!data.user) {
-    return NextResponse.json({ error: "Erro ao criar usuário." }, { status: 500 });
-  }
-
-  const { error: profileError } = await supabaseAdmin.from("profiles" as never).insert({
-    id: data.user.id,
-    email,
-    full_name,
-    account_type: "member",
-    account_status: "active",
-  } as never);
-
-  if (profileError) {
-    console.error("[register/student] profile insert error:", profileError);
-  }
-
-  return NextResponse.json({ success: true });
+  const result = await provisionMemberRegistration(registration.data, traceId);
+  return attachTraceId(
+    NextResponse.json(result.ok ? { success: true } : { error: result.error }, {
+      status: result.ok ? 200 : result.status,
+    }),
+    traceId,
+  );
 }

@@ -1,3 +1,4 @@
+import { PASSWORD_REQUIREMENTS_HINT, passwordValidationError } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -76,10 +77,11 @@ export default function CreateStudentScreen() {
       return;
     }
 
-    if (password.length < 6) {
+    const passwordError = passwordValidationError(password);
+    if (passwordError) {
       showAlert({
         title: 'Erro',
-        message: 'A senha deve ter pelo menos 6 caracteres.',
+        message: passwordError,
         type: 'error',
       });
       return;
@@ -311,7 +313,7 @@ export default function CreateStudentScreen() {
                       />
                       <TextInput
                         className="flex-1 text-white text-base font-sans"
-                        placeholder="Mínimo 6 caracteres"
+                        placeholder={PASSWORD_REQUIREMENTS_HINT}
                         placeholderTextColor={cores.placeholder}
                         value={password}
                         onChangeText={setPassword}

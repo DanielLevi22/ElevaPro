@@ -2,6 +2,8 @@ import type { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SseEvent } from "@/modules/ai/types";
 
+vi.mock("@/lib/ai-route", () => ({ withAiRoute: (handler: unknown) => handler }));
+
 /**
  * O que sobra na conversa quando o turno não chega ao fim.
  *

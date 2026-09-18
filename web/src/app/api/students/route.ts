@@ -1,5 +1,7 @@
+import { passwordValidationError, userFacingAuthError } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeSpecialist } from "@/lib/api-auth";
+import { logger } from "@/lib/logger";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(request: NextRequest) {
@@ -18,6 +20,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const passwordError = passwordValidationError(password);
+    if (passwordError) {
+      return NextResponse.json({ error: passwordError }, { status: 400 });
+    }
+
     // Create auth user
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -30,7 +37,7 @@ export async function POST(request: NextRequest) {
       const message =
         createError.message.includes("already registered") || createError.code === "email_exists"
           ? "Email já cadastrado"
-          : createError.message;
+          : userFacingAuthError(createError.message);
       return NextResponse.json({ error: message }, { status: 422 });
     }
 
@@ -75,7 +82,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (linkError) {
-      console.error("[POST /api/students] student_specialists upsert error:", linkError);
+      logger.error("students.link_failed", { error: linkError });
       return NextResponse.json(
         { error: "Erro ao vincular aluno ao especialista" },
         { status: 500 },
@@ -84,7 +91,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, student_id: studentId }, { status: 201 });
   } catch (error) {
-    console.error("[POST /api/students]", error);
+    logger.error("students.create_failed", { error });
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
   }
 }

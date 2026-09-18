@@ -1,11 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { rotaDeIA } from "../ai-route";
+
+vi.mock("../rate-limit", () => ({ enforceRateLimit: vi.fn().mockResolvedValue(null) }));
+vi.mock("../api-auth", () => ({ authenticatedUserId: vi.fn().mockResolvedValue(null) }));
+
+import { withAiRoute } from "../ai-route";
 
 const CONTEXTO = { params: Promise.resolve({}) };
 
 /** O Next entrega `NextRequest`; para o invólucro basta a forma de `Request`. */
 function req() {
-  return new Request("https://x/api") as unknown as Parameters<Parameters<typeof rotaDeIA>[0]>[0];
+  return new Request("https://x/api") as unknown as Parameters<
+    Parameters<typeof withAiRoute>[0]
+  >[0];
 }
 
 const AMBIENTE_COMPLETO = {
@@ -27,13 +33,14 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("rotaDeIA", () => {
+describe("withAiRoute", () => {
   it("deixa a resposta do handler passar intacta", async () => {
-    const rota = rotaDeIA(async () => Response.json({ reply: "oi" }));
+    const rota = withAiRoute(async () => Response.json({ reply: "oi" }));
 
     const resposta = await rota(req(), CONTEXTO);
 
     expect(resposta.status).toBe(200);
+    expect(resposta.headers.get("X-Request-Id")).toMatch(/^[0-9a-f]{32}$/);
     await expect(resposta.json()).resolves.toEqual({ reply: "oi" });
   });
 
@@ -41,7 +48,7 @@ describe("rotaDeIA", () => {
   // devolve `500` com `text/html`. O cliente móvel sabe ler JSON com código e
   // só conseguia dizer "respondeu 500 com tipo desconhecido".
   it("converte exceção do handler em JSON tipado, nunca HTML", async () => {
-    const rota = rotaDeIA(async () => {
+    const rota = withAiRoute(async () => {
       throw new Error("modelo fora do ar");
     });
 
@@ -57,7 +64,7 @@ describe("rotaDeIA", () => {
   // qual é — foi o que custou dias no preview.
   it("distingue configuração ausente de falha do modelo", async () => {
     process.env.ANTHROPIC_API_KEY = "";
-    const rota = rotaDeIA(async () => Response.json({ reply: "nunca chega aqui" }));
+    const rota = withAiRoute(async () => Response.json({ reply: "nunca chega aqui" }));
 
     const resposta = await rota(req(), CONTEXTO);
 
@@ -69,7 +76,7 @@ describe("rotaDeIA", () => {
     process.env.ANTHROPIC_API_KEY = "";
     const handler = vi.fn(async () => Response.json({}));
 
-    await rotaDeIA(handler)(req(), CONTEXTO);
+    await withAiRoute(handler)(req(), CONTEXTO);
 
     expect(handler).not.toHaveBeenCalled();
   });
@@ -79,7 +86,7 @@ describe("rotaDeIA", () => {
   it("não vaza o nome da variável ausente na resposta", async () => {
     process.env.ANTHROPIC_API_KEY = "";
 
-    const resposta = await rotaDeIA(async () => Response.json({}))(req(), CONTEXTO);
+    const resposta = await withAiRoute(async () => Response.json({}))(req(), CONTEXTO);
     const corpo = JSON.stringify(await resposta.json());
 
     expect(corpo).not.toContain("ANTHROPIC");
@@ -87,7 +94,7 @@ describe("rotaDeIA", () => {
 
   it("repassa o contexto de rota dinâmica sem tocar", async () => {
     const contexto = { params: Promise.resolve({ studentId: "abc" }) };
-    const rota = rotaDeIA<typeof contexto>(async (_req, ctx) => Response.json(await ctx.params));
+    const rota = withAiRoute<typeof contexto>(async (_req, ctx) => Response.json(await ctx.params));
 
     const resposta = await rota(req(), contexto);
 

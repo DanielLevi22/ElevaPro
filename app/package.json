@@ -21,6 +21,7 @@
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@expo-google-fonts/outfit": "^0.4.3",
     "@expo/vector-icons": "^15.0.3",
+    "@hookform/resolvers": "^5.9.1",
     "@kingstinct/react-native-healthkit": "^14.0.2",
     "@react-native-community/datetimepicker": "9.1.0",
     "@supabase/supabase-js": "^2.101.1",
@@ -63,6 +64,7 @@
     "nativewind": "^4.2.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-hook-form": "^7.88.0",
     "react-native": "0.86.3",
     "react-native-gesture-handler": "~2.32.0",
     "react-native-health-connect": "^3.5.0",
@@ -79,6 +81,7 @@
     "react-native-youtube-iframe": "^2.4.1",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^3.4.18",
+    "zod": "^4.6.5",
     "zustand": "^5.0.8"
   },
   "devDependencies": {

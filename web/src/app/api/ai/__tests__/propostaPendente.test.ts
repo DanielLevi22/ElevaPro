@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/ai-route", () => ({ withAiRoute: (handler: unknown) => handler }));
+
 /**
  * A proposta pendente sobrevive a sair da tela e voltar.
  *

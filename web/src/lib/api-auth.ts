@@ -50,14 +50,10 @@ function bearerToken(request: NextRequest): string | null {
   return token.length > 0 ? token : null;
 }
 
-/**
- * Token válido. O `account_type` sai de `profiles`, nunca de `user_metadata` —
- * metadado de auth é escrito pelo próprio usuário via `updateUser`, então
- * confiar nele deixa o chamador escolher o próprio papel.
- */
-export async function authorizeUser(request: NextRequest): Promise<AuthResult> {
+/** Resolve somente a identidade autenticada, sem consultar papel ou perfil. */
+export async function authenticatedUserId(request: NextRequest): Promise<string | null> {
   const token = bearerToken(request);
-  if (!token) return deny(401, "Token ausente.");
+  if (!token) return null;
 
   const client = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
@@ -66,17 +62,27 @@ export async function authorizeUser(request: NextRequest): Promise<AuthResult> {
   const {
     data: { user },
   } = await client.auth.getUser(token);
-  if (!user) return deny(401, "Token inválido.");
+  return user?.id ?? null;
+}
+
+/**
+ * Token válido. O `account_type` sai de `profiles`, nunca de `user_metadata` —
+ * metadado de auth é escrito pelo próprio usuário via `updateUser`, então
+ * confiar nele deixa o chamador escolher o próprio papel.
+ */
+export async function authorizeUser(request: NextRequest): Promise<AuthResult> {
+  const userId = await authenticatedUserId(request);
+  if (!userId) return deny(401, "Token inválido.");
 
   const { data: profile } = await supabaseAdmin
     .from("profiles")
     .select("account_type")
-    .eq("id", user.id)
+    .eq("id", userId)
     .maybeSingle();
 
   if (!profile) return deny(403, "Perfil não encontrado.");
 
-  return { ok: true, caller: { id: user.id, accountType: profile.account_type as AccountType } };
+  return { ok: true, caller: { id: userId, accountType: profile.account_type as AccountType } };
 }
 
 /** Token válido e conta de especialista. */

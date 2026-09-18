@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { withAiRoute } from "@/lib/ai-route";
 import { authorizeLinkedSpecialist } from "@/lib/api-auth";
 import {
   archiveSession,
@@ -23,7 +24,7 @@ import {
  * isso cada linha da resposta carrega o `module`: sem ele a lista não saberia
  * qual ícone pôr nem qual coach abrir ao clicar.
  */
-export async function GET(
+async function handleGet(
   request: NextRequest,
   { params }: { params: Promise<{ studentId: string }> },
 ) {
@@ -40,7 +41,7 @@ export async function GET(
 }
 
 /** Abre uma conversa nova, mesmo havendo outras. */
-export async function POST(
+async function handlePost(
   request: NextRequest,
   { params }: { params: Promise<{ studentId: string }> },
 ) {
@@ -63,7 +64,7 @@ export async function POST(
  * conferido pelo mesmo `sessionOwnedBy` do arquivamento, e o tamanho e cortado
  * no servico -- a mesma regra que vale para o titulo automatico.
  */
-export async function PATCH(
+async function handlePatch(
   request: NextRequest,
   { params }: { params: Promise<{ studentId: string }> },
 ) {
@@ -93,3 +94,7 @@ export async function PATCH(
   await archiveSession(owned);
   return NextResponse.json({ success: true });
 }
+
+export const GET = withAiRoute(handleGet);
+export const POST = withAiRoute(handlePost);
+export const PATCH = withAiRoute(handlePatch);

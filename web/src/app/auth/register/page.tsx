@@ -1,14 +1,20 @@
 "use client";
 
-import type { ServiceType } from "@elevapro/shared";
-import { supabase } from "@elevapro/supabase";
+import {
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_REQUIREMENTS_HINT,
+  type RegistrationCredentials,
+  registrationCredentialsSchema,
+  type ServiceType,
+  userFacingAuthError,
+} from "@elevapro/shared";
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
-import { useAuthStore } from "@/modules/auth";
+import { useForm } from "react-hook-form";
+import { type AccountRole, registerAccount, useAuthStore } from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
-
-type AccountRole = "specialist" | "student";
 
 const SERVICE_OPTIONS: { value: ServiceType; label: string; description: string }[] = [
   {
@@ -44,12 +50,13 @@ function RegisterForm() {
   const initial = deriveInitialState(roleParam);
   const [role, setRole] = useState<AccountRole>(initial.role);
   const [selectedServices, setSelectedServices] = useState<ServiceType[]>(initial.services);
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [submissionError, setSubmissionError] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegistrationCredentials>({ resolver: zodResolver(registrationCredentialsSchema) });
 
   const toggleService = (service: ServiceType) => {
     setSelectedServices((prev) =>
@@ -65,54 +72,16 @@ function RegisterForm() {
     return { icon: null, label: parts.join(" + ") || "Especialista", color: "primary" };
   }, [role, selectedServices]);
 
-  const validate = (): string | null => {
-    if (!fullName.trim() || fullName.trim().length < 2) return "Digite seu nome completo";
-    if (!email.trim()) return "Digite seu e-mail";
-    if (role === "specialist" && selectedServices.length === 0)
-      return "Selecione pelo menos um serviço";
-    if (password.length < 8) return "A senha deve ter no mínimo 8 caracteres";
-    if (password !== confirmPassword) return "As senhas não coincidem";
-    return null;
-  };
-
-  const handleRegister = async (e: React.SyntheticEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
-
-    const validationError = validate();
-    if (validationError) {
-      setError(validationError);
+  const handleRegister = async (values: RegistrationCredentials) => {
+    setSubmissionError("");
+    if (role === "specialist" && selectedServices.length === 0) {
+      setSubmissionError("Selecione pelo menos um serviço");
       return;
     }
 
     setLoading(true);
     try {
-      const endpoint = role === "student" ? "/api/auth/register/student" : "/api/auth/register";
-
-      const body =
-        role === "student"
-          ? { email: email.trim().toLowerCase(), password, full_name: fullName.trim() }
-          : {
-              email: email.trim().toLowerCase(),
-              password,
-              full_name: fullName.trim(),
-              service_types: selectedServices,
-            };
-
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Erro ao criar conta");
-
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password,
-      });
-      if (signInError) throw signInError;
+      await registerAccount({ role, services: selectedServices, credentials: values });
 
       await new Promise<void>((resolve) => {
         const timeout = setTimeout(resolve, 5000);
@@ -127,7 +96,7 @@ function RegisterForm() {
 
       router.push(role === "student" ? "/dashboard/coach" : "/dashboard");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erro ao criar conta");
+      setSubmissionError(userFacingAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -245,48 +214,42 @@ function RegisterForm() {
             </div>
           )}
 
-          <form className="space-y-5" onSubmit={handleRegister}>
-            {error && (
+          <form className="space-y-5" onSubmit={handleSubmit(handleRegister)} noValidate>
+            {submissionError && (
               <div className="bg-destructive/10 border border-destructive/50 text-destructive px-4 py-3 rounded-lg text-sm">
-                {error}
+                {submissionError}
               </div>
             )}
 
             <div className="space-y-4">
-              {[
-                {
-                  id: "fullName",
-                  label: "Nome Completo",
-                  type: "text",
-                  value: fullName,
-                  onChange: setFullName,
-                  placeholder: "Seu nome",
-                },
-                {
-                  id: "email",
-                  label: "E-mail",
-                  type: "email",
-                  value: email,
-                  onChange: setEmail,
-                  placeholder: "seu@email.com",
-                },
-                {
-                  id: "password",
-                  label: "Senha",
-                  type: "password",
-                  value: password,
-                  onChange: setPassword,
-                  placeholder: "Mínimo 8 caracteres",
-                },
-                {
-                  id: "confirmPassword",
-                  label: "Confirmar Senha",
-                  type: "password",
-                  value: confirmPassword,
-                  onChange: setConfirmPassword,
-                  placeholder: "Digite a senha novamente",
-                },
-              ].map((field) => (
+              {(
+                [
+                  {
+                    id: "fullName",
+                    label: "Nome Completo",
+                    type: "text",
+                    placeholder: "Seu nome",
+                  },
+                  {
+                    id: "email",
+                    label: "E-mail",
+                    type: "email",
+                    placeholder: "seu@email.com",
+                  },
+                  {
+                    id: "password",
+                    label: "Senha",
+                    type: "password",
+                    placeholder: PASSWORD_REQUIREMENTS_HINT,
+                  },
+                  {
+                    id: "confirmPassword",
+                    label: "Confirmar Senha",
+                    type: "password",
+                    placeholder: "Digite a senha novamente",
+                  },
+                ] as const
+              ).map((field) => (
                 <div key={field.id} className="space-y-2">
                   <label htmlFor={field.id} className="block text-sm font-medium text-foreground">
                     {field.label} <span className="text-destructive">*</span>
@@ -295,12 +258,17 @@ function RegisterForm() {
                     id={field.id}
                     type={field.type}
                     required
-                    value={field.value}
-                    onChange={(e) => field.onChange(e.target.value)}
+                    {...register(field.id)}
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     placeholder={field.placeholder}
-                    minLength={field.type === "password" ? 8 : undefined}
+                    minLength={field.type === "password" ? PASSWORD_MIN_LENGTH : undefined}
+                    aria-invalid={Boolean(errors[field.id])}
                   />
+                  {errors[field.id]?.message && (
+                    <p className="text-sm text-destructive" role="alert">
+                      {errors[field.id]?.message}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>

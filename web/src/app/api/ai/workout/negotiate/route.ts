@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { withAiRoute } from "@/lib/ai-route";
 import { authorizeUser } from "@/lib/api-auth";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { responderEmUmTurno } from "@/modules/ai/providers/turnoUnico";
@@ -30,7 +31,7 @@ interface AIWorkoutResponse {
   plan: AIWorkoutDay[];
 }
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   // Antes: `getAuthenticatedUserId`, uma cópia local que fazia
   // `const { data } = await client.auth.getUser(token)` — descartando o erro — e
   // devolvia só "existe um usuário". Nunca dizia qual papel ele tem, e o
@@ -104,3 +105,5 @@ Responda APENAS com JSON válido:
 
   return NextResponse.json(result);
 }
+
+export const POST = withAiRoute(handlePost);

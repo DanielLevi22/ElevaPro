@@ -1,6 +1,6 @@
 import { separarSugestaoDaResposta } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
-import { rotaDeIA } from "@/lib/ai-route";
+import { withAiRoute } from "@/lib/ai-route";
 import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { aiProviders } from "@/modules/ai/ai.config";
@@ -100,4 +100,4 @@ ${dietContext}`,
   return NextResponse.json({ reply: resposta, sugestao });
 };
 
-export const POST = rotaDeIA(handler);
+export const POST = withAiRoute(handler);

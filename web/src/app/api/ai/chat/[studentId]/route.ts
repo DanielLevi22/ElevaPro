@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { withAiRoute } from "@/lib/ai-route";
 import { authorizeLinkedSpecialist } from "@/lib/api-auth";
+import { logger } from "@/lib/logger";
 import { formatBodyScanIndex, queryBodyScan } from "@/modules/ai/services/bodyScanContext";
 import {
   getOrCreateSession,
@@ -83,7 +85,7 @@ async function resolverSessao(
   return getOrCreateSession(studentId, specialistId, modulo);
 }
 
-export async function POST(
+async function handlePost(
   request: NextRequest,
   { params }: { params: Promise<{ studentId: string }> },
 ) {
@@ -277,7 +279,7 @@ export async function POST(
         // O log registra a sessão, nunca o contexto: "não treina há 5 dias" ou
         // uma lesão em texto claro é inferência sobre saúde de titular
         // identificado (LGPD_COMPLIANCE, seção 4).
-        console.error("[POST /api/ai/chat] sessão do especialista", specialistId, err);
+        logger.error("ai.chat.stream_failed", { error: err });
         // O que o modelo chegou a dizer antes de quebrar fica na conversa,
         // marcado como incompleto. Descartar deixava a pergunta salva com
         // silêncio embaixo, e o turno seguinte lia esse silêncio como "não
@@ -310,7 +312,7 @@ export async function POST(
   });
 }
 
-export async function GET(
+async function handleGet(
   request: NextRequest,
   { params }: { params: Promise<{ studentId: string }> },
 ) {
@@ -374,3 +376,6 @@ export async function GET(
       : (estado.resolvedPeriodization?.id ?? null),
   });
 }
+
+export const POST = withAiRoute(handlePost);
+export const GET = withAiRoute(handleGet);

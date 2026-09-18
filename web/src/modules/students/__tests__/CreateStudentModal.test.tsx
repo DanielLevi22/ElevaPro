@@ -49,7 +49,7 @@ describe("CreateStudentModal", () => {
 
     await userEvent.type(screen.getByLabelText("Nome Completo"), "João Silva");
     await userEvent.type(screen.getByLabelText("Email"), "joao@example.com");
-    await userEvent.type(screen.getByLabelText("Senha"), "senha123");
+    await userEvent.type(screen.getByLabelText("Senha"), "Senha@123");
     await userEvent.click(screen.getByRole("button", { name: "Criar Aluno" }));
 
     await waitFor(() =>
@@ -57,7 +57,7 @@ describe("CreateStudentModal", () => {
         expect.objectContaining({
           fullName: "João Silva",
           email: "joao@example.com",
-          password: "senha123",
+          password: "Senha@123",
         }),
       ),
     );
@@ -68,7 +68,7 @@ describe("CreateStudentModal", () => {
 
     await userEvent.type(screen.getByLabelText("Nome Completo"), "Maria");
     await userEvent.type(screen.getByLabelText("Email"), "maria@example.com");
-    await userEvent.type(screen.getByLabelText("Senha"), "abc123");
+    await userEvent.type(screen.getByLabelText("Senha"), "Senha@123");
     await userEvent.click(screen.getByRole("button", { name: "Criar Aluno" }));
 
     await waitFor(() =>
@@ -82,10 +82,12 @@ describe("CreateStudentModal", () => {
 
     await userEvent.type(screen.getByLabelText("Nome Completo"), "Pedro");
     await userEvent.type(screen.getByLabelText("Email"), "pedro@example.com");
-    await userEvent.type(screen.getByLabelText("Senha"), "senha123");
+    await userEvent.type(screen.getByLabelText("Senha"), "Senha@123");
     await userEvent.click(screen.getByRole("button", { name: "Criar Aluno" }));
 
-    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Email já cadastrado"));
+    await waitFor(() =>
+      expect(screen.getByRole("alert")).toHaveTextContent("Este e-mail já possui uma conta."),
+    );
   });
 
   it("calls onClose when cancel is clicked", async () => {

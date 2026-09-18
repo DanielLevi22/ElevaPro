@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "../register/route";
+import { POST as studentPost } from "../register/student/route";
 
 /**
  * O cadastro de especialista precisa terminar com linha em
@@ -13,6 +14,10 @@ const createUser = vi.fn();
 const deleteUser = vi.fn();
 const insert = vi.fn();
 const from = vi.fn((_table: string) => ({ insert }));
+const { enforceRateLimit, recordSecurityAuditEvent } = vi.hoisted(() => ({
+  enforceRateLimit: vi.fn().mockResolvedValue(null),
+  recordSecurityAuditEvent: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock("@/lib/supabase-admin", () => ({
   supabaseAdmin: {
@@ -26,15 +31,20 @@ vi.mock("@/lib/supabase-admin", () => ({
   },
 }));
 
+vi.mock("@/lib/rate-limit", () => ({ enforceRateLimit }));
+vi.mock("@/lib/security-audit", () => ({ recordSecurityAuditEvent }));
+
 function request(body: Record<string, unknown>): Request {
-  return {
-    json: async () => body,
-  } as unknown as Request;
+  return new Request("https://elevapro.test/api/auth/register", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
 }
 
 const VALID = {
   email: "novo@elevapro.local",
-  password: "senha-123456",
+  password: "Senha-123456",
   full_name: "Novo Especialista",
   service_types: ["personal_training", "nutrition_consulting"],
 };
@@ -43,9 +53,25 @@ beforeEach(() => {
   vi.clearAllMocks();
   createUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
   insert.mockResolvedValue({ error: null });
+  enforceRateLimit.mockResolvedValue(null);
+  recordSecurityAuditEvent.mockResolvedValue(undefined);
 });
 
 describe("POST /api/auth/register", () => {
+  it("conclui cadastro member sem inserir o perfil novamente", async () => {
+    const response = await studentPost(
+      request({
+        email: "member@elevapro.local",
+        password: "Senha-123456",
+        full_name: "Novo Member",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(from).not.toHaveBeenCalledWith("profiles");
+    expect(deleteUser).not.toHaveBeenCalled();
+  });
+
   it("grava um serviço por tipo escolhido", async () => {
     const res = await POST(request(VALID));
 
@@ -81,6 +107,29 @@ describe("POST /api/auth/register", () => {
     expect(createUser).not.toHaveBeenCalled();
   });
 
+  it("recusa formato de serviços inválido antes de criar a conta", async () => {
+    const res = await POST(request({ ...VALID, service_types: "personal_training" }));
+
+    expect(res.status).toBe(400);
+    expect(createUser).not.toHaveBeenCalled();
+  });
+
+  it("recusa formato inválido do cadastro member antes de criar a conta", async () => {
+    const res = await studentPost(
+      request({ email: ["novo@elevapro.local"], password: "Senha-123456", full_name: "Novo" }),
+    );
+
+    expect(res.status).toBe(400);
+    expect(createUser).not.toHaveBeenCalled();
+  });
+
+  it("recusa senha que não cumpre a política antes de criar a conta", async () => {
+    const res = await POST(request({ ...VALID, password: "senha-123456" }));
+
+    expect(res.status).toBe(400);
+    expect(createUser).not.toHaveBeenCalled();
+  });
+
   it("traduz e-mail já cadastrado", async () => {
     createUser.mockResolvedValue({
       data: { user: null },
@@ -91,5 +140,28 @@ describe("POST /api/auth/register", () => {
 
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: "Este e-mail já possui uma conta." });
+  });
+
+  // Protege a borda que recebe senha: payload enorme nunca chega ao provedor
+  // de identidade nem vira conteúdo de log. LGPD, art. 46.
+  it("recusa payload de cadastro acima do limite antes de criar a conta", async () => {
+    const res = await POST(request({ ...VALID, ignored: "a".repeat(40_000) }));
+
+    expect(res.status).toBe(413);
+    expect(createUser).not.toHaveBeenCalled();
+  });
+
+  it("responde JSON com request id quando o corpo não é válido", async () => {
+    const response = await POST(
+      new Request("https://elevapro.test/api/auth/register", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: "{",
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(response.headers.get("X-Request-Id")).toMatch(/^[0-9a-f]{32}$/);
+    await expect(response.json()).resolves.toEqual({ error: "invalid_request_body" });
   });
 });

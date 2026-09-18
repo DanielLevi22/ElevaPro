@@ -1,3 +1,4 @@
+import { withAiRoute } from "@/lib/ai-route";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import {
   acessoDoEspecialista,
@@ -98,42 +99,44 @@ async function saveExercises(
  * que reemitisse tudo num segundo turno daria a uma proposta de 4 treinos × 6
  * exercícios espaço de sobra para divergir do que foi aprovado.
  */
-export const POST = criarRotaDeAprovacao<BulkWorkoutProposal, { id: string; title: string }[]>({
-  rotulo: "POST save-workouts",
-  chave: "pendingWorkoutProposal",
-  acesso: acessoDoEspecialista("workout"),
-  // `workout_exercises` cai por cascata a partir de `workouts`.
-  desfazerEm: "workouts",
+export const POST = withAiRoute(
+  criarRotaDeAprovacao<BulkWorkoutProposal, { id: string; title: string }[]>({
+    rotulo: "POST save-workouts",
+    chave: "pendingWorkoutProposal",
+    acesso: acessoDoEspecialista("workout"),
+    // `workout_exercises` cai por cascata a partir de `workouts`.
+    desfazerEm: "workouts",
 
-  gravar: async (ctx, proposta) => {
-    const salvos: { id: string; title: string }[] = [];
+    gravar: async (ctx, proposta) => {
+      const salvos: { id: string; title: string }[] = [];
 
-    for (const workout of proposta.workouts ?? []) {
-      const { workoutId, title } = await saveWorkout(
-        workout,
-        proposta.phase_id,
-        especialistaDe(ctx),
-      );
-      await saveExercises(workoutId, workout.exercises);
-      ctx.registrar(workoutId);
-      salvos.push({ id: workoutId, title });
-    }
+      for (const workout of proposta.workouts ?? []) {
+        const { workoutId, title } = await saveWorkout(
+          workout,
+          proposta.phase_id,
+          especialistaDe(ctx),
+        );
+        await saveExercises(workoutId, workout.exercises);
+        ctx.registrar(workoutId);
+        salvos.push({ id: workoutId, title });
+      }
 
-    return salvos;
-  },
+      return salvos;
+    },
 
-  resolver: (proposta, salvos, estado) => ({
-    savedWorkouts: [
-      ...estado.savedWorkouts,
-      ...salvos.map((w) => ({ id: w.id, title: w.title, phaseId: proposta.phase_id })),
-    ],
-    resolvedWorkoutProposal: { proposal: proposta, savedTitles: salvos.map((w) => w.title) },
+    resolver: (proposta, salvos, estado) => ({
+      savedWorkouts: [
+        ...estado.savedWorkouts,
+        ...salvos.map((w) => ({ id: w.id, title: w.title, phaseId: proposta.phase_id })),
+      ],
+      resolvedWorkoutProposal: { proposal: proposta, savedTitles: salvos.map((w) => w.title) },
+    }),
+
+    mensagem: (proposta, salvos) =>
+      `✅ Treinos aprovados e salvos na fase ${proposta.phase_name}: ${salvos
+        .map((w) => w.title)
+        .join(", ")}.`,
+
+    corpo: (_proposta, salvos) => ({ saved: salvos }),
   }),
-
-  mensagem: (proposta, salvos) =>
-    `✅ Treinos aprovados e salvos na fase ${proposta.phase_name}: ${salvos
-      .map((w) => w.title)
-      .join(", ")}.`,
-
-  corpo: (_proposta, salvos) => ({ saved: salvos }),
-});
+);

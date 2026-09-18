@@ -1,6 +1,6 @@
 import { lerSugestoesDeRefeicao } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
-import { rotaDeIA } from "@/lib/ai-route";
+import { withAiRoute } from "@/lib/ai-route";
 import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { responderEmUmTurno } from "@/modules/ai/providers/turnoUnico";
@@ -81,4 +81,4 @@ const handler = async (request: NextRequest) => {
   return NextResponse.json({ sugestoes: lerSugestoesDeRefeicao(texto) });
 };
 
-export const POST = rotaDeIA(handler);
+export const POST = withAiRoute(handler);

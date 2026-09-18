@@ -2,6 +2,7 @@ import type { ActivityAuthorFilter } from "@elevapro/shared";
 import { createActivityService } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeLinkedSpecialist } from "@/lib/api-auth";
+import { logger } from "@/lib/logger";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 /**
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   } catch {
     // Sem capturar o objeto: o erro do PostgREST pode carregar o payload, e `notes` é
     // dado sensível de saúde.
-    console.error("[GET /api/students/:id/activities] falha ao carregar atividades");
+    logger.error("students.activities.load_failed");
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
   }
 }

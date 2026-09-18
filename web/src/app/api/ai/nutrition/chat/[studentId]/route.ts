@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { withAiRoute } from "@/lib/ai-route";
 import { authorizeLinkedSpecialist } from "@/lib/api-auth";
+import { logger } from "@/lib/logger";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { NutritionOrchestrator } from "@/modules/ai/orchestrators/nutrition.orchestrator";
 import { formatBodyScanIndex, queryBodyScan } from "@/modules/ai/services/bodyScanContext";
@@ -52,7 +54,7 @@ async function resolverSessao(
   return getOrCreateSession(studentId, specialistId, modulo);
 }
 
-export async function POST(
+async function handlePost(
   request: NextRequest,
   { params }: { params: Promise<{ studentId: string }> },
 ) {
@@ -204,7 +206,7 @@ export async function POST(
       } catch (err) {
         // O log registra a sessão, nunca o contexto: alimento e quantidade
         // dizem muito sobre a pessoa (LGPD_COMPLIANCE, seção 4).
-        console.error("[POST /api/ai/nutrition/chat] especialista", specialistId, err);
+        logger.error("ai.nutrition_chat.stream_failed", { error: err });
         // O que o modelo chegou a dizer antes de quebrar fica na conversa,
         // marcado como incompleto — descartar deixava a pergunta salva com
         // silêncio embaixo.
@@ -236,7 +238,7 @@ export async function POST(
   });
 }
 
-export async function GET(
+async function handleGet(
   request: NextRequest,
   { params }: { params: Promise<{ studentId: string }> },
 ) {
@@ -279,3 +281,6 @@ export async function GET(
     mealsSaved: !estado.pendingDietMeals && Boolean(estado.resolvedDietMeals),
   });
 }
+
+export const POST = withAiRoute(handlePost);
+export const GET = withAiRoute(handleGet);

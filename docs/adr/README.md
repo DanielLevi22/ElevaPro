@@ -46,6 +46,9 @@
 | [ADR-0015](0015-autorizacao-do-bff-devolve-resultado.md) | A autorização do BFF devolve resultado, não exceção | accepted |
 | [ADR-0018](0018-metrica-de-saude-so-agregada-por-dia.md) | Métrica de saúde entra agregada por dia, nunca a série bruta | accepted |
 | [ADR-0021](0021-onde-cada-segredo-vive.md) | Cada variável mora onde é lida; credencial por ambiente | accepted |
+| [ADR-0037](0037-eventos-de-seguranca-sao-imutaveis-minimos-e-investigaveis.md) | Eventos de segurança são imutáveis, mínimos e investigáveis | accepted |
+| [ADR-0038](0038-seguranca-e-uma-propriedade-verificada-no-pipeline.md) | Segurança é uma propriedade verificada no pipeline | accepted |
+| [ADR-0039](0039-a-auditabilidade-e-controlada-por-matriz-de-cobertura.md) | A auditabilidade é controlada por matriz de cobertura | accepted |
 
 ### Avaliação física
 
@@ -72,6 +75,10 @@
 | [ADR-0006](0006-product-rename-eleva-pro.md) | Renomear produto para Eleva Pro | accepted |
 | [ADR-0008](0008-billing-model.md) | Modelo B2B (especialista paga) + B2C (aluno autônomo paga) com aluno gerenciado gratuito | accepted, prioridade substituída pelo ADR-0028 |
 | [ADR-0028](0028-o-praticante-vem-primeiro.md) | O Praticante vem primeiro, e quem orienta o Student é estado do vínculo | accepted |
+| [ADR-0033](0033-a-home-decide-o-proximo-passo.md) | A home decide o próximo passo, não resume o produto | accepted |
+| [ADR-0034](0034-o-acompanhamento-e-por-excecao-e-a-revisao-e-semanal.md) | O acompanhamento é por exceção, e a revisão é semanal | accepted |
+| [ADR-0035](0035-a-conta-do-student-e-criada-pelo-proprio-student.md) | A conta do Student é criada pelo próprio Student | accepted |
+| [ADR-0036](0036-billing-entra-depois-do-primeiro-valor.md) | Billing entra depois do primeiro valor verificável | accepted |
 
 ### Processo e documentação
 

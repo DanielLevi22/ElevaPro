@@ -13,8 +13,6 @@
 --
 -- Uso: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/verify-rls.sql
 
-\set ON_ERROR_STOP on
-\timing off
 
 -- ── Estrutura ────────────────────────────────────────────────────────────────
 
@@ -101,6 +99,265 @@ BEGIN
   RAISE NOTICE 'ok  helpers com EXECUTE correto e bucket assessments privado';
 END $$;
 
+-- O limitador guarda somente HMACs de origem e vive fora do schema exposto.
+-- Esta prova afirma as duas portas: cliente não lê a tabela e tampouco chama a
+-- função SECURITY DEFINER que a altera. O BFF usa service_role para a RPC.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_tables
+    WHERE schemaname = 'private' AND tablename = 'rate_limit_buckets' AND rowsecurity
+  ) THEN
+    RAISE EXCEPTION 'private.rate_limit_buckets ausente ou sem RLS';
+  END IF;
+
+  IF has_schema_privilege('anon', 'private', 'USAGE')
+    OR has_schema_privilege('authenticated', 'private', 'USAGE')
+    OR has_table_privilege('anon', 'private.rate_limit_buckets', 'SELECT')
+    OR has_table_privilege('authenticated', 'private.rate_limit_buckets', 'SELECT') THEN
+    RAISE EXCEPTION 'cliente tem acesso ao armazenamento privado do limitador';
+  END IF;
+
+  IF has_function_privilege(
+    'anon', 'public.consume_rate_limit(text, text, integer, integer, integer)', 'EXECUTE'
+  ) OR has_function_privilege(
+    'authenticated', 'public.consume_rate_limit(text, text, integer, integer, integer)', 'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'cliente pode executar public.consume_rate_limit';
+  END IF;
+
+  IF NOT has_function_privilege(
+    'service_role', 'public.consume_rate_limit(text, text, integer, integer, integer)', 'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'service_role não pode executar public.consume_rate_limit';
+  END IF;
+
+  RAISE NOTICE 'ok  limitador privado: RLS, schema e EXECUTE fechados ao cliente';
+END $$;
+
+-- A trilha não pode ser alterada pelo cliente nem pelo BFF: service_role ganha
+-- somente EXECUTE na função com assinatura mínima, nunca DML direto na tabela.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_tables
+    WHERE schemaname = 'private' AND tablename = 'security_audit_events' AND rowsecurity
+  ) THEN
+    RAISE EXCEPTION 'private.security_audit_events ausente ou sem RLS';
+  END IF;
+
+  IF has_table_privilege('anon', 'private.security_audit_events', 'SELECT')
+    OR has_table_privilege('authenticated', 'private.security_audit_events', 'SELECT')
+    OR has_table_privilege('service_role', 'private.security_audit_events', 'INSERT')
+    OR has_table_privilege('service_role', 'private.security_audit_events', 'UPDATE')
+    OR has_table_privilege('service_role', 'private.security_audit_events', 'DELETE') THEN
+    RAISE EXCEPTION 'trilha de auditoria tem leitura de cliente ou escrita direta pelo BFF';
+  END IF;
+
+  IF has_function_privilege(
+    'anon', 'public.record_security_audit_event(text, text, text, text, uuid, uuid, text, text)', 'EXECUTE'
+  ) OR has_function_privilege(
+    'authenticated', 'public.record_security_audit_event(text, text, text, text, uuid, uuid, text, text)', 'EXECUTE'
+  ) OR NOT has_function_privilege(
+    'service_role', 'public.record_security_audit_event(text, text, text, text, uuid, uuid, text, text)', 'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'EXECUTE de record_security_audit_event não está restrito a service_role';
+  END IF;
+
+  RAISE NOTICE 'ok  trilha append-only: cliente sem leitura, BFF sem DML e RPC restrita';
+END $$;
+
+-- O pseudônimo da trilha só protege se exigir a chave: SHA-256 puro de um UUID
+-- se desfaz com o UUID que aparece em qualquer URL. E um UUID em claro no
+-- resource_id, ao lado do pseudônimo do mesmo titular, desfaz o pseudônimo.
+-- LGPD, arts. 12 e 13, § 4º: dado pseudonimizado só se reassocia com informação
+-- adicional mantida em separado — aqui, a chave no Vault.
+BEGIN;
+
+DO $$
+DECLARE
+  conta uuid := gen_random_uuid();
+  evento bigint;
+  linha private.security_audit_events%ROWTYPE;
+  uuid_recusado boolean := false;
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM vault.secrets WHERE name = 'audit_pseudonym_key') THEN
+    RAISE EXCEPTION 'TRILHA PARADA: audit_pseudonym_key ausente do Vault; todo evento auditado vai falhar';
+  END IF;
+
+  IF private.audit_principal_hash(conta) = encode(extensions.digest(conta::text, 'sha256'), 'hex') THEN
+    RAISE EXCEPTION 'PSEUDÔNIMO REVERSÍVEL: o hash do principal não usa chave; quem tem o UUID liga o evento à pessoa';
+  END IF;
+
+  SET LOCAL ROLE service_role;
+  evento := public.record_security_audit_event(
+    p_event_type => 'identity.registration.succeeded', p_outcome => 'succeeded',
+    p_resource_type => 'account', p_origin => 'bff', p_actor_id => conta, p_subject_id => conta
+  );
+  BEGIN
+    PERFORM public.record_security_audit_event(
+      p_event_type => 'health.assessment.read', p_outcome => 'succeeded',
+      p_resource_type => 'physical_assessment_collection', p_origin => 'bff',
+      p_resource_id => 'student:' || conta::text
+    );
+  EXCEPTION WHEN raise_exception THEN
+    uuid_recusado := true;
+  END;
+  RESET ROLE;
+
+  IF NOT uuid_recusado THEN
+    RAISE EXCEPTION 'UUID EM CLARO: a RPC aceitou UUID dentro do resource_id';
+  END IF;
+
+  SELECT * INTO linha FROM private.security_audit_events WHERE event_id = evento;
+  IF linha.resource_id IS DISTINCT FROM private.audit_principal_hash(conta)
+    OR linha.subject_hash IS DISTINCT FROM private.audit_principal_hash(conta) THEN
+    RAISE EXCEPTION 'UUID EM CLARO: evento de conta não gravou o pseudônimo como titular e recurso';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM private.security_audit_events
+    WHERE resource_id ~* '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+  ) THEN
+    RAISE EXCEPTION 'UUID EM CLARO: há evento na trilha com UUID de pessoa no resource_id';
+  END IF;
+
+  RAISE NOTICE 'ok  pseudônimo com chave do Vault e nenhum UUID de pessoa em resource_id';
+END $$;
+
+ROLLBACK;
+
+-- Papel e status determinam acesso. A prova exige que a trilha não seja uma
+-- convenção do painel administrativo: a RPC de onboarding também a atravessa,
+-- enquanto UPDATE direto da coluna continua negado ao usuário comum.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgname = 'profiles_audit_authorization_change'
+      AND tgrelid = 'public.profiles'::regclass
+      AND NOT tgisinternal
+  ) THEN
+    RAISE EXCEPTION 'profiles não possui trigger de auditoria de autorização';
+  END IF;
+
+  IF has_function_privilege('anon', 'private.audit_profile_authorization_change()', 'EXECUTE')
+    OR has_function_privilege('authenticated', 'private.audit_profile_authorization_change()', 'EXECUTE')
+    OR has_function_privilege('service_role', 'private.audit_profile_authorization_change()', 'EXECUTE') THEN
+    RAISE EXCEPTION 'papel da aplicação pode chamar a função de auditoria de conta';
+  END IF;
+
+  RAISE NOTICE 'ok  mudanças de papel e status geram evento privado no banco';
+END $$;
+
+-- Trigger e event trigger não são RPCs. A execução direta por anon virava uma
+-- superfície PostgREST que não existe no produto; a única exceção é o
+-- onboarding autenticado, que precisa da porta estreita set_own_account_type.
+DO $$
+BEGIN
+  IF has_function_privilege('anon', 'public.handle_new_user()', 'EXECUTE')
+    OR has_function_privilege('authenticated', 'public.handle_new_user()', 'EXECUTE')
+    -- Entre parênteses: sem eles, o IF do PL/pgSQL termina no THEN do CASE.
+    OR (CASE
+      WHEN to_regprocedure('public.rls_auto_enable()') IS NULL THEN false
+      ELSE has_function_privilege('anon', 'public.rls_auto_enable()', 'EXECUTE')
+        OR has_function_privilege('authenticated', 'public.rls_auto_enable()', 'EXECUTE')
+    END)
+    OR has_function_privilege('anon', 'public.set_own_account_type(public.account_type, text)', 'EXECUTE')
+    OR NOT has_function_privilege('authenticated', 'public.set_own_account_type(public.account_type, text)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'SUPERFÍCIE RPC INDEVIDA: trigger/event trigger ou onboarding tem EXECUTE divergente';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+      AND p.proname IN ('foods_search_vector_update', 'update_ai_chat_session_timestamp')
+      AND COALESCE(array_to_string(p.proconfig, ','), '') !~ 'search_path=pg_catalog'
+  ) THEN
+    RAISE EXCEPTION 'SEARCH PATH MUTÁVEL: função de trigger sem caminho fixo';
+  END IF;
+
+  RAISE NOTICE 'ok  funções internas sem RPC pública e triggers com search_path fixo';
+END $$;
+
+-- Vínculo é a fronteira de autorização do Specialist. O evento precisa nascer
+-- com a alteração, pois app, RPC e BFF gravam por caminhos distintos. Só IDs
+-- opacos entram na evidência: o vínculo não é licença para duplicar o dado que
+-- ele protege.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgname = 'student_specialists_audit_change'
+      AND tgrelid = 'public.student_specialists'::regclass
+      AND NOT tgisinternal
+  ) THEN
+    RAISE EXCEPTION 'student_specialists não possui trigger de auditoria';
+  END IF;
+
+  IF has_function_privilege('anon', 'private.audit_student_specialist_link_change()', 'EXECUTE')
+    OR has_function_privilege('authenticated', 'private.audit_student_specialist_link_change()', 'EXECUTE')
+    OR has_function_privilege('service_role', 'private.audit_student_specialist_link_change()', 'EXECUTE') THEN
+    RAISE EXCEPTION 'papel da aplicação pode chamar a função de auditoria de vínculo';
+  END IF;
+
+  RAISE NOTICE 'ok  vínculo gera evento no banco sem expor dados do aluno';
+END $$;
+
+-- Consentimento é escrito pelo cliente sob RLS. Sem trigger, a evidência seria
+-- uma segunda chamada opcional e justamente a revogação poderia desaparecer da
+-- investigação. A função registra só tipo+versão, nunca resposta de saúde.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgname = 'student_consents_audit_change' AND tgrelid = 'public.student_consents'::regclass
+      AND NOT tgisinternal
+  ) THEN
+    RAISE EXCEPTION 'student_consents não possui trigger de auditoria';
+  END IF;
+
+  IF has_function_privilege('anon', 'private.audit_student_consent_change()', 'EXECUTE')
+    OR has_function_privilege('authenticated', 'private.audit_student_consent_change()', 'EXECUTE')
+    OR has_function_privilege('service_role', 'private.audit_student_consent_change()', 'EXECUTE') THEN
+    RAISE EXCEPTION 'papel da aplicação pode chamar a função de auditoria de consentimento';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'private' AND table_name = 'security_audit_events'
+      AND column_name IN ('body', 'content', 'payload', 'responses')
+  ) THEN
+    RAISE EXCEPTION 'TRILHA SENSÍVEL: auditoria ganhou coluna de conteúdo de consentimento';
+  END IF;
+
+  RAISE NOTICE 'ok  consentimento gera evento no banco sem guardar conteúdo sensível';
+END $$;
+
+-- Retenção não pode depender de uma próxima ação do usuário. `pg_cron` executa
+-- a limpeza diariamente, e a função privada não pode virar uma ferramenta de
+-- DELETE para o cliente ou o BFF.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM cron.job
+    WHERE jobname = 'purge-security-audit-events'
+      AND schedule = '17 3 * * *'
+      AND command = 'SELECT private.purge_expired_security_audit_events()'
+  ) THEN
+    RAISE EXCEPTION 'job diário de retenção da trilha de auditoria está ausente ou divergente';
+  END IF;
+
+  IF has_function_privilege('anon', 'private.purge_expired_security_audit_events()', 'EXECUTE')
+    OR has_function_privilege('authenticated', 'private.purge_expired_security_audit_events()', 'EXECUTE')
+    OR has_function_privilege('service_role', 'private.purge_expired_security_audit_events()', 'EXECUTE') THEN
+    RAISE EXCEPTION 'papel da aplicação pode disparar a remoção da trilha de auditoria';
+  END IF;
+
+  RAISE NOTICE 'ok  retenção diária da trilha agendada e função de remoção privada';
+END $$;
+
 -- ── Privilégio de coluna em workout_sessions (0036) ──────────────────────────
 -- A RLS decide quais LINHAS; o GRANT decide quais COLUNAS. Sem esta guarda, o
 -- botão de corrigir a observação é um botão de reescrever o histórico de
@@ -165,6 +422,8 @@ DECLARE
   aluno_b  uuid := gen_random_uuid();
   espec    uuid := gen_random_uuid();
   visiveis int;
+  eventos_auditados int;
+  vinculo_id uuid;
 BEGIN
   INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
   VALUES
@@ -182,7 +441,22 @@ BEGIN
          (aluno_b, '{"verificacao":true}'::jsonb, now());
 
   INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
-  VALUES (aluno_a, espec, 'personal_training', 'active');
+  VALUES (aluno_a, espec, 'personal_training', 'active')
+  RETURNING id INTO vinculo_id;
+
+  -- A criação do vínculo que libera acesso produz uma única evidência, com
+  -- especialista como ator no caminho interno de provisionamento.
+  SELECT count(*) INTO eventos_auditados
+    FROM private.security_audit_events
+   WHERE event_type = 'authorization.specialist_student_link.granted'
+     AND outcome = 'succeeded'
+     AND actor_hash = private.audit_principal_hash(espec)
+     AND subject_hash = private.audit_principal_hash(aluno_a)
+     AND resource_type = 'specialist_student_link'
+     AND resource_id = private.audit_principal_hash(vinculo_id);
+  IF eventos_auditados <> 1 THEN
+    RAISE EXCEPTION 'AUDITORIA AUSENTE: criação do vínculo gerou % eventos, esperado 1', eventos_auditados;
+  END IF;
 
   -- A partir daqui a sessão é um usuário comum, não o dono do banco.
   SET LOCAL ROLE authenticated;
@@ -223,8 +497,36 @@ BEGIN
     RAISE EXCEPTION 'VAZAMENTO: especialista lê % anamnese(s) do aluno B, sem vínculo', visiveis;
   END IF;
 
+  -- Art. 6º, VII: encerrar o vínculo remove o acesso e registra quem fez isso.
+  -- A prova junta a consequência de autorização e a evidência que permite
+  -- investigá-la; uma sem a outra não torna o controle auditável.
   RESET ROLE;
-  RAISE NOTICE 'ok  isolamento entre alunos e por vínculo, e escalonamento recusado';
+  UPDATE public.student_specialists
+     SET status = 'inactive', ended_by = espec, ended_at = now()
+   WHERE id = vinculo_id;
+
+  SELECT count(*) INTO eventos_auditados
+    FROM private.security_audit_events
+   WHERE event_type = 'authorization.specialist_student_link.revoked'
+     AND outcome = 'succeeded'
+     AND actor_hash = private.audit_principal_hash(espec)
+     AND subject_hash = private.audit_principal_hash(aluno_a)
+     AND resource_type = 'specialist_student_link'
+     AND resource_id = private.audit_principal_hash(vinculo_id);
+  IF eventos_auditados <> 1 THEN
+    RAISE EXCEPTION 'AUDITORIA AUSENTE: encerramento do vínculo gerou % eventos, esperado 1', eventos_auditados;
+  END IF;
+
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_a;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'VÍNCULO ENCERRADO, ACESSO ATIVO: especialista lê % anamnese(s) após revogação', visiveis;
+  END IF;
+
+  RESET ROLE;
+  RAISE NOTICE 'ok  isolamento por vínculo, escalonamento recusado e eventos de concessão/revogação';
 END $$;
 
 -- ── Faixas de plausibilidade do relógio (0046) ───────────────────────────────
@@ -664,6 +966,7 @@ DECLARE
   visiveis int;
   vazou    int;
   afetadas int;
+  eventos_auditados int;
 BEGIN
   INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
   VALUES
@@ -710,6 +1013,20 @@ BEGIN
   VALUES
     (aluno_a, 'health_data_collection', now(), '1.2'),
     (aluno_b, 'health_data_collection', now(), '1.2');
+
+  -- A concessão deixa prova no mesmo commit, sem repetir a resposta que a
+  -- finalidade autorizou tratar. Duas linhas, dois eventos: se o trigger virar
+  -- uma chamada opcional, a contagem denuncia a lacuna.
+  SELECT count(*) INTO eventos_auditados
+    FROM private.security_audit_events
+   WHERE event_type = 'privacy.consent.granted'
+     AND outcome = 'succeeded'
+     AND subject_hash IN (private.audit_principal_hash(aluno_a), private.audit_principal_hash(aluno_b))
+     AND resource_type = 'consent'
+     AND resource_id = 'health_data_collection:1.2';
+  IF eventos_auditados <> 2 THEN
+    RAISE EXCEPTION 'AUDITORIA AUSENTE: concessões de consentimento geraram % eventos, esperados 2', eventos_auditados;
+  END IF;
 
   SET LOCAL ROLE authenticated;
 
@@ -760,6 +1077,16 @@ BEGIN
   RESET ROLE;
   UPDATE public.student_consents SET revoked_at = now()
    WHERE student_id = aluno_a AND consent_type = 'health_data_collection';
+  SELECT count(*) INTO eventos_auditados
+    FROM private.security_audit_events
+   WHERE event_type = 'privacy.consent.revoked'
+     AND outcome = 'succeeded'
+     AND subject_hash = private.audit_principal_hash(aluno_a)
+     AND resource_type = 'consent'
+     AND resource_id = 'health_data_collection:1.2';
+  IF eventos_auditados <> 1 THEN
+    RAISE EXCEPTION 'AUDITORIA AUSENTE: revogação de consentimento gerou % eventos, esperado 1', eventos_auditados;
+  END IF;
   SET LOCAL ROLE authenticated;
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', espec, 'role', 'authenticated')::text, true);
@@ -831,6 +1158,78 @@ BEGIN
 
   RESET ROLE;
   RAISE NOTICE 'ok  métricas diárias: isoladas por vínculo e por consentimento, imutáveis, invisíveis ao admin';
+END $$;
+
+ROLLBACK;
+
+-- ── Papel e status de conta deixam evidência, sem promoção direta ───────────
+--
+-- A transição legítima do onboarding passa pela RPC, que tira o ator de
+-- auth.uid(). A alteração manual da coluna pelo mesmo usuário é a escalada que
+-- a migration 0040 fechou; ela segue recusada aqui como prova negativa.
+
+BEGIN;
+
+DO $$
+DECLARE
+  conta uuid := gen_random_uuid();
+  eventos_auditados int;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES (
+    conta, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+    'verify-account-audit@elevapro.local', '{"full_name":"A","account_type":"member"}'::jsonb
+  );
+
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', conta, 'role', 'authenticated')::text, true);
+  PERFORM public.set_own_account_type('specialist', 'A');
+
+  -- A trava de privilégio de coluna continua sendo a barreira real contra a
+  -- auto-promoção; o evento abaixo registra só uma mudança que já foi aceita.
+  BEGIN
+    UPDATE public.profiles SET account_type = 'admin' WHERE id = conta;
+    RAISE EXCEPTION 'AUTO-PROMOÇÃO: usuário alterou account_type diretamente';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+
+  RESET ROLE;
+  -- O recurso da conta é o pseudônimo dela: o UUID ao lado do subject_hash o
+  -- desfaria. Conferido antes da contagem para o erro nomear o dano certo.
+  IF EXISTS (
+    SELECT 1 FROM private.security_audit_events
+     WHERE subject_hash = private.audit_principal_hash(conta) AND resource_id = conta::text
+  ) THEN
+    RAISE EXCEPTION 'UUID EM CLARO: evento de papel/status gravou o UUID da conta no resource_id';
+  END IF;
+
+  SELECT count(*) INTO eventos_auditados
+    FROM private.security_audit_events
+   WHERE event_type = 'authorization.account_role.set_specialist'
+     AND outcome = 'succeeded'
+     AND actor_hash = private.audit_principal_hash(conta)
+     AND subject_hash = private.audit_principal_hash(conta)
+     AND resource_type = 'account'
+     AND resource_id = private.audit_principal_hash(conta);
+  IF eventos_auditados <> 1 THEN
+    RAISE EXCEPTION 'AUDITORIA AUSENTE: mudança de papel gerou % eventos, esperado 1', eventos_auditados;
+  END IF;
+
+  SELECT count(*) INTO eventos_auditados
+    FROM private.security_audit_events
+   WHERE event_type = 'authorization.account_status.set_invited'
+     AND outcome = 'succeeded'
+     AND actor_hash = private.audit_principal_hash(conta)
+     AND subject_hash = private.audit_principal_hash(conta)
+     AND resource_type = 'account'
+     AND resource_id = private.audit_principal_hash(conta);
+  IF eventos_auditados <> 1 THEN
+    RAISE EXCEPTION 'AUDITORIA AUSENTE: mudança de status gerou % eventos, esperado 1', eventos_auditados;
+  END IF;
+
+  RAISE NOTICE 'ok  papel/status auditados pela RPC e auto-promoção direta recusada';
 END $$;
 
 ROLLBACK;
@@ -1239,8 +1638,6 @@ END $$;
 
 ROLLBACK;
 
-\echo ''
-\echo 'RLS verificada neste banco. Nada foi gravado.'
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Escala: nenhuma avaliação física sem altura ou peso — Art. 6º, V

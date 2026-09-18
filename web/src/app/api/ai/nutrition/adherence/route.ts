@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { rotaDeIA } from "@/lib/ai-route";
+import { withAiRoute } from "@/lib/ai-route";
 import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { responderEmUmTurno } from "@/modules/ai/providers/turnoUnico";
@@ -61,4 +61,4 @@ Tom: Profissional, direto e útil. Idioma: Português (Brasil).`;
   return NextResponse.json({ summary: texto || "Sem dados suficientes para análise." });
 };
 
-export const POST = rotaDeIA(handler);
+export const POST = withAiRoute(handler);
