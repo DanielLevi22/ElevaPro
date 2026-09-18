@@ -11,12 +11,6 @@ type RateLimitPolicy = {
   retentionSeconds: number;
 };
 
-type RateLimitResult = {
-  allowed: boolean;
-  remaining: number;
-  retry_after_seconds: number;
-};
-
 const POLICIES = {
   ai: { limit: 20, windowSeconds: 60, retentionSeconds: 3600 },
   registration: { limit: 5, windowSeconds: 3600, retentionSeconds: 86400 },
@@ -68,19 +62,15 @@ export async function enforceRateLimit(
   try {
     const policy = POLICIES[policyName];
     const subjectHash = pseudonymizeRateLimitSubject(subject);
-    const { data: result, error } = await supabaseAdmin.rpc(
-      "consume_rate_limit" as never,
-      {
-        p_bucket: policyName,
-        p_subject_hash: subjectHash,
-        p_limit: policy.limit,
-        p_window_seconds: policy.windowSeconds,
-        p_retention_seconds: policy.retentionSeconds,
-      } as never,
-    );
+    const { data: result, error } = await supabaseAdmin.rpc("consume_rate_limit", {
+      p_bucket: policyName,
+      p_subject_hash: subjectHash,
+      p_limit: policy.limit,
+      p_window_seconds: policy.windowSeconds,
+      p_retention_seconds: policy.retentionSeconds,
+    });
 
-    const responseData: unknown = result;
-    if (error || !Array.isArray(responseData) || responseData.length !== 1) {
+    if (error || result?.length !== 1) {
       logger.error("rate_limit.unavailable", {
         policy: policyName,
         code: error?.code,
@@ -89,7 +79,7 @@ export async function enforceRateLimit(
       return NextResponse.json({ error: "rate_limit_unavailable" }, { status: 503 });
     }
 
-    const decision = responseData[0] as RateLimitResult;
+    const [decision] = result;
     if (decision.allowed) return null;
 
     await recordSecurityAuditEvent({

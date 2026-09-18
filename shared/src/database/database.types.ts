@@ -1644,6 +1644,20 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      consume_rate_limit: {
+        Args: {
+          p_bucket: string;
+          p_limit: number;
+          p_retention_seconds: number;
+          p_subject_hash: string;
+          p_window_seconds: number;
+        };
+        Returns: {
+          allowed: boolean;
+          remaining: number;
+          retry_after_seconds: number;
+        }[];
+      };
       devolver_proposta: {
         Args: { p_chave: string; p_session_id: string; p_valor: Json };
         Returns: undefined;
@@ -1660,6 +1674,19 @@ export type Database = {
         }[];
       };
       link_student_by_code: { Args: { p_code: string }; Returns: Json };
+      record_security_audit_event: {
+        Args: {
+          p_actor_hash: string;
+          p_event_type: string;
+          p_origin: string;
+          p_outcome: string;
+          p_resource_id: string;
+          p_resource_type: string;
+          p_subject_hash: string;
+          p_trace_id?: string;
+        };
+        Returns: number;
+      };
       reivindicar_proposta: {
         Args: { p_chave: string; p_session_id: string };
         Returns: Json;

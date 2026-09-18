@@ -24,6 +24,13 @@ export function pseudonymizeAuditSubject(subjectId: string): string {
   return createHash("sha256").update(subjectId).digest("hex");
 }
 
+// O gerador de tipos do Supabase não expressa argumento SQL nulo, e a RPC não
+// tem default para ator/titular: o NULL precisa ir explícito. No banco ele
+// significa "evento sem ator" (ex.: rate limit anônimo).
+function optionalPrincipalHash(principalId: string | undefined): string {
+  return (principalId ? pseudonymizeAuditSubject(principalId) : null) as string;
+}
+
 /**
  * Registra somente metadados permitidos na trilha append-only do banco.
  * A falha de observabilidade não muda o resultado da operação de negócio, mas
@@ -39,19 +46,16 @@ export function pseudonymizeAuditSubject(subjectId: string): string {
  */
 export async function recordSecurityAuditEvent(event: SecurityAuditEvent): Promise<void> {
   try {
-    const { error } = await supabaseAdmin.rpc(
-      "record_security_audit_event" as never,
-      {
-        p_event_type: event.eventType,
-        p_outcome: event.outcome,
-        p_actor_hash: event.actorId ? pseudonymizeAuditSubject(event.actorId) : null,
-        p_subject_hash: event.subjectId ? pseudonymizeAuditSubject(event.subjectId) : null,
-        p_resource_type: event.resourceType,
-        p_resource_id: event.resourceId,
-        p_origin: "bff",
-        p_trace_id: event.traceId ?? null,
-      } as never,
-    );
+    const { error } = await supabaseAdmin.rpc("record_security_audit_event", {
+      p_event_type: event.eventType,
+      p_outcome: event.outcome,
+      p_actor_hash: optionalPrincipalHash(event.actorId),
+      p_subject_hash: optionalPrincipalHash(event.subjectId),
+      p_resource_type: event.resourceType,
+      p_resource_id: event.resourceId,
+      p_origin: "bff",
+      p_trace_id: event.traceId,
+    });
 
     if (error) {
       logger.error("security_audit.write_failed", {
