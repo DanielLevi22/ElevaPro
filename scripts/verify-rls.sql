@@ -169,6 +169,29 @@ BEGIN
   RAISE NOTICE 'ok  trilha append-only: cliente sem leitura, BFF sem DML e RPC restrita';
 END $$;
 
+-- Papel e status determinam acesso. A prova exige que a trilha não seja uma
+-- convenção do painel administrativo: a RPC de onboarding também a atravessa,
+-- enquanto UPDATE direto da coluna continua negado ao usuário comum.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgname = 'profiles_audit_authorization_change'
+      AND tgrelid = 'public.profiles'::regclass
+      AND NOT tgisinternal
+  ) THEN
+    RAISE EXCEPTION 'profiles não possui trigger de auditoria de autorização';
+  END IF;
+
+  IF has_function_privilege('anon', 'private.audit_profile_authorization_change()', 'EXECUTE')
+    OR has_function_privilege('authenticated', 'private.audit_profile_authorization_change()', 'EXECUTE')
+    OR has_function_privilege('service_role', 'private.audit_profile_authorization_change()', 'EXECUTE') THEN
+    RAISE EXCEPTION 'papel da aplicação pode chamar a função de auditoria de conta';
+  END IF;
+
+  RAISE NOTICE 'ok  mudanças de papel e status geram evento privado no banco';
+END $$;
+
 -- Vínculo é a fronteira de autorização do Specialist. O evento precisa nascer
 -- com a alteração, pois app, RPC e BFF gravam por caminhos distintos. Só IDs
 -- opacos entram na evidência: o vínculo não é licença para duplicar o dado que
@@ -1046,6 +1069,69 @@ BEGIN
 
   RESET ROLE;
   RAISE NOTICE 'ok  métricas diárias: isoladas por vínculo e por consentimento, imutáveis, invisíveis ao admin';
+END $$;
+
+ROLLBACK;
+
+-- ── Papel e status de conta deixam evidência, sem promoção direta ───────────
+--
+-- A transição legítima do onboarding passa pela RPC, que tira o ator de
+-- auth.uid(). A alteração manual da coluna pelo mesmo usuário é a escalada que
+-- a migration 0040 fechou; ela segue recusada aqui como prova negativa.
+
+BEGIN;
+
+DO $$
+DECLARE
+  conta uuid := gen_random_uuid();
+  eventos_auditados int;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES (
+    conta, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+    'verify-account-audit@elevapro.local', '{"full_name":"A","account_type":"member"}'::jsonb
+  );
+
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', conta, 'role', 'authenticated')::text, true);
+  PERFORM public.set_own_account_type('specialist', 'A');
+
+  -- A trava de privilégio de coluna continua sendo a barreira real contra a
+  -- auto-promoção; o evento abaixo registra só uma mudança que já foi aceita.
+  BEGIN
+    UPDATE public.profiles SET account_type = 'admin' WHERE id = conta;
+    RAISE EXCEPTION 'AUTO-PROMOÇÃO: usuário alterou account_type diretamente';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+
+  RESET ROLE;
+  SELECT count(*) INTO eventos_auditados
+    FROM private.security_audit_events
+   WHERE event_type = 'authorization.account_role.set_specialist'
+     AND outcome = 'succeeded'
+     AND actor_id = conta
+     AND subject_id = conta
+     AND resource_type = 'account'
+     AND resource_id = conta::text;
+  IF eventos_auditados <> 1 THEN
+    RAISE EXCEPTION 'AUDITORIA AUSENTE: mudança de papel gerou % eventos, esperado 1', eventos_auditados;
+  END IF;
+
+  SELECT count(*) INTO eventos_auditados
+    FROM private.security_audit_events
+   WHERE event_type = 'authorization.account_status.set_invited'
+     AND outcome = 'succeeded'
+     AND actor_id = conta
+     AND subject_id = conta
+     AND resource_type = 'account'
+     AND resource_id = conta::text;
+  IF eventos_auditados <> 1 THEN
+    RAISE EXCEPTION 'AUDITORIA AUSENTE: mudança de status gerou % eventos, esperado 1', eventos_auditados;
+  END IF;
+
+  RAISE NOTICE 'ok  papel/status auditados pela RPC e auto-promoção direta recusada';
 END $$;
 
 ROLLBACK;

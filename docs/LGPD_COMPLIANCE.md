@@ -404,6 +404,10 @@ inferência sobre saúde de titular identificado.
   no banco com ator, titular e UUID opaco do vínculo. O trigger cobre app, RPC e
   BFF na própria transação, não duplica dados protegidos pelo vínculo e preserva
   a evidência por 365 dias (`0064`, issue #322)
+- [x] Mudanças de `profiles.account_type` e `profiles.account_status` geram
+  eventos append-only no banco. O tipo do evento informa apenas a autorização
+  resultante e a trilha mantém IDs opacos; a prova de RLS também confirma que a
+  auto-promoção direta continua recusada (`0065`, issue #322)
 
 **Requisitos recomendados (antes do lançamento):**
 - [ ] MFA disponível para especialistas (Supabase suporta nativamente)
