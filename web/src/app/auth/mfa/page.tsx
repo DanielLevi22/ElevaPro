@@ -82,7 +82,7 @@ export default function MfaPage() {
               // biome-ignore lint/performance/noImgElement: QR SVG efêmero em data: não é suportado pelo next/image.
               <img
                 alt="QR Code para configurar o autenticador"
-                className="mx-auto h-52 w-52"
+                className="mx-auto h-64 w-64"
                 src={challenge.qrCode}
               />
             ) : null}
@@ -91,6 +91,20 @@ export default function MfaPage() {
                 ? "Escaneie o QR Code no seu aplicativo autenticador e informe o código gerado."
                 : "Informe o código gerado no seu aplicativo autenticador."}
             </p>
+            {challenge.secret ? (
+              <details className="rounded-lg border border-white/10 bg-white/5 p-3 text-left">
+                <summary className="cursor-pointer text-sm font-medium text-foreground">
+                  Não conseguiu escanear? Inserir chave manualmente
+                </summary>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  No aplicativo autenticador, escolha inserir uma chave e copie a sequência abaixo.
+                  Não a compartilhe com ninguém.
+                </p>
+                <code className="mt-2 block break-all rounded bg-black/20 p-2 text-xs text-foreground select-all">
+                  {challenge.secret}
+                </code>
+              </details>
+            ) : null}
             <label className="block text-sm font-medium text-foreground" htmlFor="totp-code">
               Código do autenticador
             </label>

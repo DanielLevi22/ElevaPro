@@ -3,6 +3,7 @@ import { supabase } from "@elevapro/supabase";
 export type TotpChallenge = {
   factorId: string;
   qrCode?: string;
+  secret?: string;
 };
 
 export class MfaSetupUnavailableError extends Error {
@@ -56,7 +57,7 @@ export async function beginTotpChallenge(): Promise<TotpChallenge> {
     if (hasErrorCode(error, "mfa_totp_enroll_not_enabled")) throw new MfaSetupUnavailableError();
     throw error;
   }
-  return { factorId: data.id, qrCode: data.totp.qr_code };
+  return { factorId: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret };
 }
 
 /** Confirma um código TOTP e eleva a sessão atual para AAL2. */

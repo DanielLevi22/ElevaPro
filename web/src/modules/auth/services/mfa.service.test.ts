@@ -30,13 +30,14 @@ describe("mfa.service", () => {
   it("inscreve um fator novo quando não há autenticador confirmado", async () => {
     mfa.listFactors.mockResolvedValue({ data: { all: [] } });
     mfa.enroll.mockResolvedValue({
-      data: { id: "factor-new", totp: { qr_code: "data:image/svg+xml,qr" } },
+      data: { id: "factor-new", totp: { qr_code: "data:image/svg+xml,qr", secret: "SECRET-123" } },
       error: null,
     });
 
     await expect(beginTotpChallenge()).resolves.toEqual({
       factorId: "factor-new",
       qrCode: "data:image/svg+xml,qr",
+      secret: "SECRET-123",
     });
   });
 
