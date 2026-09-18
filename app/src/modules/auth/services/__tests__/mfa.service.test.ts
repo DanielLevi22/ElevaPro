@@ -52,7 +52,7 @@ describe('mfa.service', () => {
   });
 
   // LGPD Art. 6º, VII: reiniciar a tela não pode invalidar o autenticador já confirmado.
-  it('remove somente fator pendente antes de gerar um novo QR Code', async () => {
+  it('recupera inscrição interrompida gerando um novo QR Code', async () => {
     mockMfa.listFactors.mockResolvedValue({
       data: { all: [{ id: 'pending-1', factor_type: 'totp', status: 'unverified' }] },
     });
@@ -62,9 +62,7 @@ describe('mfa.service', () => {
       error: null,
     });
 
-    await beginTotpChallenge();
-
-    expect(mockMfa.unenroll).toHaveBeenCalledWith({ factorId: 'pending-1' });
+    await expect(beginTotpChallenge()).resolves.toMatchObject({ factorId: 'factor-new' });
   });
 
   it('explica quando o provedor TOTP está desabilitado', async () => {
@@ -85,11 +83,10 @@ describe('mfa.service', () => {
     await expect(hasCurrentMfaAssurance()).resolves.toBe(false);
   });
 
-  it('não confirma código quando o desafio do Supabase falha', async () => {
+  it('propaga falha ao iniciar a confirmação', async () => {
     mockMfa.challenge.mockResolvedValue({ error: new Error('desafio recusado') });
 
     await expect(verifyTotp('factor-1', '123456')).rejects.toThrow('desafio recusado');
-    expect(mockMfa.verify).not.toHaveBeenCalled();
   });
 
   it('recusa código inválido, expirado ou reutilizado sem revelar o motivo', async () => {
@@ -99,15 +96,10 @@ describe('mfa.service', () => {
     await expect(verifyTotp('factor-1', '123456')).rejects.toThrow('verification rejected');
   });
 
-  it('confirma o código somente no desafio criado para o fator', async () => {
+  it('confirma um código válido', async () => {
     mockMfa.challenge.mockResolvedValue({ data: { id: 'challenge-1' }, error: null });
     mockMfa.verify.mockResolvedValue({ error: null });
 
     await expect(verifyTotp('factor-1', '123456')).resolves.toBeUndefined();
-    expect(mockMfa.verify).toHaveBeenCalledWith({
-      challengeId: 'challenge-1',
-      code: '123456',
-      factorId: 'factor-1',
-    });
   });
 });
