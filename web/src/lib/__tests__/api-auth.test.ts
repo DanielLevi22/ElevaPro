@@ -40,6 +40,7 @@ vi.mock("@/lib/supabase-admin", () => ({
 
 const {
   authorizeLinkedSpecialist,
+  authorizeMfaPrivilegedUser,
   authorizeMfaSpecialist,
   authorizeSpecialist,
   authorizeStudent,
@@ -58,7 +59,7 @@ const VALID = "Bearer token-valido";
 beforeEach(() => {
   vi.clearAllMocks();
   authGetClaims.mockResolvedValue({
-    data: { claims: { sub: "user-1", aal: "aal1" } },
+    data: { claims: { sub: "user-1", aal: "aal2" } },
     error: null,
   });
   profileRow = { account_type: "specialist" };
@@ -127,6 +128,11 @@ describe("authorizeSpecialist", () => {
 describe("authorizeMfaSpecialist", () => {
   // Art. 46: senha válida não basta para uma conta que acessa dados de alunos.
   it("recusa especialista em aal1", async () => {
+    authGetClaims.mockResolvedValue({
+      data: { claims: { sub: "user-1", aal: "aal1" } },
+      error: null,
+    });
+
     const auth = await authorizeMfaSpecialist(requestWith(VALID));
 
     expect(auth.ok).toBe(false);
@@ -142,6 +148,33 @@ describe("authorizeMfaSpecialist", () => {
     const auth = await authorizeMfaSpecialist(requestWith(VALID));
 
     expect(auth.ok).toBe(true);
+  });
+});
+
+describe("authorizeMfaPrivilegedUser", () => {
+  it("recusa admin em aal1", async () => {
+    profileRow = { account_type: "admin" };
+    authGetClaims.mockResolvedValue({
+      data: { claims: { sub: "user-1", aal: "aal1" } },
+      error: null,
+    });
+
+    const auth = await authorizeMfaPrivilegedUser(requestWith(VALID));
+
+    expect(auth.ok).toBe(false);
+    if (!auth.ok) expect(await auth.response.json()).toEqual({ error: "mfa_required" });
+  });
+
+  it("faz a guarda de especialista exigir aal2", async () => {
+    authGetClaims.mockResolvedValue({
+      data: { claims: { sub: "user-1", aal: "aal1" } },
+      error: null,
+    });
+
+    const auth = await authorizeSpecialist(requestWith(VALID));
+
+    expect(auth.ok).toBe(false);
+    if (!auth.ok) expect(await auth.response.json()).toEqual({ error: "mfa_required" });
   });
 });
 

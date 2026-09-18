@@ -107,17 +107,23 @@ export async function authorizeUser(request: NextRequest): Promise<AuthResult> {
   };
 }
 
-/** Especialista com segundo fator validado na sessão atual. */
-export async function authorizeMfaSpecialist(request: NextRequest): Promise<AuthResult> {
-  const auth = await authorizeSpecialist(request);
+/** Conta privilegiada com segundo fator validado na sessão atual. */
+export async function authorizeMfaPrivilegedUser(request: NextRequest): Promise<AuthResult> {
+  const auth = await authorizeUser(request);
   if (!auth.ok) return auth;
+  if (auth.caller.accountType !== "specialist" && auth.caller.accountType !== "admin") {
+    return deny(403, "Apenas contas privilegiadas.");
+  }
   if (!hasSecondFactor(auth.caller.assuranceLevel)) return deny(403, "mfa_required");
   return auth;
 }
 
+/** @deprecated Use authorizeMfaPrivilegedUser para novas ações privilegiadas. */
+export const authorizeMfaSpecialist = authorizeMfaPrivilegedUser;
+
 /** Token válido e conta de especialista. */
 export async function authorizeSpecialist(request: NextRequest): Promise<AuthResult> {
-  const auth = await authorizeUser(request);
+  const auth = await authorizeMfaPrivilegedUser(request);
   if (!auth.ok) return auth;
   if (auth.caller.accountType !== "specialist") return deny(403, "Apenas especialistas.");
   return auth;
