@@ -35,12 +35,17 @@ export function pseudonymizeRateLimitSubject(subject: string, key = rateLimitKey
   return createHmac("sha256", key).update(subject).digest("hex");
 }
 
-function requestSubject(request: Request): string | null {
+function requestSubject(request: Request, env: NodeJS.ProcessEnv = process.env): string | null {
   // A Vercel sobrescreve estes cabeçalhos no edge. Exigir os dois impede que
   // uma requisição direta escolha um IP arbitrário como chave do limitador.
   const vercelRequestId = request.headers.get("x-vercel-id")?.trim();
   const origin = request.headers.get("x-vercel-forwarded-for")?.trim();
-  return vercelRequestId && origin ? `ip:${origin}` : null;
+  if (vercelRequestId && origin) return `ip:${origin}`;
+
+  // O servidor de desenvolvimento não recebe a cadeia de headers que a Vercel
+  // sobrescreve. A origem fixa só existe fora de preview/produção; lá, aceitar
+  // header escolhido pelo cliente tornaria o limitador contornável.
+  return env.NODE_ENV === "development" ? "local-development" : null;
 }
 
 /**

@@ -74,6 +74,26 @@ describe("rate limit", () => {
     await expect(response?.json()).resolves.toEqual({ error: "rate_limit_exceeded" });
   });
 
+  it("usa uma origem local somente durante o desenvolvimento", async () => {
+    process.env = { ...process.env, NODE_ENV: "development" };
+    rpc.mockResolvedValue({
+      data: [{ allowed: true, remaining: 19, retry_after_seconds: 42 }],
+      error: null,
+    });
+
+    await expect(
+      enforceRateLimit(new Request("http://localhost:3000/api/auth/register"), "registration"),
+    ).resolves.toBeNull();
+
+    expect(rpc).toHaveBeenCalledWith("consume_rate_limit", {
+      p_bucket: "registration",
+      p_subject_hash: pseudonymizeRateLimitSubject("local-development"),
+      p_limit: 5,
+      p_window_seconds: 3600,
+      p_retention_seconds: 86400,
+    });
+  });
+
   it("falha fechada se não há origem confiável", async () => {
     const response = await enforceRateLimit(
       new Request("https://elevapro.test/api/ai/coach"),
