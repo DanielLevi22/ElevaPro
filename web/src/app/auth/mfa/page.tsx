@@ -79,12 +79,14 @@ export default function MfaPage() {
         ) : (
           <form className="space-y-5" onSubmit={confirmChallenge}>
             {challenge.qrCode ? (
-              // biome-ignore lint/performance/noImgElement: QR SVG efêmero em data: não é suportado pelo next/image.
-              <img
-                alt="QR Code para configurar o autenticador"
-                className="mx-auto h-64 w-64"
-                src={challenge.qrCode}
-              />
+              <div className="mx-auto w-fit rounded-xl bg-white p-4">
+                {/* biome-ignore lint/performance/noImgElement: QR SVG efêmero em data: não é suportado pelo next/image. */}
+                <img
+                  alt="QR Code para configurar o autenticador"
+                  className="block h-72 w-72"
+                  src={challenge.qrCode}
+                />
+              </div>
             ) : null}
             <p className="text-center text-sm text-muted-foreground">
               {challenge.qrCode
