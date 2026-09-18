@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { logger } from "./logger";
 import { enforceRateLimit } from "./rate-limit";
-import { aiBodyLimits, enforceRequestBodyLimit } from "./request-body-limit";
+import { enforceRequestBodyLimit, requestBodyLimits } from "./request-body-limit";
 import { assertServerEnv, instrucaoDeAmbiente, ServerEnvError } from "./server-env";
 import { attachTraceId, traceIdForRequest } from "./trace";
 
@@ -62,7 +62,7 @@ export function rotaDeIA<Ctx>(
 
       const oversized = await enforceRequestBodyLimit(
         request,
-        options.maximumBodyBytes ?? aiBodyLimits.default,
+        options.maximumBodyBytes ?? requestBodyLimits.default,
       );
       if (oversized) return attachTraceId(oversized, traceId);
 

@@ -10,7 +10,7 @@ import {
 import { type NextRequest, NextResponse } from "next/server";
 import { rotaDeIA } from "@/lib/ai-route";
 import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
-import { aiBodyLimits } from "@/lib/request-body-limit";
+import { requestBodyLimits } from "@/lib/request-body-limit";
 import { clienteDoTitular } from "@/lib/supabase-titular";
 import { aiProviders } from "@/modules/ai/ai.config";
 import type { ContentBlock, ProviderTurnOptions } from "@/modules/ai/providers/types";
@@ -480,4 +480,4 @@ async function handlePost(request: NextRequest) {
   });
 }
 
-export const POST = rotaDeIA(handlePost, { maximumBodyBytes: aiBodyLimits.image });
+export const POST = rotaDeIA(handlePost, { maximumBodyBytes: requestBodyLimits.image });

@@ -2,7 +2,7 @@ import { lerAnaliseDoPrato } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
 import { rotaDeIA } from "@/lib/ai-route";
 import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
-import { aiBodyLimits } from "@/lib/request-body-limit";
+import { requestBodyLimits } from "@/lib/request-body-limit";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { responderEmUmTurno } from "@/modules/ai/providers/turnoUnico";
 
@@ -67,4 +67,4 @@ async function handlePost(request: NextRequest) {
   return NextResponse.json(analise);
 }
 
-export const POST = rotaDeIA(handlePost, { maximumBodyBytes: aiBodyLimits.image });
+export const POST = rotaDeIA(handlePost, { maximumBodyBytes: requestBodyLimits.image });
