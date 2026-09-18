@@ -3,8 +3,11 @@ import { logger } from "@/lib/logger";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 type AuditOutcome = "denied" | "failed" | "succeeded";
-type AuditEventType = "identity.registration.succeeded" | "security.rate_limit.denied";
-type AuditResourceType = "account" | "rate_limit_policy";
+type AuditEventType =
+  | "health.assessment.read"
+  | "identity.registration.succeeded"
+  | "security.rate_limit.denied";
+type AuditResourceType = "account" | "physical_assessment_collection" | "rate_limit_policy";
 
 export type SecurityAuditEvent = {
   eventType: AuditEventType;

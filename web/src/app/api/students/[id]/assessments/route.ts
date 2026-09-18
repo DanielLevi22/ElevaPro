@@ -2,7 +2,9 @@ import type { Database } from "@elevapro/shared";
 import { PHYSICAL_ASSESSMENT_COLUMNS } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeLinkedSpecialist } from "@/lib/api-auth";
+import { recordSecurityAuditEvent } from "@/lib/security-audit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { traceIdForRequest } from "@/lib/trace";
 
 type AssessmentInsert = Database["public"]["Tables"]["physical_assessments"]["Insert"];
 
@@ -87,6 +89,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       .order("created_at", { ascending: false });
 
     if (error) throw error;
+
+    if (data?.length) {
+      await recordSecurityAuditEvent({
+        eventType: "health.assessment.read",
+        outcome: "succeeded",
+        actorId: auth.caller.id,
+        subjectId: studentId,
+        resourceType: "physical_assessment_collection",
+        resourceId: studentId,
+        traceId: traceIdForRequest(request),
+      });
+    }
 
     return NextResponse.json({ assessments: data ?? [] });
   } catch (error) {
