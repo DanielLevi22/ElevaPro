@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeLinkedSpecialist, authorizeStudent } from "@/lib/api-auth";
+import { logger } from "@/lib/logger";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { AiSessionState, ChatModule } from "../types";
 import { aprovarProposta, type ChaveDeProposta } from "./aprovacaoDaProposta";
@@ -226,7 +227,7 @@ export function criarRotaDeAprovacao<Proposta, Resultado>(
           aprovacao.desfazerEm ? apagar(aprovacao.desfazerEm, criados) : Promise.resolve(),
       });
     } catch (err) {
-      console.error(`[${aprovacao.rotulo}] especialista`, specialistId, err);
+      logger.error("ai.approval.save_failed", { route: aprovacao.rotulo, error: err });
       return NextResponse.json({ error: "Não consegui salvar agora." }, { status: 500 });
     }
 

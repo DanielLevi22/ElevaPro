@@ -43,6 +43,8 @@ let apagados: string[];
 /** Quantos treinos já entraram nesta requisição — o laço passa por `from` a cada volta. */
 let treinosGravados: number;
 
+vi.mock("@/lib/ai-route", () => ({ rotaDeIA: (handler: unknown) => handler }));
+
 vi.mock("@/lib/api-auth", () => ({
   authorizeLinkedSpecialist: async () => ({
     ok: true,

@@ -1,3 +1,4 @@
+import { rotaDeIA } from "@/lib/ai-route";
 import { savePeriodization } from "@/modules/ai/services/chatService";
 import {
   acessoDoEspecialista,
@@ -20,22 +21,24 @@ export const maxDuration = 60;
  * novo para reconstruí-los, a rota respondia "aguardando aprovação", e ele
  * pedia que se aprovasse outra vez. Sem fim.
  */
-export const POST = criarRotaDeAprovacao<PeriodizationProposal, { id: string }>({
-  rotulo: "POST save-periodization",
-  chave: "pendingPeriodization",
-  acesso: acessoDoEspecialista("workout"),
-  desfazerEm: "training_periodizations",
+export const POST = rotaDeIA(
+  criarRotaDeAprovacao<PeriodizationProposal, { id: string }>({
+    rotulo: "POST save-periodization",
+    chave: "pendingPeriodization",
+    acesso: acessoDoEspecialista("workout"),
+    desfazerEm: "training_periodizations",
 
-  gravar: async (ctx, proposta) => {
-    const id = await savePeriodization(ctx.studentId, especialistaDe(ctx), proposta);
-    ctx.registrar(id);
-    return { id };
-  },
+    gravar: async (ctx, proposta) => {
+      const id = await savePeriodization(ctx.studentId, especialistaDe(ctx), proposta);
+      ctx.registrar(id);
+      return { id };
+    },
 
-  resolver: (proposta, { id }) => ({ resolvedPeriodization: { proposal: proposta, id } }),
+    resolver: (proposta, { id }) => ({ resolvedPeriodization: { proposal: proposta, id } }),
 
-  mensagem: (proposta) =>
-    `✅ Periodização aprovada e salva: ${proposta.name} (${proposta.durationWeeks} semanas, ${proposta.phases.length} fases). Podemos montar os treinos da primeira fase.`,
+    mensagem: (proposta) =>
+      `✅ Periodização aprovada e salva: ${proposta.name} (${proposta.durationWeeks} semanas, ${proposta.phases.length} fases). Podemos montar os treinos da primeira fase.`,
 
-  corpo: (proposta, { id }) => ({ id, name: proposta.name }),
-});
+    corpo: (proposta, { id }) => ({ id, name: proposta.name }),
+  }),
+);

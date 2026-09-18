@@ -47,6 +47,26 @@ ao repositório antes de declarar cobertura.
 | OPS-02 | Incidente, contenção, notificação e pós-mortem | não verificado | runbook, exercício e registro de decisão | semestral |
 | ADM-01 | Contas e permissões GitHub, Supabase, Vercel, EAS e Anthropic | não verificado | revisão de acesso privilegiado e MFA | trimestral |
 
+## Rodada #322 — evidência coletada, revisão pendente
+
+Data 2026-09-18, branch `feature/322-fundacao-de-seguranca-auditavel-limites-redactio`.
+Nenhuma linha acima muda de estado: toda linha tocada ainda tem lacuna, e `verificado` exige
+revisor humano, que está pendente. A evidência abaixo é reexecutável e fica anexada à
+revisão. Os comandos do banco rodam contra o Supabase local ou, pelo workflow, contra
+o preview.
+
+| ID | Evidência reexecutável (positivo e negativo) | O que falta para `verificado` |
+| --- | --- | --- |
+| API-01 | As 20 rotas de `/api/ai/**` passam pelo `rotaDeIA`: limite de corpo e rate limit durável antes do handler (`web/src/lib/__tests__/ai-route.test.ts`, `request-body-limit.test.ts`) | As outras 7 rotas não têm limite; falta inventário de schema e autorização por rota |
+| API-02 | Cadastro: corpo acima de 32 KiB → 413 antes do Auth e 6ª tentativa por origem → 429 (`web/src/app/api/auth/__tests__/register.test.ts`, `web/src/lib/__tests__/rate-limit.test.ts`); política de senha em `shared/src/auth/password-policy` | **Enumeração aberta:** a resposta diz que o e-mail já tem conta; o limite de 5/h só atenua. Decisão de UX pendente |
+| API-04 | Erro de banco e de modelo sai do BFF só como `name`/`code` (`logger.test.ts`, "não deixa e-mail escapar pelo details") | Limites e cancelamento do SSE sem teste; CSP/HSTS ausentes em `web/next.config.ts` |
+| DB-02 | `scripts/verify-rls.sql`: funções de trigger/event trigger sem `EXECUTE` para papéis da aplicação, `search_path` fixo e RPCs de limite/trilha só para `service_role` (`0060`, `0061`, `0066`, `0070`) | Inventário completo de funções e ownership |
+| AUD-01 | `verify-rls.sql`: cliente não lê a trilha, BFF sem DML, retenção de 365 dias por `pg_cron`, eventos de consentimento/vínculo/papel nascem no banco, pseudônimo com chave do Vault e nenhum UUID de pessoa em `resource_id`. Prova negativa feita em 2026-09-18: hash sem chave, RPC aceitando UUID e trigger gravando UUID fazem o script falhar | Consulta de investigação documentada; eventos de MFA ficam no Auth Audit Log do Supabase (#323) |
+| OBS-01 | `web/src/lib/logger.ts` redige credencial, e-mail em qualquer valor, medidas e corpo de erro do banco; as rotas da API não usam mais `console.*` (`logger.test.ts`) | Logs de `web/src` fora da API, mobile e crash reporting |
+
+Não entraram neste corte e continuam abertos: métricas de rate limit e de evento (OBS-02),
+rate limit por ator autenticado nas rotas de IA (hoje é por origem) e os demais IDs.
+
 ## Evidência mínima por estado
 
 `verificado` exige caminho/URL interno, data, revisor, versão/commit e resultado de um teste
