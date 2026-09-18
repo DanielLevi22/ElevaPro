@@ -1,3 +1,4 @@
+import { passwordValidationError, userFacingAuthError } from "@elevapro/shared";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { enforceRateLimit } from "@/lib/rate-limit";
@@ -19,6 +20,11 @@ export async function POST(request: Request) {
     );
   }
 
+  const passwordError = passwordValidationError(password);
+  if (passwordError) {
+    return attachTraceId(NextResponse.json({ error: passwordError }, { status: 400 }), traceId);
+  }
+
   // Create auth user (auto-confirmed so immediate sign-in works)
   const { data, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email,
@@ -32,7 +38,7 @@ export async function POST(request: Request) {
       authError.message.toLowerCase().includes("already registered") ||
       authError.code === "email_exists"
         ? "Este e-mail já possui uma conta."
-        : authError.message;
+        : userFacingAuthError(authError.message);
     return attachTraceId(NextResponse.json({ error: msg }, { status: 400 }), traceId);
   }
 

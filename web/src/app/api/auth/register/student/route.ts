@@ -1,3 +1,4 @@
+import { passwordValidationError, userFacingAuthError } from "@elevapro/shared";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
@@ -7,8 +8,9 @@ export async function POST(request: Request) {
   if (!email || !password || !full_name) {
     return NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 });
   }
-  if (password.length < 8) {
-    return NextResponse.json({ error: "Senha deve ter no mínimo 8 caracteres" }, { status: 400 });
+  const passwordError = passwordValidationError(password);
+  if (passwordError) {
+    return NextResponse.json({ error: passwordError }, { status: 400 });
   }
 
   const { data, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -23,7 +25,7 @@ export async function POST(request: Request) {
       authError.message.toLowerCase().includes("already registered") ||
       authError.code === "email_exists"
         ? "Este e-mail já possui uma conta."
-        : authError.message;
+        : userFacingAuthError(authError.message);
     return NextResponse.json({ error: msg }, { status: 400 });
   }
 

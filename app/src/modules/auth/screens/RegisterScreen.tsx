@@ -1,8 +1,15 @@
-import { createAuthService, type ServiceType } from '@elevapro/shared';
-import { supabase } from '@elevapro/supabase';
+import {
+  PASSWORD_REQUIREMENTS_HINT,
+  type RegistrationCredentials,
+  registrationCredentialsSchema,
+  type ServiceType,
+  userFacingAuthError,
+} from '@elevapro/shared';
 import type { Ionicons } from '@expo/vector-icons';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { showAlert } from '@/components/ui/appAlert';
 import { Button } from '@/components/ui/Button';
@@ -19,11 +26,7 @@ import {
   TOTAL_DE_TRACOS,
   useEtapasDoCadastro,
 } from '../hooks/useEtapasDoCadastro';
-
-const authService = createAuthService(supabase);
-
-const SENHA_MINIMA = 8;
-const NOME_MINIMO = 2;
+import { useAuthStore } from '../store/authStore';
 
 /** Identidade estável por traço, para a barra não se remontar a cada etapa. */
 const TRACOS = Array.from({ length: TOTAL_DE_TRACOS }, (_, i) => `traco-${i + 1}`);
@@ -81,11 +84,16 @@ const SUBTITULO: Record<Etapa, string> = {
 export function RegisterScreen() {
   const router = useRouter();
   const etapas = useEtapasDoCadastro();
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const signUp = useAuthStore((state) => state.signUp);
   const [loading, setLoading] = useState(false);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegistrationCredentials>({
+    resolver: zodResolver(registrationCredentialsSchema),
+    defaultValues: { fullName: '', email: '', password: '', confirmPassword: '' },
+  });
 
   function seguir() {
     if (etapas.impedimento) {
@@ -95,25 +103,21 @@ export function RegisterScreen() {
     etapas.avancar();
   }
 
-  async function cadastrar() {
-    const erro = validarDados({ fullName, password, confirmPassword });
-    if (erro) {
-      showAlert({ title: 'Erro', message: erro, type: 'error' });
-      return;
-    }
-
+  async function cadastrar(dados: RegistrationCredentials) {
     setLoading(true);
     try {
-      await criarConta({
-        papel: etapas.papel,
-        servicos: etapas.servicos,
-        fullName: fullName.trim(),
-        email: email.trim().toLowerCase(),
-        password,
+      const result = await signUp(dados.email.toLowerCase(), dados.password, etapas.papel, {
+        full_name: dados.fullName,
+        service_types: etapas.servicos,
       });
+      if (!result.success) throw new Error(result.error ?? 'Não foi possível criar a conta.');
       router.replace(ROUTES.TABS.ROOT);
     } catch (erro: unknown) {
-      showAlert(avisoDoErro(erro));
+      showAlert({
+        title: 'Erro no Cadastro',
+        message: userFacingAuthError(erro),
+        type: 'error',
+      });
     } finally {
       setLoading(false);
     }
@@ -176,38 +180,66 @@ export function RegisterScreen() {
           ) : null}
 
           {etapas.etapa === 'dados' ? (
-            <Group header="Dados pessoais" footer="A senha deve ter no mínimo 8 caracteres.">
-              <Input
-                icon="person"
-                value={fullName}
-                onChangeText={setFullName}
-                placeholder="Seu nome"
-                autoComplete="name"
+            <Group header="Dados pessoais" footer={PASSWORD_REQUIREMENTS_HINT}>
+              <Controller
+                control={control}
+                name="fullName"
+                render={({ field: { onChange, value } }) => (
+                  <Input
+                    icon="person"
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder="Seu nome"
+                    autoComplete="name"
+                    error={errors.fullName?.message}
+                  />
+                )}
               />
-              <Input
-                icon="mail"
-                value={email}
-                onChangeText={setEmail}
-                placeholder="seu@email.com"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
+              <Controller
+                control={control}
+                name="email"
+                render={({ field: { onChange, value } }) => (
+                  <Input
+                    icon="mail"
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder="seu@email.com"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    error={errors.email?.message}
+                  />
+                )}
               />
-              <Input
-                icon="lock-closed"
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Mínimo 8 caracteres"
-                senha
-                autoComplete="new-password"
+              <Controller
+                control={control}
+                name="password"
+                render={({ field: { onChange, value } }) => (
+                  <Input
+                    icon="lock-closed"
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder={PASSWORD_REQUIREMENTS_HINT}
+                    senha
+                    autoComplete="new-password"
+                    error={errors.password?.message}
+                  />
+                )}
               />
-              <Input
-                icon="lock-closed"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                placeholder="Digite a senha novamente"
-                senha
-                autoComplete="new-password"
+              <Controller
+                control={control}
+                name="confirmPassword"
+                render={({ field: { onChange, value } }) => (
+                  <Input
+                    icon="lock-closed"
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder="Digite a senha novamente"
+                    senha
+                    autoComplete="new-password"
+                    error={errors.confirmPassword?.message}
+                  />
+                )}
               />
             </Group>
           ) : null}
@@ -220,7 +252,12 @@ export function RegisterScreen() {
             )}
             <View className="flex-1">
               {etapas.ehUltima ? (
-                <Button label="Criar Conta" fullWidth isLoading={loading} onPress={cadastrar} />
+                <Button
+                  label="Criar Conta"
+                  fullWidth
+                  isLoading={loading}
+                  onPress={handleSubmit(cadastrar)}
+                />
               ) : (
                 <Button label="Continuar" fullWidth onPress={seguir} />
               )}
@@ -246,63 +283,4 @@ export function RegisterScreen() {
       </ScrollView>
     </ScreenLayout>
   );
-}
-
-/** Devolve o primeiro impedimento, ou `null` quando os dados servem. */
-function validarDados(dados: {
-  fullName: string;
-  password: string;
-  confirmPassword: string;
-}): string | null {
-  if (dados.fullName.trim().length < NOME_MINIMO) return 'Digite seu nome completo';
-  if (dados.password.length < SENHA_MINIMA) {
-    return `A senha deve ter no mínimo ${SENHA_MINIMA} caracteres`;
-  }
-  if (dados.password !== dados.confirmPassword) return 'As senhas não coincidem';
-  return null;
-}
-
-type DadosDoCadastro = {
-  papel: PapelNoCadastro;
-  servicos: ServiceType[];
-  fullName: string;
-  email: string;
-  password: string;
-};
-
-/**
- * Cada papel tem seu método no serviço, e não um só com um campo de tipo: é o
- * servidor que decide o que cada cadastro pode declarar. O `account_type` vindo
- * do cliente é validado no trigger `handle_new_user` — valor desconhecido cai
- * para `member` em vez de abortar (migration 0040).
- */
-async function criarConta(dados: DadosDoCadastro): Promise<void> {
-  const comum = {
-    email: dados.email,
-    password: dados.password,
-    full_name: dados.fullName,
-  };
-
-  const resposta =
-    dados.papel === 'specialist'
-      ? await authService.signUpSpecialist({ ...comum, service_types: dados.servicos })
-      : dados.papel === 'student'
-        ? await authService.signUpStudent(comum)
-        : await authService.signUpMember(comum);
-
-  if (resposta.error) throw resposta.error;
-  if (!resposta.data.user) throw new Error('Erro ao criar usuário');
-}
-
-function avisoDoErro(erro: unknown): Parameters<typeof showAlert>[0] {
-  const mensagem = erro instanceof Error ? erro.message : 'Erro desconhecido. Tente novamente.';
-
-  if (mensagem.toLowerCase().includes('already registered')) {
-    return {
-      title: 'E-mail já cadastrado',
-      message: 'Este e-mail já possui uma conta. Faça login.',
-      type: 'warning',
-    };
-  }
-  return { title: 'Erro no Cadastro', message: mensagem, type: 'error' };
 }

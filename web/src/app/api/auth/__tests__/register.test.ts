@@ -42,7 +42,7 @@ function request(body: Record<string, unknown>): Request {
 
 const VALID = {
   email: "novo@elevapro.local",
-  password: "senha-123456",
+  password: "Senha-123456",
   full_name: "Novo Especialista",
   service_types: ["personal_training", "nutrition_consulting"],
 };
@@ -86,6 +86,13 @@ describe("POST /api/auth/register", () => {
 
   it("exige os campos obrigatórios", async () => {
     const res = await POST(request({ ...VALID, service_types: [] }));
+
+    expect(res.status).toBe(400);
+    expect(createUser).not.toHaveBeenCalled();
+  });
+
+  it("recusa senha que não cumpre a política antes de criar a conta", async () => {
+    const res = await POST(request({ ...VALID, password: "senha-123456" }));
 
     expect(res.status).toBe(400);
     expect(createUser).not.toHaveBeenCalled();

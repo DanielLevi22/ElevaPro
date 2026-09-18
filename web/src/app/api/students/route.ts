@@ -1,3 +1,4 @@
+import { passwordValidationError, userFacingAuthError } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeSpecialist } from "@/lib/api-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
@@ -18,6 +19,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const passwordError = passwordValidationError(password);
+    if (passwordError) {
+      return NextResponse.json({ error: passwordError }, { status: 400 });
+    }
+
     // Create auth user
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -30,7 +36,7 @@ export async function POST(request: NextRequest) {
       const message =
         createError.message.includes("already registered") || createError.code === "email_exists"
           ? "Email já cadastrado"
-          : createError.message;
+          : userFacingAuthError(createError.message);
       return NextResponse.json({ error: message }, { status: 422 });
     }
 
