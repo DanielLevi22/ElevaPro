@@ -1,13 +1,14 @@
-import { passwordValidationError, userFacingAuthError } from "@elevapro/shared";
+import { passwordValidationError } from "@elevapro/shared";
 import { NextResponse } from "next/server";
 import {
   guardPublicRegistration,
   readPublicRegistrationJson,
 } from "@/lib/public-registration-guard";
-import { recordSecurityAuditEvent } from "@/lib/security-audit";
-import { supabaseAdmin } from "@/lib/supabase-admin";
 import { attachTraceId } from "@/lib/trace";
-import { memberRegistrationRequestSchema } from "@/modules/auth/services";
+import {
+  memberRegistrationRequestSchema,
+  provisionMemberRegistration,
+} from "@/modules/auth/services";
 
 export async function POST(request: Request) {
   const guard = await guardPublicRegistration(request);
@@ -24,43 +25,17 @@ export async function POST(request: Request) {
       traceId,
     );
   }
-  const { email, password, full_name } = registration.data;
+  const { password } = registration.data;
   const passwordError = passwordValidationError(password);
   if (passwordError) {
     return attachTraceId(NextResponse.json({ error: passwordError }, { status: 400 }), traceId);
   }
 
-  const { data, error: authError } = await supabaseAdmin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { full_name, account_type: "member" },
-  });
-
-  if (authError) {
-    const msg =
-      authError.message.toLowerCase().includes("already registered") ||
-      authError.code === "email_exists"
-        ? "Este e-mail já possui uma conta."
-        : userFacingAuthError(authError.message);
-    return attachTraceId(NextResponse.json({ error: msg }, { status: 400 }), traceId);
-  }
-
-  if (!data.user) {
-    return attachTraceId(
-      NextResponse.json({ error: "Erro ao criar usuário." }, { status: 500 }),
-      traceId,
-    );
-  }
-
-  await recordSecurityAuditEvent({
-    eventType: "identity.registration.succeeded",
-    outcome: "succeeded",
-    actorId: data.user.id,
-    subjectId: data.user.id,
-    resourceType: "account",
+  const result = await provisionMemberRegistration(registration.data, traceId);
+  return attachTraceId(
+    NextResponse.json(result.ok ? { success: true } : { error: result.error }, {
+      status: result.ok ? 200 : result.status,
+    }),
     traceId,
-  });
-
-  return attachTraceId(NextResponse.json({ success: true }), traceId);
+  );
 }
