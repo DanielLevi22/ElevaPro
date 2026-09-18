@@ -11,9 +11,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * afirmada uma vez, e o `403` de "sem vínculo" é o caso que não pode regredir.
  */
 
-const authGetUser = vi.fn();
+const authGetClaims = vi.fn();
 vi.mock("@supabase/supabase-js", () => ({
-  createClient: () => ({ auth: { getUser: authGetUser } }),
+  createClient: () => ({ auth: { getClaims: authGetClaims } }),
 }));
 
 // Encadeamento do PostgREST: cada filtro devolve o builder, `maybeSingle` resolve.
@@ -38,8 +38,13 @@ vi.mock("@/lib/supabase-admin", () => ({
   supabaseAdmin: { from: (table: string) => mockFrom(table) },
 }));
 
-const { authorizeLinkedSpecialist, authorizeSpecialist, authorizeStudent, authorizeUser } =
-  await import("../api-auth");
+const {
+  authorizeLinkedSpecialist,
+  authorizeMfaSpecialist,
+  authorizeSpecialist,
+  authorizeStudent,
+  authorizeUser,
+} = await import("../api-auth");
 
 /** Uma requisição com o header que o helper lê — nada mais é usado. */
 function requestWith(authorization?: string): NextRequest {
@@ -52,7 +57,10 @@ const VALID = "Bearer token-valido";
 
 beforeEach(() => {
   vi.clearAllMocks();
-  authGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
+  authGetClaims.mockResolvedValue({
+    data: { claims: { sub: "user-1", aal: "aal1" } },
+    error: null,
+  });
   profileRow = { account_type: "specialist" };
   linkRow = { id: "link-1" };
 });
@@ -76,7 +84,7 @@ describe("authorizeUser", () => {
   });
 
   it("recusa token que o Supabase não reconhece", async () => {
-    authGetUser.mockResolvedValue({ data: { user: null } });
+    authGetClaims.mockResolvedValue({ data: { claims: null }, error: new Error("invalid") });
     const auth = await authorizeUser(requestWith(VALID));
     expect(auth.ok).toBe(false);
     if (!auth.ok) expect(auth.response.status).toBe(401);
@@ -92,9 +100,6 @@ describe("authorizeUser", () => {
   // O furo original: `account_type` saía de `user_metadata`, que o próprio
   // usuário reescreve com `updateUser`.
   it("lê o account_type de profiles, não do token", async () => {
-    authGetUser.mockResolvedValue({
-      data: { user: { id: "user-1", user_metadata: { account_type: "admin" } } },
-    });
     profileRow = { account_type: "member" };
 
     const auth = await authorizeUser(requestWith(VALID));
@@ -116,6 +121,27 @@ describe("authorizeSpecialist", () => {
     const auth = await authorizeSpecialist(requestWith(VALID));
     expect(auth.ok).toBe(false);
     if (!auth.ok) expect(auth.response.status).toBe(403);
+  });
+});
+
+describe("authorizeMfaSpecialist", () => {
+  // Art. 46: senha válida não basta para uma conta que acessa dados de alunos.
+  it("recusa especialista em aal1", async () => {
+    const auth = await authorizeMfaSpecialist(requestWith(VALID));
+
+    expect(auth.ok).toBe(false);
+    if (!auth.ok) expect(await auth.response.json()).toEqual({ error: "mfa_required" });
+  });
+
+  it("aceita especialista em aal2", async () => {
+    authGetClaims.mockResolvedValue({
+      data: { claims: { sub: "user-1", aal: "aal2" } },
+      error: null,
+    });
+
+    const auth = await authorizeMfaSpecialist(requestWith(VALID));
+
+    expect(auth.ok).toBe(true);
   });
 });
 

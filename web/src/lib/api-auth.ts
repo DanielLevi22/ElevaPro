@@ -1,6 +1,11 @@
 import { type AccountType, createHealthService } from "@elevapro/shared";
 import { createClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
+import {
+  type AuthenticatorAssuranceLevel,
+  assuranceLevelFromClaim,
+  hasSecondFactor,
+} from "./mfa/assurance";
 import { supabaseAdmin } from "./supabase-admin";
 import { clienteDoTitular } from "./supabase-titular";
 
@@ -30,6 +35,7 @@ import { clienteDoTitular } from "./supabase-titular";
 export interface Caller {
   id: string;
   accountType: AccountType;
+  assuranceLevel: AuthenticatorAssuranceLevel;
 }
 
 /**
@@ -71,8 +77,17 @@ export async function authenticatedUserId(request: NextRequest): Promise<string 
  * confiar nele deixa o chamador escolher o próprio papel.
  */
 export async function authorizeUser(request: NextRequest): Promise<AuthResult> {
-  const userId = await authenticatedUserId(request);
-  if (!userId) return deny(401, "Token inválido.");
+  const token = bearerToken(request);
+  if (!token) return deny(401, "Token ausente.");
+
+  const client = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+  );
+  const { data: claimsData, error: claimsError } = await client.auth.getClaims(token);
+  const claims = claimsData?.claims;
+  const userId = claims?.sub;
+  if (claimsError || typeof userId !== "string") return deny(401, "Token inválido.");
 
   const { data: profile } = await supabaseAdmin
     .from("profiles")
@@ -82,7 +97,22 @@ export async function authorizeUser(request: NextRequest): Promise<AuthResult> {
 
   if (!profile) return deny(403, "Perfil não encontrado.");
 
-  return { ok: true, caller: { id: userId, accountType: profile.account_type as AccountType } };
+  return {
+    ok: true,
+    caller: {
+      id: userId,
+      accountType: profile.account_type as AccountType,
+      assuranceLevel: assuranceLevelFromClaim(claims?.aal),
+    },
+  };
+}
+
+/** Especialista com segundo fator validado na sessão atual. */
+export async function authorizeMfaSpecialist(request: NextRequest): Promise<AuthResult> {
+  const auth = await authorizeSpecialist(request);
+  if (!auth.ok) return auth;
+  if (!hasSecondFactor(auth.caller.assuranceLevel)) return deny(403, "mfa_required");
+  return auth;
 }
 
 /** Token válido e conta de especialista. */
