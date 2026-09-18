@@ -3,6 +3,7 @@ export type { AccountRole, TotpChallenge } from "./services";
 export {
   beginTotpChallenge,
   hasCurrentMfaAssurance,
+  MfaSetupUnavailableError,
   registerAccount,
   verifyTotp,
 } from "./services";

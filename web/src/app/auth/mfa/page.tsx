@@ -3,7 +3,13 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { beginTotpChallenge, type TotpChallenge, useAuthStore, verifyTotp } from "@/modules/auth";
+import {
+  beginTotpChallenge,
+  MfaSetupUnavailableError,
+  type TotpChallenge,
+  useAuthStore,
+  verifyTotp,
+} from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
 
 export default function MfaPage() {
@@ -18,8 +24,12 @@ export default function MfaPage() {
     setError("");
     try {
       setChallenge(await beginTotpChallenge());
-    } catch {
-      setError("Não foi possível preparar seu autenticador. Tente novamente.");
+    } catch (error: unknown) {
+      setError(
+        error instanceof MfaSetupUnavailableError
+          ? error.message
+          : "Não foi possível preparar seu autenticador. Tente novamente.",
+      );
     } finally {
       setLoading(false);
     }
@@ -51,6 +61,9 @@ export default function MfaPage() {
           <h1 className="text-2xl font-bold text-foreground">Proteja sua conta</h1>
           <p className="text-sm text-muted-foreground">
             Use um aplicativo autenticador para concluir o acesso.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Se uma configuração anterior foi interrompida, gere um novo QR Code.
           </p>
         </header>
 

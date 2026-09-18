@@ -62,6 +62,13 @@ double_confirm_changes = false
 # Local: não exige confirmação de email
 enable_confirmations = false
 
+[auth.mfa]
+max_enrolled_factors = 2
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
 [edge_runtime]
 enabled = true
 
