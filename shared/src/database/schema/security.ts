@@ -1,14 +1,4 @@
-import {
-  bigint,
-  index,
-  integer,
-  pgSchema,
-  primaryKey,
-  text,
-  timestamp,
-  uuid,
-} from "drizzle-orm/pg-core";
-import { profiles } from "./auth";
+import { bigint, index, integer, pgSchema, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
 
 const privateSchema = pgSchema("private");
 
@@ -40,8 +30,8 @@ export const securityAuditEvents = privateSchema.table(
     occurred_at: timestamp("occurred_at", { withTimezone: true }).notNull().defaultNow(),
     event_type: text("event_type").notNull(),
     outcome: text("outcome").notNull(),
-    actor_id: uuid("actor_id").references(() => profiles.id, { onDelete: "set null" }),
-    subject_id: uuid("subject_id").references(() => profiles.id, { onDelete: "set null" }),
+    actor_hash: text("actor_hash"),
+    subject_hash: text("subject_hash"),
     resource_type: text("resource_type").notNull(),
     resource_id: text("resource_id").notNull(),
     origin: text("origin").notNull(),
@@ -50,8 +40,8 @@ export const securityAuditEvents = privateSchema.table(
   },
   (table) => [
     index("security_audit_events_occurred_at_idx").on(table.occurred_at),
-    index("security_audit_events_actor_id_idx").on(table.actor_id),
-    index("security_audit_events_subject_id_idx").on(table.subject_id),
+    index("security_audit_events_actor_hash_idx").on(table.actor_hash),
+    index("security_audit_events_subject_hash_idx").on(table.subject_hash),
     index("security_audit_events_expires_at_idx").on(table.expires_at),
   ],
 );
