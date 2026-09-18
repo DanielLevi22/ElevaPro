@@ -13,8 +13,6 @@
 --
 -- Uso: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/verify-rls.sql
 
-\set ON_ERROR_STOP on
-\timing off
 
 -- ── Estrutura ────────────────────────────────────────────────────────────────
 
@@ -1540,8 +1538,6 @@ END $$;
 
 ROLLBACK;
 
-\echo ''
-\echo 'RLS verificada neste banco. Nada foi gravado.'
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Escala: nenhuma avaliação física sem altura ou peso — Art. 6º, V
