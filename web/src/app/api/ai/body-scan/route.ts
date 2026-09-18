@@ -10,6 +10,7 @@ import {
 import { type NextRequest, NextResponse } from "next/server";
 import { rotaDeIA } from "@/lib/ai-route";
 import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
+import { logger } from "@/lib/logger";
 import { requestBodyLimits } from "@/lib/request-body-limit";
 import { clienteDoTitular } from "@/lib/supabase-titular";
 import { aiProviders } from "@/modules/ai/ai.config";
@@ -80,26 +81,6 @@ interface BodyScanPayload extends ModelPayload {
   persisted?: boolean;
   /** A linha gravada em `body_scans`. Ausente quando a gravação falhou. */
   scanId?: string;
-}
-
-/**
- * O que pode ir para o log de uma falha desta rota.
- *
- * Diagnóstico sem carga: nenhum caminho de erro daqui pode carregar valor
- * medido, e o objeto de erro do Postgrest carrega — `details` ecoa a linha
- * recusada, que aqui é o fact sheet inteiro.
- */
-function motivoDaFalha(error: unknown): { code?: string; message: string } {
-  if (typeof error === "object" && error !== null && "code" in error) {
-    const erro = error as { code?: unknown; message?: unknown };
-
-    return {
-      code: typeof erro.code === "string" ? erro.code : undefined,
-      message: typeof erro.message === "string" ? erro.message : "erro sem mensagem",
-    };
-  }
-
-  return { message: error instanceof Error ? error.message : "erro desconhecido" };
 }
 
 function buildSystemPrompt(
@@ -385,7 +366,7 @@ async function handlePost(request: NextRequest) {
       // que falhou, e a linha inteira é o fact sheet — "desnível de ombro de
       // 1,8 cm" num log é inferência sobre saúde de titular identificado
       // (Art. 6°, VIII). Quem conserta precisa de qual constraint, não de quanto.
-      console.error("[body-scan] falha ao gravar em body_scans", motivoDaFalha(error));
+      logger.error("ai.body_scan.persist_failed", { error });
       return { ...result, persisted: false };
     }
 
@@ -461,7 +442,7 @@ async function handlePost(request: NextRequest) {
 
         emitir({ t: "ok", payload: await finalizar(modelResult) });
       } catch (error) {
-        console.error("[body-scan] chamada ao modelo falhou", motivoDaFalha(error));
+        logger.error("ai.body_scan.model_failed", { error });
         emitir({ t: "erro", codigo: "ai_unavailable" });
       } finally {
         controller.close();

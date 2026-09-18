@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { authorizeUser } from "@/lib/api-auth";
+import { logger } from "@/lib/logger";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 /**
@@ -51,13 +52,13 @@ export async function POST(request: NextRequest) {
       });
 
     if (error) {
-      console.error("[POST /api/auth/ensure-profile] specialist_services:", error);
+      logger.error("auth.ensure_profile.services_failed", { error });
       return NextResponse.json({ error: "Falha ao registrar os serviços." }, { status: 500 });
     }
 
     return NextResponse.json({ ok: true, services: links.length });
   } catch (error) {
-    console.error("[POST /api/auth/ensure-profile]", error);
+    logger.error("auth.ensure_profile.failed", { error });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

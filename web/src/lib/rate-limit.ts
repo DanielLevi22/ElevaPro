@@ -16,10 +16,17 @@ const POLICIES = {
   registration: { limit: 5, windowSeconds: 3600, retentionSeconds: 86400 },
 } as const satisfies Record<string, RateLimitPolicy>;
 
+// O código chega ao log: sem ele, a rota responde 503 e o log só diz "Error".
+class RateLimitKeyError extends Error {
+  readonly code = "rate_limit_key_invalid";
+}
+
 function rateLimitKey(env: NodeJS.ProcessEnv = process.env): string {
   const key = env.RATE_LIMIT_HMAC_KEY?.trim();
   if (!key || key.length < 32 || key.includes("PREENCHER")) {
-    throw new Error("RATE_LIMIT_HMAC_KEY must contain at least 32 characters");
+    throw new RateLimitKeyError(
+      `RATE_LIMIT_HMAC_KEY must be a secret of at least 32 characters; received ${key?.length ?? 0} characters`,
+    );
   }
   return key;
 }
@@ -103,7 +110,7 @@ export async function enforceRateLimit(
   } catch (error) {
     logger.error("rate_limit.unavailable", {
       policy: policyName,
-      error: error instanceof Error ? error.name : "unknown",
+      error,
       trace_id: traceId,
     });
     return NextResponse.json({ error: "rate_limit_unavailable" }, { status: 503 });

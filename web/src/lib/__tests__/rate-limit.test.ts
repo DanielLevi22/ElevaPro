@@ -103,4 +103,20 @@ describe("rate limit", () => {
     expect(response?.status).toBe(503);
     expect(rpc).not.toHaveBeenCalled();
   });
+
+  it("falha fechada sem a chave HMAC e diz no log qual é a causa", async () => {
+    delete process.env.RATE_LIMIT_HMAC_KEY;
+    const output = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const response = await enforceRateLimit(
+      new Request("https://elevapro.test/api/ai/coach", {
+        headers: { "x-vercel-id": "gru1::abc", "x-vercel-forwarded-for": "203.0.113.7" },
+      }),
+      "ai",
+    );
+
+    expect(response?.status).toBe(503);
+    expect(rpc).not.toHaveBeenCalled();
+    expect(String(output.mock.calls[0]?.[0])).toContain("rate_limit_key_invalid");
+  });
 });

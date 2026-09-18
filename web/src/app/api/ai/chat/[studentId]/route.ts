@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { rotaDeIA } from "@/lib/ai-route";
 import { authorizeLinkedSpecialist } from "@/lib/api-auth";
+import { logger } from "@/lib/logger";
 import { formatBodyScanIndex, queryBodyScan } from "@/modules/ai/services/bodyScanContext";
 import {
   getOrCreateSession,
@@ -278,7 +279,7 @@ async function handlePost(
         // O log registra a sessão, nunca o contexto: "não treina há 5 dias" ou
         // uma lesão em texto claro é inferência sobre saúde de titular
         // identificado (LGPD_COMPLIANCE, seção 4).
-        console.error("[POST /api/ai/chat] sessão do especialista", specialistId, err);
+        logger.error("ai.chat.stream_failed", { error: err });
         // O que o modelo chegou a dizer antes de quebrar fica na conversa,
         // marcado como incompleto. Descartar deixava a pergunta salva com
         // silêncio embaixo, e o turno seguinte lia esse silêncio como "não

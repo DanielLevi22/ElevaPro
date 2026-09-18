@@ -5,6 +5,7 @@ import {
 } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeLinkedSpecialist } from "@/lib/api-auth";
+import { logger } from "@/lib/logger";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -91,7 +92,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[PATCH /api/students/:id]", error);
+    logger.error("students.update_failed", { error });
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
   }
 }
@@ -123,7 +124,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[DELETE /api/students/:id]", error);
+    logger.error("students.delete_failed", { error });
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
   }
 }

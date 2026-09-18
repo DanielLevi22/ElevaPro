@@ -1,6 +1,7 @@
 import { passwordValidationError, userFacingAuthError } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeSpecialist } from "@/lib/api-auth";
+import { logger } from "@/lib/logger";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(request: NextRequest) {
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (linkError) {
-      console.error("[POST /api/students] student_specialists upsert error:", linkError);
+      logger.error("students.link_failed", { error: linkError });
       return NextResponse.json(
         { error: "Erro ao vincular aluno ao especialista" },
         { status: 500 },
@@ -90,7 +91,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, student_id: studentId }, { status: 201 });
   } catch (error) {
-    console.error("[POST /api/students]", error);
+    logger.error("students.create_failed", { error });
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
   }
 }

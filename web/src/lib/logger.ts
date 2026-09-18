@@ -1,18 +1,41 @@
 type LogLevel = "error" | "info" | "warn";
 type LogAttributes = Record<string, unknown>;
 
+// Medidas e métricas entram pelo nome: o valor de saúde é um número qualquer,
+// e nada no número em si o distingue de uma contagem técnica.
 const SENSITIVE_KEY =
-  /authorization|cookie|token|secret|password|email|name|phone|body|content|prompt|message|health|anamnesis|assessment|diet|meal|workout|session/i;
+  /authorization|cookie|token|secret|password|email|name|phone|body|content|prompt|message|details|hint|health|anamnesis|assessment|diet|meal|workout|session|weight|height|bmi|waist|circumference|measure|heart|pulse|sleep|readiness|value/i;
+const EMAIL = /[^\s@()<>"',;]+@[^\s@()<>"',;]+\.[^\s@()<>"',;]+/g;
 const REDACTED = "[REDACTED]";
 const CIRCULAR = "[CIRCULAR]";
 
+type ErrorLike = { name?: unknown; code?: unknown };
+
+// O PostgrestError não herda de Error, mas carrega message/code/details.
+function isErrorLike(value: object): value is ErrorLike {
+  return value instanceof Error || ("message" in value && "code" in value);
+}
+
+// Do erro fica só o que classifica a falha: message, details e hint citam a
+// linha que falhou, com e-mail e valores dentro.
+function summarizeError(error: ErrorLike): Record<string, string> {
+  const summary: Record<string, string> = {};
+  if (typeof error.name === "string") summary.name = error.name;
+  if (typeof error.code === "string") summary.code = error.code;
+  return summary;
+}
+
+function redactScalar(value: unknown): unknown {
+  if (value === null || typeof value === "boolean" || typeof value === "number") return value;
+  if (typeof value === "string") return value.slice(0, 256).replace(EMAIL, REDACTED);
+  if (typeof value === "bigint") return value.toString();
+  return String(value);
+}
+
 function redactValue(value: unknown, key: string | undefined, seen: WeakSet<object>): unknown {
   if (key && SENSITIVE_KEY.test(key)) return REDACTED;
-  if (value instanceof Error) return { name: value.name };
-  if (value === null || typeof value === "boolean" || typeof value === "number") return value;
-  if (typeof value === "string") return value.slice(0, 256);
-  if (typeof value === "bigint") return value.toString();
-  if (typeof value !== "object") return String(value);
+  if (typeof value !== "object" || value === null) return redactScalar(value);
+  if (isErrorLike(value)) return summarizeError(value);
   if (seen.has(value)) return CIRCULAR;
 
   seen.add(value);

@@ -2,6 +2,7 @@ import type { Database } from "@elevapro/shared";
 import { PHYSICAL_ASSESSMENT_COLUMNS } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeLinkedSpecialist } from "@/lib/api-auth";
+import { logger } from "@/lib/logger";
 import { recordSecurityAuditEvent } from "@/lib/security-audit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { traceIdForRequest } from "@/lib/trace";
@@ -103,7 +104,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ assessments: data ?? [] });
   } catch (error) {
-    console.error("[GET /api/students/:id/assessments]", error);
+    logger.error("students.assessments.read_failed", { error });
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
   }
 }
@@ -139,7 +140,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     return NextResponse.json({ assessment: data }, { status: 201 });
   } catch (error) {
-    console.error("[POST /api/students/:id/assessments]", error);
+    logger.error("students.assessments.create_failed", { error });
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
   }
 }
