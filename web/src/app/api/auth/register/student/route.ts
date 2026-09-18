@@ -1,28 +1,37 @@
 import { passwordValidationError, userFacingAuthError } from "@elevapro/shared";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { enforceRateLimit } from "@/lib/rate-limit";
-import { enforceRequestBodyLimit, requestBodyLimits } from "@/lib/request-body-limit";
+import {
+  guardPublicRegistration,
+  readPublicRegistrationJson,
+} from "@/lib/public-registration-guard";
 import { recordSecurityAuditEvent } from "@/lib/security-audit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { attachTraceId, traceIdForRequest } from "@/lib/trace";
+import { attachTraceId } from "@/lib/trace";
 
 export async function POST(request: Request) {
-  const traceId = traceIdForRequest(request);
-  const limited = await enforceRateLimit(request, "registration", traceId);
-  if (limited) return attachTraceId(limited, traceId);
+  const guard = await guardPublicRegistration(request);
+  if (guard.response) return guard.response;
+  const { traceId } = guard;
 
-  const oversized = await enforceRequestBodyLimit(request, requestBodyLimits.publicRegistration);
-  if (oversized) return attachTraceId(oversized, traceId);
+  const parsed = await readPublicRegistrationJson(request, traceId);
+  if (parsed.response) return parsed.response;
 
-  const { email, password, full_name } = await request.json();
+  const { email, password, full_name } = parsed.body as {
+    email?: string;
+    full_name?: string;
+    password?: string;
+  };
 
   if (!email || !password || !full_name) {
-    return NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 });
+    return attachTraceId(
+      NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 }),
+      traceId,
+    );
   }
   const passwordError = passwordValidationError(password);
   if (passwordError) {
-    return NextResponse.json({ error: passwordError }, { status: 400 });
+    return attachTraceId(NextResponse.json({ error: passwordError }, { status: 400 }), traceId);
   }
 
   const { data, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -38,11 +47,14 @@ export async function POST(request: Request) {
       authError.code === "email_exists"
         ? "Este e-mail já possui uma conta."
         : userFacingAuthError(authError.message);
-    return NextResponse.json({ error: msg }, { status: 400 });
+    return attachTraceId(NextResponse.json({ error: msg }, { status: 400 }), traceId);
   }
 
   if (!data.user) {
-    return NextResponse.json({ error: "Erro ao criar usuário." }, { status: 500 });
+    return attachTraceId(
+      NextResponse.json({ error: "Erro ao criar usuário." }, { status: 500 }),
+      traceId,
+    );
   }
 
   const { error: profileError } = await supabaseAdmin.from("profiles" as never).insert({

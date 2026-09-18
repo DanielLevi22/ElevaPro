@@ -54,7 +54,7 @@ vi.mock("@/lib/api-auth", () => ({
 
 /** O invólucro só confere ambiente; aqui ele não é o alvo. */
 vi.mock("@/lib/ai-route", () => ({
-  rotaDeIA: (handler: unknown) => handler,
+  withAiRoute: (handler: unknown) => handler,
 }));
 
 vi.mock("@/lib/supabase-admin", () => ({
@@ -75,7 +75,7 @@ vi.mock("@/lib/supabase-admin", () => ({
   },
 }));
 
-/** O `rotaDeIA` entrega `(request, context)`; sem o segundo, o tipo não fecha. */
+/** O `withAiRoute` entrega `(request, context)`; sem o segundo, o tipo não fecha. */
 const contexto = { params: Promise.resolve({}) };
 
 function pedido(corpo: unknown) {

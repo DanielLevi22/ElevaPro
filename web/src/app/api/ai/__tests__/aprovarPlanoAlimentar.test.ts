@@ -39,7 +39,7 @@ vi.mock("@/lib/api-auth", () => ({
   }),
 }));
 
-vi.mock("@/lib/ai-route", () => ({ rotaDeIA: (handler: unknown) => handler }));
+vi.mock("@/lib/ai-route", () => ({ withAiRoute: (handler: unknown) => handler }));
 
 vi.mock("@/modules/ai/services/chatService", () => ({
   getOrCreateSession: async () => "sessao-recente",

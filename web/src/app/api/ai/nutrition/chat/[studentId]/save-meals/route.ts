@@ -1,4 +1,4 @@
-import { rotaDeIA } from "@/lib/ai-route";
+import { withAiRoute } from "@/lib/ai-route";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { foodIdsByName } from "@/modules/ai/services/foodCatalog";
 import { acessoDoEspecialista, criarRotaDeAprovacao } from "@/modules/ai/services/rotaDeAprovacao";
@@ -19,7 +19,7 @@ const nomesDosAlimentos = (proposta: DietMealsProposal): string[] =>
  * gravação é abortada inteira: refeição pela metade é pior que refeição
  * nenhuma, porque o especialista não tem como saber o que ficou de fora.
  */
-export const POST = rotaDeIA(
+export const POST = withAiRoute(
   criarRotaDeAprovacao<DietMealsProposal, { id: string; name: string }[]>({
     rotulo: "POST save-meals",
     chave: "pendingDietMeals",

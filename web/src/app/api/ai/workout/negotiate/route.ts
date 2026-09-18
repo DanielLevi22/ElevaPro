@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { rotaDeIA } from "@/lib/ai-route";
+import { withAiRoute } from "@/lib/ai-route";
 import { authorizeUser } from "@/lib/api-auth";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { responderEmUmTurno } from "@/modules/ai/providers/turnoUnico";
@@ -106,4 +106,4 @@ Responda APENAS com JSON válido:
   return NextResponse.json(result);
 }
 
-export const POST = rotaDeIA(handlePost);
+export const POST = withAiRoute(handlePost);

@@ -1,6 +1,6 @@
 import { lerPrecoEstimado } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
-import { rotaDeIA } from "@/lib/ai-route";
+import { withAiRoute } from "@/lib/ai-route";
 import { authorizeUser } from "@/lib/api-auth";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { responderEmUmTurno } from "@/modules/ai/providers/turnoUnico";
@@ -82,4 +82,4 @@ const handler = async (request: NextRequest) => {
   return NextResponse.json({ response: texto || "Não consegui gerar uma resposta." });
 };
 
-export const POST = rotaDeIA(handler);
+export const POST = withAiRoute(handler);

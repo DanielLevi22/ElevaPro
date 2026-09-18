@@ -47,7 +47,7 @@ vi.mock("@/lib/api-auth", () => ({
 }));
 
 /** O invólucro só confere ambiente; aqui ele não é o alvo. */
-vi.mock("@/lib/ai-route", () => ({ rotaDeIA: (handler: unknown) => handler }));
+vi.mock("@/lib/ai-route", () => ({ withAiRoute: (handler: unknown) => handler }));
 
 vi.mock("@/lib/supabase-admin", () => ({
   supabaseAdmin: {

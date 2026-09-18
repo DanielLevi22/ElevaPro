@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { rotaDeIA } from "@/lib/ai-route";
+import { withAiRoute } from "@/lib/ai-route";
 import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { StudentCoachOrchestrator } from "@/modules/ai/orchestrators/student-coach.orchestrator";
@@ -129,4 +129,4 @@ async function handlePost(request: NextRequest) {
   });
 }
 
-export const POST = rotaDeIA(handlePost);
+export const POST = withAiRoute(handlePost);

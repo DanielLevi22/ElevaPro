@@ -1,6 +1,6 @@
 import { lerAnaliseDoPrato } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
-import { rotaDeIA } from "@/lib/ai-route";
+import { withAiRoute } from "@/lib/ai-route";
 import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
 import { requestBodyLimits } from "@/lib/request-body-limit";
 import { aiProviders } from "@/modules/ai/ai.config";
@@ -67,4 +67,4 @@ async function handlePost(request: NextRequest) {
   return NextResponse.json(analise);
 }
 
-export const POST = rotaDeIA(handlePost, { maximumBodyBytes: requestBodyLimits.image });
+export const POST = withAiRoute(handlePost, { maximumBodyBytes: requestBodyLimits.image });

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ToolCallHandler } from "@/modules/ai/orchestrators/base.orchestrator";
 import type { SseEvent } from "@/modules/ai/types";
 
-vi.mock("@/lib/ai-route", () => ({ rotaDeIA: (handler: unknown) => handler }));
+vi.mock("@/lib/ai-route", () => ({ withAiRoute: (handler: unknown) => handler }));
 
 /**
  * O que a proposta de periodização deixa no servidor.

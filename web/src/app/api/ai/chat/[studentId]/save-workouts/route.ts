@@ -1,4 +1,4 @@
-import { rotaDeIA } from "@/lib/ai-route";
+import { withAiRoute } from "@/lib/ai-route";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import {
   acessoDoEspecialista,
@@ -99,7 +99,7 @@ async function saveExercises(
  * que reemitisse tudo num segundo turno daria a uma proposta de 4 treinos × 6
  * exercícios espaço de sobra para divergir do que foi aprovado.
  */
-export const POST = rotaDeIA(
+export const POST = withAiRoute(
   criarRotaDeAprovacao<BulkWorkoutProposal, { id: string; title: string }[]>({
     rotulo: "POST save-workouts",
     chave: "pendingWorkoutProposal",

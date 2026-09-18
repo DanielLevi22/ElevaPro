@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { rotaDeIA } from "@/lib/ai-route";
+import { withAiRoute } from "@/lib/ai-route";
 import { authorizeLinkedSpecialist } from "@/lib/api-auth";
 import { logger } from "@/lib/logger";
 import { aiProviders } from "@/modules/ai/ai.config";
@@ -282,5 +282,5 @@ async function handleGet(
   });
 }
 
-export const POST = rotaDeIA(handlePost);
-export const GET = rotaDeIA(handleGet);
+export const POST = withAiRoute(handlePost);
+export const GET = withAiRoute(handleGet);

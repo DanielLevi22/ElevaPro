@@ -8,7 +8,7 @@ import {
   type VereditosDaCaptura,
 } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
-import { rotaDeIA } from "@/lib/ai-route";
+import { withAiRoute } from "@/lib/ai-route";
 import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
 import { logger } from "@/lib/logger";
 import { requestBodyLimits } from "@/lib/request-body-limit";
@@ -461,4 +461,4 @@ async function handlePost(request: NextRequest) {
   });
 }
 
-export const POST = rotaDeIA(handlePost, { maximumBodyBytes: requestBodyLimits.image });
+export const POST = withAiRoute(handlePost, { maximumBodyBytes: requestBodyLimits.image });

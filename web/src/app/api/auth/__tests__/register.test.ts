@@ -119,4 +119,18 @@ describe("POST /api/auth/register", () => {
     expect(res.status).toBe(413);
     expect(createUser).not.toHaveBeenCalled();
   });
+
+  it("responde JSON com request id quando o corpo não é válido", async () => {
+    const response = await POST(
+      new Request("https://elevapro.test/api/auth/register", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: "{",
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(response.headers.get("X-Request-Id")).toMatch(/^[0-9a-f]{32}$/);
+    await expect(response.json()).resolves.toEqual({ error: "invalid_request_body" });
+  });
 });

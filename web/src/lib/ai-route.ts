@@ -44,9 +44,9 @@ type AiRouteOptions = {
  * Aplica as proteções de borda comuns antes de executar uma rota de IA.
  *
  * @example
- * export const POST = rotaDeIA((request) => responder(request));
+ * export const POST = withAiRoute((request) => responder(request));
  */
-export function rotaDeIA<Ctx>(
+export function withAiRoute<Ctx>(
   handler: Handler<Ctx>,
   options: AiRouteOptions = {},
 ): WrappedHandler<Ctx> {

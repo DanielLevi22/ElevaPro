@@ -1,4 +1,4 @@
-import { rotaDeIA } from "@/lib/ai-route";
+import { withAiRoute } from "@/lib/ai-route";
 import { savePeriodization } from "@/modules/ai/services/chatService";
 import {
   acessoDoEspecialista,
@@ -21,7 +21,7 @@ export const maxDuration = 60;
  * novo para reconstruí-los, a rota respondia "aguardando aprovação", e ele
  * pedia que se aprovasse outra vez. Sem fim.
  */
-export const POST = rotaDeIA(
+export const POST = withAiRoute(
   criarRotaDeAprovacao<PeriodizationProposal, { id: string }>({
     rotulo: "POST save-periodization",
     chave: "pendingPeriodization",

@@ -1,21 +1,28 @@
 import { passwordValidationError, userFacingAuthError } from "@elevapro/shared";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { enforceRateLimit } from "@/lib/rate-limit";
-import { enforceRequestBodyLimit, requestBodyLimits } from "@/lib/request-body-limit";
+import {
+  guardPublicRegistration,
+  readPublicRegistrationJson,
+} from "@/lib/public-registration-guard";
 import { recordSecurityAuditEvent } from "@/lib/security-audit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { attachTraceId, traceIdForRequest } from "@/lib/trace";
+import { attachTraceId } from "@/lib/trace";
 
 export async function POST(request: Request) {
-  const traceId = traceIdForRequest(request);
-  const limited = await enforceRateLimit(request, "registration", traceId);
-  if (limited) return attachTraceId(limited, traceId);
+  const guard = await guardPublicRegistration(request);
+  if (guard.response) return guard.response;
+  const { traceId } = guard;
 
-  const oversized = await enforceRequestBodyLimit(request, requestBodyLimits.publicRegistration);
-  if (oversized) return attachTraceId(oversized, traceId);
+  const parsed = await readPublicRegistrationJson(request, traceId);
+  if (parsed.response) return parsed.response;
 
-  const { email, password, full_name, service_types } = await request.json();
+  const { email, password, full_name, service_types } = parsed.body as {
+    email?: string;
+    full_name?: string;
+    password?: string;
+    service_types?: string[];
+  };
 
   if (!email || !password || !full_name || !service_types?.length) {
     return attachTraceId(

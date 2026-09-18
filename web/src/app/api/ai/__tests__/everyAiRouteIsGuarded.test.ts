@@ -13,14 +13,14 @@ function routeFiles(dir: string): string[] {
 }
 
 // Rota de IA gasta a conta da Anthropic e recebe corpo arbitrário. O limite de
-// corpo e o rate limit durável vivem no rotaDeIA; duas rotas de aprovação já
+// corpo e o rate limit durável vivem no withAiRoute; duas rotas de aprovação já
 // nasceram fora dele sem ninguém notar. Issue #322.
 describe("rotas de IA", () => {
   it("nenhuma rota de IA exporta handler sem limite de corpo e rate limit", () => {
     const unguarded = routeFiles(AI_ROUTES_DIR)
-      .filter((file) => !readFileSync(file, "utf8").includes("rotaDeIA("))
+      .filter((file) => !readFileSync(file, "utf8").includes("withAiRoute("))
       .map((file) => relative(AI_ROUTES_DIR, file));
 
-    expect(unguarded, "ROTA SEM LIMITE: handler de IA fora do rotaDeIA").toEqual([]);
+    expect(unguarded, "ROTA SEM LIMITE: handler de IA fora do withAiRoute").toEqual([]);
   });
 });

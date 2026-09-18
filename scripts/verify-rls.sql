@@ -217,8 +217,7 @@ BEGIN
 
   IF EXISTS (
     SELECT 1 FROM private.security_audit_events
-    WHERE resource_type <> 'specialist_student_link'
-      AND resource_id ~* '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+    WHERE resource_id ~* '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
   ) THEN
     RAISE EXCEPTION 'UUID EM CLARO: há evento na trilha com UUID de pessoa no resource_id';
   END IF;
@@ -454,7 +453,7 @@ BEGIN
      AND actor_hash = private.audit_principal_hash(espec)
      AND subject_hash = private.audit_principal_hash(aluno_a)
      AND resource_type = 'specialist_student_link'
-     AND resource_id = vinculo_id::text;
+     AND resource_id = private.audit_principal_hash(vinculo_id);
   IF eventos_auditados <> 1 THEN
     RAISE EXCEPTION 'AUDITORIA AUSENTE: criação do vínculo gerou % eventos, esperado 1', eventos_auditados;
   END IF;
@@ -513,7 +512,7 @@ BEGIN
      AND actor_hash = private.audit_principal_hash(espec)
      AND subject_hash = private.audit_principal_hash(aluno_a)
      AND resource_type = 'specialist_student_link'
-     AND resource_id = vinculo_id::text;
+     AND resource_id = private.audit_principal_hash(vinculo_id);
   IF eventos_auditados <> 1 THEN
     RAISE EXCEPTION 'AUDITORIA AUSENTE: encerramento do vínculo gerou % eventos, esperado 1', eventos_auditados;
   END IF;

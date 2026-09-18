@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { rotaDeIA } from "@/lib/ai-route";
+import { withAiRoute } from "@/lib/ai-route";
 import { authorizeLinkedSpecialist } from "@/lib/api-auth";
 import {
   archiveSession,
@@ -95,6 +95,6 @@ async function handlePatch(
   return NextResponse.json({ success: true });
 }
 
-export const GET = rotaDeIA(handleGet);
-export const POST = rotaDeIA(handlePost);
-export const PATCH = rotaDeIA(handlePatch);
+export const GET = withAiRoute(handleGet);
+export const POST = withAiRoute(handlePost);
+export const PATCH = withAiRoute(handlePatch);

@@ -1,6 +1,6 @@
 import { createHealthService } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
-import { rotaDeIA } from "@/lib/ai-route";
+import { withAiRoute } from "@/lib/ai-route";
 import { authorizeStudent } from "@/lib/api-auth";
 import { clienteDoTitular } from "@/lib/supabase-titular";
 import { decideScanEligibility } from "@/modules/ai/services/escala";
@@ -55,4 +55,4 @@ async function handleGet(request: NextRequest) {
   return NextResponse.json(decideScanEligibility({ temConsentimento: true, ...loaded.sources }));
 }
 
-export const GET = rotaDeIA(handleGet);
+export const GET = withAiRoute(handleGet);

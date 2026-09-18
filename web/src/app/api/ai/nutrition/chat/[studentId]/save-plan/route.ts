@@ -1,4 +1,4 @@
-import { rotaDeIA } from "@/lib/ai-route";
+import { withAiRoute } from "@/lib/ai-route";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import {
   acessoDoEspecialista,
@@ -24,7 +24,7 @@ function somaSemanas(isoDate: string, weeks: number): string {
  * Salva a cópia guardada, não o que o modelo reemitir — é o que garante que o
  * gravado é idêntico ao que o especialista aprovou olhando o cartão.
  */
-export const POST = rotaDeIA(
+export const POST = withAiRoute(
   criarRotaDeAprovacao<DietPlanProposal, { id: string }>({
     rotulo: "POST save-plan",
     chave: "pendingDietPlan",

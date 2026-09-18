@@ -1,4 +1,4 @@
-import { rotaDeIA } from "@/lib/ai-route";
+import { withAiRoute } from "@/lib/ai-route";
 import { acessoDoAluno, criarRotaDeAprovacao } from "@/modules/ai/services/rotaDeAprovacao";
 import { saveStudentCoachPlan } from "@/modules/ai/services/studentCoachService";
 import type { PlanProposalData } from "@/modules/ai/types";
@@ -24,7 +24,7 @@ export const maxDuration = 60;
  * Agora quem grava é a rota, pelo mesmo caminho dos outros três fluxos:
  * reivindicação atômica, e desfazer se a gravação falhar no meio.
  */
-export const POST = rotaDeIA(
+export const POST = withAiRoute(
   criarRotaDeAprovacao<PlanProposalData, { id: string }>({
     rotulo: "POST student save-plan",
     chave: "pendingStudentPlan",

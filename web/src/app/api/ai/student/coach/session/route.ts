@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { rotaDeIA } from "@/lib/ai-route";
+import { withAiRoute } from "@/lib/ai-route";
 import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
 import { getAiReadinessScore } from "@/modules/ai/services/aiReadiness";
 import { getSessionState } from "@/modules/ai/services/chatService";
@@ -52,4 +52,4 @@ const handler = async (request: NextRequest) => {
   });
 };
 
-export const GET = rotaDeIA(handler);
+export const GET = withAiRoute(handler);

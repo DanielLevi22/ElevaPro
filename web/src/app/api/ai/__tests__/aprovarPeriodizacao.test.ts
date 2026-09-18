@@ -31,7 +31,7 @@ let falharAoGravar: boolean;
 /** Os ids que o desfazer mandou apagar. */
 let apagados: string[];
 
-vi.mock("@/lib/ai-route", () => ({ rotaDeIA: (handler: unknown) => handler }));
+vi.mock("@/lib/ai-route", () => ({ withAiRoute: (handler: unknown) => handler }));
 
 vi.mock("@/lib/api-auth", () => ({
   authorizeLinkedSpecialist: async () => ({
