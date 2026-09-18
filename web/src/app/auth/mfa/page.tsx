@@ -59,7 +59,8 @@ export default function MfaPage() {
         <header className="space-y-2 text-center">
           <h1 className="text-2xl font-bold text-foreground">Proteja sua conta</h1>
           <p className="text-sm text-muted-foreground">
-            Use um aplicativo autenticador para concluir o acesso.
+            Use um aplicativo autenticador, como Google Authenticator, Microsoft Authenticator ou
+            Authy, para concluir o acesso.
           </p>
           <p className="text-xs text-muted-foreground">
             Se uma configuração anterior foi interrompida, gere um novo QR Code.
@@ -93,6 +94,12 @@ export default function MfaPage() {
                 ? "Escaneie o QR Code no seu aplicativo autenticador e informe o código gerado."
                 : "Informe o código gerado no seu aplicativo autenticador."}
             </p>
+            {challenge.qrCode ? (
+              <p className="text-center text-xs text-muted-foreground">
+                No aplicativo, toque em adicionar conta e selecione escanear QR Code. Depois, digite
+                aqui o código de seis dígitos exibido por ele.
+              </p>
+            ) : null}
             {challenge.secret ? (
               <details className="rounded-lg border border-white/10 bg-white/5 p-3 text-left">
                 <summary className="cursor-pointer text-sm font-medium text-foreground">

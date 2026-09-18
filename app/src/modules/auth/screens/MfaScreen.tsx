@@ -87,7 +87,7 @@ export function MfaScreen() {
           <View className="items-center gap-3 rounded-3xl bg-card p-5">
             <Text className="text-center text-corpo text-muted-foreground">
               Não consegue escanear? No autenticador, escolha inserir chave de configuração e use a
-              chave abaixo.
+              chave abaixo. Não a compartilhe com ninguém.
             </Text>
             <Button
               fullWidth
