@@ -34,10 +34,11 @@ vi.mock("@/lib/rate-limit", () => ({ enforceRateLimit }));
 vi.mock("@/lib/security-audit", () => ({ recordSecurityAuditEvent }));
 
 function request(body: Record<string, unknown>): Request {
-  return {
-    headers: new Headers(),
-    json: async () => body,
-  } as unknown as Request;
+  return new Request("https://elevapro.test/api/auth/register", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
 }
 
 const VALID = {
@@ -108,5 +109,14 @@ describe("POST /api/auth/register", () => {
 
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: "Este e-mail já possui uma conta." });
+  });
+
+  // Protege a borda que recebe senha: payload enorme nunca chega ao provedor
+  // de identidade nem vira conteúdo de log. LGPD, art. 46.
+  it("recusa payload de cadastro acima do limite antes de criar a conta", async () => {
+    const res = await POST(request({ ...VALID, ignored: "a".repeat(40_000) }));
+
+    expect(res.status).toBe(413);
+    expect(createUser).not.toHaveBeenCalled();
   });
 });

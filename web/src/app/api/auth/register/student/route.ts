@@ -2,6 +2,7 @@ import { passwordValidationError, userFacingAuthError } from "@elevapro/shared";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { enforceRateLimit } from "@/lib/rate-limit";
+import { enforceRequestBodyLimit, requestBodyLimits } from "@/lib/request-body-limit";
 import { recordSecurityAuditEvent } from "@/lib/security-audit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { attachTraceId, traceIdForRequest } from "@/lib/trace";
@@ -10,6 +11,9 @@ export async function POST(request: Request) {
   const traceId = traceIdForRequest(request);
   const limited = await enforceRateLimit(request, "registration", traceId);
   if (limited) return attachTraceId(limited, traceId);
+
+  const oversized = await enforceRequestBodyLimit(request, requestBodyLimits.publicRegistration);
+  if (oversized) return attachTraceId(oversized, traceId);
 
   const { email, password, full_name } = await request.json();
 

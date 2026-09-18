@@ -1,11 +1,13 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 const DEFAULT_AI_BODY_LIMIT_BYTES = 1_000_000;
 const IMAGE_AI_BODY_LIMIT_BYTES = 8_000_000;
+const PUBLIC_REGISTRATION_BODY_LIMIT_BYTES = 32_768;
 
-export const aiBodyLimits = {
+export const requestBodyLimits = {
   default: DEFAULT_AI_BODY_LIMIT_BYTES,
   image: IMAGE_AI_BODY_LIMIT_BYTES,
+  publicRegistration: PUBLIC_REGISTRATION_BODY_LIMIT_BYTES,
 } as const;
 
 function declaredBodySize(request: Request): number | null {
@@ -24,7 +26,7 @@ function declaredBodySize(request: Request): number | null {
  * if (blocked) return blocked;
  */
 export async function enforceRequestBodyLimit(
-  request: NextRequest,
+  request: Request,
   maximumBytes: number,
 ): Promise<NextResponse | null> {
   const declaredSize = declaredBodySize(request);
