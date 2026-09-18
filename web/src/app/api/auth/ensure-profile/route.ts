@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { authorizeUser } from "@/lib/api-auth";
+import { authorizeMfaPrivilegedUser } from "@/lib/api-auth";
 import { logger } from "@/lib/logger";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
@@ -15,16 +15,15 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
  * ausente virava a conta que o chamador escolhesse.
  *
  * Perfil que não existe é estado de erro, não algo para remendar com dado que o
- * chamador controla: `authorizeUser` devolve 403 e o problema aparece.
+ * chamador controla: a guarda AAL2 devolve 403 e o problema aparece.
  */
 export async function POST(request: NextRequest) {
   try {
-    const auth = await authorizeUser(request);
+    const auth = await authorizeMfaPrivilegedUser(request);
     if (!auth.ok) return auth.response;
 
-    if (auth.caller.accountType !== "specialist") {
+    if (auth.caller.accountType !== "specialist")
       return NextResponse.json({ ok: true, services: 0 });
-    }
 
     // Os serviços vêm do cadastro; o `account_type` acima já veio de `profiles`,
     // então o pior que um metadado adulterado consegue é criar serviço para uma
