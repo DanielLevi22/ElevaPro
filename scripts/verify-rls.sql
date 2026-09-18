@@ -197,8 +197,11 @@ DO $$
 BEGIN
   IF has_function_privilege('anon', 'public.handle_new_user()', 'EXECUTE')
     OR has_function_privilege('authenticated', 'public.handle_new_user()', 'EXECUTE')
-    OR has_function_privilege('anon', 'public.rls_auto_enable()', 'EXECUTE')
-    OR has_function_privilege('authenticated', 'public.rls_auto_enable()', 'EXECUTE')
+    OR CASE
+      WHEN to_regprocedure('public.rls_auto_enable()') IS NULL THEN false
+      ELSE has_function_privilege('anon', 'public.rls_auto_enable()', 'EXECUTE')
+        OR has_function_privilege('authenticated', 'public.rls_auto_enable()', 'EXECUTE')
+    END
     OR has_function_privilege('anon', 'public.set_own_account_type(public.account_type, text)', 'EXECUTE')
     OR NOT has_function_privilege('authenticated', 'public.set_own_account_type(public.account_type, text)', 'EXECUTE') THEN
     RAISE EXCEPTION 'SUPERFÍCIE RPC INDEVIDA: trigger/event trigger ou onboarding tem EXECUTE divergente';

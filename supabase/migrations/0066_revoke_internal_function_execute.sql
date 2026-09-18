@@ -28,9 +28,16 @@ REVOKE ALL ON FUNCTION public.handle_new_user()
   FROM PUBLIC, anon, authenticated, service_role;
 --> statement-breakpoint
 
--- Event trigger de proteção automática de RLS: só o mecanismo DDL o invoca.
-REVOKE ALL ON FUNCTION public.rls_auto_enable()
-  FROM PUBLIC, anon, authenticated, service_role;
+-- Alguns projetos não possuem o event trigger legado. Quando existir, só o
+-- mecanismo DDL o invoca; quando não existir, não é uma superfície a fechar.
+DO $$
+BEGIN
+  IF to_regprocedure('public.rls_auto_enable()') IS NOT NULL THEN
+    REVOKE ALL ON FUNCTION public.rls_auto_enable()
+      FROM PUBLIC, anon, authenticated, service_role;
+  END IF;
+END;
+$$;
 --> statement-breakpoint
 
 -- Esta é a única RPC deste conjunto que faz parte do produto. O login anônimo
