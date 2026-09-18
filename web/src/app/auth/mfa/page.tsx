@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
@@ -80,13 +79,11 @@ export default function MfaPage() {
         ) : (
           <form className="space-y-5" onSubmit={confirmChallenge}>
             {challenge.qrCode ? (
-              <Image
+              // biome-ignore lint/performance/noImgElement: QR SVG efêmero em data: não é suportado pelo next/image.
+              <img
                 alt="QR Code para configurar o autenticador"
                 className="mx-auto h-52 w-52"
-                height={208}
                 src={challenge.qrCode}
-                unoptimized
-                width={208}
               />
             ) : null}
             <p className="text-center text-sm text-muted-foreground">
