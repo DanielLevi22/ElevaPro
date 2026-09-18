@@ -389,9 +389,15 @@ inferência sobre saúde de titular identificado.
   permanece **não verificado** na matriz (`#322`)
 - [x] Fundação de auditoria de segurança: `private.security_audit_events` recebe
   metadados mínimos de eventos de alto impacto sob legítimo interesse (Art. 7º,
-  IX), sem corpo, credencial, nome, e-mail ou dado de saúde. A conta apagada
-  desidentifica ator/titular por `ON DELETE SET NULL`; a retenção alvo é 365 dias
-  e a função remove linhas vencidas a cada nova escrita (`0061`, issue #322)
+  IX), sem corpo, credencial, nome, e-mail ou dado de saúde. Ator, titular e o
+  recurso que é o próprio titular são gravados só como HMAC-SHA-256 com a chave
+  `audit_pseudonym_key`, gerada no Vault e que nunca sai do banco: o BFF manda o
+  UUID para a RPC e só o pseudônimo é gravado; UUID em `resource_id` é recusado.
+  Sem a chave o pseudônimo não se reassocia (Art. 13, § 4º); ela é a única forma
+  de uma investigação reidentificar, e quem restaura o banco em outro projeto
+  precisa levá-la. A trilha não tem FK para a conta: apagar a conta não apaga o
+  evento, que expira pela retenção de 365 dias; a função remove linhas vencidas a
+  cada nova escrita (`0061`, `0070`, issue #322)
 - [x] Correlação técnica: o BFF gera ou reaproveita somente o `trace-id` W3C
   válido, devolve-o em `X-Request-Id` e o associa aos logs/eventos quando houver.
   São 32 caracteres hexadecimais aleatórios, sem IP, conta, URL ou conteúdo; segue

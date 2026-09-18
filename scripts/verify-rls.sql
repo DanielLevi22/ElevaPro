@@ -155,17 +155,78 @@ BEGIN
   END IF;
 
   IF has_function_privilege(
-    'anon', 'public.record_security_audit_event(text, text, text, text, text, text, text, text)', 'EXECUTE'
+    'anon', 'public.record_security_audit_event(text, text, text, text, uuid, uuid, text, text)', 'EXECUTE'
   ) OR has_function_privilege(
-    'authenticated', 'public.record_security_audit_event(text, text, text, text, text, text, text, text)', 'EXECUTE'
+    'authenticated', 'public.record_security_audit_event(text, text, text, text, uuid, uuid, text, text)', 'EXECUTE'
   ) OR NOT has_function_privilege(
-    'service_role', 'public.record_security_audit_event(text, text, text, text, text, text, text, text)', 'EXECUTE'
+    'service_role', 'public.record_security_audit_event(text, text, text, text, uuid, uuid, text, text)', 'EXECUTE'
   ) THEN
     RAISE EXCEPTION 'EXECUTE de record_security_audit_event não está restrito a service_role';
   END IF;
 
   RAISE NOTICE 'ok  trilha append-only: cliente sem leitura, BFF sem DML e RPC restrita';
 END $$;
+
+-- O pseudônimo da trilha só protege se exigir a chave: SHA-256 puro de um UUID
+-- se desfaz com o UUID que aparece em qualquer URL. E um UUID em claro no
+-- resource_id, ao lado do pseudônimo do mesmo titular, desfaz o pseudônimo.
+-- LGPD, arts. 12 e 13, § 4º: dado pseudonimizado só se reassocia com informação
+-- adicional mantida em separado — aqui, a chave no Vault.
+BEGIN;
+
+DO $$
+DECLARE
+  conta uuid := gen_random_uuid();
+  evento bigint;
+  linha private.security_audit_events%ROWTYPE;
+  uuid_recusado boolean := false;
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM vault.secrets WHERE name = 'audit_pseudonym_key') THEN
+    RAISE EXCEPTION 'TRILHA PARADA: audit_pseudonym_key ausente do Vault; todo evento auditado vai falhar';
+  END IF;
+
+  IF private.audit_principal_hash(conta) = encode(extensions.digest(conta::text, 'sha256'), 'hex') THEN
+    RAISE EXCEPTION 'PSEUDÔNIMO REVERSÍVEL: o hash do principal não usa chave; quem tem o UUID liga o evento à pessoa';
+  END IF;
+
+  SET LOCAL ROLE service_role;
+  evento := public.record_security_audit_event(
+    p_event_type => 'identity.registration.succeeded', p_outcome => 'succeeded',
+    p_resource_type => 'account', p_origin => 'bff', p_actor_id => conta, p_subject_id => conta
+  );
+  BEGIN
+    PERFORM public.record_security_audit_event(
+      p_event_type => 'health.assessment.read', p_outcome => 'succeeded',
+      p_resource_type => 'physical_assessment_collection', p_origin => 'bff',
+      p_resource_id => 'student:' || conta::text
+    );
+  EXCEPTION WHEN raise_exception THEN
+    uuid_recusado := true;
+  END;
+  RESET ROLE;
+
+  IF NOT uuid_recusado THEN
+    RAISE EXCEPTION 'UUID EM CLARO: a RPC aceitou UUID dentro do resource_id';
+  END IF;
+
+  SELECT * INTO linha FROM private.security_audit_events WHERE event_id = evento;
+  IF linha.resource_id IS DISTINCT FROM private.audit_principal_hash(conta)
+    OR linha.subject_hash IS DISTINCT FROM private.audit_principal_hash(conta) THEN
+    RAISE EXCEPTION 'UUID EM CLARO: evento de conta não gravou o pseudônimo como titular e recurso';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM private.security_audit_events
+    WHERE resource_type <> 'specialist_student_link'
+      AND resource_id ~* '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+  ) THEN
+    RAISE EXCEPTION 'UUID EM CLARO: há evento na trilha com UUID de pessoa no resource_id';
+  END IF;
+
+  RAISE NOTICE 'ok  pseudônimo com chave do Vault e nenhum UUID de pessoa em resource_id';
+END $$;
+
+ROLLBACK;
 
 -- Papel e status determinam acesso. A prova exige que a trilha não seja uma
 -- convenção do painel administrativo: a RPC de onboarding também a atravessa,
@@ -1136,6 +1197,15 @@ BEGIN
   END;
 
   RESET ROLE;
+  -- O recurso da conta é o pseudônimo dela: o UUID ao lado do subject_hash o
+  -- desfaria. Conferido antes da contagem para o erro nomear o dano certo.
+  IF EXISTS (
+    SELECT 1 FROM private.security_audit_events
+     WHERE subject_hash = private.audit_principal_hash(conta) AND resource_id = conta::text
+  ) THEN
+    RAISE EXCEPTION 'UUID EM CLARO: evento de papel/status gravou o UUID da conta no resource_id';
+  END IF;
+
   SELECT count(*) INTO eventos_auditados
     FROM private.security_audit_events
    WHERE event_type = 'authorization.account_role.set_specialist'
@@ -1143,7 +1213,7 @@ BEGIN
      AND actor_hash = private.audit_principal_hash(conta)
      AND subject_hash = private.audit_principal_hash(conta)
      AND resource_type = 'account'
-     AND resource_id = conta::text;
+     AND resource_id = private.audit_principal_hash(conta);
   IF eventos_auditados <> 1 THEN
     RAISE EXCEPTION 'AUDITORIA AUSENTE: mudança de papel gerou % eventos, esperado 1', eventos_auditados;
   END IF;
@@ -1155,7 +1225,7 @@ BEGIN
      AND actor_hash = private.audit_principal_hash(conta)
      AND subject_hash = private.audit_principal_hash(conta)
      AND resource_type = 'account'
-     AND resource_id = conta::text;
+     AND resource_id = private.audit_principal_hash(conta);
   IF eventos_auditados <> 1 THEN
     RAISE EXCEPTION 'AUDITORIA AUSENTE: mudança de status gerou % eventos, esperado 1', eventos_auditados;
   END IF;

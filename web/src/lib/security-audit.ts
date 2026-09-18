@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { logger } from "@/lib/logger";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
@@ -7,32 +6,32 @@ type AuditEventType =
   | "health.assessment.read"
   | "identity.registration.succeeded"
   | "security.rate_limit.denied";
-type AuditResourceType = "account" | "physical_assessment_collection" | "rate_limit_policy";
+
+// Recurso que é o próprio titular (a conta, a coleção de avaliações dele): o
+// banco grava o pseudônimo do titular como resource_id. Não há campo para o ID,
+// porque um UUID em claro ao lado do pseudônimo desfaria o pseudônimo.
+type SubjectResource = {
+  resourceType: "account" | "physical_assessment_collection";
+  subjectId: string;
+};
+
+// Recurso que não identifica pessoa, como o nome de uma política.
+type NamedResource = {
+  resourceType: "rate_limit_policy";
+  resourceId: string;
+};
 
 export type SecurityAuditEvent = {
   eventType: AuditEventType;
   outcome: AuditOutcome;
   actorId?: string;
-  subjectId?: string;
-  resourceType: AuditResourceType;
-  resourceId: string;
   traceId?: string;
-};
-
-/** Produz correlação investigável sem gravar o UUID da conta na trilha. */
-export function pseudonymizeAuditSubject(subjectId: string): string {
-  return createHash("sha256").update(subjectId).digest("hex");
-}
-
-// O gerador de tipos do Supabase não expressa argumento SQL nulo, e a RPC não
-// tem default para ator/titular: o NULL precisa ir explícito. No banco ele
-// significa "evento sem ator" (ex.: rate limit anônimo).
-function optionalPrincipalHash(principalId: string | undefined): string {
-  return (principalId ? pseudonymizeAuditSubject(principalId) : null) as string;
-}
+} & (SubjectResource | NamedResource);
 
 /**
- * Registra somente metadados permitidos na trilha append-only do banco.
+ * Registra somente metadados permitidos na trilha append-only do banco. Os
+ * UUIDs seguem para a RPC, que aplica o HMAC com a chave do Vault: a chave
+ * nunca sai do banco e só o pseudônimo é gravado.
  * A falha de observabilidade não muda o resultado da operação de negócio, mas
  * fica no logger técnico para abrir investigação.
  *
@@ -40,8 +39,9 @@ function optionalPrincipalHash(principalId: string | undefined): string {
  * await recordSecurityAuditEvent({
  *   eventType: "identity.registration.succeeded",
  *   outcome: "succeeded",
+ *   actorId: accountId,
+ *   subjectId: accountId,
  *   resourceType: "account",
- *   resourceId: accountId,
  * });
  */
 export async function recordSecurityAuditEvent(event: SecurityAuditEvent): Promise<void> {
@@ -49,10 +49,10 @@ export async function recordSecurityAuditEvent(event: SecurityAuditEvent): Promi
     const { error } = await supabaseAdmin.rpc("record_security_audit_event", {
       p_event_type: event.eventType,
       p_outcome: event.outcome,
-      p_actor_hash: optionalPrincipalHash(event.actorId),
-      p_subject_hash: optionalPrincipalHash(event.subjectId),
+      p_actor_id: event.actorId,
+      p_subject_id: "subjectId" in event ? event.subjectId : undefined,
       p_resource_type: event.resourceType,
-      p_resource_id: event.resourceId,
+      p_resource_id: "resourceId" in event ? event.resourceId : undefined,
       p_origin: "bff",
       p_trace_id: event.traceId,
     });

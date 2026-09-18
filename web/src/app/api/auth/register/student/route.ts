@@ -71,7 +71,6 @@ export async function POST(request: Request) {
     actorId: data.user.id,
     subjectId: data.user.id,
     resourceType: "account",
-    resourceId: data.user.id,
     traceId,
   });
 

@@ -97,7 +97,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         actorId: auth.caller.id,
         subjectId: studentId,
         resourceType: "physical_assessment_collection",
-        resourceId: studentId,
         traceId: traceIdForRequest(request),
       });
     }

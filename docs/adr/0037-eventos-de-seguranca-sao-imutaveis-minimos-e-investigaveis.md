@@ -16,4 +16,5 @@ Autenticação e recuperação de conta; criação, alteração, remoção e exp
 
 - A trilha tem RLS: titular vê eventos sobre seus recursos; auditor administrativo vê metadados necessários; Specialist não lê a trilha inteira do Student por padrão.
 - Escrita ocorre somente no servidor ou por mecanismo de banco controlado. Cliente não escolhe ator, instante, resultado nem recurso do evento.
+- Pessoa aparece na trilha só como HMAC-SHA-256 com uma chave que nasce no Vault e não sai do banco. O BFF manda o UUID para a RPC em vez de calcular o hash: com uma chave só, evento do BFF e do trigger correlacionam, e não há segredo a replicar na Vercel. Descartado SHA-256 puro, que se desfaz com qualquer UUID visto em URL. Trocar a chave quebra a correlação com os eventos já gravados, por isso ela não é rotacionada sem migrar a trilha junto.
 - Exportação, retenção, acesso excepcional e eliminação da trilha obedecem uma política documentada. Imutável não significa retenção infinita nem impede anonimização quando a base legal e a investigação já não justificam identificar o titular.

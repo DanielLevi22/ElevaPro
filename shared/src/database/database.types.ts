@@ -1676,13 +1676,13 @@ export type Database = {
       link_student_by_code: { Args: { p_code: string }; Returns: Json };
       record_security_audit_event: {
         Args: {
-          p_actor_hash: string;
+          p_actor_id?: string;
           p_event_type: string;
           p_origin: string;
           p_outcome: string;
-          p_resource_id: string;
+          p_resource_id?: string;
           p_resource_type: string;
-          p_subject_hash: string;
+          p_subject_id?: string;
           p_trace_id?: string;
         };
         Returns: number;

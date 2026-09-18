@@ -47,9 +47,10 @@ describe("GET /api/students/:id/assessments", () => {
         actorId: "specialist-1",
         subjectId: "student-1",
         resourceType: "physical_assessment_collection",
-        resourceId: "student-1",
       }),
     );
+    // O ID do aluno só pode chegar como titular, que o banco pseudonimiza.
+    expect(recordSecurityAuditEvent.mock.calls[0][0]).not.toHaveProperty("resourceId");
   });
 
   it("não registra leitura quando a coleção está vazia", async () => {
