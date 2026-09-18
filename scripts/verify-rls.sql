@@ -190,6 +190,33 @@ BEGIN
   RAISE NOTICE 'ok  mudanças de papel e status geram evento privado no banco';
 END $$;
 
+-- Trigger e event trigger não são RPCs. A execução direta por anon virava uma
+-- superfície PostgREST que não existe no produto; a única exceção é o
+-- onboarding autenticado, que precisa da porta estreita set_own_account_type.
+DO $$
+BEGIN
+  IF has_function_privilege('anon', 'public.handle_new_user()', 'EXECUTE')
+    OR has_function_privilege('authenticated', 'public.handle_new_user()', 'EXECUTE')
+    OR has_function_privilege('anon', 'public.rls_auto_enable()', 'EXECUTE')
+    OR has_function_privilege('authenticated', 'public.rls_auto_enable()', 'EXECUTE')
+    OR has_function_privilege('anon', 'public.set_own_account_type(public.account_type, text)', 'EXECUTE')
+    OR NOT has_function_privilege('authenticated', 'public.set_own_account_type(public.account_type, text)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'SUPERFÍCIE RPC INDEVIDA: trigger/event trigger ou onboarding tem EXECUTE divergente';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+      AND p.proname IN ('foods_search_vector_update', 'update_ai_chat_session_timestamp')
+      AND COALESCE(array_to_string(p.proconfig, ','), '') !~ 'search_path=pg_catalog'
+  ) THEN
+    RAISE EXCEPTION 'SEARCH PATH MUTÁVEL: função de trigger sem caminho fixo';
+  END IF;
+
+  RAISE NOTICE 'ok  funções internas sem RPC pública e triggers com search_path fixo';
+END $$;
+
 -- Vínculo é a fronteira de autorização do Specialist. O evento precisa nascer
 -- com a alteração, pois app, RPC e BFF gravam por caminhos distintos. Só IDs
 -- opacos entram na evidência: o vínculo não é licença para duplicar o dado que

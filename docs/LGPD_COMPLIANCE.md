@@ -408,6 +408,11 @@ inferência sobre saúde de titular identificado.
   eventos append-only no banco. O tipo do evento informa apenas a autorização
   resultante e a trilha mantém IDs opacos; a prova de RLS também confirma que a
   auto-promoção direta continua recusada (`0065`, issue #322)
+- [x] Funções de trigger/event trigger não são expostas como RPC: `handle_new_user`,
+  `rls_auto_enable` e os triggers internos não têm `EXECUTE` para papéis da
+  aplicação; apenas `set_own_account_type` continua acessível a `authenticated`.
+  Os `search_path` sinalizados pelo diagnóstico Supabase foram fixados (`0066`,
+  issue #322)
 
 **Requisitos recomendados (antes do lançamento):**
 - [ ] MFA disponível para especialistas (Supabase suporta nativamente)
