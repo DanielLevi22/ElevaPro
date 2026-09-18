@@ -197,11 +197,12 @@ DO $$
 BEGIN
   IF has_function_privilege('anon', 'public.handle_new_user()', 'EXECUTE')
     OR has_function_privilege('authenticated', 'public.handle_new_user()', 'EXECUTE')
-    OR CASE
+    -- Entre parênteses: sem eles, o IF do PL/pgSQL termina no THEN do CASE.
+    OR (CASE
       WHEN to_regprocedure('public.rls_auto_enable()') IS NULL THEN false
       ELSE has_function_privilege('anon', 'public.rls_auto_enable()', 'EXECUTE')
         OR has_function_privilege('authenticated', 'public.rls_auto_enable()', 'EXECUTE')
-    END
+    END)
     OR has_function_privilege('anon', 'public.set_own_account_type(public.account_type, text)', 'EXECUTE')
     OR NOT has_function_privilege('authenticated', 'public.set_own_account_type(public.account_type, text)', 'EXECUTE') THEN
     RAISE EXCEPTION 'SUPERFÍCIE RPC INDEVIDA: trigger/event trigger ou onboarding tem EXECUTE divergente';
@@ -389,8 +390,8 @@ BEGIN
     FROM private.security_audit_events
    WHERE event_type = 'authorization.specialist_student_link.granted'
      AND outcome = 'succeeded'
-     AND actor_id = espec
-     AND subject_id = aluno_a
+     AND actor_hash = private.audit_principal_hash(espec)
+     AND subject_hash = private.audit_principal_hash(aluno_a)
      AND resource_type = 'specialist_student_link'
      AND resource_id = vinculo_id::text;
   IF eventos_auditados <> 1 THEN
@@ -448,8 +449,8 @@ BEGIN
     FROM private.security_audit_events
    WHERE event_type = 'authorization.specialist_student_link.revoked'
      AND outcome = 'succeeded'
-     AND actor_id = espec
-     AND subject_id = aluno_a
+     AND actor_hash = private.audit_principal_hash(espec)
+     AND subject_hash = private.audit_principal_hash(aluno_a)
      AND resource_type = 'specialist_student_link'
      AND resource_id = vinculo_id::text;
   IF eventos_auditados <> 1 THEN
@@ -960,7 +961,7 @@ BEGIN
     FROM private.security_audit_events
    WHERE event_type = 'privacy.consent.granted'
      AND outcome = 'succeeded'
-     AND subject_id IN (aluno_a, aluno_b)
+     AND subject_hash IN (private.audit_principal_hash(aluno_a), private.audit_principal_hash(aluno_b))
      AND resource_type = 'consent'
      AND resource_id = 'health_data_collection:1.2';
   IF eventos_auditados <> 2 THEN
@@ -1020,7 +1021,7 @@ BEGIN
     FROM private.security_audit_events
    WHERE event_type = 'privacy.consent.revoked'
      AND outcome = 'succeeded'
-     AND subject_id = aluno_a
+     AND subject_hash = private.audit_principal_hash(aluno_a)
      AND resource_type = 'consent'
      AND resource_id = 'health_data_collection:1.2';
   IF eventos_auditados <> 1 THEN
@@ -1139,8 +1140,8 @@ BEGIN
     FROM private.security_audit_events
    WHERE event_type = 'authorization.account_role.set_specialist'
      AND outcome = 'succeeded'
-     AND actor_id = conta
-     AND subject_id = conta
+     AND actor_hash = private.audit_principal_hash(conta)
+     AND subject_hash = private.audit_principal_hash(conta)
      AND resource_type = 'account'
      AND resource_id = conta::text;
   IF eventos_auditados <> 1 THEN
@@ -1151,8 +1152,8 @@ BEGIN
     FROM private.security_audit_events
    WHERE event_type = 'authorization.account_status.set_invited'
      AND outcome = 'succeeded'
-     AND actor_id = conta
-     AND subject_id = conta
+     AND actor_hash = private.audit_principal_hash(conta)
+     AND subject_hash = private.audit_principal_hash(conta)
      AND resource_type = 'account'
      AND resource_id = conta::text;
   IF eventos_auditados <> 1 THEN
