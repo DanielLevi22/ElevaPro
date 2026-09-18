@@ -8,8 +8,9 @@ o código de uso único pertencem exclusivamente ao Supabase Auth e ficam apenas
 da tela durante a configuração; o Eleva Pro não os grava, registra ou envia ao BFF.
 
 O BFF confere o claim assinado `aal` em cada rota privilegiada. `aal1` recebe
-`mfa_required`; `aal2` é a única garantia aceita. CASL e o redirecionamento de interface
-não substituem essa verificação.
+`mfa_required`; `aal2` é a única garantia aceita. A policy RLS
+`privileged_session_requires_mfa` aplica a mesma regra às consultas diretas do mobile.
+CASL e o redirecionamento de interface não substituem essas verificações.
 
 ## Configuração exigida no Supabase
 
