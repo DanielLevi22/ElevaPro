@@ -1,5 +1,5 @@
-export type { TotpEnrollment } from "./mfa.service";
-export { enrollTotp, hasCurrentMfaAssurance, verifyTotp } from "./mfa.service";
+export type { TotpChallenge } from "./mfa.service";
+export { beginTotpChallenge, hasCurrentMfaAssurance, verifyTotp } from "./mfa.service";
 export { registerAccount } from "./registration.service";
 export type { AccountRegistration, AccountRole } from "./registration.types";
 export {

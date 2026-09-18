@@ -3,21 +3,21 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { enrollTotp, type TotpEnrollment, verifyTotp } from "@/modules/auth";
+import { beginTotpChallenge, type TotpChallenge, useAuthStore, verifyTotp } from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
 
 export default function MfaPage() {
   const router = useRouter();
-  const [enrollment, setEnrollment] = useState<TotpEnrollment | null>(null);
+  const [challenge, setChallenge] = useState<TotpChallenge | null>(null);
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function beginEnrollment(): Promise<void> {
+  async function beginChallenge(): Promise<void> {
     setLoading(true);
     setError("");
     try {
-      setEnrollment(await enrollTotp());
+      setChallenge(await beginTotpChallenge());
     } catch {
       setError("Não foi possível preparar seu autenticador. Tente novamente.");
     } finally {
@@ -25,9 +25,9 @@ export default function MfaPage() {
     }
   }
 
-  async function confirmEnrollment(event: React.FormEvent<HTMLFormElement>): Promise<void> {
+  async function confirmChallenge(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    if (!enrollment || !/^\d{6}$/.test(code)) {
+    if (!challenge || !/^\d{6}$/.test(code)) {
       setError("Digite o código de 6 dígitos do seu autenticador.");
       return;
     }
@@ -35,8 +35,8 @@ export default function MfaPage() {
     setLoading(true);
     setError("");
     try {
-      await verifyTotp(enrollment.factorId, code);
-      router.replace("/dashboard");
+      await verifyTotp(challenge.factorId, code);
+      router.replace(useAuthStore.getState().accountType === "admin" ? "/admin" : "/dashboard");
     } catch {
       setError("Código inválido ou expirado. Gere um novo código e tente novamente.");
     } finally {
@@ -60,20 +60,27 @@ export default function MfaPage() {
           </p>
         ) : null}
 
-        {!enrollment ? (
-          <Button fullWidth isLoading={loading} onClick={beginEnrollment}>
+        {!challenge ? (
+          <Button fullWidth isLoading={loading} onClick={beginChallenge}>
             Configurar autenticador
           </Button>
         ) : (
-          <form className="space-y-5" onSubmit={confirmEnrollment}>
-            <Image
-              alt="QR Code para configurar o autenticador"
-              className="mx-auto h-52 w-52"
-              height={208}
-              src={enrollment.qrCode}
-              unoptimized
-              width={208}
-            />
+          <form className="space-y-5" onSubmit={confirmChallenge}>
+            {challenge.qrCode ? (
+              <Image
+                alt="QR Code para configurar o autenticador"
+                className="mx-auto h-52 w-52"
+                height={208}
+                src={challenge.qrCode}
+                unoptimized
+                width={208}
+              />
+            ) : null}
+            <p className="text-center text-sm text-muted-foreground">
+              {challenge.qrCode
+                ? "Escaneie o QR Code no seu aplicativo autenticador e informe o código gerado."
+                : "Informe o código gerado no seu aplicativo autenticador."}
+            </p>
             <label className="block text-sm font-medium text-foreground" htmlFor="totp-code">
               Código do autenticador
             </label>
