@@ -494,6 +494,11 @@ BEGIN
     RAISE EXCEPTION 'MFA CONTORNADO: especialista AAL1 leu % anamnese(s)', visiveis;
   END IF;
 
+  SELECT count(*) INTO visiveis FROM public.profiles WHERE id = espec;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'PORTA MFA FECHADA: especialista AAL1 não leu a própria identidade';
+  END IF;
+
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', aluno_a, 'role', 'authenticated')::text, true);
   SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_a;

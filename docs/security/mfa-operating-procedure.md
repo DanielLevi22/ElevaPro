@@ -12,6 +12,10 @@ O BFF confere o claim assinado `aal` em cada rota privilegiada. `aal1` recebe
 `privileged_session_requires_mfa` aplica a mesma regra às consultas diretas do mobile.
 CASL e o redirecionamento de interface não substituem essas verificações.
 
+A única exceção AAL1 é a leitura da própria linha em `profiles`, necessária para o cliente
+descobrir o papel da sessão e abrir o desafio TOTP. Ela não libera perfis de terceiros,
+dados de alunos, Storage ou qualquer tabela de domínio.
+
 ## Configuração exigida no Supabase
 
 No Dashboard > Authentication:
