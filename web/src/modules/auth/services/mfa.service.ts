@@ -5,6 +5,13 @@ export type TotpEnrollment = {
   qrCode: string;
 };
 
+/** Informa se a sessão atual já completou o segundo fator. */
+export async function hasCurrentMfaAssurance(): Promise<boolean> {
+  const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (error) throw error;
+  return data.currentLevel === "aal2";
+}
+
 /** Inscreve um autenticador TOTP; o segredo fica exclusivamente no Supabase. */
 export async function enrollTotp(): Promise<TotpEnrollment> {
   const { data, error } = await supabase.auth.mfa.enroll({
