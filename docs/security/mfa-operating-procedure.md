@@ -33,6 +33,12 @@ e ator da autenticação sem que a aplicação manipule código, segredo, QR, to
 IP bruto. A trilha `private.security_audit_events` permanece append-only por 365 dias para
 eventos de produto; sua retenção é executada pelo job `purge-security-audit-events`.
 
+`trace_id` é exigido nos eventos que atravessam o BFF, onde ele é gerado ou validado pelo
+servidor. Eventos de MFA não carregam esse identificador: aceitar um valor informado pelo
+cliente não produziria correlação confiável, e encaminhar QR Code, chave ou código TOTP ao
+BFF aumentaria desnecessariamente a superfície de segredos. A correlação de MFA é feita
+pelos identificadores e instante de servidor dos Auth Audit Logs.
+
 ## Recuperação segura
 
 Não há bypass local nem recuperação manual por suporte. Quem perder o autenticador deve
