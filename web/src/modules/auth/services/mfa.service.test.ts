@@ -24,6 +24,19 @@ describe("mfa.service", () => {
     expect(mfa.enroll).not.toHaveBeenCalled();
   });
 
+  it("inscreve um fator novo quando não há autenticador confirmado", async () => {
+    mfa.listFactors.mockResolvedValue({ data: { totp: [] } });
+    mfa.enroll.mockResolvedValue({
+      data: { id: "factor-new", totp: { qr_code: "data:image/svg+xml,qr" } },
+      error: null,
+    });
+
+    await expect(beginTotpChallenge()).resolves.toEqual({
+      factorId: "factor-new",
+      qrCode: "data:image/svg+xml,qr",
+    });
+  });
+
   it("só considera AAL2 como sessão reforçada", async () => {
     mfa.getAuthenticatorAssuranceLevel.mockResolvedValue({ data: { currentLevel: "aal1" } });
     await expect(hasCurrentMfaAssurance()).resolves.toBe(false);
@@ -34,5 +47,17 @@ describe("mfa.service", () => {
 
     await expect(verifyTotp("factor-1", "123456")).rejects.toThrow("desafio recusado");
     expect(mfa.verify).not.toHaveBeenCalled();
+  });
+
+  it("confirma o código somente no desafio criado para o fator", async () => {
+    mfa.challenge.mockResolvedValue({ data: { id: "challenge-1" }, error: null });
+    mfa.verify.mockResolvedValue({ error: null });
+
+    await expect(verifyTotp("factor-1", "123456")).resolves.toBeUndefined();
+    expect(mfa.verify).toHaveBeenCalledWith({
+      factorId: "factor-1",
+      challengeId: "challenge-1",
+      code: "123456",
+    });
   });
 });

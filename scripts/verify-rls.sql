@@ -458,6 +458,15 @@ BEGIN
     (espec,   '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
      'verify-e@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb);
 
+  -- Art. 46: conta Auth sem perfil não chega ao MFA nem ao CASL. O trigger é
+  -- a fronteira que cria identidade de domínio, então esta prova usa o banco real.
+  SELECT count(*) INTO visiveis
+  FROM public.profiles
+  WHERE id IN (aluno_a, aluno_b, espec);
+  IF visiveis <> 3 THEN
+    RAISE EXCEPTION 'CADASTRO INCOMPLETO: trigger criou % perfis para 3 contas Auth', visiveis;
+  END IF;
+
   -- Dado de saúde para os DOIS alunos: assim "zero linhas" significa bloqueio e
   -- não tabela vazia.
   INSERT INTO public.student_anamnesis (student_id, responses, completed_at)
