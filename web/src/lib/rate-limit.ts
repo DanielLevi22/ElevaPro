@@ -87,7 +87,23 @@ export async function enforceRateLimit(
     }
 
     const [decision] = result;
-    if (decision.allowed) return null;
+    if (decision.allowed) {
+      logger.info("rate_limit.decision", {
+        policy: policyName,
+        outcome: "allowed",
+        remaining: decision.remaining,
+        trace_id: traceId,
+      });
+      return null;
+    }
+
+    logger.warn("rate_limit.decision", {
+      policy: policyName,
+      outcome: "denied",
+      remaining: decision.remaining,
+      retry_after_seconds: decision.retry_after_seconds,
+      trace_id: traceId,
+    });
 
     await recordSecurityAuditEvent({
       eventType: "security.rate_limit.denied",

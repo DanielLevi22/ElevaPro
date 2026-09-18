@@ -14,6 +14,8 @@ beforeEach(() => {
   process.env.RATE_LIMIT_HMAC_KEY = HMAC_KEY;
   rpc.mockReset();
   vi.spyOn(console, "error").mockImplementation(() => {});
+  vi.spyOn(console, "info").mockImplementation(() => {});
+  vi.spyOn(console, "warn").mockImplementation(() => {});
 });
 
 afterEach(() => {
@@ -53,6 +55,9 @@ describe("rate limit", () => {
       p_window_seconds: 60,
       p_retention_seconds: 3600,
     });
+    const allowedMetric = vi.mocked(console.info).mock.calls[0]?.[0] ?? "";
+    expect(allowedMetric).toContain('"outcome":"allowed"');
+    expect(allowedMetric).not.toContain("203.0.113.7");
   });
 
   it("devolve 429 e Retry-After quando a cota acabou", async () => {
@@ -72,6 +77,9 @@ describe("rate limit", () => {
     expect(response?.status).toBe(429);
     expect(response?.headers.get("Retry-After")).toBe("17");
     await expect(response?.json()).resolves.toEqual({ error: "rate_limit_exceeded" });
+    const deniedMetric = vi.mocked(console.warn).mock.calls[0]?.[0] ?? "";
+    expect(deniedMetric).toContain('"outcome":"denied"');
+    expect(deniedMetric).not.toContain("203.0.113.7");
   });
 
   it("usa uma origem local somente durante o desenvolvimento", async () => {

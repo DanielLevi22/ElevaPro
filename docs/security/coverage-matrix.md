@@ -63,9 +63,10 @@ o preview.
 | DB-02 | `scripts/verify-rls.sql`: funções de trigger/event trigger sem `EXECUTE` para papéis da aplicação, `search_path` fixo e RPCs de limite/trilha só para `service_role` (`0060`, `0061`, `0066`, `0070`) | Inventário completo de funções e ownership |
 | AUD-01 | `verify-rls.sql`: cliente não lê a trilha, BFF sem DML, retenção de 365 dias por `pg_cron`, eventos de consentimento/vínculo/papel nascem no banco, pseudônimo com chave do Vault e nenhum UUID de pessoa em `resource_id`. Prova negativa feita em 2026-09-18: hash sem chave, RPC aceitando UUID e trigger gravando UUID fazem o script falhar | Consulta de investigação documentada; eventos de MFA ficam no Auth Audit Log do Supabase (#323) |
 | OBS-01 | `web/src/lib/logger.ts` redige credencial, e-mail em qualquer valor, medidas e corpo de erro do banco; as rotas da API não usam mais `console.*` (`logger.test.ts`) | Logs de `web/src` fora da API, mobile e crash reporting |
+| OBS-02 | `rate_limit.decision` emite política, `allowed`/`denied`, saldo e `trace_id`, sem origem ou dados pessoais (`rate-limit.test.ts`) | Exportador/alerta operacional fora deste corte |
 
-Não entraram neste corte e continuam abertos: métricas de rate limit e de evento (OBS-02),
-rate limit por ator autenticado nas rotas de IA (hoje é por origem) e os demais IDs.
+Não entraram neste corte e continuam abertos: rate limit por ator autenticado nas rotas de IA
+(hoje é por origem) e os demais IDs.
 
 ## Evidência mínima por estado
 
