@@ -1,5 +1,6 @@
 import { createHealthService } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
+import { rotaDeIA } from "@/lib/ai-route";
 import { authorizeStudent } from "@/lib/api-auth";
 import { clienteDoTitular } from "@/lib/supabase-titular";
 import { decideScanEligibility } from "@/modules/ai/services/escala";
@@ -20,7 +21,7 @@ import { loadScaleSources } from "@/modules/ai/services/scaleSources";
  * Com a regra em dois lugares, o portão libera e a análise recusa — que é o
  * defeito de origem, com outro nome.
  */
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   const auth = await authorizeStudent(request);
   if (!auth.ok) return auth.response;
 
@@ -53,3 +54,5 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json(decideScanEligibility({ temConsentimento: true, ...loaded.sources }));
 }
+
+export const GET = rotaDeIA(handleGet);

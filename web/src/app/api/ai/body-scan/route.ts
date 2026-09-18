@@ -8,7 +8,9 @@ import {
   type VereditosDaCaptura,
 } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
+import { rotaDeIA } from "@/lib/ai-route";
 import { authorizeStudentWithHealthConsent } from "@/lib/api-auth";
+import { aiBodyLimits } from "@/lib/request-body-limit";
 import { clienteDoTitular } from "@/lib/supabase-titular";
 import { aiProviders } from "@/modules/ai/ai.config";
 import type { ContentBlock, ProviderTurnOptions } from "@/modules/ai/providers/types";
@@ -155,7 +157,7 @@ Retorne APENAS JSON válido com esta estrutura exata:
 Nunca retorne "height" nem "weight" — eles já são conhecidos. Nunca retorne texto fora do JSON.`;
 }
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   // Antes de ler o corpo da requisição, de propósito: sem consentimento a
   // imagem não deve nem ser desserializada aqui, muito menos sair para os EUA.
   // Art. 11, I.
@@ -477,3 +479,5 @@ export async function POST(request: NextRequest) {
     },
   });
 }
+
+export const POST = rotaDeIA(handlePost, { maximumBodyBytes: aiBodyLimits.image });

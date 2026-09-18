@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { rotaDeIA } from "@/lib/ai-route";
 import { authorizeLinkedSpecialist } from "@/lib/api-auth";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { NutritionOrchestrator } from "@/modules/ai/orchestrators/nutrition.orchestrator";
@@ -52,7 +53,7 @@ async function resolverSessao(
   return getOrCreateSession(studentId, specialistId, modulo);
 }
 
-export async function POST(
+async function handlePost(
   request: NextRequest,
   { params }: { params: Promise<{ studentId: string }> },
 ) {
@@ -236,7 +237,7 @@ export async function POST(
   });
 }
 
-export async function GET(
+async function handleGet(
   request: NextRequest,
   { params }: { params: Promise<{ studentId: string }> },
 ) {
@@ -279,3 +280,6 @@ export async function GET(
     mealsSaved: !estado.pendingDietMeals && Boolean(estado.resolvedDietMeals),
   });
 }
+
+export const POST = rotaDeIA(handlePost);
+export const GET = rotaDeIA(handleGet);

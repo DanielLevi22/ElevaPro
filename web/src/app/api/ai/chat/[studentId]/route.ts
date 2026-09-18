@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { rotaDeIA } from "@/lib/ai-route";
 import { authorizeLinkedSpecialist } from "@/lib/api-auth";
 import { formatBodyScanIndex, queryBodyScan } from "@/modules/ai/services/bodyScanContext";
 import {
@@ -83,7 +84,7 @@ async function resolverSessao(
   return getOrCreateSession(studentId, specialistId, modulo);
 }
 
-export async function POST(
+async function handlePost(
   request: NextRequest,
   { params }: { params: Promise<{ studentId: string }> },
 ) {
@@ -310,7 +311,7 @@ export async function POST(
   });
 }
 
-export async function GET(
+async function handleGet(
   request: NextRequest,
   { params }: { params: Promise<{ studentId: string }> },
 ) {
@@ -374,3 +375,6 @@ export async function GET(
       : (estado.resolvedPeriodization?.id ?? null),
   });
 }
+
+export const POST = rotaDeIA(handlePost);
+export const GET = rotaDeIA(handleGet);

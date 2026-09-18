@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { logger } from "./logger";
 import { enforceRateLimit } from "./rate-limit";
+import { aiBodyLimits, enforceRequestBodyLimit } from "./request-body-limit";
 import { assertServerEnv, instrucaoDeAmbiente, ServerEnvError } from "./server-env";
 import { attachTraceId, traceIdForRequest } from "./trace";
 
@@ -33,8 +34,22 @@ import { attachTraceId, traceIdForRequest } from "./trace";
  * assinatura que o Next espera.
  */
 type Handler<Ctx> = (request: NextRequest, contexto: Ctx) => Promise<Response>;
+type WrappedHandler<Ctx> = (request: NextRequest, contexto?: Ctx) => Promise<Response>;
 
-export function rotaDeIA<Ctx>(handler: Handler<Ctx>): Handler<Ctx> {
+type AiRouteOptions = {
+  maximumBodyBytes?: number;
+};
+
+/**
+ * Aplica as proteções de borda comuns antes de executar uma rota de IA.
+ *
+ * @example
+ * export const POST = rotaDeIA((request) => responder(request));
+ */
+export function rotaDeIA<Ctx>(
+  handler: Handler<Ctx>,
+  options: AiRouteOptions = {},
+): WrappedHandler<Ctx> {
   return async (request, contexto) => {
     const traceId = traceIdForRequest(request);
     try {
@@ -45,7 +60,13 @@ export function rotaDeIA<Ctx>(handler: Handler<Ctx>): Handler<Ctx> {
       const limited = await enforceRateLimit(request, "ai", traceId);
       if (limited) return attachTraceId(limited, traceId);
 
-      return attachTraceId(await handler(request, contexto), traceId);
+      const oversized = await enforceRequestBodyLimit(
+        request,
+        options.maximumBodyBytes ?? aiBodyLimits.default,
+      );
+      if (oversized) return attachTraceId(oversized, traceId);
+
+      return attachTraceId(await handler(request, contexto as Ctx), traceId);
     } catch (erro) {
       if (erro instanceof ServerEnvError) {
         // O log carrega quais faltam; a resposta não — nome de variável de
