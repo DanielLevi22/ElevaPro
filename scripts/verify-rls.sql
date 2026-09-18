@@ -446,6 +446,7 @@ DECLARE
   aluno_b  uuid := gen_random_uuid();
   espec    uuid := gen_random_uuid();
   visiveis int;
+  afetadas int;
   eventos_auditados int;
   vinculo_id uuid;
 BEGIN
@@ -477,6 +478,9 @@ BEGIN
   VALUES (aluno_a, espec, 'personal_training', 'active')
   RETURNING id INTO vinculo_id;
 
+  INSERT INTO public.specialist_services (specialist_id, service_type)
+  VALUES (espec, 'nutrition_consulting');
+
   -- A criação do vínculo que libera acesso produz uma única evidência, com
   -- especialista como ator no caminho interno de provisionamento.
   SELECT count(*) INTO eventos_auditados
@@ -506,6 +510,23 @@ BEGIN
   SELECT count(*) INTO visiveis FROM public.profiles WHERE id = espec;
   IF visiveis <> 1 THEN
     RAISE EXCEPTION 'PORTA MFA FECHADA: especialista AAL1 não leu a própria identidade';
+  END IF;
+
+  -- Art. 46: o serviço próprio é só o contexto mínimo para abrir o TOTP. AAL1
+  -- não recebe dieta e tampouco pode mudar a autorização que acabou de consultar.
+  SELECT count(*) INTO visiveis
+  FROM public.specialist_services
+  WHERE specialist_id = espec;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'CONTEXTO MFA AUSENTE: especialista AAL1 não leu o próprio serviço';
+  END IF;
+
+  UPDATE public.specialist_services
+  SET service_type = 'personal_training'
+  WHERE specialist_id = espec;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 0 THEN
+    RAISE EXCEPTION 'MFA CONTORNADO: especialista AAL1 alterou % serviço(s) próprio(s)', afetadas;
   END IF;
 
   PERFORM set_config('request.jwt.claims',

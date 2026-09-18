@@ -13,7 +13,12 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { type AccountRole, registerAccount, useAuthStore } from "@/modules/auth";
+import {
+  type AccountRole,
+  hasCurrentMfaAssurance,
+  registerAccount,
+  useAuthStore,
+} from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
 
 const SERVICE_OPTIONS: { value: ServiceType; label: string; description: string }[] = [
@@ -93,6 +98,11 @@ function RegisterForm() {
           }
         });
       });
+
+      if (role === "specialist" && !(await hasCurrentMfaAssurance())) {
+        router.replace("/auth/mfa");
+        return;
+      }
 
       router.push(role === "student" ? "/dashboard/coach" : "/dashboard");
     } catch (err: unknown) {

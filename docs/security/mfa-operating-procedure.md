@@ -12,9 +12,11 @@ O BFF confere o claim assinado `aal` em cada rota privilegiada. `aal1` recebe
 `privileged_session_requires_mfa` aplica a mesma regra às consultas diretas do mobile.
 CASL e o redirecionamento de interface não substituem essas verificações.
 
-A única exceção AAL1 é a leitura da própria linha em `profiles`, necessária para o cliente
-descobrir o papel da sessão e abrir o desafio TOTP. Ela não libera perfis de terceiros,
-dados de alunos, Storage ou qualquer tabela de domínio.
+A única exceção AAL1 é a leitura da própria linha em `profiles` e dos próprios
+`specialist_services`, necessária para o cliente descobrir o papel e o contexto de
+autorização da sessão antes de abrir o desafio TOTP. Ela não libera perfis de terceiros,
+dados de alunos, Storage ou qualquer tabela de domínio; criar, alterar ou remover serviços
+continua exigindo AAL2.
 
 ## Configuração exigida no Supabase
 
@@ -46,5 +48,7 @@ inscrição ficam evidenciadas ali.
 2. Com sessão AAL1, chamar uma rota BFF de especialista/admin deve retornar
    `403 { "error": "mfa_required" }`; com AAL2 deve passar a autorização.
 3. Uma conta Student deve continuar acessando seu fluxo sem MFA.
-4. No Dashboard, conferir os eventos Auth de MFA e o período de retenção. Nunca exportar
+4. Uma conta Specialist em AAL1 vê apenas a própria identidade e serviços e é levada para
+   `/auth/mfa`; ela não altera serviços nem lê dietas.
+5. No Dashboard, conferir os eventos Auth de MFA e o período de retenção. Nunca exportar
    códigos, QR Codes, tokens, e-mails ou IPs brutos para a evidência do release.
