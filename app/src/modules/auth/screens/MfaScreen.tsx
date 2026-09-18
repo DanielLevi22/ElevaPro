@@ -14,12 +14,15 @@ export function MfaScreen() {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
+  const [showManualKey, setShowManualKey] = useState(false);
   const [error, setError] = useState('');
   const escalar = useEscala();
 
   const prepareChallenge = useCallback(async (): Promise<void> => {
     setLoading(true);
     setError('');
+    setShowManualKey(false);
+    setChallenge(null);
     try {
       setChallenge(await beginTotpChallenge());
     } catch {
@@ -63,7 +66,8 @@ export function MfaScreen() {
             Proteja sua conta
           </Text>
           <Text className="text-center text-corpo text-muted-foreground">
-            Use um aplicativo autenticador para concluir o acesso.
+            Use um aplicativo autenticador, como Google Authenticator, Microsoft Authenticator ou
+            Authy.
           </Text>
         </View>
 
@@ -73,6 +77,29 @@ export function MfaScreen() {
             <Text className="text-center text-corpo text-muted-foreground">
               Escaneie o QR Code no aplicativo autenticador e informe o código gerado.
             </Text>
+            <Text className="text-center text-corpo text-muted-foreground">
+              No aplicativo, toque em adicionar conta e selecione escanear QR Code.
+            </Text>
+          </View>
+        ) : null}
+
+        {challenge?.secret ? (
+          <View className="items-center gap-3 rounded-3xl bg-card p-5">
+            <Text className="text-center text-corpo text-muted-foreground">
+              Não consegue escanear? No autenticador, escolha inserir chave de configuração e use a
+              chave abaixo.
+            </Text>
+            <Button
+              fullWidth
+              label={showManualKey ? 'Ocultar chave manual' : 'Mostrar chave manual'}
+              onPress={() => setShowManualKey((visible) => !visible)}
+              variant="ghost"
+            />
+            {showManualKey ? (
+              <Text selectable className="text-center font-mono text-corpo text-foreground">
+                {challenge.secret}
+              </Text>
+            ) : null}
           </View>
         ) : null}
 
