@@ -1,6 +1,10 @@
 -- Retenção verificável da trilha de auditoria (issue #322).
--- Habilite pg_cron no Supabase antes de aplicar esta migration. Falhar aqui é
--- intencional: retenção prometida sem scheduler ativo seria controle decorativo.
+-- O reset remoto recria o banco sem garantir que a extensão configurada no
+-- painel esteja habilitada neste database; habilitá-la aqui mantém o job como
+-- parte verificável do schema, sem depender de uma etapa manual.
+
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+--> statement-breakpoint
 
 DO $$
 BEGIN
