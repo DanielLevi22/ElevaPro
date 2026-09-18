@@ -14,22 +14,22 @@ DECLARE
 BEGIN
   IF OLD.account_type IS DISTINCT FROM NEW.account_type THEN
     INSERT INTO private.security_audit_events (
-      occurred_at, event_type, outcome, actor_id, subject_id,
+      occurred_at, event_type, outcome, actor_hash, subject_hash,
       resource_type, resource_id, origin, expires_at
     ) VALUES (
       v_now, 'authorization.account_role.set_' || NEW.account_type::text,
-      'succeeded', v_actor_id, NEW.id,
+      'succeeded', private.audit_principal_hash(v_actor_id), private.audit_principal_hash(NEW.id),
       'account', NEW.id::text, 'database', v_now + interval '365 days'
     );
   END IF;
 
   IF OLD.account_status IS DISTINCT FROM NEW.account_status THEN
     INSERT INTO private.security_audit_events (
-      occurred_at, event_type, outcome, actor_id, subject_id,
+      occurred_at, event_type, outcome, actor_hash, subject_hash,
       resource_type, resource_id, origin, expires_at
     ) VALUES (
       v_now, 'authorization.account_status.set_' || NEW.account_status::text,
-      'succeeded', v_actor_id, NEW.id,
+      'succeeded', private.audit_principal_hash(v_actor_id), private.audit_principal_hash(NEW.id),
       'account', NEW.id::text, 'database', v_now + interval '365 days'
     );
   END IF;

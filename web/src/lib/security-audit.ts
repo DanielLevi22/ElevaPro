@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { logger } from "@/lib/logger";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
@@ -14,6 +15,11 @@ export type SecurityAuditEvent = {
   resourceId: string;
   traceId?: string;
 };
+
+/** Produz correlação investigável sem gravar o UUID da conta na trilha. */
+export function pseudonymizeAuditSubject(subjectId: string): string {
+  return createHash("sha256").update(subjectId).digest("hex");
+}
 
 /**
  * Registra somente metadados permitidos na trilha append-only do banco.
@@ -35,8 +41,8 @@ export async function recordSecurityAuditEvent(event: SecurityAuditEvent): Promi
       {
         p_event_type: event.eventType,
         p_outcome: event.outcome,
-        p_actor_id: event.actorId ?? null,
-        p_subject_id: event.subjectId ?? null,
+        p_actor_hash: event.actorId ? pseudonymizeAuditSubject(event.actorId) : null,
+        p_subject_hash: event.subjectId ? pseudonymizeAuditSubject(event.subjectId) : null,
         p_resource_type: event.resourceType,
         p_resource_id: event.resourceId,
         p_origin: "bff",

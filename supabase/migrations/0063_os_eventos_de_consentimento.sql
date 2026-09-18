@@ -33,10 +33,10 @@ BEGIN
   END IF;
 
   INSERT INTO private.security_audit_events (
-    occurred_at, event_type, outcome, actor_id, subject_id,
+    occurred_at, event_type, outcome, actor_hash, subject_hash,
     resource_type, resource_id, origin, expires_at
   ) VALUES (
-    v_now, v_event_type, 'succeeded', (SELECT auth.uid()), v_subject_id,
+    v_now, v_event_type, 'succeeded', private.audit_principal_hash((SELECT auth.uid())), private.audit_principal_hash(v_subject_id),
     'consent', v_consent_type || ':' || v_policy_version, 'database', v_now + interval '365 days'
   );
 

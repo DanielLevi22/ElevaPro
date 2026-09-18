@@ -5,7 +5,7 @@ const { loggerError, rpc } = vi.hoisted(() => ({ loggerError: vi.fn(), rpc: vi.f
 vi.mock("../supabase-admin", () => ({ supabaseAdmin: { rpc } }));
 vi.mock("../logger", () => ({ logger: { error: loggerError } }));
 
-import { recordSecurityAuditEvent } from "../security-audit";
+import { pseudonymizeAuditSubject, recordSecurityAuditEvent } from "../security-audit";
 
 beforeEach(() => {
   loggerError.mockReset();
@@ -27,8 +27,8 @@ describe("security audit", () => {
     expect(rpc).toHaveBeenCalledWith("record_security_audit_event", {
       p_event_type: "security.rate_limit.denied",
       p_outcome: "denied",
-      p_actor_id: null,
-      p_subject_id: null,
+      p_actor_hash: null,
+      p_subject_hash: null,
       p_resource_type: "rate_limit_policy",
       p_resource_id: "ai",
       p_origin: "bff",
@@ -53,4 +53,12 @@ describe("security audit", () => {
       error: expect.any(Error),
     });
   });
+});
+
+it("pseudonimiza UUIDs sem devolvê-los à trilha", () => {
+  const accountId = "2c099744-62e6-4fd4-beb9-a88c4274f73c";
+  const hash = pseudonymizeAuditSubject(accountId);
+
+  expect(hash).toMatch(/^[0-9a-f]{64}$/);
+  expect(hash).not.toContain(accountId);
 });

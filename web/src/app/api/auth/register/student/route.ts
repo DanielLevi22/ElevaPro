@@ -1,8 +1,16 @@
 import { passwordValidationError, userFacingAuthError } from "@elevapro/shared";
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
+import { enforceRateLimit } from "@/lib/rate-limit";
+import { recordSecurityAuditEvent } from "@/lib/security-audit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { attachTraceId, traceIdForRequest } from "@/lib/trace";
 
 export async function POST(request: Request) {
+  const traceId = traceIdForRequest(request);
+  const limited = await enforceRateLimit(request, "registration", traceId);
+  if (limited) return attachTraceId(limited, traceId);
+
   const { email, password, full_name } = await request.json();
 
   if (!email || !password || !full_name) {
@@ -42,8 +50,26 @@ export async function POST(request: Request) {
   } as never);
 
   if (profileError) {
-    console.error("[register/student] profile insert error:", profileError);
+    logger.error("registration.student_profile_failed", { error: profileError, trace_id: traceId });
+    await supabaseAdmin.auth.admin.deleteUser(data.user.id);
+    return attachTraceId(
+      NextResponse.json(
+        { error: "Não foi possível concluir o cadastro. Tente novamente." },
+        { status: 500 },
+      ),
+      traceId,
+    );
   }
 
-  return NextResponse.json({ success: true });
+  await recordSecurityAuditEvent({
+    eventType: "identity.registration.succeeded",
+    outcome: "succeeded",
+    actorId: data.user.id,
+    subjectId: data.user.id,
+    resourceType: "account",
+    resourceId: data.user.id,
+    traceId,
+  });
+
+  return attachTraceId(NextResponse.json({ success: true }), traceId);
 }

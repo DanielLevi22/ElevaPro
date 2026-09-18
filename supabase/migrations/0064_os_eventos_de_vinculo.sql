@@ -32,10 +32,10 @@ BEGIN
   );
 
   INSERT INTO private.security_audit_events (
-    occurred_at, event_type, outcome, actor_id, subject_id,
+    occurred_at, event_type, outcome, actor_hash, subject_hash,
     resource_type, resource_id, origin, expires_at
   ) VALUES (
-    v_now, v_event_type, 'succeeded', v_actor_id, NEW.student_id,
+    v_now, v_event_type, 'succeeded', private.audit_principal_hash(v_actor_id), private.audit_principal_hash(NEW.student_id),
     'specialist_student_link', NEW.id::text, 'database', v_now + interval '365 days'
   );
 

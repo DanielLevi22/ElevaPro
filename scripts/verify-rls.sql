@@ -155,11 +155,11 @@ BEGIN
   END IF;
 
   IF has_function_privilege(
-    'anon', 'public.record_security_audit_event(text, text, uuid, uuid, text, text, text, text)', 'EXECUTE'
+    'anon', 'public.record_security_audit_event(text, text, text, text, text, text, text, text)', 'EXECUTE'
   ) OR has_function_privilege(
-    'authenticated', 'public.record_security_audit_event(text, text, uuid, uuid, text, text, text, text)', 'EXECUTE'
+    'authenticated', 'public.record_security_audit_event(text, text, text, text, text, text, text, text)', 'EXECUTE'
   ) OR NOT has_function_privilege(
-    'service_role', 'public.record_security_audit_event(text, text, uuid, uuid, text, text, text, text)', 'EXECUTE'
+    'service_role', 'public.record_security_audit_event(text, text, text, text, text, text, text, text)', 'EXECUTE'
   ) THEN
     RAISE EXCEPTION 'EXECUTE de record_security_audit_event não está restrito a service_role';
   END IF;

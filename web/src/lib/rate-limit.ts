@@ -1,6 +1,7 @@
 import { createHmac } from "node:crypto";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
+import { recordSecurityAuditEvent } from "@/lib/security-audit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { traceIdForRequest } from "@/lib/trace";
 
@@ -35,10 +36,11 @@ export function pseudonymizeRateLimitSubject(subject: string, key = rateLimitKey
 }
 
 function requestSubject(request: Request): string | null {
-  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  const realIp = request.headers.get("x-real-ip")?.trim();
-  const origin = forwarded || realIp;
-  return origin ? `ip:${origin}` : null;
+  // A Vercel sobrescreve estes cabeçalhos no edge. Exigir os dois impede que
+  // uma requisição direta escolha um IP arbitrário como chave do limitador.
+  const vercelRequestId = request.headers.get("x-vercel-id")?.trim();
+  const origin = request.headers.get("x-vercel-forwarded-for")?.trim();
+  return vercelRequestId && origin ? `ip:${origin}` : null;
 }
 
 /**
@@ -84,6 +86,14 @@ export async function enforceRateLimit(
 
     const decision = responseData[0] as RateLimitResult;
     if (decision.allowed) return null;
+
+    await recordSecurityAuditEvent({
+      eventType: "security.rate_limit.denied",
+      outcome: "denied",
+      resourceType: "rate_limit_policy",
+      resourceId: policyName,
+      traceId,
+    });
 
     return NextResponse.json(
       { error: "rate_limit_exceeded" },

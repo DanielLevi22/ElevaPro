@@ -37,7 +37,10 @@ describe("rate limit", () => {
       error: null,
     });
     const request = new Request("https://elevapro.test/api/ai/coach", {
-      headers: { "x-forwarded-for": "203.0.113.7, 10.0.0.1" },
+      headers: {
+        "x-vercel-id": "gru1::test",
+        "x-vercel-forwarded-for": "203.0.113.7",
+      },
     });
 
     const response = await enforceRateLimit(request, "ai");
@@ -58,7 +61,10 @@ describe("rate limit", () => {
       error: null,
     });
     const request = new Request("https://elevapro.test/api/auth/register", {
-      headers: { "x-real-ip": "203.0.113.7" },
+      headers: {
+        "x-vercel-id": "gru1::test",
+        "x-vercel-forwarded-for": "203.0.113.7",
+      },
     });
 
     const response = await enforceRateLimit(request, "registration");
