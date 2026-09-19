@@ -70,6 +70,7 @@
     "react-native-health-connect": "^3.5.0",
     "react-native-mmkv": "4.3.2",
     "react-native-nitro-modules": "0.35.9",
+    "react-native-qrcode-svg": "^6.3.24",
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",

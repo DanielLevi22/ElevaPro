@@ -20,6 +20,7 @@ DO $$
 DECLARE
   sem_rls text[];
   sem_politica text[];
+  sem_mfa text[];
 BEGIN
   SELECT array_agg(tablename ORDER BY tablename) INTO sem_rls
   FROM pg_tables
@@ -43,7 +44,23 @@ BEGIN
     RAISE EXCEPTION 'Tabelas com RLS e sem política: %', array_to_string(sem_politica, ', ');
   END IF;
 
-  RAISE NOTICE 'ok  todas as tabelas de public têm RLS e ao menos uma política';
+  SELECT array_agg(t.tablename ORDER BY t.tablename) INTO sem_mfa
+  FROM pg_tables t
+  WHERE t.schemaname = 'public'
+    AND t.rowsecurity
+    AND NOT EXISTS (
+      SELECT 1 FROM pg_policies p
+      WHERE p.schemaname = 'public'
+        AND p.tablename = t.tablename
+        AND p.policyname = 'privileged_session_requires_mfa'
+        AND p.permissive = 'RESTRICTIVE'
+    );
+
+  IF sem_mfa IS NOT NULL THEN
+    RAISE EXCEPTION 'Tabelas sem trava MFA para conta privilegiada: %', array_to_string(sem_mfa, ', ');
+  END IF;
+
+  RAISE NOTICE 'ok  todas as tabelas de public têm RLS, política e trava MFA';
 END $$;
 
 DO $$
@@ -86,6 +103,12 @@ BEGIN
     'authenticated', 'private.is_linked_specialist(uuid)', 'EXECUTE'
   ) THEN
     RAISE EXCEPTION 'authenticated não pode executar private.is_linked_specialist';
+  END IF;
+
+  IF NOT has_function_privilege(
+    'authenticated', 'private.current_session_meets_mfa_requirement()', 'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'authenticated não pode executar private.current_session_meets_mfa_requirement';
   END IF;
 
   IF has_function_privilege('anon', 'public.link_student_by_code(text)', 'EXECUTE') THEN
@@ -403,6 +426,7 @@ BEGIN
     SELECT 1 FROM pg_policies
     WHERE schemaname = 'public' AND tablename = 'workout_sessions'
       AND cmd IN ('DELETE', 'ALL')
+      AND NOT (policyname = 'privileged_session_requires_mfa' AND permissive = 'RESTRICTIVE')
   ) THEN
     RAISE EXCEPTION 'workout_sessions voltou a ter política de DELETE (ou FOR ALL)';
   END IF;
@@ -422,6 +446,7 @@ DECLARE
   aluno_b  uuid := gen_random_uuid();
   espec    uuid := gen_random_uuid();
   visiveis int;
+  afetadas int;
   eventos_auditados int;
   vinculo_id uuid;
 BEGIN
@@ -434,6 +459,15 @@ BEGIN
     (espec,   '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
      'verify-e@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb);
 
+  -- Art. 46: conta Auth sem perfil não chega ao MFA nem ao CASL. O trigger é
+  -- a fronteira que cria identidade de domínio, então esta prova usa o banco real.
+  SELECT count(*) INTO visiveis
+  FROM public.profiles
+  WHERE id IN (aluno_a, aluno_b, espec);
+  IF visiveis <> 3 THEN
+    RAISE EXCEPTION 'CADASTRO INCOMPLETO: trigger criou % perfis para 3 contas Auth', visiveis;
+  END IF;
+
   -- Dado de saúde para os DOIS alunos: assim "zero linhas" significa bloqueio e
   -- não tabela vazia.
   INSERT INTO public.student_anamnesis (student_id, responses, completed_at)
@@ -443,6 +477,9 @@ BEGIN
   INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
   VALUES (aluno_a, espec, 'personal_training', 'active')
   RETURNING id INTO vinculo_id;
+
+  INSERT INTO public.specialist_services (specialist_id, service_type)
+  VALUES (espec, 'nutrition_consulting');
 
   -- A criação do vínculo que libera acesso produz uma única evidência, com
   -- especialista como ator no caminho interno de provisionamento.
@@ -460,6 +497,37 @@ BEGIN
 
   -- A partir daqui a sessão é um usuário comum, não o dono do banco.
   SET LOCAL ROLE authenticated;
+
+  -- Art. 6º, VII e 46: o especialista autenticado, mas sem segundo fator,
+  -- não pode ler dado sensível por acesso direto ao PostgREST.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal1')::text, true);
+  SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_a;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'MFA CONTORNADO: especialista AAL1 leu % anamnese(s)', visiveis;
+  END IF;
+
+  SELECT count(*) INTO visiveis FROM public.profiles WHERE id = espec;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'PORTA MFA FECHADA: especialista AAL1 não leu a própria identidade';
+  END IF;
+
+  -- Art. 46: o serviço próprio é só o contexto mínimo para abrir o TOTP. AAL1
+  -- não recebe dieta e tampouco pode mudar a autorização que acabou de consultar.
+  SELECT count(*) INTO visiveis
+  FROM public.specialist_services
+  WHERE specialist_id = espec;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'CONTEXTO MFA AUSENTE: especialista AAL1 não leu o próprio serviço';
+  END IF;
+
+  UPDATE public.specialist_services
+  SET service_type = 'personal_training'
+  WHERE specialist_id = espec;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 0 THEN
+    RAISE EXCEPTION 'MFA CONTORNADO: especialista AAL1 alterou % serviço(s) próprio(s)', afetadas;
+  END IF;
 
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', aluno_a, 'role', 'authenticated')::text, true);
@@ -486,7 +554,7 @@ BEGIN
   END;
 
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
   SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_a;
   IF visiveis <> 1 THEN
     RAISE EXCEPTION 'especialista vinculado não lê o aluno A (viu %)', visiveis;
@@ -519,7 +587,7 @@ BEGIN
 
   SET LOCAL ROLE authenticated;
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
   SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_a;
   IF visiveis <> 0 THEN
     RAISE EXCEPTION 'VÍNCULO ENCERRADO, ACESSO ATIVO: especialista lê % anamnese(s) após revogação', visiveis;
@@ -765,7 +833,7 @@ BEGIN
   SET LOCAL ROLE authenticated;
 
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
 
   SELECT count(*) INTO visiveis
     FROM public.workout_sessions
@@ -910,7 +978,7 @@ BEGIN
   --    alheia não é correção, é falsificação — e o privilégio de coluna não
   --    diria nada sobre isso, porque ele vale para o papel inteiro.
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
   UPDATE public.workout_sessions SET notes = 'reescrito pelo personal'
    WHERE id = sessao_a;
   GET DIAGNOSTICS afetadas = ROW_COUNT;
@@ -1031,7 +1099,7 @@ BEGIN
   SET LOCAL ROLE authenticated;
 
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
   SELECT count(*) INTO visiveis
     FROM public.health_daily_metrics WHERE student_id = aluno_a;
   IF visiveis <> 1 THEN
@@ -1089,7 +1157,7 @@ BEGIN
   END IF;
   SET LOCAL ROLE authenticated;
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
   SELECT count(*) INTO vazou
     FROM public.health_daily_metrics WHERE student_id = aluno_a;
   IF vazou <> 0 THEN
@@ -1127,7 +1195,7 @@ BEGIN
    WHERE student_id = aluno_a AND specialist_id = espec;
   SET LOCAL ROLE authenticated;
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
   SELECT count(*) INTO vazou
     FROM public.health_daily_metrics WHERE student_id = aluno_a;
   IF vazou <> 0 THEN
@@ -1294,7 +1362,7 @@ BEGIN
   -- 1. Com vínculo e consentimento, o especialista lê. É o caso de uso: sem
   --    ele, tudo abaixo passaria com uma tabela simplesmente vazia.
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
   SELECT count(*) INTO visiveis
     FROM public.workout_session_vitals WHERE session_id = sessao_a;
   IF visiveis <> 1 THEN
@@ -1307,7 +1375,7 @@ BEGIN
    WHERE student_id = aluno_a AND consent_type = 'health_data_collection';
   SET LOCAL ROLE authenticated;
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
   -- As zonas (0054) moram na linha da média: a mesma revogação as fecha. Contar
   -- pelas zonas, e não só pela linha, é o que acusa se um dia elas forem parar
   -- noutro lugar legível.
@@ -1447,7 +1515,7 @@ BEGIN
 
   SET LOCAL ROLE authenticated;
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
 
   SELECT count(*) INTO visiveis FROM public.physical_assessments WHERE student_id = aluno_a;
   IF visiveis <> 1 THEN
@@ -1473,7 +1541,7 @@ BEGIN
    WHERE student_id = aluno_a AND consent_type = 'health_data_collection';
   SET LOCAL ROLE authenticated;
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
 
   SELECT count(*) INTO vazou FROM public.physical_assessments WHERE student_id = aluno_a;
   IF vazou <> 0 THEN
@@ -1583,7 +1651,7 @@ BEGIN
   END IF;
 
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
   SELECT count(*) INTO visiveis FROM public.body_scans WHERE student_id = aluno_a;
   IF visiveis <> 1 THEN
     RAISE EXCEPTION 'especialista vinculado não lê a análise do aluno A (viu %)', visiveis;
@@ -1614,7 +1682,7 @@ BEGIN
   END IF;
 
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
   UPDATE public.body_scans SET circ_waist = 60 WHERE student_id = aluno_a;
   GET DIAGNOSTICS visiveis = ROW_COUNT;
   IF visiveis <> 0 THEN
@@ -1892,7 +1960,7 @@ BEGIN
   -- O especialista vinculado e com consentimento não lê: nenhuma tela dele usa
   -- o dado, e abrir a leitura "para depois" é o que o Art. 6°, III recusa.
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
   SELECT count(*) INTO vazou FROM public.hydration_daily;
   IF vazou <> 0 THEN
     RAISE EXCEPTION 'LEITURA SEM FINALIDADE: especialista lê % dia(s) de água', vazou;
@@ -2039,7 +2107,7 @@ BEGIN
 
   -- 3. O especialista não grava linha `self` que o aluno depois corrigiria como sua.
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
   BEGIN
     INSERT INTO public.physical_assessments (student_id, weight_kg, height_cm, measured_by)
     VALUES (aluno, 79, 180, 'self');
@@ -2054,7 +2122,7 @@ BEGIN
   VALUES (aluno, 78, 180, 'self');
   SET LOCAL ROLE authenticated;
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated')::text, true);
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
   SELECT count(*) INTO visiveis FROM public.physical_assessments
   WHERE student_id = aluno AND measured_by = 'self';
   IF visiveis <> 1 THEN
@@ -2124,7 +2192,7 @@ BEGIN
 
   -- 2. O autor escreve a nota do aluno que ele acompanha.
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', autor, 'role', 'authenticated')::text, true);
+    json_build_object('sub', autor, 'role', 'authenticated', 'aal', 'aal2')::text, true);
   INSERT INTO public.specialist_notes (student_id, specialist_id, body)
   VALUES (aluno, autor, 'Progresso consistente na semana.')
   RETURNING id INTO nota;
@@ -2222,7 +2290,7 @@ BEGIN
 
   SET LOCAL ROLE authenticated;
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', autor, 'role', 'authenticated')::text, true);
+    json_build_object('sub', autor, 'role', 'authenticated', 'aal', 'aal2')::text, true);
   SELECT count(*) INTO visiveis FROM public.specialist_notes WHERE student_id = revogou;
   IF visiveis <> 0 THEN
     RAISE EXCEPTION 'NOTA SOBREVIVE À REVOGAÇÃO: o autor leu % nota(s) de quem revogou (Art. 11, I)', visiveis;
@@ -2463,7 +2531,7 @@ BEGIN
 
   -- 3. Nem o especialista, que não é participante.
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', specialist, 'role', 'authenticated')::text, true);
+    json_build_object('sub', specialist, 'role', 'authenticated', 'aal', 'aal2')::text, true);
   BEGIN
     PERFORM * FROM public.get_leaderboard('global', week);
     RAISE EXCEPTION 'PLACAR PARA QUEM NÃO PARTICIPA: o especialista leu o global';

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useAuthStore } from "@/modules/auth";
+import { hasCurrentMfaAssurance, useAuthStore } from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
 
 export default function LoginPage() {
@@ -46,6 +46,14 @@ export default function LoginPage() {
 
       if (!authUser) {
         setError("Perfil não encontrado. Crie uma nova conta ou contate o suporte.");
+        return;
+      }
+
+      if (
+        (accountType === "admin" || accountType === "specialist") &&
+        !(await hasCurrentMfaAssurance())
+      ) {
+        router.replace("/auth/mfa");
         return;
       }
 

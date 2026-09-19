@@ -16,7 +16,7 @@ ao repositório antes de declarar cobertura.
 
 | ID | Superfície / limite | Estado | Evidência exigida | Frequência |
 | --- | --- | --- | --- | --- |
-| IDN-01 | Cadastro, convite, login, recuperação, sessão e MFA | não verificado | configuração Auth + teste de abuso/sessão | por release e trimestral |
+| IDN-01 | Cadastro, convite, login, recuperação, sessão e MFA | verificado | `docs/security/mfa-operating-procedure.md`, TOTP/AAL2 e `web/src/lib/__tests__/api-auth.test.ts` | por release e trimestral |
 | IDN-02 | Papéis `admin`, `specialist`, `student`/legado `member` | não verificado | fonte da verdade, CASL, RLS e teste de escalada | por mudança |
 | IDN-03 | Vínculo `student_specialists` e masquerade | não verificado | RLS + BFF + teste vinculado/não vinculado | por mudança |
 | WEB-01 | Web pública, layout, proxy e cookies | não verificado | `web/src/proxy.ts`, headers/CSP/CORS e teste de sessão | por release |
@@ -41,7 +41,7 @@ ao repositório antes de declarar cobertura.
 | CICD-02 | Deploy Vercel, migrations Supabase e build/submit EAS | não verificado | ambientes segregados, aprovação, smoke test e rollback | por release |
 | OBS-01 | Logs de app, BFF, banco, mobile e crash reporting | não verificado | política de redaction + teste que proíbe dado sensível | por mudança |
 | OBS-02 | Métricas, traces, alertas e SLOs | não verificado | catálogo, labels sem PII, alerta testado e `trace_id` | mensal |
-| AUD-01 | Trilha append-only de segurança e privacidade | não verificado | contrato do evento, RLS, retenção e consulta de investigação | por release |
+| AUD-01 | Trilha append-only de segurança e privacidade | verificado | migrations `0061`–`0065`, `scripts/verify-rls.sql` e Auth Audit Logs para MFA; retenção de 365 dias | por release |
 | GOV-01 | RoPA, consentimento, direitos do titular, retenção e RIPD | não verificado | `LGPD_COMPLIANCE`, registros e amostra de atendimento | trimestral |
 | OPS-01 | Backup, restauração, DR e continuidade | não verificado | relatório de restore, RPO/RTO e acesso restrito | trimestral |
 | OPS-02 | Incidente, contenção, notificação e pós-mortem | não verificado | runbook, exercício e registro de decisão | semestral |

@@ -12,18 +12,19 @@ import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router/react-navigation';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import '../global.css';
 
 import { supabase } from '@elevapro/supabase';
-import { useAuthStore } from '@/auth';
+import { hasCurrentMfaAssurance, useAuthStore } from '@/auth';
 import { HealthDataConsentGate } from '@/components/consent/HealthDataConsentGate';
-import { AppAlertHost } from '@/components/ui/appAlert';
+import { AppAlertHost, showAlert } from '@/components/ui/appAlert';
 import { useColorScheme } from '@/components/useColorScheme';
 import { queryClient } from '@/lib/query-client';
+import { ROUTES } from '@/navigation/types';
 import { registerHealthSyncAsync } from '@/services/backgroundHealthTask';
 import { registerBackgroundFetchAsync } from '@/services/backgroundTask';
 import { requestNotificationPermissions } from '@/services/notificationService';
@@ -115,6 +116,25 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
   const segments = useSegments();
   const router = useRouter();
 
+  const redirectPrivilegedSession = useCallback(async (): Promise<void> => {
+    const inMfaRoute = String(segments[1]) === 'mfa';
+    try {
+      if (!(await hasCurrentMfaAssurance())) {
+        if (!inMfaRoute) router.replace(ROUTES.AUTH.MFA as never);
+        return;
+      }
+
+      if (segments[0] === '(auth)') router.replace(ROUTES.TABS.ROOT);
+    } catch {
+      showAlert({
+        title: 'Verificação indisponível',
+        message: 'Não foi possível confirmar a segurança da sessão. Tente entrar novamente.',
+        type: 'error',
+      });
+      await useAuthStore.getState().signOut();
+    }
+  }, [router, segments]);
+
   // Auth State Listener
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -158,13 +178,15 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
     if (!session && !inAuthGroup) {
       // Redirect to login if not authenticated
       router.replace('/(auth)/login');
+    } else if (session && (accountType === 'admin' || accountType === 'specialist')) {
+      void redirectPrivilegedSession();
     } else if (session && inAuthGroup) {
       // Todo papel entra pelo mesmo lugar. Os três ramos anteriores mandavam
       // para `(tabs)` em dois deles, e o terceiro era a fila de aprovação do
       // especialista, removida na 0050.
       router.replace('/(tabs)');
     }
-  }, [session, segments, isLoading, router]);
+  }, [session, segments, isLoading, accountType, router, redirectPrivilegedSession]);
 
   // Removed manual loading view to use Native Splash
 

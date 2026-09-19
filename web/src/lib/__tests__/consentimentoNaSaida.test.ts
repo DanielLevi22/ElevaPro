@@ -48,7 +48,7 @@ vi.mock("../supabase-admin", () => ({
 
 vi.mock("@supabase/supabase-js", () => ({
   createClient: () => ({
-    auth: { getUser: async () => ({ data: { user: { id: "aluno-1" } }, error: null }) },
+    auth: { getClaims: async () => ({ data: { claims: { sub: "aluno-1" } }, error: null }) },
     from: () => ({
       select: () => ({
         eq: () => ({

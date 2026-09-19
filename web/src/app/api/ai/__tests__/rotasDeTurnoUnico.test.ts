@@ -43,8 +43,11 @@ vi.mock("@/modules/ai/ai.config", () => ({
   aiProviders: { fast: providerFalso("fast"), reasoning: providerFalso("reasoning") },
 }));
 
+const authorizeMfaPrivilegedUser = vi.fn();
+
 vi.mock("@/lib/api-auth", () => ({
   authorizeUser: async () => ({ ok: true, caller: { id: "u-1", accountType: "specialist" } }),
+  authorizeMfaPrivilegedUser: (...args: unknown[]) => authorizeMfaPrivilegedUser(...args),
   authorizeStudent: async () => ({ ok: true, caller: { id: "u-1", accountType: "student" } }),
   authorizeStudentWithHealthConsent: async () => ({
     ok: true,
@@ -90,6 +93,10 @@ function pedido(corpo: unknown) {
 beforeEach(() => {
   chamadas = [];
   respostaDoModelo = "";
+  authorizeMfaPrivilegedUser.mockResolvedValue({
+    ok: true,
+    caller: { id: "u-1", accountType: "specialist" },
+  });
 });
 
 describe("guia de preparo", () => {
@@ -176,6 +183,48 @@ describe("análise de alimento por foto", () => {
 });
 
 describe("treino em lote e negociação", () => {
+  // LGPD, art. 46: uma senha válida sem TOTP não autoriza gerar dados de treino.
+  it("não chama o modelo quando especialista ainda está em AAL1", async () => {
+    const { POST } = await import("../workout/negotiate/route");
+    authorizeMfaPrivilegedUser.mockResolvedValue({
+      ok: false,
+      response: Response.json({ error: "mfa_required" }, { status: 403 }),
+    });
+
+    const response = await POST(
+      pedido({
+        split: "ABC",
+        goal: "hipertrofia",
+        studentLevel: "iniciante",
+        exercisesList: "agachamento",
+      }),
+    );
+
+    expect(response.status).toBe(403);
+    expect(chamadas).toHaveLength(0);
+  });
+
+  it("também bloqueia geração em lote sem AAL2", async () => {
+    const { POST } = await import("../workout/batch/route");
+    authorizeMfaPrivilegedUser.mockResolvedValue({
+      ok: false,
+      response: Response.json({ error: "mfa_required" }, { status: 403 }),
+    });
+
+    const response = await POST(
+      pedido({
+        phases: [{ name: "Base", focus: "Força", weeks: 4 }],
+        split: "ABC",
+        goal: "hipertrofia",
+        studentLevel: "iniciante",
+        exercisesList: "agachamento",
+      }),
+    );
+
+    expect(response.status).toBe(403);
+    expect(chamadas).toHaveLength(0);
+  });
+
   it("devolve o mapa de treinos que o modelo montou", async () => {
     const { POST } = await import("../workout/batch/route");
     respostaDoModelo = '{"seg":{"exercises":[]}}';

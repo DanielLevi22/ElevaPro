@@ -1,8 +1,8 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { useAuth, useAuthStore } from "@/modules/auth";
+import { useEffect, useState } from "react";
+import { hasCurrentMfaAssurance, useAuth, useAuthStore } from "@/modules/auth";
 import { DashboardSidebar } from "@/shared/components/layout/DashboardSidebar";
 import { useSidebarCollapsed } from "@/shared/hooks/useSidebarCollapsed";
 
@@ -12,12 +12,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, abilities, services, isLoading } = useAuth();
   const accountType = useAuthStore((s) => s.accountType);
   const { isCollapsed, toggle: toggleCollapse } = useSidebarCollapsed();
+  const [isMfaCheckPending, setIsMfaCheckPending] = useState(true);
 
   useEffect(() => {
     if (!isLoading && !user) {
       router.push("/auth/login");
       return;
     }
+
+    if (isLoading || !user) return;
+
+    if (accountType === "specialist" || accountType === "admin") {
+      setIsMfaCheckPending(true);
+      void hasCurrentMfaAssurance()
+        .then((hasMfa) => {
+          if (!hasMfa) {
+            router.replace("/auth/mfa");
+            return;
+          }
+          setIsMfaCheckPending(false);
+        })
+        .catch(() => router.replace("/auth/mfa"));
+      return;
+    }
+
+    setIsMfaCheckPending(false);
+
     // Students/members: only /dashboard/student/*, /dashboard/workouts/*, /dashboard/diets/* allowed
     const memberAllowed =
       pathname.startsWith("/dashboard/student") ||
@@ -39,7 +59,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push("/auth/login");
   };
 
-  if (isLoading) {
+  if (isLoading || isMfaCheckPending) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="relative">

@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { withAiRoute } from "@/lib/ai-route";
-import { authorizeUser } from "@/lib/api-auth";
+import { authorizeMfaPrivilegedUser } from "@/lib/api-auth";
 import { aiProviders } from "@/modules/ai/ai.config";
 import { responderEmUmTurno } from "@/modules/ai/providers/turnoUnico";
 
@@ -36,8 +36,9 @@ async function handlePost(request: NextRequest) {
   // `const { data } = await client.auth.getUser(token)` — descartando o erro — e
   // devolvia só "existe um usuário". Nunca dizia qual papel ele tem, e o
   // `check-api-auth.js` não pegava porque a rota não toca `supabaseAdmin`.
-  // `authorizeUser` lê o `account_type` de `profiles`, não de `user_metadata`.
-  const auth = await authorizeUser(request);
+  // Gerar treino é ação privilegiada: especialista/admin só chegam aqui depois
+  // de validar TOTP na sessão atual; CASL e a tela não são uma barreira BFF.
+  const auth = await authorizeMfaPrivilegedUser(request);
   if (!auth.ok) return auth.response;
 
   const body = (await request.json()) as {

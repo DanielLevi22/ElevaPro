@@ -164,4 +164,14 @@ describe("POST /api/auth/register", () => {
     expect(response.headers.get("X-Request-Id")).toMatch(/^[0-9a-f]{32}$/);
     await expect(response.json()).resolves.toEqual({ error: "invalid_request_body" });
   });
+
+  it("recusa resposta sem usuário antes de criar serviços", async () => {
+    createUser.mockResolvedValue({ data: { user: null }, error: null });
+
+    const res = await POST(request(VALID));
+
+    expect(res.status).toBe(500);
+    expect(from).not.toHaveBeenCalled();
+    expect(await res.json()).toEqual({ error: "Erro ao criar usuário." });
+  });
 });
