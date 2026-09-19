@@ -1,3 +1,19 @@
+# Aviso de propriedade e uso restrito
+
+© 2026 Eleva Pro. Todos os direitos reservados.
+
+O acesso público a este repositório existe exclusivamente para transparência,
+revisão e execução de pipelines. Nenhuma licença de código aberto é concedida.
+Sem autorização prévia e escrita do titular dos direitos, é proibido usar,
+copiar, modificar, distribuir, sublicenciar, criar obras derivadas ou explorar
+comercialmente o código, a documentação, as marcas e os demais ativos do Eleva
+Pro.
+
+As licenças das dependências e das obras de terceiros continuam válidas nos
+respectivos itens; elas não concedem direitos sobre o restante do repositório.
+
+---
+
 # Atribuições de terceiros
 
 Obras de terceiros usadas no Eleva Pro, com as obrigações que a licença de cada
