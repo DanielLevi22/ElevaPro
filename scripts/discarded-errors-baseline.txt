@@ -1,14 +1,12 @@
-app/src/app/(tabs)/index.tsx 1
 app/src/components/workout/WorkoutAnalyticsService.ts 7
 app/src/modules/auth/screens/LoginScreen.tsx 1
 app/src/modules/nutrition/store/nutritionStore.ts 2
 app/src/modules/students/store/studentStore.ts 3
-app/src/modules/workout/store/workoutStore.ts 2
+app/src/modules/workout/store/workoutStore.ts 1
 app/src/packages/supabase/abilities.ts 1
 app/src/packages/supabase/getUserContextJWT.ts 1
 shared/src/services/auth.service.ts 1
 shared/src/services/nutrition.service.ts 6
-shared/src/services/workouts.service.ts 5
 web/src/app/admin/page.tsx 1
 web/src/app/api/ai/chat/[studentId]/save-workouts/route.ts 2
 web/src/app/api/ai/student/nutribot/route.ts 3
