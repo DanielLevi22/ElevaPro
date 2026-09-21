@@ -41,6 +41,15 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
+      # `shared/` não tem `package.json` próprio: é irmão de `web/`, não
+      # descendente, então a resolução de módulo nunca alcança
+      # `web/node_modules` — só a raiz do repo, ancestral comum dos dois.
+      # Pacote que `shared/` importa (ex. zod em password-policy) só resolve
+      # se a raiz também foi instalada.
+      - name: Install root dependencies
+        working-directory: .
+        run: npm ci
+
       - name: Install dependencies
         run: npm ci
 
