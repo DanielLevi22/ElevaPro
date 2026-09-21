@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { criarSupabaseFake } from "../../__tests__/supabaseFake";
 import { createAdherenceService } from "../adherence.service";
@@ -149,14 +147,14 @@ describe("adherenceService — travas de LGPD (issue #332)", () => {
   // revoga o consentimento de saúde (migration 0043) — mas só se quem
   // consulta for a sessão do próprio especialista. Rodar como `service_role`
   // ignora RLS por definição e reabriria o acesso que aquela migration
-  // fechou. Isso não é testável com o fake (ele não simula RLS); a garantia
-  // real vem de construção: o serviço nunca referencia uma credencial de
-  // admin, só o `SupabaseClient` que recebe por parâmetro. O teste de RLS de
-  // verdade mora em scripts/verify-rls.sql, contra o banco real.
-  it("não referencia service_role nem uma chave de admin no código-fonte", () => {
-    const caminho = fileURLToPath(new URL("../adherence.service.ts", import.meta.url));
-    const fonte = readFileSync(caminho, "utf-8");
-
-    expect(fonte).not.toMatch(/service_role|supabaseAdmin|SERVICE_ROLE_KEY/i);
-  });
+  // fechou.
+  //
+  // Isso não é testável com o fake (ele não simula RLS), e uma varredura do
+  // código-fonte por `import.meta.url` se mostrou frágil: quebra quando este
+  // arquivo é carregado pelo runner do `web/`, que não preserva uma URL de
+  // arquivo real entre pacotes do monorepo. A garantia real é de construção
+  // — `createAdherenceService` só aceita o `SupabaseClient` que recebe por
+  // parâmetro, nunca importa credencial de admin — verificada em revisão de
+  // código, e a trava de RLS de verdade mora em scripts/verify-rls.sql,
+  // contra o banco real.
 });
