@@ -41,17 +41,19 @@ export const criarServicoDePeriodizacoes = (supabase: SupabaseClient) => ({
     if (!periodizations || periodizations.length === 0) return [];
 
     const studentIds = [...new Set(periodizations.map((p) => p.student_id))];
-    const { data: profiles } = await supabase
+    const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
       .select("id, full_name, email")
       .in("id", studentIds);
+    if (profilesError) throw profilesError;
     const profileMap = new Map(profiles?.map((p) => [p.id, p]) ?? []);
 
     const periodizationIds = periodizations.map((p) => p.id);
-    const { data: plans } = await supabase
+    const { data: plans, error: plansError } = await supabase
       .from("training_plans")
       .select("periodization_id")
       .in("periodization_id", periodizationIds);
+    if (plansError) throw plansError;
     const countsMap = new Map<string, number>();
     plans?.forEach((plan) => {
       countsMap.set(plan.periodization_id, (countsMap.get(plan.periodization_id) ?? 0) + 1);
@@ -83,7 +85,7 @@ export const criarServicoDePeriodizacoes = (supabase: SupabaseClient) => ({
     if (error) throw error;
     if (!data) return null;
 
-    const [{ data: student }, { count }] = await Promise.all([
+    const [studentResult, planCountResult] = await Promise.all([
       supabase
         .from("profiles")
         .select("id, full_name, email")
@@ -94,11 +96,13 @@ export const criarServicoDePeriodizacoes = (supabase: SupabaseClient) => ({
         .select("*", { count: "exact", head: true })
         .eq("periodization_id", id),
     ]);
+    if (studentResult.error) throw studentResult.error;
+    if (planCountResult.error) throw planCountResult.error;
 
     return {
       ...data,
-      student: student ?? undefined,
-      training_plans_count: count ?? 0,
+      student: studentResult.data ?? undefined,
+      training_plans_count: planCountResult.count ?? 0,
     } as Periodization;
   },
 
@@ -147,11 +151,12 @@ export const criarServicoDePeriodizacoes = (supabase: SupabaseClient) => ({
       .single();
     if (fetchError) throw fetchError;
 
-    await supabase
+    const { error: completeError } = await supabase
       .from("training_periodizations")
       .update({ status: "completed" })
       .eq("student_id", periodization.student_id)
       .eq("status", "active");
+    if (completeError) throw completeError;
 
     const { data, error } = await supabase
       .from("training_periodizations")
@@ -175,10 +180,11 @@ export const criarServicoDePeriodizacoes = (supabase: SupabaseClient) => ({
     if (!data || data.length === 0) return [];
 
     const planIds = data.map((p) => p.id);
-    const { data: workouts } = await supabase
+    const { data: workouts, error: workoutsError } = await supabase
       .from("workouts")
       .select("training_plan_id")
       .in("training_plan_id", planIds);
+    if (workoutsError) throw workoutsError;
     const countsMap = new Map<string, number>();
     workouts?.forEach((w) => {
       if (w.training_plan_id) {
@@ -203,10 +209,11 @@ export const criarServicoDePeriodizacoes = (supabase: SupabaseClient) => ({
     if (error) throw error;
     if (!data) return null;
 
-    const { count } = await supabase
+    const { count, error: countError } = await supabase
       .from("workouts")
       .select("*", { count: "exact", head: true })
       .eq("training_plan_id", id);
+    if (countError) throw countError;
 
     return { ...data, workouts_count: count ?? 0 } as TrainingPlan;
   },
@@ -240,11 +247,12 @@ export const criarServicoDePeriodizacoes = (supabase: SupabaseClient) => ({
   },
 
   deleteTrainingPlan: async (id: string): Promise<{ periodization_id: string | undefined }> => {
-    const { data: plan } = await supabase
+    const { data: plan, error: planError } = await supabase
       .from("training_plans")
       .select("periodization_id")
       .eq("id", id)
       .single();
+    if (planError) throw planError;
 
     const { error } = await supabase.from("training_plans").delete().eq("id", id);
     if (error) throw error;
@@ -273,10 +281,11 @@ export const criarServicoDePeriodizacoes = (supabase: SupabaseClient) => ({
       .single();
     if (cloneError) throw cloneError;
 
-    const { data: workouts } = await supabase
+    const { data: workouts, error: workoutsError } = await supabase
       .from("workouts")
       .select("*")
       .eq("training_plan_id", id);
+    if (workoutsError) throw workoutsError;
 
     if (workouts && workouts.length > 0) {
       const clonedWorkouts = workouts.map((w) => ({
@@ -288,7 +297,8 @@ export const criarServicoDePeriodizacoes = (supabase: SupabaseClient) => ({
         difficulty: w.difficulty,
         day_of_week: w.day_of_week,
       }));
-      await supabase.from("workouts").insert(clonedWorkouts);
+      const { error: insertError } = await supabase.from("workouts").insert(clonedWorkouts);
+      if (insertError) throw insertError;
     }
 
     return clone as TrainingPlan;
