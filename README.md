@@ -178,3 +178,18 @@ Para trocar o domínio de preview, defina a variável de repositório
 | Marketplace | 📋 Planejado |
 
 Estado atual e o que está em curso: [GitHub Issues](https://github.com/DanielLevi22/ElevaPro/issues)
+
+---
+
+## Direitos autorais e uso
+
+© 2026 Eleva Pro. Todos os direitos reservados.
+
+Este repositório pode ser disponibilizado publicamente para transparência, revisão
+e execução de pipelines. Essa disponibilização não concede licença de código
+aberto nem autorização para usar, copiar, modificar, distribuir, sublicenciar,
+criar obras derivadas ou explorar comercialmente o código, a documentação, as
+marcas ou outros ativos do Eleva Pro. Qualquer uso depende de autorização prévia
+e escrita do titular dos direitos.
+
+Consulte o [NOTICE.md](NOTICE.md) para as condições e atribuições de terceiros.
