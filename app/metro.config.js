@@ -9,7 +9,17 @@ config.projectRoot = __dirname;
 
 // Watch the shared package so Metro picks up changes
 const sharedPackagePath = path.resolve(__dirname, '../shared');
+const monorepoRoot = path.resolve(__dirname, '..');
 config.watchFolders = [...(config.watchFolders ?? []), sharedPackagePath];
+
+// `shared/` não tem `node_modules` próprio: pacote que ele importa (ex. zod em
+// password-policy) só existe no da raiz. Sem isto o Metro resolve módulo de
+// `shared/` só até `shared/node_modules`, que não existe, e falha mesmo com o
+// pacote instalado — ele não sobe a árvore de diretórios como o Node faz.
+config.resolver.nodeModulesPaths = [
+  path.resolve(__dirname, 'node_modules'),
+  path.resolve(monorepoRoot, 'node_modules'),
+];
 
 // Add support for GLB/GLTF 3D model files
 config.resolver.assetExts.push('glb', 'gltf', 'png', 'jpg');
