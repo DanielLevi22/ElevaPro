@@ -24,6 +24,7 @@
 | [ADR-0003](0003-environment-strategy.md) | Estratégia de ambientes Local → Preview → Production | accepted |
 | [ADR-0009](0009-migration-strategy.md) | Migrations aplicadas pelo pipeline, não à mão | accepted |
 | [ADR-0019](0019-coluna-substituida-sai-na-mesma-migration.md) | Coluna substituída sai na mesma migration, não é deprecada | accepted |
+| [ADR-0041](0041-o-alarme-exato-do-android-vira-modulo-nativo-proprio.md) | O alarme exato do Android vira módulo nativo próprio | accepted |
 
 ### Arquitetura web
 
