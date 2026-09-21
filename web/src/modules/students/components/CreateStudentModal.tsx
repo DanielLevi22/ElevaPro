@@ -1,12 +1,9 @@
 "use client";
 
-import {
-  PASSWORD_MIN_LENGTH,
-  PASSWORD_REQUIREMENTS_HINT,
-  passwordValidationError,
-  userFacingAuthError,
-} from "@elevapro/shared";
+import type { ServiceType } from "@elevapro/shared";
+import { userFacingAuthError } from "@elevapro/shared";
 import { useState } from "react";
+import { useAuthStore } from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
 import { Dialog } from "@/shared/components/ui/Dialog";
 import { FormField } from "@/shared/components/ui/FormField";
@@ -18,10 +15,18 @@ interface CreateStudentModalProps {
   onClose: () => void;
 }
 
+const ROTULO: Record<ServiceType, string> = {
+  personal_training: "Treino",
+  nutrition_consulting: "Nutrição",
+};
+
 export function CreateStudentModal({ isOpen, onClose }: CreateStudentModalProps) {
+  const user = useAuthStore((state) => state.user);
+  const servicosOferecidos = useAuthStore((state) => state.services) as ServiceType[];
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -30,7 +35,7 @@ export function CreateStudentModal({ isOpen, onClose }: CreateStudentModalProps)
   const resetForm = () => {
     setFullName("");
     setEmail("");
-    setPassword("");
+    setServiceTypes([]);
     setError(null);
     setSuccess(false);
     createStudent.reset();
@@ -41,18 +46,27 @@ export function CreateStudentModal({ isOpen, onClose }: CreateStudentModalProps)
     onClose();
   };
 
+  const alternarServico = (servico: ServiceType) => {
+    setServiceTypes((atuais) =>
+      atuais.includes(servico) ? atuais.filter((s) => s !== servico) : [...atuais, servico],
+    );
+  };
+
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
-    const passwordError = passwordValidationError(password);
-    if (passwordError) {
-      setError(passwordError);
+    if (serviceTypes.length === 0) {
+      setError("Selecione pelo menos um tipo de acompanhamento.");
+      return;
+    }
+    if (!user?.id) {
+      setError("Usuário não autenticado.");
       return;
     }
 
     try {
-      await createStudent.mutateAsync({ fullName, email, password });
+      await createStudent.mutateAsync({ specialistId: user.id, fullName, email, serviceTypes });
       setSuccess(true);
     } catch (err) {
       setError(userFacingAuthError(err));
@@ -61,7 +75,7 @@ export function CreateStudentModal({ isOpen, onClose }: CreateStudentModalProps)
 
   if (success) {
     return (
-      <Dialog open={isOpen} onClose={handleClose} title="Aluno Criado!">
+      <Dialog open={isOpen} onClose={handleClose} title="Convite enviado!">
         <div className="text-center space-y-4 py-2">
           <div className="w-14 h-14 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto">
             <svg
@@ -80,9 +94,9 @@ export function CreateStudentModal({ isOpen, onClose }: CreateStudentModalProps)
             </svg>
           </div>
           <p className="text-muted-foreground text-sm">
-            <strong className="text-foreground">{fullName}</strong> foi cadastrado com sucesso. As
-            credenciais de acesso foram enviadas para{" "}
-            <strong className="text-foreground">{email}</strong>.
+            <strong className="text-foreground">{fullName}</strong> recebeu o convite em{" "}
+            <strong className="text-foreground">{email}</strong>. Ele entra no app e define a
+            própria senha — sem custo e sem que você a conheça.
           </p>
           <Button fullWidth onClick={handleClose}>
             Concluir
@@ -97,7 +111,7 @@ export function CreateStudentModal({ isOpen, onClose }: CreateStudentModalProps)
       open={isOpen}
       onClose={handleClose}
       title="Novo Aluno"
-      description="Cadastre um aluno criando o acesso dele ao app."
+      description="Convide um aluno para criar o acesso dele ao app."
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <FormField label="Nome Completo" htmlFor="fullName">
@@ -121,17 +135,30 @@ export function CreateStudentModal({ isOpen, onClose }: CreateStudentModalProps)
           />
         </FormField>
 
-        <FormField label="Senha" htmlFor="password" hint={PASSWORD_REQUIREMENTS_HINT}>
-          <Input
-            id="password"
-            type="password"
-            required
-            minLength={PASSWORD_MIN_LENGTH}
-            placeholder={PASSWORD_REQUIREMENTS_HINT}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </FormField>
+        <fieldset className="space-y-2">
+          <legend className="block text-sm font-medium text-foreground mb-1.5">
+            Tipo de acompanhamento
+          </legend>
+          {servicosOferecidos.map((servico) => (
+            <label
+              key={servico}
+              className="flex items-center gap-2.5 text-sm text-foreground cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                checked={serviceTypes.includes(servico)}
+                onChange={() => alternarServico(servico)}
+                className="h-4 w-4 rounded border-border"
+              />
+              {ROTULO[servico]}
+            </label>
+          ))}
+          {servicosOferecidos.length === 0 && (
+            <p className="text-xs text-muted-foreground">
+              Nenhum serviço configurado no seu perfil ainda.
+            </p>
+          )}
+        </fieldset>
 
         {error && (
           <p
@@ -147,7 +174,7 @@ export function CreateStudentModal({ isOpen, onClose }: CreateStudentModalProps)
             Cancelar
           </Button>
           <Button type="submit" fullWidth isLoading={createStudent.isPending}>
-            {createStudent.isPending ? "Criando..." : "Criar Aluno"}
+            {createStudent.isPending ? "Enviando..." : "Enviar Convite"}
           </Button>
         </div>
       </form>

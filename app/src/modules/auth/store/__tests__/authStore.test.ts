@@ -5,6 +5,7 @@ jest.mock('@elevapro/supabase', () => ({
       signOut: jest.fn().mockResolvedValue({ error: null }),
       signInWithPassword: jest.fn().mockResolvedValue({ data: { user: {} }, error: null }),
       getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      updateUser: jest.fn().mockResolvedValue({ data: { user: {} }, error: null }),
     },
     from: jest.fn().mockReturnThis(),
     select: jest.fn().mockReturnThis(),
@@ -157,5 +158,13 @@ describe('authStore', () => {
 
     // Should not set isLoading if skipping
     expect(useAuthStore.getState().isLoading).toBe(false);
+  });
+
+  // Tela de destino do link de convite/recuperação (`elevapro://reset-password`),
+  // que antes não tinha para onde ir.
+  it('should complete an account invite by delegating to authService', async () => {
+    const result = await useAuthStore.getState().completeAccountInvite('Senha-Forte-123!');
+
+    expect(result).toEqual({ success: true });
   });
 });

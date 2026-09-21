@@ -1,4 +1,4 @@
-import type { DailyGoal, ProfileSummary, StudentStreak } from '@elevapro/shared';
+import type { Briefing, DailyGoal, ProfileSummary, StudentStreak } from '@elevapro/shared';
 
 /**
  * O que a tela inicial recebe, e só isso.
@@ -56,6 +56,10 @@ export interface DadosDoPainelDoEspecialista {
   perfil: ProfileSummary | null;
   alunos: unknown[];
   treinos: unknown[];
+  /** Sinais de IA (aluno inativo, convite pendente, anamnese pronta) e os números do rodapé. */
+  briefing: Briefing | null;
+  /** Média de aderência dos alunos ativos com plano — `null` sem nenhum. */
+  averageAdherence: number | null;
   carregando: boolean;
   recarregar: () => void;
 }

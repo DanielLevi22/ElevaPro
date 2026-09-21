@@ -62,6 +62,32 @@ double_confirm_changes = false
 # Local: não exige confirmação de email
 enable_confirmations = false
 
+# Convite do especialista pro aluno (ADR-0035, issue #332). Em produção, o
+# mesmo HTML precisa ser colado no painel do Supabase (Authentication → Email
+# Templates → Invite user) — não existe hoje um jeito de sincronizar isso por
+# código para projeto hospedado, só para o ambiente local via este arquivo.
+[auth.email.template.invite]
+subject = "Você foi convidado para o Eleva Pro"
+content_path = "./supabase/templates/invite.html"
+
+# O serviço de e-mail embutido do Supabase é para teste: poucos e-mails por
+# hora, sem SMTP custom. Resend é o SMTP de produção (issue #332) — mesmo
+# template acima, entrega de verdade. A chave nunca vai para este arquivo:
+# `env()` lê do ambiente na hora que o CLI sobe, igual o padrão da ADR-0021.
+# Local: `RESEND_API_KEY` em `supabase/.env` (gitignored). Produção: painel do
+# Supabase → Authentication → SMTP Settings — não é variável da Vercel, porque
+# quem envia o e-mail é a infraestrutura do Supabase, não o Next.js.
+[auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+# PREENCHER: precisa ser um endereço no domínio verificado no Resend — não
+# necessariamente elevapro.app; ver a decisão pendente no wizard da issue #332.
+admin_email = "env(RESEND_SENDER_EMAIL)"
+sender_name = "Eleva Pro"
+
 [auth.mfa]
 max_enrolled_factors = 2
 

@@ -40,6 +40,5 @@ export interface CreateStudentData {
   specialist_id: string;
   full_name: string;
   email: string;
-  password: string;
-  service_type: ServiceType;
+  service_types: ServiceType[];
 }

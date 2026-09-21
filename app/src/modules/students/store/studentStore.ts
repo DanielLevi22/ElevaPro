@@ -1,4 +1,9 @@
 import {
+  type Briefing,
+  type CreateStudentData,
+  createAdherenceService,
+  createAuthService,
+  createBriefingService,
   createStudentsService,
   PHYSICAL_ASSESSMENT_COLUMNS,
   type PhysicalAssessment,
@@ -7,6 +12,7 @@ import {
 import { supabase } from '@elevapro/supabase';
 import { create } from 'zustand';
 import { showAlert } from '@/components/ui/appAlert';
+import { getLocalDateISOString } from '@/utils/dateUtils';
 
 export type { PhysicalAssessment };
 
@@ -23,18 +29,15 @@ export interface Student {
   assessment?: Partial<PhysicalAssessment>;
 }
 
-export interface CreateStudentData {
-  specialist_id: string;
-  full_name: string;
-  email: string;
-  password: string;
-  service_type: ServiceType;
-}
-
 interface StudentState {
   students: Student[];
   totalCount: number;
   history: PhysicalAssessment[];
+  myServiceTypes: ServiceType[];
+  /** Sinais de IA (aluno inativo, convite pendente, anamnese pronta), para o chip "Em risco". */
+  briefing: Briefing | null;
+  /** Aderência por aluno visível na lista; ausente enquanto não buscada, `null` sem plano ativo. */
+  adherenceByStudent: Record<string, number | null>;
   isLoading: boolean;
 
   fetchStudents: (
@@ -73,6 +76,12 @@ interface StudentState {
     data: CreateStudentData
   ) => Promise<{ success: boolean; studentId?: string; error?: string }>;
 
+  resendInvite: (studentId: string) => Promise<{ success: boolean; error?: string }>;
+
+  fetchMyServiceTypes: (specialistId: string) => Promise<void>;
+  fetchBriefing: (specialistId: string) => Promise<void>;
+  fetchAdherenceFor: (studentIds: string[]) => Promise<void>;
+
   reset: () => void;
 }
 
@@ -80,12 +89,18 @@ const initialState = {
   students: [],
   totalCount: 0,
   history: [],
+  myServiceTypes: [] as ServiceType[],
+  briefing: null as Briefing | null,
+  adherenceByStudent: {} as Record<string, number | null>,
   isLoading: false,
 };
 
 // O BFF precisa da URL absoluta: no mobile não existe origem relativa para
 // resolver `/api/students`.
 const service = createStudentsService(supabase, process.env.EXPO_PUBLIC_API_URL ?? '');
+const authService = createAuthService(supabase);
+const briefingService = createBriefingService(supabase);
+const adherenceService = createAdherenceService(supabase);
 
 export const useStudentStore = create<StudentState>((set, get) => ({
   ...initialState,
@@ -196,6 +211,53 @@ export const useStudentStore = create<StudentState>((set, get) => ({
 
   createStudent: async (data) => {
     return service.createStudent(data);
+  },
+
+  resendInvite: async (studentId) => {
+    return service.resendInvite(studentId);
+  },
+
+  // Gate do seletor de "tipo de acompanhamento": só o que o próprio
+  // especialista presta pode aparecer como opção no cadastro (issue #332).
+  fetchMyServiceTypes: async (specialistId) => {
+    try {
+      const profile = await authService.getProfileWithServices(specialistId);
+      set({
+        myServiceTypes: (profile?.specialist_services ?? []).map((s) => s.service_type),
+      });
+    } catch (error) {
+      console.error('Error fetching specialist services:', error);
+      set({ myServiceTypes: [] });
+    }
+  },
+
+  // Sinais de IA por trás do chip "Em risco" — a mesma fonte que o Painel usa,
+  // para "em risco" significar a mesma coisa nas duas telas.
+  fetchBriefing: async (specialistId) => {
+    try {
+      set({ briefing: await briefingService.fetchBriefing(specialistId) });
+    } catch (error) {
+      console.error('Error fetching briefing:', error);
+      set({ briefing: null });
+    }
+  },
+
+  // A mesma aderência do hub de Progresso do aluno (#298), uma por linha da
+  // lista — nunca uma conta nova, para "aderência" não virar duas coisas.
+  fetchAdherenceFor: async (studentIds) => {
+    const hoje = getLocalDateISOString();
+    try {
+      const entries = await Promise.all(
+        studentIds.map(
+          async (id) => [id, await adherenceService.fetchStudentAdherence(id, hoje)] as const
+        )
+      );
+      set((state) => ({
+        adherenceByStudent: { ...state.adherenceByStudent, ...Object.fromEntries(entries) },
+      }));
+    } catch (error) {
+      console.error('Error fetching adherence:', error);
+    }
   },
 
   reset: () => set(initialState),

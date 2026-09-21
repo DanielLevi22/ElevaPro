@@ -24,6 +24,7 @@ export interface AuthState {
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   updateSession: (session: Session | null) => Promise<void>;
+  completeAccountInvite: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -121,6 +122,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return {
         success: false,
         error: error instanceof Error ? error.message : "Erro ao fazer login",
+      };
+    }
+  },
+
+  completeAccountInvite: async (newPassword) => {
+    try {
+      return await authService.completeAccountInvite(newPassword);
+    } catch (error: unknown) {
+      console.error("CompleteAccountInvite error:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Erro ao definir a senha",
       };
     }
   },

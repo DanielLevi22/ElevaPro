@@ -7,8 +7,7 @@ const input: CreateStudentData = {
   specialist_id: "especialista-1",
   full_name: "Ana Souza",
   email: "ana@exemplo.com",
-  password: "senha-forte",
-  service_type: "personal_training",
+  service_types: ["personal_training"],
 };
 
 function supabaseWithSession(accessToken: string | null): SupabaseClient {
@@ -67,10 +66,11 @@ describe("studentsService.createStudent", () => {
     expect(fetchMock.mock.calls[0][0]).toBe("https://app.exemplo/api/students");
   });
 
-  // A rota deriva o especialista do token e os serviços de `specialist_services`.
-  // Reenviar `specialist_id` do cliente permitiria cadastrar aluno no nome de
-  // outro especialista, então esses campos não podem ir no corpo.
-  it("não envia specialist_id nem service_type no corpo", async () => {
+  // A rota deriva o especialista do token, nunca do corpo — reenviar
+  // `specialist_id` do cliente permitiria cadastrar aluno no nome de outro
+  // especialista. `service_types` vai no corpo porque é escolha legítima do
+  // chamador: a rota valida contra os próprios `specialist_services` dele.
+  it("não envia specialist_id no corpo, e envia os tipos de acompanhamento escolhidos", async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       json: async () => ({ success: true, student_id: "aluno-9" }),
@@ -82,8 +82,22 @@ describe("studentsService.createStudent", () => {
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       fullName: "Ana Souza",
       email: "ana@exemplo.com",
-      password: "senha-forte",
+      serviceTypes: ["personal_training"],
     });
+  });
+
+  // ADR-0035: nenhuma senha atravessa o cliente rumo ao especialista definir
+  // por outra pessoa — nem que alguém a acrescente ao construir o input.
+  it("não envia senha no corpo, mesmo que o input carregue uma", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true, student_id: "aluno-9" }),
+    });
+
+    const service = createStudentsService(supabaseWithSession("token-abc"));
+    await service.createStudent({ ...input, password: "não deveria existir" } as never);
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).not.toHaveProperty("password");
   });
 
   it("devolve a mensagem de erro da rota", async () => {

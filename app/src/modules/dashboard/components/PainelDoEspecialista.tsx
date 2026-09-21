@@ -1,3 +1,4 @@
+import type { Briefing, BriefingSignalKind } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -6,6 +7,13 @@ import { AvatarDoCabecalho } from '@/components/ui/AvatarDoCabecalho';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { colors as brandColors } from '@/constants/colors';
 import { ROUTES } from '@/navigation/types';
+import { comOpacidade, useCores } from '@/shared/design';
+
+const SIGNAL_ICON: Record<BriefingSignalKind, keyof typeof Ionicons.glyphMap> = {
+  inactive: 'alert-circle',
+  pending_invite: 'mail-unread',
+  anamnesis_ready: 'sparkles',
+};
 
 /**
  * A Home do especialista.
@@ -19,7 +27,8 @@ import { ROUTES } from '@/navigation/types';
 interface PainelDoEspecialistaProps {
   profile: { full_name?: string | null } | null;
   students: unknown[];
-  workouts: unknown[];
+  briefing: Briefing | null;
+  averageAdherence: number | null;
   isLoading: boolean;
   onRefresh: () => void;
 }
@@ -27,16 +36,19 @@ interface PainelDoEspecialistaProps {
 export function PainelDoEspecialista({
   profile,
   students,
-  workouts,
+  briefing,
+  averageAdherence,
   isLoading,
   onRefresh,
 }: PainelDoEspecialistaProps) {
   const router = useRouter();
+  const cores = useCores();
+  const atRiskCount = briefing?.signals.filter((signal) => signal.tone === 'danger').length ?? 0;
 
   return (
     <ScreenLayout>
       {/* Ambient Top Light - Made extremely subtle */}
-      <View className="absolute top-0 w-full h-[200px] pointer-events-none opacity-20">
+      <View className="absolute top-0 w-full h-[12.5rem] pointer-events-none opacity-20">
         <LinearGradient colors={[brandColors.primary.start, 'transparent']} style={{ flex: 1 }} />
       </View>
 
@@ -52,7 +64,7 @@ export function PainelDoEspecialista({
       >
         <View className="mb-8 flex-row justify-between items-start">
           <View>
-            <Text className="text-zinc-500 text-[12px] font-bold mb-1 uppercase tracking-widest font-sans ml-1">
+            <Text className="text-zinc-500 text-[0.75rem] font-bold mb-1 uppercase tracking-widest font-sans ml-1">
               Central de Comando
             </Text>
             <Text className="text-4xl font-extrabold text-white mb-2 font-display">Dashboard</Text>
@@ -62,71 +74,116 @@ export function PainelDoEspecialista({
 
         <View className="gap-y-4">
           {/* Stats Grid */}
-          <View className="flex-row gap-4">
-            {/* Students Card - Clean Dark */}
+          <View className="flex-row gap-3">
             <TouchableOpacity
               onPress={() => router.push(ROUTES.TABS.STUDENTS)}
               activeOpacity={0.8}
               className="flex-1"
             >
               <View
-                className="rounded-[24px] p-5 h-44 justify-between relative overflow-hidden border bg-zinc-900"
+                className="rounded-2xl p-4 border bg-zinc-900"
                 style={{ borderColor: brandColors.border.default }}
               >
-                <View className="bg-zinc-800 self-start p-2.5 rounded-xl">
-                  <Ionicons name="people" size={20} color={brandColors.secondary.main} />
-                </View>
-                <View>
-                  <Text className="text-white text-4xl font-black font-display tracking-tight">
-                    {students.length}
-                  </Text>
-                  <Text className="text-zinc-500 text-[10px] font-bold tracking-widest uppercase font-sans mt-1">
-                    Alunos Ativos
-                  </Text>
-                </View>
+                <Text className="text-white text-3xl font-black font-display tracking-tight">
+                  {students.length}
+                </Text>
+                <Text className="text-zinc-500 text-[0.5625rem] font-bold tracking-widest uppercase font-sans mt-1">
+                  Alunos Ativos
+                </Text>
               </View>
             </TouchableOpacity>
 
-            {/* Workouts Card - Clean Dark */}
-            <TouchableOpacity
-              onPress={() => router.push(ROUTES.TABS.WORKOUTS)}
-              activeOpacity={0.8}
-              className="flex-1"
+            <View
+              className="flex-1 rounded-2xl p-4 border bg-zinc-900"
+              style={{ borderColor: brandColors.border.default }}
             >
-              <View
-                className="rounded-[24px] p-5 h-44 justify-between relative overflow-hidden border bg-zinc-900"
-                style={{ borderColor: brandColors.border.default }}
+              <Text
+                className="text-3xl font-black font-display tracking-tight"
+                style={{ color: cores.primaryText }}
               >
-                <View className="bg-zinc-800 self-start p-2.5 rounded-xl">
-                  <Ionicons name="barbell" size={20} color={brandColors.primary.start} />
-                </View>
-                <View>
-                  <Text className="text-white text-4xl font-black font-display tracking-tight">
-                    {workouts.length}
-                  </Text>
-                  <Text className="text-zinc-500 text-[10px] font-bold tracking-widest uppercase font-sans mt-1">
-                    Modelos
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
+                {averageAdherence === null ? '—' : `${averageAdherence}%`}
+              </Text>
+              <Text className="text-zinc-500 text-[0.5625rem] font-bold tracking-widest uppercase font-sans mt-1">
+                Aderência
+              </Text>
+            </View>
+
+            <View
+              className="flex-1 rounded-2xl p-4 border bg-zinc-900"
+              style={{ borderColor: brandColors.border.default }}
+            >
+              <Text
+                className="text-3xl font-black font-display tracking-tight"
+                style={{ color: cores.destructive }}
+              >
+                {atRiskCount}
+              </Text>
+              <Text className="text-zinc-500 text-[0.5625rem] font-bold tracking-widest uppercase font-sans mt-1">
+                Em Risco
+              </Text>
+            </View>
           </View>
+
+          {briefing && briefing.signals.length > 0 ? (
+            <View>
+              <Text className="text-zinc-500 text-[0.6875rem] font-bold tracking-widest uppercase font-sans mb-2 ml-1">
+                Alertas da IA
+              </Text>
+              <View className="gap-y-2">
+                {briefing.signals.map((signal) => {
+                  const color =
+                    signal.tone === 'danger'
+                      ? cores.destructive
+                      : signal.tone === 'success'
+                        ? cores.success
+                        : cores.warning;
+                  return (
+                    <TouchableOpacity
+                      key={`${signal.studentId}-${signal.kind}`}
+                      onPress={() => router.push(ROUTES.STUDENTS.DETAILS(signal.studentId))}
+                      activeOpacity={0.8}
+                    >
+                      <View
+                        className="rounded-2xl p-3.5 border bg-zinc-900 flex-row items-center gap-3"
+                        style={{ borderColor: brandColors.border.default }}
+                      >
+                        <View
+                          className="w-9 h-9 rounded-xl items-center justify-center"
+                          style={{ backgroundColor: comOpacidade(color, 0.15) }}
+                        >
+                          <Ionicons name={SIGNAL_ICON[signal.kind]} size={18} color={color} />
+                        </View>
+                        <View className="flex-1">
+                          <Text className="text-white text-sm font-bold font-display">
+                            {signal.studentName}
+                          </Text>
+                          <Text className="text-zinc-400 text-xs font-sans mt-0.5">
+                            {signal.message}
+                          </Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          ) : null}
 
           {/* Ranking Card - Full Width */}
           <TouchableOpacity onPress={() => router.push(ROUTES.TABS.RANKING)} activeOpacity={0.8}>
             <View
-              className="rounded-[24px] p-5 flex-row items-center justify-between border bg-zinc-900"
+              className="rounded-[1.5rem] p-5 flex-row items-center justify-between border bg-zinc-900"
               style={{ borderColor: brandColors.border.default }}
             >
               <View className="flex-row items-center gap-4">
                 <View className="bg-yellow-500/10 p-3 rounded-xl border border-yellow-500/20">
-                  <Ionicons name="trophy" size={24} color="#EAB308" />
+                  <Ionicons name="trophy" size={24} color={cores.warning} />
                 </View>
                 <View>
                   <Text className="text-white text-lg font-black font-display tracking-tight">
                     Ranking de Elite 🏆
                   </Text>
-                  <Text className="text-zinc-500 text-[10px] font-bold tracking-widest uppercase font-sans">
+                  <Text className="text-zinc-500 text-[0.625rem] font-bold tracking-widest uppercase font-sans">
                     Competição Semanal
                   </Text>
                 </View>

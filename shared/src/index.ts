@@ -11,6 +11,7 @@ export * from "./auth/totp";
 export * from "./data/anamnesisAdaptive";
 export * from "./data/anamnesisQuestions";
 export type { Database, Json } from "./database/database.types";
+export * from "./services/adherence/adherence.service";
 export * from "./services/assessment/adaptiveAnamnesis.service";
 export * from "./services/assessment/bodyScan.service";
 export * from "./services/assessment/bodyScanDescricao";

@@ -231,4 +231,34 @@ describe('studentStore', () => {
     expect(result.success).toBe(false);
     expect(result.error).toBe('Insert failed');
   });
+
+  // O seletor de "tipo de acompanhamento" no cadastro só pode oferecer o que
+  // o próprio especialista presta — sem isso ele criaria vínculo num serviço
+  // que não é dele, e a rota rejeitaria (issue #332).
+  it('carrega os tipos de serviço que o especialista presta', async () => {
+    mockSupabase.from.mockReturnValue(
+      mockSupabaseQuery({
+        id: 'p1',
+        specialist_services: [
+          { service_type: 'personal_training' },
+          { service_type: 'nutrition_consulting' },
+        ],
+      })
+    );
+
+    await useStudentStore.getState().fetchMyServiceTypes('p1');
+
+    expect(useStudentStore.getState().myServiceTypes).toEqual([
+      'personal_training',
+      'nutrition_consulting',
+    ]);
+  });
+
+  it('não quebra quando o especialista ainda não tem serviço cadastrado', async () => {
+    mockSupabase.from.mockReturnValue(mockSupabaseQuery(null, { message: 'not found' }));
+
+    await useStudentStore.getState().fetchMyServiceTypes('p1');
+
+    expect(useStudentStore.getState().myServiceTypes).toEqual([]);
+  });
 });
