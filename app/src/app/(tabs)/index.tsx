@@ -29,7 +29,7 @@ export default function TelaInicial() {
         profile={especialista.perfil}
         students={especialista.alunos}
         briefing={especialista.briefing}
-        aderenciaMedia={especialista.aderenciaMedia}
+        averageAdherence={especialista.averageAdherence}
       />
     );
   }

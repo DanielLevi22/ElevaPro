@@ -22,11 +22,11 @@ const mockActivityOf = jest.fn();
 const mockResumoDoPerfil = jest
   .fn()
   .mockResolvedValue({ id: 'u1', full_name: 'Ana Souza', avatar_url: null });
-const mockBuscarBriefing = jest.fn().mockResolvedValue({
+const mockFetchBriefing = jest.fn().mockResolvedValue({
   signals: [],
   stats: { activeStudents: 0, workoutTemplates: 0, activeDietPlans: 0, aiSessions: 0 },
 });
-const mockBuscarAderencia = jest.fn().mockResolvedValue(null);
+const mockFetchAdherence = jest.fn().mockResolvedValue(null);
 
 jest.mock('@elevapro/supabase', () => ({ supabase: {} }));
 
@@ -40,10 +40,10 @@ jest.mock('@elevapro/shared', () => ({
     getProfileSummary: (id: string) => mockResumoDoPerfil(id),
   }),
   createBriefingService: () => ({
-    fetchBriefing: (id: string) => mockBuscarBriefing(id),
+    fetchBriefing: (id: string) => mockFetchBriefing(id),
   }),
   createAdherenceService: () => ({
-    fetchAdherence: (id: string, hoje: string) => mockBuscarAderencia(id, hoje),
+    fetchAdherence: (id: string, hoje: string) => mockFetchAdherence(id, hoje),
   }),
 }));
 
@@ -164,13 +164,13 @@ describe('useDadosDaHome', () => {
   // O painel precisa dos dois pra mostrar aderência e alertas de IA (issue #332).
   it('no especialista busca briefing e aderência do dia, com a data local', async () => {
     mockPapel.atual = 'specialist';
-    mockBuscarAderencia.mockResolvedValueOnce(82);
+    mockFetchAdherence.mockResolvedValueOnce(82);
     const { result } = renderHook(() => useDadosDaHome());
 
     await waitFor(() => expect(result.current.especialista.perfil).not.toBeNull());
-    expect(mockBuscarBriefing).toHaveBeenCalledWith('u1');
-    expect(mockBuscarAderencia).toHaveBeenCalledWith('u1', '2026-09-12');
-    expect(result.current.especialista.aderenciaMedia).toBe(82);
+    expect(mockFetchBriefing).toHaveBeenCalledWith('u1');
+    expect(mockFetchAdherence).toHaveBeenCalledWith('u1', '2026-09-12');
+    expect(result.current.especialista.averageAdherence).toBe(82);
   });
 
   it('não sugere treino ao especialista, mesmo com treinos carregados', async () => {

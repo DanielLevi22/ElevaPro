@@ -9,7 +9,7 @@ import { colors as brandColors } from '@/constants/colors';
 import { ROUTES } from '@/navigation/types';
 import { comOpacidade, useCores } from '@/shared/design';
 
-const ICONE_DO_SINAL: Record<BriefingSignalKind, keyof typeof Ionicons.glyphMap> = {
+const SIGNAL_ICON: Record<BriefingSignalKind, keyof typeof Ionicons.glyphMap> = {
   inactive: 'alert-circle',
   pending_invite: 'mail-unread',
   anamnesis_ready: 'sparkles',
@@ -28,7 +28,7 @@ interface PainelDoEspecialistaProps {
   profile: { full_name?: string | null } | null;
   students: unknown[];
   briefing: Briefing | null;
-  aderenciaMedia: number | null;
+  averageAdherence: number | null;
   isLoading: boolean;
   onRefresh: () => void;
 }
@@ -37,13 +37,13 @@ export function PainelDoEspecialista({
   profile,
   students,
   briefing,
-  aderenciaMedia,
+  averageAdherence,
   isLoading,
   onRefresh,
 }: PainelDoEspecialistaProps) {
   const router = useRouter();
   const cores = useCores();
-  const emRisco = briefing?.signals.filter((sinal) => sinal.tone === 'danger').length ?? 0;
+  const atRiskCount = briefing?.signals.filter((signal) => signal.tone === 'danger').length ?? 0;
 
   return (
     <ScreenLayout>
@@ -101,7 +101,7 @@ export function PainelDoEspecialista({
                 className="text-3xl font-black font-display tracking-tight"
                 style={{ color: cores.primaryText }}
               >
-                {aderenciaMedia === null ? '—' : `${aderenciaMedia}%`}
+                {averageAdherence === null ? '—' : `${averageAdherence}%`}
               </Text>
               <Text className="text-zinc-500 text-[0.5625rem] font-bold tracking-widest uppercase font-sans mt-1">
                 Aderência
@@ -116,7 +116,7 @@ export function PainelDoEspecialista({
                 className="text-3xl font-black font-display tracking-tight"
                 style={{ color: cores.destructive }}
               >
-                {emRisco}
+                {atRiskCount}
               </Text>
               <Text className="text-zinc-500 text-[0.5625rem] font-bold tracking-widest uppercase font-sans mt-1">
                 Em Risco
@@ -130,17 +130,17 @@ export function PainelDoEspecialista({
                 Alertas da IA
               </Text>
               <View className="gap-y-2">
-                {briefing.signals.map((sinal) => {
-                  const cor =
-                    sinal.tone === 'danger'
+                {briefing.signals.map((signal) => {
+                  const color =
+                    signal.tone === 'danger'
                       ? cores.destructive
-                      : sinal.tone === 'success'
+                      : signal.tone === 'success'
                         ? cores.success
                         : cores.warning;
                   return (
                     <TouchableOpacity
-                      key={`${sinal.studentId}-${sinal.kind}`}
-                      onPress={() => router.push(ROUTES.STUDENTS.DETAILS(sinal.studentId))}
+                      key={`${signal.studentId}-${signal.kind}`}
+                      onPress={() => router.push(ROUTES.STUDENTS.DETAILS(signal.studentId))}
                       activeOpacity={0.8}
                     >
                       <View
@@ -149,16 +149,16 @@ export function PainelDoEspecialista({
                       >
                         <View
                           className="w-9 h-9 rounded-xl items-center justify-center"
-                          style={{ backgroundColor: comOpacidade(cor, 0.15) }}
+                          style={{ backgroundColor: comOpacidade(color, 0.15) }}
                         >
-                          <Ionicons name={ICONE_DO_SINAL[sinal.kind]} size={18} color={cor} />
+                          <Ionicons name={SIGNAL_ICON[signal.kind]} size={18} color={color} />
                         </View>
                         <View className="flex-1">
                           <Text className="text-white text-sm font-bold font-display">
-                            {sinal.studentName}
+                            {signal.studentName}
                           </Text>
                           <Text className="text-zinc-400 text-xs font-sans mt-0.5">
-                            {sinal.message}
+                            {signal.message}
                           </Text>
                         </View>
                       </View>

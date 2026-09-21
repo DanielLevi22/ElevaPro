@@ -1,9 +1,29 @@
-import { userFacingAuthError } from "@elevapro/shared";
+import { type ServiceType, userFacingAuthError } from "@elevapro/shared";
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeSpecialist } from "@/lib/api-auth";
 import { logger } from "@/lib/logger";
 import { recordSecurityAuditEvent } from "@/lib/security-audit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+
+/**
+ * O tipo de acompanhamento é escolha do especialista, mas só entre os
+ * serviços que ele próprio presta — o cliente escolhe o quê, nunca se o
+ * especialista está autorizado a prestar aquele serviço.
+ */
+async function findUnauthorizedServiceType(
+  specialistId: string,
+  serviceTypes: ServiceType[],
+): Promise<ServiceType | undefined> {
+  const { data: offeredServices } = await supabaseAdmin
+    .from("specialist_services")
+    .select("service_type")
+    .eq("specialist_id", specialistId);
+
+  const offered = new Set(
+    (offeredServices ?? []).map((s: { service_type: ServiceType }) => s.service_type),
+  );
+  return serviceTypes.find((type) => !offered.has(type));
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +32,8 @@ export async function POST(request: NextRequest) {
     const caller = auth.caller;
 
     const body = await request.json();
-    const { fullName, email, serviceTypes } = body;
+    const { fullName, email } = body;
+    const serviceTypes = body.serviceTypes as ServiceType[] | undefined;
 
     if (!fullName || !email || !Array.isArray(serviceTypes) || serviceTypes.length === 0) {
       return NextResponse.json(
@@ -21,18 +42,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // O tipo de acompanhamento é escolha do especialista, mas só entre os
-    // serviços que ele próprio presta — o cliente escolhe o quê, nunca se o
-    // especialista está autorizado a prestar aquele serviço.
-    const { data: offeredServices } = await supabaseAdmin
-      .from("specialist_services")
-      .select("service_type")
-      .eq("specialist_id", caller.id);
-
-    const offered = new Set(
-      (offeredServices ?? []).map((s: { service_type: string }) => s.service_type),
-    );
-    const unauthorized = serviceTypes.find((type: string) => !offered.has(type));
+    const unauthorized = await findUnauthorizedServiceType(caller.id, serviceTypes);
     if (unauthorized) {
       return NextResponse.json(
         { error: `Você não presta o serviço "${unauthorized}"` },
@@ -69,7 +79,7 @@ export async function POST(request: NextRequest) {
       { onConflict: "id" },
     );
 
-    const links = serviceTypes.map((service_type: string) => ({
+    const links = serviceTypes.map((service_type: ServiceType) => ({
       student_id: studentId,
       specialist_id: caller.id,
       service_type,

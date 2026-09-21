@@ -27,17 +27,17 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    const erroDeSenha = passwordValidationError(password);
-    if (erroDeSenha) {
-      setError(erroDeSenha);
+    const passwordError = passwordValidationError(password);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
 
     setLoading(true);
     try {
-      const resultado = await useAuthStore.getState().completeAccountInvite(password);
-      if (!resultado.success) {
-        setError(resultado.error || "O link pode ter expirado — peça um novo.");
+      const result = await useAuthStore.getState().completeAccountInvite(password);
+      if (!result.success) {
+        setError(result.error || "O link pode ter expirado — peça um novo.");
         return;
       }
       router.replace("/dashboard");

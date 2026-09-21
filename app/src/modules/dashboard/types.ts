@@ -58,8 +58,8 @@ export interface DadosDoPainelDoEspecialista {
   treinos: unknown[];
   /** Sinais de IA (aluno inativo, convite pendente, anamnese pronta) e os números do rodapé. */
   briefing: Briefing | null;
-  /** Média de aderência à dieta dos alunos ativos com plano — `null` sem nenhum. */
-  aderenciaMedia: number | null;
+  /** Média de aderência dos alunos ativos com plano — `null` sem nenhum. */
+  averageAdherence: number | null;
   carregando: boolean;
   recarregar: () => void;
 }

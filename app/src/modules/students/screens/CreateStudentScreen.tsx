@@ -12,15 +12,15 @@ import { Input } from '@/components/ui/Input';
 import { Row } from '@/components/ui/Row';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { ROUTES } from '@/navigation/types';
-import { useCadastroDeAluno } from '../hooks/useCadastroDeAluno';
+import { useStudentRegistration } from '../hooks/useStudentRegistration';
 import { useStudentStore } from '../store/studentStore';
 
-type OpcaoDeServico = { valor: ServiceType; icon: keyof typeof Ionicons.glyphMap; titulo: string };
+type ServiceOption = { value: ServiceType; icon: keyof typeof Ionicons.glyphMap; label: string };
 
 /** Mesmos rótulos do cadastro do especialista — o mesmo enum, o mesmo nome. */
-const SERVICOS: OpcaoDeServico[] = [
-  { valor: 'personal_training', icon: 'barbell', titulo: 'Treino' },
-  { valor: 'nutrition_consulting', icon: 'restaurant', titulo: 'Nutrição' },
+const SERVICE_OPTIONS: ServiceOption[] = [
+  { value: 'personal_training', icon: 'barbell', label: 'Treino' },
+  { value: 'nutrition_consulting', icon: 'restaurant', label: 'Nutrição' },
 ];
 
 export default function CreateStudentScreen() {
@@ -28,42 +28,44 @@ export default function CreateStudentScreen() {
   const { user } = useAuthStore();
   const { myServiceTypes, fetchMyServiceTypes, createStudent } = useStudentStore();
   const [isLoading, setIsLoading] = useState(false);
-  const cadastro = useCadastroDeAluno({ servicosOferecidos: myServiceTypes });
+  const registration = useStudentRegistration({ offeredServices: myServiceTypes });
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: só na entrada da tela
   useEffect(() => {
     if (user?.id) fetchMyServiceTypes(user.id);
   }, [user?.id]);
 
-  async function enviarConvite() {
-    if (cadastro.impedimento || !user?.id) return;
+  async function handleSendInvite() {
+    if (registration.blockingReason || !user?.id) return;
 
     setIsLoading(true);
-    const resultado = await createStudent({
+    const result = await createStudent({
       specialist_id: user.id,
-      full_name: cadastro.fullName,
-      email: cadastro.email.trim(),
-      service_types: cadastro.serviceTypes,
+      full_name: registration.fullName,
+      email: registration.email.trim(),
+      service_types: registration.serviceTypes,
     });
     setIsLoading(false);
 
-    if (resultado.success && resultado.studentId) {
-      cadastro.concluirConvite(resultado.studentId);
+    if (result.success && result.studentId) {
+      registration.completeInvite(result.studentId);
     } else {
       showAlert({
         title: 'Não foi possível enviar o convite',
-        message: resultado.error || 'Tente novamente.',
+        message: result.error || 'Tente novamente.',
         type: 'error',
       });
     }
   }
 
-  if (cadastro.etapa === 'convite' && cadastro.studentId) {
+  if (registration.step === 'invite' && registration.studentId) {
     return (
-      <ConviteEnviado
-        email={cadastro.email}
-        onAvaliar={() => router.replace(ROUTES.STUDENTS.ASSESSMENT(cadastro.studentId as string))}
-        onVoltar={() => router.replace(ROUTES.STUDENTS.ROOT)}
+      <InviteSent
+        email={registration.email}
+        onAssess={() =>
+          router.replace(ROUTES.STUDENTS.ASSESSMENT(registration.studentId as string))
+        }
+        onBack={() => router.replace(ROUTES.STUDENTS.ROOT)}
       />
     );
   }
@@ -85,16 +87,16 @@ export default function CreateStudentScreen() {
           <Group header="Dados básicos">
             <Input
               icon="person"
-              value={cadastro.fullName}
-              onChangeText={cadastro.setFullName}
+              value={registration.fullName}
+              onChangeText={registration.setFullName}
               placeholder="Nome completo"
               autoCapitalize="words"
               autoComplete="name"
             />
             <Input
               icon="mail"
-              value={cadastro.email}
-              onChangeText={cadastro.setEmail}
+              value={registration.email}
+              onChangeText={registration.setEmail}
               placeholder="E-mail do aluno"
               keyboardType="email-address"
               autoCapitalize="none"
@@ -106,15 +108,17 @@ export default function CreateStudentScreen() {
             header="Tipo de acompanhamento"
             footer="Só aparecem os serviços que você presta — configure em seu perfil para oferecer outro."
           >
-            {SERVICOS.filter((opcao) => myServiceTypes.includes(opcao.valor)).map((opcao) => (
-              <Row
-                key={opcao.valor}
-                icon={opcao.icon}
-                title={opcao.titulo}
-                selected={cadastro.serviceTypes.includes(opcao.valor)}
-                onPress={() => cadastro.alternarServico(opcao.valor)}
-              />
-            ))}
+            {SERVICE_OPTIONS.filter((option) => myServiceTypes.includes(option.value)).map(
+              (option) => (
+                <Row
+                  key={option.value}
+                  icon={option.icon}
+                  title={option.label}
+                  selected={registration.serviceTypes.includes(option.value)}
+                  onPress={() => registration.toggleService(option.value)}
+                />
+              )
+            )}
             {myServiceTypes.length === 0 ? (
               <View className="px-4 py-3">
                 <Text className="text-rotulo text-muted-foreground">
@@ -128,8 +132,8 @@ export default function CreateStudentScreen() {
             label="Enviar convite"
             fullWidth
             isLoading={isLoading}
-            disabled={!!cadastro.impedimento}
-            onPress={enviarConvite}
+            disabled={!!registration.blockingReason}
+            onPress={handleSendInvite}
           />
         </View>
       </ScrollView>
@@ -137,14 +141,14 @@ export default function CreateStudentScreen() {
   );
 }
 
-function ConviteEnviado({
+function InviteSent({
   email,
-  onAvaliar,
-  onVoltar,
+  onAssess,
+  onBack,
 }: {
   email: string;
-  onAvaliar: () => void;
-  onVoltar: () => void;
+  onAssess: () => void;
+  onBack: () => void;
 }) {
   return (
     <ScreenLayout>
@@ -161,9 +165,9 @@ function ConviteEnviado({
           </View>
         </Group>
 
-        <Button label="Fazer avaliação física agora" fullWidth onPress={onAvaliar} />
+        <Button label="Fazer avaliação física agora" fullWidth onPress={onAssess} />
         <View className="h-2.5" />
-        <Button label="Voltar para Alunos" variant="tinted" fullWidth onPress={onVoltar} />
+        <Button label="Voltar para Alunos" variant="tinted" fullWidth onPress={onBack} />
       </View>
     </ScreenLayout>
   );

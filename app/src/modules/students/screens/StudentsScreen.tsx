@@ -17,7 +17,7 @@ import { useCores } from '@/shared/design';
 import { StudentEditModal } from '../components/StudentEditModal';
 import { useStudentStore } from '../store/studentStore';
 
-type Filtro = 'todos' | 'risco' | 'pendentes';
+type StudentFilter = 'all' | 'atRisk' | 'pending';
 
 export default function StudentsScreen() {
   const {
@@ -33,23 +33,23 @@ export default function StudentsScreen() {
   const { user } = useAuthStore();
   const router = useRouter();
   const cores = useCores();
-  const [filtro, setFiltro] = useState<Filtro>('todos');
+  const [filter, setFilter] = useState<StudentFilter>('all');
 
-  const idsEmRisco = useMemo(
+  const atRiskIds = useMemo(
     () =>
       new Set(
         (briefing?.signals ?? [])
-          .filter((sinal) => sinal.kind === 'inactive')
+          .filter((signal) => signal.kind === 'inactive')
           .map((s) => s.studentId)
       ),
     [briefing]
   );
 
-  const studentsFiltrados = useMemo(() => {
-    if (filtro === 'risco') return students.filter((s) => idsEmRisco.has(s.id));
-    if (filtro === 'pendentes') return students.filter((s) => s.account_status === 'invited');
+  const filteredStudents = useMemo(() => {
+    if (filter === 'atRisk') return students.filter((s) => atRiskIds.has(s.id));
+    if (filter === 'pending') return students.filter((s) => s.account_status === 'invited');
     return students;
-  }, [students, filtro, idsEmRisco]);
+  }, [students, filter, atRiskIds]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: só quando o especialista muda
   useEffect(() => {
@@ -58,8 +58,10 @@ export default function StudentsScreen() {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: só quando a página de alunos muda
   useEffect(() => {
-    const idsSemAderencia = students.map((s) => s.id).filter((id) => !(id in adherenceByStudent));
-    if (idsSemAderencia.length > 0) fetchAdherenceFor(idsSemAderencia);
+    const idsMissingAdherence = students
+      .map((s) => s.id)
+      .filter((id) => !(id in adherenceByStudent));
+    if (idsMissingAdherence.length > 0) fetchAdherenceFor(idsMissingAdherence);
   }, [students]);
 
   const [selectedStudent, setSelectedStudent] = useState<
@@ -279,7 +281,7 @@ export default function StudentsScreen() {
           <Link href={'/(tabs)/students/create' as never} asChild>
             <TouchableOpacity
               activeOpacity={0.8}
-              className="h-14 w-14 rounded-full items-center justify-center bg-primary shadow-lg shadow-orange-500/20"
+              className="h-14 w-14 rounded-full items-center justify-center bg-primary shadow-lg shadow-primary/20"
             >
               <Ionicons name="add" size={28} color={cores.primaryForeground} />
             </TouchableOpacity>
@@ -339,23 +341,23 @@ export default function StudentsScreen() {
         <View className="flex-row gap-2 mt-2">
           {(
             [
-              ['todos', `Todos · ${students.length}`],
-              ['risco', `Em risco · ${idsEmRisco.size}`],
+              ['all', `Todos · ${students.length}`],
+              ['atRisk', `Em risco · ${atRiskIds.size}`],
               [
-                'pendentes',
+                'pending',
                 `Pendentes · ${students.filter((s) => s.account_status === 'invited').length}`,
               ],
             ] as const
-          ).map(([valor, rotulo]) => (
+          ).map(([value, label]) => (
             <TouchableOpacity
-              key={valor}
-              onPress={() => setFiltro(valor)}
-              className={`px-4 py-1.5 rounded-full border ${filtro === valor ? 'bg-orange-500/10 border-orange-500' : 'bg-transparent border-zinc-800'}`}
+              key={value}
+              onPress={() => setFilter(value)}
+              className={`px-4 py-1.5 rounded-full border ${filter === value ? 'bg-primary/10 border-primary' : 'bg-transparent border-zinc-800'}`}
             >
               <Text
-                className={`text-xs font-bold ${filtro === valor ? 'text-orange-500' : 'text-zinc-500'}`}
+                className={`text-xs font-bold ${filter === value ? 'text-primary-text' : 'text-zinc-500'}`}
               >
-                {rotulo.toUpperCase()}
+                {label.toUpperCase()}
               </Text>
             </TouchableOpacity>
           ))}
@@ -363,12 +365,12 @@ export default function StudentsScreen() {
       </View>
 
       {/* Content */}
-      {studentsFiltrados.length === 0 && !isLoading ? (
+      {filteredStudents.length === 0 && !isLoading ? (
         <View className="flex-1 justify-center items-center px-6">
           <View className="bg-zinc-900 p-8 rounded-full mb-6 border border-zinc-800">
             <Ionicons name="people-outline" size={80} color={cores.mutedForeground} />
           </View>
-          {filtro === 'todos' ? (
+          {filter === 'all' ? (
             <>
               <Text className="text-white text-2xl font-bold mb-2 text-center font-display">
                 Nenhum aluno ainda
@@ -379,7 +381,7 @@ export default function StudentsScreen() {
               <Link href={'/(tabs)/students/create' as never} asChild>
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  className="rounded-2xl py-4 px-8 bg-primary shadow-lg shadow-orange-500/20"
+                  className="rounded-2xl py-4 px-8 bg-primary shadow-lg shadow-primary/20"
                 >
                   <Text className="text-primary-foreground text-base font-bold font-display">
                     Novo Aluno
@@ -389,13 +391,13 @@ export default function StudentsScreen() {
             </>
           ) : (
             <Text className="text-white text-lg font-bold text-center font-display">
-              {filtro === 'risco' ? 'Nenhum aluno em risco agora' : 'Nenhum convite pendente'}
+              {filter === 'atRisk' ? 'Nenhum aluno em risco agora' : 'Nenhum convite pendente'}
             </Text>
           )}
         </View>
       ) : (
         <FlatList
-          data={studentsFiltrados}
+          data={filteredStudents}
           renderItem={renderItem}
           keyExtractor={(item, index) => item.id || `student-${index}`}
           contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}

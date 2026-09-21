@@ -23,23 +23,23 @@ export function ResetPasswordScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function confirmar() {
+  async function handleConfirm() {
     if (password !== confirmPassword) {
       showAlert({ title: 'Erro', message: 'As senhas não são iguais.', type: 'error' });
       return;
     }
 
-    const erroDeSenha = passwordValidationError(password);
-    if (erroDeSenha) {
-      showAlert({ title: 'Erro', message: erroDeSenha, type: 'error' });
+    const passwordError = passwordValidationError(password);
+    if (passwordError) {
+      showAlert({ title: 'Erro', message: passwordError, type: 'error' });
       return;
     }
 
     setLoading(true);
-    const resultado = await completeAccountInvite(password);
+    const result = await completeAccountInvite(password);
     setLoading(false);
 
-    if (resultado.success) {
+    if (result.success) {
       showAlert({
         title: 'Senha definida',
         message: 'Sua conta está pronta.',
@@ -50,7 +50,7 @@ export function ResetPasswordScreen() {
     } else {
       showAlert({
         title: 'Não foi possível definir a senha',
-        message: resultado.error || 'O link pode ter expirado — peça um novo.',
+        message: result.error || 'O link pode ter expirado — peça um novo.',
         type: 'error',
       });
     }
@@ -89,7 +89,7 @@ export function ResetPasswordScreen() {
             />
           </Group>
 
-          <Button label="Confirmar" onPress={confirmar} isLoading={loading} fullWidth />
+          <Button label="Confirmar" onPress={handleConfirm} isLoading={loading} fullWidth />
         </View>
       </ScrollView>
     </ScreenLayout>
