@@ -1,4 +1,4 @@
-import type { DeclaredMeasurementInput } from "../services/measurement.service";
+import type { DeclaredMeasurementInput } from "../services/progress/measurement.service";
 import { lerRespostaNumerica } from "./anamnese";
 import { CIRCUMFERENCE_RANGE, FAT_RANGE } from "./anamnesisMeasurement";
 
