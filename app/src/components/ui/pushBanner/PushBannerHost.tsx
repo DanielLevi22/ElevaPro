@@ -29,17 +29,17 @@ export function PushBannerHost() {
 
   if (current === null) return null;
 
-  return <Balao key={`${current.title}-${current.body}`} {...current} onDismiss={dismiss} />;
+  return <Banner key={`${current.title}-${current.body}`} {...current} onDismiss={dismiss} />;
 }
 
-const ICONES: Record<PushBannerIcon, LucideIcon> = {
+const ICONS: Record<PushBannerIcon, LucideIcon> = {
   'triangle-alert': TriangleAlert,
   utensils: Utensils,
   dumbbell: Dumbbell,
 };
 
 /** Mesma caixa "linha" do `CaixaDeIcone`: 2.5rem, ícone a 19. */
-const TAMANHO_DO_ICONE = 19;
+const ICON_SIZE = 19;
 
 /** Classe literal por tom — Tailwind só gera o que aparece escrito no fonte. */
 const HALO: Record<PushBannerTone, string> = {
@@ -50,11 +50,11 @@ const HALO: Record<PushBannerTone, string> = {
 };
 
 /** Some sozinho depois de um tempo, como o balão nativo de push faria. */
-const DURACAO_VISIVEL_MS = 5000;
-const DURACAO_DE_ENTRADA = 220;
-const DURACAO_DE_SAIDA = 160;
+const VISIBLE_DURATION_MS = 5000;
+const ENTER_DURATION_MS = 220;
+const EXIT_DURATION_MS = 160;
 
-interface BalaoProps {
+interface BannerProps {
   tone: PushBannerTone;
   icon: PushBannerIcon;
   title: string;
@@ -62,23 +62,23 @@ interface BalaoProps {
   onDismiss: () => void;
 }
 
-function Balao({ tone, icon, title, body, onDismiss }: BalaoProps) {
+function Banner({ tone, icon, title, body, onDismiss }: BannerProps) {
   const cores = useCores();
   const escalar = useEscala();
   const inset = useSafeAreaInsets();
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(-escalar(16));
-  const Icone = ICONES[icon];
+  const Icon = ICONS[icon];
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: dispara uma vez por balão — o host troca a `key` a cada balão novo, então isto nunca precisa reagir a `onDismiss`/`opacity`/`translateY` mudando.
   useEffect(() => {
-    opacity.value = withTiming(1, { duration: DURACAO_DE_ENTRADA });
+    opacity.value = withTiming(1, { duration: ENTER_DURATION_MS });
     translateY.value = withSpring(0, { damping: 16 });
 
     const saida = setTimeout(() => {
-      opacity.value = withTiming(0, { duration: DURACAO_DE_SAIDA });
+      opacity.value = withTiming(0, { duration: EXIT_DURATION_MS });
       onDismiss();
-    }, DURACAO_VISIVEL_MS);
+    }, VISIBLE_DURATION_MS);
 
     return () => clearTimeout(saida);
   }, []);
@@ -98,7 +98,7 @@ function Balao({ tone, icon, title, body, onDismiss }: BalaoProps) {
           <View
             className={`h-[2.5rem] w-[2.5rem] items-center justify-center rounded-[0.8125rem] border ${HALO[tone]}`}
           >
-            <Icone size={escalar(TAMANHO_DO_ICONE)} color={corDoTom(tone, cores)} />
+            <Icon size={escalar(ICON_SIZE)} color={colorForTone(tone, cores)} />
           </View>
           <View className="flex-1">
             <Text className="text-corpo font-bold text-foreground" numberOfLines={1}>
@@ -115,7 +115,7 @@ function Balao({ tone, icon, title, body, onDismiss }: BalaoProps) {
 }
 
 /** O ícone não aceita classe: precisa da cor já resolvida. */
-function corDoTom(tone: PushBannerTone, cores: ReturnType<typeof useCores>): string {
+function colorForTone(tone: PushBannerTone, cores: ReturnType<typeof useCores>): string {
   if (tone === 'danger') return cores.destructive;
   if (tone === 'success') return cores.success;
   if (tone === 'warning') return cores.warning;

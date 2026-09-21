@@ -138,7 +138,7 @@ function useCarregamentoDaHome(
       ]);
       setBriefing(briefingResult);
       setAverageAdherence(adherenceResult);
-      notificarSinaisDeRisco(briefingResult.signals);
+      notifyRiskSignals(briefingResult.signals);
       return;
     }
     await Promise.all([
@@ -174,14 +174,14 @@ function useCarregamentoDaHome(
  * resto do briefing, e marca visto na hora — sem isso o mesmo sinal reabriria
  * o balão a cada vez que o especialista voltasse ao app.
  */
-function notificarSinaisDeRisco(signals: BriefingSignal[]): void {
-  const { porAluno, marcarVisto } = useRiskBannerSeenStore.getState();
+function notifyRiskSignals(signals: BriefingSignal[]): void {
+  const { byStudentId, markSeen } = useRiskBannerSeenStore.getState();
 
   for (const signal of signals) {
     if (signal.kind !== 'inactive') continue;
 
     const atual = toSeenRiskSignal(signal);
-    if (!shouldShowRiskBanner(atual, porAluno[signal.studentId] ?? null)) continue;
+    if (!shouldShowRiskBanner(atual, byStudentId[signal.studentId] ?? null)) continue;
 
     showPushBanner({
       tone: signal.tone,
@@ -189,7 +189,7 @@ function notificarSinaisDeRisco(signals: BriefingSignal[]): void {
       title: signal.studentName,
       body: signal.message,
     });
-    marcarVisto(signal.studentId, atual);
+    markSeen(signal.studentId, atual);
   }
 }
 

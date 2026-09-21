@@ -5,8 +5,8 @@ import type { SeenRiskSignal } from '../services/shouldShowRiskBanner';
 
 interface RiskBannerSeenState {
   /** Por aluno, o último sinal de risco que já virou balão para este especialista. */
-  porAluno: Record<string, SeenRiskSignal>;
-  marcarVisto: (studentId: string, sinal: SeenRiskSignal) => void;
+  byStudentId: Record<string, SeenRiskSignal>;
+  markSeen: (studentId: string, signal: SeenRiskSignal) => void;
 }
 
 /**
@@ -17,14 +17,14 @@ interface RiskBannerSeenState {
  * `docs/LGPD_COMPLIANCE.md`, "Nova superfície: balão in-app (issue #336)".
  *
  * @example
- * const { porAluno, marcarVisto } = useRiskBannerSeenStore.getState();
+ * const { byStudentId, markSeen } = useRiskBannerSeenStore.getState();
  */
 export const useRiskBannerSeenStore = create<RiskBannerSeenState>()(
   persist(
     (set) => ({
-      porAluno: {},
-      marcarVisto: (studentId, sinal) =>
-        set((state) => ({ porAluno: { ...state.porAluno, [studentId]: sinal } })),
+      byStudentId: {},
+      markSeen: (studentId, signal) =>
+        set((state) => ({ byStudentId: { ...state.byStudentId, [studentId]: signal } })),
     }),
     {
       name: 'balao-de-risco-vistos',
