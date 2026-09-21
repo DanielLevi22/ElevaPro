@@ -117,10 +117,10 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
   const router = useRouter();
 
   const redirectPrivilegedSession = useCallback(async (): Promise<void> => {
-    const inMfaRoute = String(segments[1]) === 'mfa';
+    const inMfaRoute = (segments as string[])[1] === 'mfa';
     try {
       if (!(await hasCurrentMfaAssurance())) {
-        if (!inMfaRoute) router.replace(ROUTES.AUTH.MFA as never);
+        if (!inMfaRoute) router.replace(ROUTES.AUTH.MFA);
         return;
       }
 

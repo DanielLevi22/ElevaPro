@@ -214,6 +214,15 @@ jobs:
           cache: npm
           cache-dependency-path: app/package-lock.json
 
+      # `shared/` não tem `package.json` próprio: é irmão de `app/`, não
+      # descendente, então a resolução de módulo nunca alcança
+      # `app/node_modules` — só a raiz do repo, ancestral comum dos dois.
+      # Pacote que `shared/` importa (ex. zod em password-policy) só resolve
+      # se a raiz também foi instalada.
+      - name: Install root dependencies
+        working-directory: .
+        run: npm ci
+
       - name: Install dependencies
         run: npm ci
 
@@ -304,6 +313,15 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
+      # `shared/` não tem `package.json` próprio: é irmão de `web/`, não
+      # descendente, então a resolução de módulo nunca alcança
+      # `web/node_modules` — só a raiz do repo, ancestral comum dos dois.
+      # Pacote que `shared/` importa (ex. zod em password-policy) só resolve
+      # se a raiz também foi instalada.
+      - name: Install root dependencies
+        working-directory: .
+        run: npm ci
+
       - name: Install dependencies
         run: npm ci
 
@@ -329,6 +347,11 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: web/package-lock.json
+
+      # Ver o comentário equivalente no job `web-typecheck`.
+      - name: Install root dependencies
+        working-directory: .
+        run: npm ci
 
       - name: Install dependencies
         run: npm ci
@@ -370,6 +393,11 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: web/package-lock.json
+
+      # Ver o comentário equivalente no job `web-typecheck`.
+      - name: Install root dependencies
+        working-directory: .
+        run: npm ci
 
       - name: Install dependencies
         run: npm ci
