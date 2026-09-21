@@ -76,6 +76,8 @@ interface StudentState {
     data: CreateStudentData
   ) => Promise<{ success: boolean; studentId?: string; error?: string }>;
 
+  resendInvite: (studentId: string) => Promise<{ success: boolean; error?: string }>;
+
   fetchMyServiceTypes: (specialistId: string) => Promise<void>;
   fetchBriefing: (specialistId: string) => Promise<void>;
   fetchAdherenceFor: (studentIds: string[]) => Promise<void>;
@@ -209,6 +211,10 @@ export const useStudentStore = create<StudentState>((set, get) => ({
 
   createStudent: async (data) => {
     return service.createStudent(data);
+  },
+
+  resendInvite: async (studentId) => {
+    return service.resendInvite(studentId);
   },
 
   // Gate do seletor de "tipo de acompanhamento": só o que o próprio

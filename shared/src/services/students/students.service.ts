@@ -324,6 +324,32 @@ export const createStudentsService = (supabase: SupabaseClient, apiBaseUrl = "")
 
     return { success: true, studentId: result.student_id };
   },
+
+  /**
+   * Reenvia o convite de um aluno ainda `invited` — mesmo mecanismo usado
+   * por mobile e web, sem duplicar a chamada em cada tela.
+   *
+   * @example
+   * const { success, error } = await service.resendInvite(aluno.id);
+   */
+  resendInvite: async (studentId: string): Promise<{ success: boolean; error?: string }> => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) return { success: false, error: "Usuário não autenticado" };
+
+    const response = await fetch(`${apiBaseUrl}/api/students/${studentId}/resend-invite`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      return { success: false, error: result.error ?? "Não foi possível reenviar o convite" };
+    }
+
+    return { success: true };
+  },
 });
 
 export type StudentsService = ReturnType<typeof createStudentsService>;

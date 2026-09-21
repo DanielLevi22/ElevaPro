@@ -25,6 +25,7 @@ export default function StudentsScreen() {
     isLoading,
     fetchStudents,
     removeStudent,
+    resendInvite,
     briefing,
     fetchBriefing,
     adherenceByStudent,
@@ -140,6 +141,23 @@ export default function StudentsScreen() {
     setIsEditModalVisible(true);
   };
 
+  const handleResendInvite = async (student: import('../store/studentStore').Student) => {
+    const result = await resendInvite(student.id);
+    if (result.success) {
+      showAlert({
+        title: 'Convite reenviado',
+        message: `Um novo e-mail foi enviado para ${student.email || 'o aluno'}.`,
+        type: 'success',
+      });
+    } else {
+      showAlert({
+        title: 'Não foi possível reenviar',
+        message: result.error || 'Tente novamente.',
+        type: 'error',
+      });
+    }
+  };
+
   const _handlePressStudent = (student: import('../store/studentStore').Student) => {
     handleEdit(student);
   };
@@ -235,6 +253,16 @@ export default function StudentsScreen() {
           </View>
 
           <View className="flex-row items-center gap-2">
+            {/* Resend Invite Button — só para convite ainda pendente */}
+            {item.account_status === 'invited' && (
+              <TouchableOpacity
+                onPress={() => handleResendInvite(item)}
+                className="p-2 rounded-xl bg-zinc-800"
+              >
+                <Ionicons name="mail-unread" size={20} color={cores.primaryText} />
+              </TouchableOpacity>
+            )}
+
             {/* Edit Button */}
             <TouchableOpacity
               onPress={() => handleEdit(item)}

@@ -7,6 +7,7 @@ type AuditEventType =
   | "identity.registration.succeeded"
   | "identity.invite.sent"
   | "identity.invite.accepted"
+  | "identity.invite.resent"
   | "security.rate_limit.denied";
 
 // Recurso que é o próprio titular (a conta, a coleção de avaliações dele): o

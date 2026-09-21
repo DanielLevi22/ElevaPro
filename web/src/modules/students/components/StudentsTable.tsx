@@ -1,9 +1,10 @@
 "use client";
 
 import type { Student } from "@elevapro/shared";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Send } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/shared/components/ui/DataTable";
 import { StatusBadge, type StatusTone } from "@/shared/components/ui/StatusBadge";
+import { useResendInvite } from "../hooks/useResendInvite";
 
 interface StudentsTableProps {
   students: Student[];
@@ -50,6 +51,8 @@ const COLUMNS: DataTableColumn<Student>[] = [
 ];
 
 export function StudentsTable({ students }: StudentsTableProps) {
+  const resendInvite = useResendInvite();
+
   return (
     <DataTable
       columns={COLUMNS}
@@ -57,7 +60,26 @@ export function StudentsTable({ students }: StudentsTableProps) {
       rowKey={(student) => student.id}
       rowHref={(student) => `/dashboard/students/${student.id}`}
       rowLabel={(student) => `Abrir ${studentName(student)}`}
-      rowAction={() => <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+      rowAction={(student) =>
+        student.account_status === "invited" ? (
+          <button
+            type="button"
+            title="Reenviar convite"
+            aria-label={`Reenviar convite para ${studentName(student)}`}
+            disabled={resendInvite.isPending}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              resendInvite.mutate(student.id);
+            }}
+            className="p-1.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-overlay-08 disabled:opacity-50"
+          >
+            <Send className="w-4 h-4" />
+          </button>
+        ) : (
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        )
+      }
     />
   );
 }
