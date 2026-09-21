@@ -56,6 +56,10 @@ yarn-error.*
 # Estado temporario do Supabase CLI
 supabase/.temp/
 
+# Segredo do SMTP local (RESEND_API_KEY), lido via env() no config.toml —
+# nunca commitado (issue #332).
+supabase/.env
+
 # Stub que o eas-cli deixa na raiz quando roda fora de app/. O projeto Expo de
 # verdade e app/app.json; este aqui e vazio, confunde o Biome e o proprio eas.
 /app.json

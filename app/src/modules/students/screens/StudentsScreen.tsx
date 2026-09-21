@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -14,13 +13,54 @@ import {
 import { useAuthStore } from '@/auth';
 import { showAlert, showConfirm } from '@/components/ui/appAlert';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
+import { useCores } from '@/shared/design';
 import { StudentEditModal } from '../components/StudentEditModal';
 import { useStudentStore } from '../store/studentStore';
 
+type Filtro = 'todos' | 'risco' | 'pendentes';
+
 export default function StudentsScreen() {
-  const { students, isLoading, fetchStudents, removeStudent } = useStudentStore();
+  const {
+    students,
+    isLoading,
+    fetchStudents,
+    removeStudent,
+    briefing,
+    fetchBriefing,
+    adherenceByStudent,
+    fetchAdherenceFor,
+  } = useStudentStore();
   const { user } = useAuthStore();
   const router = useRouter();
+  const cores = useCores();
+  const [filtro, setFiltro] = useState<Filtro>('todos');
+
+  const idsEmRisco = useMemo(
+    () =>
+      new Set(
+        (briefing?.signals ?? [])
+          .filter((sinal) => sinal.kind === 'inactive')
+          .map((s) => s.studentId)
+      ),
+    [briefing]
+  );
+
+  const studentsFiltrados = useMemo(() => {
+    if (filtro === 'risco') return students.filter((s) => idsEmRisco.has(s.id));
+    if (filtro === 'pendentes') return students.filter((s) => s.account_status === 'invited');
+    return students;
+  }, [students, filtro, idsEmRisco]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: só quando o especialista muda
+  useEffect(() => {
+    if (user?.id) fetchBriefing(user.id);
+  }, [user?.id]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: só quando a página de alunos muda
+  useEffect(() => {
+    const idsSemAderencia = students.map((s) => s.id).filter((id) => !(id in adherenceByStudent));
+    if (idsSemAderencia.length > 0) fetchAdherenceFor(idsSemAderencia);
+  }, [students]);
 
   const [selectedStudent, setSelectedStudent] = useState<
     import('../store/studentStore').Student | null
@@ -150,7 +190,7 @@ export default function StudentsScreen() {
               <Ionicons
                 name={expired ? 'calendar-outline' : 'person'}
                 size={28}
-                color={expired ? '#52525B' : '#A1A1AA'}
+                color={expired ? cores.mutedForeground : cores.foreground}
               />
             </View>
 
@@ -162,12 +202,14 @@ export default function StudentsScreen() {
                 </Text>
                 {expired && (
                   <View className="bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-md">
-                    <Text className="text-red-500 text-[10px] font-bold uppercase">Expirado</Text>
+                    <Text className="text-red-500 text-[0.625rem] font-bold uppercase">
+                      Expirado
+                    </Text>
                   </View>
                 )}
                 {item.account_status === 'invited' && !expired && (
                   <View className="bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-md">
-                    <Text className="text-orange-500 text-[10px] font-bold uppercase">
+                    <Text className="text-orange-500 text-[0.625rem] font-bold uppercase">
                       Pendente
                     </Text>
                   </View>
@@ -177,6 +219,17 @@ export default function StudentsScreen() {
                 {item.email || 'Sem contato'}
               </Text>
             </View>
+
+            {!expired && item.id in adherenceByStudent ? (
+              <View className="items-end mr-1">
+                <Text className="text-white text-sm font-black font-display">
+                  {adherenceByStudent[item.id] === null ? '—' : `${adherenceByStudent[item.id]}%`}
+                </Text>
+                <Text className="text-zinc-500 text-[0.5625rem] font-bold uppercase">
+                  Aderência
+                </Text>
+              </View>
+            ) : null}
           </View>
 
           <View className="flex-row items-center gap-2">
@@ -185,12 +238,20 @@ export default function StudentsScreen() {
               onPress={() => handleEdit(item)}
               className={`p-2 rounded-xl ${expired ? 'bg-zinc-900' : 'bg-zinc-800'}`}
             >
-              <Ionicons name="pencil" size={20} color={expired ? '#52525B' : '#FF6B35'} />
+              <Ionicons
+                name="pencil"
+                size={20}
+                color={expired ? cores.mutedForeground : cores.primaryText}
+              />
             </TouchableOpacity>
 
             {/* Remove Button */}
             <TouchableOpacity onPress={() => handleRemove(item)} className="p-2">
-              <Ionicons name="trash-outline" size={20} color={expired ? '#52525B' : '#FF4444'} />
+              <Ionicons
+                name="trash-outline"
+                size={20}
+                color={expired ? cores.mutedForeground : cores.destructive}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -216,15 +277,11 @@ export default function StudentsScreen() {
           </View>
 
           <Link href={'/(tabs)/students/create' as never} asChild>
-            <TouchableOpacity activeOpacity={0.8}>
-              <LinearGradient
-                colors={['#FF6B35', '#FF2E63']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                className="h-14 w-14 rounded-full items-center justify-center shadow-lg shadow-orange-500/20"
-              >
-                <Ionicons name="add" size={28} color="#FFFFFF" />
-              </LinearGradient>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              className="h-14 w-14 rounded-full items-center justify-center bg-primary shadow-lg shadow-orange-500/20"
+            >
+              <Ionicons name="add" size={28} color={cores.primaryForeground} />
             </TouchableOpacity>
           </Link>
         </View>
@@ -232,10 +289,10 @@ export default function StudentsScreen() {
         {/* Search and Sort */}
         <View className="flex-row gap-3 mb-2">
           <View className="flex-1 flex-row items-center px-4 h-12 rounded-xl bg-zinc-900 border border-zinc-800">
-            <Ionicons name="search" size={18} color="#71717A" />
+            <Ionicons name="search" size={18} color={cores.mutedForeground} />
             <TextInput
               placeholder="Buscar aluno..."
-              placeholderTextColor="#71717A"
+              placeholderTextColor={cores.placeholder}
               value={search}
               onChangeText={setSearch}
               className="flex-1 ml-3 text-white font-sans text-sm"
@@ -250,7 +307,7 @@ export default function StudentsScreen() {
             <Ionicons
               name={sortOrder === 'asc' ? 'arrow-up' : 'arrow-down'}
               size={18}
-              color="#FF6B35"
+              color={cores.primaryText}
             />
           </TouchableOpacity>
         </View>
@@ -277,37 +334,68 @@ export default function StudentsScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Filtro por risco/pendência */}
+        <View className="flex-row gap-2 mt-2">
+          {(
+            [
+              ['todos', `Todos · ${students.length}`],
+              ['risco', `Em risco · ${idsEmRisco.size}`],
+              [
+                'pendentes',
+                `Pendentes · ${students.filter((s) => s.account_status === 'invited').length}`,
+              ],
+            ] as const
+          ).map(([valor, rotulo]) => (
+            <TouchableOpacity
+              key={valor}
+              onPress={() => setFiltro(valor)}
+              className={`px-4 py-1.5 rounded-full border ${filtro === valor ? 'bg-orange-500/10 border-orange-500' : 'bg-transparent border-zinc-800'}`}
+            >
+              <Text
+                className={`text-xs font-bold ${filtro === valor ? 'text-orange-500' : 'text-zinc-500'}`}
+              >
+                {rotulo.toUpperCase()}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
       {/* Content */}
-      {students.length === 0 && !isLoading ? (
+      {studentsFiltrados.length === 0 && !isLoading ? (
         <View className="flex-1 justify-center items-center px-6">
           <View className="bg-zinc-900 p-8 rounded-full mb-6 border border-zinc-800">
-            <Ionicons name="people-outline" size={80} color="#52525B" />
+            <Ionicons name="people-outline" size={80} color={cores.mutedForeground} />
           </View>
-          <Text className="text-white text-2xl font-bold mb-2 text-center font-display">
-            Nenhum aluno ainda
-          </Text>
-          <Text className="text-zinc-400 text-center px-8 text-base mb-8 font-sans">
-            Comece cadastrando seu primeiro aluno
-          </Text>
-
-          <Link href={'/(tabs)/students/create' as never} asChild>
-            <TouchableOpacity activeOpacity={0.8}>
-              <LinearGradient
-                colors={['#FF6B35', '#FF2E63']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                className="rounded-2xl py-4 px-8 shadow-lg shadow-orange-500/20"
-              >
-                <Text className="text-white text-base font-bold font-display">Novo Aluno</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </Link>
+          {filtro === 'todos' ? (
+            <>
+              <Text className="text-white text-2xl font-bold mb-2 text-center font-display">
+                Nenhum aluno ainda
+              </Text>
+              <Text className="text-zinc-400 text-center px-8 text-base mb-8 font-sans">
+                Comece cadastrando seu primeiro aluno
+              </Text>
+              <Link href={'/(tabs)/students/create' as never} asChild>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  className="rounded-2xl py-4 px-8 bg-primary shadow-lg shadow-orange-500/20"
+                >
+                  <Text className="text-primary-foreground text-base font-bold font-display">
+                    Novo Aluno
+                  </Text>
+                </TouchableOpacity>
+              </Link>
+            </>
+          ) : (
+            <Text className="text-white text-lg font-bold text-center font-display">
+              {filtro === 'risco' ? 'Nenhum aluno em risco agora' : 'Nenhum convite pendente'}
+            </Text>
+          )}
         </View>
       ) : (
         <FlatList
-          data={students}
+          data={studentsFiltrados}
           renderItem={renderItem}
           keyExtractor={(item, index) => item.id || `student-${index}`}
           contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
@@ -316,7 +404,7 @@ export default function StudentsScreen() {
           ListFooterComponent={() =>
             isLoading && students.length > 0 ? (
               <View className="py-4">
-                <ActivityIndicator color="#FF6B35" />
+                <ActivityIndicator color={cores.primaryText} />
               </View>
             ) : null
           }
@@ -333,7 +421,7 @@ export default function StudentsScreen() {
                   append: false,
                 })
               }
-              tintColor="#FF6B35"
+              tintColor={cores.primaryText}
             />
           }
           showsVerticalScrollIndicator={false}

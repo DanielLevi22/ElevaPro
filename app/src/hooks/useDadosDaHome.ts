@@ -1,7 +1,10 @@
 import {
   type AccountType,
+  type Briefing,
   contarExercicios,
+  createAdherenceService,
   createAuthService,
+  createBriefingService,
   type ProfileSummary,
 } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
@@ -42,12 +45,18 @@ export interface DadosDaHome {
 }
 
 const servicoDeAuth = createAuthService(supabase);
+const servicoDeBriefing = createBriefingService(supabase);
+const servicoDeAderencia = createAdherenceService(supabase);
 
 export function useDadosDaHome(): DadosDaHome {
   const { user, accountType, isMasquerading } = useAuthStore();
   const ehEspecialista = accountType === 'specialist';
   const fontes = useFontesDaHome(ehEspecialista ? undefined : user?.id);
-  const { perfil, recarregar } = useCarregamentoDaHome(user?.id, ehEspecialista, fontes);
+  const { perfil, briefing, aderenciaMedia, recarregar } = useCarregamentoDaHome(
+    user?.id,
+    ehEspecialista,
+    fontes
+  );
 
   const treinoSugerido = useMemo(
     () => (ehEspecialista ? null : sugerirTreino(fontes.treinos.workouts)),
@@ -62,6 +71,8 @@ export function useDadosDaHome(): DadosDaHome {
       perfil,
       alunos: fontes.alunos.students,
       treinos: fontes.treinos.workouts,
+      briefing,
+      aderenciaMedia,
       carregando: estaCarregando(fontes),
       recarregar,
     },
@@ -92,8 +103,15 @@ function useCarregamentoDaHome(
   userId: string | undefined,
   ehEspecialista: boolean,
   fontes: FontesDaHome
-): { perfil: ProfileSummary | null; recarregar: () => Promise<void> } {
+): {
+  perfil: ProfileSummary | null;
+  briefing: Briefing | null;
+  aderenciaMedia: number | null;
+  recarregar: () => Promise<void>;
+} {
   const [perfil, setPerfil] = useState<ProfileSummary | null>(null);
+  const [briefing, setBriefing] = useState<Briefing | null>(null);
+  const [aderenciaMedia, setAderenciaMedia] = useState<number | null>(null);
   const { fetchDailyData } = fontes.gamificacao;
   const { refetch: recarregarSaude } = fontes.saude;
   const { reload: reloadActivity } = fontes.activity;
@@ -104,7 +122,15 @@ function useCarregamentoDaHome(
     if (!userId) return;
     setPerfil(await servicoDeAuth.getProfileSummary(userId));
     if (ehEspecialista) {
-      await Promise.all([fetchStudents(userId), fetchWorkouts(userId)]);
+      const hoje = getLocalDateISOString();
+      const [, , briefingDoDia, aderenciaDoDia] = await Promise.all([
+        fetchStudents(userId),
+        fetchWorkouts(userId),
+        servicoDeBriefing.fetchBriefing(userId),
+        servicoDeAderencia.fetchAdherence(userId, hoje),
+      ]);
+      setBriefing(briefingDoDia);
+      setAderenciaMedia(aderenciaDoDia);
       return;
     }
     await Promise.all([
@@ -129,7 +155,7 @@ function useCarregamentoDaHome(
     }, [recarregar])
   );
 
-  return { perfil, recarregar };
+  return { perfil, briefing, aderenciaMedia, recarregar };
 }
 
 function estaCarregando({ gamificacao, alunos, treinos }: FontesDaHome): boolean {

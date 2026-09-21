@@ -15,7 +15,9 @@ import { useNutritionStore } from '../../nutrition/store/nutritionStore';
 import { useStudentStore } from '../../students/store/studentStore';
 import { useWorkoutStore } from '../../workout/store/workoutStore';
 
-const authService = createAuthService(supabase);
+// A URL absoluta é para o registro de auditoria de `completeAccountInvite`:
+// no mobile não existe origem relativa para resolver `/api/auth/accept-invite`.
+const authService = createAuthService(supabase, process.env.EXPO_PUBLIC_API_URL ?? '');
 
 export interface AuthState {
   session: Session | null;
@@ -43,6 +45,7 @@ export interface AuthState {
     role: AccountType,
     metadata?: Record<string, unknown>
   ) => Promise<{ success: boolean; error?: string }>;
+  completeAccountInvite: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -264,6 +267,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erro ao criar conta.',
+      };
+    }
+  },
+
+  completeAccountInvite: async (newPassword) => {
+    try {
+      return await authService.completeAccountInvite(newPassword);
+    } catch (error: unknown) {
+      console.error('CompleteAccountInvite error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Erro ao definir a senha.',
       };
     }
   },

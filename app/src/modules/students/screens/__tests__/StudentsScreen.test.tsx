@@ -37,6 +37,9 @@ const mockStudents = [
   },
 ];
 
+const mockFetchBriefing = jest.fn();
+const mockFetchAdherenceFor = jest.fn();
+
 jest.mock('../../store/studentStore', () => ({
   useStudentStore: () => ({
     students: mockStudents,
@@ -46,6 +49,10 @@ jest.mock('../../store/studentStore', () => ({
     cancelInvite: mockCancelInvite,
     updateStudent: mockUpdateStudent,
     totalCount: mockStudents.length,
+    briefing: null,
+    fetchBriefing: mockFetchBriefing,
+    adherenceByStudent: {},
+    fetchAdherenceFor: mockFetchAdherenceFor,
   }),
 }));
 

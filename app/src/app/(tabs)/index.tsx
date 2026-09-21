@@ -28,7 +28,8 @@ export default function TelaInicial() {
         onRefresh={especialista.recarregar}
         profile={especialista.perfil}
         students={especialista.alunos}
-        workouts={especialista.treinos}
+        briefing={especialista.briefing}
+        aderenciaMedia={especialista.aderenciaMedia}
       />
     );
   }

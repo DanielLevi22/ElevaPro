@@ -1,20 +1,14 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import React from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-// Mock Supabase
-const mockGetSession = vi.fn();
+const mockCreateStudent = vi.fn();
 
-vi.mock("@elevapro/supabase", () => ({
-  supabase: {
-    auth: { getSession: mockGetSession },
-  },
+vi.mock("@elevapro/supabase", () => ({ supabase: {} }));
+vi.mock("@elevapro/shared", () => ({
+  createStudentsService: () => ({ createStudent: mockCreateStudent }),
 }));
-
-// Mock fetch
-const mockFetch = vi.fn();
-vi.stubGlobal("fetch", mockFetch);
 
 // Import after mock
 const { useCreateStudent } = await import("../hooks/useCreateStudent");
@@ -25,93 +19,62 @@ function wrapper({ children }: { children: React.ReactNode }) {
 }
 
 describe("useCreateStudent", () => {
-  beforeEach(() => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { access_token: "token-abc" } },
-    });
-  });
-
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  it("calls POST /api/students with correct params", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ success: true, student_id: "student-456" }),
-    });
+  // ADR-0035: o especialista convida, nunca define senha — o hook não aceita
+  // mais esse campo, e delega pro mesmo serviço que o mobile usa (sem
+  // duplicar a chamada ao BFF em dois lugares).
+  it("convida o aluno pelo serviço compartilhado, sem senha", async () => {
+    mockCreateStudent.mockResolvedValueOnce({ success: true, studentId: "student-456" });
 
     const { result } = renderHook(() => useCreateStudent(), { wrapper });
 
     result.current.mutate({
+      specialistId: "specialist-1",
       fullName: "João Silva",
       email: "joao@example.com",
-      password: "senha123",
+      serviceTypes: ["personal_training"],
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      "/api/students",
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          "Content-Type": "application/json",
-          Authorization: "Bearer token-abc",
-        }),
-        body: expect.stringContaining("João Silva"),
-      }),
-    );
-
+    expect(mockCreateStudent).toHaveBeenCalledWith({
+      specialist_id: "specialist-1",
+      full_name: "João Silva",
+      email: "joao@example.com",
+      service_types: ["personal_training"],
+    });
     expect(result.current.data).toEqual({ success: true, student_id: "student-456" });
   });
 
-  it("throws when user is not authenticated", async () => {
-    mockGetSession.mockResolvedValueOnce({ data: { session: null } });
+  it("lança erro quando o serviço recusa", async () => {
+    mockCreateStudent.mockResolvedValueOnce({ success: false, error: "Email já cadastrado" });
 
     const { result } = renderHook(() => useCreateStudent(), { wrapper });
 
     result.current.mutate({
-      fullName: "João",
-      email: "joao@example.com",
-      password: "senha123",
-    });
-
-    await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(result.current.error).toBeInstanceOf(Error);
-    expect(mockFetch).not.toHaveBeenCalled();
-  });
-
-  it("throws when api returns an error response", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ error: "Email já cadastrado" }),
-    });
-
-    const { result } = renderHook(() => useCreateStudent(), { wrapper });
-
-    result.current.mutate({
+      specialistId: "specialist-1",
       fullName: "Maria",
       email: "maria@example.com",
-      password: "senha456",
+      serviceTypes: ["personal_training"],
     });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error?.message).toBe("Email já cadastrado");
   });
 
-  it("throws with fallback message when api error has no message", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({}),
-    });
+  it("lança mensagem padrão quando o serviço não devolve motivo", async () => {
+    mockCreateStudent.mockResolvedValueOnce({ success: false });
 
     const { result } = renderHook(() => useCreateStudent(), { wrapper });
 
     result.current.mutate({
+      specialistId: "specialist-1",
       fullName: "Pedro",
       email: "pedro@example.com",
-      password: "senha789",
+      serviceTypes: ["personal_training"],
     });
 
     await waitFor(() => expect(result.current.isError).toBe(true));

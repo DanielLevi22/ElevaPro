@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { passwordValidationError } from "../../auth/password-policy";
 import type {
   AccountType,
   Profile,
@@ -14,15 +15,12 @@ export interface SignUpSpecialistParams {
   service_types: ServiceType[];
 }
 
-export interface CreateStudentParams {
-  email: string;
-  password: string;
-  full_name: string;
-  specialist_id: string;
-  service_type: ServiceType;
-}
-
-export const createAuthService = (supabase: SupabaseClient) => ({
+/**
+ * @param apiBaseUrl Origem do BFF, para o registro de auditoria de
+ *   `completeAccountInvite`. Vazio no web (mesma origem); no mobile é o
+ *   `EXPO_PUBLIC_API_URL`, mesmo padrão de `createStudentsService`.
+ */
+export const createAuthService = (supabase: SupabaseClient, apiBaseUrl = "") => ({
   signIn: async (email: string, password: string) => {
     return supabase.auth.signInWithPassword({ email, password });
   },
@@ -97,17 +95,6 @@ export const createAuthService = (supabase: SupabaseClient) => ({
           account_type: "member",
         },
       },
-    });
-  },
-
-  // Criação de aluno via RPC SECURITY DEFINER — specialist não pode inserir em auth.users diretamente
-  createStudent: async (params: CreateStudentParams) => {
-    return supabase.rpc("create_student_account", {
-      p_email: params.email,
-      p_password: params.password,
-      p_full_name: params.full_name,
-      p_specialist_id: params.specialist_id,
-      p_service_type: params.service_type,
     });
   },
 
@@ -193,6 +180,47 @@ export const createAuthService = (supabase: SupabaseClient) => ({
         await supabase.auth.signOut();
         return { success: false, error: "account_inactive" };
       }
+    }
+
+    return { success: true };
+  },
+
+  /**
+   * Troca a sessão de convite/recuperação por uma senha definitiva (ADR-0035).
+   *
+   * A sessão já existe quando esta função roda — veio do link do e-mail, que o
+   * Supabase troca por sessão antes da tela abrir. Aqui só falta a senha.
+   *
+   * O registro de auditoria (`identity.invite.accepted`) é evidência, não
+   * requisito de negócio: uma falha de rede nele nunca desfaz a troca de senha
+   * que já aconteceu.
+   *
+   * @example
+   * const resultado = await authService.completeAccountInvite(novaSenha);
+   * if (resultado.success) router.replace(ROUTES.TABS.ROOT);
+   */
+  completeAccountInvite: async (
+    newPassword: string,
+  ): Promise<{ success: boolean; error?: string }> => {
+    const passwordError = passwordValidationError(newPassword);
+    if (passwordError) return { success: false, error: passwordError };
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) return { success: false, error: error.message };
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session) {
+        await fetch(`${apiBaseUrl}/api/auth/accept-invite`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+      }
+    } catch {
+      // Sem `catch` aqui a troca de senha, já bem-sucedida, apareceria como
+      // falha inteira por causa só do registro de auditoria.
     }
 
     return { success: true };

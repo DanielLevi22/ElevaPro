@@ -279,25 +279,21 @@ export const createStudentsService = (supabase: SupabaseClient, apiBaseUrl = "")
   },
 
   /**
-   * Cria o aluno pelo BFF.
+   * Convida o aluno pelo BFF — ele define a própria senha (ADR-0035).
    *
-   * Antes isto chamava a Edge Function `create-student`, que não existe no
-   * repositório — `supabase/functions/` nunca foi criado. A chamada falhava
-   * sempre, então o cadastro de aluno pelo mobile nunca funcionou.
-   *
-   * `POST /api/students` é o caminho que o web já usa e que passa por
-   * `authorizeSpecialist`. Ele deriva o especialista do token e os serviços de
-   * `specialist_services`, então `specialist_id` e `service_type` do parâmetro
-   * são ignorados de propósito: aceitar do cliente quem é o dono do vínculo
-   * deixaria um especialista cadastrar aluno no nome de outro.
+   * `POST /api/students` deriva o especialista do token via
+   * `authorizeSpecialist`, então `specialist_id` do parâmetro é ignorado de
+   * propósito: aceitar do cliente quem é o dono do vínculo deixaria um
+   * especialista cadastrar aluno no nome de outro. `service_types` viaja no
+   * corpo porque é escolha legítima do chamador — a rota valida cada tipo
+   * contra os próprios `specialist_services` de quem chama.
    *
    * @example
    * const { success, studentId } = await service.createStudent({
    *   specialist_id: user.id,
    *   full_name: "Ana",
    *   email: "ana@exemplo.com",
-   *   password: "...",
-   *   service_type: "personal_training",
+   *   service_types: ["personal_training"],
    * });
    */
   createStudent: async (
@@ -317,7 +313,7 @@ export const createStudentsService = (supabase: SupabaseClient, apiBaseUrl = "")
       body: JSON.stringify({
         fullName: data.full_name,
         email: data.email,
-        password: data.password,
+        serviceTypes: data.service_types,
       }),
     });
 
