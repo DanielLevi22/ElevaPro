@@ -305,6 +305,16 @@ dias", jamais o treino. Verificado por teste
 O sinal também não vai para log: `"João Silva não treina há 5 dias"` é
 inferência sobre saúde de titular identificado.
 
+**Nova superfície: balão in-app (issue #336).** O mesmo sinal `inactive` do
+briefing passou a também aparecer como balão dentro do app do especialista
+(`PushBanner`), ao abrir o app — sem tratamento novo, sem base legal nova: é o
+recorte da linha 255 exibido em outro componente. Duas garantias que a nova
+superfície herda e não pode afrouxar: (1) o texto derivado nunca é logado —
+vale para o balão como já valia para o card da lista; (2) o dedupe local ("já
+mostrei esse alerta pra esse aluno") guarda só `kind` + `days` no MMKV do
+aparelho, nunca a frase montada — quem lê o cache não reconstrói a inferência
+sem também ter lido o sinal original.
+
 **Regra do consentimento (Art. 8°):** Quando usamos consentimento como base, ele precisa ser:
 - **Livre**: o aluno não pode ser forçado a aceitar para usar o serviço principal
 - **Informado**: explicar em linguagem simples o que será coletado e por quê
