@@ -90,6 +90,15 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
+      # `shared/` não tem `package.json` próprio: é irmão de `web/`, não
+      # descendente, então a resolução de módulo nunca alcança
+      # `web/node_modules` — só a raiz do repo, ancestral comum dos dois.
+      # `vercel build` roda a partir da raiz deste job (sem `working-directory`
+      # nos passos abaixo), e sem isto quebra com "Module not found: zod" em
+      # qualquer rota que importe `@elevapro/shared`.
+      - name: Install root dependencies
+        run: npm ci
+
       - name: Install dependencies
         run: npm ci
         working-directory: ./web
@@ -269,6 +278,10 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: web/package-lock.json
+
+      # Ver o comentário equivalente no job `deploy-preview`.
+      - name: Install root dependencies
+        run: npm ci
 
       - name: Install dependencies
         run: npm ci
