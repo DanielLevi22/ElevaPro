@@ -1,6 +1,7 @@
 import {
   type AccountType,
   type Briefing,
+  type BriefingSignal,
   contarExercicios,
   createAdherenceService,
   createAuthService,
@@ -11,6 +12,7 @@ import { supabase } from '@elevapro/supabase';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { useAuthStore } from '@/auth';
+import { showPushBanner } from '@/components/ui/pushBanner';
 import { useDailyActivity } from '@/hooks/useDailyActivity';
 import { useHealthData } from '@/hooks/useHealthData';
 import { useAssessmentStore } from '@/modules/assessment';
@@ -18,6 +20,11 @@ import type {
   DadosDaHomeDoAluno,
   DadosDoPainelDoEspecialista,
   TreinoSugerido,
+} from '@/modules/dashboard';
+import {
+  shouldShowRiskBanner,
+  toSeenRiskSignal,
+  useRiskBannerSeenStore,
 } from '@/modules/dashboard';
 import { useGamificationStore } from '@/modules/gamification';
 import { useStudentStore } from '@/modules/students';
@@ -131,6 +138,7 @@ function useCarregamentoDaHome(
       ]);
       setBriefing(briefingResult);
       setAverageAdherence(adherenceResult);
+      notifyRiskSignals(briefingResult.signals);
       return;
     }
     await Promise.all([
@@ -156,6 +164,33 @@ function useCarregamentoDaHome(
   );
 
   return { perfil, briefing, averageAdherence, recarregar };
+}
+
+/**
+ * O balão de risco do especialista, um por aluno que mudou desde a última vez.
+ *
+ * Só `inactive`: é o único sinal com balão nesta entrega (#336) — os outros
+ * três do mock não têm dado real por trás ainda. Roda a cada foco, junto do
+ * resto do briefing, e marca visto na hora — sem isso o mesmo sinal reabriria
+ * o balão a cada vez que o especialista voltasse ao app.
+ */
+function notifyRiskSignals(signals: BriefingSignal[]): void {
+  const { byStudentId, markSeen } = useRiskBannerSeenStore.getState();
+
+  for (const signal of signals) {
+    if (signal.kind !== 'inactive') continue;
+
+    const atual = toSeenRiskSignal(signal);
+    if (!shouldShowRiskBanner(atual, byStudentId[signal.studentId] ?? null)) continue;
+
+    showPushBanner({
+      tone: signal.tone,
+      icon: 'triangle-alert',
+      title: signal.studentName,
+      body: signal.message,
+    });
+    markSeen(signal.studentId, atual);
+  }
 }
 
 function estaCarregando({ gamificacao, alunos, treinos }: FontesDaHome): boolean {

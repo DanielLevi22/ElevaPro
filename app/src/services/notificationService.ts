@@ -1,15 +1,44 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import { showConfirm } from '@/components/ui/appAlert';
+import { showPushBanner } from '@/components/ui/pushBanner';
+import { coresDoTema } from '@/shared/design';
+import { isExactAlarmGranted, openExactAlarmSettings } from '../../modules/exact-alarm-permission';
+import { pushBannerFromNotification } from './pushBannerFromNotification';
 
-// Configure notification handler
+/**
+ * O banner nativo do SO não é mais quem desenha a notificação em primeiro
+ * plano — é o `PushBanner` (issue #336), que dá o mesmo visual pra tudo:
+ * lembrete existente ou sinal novo do especialista. `shouldShowBanner: false`
+ * só afeta a apresentação em primeiro plano; app fechado/em segundo plano
+ * continua recebendo a notificação nativa normalmente — não tem outro jeito.
+ */
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldPlaySound: true,
     shouldSetBadge: false,
-    shouldShowBanner: true,
+    shouldShowBanner: false,
     shouldShowList: true,
   }),
 });
+
+/**
+ * Troca o banner nativo pelo `PushBanner` quando a notificação chega com o
+ * app já aberto. Só reage a notificação que carrega `tone`/`icon` reconhecido
+ * — o que não é nosso (`pushBannerFromNotification` devolve `null`) não vira
+ * balão, mas ainda soa e entra na lista do sistema.
+ *
+ * Chamar uma vez, na raiz do app — mesmo padrão do listener de auth em
+ * `_layout.tsx`.
+ */
+export function registerForegroundBannerListener(): () => void {
+  const subscription = Notifications.addNotificationReceivedListener((event) => {
+    const balao = pushBannerFromNotification(event.request.content);
+    if (balao) showPushBanner(balao);
+  });
+
+  return () => subscription.remove();
+}
 
 export const MEAL_CHANNEL_ID = 'meal-reminders';
 export const WORKOUT_CHANNEL_ID = 'workout-reminders';
@@ -27,7 +56,9 @@ async function ensureAndroidChannels(): Promise<void> {
   const config = {
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
-    lightColor: '#00FF88',
+    // A luz do canal não segue o tema do app — é o LED do aparelho, sempre no
+    // mesmo tom. `escuro` porque é a paleta canônica da marca (ADR-0025).
+    lightColor: coresDoTema('escuro').success,
   };
 
   await Notifications.setNotificationChannelAsync(MEAL_CHANNEL_ID, {
@@ -44,15 +75,38 @@ export async function requestNotificationPermissions(): Promise<boolean> {
   await ensureAndroidChannels();
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  if (existingStatus === 'granted') return true;
-
-  const { status } = await Notifications.requestPermissionsAsync();
-  if (status !== 'granted') {
-    console.warn('[Notifications] Permissão não concedida — nada será entregue.');
-    return false;
+  if (existingStatus !== 'granted') {
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== 'granted') {
+      console.warn('[Notifications] Permissão não concedida — nada será entregue.');
+      return false;
+    }
   }
 
+  promptExactAlarmIfNeeded();
   return true;
+}
+
+/**
+ * Android 12+ entrega lembrete atrasado sem esta permissão extra — é a causa
+ * raiz do bug relatado na #336 (ver `ExactAlarmPermissionModule.kt`).
+ *
+ * Uma vez por sessão, na porta: mesmo padrão do `HealthDataConsentGate`. Não
+ * persiste recusa — quem recusou hoje ainda vê lembretes atrasados amanhã, e
+ * perguntar de novo é mais barato que deixar isso invisível para sempre.
+ */
+function promptExactAlarmIfNeeded(): void {
+  if (Platform.OS !== 'android' || isExactAlarmGranted()) return;
+
+  showConfirm({
+    title: 'Lembretes no horário certo',
+    message:
+      'O Android pede uma permissão extra para os lembretes de refeição e treino chegarem exatamente na hora marcada, em vez de atrasados. Conceder "Alarmes e lembretes"?',
+    type: 'warning',
+    confirmText: 'Abrir configurações',
+    cancelText: 'Agora não',
+    onConfirm: openExactAlarmSettings,
+  });
 }
 
 interface MealNotification {
@@ -141,7 +195,7 @@ export async function scheduleMealNotifications(
             content: {
               title: '🍽️ Hora da refeição!',
               body: bodyText,
-              data: { planId, mealId: meal.mealId },
+              data: { planId, mealId: meal.mealId, tone: 'info', icon: 'utensils' },
               sound: true,
             },
             trigger,
@@ -162,7 +216,7 @@ export async function scheduleMealNotifications(
           content: {
             title: '🍽️ Hora da refeição!',
             body: `Não esqueça: ${meal.mealName || 'Refeição'}`,
-            data: { planId, mealId: meal.mealId },
+            data: { planId, mealId: meal.mealId, tone: 'info', icon: 'utensils' },
             sound: true,
           },
           trigger,
@@ -224,6 +278,7 @@ export async function scheduleWorkoutReminder(hour: number = 8, minute: number =
         content: {
           title: '🏋️ Hora do Treino!',
           body: 'Seu corpo alcançar o que sua mente acredita. Vamos treinar?',
+          data: { tone: 'info', icon: 'dumbbell' },
           sound: true,
         },
         trigger: {
@@ -239,6 +294,7 @@ export async function scheduleWorkoutReminder(hour: number = 8, minute: number =
         content: {
           title: '🏋️ Hora do Treino!',
           body: 'Seu corpo alcançar o que sua mente acredita. Vamos treinar?',
+          data: { tone: 'info', icon: 'dumbbell' },
           sound: true,
         },
         trigger,
@@ -265,6 +321,7 @@ export async function schedulePostWorkoutReminder(): Promise<void> {
       content: {
         title: '💪 Hora do Pós-Treino!',
         body: 'Não esqueça de fazer sua refeição pós-treino para maximizar seus resultados.',
+        data: { tone: 'info', icon: 'dumbbell' },
         sound: true,
       },
       trigger,

@@ -22,12 +22,16 @@ import { supabase } from '@elevapro/supabase';
 import { hasCurrentMfaAssurance, useAuthStore } from '@/auth';
 import { HealthDataConsentGate } from '@/components/consent/HealthDataConsentGate';
 import { AppAlertHost, showAlert } from '@/components/ui/appAlert';
+import { PushBannerHost } from '@/components/ui/pushBanner';
 import { useColorScheme } from '@/components/useColorScheme';
 import { queryClient } from '@/lib/query-client';
 import { ROUTES } from '@/navigation/types';
 import { registerHealthSyncAsync } from '@/services/backgroundHealthTask';
 import { registerBackgroundFetchAsync } from '@/services/backgroundTask';
-import { requestNotificationPermissions } from '@/services/notificationService';
+import {
+  registerForegroundBannerListener,
+  requestNotificationPermissions,
+} from '@/services/notificationService';
 import { assertBffConfigured } from '@/shared/bff';
 import { ajustarEscalaDeTexto } from '@/shared/design';
 
@@ -150,6 +154,10 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
     // Request notification permissions
     requestNotificationPermissions();
 
+    // Troca o banner nativo pelo PushBanner quando a notificação chega com o
+    // app aberto (#336).
+    const unregisterBannerListener = registerForegroundBannerListener();
+
     // Register background fetch for diet sync
     registerBackgroundFetchAsync();
 
@@ -159,6 +167,7 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
     // Cleanup subscription
     return () => {
       subscription.unsubscribe();
+      unregisterBannerListener();
     };
   }, [initializeSession]);
 
@@ -202,6 +211,9 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
           </Stack>
           {/* Fora do Stack: o aviso sobrevive à troca de tela que o disparou. */}
           <AppAlertHost />
+          {/* Mesmo motivo: o balão sobrevive à troca de tela, e aparece sobre
+              qualquer uma — é o "balão sobre o app" do mock. */}
+          <PushBannerHost />
           {/*
             Também fora do Stack, e pelo mesmo motivo: o pedido de consentimento
             é sobre a conta, não sobre a tela em que o aluno estava quando o app
