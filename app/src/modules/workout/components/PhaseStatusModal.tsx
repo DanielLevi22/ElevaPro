@@ -1,7 +1,7 @@
 import type { TrainingPlan } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { Modal, Text, TouchableOpacity, View } from 'react-native';
-import { useCores } from '@/shared/design';
+import { useCores, useEscala } from '@/shared/design';
 
 type PhaseStatus = TrainingPlan['status'];
 
@@ -66,6 +66,7 @@ export function PhaseStatusModal({
   onSelectStatus,
 }: PhaseStatusModalProps) {
   const cores = useCores();
+  const escalar = useEscala();
   const corDoTom = { orange: cores.warning, green: cores.success, blue: cores.secondary };
 
   return (
@@ -105,7 +106,7 @@ export function PhaseStatusModal({
                   >
                     <Ionicons
                       name={opcao.icon}
-                      size={20}
+                      size={escalar(20)}
                       color={ativa ? corDoTom[opcao.tom] : cores.mutedForeground}
                     />
                   </View>
@@ -116,7 +117,11 @@ export function PhaseStatusModal({
                     <Text className="text-zinc-500 text-xs text-wrap">{opcao.descricao}</Text>
                   </View>
                   {ativa && (
-                    <Ionicons name="checkmark-circle" size={20} color={corDoTom[opcao.tom]} />
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={escalar(20)}
+                      color={corDoTom[opcao.tom]}
+                    />
                   )}
                 </TouchableOpacity>
               );

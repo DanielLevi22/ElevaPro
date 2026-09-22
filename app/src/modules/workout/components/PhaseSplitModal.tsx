@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useCores } from '@/shared/design';
+import { useCores, useEscala } from '@/shared/design';
 
 interface PhaseSplitModalProps {
   visible: boolean;
@@ -25,6 +25,7 @@ export function PhaseSplitModal({
   onSelectSplit,
 }: PhaseSplitModalProps) {
   const cores = useCores();
+  const escalar = useEscala();
   const fechar = () => {
     if (!isGenerating) onClose();
   };
@@ -39,7 +40,7 @@ export function PhaseSplitModal({
         <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
           <View className="bg-zinc-900 w-full rounded-2xl p-6 border border-zinc-800 relative">
             <TouchableOpacity className="absolute top-4 right-4 z-10 p-2" onPress={fechar}>
-              <Ionicons name="close" size={24} color={cores.mutedForeground} />
+              <Ionicons name="close" size={escalar(24)} color={cores.mutedForeground} />
             </TouchableOpacity>
 
             <Text className="text-white text-xl font-bold mb-2 text-center font-display mt-2">
@@ -80,7 +81,11 @@ export function PhaseSplitModal({
                       className="bg-orange-500 px-6 py-3 rounded-xl items-center justify-center"
                       onPress={() => onSelectSplit()}
                     >
-                      <Ionicons name="checkmark" size={24} color={cores.primaryForeground} />
+                      <Ionicons
+                        name="checkmark"
+                        size={escalar(24)}
+                        color={cores.primaryForeground}
+                      />
                     </TouchableOpacity>
                   </View>
                 </View>

@@ -137,8 +137,7 @@ export default function SelectExercisesScreen() {
 
       await addWorkoutItems(workoutId, items as Parameters<typeof addWorkoutItems>[1]);
       router.back();
-    } catch (error) {
-      console.error('Error adding exercises:', error);
+    } catch {
       showAlert({
         title: 'Erro',
         message: 'Não foi possível adicionar os exercícios.',

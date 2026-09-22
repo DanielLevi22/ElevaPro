@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { colors } from '@/constants/colors';
-import { useCores } from '@/shared/design';
+import { useCores, useEscala } from '@/shared/design';
 
 interface PhaseSummaryCardProps {
   phase: TrainingPlan;
@@ -22,6 +22,7 @@ export function PhaseSummaryCard({
   onPressEnd,
 }: PhaseSummaryCardProps) {
   const cores = useCores();
+  const escalar = useEscala();
 
   return (
     <LinearGradient
@@ -52,7 +53,9 @@ export function PhaseSummaryCard({
             <Text className="text-white font-extrabold text-xl mr-2 uppercase">
               {phase.name || '--'}
             </Text>
-            {!isStudentView && <Ionicons name="chevron-down" size={16} color={cores.primary} />}
+            {!isStudentView && (
+              <Ionicons name="chevron-down" size={escalar(16)} color={cores.primary} />
+            )}
           </TouchableOpacity>
         </View>
 
@@ -66,7 +69,7 @@ export function PhaseSummaryCard({
           >
             <Ionicons
               name="fitness-outline"
-              size={16}
+              size={escalar(16)}
               color={colors.primary.start}
               style={{ marginRight: 8 }}
             />
@@ -93,7 +96,7 @@ export function PhaseSummaryCard({
               {phase.start_date ? new Date(phase.start_date).toLocaleDateString('pt-BR') : '—'}
             </Text>
             {!isStudentView && (
-              <Ionicons name="calendar-outline" size={14} color={cores.mutedForeground} />
+              <Ionicons name="calendar-outline" size={escalar(14)} color={cores.mutedForeground} />
             )}
           </TouchableOpacity>
         </View>
@@ -111,7 +114,7 @@ export function PhaseSummaryCard({
               {phase.end_date ? new Date(phase.end_date).toLocaleDateString('pt-BR') : '—'}
             </Text>
             {!isStudentView && (
-              <Ionicons name="calendar-outline" size={14} color={cores.mutedForeground} />
+              <Ionicons name="calendar-outline" size={escalar(14)} color={cores.mutedForeground} />
             )}
           </TouchableOpacity>
         </View>

@@ -1,4 +1,3 @@
-import { supabase } from '@elevapro/supabase';
 import { useCallback, useState } from 'react';
 import { showAlert } from '@/components/ui/appAlert';
 import { useWorkoutStore } from '../store/workoutStore';
@@ -11,6 +10,7 @@ interface UsePhaseSplitFlowParams {
   userId: string | undefined;
   workoutsCount: number;
   createWorkout: StoreState['createWorkout'];
+  deleteWorkoutsForPhase: StoreState['deleteWorkoutsForPhase'];
   fetchWorkoutsForPhase: StoreState['fetchWorkoutsForPhase'];
   updateTrainingPlan: StoreState['updateTrainingPlan'];
   /** Pra onde "Usar Co-Pilot" leva depois de limpar os treinos antigos — o
@@ -31,6 +31,7 @@ export function usePhaseSplitFlow({
   userId,
   workoutsCount,
   createWorkout,
+  deleteWorkoutsForPhase,
   fetchWorkoutsForPhase,
   updateTrainingPlan,
   onAiReady,
@@ -73,27 +74,28 @@ export function usePhaseSplitFlow({
     [phase, userId, customSplit]
   );
 
+  const createWorkoutsForSplit = useCallback(
+    async (phaseId: string, split: string, specialistId: string) => {
+      for (const letter of split.split('')) {
+        await createWorkout({
+          training_plan_id: phaseId,
+          title: `Treino ${letter}`,
+          description: '',
+          specialist_id: specialistId,
+        });
+      }
+    },
+    [createWorkout]
+  );
+
   const executeSplitChange = useCallback(
     async (finalSplit: string) => {
       if (!phase || !userId) return;
 
       setIsGenerating(true);
       try {
-        const { error: deleteError } = await supabase
-          .from('workouts')
-          .delete()
-          .eq('training_plan_id', phase.id);
-        if (deleteError) throw deleteError;
-
-        for (const letter of finalSplit.split('')) {
-          await createWorkout({
-            training_plan_id: phase.id,
-            title: `Treino ${letter}`,
-            description: '',
-            specialist_id: userId,
-          });
-        }
-
+        await deleteWorkoutsForPhase(phase.id);
+        await createWorkoutsForSplit(phase.id, finalSplit, userId);
         await fetchWorkoutsForPhase(phase.id);
         setShowSplitModal(false);
         setCustomSplit('');
@@ -108,7 +110,7 @@ export function usePhaseSplitFlow({
         setIsGenerating(false);
       }
     },
-    [phase, userId, createWorkout, fetchWorkoutsForPhase]
+    [phase, userId, deleteWorkoutsForPhase, createWorkoutsForSplit, fetchWorkoutsForPhase]
   );
 
   const handleAIAssist = useCallback(
@@ -136,8 +138,7 @@ export function usePhaseSplitFlow({
     if (workoutsCount > 0) {
       setIsGenerating(true);
       try {
-        const { error } = await supabase.from('workouts').delete().eq('training_plan_id', phase.id);
-        if (error) throw error;
+        await deleteWorkoutsForPhase(phase.id);
         await fetchWorkoutsForPhase(phase.id);
       } catch (_error) {
         setIsGenerating(false);
@@ -148,7 +149,14 @@ export function usePhaseSplitFlow({
       }
     }
     handleAIAssist(pendingSplit);
-  }, [phase, workoutsCount, fetchWorkoutsForPhase, handleAIAssist, pendingSplit]);
+  }, [
+    phase,
+    workoutsCount,
+    deleteWorkoutsForPhase,
+    fetchWorkoutsForPhase,
+    handleAIAssist,
+    pendingSplit,
+  ]);
 
   const handleEmptyWorkoutsFromConfirm = useCallback(() => {
     setShowWarningModal(false);

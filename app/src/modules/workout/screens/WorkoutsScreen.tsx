@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -8,7 +7,6 @@ import {
   ImageSourcePropType,
   RefreshControl,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { useAuthStore } from '@/auth';
@@ -16,6 +14,7 @@ import { PremiumCard } from '@/components/ui/PremiumCard';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { MuscleFilterCarousel } from '@/components/workout/MuscleFilterCarousel';
 import { colors } from '@/constants/colors';
+import { useCores, useEscala } from '@/shared/design';
 import { useWorkoutStore } from '../store/workoutStore';
 
 const MUSCLE_IMAGES: Record<string, ImageSourcePropType> = {
@@ -58,6 +57,8 @@ type WorkoutItem = ReturnType<typeof useWorkoutStore.getState>['workouts'][0];
 
 export default function WorkoutsScreen() {
   const router = useRouter();
+  const cores = useCores();
+  const escalar = useEscala();
   const { user } = useAuthStore();
   const { workouts, isLoading, fetchWorkouts } = useWorkoutStore();
   const [selectedMuscle, setSelectedMuscle] = useState<string | null>(null);
@@ -103,7 +104,7 @@ export default function WorkoutsScreen() {
               style={{ backgroundColor: `${getDifficultyColor(item.difficulty || '')}40` }}
             >
               <Text
-                className="text-[10px] font-bold uppercase tracking-wider"
+                className="text-[0.625rem] font-bold uppercase tracking-wider"
                 style={{ color: getDifficultyColor(item.difficulty || '') }}
               >
                 {getDifficultyLabel(item.difficulty || '')}
@@ -115,21 +116,21 @@ export default function WorkoutsScreen() {
             <View className="flex-row items-center bg-black/40 px-3 py-2 rounded-xl border border-white/5">
               <Ionicons
                 name="time-outline"
-                size={14}
+                size={escalar(14)}
                 color={colors.secondary.main}
                 style={{ marginRight: 8 }}
               />
-              <Text className="text-white/90 text-[10px] font-bold uppercase tracking-widest">
+              <Text className="text-white/90 text-[0.625rem] font-bold uppercase tracking-widest">
                 {duration} MIN
               </Text>
               <View className="w-[1px] h-3 bg-white/20 mx-3" />
               <Ionicons
                 name="apps-outline"
-                size={14}
+                size={escalar(14)}
                 color={colors.primary.start}
                 style={{ marginRight: 8 }}
               />
-              <Text className="text-white/90 text-[10px] font-bold uppercase tracking-widest">
+              <Text className="text-white/90 text-[0.625rem] font-bold uppercase tracking-widest">
                 {exercisesCount} EXERCÍCIOS
               </Text>
             </View>
@@ -140,13 +141,13 @@ export default function WorkoutsScreen() {
               >
                 Detalhes
               </Text>
-              <Ionicons name="chevron-forward" size={14} color={colors.primary.start} />
+              <Ionicons name="chevron-forward" size={escalar(14)} color={colors.primary.start} />
             </View>
           </View>
         </PremiumCard>
       );
     },
-    [router]
+    [router, escalar]
   );
 
   return (
@@ -157,19 +158,6 @@ export default function WorkoutsScreen() {
           <Text className="text-4xl font-extrabold text-white mb-1 font-display">Treinos</Text>
           <Text className="text-base text-zinc-400 font-sans">Gerencie seus treinos</Text>
         </View>
-
-        <Link href={'/(tabs)/workouts/create' as never} asChild>
-          <TouchableOpacity activeOpacity={0.8}>
-            <LinearGradient
-              colors={['#FF6B35', '#FF2E63']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              className="h-14 w-14 rounded-full items-center justify-center shadow-lg shadow-orange-500/20"
-            >
-              <Ionicons name="add" size={28} color="#FFFFFF" />
-            </LinearGradient>
-          </TouchableOpacity>
-        </Link>
       </View>
 
       <MuscleFilterCarousel
@@ -188,7 +176,7 @@ export default function WorkoutsScreen() {
           <RefreshControl
             refreshing={isLoading}
             onRefresh={() => user?.id && fetchWorkouts(user.id)}
-            tintColor="#FF6B35"
+            tintColor={cores.primary}
           />
         }
         showsVerticalScrollIndicator={false}
@@ -196,7 +184,7 @@ export default function WorkoutsScreen() {
           !isLoading ? (
             <View className="flex-1 justify-center items-center py-20">
               <View className="bg-zinc-900 p-8 rounded-full mb-6 border border-zinc-800">
-                <Ionicons name="barbell-outline" size={64} color="#52525B" />
+                <Ionicons name="barbell-outline" size={escalar(64)} color={cores.mutedForeground} />
               </View>
               <Text className="text-white text-xl font-bold mb-2 text-center font-display">
                 Nenhum treino criado
@@ -204,25 +192,10 @@ export default function WorkoutsScreen() {
               <Text className="text-zinc-400 text-center px-8 text-sm mb-8 font-sans">
                 Crie fichas de treino para seus alunos
               </Text>
-
-              <Link href={'/(tabs)/workouts/create' as never} asChild>
-                <TouchableOpacity activeOpacity={0.8}>
-                  <LinearGradient
-                    colors={['#FF6B35', '#FF2E63']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    className="rounded-2xl py-3 px-6 shadow-lg shadow-orange-500/20"
-                  >
-                    <Text className="text-white text-base font-bold font-display">
-                      Criar Treino
-                    </Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </Link>
             </View>
           ) : (
             <View className="py-20">
-              <ActivityIndicator size="large" color="#FF6B35" />
+              <ActivityIndicator size="large" color={cores.primary} />
             </View>
           )
         }

@@ -63,7 +63,12 @@ interface WorkoutState {
   updateTrainingPlan: (id: string, updates: Partial<TrainingPlan>) => Promise<void>;
   deleteTrainingPlan: (id: string) => Promise<void>;
   fetchWorkoutsForPhase: (trainingPlanId: string) => Promise<void>;
+  deleteWorkoutsForPhase: (trainingPlanId: string) => Promise<void>;
   addWorkoutItems: (workoutId: string, items: WorkoutExercise[]) => Promise<void>;
+  reorderWorkoutExercises: (
+    workoutId: string,
+    items: { id: string; order_index: number }[]
+  ) => Promise<void>;
   createWorkout: (workout: {
     training_plan_id: string;
     title: string;
@@ -262,21 +267,16 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
   },
 
   activateTrainingPlan: async (trainingPlanId) => {
-    try {
-      const activated = await workoutsService.activateTrainingPlan(trainingPlanId);
-      set((state) => ({
-        currentPeriodizationPhases: state.currentPeriodizationPhases.map((p) => {
-          if (p.id === trainingPlanId) return { ...p, status: 'active' as const };
-          if (p.periodization_id === activated.periodization_id && p.status === 'active')
-            return { ...p, status: 'completed' as const };
-          return p;
-        }),
-      }));
-      return activated;
-    } catch (error) {
-      console.error('Error activating training plan:', error);
-      throw error;
-    }
+    const activated = await workoutsService.activateTrainingPlan(trainingPlanId);
+    set((state) => ({
+      currentPeriodizationPhases: state.currentPeriodizationPhases.map((p) => {
+        if (p.id === trainingPlanId) return { ...p, status: 'active' as const };
+        if (p.periodization_id === activated.periodization_id && p.status === 'active')
+          return { ...p, status: 'completed' as const };
+        return p;
+      }),
+    }));
+    return activated;
   },
 
   updateTrainingPlan: async (id, updates) => {
@@ -303,6 +303,10 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       console.error('Error deleting training plan:', error);
       throw error;
     }
+  },
+
+  deleteWorkoutsForPhase: async (trainingPlanId) => {
+    await workoutsService.deleteWorkoutsForPhase(trainingPlanId);
   },
 
   fetchWorkoutsForPhase: async (trainingPlanId) => {
@@ -336,6 +340,11 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       console.error('Error adding workout items:', error);
       throw error;
     }
+  },
+
+  reorderWorkoutExercises: async (workoutId, items) => {
+    await workoutsService.reorderWorkoutExercises(items);
+    await get().fetchWorkoutById(workoutId);
   },
 
   createWorkout: async (workout) => {
@@ -373,15 +382,10 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
   },
 
   updateWorkout: async (id, updates) => {
-    try {
-      const updated = await workoutsService.updateWorkout(id, updates);
-      set((state) => ({
-        workouts: state.workouts.map((w) => (w.id === id ? { ...w, ...updated } : w)),
-      }));
-    } catch (error) {
-      console.error('Error updating workout:', error);
-      throw error;
-    }
+    const updated = await workoutsService.updateWorkout(id, updates);
+    set((state) => ({
+      workouts: state.workouts.map((w) => (w.id === id ? { ...w, ...updated } : w)),
+    }));
   },
 
   duplicateWorkout: async (workoutId, targetPlanId) => {

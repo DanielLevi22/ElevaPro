@@ -62,6 +62,53 @@ describe("workoutsService — exercícios do treino", () => {
   });
 });
 
+describe("workoutsService — esvaziar treinos da fase", () => {
+  // A troca de divisão e o Co-Pilot recriam do zero: extraído pro serviço
+  // porque a mesma exclusão por `training_plan_id` vivia duplicada em dois
+  // pontos do fluxo de divisão no mobile (issue #335).
+  it("apaga só os treinos da fase pedida", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({});
+
+    await createWorkoutsService(supabase).deleteWorkoutsForPhase("fase-1");
+
+    expect(chamadas[0].tabela).toBe("workouts");
+    expect(chamadas[0].filtros).toEqual({ training_plan_id: "fase-1" });
+    expect(chamadas[0].metodos.some((m) => m.nome === "delete")).toBe(true);
+  });
+
+  it("propaga o erro em vez de seguir como se tivesse apagado", async () => {
+    const { supabase } = criarSupabaseFake({ error: { message: "42501" } });
+    await expect(createWorkoutsService(supabase).deleteWorkoutsForPhase("fase-1")).rejects.toEqual({
+      message: "42501",
+    });
+  });
+});
+
+describe("workoutsService — reordenar exercícios do treino", () => {
+  it("grava o order_index de cada item, um `update` por linha", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({});
+
+    await createWorkoutsService(supabase).reorderWorkoutExercises([
+      { id: "we-1", order_index: 1 },
+      { id: "we-2", order_index: 0 },
+    ]);
+
+    expect(chamadas).toHaveLength(2);
+    expect(chamadas[0].tabela).toBe("workout_exercises");
+    expect(chamadas[0].payload).toEqual({ order_index: 1 });
+    expect(chamadas[0].filtros).toEqual({ id: "we-1" });
+    expect(chamadas[1].payload).toEqual({ order_index: 0 });
+    expect(chamadas[1].filtros).toEqual({ id: "we-2" });
+  });
+
+  it("propaga o erro em vez de seguir como se tivesse reordenado", async () => {
+    const { supabase } = criarSupabaseFake({ error: { message: "42501" } });
+    await expect(
+      createWorkoutsService(supabase).reorderWorkoutExercises([{ id: "we-1", order_index: 0 }]),
+    ).rejects.toEqual({ message: "42501" });
+  });
+});
+
 /**
  * ── TRAVAS LGPD — correção do feedback (migration 0036) ──────────────────────
  *

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Modal, Text, TouchableOpacity, View } from 'react-native';
-import { useCores } from '@/shared/design';
+import { useCores, useEscala } from '@/shared/design';
 
 interface PhaseSplitConfirmModalProps {
   visible: boolean;
@@ -25,6 +25,7 @@ export function PhaseSplitConfirmModal({
   onEmptyWorkouts,
 }: PhaseSplitConfirmModalProps) {
   const cores = useCores();
+  const escalar = useEscala();
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -40,7 +41,7 @@ export function PhaseSplitConfirmModal({
         >
           <View className="bg-zinc-900 w-full rounded-[1.5rem] p-6 border border-zinc-800 items-center shadow-2xl">
             <View className="w-16 h-16 rounded-full bg-orange-500/10 items-center justify-center border border-orange-500/20 mb-5">
-              <Ionicons name="options" size={32} color={cores.primary} />
+              <Ionicons name="options" size={escalar(32)} color={cores.primary} />
             </View>
 
             <Text className="text-white text-xl font-extrabold mb-2 text-center font-display">
@@ -64,7 +65,7 @@ export function PhaseSplitConfirmModal({
                   <View className="flex-row items-center">
                     <Ionicons
                       name="sparkles"
-                      size={20}
+                      size={escalar(20)}
                       color={cores.primaryForeground}
                       style={{ marginRight: 8 }}
                     />

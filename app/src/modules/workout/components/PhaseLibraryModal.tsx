@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { MuscleFilterCarousel } from '@/components/workout/MuscleFilterCarousel';
-import { useCores } from '@/shared/design';
+import { useCores, useEscala } from '@/shared/design';
 import { MUSCLE_IMAGES } from '../constants/muscleImages';
 import type { Workout } from '../store/workoutStore';
 
@@ -36,6 +36,7 @@ export function PhaseLibraryModal({
   onImport,
 }: PhaseLibraryModalProps) {
   const cores = useCores();
+  const escalar = useEscala();
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -49,7 +50,7 @@ export function PhaseLibraryModal({
             onPress={onClose}
             className="w-10 h-10 bg-zinc-900 rounded-full items-center justify-center border border-zinc-800"
           >
-            <Ionicons name="close" size={24} color={cores.primaryForeground} />
+            <Ionicons name="close" size={escalar(24)} color={cores.primaryForeground} />
           </TouchableOpacity>
         </View>
 
@@ -57,7 +58,7 @@ export function PhaseLibraryModal({
           <View className="bg-zinc-900 flex-row items-center px-4 py-3 rounded-2xl border border-zinc-800 mb-4">
             <Ionicons
               name="search"
-              size={20}
+              size={escalar(20)}
               color={cores.mutedForeground}
               style={{ marginRight: 12 }}
             />
@@ -94,12 +95,12 @@ export function PhaseLibraryModal({
                   {item.muscle_group || 'Geral'} • {item.difficulty || 'Iniciante'}
                 </Text>
               </View>
-              <Ionicons name="add-circle" size={24} color={cores.primary} />
+              <Ionicons name="add-circle" size={escalar(24)} color={cores.primary} />
             </TouchableOpacity>
           )}
           ListEmptyComponent={
             <View className="items-center py-20">
-              <Ionicons name="search" size={64} color={cores.muted} />
+              <Ionicons name="search" size={escalar(64)} color={cores.muted} />
               <Text className="text-zinc-600 mt-4">Nenhum modelo encontrado</Text>
             </View>
           }

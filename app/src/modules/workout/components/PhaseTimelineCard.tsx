@@ -2,7 +2,7 @@ import type { TrainingPlan } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { colors } from '@/constants/colors';
-import { useCores } from '@/shared/design';
+import { useCores, useEscala } from '@/shared/design';
 
 interface PhaseTimelineCardProps {
   phase: TrainingPlan;
@@ -20,6 +20,7 @@ const RÓTULO_DO_STATUS: Record<string, string> = {
 /** Uma fase na linha do tempo da periodização: marcador, cartão e datas. */
 export function PhaseTimelineCard({ phase, index, isLast, onPress }: PhaseTimelineCardProps) {
   const cores = useCores();
+  const escalar = useEscala();
   const phaseIsActive = phase.status === 'active';
   const phaseIsCompleted = phase.status === 'completed';
 
@@ -38,7 +39,7 @@ export function PhaseTimelineCard({ phase, index, isLast, onPress }: PhaseTimeli
           }
         >
           {phaseIsCompleted ? (
-            <Ionicons name="checkmark" size={16} color={cores.primaryForeground} />
+            <Ionicons name="checkmark" size={escalar(16)} color={cores.primaryForeground} />
           ) : (
             <Text className={`text-xs font-bold ${phaseIsActive ? 'text-white' : 'text-zinc-500'}`}>
               {index + 1}
@@ -74,7 +75,7 @@ export function PhaseTimelineCard({ phase, index, isLast, onPress }: PhaseTimeli
               <View className="flex-row items-center mt-1">
                 <Ionicons
                   name="barbell-outline"
-                  size={12}
+                  size={escalar(12)}
                   color={phaseIsActive ? colors.primary.start : colors.text.muted}
                 />
                 <Text
@@ -118,7 +119,7 @@ export function PhaseTimelineCard({ phase, index, isLast, onPress }: PhaseTimeli
 
           <View className="flex-row items-center border-t border-zinc-800/50 pt-3 mt-1">
             <View className="flex-row items-center bg-zinc-800/40 px-2.5 py-1.5 rounded-lg border border-white/5">
-              <Ionicons name="time-outline" size={12} color={colors.text.muted} />
+              <Ionicons name="time-outline" size={escalar(12)} color={colors.text.muted} />
               <Text
                 className="text-zinc-400 text-[0.625rem] font-bold ml-2"
                 style={{ color: colors.text.secondary }}
@@ -142,7 +143,7 @@ export function PhaseTimelineCard({ phase, index, isLast, onPress }: PhaseTimeli
               >
                 ACESSAR
               </Text>
-              <Ionicons name="chevron-forward" size={12} color={colors.primary.start} />
+              <Ionicons name="chevron-forward" size={escalar(12)} color={colors.primary.start} />
             </View>
           </View>
         </View>

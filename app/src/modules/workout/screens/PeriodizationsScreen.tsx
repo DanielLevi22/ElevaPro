@@ -19,7 +19,7 @@ import { SearchModal } from '@/components/ui/SearchModal';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { colors } from '@/constants/colors';
 import { ROUTES } from '@/navigation/types';
-import { useCores } from '@/shared/design';
+import { useCores, useEscala } from '@/shared/design';
 import { useStudentStore } from '@/students';
 import { useWorkoutStore } from '../store/workoutStore';
 
@@ -33,6 +33,7 @@ const PERIODIZATION_IMAGES: Record<string, ImageSourcePropType> = {
 export default function PeriodizationsScreen() {
   const router = useRouter();
   const cores = useCores();
+  const escalar = useEscala();
   const { user, accountType } = useAuthStore();
   const isSpecialist = accountType === 'specialist';
   const { periodizations, isLoading, fetchPeriodizations } = useWorkoutStore();
@@ -205,7 +206,7 @@ export default function PeriodizationsScreen() {
               onPress={() => setIsSearchModalVisible(true)}
               className="w-12 h-12 rounded-full bg-zinc-800 items-center justify-center border border-zinc-700"
             >
-              <Ionicons name="search" size={24} color={cores.foreground} />
+              <Ionicons name="search" size={escalar(24)} color={cores.foreground} />
             </TouchableOpacity>
 
             {(accountType === 'specialist' || accountType === 'member') && (
@@ -216,7 +217,7 @@ export default function PeriodizationsScreen() {
                   end={{ x: 1, y: 1 }}
                   className="h-12 w-12 rounded-full items-center justify-center shadow-lg shadow-orange-500/20"
                 >
-                  <Ionicons name="add" size={24} color={cores.primaryForeground} />
+                  <Ionicons name="add" size={escalar(24)} color={cores.primaryForeground} />
                 </LinearGradient>
               </TouchableOpacity>
             )}
@@ -258,7 +259,11 @@ export default function PeriodizationsScreen() {
           !isLoading ? (
             <View className="flex-1 justify-center items-center py-20">
               <View className="bg-zinc-900 p-8 rounded-full mb-6 border border-zinc-800">
-                <Ionicons name="calendar-outline" size={64} color={cores.mutedForeground} />
+                <Ionicons
+                  name="calendar-outline"
+                  size={escalar(64)}
+                  color={cores.mutedForeground}
+                />
               </View>
               <Text className="text-white text-xl font-bold mb-2 text-center font-display">
                 Nenhuma periodização

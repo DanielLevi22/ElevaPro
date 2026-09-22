@@ -17,7 +17,7 @@ import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { colors } from '@/constants/colors';
 import { ROUTES } from '@/navigation/types';
-import { useCores } from '@/shared/design';
+import { useCores, useEscala } from '@/shared/design';
 import { PhaseTimelineCard } from '../components/PhaseTimelineCard';
 import { useWorkoutStore } from '../store/workoutStore';
 import { useWorkoutWizardStore } from '../store/workoutWizardStore';
@@ -33,6 +33,7 @@ export default function PeriodizationDetailsScreen() {
   const params = useLocalSearchParams();
   const router = useRouter();
   const cores = useCores();
+  const escalar = useEscala();
 
   const { user, accountType } = useAuthStore();
   const rawMode = params.mode;
@@ -99,7 +100,7 @@ export default function PeriodizationDetailsScreen() {
   if (!periodization) {
     return (
       <ScreenLayout className="justify-center items-center px-6">
-        <Ionicons name="alert-circle-outline" size={64} color={cores.mutedForeground} />
+        <Ionicons name="alert-circle-outline" size={escalar(64)} color={cores.mutedForeground} />
         <Text className="text-white text-xl font-bold mt-4 text-center font-display">
           Periodização não encontrada
         </Text>
@@ -151,7 +152,7 @@ export default function PeriodizationDetailsScreen() {
                 onPress={() => router.back()}
                 className="bg-black/40 p-2.5 rounded-xl border border-white/10"
               >
-                <Ionicons name="arrow-back" size={24} color={cores.onHero} />
+                <Ionicons name="arrow-back" size={escalar(24)} color={cores.onHero} />
               </TouchableOpacity>
 
               {!isStudentView && (
@@ -165,7 +166,7 @@ export default function PeriodizationDetailsScreen() {
                   }
                   className="bg-black/40 p-2.5 rounded-xl border border-white/10"
                 >
-                  <Ionicons name="pencil" size={20} color={cores.onHero} />
+                  <Ionicons name="pencil" size={escalar(20)} color={cores.onHero} />
                 </TouchableOpacity>
               )}
             </View>
@@ -397,7 +398,11 @@ export default function PeriodizationDetailsScreen() {
                 });
               }}
             >
-              <Ionicons name="add-circle-outline" size={24} color={cores.mutedForeground} />
+              <Ionicons
+                name="add-circle-outline"
+                size={escalar(24)}
+                color={cores.mutedForeground}
+              />
               <Text className="text-zinc-500 font-bold mt-2">Adicionar Fase</Text>
             </TouchableOpacity>
           )}

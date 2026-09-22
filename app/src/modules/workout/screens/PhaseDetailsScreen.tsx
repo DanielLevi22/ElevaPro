@@ -10,7 +10,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { MuscleFilterCarousel } from '@/components/workout/MuscleFilterCarousel';
 import { colors } from '@/constants/colors';
 import { ROUTES } from '@/navigation/types';
-import { useCores } from '@/shared/design';
+import { useCores, useEscala } from '@/shared/design';
 import { PhaseLibraryModal } from '../components/PhaseLibraryModal';
 import { PhaseSplitConfirmModal } from '../components/PhaseSplitConfirmModal';
 import { PhaseSplitModal } from '../components/PhaseSplitModal';
@@ -30,6 +30,7 @@ export default function PhaseDetailsScreen() {
   const mode = Array.isArray(modeParam) ? modeParam[0] : modeParam;
   const router = useRouter();
   const cores = useCores();
+  const escalar = useEscala();
   const { user, accountType } = useAuthStore();
   // `/students/[id]/...` é navegação exclusiva do especialista olhando a ficha
   // de um aluno — não é o aluno vendo o próprio treino. Contar o pathname aqui
@@ -45,6 +46,7 @@ export default function PhaseDetailsScreen() {
     periodizations,
     deleteTrainingPlan,
     createWorkout,
+    deleteWorkoutsForPhase,
     updateTrainingPlan,
     fetchWorkoutsForPhase,
     workouts,
@@ -98,6 +100,7 @@ export default function PhaseDetailsScreen() {
     userId: user?.id,
     workoutsCount: workouts.length,
     createWorkout,
+    deleteWorkoutsForPhase,
     fetchWorkoutsForPhase,
     updateTrainingPlan,
     onAiReady: goToWizardBuild,
@@ -204,7 +207,7 @@ export default function PhaseDetailsScreen() {
   if (!phase) {
     return (
       <ScreenLayout className="justify-center items-center px-6">
-        <Ionicons name="alert-circle-outline" size={64} color={cores.mutedForeground} />
+        <Ionicons name="alert-circle-outline" size={escalar(64)} color={cores.mutedForeground} />
         <Text className="text-white text-xl font-bold mt-4 text-center font-display">
           Fase não encontrada
         </Text>
@@ -292,7 +295,7 @@ export default function PhaseDetailsScreen() {
             {workouts.length === 0 ? (
               <View className="items-center justify-center py-10">
                 <View className="bg-zinc-900 p-8 rounded-full mb-6 border border-zinc-800">
-                  <Ionicons name="walk" size={64} color={cores.mutedForeground} />
+                  <Ionicons name="walk" size={escalar(64)} color={cores.mutedForeground} />
                 </View>
                 <Text className="text-zinc-500 font-sans text-center">
                   Nenhum treino cadastrado nesta fase.
@@ -331,7 +334,7 @@ export default function PhaseDetailsScreen() {
               >
                 <Ionicons
                   name="sparkles"
-                  size={14}
+                  size={escalar(14)}
                   color={cores.primary}
                   style={{ marginRight: 6 }}
                 />
@@ -344,7 +347,7 @@ export default function PhaseDetailsScreen() {
               >
                 <Ionicons
                   name="library"
-                  size={14}
+                  size={escalar(14)}
                   color={cores.mutedForeground}
                   style={{ marginRight: 6 }}
                 />
@@ -355,7 +358,7 @@ export default function PhaseDetailsScreen() {
                 onPress={goToWizardBuild}
                 className="w-8 h-8 rounded-full bg-zinc-800 items-center justify-center border border-zinc-700"
               >
-                <Ionicons name="add" size={18} color={cores.foreground} />
+                <Ionicons name="add" size={escalar(18)} color={cores.foreground} />
               </TouchableOpacity>
             </View>
           )}

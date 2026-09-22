@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ImageBackground, Text, TouchableOpacity, View } from 'react-native';
-import { useCores } from '@/shared/design';
+import { useCores, useEscala } from '@/shared/design';
 import { MUSCLE_IMAGES } from '../constants/muscleImages';
 import type { Workout } from '../store/workoutStore';
 
@@ -22,6 +22,7 @@ export function WorkoutListItem({
   onPress,
 }: WorkoutListItemProps) {
   const cores = useCores();
+  const escalar = useEscala();
   const apagado = isStudentView && (isSuggested || isWorkoutDoneToday);
 
   return (
@@ -57,7 +58,7 @@ export function WorkoutListItem({
           <View className="flex-row items-center mt-0.5">
             <Ionicons
               name="barbell-outline"
-              size={10}
+              size={escalar(10)}
               color={cores.mutedForeground}
               style={{ marginRight: 4 }}
             />
@@ -67,7 +68,7 @@ export function WorkoutListItem({
           </View>
         </View>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={cores.mutedForeground} />
+      <Ionicons name="chevron-forward" size={escalar(18)} color={cores.mutedForeground} />
     </TouchableOpacity>
   );
 }

@@ -1,7 +1,8 @@
-import type { BulkWorkoutProposal } from '@elevapro/shared';
+import type { BulkWorkoutProposal, WorkoutExercise } from '@elevapro/shared';
+import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { showAlert } from '@/components/ui/appAlert';
 import { BarraDeProgresso } from '@/components/ui/BarraDeProgresso';
@@ -14,6 +15,7 @@ import { ProgressHeader } from '@/components/ui/ProgressHeader';
 import { Row } from '@/components/ui/Row';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { ROUTES } from '@/navigation/types';
+import { useCores, useEscala } from '@/shared/design';
 import { WorkoutChatService } from '../services/WorkoutChatService';
 import { useWorkoutStore } from '../store/workoutStore';
 import { useWorkoutWizardStore } from '../store/workoutWizardStore';
@@ -43,7 +45,8 @@ export default function WorkoutWizardBuildScreen() {
   const router = useRouter();
   const { studentId } = useLocalSearchParams<{ studentId: string }>();
   const wizard = useWorkoutWizardStore();
-  const { workouts, fetchWorkoutsForPhase, createWorkout, isLoading } = useWorkoutStore();
+  const { workouts, fetchWorkoutsForPhase, createWorkout, reorderWorkoutExercises, isLoading } =
+    useWorkoutStore();
   const token = useAuthStore((s) => s.session?.access_token ?? null);
   const specialistId = useAuthStore((s) => s.user?.id ?? null);
 
@@ -131,6 +134,19 @@ export default function WorkoutWizardBuildScreen() {
     });
   }
 
+  async function moveExercise(indice: number, direcao: -1 | 1) {
+    const exercicios = activeWorkout?.exercises ?? [];
+    const alvo = indice + direcao;
+    if (!activeWorkout || alvo < 0 || alvo >= exercicios.length) return;
+
+    const reordenados = [...exercicios];
+    [reordenados[indice], reordenados[alvo]] = [reordenados[alvo], reordenados[indice]];
+    await reorderWorkoutExercises(
+      activeWorkout.id,
+      reordenados.map((exercicio, i) => ({ id: exercicio.id, order_index: i }))
+    );
+  }
+
   function handleContinue() {
     if (workouts.length === 0) {
       showAlert({
@@ -198,15 +214,15 @@ export default function WorkoutWizardBuildScreen() {
           <TituloDeSecao acao={`${activeWorkout.exercises?.length ?? 0} exercícios`}>
             {activeWorkout.title}
           </TituloDeSecao>
-          {(activeWorkout.exercises ?? []).map((item) => (
-            <Card key={item.id} className="mb-2">
-              <Text className="text-[0.875rem] font-bold text-foreground">
-                {item.exercise?.name ?? 'Exercício'}
-              </Text>
-              <Text className="mt-1 text-[0.8125rem] text-muted-foreground">
-                {resumoDoExercicio(item)}
-              </Text>
-            </Card>
+          {(activeWorkout.exercises ?? []).map((item, index, todos) => (
+            <ExercicioDoTreinoCard
+              key={item.id}
+              item={item}
+              podeSubir={index > 0}
+              podeDescer={index < todos.length - 1}
+              onSubir={() => moveExercise(index, -1)}
+              onDescer={() => moveExercise(index, 1)}
+            />
           ))}
           <Row icon="barbell-outline" title="Adicionar exercício" chevron onPress={goToLibrary} />
         </>
@@ -245,6 +261,66 @@ function PropostaDeTreinos({
           onPress={aprovando ? undefined : onAprovar}
         />
         <Row icon="close-circle-outline" title="Descartar" onPress={onDescartar} />
+      </View>
+    </Card>
+  );
+}
+
+const TAMANHO_DA_SETA = 15;
+
+function ExercicioDoTreinoCard({
+  item,
+  podeSubir,
+  podeDescer,
+  onSubir,
+  onDescer,
+}: {
+  item: WorkoutExercise;
+  podeSubir: boolean;
+  podeDescer: boolean;
+  onSubir: () => void;
+  onDescer: () => void;
+}) {
+  const cores = useCores();
+  const escalar = useEscala();
+
+  return (
+    <Card className="mb-2 flex-row items-center justify-between">
+      <View className="min-w-0 flex-1 pr-3">
+        <Text className="text-[0.875rem] font-bold text-foreground">
+          {item.exercise?.name ?? 'Exercício'}
+        </Text>
+        <Text className="mt-1 text-[0.8125rem] text-muted-foreground">
+          {resumoDoExercicio(item)}
+        </Text>
+      </View>
+      <View className="gap-1.5">
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Mover exercício para cima"
+          disabled={!podeSubir}
+          onPress={onSubir}
+          className="h-7 w-7 items-center justify-center rounded-sm bg-muted"
+        >
+          <Ionicons
+            name="chevron-up"
+            size={escalar(TAMANHO_DA_SETA)}
+            color={podeSubir ? cores.foreground : cores.placeholder}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Mover exercício para baixo"
+          disabled={!podeDescer}
+          onPress={onDescer}
+          className="h-7 w-7 items-center justify-center rounded-sm bg-muted"
+        >
+          <Ionicons
+            name="chevron-down"
+            size={escalar(TAMANHO_DA_SETA)}
+            color={podeDescer ? cores.foreground : cores.placeholder}
+          />
+        </TouchableOpacity>
       </View>
     </Card>
   );
