@@ -1,13 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import {
-  FlatList,
-  ImageBackground,
-  Modal,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, ImageBackground, Modal, Text, TouchableOpacity, View } from 'react-native';
+import { GlassSearchField } from '@/components/ui/GlassSearchField';
 import { MuscleFilterCarousel } from '@/components/workout/MuscleFilterCarousel';
 import { useCores, useEscala } from '@/shared/design';
 import { MUSCLE_IMAGES } from '../constants/muscleImages';
@@ -40,37 +33,30 @@ export function PhaseLibraryModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View className="flex-1 bg-black/95 pt-20">
-        <View className="px-6 flex-row justify-between items-center mb-6">
+      <View className="flex-1 bg-background pt-20">
+        <View className="mb-6 flex-row items-center justify-between px-6">
           <View>
-            <Text className="text-3xl font-extrabold text-white font-display">Biblioteca</Text>
-            <Text className="text-zinc-400 text-sm">Toque num modelo para importar</Text>
+            <Text className="text-[1.6875rem] font-bold tracking-tight text-hero">Biblioteca</Text>
+            <Text className="text-[0.8125rem] text-muted-foreground">
+              Toque num modelo para importar
+            </Text>
           </View>
           <TouchableOpacity
             onPress={onClose}
-            className="w-10 h-10 bg-zinc-900 rounded-full items-center justify-center border border-zinc-800"
+            className="h-10 w-10 items-center justify-center rounded-full bg-muted"
+            accessibilityRole="button"
+            accessibilityLabel="Fechar"
           >
-            <Ionicons name="close" size={escalar(24)} color={cores.primaryForeground} />
+            <Ionicons name="close" size={escalar(22)} color={cores.foreground} />
           </TouchableOpacity>
         </View>
 
-        <View className="px-6 mb-6">
-          <View className="bg-zinc-900 flex-row items-center px-4 py-3 rounded-2xl border border-zinc-800 mb-4">
-            <Ionicons
-              name="search"
-              size={escalar(20)}
-              color={cores.mutedForeground}
-              style={{ marginRight: 12 }}
-            />
-            <TextInput
-              placeholder="Buscar na biblioteca..."
-              placeholderTextColor={cores.mutedForeground}
-              className="flex-1 text-white font-medium"
-              value={search}
-              onChangeText={onChangeSearch}
-            />
-          </View>
-
+        <View className="mb-6 gap-3 px-6">
+          <GlassSearchField
+            value={search}
+            onChangeText={onChangeSearch}
+            placeholder="Buscar na biblioteca…"
+          />
           <MuscleFilterCarousel selectedMuscle={selectedMuscle} onSelectMuscle={onSelectMuscle} />
         </View>
 
@@ -81,18 +67,18 @@ export function PhaseLibraryModal({
           renderItem={({ item }) => (
             <TouchableOpacity
               onPress={() => onImport(item.id)}
-              className="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 mb-4 flex-row items-center"
+              className="mb-3 flex-row items-center rounded-lg border border-border bg-card p-3"
             >
-              <View className="w-12 h-12 rounded-xl overflow-hidden mr-4">
+              <View className="mr-3 h-12 w-12 overflow-hidden rounded-md">
                 <ImageBackground
                   source={MUSCLE_IMAGES[item.muscle_group || 'Geral'] || MUSCLE_IMAGES.Geral}
-                  className="w-full h-full"
+                  className="h-full w-full"
                 />
               </View>
               <View className="flex-1">
-                <Text className="text-white font-bold text-base">{item.title}</Text>
-                <Text className="text-zinc-500 text-xs uppercase font-bold tracking-wider">
-                  {item.muscle_group || 'Geral'} • {item.difficulty || 'Iniciante'}
+                <Text className="text-[0.9375rem] font-bold text-foreground">{item.title}</Text>
+                <Text className="text-legenda font-bold uppercase tracking-wide text-muted-foreground">
+                  {item.muscle_group || 'Geral'} · {item.difficulty || 'Iniciante'}
                 </Text>
               </View>
               <Ionicons name="add-circle" size={escalar(24)} color={cores.primary} />
@@ -100,8 +86,8 @@ export function PhaseLibraryModal({
           )}
           ListEmptyComponent={
             <View className="items-center py-20">
-              <Ionicons name="search" size={escalar(64)} color={cores.muted} />
-              <Text className="text-zinc-600 mt-4">Nenhum modelo encontrado</Text>
+              <Ionicons name="search" size={escalar(64)} color={cores.placeholder} />
+              <Text className="mt-4 text-muted-foreground">Nenhum modelo encontrado</Text>
             </View>
           }
         />

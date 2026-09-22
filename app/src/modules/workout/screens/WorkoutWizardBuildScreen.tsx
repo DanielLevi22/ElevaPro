@@ -1,38 +1,22 @@
-import type { WorkoutExercise } from '@elevapro/shared';
-import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { showAlert } from '@/components/ui/appAlert';
 import { BarraDeProgresso } from '@/components/ui/BarraDeProgresso';
 import { BotaoFixoNoRodape } from '@/components/ui/BotaoFixoNoRodape';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
-import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
 import { GlassScreen } from '@/components/ui/GlassScreen';
 import { ProgressHeader } from '@/components/ui/ProgressHeader';
 import { Row } from '@/components/ui/Row';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { ROUTES } from '@/navigation/types';
-import { useCores, useEscala } from '@/shared/design';
+import { ExercicioDoTreinoCard } from '../components/ExercicioDoTreinoCard';
 import { useWorkoutStore } from '../store/workoutStore';
 import { useWorkoutWizardStore } from '../store/workoutWizardStore';
 
 const LETRAS = 'ABCDEFGH';
-
-function resumoDoExercicio(item: {
-  sets?: number | null;
-  reps?: string | null;
-  rest_seconds?: number | null;
-}): string {
-  const partes = [
-    item.sets ? `${item.sets} séries` : null,
-    item.reps ? `${item.reps} reps` : null,
-    item.rest_seconds ? `${item.rest_seconds}s descanso` : null,
-  ].filter(Boolean);
-  return partes.length > 0 ? partes.join(' · ') : 'Sem configuração';
-}
 
 /**
  * Passo 2 do wizard: monta os treinos (Treino A/B/C…) da fase criada no
@@ -177,65 +161,5 @@ export default function WorkoutWizardBuildScreen() {
         </Text>
       )}
     </GlassScreen>
-  );
-}
-
-const TAMANHO_DA_SETA = 15;
-
-function ExercicioDoTreinoCard({
-  item,
-  podeSubir,
-  podeDescer,
-  onSubir,
-  onDescer,
-}: {
-  item: WorkoutExercise;
-  podeSubir: boolean;
-  podeDescer: boolean;
-  onSubir: () => void;
-  onDescer: () => void;
-}) {
-  const cores = useCores();
-  const escalar = useEscala();
-
-  return (
-    <Card className="mb-2 flex-row items-center justify-between">
-      <View className="min-w-0 flex-1 pr-3">
-        <Text className="text-[0.875rem] font-bold text-foreground">
-          {item.exercise?.name ?? 'Exercício'}
-        </Text>
-        <Text className="mt-1 text-[0.8125rem] text-muted-foreground">
-          {resumoDoExercicio(item)}
-        </Text>
-      </View>
-      <View className="gap-1.5">
-        <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityLabel="Mover exercício para cima"
-          disabled={!podeSubir}
-          onPress={onSubir}
-          className="h-7 w-7 items-center justify-center rounded-sm bg-muted"
-        >
-          <Ionicons
-            name="chevron-up"
-            size={escalar(TAMANHO_DA_SETA)}
-            color={podeSubir ? cores.foreground : cores.placeholder}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityLabel="Mover exercício para baixo"
-          disabled={!podeDescer}
-          onPress={onDescer}
-          className="h-7 w-7 items-center justify-center rounded-sm bg-muted"
-        >
-          <Ionicons
-            name="chevron-down"
-            size={escalar(TAMANHO_DA_SETA)}
-            color={podeDescer ? cores.foreground : cores.placeholder}
-          />
-        </TouchableOpacity>
-      </View>
-    </Card>
   );
 }

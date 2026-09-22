@@ -1,16 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { showAlert, showConfirm } from '@/components/ui/appAlert';
-import { IconButton } from '@/components/ui/IconButton';
-import { ScreenLayout } from '@/components/ui/ScreenLayout';
+import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
+import { GlassScreen } from '@/components/ui/GlassScreen';
+import { Row } from '@/components/ui/Row';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { MuscleFilterCarousel } from '@/components/workout/MuscleFilterCarousel';
-import { colors } from '@/constants/colors';
 import { ROUTES } from '@/navigation/types';
 import { useCores, useEscala } from '@/shared/design';
+import { EstadoDaTela } from '../components/aluno/EstadoDaTela';
 import { PhaseLibraryModal } from '../components/PhaseLibraryModal';
 import { PhaseSplitConfirmModal } from '../components/PhaseSplitConfirmModal';
 import { PhaseSplitModal } from '../components/PhaseSplitModal';
@@ -24,6 +26,12 @@ import { useWorkoutStore } from '../store/workoutStore';
 import { useWorkoutWizardStore } from '../store/workoutWizardStore';
 
 const SPLITS = ['A', 'AB', 'ABC', 'ABCD', 'ABCDE', 'ABCDEF'];
+
+const ICONE_DO_STATUS = {
+  planned: 'document-text-outline',
+  active: 'play-outline',
+  completed: 'checkmark-done-outline',
+} as const;
 
 export default function PhaseDetailsScreen() {
   const { phaseId, mode: modeParam } = useLocalSearchParams();
@@ -58,8 +66,6 @@ export default function PhaseDetailsScreen() {
 
   const phase = currentPeriodizationPhases.find((p) => p.id === phaseId);
 
-  const [_showStartPicker, setShowStartPicker] = useState(false);
-  const [_showEndPicker, setShowEndPicker] = useState(false);
   const [showLibraryModal, setShowLibraryModal] = useState(false);
   const [librarySearch, setLibrarySearch] = useState('');
   const [selectedLibraryMuscle, setSelectedLibraryMuscle] = useState<string | null>(null);
@@ -137,41 +143,19 @@ export default function PhaseDetailsScreen() {
     }
   }, [phase?.id, fetchWorkoutsForPhase]);
 
-  const _handleUpdateDate = useCallback(
-    async (type: 'start' | 'end', date: Date) => {
-      if (!phase) return;
-      try {
-        await updateTrainingPlan(phase.id, {
-          [type === 'start' ? 'start_date' : 'end_date']: date.toISOString().split('T')[0],
-        });
-      } catch (_error: unknown) {
-        showAlert({ title: 'Erro', message: 'Não foi possível atualizar a data.', type: 'error' });
-      }
-    },
-    [phase, updateTrainingPlan]
-  );
-
   const handleDeletePhase = useCallback(async () => {
     if (!phase) return;
 
     showConfirm({
-      title: 'Excluir Fase',
+      title: 'Excluir fase',
       message: `Tem certeza que deseja excluir a fase "${phase.name}"? Todos os treinos desta fase serão perdidos permanentemente.`,
       type: 'danger',
       confirmText: 'Excluir',
       onConfirm: async () => {
         try {
           await deleteTrainingPlan(phase.id);
-          // Small delay for the confirm modal to disappear
-          setTimeout(() => {
-            showAlert({
-              title: 'Fase Excluída',
-              message: 'A fase e seus treinos foram removidos com sucesso.',
-              type: 'success',
-            });
-            router.back();
-          }, 500);
-        } catch (_error: unknown) {
+          router.back();
+        } catch {
           showAlert({
             title: 'Erro',
             message: 'Não foi possível excluir a fase no momento.',
@@ -190,10 +174,10 @@ export default function PhaseDetailsScreen() {
         setShowLibraryModal(false);
         showAlert({
           title: 'Sucesso! 🚀',
-          message: 'Treino importado com sucesso para esta fase.',
+          message: 'Treino importado com sucesso.',
           type: 'success',
         });
-      } catch (_e) {
+      } catch {
         showAlert({
           title: 'Erro',
           message: 'Não foi possível importar o treino selecionado.',
@@ -204,183 +188,115 @@ export default function PhaseDetailsScreen() {
     [phaseId]
   );
 
-  if (!phase) {
-    return (
-      <ScreenLayout className="justify-center items-center px-6">
-        <Ionicons name="alert-circle-outline" size={escalar(64)} color={cores.mutedForeground} />
-        <Text className="text-white text-xl font-bold mt-4 text-center font-display">
-          Fase não encontrada
-        </Text>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="bg-zinc-800 px-6 py-3 rounded-xl mt-6"
-        >
-          <Text className="text-white font-bold">Voltar</Text>
-        </TouchableOpacity>
-      </ScreenLayout>
-    );
-  }
+  if (!phase) return <EstadoDaTela naoEncontrado mensagem="Fase não encontrada." />;
 
   const filteredWorkouts = selectedMuscle
     ? workouts.filter((w) => w.muscle_group === selectedMuscle)
     : workouts;
 
   return (
-    <ScreenLayout>
-      <View className="px-6 pt-4 pb-4">
-        <View className="flex-row items-center justify-between mb-8">
-          <IconButton
-            accessibilityLabel="Voltar"
-            icon="chevron-back"
-            onPress={() => router.back()}
-          />
+    <GlassScreen>
+      <View className="flex-row items-center justify-between pt-1.5">
+        <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={router.back} />
 
-          <View className="items-center">
-            <Text className="text-white text-2xl font-extrabold font-display tracking-tight">
-              {phase.name}
-            </Text>
-            <View className="mt-1">
-              <StatusBadge status={phase.status} />
-            </View>
+        <View className="items-center">
+          <Text className="text-[1.1875rem] font-bold tracking-tight text-hero">{phase.name}</Text>
+          <View className="mt-1">
+            <StatusBadge status={phase.status} />
           </View>
-
-          {!isStudentView ? (
-            <View className="flex-row gap-2">
-              <IconButton
-                accessibilityLabel="Alterar status da fase"
-                icon={
-                  phase.status === 'planned'
-                    ? 'document-text-outline'
-                    : phase.status === 'active'
-                      ? 'play-outline'
-                      : 'checkmark-done-outline'
-                }
-                onPress={() => splitFlow.setShowStatusModalMenu(true)}
-                iconColor={
-                  phase.status === 'planned'
-                    ? colors.status.warning
-                    : phase.status === 'active'
-                      ? colors.status.success
-                      : colors.text.muted
-                }
-                size={20}
-              />
-              <IconButton
-                accessibilityLabel="Excluir"
-                icon="trash-outline"
-                variant="danger"
-                onPress={handleDeletePhase}
-                size={20}
-              />
-            </View>
-          ) : (
-            <View className="w-12" />
-          )}
         </View>
 
+        {!isStudentView ? (
+          <View className="flex-row gap-2">
+            <BotaoDeIconePlano
+              icone={
+                ICONE_DO_STATUS[phase.status as keyof typeof ICONE_DO_STATUS] ?? 'ellipse-outline'
+              }
+              rotulo="Alterar status da fase"
+              onPress={() => splitFlow.setShowStatusModalMenu(true)}
+            />
+            <BotaoDeIconePlano
+              icone="trash-outline"
+              rotulo="Excluir fase"
+              onPress={handleDeletePhase}
+              perigo
+            />
+          </View>
+        ) : (
+          <View className="w-[2.375rem]" />
+        )}
+      </View>
+
+      <View className="mt-4">
         <PhaseSummaryCard
           phase={phase}
           isStudentView={isStudentView}
           onPressSplit={() => splitFlow.setShowSplitModal(true)}
-          onPressStart={() => setShowStartPicker(true)}
-          onPressEnd={() => setShowEndPicker(true)}
+          onPressStart={() => {}}
+          onPressEnd={() => {}}
         />
       </View>
 
-      <ScrollView className="px-6" contentContainerStyle={{ paddingBottom: 100 }}>
-        {isStudentView && (
-          <>
-            <Text className="text-white font-bold text-lg mb-4 font-display">Treino do Dia</Text>
-
-            {workouts.length === 0 ? (
-              <View className="items-center justify-center py-10">
-                <View className="bg-zinc-900 p-8 rounded-full mb-6 border border-zinc-800">
-                  <Ionicons name="walk" size={escalar(64)} color={cores.mutedForeground} />
-                </View>
-                <Text className="text-zinc-500 font-sans text-center">
-                  Nenhum treino cadastrado nesta fase.
-                </Text>
-              </View>
-            ) : (
-              suggestedWorkout && (
-                <SuggestedWorkoutCard
-                  workout={suggestedWorkout}
-                  isDoneToday={isWorkoutDoneToday}
-                  onPress={goToSuggestedWorkout}
-                />
-              )
-            )}
-          </>
-        )}
-
-        <View className="flex-row items-center justify-between mb-4 mt-6">
-          <View className="flex-row items-center">
-            <Text className="text-zinc-400 font-bold text-sm uppercase tracking-wider">
-              Treinos da Fase
-            </Text>
-            <View className="bg-zinc-800 px-2 py-0.5 rounded-md ml-2">
-              <Text className="text-zinc-500 text-[0.625rem] font-bold">
-                {filteredWorkouts.length}
+      {isStudentView && (
+        <>
+          <TituloDeSecao>Treino do dia</TituloDeSecao>
+          {workouts.length === 0 ? (
+            <View className="items-center justify-center py-10">
+              <Ionicons name="walk" size={escalar(64)} color={cores.mutedForeground} />
+              <Text className="mt-4 text-center text-[0.8125rem] text-muted-foreground">
+                Nenhum treino cadastrado nesta fase.
               </Text>
             </View>
-          </View>
-
-          {!isStudentView && (
-            <View className="flex-row gap-2">
-              <TouchableOpacity
-                onPress={goToWizardBuild}
-                className="flex-row items-center bg-orange-500/10 px-3 py-1.5 rounded-xl border border-orange-500/20"
-                style={{ borderColor: `${colors.primary.start}33` }}
-              >
-                <Ionicons
-                  name="sparkles"
-                  size={escalar(14)}
-                  color={cores.primary}
-                  style={{ marginRight: 6 }}
-                />
-                <Text className="text-orange-500 font-bold text-xs uppercase">CO-PILOT</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => setShowLibraryModal(true)}
-                className="flex-row items-center"
-              >
-                <Ionicons
-                  name="library"
-                  size={escalar(14)}
-                  color={cores.mutedForeground}
-                  style={{ marginRight: 6 }}
-                />
-                <Text className="text-zinc-500 font-bold text-xs">IMPORTAR</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={goToWizardBuild}
-                className="w-8 h-8 rounded-full bg-zinc-800 items-center justify-center border border-zinc-700"
-              >
-                <Ionicons name="add" size={escalar(18)} color={cores.foreground} />
-              </TouchableOpacity>
-            </View>
+          ) : (
+            suggestedWorkout && (
+              <SuggestedWorkoutCard
+                workout={suggestedWorkout}
+                isDoneToday={isWorkoutDoneToday}
+                onPress={goToSuggestedWorkout}
+              />
+            )
           )}
+        </>
+      )}
+
+      <TituloDeSecao estilo="rotulo" acao={`${filteredWorkouts.length}`}>
+        Treinos da fase
+      </TituloDeSecao>
+
+      {!isStudentView && (
+        <View className="mb-3 flex-row items-center gap-2">
+          <Row icon="sparkles" title="Co-Pilot" onPress={goToWizardBuild} chevron />
         </View>
-
-        <MuscleFilterCarousel
-          selectedMuscle={selectedMuscle}
-          onSelectMuscle={setSelectedMuscle}
-          containerStyle={{ marginBottom: 24 }}
-        />
-
-        {filteredWorkouts.map((workout) => (
-          <WorkoutListItem
-            key={workout.id}
-            workout={workout}
-            isSuggested={workout.id === suggestedWorkout?.id}
-            isWorkoutDoneToday={isWorkoutDoneToday}
-            isStudentView={isStudentView}
-            onPress={() => goToWorkout(workout.id)}
+      )}
+      {!isStudentView && (
+        <View className="mb-3 flex-row gap-2">
+          <Row
+            icon="library-outline"
+            title="Importar da biblioteca"
+            onPress={() => setShowLibraryModal(true)}
+            chevron
           />
-        ))}
-      </ScrollView>
+        </View>
+      )}
+
+      <View className="mb-4">
+        <MuscleFilterCarousel selectedMuscle={selectedMuscle} onSelectMuscle={setSelectedMuscle} />
+      </View>
+
+      {filteredWorkouts.map((workout) => (
+        <WorkoutListItem
+          key={workout.id}
+          workout={workout}
+          isSuggested={workout.id === suggestedWorkout?.id}
+          isWorkoutDoneToday={isWorkoutDoneToday}
+          isStudentView={isStudentView}
+          onPress={() => goToWorkout(workout.id)}
+        />
+      ))}
+
+      {!isStudentView ? (
+        <Row icon="add-circle-outline" title="Adicionar treino" onPress={goToWizardBuild} />
+      ) : null}
 
       <PhaseSplitModal
         visible={splitFlow.showSplitModal}
@@ -422,6 +338,36 @@ export default function PhaseDetailsScreen() {
         onClose={() => splitFlow.setShowStatusModalMenu(false)}
         onSelectStatus={splitFlow.handleUpdateStatus}
       />
-    </ScreenLayout>
+    </GlassScreen>
+  );
+}
+
+function BotaoDeIconePlano({
+  icone,
+  rotulo,
+  onPress,
+  perigo = false,
+}: {
+  icone: keyof typeof Ionicons.glyphMap;
+  rotulo: string;
+  onPress: () => void;
+  perigo?: boolean;
+}) {
+  const cores = useCores();
+  const escalar = useEscala();
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={rotulo}
+      className="h-[2.375rem] w-[2.375rem] items-center justify-center rounded-full bg-muted"
+    >
+      <Ionicons
+        name={icone}
+        size={escalar(18)}
+        color={perigo ? cores.destructive : cores.foreground}
+      />
+    </TouchableOpacity>
   );
 }

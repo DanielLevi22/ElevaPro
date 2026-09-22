@@ -1,5 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Chip } from '@/components/ui/Chip';
+import { Vidro } from '@/components/ui/Vidro';
 import { useCores, useEscala } from '@/shared/design';
 
 interface PhaseSplitModalProps {
@@ -33,82 +35,79 @@ export function PhaseSplitModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={fechar}>
       <TouchableOpacity
-        className="flex-1 bg-black/80 justify-center items-center p-6"
+        className="flex-1 items-center justify-center bg-veu-da-folha p-6"
         activeOpacity={1}
         onPress={fechar}
       >
-        <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
-          <View className="bg-zinc-900 w-full rounded-2xl p-6 border border-zinc-800 relative">
-            <TouchableOpacity className="absolute top-4 right-4 z-10 p-2" onPress={fechar}>
-              <Ionicons name="close" size={escalar(24)} color={cores.mutedForeground} />
+        <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()} className="w-full">
+          <View className="relative rounded-lg border border-border bg-background p-6">
+            <TouchableOpacity className="absolute right-3.5 top-3.5 z-10 p-2" onPress={fechar}>
+              <Ionicons name="close" size={escalar(22)} color={cores.mutedForeground} />
             </TouchableOpacity>
 
-            <Text className="text-white text-xl font-bold mb-2 text-center font-display mt-2">
-              Divisão de Treino
+            <Text className="mb-2 mt-2 text-center text-h2 font-bold text-foreground">
+              Divisão de treino
             </Text>
 
             {isGenerating ? (
-              <View className="py-8 items-center">
+              <View className="items-center py-8">
                 <ActivityIndicator size="large" color={cores.primary} />
-                <Text className="text-zinc-400 text-sm mt-4 text-center">
+                <Text className="mt-4 text-center text-[0.8125rem] text-muted-foreground">
                   Gerando treinos para a divisão...
                 </Text>
-                <Text className="text-zinc-600 text-xs mt-2 text-center">
+                <Text className="mt-2 text-center text-legenda text-placeholder">
                   Isso pode levar alguns segundos.
                 </Text>
               </View>
             ) : (
               <>
-                <Text className="text-zinc-400 text-sm mb-6 text-center">
+                <Text className="mb-6 text-center text-[0.8125rem] text-muted-foreground">
                   Cada letra representa um treino. Ex: ABC = Treino A, B e C
                 </Text>
 
                 <View className="mb-4">
-                  <Text className="text-zinc-400 text-xs mb-2 font-semibold">
-                    DIVISÃO CUSTOMIZADA
+                  <Text className="mb-2 text-legenda font-bold uppercase tracking-wide text-placeholder">
+                    Divisão customizada
                   </Text>
                   <View className="flex-row gap-2">
-                    <TextInput
-                      value={customSplit}
-                      onChangeText={(text) => onChangeCustomSplit(text.toUpperCase())}
-                      placeholder="Ex: ABCD"
-                      placeholderTextColor={cores.mutedForeground}
-                      maxLength={10}
-                      autoCapitalize="characters"
-                      className="flex-1 bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white font-bold text-lg"
-                    />
+                    <Vidro classeExterna="flex-1" className="h-12 justify-center rounded-md px-3.5">
+                      <TextInput
+                        value={customSplit}
+                        onChangeText={(text) => onChangeCustomSplit(text.toUpperCase())}
+                        placeholder="Ex: ABCD"
+                        placeholderTextColor={cores.placeholder}
+                        maxLength={10}
+                        autoCapitalize="characters"
+                        className="text-[1.0625rem] font-bold text-foreground"
+                      />
+                    </Vidro>
                     <TouchableOpacity
-                      className="bg-orange-500 px-6 py-3 rounded-xl items-center justify-center"
+                      className="h-12 w-12 items-center justify-center rounded-md bg-primary"
                       onPress={() => onSelectSplit()}
+                      accessibilityRole="button"
+                      accessibilityLabel="Confirmar divisão customizada"
                     >
                       <Ionicons
                         name="checkmark"
-                        size={escalar(24)}
+                        size={escalar(22)}
                         color={cores.primaryForeground}
                       />
                     </TouchableOpacity>
                   </View>
                 </View>
 
-                <Text className="text-zinc-400 text-xs mb-3 font-semibold">SELEÇÃO RÁPIDA</Text>
-                <View className="flex-row flex-wrap justify-center gap-3 mb-4">
+                <Text className="mb-3 text-legenda font-bold uppercase tracking-wide text-placeholder">
+                  Seleção rápida
+                </Text>
+                <View className="mb-1 flex-row flex-wrap justify-center gap-2">
                   {splits.map((split) => (
                     <TouchableOpacity
                       key={split}
-                      className={`px-6 py-4 rounded-xl border ${
-                        pendingSplit === split
-                          ? 'bg-orange-500 border-orange-500'
-                          : 'bg-zinc-950 border-zinc-800'
-                      }`}
                       onPress={() => onSelectSplit(split)}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: pendingSplit === split }}
                     >
-                      <Text
-                        className={`font-bold text-lg ${
-                          pendingSplit === split ? 'text-white' : 'text-zinc-400'
-                        }`}
-                      >
-                        {split}
-                      </Text>
+                      <Chip tom={pendingSplit === split ? 'destaque' : 'neutro'}>{split}</Chip>
                     </TouchableOpacity>
                   ))}
                 </View>

@@ -69,6 +69,13 @@ interface WorkoutState {
     workoutId: string,
     items: { id: string; order_index: number }[]
   ) => Promise<void>;
+  updateWorkoutExercise: (
+    workoutId: string,
+    workoutExerciseId: string,
+    updates: { sets?: number; reps?: string; weight?: string; rest_seconds?: number },
+    videoUrl?: { exerciseId: string; value: string | null }
+  ) => Promise<void>;
+  removeWorkoutItem: (workoutId: string, workoutExerciseId: string) => Promise<void>;
   createWorkout: (workout: {
     training_plan_id: string;
     title: string;
@@ -344,6 +351,19 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
 
   reorderWorkoutExercises: async (workoutId, items) => {
     await workoutsService.reorderWorkoutExercises(items);
+    await get().fetchWorkoutById(workoutId);
+  },
+
+  updateWorkoutExercise: async (workoutId, workoutExerciseId, updates, videoUrl) => {
+    await workoutsService.updateWorkoutExercise(workoutExerciseId, updates);
+    if (videoUrl) {
+      await workoutsService.updateExercise(videoUrl.exerciseId, { video_url: videoUrl.value });
+    }
+    await get().fetchWorkoutById(workoutId);
+  },
+
+  removeWorkoutItem: async (workoutId, workoutExerciseId) => {
+    await workoutsService.removeExerciseFromWorkout(workoutExerciseId);
     await get().fetchWorkoutById(workoutId);
   },
 

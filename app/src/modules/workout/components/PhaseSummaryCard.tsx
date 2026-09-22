@@ -1,8 +1,7 @@
 import type { TrainingPlan } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { colors } from '@/constants/colors';
+import { Card } from '@/components/ui/Card';
 import { useCores, useEscala } from '@/shared/design';
 
 interface PhaseSummaryCardProps {
@@ -12,6 +11,8 @@ interface PhaseSummaryCardProps {
   onPressStart: () => void;
   onPressEnd: () => void;
 }
+
+const ROTULO = 'mb-2 text-[0.625rem] font-bold uppercase tracking-widest text-placeholder';
 
 /** O cartão de resumo da fase: divisão, frequência e janela de datas. */
 export function PhaseSummaryCard({
@@ -25,32 +26,16 @@ export function PhaseSummaryCard({
   const escalar = useEscala();
 
   return (
-    <LinearGradient
-      colors={[cores.card, cores.background]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      className="rounded-[2rem] p-6 border border-white/10 shadow-2xl relative overflow-hidden"
-    >
-      <View
-        className="absolute -top-20 -right-20 w-64 h-64 bg-orange-500/10 rounded-full"
-        style={{ filter: 'blur(60px)' }}
-      />
-      <View
-        className="absolute -bottom-20 -left-20 w-48 h-48 bg-zinc-500/5 rounded-full"
-        style={{ filter: 'blur(50px)' }}
-      />
-
-      <View className="flex-row justify-between mb-6">
+    <Card className="p-5">
+      <View className="flex-row justify-between">
         <View className="flex-1">
-          <Text className="text-zinc-500 text-[0.625rem] font-bold uppercase tracking-widest mb-2">
-            Divisão de Treino
-          </Text>
+          <Text className={ROTULO}>Divisão de treino</Text>
           <TouchableOpacity
             activeOpacity={isStudentView ? 1 : 0.7}
             onPress={() => !isStudentView && onPressSplit()}
-            className="flex-row items-center bg-white/5 self-start px-4 py-2.5 rounded-2xl border border-white/5"
+            className="flex-row items-center self-start rounded-md bg-muted px-3.5 py-2.5"
           >
-            <Text className="text-white font-extrabold text-xl mr-2 uppercase">
+            <Text className="mr-1.5 text-[1.125rem] font-extrabold uppercase text-foreground">
               {phase.name || '--'}
             </Text>
             {!isStudentView && (
@@ -60,65 +45,63 @@ export function PhaseSummaryCard({
         </View>
 
         <View className="items-end">
-          <Text className="text-zinc-500 text-[0.625rem] font-bold uppercase tracking-widest mb-2">
-            Frequência
-          </Text>
-          <View
-            className="flex-row items-center bg-orange-500/10 px-4 py-2.5 rounded-2xl border border-orange-500/20"
-            style={{ borderColor: `${colors.primary.start}33` }}
-          >
-            <Ionicons
-              name="fitness-outline"
-              size={escalar(16)}
-              color={colors.primary.start}
-              style={{ marginRight: 8 }}
-            />
-            <Text className="font-extrabold text-lg" style={{ color: colors.primary.start }}>
-              —
-            </Text>
+          <Text className={ROTULO}>Frequência</Text>
+          <View className="flex-row items-center gap-1.5 rounded-md bg-primary/15 px-3.5 py-2.5">
+            <Ionicons name="fitness-outline" size={escalar(16)} color={cores.primaryText} />
+            <Text className="text-[1.0625rem] font-extrabold text-primary-text">—</Text>
           </View>
         </View>
       </View>
 
-      <View className="h-[1px] bg-white/5 mb-6" />
+      <View className="my-5 h-[0.5px] bg-border" />
 
-      <View className="flex-row justify-between">
-        <View className="flex-1 mr-4">
-          <Text className="text-zinc-500 text-[0.625rem] font-bold uppercase tracking-widest mb-2">
-            Início
-          </Text>
-          <TouchableOpacity
-            activeOpacity={isStudentView ? 1 : 0.7}
-            onPress={() => !isStudentView && onPressStart()}
-            className="bg-white/5 p-3 rounded-2xl border border-white/5 flex-row items-center justify-between"
-          >
-            <Text className="text-zinc-300 font-bold text-sm">
-              {phase.start_date ? new Date(phase.start_date).toLocaleDateString('pt-BR') : '—'}
-            </Text>
-            {!isStudentView && (
-              <Ionicons name="calendar-outline" size={escalar(14)} color={cores.mutedForeground} />
-            )}
-          </TouchableOpacity>
-        </View>
-
-        <View className="flex-1">
-          <Text className="text-zinc-500 text-[0.625rem] font-bold uppercase tracking-widest mb-2">
-            Término
-          </Text>
-          <TouchableOpacity
-            activeOpacity={isStudentView ? 1 : 0.7}
-            onPress={() => !isStudentView && onPressEnd()}
-            className="bg-white/5 p-3 rounded-2xl border border-white/10 flex-row items-center justify-between"
-          >
-            <Text className="text-zinc-300 font-bold text-sm">
-              {phase.end_date ? new Date(phase.end_date).toLocaleDateString('pt-BR') : '—'}
-            </Text>
-            {!isStudentView && (
-              <Ionicons name="calendar-outline" size={escalar(14)} color={cores.mutedForeground} />
-            )}
-          </TouchableOpacity>
-        </View>
+      <View className="flex-row gap-3">
+        <CampoDeData
+          rotulo="Início"
+          data={phase.start_date}
+          editavel={!isStudentView}
+          onPress={onPressStart}
+        />
+        <CampoDeData
+          rotulo="Término"
+          data={phase.end_date}
+          editavel={!isStudentView}
+          onPress={onPressEnd}
+        />
       </View>
-    </LinearGradient>
+    </Card>
+  );
+}
+
+function CampoDeData({
+  rotulo,
+  data,
+  editavel,
+  onPress,
+}: {
+  rotulo: string;
+  data: string | null;
+  editavel: boolean;
+  onPress: () => void;
+}) {
+  const cores = useCores();
+  const escalar = useEscala();
+
+  return (
+    <View className="flex-1">
+      <Text className={ROTULO}>{rotulo}</Text>
+      <TouchableOpacity
+        activeOpacity={editavel ? 0.7 : 1}
+        onPress={() => editavel && onPress()}
+        className="flex-row items-center justify-between rounded-md bg-muted p-3"
+      >
+        <Text className="text-[0.84375rem] font-bold text-foreground">
+          {data ? new Date(data).toLocaleDateString('pt-BR') : '—'}
+        </Text>
+        {editavel ? (
+          <Ionicons name="calendar-outline" size={escalar(14)} color={cores.mutedForeground} />
+        ) : null}
+      </TouchableOpacity>
+    </View>
   );
 }

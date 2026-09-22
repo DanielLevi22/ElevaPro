@@ -1,8 +1,11 @@
 import { Text, View } from 'react-native';
 import { PremiumCard } from '@/components/ui/PremiumCard';
-import { useCores } from '@/shared/design';
+import { cn } from '@/lib/utils';
+import { useBrilho, useCores } from '@/shared/design';
 import { MUSCLE_IMAGES } from '../constants/muscleImages';
 import type { Workout } from '../store/workoutStore';
+
+const BRILHO_DO_BOTAO = { y: 10, blur: 26, espalhamento: -8, alfa: 1 } as const;
 
 interface SuggestedWorkoutCardProps {
   workout: Workout;
@@ -16,6 +19,7 @@ interface SuggestedWorkoutCardProps {
  */
 export function SuggestedWorkoutCard({ workout, isDoneToday, onPress }: SuggestedWorkoutCardProps) {
   const cores = useCores();
+  const brilho = useBrilho();
 
   return (
     <PremiumCard
@@ -34,10 +38,16 @@ export function SuggestedWorkoutCard({ workout, isDoneToday, onPress }: Suggeste
       containerStyle={isDoneToday ? { opacity: 0.8, marginBottom: 32 } : { marginBottom: 32 }}
       badge={
         <View
-          className={`${isDoneToday ? 'bg-zinc-800' : 'bg-black/40'} px-3 py-1 rounded-full border border-white/10 self-start`}
+          className={cn(
+            'self-start rounded-full border border-white/10 px-3 py-1',
+            isDoneToday ? 'bg-muted' : 'bg-glass-strong'
+          )}
         >
           <Text
-            className={`${isDoneToday ? 'text-zinc-400' : 'text-white'} font-bold text-[0.625rem] uppercase tracking-wider`}
+            className={cn(
+              'text-[0.625rem] font-bold uppercase tracking-wider',
+              isDoneToday ? 'text-muted-foreground' : 'text-white'
+            )}
           >
             {isDoneToday ? 'Concluído' : 'Sugerido para hoje'}
           </Text>
@@ -47,9 +57,12 @@ export function SuggestedWorkoutCard({ workout, isDoneToday, onPress }: Suggeste
       iconColor={isDoneToday ? cores.success : cores.foreground}
     >
       {!isDoneToday && (
-        <View className="mt-4 bg-orange-500 py-3 rounded-2xl items-center shadow-lg shadow-orange-500/40">
-          <Text className="text-white font-bold text-base uppercase tracking-widest">
-            Começar Treino
+        <View
+          className="mt-4 h-[2.875rem] items-center justify-center rounded-[0.9375rem] bg-primary"
+          style={{ boxShadow: brilho(BRILHO_DO_BOTAO, { alfa: BRILHO_DO_BOTAO.alfa }) }}
+        >
+          <Text className="text-[0.84375rem] font-extrabold uppercase tracking-widest text-primary-foreground">
+            Começar treino
           </Text>
         </View>
       )}

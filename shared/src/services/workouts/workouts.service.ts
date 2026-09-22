@@ -191,6 +191,18 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
     if (error) throw error;
   },
 
+  /** Ajusta séries/repetições/carga/descanso de um exercício já no treino — não o catálogo. */
+  updateWorkoutExercise: async (
+    workoutExerciseId: string,
+    input: { sets?: number; reps?: string; weight?: string; rest_seconds?: number },
+  ): Promise<void> => {
+    const { error } = await supabase
+      .from("workout_exercises")
+      .update(input)
+      .eq("id", workoutExerciseId);
+    if (error) throw error;
+  },
+
   /** Grava a nova ordem depois de mover um exercício na montagem do treino. */
   reorderWorkoutExercises: async (itens: { id: string; order_index: number }[]): Promise<void> => {
     for (const item of itens) {

@@ -109,6 +109,30 @@ describe("workoutsService — reordenar exercícios do treino", () => {
   });
 });
 
+describe("workoutsService — ajustar exercício do treino", () => {
+  it("grava só os campos de execução, na linha do treino, não no catálogo", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({});
+
+    await createWorkoutsService(supabase).updateWorkoutExercise("we-1", {
+      sets: 4,
+      reps: "10",
+      weight: "20",
+      rest_seconds: 90,
+    });
+
+    expect(chamadas[0].tabela).toBe("workout_exercises");
+    expect(chamadas[0].payload).toEqual({ sets: 4, reps: "10", weight: "20", rest_seconds: 90 });
+    expect(chamadas[0].filtros).toEqual({ id: "we-1" });
+  });
+
+  it("propaga o erro em vez de seguir como se tivesse ajustado", async () => {
+    const { supabase } = criarSupabaseFake({ error: { message: "42501" } });
+    await expect(
+      createWorkoutsService(supabase).updateWorkoutExercise("we-1", { sets: 4 }),
+    ).rejects.toEqual({ message: "42501" });
+  });
+});
+
 /**
  * ── TRAVAS LGPD — correção do feedback (migration 0036) ──────────────────────
  *

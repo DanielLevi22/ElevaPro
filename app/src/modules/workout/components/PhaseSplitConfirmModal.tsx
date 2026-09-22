@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Modal, Text, TouchableOpacity, View } from 'react-native';
+import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
 import { useCores, useEscala } from '@/shared/design';
 
 interface PhaseSplitConfirmModalProps {
@@ -30,7 +30,7 @@ export function PhaseSplitConfirmModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <TouchableOpacity
-        className="flex-1 bg-black/80 justify-center items-center p-4"
+        className="flex-1 items-center justify-center bg-veu-da-folha p-4"
         activeOpacity={1}
         onPress={onClose}
       >
@@ -39,57 +39,42 @@ export function PhaseSplitConfirmModal({
           onPress={(e) => e.stopPropagation()}
           className="w-[90%] max-w-[25rem]"
         >
-          <View className="bg-zinc-900 w-full rounded-[1.5rem] p-6 border border-zinc-800 items-center shadow-2xl">
-            <View className="w-16 h-16 rounded-full bg-orange-500/10 items-center justify-center border border-orange-500/20 mb-5">
-              <Ionicons name="options" size={escalar(32)} color={cores.primary} />
+          <View className="w-full items-center rounded-lg border border-border bg-background p-6">
+            <View className="mb-5 h-16 w-16 items-center justify-center rounded-full bg-primary/15">
+              <Ionicons name="options" size={escalar(32)} color={cores.primaryText} />
             </View>
 
-            <Text className="text-white text-xl font-extrabold mb-2 text-center font-display">
-              Configurar Treinos
+            <Text className="mb-2 text-center text-h2 font-bold text-foreground">
+              Configurar treinos
             </Text>
 
-            <Text className="text-zinc-400 text-center font-sans mb-8 leading-relaxed text-sm px-2">
+            <Text className="mb-8 px-2 text-center text-[0.8125rem] leading-relaxed text-muted-foreground">
               {hasExistingWorkouts
                 ? `Mudar a divisão para ${pendingSplit} irá excluir os treinos atuais.\nComo deseja prosseguir?`
                 : `Divisão ${pendingSplit} selecionada.\nComo deseja criar seus treinos?`}
             </Text>
 
-            <View className="w-full gap-3">
-              <TouchableOpacity onPress={onUseAI} activeOpacity={0.9} className="w-full">
-                <LinearGradient
-                  colors={[cores.primary, cores.primary]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  className="py-4 rounded-xl items-center justify-center shadow-lg"
-                >
-                  <View className="flex-row items-center">
-                    <Ionicons
-                      name="sparkles"
-                      size={escalar(20)}
-                      color={cores.primaryForeground}
-                      style={{ marginRight: 8 }}
-                    />
-                    <Text className="text-white font-bold text-base font-display uppercase tracking-wider">
-                      Usar Co-Pilot
-                    </Text>
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
+            <View className="w-full gap-2.5">
+              <BotaoDeDestaque rotulo="Usar Co-Pilot" icone="sparkles" onPress={onUseAI} />
 
               <TouchableOpacity
-                className="w-full py-4 rounded-xl bg-zinc-800 border border-zinc-700 items-center justify-center"
+                className="h-[2.625rem] w-full items-center justify-center rounded-md bg-muted"
                 onPress={onEmptyWorkouts}
+                accessibilityRole="button"
               >
-                <Text className="text-white font-bold text-base font-display uppercase tracking-wider">
-                  Treinos Vazios
+                <Text className="text-[0.78125rem] font-extrabold uppercase tracking-wide text-foreground">
+                  Treinos vazios
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                className="w-full py-3 items-center justify-center mt-2"
+                className="mt-1 w-full items-center justify-center py-2"
                 onPress={onClose}
+                accessibilityRole="button"
               >
-                <Text className="text-zinc-500 font-bold text-sm">Cancelar</Text>
+                <Text className="text-[0.8125rem] font-semibold text-muted-foreground">
+                  Cancelar
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

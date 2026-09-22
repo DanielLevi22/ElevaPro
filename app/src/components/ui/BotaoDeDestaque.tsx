@@ -24,6 +24,8 @@ interface BotaoDeDestaqueProps {
   onPress: () => void;
   icone?: keyof typeof Ionicons.glyphMap;
   tamanho?: 'cartao' | 'fixo' | 'compacto' | 'grande';
+  /** `perigo` é a ação que encerra algo — o rosa do kit, mesmo tom do `GlassSheet`. */
+  tom?: 'primary' | 'perigo';
 }
 
 const FORMA = {
@@ -55,10 +57,12 @@ export function BotaoDeDestaque({
   onPress,
   icone,
   tamanho = 'fixo',
+  tom = 'primary',
 }: BotaoDeDestaqueProps) {
   const cores = useCores();
   const escalar = useEscala();
   const comBrilho = useBrilho();
+  const corDoIcone = tom === 'perigo' ? cores.sobrePerigo : cores.primaryForeground;
 
   return (
     <TouchableOpacity
@@ -66,19 +70,20 @@ export function BotaoDeDestaque({
       activeOpacity={0.85}
       accessibilityRole="button"
       accessibilityLabel={rotulo}
-      className={cn('flex-row items-center justify-center gap-2 bg-primary', FORMA[tamanho])}
+      className={cn(
+        'flex-row items-center justify-center gap-2',
+        tom === 'perigo' ? 'bg-perigo' : 'bg-primary',
+        FORMA[tamanho]
+      )}
       style={{ boxShadow: comBrilho(BRILHO[tamanho], { alfa: BRILHO[tamanho].alfa }) }}
     >
       {icone ? (
-        <Ionicons
-          name={icone}
-          size={escalar(TAMANHO_DO_ICONE[tamanho])}
-          color={cores.primaryForeground}
-        />
+        <Ionicons name={icone} size={escalar(TAMANHO_DO_ICONE[tamanho])} color={corDoIcone} />
       ) : null}
       <Text
         className={cn(
-          'font-extrabold uppercase tracking-widest text-primary-foreground',
+          'font-extrabold uppercase tracking-widest',
+          tom === 'perigo' ? 'text-sobre-perigo' : 'text-primary-foreground',
           TEXTO[tamanho]
         )}
       >
