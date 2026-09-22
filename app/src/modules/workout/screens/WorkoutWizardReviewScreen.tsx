@@ -6,13 +6,13 @@ import { showAlert } from '@/components/ui/appAlert';
 import { BarraDeProgresso } from '@/components/ui/BarraDeProgresso';
 import { BotaoFixoNoRodape } from '@/components/ui/BotaoFixoNoRodape';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
-import { Card } from '@/components/ui/Card';
 import { GlassScreen } from '@/components/ui/GlassScreen';
 import { Group } from '@/components/ui/Group';
 import { ProgressHeader } from '@/components/ui/ProgressHeader';
 import { Row } from '@/components/ui/Row';
 import { Switch } from '@/components/ui/Switch';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
+import { Vidro } from '@/components/ui/Vidro';
 import { ROUTES } from '@/navigation/types';
 import { useWorkoutStore } from '../store/workoutStore';
 import { useWorkoutWizardStore } from '../store/workoutWizardStore';
@@ -120,7 +120,7 @@ export default function WorkoutWizardReviewScreen() {
         <BarraDeProgresso percentual={100} espessura="fina" />
       </View>
 
-      <Card className="mt-4">
+      <Vidro className="mt-4 p-4">
         <Text className="text-[1.1rem] font-bold text-foreground">{wizard.planName}</Text>
         <Text className="mt-1 text-[0.8125rem] text-muted-foreground">
           {wizard.durationWeeks} semanas · {wizard.frequencyPerWeek}x/semana
@@ -130,7 +130,7 @@ export default function WorkoutWizardReviewScreen() {
           <EstatDoResumo rotulo="Treinos" valor={String(workouts.length)} />
           <EstatDoResumo rotulo="Exercícios" valor={String(totalExercicios)} />
         </View>
-      </Card>
+      </Vidro>
 
       <TituloDeSecao estilo="rotulo">Divisão semanal</TituloDeSecao>
       <Group>

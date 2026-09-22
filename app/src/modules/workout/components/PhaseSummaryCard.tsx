@@ -1,7 +1,7 @@
 import type { TrainingPlan } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { Card } from '@/components/ui/Card';
+import { Vidro } from '@/components/ui/Vidro';
 import { useCores, useEscala } from '@/shared/design';
 
 interface PhaseSummaryCardProps {
@@ -26,14 +26,14 @@ export function PhaseSummaryCard({
   const escalar = useEscala();
 
   return (
-    <Card className="p-5">
+    <Vidro className="p-5">
       <View className="flex-row justify-between">
         <View className="flex-1">
           <Text className={ROTULO}>Divisão de treino</Text>
           <TouchableOpacity
             activeOpacity={isStudentView ? 1 : 0.7}
             onPress={() => !isStudentView && onPressSplit()}
-            className="flex-row items-center self-start rounded-md bg-muted px-3.5 py-2.5"
+            className="flex-row items-center self-start rounded-md bg-glass-strong px-3.5 py-2.5"
           >
             <Text className="mr-1.5 text-[1.125rem] font-extrabold uppercase text-foreground">
               {phase.name || '--'}
@@ -53,7 +53,7 @@ export function PhaseSummaryCard({
         </View>
       </View>
 
-      <View className="my-5 h-[0.5px] bg-border" />
+      <View className="my-5 h-[0.5px] bg-glass-border" />
 
       <View className="flex-row gap-3">
         <CampoDeData
@@ -69,7 +69,7 @@ export function PhaseSummaryCard({
           onPress={onPressEnd}
         />
       </View>
-    </Card>
+    </Vidro>
   );
 }
 
@@ -93,7 +93,7 @@ function CampoDeData({
       <TouchableOpacity
         activeOpacity={editavel ? 0.7 : 1}
         onPress={() => editavel && onPress()}
-        className="flex-row items-center justify-between rounded-md bg-muted p-3"
+        className="flex-row items-center justify-between rounded-md bg-glass-strong p-3"
       >
         <Text className="text-[0.84375rem] font-bold text-foreground">
           {data ? new Date(data).toLocaleDateString('pt-BR') : '—'}

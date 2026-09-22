@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ImageBackground, Text, TouchableOpacity, View } from 'react-native';
-import { Card } from '@/components/ui/Card';
+import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
 import { useCores, useEscala } from '@/shared/design';
 import { MUSCLE_IMAGES } from '../constants/muscleImages';
@@ -29,7 +29,7 @@ export function WorkoutListItem({
 
   return (
     <TouchableOpacity onPress={onPress} className="mb-3">
-      <Card
+      <Vidro
         className={cn(
           'flex-row items-center justify-between p-3',
           isStudentView && isSuggested && 'opacity-50',
@@ -71,7 +71,7 @@ export function WorkoutListItem({
           </View>
         </View>
         <Ionicons name="chevron-forward" size={escalar(18)} color={cores.mutedForeground} />
-      </Card>
+      </Vidro>
     </TouchableOpacity>
   );
 }

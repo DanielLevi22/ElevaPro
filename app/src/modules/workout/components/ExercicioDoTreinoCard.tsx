@@ -1,7 +1,7 @@
 import type { WorkoutExercise } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { Card } from '@/components/ui/Card';
+import { Vidro } from '@/components/ui/Vidro';
 import { useCores, useEscala } from '@/shared/design';
 
 function resumoDoExercicio(item: {
@@ -53,7 +53,7 @@ export function ExercicioDoTreinoCard({
   const escalar = useEscala();
 
   return (
-    <Card className="mb-2 flex-row items-center justify-between">
+    <Vidro className="mb-2 flex-row items-center justify-between">
       <TouchableOpacity
         className="min-w-0 flex-1 pr-3"
         disabled={!onEditar}
@@ -74,7 +74,7 @@ export function ExercicioDoTreinoCard({
             accessibilityRole="button"
             accessibilityLabel={`Remover ${item.exercise?.name ?? 'exercício'}`}
             onPress={onRemover}
-            className="h-7 w-7 items-center justify-center rounded-sm bg-muted"
+            className="h-7 w-7 items-center justify-center rounded-sm bg-glass-strong"
           >
             <Ionicons
               name="trash-outline"
@@ -89,7 +89,7 @@ export function ExercicioDoTreinoCard({
             accessibilityLabel="Mover exercício para cima"
             disabled={!podeSubir}
             onPress={onSubir}
-            className="h-7 w-7 items-center justify-center rounded-sm bg-muted"
+            className="h-7 w-7 items-center justify-center rounded-sm bg-glass-strong"
           >
             <Ionicons
               name="chevron-up"
@@ -102,7 +102,7 @@ export function ExercicioDoTreinoCard({
             accessibilityLabel="Mover exercício para baixo"
             disabled={!podeDescer}
             onPress={onDescer}
-            className="h-7 w-7 items-center justify-center rounded-sm bg-muted"
+            className="h-7 w-7 items-center justify-center rounded-sm bg-glass-strong"
           >
             <Ionicons
               name="chevron-down"
@@ -112,6 +112,6 @@ export function ExercicioDoTreinoCard({
           </TouchableOpacity>
         </View>
       </View>
-    </Card>
+    </Vidro>
   );
 }

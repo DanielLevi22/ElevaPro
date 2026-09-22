@@ -15,7 +15,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/auth';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
-import { Card } from '@/components/ui/Card';
 import { GlassScreen } from '@/components/ui/GlassScreen';
 import { Row } from '@/components/ui/Row';
 import { Vidro } from '@/components/ui/Vidro';
@@ -200,7 +199,7 @@ function CartaoDePeriodizacao({
 }) {
   const salva = Boolean(proposta.savedId);
   return (
-    <Card className="mt-3">
+    <Vidro className="mt-3 p-4">
       <Text className="text-[0.95rem] font-bold text-foreground">{proposta.data.name}</Text>
       <Text className="mt-1 text-[0.8125rem] text-muted-foreground">
         {proposta.data.durationWeeks} semanas · nível {proposta.data.level}
@@ -229,7 +228,7 @@ function CartaoDePeriodizacao({
           <Row icon="create-outline" title="Ajustar" onPress={onAjustar} />
         </View>
       )}
-    </Card>
+    </Vidro>
   );
 }
 
@@ -248,7 +247,7 @@ function CartaoDeTreinos({
 }) {
   const resolvido = salvos.length > 0;
   return (
-    <Card className={cn('mt-3', resolvido && 'border-primary/30')}>
+    <Vidro destaque={resolvido} className="mt-3 p-4">
       <Text className="text-[0.95rem] font-bold text-foreground">
         Treinos · {proposta.phase_name}
       </Text>
@@ -267,7 +266,7 @@ function CartaoDeTreinos({
           <Row icon="create-outline" title="Ajustar" onPress={onAjustar} />
         </View>
       )}
-    </Card>
+    </Vidro>
   );
 }
 
