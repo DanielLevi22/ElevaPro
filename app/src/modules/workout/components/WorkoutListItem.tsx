@@ -1,10 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ImageBackground, Text, TouchableOpacity, View } from 'react-native';
-import { Vidro } from '@/components/ui/Vidro';
-import { cn } from '@/lib/utils';
-import { useCores, useEscala } from '@/shared/design';
-import { MUSCLE_IMAGES } from '../constants/muscleImages';
+import { View } from 'react-native';
+import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
 import type { Workout } from '../store/workoutStore';
 
 interface WorkoutListItemProps {
@@ -15,7 +10,10 @@ interface WorkoutListItemProps {
   onPress: () => void;
 }
 
-/** Uma linha da lista de treinos da fase, com a imagem do grupo muscular. */
+const OPACIDADE_SUGERIDO = 0.5;
+const OPACIDADE_FEITO = 0.3;
+
+/** Uma linha da lista de treinos da fase, no mesmo vidro das entradas da home. */
 export function WorkoutListItem({
   workout,
   isSuggested,
@@ -23,55 +21,22 @@ export function WorkoutListItem({
   isStudentView,
   onPress,
 }: WorkoutListItemProps) {
-  const cores = useCores();
-  const escalar = useEscala();
-  const apagado = isStudentView && (isSuggested || isWorkoutDoneToday);
+  const opacidade =
+    isStudentView && isWorkoutDoneToday
+      ? OPACIDADE_FEITO
+      : isStudentView && isSuggested
+        ? OPACIDADE_SUGERIDO
+        : 1;
 
   return (
-    <TouchableOpacity onPress={onPress} className="mb-3">
-      <Vidro
-        className={cn(
-          'flex-row items-center justify-between p-3',
-          isStudentView && isSuggested && 'opacity-50',
-          isStudentView && isWorkoutDoneToday && 'opacity-30'
-        )}
-      >
-        <View className="flex-1 flex-row items-center">
-          <View className="mr-3.5 h-14 w-14 overflow-hidden rounded-md">
-            <ImageBackground
-              source={MUSCLE_IMAGES[workout.muscle_group || 'Geral'] || MUSCLE_IMAGES.Geral}
-              className="h-full w-full items-center justify-center"
-              resizeMode="cover"
-            >
-              <LinearGradient
-                colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.6)']}
-                className="h-full w-full items-center justify-center"
-              >
-                <Text className="text-[0.75rem] font-bold text-white">
-                  {workout.title.charAt(0)}
-                </Text>
-              </LinearGradient>
-            </ImageBackground>
-          </View>
-          <View className="min-w-0 flex-1">
-            <Text
-              className={cn(
-                'text-[1rem] font-bold',
-                apagado ? 'text-muted-foreground' : 'text-foreground'
-              )}
-            >
-              {workout.title}
-            </Text>
-            <View className="mt-0.5 flex-row items-center gap-1">
-              <Ionicons name="barbell-outline" size={escalar(10)} color={cores.mutedForeground} />
-              <Text className="text-legenda font-bold uppercase tracking-wide text-muted-foreground">
-                {workout.muscle_group || 'Geral'} · {workout.exercises?.length || 0} exercícios
-              </Text>
-            </View>
-          </View>
-        </View>
-        <Ionicons name="chevron-forward" size={escalar(18)} color={cores.mutedForeground} />
-      </Vidro>
-    </TouchableOpacity>
+    <View style={{ opacity: opacidade }}>
+      <LinhaDeVidro
+        icon="barbell"
+        tom="marca"
+        titulo={workout.title}
+        sub={`${workout.muscle_group || 'Geral'} · ${workout.exercises?.length || 0} exercícios`}
+        onPress={onPress}
+      />
+    </View>
   );
 }

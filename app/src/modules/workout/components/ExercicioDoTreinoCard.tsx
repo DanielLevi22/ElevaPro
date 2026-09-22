@@ -1,7 +1,7 @@
 import type { WorkoutExercise } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, TouchableOpacity, View } from 'react-native';
-import { Vidro } from '@/components/ui/Vidro';
+import { TouchableOpacity, View } from 'react-native';
+import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
 import { useCores, useEscala } from '@/shared/design';
 
 function resumoDoExercicio(item: {
@@ -32,9 +32,9 @@ interface ExercicioDoTreinoCardProps {
 }
 
 /**
- * Uma linha de exercício do treino, com as setas de reordenar — a Montagem
- * do wizard e a ficha do treino (`WorkoutDetailsScreen`) usam a mesma linha,
- * a segunda só acrescenta editar e remover.
+ * Uma linha de exercício do treino, no mesmo vidro das entradas da home —
+ * a Montagem do wizard e a ficha do treino usam a mesma linha, a segunda só
+ * acrescenta editar e remover.
  *
  * @example
  * <ExercicioDoTreinoCard item={item} podeSubir podeDescer
@@ -49,69 +49,90 @@ export function ExercicioDoTreinoCard({
   onEditar,
   onRemover,
 }: ExercicioDoTreinoCardProps) {
+  return (
+    <LinhaDeVidro
+      icon="barbell"
+      tom="marca"
+      titulo={item.exercise?.name ?? 'Exercício'}
+      sub={resumoDoExercicio(item)}
+      onPress={onEditar}
+      direita={
+        <SetasDeOrdem
+          podeSubir={podeSubir}
+          podeDescer={podeDescer}
+          onSubir={onSubir}
+          onDescer={onDescer}
+          onRemover={onRemover}
+          nomeDoExercicio={item.exercise?.name}
+        />
+      }
+    />
+  );
+}
+
+function SetasDeOrdem({
+  podeSubir,
+  podeDescer,
+  onSubir,
+  onDescer,
+  onRemover,
+  nomeDoExercicio,
+}: {
+  podeSubir: boolean;
+  podeDescer: boolean;
+  onSubir: () => void;
+  onDescer: () => void;
+  onRemover?: () => void;
+  nomeDoExercicio?: string;
+}) {
   const cores = useCores();
   const escalar = useEscala();
+  const rotulo = nomeDoExercicio ?? 'exercício';
 
   return (
-    <Vidro className="mb-2 flex-row items-center justify-between">
-      <TouchableOpacity
-        className="min-w-0 flex-1 pr-3"
-        disabled={!onEditar}
-        onPress={onEditar}
-        accessibilityRole={onEditar ? 'button' : undefined}
-        accessibilityLabel={onEditar ? `Editar ${item.exercise?.name ?? 'exercício'}` : undefined}
-      >
-        <Text className="text-[0.875rem] font-bold text-foreground">
-          {item.exercise?.name ?? 'Exercício'}
-        </Text>
-        <Text className="mt-1 text-[0.8125rem] text-muted-foreground">
-          {resumoDoExercicio(item)}
-        </Text>
-      </TouchableOpacity>
-      <View className="flex-row items-center gap-1.5">
-        {onRemover ? (
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel={`Remover ${item.exercise?.name ?? 'exercício'}`}
-            onPress={onRemover}
-            className="h-7 w-7 items-center justify-center rounded-sm bg-glass-strong"
-          >
-            <Ionicons
-              name="trash-outline"
-              size={escalar(TAMANHO_DA_LIXEIRA)}
-              color={cores.destructive}
-            />
-          </TouchableOpacity>
-        ) : null}
-        <View className="gap-1.5">
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="Mover exercício para cima"
-            disabled={!podeSubir}
-            onPress={onSubir}
-            className="h-7 w-7 items-center justify-center rounded-sm bg-glass-strong"
-          >
-            <Ionicons
-              name="chevron-up"
-              size={escalar(TAMANHO_DA_SETA)}
-              color={podeSubir ? cores.foreground : cores.placeholder}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="Mover exercício para baixo"
-            disabled={!podeDescer}
-            onPress={onDescer}
-            className="h-7 w-7 items-center justify-center rounded-sm bg-glass-strong"
-          >
-            <Ionicons
-              name="chevron-down"
-              size={escalar(TAMANHO_DA_SETA)}
-              color={podeDescer ? cores.foreground : cores.placeholder}
-            />
-          </TouchableOpacity>
-        </View>
+    <View className="flex-row items-center gap-1.5">
+      {onRemover ? (
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={`Remover ${rotulo}`}
+          onPress={onRemover}
+          className="h-7 w-7 items-center justify-center rounded-sm bg-glass-strong"
+        >
+          <Ionicons
+            name="trash-outline"
+            size={escalar(TAMANHO_DA_LIXEIRA)}
+            color={cores.destructive}
+          />
+        </TouchableOpacity>
+      ) : null}
+      <View className="gap-1.5">
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={`Mover ${rotulo} para cima`}
+          disabled={!podeSubir}
+          onPress={onSubir}
+          className="h-7 w-7 items-center justify-center rounded-sm bg-glass-strong"
+        >
+          <Ionicons
+            name="chevron-up"
+            size={escalar(TAMANHO_DA_SETA)}
+            color={podeSubir ? cores.foreground : cores.placeholder}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={`Mover ${rotulo} para baixo`}
+          disabled={!podeDescer}
+          onPress={onDescer}
+          className="h-7 w-7 items-center justify-center rounded-sm bg-glass-strong"
+        >
+          <Ionicons
+            name="chevron-down"
+            size={escalar(TAMANHO_DA_SETA)}
+            color={podeDescer ? cores.foreground : cores.placeholder}
+          />
+        </TouchableOpacity>
       </View>
-    </Vidro>
+    </View>
   );
 }
