@@ -158,3 +158,47 @@ describe("adherenceService — travas de LGPD (issue #332)", () => {
   // código, e a trava de RLS de verdade mora em scripts/verify-rls.sql,
   // contra o banco real.
 });
+
+describe("adherenceService — contrato de leitura do treino (regressão do wizard, issue #335)", () => {
+  // O wizard de criação de treino (#335) publica pelos mesmos dois campos que
+  // este serviço já lia: `activatePeriodization`/`activateTrainingPlan` viram
+  // `status = 'active'`, e o passo de revisão grava `day_of_week` em cada
+  // treino. Se qualquer um dos dois lados divergir do que está fixado aqui, a
+  // aderência para de contar sessão prescrita sem ninguém perceber.
+  it("lê periodização e fase pelo mesmo par tabela/status que o wizard publica", async () => {
+    const { supabase, chamadas } = criarSupabaseFake([
+      { data: { id: "periodizacao-1" } },
+      { data: { id: "fase-1" } },
+      { count: 4 },
+      { count: 3 },
+    ]);
+
+    await createAdherenceService(supabase).fetchStudentAdherence("aluno-1", HOJE);
+
+    expect(chamadas[0].tabela).toBe("training_periodizations");
+    expect(chamadas[0].select).toBe("id");
+    expect(chamadas[0].filtros).toEqual({ student_id: "aluno-1", status: "active" });
+
+    expect(chamadas[1].tabela).toBe("training_plans");
+    expect(chamadas[1].select).toBe("id");
+    expect(chamadas[1].filtros).toEqual({ periodization_id: "periodizacao-1", status: "active" });
+  });
+
+  it("conta como prescrito só o treino com day_of_week preenchido, na fase ativa", async () => {
+    const { supabase, chamadas } = criarSupabaseFake([
+      { data: { id: "periodizacao-1" } },
+      { data: { id: "fase-1" } },
+      { count: 4 },
+      { count: 3 },
+    ]);
+
+    await createAdherenceService(supabase).fetchStudentAdherence("aluno-1", HOJE);
+
+    expect(chamadas[2].tabela).toBe("workouts");
+    expect(chamadas[2].filtros).toEqual({ training_plan_id: "fase-1" });
+    expect(chamadas[2].metodos).toContainEqual({
+      nome: "not",
+      args: ["day_of_week", "is", null],
+    });
+  });
+});

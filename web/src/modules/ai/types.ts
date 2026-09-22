@@ -1,13 +1,23 @@
+import type {
+  BulkWorkoutExercise,
+  BulkWorkoutItem,
+  BulkWorkoutProposal,
+  ChatMessage,
+  PeriodizationProposal,
+  WorkoutSseEvent,
+} from "@elevapro/shared";
 import type { PlanProposalData } from "./tools/studentCoachTools";
 
-export type { PlanProposalData };
-
-export interface ChatMessage {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  createdAt: string;
-}
+// Contrato de proposta de treino e o formato de mensagem: mesmo tipo que o
+// mobile consome do mesmo endpoint de chat — a fonte única vive em shared/.
+export type {
+  BulkWorkoutExercise,
+  BulkWorkoutItem,
+  BulkWorkoutProposal,
+  ChatMessage,
+  PeriodizationProposal,
+  PlanProposalData,
+};
 
 export type ChatModule = "workout" | "nutrition" | "general";
 
@@ -35,20 +45,6 @@ export interface ChatSession {
   module: "workout" | "nutrition" | "general";
   createdAt: string;
   updatedAt: string;
-}
-
-export interface PeriodizationProposal {
-  name: string;
-  goal: string;
-  durationWeeks: number;
-  /** AAAA-MM-DD. O card mostra o período e o banco recusa nulo desde a 0024. */
-  startDate: string;
-  level: string;
-  phases: {
-    name: string;
-    weeks: number;
-    focus: string;
-  }[];
 }
 
 /** Os campos da anamnese que o prompt usa. Nada além disso atravessa a fronteira. */
@@ -89,29 +85,6 @@ export interface StudentContext {
     /** `workoutCount` é o que diz se a fase ainda precisa ser montada. */
     phases: { id: string; name: string; weeks: number; focus: string; workoutCount: number }[];
   }[];
-}
-
-export interface BulkWorkoutExercise {
-  exercise_name: string;
-  sets: number;
-  reps: string;
-  rest_seconds: number;
-  notes?: string;
-}
-
-export interface BulkWorkoutItem {
-  title: string;
-  muscle_group?: string;
-  difficulty?: string;
-  day_of_week?: string;
-  description?: string;
-  exercises?: BulkWorkoutExercise[];
-}
-
-export interface BulkWorkoutProposal {
-  phase_id: string;
-  phase_name: string;
-  workouts: BulkWorkoutItem[];
 }
 
 export interface DietPlanProposal {
@@ -199,23 +172,15 @@ export interface AiSessionState {
   resolvedDietMeals?: DietMealsProposal;
 }
 
+/**
+ * O chat do web também propõe dieta e o plano do aluno — eventos que o
+ * orquestrador de treino (`WorkoutSseEvent`, em shared/) não emite. Aqui a
+ * união reaproveita o contrato de treino e só acrescenta o que é exclusivo
+ * daqui, em vez de redeclarar `text`/`tool_start`/`proposal`/etc.
+ */
 export type SseEvent =
-  | { type: "text"; content: string }
-  /** O modelo parou para consultar ou gravar. Sem isto o stream fica mudo. */
-  | { type: "tool_start"; tool: string; label: string }
-  | { type: "tool_end"; tool: string }
-  /**
-   * Um pedaço da proposta que está sendo escrita agora.
-   *
-   * Só das ferramentas que fazem a tela esperar. Consulta volta antes de a
-   * pessoa terminar de ler a frase anterior e não tem o que prever.
-   */
-  | { type: "proposal_building"; tool: string; partial: string }
-  | { type: "proposal"; data: PeriodizationProposal }
-  | { type: "workout_proposal"; data: BulkWorkoutProposal }
+  | Exclude<WorkoutSseEvent, { type: "saved" }>
   | { type: "diet_plan_proposal"; data: DietPlanProposal }
   | { type: "diet_meals_proposal"; data: DietMealsProposal }
   | { type: "plan_proposal"; data: PlanProposalData }
-  | { type: "saved"; entity: "periodization" | "diet_plan"; id: string; name: string }
-  | { type: "done" }
-  | { type: "error"; message: string };
+  | { type: "saved"; entity: "periodization" | "diet_plan"; id: string; name: string };

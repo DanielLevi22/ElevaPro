@@ -6,7 +6,9 @@ import {
   createAdherenceService,
   createAuthService,
   createBriefingService,
+  createWorkoutsService,
   type ProfileSummary,
+  type TrainingSignal,
 } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { useFocusEffect } from 'expo-router';
@@ -23,8 +25,11 @@ import type {
 } from '@/modules/dashboard';
 import {
   shouldShowRiskBanner,
+  shouldShowTrainingSignal,
   toSeenRiskSignal,
+  toSeenTrainingSignal,
   useRiskBannerSeenStore,
+  useTrainingSignalSeenStore,
 } from '@/modules/dashboard';
 import { useGamificationStore } from '@/modules/gamification';
 import { useStudentStore } from '@/modules/students';
@@ -54,6 +59,7 @@ export interface DadosDaHome {
 const servicoDeAuth = createAuthService(supabase);
 const briefingService = createBriefingService(supabase);
 const adherenceService = createAdherenceService(supabase);
+const workoutsService = createWorkoutsService(supabase);
 
 export function useDadosDaHome(): DadosDaHome {
   const { user, accountType, isMasquerading } = useAuthStore();
@@ -141,12 +147,14 @@ function useCarregamentoDaHome(
       notifyRiskSignals(briefingResult.signals);
       return;
     }
-    await Promise.all([
+    const [, , , , sinal] = await Promise.all([
       fetchDailyData(getLocalDateISOString()),
       fetchWorkouts(userId),
       recarregarSaude(),
       reloadActivity(),
+      workoutsService.fetchActiveTrainingSignal(userId),
     ]);
+    notifyNewTrainingPlan(sinal);
   }, [
     userId,
     ehEspecialista,
@@ -191,6 +199,30 @@ function notifyRiskSignals(signals: BriefingSignal[]): void {
     });
     markSeen(signal.studentId, atual);
   }
+}
+
+/**
+ * O aviso de plano novo pro aluno — mesma ideia do balão de risco do
+ * especialista, do lado dele: roda a cada foco e marca visto na hora, senão
+ * o mesmo plano reabriria o balão toda vez que o aluno voltasse ao app.
+ *
+ * Só avisa da próxima vez que o app abrir — não é push de verdade (#335,
+ * Bloco D fica pra depois).
+ */
+function notifyNewTrainingPlan(signal: TrainingSignal | null): void {
+  if (!signal) return;
+
+  const { lastSeen, markSeen } = useTrainingSignalSeenStore.getState();
+  const atual = toSeenTrainingSignal(signal);
+  if (!shouldShowTrainingSignal(atual, lastSeen)) return;
+
+  showPushBanner({
+    tone: 'info',
+    icon: 'dumbbell',
+    title: 'Novo treino disponível',
+    body: signal.name,
+  });
+  markSeen(atual);
 }
 
 function estaCarregando({ gamificacao, alunos, treinos }: FontesDaHome): boolean {

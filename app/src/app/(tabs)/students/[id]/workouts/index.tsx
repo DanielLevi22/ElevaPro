@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import {
   ActivityIndicator,
@@ -13,10 +13,13 @@ import {
 import { useAuthStore } from '@/auth';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { useWorkoutStore } from '@/modules/workout/store/workoutStore';
+import { ROUTES } from '@/navigation/types';
+import { useCores } from '@/shared/design';
 
 export default function StudentWorkoutsScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const cores = useCores();
   const { user } = useAuthStore();
   const { periodizations, isLoading, fetchPeriodizations } = useWorkoutStore();
 
@@ -31,6 +34,17 @@ export default function StudentWorkoutsScreen() {
 
   // Filter periodizations for this specific student
   const studentPeriodizations = periodizations.filter((p) => p.student_id === studentId);
+  // Só existe se o aluno já tiver alguma periodização — sem uma ainda, o
+  // wizard abre com o nome genérico.
+  const studentName = studentPeriodizations[0]?.student?.full_name ?? undefined;
+
+  function abrirWizard() {
+    if (!studentId) return;
+    router.push({
+      pathname: ROUTES.WORKOUTS.WIZARD_STRUCTURE,
+      params: { studentId, studentName },
+    });
+  }
 
   const renderItem = ({
     item,
@@ -77,7 +91,7 @@ export default function StudentWorkoutsScreen() {
             <Ionicons
               name="calendar-outline"
               size={16}
-              color="#FF6B35"
+              color={cores.primary}
               style={{ marginRight: 6 }}
             />
             <Text className="text-zinc-300 text-xs font-bold">
@@ -106,21 +120,16 @@ export default function StudentWorkoutsScreen() {
           </View>
         </View>
 
-        <Link
-          href={`/(tabs)/workouts/create-periodization?studentId=${studentId}` as never}
-          asChild
-        >
-          <TouchableOpacity activeOpacity={0.8}>
-            <LinearGradient
-              colors={['#FF6B35', '#FF2E63']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              className="h-12 w-12 rounded-full items-center justify-center shadow-lg shadow-orange-500/20"
-            >
-              <Ionicons name="add" size={24} color="#FFFFFF" />
-            </LinearGradient>
-          </TouchableOpacity>
-        </Link>
+        <TouchableOpacity activeOpacity={0.8} onPress={abrirWizard}>
+          <LinearGradient
+            colors={[cores.primary, cores.primary]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            className="h-12 w-12 rounded-full items-center justify-center shadow-lg shadow-orange-500/20"
+          >
+            <Ionicons name="add" size={24} color={cores.primaryForeground} />
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
 
       {/* Content */}
@@ -133,7 +142,7 @@ export default function StudentWorkoutsScreen() {
           <RefreshControl
             refreshing={isLoading}
             onRefresh={() => user?.id && fetchPeriodizations(user.id)}
-            tintColor="#FF6B35"
+            tintColor={cores.primary}
           />
         }
         showsVerticalScrollIndicator={false}
@@ -141,7 +150,7 @@ export default function StudentWorkoutsScreen() {
           !isLoading ? (
             <View className="flex-1 justify-center items-center py-20">
               <View className="bg-zinc-900 p-8 rounded-full mb-6 border border-zinc-800">
-                <Ionicons name="calendar-outline" size={64} color="#52525B" />
+                <Ionicons name="calendar-outline" size={64} color={cores.mutedForeground} />
               </View>
               <Text className="text-white text-xl font-bold mb-2 text-center font-display">
                 Nenhuma periodização
@@ -150,27 +159,22 @@ export default function StudentWorkoutsScreen() {
                 Este aluno ainda não possui periodizações ativas ou planejadas.
               </Text>
 
-              <Link
-                href={`/(tabs)/workouts/create-periodization?studentId=${studentId}` as never}
-                asChild
-              >
-                <TouchableOpacity activeOpacity={0.8}>
-                  <LinearGradient
-                    colors={['#FF6B35', '#FF2E63']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    className="rounded-2xl py-3 px-6 shadow-lg shadow-orange-500/20"
-                  >
-                    <Text className="text-white text-base font-bold font-display">
-                      Criar Periodização
-                    </Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </Link>
+              <TouchableOpacity activeOpacity={0.8} onPress={abrirWizard}>
+                <LinearGradient
+                  colors={[cores.primary, cores.primary]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  className="rounded-2xl py-3 px-6 shadow-lg shadow-orange-500/20"
+                >
+                  <Text className="text-primary-foreground text-base font-bold font-display">
+                    Criar Periodização
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
             </View>
           ) : (
             <View className="py-20">
-              <ActivityIndicator size="large" color="#FF6B35" />
+              <ActivityIndicator size="large" color={cores.primary} />
             </View>
           )
         }

@@ -34,7 +34,7 @@ describe('isImmersiveRoute', () => {
   it.each([
     '/workouts',
     '/workouts/create',
-    '/workouts/create-periodization',
+    '/workouts/wizard/structure',
     '/workouts/select-exercises',
     '/workouts/periodizations/abc-123',
     '/workouts/cardio/abc-123',

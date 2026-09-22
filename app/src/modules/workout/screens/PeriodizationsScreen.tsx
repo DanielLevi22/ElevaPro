@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -12,11 +12,15 @@ import {
   View,
 } from 'react-native';
 import { useAuthStore } from '@/auth';
+import { StudentPickerModal } from '@/components/StudentPickerModal';
 import { PremiumCard } from '@/components/ui/PremiumCard';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { SearchModal } from '@/components/ui/SearchModal';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { colors } from '@/constants/colors';
+import { ROUTES } from '@/navigation/types';
+import { useCores } from '@/shared/design';
+import { useStudentStore } from '@/students';
 import { useWorkoutStore } from '../store/workoutStore';
 
 const PERIODIZATION_IMAGES: Record<string, ImageSourcePropType> = {
@@ -28,17 +32,35 @@ const PERIODIZATION_IMAGES: Record<string, ImageSourcePropType> = {
 
 export default function PeriodizationsScreen() {
   const router = useRouter();
+  const cores = useCores();
   const { user, accountType } = useAuthStore();
   const isSpecialist = accountType === 'specialist';
   const { periodizations, isLoading, fetchPeriodizations } = useWorkoutStore();
+  const { students, fetchStudents } = useStudentStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
+  const [showStudentPicker, setShowStudentPicker] = useState(false);
 
   useEffect(() => {
     if (user?.id && accountType) {
       fetchPeriodizations(user.id);
     }
-  }, [user?.id, accountType, fetchPeriodizations]);
+    if (user?.id && isSpecialist) {
+      fetchStudents(user.id);
+    }
+  }, [user?.id, accountType, isSpecialist, fetchPeriodizations, fetchStudents]);
+
+  // O `StudentPickerModal` é anterior ao módulo de alunos ganhar `avatar_url`
+  // nulável — aqui é o único ponto de contato entre os dois formatos.
+  const studentsParaPicker = useMemo(
+    () =>
+      students.map((s) => ({
+        id: s.id,
+        full_name: s.full_name,
+        avatar_url: s.avatar_url ?? undefined,
+      })),
+    [students]
+  );
 
   const filteredPeriodizations = useMemo(() => {
     if (!searchQuery.trim()) {
@@ -98,7 +120,7 @@ export default function PeriodizationsScreen() {
                 color={colors.primary.start}
                 style={{ marginRight: 8 }}
               />
-              <Text className="text-white/90 text-[10px] font-bold uppercase tracking-widest">
+              <Text className="text-white/90 text-[0.625rem] font-bold uppercase tracking-widest">
                 {item.start_date ? new Date(item.start_date).toLocaleDateString() : '—'} -{' '}
                 {item.end_date ? new Date(item.end_date).toLocaleDateString() : '—'}
               </Text>
@@ -110,7 +132,7 @@ export default function PeriodizationsScreen() {
                   onPress={() => router.push(`/(tabs)/workouts/periodizations/${item.id}`)}
                   className="flex-1 py-2.5 rounded-xl border border-zinc-600 items-center"
                 >
-                  <Text className="text-zinc-300 text-[10px] font-black uppercase tracking-widest">
+                  <Text className="text-zinc-300 text-[0.625rem] font-black uppercase tracking-widest">
                     Gerenciar
                   </Text>
                 </TouchableOpacity>
@@ -125,7 +147,7 @@ export default function PeriodizationsScreen() {
                   style={{ backgroundColor: colors.primary.start }}
                 >
                   <Ionicons name="play" size={12} color="white" />
-                  <Text className="text-white text-[10px] font-black uppercase tracking-widest">
+                  <Text className="text-white text-[0.625rem] font-black uppercase tracking-widest">
                     Iniciar
                   </Text>
                 </TouchableOpacity>
@@ -147,6 +169,18 @@ export default function PeriodizationsScreen() {
     },
     [router, isSpecialist, accountType]
   );
+
+  // O `member` cria para si mesmo, sem escolher aluno; o `specialist` escolhe
+  // antes de entrar no wizard, que não tem seletor embutido.
+  const abrirCriacao = useCallback(() => {
+    if (isSpecialist) {
+      setShowStudentPicker(true);
+      return;
+    }
+    if (user?.id) {
+      router.push({ pathname: ROUTES.WORKOUTS.WIZARD_STRUCTURE, params: { studentId: user.id } });
+    }
+  }, [isSpecialist, user?.id, router]);
 
   return (
     <ScreenLayout>
@@ -171,22 +205,20 @@ export default function PeriodizationsScreen() {
               onPress={() => setIsSearchModalVisible(true)}
               className="w-12 h-12 rounded-full bg-zinc-800 items-center justify-center border border-zinc-700"
             >
-              <Ionicons name="search" size={24} color="#E4E4E7" />
+              <Ionicons name="search" size={24} color={cores.foreground} />
             </TouchableOpacity>
 
             {(accountType === 'specialist' || accountType === 'member') && (
-              <Link href="/(tabs)/workouts/create-periodization" asChild>
-                <TouchableOpacity activeOpacity={0.8}>
-                  <LinearGradient
-                    colors={['#FF6B35', '#FF2E63']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    className="h-12 w-12 rounded-full items-center justify-center shadow-lg shadow-orange-500/20"
-                  >
-                    <Ionicons name="add" size={24} color="#FFFFFF" />
-                  </LinearGradient>
-                </TouchableOpacity>
-              </Link>
+              <TouchableOpacity activeOpacity={0.8} onPress={abrirCriacao}>
+                <LinearGradient
+                  colors={[cores.primary, cores.primary]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  className="h-12 w-12 rounded-full items-center justify-center shadow-lg shadow-orange-500/20"
+                >
+                  <Ionicons name="add" size={24} color={cores.primaryForeground} />
+                </LinearGradient>
+              </TouchableOpacity>
             )}
           </View>
         </View>
@@ -199,6 +231,19 @@ export default function PeriodizationsScreen() {
         onChangeText={setSearchQuery}
       />
 
+      <StudentPickerModal
+        visible={showStudentPicker}
+        onClose={() => setShowStudentPicker(false)}
+        students={studentsParaPicker}
+        onSelect={(student) => {
+          setShowStudentPicker(false);
+          router.push({
+            pathname: ROUTES.WORKOUTS.WIZARD_STRUCTURE,
+            params: { studentId: student.id, studentName: student.full_name ?? undefined },
+          });
+        }}
+      />
+
       {/* Content */}
       <FlatList
         data={filteredPeriodizations}
@@ -206,14 +251,14 @@ export default function PeriodizationsScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={onRefresh} tintColor="#FF6B35" />
+          <RefreshControl refreshing={isLoading} onRefresh={onRefresh} tintColor={cores.primary} />
         }
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           !isLoading ? (
             <View className="flex-1 justify-center items-center py-20">
               <View className="bg-zinc-900 p-8 rounded-full mb-6 border border-zinc-800">
-                <Ionicons name="calendar-outline" size={64} color="#52525B" />
+                <Ionicons name="calendar-outline" size={64} color={cores.mutedForeground} />
               </View>
               <Text className="text-white text-xl font-bold mb-2 text-center font-display">
                 Nenhuma periodização
@@ -227,25 +272,23 @@ export default function PeriodizationsScreen() {
               </Text>
 
               {(accountType === 'specialist' || accountType === 'member') && (
-                <Link href="/(tabs)/workouts/create-periodization" asChild>
-                  <TouchableOpacity activeOpacity={0.8}>
-                    <LinearGradient
-                      colors={['#FF6B35', '#FF2E63']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      className="rounded-2xl py-3 px-6 shadow-lg shadow-orange-500/20"
-                    >
-                      <Text className="text-white text-base font-bold font-display">
-                        Criar Periodização
-                      </Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                </Link>
+                <TouchableOpacity activeOpacity={0.8} onPress={abrirCriacao}>
+                  <LinearGradient
+                    colors={[cores.primary, cores.primary]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    className="rounded-2xl py-3 px-6 shadow-lg shadow-orange-500/20"
+                  >
+                    <Text className="text-primary-foreground text-base font-bold font-display">
+                      Criar Periodização
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
               )}
             </View>
           ) : (
             <View className="py-20">
-              <ActivityIndicator size="large" color="#FF6B35" />
+              <ActivityIndicator size="large" color={cores.primary} />
             </View>
           )
         }

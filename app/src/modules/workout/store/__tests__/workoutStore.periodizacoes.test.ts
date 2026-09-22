@@ -154,6 +154,41 @@ describe('workoutStore — periodizações e fases', () => {
     expect(state.periodizations.find((p) => p.id === 'old-active')?.status).toBe('completed');
   });
 
+  it('should activate training plan and deactivate old ones from the same periodization', async () => {
+    const trainingPlanId = 'new-active-phase';
+
+    mockSupabase.from.mockImplementation((_table: string) => {
+      const chain = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        update: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: { id: trainingPlanId, periodization_id: 'p1', status: 'active' },
+          error: null,
+        }),
+      };
+      return chain;
+    });
+
+    // Seed state with an active phase for the same periodization
+    useWorkoutStore.setState({
+      currentPeriodizationPhases: [
+        fase({ id: 'old-active-phase', periodization_id: 'p1', status: 'active', name: 'Old' }),
+        fase({ id: trainingPlanId, periodization_id: 'p1', name: 'New' }),
+      ],
+    });
+
+    await useWorkoutStore.getState().activateTrainingPlan(trainingPlanId);
+
+    const state = useWorkoutStore.getState();
+    expect(state.currentPeriodizationPhases.find((p) => p.id === trainingPlanId)?.status).toBe(
+      'active'
+    );
+    expect(state.currentPeriodizationPhases.find((p) => p.id === 'old-active-phase')?.status).toBe(
+      'completed'
+    );
+  });
+
   it('should create a periodization successfully', async () => {
     const mockPeriodization = {
       id: 'new-p',

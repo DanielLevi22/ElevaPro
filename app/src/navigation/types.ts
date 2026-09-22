@@ -73,14 +73,20 @@ export const ROUTES = {
       `/(tabs)/students/${id}/assessment`,
     ANALYTICS: (id: string): `/(tabs)/students/${string}/analytics` =>
       `/(tabs)/students/${id}/analytics`,
+    WORKOUT_DETAILS: (
+      studentId: string,
+      workoutId: string
+    ): `/(tabs)/students/${string}/workouts/details/${string}` =>
+      `/(tabs)/students/${studentId}/workouts/details/${workoutId}`,
   },
 
   // Workout Flows
   WORKOUTS: {
     ROOT: '/(tabs)/workouts',
-    CREATE_PERIODIZATION: '/(tabs)/workouts/create-periodization',
     DETAILS: (id: string): `/(tabs)/workouts/${string}` => `/(tabs)/workouts/${id}`,
-    SELECT_EXERCISES: '/workouts/select-exercises',
+    // Sem o grupo `(tabs)` isto nunca casava com a rota de verdade — os únicos
+    // dois call sites que existiam bypassavam a constante com string solta.
+    SELECT_EXERCISES: '/(tabs)/workouts/select-exercises',
     PERIODIZATION: (id: string): `/(tabs)/workouts/periodizations/${string}` =>
       `/(tabs)/workouts/periodizations/${id}`,
     PHASE: (
@@ -89,6 +95,12 @@ export const ROUTES = {
     ): `/(tabs)/workouts/periodizations/${string}/phases/${string}` =>
       `/(tabs)/workouts/periodizations/${periodizationId}/phases/${phaseId}`,
     EXECUTE: (id: string): `/(tabs)/workouts/execute/${string}` => `/(tabs)/workouts/execute/${id}`,
+    // Wizard de criação (#335) — substitui a antiga CreatePeriodizationScreen
+    // e a criação inline de fase/treino que ainda mora em
+    // PeriodizationDetailsScreen/PhaseDetailsScreen.
+    WIZARD_STRUCTURE: '/(tabs)/workouts/wizard/structure',
+    WIZARD_BUILD: '/(tabs)/workouts/wizard/build',
+    WIZARD_REVIEW: '/(tabs)/workouts/wizard/review',
   },
 
   // Nutrição do aluno, no desenho de vidro (#298). O member segue nas telas antigas.

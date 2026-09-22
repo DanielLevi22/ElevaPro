@@ -1,8 +1,8 @@
 "use client";
 
+import { readSseStream } from "@elevapro/shared";
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/modules/auth";
-import { Button } from "@/shared/components/ui/Button";
 import { criarAcumuladorDaPrevia } from "../services/acumuladorDaPrevia";
 import { criarAcumuladorDeTexto } from "../services/acumuladorDeTexto";
 import type { BlocoDeContexto } from "../services/disponibilidade";
@@ -10,6 +10,7 @@ import type { Previa } from "../services/previaDaProposta";
 import { dispensar, foiDispensada } from "../services/propostaDispensada";
 import type { BulkWorkoutProposal, ChatMessage, PeriodizationProposal, SseEvent } from "../types";
 import { BulkWorkoutProposalCard } from "./BulkWorkoutProposalCard";
+import { ChatInputBar } from "./ChatInputBar";
 import { ContextoDisponivel } from "./ContextoDisponivel";
 import { PainelDeProposta } from "./PainelDeProposta";
 import { PeriodizationProposalCard } from "./PeriodizationProposalCard";
@@ -291,58 +292,38 @@ export function AiCoachChat({
 
       if (!response.body) return;
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n\n");
-        buffer = lines.pop() ?? "";
-
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          try {
-            const event: SseEvent = JSON.parse(line.slice(6));
-
-            if (event.type === "text") {
-              texto.empurrar(event.content);
-            } else if (event.type === "proposal") {
-              // O cartão de verdade chegou: a prévia cumpriu o papel dela.
-              emMontagem.limpar();
-              setProposal({ data: event.data });
-            } else if (event.type === "proposal_building") {
-              emMontagem.empurrar(event.tool, event.partial);
-            } else if (event.type === "tool_start") {
-              setActivity(event.label);
-            } else if (event.type === "tool_end") {
-              setActivity(null);
-            } else if (event.type === "workout_proposal") {
-              emMontagem.limpar();
-              setWorkoutProposal(event.data);
-              setSavedWorkoutTitles([]);
-            } else if (event.type === "saved" && event.entity === "periodization") {
-              // Só marca o cartão que ainda está na tela. Recriar o que saiu ao
-              // aprovar o traria de volta abaixo de texto mais novo — cartão é
-              // renderizado sempre no fim da lista —, e a leitura vira "isto
-              // voltou". A confirmação de que salvou é a frase do coach, que
-              // aparece na ordem em que aconteceu.
-              setProposal((prev) => (prev ? { ...prev, savedId: event.id } : null));
-            } else if (event.type === "error") {
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantId ? { ...m, content: `Erro: ${event.message}` } : m,
-                ),
-              );
-            }
-          } catch {
-            // malformed SSE chunk — skip
-          }
+      await readSseStream(response.body, (event: SseEvent) => {
+        if (event.type === "text") {
+          texto.empurrar(event.content);
+        } else if (event.type === "proposal") {
+          // O cartão de verdade chegou: a prévia cumpriu o papel dela.
+          emMontagem.limpar();
+          setProposal({ data: event.data });
+        } else if (event.type === "proposal_building") {
+          emMontagem.empurrar(event.tool, event.partial);
+        } else if (event.type === "tool_start") {
+          setActivity(event.label);
+        } else if (event.type === "tool_end") {
+          setActivity(null);
+        } else if (event.type === "workout_proposal") {
+          emMontagem.limpar();
+          setWorkoutProposal(event.data);
+          setSavedWorkoutTitles([]);
+        } else if (event.type === "saved" && event.entity === "periodization") {
+          // Só marca o cartão que ainda está na tela. Recriar o que saiu ao
+          // aprovar o traria de volta abaixo de texto mais novo — cartão é
+          // renderizado sempre no fim da lista —, e a leitura vira "isto
+          // voltou". A confirmação de que salvou é a frase do coach, que
+          // aparece na ordem em que aconteceu.
+          setProposal((prev) => (prev ? { ...prev, savedId: event.id } : null));
+        } else if (event.type === "error") {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantId ? { ...m, content: `Erro: ${event.message}` } : m,
+            ),
+          );
         }
-      }
+      });
     } finally {
       // O último pedaço chega depois do último quadro: sem isto a resposta
       // aparece truncada na tela e completa no histórico.
@@ -490,52 +471,14 @@ export function AiCoachChat({
         </PainelDeProposta>
       )}
 
-      {/* Input */}
-      <div className="border-t border-white/10 pt-4">
-        <div className="flex gap-3 items-end">
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            rows={1}
-            placeholder="Digite uma mensagem... (Enter para enviar)"
-            disabled={loading}
-            className="flex-1 resize-none bg-surface border border-white/10 rounded-xl px-4 py-3 text-foreground placeholder-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:opacity-50 max-h-32 overflow-y-auto"
-            style={{ height: "auto" }}
-            onInput={(e) => {
-              const t = e.currentTarget;
-              t.style.height = "auto";
-              t.style.height = `${Math.min(t.scrollHeight, 128)}px`;
-            }}
-          />
-          <Button
-            size="icon"
-            aria-label="Enviar mensagem"
-            onClick={() => sendMessage()}
-            disabled={!input.trim() || loading}
-            className="shrink-0"
-          >
-            <svg
-              aria-hidden="true"
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-              />
-            </svg>
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground mt-2 text-center">
-          Shift+Enter para nova linha · Enter para enviar
-        </p>
-      </div>
+      <ChatInputBar
+        value={input}
+        onChange={setInput}
+        onKeyDown={handleKeyDown}
+        onSend={() => sendMessage()}
+        loading={loading}
+        inputRef={inputRef}
+      />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-app/src/modules/ai/services/AssistantService.ts 2
+app/src/modules/ai/services/AssistantService.ts 1
 app/src/modules/assessment/screens/AdaptiveAnamnesisScreen.tsx 1
 app/src/modules/assessment/screens/BodyScanIntroduction.tsx 1
 app/src/modules/assessment/screens/BodyScanProcessing.tsx 1
@@ -7,5 +7,4 @@ app/src/modules/nutrition/screens/CookingScreen.tsx 1
 app/src/modules/nutrition/services/ShoppingListService.ts 1
 app/src/modules/nutrition/store/nutritionStore.ts 1
 app/src/modules/students/screens/StudentAnamnesisScreen.tsx 2
-app/src/modules/workout/services/WorkoutAIService.ts 1
 app/src/modules/workout/store/workoutStore.ts 1

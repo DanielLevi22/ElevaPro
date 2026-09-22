@@ -8,6 +8,13 @@ import type {
   UpdateTrainingPlanInput,
 } from "../../types/workouts.types";
 
+/** O mínimo pra saber se o plano ativo do aluno mudou desde a última vez visto. */
+export interface TrainingSignal {
+  id: string;
+  name: string;
+  updatedAt: string;
+}
+
 /**
  * As colunas que o tipo declara, e não `*`.
  *
@@ -64,6 +71,23 @@ export const criarServicoDePeriodizacoes = (supabase: SupabaseClient) => ({
       student: profileMap.get(p.student_id),
       training_plans_count: countsMap.get(p.id) ?? 0,
     })) as Periodization[];
+  },
+
+  /**
+   * O suficiente pra saber se o plano do aluno mudou desde a última vez que
+   * ele abriu o app — não a periodização inteira, que teria muito mais do que
+   * o aviso in-app precisa (Art. 6°, III).
+   */
+  fetchActiveTrainingSignal: async (studentId: string): Promise<TrainingSignal | null> => {
+    const { data, error } = await supabase
+      .from("training_periodizations")
+      .select("id, name, updated_at")
+      .eq("student_id", studentId)
+      .eq("status", "active")
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    return { id: data.id, name: data.name, updatedAt: data.updated_at };
   },
 
   fetchStudentPeriodizations: async (studentId: string): Promise<Periodization[]> => {
@@ -216,6 +240,31 @@ export const criarServicoDePeriodizacoes = (supabase: SupabaseClient) => ({
     if (countError) throw countError;
 
     return { ...data, workouts_count: count ?? 0 } as TrainingPlan;
+  },
+
+  activateTrainingPlan: async (id: string): Promise<TrainingPlan> => {
+    const { data: plan, error: fetchError } = await supabase
+      .from("training_plans")
+      .select("periodization_id")
+      .eq("id", id)
+      .single();
+    if (fetchError) throw fetchError;
+
+    const { error: completeError } = await supabase
+      .from("training_plans")
+      .update({ status: "completed" })
+      .eq("periodization_id", plan.periodization_id)
+      .eq("status", "active");
+    if (completeError) throw completeError;
+
+    const { data, error } = await supabase
+      .from("training_plans")
+      .update({ status: "active" })
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as TrainingPlan;
   },
 
   createTrainingPlan: async (input: CreateTrainingPlanInput): Promise<TrainingPlan> => {
