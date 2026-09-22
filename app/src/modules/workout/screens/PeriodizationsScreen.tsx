@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -17,7 +16,6 @@ import { PremiumCard } from '@/components/ui/PremiumCard';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { SearchModal } from '@/components/ui/SearchModal';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { colors } from '@/constants/colors';
 import { ROUTES } from '@/navigation/types';
 import { useCores, useEscala } from '@/shared/design';
 import { useStudentStore } from '@/students';
@@ -117,8 +115,8 @@ export default function PeriodizationsScreen() {
             <View className="flex-row items-center bg-black/40 px-3 py-2 rounded-xl border border-white/5 self-start mb-3">
               <Ionicons
                 name="calendar-outline"
-                size={14}
-                color={colors.primary.start}
+                size={escalar(14)}
+                color={cores.primary}
                 style={{ marginRight: 8 }}
               />
               <Text className="text-white/90 text-[0.625rem] font-bold uppercase tracking-widest">
@@ -144,31 +142,27 @@ export default function PeriodizationsScreen() {
                       params: { mode: 'execute' },
                     })
                   }
-                  className="flex-1 py-2.5 rounded-xl items-center flex-row justify-center gap-1"
-                  style={{ backgroundColor: colors.primary.start }}
+                  className="flex-1 py-2.5 rounded-xl items-center flex-row justify-center gap-1 bg-primary"
                 >
-                  <Ionicons name="play" size={12} color="white" />
-                  <Text className="text-white text-[0.625rem] font-black uppercase tracking-widest">
+                  <Ionicons name="play" size={escalar(12)} color={cores.primaryForeground} />
+                  <Text className="text-[0.625rem] font-black uppercase tracking-widest text-primary-foreground">
                     Iniciar
                   </Text>
                 </TouchableOpacity>
               </View>
             ) : (
               <View className="flex-row items-center justify-end">
-                <Text
-                  className="font-bold text-xs mr-1 uppercase"
-                  style={{ color: colors.primary.start }}
-                >
+                <Text className="mr-1 text-xs font-bold uppercase text-primary-text">
                   {isSpecialist ? 'Gerenciar' : 'Abrir'}
                 </Text>
-                <Ionicons name="chevron-forward" size={14} color={colors.primary.start} />
+                <Ionicons name="chevron-forward" size={escalar(14)} color={cores.primaryText} />
               </View>
             )}
           </View>
         </PremiumCard>
       );
     },
-    [router, isSpecialist, accountType]
+    [router, isSpecialist, accountType, cores, escalar]
   );
 
   // O `member` cria para si mesmo, sem escolher aluno; o `specialist` escolhe
@@ -189,10 +183,10 @@ export default function PeriodizationsScreen() {
       <View className="px-6 pt-4 pb-6">
         <View className="flex-row justify-between items-center mb-6">
           <View>
-            <Text className="text-4xl font-extrabold text-white mb-0.5 font-display tracking-tight">
+            <Text className="mb-0.5 text-4xl font-extrabold tracking-tight text-foreground">
               {isSpecialist ? 'Alunos' : 'Meus Treinos'}
             </Text>
-            <Text className="text-sm text-zinc-400 font-sans">
+            <Text className="text-sm text-muted-foreground">
               {isSpecialist
                 ? 'Gestão de Planejamento'
                 : accountType === 'member'
@@ -204,21 +198,18 @@ export default function PeriodizationsScreen() {
           <View className="flex-row items-center gap-3">
             <TouchableOpacity
               onPress={() => setIsSearchModalVisible(true)}
-              className="w-12 h-12 rounded-full bg-zinc-800 items-center justify-center border border-zinc-700"
+              className="h-12 w-12 items-center justify-center rounded-full bg-muted"
             >
               <Ionicons name="search" size={escalar(24)} color={cores.foreground} />
             </TouchableOpacity>
 
             {(accountType === 'specialist' || accountType === 'member') && (
-              <TouchableOpacity activeOpacity={0.8} onPress={abrirCriacao}>
-                <LinearGradient
-                  colors={[cores.primary, cores.primary]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  className="h-12 w-12 rounded-full items-center justify-center shadow-lg shadow-orange-500/20"
-                >
-                  <Ionicons name="add" size={escalar(24)} color={cores.primaryForeground} />
-                </LinearGradient>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={abrirCriacao}
+                className="h-12 w-12 items-center justify-center rounded-full bg-primary"
+              >
+                <Ionicons name="add" size={escalar(24)} color={cores.primaryForeground} />
               </TouchableOpacity>
             )}
           </View>
@@ -257,18 +248,18 @@ export default function PeriodizationsScreen() {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           !isLoading ? (
-            <View className="flex-1 justify-center items-center py-20">
-              <View className="bg-zinc-900 p-8 rounded-full mb-6 border border-zinc-800">
+            <View className="flex-1 items-center justify-center py-20">
+              <View className="mb-6 rounded-full bg-muted p-8">
                 <Ionicons
                   name="calendar-outline"
                   size={escalar(64)}
                   color={cores.mutedForeground}
                 />
               </View>
-              <Text className="text-white text-xl font-bold mb-2 text-center font-display">
+              <Text className="mb-2 text-center text-xl font-bold text-foreground">
                 Nenhuma periodização
               </Text>
-              <Text className="text-zinc-400 text-center px-8 text-sm mb-8 font-sans">
+              <Text className="mb-8 px-8 text-center text-sm text-muted-foreground">
                 {accountType === 'specialist'
                   ? 'Crie um planejamento para seus alunos'
                   : accountType === 'member'
@@ -277,17 +268,14 @@ export default function PeriodizationsScreen() {
               </Text>
 
               {(accountType === 'specialist' || accountType === 'member') && (
-                <TouchableOpacity activeOpacity={0.8} onPress={abrirCriacao}>
-                  <LinearGradient
-                    colors={[cores.primary, cores.primary]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    className="rounded-2xl py-3 px-6 shadow-lg shadow-orange-500/20"
-                  >
-                    <Text className="text-primary-foreground text-base font-bold font-display">
-                      Criar Periodização
-                    </Text>
-                  </LinearGradient>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={abrirCriacao}
+                  className="rounded-md bg-primary px-6 py-3"
+                >
+                  <Text className="text-base font-bold text-primary-foreground">
+                    Criar periodização
+                  </Text>
                 </TouchableOpacity>
               )}
             </View>

@@ -155,8 +155,8 @@ export default function WorkoutsScreen() {
       {/* Header */}
       <View className="flex-row justify-between items-center px-6 pt-4 pb-6">
         <View>
-          <Text className="text-4xl font-extrabold text-white mb-1 font-display">Treinos</Text>
-          <Text className="text-base text-zinc-400 font-sans">Gerencie seus treinos</Text>
+          <Text className="mb-1 text-4xl font-extrabold text-foreground">Treinos</Text>
+          <Text className="text-base text-muted-foreground">Gerencie seus treinos</Text>
         </View>
       </View>
 
@@ -182,14 +182,14 @@ export default function WorkoutsScreen() {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           !isLoading ? (
-            <View className="flex-1 justify-center items-center py-20">
-              <View className="bg-zinc-900 p-8 rounded-full mb-6 border border-zinc-800">
+            <View className="flex-1 items-center justify-center py-20">
+              <View className="mb-6 rounded-full bg-muted p-8">
                 <Ionicons name="barbell-outline" size={escalar(64)} color={cores.mutedForeground} />
               </View>
-              <Text className="text-white text-xl font-bold mb-2 text-center font-display">
+              <Text className="mb-2 text-center text-xl font-bold text-foreground">
                 Nenhum treino criado
               </Text>
-              <Text className="text-zinc-400 text-center px-8 text-sm mb-8 font-sans">
+              <Text className="mb-8 px-8 text-center text-sm text-muted-foreground">
                 Crie fichas de treino para seus alunos
               </Text>
             </View>
