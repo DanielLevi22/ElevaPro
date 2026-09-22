@@ -101,6 +101,9 @@ export const ROUTES = {
     WIZARD_STRUCTURE: '/(tabs)/workouts/wizard/structure',
     WIZARD_BUILD: '/(tabs)/workouts/wizard/build',
     WIZARD_REVIEW: '/(tabs)/workouts/wizard/review',
+    // Chat de verdade com o assistente (#335) — substitui a proposta de um
+    // tiro só que morava em WIZARD_STRUCTURE/WIZARD_BUILD.
+    WIZARD_ASSISTANT: '/(tabs)/workouts/wizard/assistant',
   },
 
   // Nutrição do aluno, no desenho de vidro (#298). O member segue nas telas antigas.

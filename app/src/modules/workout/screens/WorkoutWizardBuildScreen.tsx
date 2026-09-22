@@ -1,4 +1,4 @@
-import type { BulkWorkoutProposal, WorkoutExercise } from '@elevapro/shared';
+import type { WorkoutExercise } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -16,7 +16,6 @@ import { Row } from '@/components/ui/Row';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { ROUTES } from '@/navigation/types';
 import { useCores, useEscala } from '@/shared/design';
-import { WorkoutChatService } from '../services/WorkoutChatService';
 import { useWorkoutStore } from '../store/workoutStore';
 import { useWorkoutWizardStore } from '../store/workoutWizardStore';
 
@@ -47,13 +46,9 @@ export default function WorkoutWizardBuildScreen() {
   const wizard = useWorkoutWizardStore();
   const { workouts, fetchWorkoutsForPhase, createWorkout, reorderWorkoutExercises, isLoading } =
     useWorkoutStore();
-  const token = useAuthStore((s) => s.session?.access_token ?? null);
   const specialistId = useAuthStore((s) => s.user?.id ?? null);
 
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [workoutProposal, setWorkoutProposal] = useState<BulkWorkoutProposal | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [approving, setApproving] = useState(false);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: só a fase muda o que buscar; a função vem da store e é estável entre renders
   useEffect(() => {
@@ -80,50 +75,8 @@ export default function WorkoutWizardBuildScreen() {
     }
   }
 
-  async function requestAiWorkouts() {
-    if (!token || !studentId) return;
-    setAiLoading(true);
-    try {
-      const sessionId =
-        wizard.aiSessionId ?? (await WorkoutChatService.loadSession(token, studentId)).sessionId;
-      wizard.setAiSessionId(sessionId);
-
-      const mensagem = `Sugira os treinos da fase "${wizard.planName}"${
-        wizard.split ? `, divisão ${wizard.split}` : ''
-      }${wizard.objective ? `, foco em ${wizard.objective}` : ''}.`;
-
-      let proposta: BulkWorkoutProposal | null = null;
-      let erro: string | null = null;
-      await WorkoutChatService.sendMessage(token, studentId, mensagem, sessionId, (event) => {
-        if (event.type === 'workout_proposal') proposta = event.data;
-        if (event.type === 'error') erro = event.message;
-      });
-
-      if (erro || !proposta) throw new Error(erro ?? 'sem proposta');
-      setWorkoutProposal(proposta);
-    } catch {
-      showAlert({
-        title: 'IA indisponível',
-        message: 'Não consegui gerar treinos agora. Tente de novo ou monte manualmente.',
-        type: 'error',
-      });
-    } finally {
-      setAiLoading(false);
-    }
-  }
-
-  async function approveAiWorkouts() {
-    if (!token || !studentId || !wizard.aiSessionId) return;
-    setApproving(true);
-    try {
-      await WorkoutChatService.approveWorkouts(token, studentId, wizard.aiSessionId);
-      setWorkoutProposal(null);
-      if (wizard.phaseId) await fetchWorkoutsForPhase(wizard.phaseId);
-    } catch {
-      showAlert({ title: 'Erro', message: 'Não consegui salvar os treinos da IA.', type: 'error' });
-    } finally {
-      setApproving(false);
-    }
+  function goToAssistant() {
+    router.push({ pathname: ROUTES.WORKOUTS.WIZARD_ASSISTANT, params: { studentId } });
   }
 
   function goToLibrary() {
@@ -195,19 +148,11 @@ export default function WorkoutWizardBuildScreen() {
       <Row icon="add-circle-outline" title="Adicionar treino" onPress={addWorkout} />
       <Row
         icon="sparkles"
-        title={aiLoading ? 'Gerando…' : 'Sugestão da IA'}
-        sub="Propõe os treinos da fase pra você aprovar"
-        onPress={aiLoading ? undefined : requestAiWorkouts}
+        title="Sugestão da IA"
+        sub="Conversa com o assistente para propor os treinos da fase"
+        chevron
+        onPress={goToAssistant}
       />
-
-      {workoutProposal ? (
-        <PropostaDeTreinos
-          proposta={workoutProposal}
-          aprovando={approving}
-          onAprovar={approveAiWorkouts}
-          onDescartar={() => setWorkoutProposal(null)}
-        />
-      ) : null}
 
       {activeWorkout ? (
         <>
@@ -232,37 +177,6 @@ export default function WorkoutWizardBuildScreen() {
         </Text>
       )}
     </GlassScreen>
-  );
-}
-
-function PropostaDeTreinos({
-  proposta,
-  aprovando,
-  onAprovar,
-  onDescartar,
-}: {
-  proposta: BulkWorkoutProposal;
-  aprovando: boolean;
-  onAprovar: () => void;
-  onDescartar: () => void;
-}) {
-  return (
-    <Card className="mt-1">
-      <Text className="text-[0.95rem] font-bold text-foreground">{proposta.phase_name}</Text>
-      {proposta.workouts.map((w) => (
-        <Text key={w.title} className="mt-2 text-[0.8125rem] text-foreground">
-          {w.title} · {w.exercises?.length ?? 0} exercícios
-        </Text>
-      ))}
-      <View className="mt-3 flex-row gap-2">
-        <Row
-          icon="checkmark-circle-outline"
-          title={aprovando ? 'Salvando…' : 'Aprovar e adicionar'}
-          onPress={aprovando ? undefined : onAprovar}
-        />
-        <Row icon="close-circle-outline" title="Descartar" onPress={onDescartar} />
-      </View>
-    </Card>
   );
 }
 

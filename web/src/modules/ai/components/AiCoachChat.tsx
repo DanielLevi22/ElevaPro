@@ -1,6 +1,5 @@
 "use client";
 
-import { readSseStream } from "@elevapro/shared";
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/modules/auth";
 import { criarAcumuladorDaPrevia } from "../services/acumuladorDaPrevia";
@@ -11,11 +10,11 @@ import { dispensar, foiDispensada } from "../services/propostaDispensada";
 import type { BulkWorkoutProposal, ChatMessage, PeriodizationProposal, SseEvent } from "../types";
 import { BulkWorkoutProposalCard } from "./BulkWorkoutProposalCard";
 import { ChatInputBar } from "./ChatInputBar";
+import { ChatMessageBubble } from "./ChatMessageBubble";
 import { ContextoDisponivel } from "./ContextoDisponivel";
 import { PainelDeProposta } from "./PainelDeProposta";
 import { PeriodizationProposalCard } from "./PeriodizationProposalCard";
 import { PreviaDaProposta } from "./PreviaDaProposta";
-import { TextoDoAssistente } from "./TextoDoAssistente";
 
 interface Props {
   studentId: string;
@@ -292,38 +291,58 @@ export function AiCoachChat({
 
       if (!response.body) return;
 
-      await readSseStream(response.body, (event: SseEvent) => {
-        if (event.type === "text") {
-          texto.empurrar(event.content);
-        } else if (event.type === "proposal") {
-          // O cartão de verdade chegou: a prévia cumpriu o papel dela.
-          emMontagem.limpar();
-          setProposal({ data: event.data });
-        } else if (event.type === "proposal_building") {
-          emMontagem.empurrar(event.tool, event.partial);
-        } else if (event.type === "tool_start") {
-          setActivity(event.label);
-        } else if (event.type === "tool_end") {
-          setActivity(null);
-        } else if (event.type === "workout_proposal") {
-          emMontagem.limpar();
-          setWorkoutProposal(event.data);
-          setSavedWorkoutTitles([]);
-        } else if (event.type === "saved" && event.entity === "periodization") {
-          // Só marca o cartão que ainda está na tela. Recriar o que saiu ao
-          // aprovar o traria de volta abaixo de texto mais novo — cartão é
-          // renderizado sempre no fim da lista —, e a leitura vira "isto
-          // voltou". A confirmação de que salvou é a frase do coach, que
-          // aparece na ordem em que aconteceu.
-          setProposal((prev) => (prev ? { ...prev, savedId: event.id } : null));
-        } else if (event.type === "error") {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId ? { ...m, content: `Erro: ${event.message}` } : m,
-            ),
-          );
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const event: SseEvent = JSON.parse(line.slice(6));
+
+            if (event.type === "text") {
+              texto.empurrar(event.content);
+            } else if (event.type === "proposal") {
+              // O cartão de verdade chegou: a prévia cumpriu o papel dela.
+              emMontagem.limpar();
+              setProposal({ data: event.data });
+            } else if (event.type === "proposal_building") {
+              emMontagem.empurrar(event.tool, event.partial);
+            } else if (event.type === "tool_start") {
+              setActivity(event.label);
+            } else if (event.type === "tool_end") {
+              setActivity(null);
+            } else if (event.type === "workout_proposal") {
+              emMontagem.limpar();
+              setWorkoutProposal(event.data);
+              setSavedWorkoutTitles([]);
+            } else if (event.type === "saved" && event.entity === "periodization") {
+              // Só marca o cartão que ainda está na tela. Recriar o que saiu ao
+              // aprovar o traria de volta abaixo de texto mais novo — cartão é
+              // renderizado sempre no fim da lista —, e a leitura vira "isto
+              // voltou". A confirmação de que salvou é a frase do coach, que
+              // aparece na ordem em que aconteceu.
+              setProposal((prev) => (prev ? { ...prev, savedId: event.id } : null));
+            } else if (event.type === "error") {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantId ? { ...m, content: `Erro: ${event.message}` } : m,
+                ),
+              );
+            }
+          } catch {
+            // malformed SSE chunk — skip
+          }
         }
-      });
+      }
     } finally {
       // O último pedaço chega depois do último quadro: sem isto a resposta
       // aparece truncada na tela e completa no histórico.
@@ -359,39 +378,7 @@ export function AiCoachChat({
         <ContextoDisponivel blocos={contexto} />
 
         {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-          >
-            {msg.role === "assistant" && (
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0 mr-2 mt-0.5">
-                AI
-              </div>
-            )}
-            <div
-              className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
-                msg.role === "user"
-                  ? "bg-primary text-primary-foreground rounded-br-sm"
-                  : "bg-surface border border-white/10 text-foreground rounded-bl-sm"
-              }`}
-            >
-              {/* Só o texto do assistente é interpretado: quem escreve um
-                  asterisco na própria mensagem espera ver um asterisco. */}
-              {msg.content ? (
-                msg.role === "assistant" ? (
-                  <TextoDoAssistente content={msg.content} />
-                ) : (
-                  msg.content
-                )
-              ) : (
-                <span className="flex gap-1 items-center text-muted-foreground">
-                  <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:0ms]" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:150ms]" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:300ms]" />
-                </span>
-              )}
-            </div>
-          </div>
+          <ChatMessageBubble key={msg.id} msg={msg} />
         ))}
 
         {/* Só enquanto uma ferramenta roda de verdade — consultar catálogo,
