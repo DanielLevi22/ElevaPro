@@ -1,52 +1,53 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  ImageSourcePropType,
-  RefreshControl,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { StudentPickerModal } from '@/components/StudentPickerModal';
-import { PremiumCard } from '@/components/ui/PremiumCard';
-import { ScreenLayout } from '@/components/ui/ScreenLayout';
+import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
+import { CabecalhoSobreFoto } from '@/components/ui/CabecalhoSobreFoto';
+import { Chip } from '@/components/ui/Chip';
 import { SearchModal } from '@/components/ui/SearchModal';
-import { StatusBadge } from '@/components/ui/StatusBadge';
+import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
+import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { ROUTES } from '@/navigation/types';
-import { useCores, useEscala } from '@/shared/design';
+import { useCores } from '@/shared/design';
+import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { useStudentStore } from '@/students';
-import { useWorkoutStore } from '../store/workoutStore';
+import { PeriodizationHeroCard } from '../components/PeriodizationHeroCard';
+import { PeriodizationHistoryRow } from '../components/PeriodizationHistoryRow';
+import { type Periodization, useWorkoutStore } from '../store/workoutStore';
 
-const PERIODIZATION_IMAGES: Record<string, ImageSourcePropType> = {
-  strength: require('../../../../assets/workouts/back.jpg'),
-  hypertrophy: require('../../../../assets/workouts/chest.jpg'),
-  adaptation: require('../../../../assets/workouts/arms.jpg'),
-  default: require('../../../../assets/workouts/shoulders.jpg'),
+type Filtro = 'todas' | 'concluidas' | 'planejadas';
+
+const STATUS_DO_FILTRO: Record<Exclude<Filtro, 'todas'>, Periodization['status']> = {
+  concluidas: 'completed',
+  planejadas: 'planned',
 };
 
+/**
+ * A lista de periodizações do especialista e do praticante — a mesma casca
+ * de vidro da lista do aluno (`PeriodizacoesDoAlunoScreen`), com uma diferença:
+ * aqui pode haver mais de uma periodização em andamento ao mesmo tempo, uma
+ * por aluno, então cada ativa vira um cartão-herói (#335).
+ *
+ * @example
+ * <PeriodizationsScreen />
+ */
 export default function PeriodizationsScreen() {
   const router = useRouter();
-  const cores = useCores();
-  const escalar = useEscala();
   const { user, accountType } = useAuthStore();
   const isSpecialist = accountType === 'specialist';
+  const isMember = accountType === 'member';
   const { periodizations, isLoading, fetchPeriodizations } = useWorkoutStore();
   const { students, fetchStudents } = useStudentStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
   const [showStudentPicker, setShowStudentPicker] = useState(false);
+  const [filtro, setFiltro] = useState<Filtro>('todas');
 
   useEffect(() => {
-    if (user?.id && accountType) {
-      fetchPeriodizations(user.id);
-    }
-    if (user?.id && isSpecialist) {
-      fetchStudents(user.id);
-    }
+    if (user?.id && accountType) fetchPeriodizations(user.id);
+    if (user?.id && isSpecialist) fetchStudents(user.id);
   }, [user?.id, accountType, isSpecialist, fetchPeriodizations, fetchStudents]);
 
   // O `StudentPickerModal` é anterior ao módulo de alunos ganhar `avatar_url`
@@ -61,108 +62,35 @@ export default function PeriodizationsScreen() {
     [students]
   );
 
-  const filteredPeriodizations = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return accountType === 'specialist'
-        ? periodizations
-        : periodizations.filter((p) => p.status === 'active' || p.status === 'planned');
-    }
-
+  const buscadas = useMemo(() => {
+    if (!searchQuery.trim()) return periodizations;
     const query = searchQuery.toLowerCase();
-    return periodizations.filter((periodization) => {
-      if (
-        accountType !== 'specialist' &&
-        periodization.status !== 'active' &&
-        periodization.status !== 'planned'
-      )
-        return false;
-
-      const name = periodization.name?.toLowerCase() || '';
-      const studentName = periodization.student?.full_name?.toLowerCase() || '';
-      return name.includes(query) || studentName.includes(query);
+    return periodizations.filter((p) => {
+      const nome = p.name?.toLowerCase() ?? '';
+      const aluno = p.student?.full_name?.toLowerCase() ?? '';
+      return nome.includes(query) || aluno.includes(query);
     });
-  }, [periodizations, searchQuery, accountType]);
+  }, [periodizations, searchQuery]);
 
-  type PeriodizationItem = ReturnType<typeof useWorkoutStore.getState>['periodizations'][number] & {
-    phases?: unknown[];
-  };
+  const ativas = useMemo(() => buscadas.filter((p) => p.status === 'active'), [buscadas]);
+  const historico = useMemo(
+    () =>
+      buscadas.filter(
+        (p) =>
+          p.status !== 'active' && (filtro === 'todas' || p.status === STATUS_DO_FILTRO[filtro])
+      ),
+    [buscadas, filtro]
+  );
 
-  const onRefresh = useCallback(() => {
-    if (user?.id) {
-      fetchPeriodizations(user.id);
-    }
-  }, [user?.id, fetchPeriodizations]);
-
-  const renderItem = useCallback(
-    ({ item }: { item: PeriodizationItem }) => {
-      // Get phases count from the periodization object
-      const phaseCount = item.phases?.length || 0;
-
-      return (
-        <PremiumCard
-          title={item.name || 'Sem nome'}
-          subtitle={
-            isSpecialist
-              ? `${item.student?.full_name || 'Aluno'} • ${phaseCount} ${phaseCount === 1 ? 'Fase' : 'Fases'}`
-              : `${item.objective || 'Geral'} • ${phaseCount} ${phaseCount === 1 ? 'Fase' : 'Fases'}`
-          }
-          image={PERIODIZATION_IMAGES[item.objective as string] || PERIODIZATION_IMAGES.default}
-          onPress={() => router.push(`/(tabs)/workouts/periodizations/${item.id}`)}
-          badge={<StatusBadge status={item.status} />}
-          containerStyle={{ marginBottom: 24 }}
-        >
-          <View className="mt-4">
-            <View className="flex-row items-center bg-black/40 px-3 py-2 rounded-xl border border-white/5 self-start mb-3">
-              <Ionicons
-                name="calendar-outline"
-                size={escalar(14)}
-                color={cores.primary}
-                style={{ marginRight: 8 }}
-              />
-              <Text className="text-white/90 text-[0.625rem] font-bold uppercase tracking-widest">
-                {item.start_date ? new Date(item.start_date).toLocaleDateString() : '—'} -{' '}
-                {item.end_date ? new Date(item.end_date).toLocaleDateString() : '—'}
-              </Text>
-            </View>
-
-            {accountType === 'member' ? (
-              <View className="flex-row gap-2">
-                <TouchableOpacity
-                  onPress={() => router.push(`/(tabs)/workouts/periodizations/${item.id}`)}
-                  className="flex-1 py-2.5 rounded-xl border border-zinc-600 items-center"
-                >
-                  <Text className="text-zinc-300 text-[0.625rem] font-black uppercase tracking-widest">
-                    Gerenciar
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() =>
-                    router.push({
-                      pathname: `/(tabs)/workouts/periodizations/${item.id}` as never,
-                      params: { mode: 'execute' },
-                    })
-                  }
-                  className="flex-1 py-2.5 rounded-xl items-center flex-row justify-center gap-1 bg-primary"
-                >
-                  <Ionicons name="play" size={escalar(12)} color={cores.primaryForeground} />
-                  <Text className="text-[0.625rem] font-black uppercase tracking-widest text-primary-foreground">
-                    Iniciar
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View className="flex-row items-center justify-end">
-                <Text className="mr-1 text-xs font-bold uppercase text-primary-text">
-                  {isSpecialist ? 'Gerenciar' : 'Abrir'}
-                </Text>
-                <Ionicons name="chevron-forward" size={escalar(14)} color={cores.primaryText} />
-              </View>
-            )}
-          </View>
-        </PremiumCard>
+  const abrir = useCallback(
+    (periodizacao: Periodization, executar = false) => {
+      router.push(
+        executar
+          ? ROUTES.WORKOUTS.PERIODIZATION_EXECUTE(periodizacao.id)
+          : ROUTES.WORKOUTS.PERIODIZATION(periodizacao.id)
       );
     },
-    [router, isSpecialist, accountType, cores, escalar]
+    [router]
   );
 
   // O `member` cria para si mesmo, sem escolher aluno; o `specialist` escolhe
@@ -177,44 +105,29 @@ export default function PeriodizationsScreen() {
     }
   }, [isSpecialist, user?.id, router]);
 
+  const onRefresh = useCallback(() => {
+    if (user?.id) fetchPeriodizations(user.id);
+  }, [user?.id, fetchPeriodizations]);
+
   return (
-    <ScreenLayout>
-      {/* Header */}
-      <View className="px-6 pt-4 pb-6">
-        <View className="flex-row justify-between items-center mb-6">
-          <View>
-            <Text className="mb-0.5 text-4xl font-extrabold tracking-tight text-foreground">
-              {isSpecialist ? 'Alunos' : 'Meus Treinos'}
-            </Text>
-            <Text className="text-sm text-muted-foreground">
-              {isSpecialist
-                ? 'Gestão de Planejamento'
-                : accountType === 'member'
-                  ? 'Planejamento & Execução'
-                  : 'Seus treinos'}
-            </Text>
-          </View>
-
-          <View className="flex-row items-center gap-3">
-            <TouchableOpacity
+    <TelaDeVidroComFoto
+      image={fotoDoGrupo('braços')}
+      refresh={{ refreshing: isLoading, onRefresh }}
+    >
+      <CabecalhoSobreFoto
+        sobrelinha={isSpecialist ? 'Gestão de planejamento' : 'Meus treinos'}
+        titulo={isSpecialist ? 'Alunos' : 'Periodizações'}
+        direita={
+          <View className="flex-row items-center gap-2">
+            <BotaoRedondo
+              icone="search"
+              rotulo="Buscar periodização"
               onPress={() => setIsSearchModalVisible(true)}
-              className="h-12 w-12 items-center justify-center rounded-full bg-muted"
-            >
-              <Ionicons name="search" size={escalar(24)} color={cores.foreground} />
-            </TouchableOpacity>
-
-            {(accountType === 'specialist' || accountType === 'member') && (
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={abrirCriacao}
-                className="h-12 w-12 items-center justify-center rounded-full bg-primary"
-              >
-                <Ionicons name="add" size={escalar(24)} color={cores.primaryForeground} />
-              </TouchableOpacity>
-            )}
+            />
+            <BotaoRedondo icone="plus" rotulo="Nova periodização" onPress={abrirCriacao} />
           </View>
-        </View>
-      </View>
+        }
+      />
 
       <SearchModal
         visible={isSearchModalVisible}
@@ -223,69 +136,107 @@ export default function PeriodizationsScreen() {
         onChangeText={setSearchQuery}
       />
 
-      <StudentPickerModal
-        visible={showStudentPicker}
-        onClose={() => setShowStudentPicker(false)}
-        students={studentsParaPicker}
-        onSelect={(student) => {
-          setShowStudentPicker(false);
-          router.push({
-            pathname: ROUTES.WORKOUTS.WIZARD_STRUCTURE,
-            params: { studentId: student.id, studentName: student.full_name ?? undefined },
-          });
-        }}
-      />
+      {isSpecialist ? (
+        <StudentPickerModal
+          visible={showStudentPicker}
+          onClose={() => setShowStudentPicker(false)}
+          students={studentsParaPicker}
+          onSelect={(student) => {
+            setShowStudentPicker(false);
+            router.push({
+              pathname: ROUTES.WORKOUTS.WIZARD_STRUCTURE,
+              params: { studentId: student.id, studentName: student.full_name ?? undefined },
+            });
+          }}
+        />
+      ) : null}
 
-      {/* Content */}
-      <FlatList
-        data={filteredPeriodizations}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
-        refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={onRefresh} tintColor={cores.primary} />
-        }
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          !isLoading ? (
-            <View className="flex-1 items-center justify-center py-20">
-              <View className="mb-6 rounded-full bg-muted p-8">
-                <Ionicons
-                  name="calendar-outline"
-                  size={escalar(64)}
-                  color={cores.mutedForeground}
-                />
-              </View>
-              <Text className="mb-2 text-center text-xl font-bold text-foreground">
-                Nenhuma periodização
-              </Text>
-              <Text className="mb-8 px-8 text-center text-sm text-muted-foreground">
-                {accountType === 'specialist'
-                  ? 'Crie um planejamento para seus alunos'
-                  : accountType === 'member'
-                    ? 'Crie sua primeira periodização de treino'
-                    : 'Seu personal ainda não criou uma periodização'}
-              </Text>
+      <ConteudoDaLista
+        carregando={isLoading}
+        vazio={buscadas.length === 0}
+        especialista={isSpecialist}
+      >
+        {ativas.map((periodizacao) => (
+          <PeriodizationHeroCard
+            key={periodizacao.id}
+            periodizacao={periodizacao}
+            nomeDoAluno={isSpecialist ? (periodizacao.student?.full_name ?? undefined) : undefined}
+            onPress={() => abrir(periodizacao, isMember)}
+          />
+        ))}
 
-              {(accountType === 'specialist' || accountType === 'member') && (
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={abrirCriacao}
-                  className="rounded-md bg-primary px-6 py-3"
-                >
-                  <Text className="text-base font-bold text-primary-foreground">
-                    Criar periodização
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          ) : (
-            <View className="py-20">
-              <ActivityIndicator size="large" color={cores.primary} />
-            </View>
-          )
-        }
-      />
-    </ScreenLayout>
+        <FiltrosDePeriodizacoes periodizacoes={buscadas} filtro={filtro} onMudar={setFiltro} />
+
+        <TituloDeSecao estilo="rotulo" acao="Mais recentes">
+          Histórico
+        </TituloDeSecao>
+        {historico.map((periodizacao) => (
+          <PeriodizationHistoryRow
+            key={periodizacao.id}
+            periodizacao={periodizacao}
+            onPress={() => abrir(periodizacao)}
+          />
+        ))}
+        {historico.length === 0 ? (
+          <Text className="py-6 text-center text-micro text-muted-foreground">
+            Nenhuma periodização aqui.
+          </Text>
+        ) : null}
+      </ConteudoDaLista>
+    </TelaDeVidroComFoto>
+  );
+}
+
+interface ConteudoDaListaProps {
+  carregando: boolean;
+  vazio: boolean;
+  especialista: boolean;
+  children: React.ReactNode;
+}
+
+/** Carregando e lista vazia antes do conteúdo — o "criar" some do vazio quando é o aluno lendo. */
+function ConteudoDaLista({ carregando, vazio, especialista, children }: ConteudoDaListaProps) {
+  const cores = useCores();
+  if (carregando) return <ActivityIndicator className="mt-10" color={cores.primary} />;
+  if (vazio) {
+    return (
+      <Text className="px-6 py-10 text-center text-legenda text-muted-foreground">
+        {especialista
+          ? 'Crie um planejamento para seus alunos.'
+          : 'Crie sua primeira periodização de treino.'}
+      </Text>
+    );
+  }
+  return <>{children}</>;
+}
+
+interface FiltrosDePeriodizacoesProps {
+  periodizacoes: Periodization[];
+  filtro: Filtro;
+  onMudar: (filtro: Filtro) => void;
+}
+
+function FiltrosDePeriodizacoes({ periodizacoes, filtro, onMudar }: FiltrosDePeriodizacoesProps) {
+  const quantos = (status: Periodization['status']) =>
+    periodizacoes.filter((p) => p.status === status).length;
+  const opcoes: { chave: Filtro; rotulo: string }[] = [
+    { chave: 'todas', rotulo: `Todas · ${periodizacoes.length}` },
+    { chave: 'concluidas', rotulo: `Concluídas · ${quantos('completed')}` },
+    { chave: 'planejadas', rotulo: `Planejadas · ${quantos('planned')}` },
+  ];
+
+  return (
+    <View className="mt-4 flex-row flex-wrap gap-[0.4375rem]">
+      {opcoes.map((opcao) => (
+        <TouchableOpacity
+          key={opcao.chave}
+          onPress={() => onMudar(opcao.chave)}
+          accessibilityRole="button"
+          accessibilityState={{ selected: filtro === opcao.chave }}
+        >
+          <Chip tom={filtro === opcao.chave ? 'destaque' : 'neutro'}>{opcao.rotulo}</Chip>
+        </TouchableOpacity>
+      ))}
+    </View>
   );
 }

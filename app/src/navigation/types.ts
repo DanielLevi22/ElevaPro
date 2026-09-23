@@ -89,6 +89,16 @@ export const ROUTES = {
     SELECT_EXERCISES: '/(tabs)/workouts/select-exercises',
     PERIODIZATION: (id: string): `/(tabs)/workouts/periodizations/${string}` =>
       `/(tabs)/workouts/periodizations/${id}`,
+    /**
+     * A mesma ficha, em modo de execução — `mode` como parâmetro, e não
+     * embutido na URL: `PERIODIZATION(id)` embutida não casa com `pathname`
+     * em objeto, que quer o segmento `[id]` literal (ver `PROGRESS.SCAN`).
+     */
+    PERIODIZATION_EXECUTE: (id: string) =>
+      ({
+        pathname: '/(tabs)/workouts/periodizations/[id]',
+        params: { id, mode: 'execute' },
+      }) as const,
     PHASE: (
       periodizationId: string,
       phaseId: string
