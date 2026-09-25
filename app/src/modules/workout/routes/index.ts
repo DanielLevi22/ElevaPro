@@ -8,7 +8,6 @@ export { SessaoEmAndamentoScreen } from '../screens/aluno/sessao/SessaoEmAndamen
 export { TreinosDaFaseScreen } from '../screens/aluno/TreinosDaFaseScreen';
 export { default as SelectExercisesScreen } from '../screens/SelectExercisesScreen';
 export { default as WorkoutDetailsScreen } from '../screens/WorkoutDetailsScreen';
-export { default as WorkoutsScreen } from '../screens/WorkoutsScreen';
 
 // Routes
 export { WorkoutNavigator } from './routes';
