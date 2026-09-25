@@ -190,6 +190,37 @@ describe('workoutStore', () => {
     expect(refetchCalled).toBe(true);
   });
 
+  // O dia da semana é o que a aderência do aluno lê para saber o que está
+  // prescrito (issue #335) — sem atualizar o estado local, a tela de revisão
+  // mostraria o treino sem dia mesmo depois de salvo.
+  it('should update a workout and update local state', async () => {
+    useWorkoutStore.setState({
+      workouts: [
+        {
+          id: 'w1',
+          training_plan_id: 'tp1',
+          title: 'Treino A',
+          specialist_id: 'spec1',
+          student_id: null,
+          created_at: '',
+          updated_at: '',
+          description: null,
+          muscle_group: null,
+          difficulty: null,
+          day_of_week: null,
+        },
+      ],
+    });
+    mockSupabase.from.mockReturnValue(
+      mockSupabaseQuery({ id: 'w1', title: 'Treino A', day_of_week: 'monday' })
+    );
+
+    await useWorkoutStore.getState().updateWorkout('w1', { day_of_week: 'monday' });
+
+    const state = useWorkoutStore.getState();
+    expect(state.workouts.find((w) => w.id === 'w1')?.day_of_week).toBe('monday');
+  });
+
   it('should fetch workout by id and update workouts in state', async () => {
     const mockWorkout = {
       id: 'w1',

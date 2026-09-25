@@ -1,6 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
+import type { Ionicons } from '@expo/vector-icons';
 import type { ViewStyle } from 'react-native';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, TouchableOpacity } from 'react-native';
+import { Chip } from '@/components/ui/Chip';
 
 interface MuscleFilterCarouselProps {
   selectedMuscle: string | null;
@@ -15,7 +16,7 @@ export const MUSCLE_FILTERS = [
   { name: 'Braços', icon: 'barbell' },
   { name: 'Ombros', icon: 'shield' },
   { name: 'Abdominais', icon: 'grid' },
-] as const;
+] as const satisfies { name: string; icon: keyof typeof Ionicons.glyphMap }[];
 
 export function MuscleFilterCarousel({
   selectedMuscle,
@@ -23,48 +24,34 @@ export function MuscleFilterCarousel({
   containerStyle,
 }: MuscleFilterCarouselProps) {
   return (
-    <View style={containerStyle}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingRight: 24 }}
-        className="flex-row"
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerClassName="gap-1.5 pr-6"
+      style={containerStyle}
+    >
+      <TouchableOpacity
+        onPress={() => onSelectMuscle(null)}
+        accessibilityRole="button"
+        accessibilityState={{ selected: !selectedMuscle }}
       >
-        <TouchableOpacity
-          onPress={() => onSelectMuscle(null)}
-          className={`flex-row items-center px-4 py-2.5 rounded-2xl mr-3 border ${!selectedMuscle ? 'bg-orange-500/10 border-orange-500/30' : 'bg-zinc-900 border-zinc-800'}`}
-        >
-          <Ionicons
-            name="grid-outline"
-            size={18}
-            color={!selectedMuscle ? '#FF6B35' : '#71717A'}
-            style={{ marginRight: 8 }}
-          />
-          <Text className={`font-bold ${!selectedMuscle ? 'text-white' : 'text-zinc-500'}`}>
-            Todos
-          </Text>
-        </TouchableOpacity>
+        <Chip tom={!selectedMuscle ? 'destaque' : 'neutro'} icone="grid-outline">
+          Todos
+        </Chip>
+      </TouchableOpacity>
 
-        {MUSCLE_FILTERS.map((m) => (
-          <TouchableOpacity
-            key={m.name}
-            onPress={() => onSelectMuscle(m.name)}
-            className={`flex-row items-center px-4 py-2.5 rounded-2xl mr-3 border ${selectedMuscle === m.name ? 'bg-orange-500/10 border-orange-500/30' : 'bg-zinc-900 border-zinc-800'}`}
-          >
-            <Ionicons
-              name={m.icon as keyof typeof Ionicons.glyphMap}
-              size={18}
-              color={selectedMuscle === m.name ? '#FF6B35' : '#71717A'}
-              style={{ marginRight: 8 }}
-            />
-            <Text
-              className={`font-bold ${selectedMuscle === m.name ? 'text-white' : 'text-zinc-500'}`}
-            >
-              {m.name}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
+      {MUSCLE_FILTERS.map((m) => (
+        <TouchableOpacity
+          key={m.name}
+          onPress={() => onSelectMuscle(m.name)}
+          accessibilityRole="button"
+          accessibilityState={{ selected: selectedMuscle === m.name }}
+        >
+          <Chip tom={selectedMuscle === m.name ? 'destaque' : 'neutro'} icone={m.icon}>
+            {m.name}
+          </Chip>
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
   );
 }

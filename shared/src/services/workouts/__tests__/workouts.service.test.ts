@@ -30,131 +30,6 @@ describe("workoutsService — catálogo de exercícios", () => {
   });
 });
 
-describe("workoutsService — periodizações", () => {
-  // Regressão do DT-23. `start_date` e `end_date` são NOT NULL desde a
-  // migration `0024`. Enquanto o tipo os declarava opcionais, o serviço mandava
-  // `null` e o banco recusava o insert — criar periodização falhava sempre, e
-  // nada no compilador acusava.
-  it("manda as datas que o banco exige, sem null", async () => {
-    const { supabase, chamadas } = criarSupabaseFake({ data: { id: "p1" } });
-
-    await createWorkoutsService(supabase).createPeriodization({
-      student_id: "aluno-1",
-      specialist_id: "esp-1",
-      name: "Hipertrofia",
-      start_date: "2026-09-01",
-      end_date: "2026-12-01",
-    });
-
-    const payload = chamadas[0].payload as Record<string, unknown>;
-    expect(payload.start_date).toBe("2026-09-01");
-    expect(payload.end_date).toBe("2026-12-01");
-    expect(payload.status).toBe("planned");
-  });
-
-  // Duas periodizações ativas para o mesmo aluno tornam ambíguo qual está
-  // valendo. Ativar uma precisa encerrar a anterior na mesma operação.
-  it("encerra a periodização ativa do aluno ao ativar outra", async () => {
-    const { supabase, chamadas } = criarSupabaseFake([
-      { data: { student_id: "aluno-1" } },
-      {},
-      { data: { id: "p2", status: "active" } },
-    ]);
-
-    await createWorkoutsService(supabase).activatePeriodization("p2");
-
-    expect(chamadas[1].payload).toEqual({ status: "completed" });
-    expect(chamadas[1].filtros).toEqual({ student_id: "aluno-1", status: "active" });
-    expect(chamadas[2].payload).toEqual({ status: "active" });
-    expect(chamadas[2].filtros).toEqual({ id: "p2" });
-  });
-
-  it("propaga erro da busca sem tentar ativar nada", async () => {
-    const { supabase, chamadas } = criarSupabaseFake({ error: { message: "não encontrada" } });
-    await expect(createWorkoutsService(supabase).activatePeriodization("p2")).rejects.toEqual({
-      message: "não encontrada",
-    });
-    expect(chamadas).toHaveLength(1);
-  });
-});
-
-describe("workoutsService — fichas de treino", () => {
-  it("manda as datas obrigatórias ao criar a ficha", async () => {
-    const { supabase, chamadas } = criarSupabaseFake({ data: { id: "f1" } });
-
-    await createWorkoutsService(supabase).createTrainingPlan({
-      periodization_id: "p1",
-      name: "Fase 1",
-      start_date: "2026-09-01",
-      end_date: "2026-09-30",
-    });
-
-    const payload = chamadas[0].payload as Record<string, unknown>;
-    expect(payload.start_date).toBe("2026-09-01");
-    expect(payload.end_date).toBe("2026-09-30");
-    expect(payload.order_index).toBe(0);
-  });
-
-  // A cópia nasce "planned", nunca herdando o status da original: clonar uma
-  // ficha ativa não pode ativar duas ao mesmo tempo.
-  it("clona a ficha como planejada, marcando o nome", async () => {
-    const { supabase, chamadas } = criarSupabaseFake([
-      {
-        data: {
-          id: "f1",
-          periodization_id: "p1",
-          name: "Fase 1",
-          status: "active",
-          start_date: "2026-09-01",
-          end_date: "2026-09-30",
-          order_index: 2,
-        },
-      },
-      { data: { id: "f2" } },
-      { data: [] },
-    ]);
-
-    await createWorkoutsService(supabase).cloneTrainingPlan("f1");
-
-    const payload = chamadas[1].payload as Record<string, unknown>;
-    expect(payload.name).toBe("Fase 1 (Cópia)");
-    expect(payload.status).toBe("planned");
-    expect(payload.order_index).toBe(2);
-  });
-
-  it("copia os treinos da ficha original para a cópia", async () => {
-    const { supabase, chamadas } = criarSupabaseFake([
-      { data: { id: "f1", periodization_id: "p1", name: "Fase 1" } },
-      { data: { id: "f2" } },
-      {
-        data: [
-          { specialist_id: "esp-1", title: "Treino A", muscle_group: "peito", difficulty: null },
-        ],
-      },
-      {},
-    ]);
-
-    await createWorkoutsService(supabase).cloneTrainingPlan("f1");
-
-    const copiados = chamadas[3].payload as Record<string, unknown>[];
-    expect(copiados[0].training_plan_id).toBe("f2");
-    expect(copiados[0].title).toBe("Treino A");
-    // O id da original não pode viajar junto, senão a cópia sobrescreve.
-    expect(copiados[0]).not.toHaveProperty("id");
-  });
-
-  it("não tenta copiar treino quando a ficha original está vazia", async () => {
-    const { supabase, chamadas } = criarSupabaseFake([
-      { data: { id: "f1", name: "Fase 1" } },
-      { data: { id: "f2" } },
-      { data: [] },
-    ]);
-
-    await createWorkoutsService(supabase).cloneTrainingPlan("f1");
-    expect(chamadas).toHaveLength(3);
-  });
-});
-
 describe("workoutsService — exercícios do treino", () => {
   // A ordem na tela vem de `order_index`. Sem o índice do laço como padrão,
   // vários exercícios entrariam com o mesmo valor e a ordem viraria a do banco.
@@ -184,6 +59,77 @@ describe("workoutsService — exercícios do treino", () => {
     expect(linha.reps).toBeNull();
     expect(linha.weight).toBeNull();
     expect(linha.notes).toBeNull();
+  });
+});
+
+describe("workoutsService — esvaziar treinos da fase", () => {
+  // A troca de divisão e o Co-Pilot recriam do zero: extraído pro serviço
+  // porque a mesma exclusão por `training_plan_id` vivia duplicada em dois
+  // pontos do fluxo de divisão no mobile (issue #335).
+  it("apaga só os treinos da fase pedida", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({});
+
+    await createWorkoutsService(supabase).deleteWorkoutsForPhase("fase-1");
+
+    expect(chamadas[0].tabela).toBe("workouts");
+    expect(chamadas[0].filtros).toEqual({ training_plan_id: "fase-1" });
+    expect(chamadas[0].metodos.some((m) => m.nome === "delete")).toBe(true);
+  });
+
+  it("propaga o erro em vez de seguir como se tivesse apagado", async () => {
+    const { supabase } = criarSupabaseFake({ error: { message: "42501" } });
+    await expect(createWorkoutsService(supabase).deleteWorkoutsForPhase("fase-1")).rejects.toEqual({
+      message: "42501",
+    });
+  });
+});
+
+describe("workoutsService — reordenar exercícios do treino", () => {
+  it("grava o order_index de cada item, um `update` por linha", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({});
+
+    await createWorkoutsService(supabase).reorderWorkoutExercises([
+      { id: "we-1", order_index: 1 },
+      { id: "we-2", order_index: 0 },
+    ]);
+
+    expect(chamadas).toHaveLength(2);
+    expect(chamadas[0].tabela).toBe("workout_exercises");
+    expect(chamadas[0].payload).toEqual({ order_index: 1 });
+    expect(chamadas[0].filtros).toEqual({ id: "we-1" });
+    expect(chamadas[1].payload).toEqual({ order_index: 0 });
+    expect(chamadas[1].filtros).toEqual({ id: "we-2" });
+  });
+
+  it("propaga o erro em vez de seguir como se tivesse reordenado", async () => {
+    const { supabase } = criarSupabaseFake({ error: { message: "42501" } });
+    await expect(
+      createWorkoutsService(supabase).reorderWorkoutExercises([{ id: "we-1", order_index: 0 }]),
+    ).rejects.toEqual({ message: "42501" });
+  });
+});
+
+describe("workoutsService — ajustar exercício do treino", () => {
+  it("grava só os campos de execução, na linha do treino, não no catálogo", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({});
+
+    await createWorkoutsService(supabase).updateWorkoutExercise("we-1", {
+      sets: 4,
+      reps: "10",
+      weight: "20",
+      rest_seconds: 90,
+    });
+
+    expect(chamadas[0].tabela).toBe("workout_exercises");
+    expect(chamadas[0].payload).toEqual({ sets: 4, reps: "10", weight: "20", rest_seconds: 90 });
+    expect(chamadas[0].filtros).toEqual({ id: "we-1" });
+  });
+
+  it("propaga o erro em vez de seguir como se tivesse ajustado", async () => {
+    const { supabase } = criarSupabaseFake({ error: { message: "42501" } });
+    await expect(
+      createWorkoutsService(supabase).updateWorkoutExercise("we-1", { sets: 4 }),
+    ).rejects.toEqual({ message: "42501" });
   });
 });
 

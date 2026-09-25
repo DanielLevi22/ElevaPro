@@ -73,22 +73,62 @@ export const ROUTES = {
       `/(tabs)/students/${id}/assessment`,
     ANALYTICS: (id: string): `/(tabs)/students/${string}/analytics` =>
       `/(tabs)/students/${id}/analytics`,
+    WORKOUT_DETAILS: (
+      studentId: string,
+      workoutId: string
+    ): `/(tabs)/students/${string}/workouts/details/${string}` =>
+      `/(tabs)/students/${studentId}/workouts/details/${workoutId}`,
   },
 
   // Workout Flows
   WORKOUTS: {
     ROOT: '/(tabs)/workouts',
-    CREATE_PERIODIZATION: '/(tabs)/workouts/create-periodization',
     DETAILS: (id: string): `/(tabs)/workouts/${string}` => `/(tabs)/workouts/${id}`,
-    SELECT_EXERCISES: '/workouts/select-exercises',
+    // Sem o grupo `(tabs)` isto nunca casava com a rota de verdade — os únicos
+    // dois call sites que existiam bypassavam a constante com string solta.
+    SELECT_EXERCISES: '/(tabs)/workouts/select-exercises',
+    /**
+     * A ficha do treino pro especialista/personal — `workoutId` repete `id`
+     * porque `WorkoutDetailsScreen` ainda lê os dois nomes de parâmetro.
+     */
+    DETAILS_FOR_SPECIALIST: (id: string, studentId: string | undefined) =>
+      ({
+        pathname: '/(tabs)/workouts/details/[id]',
+        params: { id, workoutId: id, studentId },
+      }) as const,
+    /** A mesma ficha, pro aluno/membro — com `mode=execute` quando vem da execução do dia. */
+    DETAILS_STUDENT: (id: string, executar = false) =>
+      ({
+        pathname: '/(tabs)/workouts/details/[id]',
+        params: executar ? { id, mode: 'execute' } : { id },
+      }) as const,
     PERIODIZATION: (id: string): `/(tabs)/workouts/periodizations/${string}` =>
       `/(tabs)/workouts/periodizations/${id}`,
+    /**
+     * A mesma ficha, em modo de execução — `mode` como parâmetro, e não
+     * embutido na URL: `PERIODIZATION(id)` embutida não casa com `pathname`
+     * em objeto, que quer o segmento `[id]` literal (ver `PROGRESS.SCAN`).
+     */
+    PERIODIZATION_EXECUTE: (id: string) =>
+      ({
+        pathname: '/(tabs)/workouts/periodizations/[id]',
+        params: { id, mode: 'execute' },
+      }) as const,
     PHASE: (
       periodizationId: string,
       phaseId: string
     ): `/(tabs)/workouts/periodizations/${string}/phases/${string}` =>
       `/(tabs)/workouts/periodizations/${periodizationId}/phases/${phaseId}`,
     EXECUTE: (id: string): `/(tabs)/workouts/execute/${string}` => `/(tabs)/workouts/execute/${id}`,
+    // Wizard de criação (#335) — substitui a antiga CreatePeriodizationScreen
+    // e a criação inline de fase/treino que ainda mora em
+    // PeriodizationDetailsScreen/PhaseDetailsScreen.
+    WIZARD_STRUCTURE: '/(tabs)/workouts/wizard/structure',
+    WIZARD_BUILD: '/(tabs)/workouts/wizard/build',
+    WIZARD_REVIEW: '/(tabs)/workouts/wizard/review',
+    // Chat de verdade com o assistente (#335) — substitui a proposta de um
+    // tiro só que morava em WIZARD_STRUCTURE/WIZARD_BUILD.
+    WIZARD_ASSISTANT: '/(tabs)/workouts/wizard/assistant',
   },
 
   // Nutrição do aluno, no desenho de vidro (#298). O member segue nas telas antigas.

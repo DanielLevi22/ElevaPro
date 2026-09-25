@@ -4,6 +4,7 @@ import type {
   TrainingPlan,
   UpdatePeriodizationInput,
   UpdateTrainingPlanInput,
+  UpdateWorkoutInput,
   Workout,
   WorkoutExercise,
   WorkoutSession,
@@ -40,7 +41,6 @@ interface WorkoutState {
   libraryWorkouts: Workout[];
   periodizations: Periodization[];
   exercises: Exercise[];
-  selectedExercises: SelectedExercise[];
   currentPeriodizationPhases: TrainingPlan[];
   isLoading: boolean;
   fetchWorkouts: (specialistId: string) => Promise<void>;
@@ -59,10 +59,23 @@ interface WorkoutState {
   updatePeriodization: (id: string, updates: Partial<Periodization>) => Promise<void>;
   activatePeriodization: (periodizationId: string) => Promise<Periodization>;
   createTrainingPlan: (plan: Omit<TrainingPlan, 'id' | 'created_at'>) => Promise<TrainingPlan>;
+  activateTrainingPlan: (trainingPlanId: string) => Promise<TrainingPlan>;
   updateTrainingPlan: (id: string, updates: Partial<TrainingPlan>) => Promise<void>;
   deleteTrainingPlan: (id: string) => Promise<void>;
   fetchWorkoutsForPhase: (trainingPlanId: string) => Promise<void>;
+  deleteWorkoutsForPhase: (trainingPlanId: string) => Promise<void>;
   addWorkoutItems: (workoutId: string, items: WorkoutExercise[]) => Promise<void>;
+  reorderWorkoutExercises: (
+    workoutId: string,
+    items: { id: string; order_index: number }[]
+  ) => Promise<void>;
+  updateWorkoutExercise: (
+    workoutId: string,
+    workoutExerciseId: string,
+    updates: { sets?: number; reps?: string; weight?: string; rest_seconds?: number },
+    videoUrl?: { exerciseId: string; value: string | null }
+  ) => Promise<void>;
+  removeWorkoutItem: (workoutId: string, workoutExerciseId: string) => Promise<void>;
   createWorkout: (workout: {
     training_plan_id: string;
     title: string;
@@ -70,11 +83,10 @@ interface WorkoutState {
     muscle_group?: string;
     specialist_id: string;
   }) => Promise<void>;
+  updateWorkout: (id: string, updates: UpdateWorkoutInput) => Promise<void>;
   fetchLastWorkoutSession: (
     studentId: string
   ) => Promise<{ workout_id: string | null; completed_at: string | null } | null>;
-  setSelectedExercises: (exercises: SelectedExercise[]) => void;
-  clearSelectedExercises: () => void;
   duplicateWorkout: (workoutId: string, targetPlanId: string) => Promise<void>;
   reset: () => void;
 }
@@ -84,7 +96,6 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
   libraryWorkouts: [],
   periodizations: [],
   exercises: [],
-  selectedExercises: [],
   currentPeriodizationPhases: [],
   isLoading: false,
 
@@ -262,6 +273,19 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     }
   },
 
+  activateTrainingPlan: async (trainingPlanId) => {
+    const activated = await workoutsService.activateTrainingPlan(trainingPlanId);
+    set((state) => ({
+      currentPeriodizationPhases: state.currentPeriodizationPhases.map((p) => {
+        if (p.id === trainingPlanId) return { ...p, status: 'active' as const };
+        if (p.periodization_id === activated.periodization_id && p.status === 'active')
+          return { ...p, status: 'completed' as const };
+        return p;
+      }),
+    }));
+    return activated;
+  },
+
   updateTrainingPlan: async (id, updates) => {
     try {
       await workoutsService.updateTrainingPlan(id, updates as UpdateTrainingPlanInput);
@@ -286,6 +310,10 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       console.error('Error deleting training plan:', error);
       throw error;
     }
+  },
+
+  deleteWorkoutsForPhase: async (trainingPlanId) => {
+    await workoutsService.deleteWorkoutsForPhase(trainingPlanId);
   },
 
   fetchWorkoutsForPhase: async (trainingPlanId) => {
@@ -319,6 +347,24 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       console.error('Error adding workout items:', error);
       throw error;
     }
+  },
+
+  reorderWorkoutExercises: async (workoutId, items) => {
+    await workoutsService.reorderWorkoutExercises(items);
+    await get().fetchWorkoutById(workoutId);
+  },
+
+  updateWorkoutExercise: async (workoutId, workoutExerciseId, updates, videoUrl) => {
+    await workoutsService.updateWorkoutExercise(workoutExerciseId, updates);
+    if (videoUrl) {
+      await workoutsService.updateExercise(videoUrl.exerciseId, { video_url: videoUrl.value });
+    }
+    await get().fetchWorkoutById(workoutId);
+  },
+
+  removeWorkoutItem: async (workoutId, workoutExerciseId) => {
+    await workoutsService.removeExerciseFromWorkout(workoutExerciseId);
+    await get().fetchWorkoutById(workoutId);
   },
 
   createWorkout: async (workout) => {
@@ -355,8 +401,12 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     }
   },
 
-  setSelectedExercises: (exercises) => set({ selectedExercises: exercises }),
-  clearSelectedExercises: () => set({ selectedExercises: [] }),
+  updateWorkout: async (id, updates) => {
+    const updated = await workoutsService.updateWorkout(id, updates);
+    set((state) => ({
+      workouts: state.workouts.map((w) => (w.id === id ? { ...w, ...updated } : w)),
+    }));
+  },
 
   duplicateWorkout: async (workoutId, targetPlanId) => {
     set({ isLoading: true });
@@ -404,7 +454,6 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       libraryWorkouts: [],
       periodizations: [],
       exercises: [],
-      selectedExercises: [],
       currentPeriodizationPhases: [],
       isLoading: false,
     });

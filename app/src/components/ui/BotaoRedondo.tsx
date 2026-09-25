@@ -10,6 +10,7 @@ import Info from 'lucide-react-native/icons/info';
 import Mic from 'lucide-react-native/icons/mic';
 import MicOff from 'lucide-react-native/icons/mic-off';
 import Music from 'lucide-react-native/icons/music';
+import Pencil from 'lucide-react-native/icons/pencil';
 import Plus from 'lucide-react-native/icons/plus';
 import RefreshCw from 'lucide-react-native/icons/refresh-cw';
 import Ruler from 'lucide-react-native/icons/ruler';
@@ -66,6 +67,8 @@ const ICONS = {
   ruler: Ruler,
   /** "Como funciona" do ranking (#320). */
   info: Info,
+  /** Editar a periodização, no cabeçalho da ficha (#335). */
+  pencil: Pencil,
 } as const satisfies Record<string, LucideIcon>;
 
 export type RoundIcon = keyof typeof ICONS;

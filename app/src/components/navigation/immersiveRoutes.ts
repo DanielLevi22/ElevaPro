@@ -13,13 +13,7 @@
  */
 
 /** Rotas de `/workouts/<algo>` que são navegação normal, não detalhe de treino. */
-const WORKOUT_NON_DETAIL_SEGMENTS = new Set([
-  'create',
-  'create-periodization',
-  'select-exercises',
-  'index',
-  'execute',
-]);
+const WORKOUT_NON_DETAIL_SEGMENTS = new Set(['create', 'select-exercises', 'index', 'execute']);
 
 /** O detalhe do treino que o especialista abre pela ficha do aluno: sempre a tela antiga. */
 const DETALHE_PELA_FICHA = /^\/students\/[^/]+\/workouts\/details\/[^/]+$/;

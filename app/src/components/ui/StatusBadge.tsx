@@ -7,7 +7,7 @@ import { Badge, type BadgeProps } from './Badge';
  * duas coisas estavam no mesmo lugar, com os hexadecimais da paleta coral
  * escritos à mão na tabela.
  */
-export type StatusType = 'active' | 'draft' | 'completed' | 'pending' | 'canceled';
+export type StatusType = 'active' | 'draft' | 'planned' | 'completed' | 'pending' | 'canceled';
 
 interface StatusBadgeProps {
   status: StatusType | string;
@@ -17,6 +17,9 @@ interface StatusBadgeProps {
 const ESTADO: Record<StatusType, { label: string; tone: BadgeProps['tone'] }> = {
   active: { label: 'Ativo', tone: 'success' },
   draft: { label: 'Rascunho', tone: 'warning' },
+  // Mesmo rótulo que o PhaseTimelineCard/PhaseStatusModal já usam pro mesmo
+  // status — sem isto, "planned" aparecia cru no selo (#335).
+  planned: { label: 'Rascunho', tone: 'warning' },
   completed: { label: 'Concluído', tone: 'neutral' },
   pending: { label: 'Pendente', tone: 'warning' },
   canceled: { label: 'Cancelado', tone: 'danger' },

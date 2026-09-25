@@ -159,6 +159,15 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
     if (error) throw error;
   },
 
+  /** Esvazia a fase antes de recriar os treinos pela divisão — troca de "ABC" pra "ABCD", ou pra dar lugar à proposta da IA. */
+  deleteWorkoutsForPhase: async (trainingPlanId: string): Promise<void> => {
+    const { error } = await supabase
+      .from("workouts")
+      .delete()
+      .eq("training_plan_id", trainingPlanId);
+    if (error) throw error;
+  },
+
   addExercisesToWorkout: async (
     workoutId: string,
     items: AddWorkoutExerciseInput[],
@@ -180,6 +189,29 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
   removeExerciseFromWorkout: async (workoutExerciseId: string): Promise<void> => {
     const { error } = await supabase.from("workout_exercises").delete().eq("id", workoutExerciseId);
     if (error) throw error;
+  },
+
+  /** Ajusta séries/repetições/carga/descanso de um exercício já no treino — não o catálogo. */
+  updateWorkoutExercise: async (
+    workoutExerciseId: string,
+    input: { sets?: number; reps?: string; weight?: string; rest_seconds?: number },
+  ): Promise<void> => {
+    const { error } = await supabase
+      .from("workout_exercises")
+      .update(input)
+      .eq("id", workoutExerciseId);
+    if (error) throw error;
+  },
+
+  /** Grava a nova ordem depois de mover um exercício na montagem do treino. */
+  reorderWorkoutExercises: async (itens: { id: string; order_index: number }[]): Promise<void> => {
+    for (const item of itens) {
+      const { error } = await supabase
+        .from("workout_exercises")
+        .update({ order_index: item.order_index })
+        .eq("id", item.id);
+      if (error) throw error;
+    }
   },
 });
 

@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/modules/auth";
-import { Button } from "@/shared/components/ui/Button";
 import { criarAcumuladorDaPrevia } from "../services/acumuladorDaPrevia";
 import { criarAcumuladorDeTexto } from "../services/acumuladorDeTexto";
 import type { BlocoDeContexto } from "../services/disponibilidade";
@@ -10,11 +9,12 @@ import type { Previa } from "../services/previaDaProposta";
 import { dispensar, foiDispensada } from "../services/propostaDispensada";
 import type { BulkWorkoutProposal, ChatMessage, PeriodizationProposal, SseEvent } from "../types";
 import { BulkWorkoutProposalCard } from "./BulkWorkoutProposalCard";
+import { ChatInputBar } from "./ChatInputBar";
+import { ChatMessageBubble } from "./ChatMessageBubble";
 import { ContextoDisponivel } from "./ContextoDisponivel";
 import { PainelDeProposta } from "./PainelDeProposta";
 import { PeriodizationProposalCard } from "./PeriodizationProposalCard";
 import { PreviaDaProposta } from "./PreviaDaProposta";
-import { TextoDoAssistente } from "./TextoDoAssistente";
 
 interface Props {
   studentId: string;
@@ -378,39 +378,7 @@ export function AiCoachChat({
         <ContextoDisponivel blocos={contexto} />
 
         {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-          >
-            {msg.role === "assistant" && (
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0 mr-2 mt-0.5">
-                AI
-              </div>
-            )}
-            <div
-              className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
-                msg.role === "user"
-                  ? "bg-primary text-primary-foreground rounded-br-sm"
-                  : "bg-surface border border-white/10 text-foreground rounded-bl-sm"
-              }`}
-            >
-              {/* Só o texto do assistente é interpretado: quem escreve um
-                  asterisco na própria mensagem espera ver um asterisco. */}
-              {msg.content ? (
-                msg.role === "assistant" ? (
-                  <TextoDoAssistente content={msg.content} />
-                ) : (
-                  msg.content
-                )
-              ) : (
-                <span className="flex gap-1 items-center text-muted-foreground">
-                  <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:0ms]" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:150ms]" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:300ms]" />
-                </span>
-              )}
-            </div>
-          </div>
+          <ChatMessageBubble key={msg.id} msg={msg} />
         ))}
 
         {/* Só enquanto uma ferramenta roda de verdade — consultar catálogo,
@@ -490,52 +458,14 @@ export function AiCoachChat({
         </PainelDeProposta>
       )}
 
-      {/* Input */}
-      <div className="border-t border-white/10 pt-4">
-        <div className="flex gap-3 items-end">
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            rows={1}
-            placeholder="Digite uma mensagem... (Enter para enviar)"
-            disabled={loading}
-            className="flex-1 resize-none bg-surface border border-white/10 rounded-xl px-4 py-3 text-foreground placeholder-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:opacity-50 max-h-32 overflow-y-auto"
-            style={{ height: "auto" }}
-            onInput={(e) => {
-              const t = e.currentTarget;
-              t.style.height = "auto";
-              t.style.height = `${Math.min(t.scrollHeight, 128)}px`;
-            }}
-          />
-          <Button
-            size="icon"
-            aria-label="Enviar mensagem"
-            onClick={() => sendMessage()}
-            disabled={!input.trim() || loading}
-            className="shrink-0"
-          >
-            <svg
-              aria-hidden="true"
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-              />
-            </svg>
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground mt-2 text-center">
-          Shift+Enter para nova linha · Enter para enviar
-        </p>
-      </div>
+      <ChatInputBar
+        value={input}
+        onChange={setInput}
+        onKeyDown={handleKeyDown}
+        onSend={() => sendMessage()}
+        loading={loading}
+        inputRef={inputRef}
+      />
     </div>
   );
 }

@@ -42,6 +42,7 @@ describe('StatusBadge', () => {
   it.each([
     ['active', 'Ativo'],
     ['draft', 'Rascunho'],
+    ['planned', 'Rascunho'],
     ['completed', 'Concluído'],
     ['pending', 'Pendente'],
     ['canceled', 'Cancelado'],

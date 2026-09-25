@@ -27,6 +27,7 @@ const mockFetchBriefing = jest.fn().mockResolvedValue({
   stats: { activeStudents: 0, workoutTemplates: 0, activeDietPlans: 0, aiSessions: 0 },
 });
 const mockFetchAdherence = jest.fn().mockResolvedValue(null);
+const mockFetchActiveTrainingSignal = jest.fn().mockResolvedValue(null);
 
 jest.mock('@elevapro/supabase', () => ({ supabase: {} }));
 
@@ -44,6 +45,9 @@ jest.mock('@elevapro/shared', () => ({
   }),
   createAdherenceService: () => ({
     fetchAdherence: (id: string, hoje: string) => mockFetchAdherence(id, hoje),
+  }),
+  createWorkoutsService: () => ({
+    fetchActiveTrainingSignal: (id: string) => mockFetchActiveTrainingSignal(id),
   }),
 }));
 
@@ -121,6 +125,9 @@ describe('useDadosDaHome', () => {
     await waitFor(() => expect(result.current.aluno.perfil?.full_name).toBe('Ana Souza'));
     expect(mockBuscarDoDia).toHaveBeenCalledWith('2026-09-12');
     expect(mockBuscarTreinos).toHaveBeenCalledWith('u1');
+    // O sinal de plano novo (#335) é buscado junto do resto, pro aviso in-app
+    // decidir se mostra o balão sem esperar outro carregamento.
+    expect(mockFetchActiveTrainingSignal).toHaveBeenCalledWith('u1');
     expect(mockRecarregarSaude).toHaveBeenCalled();
     expect(mockReloadActivity).toHaveBeenCalled();
     expect(mockBuscarAlunos).not.toHaveBeenCalled();
@@ -145,6 +152,7 @@ describe('useDadosDaHome', () => {
     expect(mockBuscarDoDia).not.toHaveBeenCalled();
     expect(mockActivityOf).not.toHaveBeenCalledWith('u1');
     expect(mockReloadActivity).not.toHaveBeenCalled();
+    expect(mockFetchActiveTrainingSignal).not.toHaveBeenCalled();
   });
 
   it('pede o perfil ao serviço compartilhado, que traz só nome e avatar', async () => {
