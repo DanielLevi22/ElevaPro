@@ -87,6 +87,21 @@ export const ROUTES = {
     // Sem o grupo `(tabs)` isto nunca casava com a rota de verdade — os únicos
     // dois call sites que existiam bypassavam a constante com string solta.
     SELECT_EXERCISES: '/(tabs)/workouts/select-exercises',
+    /**
+     * A ficha do treino pro especialista/personal — `workoutId` repete `id`
+     * porque `WorkoutDetailsScreen` ainda lê os dois nomes de parâmetro.
+     */
+    DETAILS_FOR_SPECIALIST: (id: string, studentId: string | undefined) =>
+      ({
+        pathname: '/(tabs)/workouts/details/[id]',
+        params: { id, workoutId: id, studentId },
+      }) as const,
+    /** A mesma ficha, pro aluno/membro — com `mode=execute` quando vem da execução do dia. */
+    DETAILS_STUDENT: (id: string, executar = false) =>
+      ({
+        pathname: '/(tabs)/workouts/details/[id]',
+        params: executar ? { id, mode: 'execute' } : { id },
+      }) as const,
     PERIODIZATION: (id: string): `/(tabs)/workouts/periodizations/${string}` =>
       `/(tabs)/workouts/periodizations/${id}`,
     /**

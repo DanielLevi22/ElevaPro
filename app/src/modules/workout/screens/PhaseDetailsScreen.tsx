@@ -79,27 +79,31 @@ export default function PhaseDetailsScreen() {
    * carregada no store, de quem visitou a tela de periodização antes de chegar
    * nesta fase (sempre o caso: não existe link direto pra uma fase).
    */
-  const goToWizardBuild = useCallback(() => {
-    if (!phase) return;
-    const periodizacao = periodizations.find((p) => p.id === phase.periodization_id);
-    if (!periodizacao) {
-      showAlert({
-        title: 'Erro',
-        message:
-          'Não encontrei o aluno desta fase. Abra pela lista de periodizações e tente de novo.',
-        type: 'error',
-      });
-      return;
-    }
+  const goToWizardBuild = useCallback(
+    (split?: string) => {
+      if (!phase) return;
+      const periodizacao = periodizations.find((p) => p.id === phase.periodization_id);
+      if (!periodizacao) {
+        showAlert({
+          title: 'Erro',
+          message:
+            'Não encontrei o aluno desta fase. Abra pela lista de periodizações e tente de novo.',
+          type: 'error',
+        });
+        return;
+      }
 
-    wizard.startFor(periodizacao.student_id, periodizacao.student?.full_name ?? 'Aluno');
-    wizard.setPlanName(phase.name);
-    wizard.setCreatedStructure(periodizacao.id, phase.id);
-    router.push({
-      pathname: ROUTES.WORKOUTS.WIZARD_BUILD,
-      params: { studentId: periodizacao.student_id },
-    });
-  }, [phase, periodizations, wizard, router]);
+      wizard.startFor(periodizacao.student_id, periodizacao.student?.full_name ?? 'Aluno');
+      wizard.setPlanName(phase.name);
+      if (split) wizard.setSplit(split);
+      wizard.setCreatedStructure(periodizacao.id, phase.id);
+      router.push({
+        pathname: ROUTES.WORKOUTS.WIZARD_BUILD,
+        params: { studentId: periodizacao.student_id },
+      });
+    },
+    [phase, periodizations, wizard, router]
+  );
 
   const splitFlow = usePhaseSplitFlow({
     phase,
@@ -265,7 +269,7 @@ export default function PhaseDetailsScreen() {
 
       {!isStudentView && (
         <View className="mb-3 flex-row items-center gap-2">
-          <Row icon="sparkles" title="Co-Pilot" onPress={goToWizardBuild} chevron />
+          <Row icon="sparkles" title="Co-Pilot" onPress={() => goToWizardBuild()} chevron />
         </View>
       )}
       {!isStudentView && (
@@ -295,7 +299,7 @@ export default function PhaseDetailsScreen() {
       ))}
 
       {!isStudentView ? (
-        <Row icon="add-circle-outline" title="Adicionar treino" onPress={goToWizardBuild} />
+        <Row icon="add-circle-outline" title="Adicionar treino" onPress={() => goToWizardBuild()} />
       ) : null}
 
       <PhaseSplitModal

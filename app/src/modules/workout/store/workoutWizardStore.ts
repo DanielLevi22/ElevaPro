@@ -21,7 +21,6 @@ interface WorkoutWizardState {
   /** Preenchidos quando o passo 1 termina, manual ou pela IA. */
   periodizationId: string | null;
   phaseId: string | null;
-  notifyOnPublish: boolean;
 
   startFor: (studentId: string, studentName: string) => void;
   setPlanName: (value: string) => void;
@@ -31,7 +30,6 @@ interface WorkoutWizardState {
   setSplit: (value: string) => void;
   setAiSessionId: (value: string) => void;
   setCreatedStructure: (periodizationId: string, phaseId: string) => void;
-  setNotifyOnPublish: (value: boolean) => void;
   reset: () => void;
 }
 
@@ -46,7 +44,6 @@ const ESTADO_INICIAL = {
   aiSessionId: null,
   periodizationId: null,
   phaseId: null,
-  notifyOnPublish: true,
 } satisfies Omit<
   WorkoutWizardState,
   | 'startFor'
@@ -57,7 +54,6 @@ const ESTADO_INICIAL = {
   | 'setSplit'
   | 'setAiSessionId'
   | 'setCreatedStructure'
-  | 'setNotifyOnPublish'
   | 'reset'
 >;
 
@@ -73,7 +69,6 @@ export const useWorkoutWizardStore = create<WorkoutWizardState>((set) => ({
   setSplit: (split) => set({ split }),
   setAiSessionId: (aiSessionId) => set({ aiSessionId }),
   setCreatedStructure: (periodizationId, phaseId) => set({ periodizationId, phaseId }),
-  setNotifyOnPublish: (notifyOnPublish) => set({ notifyOnPublish }),
 
   reset: () => set(ESTADO_INICIAL),
 }));

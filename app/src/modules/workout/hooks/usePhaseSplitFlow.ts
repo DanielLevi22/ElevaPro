@@ -14,8 +14,9 @@ interface UsePhaseSplitFlowParams {
   fetchWorkoutsForPhase: StoreState['fetchWorkoutsForPhase'];
   updateTrainingPlan: StoreState['updateTrainingPlan'];
   /** Pra onde "Usar Co-Pilot" leva depois de limpar os treinos antigos — o
-   * passo de montagem do wizard (#335), que já tem a IA de verdade. */
-  onAiReady: () => void;
+   * passo de montagem do wizard (#335), que já tem a IA de verdade. Recebe a
+   * divisão escolhida, pro wizard não abrir sem lembrar dela. */
+  onAiReady: (split: string) => void;
 }
 
 /**
@@ -127,7 +128,7 @@ export function usePhaseSplitFlow({
       }
       setShowSplitModal(false);
       setCustomSplit('');
-      onAiReady();
+      onAiReady(finalSplit);
     },
     [phase, customSplit, onAiReady]
   );

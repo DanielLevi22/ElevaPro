@@ -21,7 +21,7 @@ import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/navigation/types';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
-import { type PropostaDePeriodizacao, useAssistantChat } from '../hooks/useAssistantChat';
+import { type PeriodizationProposalState, useAssistantChat } from '../hooks/useAssistantChat';
 import { useWorkoutStore } from '../store/workoutStore';
 import { useWorkoutWizardStore } from '../store/workoutWizardStore';
 
@@ -72,33 +72,33 @@ export default function WorkoutAssistantScreen() {
       <GlassScreen
         bottomSpace="actionBar"
         scrollRef={rolagem}
-        overlay={<CampoDaConversa respondendo={chat.respondendo} onEnviar={chat.enviar} />}
+        overlay={<CampoDaConversa respondendo={chat.responding} onEnviar={chat.sendMessage} />}
       >
         <CabecalhoDoAssistente nomeDoAluno={wizard.studentName ?? 'Aluno'} onVoltar={router.back} />
 
-        <Baloes mensagens={chat.mensagens} />
+        <Baloes mensagens={chat.messages} />
 
-        {chat.propostaPeriodizacao ? (
+        {chat.periodizationProposal ? (
           <CartaoDePeriodizacao
-            proposta={chat.propostaPeriodizacao}
-            salvando={chat.salvandoPeriodizacao}
-            onAprovar={chat.aprovarPeriodizacao}
-            onAjustar={() => chat.enviar('Quero ajustar algumas coisas na proposta.')}
+            proposta={chat.periodizationProposal}
+            salvando={chat.savingPeriodization}
+            onAprovar={chat.approvePeriodization}
+            onAjustar={() => chat.sendMessage('Quero ajustar algumas coisas na proposta.')}
             onContinuar={irParaMontagem}
           />
         ) : null}
 
-        {chat.propostaTreinos ? (
+        {chat.workoutsProposal ? (
           <CartaoDeTreinos
-            proposta={chat.propostaTreinos}
-            salvos={chat.treinosSalvos}
-            salvando={chat.salvandoTreinos}
-            onAprovar={chat.aprovarTreinos}
-            onAjustar={() => chat.enviar('Quero ajustar os treinos da proposta.')}
+            proposta={chat.workoutsProposal}
+            salvos={chat.savedWorkoutTitles}
+            salvando={chat.savingWorkouts}
+            onAprovar={chat.approveWorkouts}
+            onAjustar={() => chat.sendMessage('Quero ajustar os treinos da proposta.')}
           />
         ) : null}
 
-        {chat.respondendo ? <Digitando /> : null}
+        {chat.responding ? <Digitando /> : null}
       </GlassScreen>
     </KeyboardAvoidingView>
   );
@@ -191,7 +191,7 @@ function CartaoDePeriodizacao({
   onAjustar,
   onContinuar,
 }: {
-  proposta: PropostaDePeriodizacao;
+  proposta: PeriodizationProposalState;
   salvando: boolean;
   onAprovar: () => void;
   onAjustar: () => void;

@@ -76,17 +76,11 @@ export function useSuggestedWorkout({
         const isSpecialistOrPersonal =
           (accountType as string) === 'personal' || (accountType as string) === 'specialist';
         if (isSpecialistOrPersonal) {
-          router.push({
-            pathname: '/(tabs)/workouts/details/[id]' as never,
-            params: { id: workoutId, workoutId, studentId: userId },
-          });
+          router.push(ROUTES.WORKOUTS.DETAILS_FOR_SPECIALIST(workoutId, userId));
         } else if (isStudentView && accountType !== 'member' && userId) {
           router.push(ROUTES.STUDENTS.WORKOUT_DETAILS(userId, workoutId));
         } else {
-          router.push({
-            pathname: `/(tabs)/workouts/details/${workoutId}` as never,
-            params: mode === 'execute' ? { mode: 'execute' } : {},
-          });
+          router.push(ROUTES.WORKOUTS.DETAILS_STUDENT(workoutId, mode === 'execute'));
         }
       };
 
@@ -112,19 +106,11 @@ export function useSuggestedWorkout({
       const isSpecialistOrPersonal =
         (accountType as string) === 'personal' || (accountType as string) === 'specialist';
       if (isSpecialistOrPersonal) {
-        router.push({
-          pathname: '/(tabs)/workouts/details/[id]' as never,
-          params: {
-            id: suggestedWorkout.id,
-            workoutId: suggestedWorkout.id,
-            studentId: userId,
-          },
-        });
+        router.push(ROUTES.WORKOUTS.DETAILS_FOR_SPECIALIST(suggestedWorkout.id, userId));
+      } else if (isStudentView && accountType !== 'member' && userId) {
+        router.push(ROUTES.STUDENTS.WORKOUT_DETAILS(userId, suggestedWorkout.id));
       } else {
-        router.push({
-          pathname: `/(tabs)/workouts/details/${suggestedWorkout.id}` as never,
-          params: mode === 'execute' ? { mode: 'execute' } : {},
-        });
+        router.push(ROUTES.WORKOUTS.DETAILS_STUDENT(suggestedWorkout.id, mode === 'execute'));
       }
     };
 
@@ -137,7 +123,7 @@ export function useSuggestedWorkout({
       return;
     }
     proceed();
-  }, [suggestedWorkout, accountType, mode, router, userId, isWorkoutDoneToday]);
+  }, [suggestedWorkout, accountType, isStudentView, mode, router, userId, isWorkoutDoneToday]);
 
   return { suggestedWorkout, isWorkoutDoneToday, goToWorkout, goToSuggestedWorkout };
 }

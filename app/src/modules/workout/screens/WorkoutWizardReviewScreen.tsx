@@ -10,7 +10,6 @@ import { GlassScreen } from '@/components/ui/GlassScreen';
 import { Group } from '@/components/ui/Group';
 import { ProgressHeader } from '@/components/ui/ProgressHeader';
 import { Row } from '@/components/ui/Row';
-import { Switch } from '@/components/ui/Switch';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import { ROUTES } from '@/navigation/types';
@@ -143,17 +142,6 @@ export default function WorkoutWizardReviewScreen() {
             onPress={() => cycleDay(w.id, w.day_of_week ?? null)}
           />
         ))}
-      </Group>
-
-      <TituloDeSecao estilo="rotulo">Publicação</TituloDeSecao>
-      <Group>
-        <Row
-          icon="notifications-outline"
-          title="Notificar a aluna"
-          trailing={
-            <Switch checked={wizard.notifyOnPublish} onChange={wizard.setNotifyOnPublish} />
-          }
-        />
       </Group>
     </GlassScreen>
   );

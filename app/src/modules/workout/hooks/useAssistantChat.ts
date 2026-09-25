@@ -2,23 +2,23 @@ import type { BulkWorkoutProposal, ChatMessage, PeriodizationProposal } from '@e
 import { useCallback, useEffect, useState } from 'react';
 import { WorkoutChatService } from '../services/WorkoutChatService';
 
-export interface PropostaDePeriodizacao {
+export interface PeriodizationProposalState {
   data: PeriodizationProposal;
   savedId?: string;
 }
 
 export interface AssistantChat {
-  mensagens: ChatMessage[];
-  inicializando: boolean;
-  respondendo: boolean;
-  propostaPeriodizacao: PropostaDePeriodizacao | null;
-  propostaTreinos: BulkWorkoutProposal | null;
-  treinosSalvos: string[];
-  salvandoPeriodizacao: boolean;
-  salvandoTreinos: boolean;
-  enviar: (texto: string) => void;
-  aprovarPeriodizacao: () => void;
-  aprovarTreinos: () => void;
+  messages: ChatMessage[];
+  initializing: boolean;
+  responding: boolean;
+  periodizationProposal: PeriodizationProposalState | null;
+  workoutsProposal: BulkWorkoutProposal | null;
+  savedWorkoutTitles: string[];
+  savingPeriodization: boolean;
+  savingWorkouts: boolean;
+  sendMessage: (texto: string) => void;
+  approvePeriodization: () => void;
+  approveWorkouts: () => void;
 }
 
 interface OpcoesDoChat {
@@ -68,9 +68,8 @@ export function useAssistantChat({
   const [mensagens, setMensagens] = useState<ChatMessage[]>([SAUDACAO_PADRAO]);
   const [inicializando, setInicializando] = useState(true);
   const [respondendo, setRespondendo] = useState(false);
-  const [propostaPeriodizacao, setPropostaPeriodizacao] = useState<PropostaDePeriodizacao | null>(
-    null
-  );
+  const [propostaPeriodizacao, setPropostaPeriodizacao] =
+    useState<PeriodizationProposalState | null>(null);
   const [propostaTreinos, setPropostaTreinos] = useState<BulkWorkoutProposal | null>(null);
   const [treinosSalvos, setTreinosSalvos] = useState<string[]>([]);
   const [salvandoPeriodizacao, setSalvandoPeriodizacao] = useState(false);
@@ -215,16 +214,16 @@ export function useAssistantChat({
   }, [propostaTreinos, salvandoTreinos, token, studentId, sessionId, onWorkoutsApproved, enviar]);
 
   return {
-    mensagens,
-    inicializando,
-    respondendo,
-    propostaPeriodizacao,
-    propostaTreinos,
-    treinosSalvos,
-    salvandoPeriodizacao,
-    salvandoTreinos,
-    enviar,
-    aprovarPeriodizacao,
-    aprovarTreinos,
+    messages: mensagens,
+    initializing: inicializando,
+    responding: respondendo,
+    periodizationProposal: propostaPeriodizacao,
+    workoutsProposal: propostaTreinos,
+    savedWorkoutTitles: treinosSalvos,
+    savingPeriodization: salvandoPeriodizacao,
+    savingWorkouts: salvandoTreinos,
+    sendMessage: enviar,
+    approvePeriodization: aprovarPeriodizacao,
+    approveWorkouts: aprovarTreinos,
   };
 }

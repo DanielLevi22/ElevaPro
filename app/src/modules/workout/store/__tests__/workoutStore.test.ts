@@ -195,8 +195,21 @@ describe('workoutStore', () => {
   // mostraria o treino sem dia mesmo depois de salvo.
   it('should update a workout and update local state', async () => {
     useWorkoutStore.setState({
-      // biome-ignore lint/suspicious/noExplicitAny: fixture mínima de teste
-      workouts: [{ id: 'w1', title: 'Treino A', day_of_week: null } as any],
+      workouts: [
+        {
+          id: 'w1',
+          training_plan_id: 'tp1',
+          title: 'Treino A',
+          specialist_id: 'spec1',
+          student_id: null,
+          created_at: '',
+          updated_at: '',
+          description: null,
+          muscle_group: null,
+          difficulty: null,
+          day_of_week: null,
+        },
+      ],
     });
     mockSupabase.from.mockReturnValue(
       mockSupabaseQuery({ id: 'w1', title: 'Treino A', day_of_week: 'monday' })
