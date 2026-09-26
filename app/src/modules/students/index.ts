@@ -1,8 +1,6 @@
 // Students Module - Public API
 // This module handles student management for personal trainers
 
-// Components
-export { StudentEditModal } from './components/StudentEditModal';
 // Store
 export { useLinkedStudent } from './hooks/useLinkedStudent';
 export * from './routes';

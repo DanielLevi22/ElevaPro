@@ -13,7 +13,6 @@ import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { ActionPill } from '../components/ActionPill';
 import { FilterChips } from '../components/FilterChips';
 import { StudentActionsSheet } from '../components/StudentActionsSheet';
-import { StudentEditModal } from '../components/StudentEditModal';
 import { StudentRow } from '../components/StudentRow';
 import { type StudentFilter, type StudentListState, useStudentList } from '../hooks/useStudentList';
 import { type Student, useStudentStore } from '../store/studentStore';
@@ -22,15 +21,14 @@ import { type Student, useStudentStore } from '../store/studentStore';
  * A lista de alunos do especialista — a tela 2 do fluxo no kit de vidro (#334).
  *
  * Tudo o que a lista antiga fazia continua: busca, ordem por nome ou recentes,
- * filtros de risco e pendência, página, editar, reenviar convite e remover (agora
- * no "…" de cada linha). O chip "Arquivados" do kit fica de fora: arquivar ainda
+ * filtros de risco e pendência, página, reenviar convite e remover (agora no "…"
+ * de cada linha, com a avaliação física no lugar do "Editar", que não gravava). O chip "Arquivados" do kit fica de fora: arquivar ainda
  * não existe.
  */
 export default function StudentsScreen() {
   const router = useRouter();
   const list = useStudentList();
   const [actionsFor, setActionsFor] = useState<Student | null>(null);
-  const [editing, setEditing] = useState<Student | null>(null);
   const handlers = useStudentActions();
 
   const openCreate = () => router.push(ROUTES.STUDENTS.CREATE);
@@ -74,18 +72,9 @@ export default function StudentsScreen() {
       <StudentActionsSheet
         student={actionsFor}
         onClose={() => setActionsFor(null)}
-        onEdit={setEditing}
+        onAssess={(student) => router.push(ROUTES.STUDENTS.ASSESSMENT(student.id))}
         onResendInvite={handlers.resendInvite}
         onRemove={handlers.remove}
-      />
-      <StudentEditModal
-        visible={editing !== null}
-        onClose={() => setEditing(null)}
-        onSave={async () => {
-          setEditing(null);
-          list.reload();
-        }}
-        student={editing ? { ...editing, full_name: editing.full_name ?? undefined } : null}
       />
     </TelaDeVidroComFoto>
   );

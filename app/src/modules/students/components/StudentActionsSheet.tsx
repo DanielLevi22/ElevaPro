@@ -4,19 +4,23 @@ import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
 import type { Student } from '../store/studentStore';
 
 /**
- * As ações de um aluno da lista, numa folha que sobe do pé da tela: editar,
- * reenviar o convite e remover.
+ * As ações de um aluno da lista, numa folha que sobe do pé da tela: avaliação
+ * física, reenviar o convite e remover.
  *
  * A linha do kit não desenha botões, e a lista antiga tinha três por aluno. A folha
  * guarda as três sem pôr ícone solto em cada linha. Não é a `GlassSheet`: aquela é
  * uma decisão com duas saídas, e aqui é um menu.
  *
- * @example <StudentActionsSheet student={aluno} onClose={fechar} onEdit={editar} … />
+ * @example <StudentActionsSheet student={aluno} onClose={fechar} onAssess={avaliar} … />
  */
 interface StudentActionsSheetProps {
   student: Student | null;
   onClose: () => void;
-  onEdit: (student: Student) => void;
+  /**
+   * Medidas e dobras vão pela Avaliação, que grava. O modal "Editar aluno" que
+   * ficava aqui descartava tudo o que era digitado (#334).
+   */
+  onAssess: (student: Student) => void;
   onResendInvite: (student: Student) => void;
   onRemove: (student: Student) => void;
 }
@@ -24,7 +28,7 @@ interface StudentActionsSheetProps {
 export function StudentActionsSheet({
   student,
   onClose,
-  onEdit,
+  onAssess,
   onResendInvite,
   onRemove,
 }: StudentActionsSheetProps) {
@@ -50,11 +54,11 @@ export function StudentActionsSheet({
           {student?.full_name || 'Aluno'}
         </Text>
         <LinhaDeVidro
-          icon="create-outline"
+          icon="body-outline"
           tom="marca"
-          titulo="Editar dados"
-          sub="Nome e medidas"
-          onPress={run(onEdit)}
+          titulo="Avaliação física"
+          sub="Medidas e dobras"
+          onPress={run(onAssess)}
         />
         {invited ? (
           <LinhaDeVidro
