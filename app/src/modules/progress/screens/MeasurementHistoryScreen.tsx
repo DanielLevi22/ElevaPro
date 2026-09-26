@@ -7,11 +7,11 @@ import { GlassScreen } from '@/components/ui/GlassScreen';
 import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
 import { ProgressHeader } from '@/components/ui/ProgressHeader';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
-import { ROUTES } from '@/navigation/types';
 import { EmptyCard } from '../components/ChartCard';
 import { chipDate } from '../components/measurementLabels';
 import { SourceChips } from '../components/SourceChips';
 import { useMeasurements } from '../hooks/useMeasurements';
+import { useProgressNavigation } from '../navigation/ProgressNavigation';
 
 /**
  * O histórico das medidas de uma origem, da mais recente à mais antiga (#312).
@@ -24,6 +24,8 @@ import { useMeasurements } from '../hooks/useMeasurements';
  */
 export function MeasurementHistoryScreen({ studentId }: { studentId: string }) {
   const router = useRouter();
+  const { routes } = useProgressNavigation();
+  const { measurementForm } = routes;
   const { series, source, sources, setSource, loading } = useMeasurements(studentId);
   const latest = series.at(-1);
 
@@ -45,7 +47,7 @@ export function MeasurementHistoryScreen({ studentId }: { studentId: string }) {
           />
           <TituloDeSecao
             estilo="rotulo"
-            acao={source === 'self' ? 'toque para corrigir' : undefined}
+            acao={source === 'self' && measurementForm ? 'toque para corrigir' : undefined}
           >
             {`${series.length} ${series.length === 1 ? 'registro' : 'registros'}`}
           </TituloDeSecao>
@@ -54,12 +56,8 @@ export function MeasurementHistoryScreen({ studentId }: { studentId: string }) {
               key={record.id}
               record={record}
               onPress={
-                record.measured_by === 'self'
-                  ? () =>
-                      router.push({
-                        pathname: ROUTES.PROGRESS.MEASUREMENT_FORM,
-                        params: { id: record.id },
-                      })
+                record.measured_by === 'self' && measurementForm
+                  ? () => router.push(measurementForm(record.id))
                   : undefined
               }
             />

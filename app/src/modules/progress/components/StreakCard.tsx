@@ -4,6 +4,7 @@ import { Text, View } from 'react-native';
 import { Orb } from '@/components/ui/Orb';
 import { Vidro } from '@/components/ui/Vidro';
 import { useCores, useEscala } from '@/shared/design';
+import { useProgressNavigation } from '../navigation/ProgressNavigation';
 
 /**
  * O cartão da sequência do hub: os dias seguidos, a esfera da chama e a frase do
@@ -30,6 +31,7 @@ const NOTE_ICON_SIZE = 15;
 export function StreakCard({ standing }: StreakCardProps) {
   const cores = useCores();
   const escalar = useEscala();
+  const { viewer } = useProgressNavigation();
 
   return (
     <Vidro destaque classeExterna="mt-3.5" className="p-[1.125rem]">
@@ -56,7 +58,7 @@ export function StreakCard({ standing }: StreakCardProps) {
           color={cores.primaryText}
         />
         <Text className="flex-1 text-[0.71875rem] leading-[1rem] text-muted-foreground">
-          {recordSentence(standing)}
+          {viewer === 'self' ? recordSentence(standing) : specialistSentence(standing)}
         </Text>
       </View>
     </Vidro>
@@ -74,4 +76,20 @@ function recordSentence({ current, best, toTie }: StreakStanding): string {
       : '';
   }
   return `Seu melhor recorde é ${contagem(best, 'dia', 'dias')}. ${toTie === 1 ? 'Falta 1' : `Faltam ${toTie}`} para empatar.`;
+}
+
+/**
+ * A mesma frase para o especialista, na terceira pessoa: "seu recorde" falaria
+ * com quem está olhando, e não com o aluno.
+ *
+ * @example specialistSentence({ current: 12, best: 18, toTie: 6 }) // "O recorde do aluno é 18 dias. Faltam 6 para empatar."
+ */
+function specialistSentence({ current, best, toTie }: StreakStanding): string {
+  if (best === 0) return 'O aluno ainda não começou uma sequência de treinos ou refeições.';
+  if (toTie === 0) {
+    return current === best
+      ? `É a melhor sequência do aluno: ${contagem(best, 'dia', 'dias')}.`
+      : '';
+  }
+  return `O recorde do aluno é ${contagem(best, 'dia', 'dias')}. ${toTie === 1 ? 'Falta 1' : `Faltam ${toTie}`} para empatar.`;
 }

@@ -11,12 +11,12 @@ import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
 import { ProgressHeader } from '@/components/ui/ProgressHeader';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
-import { ROUTES } from '@/navigation/types';
 import { AdherenceGoalBar } from '../components/AdherenceGoalBar';
 import { CardTitle } from '../components/CardTitle';
 import { EmptyCard } from '../components/ChartCard';
 import { chipDate, localChipDate, SOURCE_LABEL, shortDate } from '../components/measurementLabels';
 import { usePeriodReport } from '../hooks/usePeriodReport';
+import { useProgressNavigation } from '../navigation/ProgressNavigation';
 import { sharePeriodReport } from '../services/shareReportPdf';
 
 /**
@@ -36,6 +36,7 @@ interface PeriodReportScreenProps {
 
 export function PeriodReportScreen({ studentId, studentName }: PeriodReportScreenProps) {
   const router = useRouter();
+  const { viewer, routes } = useProgressNavigation();
   const { report, periodization, specialist, note, loading } = usePeriodReport(studentId);
   const [exporting, setExporting] = useState(false);
 
@@ -73,7 +74,9 @@ export function PeriodReportScreen({ studentId, studentName }: PeriodReportScree
     showConfirm({
       title: 'Exportar em PDF?',
       message:
-        'O arquivo leva peso, medidas e o que o seu especialista escreveu. Quem receber poderá ler tudo.',
+        viewer === 'self'
+          ? 'O arquivo leva peso, medidas e o que o seu especialista escreveu. Quem receber poderá ler tudo.'
+          : 'O arquivo leva peso, medidas e o que você escreveu sobre o aluno. Quem receber poderá ler tudo.',
       confirmText: 'Exportar',
       onConfirm: exportSheet,
     });
@@ -88,8 +91,7 @@ export function PeriodReportScreen({ studentId, studentName }: PeriodReportScree
             secundaria={{
               rotulo: 'Ver detalhes',
               icone: 'stats-chart-outline',
-              onPress: () =>
-                router.push({ pathname: ROUTES.PROGRESS.HOME, params: { segment: 'training' } }),
+              onPress: () => router.push(routes.home('training')),
             }}
             principal={{
               rotulo: exporting ? 'Gerando' : 'Exportar PDF',

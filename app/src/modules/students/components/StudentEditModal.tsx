@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -11,6 +10,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { ROUTES } from '@/navigation/types';
+import { useCores } from '@/shared/design';
 
 interface StudentData {
   id?: string;
@@ -32,6 +33,7 @@ interface StudentEditModalProps {
 type Tab = 'personal' | 'measurements' | 'skinfolds';
 
 export function StudentEditModal({ visible, onClose, onSave, student }: StudentEditModalProps) {
+  const cores = useCores();
   const [activeTab, setActiveTab] = useState<Tab>('personal');
   const [loading, setLoading] = useState(false);
 
@@ -153,11 +155,18 @@ export function StudentEditModal({ visible, onClose, onSave, student }: StudentE
     <View className={`flex-1 ${widthClass} mb-4`}>
       <Text className="text-zinc-400 text-xs font-bold mb-2 ml-1 uppercase">{label}</Text>
       <View className="bg-zinc-900 rounded-xl border border-zinc-800 focus:border-orange-500 flex-row items-center px-4 h-12">
-        {icon && <Ionicons name={icon} size={18} color="#71717A" style={{ marginRight: 8 }} />}
+        {icon && (
+          <Ionicons
+            name={icon}
+            size={18}
+            color={cores.mutedForeground}
+            style={{ marginRight: 8 }}
+          />
+        )}
         <TextInput
           className="flex-1 text-white text-base font-sans"
           placeholder={placeholder}
-          placeholderTextColor="#52525B"
+          placeholderTextColor={cores.placeholder}
           value={value}
           onChangeText={onChange}
           keyboardType="numeric"
@@ -175,12 +184,12 @@ export function StudentEditModal({ visible, onClose, onSave, student }: StudentE
             <Text className="text-white text-xl font-bold font-display">Editar Aluno</Text>
             <View className="flex-row items-center gap-3">
               {student?.id && (
-                <Link href={`/students/${student.id}/history` as never} asChild>
+                <Link href={ROUTES.STUDENTS.DETAILS(student.id)} asChild>
                   <TouchableOpacity
                     onPress={onClose}
                     className="bg-zinc-900 p-2 rounded-full border border-zinc-800"
                   >
-                    <Ionicons name="clipboard-outline" size={20} color="#FF6B35" />
+                    <Ionicons name="clipboard-outline" size={20} color={cores.primary} />
                   </TouchableOpacity>
                 </Link>
               )}
@@ -188,7 +197,7 @@ export function StudentEditModal({ visible, onClose, onSave, student }: StudentE
                 onPress={onClose}
                 className="bg-zinc-900 p-2 rounded-full border border-zinc-800"
               >
-                <Ionicons name="close" size={20} color="#71717A" />
+                <Ionicons name="close" size={20} color={cores.mutedForeground} />
               </TouchableOpacity>
             </View>
           </View>
@@ -224,13 +233,13 @@ export function StudentEditModal({ visible, onClose, onSave, student }: StudentE
                       <Ionicons
                         name="person-outline"
                         size={20}
-                        color="#71717A"
+                        color={cores.mutedForeground}
                         style={{ marginRight: 10 }}
                       />
                       <TextInput
                         className="flex-1 text-white text-base font-sans"
                         placeholder="Ex: João Silva"
-                        placeholderTextColor="#52525B"
+                        placeholderTextColor={cores.placeholder}
                         value={name}
                         onChangeText={setName}
                         autoCapitalize="words"
@@ -244,13 +253,13 @@ export function StudentEditModal({ visible, onClose, onSave, student }: StudentE
                       <Ionicons
                         name="call-outline"
                         size={20}
-                        color="#71717A"
+                        color={cores.mutedForeground}
                         style={{ marginRight: 10 }}
                       />
                       <TextInput
                         className="flex-1 text-white text-base font-sans"
                         placeholder="(00) 00000-0000"
-                        placeholderTextColor="#52525B"
+                        placeholderTextColor={cores.placeholder}
                         value={phone}
                         onChangeText={setPhone}
                         keyboardType="phone-pad"
@@ -268,7 +277,7 @@ export function StudentEditModal({ visible, onClose, onSave, student }: StudentE
                     <TextInput
                       className="bg-zinc-900 rounded-xl border border-zinc-800 focus:border-orange-500 text-white text-base font-sans p-4 h-24"
                       placeholder="Objetivos, lesões, etc..."
-                      placeholderTextColor="#52525B"
+                      placeholderTextColor={cores.placeholder}
                       value={notes}
                       onChangeText={setNotes}
                       multiline
@@ -332,20 +341,15 @@ export function StudentEditModal({ visible, onClose, onSave, student }: StudentE
               activeOpacity={0.8}
               className="mt-6 mb-10"
             >
-              <LinearGradient
-                colors={['#FF6B35', '#FF2E63']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                className="rounded-2xl py-4 items-center justify-center shadow-lg shadow-orange-500/20"
-              >
+              <View className="rounded-2xl py-4 items-center justify-center bg-primary">
                 {loading ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={cores.primaryForeground} />
                 ) : (
-                  <Text className="text-white text-lg font-bold font-display">
+                  <Text className="text-primary-foreground text-lg font-bold font-display">
                     Salvar Alterações
                   </Text>
                 )}
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
           </ScrollView>
         </View>

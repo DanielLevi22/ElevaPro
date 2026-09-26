@@ -68,11 +68,34 @@ export const ROUTES = {
       `/(tabs)/students/${id}/workouts`,
     NUTRITION: (id: string): `/(tabs)/students/${string}/nutrition` =>
       `/(tabs)/students/${id}/nutrition`,
-    HISTORY: (id: string): `/(tabs)/students/${string}/history` => `/(tabs)/students/${id}/history`,
+    // A linha do tempo que morava em `/history` foi para o Acompanhamento (#334).
+    ANAMNESIS: '/students/anamnesis',
     ASSESSMENT: (id: string): `/(tabs)/students/${string}/assessment` =>
       `/(tabs)/students/${id}/assessment`,
-    ANALYTICS: (id: string): `/(tabs)/students/${string}/analytics` =>
-      `/(tabs)/students/${id}/analytics`,
+    /**
+     * O fluxo de Progresso do aluno visto pelo especialista — o "Evolução geral"
+     * do Acompanhamento (#334). As mesmas telas da aba do aluno, dentro da pilha de
+     * Alunos; em objeto pela mesma razão de `PROGRESS.SCAN`. O hub é `hub`, e não
+     * `index`: `progress/index` sai tipado como caminho literal, que o roteador
+     * não serve (a armadilha de `PROGRESS.SCANS`), e fora da pasta ele ficaria sem
+     * o `_layout` que diz quem está olhando.
+     */
+    PROGRESS: {
+      HOME: (id: string, segment: 'overview' | 'nutrition' | 'training' = 'overview') =>
+        ({ pathname: '/(tabs)/students/[id]/progress/hub', params: { id, segment } }) as const,
+      LOADS: (id: string) =>
+        ({ pathname: '/(tabs)/students/[id]/progress/loads', params: { id } }) as const,
+      BODY: (id: string) =>
+        ({ pathname: '/(tabs)/students/[id]/progress/body', params: { id } }) as const,
+      CIRCUMFERENCES: (id: string) =>
+        ({ pathname: '/(tabs)/students/[id]/progress/circumferences', params: { id } }) as const,
+      COMPARE: (id: string) =>
+        ({ pathname: '/(tabs)/students/[id]/progress/compare', params: { id } }) as const,
+      MEASUREMENTS: (id: string) =>
+        ({ pathname: '/(tabs)/students/[id]/progress/measurements', params: { id } }) as const,
+      REPORT: (id: string) =>
+        ({ pathname: '/(tabs)/students/[id]/progress/report', params: { id } }) as const,
+    },
     WORKOUT_DETAILS: (
       studentId: string,
       workoutId: string

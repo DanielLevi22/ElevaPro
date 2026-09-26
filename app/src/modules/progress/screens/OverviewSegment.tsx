@@ -7,11 +7,12 @@ import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { trendDelta } from '@/components/ui/TrendDelta';
 import { Vidro } from '@/components/ui/Vidro';
 import type { DailyActivityState } from '@/hooks/useDailyActivity';
-import { ROUTES } from '@/navigation/types';
 import { ConsistencyGrid } from '../components/ConsistencyGrid';
+import { HubBackButton } from '../components/HubBackButton';
 import { ShortcutRow } from '../components/ShortcutRow';
 import { StreakCard } from '../components/StreakCard';
 import { TrendStat } from '../components/TrendStat';
+import { useProgressNavigation } from '../navigation/ProgressNavigation';
 
 /**
  * Tela 1 do kit de métricas: o hub de Progresso, no segmento Geral.
@@ -32,10 +33,16 @@ export function OverviewSegment({ activity, segments, onOpenTraining }: Overview
   const { days, today, streak } = activity;
   const summary = useMemo(() => summarizeProgress(days, today), [days, today]);
   const weeks = useMemo(() => consistencyWeeks(days, today), [days, today]);
+  const { viewer, studentName } = useProgressNavigation();
 
   return (
     <>
-      <ProgressHeader size="segment" eyebrow="Últimos 30 dias" title="Seu progresso" />
+      <ProgressHeader
+        size="segment"
+        eyebrow="Últimos 30 dias"
+        title={viewer === 'self' ? 'Seu progresso' : (studentName ?? 'Progresso')}
+        leading={<HubBackButton />}
+      />
       <View className="mt-4">{segments}</View>
       <StreakCard standing={streak} />
       <SummaryStats summary={summary} />
@@ -86,6 +93,8 @@ function SummaryStats({ summary }: { summary: ProgressSummary }) {
 /** O relatório do período entra aqui quando a tela existir: atalho para rota que não existe é pior que atalho que falta. */
 function Shortcuts({ onOpenTraining }: { onOpenTraining: () => void }) {
   const router = useRouter();
+  const { routes } = useProgressNavigation();
+  const { sessionHistory } = routes;
   return (
     <>
       <TituloDeSecao estilo="rotulo">Atalhos</TituloDeSecao>
@@ -99,31 +108,33 @@ function Shortcuts({ onOpenTraining }: { onOpenTraining: () => void }) {
         icon="barbell-outline"
         title="Evolução de cargas"
         subtitle="A carga máxima de cada exercício"
-        onPress={() => router.push(ROUTES.PROGRESS.LOADS)}
+        onPress={() => router.push(routes.loads)}
       />
       <ShortcutRow
         icon="scale-outline"
         title="Composição corporal"
         subtitle="Peso, gordura e massa magra"
-        onPress={() => router.push(ROUTES.PROGRESS.BODY)}
+        onPress={() => router.push(routes.body)}
       />
       <ShortcutRow
         icon="resize-outline"
         title="Circunferências"
         subtitle="8 medidas acompanhadas"
-        onPress={() => router.push(ROUTES.PROGRESS.CIRCUMFERENCES)}
+        onPress={() => router.push(routes.circumferences)}
       />
-      <ShortcutRow
-        icon="time-outline"
-        title="Histórico de sessões"
-        subtitle="Corrigir o que você registrou"
-        onPress={() => router.push(ROUTES.STUDENT.SESSION_HISTORY)}
-      />
+      {sessionHistory ? (
+        <ShortcutRow
+          icon="time-outline"
+          title="Histórico de sessões"
+          subtitle="Corrigir o que você registrou"
+          onPress={() => router.push(sessionHistory)}
+        />
+      ) : null}
       <ShortcutRow
         icon="document-text-outline"
         title="Relatório do período"
         subtitle="Os últimos 90 dias, com exportação em PDF"
-        onPress={() => router.push(ROUTES.PROGRESS.REPORT)}
+        onPress={() => router.push(routes.report)}
       />
     </>
   );

@@ -4,16 +4,17 @@ import { type ReactNode, useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 import { ProgressHeader } from '@/components/ui/ProgressHeader';
 import { judgementOf, TrendDelta } from '@/components/ui/TrendDelta';
-import { ROUTES } from '@/navigation/types';
 import { ChartCard, EmptyCard } from '../components/ChartCard';
 import { AreaChart } from '../components/charts/AreaChart';
 import { Donut, type DonutSlice } from '../components/charts/Donut';
 import { evenLabels } from '../components/charts/geometry';
 import { formatLoad, loadUnit } from '../components/charts/loadFormat';
 import { MuscleBars } from '../components/charts/MuscleBars';
+import { HubBackButton } from '../components/HubBackButton';
 import { PeriodChips, type PeriodWeeks } from '../components/PeriodChips';
 import { ShortcutRow } from '../components/ShortcutRow';
 import { useTrainingSets } from '../hooks/useTrainingSets';
+import { useProgressNavigation } from '../navigation/ProgressNavigation';
 
 /**
  * Tela 2 do kit de métricas: a evolução em números, no segmento Treino.
@@ -41,13 +42,19 @@ const STIMULUS: Record<Stimulus, { label: string; tone: DonutSlice['tone'] }> = 
 
 export function TrainingSegment({ studentId, segments }: TrainingSegmentProps) {
   const router = useRouter();
+  const { viewer, routes } = useProgressNavigation();
   const [weeks, setWeeks] = useState<PeriodWeeks>(12);
   const { sets, today, loading } = useTrainingSets(studentId, weeks * DAYS_READ_PER_WEEK);
   const load = useMemo(() => summarizeTrainingLoad(sets, today, weeks), [sets, today, weeks]);
 
   return (
     <>
-      <ProgressHeader size="page" eyebrow="Sua evolução" title="Em números" />
+      <ProgressHeader
+        size="page"
+        eyebrow={viewer === 'self' ? 'Sua evolução' : 'Evolução'}
+        title="Em números"
+        leading={<HubBackButton />}
+      />
       <View className="mt-4">{segments}</View>
       <PeriodChips value={weeks} onChange={setWeeks} />
       {load.total === 0 && !loading ? (
@@ -62,7 +69,7 @@ export function TrainingSegment({ studentId, segments }: TrainingSegmentProps) {
           icon="barbell-outline"
           title="Evolução de cargas"
           subtitle="A carga máxima de cada exercício"
-          onPress={() => router.push(ROUTES.PROGRESS.LOADS)}
+          onPress={() => router.push(routes.loads)}
         />
       </View>
     </>

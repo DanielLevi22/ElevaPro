@@ -1,4 +1,8 @@
 export { useCanDeclare } from './hooks/useMeasurements';
+export {
+  SpecialistProgressProvider,
+  useProgressNavigation,
+} from './navigation/ProgressNavigation';
 export { BodyCompositionScreen } from './screens/BodyCompositionScreen';
 export { CircumferencesScreen } from './screens/CircumferencesScreen';
 export { CompareMeasurementsScreen } from './screens/CompareMeasurementsScreen';
