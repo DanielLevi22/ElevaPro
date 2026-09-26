@@ -1,11 +1,10 @@
 import { shortMonthOf } from '@elevapro/shared';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { showAlert } from '@/components/ui/appAlert';
 import { CabecalhoSobreFoto } from '@/components/ui/CabecalhoSobreFoto';
-import { Chip } from '@/components/ui/Chip';
 import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
 import { StatTile } from '@/components/ui/StatTile';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
@@ -14,6 +13,7 @@ import { ROUTES } from '@/navigation/types';
 import { useCores } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { ActionPill } from '../components/ActionPill';
+import { FilterChips } from '../components/FilterChips';
 import { TimelineCard } from '../components/TimelineCard';
 import { useLinkedStudent } from '../hooks/useLinkedStudent';
 import { useStudentActivities } from '../hooks/useStudentActivities';
@@ -49,17 +49,16 @@ export default function StudentFollowUpScreen() {
         <ActionPill
           icon="archive-outline"
           label="Arquivar aluno"
-          onPress={() =>
-            showAlert({
-              title: 'Em breve',
-              message: 'Funcionalidade de arquivar aluno em desenvolvimento',
-              type: 'info',
-            })
-          }
+          onPress={() => showComingSoon('Funcionalidade de arquivar aluno em desenvolvimento')}
         />
       </View>
     </TelaDeVidroComFoto>
   );
+}
+
+/** O que ainda não existe avisa em vez de sumir: o especialista sabe que vem. */
+function showComingSoon(message: string): void {
+  showAlert({ title: 'Em breve', message, type: 'info' });
 }
 
 /** "mai/26": o mês do vínculo, como a sobrelinha do kit escreve. */
@@ -103,13 +102,7 @@ function Shortcuts({ student }: { student: Student }) {
         <ActionPill
           icon="download-outline"
           label="Baixar treino"
-          onPress={() =>
-            showAlert({
-              title: 'Em breve',
-              message: 'Geração de PDF da ficha completa',
-              type: 'info',
-            })
-          }
+          onPress={() => showComingSoon('Geração de PDF da ficha completa')}
         />
         <ActionPill icon="eye-outline" label="Visão do aluno" onPress={enterStudentView} />
         <ActionPill
@@ -176,18 +169,7 @@ function Timeline({ studentId }: { studentId: string }) {
 
   return (
     <>
-      <View className="mt-5 flex-row flex-wrap gap-[0.4375rem]">
-        {FILTERS.map((option) => (
-          <TouchableOpacity
-            key={option.value}
-            onPress={() => setFilter(option.value)}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: filter === option.value }}
-          >
-            <Chip tom={filter === option.value ? 'destaque' : 'neutro'}>{option.label}</Chip>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <FilterChips options={FILTERS} value={filter} onChange={setFilter} className="mt-5" />
       <TituloDeSecao estilo="rotulo" acao={monthLabel(today)}>
         Linha do tempo
       </TituloDeSecao>

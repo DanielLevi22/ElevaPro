@@ -35,7 +35,7 @@ const SIGNAL_TONE: Record<BriefingSignal['tone'], TomDeMetrica> = {
  * A seção "Hoje" do kit (agenda do dia) não está aqui: o app não tem agenda, e
  * horário inventado seria pior que a seção ausente.
  */
-interface PainelDoEspecialistaProps {
+interface SpecialistDashboardProps {
   profile: { full_name?: string | null } | null;
   students: unknown[];
   briefing: Briefing | null;
@@ -44,14 +44,14 @@ interface PainelDoEspecialistaProps {
   onRefresh: () => void;
 }
 
-export function PainelDoEspecialista({
+export function SpecialistDashboard({
   profile,
   students,
   briefing,
   averageAdherence,
   isLoading,
   onRefresh,
-}: PainelDoEspecialistaProps) {
+}: SpecialistDashboardProps) {
   const router = useRouter();
   const signals = briefing?.signals ?? [];
   const atRiskCount = signals.filter((signal) => signal.tone === 'danger').length;

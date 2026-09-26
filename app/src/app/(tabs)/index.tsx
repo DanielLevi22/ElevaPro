@@ -1,7 +1,7 @@
 import { Text } from 'react-native';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { useDadosDaHome } from '@/hooks/useDadosDaHome';
-import { HomeDoAluno, PainelDoEspecialista } from '@/modules/dashboard';
+import { HomeDoAluno, SpecialistDashboard } from '@/modules/dashboard';
 
 /**
  * A entrada do app, e só a escolha de qual delas.
@@ -23,7 +23,7 @@ export default function TelaInicial() {
 
   if (accountType === 'specialist' && !isMasquerading) {
     return (
-      <PainelDoEspecialista
+      <SpecialistDashboard
         isLoading={especialista.carregando}
         onRefresh={especialista.recarregar}
         profile={especialista.perfil}

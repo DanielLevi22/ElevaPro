@@ -5,17 +5,17 @@ import { useAuthStore } from '@/auth';
 import { showAlert, showConfirm } from '@/components/ui/appAlert';
 import { BotaoFixoNoRodape } from '@/components/ui/BotaoFixoNoRodape';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
-import { Chip } from '@/components/ui/Chip';
 import { GlassSearchField } from '@/components/ui/GlassSearchField';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { ROUTES } from '@/navigation/types';
 import { useCores } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { ActionPill } from '../components/ActionPill';
+import { FilterChips } from '../components/FilterChips';
 import { StudentActionsSheet } from '../components/StudentActionsSheet';
 import { StudentEditModal } from '../components/StudentEditModal';
 import { StudentRow } from '../components/StudentRow';
-import { type StudentFilter, useStudentList } from '../hooks/useStudentList';
+import { type StudentFilter, type StudentListState, useStudentList } from '../hooks/useStudentList';
 import { type Student, useStudentStore } from '../store/studentStore';
 
 /**
@@ -91,8 +91,6 @@ export default function StudentsScreen() {
   );
 }
 
-type StudentList = ReturnType<typeof useStudentList>;
-
 function Header({
   total,
   atRisk,
@@ -121,36 +119,28 @@ function Header({
   );
 }
 
-function Filters({ list }: { list: StudentList }) {
+function Filters({ list }: { list: StudentListState }) {
   const options: readonly { value: StudentFilter; label: string }[] = [
     { value: 'all', label: `Todos · ${list.students.length}` },
     { value: 'atRisk', label: `Em risco · ${list.atRiskCount}` },
     { value: 'pending', label: `Pendentes · ${list.pendingCount}` },
   ];
-  return (
-    <View className="mt-3 flex-row flex-wrap gap-[0.4375rem]">
-      {options.map((option) => (
-        <TouchableOpacity
-          key={option.value}
-          onPress={() => list.setFilter(option.value)}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: list.filter === option.value }}
-        >
-          <Chip tom={list.filter === option.value ? 'destaque' : 'neutro'}>{option.label}</Chip>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
+  return <FilterChips options={options} value={list.filter} onChange={list.setFilter} />;
 }
+
+/** O rótulo da ordem, por critério e sentido: tabela, e não ternário dentro de ternário. */
+const SORT_LABEL = {
+  full_name: { asc: 'A–Z', desc: 'Z–A' },
+  created_at: { asc: 'Mais antigos', desc: 'Recentes' },
+} as const;
 
 /**
  * "Lista" com a ordem à direita, como o kit ("A–Z"). Tocar alterna o sentido;
  * segurar troca entre nome e recentes — as duas ordens que a lista antiga tinha.
  */
-function SortTitle({ list }: { list: StudentList }) {
+function SortTitle({ list }: { list: StudentListState }) {
   const byName = list.sortBy === 'full_name';
-  const asc = list.sortOrder === 'asc';
-  const label = byName ? (asc ? 'A–Z' : 'Z–A') : asc ? 'Mais antigos' : 'Recentes';
+  const label = SORT_LABEL[list.sortBy][list.sortOrder];
   return (
     <View className="mb-2.5 mt-5 flex-row items-baseline justify-between px-0.5">
       <Text className="text-[0.65625rem] font-bold uppercase tracking-widest text-placeholder">
@@ -206,8 +196,13 @@ function ListFooter({
   );
 }
 
+interface StudentActions {
+  remove: (student: Student) => void;
+  resendInvite: (student: Student) => Promise<void>;
+}
+
 /** Reenviar e remover, com a confirmação e o aviso de resultado da lista antiga. */
-function useStudentActions() {
+function useStudentActions(): StudentActions {
   const { user } = useAuthStore();
   const { removeStudent, resendInvite } = useStudentStore();
 

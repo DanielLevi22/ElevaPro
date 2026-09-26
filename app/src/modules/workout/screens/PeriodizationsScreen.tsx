@@ -4,7 +4,10 @@ import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { StudentPickerModal } from '@/components/StudentPickerModal';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
-import { CabecalhoSobreFoto } from '@/components/ui/CabecalhoSobreFoto';
+import {
+  CabecalhoSobreFoto,
+  type CabecalhoSobreFotoProps,
+} from '@/components/ui/CabecalhoSobreFoto';
 import { Chip } from '@/components/ui/Chip';
 import { SearchModal } from '@/components/ui/SearchModal';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
@@ -67,23 +70,23 @@ export default function PeriodizationsScreen({ studentId }: { studentId?: string
     [students]
   );
 
-  const doEscopo = useMemo(
+  const scoped = useMemo(
     () => (studentId ? periodizations.filter((p) => p.student_id === studentId) : periodizations),
     [periodizations, studentId]
   );
-  const nomeDoAluno = studentId
-    ? (students.find((s) => s.id === studentId)?.full_name ?? doEscopo[0]?.student?.full_name)
+  const studentName = studentId
+    ? (students.find((s) => s.id === studentId)?.full_name ?? scoped[0]?.student?.full_name)
     : undefined;
 
   const buscadas = useMemo(() => {
-    if (!searchQuery.trim()) return doEscopo;
+    if (!searchQuery.trim()) return scoped;
     const query = searchQuery.toLowerCase();
-    return doEscopo.filter((p) => {
+    return scoped.filter((p) => {
       const nome = p.name?.toLowerCase() ?? '';
       const aluno = p.student?.full_name?.toLowerCase() ?? '';
       return nome.includes(query) || aluno.includes(query);
     });
-  }, [doEscopo, searchQuery]);
+  }, [scoped, searchQuery]);
 
   const ativas = useMemo(() => buscadas.filter((p) => p.status === 'active'), [buscadas]);
   const historico = useMemo(
@@ -116,7 +119,7 @@ export default function PeriodizationsScreen({ studentId }: { studentId?: string
     if (studentId) {
       router.push({
         pathname: ROUTES.WORKOUTS.WIZARD_STRUCTURE,
-        params: { studentId, studentName: nomeDoAluno ?? undefined },
+        params: { studentId, studentName: studentName ?? undefined },
       });
       return;
     }
@@ -127,7 +130,7 @@ export default function PeriodizationsScreen({ studentId }: { studentId?: string
     if (user?.id) {
       router.push({ pathname: ROUTES.WORKOUTS.WIZARD_STRUCTURE, params: { studentId: user.id } });
     }
-  }, [studentId, nomeDoAluno, isSpecialist, user?.id, router]);
+  }, [studentId, studentName, isSpecialist, user?.id, router]);
 
   const onRefresh = useCallback(() => {
     if (user?.id) fetchPeriodizations(user.id);
@@ -139,7 +142,7 @@ export default function PeriodizationsScreen({ studentId }: { studentId?: string
       refresh={{ refreshing: isLoading, onRefresh }}
     >
       <CabecalhoSobreFoto
-        {...cabecalho(studentId ? (nomeDoAluno ?? 'Aluno') : null, isSpecialist)}
+        {...headerCopy(studentId ? (studentName ?? 'Aluno') : null, isSpecialist)}
         onVoltar={studentId ? router.back : undefined}
         direita={
           <View className="flex-row items-center gap-2">
@@ -212,9 +215,12 @@ export default function PeriodizationsScreen({ studentId }: { studentId?: string
 }
 
 /** O que o cabeçalho diz: o aluno recortado, a gestão do especialista ou os treinos de quem treina. */
-function cabecalho(aluno: string | null, especialista: boolean) {
-  if (aluno) return { sobrelinha: 'Treinos do aluno', titulo: aluno };
-  return especialista
+function headerCopy(
+  student: string | null,
+  specialist: boolean
+): Pick<CabecalhoSobreFotoProps, 'sobrelinha' | 'titulo'> {
+  if (student) return { sobrelinha: 'Treinos do aluno', titulo: student };
+  return specialist
     ? { sobrelinha: 'Gestão de planejamento', titulo: 'Alunos' }
     : { sobrelinha: 'Meus treinos', titulo: 'Periodizações' };
 }

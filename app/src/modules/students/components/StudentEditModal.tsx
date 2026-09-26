@@ -11,12 +11,11 @@ import {
   View,
 } from 'react-native';
 import { ROUTES } from '@/navigation/types';
-import { useCores } from '@/shared/design';
+import { useCores, useEscala } from '@/shared/design';
 
 interface StudentData {
   id?: string;
   full_name?: string;
-  phone?: string;
   notes?: string;
   weight?: number | string;
   height?: number | string;
@@ -34,12 +33,12 @@ type Tab = 'personal' | 'measurements' | 'skinfolds';
 
 export function StudentEditModal({ visible, onClose, onSave, student }: StudentEditModalProps) {
   const cores = useCores();
+  const escalar = useEscala();
   const [activeTab, setActiveTab] = useState<Tab>('personal');
   const [loading, setLoading] = useState(false);
 
   // Personal
   const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
   const [notes, setNotes] = useState('');
 
   // Measurements
@@ -72,7 +71,6 @@ export function StudentEditModal({ visible, onClose, onSave, student }: StudentE
   useEffect(() => {
     if (student) {
       setName(student.full_name || '');
-      setPhone(student.phone || '');
       setNotes(student.notes || '');
 
       // Load assessment data
@@ -110,7 +108,6 @@ export function StudentEditModal({ visible, onClose, onSave, student }: StudentE
     try {
       await onSave({
         name,
-        phone,
         notes,
         weight,
         height,
@@ -154,15 +151,8 @@ export function StudentEditModal({ visible, onClose, onSave, student }: StudentE
   ) => (
     <View className={`flex-1 ${widthClass} mb-4`}>
       <Text className="text-zinc-400 text-xs font-bold mb-2 ml-1 uppercase">{label}</Text>
-      <View className="bg-zinc-900 rounded-xl border border-zinc-800 focus:border-orange-500 flex-row items-center px-4 h-12">
-        {icon && (
-          <Ionicons
-            name={icon}
-            size={18}
-            color={cores.mutedForeground}
-            style={{ marginRight: 8 }}
-          />
-        )}
+      <View className="bg-zinc-900 rounded-xl border border-zinc-800 focus:border-orange-500 flex-row items-center gap-2 px-4 h-12">
+        {icon && <Ionicons name={icon} size={escalar(18)} color={cores.mutedForeground} />}
         <TextInput
           className="flex-1 text-white text-base font-sans"
           placeholder={placeholder}
@@ -189,7 +179,7 @@ export function StudentEditModal({ visible, onClose, onSave, student }: StudentE
                     onPress={onClose}
                     className="bg-zinc-900 p-2 rounded-full border border-zinc-800"
                   >
-                    <Ionicons name="clipboard-outline" size={20} color={cores.primary} />
+                    <Ionicons name="clipboard-outline" size={escalar(20)} color={cores.primary} />
                   </TouchableOpacity>
                 </Link>
               )}
@@ -197,7 +187,7 @@ export function StudentEditModal({ visible, onClose, onSave, student }: StudentE
                 onPress={onClose}
                 className="bg-zinc-900 p-2 rounded-full border border-zinc-800"
               >
-                <Ionicons name="close" size={20} color={cores.mutedForeground} />
+                <Ionicons name="close" size={escalar(20)} color={cores.mutedForeground} />
               </TouchableOpacity>
             </View>
           </View>
@@ -229,12 +219,11 @@ export function StudentEditModal({ visible, onClose, onSave, student }: StudentE
 
                   <View className="mb-4">
                     <Text className="text-white font-medium mb-2 ml-1">Nome Completo</Text>
-                    <View className="bg-zinc-900 rounded-xl border border-zinc-800 focus:border-orange-500 flex-row items-center px-4 h-12">
+                    <View className="bg-zinc-900 rounded-xl border border-zinc-800 focus:border-orange-500 flex-row items-center gap-2.5 px-4 h-12">
                       <Ionicons
                         name="person-outline"
-                        size={20}
+                        size={escalar(20)}
                         color={cores.mutedForeground}
-                        style={{ marginRight: 10 }}
                       />
                       <TextInput
                         className="flex-1 text-white text-base font-sans"
@@ -243,26 +232,6 @@ export function StudentEditModal({ visible, onClose, onSave, student }: StudentE
                         value={name}
                         onChangeText={setName}
                         autoCapitalize="words"
-                      />
-                    </View>
-                  </View>
-
-                  <View className="mb-4">
-                    <Text className="text-white font-medium mb-2 ml-1">Telefone</Text>
-                    <View className="bg-zinc-900 rounded-xl border border-zinc-800 focus:border-orange-500 flex-row items-center px-4 h-12">
-                      <Ionicons
-                        name="call-outline"
-                        size={20}
-                        color={cores.mutedForeground}
-                        style={{ marginRight: 10 }}
-                      />
-                      <TextInput
-                        className="flex-1 text-white text-base font-sans"
-                        placeholder="(00) 00000-0000"
-                        placeholderTextColor={cores.placeholder}
-                        value={phone}
-                        onChangeText={setPhone}
-                        keyboardType="phone-pad"
                       />
                     </View>
                   </View>

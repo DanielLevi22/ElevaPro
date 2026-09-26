@@ -22,6 +22,14 @@ import { useStudentStore } from '../store/studentStore';
 
 const TOTAL_STEPS = 2;
 
+function showInviteFailed(error: string | undefined): void {
+  showAlert({
+    title: 'Não foi possível enviar o convite',
+    message: error || 'Tente novamente.',
+    type: 'error',
+  });
+}
+
 /**
  * O cadastro de aluno pelo especialista — as telas 3 e 5 do fluxo no kit de vidro
  * (#334): dados e tipo de acompanhamento, e o convite enviado.
@@ -56,15 +64,8 @@ export default function CreateStudentScreen() {
       service_types: registration.serviceTypes,
     });
     setIsSending(false);
-    if (result.success && result.studentId) {
-      registration.completeInvite(result.studentId);
-      return;
-    }
-    showAlert({
-      title: 'Não foi possível enviar o convite',
-      message: result.error || 'Tente novamente.',
-      type: 'error',
-    });
+    if (result.success && result.studentId) registration.completeInvite(result.studentId);
+    else showInviteFailed(result.error);
   }
 
   if (registration.step === 'invite' && registration.studentId) {
@@ -164,7 +165,10 @@ function InviteSent({
         titulo="Montar treino"
         sub="Periodização e divisão"
         onPress={() =>
-          router.replace({ pathname: ROUTES.WORKOUTS.WIZARD_STRUCTURE, params: { studentId } })
+          router.replace({
+            pathname: ROUTES.WORKOUTS.WIZARD_STRUCTURE,
+            params: { studentId, studentName: name.trim() },
+          })
         }
       />
       <LinhaDeVidro

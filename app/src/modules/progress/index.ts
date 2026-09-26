@@ -1,5 +1,7 @@
 export { useCanDeclare } from './hooks/useMeasurements';
 export {
+  PROGRESS_SEGMENTS,
+  type ProgressSegment,
   SpecialistProgressProvider,
   useProgressNavigation,
 } from './navigation/ProgressNavigation';
@@ -10,4 +12,4 @@ export { ExerciseLoadsScreen } from './screens/ExerciseLoadsScreen';
 export { MeasurementFormScreen } from './screens/MeasurementFormScreen';
 export { MeasurementHistoryScreen } from './screens/MeasurementHistoryScreen';
 export { PeriodReportScreen } from './screens/PeriodReportScreen';
-export { PROGRESS_SEGMENTS, ProgressScreen, type ProgressSegment } from './screens/ProgressScreen';
+export { ProgressScreen } from './screens/ProgressScreen';

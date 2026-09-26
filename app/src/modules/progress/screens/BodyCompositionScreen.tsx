@@ -16,7 +16,7 @@ import { ShortcutRow } from '../components/ShortcutRow';
 import { SourceChips } from '../components/SourceChips';
 import { TrendStat } from '../components/TrendStat';
 import { useMeasurements } from '../hooks/useMeasurements';
-import { useProgressNavigation } from '../navigation/ProgressNavigation';
+import { type ProgressViewer, useProgressNavigation } from '../navigation/ProgressNavigation';
 
 /**
  * Tela 4 do kit de métricas: a composição corporal.
@@ -249,7 +249,7 @@ function WeightSplit({ latest }: { latest: PhysicalAssessment }) {
 }
 
 /** O vazio fala com quem está olhando: o aluno que declara, o que espera a avaliação, ou o especialista. */
-function emptyMessage(viewer: 'self' | 'specialist', canDeclare: boolean): string {
+function emptyMessage(viewer: ProgressViewer, canDeclare: boolean): string {
   if (viewer === 'specialist') {
     return 'Nenhuma avaliação ainda. Quando você registrar uma, a composição aparece aqui.';
   }

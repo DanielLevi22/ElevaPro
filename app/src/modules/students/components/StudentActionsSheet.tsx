@@ -1,5 +1,5 @@
-import { Modal, Pressable, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Modal, Pressable, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
 import type { Student } from '../store/studentStore';
 
@@ -28,7 +28,6 @@ export function StudentActionsSheet({
   onResendInvite,
   onRemove,
 }: StudentActionsSheetProps) {
-  const insets = useSafeAreaInsets();
   const invited = student?.account_status === 'invited';
 
   // Fecha antes de agir: a ação abre modal ou confirmação, e duas folhas
@@ -42,9 +41,10 @@ export function StudentActionsSheet({
   return (
     <Modal transparent visible={student !== null} animationType="slide" onRequestClose={onClose}>
       <Pressable className="flex-1 bg-black/50" onPress={onClose} accessibilityLabel="Fechar" />
-      <View
-        className="rounded-t-[1.75rem] border-t border-glass-border bg-background px-4 pt-4"
-        style={{ paddingBottom: insets.bottom + 16 }}
+      {/* O `SafeAreaView` soma a área do indicador de início ao `pb-4`, como o `ScreenLayout`. */}
+      <SafeAreaView
+        edges={['bottom']}
+        className="rounded-t-[1.75rem] border-t border-glass-border bg-background px-4 pb-4 pt-4"
       >
         <Text numberOfLines={1} className="mb-3 px-1 text-rotulo font-bold text-foreground">
           {student?.full_name || 'Aluno'}
@@ -72,7 +72,7 @@ export function StudentActionsSheet({
           sub={invited ? 'O link deixa de valer' : 'Ele perde o acesso aos treinos'}
           onPress={run(onRemove)}
         />
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 }

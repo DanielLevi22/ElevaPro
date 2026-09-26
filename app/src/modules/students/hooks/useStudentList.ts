@@ -1,125 +1,158 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '@/auth';
-import type { StudentRowState } from '../components/StudentRow';
+import {
+  filterStudents,
+  type StudentFilter,
+  type StudentRowState,
+  studentRowState,
+} from '../services/studentListState';
 import { type Student, useStudentStore } from '../store/studentStore';
 
-export type StudentFilter = 'all' | 'atRisk' | 'pending';
+export type { StudentFilter };
 export type StudentSort = 'full_name' | 'created_at';
+type SortOrder = 'asc' | 'desc';
 
-/** Convite sem resposta há mais de uma semana deixa de valer. */
-const INVITE_VALID_DAYS = 7;
-const DAY_MS = 86_400_000;
 const SEARCH_DEBOUNCE_MS = 500;
 
-function isExpired(createdAt?: string): boolean {
-  if (!createdAt) return false;
-  return (Date.now() - new Date(createdAt).getTime()) / DAY_MS > INVITE_VALID_DAYS;
+interface StudentQuery {
+  search: string;
+  setSearch: (search: string) => void;
+  sortBy: StudentSort;
+  setSortBy: (sort: StudentSort) => void;
+  sortOrder: SortOrder;
+  toggleSortOrder: () => void;
+  hasMore: boolean;
+  loadMore: () => void;
+  reload: () => void;
+}
+
+export interface StudentListState extends StudentQuery {
+  students: Student[];
+  visible: Student[];
+  totalCount: number;
+  isLoading: boolean;
+  adherenceByStudent: Record<string, number | null>;
+  atRiskCount: number;
+  pendingCount: number;
+  filter: StudentFilter;
+  setFilter: (filter: StudentFilter) => void;
+  stateOf: (student: Student) => StudentRowState;
 }
 
 /**
  * A lista de alunos do especialista: busca, ordenação, página, filtro por risco e o
- * estado de cada linha.
- *
- * O filtro "Em risco" usa o sinal de inatividade do briefing (#332), e não uma
- * régua de aderência nova: é o mesmo número do painel.
+ * estado de cada linha. A regra de estado e de filtro mora em `studentListState`.
  *
  * @example const list = useStudentList(); list.setSearch('ana');
  */
-export function useStudentList() {
-  const { user } = useAuthStore();
-  const userId = user?.id;
+export function useStudentList(): StudentListState {
   const store = useStudentStore();
   const [filter, setFilter] = useState<StudentFilter>('all');
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [sortBy, setSortBy] = useState<StudentSort>('full_name');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [page, setPage] = useState(1);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [search]);
-
-  const query = useMemo(
-    () => ({ search: debouncedSearch, sortBy, sortOrder }),
-    [debouncedSearch, sortBy, sortOrder]
-  );
-
-  const { fetchStudents } = store;
-  const reload = useCallback(() => {
-    if (!userId) return;
-    fetchStudents(userId, { ...query, page: 1, append: false });
-    setPage(1);
-  }, [userId, query, fetchStudents]);
-
-  useEffect(reload, [reload]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: só quando o especialista muda
-  useEffect(() => {
-    if (userId) store.fetchBriefing(userId);
-  }, [userId]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: só quando a página de alunos muda
-  useEffect(() => {
-    const missing = store.students
-      .map((s) => s.id)
-      .filter((id) => !(id in store.adherenceByStudent));
-    if (missing.length > 0) store.fetchAdherenceFor(missing);
-  }, [store.students]);
-
-  const hasMore = store.students.length < store.totalCount;
-  const loadMore = () => {
-    if (store.isLoading || !hasMore || !userId) return;
-    fetchStudents(userId, { ...query, page: page + 1, append: true });
-    setPage(page + 1);
-  };
-
-  const atRiskIds = useMemo(
-    () =>
-      new Set(
-        (store.briefing?.signals ?? [])
-          .filter((signal) => signal.kind === 'inactive')
-          .map((signal) => signal.studentId)
-      ),
-    [store.briefing]
-  );
+  const query = useStudentQuery();
+  const atRiskIds = useAtRiskIds();
+  useAdherenceForPage();
 
   const stateOf = useCallback(
-    (student: Student): StudentRowState => {
-      if (student.account_status === 'invited') {
-        return isExpired(student.link_created_at) ? 'expired' : 'pending';
-      }
-      return atRiskIds.has(student.id) ? 'atRisk' : 'ok';
-    },
+    (student: Student) => studentRowState(student, atRiskIds, Date.now()),
     [atRiskIds]
   );
-
-  const visible = useMemo(() => {
-    if (filter === 'atRisk') return store.students.filter((s) => atRiskIds.has(s.id));
-    if (filter === 'pending') return store.students.filter((s) => s.account_status === 'invited');
-    return store.students;
-  }, [store.students, filter, atRiskIds]);
+  const visible = useMemo(
+    () => filterStudents(store.students, filter, atRiskIds),
+    [store.students, filter, atRiskIds]
+  );
 
   return {
+    ...query,
     students: store.students,
     visible,
     totalCount: store.totalCount,
     isLoading: store.isLoading,
     adherenceByStudent: store.adherenceByStudent,
     atRiskCount: atRiskIds.size,
-    pendingCount: store.students.filter((s) => s.account_status === 'invited').length,
+    pendingCount: filterStudents(store.students, 'pending', atRiskIds).length,
     filter,
     setFilter,
+    stateOf,
+  };
+}
+
+/** Busca com espera, ordem e página — o que vai para `fetchStudents`. */
+function useStudentQuery(): StudentQuery {
+  const { user } = useAuthStore();
+  const userId = user?.id;
+  const { fetchStudents, isLoading, students, totalCount } = useStudentStore();
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounced(search, SEARCH_DEBOUNCE_MS);
+  const [sortBy, setSortBy] = useState<StudentSort>('full_name');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [page, setPage] = useState(1);
+  const params = useMemo(
+    () => ({ search: debouncedSearch, sortBy, sortOrder }),
+    [debouncedSearch, sortBy, sortOrder]
+  );
+
+  const reload = useCallback(() => {
+    if (!userId) return;
+    fetchStudents(userId, { ...params, page: 1, append: false });
+    setPage(1);
+  }, [userId, params, fetchStudents]);
+  useEffect(reload, [reload]);
+
+  const hasMore = students.length < totalCount;
+  const loadMore = () => {
+    if (isLoading || !hasMore || !userId) return;
+    fetchStudents(userId, { ...params, page: page + 1, append: true });
+    setPage(page + 1);
+  };
+  const toggleSortOrder = () => setSortOrder((order) => (order === 'asc' ? 'desc' : 'asc'));
+
+  return {
     search,
     setSearch,
     sortBy,
     setSortBy,
     sortOrder,
-    toggleSortOrder: () => setSortOrder((order) => (order === 'asc' ? 'desc' : 'asc')),
+    toggleSortOrder,
     hasMore,
     loadMore,
     reload,
-    stateOf,
   };
+}
+
+function useDebounced(value: string, delayMs: number): string {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(timer);
+  }, [value, delayMs]);
+  return debounced;
+}
+
+/** Os alunos com sinal de inatividade no briefing (#332), buscado uma vez por especialista. */
+function useAtRiskIds(): ReadonlySet<string> {
+  const { user } = useAuthStore();
+  const { briefing, fetchBriefing } = useStudentStore();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: só quando o especialista muda
+  useEffect(() => {
+    if (user?.id) fetchBriefing(user.id);
+  }, [user?.id]);
+  return useMemo(
+    () =>
+      new Set(
+        (briefing?.signals ?? [])
+          .filter((signal) => signal.kind === 'inactive')
+          .map((signal) => signal.studentId)
+      ),
+    [briefing]
+  );
+}
+
+/** A aderência de cada aluno da página que ainda não foi buscada. */
+function useAdherenceForPage(): void {
+  const { students, adherenceByStudent, fetchAdherenceFor } = useStudentStore();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: só quando a página de alunos muda
+  useEffect(() => {
+    const missing = students.map((s) => s.id).filter((id) => !(id in adherenceByStudent));
+    if (missing.length > 0) fetchAdherenceFor(missing);
+  }, [students]);
 }

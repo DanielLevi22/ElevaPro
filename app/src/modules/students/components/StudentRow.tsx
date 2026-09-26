@@ -3,6 +3,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
 import { useCores, useEscala } from '@/shared/design';
+import type { StudentRowState } from '../services/studentListState';
 import type { Student } from '../store/studentStore';
 
 /**
@@ -15,7 +16,6 @@ import type { Student } from '../store/studentStore';
  *
  * @example <StudentRow student={aluno} state="ok" adherence={94} onPress={abrir} onActions={menu} />
  */
-export type StudentRowState = 'ok' | 'atRisk' | 'pending' | 'expired';
 
 interface StudentRowProps {
   student: Student;

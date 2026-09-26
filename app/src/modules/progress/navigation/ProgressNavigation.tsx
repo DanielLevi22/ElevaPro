@@ -1,7 +1,6 @@
 import type { Href } from 'expo-router';
 import { createContext, type ReactNode, useContext } from 'react';
 import { ROUTES } from '@/navigation/types';
-import type { ProgressSegment } from '../screens/ProgressScreen';
 
 /**
  * Quem está olhando o Progresso, e para onde as telas dele navegam.
@@ -18,6 +17,13 @@ import type { ProgressSegment } from '../screens/ProgressScreen';
  * const { routes } = useProgressNavigation();
  * router.push(routes.loads);
  */
+/** Os segmentos do hub. Moram aqui porque são parâmetro de rota: o relatório abre o Treino. */
+export const PROGRESS_SEGMENTS = ['overview', 'nutrition', 'training'] as const;
+export type ProgressSegment = (typeof PROGRESS_SEGMENTS)[number];
+
+/** Quem está olhando: o próprio aluno, ou o especialista vinculado. */
+export type ProgressViewer = 'self' | 'specialist';
+
 export interface ProgressRoutes {
   home: (segment?: ProgressSegment) => Href;
   loads: Href;
@@ -33,7 +39,7 @@ export interface ProgressRoutes {
 }
 
 export interface ProgressNavigation {
-  viewer: 'self' | 'specialist';
+  viewer: ProgressViewer;
   /** O nome do aluno nos títulos, quando quem olha é o especialista. */
   studentName: string | null;
   /** O voltar do hub, que na aba do aluno é raiz e não tem para onde voltar. */

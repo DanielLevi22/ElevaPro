@@ -3,6 +3,7 @@ import { PROGRESS_GLOW } from '@/components/ui/BrilhoAmbiente';
 import { GlassScreen } from '@/components/ui/GlassScreen';
 import { GlassSegmented } from '@/components/ui/GlassSegmented';
 import { useDailyActivity } from '@/hooks/useDailyActivity';
+import type { ProgressSegment } from '../navigation/ProgressNavigation';
 import { NutritionSegment } from './NutritionSegment';
 import { OverviewSegment } from './OverviewSegment';
 import { TrainingSegment } from './TrainingSegment';
@@ -16,8 +17,6 @@ import { TrainingSegment } from './TrainingSegment';
  *
  * @example <ProgressScreen studentId={user.id} initialSegment="training" />
  */
-export const PROGRESS_SEGMENTS = ['overview', 'nutrition', 'training'] as const;
-export type ProgressSegment = (typeof PROGRESS_SEGMENTS)[number];
 
 interface ProgressScreenProps {
   studentId: string;
