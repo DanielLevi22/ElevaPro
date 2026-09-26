@@ -16,6 +16,7 @@ import { ShortcutRow } from '../components/ShortcutRow';
 import { SourceChips } from '../components/SourceChips';
 import { TrendStat } from '../components/TrendStat';
 import { useMeasurements } from '../hooks/useMeasurements';
+import { type ProgressViewer, useProgressNavigation } from '../navigation/ProgressNavigation';
 
 /**
  * Tela 4 do kit de métricas: a composição corporal.
@@ -35,6 +36,7 @@ interface BodyCompositionScreenProps {
 
 export function BodyCompositionScreen({ studentId, canDeclare }: BodyCompositionScreenProps) {
   const router = useRouter();
+  const { viewer, routes } = useProgressNavigation();
   const { series, source, sources, setSource, loading } = useMeasurements(studentId);
   const latest = series.at(-1);
   const openForm = () => router.push(ROUTES.PROGRESS.MEASUREMENT_FORM);
@@ -43,7 +45,7 @@ export function BodyCompositionScreen({ studentId, canDeclare }: BodyComposition
       secundaria={{
         rotulo: 'Histórico',
         icone: 'time-outline',
-        onPress: () => router.push(ROUTES.PROGRESS.MEASUREMENTS),
+        onPress: () => router.push(routes.measurements),
       }}
       principal={{ rotulo: 'Nova medida', icone: 'add', onPress: openForm }}
     />
@@ -97,24 +99,20 @@ export function BodyCompositionScreen({ studentId, canDeclare }: BodyComposition
               icon="git-compare-outline"
               title="O que mudou"
               subtitle="Compare com o registro de 3 meses antes"
-              onPress={() => router.push(ROUTES.PROGRESS.COMPARE)}
+              onPress={() => router.push(routes.compare)}
             />
             {canDeclare ? null : (
               <ShortcutRow
                 icon="time-outline"
                 title="Histórico"
                 subtitle="Todas as medidas registradas"
-                onPress={() => router.push(ROUTES.PROGRESS.MEASUREMENTS)}
+                onPress={() => router.push(routes.measurements)}
               />
             )}
           </View>
         </>
       ) : loading ? null : (
-        <EmptyCard>
-          {canDeclare
-            ? 'Nenhuma medida ainda. Registre peso e medidas para acompanhar a sua composição.'
-            : 'Nenhuma avaliação ainda. Quando o seu especialista medir, a composição aparece aqui.'}
-        </EmptyCard>
+        <EmptyCard>{emptyMessage(viewer, canDeclare)}</EmptyCard>
       )}
     </GlassScreen>
   );
@@ -248,4 +246,14 @@ function WeightSplit({ latest }: { latest: PhysicalAssessment }) {
       </View>
     </ChartCard>
   );
+}
+
+/** O vazio fala com quem está olhando: o aluno que declara, o que espera a avaliação, ou o especialista. */
+function emptyMessage(viewer: ProgressViewer, canDeclare: boolean): string {
+  if (viewer === 'specialist') {
+    return 'Nenhuma avaliação ainda. Quando você registrar uma, a composição aparece aqui.';
+  }
+  return canDeclare
+    ? 'Nenhuma medida ainda. Registre peso e medidas para acompanhar a sua composição.'
+    : 'Nenhuma avaliação ainda. Quando o seu especialista medir, a composição aparece aqui.';
 }

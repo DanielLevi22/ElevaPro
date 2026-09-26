@@ -1,473 +1,234 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Link, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { showAlert, showConfirm } from '@/components/ui/appAlert';
-import { ScreenLayout } from '@/components/ui/ScreenLayout';
+import { BotaoFixoNoRodape } from '@/components/ui/BotaoFixoNoRodape';
+import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
+import { GlassSearchField } from '@/components/ui/GlassSearchField';
+import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
+import { ROUTES } from '@/navigation/types';
 import { useCores } from '@/shared/design';
-import { StudentEditModal } from '../components/StudentEditModal';
-import { useStudentStore } from '../store/studentStore';
+import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
+import { ActionPill } from '../components/ActionPill';
+import { FilterChips } from '../components/FilterChips';
+import { StudentActionsSheet } from '../components/StudentActionsSheet';
+import { StudentRow } from '../components/StudentRow';
+import { type StudentFilter, type StudentListState, useStudentList } from '../hooks/useStudentList';
+import { type Student, useStudentStore } from '../store/studentStore';
 
-type StudentFilter = 'all' | 'atRisk' | 'pending';
-
+/**
+ * A lista de alunos do especialista — a tela 2 do fluxo no kit de vidro (#334).
+ *
+ * Tudo o que a lista antiga fazia continua: busca, ordem por nome ou recentes,
+ * filtros de risco e pendência, página, reenviar convite e remover (agora no "…"
+ * de cada linha, com a avaliação física no lugar do "Editar", que não gravava). O chip "Arquivados" do kit fica de fora: arquivar ainda
+ * não existe.
+ */
 export default function StudentsScreen() {
-  const {
-    students,
-    isLoading,
-    fetchStudents,
-    removeStudent,
-    resendInvite,
-    briefing,
-    fetchBriefing,
-    adherenceByStudent,
-    fetchAdherenceFor,
-  } = useStudentStore();
-  const { user } = useAuthStore();
   const router = useRouter();
-  const cores = useCores();
-  const [filter, setFilter] = useState<StudentFilter>('all');
+  const list = useStudentList();
+  const [actionsFor, setActionsFor] = useState<Student | null>(null);
+  const handlers = useStudentActions();
 
-  const atRiskIds = useMemo(
-    () =>
-      new Set(
-        (briefing?.signals ?? [])
-          .filter((signal) => signal.kind === 'inactive')
-          .map((s) => s.studentId)
-      ),
-    [briefing]
+  const openCreate = () => router.push(ROUTES.STUDENTS.CREATE);
+
+  return (
+    <TelaDeVidroComFoto
+      image={fotoDoGrupo('back')}
+      bottomSpace="fixedButton"
+      refresh={{ refreshing: list.isLoading && list.students.length === 0, onRefresh: list.reload }}
+      overlay={<BotaoFixoNoRodape rotulo="Novo aluno" icone="add" onPress={openCreate} />}
+    >
+      <Header total={list.totalCount} atRisk={list.atRiskCount} onCreate={openCreate} />
+      <GlassSearchField
+        value={list.search}
+        onChangeText={list.setSearch}
+        placeholder="Buscar aluno…"
+        className="mt-4"
+      />
+      <Filters list={list} />
+      <SortTitle list={list} />
+      {list.visible.length === 0 && !list.isLoading ? (
+        <EmptyState filter={list.filter} onCreate={openCreate} />
+      ) : (
+        list.visible.map((student) => (
+          <StudentRow
+            key={student.id}
+            student={student}
+            state={list.stateOf(student)}
+            adherence={list.adherenceByStudent[student.id]}
+            onPress={() => router.push(ROUTES.STUDENTS.DETAILS(student.id))}
+            onActions={() => setActionsFor(student)}
+          />
+        ))
+      )}
+      <ListFooter
+        loading={list.isLoading && list.students.length > 0}
+        hasMore={list.hasMore}
+        onMore={list.loadMore}
+      />
+
+      <StudentActionsSheet
+        student={actionsFor}
+        onClose={() => setActionsFor(null)}
+        onAssess={(student) => router.push(ROUTES.STUDENTS.ASSESSMENT(student.id))}
+        onResendInvite={handlers.resendInvite}
+        onRemove={handlers.remove}
+      />
+    </TelaDeVidroComFoto>
   );
+}
 
-  const filteredStudents = useMemo(() => {
-    if (filter === 'atRisk') return students.filter((s) => atRiskIds.has(s.id));
-    if (filter === 'pending') return students.filter((s) => s.account_status === 'invited');
-    return students;
-  }, [students, filter, atRiskIds]);
+function Header({
+  total,
+  atRisk,
+  onCreate,
+}: {
+  total: number;
+  atRisk: number;
+  onCreate: () => void;
+}) {
+  const eyebrow = `${total} ${total === 1 ? 'aluno' : 'alunos'}${atRisk > 0 ? ` · ${atRisk} em risco` : ''}`;
+  return (
+    <View className="flex-row items-center gap-3">
+      <View className="min-w-0 flex-1">
+        <Text className="text-micro font-bold uppercase tracking-wide text-hero-secondary">
+          {eyebrow}
+        </Text>
+        <Text
+          testID="students-header-title"
+          className="mt-0.5 text-[1.375rem] font-bold tracking-tight text-hero"
+        >
+          Alunos
+        </Text>
+      </View>
+      <BotaoRedondo icone="plus" rotulo="Novo aluno" onPress={onCreate} />
+    </View>
+  );
+}
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: só quando o especialista muda
-  useEffect(() => {
-    if (user?.id) fetchBriefing(user.id);
-  }, [user?.id]);
+function Filters({ list }: { list: StudentListState }) {
+  const options: readonly { value: StudentFilter; label: string }[] = [
+    { value: 'all', label: `Todos · ${list.students.length}` },
+    { value: 'atRisk', label: `Em risco · ${list.atRiskCount}` },
+    { value: 'pending', label: `Pendentes · ${list.pendingCount}` },
+  ];
+  return <FilterChips options={options} value={list.filter} onChange={list.setFilter} />;
+}
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: só quando a página de alunos muda
-  useEffect(() => {
-    const idsMissingAdherence = students
-      .map((s) => s.id)
-      .filter((id) => !(id in adherenceByStudent));
-    if (idsMissingAdherence.length > 0) fetchAdherenceFor(idsMissingAdherence);
-  }, [students]);
+/** O rótulo da ordem, por critério e sentido: tabela, e não ternário dentro de ternário. */
+const SORT_LABEL = {
+  full_name: { asc: 'A–Z', desc: 'Z–A' },
+  created_at: { asc: 'Mais antigos', desc: 'Recentes' },
+} as const;
 
-  const [selectedStudent, setSelectedStudent] = useState<
-    import('../store/studentStore').Student | null
-  >(null);
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [sortBy, setBy] = useState<'full_name' | 'created_at'>('full_name');
-  const [sortOrder, setOrder] = useState<'asc' | 'desc'>('asc');
-  const [page, setPage] = useState(1);
-  const { totalCount } = useStudentStore();
+/**
+ * "Lista" com a ordem à direita, como o kit ("A–Z"). Tocar alterna o sentido;
+ * segurar troca entre nome e recentes — as duas ordens que a lista antiga tinha.
+ */
+function SortTitle({ list }: { list: StudentListState }) {
+  const byName = list.sortBy === 'full_name';
+  const label = SORT_LABEL[list.sortBy][list.sortOrder];
+  return (
+    <View className="mb-2.5 mt-5 flex-row items-baseline justify-between px-0.5">
+      <Text className="text-[0.65625rem] font-bold uppercase tracking-widest text-placeholder">
+        Lista
+      </Text>
+      <TouchableOpacity
+        onPress={list.toggleSortOrder}
+        onLongPress={() => list.setSortBy(byName ? 'created_at' : 'full_name')}
+        accessibilityRole="button"
+        accessibilityHint="Toque para inverter; segure para ordenar por nome ou por data"
+      >
+        <Text className="text-[0.71875rem] font-semibold text-primary-text">{label}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
 
-  // Search Debounce
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [search]);
+function EmptyState({ filter, onCreate }: { filter: StudentFilter; onCreate: () => void }) {
+  if (filter !== 'all') {
+    return (
+      <Text className="py-8 text-center text-legenda text-muted-foreground">
+        {filter === 'atRisk' ? 'Nenhum aluno em risco agora.' : 'Nenhum convite pendente.'}
+      </Text>
+    );
+  }
+  return (
+    <View className="items-center py-8">
+      <Text className="text-h2 font-bold text-foreground">Nenhum aluno ainda</Text>
+      <Text className="mb-4 mt-1 text-legenda text-muted-foreground">
+        Comece cadastrando seu primeiro aluno.
+      </Text>
+      <ActionPill icon="person-add-outline" label="Novo aluno" onPress={onCreate} />
+    </View>
+  );
+}
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: auto-suppressed during final sweep
-  useEffect(() => {
-    if (user?.id) {
-      fetchStudents(user.id, {
-        search: debouncedSearch,
-        sortBy,
-        sortOrder,
-        page: 1,
-        append: false,
-      });
-      setPage(1);
-    }
-  }, [user, debouncedSearch, sortBy, sortOrder]);
+function ListFooter({
+  loading,
+  hasMore,
+  onMore,
+}: {
+  loading: boolean;
+  hasMore: boolean;
+  onMore: () => void;
+}) {
+  const cores = useCores();
+  if (loading) return <ActivityIndicator color={cores.primaryText} className="py-4" />;
+  if (!hasMore) return null;
+  return (
+    <View className="mt-1 items-center">
+      <ActionPill icon="chevron-down" label="Carregar mais" onPress={onMore} />
+    </View>
+  );
+}
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: auto-suppressed during final sweep
-  const loadMore = useCallback(() => {
-    if (!isLoading && students.length < totalCount && user?.id) {
-      const nextPage = page + 1;
-      fetchStudents(user.id, {
-        search: debouncedSearch,
-        sortBy,
-        sortOrder,
-        page: nextPage,
-        append: true,
-      });
-      setPage(nextPage);
-    }
-  }, [isLoading, students.length, totalCount, user?.id, debouncedSearch, sortBy, sortOrder, page]);
+interface StudentActions {
+  remove: (student: Student) => void;
+  resendInvite: (student: Student) => Promise<void>;
+}
 
-  const handleRemove = (item: import('../store/studentStore').Student) => {
-    const isInvite = item.account_status === 'invited';
-    const title = isInvite ? 'Cancelar Convite' : 'Remover Aluno';
-    const message = isInvite
-      ? `Tem certeza que deseja cancelar o convite para ${item.full_name || 'este aluno'}?`
-      : `Tem certeza que deseja remover ${item.full_name || 'este aluno'}? Ele perderá o acesso aos treinos.`;
+/** Reenviar e remover, com a confirmação e o aviso de resultado da lista antiga. */
+function useStudentActions(): StudentActions {
+  const { user } = useAuthStore();
+  const { removeStudent, resendInvite } = useStudentStore();
 
+  const remove = (student: Student) => {
+    const invite = student.account_status === 'invited';
+    const name = student.full_name || 'este aluno';
     showConfirm({
-      title: title,
-      message: message,
+      title: invite ? 'Cancelar Convite' : 'Remover Aluno',
+      message: invite
+        ? `Tem certeza que deseja cancelar o convite para ${name}?`
+        : `Tem certeza que deseja remover ${name}? Ele perderá o acesso aos treinos.`,
       type: 'danger',
-      confirmText: isInvite ? 'Cancelar Convite' : 'Remover',
+      confirmText: invite ? 'Cancelar Convite' : 'Remover',
       cancelText: 'Voltar',
       onConfirm: async () => {
-        if (user?.id && item?.id) {
-          await removeStudent(user.id, item.id, item.service_type);
-        } else {
-          showAlert({ title: 'Erro', message: 'ID do aluno não encontrado.', type: 'error' });
-        }
+        if (!user?.id) return;
+        await removeStudent(user.id, student.id, student.service_type);
       },
     });
   };
 
-  const handleEdit = (student: import('../store/studentStore').Student) => {
-    setSelectedStudent(student);
-    setIsEditModalVisible(true);
-  };
-
-  const handleResendInvite = async (student: import('../store/studentStore').Student) => {
+  const resend = async (student: Student) => {
     const result = await resendInvite(student.id);
-    if (result.success) {
-      showAlert({
-        title: 'Convite reenviado',
-        message: `Um novo e-mail foi enviado para ${student.email || 'o aluno'}.`,
-        type: 'success',
-      });
-    } else {
-      showAlert({
-        title: 'Não foi possível reenviar',
-        message: result.error || 'Tente novamente.',
-        type: 'error',
-      });
-    }
-  };
-
-  const _handlePressStudent = (student: import('../store/studentStore').Student) => {
-    handleEdit(student);
-  };
-
-  const handleEnterStudent = (student: import('../store/studentStore').Student) => {
-    router.push(`/(tabs)/students/${student.id}`);
-  };
-
-  const handleSaveEdit = async (_data: Record<string, unknown>) => {
-    setIsEditModalVisible(false);
-    setSelectedStudent(null);
-    if (user?.id) {
-      fetchStudents(user.id, {
-        search: debouncedSearch,
-        sortBy,
-        sortOrder,
-        page: 1,
-        append: false,
-      });
-    }
-  };
-
-  const isExpired = (createdAt?: string) => {
-    if (!createdAt) return false;
-    const created = new Date(createdAt);
-    const now = new Date();
-    const diff = now.getTime() - created.getTime();
-    const days = diff / (1000 * 60 * 60 * 24);
-    return days > 7;
-  };
-
-  const renderItem = ({ item }: { item: import('../store/studentStore').Student }) => {
-    const expired = item.account_status === 'invited' && isExpired(item.link_created_at);
-
-    return (
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={() => !expired && handleEnterStudent(item)}
-        disabled={expired}
-        className="mb-3"
-      >
-        <View
-          className={`p-4 rounded-2xl border flex-row items-center justify-between ${
-            expired ? 'bg-zinc-900/50 border-zinc-900 opacity-60' : 'bg-zinc-900 border-zinc-800'
-          }`}
-        >
-          <View className="flex-row items-center flex-1">
-            {/* Avatar */}
-            <View className="h-14 w-14 rounded-full items-center justify-center mr-4 bg-zinc-800">
-              <Ionicons
-                name={expired ? 'calendar-outline' : 'person'}
-                size={28}
-                color={expired ? cores.mutedForeground : cores.foreground}
-              />
-            </View>
-
-            {/* Info */}
-            <View className="flex-1 mr-2">
-              <View className="flex-row items-center gap-2 mb-1">
-                <Text className="text-white text-lg font-bold font-display" numberOfLines={1}>
-                  {item.full_name || 'Aluno sem nome'}
-                </Text>
-                {expired && (
-                  <View className="bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-md">
-                    <Text className="text-red-500 text-[0.625rem] font-bold uppercase">
-                      Expirado
-                    </Text>
-                  </View>
-                )}
-                {item.account_status === 'invited' && !expired && (
-                  <View className="bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-md">
-                    <Text className="text-orange-500 text-[0.625rem] font-bold uppercase">
-                      Pendente
-                    </Text>
-                  </View>
-                )}
-              </View>
-              <Text className="text-zinc-400 text-sm font-sans" numberOfLines={1}>
-                {item.email || 'Sem contato'}
-              </Text>
-            </View>
-
-            {!expired && item.id in adherenceByStudent ? (
-              <View className="items-end mr-1">
-                <Text className="text-white text-sm font-black font-display">
-                  {adherenceByStudent[item.id] === null ? '—' : `${adherenceByStudent[item.id]}%`}
-                </Text>
-                <Text className="text-zinc-500 text-[0.5625rem] font-bold uppercase">
-                  Aderência
-                </Text>
-              </View>
-            ) : null}
-          </View>
-
-          <View className="flex-row items-center gap-2">
-            {/* Resend Invite Button — só para convite ainda pendente */}
-            {item.account_status === 'invited' && (
-              <TouchableOpacity
-                onPress={() => handleResendInvite(item)}
-                className="p-2 rounded-xl bg-zinc-800"
-              >
-                <Ionicons name="mail-unread" size={20} color={cores.primaryText} />
-              </TouchableOpacity>
-            )}
-
-            {/* Edit Button */}
-            <TouchableOpacity
-              onPress={() => handleEdit(item)}
-              className={`p-2 rounded-xl ${expired ? 'bg-zinc-900' : 'bg-zinc-800'}`}
-            >
-              <Ionicons
-                name="pencil"
-                size={20}
-                color={expired ? cores.mutedForeground : cores.primaryText}
-              />
-            </TouchableOpacity>
-
-            {/* Remove Button */}
-            <TouchableOpacity onPress={() => handleRemove(item)} className="p-2">
-              <Ionicons
-                name="trash-outline"
-                size={20}
-                color={expired ? cores.mutedForeground : cores.destructive}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </TouchableOpacity>
+    showAlert(
+      result.success
+        ? {
+            title: 'Convite reenviado',
+            message: `Um novo e-mail foi enviado para ${student.email || 'o aluno'}.`,
+            type: 'success',
+          }
+        : {
+            title: 'Não foi possível reenviar',
+            message: result.error || 'Tente novamente.',
+            type: 'error',
+          }
     );
   };
 
-  return (
-    <ScreenLayout>
-      {/* Header */}
-      <View className="px-6 pt-4 pb-4">
-        <View className="flex-row justify-between items-center mb-6">
-          <View>
-            <Text
-              testID="students-header-title"
-              className="text-4xl font-extrabold text-white mb-1 font-display"
-            >
-              Meus Alunos
-            </Text>
-            <Text className="text-base text-zinc-400 font-sans">
-              {totalCount} {totalCount === 1 ? 'aluno' : 'alunos'}
-            </Text>
-          </View>
-
-          <Link href={'/(tabs)/students/create' as never} asChild>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              className="h-14 w-14 rounded-full items-center justify-center bg-primary shadow-lg shadow-primary/20"
-            >
-              <Ionicons name="add" size={28} color={cores.primaryForeground} />
-            </TouchableOpacity>
-          </Link>
-        </View>
-
-        {/* Search and Sort */}
-        <View className="flex-row gap-3 mb-2">
-          <View className="flex-1 flex-row items-center px-4 h-12 rounded-xl bg-zinc-900 border border-zinc-800">
-            <Ionicons name="search" size={18} color={cores.mutedForeground} />
-            <TextInput
-              placeholder="Buscar aluno..."
-              placeholderTextColor={cores.placeholder}
-              value={search}
-              onChangeText={setSearch}
-              className="flex-1 ml-3 text-white font-sans text-sm"
-              style={{ padding: 0 }}
-            />
-          </View>
-
-          <TouchableOpacity
-            onPress={() => setOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
-            className="w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-800 items-center justify-center"
-          >
-            <Ionicons
-              name={sortOrder === 'asc' ? 'arrow-up' : 'arrow-down'}
-              size={18}
-              color={cores.primaryText}
-            />
-          </TouchableOpacity>
-        </View>
-
-        <View className="flex-row gap-2">
-          <TouchableOpacity
-            onPress={() => setBy('full_name')}
-            className={`px-4 py-1.5 rounded-full border ${sortBy === 'full_name' ? 'bg-orange-500/10 border-orange-500' : 'bg-transparent border-zinc-800'}`}
-          >
-            <Text
-              className={`text-xs font-bold ${sortBy === 'full_name' ? 'text-orange-500' : 'text-zinc-500'}`}
-            >
-              NOME (A-Z)
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setBy('created_at')}
-            className={`px-4 py-1.5 rounded-full border ${sortBy === 'created_at' ? 'bg-orange-500/10 border-orange-500' : 'bg-transparent border-zinc-800'}`}
-          >
-            <Text
-              className={`text-xs font-bold ${sortBy === 'created_at' ? 'text-orange-500' : 'text-zinc-500'}`}
-            >
-              RECENTES
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Filtro por risco/pendência */}
-        <View className="flex-row gap-2 mt-2">
-          {(
-            [
-              ['all', `Todos · ${students.length}`],
-              ['atRisk', `Em risco · ${atRiskIds.size}`],
-              [
-                'pending',
-                `Pendentes · ${students.filter((s) => s.account_status === 'invited').length}`,
-              ],
-            ] as const
-          ).map(([value, label]) => (
-            <TouchableOpacity
-              key={value}
-              onPress={() => setFilter(value)}
-              className={`px-4 py-1.5 rounded-full border ${filter === value ? 'bg-primary/10 border-primary' : 'bg-transparent border-zinc-800'}`}
-            >
-              <Text
-                className={`text-xs font-bold ${filter === value ? 'text-primary-text' : 'text-zinc-500'}`}
-              >
-                {label.toUpperCase()}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      {/* Content */}
-      {filteredStudents.length === 0 && !isLoading ? (
-        <View className="flex-1 justify-center items-center px-6">
-          <View className="bg-zinc-900 p-8 rounded-full mb-6 border border-zinc-800">
-            <Ionicons name="people-outline" size={80} color={cores.mutedForeground} />
-          </View>
-          {filter === 'all' ? (
-            <>
-              <Text className="text-white text-2xl font-bold mb-2 text-center font-display">
-                Nenhum aluno ainda
-              </Text>
-              <Text className="text-zinc-400 text-center px-8 text-base mb-8 font-sans">
-                Comece cadastrando seu primeiro aluno
-              </Text>
-              <Link href={'/(tabs)/students/create' as never} asChild>
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  className="rounded-2xl py-4 px-8 bg-primary shadow-lg shadow-primary/20"
-                >
-                  <Text className="text-primary-foreground text-base font-bold font-display">
-                    Novo Aluno
-                  </Text>
-                </TouchableOpacity>
-              </Link>
-            </>
-          ) : (
-            <Text className="text-white text-lg font-bold text-center font-display">
-              {filter === 'atRisk' ? 'Nenhum aluno em risco agora' : 'Nenhum convite pendente'}
-            </Text>
-          )}
-        </View>
-      ) : (
-        <FlatList
-          data={filteredStudents}
-          renderItem={renderItem}
-          keyExtractor={(item, index) => item.id || `student-${index}`}
-          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
-          onEndReached={loadMore}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={() =>
-            isLoading && students.length > 0 ? (
-              <View className="py-4">
-                <ActivityIndicator color={cores.primaryText} />
-              </View>
-            ) : null
-          }
-          refreshControl={
-            <RefreshControl
-              refreshing={isLoading && students.length === 0}
-              onRefresh={() =>
-                user?.id &&
-                fetchStudents(user.id, {
-                  search: debouncedSearch,
-                  sortBy,
-                  sortOrder,
-                  page: 1,
-                  append: false,
-                })
-              }
-              tintColor={cores.primaryText}
-            />
-          }
-          showsVerticalScrollIndicator={false}
-        />
-      )}
-
-      <StudentEditModal
-        visible={isEditModalVisible}
-        onClose={() => setIsEditModalVisible(false)}
-        onSave={handleSaveEdit}
-        student={
-          selectedStudent
-            ? { ...selectedStudent, full_name: selectedStudent.full_name ?? undefined }
-            : null
-        }
-      />
-    </ScreenLayout>
-  );
+  return { remove, resendInvite: resend };
 }

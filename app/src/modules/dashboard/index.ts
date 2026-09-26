@@ -1,4 +1,4 @@
-export { PainelDoEspecialista } from './components/PainelDoEspecialista';
+export { SpecialistDashboard } from './components/SpecialistDashboard';
 export { HomeDoAluno } from './screens/HomeDoAluno';
 export type { SeenRiskSignal } from './services/shouldShowRiskBanner';
 export { shouldShowRiskBanner, toSeenRiskSignal } from './services/shouldShowRiskBanner';

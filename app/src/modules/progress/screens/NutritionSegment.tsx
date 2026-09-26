@@ -8,6 +8,7 @@ import { useNutritionNumbers } from '@/hooks/useNutritionNumbers';
 import { ChartCard, EmptyCard } from '../components/ChartCard';
 import { AreaChart } from '../components/charts/AreaChart';
 import { Donut } from '../components/charts/Donut';
+import { HubBackButton } from '../components/HubBackButton';
 import { TrendStat } from '../components/TrendStat';
 
 /**
@@ -33,7 +34,12 @@ export function NutritionSegment({ studentId, segments }: NutritionSegmentProps)
 
   return (
     <>
-      <ProgressHeader size="nutrition" eyebrow="Últimas 12 semanas" title="Nutrição em números" />
+      <ProgressHeader
+        size="nutrition"
+        eyebrow="Últimas 12 semanas"
+        title="Nutrição em números"
+        leading={<HubBackButton />}
+      />
       <View className="mt-3.5">{segments}</View>
       <NutritionStats period={period} />
       {empty ? (

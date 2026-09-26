@@ -4,7 +4,10 @@ import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { StudentPickerModal } from '@/components/StudentPickerModal';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
-import { CabecalhoSobreFoto } from '@/components/ui/CabecalhoSobreFoto';
+import {
+  CabecalhoSobreFoto,
+  type CabecalhoSobreFotoProps,
+} from '@/components/ui/CabecalhoSobreFoto';
 import { Chip } from '@/components/ui/Chip';
 import { SearchModal } from '@/components/ui/SearchModal';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
@@ -30,10 +33,15 @@ const STATUS_DO_FILTRO: Record<Exclude<Filtro, 'todas'>, Periodization['status']
  * aqui pode haver mais de uma periodização em andamento ao mesmo tempo, uma
  * por aluno, então cada ativa vira um cartão-herói (#335).
  *
+ * Com `studentId`, é a mesma lista recortada num aluno: o "Treinos" do
+ * Acompanhamento (#334), dentro da pilha de Alunos, com voltar e sem o seletor de
+ * aluno na criação.
+ *
  * @example
  * <PeriodizationsScreen />
+ * <PeriodizationsScreen studentId={aluno.id} />
  */
-export default function PeriodizationsScreen() {
+export default function PeriodizationsScreen({ studentId }: { studentId?: string } = {}) {
   const router = useRouter();
   const { user, accountType } = useAuthStore();
   const isSpecialist = accountType === 'specialist';
@@ -62,15 +70,23 @@ export default function PeriodizationsScreen() {
     [students]
   );
 
+  const scoped = useMemo(
+    () => (studentId ? periodizations.filter((p) => p.student_id === studentId) : periodizations),
+    [periodizations, studentId]
+  );
+  const studentName = studentId
+    ? (students.find((s) => s.id === studentId)?.full_name ?? scoped[0]?.student?.full_name)
+    : undefined;
+
   const buscadas = useMemo(() => {
-    if (!searchQuery.trim()) return periodizations;
+    if (!searchQuery.trim()) return scoped;
     const query = searchQuery.toLowerCase();
-    return periodizations.filter((p) => {
+    return scoped.filter((p) => {
       const nome = p.name?.toLowerCase() ?? '';
       const aluno = p.student?.full_name?.toLowerCase() ?? '';
       return nome.includes(query) || aluno.includes(query);
     });
-  }, [periodizations, searchQuery]);
+  }, [scoped, searchQuery]);
 
   const ativas = useMemo(() => buscadas.filter((p) => p.status === 'active'), [buscadas]);
   const historico = useMemo(
@@ -84,18 +100,29 @@ export default function PeriodizationsScreen() {
 
   const abrir = useCallback(
     (periodizacao: Periodization, executar = false) => {
+      if (studentId) {
+        router.push(ROUTES.STUDENTS.PERIODIZATION(studentId, periodizacao.id));
+        return;
+      }
       router.push(
         executar
           ? ROUTES.WORKOUTS.PERIODIZATION_EXECUTE(periodizacao.id)
           : ROUTES.WORKOUTS.PERIODIZATION(periodizacao.id)
       );
     },
-    [router]
+    [router, studentId]
   );
 
   // O `member` cria para si mesmo, sem escolher aluno; o `specialist` escolhe
   // antes de entrar no wizard, que não tem seletor embutido.
   const abrirCriacao = useCallback(() => {
+    if (studentId) {
+      router.push({
+        pathname: ROUTES.WORKOUTS.WIZARD_STRUCTURE,
+        params: { studentId, studentName: studentName ?? undefined },
+      });
+      return;
+    }
     if (isSpecialist) {
       setShowStudentPicker(true);
       return;
@@ -103,7 +130,7 @@ export default function PeriodizationsScreen() {
     if (user?.id) {
       router.push({ pathname: ROUTES.WORKOUTS.WIZARD_STRUCTURE, params: { studentId: user.id } });
     }
-  }, [isSpecialist, user?.id, router]);
+  }, [studentId, studentName, isSpecialist, user?.id, router]);
 
   const onRefresh = useCallback(() => {
     if (user?.id) fetchPeriodizations(user.id);
@@ -115,8 +142,8 @@ export default function PeriodizationsScreen() {
       refresh={{ refreshing: isLoading, onRefresh }}
     >
       <CabecalhoSobreFoto
-        sobrelinha={isSpecialist ? 'Gestão de planejamento' : 'Meus treinos'}
-        titulo={isSpecialist ? 'Alunos' : 'Periodizações'}
+        {...headerCopy(studentId ? (studentName ?? 'Aluno') : null, isSpecialist)}
+        onVoltar={studentId ? router.back : undefined}
         direita={
           <View className="flex-row items-center gap-2">
             <BotaoRedondo
@@ -185,6 +212,17 @@ export default function PeriodizationsScreen() {
       </ConteudoDaLista>
     </TelaDeVidroComFoto>
   );
+}
+
+/** O que o cabeçalho diz: o aluno recortado, a gestão do especialista ou os treinos de quem treina. */
+function headerCopy(
+  student: string | null,
+  specialist: boolean
+): Pick<CabecalhoSobreFotoProps, 'sobrelinha' | 'titulo'> {
+  if (student) return { sobrelinha: 'Treinos do aluno', titulo: student };
+  return specialist
+    ? { sobrelinha: 'Gestão de planejamento', titulo: 'Alunos' }
+    : { sobrelinha: 'Meus treinos', titulo: 'Periodizações' };
 }
 
 interface ConteudoDaListaProps {

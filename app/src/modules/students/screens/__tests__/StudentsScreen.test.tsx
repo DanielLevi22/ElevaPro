@@ -63,23 +63,6 @@ jest.mock('expo-router', () => ({
   Link: ({ children }: { children: React.ReactNode }) => children,
 }));
 
-// Mock Child Component to avoid complexity
-jest.mock('../../components/StudentEditModal', () => {
-  const { View } = require('react-native');
-  return {
-    StudentEditModal: ({
-      visible,
-      onSave,
-    }: {
-      visible: boolean;
-      onSave: (data: unknown) => void;
-    }) =>
-      visible ? (
-        <View testID="mock-StudentEditModal" onTouchEnd={() => onSave({ name: 'Updated Name' })} />
-      ) : null,
-  };
-});
-
 // Mock Alert
 jest.spyOn(Alert, 'alert');
 

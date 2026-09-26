@@ -1,33 +1,48 @@
-import type { ServiceType } from '@elevapro/shared';
-import type { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { showAlert } from '@/components/ui/appAlert';
-import { Button } from '@/components/ui/Button';
-import { Group } from '@/components/ui/Group';
-import { Hero } from '@/components/ui/Hero';
-import { Input } from '@/components/ui/Input';
-import { Row } from '@/components/ui/Row';
-import { ScreenLayout } from '@/components/ui/ScreenLayout';
+import { BotaoFixoNoRodape } from '@/components/ui/BotaoFixoNoRodape';
+import { CabecalhoSobreFoto } from '@/components/ui/CabecalhoSobreFoto';
+import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
+import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
+import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
+import { Vidro } from '@/components/ui/Vidro';
 import { ROUTES } from '@/navigation/types';
+import { useCores, useEscala } from '@/shared/design';
+import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
+import { ActionPill } from '../components/ActionPill';
+import { FormField } from '../components/FormField';
+import { ServiceChoice } from '../components/ServiceChoice';
+import { StepBar } from '../components/StepBar';
 import { useStudentRegistration } from '../hooks/useStudentRegistration';
 import { useStudentStore } from '../store/studentStore';
 
-type ServiceOption = { value: ServiceType; icon: keyof typeof Ionicons.glyphMap; label: string };
+const TOTAL_STEPS = 2;
 
-/** Mesmos rótulos do cadastro do especialista — o mesmo enum, o mesmo nome. */
-const SERVICE_OPTIONS: ServiceOption[] = [
-  { value: 'personal_training', icon: 'barbell', label: 'Treino' },
-  { value: 'nutrition_consulting', icon: 'restaurant', label: 'Nutrição' },
-];
+function showInviteFailed(error: string | undefined): void {
+  showAlert({
+    title: 'Não foi possível enviar o convite',
+    message: error || 'Tente novamente.',
+    type: 'error',
+  });
+}
 
+/**
+ * O cadastro de aluno pelo especialista — as telas 3 e 5 do fluxo no kit de vidro
+ * (#334): dados e tipo de acompanhamento, e o convite enviado.
+ *
+ * Telefone, nascimento e sexo do kit ficam de fora de propósito: o mapa de dados
+ * rejeita os três sem uso funcional (docs/LGPD_COMPLIANCE.md, "o que NÃO coletar").
+ * A anamnese (tela 4) é respondida pelo próprio aluno no primeiro acesso (#332).
+ */
 export default function CreateStudentScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { myServiceTypes, fetchMyServiceTypes, createStudent } = useStudentStore();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const registration = useStudentRegistration({ offeredServices: myServiceTypes });
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: só na entrada da tela
@@ -35,140 +50,148 @@ export default function CreateStudentScreen() {
     if (user?.id) fetchMyServiceTypes(user.id);
   }, [user?.id]);
 
-  async function handleSendInvite() {
-    if (registration.blockingReason || !user?.id) return;
-
-    setIsLoading(true);
+  async function sendInvite() {
+    if (registration.blockingReason) {
+      showAlert({ title: 'Faltam dados', message: registration.blockingReason, type: 'info' });
+      return;
+    }
+    if (!user?.id || isSending) return;
+    setIsSending(true);
     const result = await createStudent({
       specialist_id: user.id,
       full_name: registration.fullName,
       email: registration.email.trim(),
       service_types: registration.serviceTypes,
     });
-    setIsLoading(false);
-
-    if (result.success && result.studentId) {
-      registration.completeInvite(result.studentId);
-    } else {
-      showAlert({
-        title: 'Não foi possível enviar o convite',
-        message: result.error || 'Tente novamente.',
-        type: 'error',
-      });
-    }
+    setIsSending(false);
+    if (result.success && result.studentId) registration.completeInvite(result.studentId);
+    else showInviteFailed(result.error);
   }
 
   if (registration.step === 'invite' && registration.studentId) {
     return (
       <InviteSent
+        studentId={registration.studentId}
+        name={registration.fullName}
         email={registration.email}
-        onAssess={() =>
-          router.replace(ROUTES.STUDENTS.ASSESSMENT(registration.studentId as string))
-        }
-        onBack={() => router.replace(ROUTES.STUDENTS.ROOT)}
       />
     );
   }
 
   return (
-    <ScreenLayout useSafeArea={false}>
-      <ScrollView
-        contentContainerClassName="grow pb-8"
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Hero
-          imagem={require('../../../../assets/workouts/back.jpg')}
-          titulo="Novo Aluno"
-          sub="O aluno recebe um convite por e-mail e define a própria senha."
+    <TelaDeVidroComFoto
+      image={fotoDoGrupo('arms')}
+      bottomSpace="fixedButton"
+      overlay={
+        <BotaoFixoNoRodape
+          rotulo={isSending ? 'Enviando' : 'Enviar convite'}
+          icone="send"
+          onPress={sendInvite}
         />
-
-        <View className="flex-1 justify-center px-5">
-          <Group header="Dados básicos">
-            <Input
-              icon="person"
-              value={registration.fullName}
-              onChangeText={registration.setFullName}
-              placeholder="Nome completo"
-              autoCapitalize="words"
-              autoComplete="name"
-            />
-            <Input
-              icon="mail"
-              value={registration.email}
-              onChangeText={registration.setEmail}
-              placeholder="E-mail do aluno"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-            />
-          </Group>
-
-          <Group
-            header="Tipo de acompanhamento"
-            footer="Só aparecem os serviços que você presta — configure em seu perfil para oferecer outro."
-          >
-            {SERVICE_OPTIONS.filter((option) => myServiceTypes.includes(option.value)).map(
-              (option) => (
-                <Row
-                  key={option.value}
-                  icon={option.icon}
-                  title={option.label}
-                  selected={registration.serviceTypes.includes(option.value)}
-                  onPress={() => registration.toggleService(option.value)}
-                />
-              )
-            )}
-            {myServiceTypes.length === 0 ? (
-              <View className="px-4 py-3">
-                <Text className="text-rotulo text-muted-foreground">
-                  Nenhum serviço configurado no seu perfil ainda.
-                </Text>
-              </View>
-            ) : null}
-          </Group>
-
-          <Button
-            label="Enviar convite"
-            fullWidth
-            isLoading={isLoading}
-            disabled={!!registration.blockingReason}
-            onPress={handleSendInvite}
-          />
-        </View>
-      </ScrollView>
-    </ScreenLayout>
+      }
+    >
+      <CabecalhoSobreFoto sobrelinha="Novo aluno" titulo="Dados básicos" onVoltar={router.back} />
+      <StepBar current={1} total={TOTAL_STEPS} />
+      <Vidro classeExterna="mt-[1.125rem]" className="p-4 pb-1">
+        <FormField
+          label="Nome completo"
+          icon="person-outline"
+          value={registration.fullName}
+          onChangeText={registration.setFullName}
+          placeholder="Nome e sobrenome"
+          autoCapitalize="words"
+          autoComplete="name"
+        />
+        <FormField
+          label="E-mail"
+          icon="mail-outline"
+          value={registration.email}
+          onChangeText={registration.setEmail}
+          placeholder="email@exemplo.com"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+        />
+      </Vidro>
+      <TituloDeSecao estilo="rotulo">Tipo de acompanhamento</TituloDeSecao>
+      <ServiceChoice
+        offered={myServiceTypes}
+        selected={registration.serviceTypes}
+        onSelect={registration.selectServices}
+      />
+      <Text className="mt-1 px-0.5 text-[0.71875rem] leading-[1.4] text-muted-foreground">
+        O aluno recebe um convite por e-mail e define a própria senha. Só aparecem os serviços que
+        você presta — configure em seu perfil para oferecer outro.
+      </Text>
+    </TelaDeVidroComFoto>
   );
 }
 
-function InviteSent({
-  email,
-  onAssess,
-  onBack,
-}: {
-  email: string;
-  onAssess: () => void;
-  onBack: () => void;
-}) {
-  return (
-    <ScreenLayout>
-      <View className="flex-1 justify-center px-5">
-        <Group header="Convite enviado">
-          <View className="items-center px-4 py-6">
-            <Text className="text-center text-display font-bold text-foreground">
-              Convite enviado
-            </Text>
-            <Text className="mt-2 text-center text-corpo leading-[1.4] text-muted-foreground">
-              {email} recebeu o acesso. O aluno entra como aluno gerenciado e define a própria senha
-              — sem custo para ele.
-            </Text>
-          </View>
-        </Group>
+const SENT_ICON = 30;
 
-        <Button label="Fazer avaliação física agora" fullWidth onPress={onAssess} />
-        <View className="h-2.5" />
-        <Button label="Voltar para Alunos" variant="tinted" fullWidth onPress={onBack} />
+function InviteSent({
+  studentId,
+  name,
+  email,
+}: {
+  studentId: string;
+  name: string;
+  email: string;
+}) {
+  const router = useRouter();
+  const cores = useCores();
+  const escalar = useEscala();
+  const firstName = name.trim().split(/\s+/)[0] || 'O aluno';
+
+  return (
+    <TelaDeVidroComFoto image={fotoDoGrupo('chest')}>
+      <CabecalhoSobreFoto sobrelinha="Novo aluno" titulo="Convite" />
+      <StepBar current={TOTAL_STEPS} total={TOTAL_STEPS} />
+      <Vidro classeExterna="mt-[1.125rem]" className="items-center p-6">
+        <View className="mb-4 h-[4.375rem] w-[4.375rem] items-center justify-center rounded-full border border-primary/40 bg-primary/15">
+          <Ionicons name="send" size={escalar(SENT_ICON)} color={cores.primaryText} />
+        </View>
+        <Text className="font-display-black text-[1.3125rem] tracking-tight text-foreground">
+          Convite enviado
+        </Text>
+        <Text className="mt-2 text-center text-[0.8125rem] leading-[1.45] text-muted-foreground">
+          {`${firstName} recebeu o acesso em ${email}. Entra como aluno gerenciado e define a própria senha — sem custo para ele.`}
+        </Text>
+      </Vidro>
+      <TituloDeSecao estilo="rotulo">Próximos passos</TituloDeSecao>
+      <LinhaDeVidro
+        icon="barbell-outline"
+        tom="marca"
+        titulo="Montar treino"
+        sub="Periodização e divisão"
+        onPress={() =>
+          router.replace({
+            pathname: ROUTES.WORKOUTS.WIZARD_STRUCTURE,
+            params: { studentId, studentName: name.trim() },
+          })
+        }
+      />
+      <LinhaDeVidro
+        icon="nutrition-outline"
+        tom="ritmo"
+        titulo="Montar dieta"
+        sub="Macros e refeições"
+        onPress={() => router.replace(ROUTES.STUDENTS.NUTRITION(studentId))}
+      />
+      <LinhaDeVidro
+        icon="body-outline"
+        tom="cadencia"
+        titulo="Fazer avaliação física"
+        sub="Medidas e fotos"
+        onPress={() => router.replace(ROUTES.STUDENTS.ASSESSMENT(studentId))}
+      />
+      <View className="mt-3 flex-row">
+        <ActionPill
+          icon="people-outline"
+          label="Voltar para Alunos"
+          onPress={() => router.replace(ROUTES.STUDENTS.ROOT)}
+        />
       </View>
-    </ScreenLayout>
+    </TelaDeVidroComFoto>
   );
 }
