@@ -1,28 +1,39 @@
-import type { Briefing, BriefingSignalKind } from '@elevapro/shared';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import type { Briefing, BriefingSignal, BriefingSignalKind } from '@elevapro/shared';
+import type { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { AvatarDoCabecalho } from '@/components/ui/AvatarDoCabecalho';
-import { ScreenLayout } from '@/components/ui/ScreenLayout';
-import { colors as brandColors } from '@/constants/colors';
+import { CaixaDeIcone, type TomDeMetrica } from '@/components/ui/CaixaDeIcone';
+import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
+import { StatTile } from '@/components/ui/StatTile';
+import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
+import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
+import { Vidro } from '@/components/ui/Vidro';
 import { ROUTES } from '@/navigation/types';
-import { comOpacidade, useCores } from '@/shared/design';
+import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 
 const SIGNAL_ICON: Record<BriefingSignalKind, keyof typeof Ionicons.glyphMap> = {
-  inactive: 'alert-circle',
-  pending_invite: 'mail-unread',
-  anamnesis_ready: 'sparkles',
+  inactive: 'warning-outline',
+  pending_invite: 'mail-unread-outline',
+  anamnesis_ready: 'sparkles-outline',
+};
+
+/** O vermelho do kit para risco, a marca para boa notícia, o âmbar para o resto. */
+const SIGNAL_TONE: Record<BriefingSignal['tone'], TomDeMetrica> = {
+  danger: 'batimento',
+  success: 'marca',
+  warning: 'gordura',
 };
 
 /**
- * A Home do especialista.
+ * A Home do especialista — a tela 1 do fluxo do especialista no kit de vidro (#334).
  *
  * Saiu de `(tabs)/index.tsx` porque é outra tela inteira dentro do mesmo
  * arquivo: outro papel, outros dados, e nenhuma sobreposição com a do aluno
- * além do `if` que as separava. O arquivo passava de 500 linhas, e a #194
- * pedia mais um cartão na Home do aluno — extrair a metade que não ia crescer
- * era o caminho mais curto e o mais honesto.
+ * além do `if` que as separava.
+ *
+ * A seção "Hoje" do kit (agenda do dia) não está aqui: o app não tem agenda, e
+ * horário inventado seria pior que a seção ausente.
  */
 interface PainelDoEspecialistaProps {
   profile: { full_name?: string | null } | null;
@@ -42,178 +53,104 @@ export function PainelDoEspecialista({
   onRefresh,
 }: PainelDoEspecialistaProps) {
   const router = useRouter();
-  const cores = useCores();
-  const atRiskCount = briefing?.signals.filter((signal) => signal.tone === 'danger').length ?? 0;
+  const signals = briefing?.signals ?? [];
+  const atRiskCount = signals.filter((signal) => signal.tone === 'danger').length;
+  const firstName = profile?.full_name?.trim().split(/\s+/)[0];
 
   return (
-    <ScreenLayout>
-      {/* Ambient Top Light - Made extremely subtle */}
-      <View className="absolute top-0 w-full h-[12.5rem] pointer-events-none opacity-20">
-        <LinearGradient colors={[brandColors.primary.start, 'transparent']} style={{ flex: 1 }} />
+    <TelaDeVidroComFoto image={fotoDoGrupo('chest')} refresh={{ refreshing: isLoading, onRefresh }}>
+      <View className="flex-row items-center gap-3">
+        <View className="min-w-0 flex-1">
+          <Text className="text-micro font-bold uppercase tracking-wide text-hero-secondary">
+            {todayLabel()}
+          </Text>
+          <Text
+            numberOfLines={1}
+            className="mt-0.5 text-[1.375rem] font-bold tracking-tight text-hero"
+          >
+            {firstName ? `Olá, ${firstName}` : 'Olá'}
+          </Text>
+        </View>
+        <AvatarDoCabecalho profile={profile} />
       </View>
 
-      <ScrollView
-        contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
-        refreshControl={
-          <RefreshControl
-            refreshing={isLoading}
-            onRefresh={onRefresh}
-            tintColor={brandColors.primary.start}
-          />
-        }
+      <TouchableOpacity
+        onPress={() => router.push(ROUTES.TABS.STUDENTS)}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        className="mt-[1.125rem] flex-row gap-2.5"
       >
-        <View className="mb-8 flex-row justify-between items-start">
-          <View>
-            <Text className="text-zinc-500 text-[0.75rem] font-bold mb-1 uppercase tracking-widest font-sans ml-1">
-              Central de Comando
-            </Text>
-            <Text className="text-4xl font-extrabold text-white mb-2 font-display">Dashboard</Text>
-          </View>
-          <AvatarDoCabecalho profile={profile} />
-        </View>
+        <StatTile value={String(students.length)} label="Alunos ativos" tone="brand" size="lg" />
+        <StatTile
+          value={averageAdherence === null ? '—' : `${averageAdherence}%`}
+          label="Aderência"
+          tone="info"
+          size="lg"
+        />
+        <StatTile value={String(atRiskCount)} label="Em risco" tone="danger" size="lg" />
+      </TouchableOpacity>
 
-        <View className="gap-y-4">
-          {/* Stats Grid */}
-          <View className="flex-row gap-3">
-            <TouchableOpacity
-              onPress={() => router.push(ROUTES.TABS.STUDENTS)}
-              activeOpacity={0.8}
-              className="flex-1"
-            >
-              <View
-                className="rounded-2xl p-4 border bg-zinc-900"
-                style={{ borderColor: brandColors.border.default }}
-              >
-                <Text className="text-white text-3xl font-black font-display tracking-tight">
-                  {students.length}
-                </Text>
-                <Text className="text-zinc-500 text-[0.5625rem] font-bold tracking-widest uppercase font-sans mt-1">
-                  Alunos Ativos
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            <View
-              className="flex-1 rounded-2xl p-4 border bg-zinc-900"
-              style={{ borderColor: brandColors.border.default }}
-            >
-              <Text
-                className="text-3xl font-black font-display tracking-tight"
-                style={{ color: cores.primaryText }}
-              >
-                {averageAdherence === null ? '—' : `${averageAdherence}%`}
-              </Text>
-              <Text className="text-zinc-500 text-[0.5625rem] font-bold tracking-widest uppercase font-sans mt-1">
-                Aderência
-              </Text>
-            </View>
-
-            <View
-              className="flex-1 rounded-2xl p-4 border bg-zinc-900"
-              style={{ borderColor: brandColors.border.default }}
-            >
-              <Text
-                className="text-3xl font-black font-display tracking-tight"
-                style={{ color: cores.destructive }}
-              >
-                {atRiskCount}
-              </Text>
-              <Text className="text-zinc-500 text-[0.5625rem] font-bold tracking-widest uppercase font-sans mt-1">
-                Em Risco
-              </Text>
-            </View>
-          </View>
-
-          {briefing && briefing.signals.length > 0 ? (
-            <View>
-              <Text className="text-zinc-500 text-[0.6875rem] font-bold tracking-widest uppercase font-sans mb-2 ml-1">
-                Alertas da IA
-              </Text>
-              <View className="gap-y-2">
-                {briefing.signals.map((signal) => {
-                  const color =
-                    signal.tone === 'danger'
-                      ? cores.destructive
-                      : signal.tone === 'success'
-                        ? cores.success
-                        : cores.warning;
-                  return (
-                    <TouchableOpacity
-                      key={`${signal.studentId}-${signal.kind}`}
-                      onPress={() => router.push(ROUTES.STUDENTS.DETAILS(signal.studentId))}
-                      activeOpacity={0.8}
-                    >
-                      <View
-                        className="rounded-2xl p-3.5 border bg-zinc-900 flex-row items-center gap-3"
-                        style={{ borderColor: brandColors.border.default }}
-                      >
-                        <View
-                          className="w-9 h-9 rounded-xl items-center justify-center"
-                          style={{ backgroundColor: comOpacidade(color, 0.15) }}
-                        >
-                          <Ionicons name={SIGNAL_ICON[signal.kind]} size={18} color={color} />
-                        </View>
-                        <View className="flex-1">
-                          <Text className="text-white text-sm font-bold font-display">
-                            {signal.studentName}
-                          </Text>
-                          <Text className="text-zinc-400 text-xs font-sans mt-0.5">
-                            {signal.message}
-                          </Text>
-                        </View>
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-          ) : null}
-
-          {/* Ranking Card - Full Width */}
-          <TouchableOpacity onPress={() => router.push(ROUTES.TABS.RANKING)} activeOpacity={0.8}>
-            <View
-              className="rounded-[1.5rem] p-5 flex-row items-center justify-between border bg-zinc-900"
-              style={{ borderColor: brandColors.border.default }}
-            >
-              <View className="flex-row items-center gap-4">
-                <View className="bg-yellow-500/10 p-3 rounded-xl border border-yellow-500/20">
-                  <Ionicons name="trophy" size={24} color={cores.warning} />
-                </View>
-                <View>
-                  <Text className="text-white text-lg font-black font-display tracking-tight">
-                    Ranking de Elite 🏆
-                  </Text>
-                  <Text className="text-zinc-500 text-[0.625rem] font-bold tracking-widest uppercase font-sans">
-                    Competição Semanal
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={brandColors.text.muted} />
-            </View>
-          </TouchableOpacity>
-
-          {/* Quick Action - Premium Solid Button */}
-          <TouchableOpacity
-            onPress={() => router.push(ROUTES.STUDENTS.CREATE)}
-            activeOpacity={0.8}
-            className="mt-2 text-center"
+      {signals.length > 0 ? (
+        <>
+          <TituloDeSecao
+            estilo="rotulo"
+            acao={signals.length === 1 ? '1 novo' : `${signals.length} novos`}
           >
-            <View style={{ borderRadius: 24, overflow: 'hidden' }}>
-              <LinearGradient
-                colors={[brandColors.primary.start, brandColors.primary.end]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                className="p-5 flex-row items-center justify-center shadow-lg shadow-orange-500/30"
-              >
-                <Ionicons name="person-add" size={22} color="white" style={{ marginRight: 10 }} />
-                <Text className="text-white text-base font-black font-display uppercase tracking-widest">
-                  Novo Aluno
-                </Text>
-              </LinearGradient>
-            </View>
-          </TouchableOpacity>
+            Alertas da IA
+          </TituloDeSecao>
+          {signals.map((signal) => (
+            <SignalCard
+              key={`${signal.studentId}-${signal.kind}`}
+              signal={signal}
+              onPress={() => router.push(ROUTES.STUDENTS.DETAILS(signal.studentId))}
+            />
+          ))}
+        </>
+      ) : null}
+
+      <TituloDeSecao estilo="rotulo">Atalhos</TituloDeSecao>
+      <LinhaDeVidro
+        icon="person-add-outline"
+        tom="marca"
+        titulo="Novo aluno"
+        sub="Convite por e-mail"
+        onPress={() => router.push(ROUTES.STUDENTS.CREATE)}
+      />
+      <LinhaDeVidro
+        icon="trophy-outline"
+        tom="gordura"
+        titulo="Ranking de Elite"
+        sub="Competição semanal"
+        onPress={() => router.push(ROUTES.TABS.RANKING)}
+      />
+    </TelaDeVidroComFoto>
+  );
+}
+
+/** "Sexta-feira, 12 de setembro", a sobrelinha do kit. */
+function todayLabel(): string {
+  const label = new Date().toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+  return `${label[0].toUpperCase()}${label.slice(1)}`;
+}
+
+function SignalCard({ signal, onPress }: { signal: BriefingSignal; onPress: () => void }) {
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} accessibilityRole="button">
+      <Vidro classeExterna="mb-[0.5625rem]" className="flex-row items-center gap-3 p-[0.8125rem]">
+        <CaixaDeIcone icon={SIGNAL_ICON[signal.kind]} tom={SIGNAL_TONE[signal.tone]} />
+        <View className="min-w-0 flex-1">
+          <Text className="text-[0.84375rem] font-bold tracking-tight text-foreground">
+            {signal.studentName}
+          </Text>
+          <Text className="mt-0.5 text-[0.75rem] leading-[1.35] text-muted-foreground">
+            {signal.message}
+          </Text>
         </View>
-      </ScrollView>
-    </ScreenLayout>
+      </Vidro>
+    </TouchableOpacity>
   );
 }

@@ -1,0 +1,78 @@
+import { Modal, Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
+import type { Student } from '../store/studentStore';
+
+/**
+ * As ações de um aluno da lista, numa folha que sobe do pé da tela: editar,
+ * reenviar o convite e remover.
+ *
+ * A linha do kit não desenha botões, e a lista antiga tinha três por aluno. A folha
+ * guarda as três sem pôr ícone solto em cada linha. Não é a `GlassSheet`: aquela é
+ * uma decisão com duas saídas, e aqui é um menu.
+ *
+ * @example <StudentActionsSheet student={aluno} onClose={fechar} onEdit={editar} … />
+ */
+interface StudentActionsSheetProps {
+  student: Student | null;
+  onClose: () => void;
+  onEdit: (student: Student) => void;
+  onResendInvite: (student: Student) => void;
+  onRemove: (student: Student) => void;
+}
+
+export function StudentActionsSheet({
+  student,
+  onClose,
+  onEdit,
+  onResendInvite,
+  onRemove,
+}: StudentActionsSheetProps) {
+  const insets = useSafeAreaInsets();
+  const invited = student?.account_status === 'invited';
+
+  // Fecha antes de agir: a ação abre modal ou confirmação, e duas folhas
+  // empilhadas no Android perdem o toque na de cima.
+  const run = (action: (student: Student) => void) => () => {
+    if (!student) return;
+    onClose();
+    action(student);
+  };
+
+  return (
+    <Modal transparent visible={student !== null} animationType="slide" onRequestClose={onClose}>
+      <Pressable className="flex-1 bg-black/50" onPress={onClose} accessibilityLabel="Fechar" />
+      <View
+        className="rounded-t-[1.75rem] border-t border-glass-border bg-background px-4 pt-4"
+        style={{ paddingBottom: insets.bottom + 16 }}
+      >
+        <Text numberOfLines={1} className="mb-3 px-1 text-rotulo font-bold text-foreground">
+          {student?.full_name || 'Aluno'}
+        </Text>
+        <LinhaDeVidro
+          icon="create-outline"
+          tom="marca"
+          titulo="Editar dados"
+          sub="Nome e medidas"
+          onPress={run(onEdit)}
+        />
+        {invited ? (
+          <LinhaDeVidro
+            icon="mail-unread-outline"
+            tom="ritmo"
+            titulo="Reenviar convite"
+            sub={student?.email || undefined}
+            onPress={run(onResendInvite)}
+          />
+        ) : null}
+        <LinhaDeVidro
+          icon="trash-outline"
+          tom="batimento"
+          titulo={invited ? 'Cancelar convite' : 'Remover aluno'}
+          sub={invited ? 'O link deixa de valer' : 'Ele perde o acesso aos treinos'}
+          onPress={run(onRemove)}
+        />
+      </View>
+    </Modal>
+  );
+}

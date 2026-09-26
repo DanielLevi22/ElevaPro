@@ -64,4 +64,13 @@ describe('useStudentRegistration', () => {
     expect(result.current.step).toBe('invite');
     expect(result.current.studentId).toBe('aluno-9');
   });
+
+  it('troca a seleção inteira, descartando serviço que o especialista não presta', () => {
+    const { result } = renderHook(() =>
+      useStudentRegistration({ offeredServices: ['personal_training'] })
+    );
+
+    act(() => result.current.selectServices(['personal_training', 'nutrition_consulting']));
+    expect(result.current.serviceTypes).toEqual(['personal_training']);
+  });
 });

@@ -1,37 +1,44 @@
 import { Text } from 'react-native';
-import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
+import { Vidro } from './Vidro';
 
 /**
- * O número do topo do perfil no kit: valor grande na cor da grandeza e o
- * rótulo em caixa alta embaixo — "Ativo · Status", "mai/26 · Desde".
+ * O número em fila do kit do especialista: valor grande na cor da grandeza e o
+ * rótulo em caixa alta embaixo — "24 Alunos ativos", "87% Aderência", "Ativo Status".
  *
  * Não é o `BlocoDeMetrica`: o kit do especialista tira o ícone e pinta o
  * próprio número, para três deles caberem lado a lado.
  *
- * @example <StatTile value="Ativo" label="Status" tone="positive" />
+ * @example <StatTile value="87%" label="Aderência" tone="info" size="lg" />
  */
-export type StatTone = 'positive' | 'warning' | 'neutral';
+export type StatTone = 'positive' | 'brand' | 'info' | 'warning' | 'danger' | 'neutral';
 
 interface StatTileProps {
   value: string;
   label: string;
   tone?: StatTone;
+  /** `lg` é o 26 do painel; `md`, o 21 das telas do aluno. */
+  size?: 'md' | 'lg';
 }
 
 /** Classe literal por tom: o Tailwind só gera o que aparece escrito no fonte. */
 const VALUE_COLOR: Record<StatTone, string> = {
   positive: 'text-texto-saude-passos',
+  brand: 'text-primary-text',
+  info: 'text-texto-cardio-ritmo',
   warning: 'text-texto-macro-gordura',
+  danger: 'text-texto-perigo',
   neutral: 'text-foreground',
 };
 
-export function StatTile({ value, label, tone = 'neutral' }: StatTileProps) {
+const VALUE_SIZE = { md: 'text-[1.3125rem]', lg: 'text-[1.625rem]' } as const;
+
+export function StatTile({ value, label, tone = 'neutral', size = 'md' }: StatTileProps) {
   return (
     <Vidro classeExterna="flex-1" className="px-3 py-[0.8125rem]">
       <Text
         numberOfLines={1}
-        className={cn('font-display-black text-[1.3125rem] tracking-tight', VALUE_COLOR[tone])}
+        className={cn('font-display-black tracking-tight', VALUE_SIZE[size], VALUE_COLOR[tone])}
       >
         {value}
       </Text>

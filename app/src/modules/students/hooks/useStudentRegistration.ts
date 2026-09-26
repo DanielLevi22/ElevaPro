@@ -30,6 +30,8 @@ type StudentRegistration = {
   setEmail: (value: string) => void;
   serviceTypes: ServiceType[];
   toggleService: (service: ServiceType) => void;
+  /** Troca a seleção inteira: as opções combinadas do kit ("Treino + Nutrição"). */
+  selectServices: (services: ServiceType[]) => void;
   /** Por que não dá para enviar o convite agora, ou `null` quando dá. */
   blockingReason: string | null;
   studentId: string | null;
@@ -55,6 +57,13 @@ export function useStudentRegistration({
     [offeredServices]
   );
 
+  const selectServices = useCallback(
+    (services: ServiceType[]) => {
+      setServiceTypes(services.filter((service) => offeredServices.includes(service)));
+    },
+    [offeredServices]
+  );
+
   const blockingReason = useMemo(() => {
     if (!fullName.trim() || !email.trim() || serviceTypes.length === 0) {
       return 'Preencha nome, e-mail e o tipo de acompanhamento.';
@@ -75,6 +84,7 @@ export function useStudentRegistration({
     setEmail,
     serviceTypes,
     toggleService,
+    selectServices,
     blockingReason,
     studentId,
     completeInvite,
