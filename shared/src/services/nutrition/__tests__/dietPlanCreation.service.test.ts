@@ -14,9 +14,8 @@ const plan = {
   target_fat: 67,
 };
 
-// Respostas na ordem das chamadas de `createDietPlan` (busca do plano ativo,
-// inserção do plano) seguidas da inserção das refeições.
-const respostasDaCriacao = [{ data: null }, { data: { id: "plano-novo" } }, { data: [] }];
+// Respostas na ordem: a inserção do plano, depois a das refeições.
+const respostasDaCriacao = [{ data: { id: "plano-novo" } }, { data: [] }];
 
 describe("nutritionService — criar plano pela estratégia", () => {
   it("grava as metas do formulário e o tipo de plano que sai da estratégia", async () => {
@@ -65,7 +64,6 @@ describe("nutritionService — criar plano pela estratégia", () => {
 
   it("propaga o erro da inserção das refeições", async () => {
     const { supabase } = criarSupabaseFake([
-      { data: null },
       { data: { id: "plano-novo" } },
       { error: { message: "42501" } },
     ]);
@@ -73,5 +71,150 @@ describe("nutritionService — criar plano pela estratégia", () => {
     await expect(
       createNutritionService(supabase).createDietPlanFromStrategy(plan, "standard"),
     ).rejects.toEqual({ message: "42501" });
+  });
+});
+
+describe("nutritionService — plano nasce em rascunho", () => {
+  // Criar não pode tirar a dieta que o aluno segue: o plano só vale, e só
+  // finaliza o anterior, quando é enviado (#337).
+  it("cria o plano em draft, sem tocar no plano ativo do aluno", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({ data: { id: "plano-novo" } });
+
+    await createNutritionService(supabase).createDietPlan(plan);
+
+    expect(chamadas).toHaveLength(1);
+    expect(chamadas[0].payload).toMatchObject({ status: "draft", student_id: "aluno-1" });
+  });
+
+  it("envia o rascunho pela função do banco, que finaliza o anterior na mesma transação", async () => {
+    const { supabase, rpcs } = criarSupabaseFake({ data: { id: "plano-novo", status: "active" } });
+
+    const sent = await createNutritionService(supabase).activateDietPlan("plano-novo");
+
+    expect(rpcs).toEqual([{ nome: "activate_diet_plan", args: [{ p_plan_id: "plano-novo" }] }]);
+    expect(sent.status).toBe("active");
+  });
+
+  it("propaga a recusa do envio", async () => {
+    const { supabase } = criarSupabaseFake({ error: { message: "42501" } });
+
+    await expect(createNutritionService(supabase).activateDietPlan("alheio")).rejects.toEqual({
+      message: "42501",
+    });
+  });
+
+  // O histórico é o que já valeu. Rascunho nunca valeu e não é histórico.
+  it("o histórico traz só planos finalizados", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({ data: [] });
+
+    await createNutritionService(supabase).fetchDietPlanHistory("aluno-1");
+
+    expect(chamadas[0].filtros).toEqual({ student_id: "aluno-1", status: "finished" });
+  });
+});
+
+describe("nutritionService — clonar plano", () => {
+  const planoOrigem = {
+    id: "p1",
+    name: "Cutting",
+    plan_type: "unique",
+    end_date: "2026-12-31",
+    target_calories: 2000,
+    target_protein: 150,
+    target_carbs: 200,
+    target_fat: 60,
+  };
+
+  const refeicaoDeOrigem = {
+    name: "Café",
+    meal_type: "breakfast",
+    meal_order: 0,
+    day_of_week: 1,
+    meal_time: "08:00",
+    target_calories: 400,
+    diet_meal_items: [
+      { food_id: "f1", quantity: "100", unit: "g", order_index: 0 },
+      { food_id: "f2", quantity: "50", unit: "g", order_index: 1 },
+    ],
+  };
+
+  // O clone pertence ao aluno de destino e ao especialista que importou — não
+  // aos da origem. Herdar o dono seria vazar plano entre alunos.
+  it("cria um rascunho para o aluno de destino, do especialista que importou", async () => {
+    const { supabase, chamadas } = criarSupabaseFake([
+      { data: planoOrigem },
+      { data: { id: "novo" } },
+      { data: [] },
+    ]);
+
+    await createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1");
+
+    const criacao = chamadas[1].payload as Record<string, unknown>;
+    expect(criacao).toMatchObject({
+      student_id: "aluno-2",
+      specialist_id: "esp-1",
+      status: "draft",
+      target_calories: 2000,
+    });
+  });
+
+  it("não finaliza nenhum plano do aluno de destino", async () => {
+    const { supabase, chamadas } = criarSupabaseFake([
+      { data: planoOrigem },
+      { data: { id: "novo" } },
+      { data: [] },
+    ]);
+
+    await createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1");
+
+    expect(chamadas.some((c) => c.metodos.some((m) => m.nome === "update"))).toBe(false);
+  });
+
+  it("copia as refeições e os itens de cada uma", async () => {
+    const { supabase, chamadas } = criarSupabaseFake([
+      { data: planoOrigem },
+      { data: { id: "novo" } },
+      { data: [refeicaoDeOrigem] },
+      { data: { id: "refeicao-nova" } },
+      {},
+    ]);
+
+    await createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1");
+
+    const refeicao = chamadas[3].payload as Record<string, unknown>;
+    expect(refeicao).toMatchObject({ diet_plan_id: "novo", name: "Café", day_of_week: 1 });
+    expect(chamadas[4].payload).toEqual([
+      { diet_meal_id: "refeicao-nova", food_id: "f1", quantity: "100", unit: "g", order_index: 0 },
+      { diet_meal_id: "refeicao-nova", food_id: "f2", quantity: "50", unit: "g", order_index: 1 },
+    ]);
+  });
+
+  it("não insere itens quando a refeição de origem não tem nenhum", async () => {
+    const { supabase, chamadas } = criarSupabaseFake([
+      { data: planoOrigem },
+      { data: { id: "novo" } },
+      { data: [{ ...refeicaoDeOrigem, diet_meal_items: [] }] },
+      { data: { id: "refeicao-nova" } },
+    ]);
+
+    await createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1");
+
+    expect(chamadas.filter((c) => c.tabela === "diet_meal_items")).toHaveLength(0);
+  });
+
+  // Antes o erro da cópia dos itens era descartado: o clone saía com as
+  // refeições vazias e ninguém sabia.
+  it("propaga o erro da cópia dos itens", async () => {
+    const { supabase } = criarSupabaseFake([
+      { data: planoOrigem },
+      { data: { id: "novo" } },
+      { data: [refeicaoDeOrigem] },
+      { data: { id: "refeicao-nova" } },
+      { error: { message: "23503" } },
+    ]);
+
+    await expect(
+      createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1"),
+    ).rejects.toEqual({ message: "23503" });
   });
 });

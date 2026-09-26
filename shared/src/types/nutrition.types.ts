@@ -1,6 +1,6 @@
 // Canonical nutrition types — aligned with shared/src/database/schema/nutrition.ts
 
-export type DietPlanStatus = "active" | "finished";
+export type DietPlanStatus = "draft" | "active" | "finished";
 export type DietPlanType = "unique" | "cyclic";
 
 export interface Food {

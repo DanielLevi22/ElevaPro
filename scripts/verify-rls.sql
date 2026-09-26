@@ -649,7 +649,8 @@ DO $$
 DECLARE
   saude       text[] := ARRAY['health_daily_metrics','meal_logs','physical_assessments',
                               'student_anamnesis','body_scans','workout_session_vitals',
-                              'hydration_daily','specialist_notes'];
+                              'hydration_daily','specialist_notes',
+                              'diet_plans','diet_meals','diet_meal_items'];
   contrato    text[] := ARRAY['profiles','specialist_services','workout_sessions',
                               'workout_session_sets','workout_session_exercises',
                               'achievements','daily_goals','student_streaks',
@@ -687,7 +688,7 @@ BEGIN
       array_to_string(sobrando, ', ');
   END IF;
 
-  RAISE NOTICE 'ok  Art. 11 confere consentimento em 8 tabelas; Art. 7° não confere em 9';
+  RAISE NOTICE 'ok  Art. 11 confere consentimento em 11 tabelas; Art. 7° não confere em 9';
 END $$;
 
 -- ── Nenhuma coordenada, em tabela nenhuma (0049) ─────────────────────────────
@@ -2581,6 +2582,263 @@ BEGIN
   END IF;
 
   RAISE NOTICE 'ok  placar: só o trigger pontua, o global só com aceite vigente, a conta apagada leva os pontos';
+END $$;
+
+ROLLBACK;
+
+-- ── Plano de dieta: rascunho, autoria, vínculo e consentimento (#337) ────────
+--
+-- O /lgpd-check da #337 decidiu, e cada ponto é travado aqui por comportamento:
+--
+--   1. o aluno não lê o rascunho do especialista — plano, refeição nem item —
+--      e lê depois de enviado;
+--   2. o aluno lê a prescrição, mas não a reescreve (Art. 6°, V);
+--   3. especialista sem vínculo, ou com o consentimento do aluno revogado, não
+--      lê nem grava; e não cria plano para aluno que não é dele;
+--   4. o Praticante cria o próprio plano só com consentimento (Art. 11, I);
+--   5. enviar finaliza o ativo de outro autor, só aceita rascunho, exige MFA e
+--      deixa evento sem conteúdo, com o plano pseudonimizado;
+--   6. o rascunho sai no fim do vínculo e depois de 90 dias (Art. 15, I).
+
+BEGIN;
+
+DO $$
+DECLARE
+  aluno      uuid := gen_random_uuid();
+  revogou    uuid := gen_random_uuid();
+  praticante uuid := gen_random_uuid();
+  semcons    uuid := gen_random_uuid();
+  autor      uuid := gen_random_uuid();
+  estranho   uuid := gen_random_uuid();
+  alimento   uuid;
+  anterior   uuid;
+  rascunho   uuid;
+  outro_rasc uuid;
+  refeicao   uuid;
+  plano_rev  uuid;
+  velho      uuid;
+  afetadas   int;
+  visiveis   int;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (aluno,      '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-da@elevapro.local', '{"full_name":"A","account_type":"student"}'::jsonb),
+    (revogou,    '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-dr@elevapro.local', '{"full_name":"R","account_type":"student"}'::jsonb),
+    (praticante, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-dp@elevapro.local', '{"full_name":"P","account_type":"student"}'::jsonb),
+    (semcons,    '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-ds@elevapro.local', '{"full_name":"S","account_type":"student"}'::jsonb),
+    (autor,      '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-d1@elevapro.local', '{"full_name":"E1","account_type":"specialist"}'::jsonb),
+    (estranho,   '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-d2@elevapro.local', '{"full_name":"E2","account_type":"specialist"}'::jsonb);
+
+  INSERT INTO public.student_consents (student_id, consent_type, given_at, policy_version)
+  VALUES (aluno, 'health_data_collection', now(), '1.8'),
+         (revogou, 'health_data_collection', now(), '1.8'),
+         (praticante, 'health_data_collection', now(), '1.8');
+
+  INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
+  VALUES (aluno, autor, 'nutrition_consulting', 'active'),
+         (revogou, autor, 'nutrition_consulting', 'active');
+
+  INSERT INTO public.foods (name) VALUES ('Arroz verify') RETURNING id INTO alimento;
+
+  -- O plano que o aluno segue hoje foi montado por ele mesmo: é de outro autor,
+  -- que a RLS do especialista não alcança. Enviar precisa finalizá-lo assim mesmo.
+  INSERT INTO public.diet_plans (student_id, specialist_id, name, status, start_date, end_date)
+  VALUES (aluno, NULL, 'Plano atual', 'active', CURRENT_DATE, CURRENT_DATE + 30) RETURNING id INTO anterior;
+
+  SET LOCAL ROLE authenticated;
+
+  -- 3. O autor vinculado cria o rascunho, com refeição e item, e lê o que criou.
+  -- Sem este positivo, a trava toda passaria com política que nega tudo.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', autor, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  INSERT INTO public.diet_plans (student_id, specialist_id, name, status, start_date, end_date)
+  VALUES (aluno, autor, 'Próxima dieta', 'draft', CURRENT_DATE, CURRENT_DATE + 30) RETURNING id INTO rascunho;
+  INSERT INTO public.diet_meals (diet_plan_id, name) VALUES (rascunho, 'Almoço')
+  RETURNING id INTO refeicao;
+  INSERT INTO public.diet_meal_items (diet_meal_id, food_id, quantity, unit)
+  VALUES (refeicao, alimento, 150, 'g');
+
+  SELECT count(*) INTO visiveis FROM public.diet_meal_items i
+    JOIN public.diet_meals m ON m.id = i.diet_meal_id WHERE m.diet_plan_id = rascunho;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'o autor não lê o item do rascunho que montou (viu %)', visiveis;
+  END IF;
+
+  -- 3. E não cria plano para quem não é aluno dele.
+  BEGIN
+    INSERT INTO public.diet_plans (student_id, specialist_id, name, status, start_date, end_date)
+    VALUES (praticante, autor, 'Plano alheio', 'draft', CURRENT_DATE, CURRENT_DATE + 30);
+    RAISE EXCEPTION 'PRESCRIÇÃO SEM VÍNCULO: especialista criou plano para quem não atende';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- 1. O aluno não enxerga o rascunho em nenhuma das três tabelas.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', aluno, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO visiveis FROM public.diet_plans WHERE id = rascunho;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'RASCUNHO EXPOSTO: o aluno leu o plano ainda em montagem';
+  END IF;
+  SELECT count(*) INTO visiveis FROM public.diet_meals WHERE id = refeicao;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'RASCUNHO EXPOSTO: o aluno leu a refeição do plano em montagem';
+  END IF;
+  SELECT count(*) INTO visiveis FROM public.diet_meal_items WHERE diet_meal_id = refeicao;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'RASCUNHO EXPOSTO: o aluno leu o item do plano em montagem';
+  END IF;
+
+  -- 3. Especialista sem vínculo não lê, e não envia.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', estranho, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  SELECT count(*) INTO visiveis FROM public.diet_plans WHERE student_id = aluno;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'DIETA LIDA SEM VÍNCULO: especialista de fora viu % plano(s)', visiveis;
+  END IF;
+  BEGIN
+    PERFORM public.activate_diet_plan(rascunho);
+    RAISE EXCEPTION 'DIETA ENVIADA SEM VÍNCULO: especialista de fora ativou plano alheio';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- 5. Sem o segundo fator, o autor não envia: a função escapa da RLS e da
+  -- trava restritiva da 0067, e precisa conferir o MFA por conta própria.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', autor, 'role', 'authenticated', 'aal', 'aal1')::text, true);
+  BEGIN
+    PERFORM public.activate_diet_plan(rascunho);
+    RAISE EXCEPTION 'ENVIO SEM MFA: especialista em aal1 ativou plano';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- 5. Com MFA, enviar ativa o rascunho e finaliza o plano do outro autor.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', autor, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  PERFORM public.activate_diet_plan(rascunho);
+
+  BEGIN
+    PERFORM public.activate_diet_plan(rascunho);
+    RAISE EXCEPTION 'REENVIO ACEITO: activate_diet_plan ativou plano que não era rascunho';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
+  RESET ROLE;
+  SELECT count(*) INTO visiveis FROM public.diet_plans WHERE student_id = aluno AND status = 'active';
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'DOIS PLANOS ATIVOS: o aluno ficou com % plano(s) ativo(s)', visiveis;
+  END IF;
+  IF (SELECT status FROM public.diet_plans WHERE id = anterior) <> 'finished' THEN
+    RAISE EXCEPTION 'PLANO ANTERIOR ATIVO: enviar não finalizou o plano de outro autor';
+  END IF;
+
+  -- 5. O evento existe, e o plano entra pseudonimizado: o UUID em claro é
+  -- correlacionável com o aluno e não pertence à trilha (padrão da 0071).
+  SELECT count(*) INTO visiveis FROM private.security_audit_events
+   WHERE event_type = 'health.diet_plan.activated'
+     AND resource_type = 'diet_plan'
+     AND resource_id = private.audit_principal_hash(rascunho);
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'ENVIO SEM RASTRO: % evento(s) de ativação pseudonimizado(s)', visiveis;
+  END IF;
+  SELECT count(*) INTO visiveis FROM private.security_audit_events
+   WHERE resource_type = 'diet_plan' AND resource_id IN (rascunho::text, anterior::text);
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'PLANO EM CLARO NA TRILHA: % evento(s) com o UUID do plano', visiveis;
+  END IF;
+
+  -- 1. Enviado, o aluno lê o item.
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', aluno, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO visiveis FROM public.diet_meal_items WHERE diet_meal_id = refeicao;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'o aluno não lê o plano que recebeu (viu % item)', visiveis;
+  END IF;
+
+  -- 2. Mas não reescreve a prescrição.
+  UPDATE public.diet_meal_items SET quantity = 999 WHERE diet_meal_id = refeicao;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 0 THEN
+    RAISE EXCEPTION 'PRESCRIÇÃO REESCRITA PELO ALUNO: % item(ns) alterado(s)', afetadas;
+  END IF;
+  DELETE FROM public.diet_meals WHERE id = refeicao;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 0 THEN
+    RAISE EXCEPTION 'PRESCRIÇÃO APAGADA PELO ALUNO: % refeição(ões)', afetadas;
+  END IF;
+  BEGIN
+    INSERT INTO public.diet_meals (diet_plan_id, name) VALUES (rascunho, 'Refeição do aluno');
+    RAISE EXCEPTION 'PRESCRIÇÃO ALTERADA PELO ALUNO: refeição inserida no plano do especialista';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- 3. Revogado o consentimento, o autor para de ler (Art. 11, I).
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', autor, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  INSERT INTO public.diet_plans (student_id, specialist_id, name, status, start_date, end_date)
+  VALUES (revogou, autor, 'Plano de quem vai revogar', 'draft', CURRENT_DATE, CURRENT_DATE + 30) RETURNING id INTO plano_rev;
+  RESET ROLE;
+  UPDATE public.student_consents SET revoked_at = now()
+   WHERE student_id = revogou AND consent_type = 'health_data_collection';
+  SET LOCAL ROLE authenticated;
+  SELECT count(*) INTO visiveis FROM public.diet_plans WHERE id = plano_rev;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'REVOGAÇÃO SEM EFEITO NA DIETA: o autor segue lendo o plano de quem revogou';
+  END IF;
+
+  -- 4. O Praticante cria e lê o próprio rascunho; sem consentimento, não cria.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', praticante, 'role', 'authenticated')::text, true);
+  INSERT INTO public.diet_plans (student_id, specialist_id, name, status, start_date, end_date)
+  VALUES (praticante, NULL, 'Meu plano', 'draft', CURRENT_DATE, CURRENT_DATE + 30);
+  SELECT count(*) INTO visiveis FROM public.diet_plans WHERE student_id = praticante;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'o Praticante não lê o próprio rascunho (viu %)', visiveis;
+  END IF;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', semcons, 'role', 'authenticated')::text, true);
+  BEGIN
+    INSERT INTO public.diet_plans (student_id, specialist_id, name, status, start_date, end_date)
+    VALUES (semcons, NULL, 'Plano sem consentimento', 'draft', CURRENT_DATE, CURRENT_DATE + 30);
+    RAISE EXCEPTION 'DADO DE SAÚDE SEM CONSENTIMENTO: Praticante criou plano sem consentir';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- 6. O rascunho sai quando o vínculo do autor termina…
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', autor, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  INSERT INTO public.diet_plans (student_id, specialist_id, name, status, start_date, end_date)
+  VALUES (aluno, autor, 'Rascunho esquecido', 'draft', CURRENT_DATE, CURRENT_DATE + 30) RETURNING id INTO outro_rasc;
+  RESET ROLE;
+  UPDATE public.student_specialists SET status = 'inactive'
+   WHERE student_id = aluno AND specialist_id = autor;
+  IF EXISTS (SELECT 1 FROM public.diet_plans WHERE id = outro_rasc) THEN
+    RAISE EXCEPTION 'RASCUNHO ÓRFÃO: o vínculo acabou e o rascunho de saúde ficou';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.diet_plans WHERE id = rascunho) THEN
+    RAISE EXCEPTION 'PLANO ENVIADO APAGADO: o fim do vínculo levou o plano que o aluno segue';
+  END IF;
+
+  -- …e depois de 90 dias, sem levar o rascunho recente.
+  INSERT INTO public.diet_plans (student_id, specialist_id, name, status, created_at, start_date, end_date)
+  VALUES (praticante, NULL, 'Rascunho de 91 dias', 'draft', now() - interval '91 days', CURRENT_DATE, CURRENT_DATE + 30)
+  RETURNING id INTO velho;
+  PERFORM private.purge_stale_diet_plan_drafts();
+  IF EXISTS (SELECT 1 FROM public.diet_plans WHERE id = velho) THEN
+    RAISE EXCEPTION 'RASCUNHO SEM PRAZO: rascunho de 91 dias sobreviveu à limpeza';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.diet_plans WHERE student_id = praticante AND status = 'draft') THEN
+    RAISE EXCEPTION 'RASCUNHO RECENTE APAGADO: a limpeza levou rascunho de hoje';
+  END IF;
+
+  RAISE NOTICE 'ok  dieta: rascunho invisível ao aluno, prescrição só do autor vinculado com consentimento, envio atômico e auditado, rascunho com prazo';
 END $$;
 
 ROLLBACK;

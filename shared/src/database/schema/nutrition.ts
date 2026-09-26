@@ -13,7 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { profiles } from "./auth";
 
-export const dietPlanStatusEnum = pgEnum("diet_plan_status", ["active", "finished"]);
+export const dietPlanStatusEnum = pgEnum("diet_plan_status", ["active", "finished", "draft"]);
 export const dietPlanTypeEnum = pgEnum("diet_plan_type", ["unique", "cyclic"]);
 
 export const foods = pgTable("foods", {

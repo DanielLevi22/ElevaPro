@@ -174,18 +174,38 @@ export function useCreateDietPlanWithStrategy() {
   });
 }
 
-export function useUpdateDietPlanStatus() {
+/**
+ * Envia o rascunho: ele passa a valer e o plano ativo do aluno é finalizado,
+ * numa transação no banco (#337).
+ *
+ * @example
+ * const activate = useActivateDietPlan();
+ * await activate.mutateAsync(plan.id);
+ */
+export function useActivateDietPlan() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      planId,
-      status,
-      isActive: _isActive, // is_active removed from canonical schema — ignored
-    }: {
-      planId: string;
-      status: DietPlan["status"];
-      isActive: boolean;
-    }) => nutritionService.updateDietPlan(planId, { status }),
+    mutationFn: (planId: string) => nutritionService.activateDietPlan(planId),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["diet_plans"] });
+      queryClient.invalidateQueries({ queryKey: ["diet_plan", data.id] });
+    },
+  });
+}
+
+/**
+ * Finaliza o plano ativo. Não existe o caminho de volta por status: reativar é
+ * copiar o plano para um rascunho e enviar, para que dois planos nunca valham
+ * ao mesmo tempo.
+ *
+ * @example
+ * const finish = useFinishDietPlan();
+ * await finish.mutateAsync(plan.id);
+ */
+export function useFinishDietPlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (planId: string) => nutritionService.finishDietPlan(planId),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["diet_plans"] });
       queryClient.invalidateQueries({ queryKey: ["diet_plan", data.id] });
@@ -201,17 +221,6 @@ export function useDeleteDietPlan() {
       queryClient.invalidateQueries({ queryKey: ["diet_plans"] });
       queryClient.removeQueries({ queryKey: ["diet_plan", planId] });
       queryClient.removeQueries({ queryKey: ["diet_meals", planId] });
-    },
-  });
-}
-
-export function useFinishDietPlan() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (planId: string) => nutritionService.finishDietPlan(planId),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["diet_plans"] });
-      queryClient.invalidateQueries({ queryKey: ["diet_plan", data.id] });
     },
   });
 }

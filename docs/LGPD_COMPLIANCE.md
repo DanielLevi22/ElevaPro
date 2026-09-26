@@ -546,7 +546,7 @@ banco. O critério é a **base legal**, não o vínculo.
 
 | Base legal | Tabelas | Revogar o consentimento… | Migration |
 |---|---|---|---|
-| Art. 11 (tutela da saúde **+** consentimento) | `health_daily_metrics`, `meal_logs`, `physical_assessments`, `student_anamnesis`, `body_scans`, `workout_session_vitals`, `specialist_notes` | **fecha** o acesso do especialista | 0043, 0044, 0045, 0049, 0057 |
+| Art. 11 (tutela da saúde **+** consentimento) | `health_daily_metrics`, `meal_logs`, `physical_assessments`, `student_anamnesis`, `body_scans`, `workout_session_vitals`, `specialist_notes`, `diet_plans`, `diet_meals`, `diet_meal_items` | **fecha** o acesso do especialista | 0043, 0044, 0045, 0049, 0057, 0073 |
 | Art. 11, só do titular | `hydration_daily` | não há acesso do especialista a fechar; **revogar interrompe a gravação**, que a política de INSERT e UPDATE recusa sem consentimento | 0052 |
 | Art. 7°, V (execução de contrato) | `profiles`, `specialist_services`, `workout_sessions`, `workout_session_sets`, `workout_session_exercises`, `achievements`, `daily_goals`, `student_streaks`, `ranking_scores` | não alcança — o caminho é encerrar o vínculo | — |
 
@@ -564,9 +564,7 @@ Mexer numa das listas é mexer nesta tabela; as duas mudam juntas.
 
 **Pendência — rota `/api/students/[id]/activities` não consulta o consentimento** (achada no `/lgpd-check` da #334, 2026-09-26). Ela agrega `meal_logs`, `physical_assessments` e `workout_sessions.notes` com `service_role`, que ignora RLS, e a única barreira é `authorizeLinkedSpecialist` — vínculo, não consentimento. O aluno que revoga o consentimento de saúde continua com essas fatias visíveis na aba Atividades do web. O app não usa a rota por isso; a correção da rota é issue própria.
 
-**Pendência — `diet_plans`, `diet_meals` e `diet_meal_items` fora das duas listas** (achada no `/lgpd-check` da #337, 2026-09-26). São Art. 11 (§2.2), mas a política do especialista nunca consultou o vínculo: a `specialist_manage_own_diet_plans` da `0013` é `specialist_id = auth.uid()`. Como a trava da `verify-rls.sql` só inspeciona políticas que citam `is_linked_specialist` ou `student_specialists`, as três passaram despercebidas. Consequências: o especialista desvinculado continua lendo e editando os planos que escreveu; revogar o consentimento não fecha nada; e, como a mesma expressão vale de `WITH CHECK`, qualquer especialista cria plano para qualquer `student_id`. A fatia 3 da #337 reescreve as três políticas com `is_linked_specialist` + `health_consent_not_revoked` (o helper tolerante, pelo mesmo motivo da `0044`: existe acervo de dieta gravado sem linha em `student_consents`) e põe as três na lista `saude`.
-
-**Pendência — `diet_meals` e `diet_meal_items` graváveis pelo aluno vinculado** (mesma revisão). As duas políticas da `0013` são `FOR ALL` com `dp.student_id = auth.uid()`: o aluno reescreve, pela API, a prescrição do especialista. A correção separa leitura (aluno, plano fora de rascunho) de escrita (especialista vinculado, ou o próprio Praticante no plano sem especialista).
+**Resolvido na `0073` (#337) — a RLS de dieta ignorava vínculo e consentimento.** A política do especialista em `diet_plans` era só `specialist_id = auth.uid()` desde a `0013`: o desvinculado seguia lendo e editando, revogar não fechava nada e qualquer especialista criava plano para qualquer aluno. E `diet_meals`/`diet_meal_items` eram `FOR ALL` para o aluno, que reescrevia a prescrição pela API. A trava de revogação não via as três tabelas porque só inspeciona política que cita o vínculo. Agora o especialista precisa de `is_linked_specialist` + `health_consent_not_revoked` (o helper tolerante, pelo motivo da `0044`), o aluno só lê, e as três estão na lista `saude` da `verify-rls.sql`, travadas também por comportamento com prova negativa.
 
 **Pendência — `workout_sessions.notes`.** A tabela é mista: séries e datas são
 execução de contrato, mas o campo aberto onde o aluno escreve sobre dor e

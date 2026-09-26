@@ -1644,6 +1644,32 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      activate_diet_plan: {
+        Args: { p_plan_id: string };
+        Returns: {
+          created_at: string;
+          end_date: string;
+          id: string;
+          name: string | null;
+          notes: string | null;
+          plan_type: Database["public"]["Enums"]["diet_plan_type"];
+          specialist_id: string | null;
+          start_date: string;
+          status: Database["public"]["Enums"]["diet_plan_status"];
+          student_id: string;
+          target_calories: number | null;
+          target_carbs: number | null;
+          target_fat: number | null;
+          target_protein: number | null;
+          version: number;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "diet_plans";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       consume_rate_limit: {
         Args: {
           p_bucket: string;
@@ -1705,7 +1731,7 @@ export type Database = {
         | "friday"
         | "saturday"
         | "sunday";
-      diet_plan_status: "active" | "finished";
+      diet_plan_status: "active" | "finished" | "draft";
       diet_plan_type: "unique" | "cyclic";
       link_status: "active" | "inactive";
       measurement_source: "specialist" | "self";
@@ -1833,7 +1859,7 @@ export const Constants = {
       account_type: ["admin", "specialist", "student", "member"],
       consent_type: ["health_data_collection", "technique_analysis", "ranking"],
       day_of_week: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
-      diet_plan_status: ["active", "finished"],
+      diet_plan_status: ["active", "finished", "draft"],
       diet_plan_type: ["unique", "cyclic"],
       link_status: ["active", "inactive"],
       measurement_source: ["specialist", "self"],

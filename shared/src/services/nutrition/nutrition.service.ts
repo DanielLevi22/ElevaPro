@@ -63,50 +63,11 @@ const createBaseNutritionService = (supabase: SupabaseClient) => ({
       .from("diet_plans")
       .select("*")
       .eq("student_id", studentId)
-      .neq("status", "active")
+      .eq("status", "finished")
       .order("end_date", { ascending: false })
       .order("created_at", { ascending: false });
     if (error) throw error;
     return (data || []) as DietPlan[];
-  },
-
-  createDietPlan: async (input: CreateDietPlanInput): Promise<DietPlan> => {
-    const today = new Date().toISOString().split("T")[0];
-    const { data: existing } = await supabase
-      .from("diet_plans")
-      .select("id")
-      .eq("student_id", input.student_id)
-      .eq("status", "active")
-      .limit(1)
-      .maybeSingle();
-    if (existing) {
-      await supabase
-        .from("diet_plans")
-        .update({ status: "finished", end_date: today })
-        .eq("id", existing.id);
-    }
-
-    const { data, error } = await supabase
-      .from("diet_plans")
-      .insert({
-        student_id: input.student_id,
-        specialist_id: input.specialist_id,
-        name: input.name ?? null,
-        plan_type: input.plan_type ?? "cyclic",
-        status: "active",
-        version: 1,
-        start_date: input.start_date ?? null,
-        end_date: input.end_date ?? null,
-        target_calories: input.target_calories ?? null,
-        target_protein: input.target_protein ?? null,
-        target_carbs: input.target_carbs ?? null,
-        target_fat: input.target_fat ?? null,
-        notes: input.notes ?? null,
-      })
-      .select()
-      .single();
-    if (error) throw error;
-    return data as DietPlan;
   },
 
   updateDietPlan: async (id: string, input: UpdateDietPlanInput): Promise<DietPlan> => {
@@ -144,93 +105,6 @@ const createBaseNutritionService = (supabase: SupabaseClient) => ({
 
     const { error } = await supabase.from("diet_plans").delete().eq("id", id);
     if (error) throw error;
-  },
-
-  cloneDietPlan: async (
-    sourcePlanId: string,
-    targetStudentId: string,
-    specialistId: string,
-  ): Promise<DietPlan> => {
-    const { data: sourcePlan, error: planError } = await supabase
-      .from("diet_plans")
-      .select("*")
-      .eq("id", sourcePlanId)
-      .single();
-    if (planError) throw planError;
-
-    const today = new Date().toISOString().split("T")[0];
-    const { data: existing } = await supabase
-      .from("diet_plans")
-      .select("id")
-      .eq("student_id", targetStudentId)
-      .eq("status", "active")
-      .limit(1)
-      .maybeSingle();
-    if (existing) {
-      await supabase
-        .from("diet_plans")
-        .update({ status: "finished", end_date: today })
-        .eq("id", existing.id);
-    }
-
-    const { data: newPlan, error: newPlanError } = await supabase
-      .from("diet_plans")
-      .insert({
-        student_id: targetStudentId,
-        specialist_id: specialistId,
-        name: `${sourcePlan.name ?? "Plano"} (Importado)`,
-        plan_type: sourcePlan.plan_type,
-        status: "active",
-        version: 1,
-        start_date: new Date().toISOString().split("T")[0],
-        end_date: sourcePlan.end_date,
-        target_calories: sourcePlan.target_calories,
-        target_protein: sourcePlan.target_protein,
-        target_carbs: sourcePlan.target_carbs,
-        target_fat: sourcePlan.target_fat,
-      })
-      .select()
-      .single();
-    if (newPlanError) throw newPlanError;
-
-    const { data: sourceMeals } = await supabase
-      .from("diet_meals")
-      .select("*, diet_meal_items(*)")
-      .eq("diet_plan_id", sourcePlanId);
-
-    for (const sourceMeal of sourceMeals ?? []) {
-      const { data: newMeal, error: mealError } = await supabase
-        .from("diet_meals")
-        .insert({
-          diet_plan_id: newPlan.id,
-          name: sourceMeal.name,
-          meal_type: sourceMeal.meal_type,
-          meal_order: sourceMeal.meal_order,
-          day_of_week: sourceMeal.day_of_week,
-          meal_time: sourceMeal.meal_time,
-          target_calories: sourceMeal.target_calories,
-        })
-        .select()
-        .single();
-      if (mealError) throw mealError;
-
-      const items = sourceMeal.diet_meal_items ?? [];
-      if (items.length > 0) {
-        await supabase.from("diet_meal_items").insert(
-          items.map(
-            (item: { food_id: string; quantity: string; unit: string; order_index: number }) => ({
-              diet_meal_id: newMeal.id,
-              food_id: item.food_id,
-              quantity: item.quantity,
-              unit: item.unit,
-              order_index: item.order_index,
-            }),
-          ),
-        );
-      }
-    }
-
-    return newPlan as DietPlan;
   },
 
   // ── Diet Meals ─────────────────────────────────────────────────────────────
@@ -465,5 +339,5 @@ const createBaseNutritionService = (supabase: SupabaseClient) => ({
 
 export const createNutritionService = (supabase: SupabaseClient) => {
   const base = createBaseNutritionService(supabase);
-  return { ...base, ...createDietPlanCreation(supabase, base.createDietPlan) };
+  return { ...base, ...createDietPlanCreation(supabase) };
 };

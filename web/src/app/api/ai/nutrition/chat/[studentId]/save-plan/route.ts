@@ -39,7 +39,9 @@ export const POST = withAiRoute(
           specialist_id: especialistaDe(ctx),
           name: plano.name,
           plan_type: plano.plan_type,
-          status: "active",
+          // Rascunho, como todo plano novo (#337): o especialista revisa as
+          // refeições e envia pela tela do plano, e só então o anterior sai.
+          status: "draft",
           // Período obrigatório: `DietDetailsHeader` formata estas datas, e o
           // `format` do date-fns lança com data inválida.
           start_date: plano.start_date,
