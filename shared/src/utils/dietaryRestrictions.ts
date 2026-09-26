@@ -28,8 +28,22 @@ const FROM_ANAMNESIS: Record<string, DietaryRestriction> = {
 
 const NO_RESTRICTION = "Nenhuma";
 
+// O mobile grava `{ questionId, value }`; o web, o valor direto.
+function unwrap(answer: unknown): unknown {
+  if (
+    answer !== null &&
+    typeof answer === "object" &&
+    !Array.isArray(answer) &&
+    "value" in answer
+  ) {
+    return (answer as { value: unknown }).value;
+  }
+  return answer;
+}
+
 function answersOf(answer: unknown): string[] {
-  const list = Array.isArray(answer) ? answer : [answer];
+  const value = unwrap(answer);
+  const list = Array.isArray(value) ? value : [value];
   return list.filter((item): item is string => typeof item === "string");
 }
 

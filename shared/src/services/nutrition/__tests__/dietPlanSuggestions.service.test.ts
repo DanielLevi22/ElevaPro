@@ -42,3 +42,54 @@ describe("nutritionService — sugestão de restrições pela anamnese", () => {
     ).rejects.toEqual({ message: "42501" });
   });
 });
+
+describe("nutritionService — sugestão de meta calórica", () => {
+  const ANAMNESE = {
+    age: { questionId: "age", value: 30 },
+    gender: "Masculino",
+    height: "180",
+    weight: "85",
+    weekly_frequency: 4,
+    profession_routine: "Sedentário",
+    main_goal: "Emagrecimento",
+  };
+
+  it("lê só os campos nomeados da anamnese", async () => {
+    const { supabase, chamadas } = criarSupabaseFake([{ data: ANAMNESE }, { data: null }]);
+
+    await createNutritionService(supabase).fetchDietGoalSuggestion("aluno-1");
+
+    expect(chamadas[0].select).toBe(
+      "age:responses->age, gender:responses->gender, height:responses->height, weight:responses->weight, weekly_frequency:responses->weekly_frequency, profession_routine:responses->profession_routine, main_goal:responses->main_goal",
+    );
+  });
+
+  // A medida do especialista vale mais que a declarada na anamnese.
+  it("usa peso e altura da última avaliação quando existe", async () => {
+    const { supabase } = criarSupabaseFake([
+      { data: ANAMNESE },
+      { data: { weight_kg: "80", height_cm: "180" } },
+    ]);
+
+    const goal = await createNutritionService(supabase).fetchDietGoalSuggestion("aluno-1");
+
+    expect(goal?.tmb).toBe(1780);
+  });
+
+  // Minimização: a tela recebe a conta pronta, não idade e sexo do aluno.
+  it("devolve só a conta, sem os dados do aluno", async () => {
+    const { supabase } = criarSupabaseFake([{ data: ANAMNESE }, { data: null }]);
+
+    const goal = await createNutritionService(supabase).fetchDietGoalSuggestion("aluno-1");
+
+    expect(Object.keys(goal ?? {}).sort()).toEqual(
+      ["deltaKcal", "goal", "macros", "targetCalories", "tdee", "tmb"].sort(),
+    );
+  });
+
+  it("sem anamnese, não sugere", async () => {
+    const { supabase } = criarSupabaseFake([{ data: null }, { data: null }]);
+
+    expect(await createNutritionService(supabase).fetchDietGoalSuggestion("aluno-1")).toBeNull();
+  });
+});

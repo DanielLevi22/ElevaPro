@@ -61,6 +61,7 @@ export * from "./utils/dailyActivity";
 export * from "./utils/dateOnly";
 export * from "./utils/diarioAlimentar";
 export * from "./utils/dietaryRestrictions";
+export * from "./utils/dietGoalSuggestion";
 export * from "./utils/dietStrategies";
 export * from "./utils/energyTargets";
 export * from "./utils/heartRateZones";

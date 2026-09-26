@@ -48,3 +48,14 @@ describe("hasUnmappedDietaryNotes", () => {
     expect(hasUnmappedDietaryNotes(undefined)).toBe(false);
   });
 });
+
+describe("resposta embrulhada pelo mobile", () => {
+  // O mobile grava `{ questionId, value }` e o web grava o valor direto. Sem
+  // desembrulhar, quem preencheu pelo celular nunca teria etiqueta sugerida.
+  it("lê a resposta embrulhada como a direta", () => {
+    const wrapped = { questionId: "dietary_restrictions", value: ["Diabetes", "Vegano"] };
+
+    expect(restrictionsFromAnamnesis(wrapped)).toEqual(["vegan"]);
+    expect(hasUnmappedDietaryNotes(wrapped)).toBe(true);
+  });
+});
