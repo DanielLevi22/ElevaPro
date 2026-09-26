@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  calculateDietStrategy,
+  DIET_STRATEGIES,
+  DIET_STRATEGY_TYPES,
+  type DietStrategyType,
+} from "@elevapro/shared";
 import { ChevronLeft, Clock, Flame, Pencil, RefreshCw, Utensils } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -12,11 +18,6 @@ import { useAuthUser } from "@/shared/hooks/useAuthUser";
 import { useHealthDataConsent } from "@/shared/hooks/useHealthDataConsent";
 import { useCreateDietPlanWithStrategy } from "@/shared/hooks/useNutrition";
 import { useStudents } from "@/shared/hooks/useStudents";
-import {
-  calculateDietStrategy,
-  DIET_STRATEGIES,
-  type DietStrategyType,
-} from "@/shared/utils/dietStrategies";
 
 const DAYS_NAME = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
@@ -99,7 +100,6 @@ export function DietCreatorPage() {
         plan: {
           name,
           student_id: studentId,
-          plan_type: selectedStrategy === "carb_cycling" ? "cyclic" : "unique",
           start_date: startDate,
           end_date: endDate,
           target_calories: targetCalories,
@@ -107,7 +107,7 @@ export function DietCreatorPage() {
           target_carbs: carbs,
           target_fat: fat,
         },
-        strategyData: strategyDetails,
+        strategy: selectedStrategy,
       });
       toast.success("Plano nutricional criado com sucesso!");
       router.push(`/dashboard/diets/${newPlan.id}`);
@@ -191,7 +191,7 @@ export function DietCreatorPage() {
             {DIET_STRATEGIES[selectedStrategy].description}
           </p>
           <div className="flex flex-wrap gap-2">
-            {(Object.keys(DIET_STRATEGIES) as DietStrategyType[]).map((strategy) => {
+            {DIET_STRATEGY_TYPES.map((strategy) => {
               const isSelected = selectedStrategy === strategy;
               const Icon = STRATEGY_ICON[strategy];
               return (

@@ -22,7 +22,5 @@ export { StudentNutritionScreen } from '../screens/StudentNutritionScreen';
 // Store
 export { useNutritionStore } from '../store/nutritionStore';
 
-// Utils
-export * from '../utils/nutrition';
 // Routes
 export { NutritionNavigator } from './routes';

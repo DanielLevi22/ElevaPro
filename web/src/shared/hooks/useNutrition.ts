@@ -7,12 +7,12 @@ import {
   type DietMeal,
   type DietMealItem,
   type DietPlan,
+  type DietStrategyType,
   type Food,
   type MealLog,
 } from "@elevapro/shared";
 import { defineAbilitiesFor, supabase } from "@elevapro/supabase";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { StrategyResult } from "../utils/dietStrategies";
 import { useAuthUser } from "./useAuthUser";
 
 /**
@@ -144,41 +144,31 @@ export function useCreateDietPlan() {
   });
 }
 
+/**
+ * Cria o plano pela estratégia escolhida. O tipo de plano e as refeições-molde
+ * saem do serviço compartilhado, o mesmo que o mobile usa (#337).
+ *
+ * @example
+ * const create = useCreateDietPlanWithStrategy();
+ * await create.mutateAsync({ plan: { student_id, name, target_calories }, strategy: "standard" });
+ */
 export function useCreateDietPlanWithStrategy() {
   const queryClient = useQueryClient();
   const { data: currentUser } = useAuthUser();
   return useMutation({
     mutationFn: async ({
       plan,
-      strategyData,
+      strategy,
     }: {
-      plan: Omit<CreateDietPlanInput, "specialist_id">;
-      strategyData: StrategyResult;
+      plan: Omit<CreateDietPlanInput, "specialist_id" | "plan_type">;
+      strategy: DietStrategyType;
     }) => {
       if (!currentUser) throw new Error("Usuário não autenticado");
       const specialistId = currentUser.accountType === "specialist" ? currentUser.id : null;
-      const newPlan = await nutritionService.createDietPlan({
-        ...plan,
-        specialist_id: specialistId,
-      });
-
-      const { weeklySchedule } = strategyData;
-      const daysToSave = plan.plan_type === "unique" ? [weeklySchedule[0]] : weeklySchedule;
-
-      for (const day of daysToSave) {
-        for (const [index, mealTemplate] of day.meals.entries()) {
-          await nutritionService.createDietMeal({
-            diet_plan_id: newPlan.id,
-            name: mealTemplate.name,
-            day_of_week: day.dayOfWeek,
-            meal_type: mealTemplate.type,
-            meal_order: index,
-            target_calories: 0,
-            meal_time: mealTemplate.time,
-          });
-        }
-      }
-      return newPlan;
+      return nutritionService.createDietPlanFromStrategy(
+        { ...plan, specialist_id: specialistId },
+        strategy,
+      );
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["diet_plans"] }),
   });

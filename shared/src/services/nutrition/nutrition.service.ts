@@ -14,8 +14,9 @@ import type {
   UpdateMealItemInput,
 } from "../../types/nutrition.types";
 import { createCatalogoDeAlimentos } from "./catalogoDeAlimentos.service";
+import { createDietPlanCreation } from "./dietPlanCreation.service";
 
-export const createNutritionService = (supabase: SupabaseClient) => ({
+const createBaseNutritionService = (supabase: SupabaseClient) => ({
   ...createCatalogoDeAlimentos(supabase),
 
   // ── Diet Plans ─────────────────────────────────────────────────────────────
@@ -461,3 +462,8 @@ export const createNutritionService = (supabase: SupabaseClient) => ({
     return data as MealLog;
   },
 });
+
+export const createNutritionService = (supabase: SupabaseClient) => {
+  const base = createBaseNutritionService(supabase);
+  return { ...base, ...createDietPlanCreation(supabase, base.createDietPlan) };
+};
