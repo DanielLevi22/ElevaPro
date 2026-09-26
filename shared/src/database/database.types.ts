@@ -429,9 +429,13 @@ export type Database = {
       };
       diet_plans: {
         Row: {
+          allows_supplements: boolean | null;
           created_at: string;
+          dietary_restrictions: string[];
           end_date: string;
+          free_meal_days: number[];
           id: string;
+          meals_per_day: number | null;
           name: string | null;
           notes: string | null;
           plan_type: Database["public"]["Enums"]["diet_plan_type"];
@@ -446,9 +450,13 @@ export type Database = {
           version: number;
         };
         Insert: {
+          allows_supplements?: boolean | null;
           created_at?: string;
+          dietary_restrictions?: string[];
           end_date: string;
+          free_meal_days?: number[];
           id?: string;
+          meals_per_day?: number | null;
           name?: string | null;
           notes?: string | null;
           plan_type?: Database["public"]["Enums"]["diet_plan_type"];
@@ -463,9 +471,13 @@ export type Database = {
           version?: number;
         };
         Update: {
+          allows_supplements?: boolean | null;
           created_at?: string;
+          dietary_restrictions?: string[];
           end_date?: string;
+          free_meal_days?: number[];
           id?: string;
+          meals_per_day?: number | null;
           name?: string | null;
           notes?: string | null;
           plan_type?: Database["public"]["Enums"]["diet_plan_type"];
@@ -1647,9 +1659,13 @@ export type Database = {
       activate_diet_plan: {
         Args: { p_plan_id: string };
         Returns: {
+          allows_supplements: boolean | null;
           created_at: string;
+          dietary_restrictions: string[];
           end_date: string;
+          free_meal_days: number[];
           id: string;
+          meals_per_day: number | null;
           name: string | null;
           notes: string | null;
           plan_type: Database["public"]["Enums"]["diet_plan_type"];

@@ -4,22 +4,32 @@ import {
   calculateDietStrategy,
   DIET_STRATEGIES,
   DIET_STRATEGY_TYPES,
+  type DietPlanPreferences,
   type DietStrategyType,
 } from "@elevapro/shared";
 import { ChevronLeft, Clock, Flame, Pencil, RefreshCw, Utensils } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { DietPreferencesFields } from "@/modules/nutrition/components/DietPreferencesFields";
 import { HealthDataConsentModal } from "@/modules/nutrition/components/HealthDataConsentModal";
 import { MacroRing } from "@/modules/nutrition/components/MacroRing";
 import { Button } from "@/shared/components/ui/Button";
 import { DatePicker } from "@/shared/components/ui/DatePicker";
 import { useAuthUser } from "@/shared/hooks/useAuthUser";
+import { useDietaryRestrictionHint } from "@/shared/hooks/useDietPlanSuggestions";
 import { useHealthDataConsent } from "@/shared/hooks/useHealthDataConsent";
 import { useCreateDietPlanWithStrategy } from "@/shared/hooks/useNutrition";
 import { useStudents } from "@/shared/hooks/useStudents";
 
 const DAYS_NAME = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+const NO_PREFERENCES: DietPlanPreferences = {
+  dietary_restrictions: [],
+  meals_per_day: null,
+  allows_supplements: null,
+  free_meal_days: [],
+};
 
 const STRATEGY_ICON: Record<DietStrategyType, React.ComponentType<{ className?: string }>> = {
   standard: Utensils,
@@ -57,6 +67,14 @@ export function DietCreatorPage() {
   const [carbs, setCarbs] = useState(200);
   const [fat, setFat] = useState(60);
   const [showConsentModal, setShowConsentModal] = useState(false);
+  const [preferences, setPreferences] = useState<DietPlanPreferences>(NO_PREFERENCES);
+  const { data: restrictionHint } = useDietaryRestrictionHint(studentId);
+
+  // A anamnese sugere, o especialista decide: a sugestão entra quando o aluno
+  // é escolhido, e a partir daí o que vale é o que ele marcar.
+  useEffect(() => {
+    setPreferences({ ...NO_PREFERENCES, dietary_restrictions: restrictionHint?.suggested ?? [] });
+  }, [restrictionHint]);
 
   const { data: consent } = useHealthDataConsent();
   // `isCurrent` já resolve versão da política e revogação: consentimento dado
@@ -106,6 +124,7 @@ export function DietCreatorPage() {
           target_protein: protein,
           target_carbs: carbs,
           target_fat: fat,
+          ...preferences,
         },
         strategy: selectedStrategy,
       });
@@ -250,6 +269,15 @@ export function DietCreatorPage() {
             />
             <MacroRing label="Gordura" value={fat} max={150} color="hsl(var(--warning))" unit="g" />
           </div>
+        </section>
+
+        <section className="py-5.5 border-b border-border">
+          <SectionTitle>Preferências</SectionTitle>
+          <DietPreferencesFields
+            value={preferences}
+            onChange={setPreferences}
+            hasOtherNotes={restrictionHint?.hasOtherNotes ?? false}
+          />
         </section>
 
         <section className="py-5.5 border-b border-border space-y-4">

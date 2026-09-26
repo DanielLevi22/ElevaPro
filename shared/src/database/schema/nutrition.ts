@@ -52,6 +52,12 @@ export const dietPlans = pgTable("diet_plans", {
   target_carbs: numeric("target_carbs", { precision: 7, scale: 2 }),
   target_fat: numeric("target_fat", { precision: 7, scale: 2 }),
   notes: text("notes"),
+  // Preferências do plano (0074, #337). A restrição é vocabulário fechado de
+  // exclusão de alimento, com CHECK no banco: diagnóstico fica na anamnese.
+  dietary_restrictions: text("dietary_restrictions").array().notNull().default([]),
+  meals_per_day: integer("meals_per_day"),
+  allows_supplements: boolean("allows_supplements"),
+  free_meal_days: integer("free_meal_days").array().notNull().default([]),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

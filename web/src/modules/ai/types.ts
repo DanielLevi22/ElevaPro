@@ -1,3 +1,4 @@
+import type { DietPlanPreferences } from "@elevapro/shared";
 import type { PlanProposalData } from "./tools/studentCoachTools";
 
 export type { PlanProposalData };
@@ -63,6 +64,8 @@ export interface StudentHealthContext {
   weightKg?: number;
   heightCm?: number;
   bodyFatPct?: number;
+  /** Do plano mais recente deste especialista (#337). Etiqueta, nunca diagnóstico. */
+  dietPreferences?: DietPlanPreferences;
 }
 
 /**

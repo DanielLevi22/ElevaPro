@@ -1,4 +1,9 @@
-import { lerRespostaTexto } from "@elevapro/shared";
+import {
+  DIAS_DA_SEMANA,
+  DIETARY_RESTRICTION_LABELS,
+  type DietPlanPreferences,
+  lerRespostaTexto,
+} from "@elevapro/shared";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { StudentContext, StudentHealthContext } from "../types";
 
@@ -94,8 +99,28 @@ async function hasHealthConsent(studentId: string): Promise<boolean> {
   return Boolean(data.given_at) && !data.revoked_at;
 }
 
-async function loadHealth(studentId: string): Promise<StudentHealthContext> {
-  const [anamnesisRes, assessmentRes] = await Promise.all([
+/**
+ * As preferências do plano mais recente que este especialista montou. Só do
+ * dele: pelo coach, um especialista não lê o plano de outro.
+ */
+async function loadDietPreferences(
+  studentId: string,
+  specialistId: string,
+): Promise<DietPlanPreferences | undefined> {
+  const { data, error } = await supabaseAdmin
+    .from("diet_plans")
+    .select("dietary_restrictions, meals_per_day, allows_supplements, free_meal_days")
+    .eq("student_id", studentId)
+    .eq("specialist_id", specialistId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as DietPlanPreferences | null) ?? undefined;
+}
+
+async function loadHealth(studentId: string, specialistId: string): Promise<StudentHealthContext> {
+  const [anamnesisRes, assessmentRes, dietPreferences] = await Promise.all([
     supabaseAdmin
       .from("student_anamnesis")
       .select("responses")
@@ -111,6 +136,8 @@ async function loadHealth(studentId: string): Promise<StudentHealthContext> {
       .order("assessed_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+
+    loadDietPreferences(studentId, specialistId),
   ]);
 
   if (anamnesisRes.error) throw anamnesisRes.error;
@@ -124,6 +151,7 @@ async function loadHealth(studentId: string): Promise<StudentHealthContext> {
     weightKg: numeric(assessment?.weight_kg),
     heightCm: numeric(assessment?.height_cm),
     bodyFatPct: numeric(assessment?.body_fat_pct),
+    dietPreferences,
   };
 
   return health;
@@ -189,7 +217,7 @@ export async function loadStudentContext(
 
   return {
     studentId,
-    health: consent ? await loadHealth(studentId) : null,
+    health: consent ? await loadHealth(studentId, specialistId) : null,
     healthUnavailableReason: consent ? null : "no_consent",
     periodizations,
   };
@@ -216,7 +244,25 @@ function healthLines(health: StudentHealthContext): string[] {
   if (health.heightCm !== undefined) medidas.push(`Altura: ${health.heightCm} cm`);
   if (health.bodyFatPct !== undefined) medidas.push(`% Gordura: ${health.bodyFatPct}%`);
   if (medidas.length > 0) lines.push(`\n--- ÚLTIMA AVALIAÇÃO ---`, ...medidas);
+  if (health.dietPreferences) lines.push(...dietPreferenceLines(health.dietPreferences));
 
+  return lines;
+}
+
+function dietPreferenceLines(prefs: DietPlanPreferences): string[] {
+  const restrictions = prefs.dietary_restrictions.map((tag) => DIETARY_RESTRICTION_LABELS[tag]);
+  const lines = [
+    `\n--- PREFERÊNCIAS DA DIETA ---`,
+    `Restrições da dieta: ${restrictions.join(", ") || "nenhuma"}`,
+  ];
+  if (prefs.meals_per_day !== null) lines.push(`Refeições por dia: ${prefs.meals_per_day}`);
+  if (prefs.allows_supplements !== null) {
+    lines.push(`Suplementos: ${prefs.allows_supplements ? "permitidos" : "não usar"}`);
+  }
+  if (prefs.free_meal_days.length > 0) {
+    const days = prefs.free_meal_days.map((day) => DIAS_DA_SEMANA[day]?.toLowerCase());
+    lines.push(`Refeição livre: ${days.join(", ")}`);
+  }
   return lines;
 }
 

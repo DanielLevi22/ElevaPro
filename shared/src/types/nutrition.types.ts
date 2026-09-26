@@ -1,3 +1,5 @@
+import type { DietaryRestriction } from "../utils/dietaryRestrictions";
+
 // Canonical nutrition types — aligned with shared/src/database/schema/nutrition.ts
 
 export type DietPlanStatus = "draft" | "active" | "finished";
@@ -20,7 +22,19 @@ export interface Food {
   created_at: string;
 }
 
-export interface DietPlan {
+/**
+ * O que o plano exclui e como ele se distribui (#337). `dietary_restrictions`
+ * é vocabulário fechado de exclusão de alimento, nunca diagnóstico.
+ */
+export interface DietPlanPreferences {
+  dietary_restrictions: DietaryRestriction[];
+  meals_per_day: number | null;
+  allows_supplements: boolean | null;
+  /** Dias da semana com refeição livre, domingo = 0. */
+  free_meal_days: number[];
+}
+
+export interface DietPlan extends DietPlanPreferences {
   id: string;
   student_id: string;
   specialist_id: string | null;
@@ -135,6 +149,10 @@ export interface CreateDietPlanInput {
   target_carbs?: number | null;
   target_fat?: number | null;
   notes?: string | null;
+  dietary_restrictions?: DietaryRestriction[];
+  meals_per_day?: number | null;
+  allows_supplements?: boolean | null;
+  free_meal_days?: number[];
 }
 
 export interface UpdateDietPlanInput {
@@ -148,6 +166,10 @@ export interface UpdateDietPlanInput {
   target_carbs?: number | null;
   target_fat?: number | null;
   notes?: string | null;
+  dietary_restrictions?: DietaryRestriction[];
+  meals_per_day?: number | null;
+  allows_supplements?: boolean | null;
+  free_meal_days?: number[];
 }
 
 export interface CreateDietMealInput {

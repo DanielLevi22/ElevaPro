@@ -15,6 +15,7 @@ import type {
 } from "../../types/nutrition.types";
 import { createCatalogoDeAlimentos } from "./catalogoDeAlimentos.service";
 import { createDietPlanCreation } from "./dietPlanCreation.service";
+import { createDietPlanSuggestions } from "./dietPlanSuggestions.service";
 
 const createBaseNutritionService = (supabase: SupabaseClient) => ({
   ...createCatalogoDeAlimentos(supabase),
@@ -339,5 +340,9 @@ const createBaseNutritionService = (supabase: SupabaseClient) => ({
 
 export const createNutritionService = (supabase: SupabaseClient) => {
   const base = createBaseNutritionService(supabase);
-  return { ...base, ...createDietPlanCreation(supabase) };
+  return {
+    ...base,
+    ...createDietPlanCreation(supabase),
+    ...createDietPlanSuggestions(supabase),
+  };
 };

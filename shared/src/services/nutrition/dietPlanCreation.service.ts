@@ -52,6 +52,10 @@ export const createDietPlanCreation = (supabase: SupabaseClient) => {
         target_carbs: input.target_carbs ?? null,
         target_fat: input.target_fat ?? null,
         notes: input.notes ?? null,
+        dietary_restrictions: input.dietary_restrictions ?? [],
+        meals_per_day: input.meals_per_day ?? null,
+        allows_supplements: input.allows_supplements ?? null,
+        free_meal_days: input.free_meal_days ?? [],
       })
       .select()
       .single();
@@ -119,7 +123,7 @@ export const createDietPlanCreation = (supabase: SupabaseClient) => {
       const created = await createDietPlan({ ...plan, plan_type: planType });
 
       const schedule = calculateDietStrategy(strategy, Number(plan.target_calories ?? 0));
-      const rows = strategyMealRows(schedule, planType);
+      const rows = strategyMealRows(schedule, planType, plan.meals_per_day);
       if (rows.length === 0) return created;
 
       const { error } = await supabase

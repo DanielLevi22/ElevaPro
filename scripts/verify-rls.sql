@@ -2842,3 +2842,53 @@ BEGIN
 END $$;
 
 ROLLBACK;
+
+-- ── Preferências do plano: vocabulário fechado, sem diagnóstico (#337) ───────
+--
+-- LGPD (Art. 6°, III): a restrição do plano é exclusão de alimento. A anamnese
+-- oferece "Diabetes" na mesma pergunta, e aceitar texto aberto aqui levaria o
+-- diagnóstico para uma segunda tabela, sob outra política de acesso.
+
+BEGIN;
+
+DO $$
+DECLARE
+  aluno uuid := gen_random_uuid();
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES (aluno, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+          'verify-pref@elevapro.local', '{"full_name":"P","account_type":"student"}'::jsonb);
+
+  -- O positivo: as quatro etiquetas passam. Sem ele, um CHECK que recusa tudo
+  -- passaria nesta trava.
+  INSERT INTO public.diet_plans (student_id, name, status, start_date, end_date,
+                                 dietary_restrictions, meals_per_day, free_meal_days)
+  VALUES (aluno, 'Etiquetas válidas', 'draft', CURRENT_DATE, CURRENT_DATE + 30,
+          ARRAY['lactose_free', 'gluten_free', 'vegetarian', 'vegan'], 5, ARRAY[0, 6]);
+
+  BEGIN
+    INSERT INTO public.diet_plans (student_id, name, status, start_date, end_date, dietary_restrictions)
+    VALUES (aluno, 'Diagnóstico', 'draft', CURRENT_DATE, CURRENT_DATE + 30, ARRAY['diabetes']);
+    RAISE EXCEPTION 'DIAGNÓSTICO NO PLANO: diet_plans aceitou "diabetes" como restrição';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
+  BEGIN
+    INSERT INTO public.diet_plans (student_id, name, status, start_date, end_date, dietary_restrictions)
+    VALUES (aluno, 'Texto livre', 'draft', CURRENT_DATE, CURRENT_DATE + 30,
+            ARRAY['intolerante a lactose, sente dor abdominal']);
+    RAISE EXCEPTION 'TEXTO LIVRE NO PLANO: diet_plans aceitou restrição fora do vocabulário';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
+  BEGIN
+    INSERT INTO public.diet_plans (student_id, name, status, start_date, end_date, free_meal_days)
+    VALUES (aluno, 'Dia inexistente', 'draft', CURRENT_DATE, CURRENT_DATE + 30, ARRAY[7]);
+    RAISE EXCEPTION 'DIA INEXISTENTE: diet_plans aceitou refeição livre no dia 7';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
+  RAISE NOTICE 'ok  preferências da dieta: só as quatro etiquetas de exclusão, sem diagnóstico nem texto livre';
+END $$;
+
+ROLLBACK;

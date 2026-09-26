@@ -97,3 +97,38 @@ describe("strategyMealRows", () => {
     expect(strategyMealRows(calculateDietStrategy("manual", 2000), "unique")).toEqual([]);
   });
 });
+
+describe("strategyMealRows com o número de refeições da preferência", () => {
+  const names = (rows: { name: string }[]) => rows.map((row) => row.name);
+
+  it("com menos refeições, tira primeiro o lanche e mantém as principais", () => {
+    const rows = strategyMealRows(calculateDietStrategy("standard", 2000), "unique", 3);
+
+    expect(names(rows)).toEqual(["Café da Manhã", "Almoço", "Jantar"]);
+  });
+
+  it("com mais refeições, completa com lanche da manhã e ceia, em ordem de horário", () => {
+    const rows = strategyMealRows(calculateDietStrategy("standard", 2000), "unique", 6);
+
+    expect(rows.map((row) => row.meal_time)).toEqual([
+      "08:00",
+      "10:30",
+      "13:00",
+      "16:00",
+      "20:00",
+      "22:00",
+    ]);
+    expect(rows.map((row) => row.meal_order)).toEqual([0, 1, 2, 3, 4, 5]);
+  });
+
+  // No jejum, completar com lanche das 10:30 quebraria a janela de 8h.
+  it("no jejum intermitente, só completa com refeição dentro da janela", () => {
+    const rows = strategyMealRows(calculateDietStrategy("intermittent_fasting", 2000), "unique", 8);
+
+    expect(rows.every((row) => row.meal_time >= "12:00" && row.meal_time <= "21:30")).toBe(true);
+  });
+
+  it("a personalizada continua sem refeição, qualquer que seja o número", () => {
+    expect(strategyMealRows(calculateDietStrategy("manual", 2000), "unique", 5)).toEqual([]);
+  });
+});

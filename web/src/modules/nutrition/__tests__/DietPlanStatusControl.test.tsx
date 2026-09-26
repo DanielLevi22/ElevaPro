@@ -30,6 +30,10 @@ function makePlan(overrides: Partial<DietPlan> = {}): DietPlan {
     target_carbs: 220,
     target_fat: 73,
     notes: null,
+    dietary_restrictions: [],
+    meals_per_day: null,
+    allows_supplements: null,
+    free_meal_days: [],
     created_at: "2026-10-01T00:00:00Z",
     ...overrides,
   };

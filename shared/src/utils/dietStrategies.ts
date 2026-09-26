@@ -34,6 +34,8 @@ export interface DayTemplate {
   description: string;
   macros: MacroSplit;
   meals: MealTemplate[];
+  /** Horário em que a estratégia admite refeição, quando ela restringe (jejum). */
+  mealWindow?: { from: string; to: string };
 }
 
 export interface StrategyResult {
@@ -93,6 +95,21 @@ const FASTING_MEALS: MealTemplate[] = [
   { name: "Ceia", time: "21:30", type: "snack" },
 ];
 
+// Para completar o dia quando a preferência pede mais refeições que o molde,
+// na ordem em que entram.
+const EXTRA_MEALS: MealTemplate[] = [
+  { name: "Lanche da Manhã", time: "10:30", type: "snack" },
+  { name: "Ceia", time: "22:00", type: "snack" },
+  { name: "Pré-Treino", time: "17:30", type: "snack" },
+  { name: "Lanche da Noite", time: "21:00", type: "snack" },
+];
+
+// Para tirar refeição quando a preferência pede menos: o lanche sai primeiro,
+// o almoço por último.
+const DROP_ORDER: MealTemplate["type"][] = ["snack", "breakfast", "dinner", "lunch"];
+
+const FASTING_WINDOW = { from: "12:00", to: "21:30" };
+
 /** Percentual da energia em cada macro, e o fator sobre a energia base do dia. */
 interface DayRule {
   label: string;
@@ -100,6 +117,7 @@ interface DayRule {
   calorieFactor: number;
   percent: { protein: number; carbs: number; fat: number };
   meals: MealTemplate[];
+  mealWindow?: DayTemplate["mealWindow"];
 }
 
 const BALANCED = { protein: 30, carbs: 40, fat: 30 };
@@ -144,7 +162,10 @@ function dayRule(strategy: DietStrategyType, dayOfWeek: number): DayRule {
     case "ketogenic":
       return rule("Keto", "Cetose", { protein: 25, carbs: 5, fat: 70 }, BASE_MEALS);
     case "intermittent_fasting":
-      return rule("Janela 8h", "12:00 - 20:00", BALANCED, FASTING_MEALS);
+      return {
+        ...rule("Janela 8h", "12:00 - 20:00", BALANCED, FASTING_MEALS),
+        mealWindow: FASTING_WINDOW,
+      };
     case "manual":
       return rule("Manual", "Livre", BALANCED, []);
     default:
@@ -184,9 +205,9 @@ export function calculateDietStrategy(
   baseCalories: number,
 ): StrategyResult {
   const weeklySchedule = [0, 1, 2, 3, 4, 5, 6].map((dayOfWeek) => {
-    const { label, description, calorieFactor, percent, meals } = dayRule(strategy, dayOfWeek);
+    const { calorieFactor, percent, ...day } = dayRule(strategy, dayOfWeek);
     const macros = toGrams(Math.round(baseCalories * calorieFactor), percent);
-    return { dayOfWeek, label, description, macros, meals };
+    return { dayOfWeek, macros, ...day };
   });
 
   return {
@@ -200,8 +221,40 @@ export type StrategyMealRow = Required<
   Pick<CreateDietMealInput, "name" | "meal_type" | "meal_time" | "meal_order" | "day_of_week">
 >;
 
-function rowsOfDay(day: DayTemplate, dayOfWeek: number | null): StrategyMealRow[] {
-  return day.meals.map((meal, index) => ({
+function withoutMeals(meals: MealTemplate[], count: number): MealTemplate[] {
+  const kept = [...meals];
+  for (const type of DROP_ORDER) {
+    while (kept.length > count) {
+      const index = kept.findLastIndex((meal) => meal.type === type);
+      if (index < 0) break;
+      kept.splice(index, 1);
+    }
+  }
+  return kept;
+}
+
+function withExtraMeals(day: DayTemplate, count: number): MealTemplate[] {
+  const fits = (meal: MealTemplate) =>
+    !day.mealWindow || (meal.time >= day.mealWindow.from && meal.time <= day.mealWindow.to);
+  const taken = new Set(day.meals.map((meal) => meal.name));
+  const extras = EXTRA_MEALS.filter((meal) => fits(meal) && !taken.has(meal.name));
+  const added = extras.slice(0, Math.max(0, count - day.meals.length));
+  return [...day.meals, ...added].sort((a, b) => a.time.localeCompare(b.time));
+}
+
+// A personalizada não sugere refeição: o número da preferência não a muda.
+function mealsForCount(day: DayTemplate, count?: number | null): MealTemplate[] {
+  if (!count || day.meals.length === 0) return day.meals;
+  if (count < day.meals.length) return withoutMeals(day.meals, count);
+  return withExtraMeals(day, count);
+}
+
+function rowsOfDay(
+  day: DayTemplate,
+  dayOfWeek: number | null,
+  mealsPerDay?: number | null,
+): StrategyMealRow[] {
+  return mealsForCount(day, mealsPerDay).map((meal, index) => ({
     name: meal.name,
     meal_type: meal.type,
     meal_time: meal.time,
@@ -217,13 +270,16 @@ function rowsOfDay(day: DayTemplate, dayOfWeek: number | null): StrategyMealRow[
  * `mealsOfDay` lê. Gravar os sete dias numa dieta única repetia cada refeição
  * sete vezes na tela (regressão da #337).
  *
+ * `mealsPerDay`, a preferência do plano, tira ou acrescenta refeições ao molde.
+ *
  * @example
- * const rows = strategyMealRows(calculateDietStrategy("standard", 2000), "unique");
+ * const rows = strategyMealRows(calculateDietStrategy("standard", 2000), "unique", 5);
  */
 export function strategyMealRows(
   result: StrategyResult,
   planType: DietPlanType,
+  mealsPerDay?: number | null,
 ): StrategyMealRow[] {
-  if (planType === "unique") return rowsOfDay(result.weeklySchedule[0], null);
-  return result.weeklySchedule.flatMap((day) => rowsOfDay(day, day.dayOfWeek));
+  if (planType === "unique") return rowsOfDay(result.weeklySchedule[0], null, mealsPerDay);
+  return result.weeklySchedule.flatMap((day) => rowsOfDay(day, day.dayOfWeek, mealsPerDay));
 }
