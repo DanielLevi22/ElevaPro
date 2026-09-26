@@ -30,10 +30,15 @@ const STATUS_DO_FILTRO: Record<Exclude<Filtro, 'todas'>, Periodization['status']
  * aqui pode haver mais de uma periodização em andamento ao mesmo tempo, uma
  * por aluno, então cada ativa vira um cartão-herói (#335).
  *
+ * Com `studentId`, é a mesma lista recortada num aluno: o "Treinos" do
+ * Acompanhamento (#334), dentro da pilha de Alunos, com voltar e sem o seletor de
+ * aluno na criação.
+ *
  * @example
  * <PeriodizationsScreen />
+ * <PeriodizationsScreen studentId={aluno.id} />
  */
-export default function PeriodizationsScreen() {
+export default function PeriodizationsScreen({ studentId }: { studentId?: string } = {}) {
   const router = useRouter();
   const { user, accountType } = useAuthStore();
   const isSpecialist = accountType === 'specialist';
@@ -62,15 +67,23 @@ export default function PeriodizationsScreen() {
     [students]
   );
 
+  const doEscopo = useMemo(
+    () => (studentId ? periodizations.filter((p) => p.student_id === studentId) : periodizations),
+    [periodizations, studentId]
+  );
+  const nomeDoAluno = studentId
+    ? (students.find((s) => s.id === studentId)?.full_name ?? doEscopo[0]?.student?.full_name)
+    : undefined;
+
   const buscadas = useMemo(() => {
-    if (!searchQuery.trim()) return periodizations;
+    if (!searchQuery.trim()) return doEscopo;
     const query = searchQuery.toLowerCase();
-    return periodizations.filter((p) => {
+    return doEscopo.filter((p) => {
       const nome = p.name?.toLowerCase() ?? '';
       const aluno = p.student?.full_name?.toLowerCase() ?? '';
       return nome.includes(query) || aluno.includes(query);
     });
-  }, [periodizations, searchQuery]);
+  }, [doEscopo, searchQuery]);
 
   const ativas = useMemo(() => buscadas.filter((p) => p.status === 'active'), [buscadas]);
   const historico = useMemo(
@@ -84,18 +97,29 @@ export default function PeriodizationsScreen() {
 
   const abrir = useCallback(
     (periodizacao: Periodization, executar = false) => {
+      if (studentId) {
+        router.push(ROUTES.STUDENTS.PERIODIZATION(studentId, periodizacao.id));
+        return;
+      }
       router.push(
         executar
           ? ROUTES.WORKOUTS.PERIODIZATION_EXECUTE(periodizacao.id)
           : ROUTES.WORKOUTS.PERIODIZATION(periodizacao.id)
       );
     },
-    [router]
+    [router, studentId]
   );
 
   // O `member` cria para si mesmo, sem escolher aluno; o `specialist` escolhe
   // antes de entrar no wizard, que não tem seletor embutido.
   const abrirCriacao = useCallback(() => {
+    if (studentId) {
+      router.push({
+        pathname: ROUTES.WORKOUTS.WIZARD_STRUCTURE,
+        params: { studentId, studentName: nomeDoAluno ?? undefined },
+      });
+      return;
+    }
     if (isSpecialist) {
       setShowStudentPicker(true);
       return;
@@ -103,7 +127,7 @@ export default function PeriodizationsScreen() {
     if (user?.id) {
       router.push({ pathname: ROUTES.WORKOUTS.WIZARD_STRUCTURE, params: { studentId: user.id } });
     }
-  }, [isSpecialist, user?.id, router]);
+  }, [studentId, nomeDoAluno, isSpecialist, user?.id, router]);
 
   const onRefresh = useCallback(() => {
     if (user?.id) fetchPeriodizations(user.id);
@@ -115,8 +139,8 @@ export default function PeriodizationsScreen() {
       refresh={{ refreshing: isLoading, onRefresh }}
     >
       <CabecalhoSobreFoto
-        sobrelinha={isSpecialist ? 'Gestão de planejamento' : 'Meus treinos'}
-        titulo={isSpecialist ? 'Alunos' : 'Periodizações'}
+        {...cabecalho(studentId ? (nomeDoAluno ?? 'Aluno') : null, isSpecialist)}
+        onVoltar={studentId ? router.back : undefined}
         direita={
           <View className="flex-row items-center gap-2">
             <BotaoRedondo
@@ -185,6 +209,14 @@ export default function PeriodizationsScreen() {
       </ConteudoDaLista>
     </TelaDeVidroComFoto>
   );
+}
+
+/** O que o cabeçalho diz: o aluno recortado, a gestão do especialista ou os treinos de quem treina. */
+function cabecalho(aluno: string | null, especialista: boolean) {
+  if (aluno) return { sobrelinha: 'Treinos do aluno', titulo: aluno };
+  return especialista
+    ? { sobrelinha: 'Gestão de planejamento', titulo: 'Alunos' }
+    : { sobrelinha: 'Meus treinos', titulo: 'Periodizações' };
 }
 
 interface ConteudoDaListaProps {

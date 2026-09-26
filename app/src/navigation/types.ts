@@ -96,6 +96,12 @@ export const ROUTES = {
       REPORT: (id: string) =>
         ({ pathname: '/(tabs)/students/[id]/progress/report', params: { id } }) as const,
     },
+    /** Uma periodização aberta a partir dos treinos do aluno, sem sair da pilha de Alunos. */
+    PERIODIZATION: (studentId: string, periodizationId: string) =>
+      ({
+        pathname: '/(tabs)/students/[id]/workouts/[periodizationId]',
+        params: { id: studentId, periodizationId },
+      }) as const,
     WORKOUT_DETAILS: (
       studentId: string,
       workoutId: string
