@@ -18,6 +18,7 @@ export interface NutritionAssistantChat {
   saving: boolean;
   error: string | null;
   planId: string | null;
+  readOnly: boolean;
   retry: () => void;
   sendMessage: (text: string) => void;
   approvePlan: () => void;
@@ -59,6 +60,7 @@ export function useNutritionAssistantChat({
   const [plan, setPlan] = useState<ProposalState<DietPlanProposal> | null>(null);
   const [meals, setMeals] = useState<ProposalState<DietMealsProposal> | null>(null);
   const [saving, setSaving] = useState(false);
+  const [readOnly, setReadOnly] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [savedPlanId, setSavedPlanId] = useState<string | null>(planId ?? null);
@@ -66,6 +68,7 @@ export function useNutritionAssistantChat({
   const resolvedPlan = useRef(planId);
   const busy = useRef(false);
   const mounted = useRef(true);
+  const authenticated = Boolean(token);
 
   // A tela remonta por aluno/rascunho; callbacks do wizard não reiniciam a conversa.
   // biome-ignore lint/correctness/useExhaustiveDependencies: sessão resolvida altera o wizard, não o destino da conversa
@@ -81,6 +84,7 @@ export function useNutritionAssistantChat({
         resolvedSession.current = session.sessionId;
         resolvedPlan.current = session.savedPlanId ?? planId;
         setSavedPlanId(session.savedPlanId ?? planId ?? null);
+        setReadOnly(session.readOnly ?? false);
         onSessionResolved(session.sessionId);
         chat.load(session.messages);
         setPlan(
@@ -98,7 +102,7 @@ export function useNutritionAssistantChat({
       cancelled = true;
       mounted.current = false;
     };
-  }, [token, studentId, attempt]);
+  }, [authenticated, studentId, attempt]);
 
   const blocked = () => initializing || !!error || busy.current || !resolvedSession.current;
 
@@ -130,7 +134,7 @@ export function useNutritionAssistantChat({
   };
 
   async function approve(work: () => Promise<void>, failure: string) {
-    if (blocked()) return;
+    if (blocked() || readOnly) return;
     busy.current = true;
     setSaving(true);
     try {
@@ -182,6 +186,7 @@ export function useNutritionAssistantChat({
     saving,
     error,
     planId: savedPlanId,
+    readOnly,
     retry: () => setAttempt((current) => current + 1),
     sendMessage,
     approvePlan,

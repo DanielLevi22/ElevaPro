@@ -84,6 +84,7 @@ interface BotaoRedondoProps {
   /** Obrigatório: sem texto, o leitor de tela só anunciaria "botão". */
   rotulo: string;
   onPress: () => void;
+  disabled?: boolean;
 }
 
 const LADO = 38;
@@ -92,7 +93,13 @@ const TRACO = 1.5;
 /** O kit dimensiona o ícone pelo botão: 47% do lado. */
 const FRACAO_DO_ICONE = 0.47;
 
-export function BotaoRedondo({ icone, rotulo, onPress, preenchido = false }: BotaoRedondoProps) {
+export function BotaoRedondo({
+  icone,
+  rotulo,
+  onPress,
+  preenchido = false,
+  disabled = false,
+}: BotaoRedondoProps) {
   const Icone = ICONS[icone];
   const cores = useCores();
   const escalar = useEscala();
@@ -100,6 +107,8 @@ export function BotaoRedondo({ icone, rotulo, onPress, preenchido = false }: Bot
   return (
     <TouchableOpacity
       onPress={onPress}
+      disabled={disabled}
+      accessibilityState={{ disabled }}
       activeOpacity={0.8}
       accessibilityRole="button"
       accessibilityLabel={rotulo}

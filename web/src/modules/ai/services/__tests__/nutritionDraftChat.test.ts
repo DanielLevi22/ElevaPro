@@ -20,6 +20,10 @@ vi.mock("@/lib/supabase-admin", () => ({
           return query;
         },
         order: () => query,
+        is: (column: string, value: unknown) => {
+          filters.push((row) => (row[column] ?? null) === value);
+          return query;
+        },
         limit: () => query,
         insert: (row: Row) => {
           inserted = { id: "new-session", ...row };
@@ -74,6 +78,30 @@ beforeEach(() => {
 });
 
 describe("conversa do rascunho de dieta", () => {
+  it("não retoma automaticamente uma conversa arquivada pelo botão do plano", async () => {
+    rows.ai_chat_sessions[0].archived_at = "2026-09-27";
+    const session = await resolveNutritionChat({
+      studentId: "student",
+      specialistId: "author",
+      planId: "draft",
+    });
+    expect(session.id).toBe("new-session");
+  });
+  it.each([
+    "active",
+    "finished",
+  ])("reabre a conversa do plano %s sem liberar gravação", async (status) => {
+    rows.diet_plans[0].status = status;
+    const scope = { studentId: "student", specialistId: "author", sessionId: "draft-session" };
+    const conversation = await resolveNutritionChat({ ...scope, intent: "conversation" });
+    expect(conversation.id).toBe("draft-session");
+    expect(conversation.draft).toBeNull();
+    expect(conversation.closedPlanId).toBe("draft");
+    await expect(
+      resolveNutritionChat(scope),
+      "PRESCRIÇÃO ALTERÁVEL: aprovação liberada após envio",
+    ).rejects.toThrow();
+  });
   it("retoma a conversa do rascunho aberto em vez da conversa mais recente do aluno", async () => {
     const session = await resolveNutritionChat({
       studentId: "student",
@@ -129,7 +157,7 @@ describe("conversa do rascunho de dieta", () => {
       specialistId: "author",
       fresh: true,
     });
-    expect(session).toEqual({ id: "new-session", draft: null });
+    expect(session).toEqual({ id: "new-session", draft: null, closedPlanId: undefined });
   });
   it("recusa estado com destino de gravação diferente do rascunho da conversa", async () => {
     rows.ai_chat_sessions[0].state = { draftPlanId: "draft", savedDietPlanId: "other" };

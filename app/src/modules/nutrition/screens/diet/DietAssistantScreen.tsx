@@ -1,5 +1,6 @@
 import type { DietMealsProposal, DietPlanProposal } from '@elevapro/shared';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRef } from 'react';
 import { KeyboardAvoidingView, Platform, Text, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
@@ -7,11 +8,12 @@ import { GlassScreen } from '@/components/ui/GlassScreen';
 import { Row } from '@/components/ui/Row';
 import { Vidro } from '@/components/ui/Vidro';
 import { ROUTES } from '@/navigation/types';
+import { AssistantHistoryButton } from '@/shared/chat/AssistantHistoryButton';
 import {
-  Baloes,
-  CabecalhoDoAssistente,
-  CampoDaConversa,
-  Digitando,
+  AssistantHeader,
+  ChatComposer,
+  ChatMessages,
+  TypingIndicator,
 } from '@/shared/chat/ChatPieces';
 import {
   type ProposalState,
@@ -26,7 +28,12 @@ import { useDietWizardStore } from '../../store/dietWizardStore';
  * segue para as refeições; o aluno não vê nada até o envio.
  */
 export default function DietAssistantScreen() {
-  const params = useLocalSearchParams<{ studentId?: string; planId?: string }>();
+  const params = useLocalSearchParams<{
+    studentId?: string;
+    planId?: string;
+    sessionId?: string;
+  }>();
+  const actorId = useAuthStore((s) => s.user?.id);
   const wizard = useDietWizardStore();
   const allowed = useAuthStore(
     (s) =>
@@ -34,7 +41,7 @@ export default function DietAssistantScreen() {
       !!s.abilities?.can('create', 'Diet') &&
       !!s.abilities?.can('update', 'Diet')
   );
-  const studentId = params.studentId ?? wizard.studentId;
+  const studentId = params.studentId ?? (wizard.actorId === actorId ? wizard.studentId : null);
   if (!allowed || !studentId) {
     return (
       <GlassScreen>
@@ -46,36 +53,61 @@ export default function DietAssistantScreen() {
   }
   return (
     <DietAssistantConversation
-      key={`${studentId}:${params.planId ?? 'new'}`}
+      key={`${actorId}:${studentId}:${params.planId ?? 'new'}:${params.sessionId ?? 'current'}`}
       studentId={studentId}
       planId={params.planId}
+      sessionId={params.sessionId}
     />
   );
 }
 
-function DietAssistantConversation({ studentId, planId }: { studentId: string; planId?: string }) {
+function DietAssistantConversation({
+  studentId,
+  planId,
+  sessionId,
+}: {
+  studentId: string;
+  planId?: string;
+  sessionId?: string;
+}) {
   const router = useRouter();
   const wizard = useDietWizardStore();
   const token = useAuthStore((s) => s.session?.access_token ?? '');
+  const actorId = useAuthStore((s) => s.user?.id);
+  const canWorkout = useAuthStore(
+    (s) => !!s.abilities?.can('create', 'Workout') && !!s.abilities?.can('create', 'Periodization')
+  );
+  const generation = useRef(wizard.generation).current;
+  const ownsWizard = () => {
+    const current = useDietWizardStore.getState();
+    return (
+      !planId &&
+      current.actorId === actorId &&
+      current.studentId === studentId &&
+      current.generation === generation
+    );
+  };
   const chat = useNutritionAssistantChat({
     token,
     studentId,
     planId,
-    sessionId: !planId && wizard.studentId === studentId ? wizard.aiSessionId : null,
+    sessionId: sessionId ?? (ownsWizard() ? wizard.aiSessionId : null),
     onSessionResolved: (id) => {
-      if (!planId && useDietWizardStore.getState().studentId === studentId)
-        wizard.setAiSessionId(id);
+      if (ownsWizard()) wizard.setAiSessionId(id);
     },
     onPlanApproved: (id) => {
-      if (!planId && useDietWizardStore.getState().studentId === studentId)
-        wizard.setCreatedPlan(id);
+      if (ownsWizard()) wizard.setCreatedPlan(id);
     },
   });
   const blocked = chat.initializing || chat.responding || chat.saving || !!chat.error;
 
   const openPlan = () =>
     chat.planId &&
-    router.replace({ pathname: ROUTES.NUTRITION.WIZARD_PLAN, params: { planId: chat.planId } });
+    router.replace(
+      chat.readOnly
+        ? ROUTES.NUTRITION.PLAN(chat.planId)
+        : { pathname: ROUTES.NUTRITION.WIZARD_PLAN, params: { planId: chat.planId } }
+    );
 
   return (
     <KeyboardAvoidingView
@@ -84,9 +116,26 @@ function DietAssistantConversation({ studentId, planId }: { studentId: string; p
     >
       <GlassScreen
         bottomSpace="actionBar"
-        overlay={<CampoDaConversa respondendo={blocked} onEnviar={chat.sendMessage} />}
+        overlay={<ChatComposer busy={blocked} onSend={chat.sendMessage} />}
       >
-        <CabecalhoDoAssistente assunto="plano alimentar" onVoltar={router.back} />
+        <AssistantHeader
+          subject="plano alimentar"
+          onBack={router.back}
+          history={
+            <AssistantHistoryButton
+              token={token}
+              studentId={studentId}
+              disabled={chat.responding || chat.saving}
+              canNutrition
+              canWorkout={canWorkout}
+            />
+          }
+        />
+        {chat.readOnly && (
+          <Text className="mt-3 text-muted-foreground">
+            Plano já enviado. Você pode conversar sobre ele; alterações exigem um novo rascunho.
+          </Text>
+        )}
         {chat.initializing && <Text className="mt-4 text-muted-foreground">Abrindo conversa…</Text>}
         {chat.error && (
           <Vidro className="mt-3 p-4">
@@ -96,9 +145,9 @@ function DietAssistantConversation({ studentId, planId }: { studentId: string; p
             <Row icon="refresh-outline" title="Tentar novamente" onPress={chat.retry} />
           </Vidro>
         )}
-        <Baloes mensagens={chat.messages} />
+        <ChatMessages messages={chat.messages} />
 
-        {chat.planProposal && (
+        {chat.planProposal && !chat.readOnly && (
           <PlanProposalCard
             proposal={chat.planProposal}
             saving={blocked}
@@ -106,7 +155,7 @@ function DietAssistantConversation({ studentId, planId }: { studentId: string; p
             onAdjust={() => chat.sendMessage('Quero ajustar o plano proposto.')}
           />
         )}
-        {chat.mealsProposal && (
+        {chat.mealsProposal && !chat.readOnly && (
           <MealsProposalCard
             proposal={chat.mealsProposal}
             saving={blocked || !chat.planId}
@@ -115,14 +164,14 @@ function DietAssistantConversation({ studentId, planId }: { studentId: string; p
             onOpenPlan={openPlan}
           />
         )}
-        {chat.planId && !chat.mealsProposal?.saved && (
+        {chat.planId && (chat.readOnly || !chat.mealsProposal?.saved) && (
           <Row
             icon="restaurant-outline"
-            title="Continuar montagem manual"
+            title={chat.readOnly ? 'Visualizar plano alimentar' : 'Continuar montagem manual'}
             onPress={blocked && !chat.error ? undefined : openPlan}
           />
         )}
-        {chat.responding && <Digitando />}
+        {chat.responding && <TypingIndicator />}
       </GlassScreen>
     </KeyboardAvoidingView>
   );

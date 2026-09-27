@@ -31,6 +31,35 @@ beforeEach(() => {
   global.fetch = jest.fn().mockResolvedValue(response(session));
 });
 
+it('retoma uma dieta enviada sem permitir aprovar alterações', async () => {
+  (global.fetch as jest.Mock).mockResolvedValue(response({ ...session, readOnly: true }));
+  const { result } = renderHook(() => useNutritionAssistantChat(options));
+  await waitFor(() => expect(result.current.initializing).toBe(false));
+  await act(async () => {
+    result.current.approveMeals();
+  });
+  expect(global.fetch).toHaveBeenCalledTimes(1);
+  expect(result.current.readOnly).toBe(true);
+});
+
+it('renovar o token não abre outra conversa de nutrição', async () => {
+  const { result, rerender } = renderHook(
+    ({ token }: { token: string }) => useNutritionAssistantChat({ ...options, token }),
+    { initialProps: { token: 'first' } }
+  );
+  await waitFor(() => expect(result.current.initializing).toBe(false));
+  rerender({ token: 'refreshed' });
+  expect(global.fetch).toHaveBeenCalledTimes(1);
+  (global.fetch as jest.Mock).mockResolvedValue(response({ saved: [{ id: 'meal-1' }] }));
+  await act(async () => {
+    result.current.approveMeals();
+  });
+  expect(JSON.parse((global.fetch as jest.Mock).mock.calls[1][1].body)).toEqual({
+    sessionId: 'draft-chat',
+    planId: 'draft-1',
+  });
+});
+
 it('abre e aprova no rascunho da rota, usando a sessão resolvida pelo servidor', async () => {
   const { result } = renderHook(() => useNutritionAssistantChat(options));
   await waitFor(() => expect(result.current.initializing).toBe(false));

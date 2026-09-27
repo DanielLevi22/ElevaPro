@@ -178,6 +178,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return;
     }
 
+    if (!session?.user || state.user?.id !== session.user.id) {
+      // O evento de expiração/troca também precisa descartar formulários sensíveis.
+      useNutritionStore.getState().reset();
+    }
     set({ isLoading: true });
     try {
       if (!session?.user) {

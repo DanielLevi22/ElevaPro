@@ -30,6 +30,7 @@ export function useDietGoalSetup(studentId: string): DietGoalSetup {
       return;
     }
     let active = true;
+    const generation = useDietWizardStore.getState().generation;
     setLoading(true);
     setSuggestion(null);
     setHasOtherNotes(false);
@@ -40,6 +41,7 @@ export function useDietGoalSetup(studentId: string): DietGoalSetup {
       .then(([goal, hint]) => {
         if (!active) return;
         const wizard = useDietWizardStore.getState();
+        if (wizard.generation !== generation) return;
         wizard.initializeGoals(studentId, goal, hint.suggested);
         setSuggestion(goal);
         setHasOtherNotes(hint.hasOtherNotes);

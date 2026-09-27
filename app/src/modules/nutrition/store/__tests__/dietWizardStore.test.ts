@@ -3,7 +3,14 @@ import { useDietWizardStore } from '../dietWizardStore';
 const store = () => useDietWizardStore.getState();
 
 describe('dietWizardStore', () => {
-  beforeEach(() => store().startFor({ studentId: 'aluno-1', studentName: 'Ana', ownPlan: false }));
+  beforeEach(() =>
+    store().startFor({
+      actorId: 'account-a',
+      studentId: 'aluno-1',
+      studentName: 'Ana',
+      ownPlan: false,
+    })
+  );
 
   it('começa pela estratégia padrão, sem nome e sem plano criado', () => {
     expect(store()).toMatchObject({ strategy: 'standard', planName: '', planId: null });
@@ -81,7 +88,12 @@ describe('dietWizardStore', () => {
   });
 
   it('ignora a sugestão que chegou depois de trocar de aluno', () => {
-    store().startFor({ studentId: 'aluno-2', studentName: 'Bia', ownPlan: false });
+    store().startFor({
+      actorId: 'account-a',
+      studentId: 'aluno-2',
+      studentName: 'Bia',
+      ownPlan: false,
+    });
     store().initializeGoals(
       'aluno-1',
       {
@@ -108,7 +120,12 @@ describe('dietWizardStore', () => {
     store().setPlanName('Cutting');
     store().setCreatedPlan('plano-1');
 
-    store().startFor({ studentId: 'aluno-2', studentName: 'Bia', ownPlan: false });
+    store().startFor({
+      actorId: 'account-a',
+      studentId: 'aluno-2',
+      studentName: 'Bia',
+      ownPlan: false,
+    });
 
     expect(store()).toMatchObject({ studentId: 'aluno-2', planName: '', planId: null });
   });
@@ -116,7 +133,12 @@ describe('dietWizardStore', () => {
 
 describe('dietWizardStore — vigência', () => {
   it('começa em quatro semanas e nunca fica abaixo de uma', () => {
-    store().startFor({ studentId: 'aluno-1', studentName: 'Ana', ownPlan: false });
+    store().startFor({
+      actorId: 'account-a',
+      studentId: 'aluno-1',
+      studentName: 'Ana',
+      ownPlan: false,
+    });
     expect(store().durationWeeks).toBe(4);
 
     store().setDurationWeeks(0);

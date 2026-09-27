@@ -55,11 +55,15 @@ export default function DietReviewScreen() {
   }, [plan?.id]);
 
   const totals = plan ? dayTotals(editor.meals, plan.plan_type) : [];
-  const average = averageOf(totals.filter((t) => t.macros.calorias > 0));
-  const notesForReview = reviewNotes(totals, {
-    calorias: numeroDoBanco(plan?.target_calories),
-    proteina: numeroDoBanco(plan?.target_protein),
-  });
+  const average = averageOf(totals);
+  const notesForReview = reviewNotes(
+    totals,
+    {
+      calorias: numeroDoBanco(plan?.target_calories),
+      proteina: numeroDoBanco(plan?.target_protein),
+    },
+    { meals: editor.meals, restrictions: plan?.dietary_restrictions ?? [] }
+  );
   const alreadyActive = plan?.status !== 'draft';
   const ready = totals.length > 0 && totals.every((t) => t.macros.calorias > 0);
 

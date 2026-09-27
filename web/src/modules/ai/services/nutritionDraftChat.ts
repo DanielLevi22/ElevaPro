@@ -30,21 +30,40 @@ export async function requireNutritionConsent(studentId: string): Promise<void> 
 /** Lê somente as metas/preferências do rascunho do autor, nunca nome ou notas.
  * @example const draft = await loadNutritionDraft(planId, studentId, specialistId);
  */
-export async function loadNutritionDraft(planId: string, studentId: string, specialistId: string) {
+async function loadNutritionPlan(planId: string, studentId: string, specialistId: string) {
   await requireNutritionConsent(studentId);
   const { data: draft, error } = await supabaseAdmin
     .from("diet_plans")
     .select(
-      "id, plan_type, target_calories, target_protein, target_carbs, target_fat, dietary_restrictions, meals_per_day, allows_supplements, free_meal_days",
+      "id, status, plan_type, target_calories, target_protein, target_carbs, target_fat, dietary_restrictions, meals_per_day, allows_supplements, free_meal_days",
     )
     .eq("id", planId)
     .eq("student_id", studentId)
     .eq("specialist_id", specialistId)
-    .eq("status", "draft")
     .maybeSingle();
   if (error) throw new NutritionChatError("Não foi possível conferir o rascunho.", 503);
   if (!draft) throw new NutritionChatError("Rascunho indisponível para esta conversa.", 404);
   return draft;
+}
+
+/** Só o rascunho do autor pode receber a proposta aprovada.
+ * @example await loadNutritionDraft(planId, studentId, specialistId);
+ */
+export async function loadNutritionDraft(planId: string, studentId: string, specialistId: string) {
+  const plan = await loadNutritionPlan(planId, studentId, specialistId);
+  if (plan.status !== "draft")
+    throw new NutritionChatError("A prescrição enviada não pode ser alterada nesta conversa.", 409);
+  return plan;
+}
+
+function planScope(
+  plan: Awaited<ReturnType<typeof loadNutritionPlan>> | null,
+  intent?: "conversation",
+) {
+  if (!plan || plan.status === "draft") return { draft: plan, closedPlanId: undefined };
+  if (intent !== "conversation")
+    throw new NutritionChatError("A prescrição enviada não pode ser alterada nesta conversa.", 409);
+  return { draft: null, closedPlanId: plan.id };
 }
 
 interface ChatScope {
@@ -53,6 +72,7 @@ interface ChatScope {
   sessionId?: string;
   planId?: string;
   fresh?: boolean;
+  intent?: "conversation";
 }
 
 /** Resolve uma conversa da criação ou do rascunho, sem trocar seu destino.
@@ -61,7 +81,9 @@ interface ChatScope {
 export async function resolveNutritionChat(scope: ChatScope) {
   const { studentId, specialistId, planId, sessionId, fresh } = scope;
   await requireNutritionConsent(studentId);
-  let draft = planId ? await loadNutritionDraft(planId, studentId, specialistId) : null;
+  let plan = planId ? await loadNutritionPlan(planId, studentId, specialistId) : null;
+  // Valida antes de criar uma sessão: aprovação não pode abrir conversa em plano enviado.
+  planScope(plan, scope.intent);
   if (sessionId || planId) {
     let query = supabaseAdmin
       .from("ai_chat_sessions")
@@ -70,7 +92,7 @@ export async function resolveNutritionChat(scope: ChatScope) {
       .eq("specialist_id", specialistId)
       .eq("module", "nutrition");
     if (sessionId) query = query.eq("id", sessionId);
-    else if (planId) query = query.eq("state->>draftPlanId", planId);
+    else if (planId) query = query.eq("state->>draftPlanId", planId).is("archived_at", null);
     const { data: session, error } = await query
       .order("updated_at", { ascending: false })
       .limit(1)
@@ -92,15 +114,15 @@ export async function resolveNutritionChat(scope: ChatScope) {
         throw new NutritionChatError("Esta conversa não pertence ao rascunho aberto.", 409);
       }
       const boundPlanId = state.draftPlanId ?? state.savedDietPlanId;
-      if (boundPlanId && !draft)
-        draft = await loadNutritionDraft(boundPlanId, studentId, specialistId);
-      return { id: session.id, draft };
+      if (boundPlanId && !plan)
+        plan = await loadNutritionPlan(boundPlanId, studentId, specialistId);
+      return { id: session.id, ...planScope(plan, scope.intent) };
     }
     if (sessionId) throw new NutritionChatError("Conversa não encontrada.", 404);
   }
   if (!planId && !fresh) {
     const id = await getOrCreateSession(studentId, specialistId, "nutrition");
-    return resolveNutritionChat({ studentId, specialistId, sessionId: id });
+    return resolveNutritionChat({ ...scope, sessionId: id });
   }
   const { data: created, error } = await supabaseAdmin
     .from("ai_chat_sessions")
@@ -113,7 +135,7 @@ export async function resolveNutritionChat(scope: ChatScope) {
     .select("id")
     .single();
   if (error || !created) throw new NutritionChatError("Não foi possível iniciar a conversa.", 503);
-  return { id: created.id, draft };
+  return { id: created.id, ...planScope(plan, scope.intent) };
 }
 
 /** Contexto mínimo: sem identificadores, nome do plano ou observações livres.

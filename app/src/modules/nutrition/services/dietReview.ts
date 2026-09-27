@@ -1,5 +1,6 @@
-import { DIAS_DA_SEMANA, type DietPlanType } from '@elevapro/shared';
+import { DIAS_DA_SEMANA, type DietaryRestriction, type DietPlanType } from '@elevapro/shared';
 import { type ItemDoPrato, MACROS_ZERADOS, type Macros, macrosDosItens } from './consumoDoDia';
+import { restrictionNotes } from './dietRestrictionReview';
 
 interface MealWithItems {
   day_of_week: number | null;
@@ -30,6 +31,8 @@ function itemsOf(meal: MealWithItems): ItemDoPrato[] {
  */
 export function dayTotals(meals: readonly MealWithItems[], planType: DietPlanType): DayTotal[] {
   const byDay = new Map<number | null, ItemDoPrato[]>();
+  const days = planType === 'unique' ? [null] : [0, 1, 2, 3, 4, 5, 6];
+  for (const day of days) byDay.set(day, []);
   for (const meal of meals) {
     const day = planType === 'unique' ? null : meal.day_of_week;
     byDay.set(day, [...(byDay.get(day) ?? []), ...itemsOf(meal)]);
@@ -66,9 +69,19 @@ function proteinNote(totals: DayTotal[], target: number): string {
  */
 export function reviewNotes(
   totals: readonly DayTotal[],
-  target: Pick<Macros, 'calorias' | 'proteina'>
+  target: Pick<Macros, 'calorias' | 'proteina'>,
+  foodReview?: { meals: readonly MealWithItems[]; restrictions: readonly DietaryRestriction[] }
 ): string[] {
   const withFood = totals.filter((t) => t.macros.calorias > MACROS_ZERADOS.calorias);
   if (withFood.length === 0) return ['Nenhum alimento montado ainda.'];
-  return [calorieNote(withFood, target.calorias), proteinNote(withFood, target.proteina)];
+  const emptyDays = totals.length - withFood.length;
+  const missing = emptyDays
+    ? [`${emptyDays} ${emptyDays === 1 ? 'dia sem alimentos.' : 'dias sem alimentos.'}`]
+    : [];
+  return [
+    ...missing,
+    calorieNote([...totals], target.calorias),
+    proteinNote([...totals], target.proteina),
+    ...restrictionNotes(foodReview?.meals ?? [], foodReview?.restrictions ?? []),
+  ];
 }

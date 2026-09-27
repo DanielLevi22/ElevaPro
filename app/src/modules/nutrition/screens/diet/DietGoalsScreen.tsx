@@ -1,7 +1,5 @@
-import { calculateDietStrategy, createNutritionService } from '@elevapro/shared';
-import { supabase } from '@elevapro/supabase';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { calculateDietStrategy } from '@elevapro/shared';
+import { Redirect, useRouter } from 'expo-router';
 import { Text, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { showAlert } from '@/components/ui/appAlert';
@@ -13,18 +11,15 @@ import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import { ROUTES } from '@/navigation/types';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
-import { getLocalDateISOString } from '@/utils/dateUtils';
 import { DailyGoalCard } from '../../components/diet/DailyGoalCard';
 import { DietPreferencesPanel } from '../../components/diet/DietPreferencesPanel';
 import { MacroSplitRow } from '../../components/diet/MacroSplitRow';
 import { StepButton } from '../../components/diet/StepButton';
 import { WeeklyForecast } from '../../components/diet/WeeklyForecast';
+import { useDietDraftCreation } from '../../hooks/useDietDraftCreation';
 import { useDietGoalSetup } from '../../hooks/useDietGoalSetup';
-import { draftInput } from '../../services/dietDraft';
 import { useDietWizardStore } from '../../store/dietWizardStore';
 import { DIET_WIZARD_STEPS } from './DietStartScreen';
-
-const nutrition = createNutritionService(supabase);
 
 /**
  * Passo 2 da criação de dieta (#337), a tela 17 do kit: meta diária pela
@@ -35,29 +30,23 @@ export default function DietGoalsScreen() {
   const router = useRouter();
   const wizard = useDietWizardStore();
   const userId = useAuthStore((s) => s.user?.id ?? null);
-  const setup = useDietGoalSetup(wizard.studentId ?? '');
-  const [saving, setSaving] = useState(false);
+  const canCreate = useAuthStore((s) => s.abilities?.can('create', 'Diet') ?? false);
+  const ownsDraft = !!userId && wizard.actorId === userId && !!wizard.studentId;
+  const setup = useDietGoalSetup(ownsDraft && canCreate ? (wizard.studentId ?? '') : '');
+  const creation = useDietDraftCreation({ userId, canCreate });
+  const saving = creation.saving;
   const grams = wizard.macroGrams();
 
   async function createDraft() {
-    if (!wizard.studentId || !userId || saving) return;
-    setSaving(true);
     try {
-      const input = draftInput(
-        { ...wizard, studentId: wizard.studentId, macroGrams: grams },
-        userId,
-        getLocalDateISOString()
-      );
-      const draft = await nutrition.createDietPlanFromStrategy(input, wizard.strategy);
-      wizard.setCreatedPlan(draft.id);
-      router.replace({ pathname: ROUTES.NUTRITION.WIZARD_PLAN, params: { planId: draft.id } });
+      const planId = await creation.createDraft();
+      if (planId) router.replace({ pathname: ROUTES.NUTRITION.WIZARD_PLAN, params: { planId } });
     } catch {
       showAlert({ title: 'Erro', message: 'Não foi possível criar o plano.', type: 'error' });
-    } finally {
-      setSaving(false);
     }
   }
 
+  if (!ownsDraft) return <Redirect href={ROUTES.NUTRITION.WIZARD_START} />;
   return (
     <TelaDeVidroComFoto
       image={fotoDoGrupo('legs')}
@@ -67,7 +56,7 @@ export default function DietGoalsScreen() {
           rotulo={saving ? 'Criando' : 'Montar refeições'}
           icone="arrow-forward"
           onPress={createDraft}
-          disabled={saving || setup.loading}
+          disabled={!canCreate || saving || setup.loading}
         />
       }
     >

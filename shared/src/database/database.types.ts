@@ -1666,10 +1666,6 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      append_diet_draft_meals: {
-        Args: { p_plan_id: string; p_student_id: string; p_specialist_id: string; p_meals: Json };
-        Returns: { id: string; name: string }[];
-      };
       activate_diet_plan: {
         Args: { p_plan_id: string };
         Returns: {
@@ -1700,6 +1696,13 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      append_diet_draft_meals: {
+        Args: { p_meals: Json; p_plan_id: string; p_specialist_id: string; p_student_id: string };
+        Returns: {
+          id: string;
+          name: string;
+        }[];
       };
       consume_rate_limit: {
         Args: {

@@ -1,5 +1,6 @@
 import type { ChatMessage } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,51 +17,54 @@ import { useBrilho, useCores, useEscala } from '@/shared/design';
  */
 
 /** O topo do chat: voltar, o selo e "Assistente" com o assunto embaixo. */
-export function CabecalhoDoAssistente({
-  assunto,
-  onVoltar,
+export function AssistantHeader({
+  subject,
+  onBack,
+  history,
 }: {
-  assunto: string;
-  onVoltar: () => void;
+  subject: string;
+  onBack: () => void;
+  history?: ReactNode;
 }) {
-  const cores = useCores();
-  const escalar = useEscala();
+  const colors = useCores();
+  const scale = useEscala();
 
   return (
     <View className="flex-row items-center gap-3 pt-1.5">
-      <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={onVoltar} />
+      <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={onBack} />
       <View className="min-w-0 flex-1 flex-row items-center gap-2.5">
         <View className="h-9 w-9 shrink-0 items-center justify-center rounded-full border-[0.09375rem] border-primary bg-primary/20">
-          <Ionicons name="sparkles" size={escalar(17)} color={cores.primary} />
+          <Ionicons name="sparkles" size={scale(17)} color={colors.primary} />
         </View>
         <View className="min-w-0 flex-1">
           <Text className="text-[0.96875rem] font-bold tracking-tight text-hero">Assistente</Text>
           <Text className="text-[0.71875rem] font-semibold text-muted-foreground" numberOfLines={1}>
-            {assunto}
+            {subject}
           </Text>
         </View>
       </View>
+      {history}
     </View>
   );
 }
 
-export function Baloes({ mensagens }: { mensagens: ChatMessage[] }) {
+export function ChatMessages({ messages }: { messages: ChatMessage[] }) {
   return (
     <View className="mt-[1.375rem] gap-3">
-      {mensagens.map((mensagem) => (
-        <Balao key={mensagem.id} mensagem={mensagem} />
+      {messages.map((message) => (
+        <ChatBubble key={message.id} message={message} />
       ))}
     </View>
   );
 }
 
-function Balao({ mensagem }: { mensagem: ChatMessage }) {
-  if (mensagem.role === 'user') {
+function ChatBubble({ message }: { message: ChatMessage }) {
+  if (message.role === 'user') {
     return (
       <View className="items-end">
         <View className="max-w-[84%] rounded-[1.25rem] rounded-br-md bg-primary px-3.5 py-3">
           <Text className="text-[0.84375rem] font-semibold leading-[1.22rem] text-primary-foreground">
-            {mensagem.content}
+            {message.content}
           </Text>
         </View>
       </View>
@@ -73,7 +77,7 @@ function Balao({ mensagem }: { mensagem: ChatMessage }) {
         className="rounded-[1.25rem] rounded-bl-md px-3.5 py-3"
       >
         <Text className="text-[0.84375rem] leading-[1.22rem] text-foreground">
-          {mensagem.content || '…'}
+          {message.content || '…'}
         </Text>
       </Vidro>
     </View>
@@ -81,15 +85,15 @@ function Balao({ mensagem }: { mensagem: ChatMessage }) {
 }
 
 /** Os três pontos do kit enquanto a resposta não chega. */
-export function Digitando() {
+export function TypingIndicator() {
   return (
     <View className="mt-3 items-start" accessibilityLabel="O assistente está respondendo">
       <Vidro
         classeExterna="rounded-[1.25rem] rounded-bl-md"
         className="flex-row gap-[0.3125rem] rounded-[1.25rem] rounded-bl-md px-3.5 py-3"
       >
-        {['a', 'b', 'c'].map((ponto) => (
-          <View key={ponto} className="h-1.5 w-1.5 rounded-full bg-placeholder" />
+        {['a', 'b', 'c'].map((dot) => (
+          <View key={dot} className="h-1.5 w-1.5 rounded-full bg-placeholder" />
         ))}
       </Vidro>
     </View>
@@ -97,64 +101,58 @@ export function Digitando() {
 }
 
 /** Mesma altura da barra de duas ações do kit, no mesmo lugar acima da tab bar. */
-const ACIMA_DO_INSET = 84;
-const BRILHO_DO_ENVIO = { y: 10, blur: 26, espalhamento: -10 } as const;
+const ABOVE_INSET = 84;
+const SEND_GLOW = { y: 10, blur: 26, espalhamento: -10 } as const;
 
-export function CampoDaConversa({
-  respondendo,
-  onEnviar,
-}: {
-  respondendo: boolean;
-  onEnviar: (texto: string) => void;
-}) {
-  const cores = useCores();
-  const escalar = useEscala();
-  const brilho = useBrilho();
+export function ChatComposer({ busy, onSend }: { busy: boolean; onSend: (text: string) => void }) {
+  const colors = useCores();
+  const scale = useEscala();
+  const glow = useBrilho();
   const insets = useSafeAreaInsets();
-  const [texto, setTexto] = useState('');
-  const podeEnviar = texto.trim().length > 0 && !respondendo;
+  const [text, setText] = useState('');
+  const canSend = text.trim().length > 0 && !busy;
 
-  const enviar = () => {
-    if (!podeEnviar) return;
-    onEnviar(texto);
-    setTexto('');
+  const send = () => {
+    if (!canSend) return;
+    onSend(text);
+    setText('');
   };
 
   return (
     <View
       className="absolute left-[1.125rem] right-[1.125rem] flex-row gap-[0.5625rem]"
-      style={{ bottom: insets.bottom + escalar(ACIMA_DO_INSET) }}
+      style={{ bottom: insets.bottom + scale(ABOVE_INSET) }}
     >
       <View className="h-[2.625rem] flex-1 justify-center overflow-hidden rounded-[0.8125rem] border border-glass-border bg-background px-3.5">
         <View className="absolute inset-0 bg-glass-strong" />
         <TextInput
-          value={texto}
-          onChangeText={setTexto}
-          onSubmitEditing={enviar}
+          value={text}
+          onChangeText={setText}
+          onSubmitEditing={send}
           placeholder="Pergunte ao assistente…"
-          placeholderTextColor={cores.placeholder}
+          placeholderTextColor={colors.placeholder}
           returnKeyType="send"
-          editable={!respondendo}
+          editable={!busy}
           accessibilityLabel="Mensagem para o assistente"
           className="text-[0.84375rem] text-foreground"
         />
       </View>
       <TouchableOpacity
-        onPress={enviar}
-        disabled={!podeEnviar}
+        onPress={send}
+        disabled={!canSend}
         accessibilityRole="button"
         accessibilityLabel="Enviar mensagem"
-        accessibilityState={{ disabled: !podeEnviar }}
+        accessibilityState={{ disabled: !canSend }}
         className={cn(
           'h-[2.625rem] w-[2.625rem] items-center justify-center rounded-[0.8125rem]',
-          podeEnviar ? 'bg-primary' : 'border border-glass-border bg-background'
+          canSend ? 'bg-primary' : 'border border-glass-border bg-background'
         )}
-        style={podeEnviar ? { boxShadow: brilho(BRILHO_DO_ENVIO, { alfa: 0.8 }) } : undefined}
+        style={canSend ? { boxShadow: glow(SEND_GLOW, { alfa: 0.8 }) } : undefined}
       >
         <Ionicons
           name="send"
-          size={escalar(15)}
-          color={podeEnviar ? cores.primaryForeground : cores.placeholder}
+          size={scale(15)}
+          color={canSend ? colors.primaryForeground : colors.placeholder}
         />
       </TouchableOpacity>
     </View>

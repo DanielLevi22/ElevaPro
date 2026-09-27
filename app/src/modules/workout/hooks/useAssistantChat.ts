@@ -1,5 +1,6 @@
-import type { BulkWorkoutProposal, ChatMessage, PeriodizationProposal } from '@elevapro/shared';
-import { useCallback, useEffect, useState } from 'react';
+import type { BulkWorkoutProposal, PeriodizationProposal } from '@elevapro/shared';
+import { useEffect, useRef, useState } from 'react';
+import { mensagemDeErroBff } from '@/shared/bff';
 import { useChatConversation } from '@/shared/chat/useChatConversation';
 import { WorkoutChatService } from '../services/WorkoutChatService';
 
@@ -8,21 +9,7 @@ export interface PeriodizationProposalState {
   savedId?: string;
 }
 
-export interface AssistantChat {
-  messages: ChatMessage[];
-  initializing: boolean;
-  responding: boolean;
-  periodizationProposal: PeriodizationProposalState | null;
-  workoutsProposal: BulkWorkoutProposal | null;
-  savedWorkoutTitles: string[];
-  savingPeriodization: boolean;
-  savingWorkouts: boolean;
-  sendMessage: (texto: string) => void;
-  approvePeriodization: () => void;
-  approveWorkouts: () => void;
-}
-
-interface OpcoesDoChat {
+interface Options {
   token: string;
   studentId: string;
   sessionId: string | null;
@@ -33,16 +20,11 @@ interface OpcoesDoChat {
   onWorkoutsApproved?: () => void;
 }
 
-const SAUDACAO = 'Olá! Vou te ajudar a montar o treino deste aluno. Por onde quer começar?';
+const GREETING = 'Olá! Vou te ajudar a montar o treino deste aluno. Por onde quer começar?';
 
-/**
- * A conversa do especialista com o assistente de treino — o mesmo chat do
- * web (`/api/ai/chat/[studentId]`), pela sessão que `WorkoutChatService` já
- * fala com o orquestrador (`propose_periodization`/`propose_workouts`).
- *
- * @example
- * const chat = useAssistantChat({ token, studentId, sessionId: wizard.aiSessionId,
- *   onSessionResolved: wizard.setAiSessionId });
+/** Retoma o chat do web e aprova somente as propostas da sessão resolvida.
+ * A tela remonta por conta/aluno/sessão: respostas tardias não alcançam a próxima conversa.
+ * @example const chat = useAssistantChat({ token, studentId, sessionId, onSessionResolved });
  */
 export function useAssistantChat({
   token,
@@ -51,126 +33,145 @@ export function useAssistantChat({
   onSessionResolved,
   onPeriodizationApproved,
   onWorkoutsApproved,
-}: OpcoesDoChat): AssistantChat {
-  const chat = useChatConversation(SAUDACAO);
-  const [inicializando, setInicializando] = useState(true);
-  const [propostaPeriodizacao, setPropostaPeriodizacao] =
-    useState<PeriodizationProposalState | null>(null);
-  const [propostaTreinos, setPropostaTreinos] = useState<BulkWorkoutProposal | null>(null);
-  const [treinosSalvos, setTreinosSalvos] = useState<string[]>([]);
-  const [salvandoPeriodizacao, setSalvandoPeriodizacao] = useState(false);
-  const [salvandoTreinos, setSalvandoTreinos] = useState(false);
+}: Options) {
+  const chat = useChatConversation(GREETING);
+  const [initializing, setInitializing] = useState(true);
+  const [periodization, setPeriodization] = useState<PeriodizationProposalState | null>(null);
+  const [workouts, setWorkouts] = useState<BulkWorkoutProposal | null>(null);
+  const [savedTitles, setSavedTitles] = useState<string[]>([]);
+  const [saving, setSaving] = useState<'periodization' | 'workouts' | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const resolvedSession = useRef<string | null>(null);
+  const busy = useRef(false);
+  const mounted = useRef(true);
+  const authenticated = Boolean(token);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: carrega uma vez por aluno; sessionId/onSessionResolved mudariam o efeito a cada resposta do próprio efeito
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a tela remonta por destino; resolver a sessão não reinicia o carregamento
   useEffect(() => {
-    let cancelado = false;
+    let cancelled = false;
+    mounted.current = true;
+    resolvedSession.current = null;
+    setInitializing(true);
+    setError(null);
     WorkoutChatService.loadSession(token, studentId, sessionId ?? undefined)
-      .then((sessao) => {
-        if (cancelado) return;
-        onSessionResolved(sessao.sessionId);
-        chat.load(sessao.messages);
-        setPropostaPeriodizacao(
-          sessao.periodization
-            ? { data: sessao.periodization, savedId: sessao.savedPeriodizationId ?? undefined }
+      .then((session) => {
+        if (cancelled) return;
+        resolvedSession.current = session.sessionId;
+        onSessionResolved(session.sessionId);
+        chat.load(session.messages);
+        setPeriodization(
+          session.periodization
+            ? { data: session.periodization, savedId: session.savedPeriodizationId ?? undefined }
             : null
         );
-        setTreinosSalvos(sessao.savedWorkoutTitles);
-        setPropostaTreinos(sessao.workoutProposal);
+        setSavedTitles(session.savedWorkoutTitles);
+        setWorkouts(session.workoutProposal);
       })
-      .catch(() => {
-        // Silêncio aqui é o comportamento do web: a tela mostra a boas-vindas.
+      .catch((failure: unknown) => {
+        if (!cancelled) setError(mensagemDeErroBff(failure));
       })
       .finally(() => {
-        if (!cancelado) setInicializando(false);
+        if (!cancelled) setInitializing(false);
       });
     return () => {
-      cancelado = true;
+      cancelled = true;
+      mounted.current = false;
     };
-  }, [token, studentId]);
+  }, [authenticated, studentId, attempt]);
 
-  const enviar = useCallback(
-    (texto: string) => {
-      if (chat.responding) return;
-      chat.reply(texto, ({ text, error }) =>
-        WorkoutChatService.sendMessage(token, studentId, texto.trim(), sessionId, (evento) => {
-          if (evento.type === 'text') text(evento.content);
-          else if (evento.type === 'proposal') setPropostaPeriodizacao({ data: evento.data });
-          else if (evento.type === 'workout_proposal') {
-            setPropostaTreinos(evento.data);
-            setTreinosSalvos([]);
-          } else if (evento.type === 'saved' && evento.entity === 'periodization') {
-            setPropostaPeriodizacao((atual) => (atual ? { ...atual, savedId: evento.id } : atual));
-          } else if (evento.type === 'error') error(evento.message);
-        })
-      );
-    },
-    [chat, token, studentId, sessionId]
-  );
+  const blocked = () => initializing || !!error || busy.current || !resolvedSession.current;
+  const sendMessage = (text: string) => {
+    if (blocked() || !text.trim()) return;
+    busy.current = true;
+    void chat
+      .reply(text, ({ text: write, error: fail }) =>
+        WorkoutChatService.sendMessage(
+          token,
+          studentId,
+          text.trim(),
+          resolvedSession.current,
+          (event) => {
+            if (!mounted.current) return;
+            if (event.type === 'text') write(event.content);
+            else if (event.type === 'proposal') setPeriodization({ data: event.data });
+            else if (event.type === 'workout_proposal') {
+              setWorkouts(event.data);
+              setSavedTitles([]);
+            } else if (event.type === 'saved' && event.entity === 'periodization') {
+              setPeriodization((current) =>
+                current ? { ...current, savedId: event.id } : current
+              );
+            } else if (event.type === 'error') fail(event.message);
+          }
+        )
+      )
+      .finally(() => {
+        busy.current = false;
+      });
+  };
 
-  const aprovarPeriodizacao = useCallback(async () => {
-    if (!propostaPeriodizacao || propostaPeriodizacao.savedId || salvandoPeriodizacao) return;
-    setSalvandoPeriodizacao(true);
+  async function approve(kind: 'periodization' | 'workouts', work: () => Promise<void>) {
+    if (blocked()) return;
+    busy.current = true;
+    setSaving(kind);
     try {
-      const salva = await WorkoutChatService.approvePeriodization(token, studentId, sessionId);
-      setPropostaPeriodizacao((atual) => (atual ? { ...atual, savedId: salva.id } : atual));
-      chat.say(
-        `Pronto! Periodização "${salva.name}" salva. Podemos montar os treinos da primeira fase.`
-      );
-      onPeriodizationApproved?.(salva.id);
+      await work();
     } catch {
-      chat.say('Não consegui salvar a periodização agora. Tente de novo.');
+      if (mounted.current) chat.say('Não consegui salvar agora. Tente de novo.');
     } finally {
-      setSalvandoPeriodizacao(false);
+      busy.current = false;
+      if (mounted.current) setSaving(null);
     }
-  }, [
-    propostaPeriodizacao,
-    salvandoPeriodizacao,
-    token,
-    studentId,
-    sessionId,
-    onPeriodizationApproved,
-    chat,
-  ]);
+  }
 
-  const aprovarTreinos = useCallback(async () => {
-    if (!propostaTreinos || salvandoTreinos) return;
-    const fase = propostaTreinos.phase_name;
-    setSalvandoTreinos(true);
-    try {
-      const salvo = await WorkoutChatService.approveWorkouts(token, studentId, sessionId);
-      setTreinosSalvos(salvo.saved.map((w) => w.title));
+  const approvePeriodization = () => {
+    if (!periodization || periodization.savedId) return;
+    return approve('periodization', async () => {
+      const saved = await WorkoutChatService.approvePeriodization(
+        token,
+        studentId,
+        resolvedSession.current
+      );
+      if (!mounted.current) return;
+      setPeriodization((current) => (current ? { ...current, savedId: saved.id } : current));
       chat.say(
-        `Pronto! ${salvo.saved.length === 1 ? '1 treino salvo' : `${salvo.saved.length} treinos salvos`} na fase ${fase}.`
+        `Pronto! Periodização "${saved.name}" salva. Podemos montar os treinos da primeira fase.`
+      );
+      onPeriodizationApproved?.(saved.id);
+    });
+  };
+  const approveWorkouts = () => {
+    if (!workouts || savedTitles.length) return;
+    return approve('workouts', async () => {
+      const saved = await WorkoutChatService.approveWorkouts(
+        token,
+        studentId,
+        resolvedSession.current
+      );
+      if (!mounted.current) return;
+      setSavedTitles(saved.saved.map((workout) => workout.title));
+      chat.say(
+        `Pronto! ${saved.saved.length} treinos salvos na fase ${workouts.phase_name}. Podemos continuar a montagem.`
       );
       onWorkoutsApproved?.();
-      enviar(`Aprovei os treinos da fase ${fase}. E agora?`);
-    } catch {
-      chat.say('Não consegui salvar os treinos agora. Tente de novo.');
-    } finally {
-      setSalvandoTreinos(false);
-    }
-  }, [
-    propostaTreinos,
-    salvandoTreinos,
-    token,
-    studentId,
-    sessionId,
-    onWorkoutsApproved,
-    enviar,
-    chat,
-  ]);
+    });
+  };
 
   return {
     messages: chat.messages,
-    initializing: inicializando,
+    initializing,
     responding: chat.responding,
-    periodizationProposal: propostaPeriodizacao,
-    workoutsProposal: propostaTreinos,
-    savedWorkoutTitles: treinosSalvos,
-    savingPeriodization: salvandoPeriodizacao,
-    savingWorkouts: salvandoTreinos,
-    sendMessage: enviar,
-    approvePeriodization: aprovarPeriodizacao,
-    approveWorkouts: aprovarTreinos,
+    periodizationProposal: periodization,
+    workoutsProposal: workouts,
+    savedWorkoutTitles: savedTitles,
+    savingPeriodization: saving === 'periodization',
+    savingWorkouts: saving === 'workouts',
+    error,
+    sessionId: resolvedSession.current,
+    retry: () => setAttempt((current) => current + 1),
+    sendMessage,
+    approvePeriodization,
+    approveWorkouts,
   };
 }

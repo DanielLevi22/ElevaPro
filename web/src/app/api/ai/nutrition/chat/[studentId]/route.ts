@@ -69,6 +69,7 @@ async function handlePost(
       specialistId,
       sessionId: typeof body.sessionId === "string" ? body.sessionId : undefined,
       planId: typeof body.planId === "string" ? body.planId : undefined,
+      intent: "conversation",
     });
   } catch (error) {
     return scopeFailure(error);
@@ -87,7 +88,11 @@ async function handlePost(
       try {
         const sessionId = scope.id;
         // O carregador continua verificando consentimento e omitindo o nome do titular.
-        const studentCtx = await loadStudentContext(studentId, specialistId, scope.draft?.id);
+        const studentCtx = await loadStudentContext(
+          studentId,
+          specialistId,
+          scope.draft?.id ?? scope.closedPlanId,
+        );
 
         const storedMessages = await getSessionMessages(sessionId);
         const history = historicoDoTurno(storedMessages);
@@ -102,6 +107,9 @@ async function handlePost(
           formatContextForPrompt(studentCtx),
           bodyScanIndex,
           scope.draft ? nutritionDraftPrompt(scope.draft) : "",
+          scope.closedPlanId
+            ? "Esta conversa pertence a uma prescrição já enviada. Pode discutir o plano, mas não propor nem gravar mudanças. Para ajustar, peça ao especialista que abra uma nova versão em rascunho."
+            : "",
         ]
           .filter(Boolean)
           .join(SECTION_SEPARATOR);
@@ -119,6 +127,11 @@ async function handlePost(
 
         const onToolCall = async (name: string, input: unknown): Promise<string> => {
           const typed = input as Record<string, unknown>;
+          if (scope.closedPlanId && (name === "propose_diet_plan" || name === "propose_meals")) {
+            return JSON.stringify({
+              error: "Plano enviado: abra uma nova versão em rascunho para propor alterações.",
+            });
+          }
 
           if (name === "query_foods") {
             const result = await queryFoods(
@@ -271,6 +284,7 @@ async function handleGet(
       sessionId: pedida,
       planId: request.nextUrl.searchParams.get("planId") ?? undefined,
       fresh: request.nextUrl.searchParams.get("new") === "1",
+      intent: "conversation",
     });
   } catch (error) {
     return scopeFailure(error);
@@ -290,11 +304,20 @@ async function handleGet(
   return NextResponse.json({
     sessionId,
     savedPlanId: estado.savedDietPlanId ?? null,
+    readOnly: !!scope.closedPlanId,
     messages,
-    planProposal: estado.pendingDietPlan ?? estado.resolvedDietPlan ?? null,
-    planSaved: !estado.pendingDietPlan && Boolean(estado.resolvedDietPlan),
-    mealsProposal: estado.pendingDietMeals ?? estado.resolvedDietMeals ?? null,
-    mealsSaved: !estado.pendingDietMeals && Boolean(estado.resolvedDietMeals),
+    planProposal: scope.closedPlanId
+      ? (estado.resolvedDietPlan ?? null)
+      : (estado.pendingDietPlan ?? estado.resolvedDietPlan ?? null),
+    planSaved: scope.closedPlanId
+      ? true
+      : !estado.pendingDietPlan && Boolean(estado.resolvedDietPlan),
+    mealsProposal: scope.closedPlanId
+      ? (estado.resolvedDietMeals ?? null)
+      : (estado.pendingDietMeals ?? estado.resolvedDietMeals ?? null),
+    mealsSaved: scope.closedPlanId
+      ? true
+      : !estado.pendingDietMeals && Boolean(estado.resolvedDietMeals),
   });
 }
 

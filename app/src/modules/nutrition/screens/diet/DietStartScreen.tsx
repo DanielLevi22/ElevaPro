@@ -112,14 +112,23 @@ function DietStrategyScreen({
   const wizard = useDietWizardStore();
   const ownPlan = studentId === userId;
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reiniciar o rascunho é só sobre trocar de aluno
+  // O formulário só pode ser retomado pela mesma identidade e para o mesmo aluno.
   useEffect(() => {
     setSourcePlanId(null);
     const current = useDietWizardStore.getState();
-    if (studentId && (current.studentId !== studentId || current.planId)) {
-      current.startFor({ studentId, studentName: studentName ?? 'Aluno', ownPlan });
+    if (
+      userId &&
+      studentId &&
+      (current.actorId !== userId || current.studentId !== studentId || current.planId)
+    ) {
+      current.startFor({
+        actorId: userId,
+        studentId,
+        studentName: studentName ?? 'Aluno',
+        ownPlan,
+      });
     }
-  }, [studentId]);
+  }, [studentId, userId, studentName, ownPlan]);
 
   const points = STARTING_POINTS.filter((point) => !(ownPlan && point.specialistOnly));
 
@@ -150,6 +159,7 @@ function DietStrategyScreen({
       return;
     }
     copyingRef.current = true;
+    const generation = useDietWizardStore.getState().generation;
     setCopying(true);
     try {
       const draft = await nutrition.cloneDietPlan(
@@ -158,6 +168,7 @@ function DietStrategyScreen({
         ownPlan ? null : userId,
         wizard.planName
       );
+      if (useDietWizardStore.getState().generation !== generation) return;
       wizard.setCreatedPlan(draft.id);
       router.replace({ pathname: ROUTES.NUTRITION.WIZARD_PLAN, params: { planId: draft.id } });
     } catch {

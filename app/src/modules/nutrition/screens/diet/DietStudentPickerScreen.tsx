@@ -35,9 +35,13 @@ export default function DietStudentPickerScreen() {
   );
 
   function selectStudent(student: DietStudentChoice) {
-    useDietWizardStore
-      .getState()
-      .startFor({ studentId: student.id, studentName: student.name, ownPlan: false });
+    if (!userId || !canCreate) return;
+    useDietWizardStore.getState().startFor({
+      actorId: userId,
+      studentId: student.id,
+      studentName: student.name,
+      ownPlan: false,
+    });
     router.push({ pathname: ROUTES.NUTRITION.WIZARD_START, params: { studentId: student.id } });
   }
 

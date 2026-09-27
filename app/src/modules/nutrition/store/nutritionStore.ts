@@ -12,6 +12,7 @@ import { useAuthStore } from '@/auth';
 import { useGamificationStore } from '@/modules/gamification/store/gamificationStore';
 import { cancelPlanNotifications, scheduleMealNotifications } from '@/services/notificationService';
 import { lembretesDaDieta } from '../services/lembretesDaDieta';
+import { useDietWizardStore } from './dietWizardStore';
 
 export type { Food };
 
@@ -298,6 +299,8 @@ export const useNutritionStore = create<NutritionStore>((set, get) => ({
   },
 
   reset: () => {
+    // O formulário ainda não persistido também contém dados de saúde.
+    useDietWizardStore.getState().reset();
     set({
       foods: [],
       currentDietPlan: null,

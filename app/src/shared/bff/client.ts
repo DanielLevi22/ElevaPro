@@ -312,6 +312,8 @@ export async function lerRespostaBff<T>(response: Response, url: string): Promis
 }
 
 interface PostBffOptions {
+  /** PATCH mantém as mesmas defesas de transporte das criações por POST. */
+  method?: 'POST' | 'PATCH';
   /** JWT do aluno. As rotas do BFF exigem — `authorizeStudent` depende dele. */
   token?: string;
   /** Análise de imagem passa de 30s com folga. */
@@ -334,7 +336,7 @@ const TIMEOUT_PADRAO_MS = 60_000;
 export async function fetchBff(
   path: string,
   body: unknown,
-  { token, timeoutMs = TIMEOUT_PADRAO_MS }: PostBffOptions = {}
+  { token, timeoutMs = TIMEOUT_PADRAO_MS, method = 'POST' }: PostBffOptions = {}
 ): Promise<{ response: Response; url: string }> {
   const url = bffUrl(path);
   const host = hostDe(url);
@@ -344,7 +346,7 @@ export async function fetchBff(
   let response: Response;
   try {
     response = (await expoFetch(url, {
-      method: 'POST',
+      method,
       // `manual` só é honrado pelo fetch do `expo/fetch`. Ver o cabeçalho.
       redirect: 'manual',
       headers: {

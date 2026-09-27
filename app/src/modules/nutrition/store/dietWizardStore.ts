@@ -19,6 +19,7 @@ export type MacroPercent = Record<Macro, number>;
 type GoalSuggestion = { targetCalories: number; macros: Record<Macro, number> };
 
 interface StartOptions {
+  actorId: string;
   studentId: string;
   studentName: string;
   /** Plano do próprio Praticante: não há aluno para quem enviar. */
@@ -26,6 +27,8 @@ interface StartOptions {
 }
 
 interface DietWizardState {
+  actorId: string | null;
+  generation: number;
   studentId: string | null;
   studentName: string | null;
   ownPlan: boolean;
@@ -68,6 +71,7 @@ interface DietWizardState {
 const BALANCED: MacroPercent = { protein: 30, carbs: 40, fat: 30 };
 
 const INITIAL = {
+  actorId: null,
   studentId: null,
   studentName: null,
   ownPlan: false,
@@ -104,9 +108,10 @@ const KCAL_PER_GRAM: Record<Macro, number> = { protein: 4, carbs: 4, fat: 9 };
 
 export const useDietWizardStore = create<DietWizardState>((set, get) => ({
   ...INITIAL,
+  generation: 0,
 
-  startFor: ({ studentId, studentName, ownPlan }) =>
-    set({ ...INITIAL, studentId, studentName, ownPlan }),
+  startFor: ({ actorId, studentId, studentName, ownPlan }) =>
+    set({ ...INITIAL, actorId, studentId, studentName, ownPlan, generation: get().generation + 1 }),
   setStartingPoint: (startingPoint) => set({ startingPoint }),
   setStrategy: (strategy) => set({ strategy }),
   setPlanName: (planName) => set({ planName }),
@@ -158,5 +163,5 @@ export const useDietWizardStore = create<DietWizardState>((set, get) => ({
     return { protein: grams('protein'), carbs: grams('carbs'), fat: grams('fat') };
   },
 
-  reset: () => set(INITIAL),
+  reset: () => set({ ...INITIAL, generation: get().generation + 1 }),
 }));

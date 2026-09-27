@@ -28,6 +28,7 @@ export interface NutritionChatSession {
   mealsProposal: DietMealsProposal | null;
   mealsSaved: boolean;
   savedPlanId: string | null;
+  readOnly?: boolean;
 }
 
 const base = (studentId: string) => `/api/ai/nutrition/chat/${studentId}`;
