@@ -173,7 +173,7 @@ function WorkoutAssistantConversation({
             proposal={chat.periodizationProposal}
             saving={blocked}
             onApprove={chat.approvePeriodization}
-            onAdjust={() => chat.sendMessage('Quero ajustar algumas coisas na proposal.')}
+            onAdjust={() => chat.sendMessage('Quero ajustar algumas coisas na proposta.')}
             onContinue={openBuilder}
           />
         ) : null}
@@ -184,7 +184,7 @@ function WorkoutAssistantConversation({
             savedTitles={chat.savedWorkoutTitles}
             saving={blocked}
             onApprove={chat.approveWorkouts}
-            onAdjust={() => chat.sendMessage('Quero ajustar os treinos da proposal.')}
+            onAdjust={() => chat.sendMessage('Quero ajustar os treinos da proposta.')}
           />
         ) : null}
 
