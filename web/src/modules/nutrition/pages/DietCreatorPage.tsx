@@ -1,24 +1,36 @@
 "use client";
 
+import {
+  calculateDietStrategy,
+  DIET_STRATEGIES,
+  DIET_STRATEGY_TYPES,
+  type DietPlanPreferences,
+  type DietStrategyType,
+} from "@elevapro/shared";
 import { ChevronLeft, Clock, Flame, Pencil, RefreshCw, Utensils } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { DietPreferencesFields } from "@/modules/nutrition/components/DietPreferencesFields";
 import { HealthDataConsentModal } from "@/modules/nutrition/components/HealthDataConsentModal";
+import { ImportDietModal } from "@/modules/nutrition/components/ImportDietModal";
 import { MacroRing } from "@/modules/nutrition/components/MacroRing";
 import { Button } from "@/shared/components/ui/Button";
 import { DatePicker } from "@/shared/components/ui/DatePicker";
 import { useAuthUser } from "@/shared/hooks/useAuthUser";
+import { useDietaryRestrictionHint } from "@/shared/hooks/useDietPlanSuggestions";
 import { useHealthDataConsent } from "@/shared/hooks/useHealthDataConsent";
 import { useCreateDietPlanWithStrategy } from "@/shared/hooks/useNutrition";
 import { useStudents } from "@/shared/hooks/useStudents";
-import {
-  calculateDietStrategy,
-  DIET_STRATEGIES,
-  type DietStrategyType,
-} from "@/shared/utils/dietStrategies";
 
 const DAYS_NAME = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+const NO_PREFERENCES: DietPlanPreferences = {
+  dietary_restrictions: [],
+  meals_per_day: null,
+  allows_supplements: null,
+  free_meal_days: [],
+};
 
 const STRATEGY_ICON: Record<DietStrategyType, React.ComponentType<{ className?: string }>> = {
   standard: Utensils,
@@ -56,6 +68,15 @@ export function DietCreatorPage() {
   const [carbs, setCarbs] = useState(200);
   const [fat, setFat] = useState(60);
   const [showConsentModal, setShowConsentModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [preferences, setPreferences] = useState<DietPlanPreferences>(NO_PREFERENCES);
+  const { data: restrictionHint } = useDietaryRestrictionHint(studentId);
+
+  // A anamnese sugere, o especialista decide: a sugestão entra quando o aluno
+  // é escolhido, e a partir daí o que vale é o que ele marcar.
+  useEffect(() => {
+    setPreferences({ ...NO_PREFERENCES, dietary_restrictions: restrictionHint?.suggested ?? [] });
+  }, [restrictionHint]);
 
   const { data: consent } = useHealthDataConsent();
   // `isCurrent` já resolve versão da política e revogação: consentimento dado
@@ -99,15 +120,15 @@ export function DietCreatorPage() {
         plan: {
           name,
           student_id: studentId,
-          plan_type: selectedStrategy === "carb_cycling" ? "cyclic" : "unique",
           start_date: startDate,
           end_date: endDate,
           target_calories: targetCalories,
           target_protein: protein,
           target_carbs: carbs,
           target_fat: fat,
+          ...preferences,
         },
-        strategyData: strategyDetails,
+        strategy: selectedStrategy,
       });
       toast.success("Plano nutricional criado com sucesso!");
       router.push(`/dashboard/diets/${newPlan.id}`);
@@ -120,6 +141,13 @@ export function DietCreatorPage() {
 
   return (
     <div className="w-full">
+      {showImportModal && (
+        <ImportDietModal
+          isOpen
+          onClose={() => setShowImportModal(false)}
+          targetStudentId={studentId || undefined}
+        />
+      )}
       {showConsentModal && (
         <HealthDataConsentModal
           onAccept={() => {
@@ -142,6 +170,17 @@ export function DietCreatorPage() {
         <h1 className="font-display text-2xl font-extrabold text-foreground">
           Novo Plano Nutricional
         </h1>
+        {authUser?.accountType === "specialist" &&
+          authUser.services.includes("nutrition_consulting") && (
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <span className="text-sm text-muted-foreground">
+                Comece do zero abaixo ou reaproveite um plano.
+              </span>
+              <Button variant="secondary" onClick={() => setShowImportModal(true)}>
+                Copiar de um plano
+              </Button>
+            </div>
+          )}
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -191,7 +230,7 @@ export function DietCreatorPage() {
             {DIET_STRATEGIES[selectedStrategy].description}
           </p>
           <div className="flex flex-wrap gap-2">
-            {(Object.keys(DIET_STRATEGIES) as DietStrategyType[]).map((strategy) => {
+            {DIET_STRATEGY_TYPES.map((strategy) => {
               const isSelected = selectedStrategy === strategy;
               const Icon = STRATEGY_ICON[strategy];
               return (
@@ -250,6 +289,15 @@ export function DietCreatorPage() {
             />
             <MacroRing label="Gordura" value={fat} max={150} color="hsl(var(--warning))" unit="g" />
           </div>
+        </section>
+
+        <section className="py-5.5 border-b border-border">
+          <SectionTitle>Preferências</SectionTitle>
+          <DietPreferencesFields
+            value={preferences}
+            onChange={setPreferences}
+            hasOtherNotes={restrictionHint?.hasOtherNotes ?? false}
+          />
         </section>
 
         <section className="py-5.5 border-b border-border space-y-4">

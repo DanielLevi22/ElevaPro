@@ -6,11 +6,9 @@ import { aiProviders } from "@/modules/ai/ai.config";
 import { NutritionOrchestrator } from "@/modules/ai/orchestrators/nutrition.orchestrator";
 import { formatBodyScanIndex, queryBodyScan } from "@/modules/ai/services/bodyScanContext";
 import {
-  getOrCreateSession,
   getSessionMessages,
   getSessionState,
   saveMessage,
-  sessionOwnedBy,
   updateSessionState,
 } from "@/modules/ai/services/chatService";
 import { formatContextForPrompt, loadStudentContext } from "@/modules/ai/services/contextLoader";
@@ -18,6 +16,11 @@ import { definirTituloProvisorio, nomearConversa } from "@/modules/ai/services/c
 import { queryFoods, unknownFoodNames } from "@/modules/ai/services/foodCatalog";
 import { historicoDoTurno } from "@/modules/ai/services/historicoDoTurno";
 import { mensagemDeFalha } from "@/modules/ai/services/mensagemDeFalha";
+import {
+  NutritionChatError,
+  nutritionDraftPrompt,
+  resolveNutritionChat,
+} from "@/modules/ai/services/nutritionDraftChat";
 import { criarRespostaEmProgresso } from "@/modules/ai/services/respostaEmProgresso";
 import type { DietMealsProposal, DietPlanProposal, SseEvent } from "@/modules/ai/types";
 
@@ -32,26 +35,15 @@ const SECTION_SEPARATOR = `
 // plano Hobby; no Pro dá para subir até 300.
 export const maxDuration = 60;
 
-const MODULE = "nutrition" as const;
-
-/**
- * Qual conversa esta requisição usa.
- *
- * Com `sessionId`, valida o dono antes de tocar em qualquer coisa: o id vem do
- * cliente e esta rota usa `service_role`, que não consulta RLS. Sem `sessionId`,
- * o comportamento antigo é preservado — retoma a mais recente.
- *
- * `null` significa "essa conversa não é sua": o chamador responde 404 sem
- * confirmar nem desmentir que o id existe.
- */
-async function resolverSessao(
-  sessionId: string | undefined,
-  studentId: string,
-  specialistId: string,
-  modulo: "workout" | "nutrition" | "general",
-): Promise<string | null> {
-  if (sessionId) return sessionOwnedBy(sessionId, studentId, specialistId);
-  return getOrCreateSession(studentId, specialistId, modulo);
+function scopeFailure(error: unknown) {
+  return NextResponse.json(
+    {
+      code: error instanceof NutritionChatError ? error.code : undefined,
+      error:
+        error instanceof NutritionChatError ? error.message : "Não foi possível abrir a conversa.",
+    },
+    { status: error instanceof NutritionChatError ? error.status : 503 },
+  );
 }
 
 async function handlePost(
@@ -67,8 +59,21 @@ async function handlePost(
   const specialistId = auth.caller.id;
 
   const body = await request.json().catch(() => null);
-  if (!body?.message) {
+  if (typeof body?.message !== "string" || !body.message.trim()) {
     return NextResponse.json({ error: "message is required" }, { status: 400 });
+  }
+
+  let scope: Awaited<ReturnType<typeof resolveNutritionChat>>;
+  try {
+    scope = await resolveNutritionChat({
+      studentId,
+      specialistId,
+      sessionId: typeof body.sessionId === "string" ? body.sessionId : undefined,
+      planId: typeof body.planId === "string" ? body.planId : undefined,
+      intent: "conversation",
+    });
+  } catch (error) {
+    return scopeFailure(error);
   }
 
   const userMessage: string = body.message;
@@ -82,23 +87,13 @@ async function handlePost(
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const [sessionId, studentCtx] = await Promise.all([
-          resolverSessao(body.sessionId, studentId, specialistId, MODULE),
-          // Verifica `student_consents` antes de ler dado de saúde, e não
-          // devolve o nome do titular. Plano alimentar é dado sensível
-          // (Art. 11, II, f + I) — ver LGPD_COMPLIANCE, seção 10.
-          loadStudentContext(studentId, specialistId),
-        ]);
-
-        // Conversa que não é deste aluno com este especialista não existe para
-        // quem perguntou. Encerrar aqui evita que o restante do stream trabalhe
-        // com uma sessão nula — e o tipo obriga a decidir, em vez de deixar
-        // passar com `!`.
-        if (!sessionId) {
-          controller.enqueue(sseChunk({ type: "error", message: "conversa não encontrada" }));
-          controller.close();
-          return;
-        }
+        const sessionId = scope.id;
+        // O carregador continua verificando consentimento e omitindo o nome do titular.
+        const studentCtx = await loadStudentContext(
+          studentId,
+          specialistId,
+          scope.draft?.id ?? scope.closedPlanId,
+        );
 
         const storedMessages = await getSessionMessages(sessionId);
         const history = historicoDoTurno(storedMessages);
@@ -109,7 +104,14 @@ async function handlePost(
         // Falha aqui não derruba o chat — o coach só deixa de saber que existe.
         const bodyScanIndex = await formatBodyScanIndex(studentId).catch(() => "");
 
-        const contextText = [formatContextForPrompt(studentCtx), bodyScanIndex]
+        const contextText = [
+          formatContextForPrompt(studentCtx),
+          bodyScanIndex,
+          scope.draft ? nutritionDraftPrompt(scope.draft) : "",
+          scope.closedPlanId
+            ? "Esta conversa pertence a uma prescrição já enviada. Pode discutir o plano, mas não propor nem gravar mudanças. Para ajustar, peça ao especialista que abra uma nova versão em rascunho."
+            : "",
+        ]
           .filter(Boolean)
           .join(SECTION_SEPARATOR);
         const primeiraTroca = storedMessages.length === 0;
@@ -126,12 +128,20 @@ async function handlePost(
 
         const onToolCall = async (name: string, input: unknown): Promise<string> => {
           const typed = input as Record<string, unknown>;
+          if (scope.closedPlanId && (name === "propose_diet_plan" || name === "propose_meals")) {
+            return JSON.stringify({
+              error: "Plano enviado: abra uma nova versão em rascunho para propor alterações.",
+            });
+          }
 
           if (name === "query_foods") {
-            const result = await queryFoods({
-              search_term: typeof typed.search_term === "string" ? typed.search_term : undefined,
-              category: typeof typed.category === "string" ? typed.category : undefined,
-            });
+            const result = await queryFoods(
+              {
+                search_term: typeof typed.search_term === "string" ? typed.search_term : undefined,
+                category: typeof typed.category === "string" ? typed.category : undefined,
+              },
+              specialistId,
+            );
 
             if (result.unknownCategory) {
               return JSON.stringify({
@@ -145,6 +155,10 @@ async function handlePost(
           }
 
           if (name === "propose_diet_plan") {
+            if (scope.draft)
+              return JSON.stringify({
+                error: "O rascunho já existe. Use propose_meals para adicionar refeições nele.",
+              });
             const plan = typed as unknown as DietPlanProposal;
             await updateSessionState(sessionId, { pendingDietPlan: plan });
             controller.enqueue(sseChunk({ type: "diet_plan_proposal", data: plan }));
@@ -159,7 +173,7 @@ async function handlePost(
             // metade, com o especialista aprovando cinco alimentos e recebendo
             // três.
             const nomes = meals.flatMap((m) => m.items.map((i) => i.food_name));
-            const desconhecidos = await unknownFoodNames(nomes);
+            const desconhecidos = await unknownFoodNames(nomes, specialistId);
             if (desconhecidos.length > 0) {
               return JSON.stringify({
                 error: "Alguns alimentos não existem no catálogo.",
@@ -170,9 +184,16 @@ async function handlePost(
 
             const proposal: DietMealsProposal = {
               plan_name: (typed.plan_name as string) ?? "",
-              plan_type: meals.some((m) => m.day_of_week !== undefined) ? "cyclic" : "unique",
+              plan_type: meals.some((m) => m.day_of_week != null) ? "cyclic" : "unique",
               meals,
             };
+
+            if (scope.draft && proposal.plan_type !== scope.draft.plan_type) {
+              return JSON.stringify({
+                error:
+                  "O tipo das refeições deve corresponder ao rascunho aberto. Na dieta cíclica, informe day_of_week de 0 a 6.",
+              });
+            }
 
             await updateSessionState(sessionId, { pendingDietMeals: proposal });
             controller.enqueue(sseChunk({ type: "diet_meals_proposal", data: proposal }));
@@ -256,11 +277,20 @@ async function handleGet(
   // diferentes na mesma tela é pior que uma só.
   const pedida = request.nextUrl.searchParams.get("sessionId") ?? undefined;
 
-  const sessionId = await resolverSessao(pedida, studentId, auth.caller.id, MODULE);
-
-  if (!sessionId) {
-    return NextResponse.json({ error: "conversa não encontrada" }, { status: 404 });
+  let scope: Awaited<ReturnType<typeof resolveNutritionChat>>;
+  try {
+    scope = await resolveNutritionChat({
+      studentId,
+      specialistId: auth.caller.id,
+      sessionId: pedida,
+      planId: request.nextUrl.searchParams.get("planId") ?? undefined,
+      fresh: request.nextUrl.searchParams.get("new") === "1",
+      intent: "conversation",
+    });
+  } catch (error) {
+    return scopeFailure(error);
   }
+  const sessionId = scope.id;
 
   const [messages, estado] = await Promise.all([
     getSessionMessages(sessionId),
@@ -274,11 +304,21 @@ async function handleGet(
   // mostrar. Sem pendente, volta a aprovada, marcada como salva.
   return NextResponse.json({
     sessionId,
+    savedPlanId: estado.savedDietPlanId ?? null,
+    readOnly: !!scope.closedPlanId,
     messages,
-    planProposal: estado.pendingDietPlan ?? estado.resolvedDietPlan ?? null,
-    planSaved: !estado.pendingDietPlan && Boolean(estado.resolvedDietPlan),
-    mealsProposal: estado.pendingDietMeals ?? estado.resolvedDietMeals ?? null,
-    mealsSaved: !estado.pendingDietMeals && Boolean(estado.resolvedDietMeals),
+    planProposal: scope.closedPlanId
+      ? (estado.resolvedDietPlan ?? null)
+      : (estado.pendingDietPlan ?? estado.resolvedDietPlan ?? null),
+    planSaved: scope.closedPlanId
+      ? true
+      : !estado.pendingDietPlan && Boolean(estado.resolvedDietPlan),
+    mealsProposal: scope.closedPlanId
+      ? (estado.resolvedDietMeals ?? null)
+      : (estado.pendingDietMeals ?? estado.resolvedDietMeals ?? null),
+    mealsSaved: scope.closedPlanId
+      ? true
+      : !estado.pendingDietMeals && Boolean(estado.resolvedDietMeals),
   });
 }
 

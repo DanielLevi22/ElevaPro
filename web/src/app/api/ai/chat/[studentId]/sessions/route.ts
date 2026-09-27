@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { withAiRoute } from "@/lib/ai-route";
-import { authorizeLinkedSpecialist } from "@/lib/api-auth";
+import { type AuthResult, authorizeLinkedSpecialist } from "@/lib/api-auth";
 import {
   archiveSession,
   createSession,
@@ -8,6 +8,34 @@ import {
   sessionOwnedBy,
   updateSessionTitle,
 } from "@/modules/ai/services/chatService";
+import {
+  NutritionChatError,
+  requireNutritionConsent,
+} from "@/modules/ai/services/nutritionDraftChat";
+
+// Títulos livres também podem revelar saúde: o portão vale antes da listagem.
+async function authorizeHistory(request: NextRequest, studentId: string): Promise<AuthResult> {
+  const auth = await authorizeLinkedSpecialist(request, studentId);
+  if (!auth.ok) return auth;
+  try {
+    await requireNutritionConsent(studentId);
+    return auth;
+  } catch (failure) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        {
+          code: failure instanceof NutritionChatError ? failure.code : undefined,
+          error:
+            failure instanceof NutritionChatError
+              ? failure.message
+              : "Não foi possível conferir a autorização.",
+        },
+        { status: failure instanceof NutritionChatError ? failure.status : 503 },
+      ),
+    };
+  }
+}
 
 /**
  * As conversas do especialista com o coach sobre este aluno.
@@ -30,11 +58,12 @@ async function handleGet(
 ) {
   const { studentId } = await params;
 
-  const auth = await authorizeLinkedSpecialist(request, studentId);
+  const auth = await authorizeHistory(request, studentId);
   if (!auth.ok) return auth.response;
 
-  const pedido = request.nextUrl.searchParams.get("module");
-  const module = pedido === "all" || pedido === "nutrition" ? pedido : "workout";
+  const requestedModule = request.nextUrl.searchParams.get("module");
+  const module =
+    requestedModule === "all" || requestedModule === "nutrition" ? requestedModule : "workout";
 
   const sessions = await listSessions(studentId, auth.caller.id, module);
   return NextResponse.json({ sessions });
@@ -47,7 +76,7 @@ async function handlePost(
 ) {
   const { studentId } = await params;
 
-  const auth = await authorizeLinkedSpecialist(request, studentId);
+  const auth = await authorizeHistory(request, studentId);
   if (!auth.ok) return auth.response;
 
   const body = await request.json().catch(() => ({}));
@@ -70,7 +99,7 @@ async function handlePatch(
 ) {
   const { studentId } = await params;
 
-  const auth = await authorizeLinkedSpecialist(request, studentId);
+  const auth = await authorizeHistory(request, studentId);
   if (!auth.ok) return auth.response;
 
   const body = await request.json().catch(() => null);

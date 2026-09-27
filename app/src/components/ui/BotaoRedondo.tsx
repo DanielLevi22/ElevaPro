@@ -5,6 +5,7 @@ import ChevronDown from 'lucide-react-native/icons/chevron-down';
 import ChevronLeft from 'lucide-react-native/icons/chevron-left';
 import Clock from 'lucide-react-native/icons/clock';
 import Download from 'lucide-react-native/icons/download';
+import Ellipsis from 'lucide-react-native/icons/ellipsis';
 import Heart from 'lucide-react-native/icons/heart';
 import Info from 'lucide-react-native/icons/info';
 import Mic from 'lucide-react-native/icons/mic';
@@ -16,6 +17,7 @@ import RefreshCw from 'lucide-react-native/icons/refresh-cw';
 import Ruler from 'lucide-react-native/icons/ruler';
 import Search from 'lucide-react-native/icons/search';
 import Share from 'lucide-react-native/icons/share';
+import Sparkles from 'lucide-react-native/icons/sparkles';
 // No lucide 1.46 o `trash-2` do kit é apelido do arquivo `trash`.
 import Trash2 from 'lucide-react-native/icons/trash';
 import Volume2 from 'lucide-react-native/icons/volume-2';
@@ -69,6 +71,9 @@ const ICONS = {
   info: Info,
   /** Editar a periodização, no cabeçalho da ficha (#335). */
   pencil: Pencil,
+  /** O assistente de IA na montagem das refeições, e as opções do plano (#337). */
+  sparkles: Sparkles,
+  ellipsis: Ellipsis,
 } as const satisfies Record<string, LucideIcon>;
 
 export type RoundIcon = keyof typeof ICONS;
@@ -79,6 +84,7 @@ interface BotaoRedondoProps {
   /** Obrigatório: sem texto, o leitor de tela só anunciaria "botão". */
   rotulo: string;
   onPress: () => void;
+  disabled?: boolean;
 }
 
 const LADO = 38;
@@ -87,7 +93,13 @@ const TRACO = 1.5;
 /** O kit dimensiona o ícone pelo botão: 47% do lado. */
 const FRACAO_DO_ICONE = 0.47;
 
-export function BotaoRedondo({ icone, rotulo, onPress, preenchido = false }: BotaoRedondoProps) {
+export function BotaoRedondo({
+  icone,
+  rotulo,
+  onPress,
+  preenchido = false,
+  disabled = false,
+}: BotaoRedondoProps) {
   const Icone = ICONS[icone];
   const cores = useCores();
   const escalar = useEscala();
@@ -95,6 +107,8 @@ export function BotaoRedondo({ icone, rotulo, onPress, preenchido = false }: Bot
   return (
     <TouchableOpacity
       onPress={onPress}
+      disabled={disabled}
+      accessibilityState={{ disabled }}
       activeOpacity={0.8}
       accessibilityRole="button"
       accessibilityLabel={rotulo}

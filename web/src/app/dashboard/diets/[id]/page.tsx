@@ -132,7 +132,8 @@ export default function DietDetailsPage() {
   const isCyclic = dietPlan.plan_type === "cyclic";
   const currentDayName = DAYS_OF_WEEK.find((d) => d.id === selectedDay)?.label || "";
   const dayMeals = meals.filter((m) => m.day_of_week === selectedDay);
-  const nutritionStep = dayMeals.length === 0 ? 2 : 3;
+  // O envio só fica pendente enquanto o plano é rascunho (#337).
+  const nutritionStep = dietPlan.status !== "draft" ? 4 : dayMeals.length === 0 ? 2 : 3;
 
   return (
     <div className="space-y-8">

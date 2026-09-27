@@ -23,12 +23,13 @@ interface BotaoFixoNoRodapeProps {
   rotulo: string;
   icone?: keyof typeof Ionicons.glyphMap;
   onPress: () => void;
+  disabled?: boolean;
 }
 
 /** A tab bar do kit (52), o respiro acima dela (14) e o que o "+" sobressai (22). */
 const ACIMA_DA_TAB_BAR = 88;
 
-export function BotaoFixoNoRodape({ rotulo, icone, onPress }: BotaoFixoNoRodapeProps) {
+export function BotaoFixoNoRodape({ rotulo, icone, onPress, disabled }: BotaoFixoNoRodapeProps) {
   const escalar = useEscala();
   const insets = useSafeAreaInsets();
 
@@ -37,7 +38,7 @@ export function BotaoFixoNoRodape({ rotulo, icone, onPress }: BotaoFixoNoRodapeP
       className="absolute left-[1.125rem] right-[1.125rem]"
       style={{ bottom: insets.bottom + escalar(ACIMA_DA_TAB_BAR) }}
     >
-      <BotaoDeDestaque rotulo={rotulo} icone={icone} onPress={onPress} />
+      <BotaoDeDestaque rotulo={rotulo} icone={icone} onPress={onPress} disabled={disabled} />
     </View>
   );
 }

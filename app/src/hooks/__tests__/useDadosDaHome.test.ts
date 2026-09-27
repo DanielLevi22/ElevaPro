@@ -28,6 +28,8 @@ const mockFetchBriefing = jest.fn().mockResolvedValue({
 });
 const mockFetchAdherence = jest.fn().mockResolvedValue(null);
 const mockFetchActiveTrainingSignal = jest.fn().mockResolvedValue(null);
+const mockFetchActiveDietSignal = jest.fn().mockResolvedValue(null);
+const mockShowPushBanner = jest.fn();
 
 jest.mock('@elevapro/supabase', () => ({ supabase: {} }));
 
@@ -49,6 +51,13 @@ jest.mock('@elevapro/shared', () => ({
   createWorkoutsService: () => ({
     fetchActiveTrainingSignal: (id: string) => mockFetchActiveTrainingSignal(id),
   }),
+  createNutritionService: () => ({
+    fetchActiveDietSignal: (id: string) => mockFetchActiveDietSignal(id),
+  }),
+}));
+
+jest.mock('@/components/ui/pushBanner', () => ({
+  showPushBanner: (request: unknown) => mockShowPushBanner(request),
 }));
 
 // O foco dispara na montagem; no teste, montar é focar.
@@ -223,5 +232,32 @@ describe('sugerirTreino', () => {
 
   it('não sugere nada quando não há treino', () => {
     expect(sugerirTreino([])).toBeNull();
+  });
+
+  // A dieta enviada vira balão na próxima abertura do app, como o treino (#337).
+  it('avisa a dieta nova uma vez só, e não de novo na volta seguinte', async () => {
+    mockPapel.atual = 'student';
+    mockFetchActiveDietSignal.mockResolvedValue({
+      id: 'dieta-1',
+      name: 'Cutting',
+      updatedAt: '2026-10-01T10:00:00Z',
+    });
+    mockShowPushBanner.mockClear();
+
+    const primeira = renderHook(() => useDadosDaHome());
+    await waitFor(() => expect(mockFetchActiveDietSignal).toHaveBeenCalledWith('u1'));
+    await waitFor(() =>
+      expect(mockShowPushBanner).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Nova dieta disponível', body: 'Cutting' })
+      )
+    );
+    primeira.unmount();
+
+    renderHook(() => useDadosDaHome());
+    await waitFor(() => expect(mockFetchActiveDietSignal).toHaveBeenCalledTimes(2));
+    const avisosDeDieta = mockShowPushBanner.mock.calls.filter(
+      ([request]) => (request as { title: string }).title === 'Nova dieta disponível'
+    );
+    expect(avisosDeDieta).toHaveLength(1);
   });
 });

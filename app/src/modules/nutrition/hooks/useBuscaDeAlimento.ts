@@ -1,16 +1,9 @@
-import { createNutritionService, type Food } from '@elevapro/shared';
-import { supabase } from '@elevapro/supabase';
-import { useEffect, useState } from 'react';
+import type { Food } from '@elevapro/shared';
+import { useState } from 'react';
 import { numeroDoBanco } from '../services/consumoDoDia';
 import { densidadeDeProteina } from '../services/equivalenciaDaTroca';
+import { useFoodCatalogSearch } from './useFoodCatalogSearch';
 import { type RegistroNoDiario, useRegistroNoDiario } from './useRegistroNoDiario';
-
-const nutricao = createNutritionService(supabase);
-
-/** Espera o aluno parar de digitar antes de ir ao banco. */
-const ESPERA_DA_DIGITACAO = 300;
-const RESULTADOS = 20;
-const MINIMO_PARA_BUSCAR = 2;
 
 export interface BuscaDeAlimento {
   consulta: string;
@@ -41,7 +34,7 @@ export function useBuscaDeAlimento(
   const [consulta, setConsulta] = useState('');
   const [categoria, setCategoria] = useState<string | null>('proteina');
   const [maisProteina, setMaisProteina] = useState(false);
-  const { resultados, buscando } = useResultados(consulta, categoria);
+  const { results: resultados, searching: buscando } = useFoodCatalogSearch(consulta, categoria);
   const { meta, consumo } = registro.plano;
 
   return {
@@ -57,38 +50,6 @@ export function useBuscaDeAlimento(
     adicionar: (food) => registro.pedir(pedidoDoAlimento(food)),
     registro,
   };
-}
-
-/** Texto digitado manda; sem texto, a categoria escolhida. */
-function useResultados(consulta: string, categoria: string | null) {
-  const [resultados, setResultados] = useState<Food[]>([]);
-  const [buscando, setBuscando] = useState(false);
-
-  useEffect(() => {
-    let ativo = true;
-    setBuscando(true);
-    const espera = setTimeout(() => {
-      buscar(consulta.trim(), categoria)
-        .then((lista) => ativo && setResultados(lista))
-        .catch(() => ativo && setResultados([]))
-        .finally(() => ativo && setBuscando(false));
-    }, ESPERA_DA_DIGITACAO);
-    return () => {
-      ativo = false;
-      clearTimeout(espera);
-    };
-  }, [consulta, categoria]);
-
-  return { resultados, buscando };
-}
-
-async function buscar(consulta: string, categoria: string | null): Promise<Food[]> {
-  if (consulta.length >= MINIMO_PARA_BUSCAR) {
-    const achados = await nutricao.searchFoods(consulta, 0, RESULTADOS);
-    return categoria ? achados.filter((food) => food.category === categoria) : achados;
-  }
-  if (categoria) return nutricao.fetchFoodsByCategory(categoria, RESULTADOS);
-  return nutricao.fetchFoods(RESULTADOS);
 }
 
 function porProteina(a: Food, b: Food): number {

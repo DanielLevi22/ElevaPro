@@ -6,13 +6,12 @@ import {
   createNutritionService,
   type DietMeal,
   type DietMealItem,
-  type DietPlan,
+  type DietStrategyType,
   type Food,
   type MealLog,
 } from "@elevapro/shared";
 import { defineAbilitiesFor, supabase } from "@elevapro/supabase";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { StrategyResult } from "../utils/dietStrategies";
 import { useAuthUser } from "./useAuthUser";
 
 /**
@@ -144,58 +143,68 @@ export function useCreateDietPlan() {
   });
 }
 
+/**
+ * Cria o plano pela estratégia escolhida. O tipo de plano e as refeições-molde
+ * saem do serviço compartilhado, o mesmo que o mobile usa (#337).
+ *
+ * @example
+ * const create = useCreateDietPlanWithStrategy();
+ * await create.mutateAsync({ plan: { student_id, name, target_calories }, strategy: "standard" });
+ */
 export function useCreateDietPlanWithStrategy() {
   const queryClient = useQueryClient();
   const { data: currentUser } = useAuthUser();
   return useMutation({
     mutationFn: async ({
       plan,
-      strategyData,
+      strategy,
     }: {
-      plan: Omit<CreateDietPlanInput, "specialist_id">;
-      strategyData: StrategyResult;
+      plan: Omit<CreateDietPlanInput, "specialist_id" | "plan_type">;
+      strategy: DietStrategyType;
     }) => {
       if (!currentUser) throw new Error("Usuário não autenticado");
       const specialistId = currentUser.accountType === "specialist" ? currentUser.id : null;
-      const newPlan = await nutritionService.createDietPlan({
-        ...plan,
-        specialist_id: specialistId,
-      });
-
-      const { weeklySchedule } = strategyData;
-      const daysToSave = plan.plan_type === "unique" ? [weeklySchedule[0]] : weeklySchedule;
-
-      for (const day of daysToSave) {
-        for (const [index, mealTemplate] of day.meals.entries()) {
-          await nutritionService.createDietMeal({
-            diet_plan_id: newPlan.id,
-            name: mealTemplate.name,
-            day_of_week: day.dayOfWeek,
-            meal_type: mealTemplate.type,
-            meal_order: index,
-            target_calories: 0,
-            meal_time: mealTemplate.time,
-          });
-        }
-      }
-      return newPlan;
+      return nutritionService.createDietPlanFromStrategy(
+        { ...plan, specialist_id: specialistId },
+        strategy,
+      );
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["diet_plans"] }),
   });
 }
 
-export function useUpdateDietPlanStatus() {
+/**
+ * Envia o rascunho: ele passa a valer e o plano ativo do aluno é finalizado,
+ * numa transação no banco (#337).
+ *
+ * @example
+ * const activate = useActivateDietPlan();
+ * await activate.mutateAsync(plan.id);
+ */
+export function useActivateDietPlan() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      planId,
-      status,
-      isActive: _isActive, // is_active removed from canonical schema — ignored
-    }: {
-      planId: string;
-      status: DietPlan["status"];
-      isActive: boolean;
-    }) => nutritionService.updateDietPlan(planId, { status }),
+    mutationFn: (planId: string) => nutritionService.activateDietPlan(planId),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["diet_plans"] });
+      queryClient.invalidateQueries({ queryKey: ["diet_plan", data.id] });
+    },
+  });
+}
+
+/**
+ * Finaliza o plano ativo. Não existe o caminho de volta por status: reativar é
+ * copiar o plano para um rascunho e enviar, para que dois planos nunca valham
+ * ao mesmo tempo.
+ *
+ * @example
+ * const finish = useFinishDietPlan();
+ * await finish.mutateAsync(plan.id);
+ */
+export function useFinishDietPlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (planId: string) => nutritionService.finishDietPlan(planId),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["diet_plans"] });
       queryClient.invalidateQueries({ queryKey: ["diet_plan", data.id] });
@@ -211,17 +220,6 @@ export function useDeleteDietPlan() {
       queryClient.invalidateQueries({ queryKey: ["diet_plans"] });
       queryClient.removeQueries({ queryKey: ["diet_plan", planId] });
       queryClient.removeQueries({ queryKey: ["diet_meals", planId] });
-    },
-  });
-}
-
-export function useFinishDietPlan() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (planId: string) => nutritionService.finishDietPlan(planId),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["diet_plans"] });
-      queryClient.invalidateQueries({ queryKey: ["diet_plan", data.id] });
     },
   });
 }
@@ -335,15 +333,17 @@ export function useImportDiet() {
     mutationFn: async ({
       sourceDietPlanId,
       targetStudentId,
+      name,
     }: {
       sourceDietPlanId: string;
       targetStudentId: string;
+      name: string;
     }) => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
-      return nutritionService.cloneDietPlan(sourceDietPlanId, targetStudentId, user.id);
+      return nutritionService.cloneDietPlan(sourceDietPlanId, targetStudentId, user.id, name);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["diet_plans"] }),
   });

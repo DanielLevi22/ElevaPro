@@ -63,7 +63,27 @@ vi.mock("@/lib/supabase-admin", () => {
   builder.then = (resolve: (value: unknown) => unknown) => resolve({ data: [], error: null });
   return {
     supabaseAdmin: {
-      from: () => builder,
+      from: (table: string) => {
+        if (table !== "student_consents" && table !== "ai_chat_sessions") return builder;
+        let requested = "sessao-recente";
+        const query = {
+          select: () => query,
+          eq: (column: string, value: string) => {
+            if (column === "id") requested = value;
+            return query;
+          },
+          order: () => query,
+          limit: () => query,
+          maybeSingle: async () => ({
+            data:
+              table === "student_consents"
+                ? { given_at: "2026-09-01", revoked_at: null }
+                : { id: requested, state: estadoDaConversa[requested] },
+            error: null,
+          }),
+        };
+        return query;
+      },
       // O que o banco faz: tira a chave do `state` e devolve o que estava lá.
       // A segunda chamada não acha mais nada — é essa a trava.
       rpc: async (nome: string, args: Record<string, unknown>) => {

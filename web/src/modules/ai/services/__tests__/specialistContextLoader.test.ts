@@ -276,3 +276,48 @@ describe("as duas formas gravadas em responses", () => {
     expect(readAnamnesis(EMBRULHADA).injuries).toBe(LESAO);
   });
 });
+
+describe("preferências da dieta no contexto (#337)", () => {
+  const PREFERENCIAS = {
+    data: {
+      dietary_restrictions: ["lactose_free", "vegetarian"],
+      meals_per_day: 5,
+      allows_supplements: false,
+      free_meal_days: [0],
+    },
+    error: null,
+  };
+
+  it("leva restrições, refeições por dia, suplementos e refeição livre para o prompt", async () => {
+    tables.diet_plans = PREFERENCIAS;
+
+    const texto = formatContextForPrompt(await loadStudentContext("aluno-1", "espec-1"));
+
+    expect(texto).toContain("Restrições da dieta: Sem lactose, Vegetariana");
+    expect(texto).toContain("Refeições por dia: 5");
+    expect(texto).toContain("Suplementos: não usar");
+    expect(texto).toContain("Refeição livre: domingo");
+  });
+
+  // Preferência é dado do plano (Art. 11): sem consentimento, nem sai do banco.
+  it("sem consentimento, não consulta o plano", async () => {
+    tables.student_consents = { data: null, error: null };
+    tables.diet_plans = PREFERENCIAS;
+
+    const texto = formatContextForPrompt(await loadStudentContext("aluno-1", "espec-1"));
+
+    expect(selected.diet_plans).toBeUndefined();
+    expect(texto).not.toContain("Sem lactose");
+  });
+
+  // O especialista não vê, pelo coach, o plano que outro especialista montou.
+  it("lê só o plano deste especialista, sem pedir o plano inteiro", async () => {
+    tables.diet_plans = PREFERENCIAS;
+
+    await loadStudentContext("aluno-1", "espec-1");
+
+    expect(selected.diet_plans).toBe(
+      "dietary_restrictions, meals_per_day, allows_supplements, free_meal_days",
+    );
+  });
+});

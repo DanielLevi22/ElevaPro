@@ -1,286 +1,158 @@
-import type { DietPlan } from '@elevapro/shared';
-import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Link, useFocusEffect, useRouter } from 'expo-router';
-import { useCallback } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import Animated, { FadeInDown, Layout } from 'react-native-reanimated';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
-import { ScreenLayout } from '@/components/ui/ScreenLayout';
-import { colors as brandColors } from '@/constants/colors';
-import { useNutritionStore } from '../store/nutritionStore';
+import { BotaoFixoNoRodape } from '@/components/ui/BotaoFixoNoRodape';
+import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
+import { Chip } from '@/components/ui/Chip';
+import { GlassSearchField } from '@/components/ui/GlassSearchField';
+import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
+import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
+import { ROUTES } from '@/navigation/types';
+import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
+import { DietListFeedback } from '../components/diet/DietListFeedback';
+import { DietPlanListCard } from '../components/diet/DietPlanListCard';
+import { ToggleChip } from '../components/diet/ToggleChip';
+import { type DietListStatus, useDietPlanList } from '../hooks/useDietPlanList';
 
+const FILTERS: readonly { value: DietListStatus; label: string }[] = [
+  { value: 'all', label: 'Todas' },
+  { value: 'active', label: 'Ativas' },
+  { value: 'draft', label: 'Rascunhos' },
+  { value: 'finished', label: 'Finalizadas' },
+];
+
+/** Aba do especialista no mesmo kit de vidro do wizard (#337). */
 export default function NutritionScreen() {
   const router = useRouter();
-  const { user } = useAuthStore();
-  const { dietPlans, isLoading, fetchDietPlans } = useNutritionStore();
-  useFocusEffect(
-    useCallback(() => {
-      if (user?.id) {
-        fetchDietPlans(user.id);
-      }
-    }, [user?.id, fetchDietPlans])
-  );
-
-  const handlePressPlan = (studentId: string, planId: string) => {
-    Haptics.selectionAsync();
-    router.push(`/(tabs)/students/${studentId}/nutrition/${planId}`);
-  };
-
-  const handleCreatePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  };
-
-  const renderItem = ({
-    item,
-    index,
-  }: {
-    item: DietPlan & { student?: { full_name: string | null } };
-    index: number;
-  }) => (
-    <Animated.View entering={FadeInDown.delay(index * 100).springify()} layout={Layout.springify()}>
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={() => handlePressPlan(item.student_id, item.id)}
-        className="mb-4"
-      >
-        <View
-          className="rounded-3xl p-6 border shadow-sm"
-          style={{
-            backgroundColor: brandColors.background.secondary,
-            borderColor: brandColors.border.dark,
-          }}
-        >
-          <View className="flex-row justify-between items-start mb-6">
-            <View className="flex-1 mr-4">
-              <Text className="text-white text-xl font-black font-display mb-1 leading-tight">
-                {item.name}
-              </Text>
-              <Text className="text-zinc-500 text-sm font-sans line-clamp-2">
-                {item.notes || 'Sem descrição'}
-              </Text>
-              {item.student?.full_name && (
-                <View className="flex-row items-center mt-3">
-                  <View className="bg-white/5 p-1 rounded-full mr-2">
-                    <Ionicons name="person" size={12} color={brandColors.text.muted} />
-                  </View>
-                  <Text className="text-zinc-500 text-[10px] font-black uppercase tracking-widest">
-                    {item.student.full_name}
-                  </Text>
-                </View>
-              )}
-            </View>
-            <View
-              className="px-3 py-1.5 rounded-full border"
-              style={{
-                backgroundColor:
-                  item.status === 'active'
-                    ? `${brandColors.status.success}15`
-                    : brandColors.background.primary,
-                borderColor:
-                  item.status === 'active'
-                    ? `${brandColors.status.success}30`
-                    : brandColors.border.dark,
-              }}
-            >
-              <Text
-                className="text-[10px] font-black uppercase tracking-widest"
-                style={{
-                  color:
-                    item.status === 'active' ? brandColors.status.success : brandColors.text.muted,
-                }}
-              >
-                {item.status === 'active' ? 'Ativo' : 'Inativo'}
-              </Text>
-            </View>
-          </View>
-
-          {/* Macros Summary - Premium Style */}
-          <View className="flex-row gap-3 mb-6">
-            <View
-              className="flex-1 p-3 rounded-2xl items-center border"
-              style={{
-                backgroundColor: brandColors.background.primary,
-                borderColor: brandColors.border.dark,
-              }}
-            >
-              <Text className="text-emerald-500 text-[9px] font-black uppercase tracking-widest mb-1">
-                PROT
-              </Text>
-              <Text className="text-white font-bold text-sm tracking-tight">
-                {item.target_protein}g
-              </Text>
-            </View>
-            <View
-              className="flex-1 p-3 rounded-2xl items-center border"
-              style={{
-                backgroundColor: brandColors.background.primary,
-                borderColor: brandColors.border.dark,
-              }}
-            >
-              <Text className="text-blue-500 text-[9px] font-black uppercase tracking-widest mb-1">
-                CARB
-              </Text>
-              <Text className="text-white font-bold text-sm tracking-tight">
-                {item.target_carbs}g
-              </Text>
-            </View>
-            <View
-              className="flex-1 p-3 rounded-2xl items-center border"
-              style={{
-                backgroundColor: brandColors.background.primary,
-                borderColor: brandColors.border.dark,
-              }}
-            >
-              <Text className="text-orange-500 text-[9px] font-black uppercase tracking-widest mb-1">
-                GORD
-              </Text>
-              <Text className="text-white font-bold text-sm tracking-tight">
-                {item.target_fat}g
-              </Text>
-            </View>
-          </View>
-
-          <View
-            className="flex-row justify-between items-center pt-5 border-t"
-            style={{ borderTopColor: brandColors.border.dark }}
-          >
-            <View
-              className="flex-row items-center px-3 py-1.5 rounded-xl border"
-              style={{
-                backgroundColor: `${brandColors.primary.start}08`,
-                borderColor: `${brandColors.primary.start}20`,
-              }}
-            >
-              <Ionicons
-                name="flame"
-                size={14}
-                color={brandColors.primary.start}
-                style={{ marginRight: 6 }}
-              />
-              <Text
-                className="font-black text-sm font-display tracking-tight"
-                style={{ color: brandColors.primary.start }}
-              >
-                {item.target_calories}{' '}
-                <Text className="text-[10px] font-bold uppercase tracking-widest">kcal</Text>
-              </Text>
-            </View>
-            <View className="flex-row items-center">
-              <Text className="text-zinc-600 text-[10px] mr-2 font-black uppercase tracking-widest">
-                {item.start_date ? new Date(item.start_date).toLocaleDateString() : '—'}
-              </Text>
-              <Ionicons name="chevron-forward" size={14} color={brandColors.text.disabled} />
-            </View>
-          </View>
-        </View>
-      </TouchableOpacity>
-    </Animated.View>
-  );
+  const userId = useAuthStore((s) => s.user?.id);
+  const canRead = useAuthStore((s) => !!s.abilities?.can('read', 'Diet'));
+  const canCreate = useAuthStore((s) => !!s.abilities?.can('create', 'Diet'));
+  const list = useDietPlanList(userId, canRead);
+  const [limit, setLimit] = useState(20);
+  const createPlan = () => router.push(ROUTES.NUTRITION.WIZARD_START);
+  const count = list.plans?.length;
 
   return (
-    <ScreenLayout>
-      {/* Large Title Header */}
-      <View className="flex-row justify-between items-end px-6 pt-8 pb-6">
-        <View>
-          <Text className="text-4xl font-extrabold text-white font-display tracking-tight">
+    <TelaDeVidroComFoto
+      image={fotoDoGrupo('legs')}
+      bottomSpace={canCreate ? 'fixedButton' : 'tab'}
+      refresh={
+        canRead
+          ? {
+              refreshing: list.isFetching && list.plans !== undefined,
+              onRefresh: () => void list.refetch(),
+            }
+          : undefined
+      }
+      overlay={
+        canCreate ? (
+          <BotaoFixoNoRodape rotulo="Nova dieta" icone="add" onPress={createPlan} />
+        ) : undefined
+      }
+    >
+      <View className="flex-row items-center gap-3">
+        <View className="min-w-0 flex-1">
+          <Text className="text-micro font-bold uppercase tracking-wide text-hero-secondary">
+            {count === undefined
+              ? 'Planos alimentares'
+              : `${count} ${count === 1 ? 'plano alimentar' : 'planos alimentares'}`}
+          </Text>
+          <Text className="mt-0.5 text-[1.375rem] font-bold tracking-tight text-hero">
             Nutrição
           </Text>
-          <Text className="text-base text-zinc-400 font-sans font-medium mt-1">
-            Gestão de planos alimentares
-          </Text>
         </View>
-
-        <Link href={'/nutrition/create' as never} asChild>
-          <TouchableOpacity activeOpacity={0.8} onPress={handleCreatePress}>
-            <LinearGradient
-              colors={brandColors.gradients.primary}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              className="h-12 w-12 rounded-full items-center justify-center shadow-xl"
-              style={{
-                shadowColor: brandColors.primary.start,
-                shadowOpacity: 0.3,
-                shadowRadius: 10,
-              }}
-            >
-              <Ionicons name="add" size={28} color="#FFFFFF" />
-            </LinearGradient>
-          </TouchableOpacity>
-        </Link>
+        {canCreate && (
+          <BotaoRedondo icone="plus" rotulo="Criar plano alimentar" onPress={createPlan} />
+        )}
       </View>
-
-      {/* Content */}
-      <FlatList
-        data={dietPlans}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
-        refreshControl={
-          <RefreshControl
-            refreshing={isLoading}
-            onRefresh={() => user?.id && fetchDietPlans(user.id)}
-            tintColor={brandColors.primary.start}
+      {!canRead ? (
+        <Text accessibilityRole="alert" className="py-6 text-sm text-muted-foreground">
+          Sua conta não tem permissão para acessar dietas.
+        </Text>
+      ) : (
+        <>
+          <GlassSearchField
+            value={list.search}
+            onChangeText={(value) => {
+              list.setSearch(value);
+              setLimit(20);
+            }}
+            placeholder="Buscar aluno ou plano…"
+            className="mt-4"
           />
-        }
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          !isLoading ? (
-            <Animated.View
-              entering={FadeInDown.delay(200).springify()}
-              className="flex-1 justify-center items-center py-20"
-            >
-              <View
-                className="p-8 rounded-full mb-6 border"
-                style={{
-                  backgroundColor: brandColors.background.secondary,
-                  borderColor: brandColors.border.dark,
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="mt-3"
+            contentContainerClassName="gap-2"
+            keyboardShouldPersistTaps="handled"
+          >
+            {FILTERS.map((filter) => (
+              <TouchableOpacity
+                key={filter.value}
+                accessibilityRole="radio"
+                accessibilityLabel={filter.label}
+                accessibilityState={{ selected: list.status === filter.value }}
+                onPress={() => {
+                  list.setStatus(filter.value);
+                  setLimit(20);
                 }}
               >
-                <Ionicons name="restaurant-outline" size={64} color={brandColors.text.disabled} />
-              </View>
-              <Text className="text-white text-xl font-bold mb-2 text-center font-display">
-                Nenhum plano encontrado
+                <Chip tom={list.status === filter.value ? 'destaque' : 'neutro'}>
+                  {filter.label}
+                </Chip>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          <TituloDeSecao estilo="rotulo">Planos alimentares</TituloDeSecao>
+          <DietListFeedback
+            loaded={list.plans !== undefined}
+            error={!!list.error}
+            paused={list.fetchStatus === 'paused'}
+            onRetry={() => void list.refetch()}
+            noun="planos"
+          />
+          {list.plans !== undefined && list.visible.length === 0 && (
+            <View className="gap-3 py-6">
+              <Text className="text-sm text-muted-foreground">
+                {list.plans.length === 0
+                  ? 'Nenhuma dieta criada ainda. Comece em Nova dieta.'
+                  : 'Nenhum plano encontrado com esta busca ou filtro.'}
               </Text>
-              <Text className="text-zinc-400 text-center px-8 text-sm mb-8 font-sans leading-relaxed">
-                Crie planos alimentares personalizados para seus alunos e acompanhe o progresso.
-              </Text>
-
-              <Link href={'/nutrition/create' as never} asChild>
-                <TouchableOpacity activeOpacity={0.8} onPress={handleCreatePress}>
-                  <LinearGradient
-                    colors={brandColors.gradients.primary}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    className="rounded-2xl py-4 px-10 shadow-xl"
-                    style={{
-                      shadowColor: brandColors.primary.start,
-                      shadowOpacity: 0.3,
-                      shadowRadius: 10,
-                    }}
-                  >
-                    <Text className="text-white text-base font-black font-display uppercase tracking-widest">
-                      Criar Primeiro Plano
-                    </Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </Link>
-            </Animated.View>
-          ) : (
-            <View className="py-20">
-              <ActivityIndicator size="large" color={brandColors.primary.start} />
+              {(list.search !== '' || list.status !== 'all') && (
+                <ToggleChip
+                  active={false}
+                  onPress={() => {
+                    list.setSearch('');
+                    list.setStatus('all');
+                  }}
+                >
+                  Limpar filtros
+                </ToggleChip>
+              )}
             </View>
-          )
-        }
-      />
-    </ScreenLayout>
+          )}
+          {list.visible.slice(0, limit).map((plan) => (
+            <DietPlanListCard
+              key={plan.id}
+              plan={plan}
+              onPress={() =>
+                router.push(
+                  plan.status === 'draft'
+                    ? { pathname: ROUTES.NUTRITION.WIZARD_PLAN, params: { planId: plan.id } }
+                    : ROUTES.NUTRITION.PLAN(plan.id)
+                )
+              }
+            />
+          ))}
+          {list.visible.length > limit && (
+            <ToggleChip active={false} onPress={() => setLimit((current) => current + 20)}>
+              Mostrar mais planos
+            </ToggleChip>
+          )}
+        </>
+      )}
+    </TelaDeVidroComFoto>
   );
 }

@@ -1,5 +1,4 @@
 import {
-  type CreateDietMealInput,
   createNutritionService,
   type DietMeal,
   type DietMealItem,
@@ -13,7 +12,7 @@ import { useAuthStore } from '@/auth';
 import { useGamificationStore } from '@/modules/gamification/store/gamificationStore';
 import { cancelPlanNotifications, scheduleMealNotifications } from '@/services/notificationService';
 import { lembretesDaDieta } from '../services/lembretesDaDieta';
-import type { StrategyResult } from '../utils/dietStrategies';
+import { useDietWizardStore } from './dietWizardStore';
 
 export type { Food };
 
@@ -30,37 +29,16 @@ interface NutritionStore {
   // Diet Plans
   currentDietPlan: DietPlan | null;
   dietPlans: (DietPlan & { student?: { id: string; full_name: string | null } })[];
-  dietPlanHistory: DietPlan[];
   fetchDietPlans: (specialistId: string) => Promise<void>;
   fetchDietPlan: (studentId: string) => Promise<void>;
-  fetchDietPlanHistory: (studentId: string) => Promise<void>;
-  createDietPlan: (
-    plan: Omit<DietPlan, 'id' | 'version' | 'status' | 'created_at'>,
-    sourcePlanId?: string
-  ) => Promise<void>;
-  finishDietPlan: (planId: string) => Promise<void>;
-  updateDietPlan: (id: string, updates: Partial<DietPlan>) => Promise<void>;
-  createDietPlanWithStrategy: (
-    planData: Omit<DietPlan, 'id' | 'version' | 'status' | 'created_at'>,
-    strategyData: StrategyResult
-  ) => Promise<void>;
 
   // Meals
   meals: DietMeal[];
   fetchMeals: (dietPlanId: string) => Promise<void>;
-  addMeal: (meal: CreateDietMealInput) => Promise<DietMeal>;
-  updateMeal: (id: string, updates: Partial<DietMeal>) => Promise<void>;
 
   // Meal Items
   mealItems: Record<string, DietMealItem[]>;
   fetchMealItems: (mealId: string) => Promise<void>;
-  addFoodToMeal: (mealId: string, foodId: string, quantity: number, unit: string) => Promise<void>;
-  addFoodsToMeal: (
-    mealId: string,
-    items: Array<{ foodId: string; quantity: number; unit: string }>
-  ) => Promise<void>;
-  updateMealItem: (itemId: string, updates: Partial<DietMealItem>) => Promise<void>;
-  removeFoodFromMeal: (itemId: string) => Promise<void>;
   substituteFood: (
     mealId: string,
     date: string,
@@ -69,16 +47,6 @@ interface NutritionStore {
     quantity: number,
     unit: string
   ) => Promise<void>;
-
-  // Day Operations
-  copiedDay: { meals: DietMeal[]; items: Record<string, DietMealItem[]> } | null;
-  copyDay: (
-    dayOfWeek: number,
-    meals: DietMeal[],
-    mealItems: Record<string, DietMealItem[]>
-  ) => Promise<void>;
-  pasteDay: (targetDay: number, dietPlanId?: string) => Promise<void>;
-  clearDay: (dayOfWeek: number, dietPlanId?: string) => Promise<void>;
 
   // Daily Logs
   dailyLogs: Record<string, MealLog>;
@@ -96,11 +64,9 @@ export const useNutritionStore = create<NutritionStore>((set, get) => ({
   foods: [],
   currentDietPlan: null,
   dietPlans: [],
-  dietPlanHistory: [],
   meals: [],
   mealItems: {},
   isLoading: false,
-  copiedDay: null,
   dailyLogs: {},
 
   fetchDailyLogs: async (studentId, date) => {
@@ -162,54 +128,6 @@ export const useNutritionStore = create<NutritionStore>((set, get) => ({
     }
   },
 
-  copyDay: async (dayOfWeek, meals, mealItems) => {
-    const dayMeals = meals.filter((m) => m.day_of_week === dayOfWeek);
-    const dayItems: Record<string, DietMealItem[]> = {};
-    for (const meal of dayMeals) {
-      if (mealItems[meal.id]) dayItems[meal.id] = mealItems[meal.id];
-    }
-    set({ copiedDay: { meals: dayMeals, items: dayItems } });
-  },
-
-  pasteDay: async (targetDay, dietPlanId) => {
-    const { copiedDay, currentDietPlan } = get();
-    if (!copiedDay) throw new Error('Nenhum dia copiado para colar.');
-
-    const targetPlanId = dietPlanId ?? currentDietPlan?.id;
-    if (!targetPlanId) throw new Error('Plano de dieta não identificado.');
-
-    set({ isLoading: true });
-    try {
-      const sourceMeals = copiedDay.meals.map((meal) => ({
-        ...meal,
-        diet_meal_items: copiedDay.items[meal.id] ?? [],
-      }));
-      await nutritionService.pasteDietDay(targetPlanId, targetDay, sourceMeals);
-      await get().fetchMeals(targetPlanId);
-    } catch (error) {
-      console.error('Error pasting day:', error);
-      throw error;
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
-  clearDay: async (dayOfWeek, dietPlanId) => {
-    const { currentDietPlan } = get();
-    const targetPlanId = dietPlanId ?? currentDietPlan?.id;
-    if (!targetPlanId) throw new Error('Plano de dieta não identificado.');
-
-    try {
-      await nutritionService.clearDietDay(targetPlanId, dayOfWeek);
-      set((state) => ({
-        meals: state.meals.filter((m) => m.day_of_week !== dayOfWeek),
-      }));
-    } catch (error) {
-      console.error('Error clearing day:', error);
-      throw error;
-    }
-  },
-
   searchFoods: async (query, page = 0, pageSize = 10) => {
     try {
       const data = await nutritionService.searchFoods(query, page, pageSize);
@@ -268,149 +186,6 @@ export const useNutritionStore = create<NutritionStore>((set, get) => ({
     }
   },
 
-  fetchDietPlanHistory: async (studentId) => {
-    try {
-      const data = await nutritionService.fetchDietPlanHistory(studentId);
-      set({ dietPlanHistory: data });
-    } catch (error) {
-      console.error('Error fetching diet plan history:', error);
-      set({ dietPlanHistory: [] });
-    }
-  },
-
-  createDietPlan: async (plan, sourcePlanId) => {
-    try {
-      const newPlan = await nutritionService.createDietPlan({
-        student_id: plan.student_id,
-        specialist_id: plan.specialist_id ?? '',
-        name: plan.name,
-        plan_type: plan.plan_type,
-        start_date: plan.start_date,
-        end_date: plan.end_date,
-        target_calories: plan.target_calories,
-        target_protein: plan.target_protein,
-        target_carbs: plan.target_carbs,
-        target_fat: plan.target_fat,
-        notes: plan.notes,
-      });
-
-      if (sourcePlanId) {
-        // Clone meals from source plan
-        const sourceMeals = await nutritionService.fetchDietMeals(sourcePlanId);
-        for (const sourceMeal of sourceMeals) {
-          const newMeal = await nutritionService.createDietMeal({
-            diet_plan_id: newPlan.id,
-            name: sourceMeal.name,
-            meal_type: sourceMeal.meal_type,
-            meal_order: sourceMeal.meal_order,
-            day_of_week: sourceMeal.day_of_week,
-            meal_time: sourceMeal.meal_time,
-            target_calories: sourceMeal.target_calories,
-          });
-          const items = sourceMeal.diet_meal_items ?? [];
-          if (items.length > 0) {
-            await nutritionService.addFoodsToMeal(
-              items.map((item, index) => ({
-                diet_meal_id: newMeal.id,
-                food_id: item.food_id,
-                quantity: Number(item.quantity),
-                unit: item.unit,
-                order_index: item.order_index ?? index,
-              }))
-            );
-          }
-        }
-      }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .eq('id', plan.student_id)
-        .single();
-
-      set((state) => ({
-        currentDietPlan: newPlan,
-        dietPlans: [{ ...newPlan, student: profile ?? undefined }, ...state.dietPlans],
-      }));
-    } catch (error) {
-      console.error('Error creating diet plan:', error);
-      throw error;
-    }
-  },
-
-  finishDietPlan: async (planId) => {
-    try {
-      await cancelPlanNotifications(planId);
-      const data = await nutritionService.finishDietPlan(planId);
-      set((state) => ({
-        currentDietPlan: state.currentDietPlan?.id === planId ? null : state.currentDietPlan,
-        dietPlanHistory: [data, ...state.dietPlanHistory],
-      }));
-    } catch (error) {
-      console.error('Error finishing diet plan:', error);
-      throw error;
-    }
-  },
-
-  updateDietPlan: async (id, updates) => {
-    try {
-      const data = await nutritionService.updateDietPlan(
-        id,
-        updates as Parameters<typeof nutritionService.updateDietPlan>[1]
-      );
-      set({ currentDietPlan: data });
-    } catch (error) {
-      console.error('Error updating diet plan:', error);
-      throw error;
-    }
-  },
-
-  createDietPlanWithStrategy: async (planData, strategyData) => {
-    try {
-      const newPlan = await nutritionService.createDietPlan({
-        student_id: planData.student_id,
-        specialist_id: planData.specialist_id ?? null,
-        name: planData.name,
-        plan_type: planData.plan_type,
-        start_date: planData.start_date,
-        end_date: planData.end_date,
-        target_calories: planData.target_calories,
-        target_protein: planData.target_protein,
-        target_carbs: planData.target_carbs,
-        target_fat: planData.target_fat,
-      });
-
-      const { weeklySchedule } = strategyData;
-      for (const day of weeklySchedule) {
-        for (const [index, mealTemplate] of day.meals.entries()) {
-          await nutritionService.createDietMeal({
-            diet_plan_id: newPlan.id,
-            day_of_week: day.dayOfWeek,
-            name: mealTemplate.name,
-            meal_type: mealTemplate.type,
-            meal_order: index,
-            target_calories: 0,
-            meal_time: mealTemplate.time,
-          });
-        }
-      }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .eq('id', planData.student_id)
-        .single();
-
-      set((state) => ({
-        currentDietPlan: newPlan,
-        dietPlans: [{ ...newPlan, student: profile ?? undefined }, ...state.dietPlans],
-      }));
-    } catch (error) {
-      console.error('Error creating strategy diet plan:', error);
-      throw error;
-    }
-  },
-
   fetchMeals: async (dietPlanId) => {
     try {
       const mealsWithItems = await nutritionService.fetchDietMeals(dietPlanId);
@@ -443,32 +218,6 @@ export const useNutritionStore = create<NutritionStore>((set, get) => ({
     }
   },
 
-  addMeal: async (meal) => {
-    try {
-      const data = await nutritionService.createDietMeal(meal);
-      set((state) => ({ meals: [...state.meals, data] }));
-      return data;
-    } catch (error) {
-      console.error('Error adding meal:', error);
-      throw error;
-    }
-  },
-
-  updateMeal: async (id, updates) => {
-    try {
-      const data = await nutritionService.updateDietMeal(
-        id,
-        updates as Parameters<typeof nutritionService.updateDietMeal>[1]
-      );
-      set((state) => ({
-        meals: state.meals.map((meal) => (meal.id === id ? { ...meal, ...data } : meal)),
-      }));
-    } catch (error) {
-      console.error('Error updating meal:', error);
-      throw error;
-    }
-  },
-
   fetchMealItems: async (mealId) => {
     try {
       const { data, error } = await supabase
@@ -482,90 +231,6 @@ export const useNutritionStore = create<NutritionStore>((set, get) => ({
       }));
     } catch (error) {
       console.error('Error fetching meal items:', error);
-    }
-  },
-
-  addFoodToMeal: async (mealId, foodId, quantity, unit) => {
-    try {
-      const currentItems = get().mealItems[mealId] ?? [];
-      const data = await nutritionService.addFoodToMeal({
-        diet_meal_id: mealId,
-        food_id: foodId,
-        quantity,
-        unit,
-        order_index: currentItems.length,
-      });
-      set((state) => ({
-        mealItems: {
-          ...state.mealItems,
-          [mealId]: [...(state.mealItems[mealId] ?? []), data as DietMealItem],
-        },
-      }));
-    } catch (error) {
-      console.error('Error adding food to meal:', error);
-      throw error;
-    }
-  },
-
-  addFoodsToMeal: async (mealId, items) => {
-    try {
-      const currentItems = get().mealItems[mealId] ?? [];
-      const data = await nutritionService.addFoodsToMeal(
-        items.map((item, index) => ({
-          diet_meal_id: mealId,
-          food_id: item.foodId,
-          quantity: item.quantity,
-          unit: item.unit,
-          order_index: currentItems.length + index,
-        }))
-      );
-      set((state) => ({
-        mealItems: {
-          ...state.mealItems,
-          [mealId]: [...(state.mealItems[mealId] ?? []), ...(data as DietMealItem[])],
-        },
-      }));
-    } catch (error) {
-      console.error('Error adding foods to meal:', error);
-      throw error;
-    }
-  },
-
-  updateMealItem: async (itemId, updates) => {
-    try {
-      const data = await nutritionService.updateMealItem(
-        itemId,
-        updates as Parameters<typeof nutritionService.updateMealItem>[1]
-      );
-      set((state) => {
-        const newMealItems = { ...state.mealItems };
-        const mealId = (data as DietMealItem).diet_meal_id;
-        if (newMealItems[mealId]) {
-          newMealItems[mealId] = newMealItems[mealId].map((item) =>
-            item.id === itemId ? (data as DietMealItem) : item
-          );
-        }
-        return { mealItems: newMealItems };
-      });
-    } catch (error) {
-      console.error('Error updating meal item:', error);
-      throw error;
-    }
-  },
-
-  removeFoodFromMeal: async (itemId) => {
-    try {
-      await nutritionService.removeFoodFromMeal(itemId);
-      set((state) => {
-        const newMealItems = { ...state.mealItems };
-        for (const mealId of Object.keys(newMealItems)) {
-          newMealItems[mealId] = newMealItems[mealId].filter((item) => item.id !== itemId);
-        }
-        return { mealItems: newMealItems };
-      });
-    } catch (error) {
-      console.error('Error removing food from meal:', error);
-      throw error;
     }
   },
 
@@ -634,14 +299,14 @@ export const useNutritionStore = create<NutritionStore>((set, get) => ({
   },
 
   reset: () => {
+    // O formulário ainda não persistido também contém dados de saúde.
+    useDietWizardStore.getState().reset();
     set({
       foods: [],
       currentDietPlan: null,
       dietPlans: [],
-      dietPlanHistory: [],
       meals: [],
       mealItems: {},
-      copiedDay: null,
       dailyLogs: {},
       isLoading: false,
     });

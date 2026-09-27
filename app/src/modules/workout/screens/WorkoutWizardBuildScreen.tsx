@@ -26,7 +26,10 @@ const LETRAS = 'ABCDEFGH';
  */
 export default function WorkoutWizardBuildScreen() {
   const router = useRouter();
-  const { studentId } = useLocalSearchParams<{ studentId: string }>();
+  const { studentId, sessionId } = useLocalSearchParams<{
+    studentId: string;
+    sessionId?: string;
+  }>();
   const wizard = useWorkoutWizardStore();
   const { workouts, fetchWorkoutsForPhase, createWorkout, reorderWorkoutExercises, isLoading } =
     useWorkoutStore();
@@ -60,7 +63,10 @@ export default function WorkoutWizardBuildScreen() {
   }
 
   function goToAssistant() {
-    router.push({ pathname: ROUTES.WORKOUTS.WIZARD_ASSISTANT, params: { studentId } });
+    router.push({
+      pathname: ROUTES.WORKOUTS.WIZARD_ASSISTANT,
+      params: { studentId, ...(sessionId ? { sessionId } : {}) },
+    });
   }
 
   function goToLibrary() {

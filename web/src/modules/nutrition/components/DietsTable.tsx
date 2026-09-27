@@ -21,6 +21,7 @@ interface DietsTableProps {
 }
 
 const STATUS: Record<DietPlan["status"], { label: string; tone: StatusTone }> = {
+  draft: { label: "Rascunho", tone: "warning" },
   active: { label: "Ativo", tone: "success" },
   finished: { label: "Finalizado", tone: "neutral" },
 };

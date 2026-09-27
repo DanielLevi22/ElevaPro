@@ -18,10 +18,11 @@ interface DietsFilterProps {
   onStatusChange: (value: DietStatusFilter) => void;
 }
 
-// Só `active` e `finished` existem em DietPlanStatus — o design previa também
-// "Rascunhos" e "Concluídas", que não têm correspondente no schema.
+// "Concluídas", que o design previa, não tem correspondente no schema: o fim de
+// um plano é `finished`. O rascunho ganhou status próprio na #337.
 const STATUS_TABS: FilterTab<DietStatusFilter>[] = [
   { value: "all", label: "Todas" },
+  { value: "draft", label: "Rascunhos" },
   { value: "active", label: "Ativas" },
   { value: "finished", label: "Finalizadas" },
 ];

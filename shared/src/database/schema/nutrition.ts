@@ -1,4 +1,5 @@
 import {
+  type AnyPgColumn,
   boolean,
   date,
   integer,
@@ -13,7 +14,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { profiles } from "./auth";
 
-export const dietPlanStatusEnum = pgEnum("diet_plan_status", ["active", "finished"]);
+export const dietPlanStatusEnum = pgEnum("diet_plan_status", ["active", "finished", "draft"]);
 export const dietPlanTypeEnum = pgEnum("diet_plan_type", ["unique", "cyclic"]);
 
 export const foods = pgTable("foods", {
@@ -45,6 +46,9 @@ export const dietPlans = pgTable("diet_plans", {
   plan_type: dietPlanTypeEnum("plan_type").notNull().default("cyclic"),
   status: dietPlanStatusEnum("status").notNull().default("active"),
   version: integer("version").notNull().default(1),
+  source_plan_id: uuid("source_plan_id").references((): AnyPgColumn => dietPlans.id, {
+    onDelete: "set null",
+  }),
   start_date: date("start_date"),
   end_date: date("end_date"),
   target_calories: numeric("target_calories", { precision: 7, scale: 2 }),
@@ -52,6 +56,12 @@ export const dietPlans = pgTable("diet_plans", {
   target_carbs: numeric("target_carbs", { precision: 7, scale: 2 }),
   target_fat: numeric("target_fat", { precision: 7, scale: 2 }),
   notes: text("notes"),
+  // Preferências do plano (0074, #337). A restrição é vocabulário fechado de
+  // exclusão de alimento, com CHECK no banco: diagnóstico fica na anamnese.
+  dietary_restrictions: text("dietary_restrictions").array().notNull().default([]),
+  meals_per_day: integer("meals_per_day"),
+  allows_supplements: boolean("allows_supplements"),
+  free_meal_days: integer("free_meal_days").array().notNull().default([]),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

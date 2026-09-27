@@ -4,6 +4,15 @@ import { criarSupabaseFake } from "../../__tests__/supabaseFake";
 import { createNutritionService } from "../nutrition.service";
 
 describe("nutritionService — planos de dieta", () => {
+  it("lista os planos do próprio aluno incluindo os rascunhos permitidos pela RLS", async () => {
+    const draft = { id: "rascunho", student_id: "aluno-1", status: "draft" };
+    const { supabase, chamadas } = criarSupabaseFake({ data: [draft] });
+
+    expect(await createNutritionService(supabase).fetchStudentDietPlans("aluno-1")).toEqual([
+      draft,
+    ]);
+    expect(chamadas[0].filtros).toEqual({ student_id: "aluno-1" });
+  });
   // A busca traz todos os planos do especialista de uma vez e o recorte por
   // aluno é feito por quem chama. O embed nomeia a constraint de propósito:
   // `diet_plans` tem duas FKs para `profiles` (student_id e specialist_id), e
@@ -27,131 +36,6 @@ describe("nutritionService — planos de dieta", () => {
     await expect(createNutritionService(supabase).fetchDietPlans("esp-1")).rejects.toEqual({
       message: "42703",
     });
-  });
-});
-
-describe("nutritionService — clonar plano", () => {
-  const planoOrigem = {
-    id: "p1",
-    name: "Cutting",
-    plan_type: "unique",
-    end_date: "2026-12-31",
-    target_calories: 2000,
-    target_protein: 150,
-    target_carbs: 200,
-    target_fat: 60,
-  };
-
-  // Dois planos ativos para o mesmo aluno fazem `fetchActiveDietPlan`
-  // (`maybeSingle`) quebrar. Encerrar o anterior é o que mantém o invariante.
-  it("encerra o plano ativo do aluno antes de criar o novo", async () => {
-    const { supabase, chamadas } = criarSupabaseFake([
-      { data: planoOrigem },
-      { data: { id: "antigo" } },
-      {},
-      { data: { id: "novo" } },
-      { data: [] },
-    ]);
-
-    await createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1");
-
-    const encerramento = chamadas[2];
-    expect(encerramento.tabela).toBe("diet_plans");
-    expect(encerramento.payload).toEqual({ status: "finished", end_date: expect.any(String) });
-    expect(encerramento.filtros).toEqual({ id: "antigo" });
-  });
-
-  it("não encerra nada quando o aluno não tem plano ativo", async () => {
-    const { supabase, chamadas } = criarSupabaseFake([
-      { data: planoOrigem },
-      { data: null },
-      { data: { id: "novo" } },
-      { data: [] },
-    ]);
-
-    await createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1");
-
-    // O payload de criação também traz `status`, então a asserção precisa
-    // olhar o encerramento especificamente: um update marcando "finished".
-    const encerramentos = chamadas.filter(
-      (c) => (c.payload as { status?: string } | undefined)?.status === "finished",
-    );
-    expect(encerramentos).toHaveLength(0);
-  });
-
-  // O clone pertence ao aluno de destino e ao especialista que importou — não
-  // aos da origem. Herdar o dono seria vazar plano entre alunos.
-  it("cria o novo plano para o aluno de destino, marcado como importado", async () => {
-    const { supabase, chamadas } = criarSupabaseFake([
-      { data: planoOrigem },
-      { data: null },
-      { data: { id: "novo" } },
-      { data: [] },
-    ]);
-
-    await createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1");
-
-    const criacao = chamadas[2].payload as Record<string, unknown>;
-    expect(criacao.student_id).toBe("aluno-2");
-    expect(criacao.specialist_id).toBe("esp-1");
-    expect(criacao.name).toBe("Cutting (Importado)");
-    expect(criacao.status).toBe("active");
-    expect(criacao.version).toBe(1);
-  });
-
-  it("copia as refeições e os itens de cada uma", async () => {
-    const { supabase, chamadas } = criarSupabaseFake([
-      { data: planoOrigem },
-      { data: null },
-      { data: { id: "novo" } },
-      {
-        data: [
-          {
-            name: "Café",
-            meal_type: "breakfast",
-            meal_order: 0,
-            day_of_week: 1,
-            meal_time: "08:00",
-            target_calories: 400,
-            diet_meal_items: [
-              { food_id: "f1", quantity: "100", unit: "g", order_index: 0 },
-              { food_id: "f2", quantity: "50", unit: "g", order_index: 1 },
-            ],
-          },
-        ],
-      },
-      { data: { id: "refeicao-nova" } },
-      {},
-    ]);
-
-    await createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1");
-
-    const refeicao = chamadas[4].payload as Record<string, unknown>;
-    expect(refeicao.diet_plan_id).toBe("novo");
-    expect(refeicao.name).toBe("Café");
-
-    const itens = chamadas[5].payload as Record<string, unknown>[];
-    expect(itens).toHaveLength(2);
-    expect(itens[0]).toEqual({
-      diet_meal_id: "refeicao-nova",
-      food_id: "f1",
-      quantity: "100",
-      unit: "g",
-      order_index: 0,
-    });
-  });
-
-  it("não insere itens quando a refeição de origem não tem nenhum", async () => {
-    const { supabase, chamadas } = criarSupabaseFake([
-      { data: planoOrigem },
-      { data: null },
-      { data: { id: "novo" } },
-      { data: [{ name: "Café", diet_meal_items: [] }] },
-      { data: { id: "refeicao-nova" } },
-    ]);
-
-    await createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1");
-    expect(chamadas.filter((c) => c.tabela === "diet_meal_items")).toHaveLength(0);
   });
 });
 
@@ -283,5 +167,27 @@ describe("nutritionService — alimentos da mesma categoria", () => {
     await expect(createNutritionService(supabase).fetchFoodsByCategory("proteina")).rejects.toEqual(
       { message: "42501" },
     );
+  });
+});
+
+describe("nutritionService — sinal de dieta ativa", () => {
+  // O balão de dieta nova do aluno (#337) compara o plano ativo com o último
+  // que ele já viu. O rascunho nunca é sinal: não vale até ser enviado.
+  it("lê só o plano ativo do aluno, com id, nome e criação", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({
+      data: { id: "d1", name: "Cutting", created_at: "2026-10-01T10:00:00Z" },
+    });
+
+    const signal = await createNutritionService(supabase).fetchActiveDietSignal("aluno-1");
+
+    expect(chamadas[0].select).toBe("id, name, created_at");
+    expect(chamadas[0].filtros).toEqual({ student_id: "aluno-1", status: "active" });
+    expect(signal).toEqual({ id: "d1", name: "Cutting", updatedAt: "2026-10-01T10:00:00Z" });
+  });
+
+  it("sem plano ativo, sem sinal", async () => {
+    const { supabase } = criarSupabaseFake({ data: null });
+
+    expect(await createNutritionService(supabase).fetchActiveDietSignal("aluno-1")).toBeNull();
   });
 });

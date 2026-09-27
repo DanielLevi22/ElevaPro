@@ -22,6 +22,7 @@ import { useBrilho, useCores, useEscala } from '@/shared/design';
 interface BotaoDeDestaqueProps {
   rotulo: string;
   onPress: () => void;
+  disabled?: boolean;
   icone?: keyof typeof Ionicons.glyphMap;
   tamanho?: 'cartao' | 'fixo' | 'compacto' | 'grande';
   /** `perigo` é a ação que encerra algo — o rosa do kit, mesmo tom do `GlassSheet`. */
@@ -58,6 +59,7 @@ export function BotaoDeDestaque({
   icone,
   tamanho = 'fixo',
   tom = 'primary',
+  disabled = false,
 }: BotaoDeDestaqueProps) {
   const cores = useCores();
   const escalar = useEscala();
@@ -67,13 +69,16 @@ export function BotaoDeDestaque({
   return (
     <TouchableOpacity
       onPress={onPress}
+      disabled={disabled}
       activeOpacity={0.85}
       accessibilityRole="button"
       accessibilityLabel={rotulo}
+      accessibilityState={{ disabled }}
       className={cn(
         'flex-row items-center justify-center gap-2',
         tom === 'perigo' ? 'bg-perigo' : 'bg-primary',
-        FORMA[tamanho]
+        FORMA[tamanho],
+        disabled ? 'opacity-50' : null
       )}
       style={{ boxShadow: comBrilho(BRILHO[tamanho], { alfa: BRILHO[tamanho].alfa }) }}
     >

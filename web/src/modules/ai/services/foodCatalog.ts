@@ -117,10 +117,13 @@ const COLUNAS = "id, name, category, serving_size, serving_unit, calories, prote
  * await queryFoods({ category: "proteinas" }); // sinônimo resolve sozinho
  * await queryFoods({ search_term: "frango" });
  */
-export async function queryFoods(input: {
-  search_term?: string;
-  category?: string;
-}): Promise<FoodQueryResult> {
+export async function queryFoods(
+  input: {
+    search_term?: string;
+    category?: string;
+  },
+  ownerId?: string,
+): Promise<FoodQueryResult> {
   const category = input.category ? resolveFoodCategory(input.category) : null;
   if (input.category && !category) {
     return {
@@ -137,6 +140,7 @@ export async function queryFoods(input: {
     .limit(MAX_RESULTS);
 
   if (category) query = query.eq("category", category);
+  if (ownerId) query = query.or(`is_custom.eq.false,created_by.eq.${ownerId}`);
   if (input.search_term) query = query.ilike("name", `%${input.search_term}%`);
 
   const { data, error, count } = await query;
@@ -158,10 +162,12 @@ export async function queryFoods(input: {
  * Lê o catálogo inteiro em vez de filtrar por `in`, porque o modelo reescreve a
  * caixa e o acento do que leu — a mesma lição de `unknownExerciseNames`.
  */
-export async function unknownFoodNames(names: string[]): Promise<string[]> {
+export async function unknownFoodNames(names: string[], ownerId?: string): Promise<string[]> {
   if (names.length === 0) return [];
 
-  const { data, error } = await supabaseAdmin.from("foods").select("name");
+  let query = supabaseAdmin.from("foods").select("name");
+  if (ownerId) query = query.or(`is_custom.eq.false,created_by.eq.${ownerId}`);
+  const { data, error } = await query;
   if (error) throw error;
 
   const existentes = new Set(((data ?? []) as { name: string }[]).map((f) => normalize(f.name)));
@@ -169,10 +175,15 @@ export async function unknownFoodNames(names: string[]): Promise<string[]> {
 }
 
 /** Nome → id, normalizado, para a gravação casar com o que o modelo escreveu. */
-export async function foodIdsByName(names: string[]): Promise<Map<string, string>> {
+export async function foodIdsByName(
+  names: string[],
+  ownerId?: string,
+): Promise<Map<string, string>> {
   if (names.length === 0) return new Map();
 
-  const { data, error } = await supabaseAdmin.from("foods").select("id, name");
+  let query = supabaseAdmin.from("foods").select("id, name");
+  if (ownerId) query = query.or(`is_custom.eq.false,created_by.eq.${ownerId}`);
+  const { data, error } = await query;
   if (error) throw error;
 
   const porNome = new Map<string, string>();

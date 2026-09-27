@@ -15,7 +15,8 @@ import { cn } from '@/lib/utils';
 interface BarraDeProgressoProps {
   /** De 0 a 100; fora disso é cortado. */
   percentual: number;
-  tom?: 'marca' | 'concluida' | 'apagada';
+  /** Os três macros vêm do kit da dieta: proteína, carbo e gordura, cada um na sua cor (#337). */
+  tom?: 'marca' | 'concluida' | 'apagada' | 'proteina' | 'carboidrato' | 'gordura';
   /** `normal` é a de 6 do kit; `fina`, a de 4 dos cartões de fase; `fio`, a de 3. */
   espessura?: 'normal' | 'fina' | 'fio';
 }
@@ -24,6 +25,9 @@ const PREENCHIMENTO = {
   marca: 'bg-primary',
   concluida: 'bg-metrica-passos',
   apagada: 'bg-placeholder',
+  proteina: 'bg-primary',
+  carboidrato: 'bg-secondary',
+  gordura: 'bg-accent',
 } as const;
 
 const ALTURA = { normal: 'h-1.5', fina: 'h-1', fio: 'h-[0.1875rem]' } as const;

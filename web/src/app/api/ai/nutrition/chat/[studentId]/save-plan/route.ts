@@ -1,10 +1,7 @@
 import { withAiRoute } from "@/lib/ai-route";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import {
-  acessoDoEspecialista,
-  criarRotaDeAprovacao,
-  especialistaDe,
-} from "@/modules/ai/services/rotaDeAprovacao";
+import { nutritionApprovalAccess } from "@/modules/ai/services/nutritionApprovalAccess";
+import { criarRotaDeAprovacao, especialistaDe } from "@/modules/ai/services/rotaDeAprovacao";
 import type { DietPlanProposal } from "@/modules/ai/types";
 
 // Na Vercel uma rota sem isto morre no default de poucos segundos. 60s é o
@@ -28,7 +25,11 @@ export const POST = withAiRoute(
   criarRotaDeAprovacao<DietPlanProposal, { id: string }>({
     rotulo: "POST save-plan",
     chave: "pendingDietPlan",
-    acesso: acessoDoEspecialista("nutrition"),
+    acesso: nutritionApprovalAccess,
+    verificar: async ({ estado }) =>
+      estado.draftPlanId
+        ? { erro: "O rascunho já existe. Aprove apenas as refeições nesta conversa.", status: 409 }
+        : null,
     // Insert único: não existe "meio" para desfazer.
 
     gravar: async (ctx, plano) => {
@@ -39,7 +40,9 @@ export const POST = withAiRoute(
           specialist_id: especialistaDe(ctx),
           name: plano.name,
           plan_type: plano.plan_type,
-          status: "active",
+          // Rascunho, como todo plano novo (#337): o especialista revisa as
+          // refeições e envia pela tela do plano, e só então o anterior sai.
+          status: "draft",
           // Período obrigatório: `DietDetailsHeader` formata estas datas, e o
           // `format` do date-fns lança com data inválida.
           start_date: plano.start_date,
@@ -57,7 +60,11 @@ export const POST = withAiRoute(
       return { id: data.id };
     },
 
-    resolver: (plano, { id }) => ({ savedDietPlanId: id, resolvedDietPlan: plano }),
+    resolver: (plano, { id }) => ({
+      draftPlanId: id,
+      savedDietPlanId: id,
+      resolvedDietPlan: plano,
+    }),
 
     mensagem: (plano) =>
       `✅ Plano alimentar aprovado e salvo: ${plano.name} (${plano.target_calories} kcal/dia).`,

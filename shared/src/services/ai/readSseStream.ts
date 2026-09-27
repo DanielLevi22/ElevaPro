@@ -12,9 +12,9 @@ import type { WorkoutSseEvent } from "./workoutProposal.types";
  * const resposta = await fetch(url, { method: "POST", body });
  * if (resposta.body) await readSseStream(resposta.body, (evento) => { ... });
  */
-export async function readSseStream(
+export async function readSseStream<Event = WorkoutSseEvent>(
   body: ReadableStream<Uint8Array>,
-  onEvent: (event: WorkoutSseEvent) => void,
+  onEvent: (event: Event) => void,
 ): Promise<void> {
   const reader = body.getReader();
   const decoder = new TextDecoder();
@@ -31,7 +31,7 @@ export async function readSseStream(
     for (const linha of linhas) {
       if (!linha.startsWith("data: ")) continue;
       try {
-        onEvent(JSON.parse(linha.slice(6)) as WorkoutSseEvent);
+        onEvent(JSON.parse(linha.slice(6)) as Event);
       } catch {
         // quadro mal formado — ignora e segue para o próximo
       }

@@ -1,12 +1,12 @@
 "use client";
 
 import type { DietPlan } from "@elevapro/shared";
-import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useDeleteDietPlan, useUpdateDietPlanStatus } from "@/shared/hooks/useNutrition";
+import { useDeleteDietPlan } from "@/shared/hooks/useNutrition";
 import { formatDateRange } from "@/shared/utils/formatDate";
 import { DeleteDietPlanModal } from "./DeleteDietPlanModal";
+import { DietPlanStatusControl } from "./DietPlanStatusControl";
 import { MacroRing } from "./MacroRing";
 
 interface DietDetailsHeaderProps {
@@ -24,52 +24,8 @@ export function DietDetailsHeader({
   onDayOptions,
   isCyclic,
 }: DietDetailsHeaderProps) {
-  const updateStatusMutation = useUpdateDietPlanStatus();
   const deleteMutation = useDeleteDietPlan();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
-
-  // Só os dois valores que `diet_plan_status` aceita. O menu oferecia também
-  // "Rascunho" (`draft`) e "Concluído" (`completed`), que o enum recusa com
-  // 22P02: as duas opções apareciam e nunca salvavam.
-  const statuses: {
-    id: DietPlan["status"];
-    label: string;
-    color: string;
-    dot: string;
-    isActive: boolean;
-  }[] = [
-    {
-      id: "active",
-      label: "Ativo",
-      color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-      dot: "bg-emerald-500",
-      isActive: true,
-    },
-    {
-      id: "finished",
-      label: "Finalizado",
-      color: "bg-orange-500/10 text-orange-400 border-orange-500/20",
-      dot: "bg-orange-500",
-      isActive: false,
-    },
-  ];
-
-  const handleUpdateStatus = async (status: DietPlan["status"], isActive: boolean) => {
-    try {
-      await updateStatusMutation.mutateAsync({
-        planId: dietPlan.id,
-        status,
-        isActive,
-      });
-      toast.success(`Status atualizado para ${status.toUpperCase()}!`);
-      setIsStatusMenuOpen(false);
-    } catch (_error) {
-      toast.error("Erro ao atualizar status do plano");
-    }
-  };
-
-  const currentStatus = statuses.find((s) => s.id === dietPlan.status) || statuses[0];
 
   const handleDelete = async () => {
     try {
@@ -108,68 +64,7 @@ export function DietDetailsHeader({
           </button>
           <h1 className="text-3xl font-bold text-foreground">{dietPlan.name}</h1>
           <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground relative">
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
-                disabled={updateStatusMutation.isPending}
-                className={`px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 flex items-center gap-2 ${currentStatus.color}`}
-              >
-                <div
-                  className={`w-1.5 h-1.5 rounded-full ${dietPlan.status === "active" ? "animate-pulse" : ""} ${currentStatus.dot}`}
-                />
-                {currentStatus.label}
-                <svg
-                  aria-hidden="true"
-                  className={`w-3 h-3 transition-transform ${isStatusMenuOpen ? "rotate-180" : ""}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={3}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </button>
-
-              <AnimatePresence>
-                {isStatusMenuOpen && (
-                  <>
-                    <button
-                      type="button"
-                      aria-label="Fechar menu de status"
-                      className="fixed inset-0 z-40 cursor-default"
-                      onClick={() => setIsStatusMenuOpen(false)}
-                    />
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute top-full left-0 mt-2 w-48 bg-zinc-900 border border-white/10 rounded-2xl p-2 shadow-2xl z-50 overflow-hidden"
-                    >
-                      {statuses.map((s) => (
-                        <button
-                          type="button"
-                          key={s.id}
-                          onClick={() => handleUpdateStatus(s.id, s.isActive)}
-                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors ${
-                            dietPlan.status === s.id
-                              ? "bg-white/10 text-white"
-                              : "text-zinc-500 hover:bg-white/5 hover:text-zinc-300"
-                          }`}
-                        >
-                          <div className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-                          {s.label}
-                        </button>
-                      ))}
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
-            </div>
+            <DietPlanStatusControl dietPlan={dietPlan} />
             {/* `format` do date-fns LANÇA com data inválida, e `new Date("")` é
                 Invalid Date — um plano sem período derrubava a tela inteira. O
                 utilitário devolve traço em vez de quebrar, e a 0025 passou a

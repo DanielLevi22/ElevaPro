@@ -6,6 +6,7 @@ import {
   createAdherenceService,
   createAuthService,
   createBriefingService,
+  createNutritionService,
   createWorkoutsService,
   type ProfileSummary,
   type TrainingSignal,
@@ -60,6 +61,7 @@ const servicoDeAuth = createAuthService(supabase);
 const briefingService = createBriefingService(supabase);
 const adherenceService = createAdherenceService(supabase);
 const workoutsService = createWorkoutsService(supabase);
+const nutritionService = createNutritionService(supabase);
 
 export function useDadosDaHome(): DadosDaHome {
   const { user, accountType, isMasquerading } = useAuthStore();
@@ -147,14 +149,16 @@ function useCarregamentoDaHome(
       notifyRiskSignals(briefingResult.signals);
       return;
     }
-    const [, , , , sinal] = await Promise.all([
+    const [, , , , sinal, sinalDaDieta] = await Promise.all([
       fetchDailyData(getLocalDateISOString()),
       fetchWorkouts(userId),
       recarregarSaude(),
       reloadActivity(),
       workoutsService.fetchActiveTrainingSignal(userId),
+      nutritionService.fetchActiveDietSignal(userId),
     ]);
     notifyNewTrainingPlan(sinal);
+    notifyNewDietPlan(sinalDaDieta);
   }, [
     userId,
     ehEspecialista,
@@ -223,6 +227,26 @@ function notifyNewTrainingPlan(signal: TrainingSignal | null): void {
     body: signal.name,
   });
   markSeen(atual);
+}
+
+/**
+ * O aviso de dieta nova, do mesmo jeito que o de treino: a dieta enviada pelo
+ * especialista vira balão na próxima abertura do app, uma vez (#337).
+ */
+function notifyNewDietPlan(signal: TrainingSignal | null): void {
+  if (!signal) return;
+
+  const { lastSeenDiet, markDietSeen } = useTrainingSignalSeenStore.getState();
+  const atual = toSeenTrainingSignal(signal);
+  if (!shouldShowTrainingSignal(atual, lastSeenDiet)) return;
+
+  showPushBanner({
+    tone: 'info',
+    icon: 'utensils',
+    title: 'Nova dieta disponível',
+    body: signal.name,
+  });
+  markDietSeen(atual);
 }
 
 function estaCarregando({ gamificacao, alunos, treinos }: FontesDaHome): boolean {
