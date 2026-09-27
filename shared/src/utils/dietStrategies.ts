@@ -92,7 +92,7 @@ const FASTING_MEALS: MealTemplate[] = [
   { name: "Quebra-Jejum (Almoço)", time: "12:00", type: "lunch" },
   { name: "Lanche da Tarde", time: "15:00", type: "snack" },
   { name: "Jantar (Pós-treino)", time: "19:00", type: "dinner" },
-  { name: "Ceia", time: "21:30", type: "snack" },
+  { name: "Ceia", time: "20:00", type: "snack" },
 ];
 
 // Para completar o dia quando a preferência pede mais refeições que o molde,
@@ -108,7 +108,16 @@ const EXTRA_MEALS: MealTemplate[] = [
 // o almoço por último.
 const DROP_ORDER: MealTemplate["type"][] = ["snack", "breakfast", "dinner", "lunch"];
 
-const FASTING_WINDOW = { from: "12:00", to: "21:30" };
+const FASTING_WINDOW = { from: "12:00", to: "20:00" };
+
+// O molde precisa comportar todas as quantidades aceitas pela preferência,
+// sem estender a janela de oito horas anunciada na escolha da estratégia.
+const FASTING_EXTRA_MEALS: MealTemplate[] = [
+  { name: "Lanche do Início da Tarde", time: "13:00", type: "snack" },
+  { name: "Lanche Intermediário", time: "14:00", type: "snack" },
+  { name: "Lanche do Fim da Tarde", time: "16:00", type: "snack" },
+  { name: "Lanche Antes do Jantar", time: "17:30", type: "snack" },
+];
 
 /** Percentual da energia em cada macro, e o fator sobre a energia base do dia. */
 interface DayRule {
@@ -237,7 +246,8 @@ function withExtraMeals(day: DayTemplate, count: number): MealTemplate[] {
   const fits = (meal: MealTemplate) =>
     !day.mealWindow || (meal.time >= day.mealWindow.from && meal.time <= day.mealWindow.to);
   const taken = new Set(day.meals.map((meal) => meal.name));
-  const extras = EXTRA_MEALS.filter((meal) => fits(meal) && !taken.has(meal.name));
+  const candidates = day.mealWindow ? FASTING_EXTRA_MEALS : EXTRA_MEALS;
+  const extras = candidates.filter((meal) => fits(meal) && !taken.has(meal.name));
   const added = extras.slice(0, Math.max(0, count - day.meals.length));
   return [...day.meals, ...added].sort((a, b) => a.time.localeCompare(b.time));
 }

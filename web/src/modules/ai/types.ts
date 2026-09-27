@@ -1,4 +1,4 @@
-import type { DietPlanPreferences } from "@elevapro/shared";
+import type { DietMealsProposal, DietPlanPreferences, DietPlanProposal } from "@elevapro/shared";
 import type { PlanProposalData } from "./tools/studentCoachTools";
 
 export type { PlanProposalData };
@@ -117,37 +117,13 @@ export interface BulkWorkoutProposal {
   workouts: BulkWorkoutItem[];
 }
 
-export interface DietPlanProposal {
-  name: string;
-  plan_type: "unique" | "cyclic";
-  start_date: string;
-  duration_weeks: number;
-  target_calories: number;
-  target_protein: number;
-  target_carbs: number;
-  target_fat: number;
-  notes?: string;
-}
-
-export interface DietMealItemProposal {
-  food_name: string;
-  quantity: number;
-  unit: string;
-}
-
-export interface DietMealProposal {
-  name: string;
-  meal_time?: string;
-  /** 0=Dom a 6=Sáb, só na dieta cíclica. */
-  day_of_week?: number;
-  items: DietMealItemProposal[];
-}
-
-export interface DietMealsProposal {
-  plan_name: string;
-  plan_type: "unique" | "cyclic";
-  meals: DietMealProposal[];
-}
+// Movidas para o `shared` na #337: o mobile aprova pelas mesmas rotas.
+export type {
+  DietMealItemProposal,
+  DietMealProposal,
+  DietMealsProposal,
+  DietPlanProposal,
+} from "@elevapro/shared";
 
 export interface AiSessionState {
   savedWorkouts: { id: string; title: string; phaseId: string }[];
@@ -179,6 +155,8 @@ export interface AiSessionState {
   pendingDietPlan?: DietPlanProposal;
   pendingDietMeals?: DietMealsProposal;
   savedDietPlanId?: string;
+  /** Destino imutável da conversa aberta a partir de um rascunho no mobile. */
+  draftPlanId?: string;
   /**
    * O plano que o assistente do aluno apresentou, e o que dele foi salvo.
    *

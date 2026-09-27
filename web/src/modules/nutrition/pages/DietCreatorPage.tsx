@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { DietPreferencesFields } from "@/modules/nutrition/components/DietPreferencesFields";
 import { HealthDataConsentModal } from "@/modules/nutrition/components/HealthDataConsentModal";
+import { ImportDietModal } from "@/modules/nutrition/components/ImportDietModal";
 import { MacroRing } from "@/modules/nutrition/components/MacroRing";
 import { Button } from "@/shared/components/ui/Button";
 import { DatePicker } from "@/shared/components/ui/DatePicker";
@@ -67,6 +68,7 @@ export function DietCreatorPage() {
   const [carbs, setCarbs] = useState(200);
   const [fat, setFat] = useState(60);
   const [showConsentModal, setShowConsentModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [preferences, setPreferences] = useState<DietPlanPreferences>(NO_PREFERENCES);
   const { data: restrictionHint } = useDietaryRestrictionHint(studentId);
 
@@ -139,6 +141,13 @@ export function DietCreatorPage() {
 
   return (
     <div className="w-full">
+      {showImportModal && (
+        <ImportDietModal
+          isOpen
+          onClose={() => setShowImportModal(false)}
+          targetStudentId={studentId || undefined}
+        />
+      )}
       {showConsentModal && (
         <HealthDataConsentModal
           onAccept={() => {
@@ -161,6 +170,17 @@ export function DietCreatorPage() {
         <h1 className="font-display text-2xl font-extrabold text-foreground">
           Novo Plano Nutricional
         </h1>
+        {authUser?.accountType === "specialist" &&
+          authUser.services.includes("nutrition_consulting") && (
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <span className="text-sm text-muted-foreground">
+                Comece do zero abaixo ou reaproveite um plano.
+              </span>
+              <Button variant="secondary" onClick={() => setShowImportModal(true)}>
+                Copiar de um plano
+              </Button>
+            </div>
+          )}
       </div>
 
       <form onSubmit={handleSubmit}>

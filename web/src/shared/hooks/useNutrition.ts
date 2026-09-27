@@ -6,7 +6,6 @@ import {
   createNutritionService,
   type DietMeal,
   type DietMealItem,
-  type DietPlan,
   type DietStrategyType,
   type Food,
   type MealLog,
@@ -334,15 +333,17 @@ export function useImportDiet() {
     mutationFn: async ({
       sourceDietPlanId,
       targetStudentId,
+      name,
     }: {
       sourceDietPlanId: string;
       targetStudentId: string;
+      name: string;
     }) => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
-      return nutritionService.cloneDietPlan(sourceDietPlanId, targetStudentId, user.id);
+      return nutritionService.cloneDietPlan(sourceDietPlanId, targetStudentId, user.id, name);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["diet_plans"] }),
   });

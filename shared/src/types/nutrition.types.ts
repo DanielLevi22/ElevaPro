@@ -42,6 +42,8 @@ export interface DietPlan extends DietPlanPreferences {
   plan_type: DietPlanType;
   status: DietPlanStatus;
   version: number;
+  /** Plano enviado que originou este ajuste; ausente nos planos anteriores à 0075. */
+  source_plan_id?: string | null;
   start_date: string | null;
   end_date: string | null;
   target_calories: number | null;

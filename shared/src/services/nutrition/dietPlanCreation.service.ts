@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CreateDietPlanInput, DietPlan } from "../../types/nutrition.types";
+import { addDays, daysBetween, localDateOf } from "../../utils/dateOnly";
 import {
   calculateDietStrategy,
   DIET_STRATEGIES,
@@ -26,6 +27,17 @@ interface SourceMeal {
 
 const COPIED_MEAL_COLUMNS =
   "name, meal_type, meal_order, day_of_week, meal_time, target_calories, diet_meal_items(food_id, quantity, unit, order_index)";
+
+// Uma cópia é uma nova vigência; reutilizar o fim deixaria o rascunho vencido.
+function copiedPeriod(source: Pick<DietPlan, "start_date" | "end_date">) {
+  const duration =
+    source.start_date && source.end_date ? daysBetween(source.start_date, source.end_date) : 28;
+  const start_date = localDateOf(new Date());
+  return {
+    start_date,
+    end_date: addDays(start_date, Number.isFinite(duration) && duration > 0 ? duration : 28),
+  };
+}
 
 /**
  * Criação e ciclo de vida do plano de dieta, a parte que web e mobile precisam
@@ -98,6 +110,15 @@ export const createDietPlanCreation = (supabase: SupabaseClient) => {
 
   return {
     /**
+     * Abre ou retoma o ajuste sem alterar a prescrição ativa. A cópia é atômica.
+     * @example const draft = await nutrition.createDietPlanVersion(activePlan.id);
+     */
+    createDietPlanVersion: async (planId: string): Promise<DietPlan> => {
+      const { data, error } = await supabase.rpc("create_diet_plan_version", { p_plan_id: planId });
+      if (error) throw error;
+      return data as DietPlan;
+    },
+    /**
      * Cria o plano em rascunho. Não mexe no plano ativo do aluno.
      *
      * @example
@@ -138,29 +159,39 @@ export const createDietPlanCreation = (supabase: SupabaseClient) => {
      * aluno. O dono é o aluno de destino e quem importou, nunca os da origem.
      *
      * @example
-     * const draft = await nutritionService.cloneDietPlan(sourceId, targetStudentId, specialistId);
+     * const draft = await nutritionService.cloneDietPlan(sourceId, targetStudentId, specialistId, "Novo plano");
      */
     cloneDietPlan: async (
       sourcePlanId: string,
       targetStudentId: string,
-      specialistId: string,
+      specialistId: string | null,
+      name: string,
     ): Promise<DietPlan> => {
+      if (!name.trim()) {
+        throw new Error(
+          `Nome do plano inválido: ${JSON.stringify(name)}. Esperado texto não vazio.`,
+        );
+      }
       const { data: source, error } = await supabase
         .from("diet_plans")
         .select(
-          "name, plan_type, end_date, target_calories, target_protein, target_carbs, target_fat",
+          "plan_type, start_date, end_date, target_calories, target_protein, target_carbs, target_fat",
         )
         .eq("id", sourcePlanId)
         .single();
       if (error) throw error;
 
-      const { name, ...copied } = source as Record<string, unknown> & { name: string | null };
+      const copied = source as DietPlan;
       const draft = await createDietPlan({
-        ...(copied as Partial<CreateDietPlanInput>),
+        plan_type: copied.plan_type,
+        ...copiedPeriod(copied),
+        target_calories: copied.target_calories,
+        target_protein: copied.target_protein,
+        target_carbs: copied.target_carbs,
+        target_fat: copied.target_fat,
         student_id: targetStudentId,
         specialist_id: specialistId,
-        name: `${name ?? "Plano"} (Importado)`,
-        start_date: new Date().toISOString().split("T")[0],
+        name: name.trim(),
       });
       await copyMeals(sourcePlanId, draft.id);
       return draft;

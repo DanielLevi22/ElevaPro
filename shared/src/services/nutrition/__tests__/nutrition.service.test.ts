@@ -4,6 +4,15 @@ import { criarSupabaseFake } from "../../__tests__/supabaseFake";
 import { createNutritionService } from "../nutrition.service";
 
 describe("nutritionService — planos de dieta", () => {
+  it("lista os planos do próprio aluno incluindo os rascunhos permitidos pela RLS", async () => {
+    const draft = { id: "rascunho", student_id: "aluno-1", status: "draft" };
+    const { supabase, chamadas } = criarSupabaseFake({ data: [draft] });
+
+    expect(await createNutritionService(supabase).fetchStudentDietPlans("aluno-1")).toEqual([
+      draft,
+    ]);
+    expect(chamadas[0].filtros).toEqual({ student_id: "aluno-1" });
+  });
   // A busca traz todos os planos do especialista de uma vez e o recorte por
   // aluno é feito por quem chama. O embed nomeia a constraint de propósito:
   // `diet_plans` tem duas FKs para `profiles` (student_id e specialist_id), e
@@ -158,5 +167,27 @@ describe("nutritionService — alimentos da mesma categoria", () => {
     await expect(createNutritionService(supabase).fetchFoodsByCategory("proteina")).rejects.toEqual(
       { message: "42501" },
     );
+  });
+});
+
+describe("nutritionService — sinal de dieta ativa", () => {
+  // O balão de dieta nova do aluno (#337) compara o plano ativo com o último
+  // que ele já viu. O rascunho nunca é sinal: não vale até ser enviado.
+  it("lê só o plano ativo do aluno, com id, nome e criação", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({
+      data: { id: "d1", name: "Cutting", created_at: "2026-10-01T10:00:00Z" },
+    });
+
+    const signal = await createNutritionService(supabase).fetchActiveDietSignal("aluno-1");
+
+    expect(chamadas[0].select).toBe("id, name, created_at");
+    expect(chamadas[0].filtros).toEqual({ student_id: "aluno-1", status: "active" });
+    expect(signal).toEqual({ id: "d1", name: "Cutting", updatedAt: "2026-10-01T10:00:00Z" });
+  });
+
+  it("sem plano ativo, sem sinal", async () => {
+    const { supabase } = criarSupabaseFake({ data: null });
+
+    expect(await createNutritionService(supabase).fetchActiveDietSignal("aluno-1")).toBeNull();
   });
 });

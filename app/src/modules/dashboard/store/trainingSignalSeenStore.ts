@@ -7,6 +7,9 @@ interface TrainingSignalSeenState {
   /** O último plano ativo que já virou balão neste aparelho. */
   lastSeen: SeenTrainingSignal | null;
   markSeen: (signal: SeenTrainingSignal) => void;
+  /** A última dieta ativa que já virou balão (#337). Mesmo formato do plano de treino. */
+  lastSeenDiet: SeenTrainingSignal | null;
+  markDietSeen: (signal: SeenTrainingSignal) => void;
 }
 
 /**
@@ -21,6 +24,8 @@ export const useTrainingSignalSeenStore = create<TrainingSignalSeenState>()(
     (set) => ({
       lastSeen: null,
       markSeen: (signal) => set({ lastSeen: signal }),
+      lastSeenDiet: null,
+      markDietSeen: (signal) => set({ lastSeenDiet: signal }),
     }),
     {
       name: 'balao-de-plano-visto',

@@ -1,4 +1,5 @@
 import {
+  type AnyPgColumn,
   boolean,
   date,
   integer,
@@ -45,6 +46,9 @@ export const dietPlans = pgTable("diet_plans", {
   plan_type: dietPlanTypeEnum("plan_type").notNull().default("cyclic"),
   status: dietPlanStatusEnum("status").notNull().default("active"),
   version: integer("version").notNull().default(1),
+  source_plan_id: uuid("source_plan_id").references((): AnyPgColumn => dietPlans.id, {
+    onDelete: "set null",
+  }),
   start_date: date("start_date"),
   end_date: date("end_date"),
   target_calories: numeric("target_calories", { precision: 7, scale: 2 }),

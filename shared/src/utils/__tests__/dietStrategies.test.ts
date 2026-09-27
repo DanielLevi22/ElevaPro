@@ -125,7 +125,8 @@ describe("strategyMealRows com o número de refeições da preferência", () => 
   it("no jejum intermitente, só completa com refeição dentro da janela", () => {
     const rows = strategyMealRows(calculateDietStrategy("intermittent_fasting", 2000), "unique", 8);
 
-    expect(rows.every((row) => row.meal_time >= "12:00" && row.meal_time <= "21:30")).toBe(true);
+    expect(rows).toHaveLength(8);
+    expect(rows.every((row) => row.meal_time >= "12:00" && row.meal_time <= "20:00")).toBe(true);
   });
 
   it("a personalizada continua sem refeição, qualquer que seja o número", () => {

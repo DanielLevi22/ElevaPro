@@ -1,5 +1,6 @@
 import type { BulkWorkoutProposal, ChatMessage, PeriodizationProposal } from '@elevapro/shared';
 import { useCallback, useEffect, useState } from 'react';
+import { useChatConversation } from '@/shared/chat/useChatConversation';
 import { WorkoutChatService } from '../services/WorkoutChatService';
 
 export interface PeriodizationProposalState {
@@ -32,21 +33,7 @@ interface OpcoesDoChat {
   onWorkoutsApproved?: () => void;
 }
 
-function mensagemDoAssistente(conteudo: string): ChatMessage {
-  return {
-    id: `assistente-${Date.now()}-${Math.round(Math.random() * 1000)}`,
-    role: 'assistant',
-    content: conteudo,
-    createdAt: new Date().toISOString(),
-  };
-}
-
-const SAUDACAO_PADRAO: ChatMessage = {
-  id: 'boas-vindas',
-  role: 'assistant',
-  content: 'Olá! Vou te ajudar a montar o treino deste aluno. Por onde quer começar?',
-  createdAt: new Date().toISOString(),
-};
+const SAUDACAO = 'Olá! Vou te ajudar a montar o treino deste aluno. Por onde quer começar?';
 
 /**
  * A conversa do especialista com o assistente de treino — o mesmo chat do
@@ -65,9 +52,8 @@ export function useAssistantChat({
   onPeriodizationApproved,
   onWorkoutsApproved,
 }: OpcoesDoChat): AssistantChat {
-  const [mensagens, setMensagens] = useState<ChatMessage[]>([SAUDACAO_PADRAO]);
+  const chat = useChatConversation(SAUDACAO);
   const [inicializando, setInicializando] = useState(true);
-  const [respondendo, setRespondendo] = useState(false);
   const [propostaPeriodizacao, setPropostaPeriodizacao] =
     useState<PeriodizationProposalState | null>(null);
   const [propostaTreinos, setPropostaTreinos] = useState<BulkWorkoutProposal | null>(null);
@@ -82,7 +68,7 @@ export function useAssistantChat({
       .then((sessao) => {
         if (cancelado) return;
         onSessionResolved(sessao.sessionId);
-        setMensagens(sessao.messages.length > 0 ? sessao.messages : [SAUDACAO_PADRAO]);
+        chat.load(sessao.messages);
         setPropostaPeriodizacao(
           sessao.periodization
             ? { data: sessao.periodization, savedId: sessao.savedPeriodizationId ?? undefined }
@@ -103,59 +89,22 @@ export function useAssistantChat({
   }, [token, studentId]);
 
   const enviar = useCallback(
-    async (texto: string) => {
-      const pergunta = texto.trim();
-      if (!pergunta || respondendo) return;
-
-      const assistantId = `assistente-${Date.now()}`;
-      setMensagens((atuais) => [
-        ...atuais,
-        {
-          id: `aluno-${Date.now()}`,
-          role: 'user',
-          content: pergunta,
-          createdAt: new Date().toISOString(),
-        },
-        { id: assistantId, role: 'assistant', content: '', createdAt: new Date().toISOString() },
-      ]);
-      setRespondendo(true);
-
-      try {
-        await WorkoutChatService.sendMessage(token, studentId, pergunta, sessionId, (evento) => {
-          if (evento.type === 'text') {
-            setMensagens((atuais) =>
-              atuais.map((m) =>
-                m.id === assistantId ? { ...m, content: m.content + evento.content } : m
-              )
-            );
-          } else if (evento.type === 'proposal') {
-            setPropostaPeriodizacao({ data: evento.data });
-          } else if (evento.type === 'workout_proposal') {
+    (texto: string) => {
+      if (chat.responding) return;
+      chat.reply(texto, ({ text, error }) =>
+        WorkoutChatService.sendMessage(token, studentId, texto.trim(), sessionId, (evento) => {
+          if (evento.type === 'text') text(evento.content);
+          else if (evento.type === 'proposal') setPropostaPeriodizacao({ data: evento.data });
+          else if (evento.type === 'workout_proposal') {
             setPropostaTreinos(evento.data);
             setTreinosSalvos([]);
           } else if (evento.type === 'saved' && evento.entity === 'periodization') {
             setPropostaPeriodizacao((atual) => (atual ? { ...atual, savedId: evento.id } : atual));
-          } else if (evento.type === 'error') {
-            setMensagens((atuais) =>
-              atuais.map((m) =>
-                m.id === assistantId ? { ...m, content: `Erro: ${evento.message}` } : m
-              )
-            );
-          }
-        });
-      } catch {
-        setMensagens((atuais) =>
-          atuais.map((m) =>
-            m.id === assistantId
-              ? { ...m, content: 'Não consegui responder agora. Tente de novo.' }
-              : m
-          )
-        );
-      } finally {
-        setRespondendo(false);
-      }
+          } else if (evento.type === 'error') error(evento.message);
+        })
+      );
     },
-    [token, studentId, sessionId, respondendo]
+    [chat, token, studentId, sessionId]
   );
 
   const aprovarPeriodizacao = useCallback(async () => {
@@ -164,18 +113,12 @@ export function useAssistantChat({
     try {
       const salva = await WorkoutChatService.approvePeriodization(token, studentId, sessionId);
       setPropostaPeriodizacao((atual) => (atual ? { ...atual, savedId: salva.id } : atual));
-      setMensagens((atuais) => [
-        ...atuais,
-        mensagemDoAssistente(
-          `Pronto! Periodização "${salva.name}" salva. Podemos montar os treinos da primeira fase.`
-        ),
-      ]);
+      chat.say(
+        `Pronto! Periodização "${salva.name}" salva. Podemos montar os treinos da primeira fase.`
+      );
       onPeriodizationApproved?.(salva.id);
     } catch {
-      setMensagens((atuais) => [
-        ...atuais,
-        mensagemDoAssistente('Não consegui salvar a periodização agora. Tente de novo.'),
-      ]);
+      chat.say('Não consegui salvar a periodização agora. Tente de novo.');
     } finally {
       setSalvandoPeriodizacao(false);
     }
@@ -186,6 +129,7 @@ export function useAssistantChat({
     studentId,
     sessionId,
     onPeriodizationApproved,
+    chat,
   ]);
 
   const aprovarTreinos = useCallback(async () => {
@@ -195,28 +139,31 @@ export function useAssistantChat({
     try {
       const salvo = await WorkoutChatService.approveWorkouts(token, studentId, sessionId);
       setTreinosSalvos(salvo.saved.map((w) => w.title));
-      setMensagens((atuais) => [
-        ...atuais,
-        mensagemDoAssistente(
-          `Pronto! ${salvo.saved.length === 1 ? '1 treino salvo' : `${salvo.saved.length} treinos salvos`} na fase ${fase}.`
-        ),
-      ]);
+      chat.say(
+        `Pronto! ${salvo.saved.length === 1 ? '1 treino salvo' : `${salvo.saved.length} treinos salvos`} na fase ${fase}.`
+      );
       onWorkoutsApproved?.();
       enviar(`Aprovei os treinos da fase ${fase}. E agora?`);
     } catch {
-      setMensagens((atuais) => [
-        ...atuais,
-        mensagemDoAssistente('Não consegui salvar os treinos agora. Tente de novo.'),
-      ]);
+      chat.say('Não consegui salvar os treinos agora. Tente de novo.');
     } finally {
       setSalvandoTreinos(false);
     }
-  }, [propostaTreinos, salvandoTreinos, token, studentId, sessionId, onWorkoutsApproved, enviar]);
+  }, [
+    propostaTreinos,
+    salvandoTreinos,
+    token,
+    studentId,
+    sessionId,
+    onWorkoutsApproved,
+    enviar,
+    chat,
+  ]);
 
   return {
-    messages: mensagens,
+    messages: chat.messages,
     initializing: inicializando,
-    responding: respondendo,
+    responding: chat.responding,
     periodizationProposal: propostaPeriodizacao,
     workoutsProposal: propostaTreinos,
     savedWorkoutTitles: treinosSalvos,

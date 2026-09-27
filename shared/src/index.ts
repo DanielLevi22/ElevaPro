@@ -12,6 +12,7 @@ export * from "./data/anamnesisAdaptive";
 export * from "./data/anamnesisQuestions";
 export type { Database, Json } from "./database/database.types";
 export * from "./services/adherence/adherence.service";
+export * from "./services/ai/dietProposal.types";
 export * from "./services/ai/readSseStream";
 export * from "./services/ai/workoutProposal.types";
 export * from "./services/assessment/adaptiveAnamnesis.service";

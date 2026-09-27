@@ -68,6 +68,7 @@ export function TelaDeVidroComFoto({
         }
       >
         <ScrollView
+          keyboardShouldPersistTaps="handled"
           contentContainerClassName={cn(
             BOTTOM_SPACE[bottomSpace],
             centered ? 'flex-grow justify-center' : null

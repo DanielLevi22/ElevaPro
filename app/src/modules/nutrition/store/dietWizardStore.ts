@@ -13,9 +13,10 @@ import { create } from 'zustand';
  * diante o wizard lê pelo `planId`.
  */
 
-export type DietStartingPoint = 'strategy' | 'copy' | 'template' | 'assistant';
+export type DietStartingPoint = 'strategy' | 'copy' | 'assistant';
 export type Macro = 'protein' | 'carbs' | 'fat';
 export type MacroPercent = Record<Macro, number>;
+type GoalSuggestion = { targetCalories: number; macros: Record<Macro, number> };
 
 interface StartOptions {
   studentId: string;
@@ -33,17 +34,29 @@ interface DietWizardState {
   planName: string;
   targetCalories: number;
   macroPercent: MacroPercent;
+  /** Vigência a partir de hoje: o fim do plano. */
+  durationWeeks: number;
   preferences: DietPlanPreferences;
   planId: string | null;
   aiSessionId: string | null;
+  goalsInitialized: boolean;
+  goalsEdited: boolean;
+  preferencesEdited: boolean;
 
   startFor: (options: StartOptions) => void;
   setStartingPoint: (value: DietStartingPoint) => void;
   setStrategy: (value: DietStrategyType) => void;
   setPlanName: (value: string) => void;
   setTargetCalories: (value: number) => void;
+  setDurationWeeks: (value: number) => void;
   setMacroPercent: (macro: Exclude<Macro, 'carbs'>, value: number) => void;
-  applySuggestion: (suggestion: { targetCalories: number; macros: Record<Macro, number> }) => void;
+  applySuggestion: (suggestion: GoalSuggestion) => void;
+  /** Preenche uma vez por criação, sem substituir decisões ao retomar o passo 2. */
+  initializeGoals: (
+    studentId: string,
+    suggestion: GoalSuggestion | null,
+    restrictions: DietPlanPreferences['dietary_restrictions']
+  ) => void;
   setPreferences: (value: DietPlanPreferences) => void;
   setCreatedPlan: (planId: string) => void;
   setAiSessionId: (value: string) => void;
@@ -63,6 +76,8 @@ const INITIAL = {
   planName: '',
   targetCalories: 2000,
   macroPercent: BALANCED,
+  // Um mês, o mesmo padrão do web.
+  durationWeeks: 4,
   preferences: {
     dietary_restrictions: [],
     meals_per_day: null,
@@ -71,6 +86,9 @@ const INITIAL = {
   } as DietPlanPreferences,
   planId: null,
   aiSessionId: null,
+  goalsInitialized: false,
+  goalsEdited: false,
+  preferencesEdited: false,
 };
 
 // Carbo fecha a conta: proteína e gordura são decisão, o carbo é o que sobra.
@@ -92,12 +110,16 @@ export const useDietWizardStore = create<DietWizardState>((set, get) => ({
   setStartingPoint: (startingPoint) => set({ startingPoint }),
   setStrategy: (strategy) => set({ strategy }),
   setPlanName: (planName) => set({ planName }),
-  setTargetCalories: (targetCalories) => set({ targetCalories: Math.max(0, targetCalories) }),
+  setTargetCalories: (targetCalories) =>
+    set({ targetCalories: Math.max(0, targetCalories), goalsEdited: true }),
+  setDurationWeeks: (durationWeeks) =>
+    set({ durationWeeks: Math.max(1, Math.round(durationWeeks)) }),
 
   setMacroPercent: (macro, value) => {
     const current = get().macroPercent;
     const next = clampPercent(value);
     set({
+      goalsEdited: true,
       macroPercent:
         macro === 'protein' ? balanced(next, current.fat) : balanced(current.protein, next),
     });
@@ -111,7 +133,19 @@ export const useDietWizardStore = create<DietWizardState>((set, get) => ({
     set({ targetCalories, macroPercent: balanced(percentOf('protein'), percentOf('fat')) });
   },
 
-  setPreferences: (preferences) => set({ preferences }),
+  initializeGoals: (studentId, suggestion, restrictions) => {
+    const current = get();
+    if (current.studentId !== studentId || current.goalsInitialized) return;
+    if (suggestion && !current.goalsEdited) current.applySuggestion(suggestion);
+    set({
+      goalsInitialized: true,
+      preferences: current.preferencesEdited
+        ? current.preferences
+        : { ...current.preferences, dietary_restrictions: restrictions },
+    });
+  },
+
+  setPreferences: (preferences) => set({ preferences, preferencesEdited: true }),
   setCreatedPlan: (planId) => set({ planId }),
   setAiSessionId: (aiSessionId) => set({ aiSessionId }),
 

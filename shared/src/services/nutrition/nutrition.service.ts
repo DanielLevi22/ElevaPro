@@ -2,7 +2,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   AddFoodToMealInput,
   CreateDietMealInput,
-  CreateDietPlanInput,
   DietMeal,
   DietMealItem,
   DietPlan,
@@ -13,6 +12,7 @@ import type {
   UpdateDietPlanInput,
   UpdateMealItemInput,
 } from "../../types/nutrition.types";
+import type { TrainingSignal } from "../workouts/periodizacoes";
 import { createCatalogoDeAlimentos } from "./catalogoDeAlimentos.service";
 import { createDietPlanCreation } from "./dietPlanCreation.service";
 import { createDietPlanSuggestions } from "./dietPlanSuggestions.service";
@@ -21,6 +21,20 @@ const createBaseNutritionService = (supabase: SupabaseClient) => ({
   ...createCatalogoDeAlimentos(supabase),
 
   // ── Diet Plans ─────────────────────────────────────────────────────────────
+
+  /**
+   * Planos do aluno sob a sessão de quem consulta; a RLS oculta rascunhos alheios.
+   * @example const plans = await nutrition.fetchStudentDietPlans(studentId);
+   */
+  fetchStudentDietPlans: async (studentId: string): Promise<DietPlan[]> => {
+    const { data, error } = await supabase
+      .from("diet_plans")
+      .select("*")
+      .eq("student_id", studentId)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as DietPlan[];
+  },
 
   fetchDietPlans: async (
     specialistId: string,
@@ -51,6 +65,25 @@ const createBaseNutritionService = (supabase: SupabaseClient) => ({
       .maybeSingle();
     if (error) throw error;
     return data as DietPlan | null;
+  },
+
+  /**
+   * O sinal de dieta nova para o balão do aluno (#337): o plano ativo, no
+   * mesmo formato do sinal de treino. Rascunho não é sinal — não vale ainda.
+   * Toda versão enviada é um plano novo, então o id basta para dizer "mudou".
+   *
+   * @example const signal = await nutritionService.fetchActiveDietSignal(userId);
+   */
+  fetchActiveDietSignal: async (studentId: string): Promise<TrainingSignal | null> => {
+    const { data, error } = await supabase
+      .from("diet_plans")
+      .select("id, name, created_at")
+      .eq("student_id", studentId)
+      .eq("status", "active")
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    return { id: data.id, name: data.name ?? "Plano alimentar", updatedAt: data.created_at };
   },
 
   fetchDietPlanById: async (id: string): Promise<DietPlan | null> => {

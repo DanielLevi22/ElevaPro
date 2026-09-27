@@ -106,12 +106,15 @@ async function hasHealthConsent(studentId: string): Promise<boolean> {
 async function loadDietPreferences(
   studentId: string,
   specialistId: string,
+  planId?: string,
 ): Promise<DietPlanPreferences | undefined> {
-  const { data, error } = await supabaseAdmin
+  let query = supabaseAdmin
     .from("diet_plans")
     .select("dietary_restrictions, meals_per_day, allows_supplements, free_meal_days")
     .eq("student_id", studentId)
-    .eq("specialist_id", specialistId)
+    .eq("specialist_id", specialistId);
+  if (planId) query = query.eq("id", planId);
+  const { data, error } = await query
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -119,7 +122,11 @@ async function loadDietPreferences(
   return (data as DietPlanPreferences | null) ?? undefined;
 }
 
-async function loadHealth(studentId: string, specialistId: string): Promise<StudentHealthContext> {
+async function loadHealth(
+  studentId: string,
+  specialistId: string,
+  planId?: string,
+): Promise<StudentHealthContext> {
   const [anamnesisRes, assessmentRes, dietPreferences] = await Promise.all([
     supabaseAdmin
       .from("student_anamnesis")
@@ -137,7 +144,7 @@ async function loadHealth(studentId: string, specialistId: string): Promise<Stud
       .limit(1)
       .maybeSingle(),
 
-    loadDietPreferences(studentId, specialistId),
+    loadDietPreferences(studentId, specialistId, planId),
   ]);
 
   if (anamnesisRes.error) throw anamnesisRes.error;
@@ -160,6 +167,7 @@ async function loadHealth(studentId: string, specialistId: string): Promise<Stud
 export async function loadStudentContext(
   studentId: string,
   specialistId: string,
+  planId?: string,
 ): Promise<StudentContext> {
   const [consent, periodizationsRes] = await Promise.all([
     hasHealthConsent(studentId),
@@ -217,7 +225,7 @@ export async function loadStudentContext(
 
   return {
     studentId,
-    health: consent ? await loadHealth(studentId, specialistId) : null,
+    health: consent ? await loadHealth(studentId, specialistId, planId) : null,
     healthUnavailableReason: consent ? null : "no_consent",
     periodizations,
   };

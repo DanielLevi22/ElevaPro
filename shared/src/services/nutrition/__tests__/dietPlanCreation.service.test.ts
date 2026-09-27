@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { criarSupabaseFake } from "../../__tests__/supabaseFake";
 import { createNutritionService } from "../nutrition.service";
 
@@ -114,6 +114,31 @@ describe("nutritionService — plano nasce em rascunho", () => {
 });
 
 describe("nutritionService — clonar plano", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("recomeça a vigência hoje sem herdar o vencimento do plano antigo", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 8, 27, 23, 30));
+    const { supabase, chamadas } = criarSupabaseFake([
+      { data: { plan_type: "unique", start_date: "2026-01-01", end_date: "2026-01-29" } },
+      { data: { id: "novo" } },
+      { data: [] },
+    ]);
+
+    await createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1", "Novo plano");
+
+    expect(chamadas[1].payload).toMatchObject({ start_date: "2026-09-27", end_date: "2026-10-25" });
+  });
+
+  it("recusa nome vazio antes de ler ou criar um plano", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({ data: null });
+
+    await expect(
+      createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1", "  "),
+    ).rejects.toThrow('Nome do plano inválido: "  ". Esperado texto não vazio.');
+    expect(chamadas).toHaveLength(0);
+  });
+
   const planoOrigem = {
     id: "p1",
     name: "Cutting",
@@ -138,6 +163,39 @@ describe("nutritionService — clonar plano", () => {
     ],
   };
 
+  // Art. 6°, III: reaproveitar uma estrutura não autoriza transferir a
+  // identificação, as notas nem as restrições de um aluno para outro.
+  it("não transfere nome, notas ou restrições do aluno de origem", async () => {
+    const { supabase, chamadas } = criarSupabaseFake([
+      {
+        data: {
+          ...planoOrigem,
+          name: "Plano da Ana",
+          notes: "Observação da Ana",
+          dietary_restrictions: ["lactose_free"],
+        },
+      },
+      { data: { id: "novo" } },
+      { data: [] },
+    ]);
+
+    await createNutritionService(supabase).cloneDietPlan(
+      "p1",
+      "aluno-2",
+      "esp-1",
+      "  Novo plano  ",
+    );
+
+    expect(
+      chamadas[1].payload,
+      "VAZAMENTO ENTRE ALUNOS: cópia herdou informações pessoais da origem",
+    ).toMatchObject({
+      name: "Novo plano",
+      notes: null,
+      dietary_restrictions: [],
+    });
+  });
+
   // O clone pertence ao aluno de destino e ao especialista que importou — não
   // aos da origem. Herdar o dono seria vazar plano entre alunos.
   it("cria um rascunho para o aluno de destino, do especialista que importou", async () => {
@@ -147,7 +205,7 @@ describe("nutritionService — clonar plano", () => {
       { data: [] },
     ]);
 
-    await createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1");
+    await createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1", "Novo plano");
 
     const criacao = chamadas[1].payload as Record<string, unknown>;
     expect(criacao).toMatchObject({
@@ -165,7 +223,7 @@ describe("nutritionService — clonar plano", () => {
       { data: [] },
     ]);
 
-    await createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1");
+    await createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1", "Novo plano");
 
     expect(chamadas.some((c) => c.metodos.some((m) => m.nome === "update"))).toBe(false);
   });
@@ -179,7 +237,7 @@ describe("nutritionService — clonar plano", () => {
       {},
     ]);
 
-    await createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1");
+    await createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1", "Novo plano");
 
     const refeicao = chamadas[3].payload as Record<string, unknown>;
     expect(refeicao).toMatchObject({ diet_plan_id: "novo", name: "Café", day_of_week: 1 });
@@ -197,7 +255,7 @@ describe("nutritionService — clonar plano", () => {
       { data: { id: "refeicao-nova" } },
     ]);
 
-    await createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1");
+    await createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1", "Novo plano");
 
     expect(chamadas.filter((c) => c.tabela === "diet_meal_items")).toHaveLength(0);
   });
@@ -214,7 +272,7 @@ describe("nutritionService — clonar plano", () => {
     ]);
 
     await expect(
-      createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1"),
+      createNutritionService(supabase).cloneDietPlan("p1", "aluno-2", "esp-1", "Novo plano"),
     ).rejects.toEqual({ message: "23503" });
   });
 });

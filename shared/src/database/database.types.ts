@@ -439,6 +439,7 @@ export type Database = {
           name: string | null;
           notes: string | null;
           plan_type: Database["public"]["Enums"]["diet_plan_type"];
+          source_plan_id: string | null;
           specialist_id: string | null;
           start_date: string;
           status: Database["public"]["Enums"]["diet_plan_status"];
@@ -460,6 +461,7 @@ export type Database = {
           name?: string | null;
           notes?: string | null;
           plan_type?: Database["public"]["Enums"]["diet_plan_type"];
+          source_plan_id?: string | null;
           specialist_id?: string | null;
           start_date: string;
           status?: Database["public"]["Enums"]["diet_plan_status"];
@@ -481,6 +483,7 @@ export type Database = {
           name?: string | null;
           notes?: string | null;
           plan_type?: Database["public"]["Enums"]["diet_plan_type"];
+          source_plan_id?: string | null;
           specialist_id?: string | null;
           start_date?: string;
           status?: Database["public"]["Enums"]["diet_plan_status"];
@@ -492,6 +495,13 @@ export type Database = {
           version?: number;
         };
         Relationships: [
+          {
+            foreignKeyName: "diet_plans_source_plan_id_fkey";
+            columns: ["source_plan_id"];
+            isOneToOne: false;
+            referencedRelation: "diet_plans";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "diet_plans_specialist_id_profiles_id_fk";
             columns: ["specialist_id"];
@@ -1656,6 +1666,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      append_diet_draft_meals: {
+        Args: { p_plan_id: string; p_student_id: string; p_specialist_id: string; p_meals: Json };
+        Returns: { id: string; name: string }[];
+      };
       activate_diet_plan: {
         Args: { p_plan_id: string };
         Returns: {
@@ -1669,6 +1683,7 @@ export type Database = {
           name: string | null;
           notes: string | null;
           plan_type: Database["public"]["Enums"]["diet_plan_type"];
+          source_plan_id: string | null;
           specialist_id: string | null;
           start_date: string;
           status: Database["public"]["Enums"]["diet_plan_status"];
@@ -1699,6 +1714,37 @@ export type Database = {
           remaining: number;
           retry_after_seconds: number;
         }[];
+      };
+      create_diet_plan_version: {
+        Args: { p_plan_id: string };
+        Returns: {
+          allows_supplements: boolean | null;
+          created_at: string;
+          dietary_restrictions: string[];
+          end_date: string;
+          free_meal_days: number[];
+          id: string;
+          meals_per_day: number | null;
+          name: string | null;
+          notes: string | null;
+          plan_type: Database["public"]["Enums"]["diet_plan_type"];
+          source_plan_id: string | null;
+          specialist_id: string | null;
+          start_date: string;
+          status: Database["public"]["Enums"]["diet_plan_status"];
+          student_id: string;
+          target_calories: number | null;
+          target_carbs: number | null;
+          target_fat: number | null;
+          target_protein: number | null;
+          version: number;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "diet_plans";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       devolver_proposta: {
         Args: { p_chave: string; p_session_id: string; p_valor: Json };

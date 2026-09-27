@@ -1,7 +1,11 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/shared/components/ui/Button";
 import { Dialog } from "@/shared/components/ui/Dialog";
+import { Input } from "@/shared/components/ui/Input";
 import { useDietPlans, useImportDiet } from "@/shared/hooks/useNutrition";
 import { useStudents } from "@/shared/hooks/useStudents";
 
@@ -12,9 +16,12 @@ interface ImportDietModalProps {
 }
 
 export function ImportDietModal({ isOpen, onClose, targetStudentId }: ImportDietModalProps) {
-  const alunoDeDestinoId = useId();
-  const alunoDeOrigemId = useId();
-  const planoDeDietaId = useId();
+  const router = useRouter();
+  const targetStudentFieldId = useId();
+  const sourceStudentFieldId = useId();
+  const dietPlanFieldId = useId();
+  const planNameFieldId = useId();
+  const [planName, setPlanName] = useState("");
   const [selectedSourceStudent, setSelectedSourceStudent] = useState("");
   const [selectedDietPlan, setSelectedDietPlan] = useState("");
   const [selectedTargetStudent, setSelectedTargetStudent] = useState(targetStudentId || "");
@@ -25,28 +32,30 @@ export function ImportDietModal({ isOpen, onClose, targetStudentId }: ImportDiet
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (importDietMutation.isPending) return;
 
-    if (!selectedDietPlan || !selectedTargetStudent) {
-      toast.error("Selecione um plano e um aluno de destino");
+    if (!selectedDietPlan || !selectedTargetStudent || !planName.trim()) {
+      toast.error("Selecione um plano, um aluno de destino e informe o novo nome");
       return;
     }
 
     try {
-      await importDietMutation.mutateAsync({
+      const draft = await importDietMutation.mutateAsync({
         sourceDietPlanId: selectedDietPlan,
         targetStudentId: selectedTargetStudent,
+        name: planName.trim(),
       });
 
-      // Reset form
       setSelectedSourceStudent("");
       setSelectedDietPlan("");
       setSelectedTargetStudent(targetStudentId || "");
+      setPlanName("");
       onClose();
 
-      toast.success("Dieta importada com sucesso!");
-    } catch (error: unknown) {
-      console.error("Error importing diet:", error);
-      toast.error(error instanceof Error ? error.message : "Erro ao importar dieta");
+      toast.success("Rascunho criado. Revise as refeições antes de enviar.");
+      router.push(`/dashboard/diets/${draft.id}`);
+    } catch {
+      toast.error("Não foi possível copiar a dieta. Tente novamente.");
     }
   };
 
@@ -55,15 +64,18 @@ export function ImportDietModal({ isOpen, onClose, targetStudentId }: ImportDiet
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor={alunoDeOrigemId} className="text-sm font-medium text-muted-foreground">
+            <label
+              htmlFor={sourceStudentFieldId}
+              className="text-sm font-medium text-muted-foreground"
+            >
               Aluno de Origem
             </label>
             <select
-              id={alunoDeOrigemId}
+              id={sourceStudentFieldId}
               value={selectedSourceStudent}
               onChange={(e) => {
                 setSelectedSourceStudent(e.target.value);
-                setSelectedDietPlan(""); // Reset diet plan when changing student
+                setSelectedDietPlan("");
               }}
               className="w-full bg-background border border-white/10 rounded-lg px-4 py-3 text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
               required
@@ -79,11 +91,14 @@ export function ImportDietModal({ isOpen, onClose, targetStudentId }: ImportDiet
 
           {selectedSourceStudent && (
             <div className="space-y-2">
-              <label htmlFor={planoDeDietaId} className="text-sm font-medium text-muted-foreground">
+              <label
+                htmlFor={dietPlanFieldId}
+                className="text-sm font-medium text-muted-foreground"
+              >
                 Plano de Dieta
               </label>
               <select
-                id={planoDeDietaId}
+                id={dietPlanFieldId}
                 value={selectedDietPlan}
                 onChange={(e) => setSelectedDietPlan(e.target.value)}
                 className="w-full bg-background border border-white/10 rounded-lg px-4 py-3 text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -92,7 +107,13 @@ export function ImportDietModal({ isOpen, onClose, targetStudentId }: ImportDiet
                 <option value="">Selecione um plano</option>
                 {sourceDietPlans.map((plan) => (
                   <option key={plan.id} value={plan.id}>
-                    {plan.name} ({plan.status === "active" ? "Ativo" : "Inativo"})
+                    {plan.name} (
+                    {plan.status === "active"
+                      ? "Ativo"
+                      : plan.status === "draft"
+                        ? "Rascunho"
+                        : "Finalizado"}
+                    )
                   </option>
                 ))}
               </select>
@@ -102,13 +123,13 @@ export function ImportDietModal({ isOpen, onClose, targetStudentId }: ImportDiet
           {!targetStudentId && (
             <div className="space-y-2">
               <label
-                htmlFor={alunoDeDestinoId}
+                htmlFor={targetStudentFieldId}
                 className="text-sm font-medium text-muted-foreground"
               >
                 Aluno de Destino
               </label>
               <select
-                id={alunoDeDestinoId}
+                id={targetStudentFieldId}
                 value={selectedTargetStudent}
                 onChange={(e) => setSelectedTargetStudent(e.target.value)}
                 className="w-full bg-background border border-white/10 rounded-lg px-4 py-3 text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -126,12 +147,27 @@ export function ImportDietModal({ isOpen, onClose, targetStudentId }: ImportDiet
             </div>
           )}
 
+          <div className="space-y-2">
+            <label htmlFor={planNameFieldId} className="text-sm font-medium text-muted-foreground">
+              Nome do novo plano
+            </label>
+            <Input
+              id={planNameFieldId}
+              value={planName}
+              onChange={(event) => setPlanName(event.target.value)}
+              placeholder="Ex.: Cutting fase 2"
+              required
+              disabled={importDietMutation.isPending}
+            />
+          </div>
+
           {selectedDietPlan && (
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
               <p className="text-xs text-muted-foreground mb-1">⚠️ Importante:</p>
               <p className="text-xs text-muted-foreground">
-                A dieta será copiada completamente, incluindo todas as refeições e alimentos. O
-                aluno de destino não pode ter um plano ativo.
+                Metas, refeições e alimentos serão copiados para um rascunho, sem nome, notas ou
+                restrições do aluno de origem. A dieta atual do destino continua ativa até você
+                enviar a nova.
               </p>
             </div>
           )}

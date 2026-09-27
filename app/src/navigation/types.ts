@@ -163,6 +163,8 @@ export const ROUTES = {
   // Nutrição do aluno, no desenho de vidro (#298). O member segue nas telas antigas.
   NUTRITION: {
     ROOT: '/(tabs)/nutrition',
+    /** Leitura do plano enviado; edição é uma ação explícita, em rascunho. */
+    PLAN: (id: string) => ({ pathname: '/(tabs)/nutrition/[id]', params: { id } }) as const,
     /** `data` é o dia aberto no plano: o detalhe mostra o que foi comido nele. */
     MEAL: (
       refeicaoId: string,
@@ -182,6 +184,18 @@ export const ROUTES = {
     ADHERENCE: '/(tabs)/nutrition/aderencia',
     /** O modo de preparo de uma refeição, gerado pelo assistente de receita. */
     COOKING: '/(tabs)/nutrition/cooking',
+    /**
+     * A criação de dieta em passos (#337): ponto de partida, metas, o plano com
+     * as refeições, a revisão e o envio. Os parâmetros vão por `params`.
+     */
+    WIZARD_START: '/(tabs)/nutrition/wizard/start',
+    WIZARD_GOALS: '/(tabs)/nutrition/wizard/goals',
+    WIZARD_PLAN: '/(tabs)/nutrition/wizard/plan',
+    WIZARD_MEAL: '/(tabs)/nutrition/wizard/meal',
+    WIZARD_FOOD_SEARCH: '/(tabs)/nutrition/wizard/food-search',
+    WIZARD_REVIEW: '/(tabs)/nutrition/wizard/review',
+    WIZARD_SENT: '/(tabs)/nutrition/wizard/sent',
+    WIZARD_ASSISTANT: '/(tabs)/nutrition/wizard/assistant',
   },
 
   // Telas do próprio aluno sobre os dados dele

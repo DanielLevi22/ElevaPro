@@ -1,3 +1,3 @@
-import { DietDetailsScreen } from '@/modules/nutrition/routes/index';
+import { DietPlanViewScreen } from '@/modules/nutrition/routes/index';
 
-export default DietDetailsScreen;
+export default DietPlanViewScreen;

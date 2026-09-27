@@ -22,6 +22,7 @@ on:
       - "supabase/migrations/**"
       - "supabase/seed.sql"
       - "scripts/verify-rls.sql"
+      - "scripts/verify-diet-plan-versions.sql"
   workflow_call:
   # Permite reverificar um ambiente sem push. `db push` é forward-only e a
   # verificação não escreve nada, então rodar de novo é seguro.
@@ -106,7 +107,9 @@ jobs:
       # afirma o isolamento no banco de verdade, dentro de uma transação que
       # termina em ROLLBACK.
       - name: Verificar RLS no ambiente
-        run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/verify-rls.sql
+        run: |
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/verify-rls.sql
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/verify-diet-plan-versions.sql
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
 

@@ -53,6 +53,56 @@ describe('dietWizardStore', () => {
     expect(store().macroPercent).toEqual({ protein: 30, carbs: 40, fat: 30 });
   });
 
+  it('retomar as metas não sobrescreve os ajustes com a sugestão automática', () => {
+    const suggestion = { targetCalories: 2000, macros: { protein: 150, carbs: 200, fat: 67 } };
+    store().initializeGoals('aluno-1', suggestion, ['lactose_free']);
+    store().setTargetCalories(2300);
+    store().setPreferences({ ...store().preferences, dietary_restrictions: ['vegan'] });
+
+    store().initializeGoals('aluno-1', suggestion, ['lactose_free']);
+
+    expect(store().targetCalories).toBe(2300);
+    expect(store().preferences.dietary_restrictions).toEqual(['vegan']);
+  });
+
+  it('a sugestão atrasada preserva a meta digitada e ainda preenche as restrições', () => {
+    store().setTargetCalories(2300);
+    store().initializeGoals(
+      'aluno-1',
+      {
+        targetCalories: 1800,
+        macros: { protein: 135, carbs: 180, fat: 60 },
+      },
+      ['lactose_free']
+    );
+
+    expect(store().targetCalories).toBe(2300);
+    expect(store().preferences.dietary_restrictions).toEqual(['lactose_free']);
+  });
+
+  it('ignora a sugestão que chegou depois de trocar de aluno', () => {
+    store().startFor({ studentId: 'aluno-2', studentName: 'Bia', ownPlan: false });
+    store().initializeGoals(
+      'aluno-1',
+      {
+        targetCalories: 1800,
+        macros: { protein: 135, carbs: 180, fat: 60 },
+      },
+      ['lactose_free']
+    );
+
+    expect(store().targetCalories).toBe(2000);
+    expect(store().preferences.dietary_restrictions).toEqual([]);
+    expect(store().goalsInitialized).toBe(false);
+  });
+
+  it('a resposta automática não remove preferências já escolhidas', () => {
+    store().setPreferences({ ...store().preferences, dietary_restrictions: ['vegan'] });
+    store().initializeGoals('aluno-1', null, ['lactose_free']);
+
+    expect(store().preferences.dietary_restrictions).toEqual(['vegan']);
+  });
+
   // Trocar de aluno no meio não pode levar o rascunho de um para o outro.
   it('começar para outro aluno descarta o que estava preenchido', () => {
     store().setPlanName('Cutting');
@@ -61,5 +111,15 @@ describe('dietWizardStore', () => {
     store().startFor({ studentId: 'aluno-2', studentName: 'Bia', ownPlan: false });
 
     expect(store()).toMatchObject({ studentId: 'aluno-2', planName: '', planId: null });
+  });
+});
+
+describe('dietWizardStore — vigência', () => {
+  it('começa em quatro semanas e nunca fica abaixo de uma', () => {
+    store().startFor({ studentId: 'aluno-1', studentName: 'Ana', ownPlan: false });
+    expect(store().durationWeeks).toBe(4);
+
+    store().setDurationWeeks(0);
+    expect(store().durationWeeks).toBe(1);
   });
 });

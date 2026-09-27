@@ -10,17 +10,29 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * que ele nunca volta a responder vazio quando o vazio seria mentira.
  */
 
-let rows: { id?: string; name: string; category?: string | null }[];
+let rows: {
+  id?: string;
+  name: string;
+  category?: string | null;
+  is_custom?: boolean;
+  created_by?: string;
+}[];
 let total: number;
 let queryError: unknown;
 let filtros: { eq?: [string, string]; ilike?: [string, string] };
 
 const mockFrom = vi.fn(() => {
+  let owner: string | undefined;
   const builder: Record<string, unknown> = {};
   const chain = () => builder;
   builder.select = vi.fn(chain);
   builder.order = vi.fn(chain);
   builder.limit = vi.fn(chain);
+  builder.or = (clause: string) => {
+    expect(clause).toMatch(/^is_custom\.eq\.false,created_by\.eq\./);
+    owner = clause.split("created_by.eq.")[1];
+    return builder;
+  };
   builder.eq = vi.fn((coluna: string, valor: string) => {
     filtros.eq = [coluna, valor];
     return builder;
@@ -31,7 +43,13 @@ const mockFrom = vi.fn(() => {
   });
   // biome-ignore lint/suspicious/noThenProperty: o builder do PostgREST é thenable
   builder.then = (resolve: (value: unknown) => unknown) =>
-    resolve({ data: queryError ? null : rows, error: queryError, count: total });
+    resolve({
+      data: queryError
+        ? null
+        : rows.filter((row) => !owner || row.is_custom === false || row.created_by === owner),
+      error: queryError,
+      count: total,
+    });
   return builder;
 });
 
@@ -41,6 +59,24 @@ vi.mock("@/lib/supabase-admin", () => ({
 
 const { FOOD_CATEGORIES, foodIdsByName, queryFoods, resolveFoodCategory, unknownFoodNames } =
   await import("../foodCatalog");
+
+// Art. 6°, VII: o catálogo particular de outro autor não pode atravessar o BFF service_role.
+it("não envia nem associa alimentos particulares de outro autor à proposta", async () => {
+  rows = [
+    { id: "public", name: "Arroz", is_custom: false },
+    { id: "own", name: "Receita própria", is_custom: true, created_by: "author" },
+    { id: "private", name: "Receita alheia", is_custom: true, created_by: "stranger" },
+  ];
+  expect(
+    (await queryFoods({}, "author")).foods.map((food) => food.id),
+    "CATÁLOGO EXPOSTO: IA leu alimento particular de outro autor",
+  ).toEqual(["public", "own"]);
+  expect(await unknownFoodNames(["Receita alheia"], "author")).toEqual(["Receita alheia"]);
+  expect(
+    await foodIdsByName(["Receita alheia"], "author"),
+    "ALIMENTO ALHEIO: proposta associou catálogo privado",
+  ).toEqual(new Map());
+});
 
 beforeEach(() => {
   vi.clearAllMocks();
