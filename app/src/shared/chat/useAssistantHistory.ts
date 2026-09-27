@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { BffHttpError, mensagemDeErroBff } from '@/shared/bff';
+import { BffHttpError, isConsentRequired, mensagemDeErroBff } from '@/shared/bff';
 import {
   type AssistantConversation,
   type AssistantModule,
@@ -24,6 +24,7 @@ export function useAssistantHistory(token: string, studentId: string) {
   }>({ scope, sessions: [], loading: true, error: null });
   const [pendingScope, setPendingScope] = useState<string | null>(null);
   const [deniedScope, setDeniedScope] = useState<string | null>(null);
+  const [consentScope, setConsentScope] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     const sequence = ++loadSequence.current;
@@ -38,17 +39,20 @@ export function useAssistantHistory(token: string, studentId: string) {
       const sessions = await assistantConversations.list(token, studentId);
       if (mounted.current && currentScope.current === scope && sequence === loadSequence.current) {
         setDeniedScope(null);
+        setConsentScope(null);
         setState({ scope, sessions, loading: false, error: null });
       }
     } catch (failure) {
       if (mounted.current && currentScope.current === scope && sequence === loadSequence.current) {
         const denied = failure instanceof BffHttpError && [401, 403].includes(failure.status);
         if (denied) setDeniedScope(scope);
+        const consentRequired = isConsentRequired(failure);
+        setConsentScope(consentRequired ? scope : null);
         setState((previous) => ({
           ...previous,
           sessions: [],
           loading: false,
-          error: mensagemDeErroBff(failure),
+          error: consentRequired ? null : mensagemDeErroBff(failure),
         }));
       }
     }
@@ -83,10 +87,12 @@ export function useAssistantHistory(token: string, studentId: string) {
       if (mounted.current && currentScope.current === scope) {
         const denied = failure instanceof BffHttpError && [401, 403].includes(failure.status);
         if (denied) setDeniedScope(scope);
+        const consentRequired = isConsentRequired(failure);
+        setConsentScope(consentRequired ? scope : null);
         setState((previous) => ({
           ...previous,
           sessions: denied ? [] : previous.sessions,
-          error: mensagemDeErroBff(failure),
+          error: consentRequired ? null : mensagemDeErroBff(failure),
         }));
       }
       return null;
@@ -134,6 +140,7 @@ export function useAssistantHistory(token: string, studentId: string) {
     error: state.scope === scope ? state.error : null,
     pending: pendingScope === scope,
     denied: deniedScope === scope,
+    consentRequired: consentScope === scope,
     refresh,
     create,
     rename,

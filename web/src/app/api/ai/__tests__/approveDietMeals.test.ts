@@ -147,6 +147,9 @@ it.each([
     response.status,
     "PRESCRIÇÃO INDEVIDA: aprovação autorizada fora do rascunho",
   ).toBeGreaterThanOrEqual(400);
+  if (reason === "revoked") {
+    expect(await response.json()).toMatchObject({ code: "consent_required" });
+  }
   expect(rpc, "PROPOSTA CONSUMIDA: a recusa chegou depois da reivindicação").not.toHaveBeenCalled();
   expect(state().pendingDietMeals).toEqual(proposal);
 });

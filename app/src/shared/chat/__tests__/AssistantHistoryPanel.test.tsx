@@ -86,3 +86,44 @@ it('não oferece criação nem retomada do módulo sem permissão', async () => 
   expect(screen.queryByText('Nova conversa de treino')).toBeNull();
   expect(screen.getByText('Nova conversa de nutrição')).toBeTruthy();
 });
+
+// Art. 11: o especialista não pode aceitar o tratamento em nome do titular.
+it('abre o modal de consentimento sem erro técnico nem aceite pelo especialista', async () => {
+  const logged = jest.spyOn(console, 'error').mockImplementation(() => {});
+  (global.fetch as jest.Mock).mockResolvedValue({
+    ...response({ error: 'O aluno precisa autorizar.', code: 'consent_required' }),
+    ok: false,
+    status: 403,
+  });
+  const onSelect = jest.fn();
+  render(
+    <AssistantHistoryPanel
+      token="token"
+      studentId="student"
+      canWorkout
+      canNutrition
+      onSelect={onSelect}
+      onClose={jest.fn()}
+    />
+  );
+  expect(await screen.findByText('Consentimento do aluno')).toBeTruthy();
+  expect(screen.queryByText(/\[dev\]|Não consegui falar com a IA/)).toBeNull();
+  if (screen.queryByText('Aceitar e continuar')) {
+    throw new Error('CONSENTIMENTO DE TERCEIRO: especialista recebeu ação de aceite');
+  }
+  expect(logged).not.toHaveBeenCalled();
+  fireEvent.press(screen.getByText('Agora não'));
+  expect(screen.queryByText('Nenhuma conversa ainda.')).toBeNull();
+  fireEvent.press(screen.getByText('Nova conversa de treino'));
+  expect(global.fetch).toHaveBeenCalledTimes(1);
+  expect(onSelect).not.toHaveBeenCalled();
+  fireEvent.press(screen.getByText('Ver autorização'));
+  (global.fetch as jest.Mock).mockResolvedValue(response({ sessions }));
+  fireEvent.press(screen.getByText('Verificar autorização'));
+  expect(await screen.findByText('Dieta A')).toBeTruthy();
+  expect(screen.queryByText('Consentimento do aluno')).toBeNull();
+  expect(
+    (global.fetch as jest.Mock).mock.calls.every(([, options]) => options.method === 'GET')
+  ).toBe(true);
+  logged.mockRestore();
+});

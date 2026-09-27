@@ -27,6 +27,7 @@ export const nutritionApprovalAccess: Acesso = async (request, params) => {
       ok: false,
       response: NextResponse.json(
         {
+          code: error instanceof NutritionChatError ? error.code : undefined,
           error:
             error instanceof NutritionChatError
               ? error.message

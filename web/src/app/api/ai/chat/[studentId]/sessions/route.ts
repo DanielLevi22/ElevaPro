@@ -25,6 +25,7 @@ async function authorizeHistory(request: NextRequest, studentId: string): Promis
       ok: false,
       response: NextResponse.json(
         {
+          code: failure instanceof NutritionChatError ? failure.code : undefined,
           error:
             failure instanceof NutritionChatError
               ? failure.message

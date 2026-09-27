@@ -20,11 +20,36 @@ it.each([401, 403])('limpa títulos e bloqueia ações quando perde acesso (%s)'
     await result.current.rename('diet', 'Não permitido');
   });
   expect(result.current.sessions).toEqual([]);
+  expect(result.current.consentRequired).toBe(false);
+  expect(result.current.error).toBeTruthy();
   await act(async () => {
     expect(await result.current.create('nutrition')).toBeNull();
   });
   expect(global.fetch).toHaveBeenCalledTimes(2);
 });
+// Art. 11: revogação impede uso das conversas, inclusive nas ações do histórico.
+it('retira títulos ao exigir consentimento e só libera após confirmação do servidor', async () => {
+  const { result } = renderHook(() => useAssistantHistory('token', 'student'));
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  (global.fetch as jest.Mock).mockResolvedValueOnce(response({ code: 'consent_required' }, 403));
+  await act(async () => {
+    await result.current.archive('diet');
+  });
+  expect(result.current.consentRequired).toBe(true);
+  expect(result.current.sessions).toEqual([]);
+  expect(result.current.error).toBeNull();
+  await act(async () => {
+    expect(await result.current.create('workout')).toBeNull();
+  });
+  expect(global.fetch).toHaveBeenCalledTimes(2);
+  await act(async () => {
+    await result.current.refresh();
+  });
+  expect(result.current.consentRequired).toBe(false);
+  expect(result.current.denied).toBe(false);
+  expect(result.current.sessions).toHaveLength(2);
+});
+
 beforeEach(() => {
   process.env.EXPO_PUBLIC_API_URL = 'https://example.test';
   global.fetch = jest.fn().mockResolvedValue(response({ sessions }));

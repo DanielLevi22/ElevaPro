@@ -388,11 +388,12 @@ export async function fetchBff(
  * com `error` OBJETO — `{ code, message }` —, e interpolar objeto em string
  * produz `"[object Object]"` na tela do usuário.
  */
-function codigoDoErro(corpo: { error?: unknown } | null): string | undefined {
-  const erro = corpo?.error;
-  if (typeof erro === 'string') return erro;
-  if (typeof erro === 'object' && erro !== null) {
-    const code = (erro as { code?: unknown }).code;
+function errorCode(body: { error?: unknown; code?: unknown } | null): string | undefined {
+  if (typeof body?.code === 'string') return body.code;
+  const error = body?.error;
+  if (typeof error === 'string') return error;
+  if (typeof error === 'object' && error !== null) {
+    const code = (error as { code?: unknown }).code;
     if (typeof code === 'string') return code;
   }
   return undefined;
@@ -409,7 +410,7 @@ export async function postBff<T>(
   // Depois do parse, e não antes: o código de erro que a rota devolveu está no
   // corpo, e é ele que vira mensagem para o aluno. Checar `ok` primeiro jogaria
   // essa informação fora.
-  if (!response.ok) throw new BffHttpError(path, response.status, codigoDoErro(corpo));
+  if (!response.ok) throw new BffHttpError(path, response.status, errorCode(corpo));
 
   return corpo;
 }
@@ -469,7 +470,7 @@ export async function getBff<T>(
   }
 
   const corpo = await lerRespostaBff<T & { error?: unknown }>(response, url);
-  if (!response.ok) throw new BffHttpError(path, response.status, codigoDoErro(corpo));
+  if (!response.ok) throw new BffHttpError(path, response.status, errorCode(corpo));
 
   return corpo;
 }

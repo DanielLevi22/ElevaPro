@@ -6,6 +6,7 @@ export class NutritionChatError extends Error {
   constructor(
     message: string,
     public readonly status: number,
+    public readonly code?: "consent_required",
   ) {
     super(message);
   }
@@ -23,7 +24,11 @@ export async function requireNutritionConsent(studentId: string): Promise<void> 
     .maybeSingle();
   if (error) throw new NutritionChatError("Não foi possível conferir a autorização.", 503);
   if (!consent?.given_at || consent.revoked_at) {
-    throw new NutritionChatError("O aluno precisa autorizar o uso dos dados de saúde.", 403);
+    throw new NutritionChatError(
+      "O aluno precisa autorizar o uso dos dados de saúde.",
+      403,
+      "consent_required",
+    );
   }
 }
 

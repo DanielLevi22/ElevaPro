@@ -1,6 +1,6 @@
 import type { ChatMessage, DietMealsProposal, DietPlanProposal } from '@elevapro/shared';
 import { useEffect, useRef, useState } from 'react';
-import { mensagemDeErroBff } from '@/shared/bff';
+import { isConsentRequired, mensagemDeErroBff } from '@/shared/bff';
 import { useChatConversation } from '@/shared/chat/useChatConversation';
 import { NutritionChatService } from '../services/NutritionChatService';
 
@@ -17,6 +17,7 @@ export interface NutritionAssistantChat {
   mealsProposal: ProposalState<DietMealsProposal> | null;
   saving: boolean;
   error: string | null;
+  consentRequired: boolean;
   planId: string | null;
   readOnly: boolean;
   retry: () => void;
@@ -62,6 +63,7 @@ export function useNutritionAssistantChat({
   const [saving, setSaving] = useState(false);
   const [readOnly, setReadOnly] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [consentRequired, setConsentRequired] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [savedPlanId, setSavedPlanId] = useState<string | null>(planId ?? null);
   const resolvedSession = useRef<string | null>(null);
@@ -70,17 +72,30 @@ export function useNutritionAssistantChat({
   const mounted = useRef(true);
   const authenticated = Boolean(token);
 
+  function handleConsentFailure(failure: unknown): boolean {
+    if (!isConsentRequired(failure)) return false;
+    if (mounted.current) {
+      setConsentRequired(true);
+      setError(null);
+      setPlan(null);
+      setMeals(null);
+      chat.load([]);
+    }
+    return true;
+  }
+
   // A tela remonta por aluno/rascunho; callbacks do wizard não reiniciam a conversa.
   // biome-ignore lint/correctness/useExhaustiveDependencies: sessão resolvida altera o wizard, não o destino da conversa
   useEffect(() => {
     let cancelled = false;
     mounted.current = true;
-    resolvedSession.current = null;
+    const retrySession = resolvedSession.current ?? sessionId;
     setInitializing(true);
     setError(null);
-    NutritionChatService.loadSession(token, studentId, sessionId ?? undefined, planId)
+    NutritionChatService.loadSession(token, studentId, retrySession ?? undefined, planId)
       .then((session) => {
         if (cancelled) return;
+        setConsentRequired(false);
         resolvedSession.current = session.sessionId;
         resolvedPlan.current = session.savedPlanId ?? planId;
         setSavedPlanId(session.savedPlanId ?? planId ?? null);
@@ -95,7 +110,10 @@ export function useNutritionAssistantChat({
         );
       })
       .catch((failure: unknown) => {
-        if (!cancelled) setError(mensagemDeErroBff(failure));
+        if (!cancelled && !handleConsentFailure(failure)) {
+          setConsentRequired(false);
+          setError(mensagemDeErroBff(failure));
+        }
       })
       .finally(() => !cancelled && setInitializing(false));
     return () => {
@@ -104,7 +122,8 @@ export function useNutritionAssistantChat({
     };
   }, [authenticated, studentId, attempt]);
 
-  const blocked = () => initializing || !!error || busy.current || !resolvedSession.current;
+  const blocked = () =>
+    initializing || consentRequired || !!error || busy.current || !resolvedSession.current;
 
   const sendMessage = (text: string) => {
     if (blocked() || !text.trim()) return;
@@ -126,7 +145,9 @@ export function useNutritionAssistantChat({
             else if (event.type === 'error') fail(event.message);
           },
           resolvedPlan.current
-        )
+        ).catch((failure: unknown) => {
+          if (!handleConsentFailure(failure)) throw failure;
+        })
       )
       .finally(() => {
         busy.current = false;
@@ -139,8 +160,8 @@ export function useNutritionAssistantChat({
     setSaving(true);
     try {
       await work();
-    } catch {
-      chat.say(failure);
+    } catch (error: unknown) {
+      if (!handleConsentFailure(error) && mounted.current) chat.say(failure);
     } finally {
       busy.current = false;
       setSaving(false);
@@ -178,14 +199,15 @@ export function useNutritionAssistantChat({
     }, 'Não consegui salvar as refeições agora. Tente de novo.');
 
   return {
-    messages: chat.messages,
+    messages: consentRequired ? [] : chat.messages,
     initializing,
     responding: chat.responding,
     planProposal: plan,
     mealsProposal: meals,
     saving,
     error,
-    planId: savedPlanId,
+    consentRequired,
+    planId: consentRequired ? null : savedPlanId,
     readOnly,
     retry: () => setAttempt((current) => current + 1),
     sendMessage,

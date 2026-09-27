@@ -111,3 +111,49 @@ it('erro ao aprovar mantém a proposta disponível para nova tentativa', async (
   });
   await waitFor(() => expect(result.current.mealsProposal?.saved).toBe(true));
 });
+
+it('exige consentimento sem erro técnico e retoma depois da autorização', async () => {
+  (global.fetch as jest.Mock).mockResolvedValueOnce(response({ code: 'consent_required' }, 403));
+  const { result } = renderHook(() => useNutritionAssistantChat(options));
+  await waitFor(() => expect(result.current.initializing).toBe(false));
+  expect(result.current.consentRequired).toBe(true);
+  expect(result.current.error).toBeNull();
+  expect(result.current.messages).toEqual([]);
+  act(() => result.current.sendMessage('Montar'));
+  expect(global.fetch).toHaveBeenCalledTimes(1);
+  act(() => result.current.retry());
+  await waitFor(() => expect(result.current.consentRequired).toBe(false));
+  expect(result.current.mealsProposal).not.toBeNull();
+});
+
+it.each([
+  'approve',
+  'send',
+])('retira o conteúdo e pede consentimento se revogado durante %s', async (action) => {
+  const { result } = renderHook(() => useNutritionAssistantChat(options));
+  await waitFor(() => expect(result.current.initializing).toBe(false));
+  (global.fetch as jest.Mock).mockResolvedValueOnce(response({ code: 'consent_required' }, 403));
+  await act(async () => {
+    if (action === 'approve') result.current.approveMeals();
+    else result.current.sendMessage('Montar refeições');
+  });
+  await waitFor(() => expect(result.current.consentRequired).toBe(true));
+  expect(result.current.messages).toEqual([]);
+  expect(result.current.mealsProposal).toBeNull();
+  expect(result.current.error).toBeNull();
+  act(() => {
+    result.current.approveMeals();
+    result.current.sendMessage('Tentar');
+  });
+  expect(global.fetch).toHaveBeenCalledTimes(2);
+  (global.fetch as jest.Mock).mockResolvedValueOnce(response({ code: 'consent_required' }, 403));
+  await act(async () => {
+    result.current.retry();
+  });
+  await waitFor(() => expect(result.current.initializing).toBe(false));
+  expect(result.current.consentRequired).toBe(true);
+  act(() => result.current.retry());
+  await waitFor(() => expect(result.current.consentRequired).toBe(false));
+  expect((global.fetch as jest.Mock).mock.calls[2][0]).toContain('sessionId=draft-chat');
+  expect((global.fetch as jest.Mock).mock.calls[3][0]).toContain('sessionId=draft-chat');
+});

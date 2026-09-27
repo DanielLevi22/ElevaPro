@@ -38,6 +38,7 @@ export const maxDuration = 60;
 function scopeFailure(error: unknown) {
   return NextResponse.json(
     {
+      code: error instanceof NutritionChatError ? error.code : undefined,
       error:
         error instanceof NutritionChatError ? error.message : "Não foi possível abrir a conversa.",
     },

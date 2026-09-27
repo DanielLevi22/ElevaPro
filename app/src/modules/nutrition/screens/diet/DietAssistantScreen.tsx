@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useRef } from 'react';
 import { KeyboardAvoidingView, Platform, Text, View } from 'react-native';
 import { useAuthStore } from '@/auth';
+import { StudentConsentNotice } from '@/components/consent/StudentConsentNotice';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
 import { GlassScreen } from '@/components/ui/GlassScreen';
 import { Row } from '@/components/ui/Row';
@@ -99,7 +100,8 @@ function DietAssistantConversation({
       if (ownsWizard()) wizard.setCreatedPlan(id);
     },
   });
-  const blocked = chat.initializing || chat.responding || chat.saving || !!chat.error;
+  const blocked =
+    chat.initializing || chat.responding || chat.saving || chat.consentRequired || !!chat.error;
 
   const openPlan = () =>
     chat.planId &&
@@ -137,6 +139,9 @@ function DietAssistantConversation({
           </Text>
         )}
         {chat.initializing && <Text className="mt-4 text-muted-foreground">Abrindo conversa…</Text>}
+        {chat.consentRequired && (
+          <StudentConsentNotice busy={chat.initializing} onCheck={chat.retry} />
+        )}
         {chat.error && (
           <Vidro className="mt-3 p-4">
             <Text accessibilityRole="alert" className="text-foreground">

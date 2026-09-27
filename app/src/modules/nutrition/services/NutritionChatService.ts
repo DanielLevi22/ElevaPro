@@ -5,7 +5,7 @@ import {
   type DietSseEvent,
   readSseStream,
 } from '@elevapro/shared';
-import { fetchBff, getBff, postBff } from '@/shared/bff';
+import { BffHttpError, fetchBff, getBff, lerRespostaBff, postBff } from '@/shared/bff';
 
 /**
  * O chat de nutrição do especialista, o mesmo do web
@@ -54,12 +54,15 @@ export const NutritionChatService = {
     onEvent: (event: DietSseEvent) => void,
     planId?: string
   ): Promise<void> => {
-    const { response } = await fetchBff(
+    const { response, url } = await fetchBff(
       base(studentId),
       { message, sessionId, ...(planId ? { planId } : {}) },
       { token, timeoutMs: CHAT_TIMEOUT_MS }
     );
-    if (!response.ok) throw new Error(`Chat de nutrição respondeu ${response.status}`);
+    if (!response.ok) {
+      const failure = await lerRespostaBff<{ code?: string }>(response, url);
+      throw new BffHttpError(base(studentId), response.status, failure.code);
+    }
     if (!response.body) throw new Error('Chat de nutrição respondeu sem corpo de stream');
     await readSseStream<DietSseEvent>(response.body, onEvent);
   },

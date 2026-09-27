@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { FlatList, Text, TextInput, View } from 'react-native';
+import { StudentConsentNotice } from '@/components/consent/StudentConsentNotice';
 import { AlvoDoVidro } from '@/components/ui/AlvoDoVidro';
 import { BRILHO_DA_NUTRICAO, BrilhoAmbiente } from '@/components/ui/BrilhoAmbiente';
 import { Row } from '@/components/ui/Row';
@@ -85,10 +86,13 @@ export function AssistantHistoryPanel({
                   />
                 </Vidro>
               )}
+              {history.consentRequired && (
+                <StudentConsentNotice busy={blocked} onCheck={() => void history.refresh()} />
+              )}
             </View>
           }
           ListEmptyComponent={
-            !history.loading && !history.error ? (
+            !history.loading && !history.error && !history.consentRequired ? (
               <Text className="mt-4 text-muted-foreground">Nenhuma conversa ainda.</Text>
             ) : null
           }

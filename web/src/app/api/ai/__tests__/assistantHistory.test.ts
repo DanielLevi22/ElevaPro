@@ -155,6 +155,9 @@ it.each([
       response.status,
       "HISTÓRICO EXPOSTO: acesso sem vínculo/consentimento",
     ).toBeGreaterThanOrEqual(400);
+    if (reason === "revoked" || reason === "missing-consent") {
+      expect(await response.json()).toMatchObject({ code: "consent_required" });
+    }
   }
 });
 
