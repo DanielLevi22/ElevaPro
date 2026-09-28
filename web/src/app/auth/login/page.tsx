@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { hasCurrentMfaAssurance, useAuthStore } from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
+import { PasswordInput } from "@/shared/components/ui/PasswordInput";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -126,10 +127,9 @@ export default function LoginPage() {
                 <label htmlFor="password" className="block text-sm font-medium text-foreground">
                   Senha
                 </label>
-                <input
+                <PasswordInput
                   id="password"
                   name="password"
-                  type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

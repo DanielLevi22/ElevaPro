@@ -21,7 +21,7 @@ ao repositório antes de declarar cobertura.
 | IDN-03 | Vínculo `student_specialists` e masquerade | não verificado | RLS + BFF + teste vinculado/não vinculado | por mudança |
 | WEB-01 | Web pública, layout, proxy e cookies | não verificado | `web/src/proxy.ts`, headers/CSP/CORS e teste de sessão | por release |
 | WEB-02 | Páginas autenticadas e Server Components | não verificado | `page-auth`, serviços e teste de acesso direto | por mudança |
-| API-01 | As 27 rotas `web/src/app/api/**` | não verificado | inventário de rota, schema, autorização, rate limit e teste | por rota/mudança |
+| API-01 | As 29 rotas `web/src/app/api/**` | não verificado | inventário de rota, schema, autorização, rate limit e teste | por rota/mudança |
 | API-02 | Rotas públicas de cadastro | não verificado | validação, anti-enumeração, limite e teste de abuso | por mudança |
 | API-03 | Rotas com `service_role` | não verificado | `api-auth`, autorização específica e teste negativo | por rota/mudança |
 | API-04 | SSE/streaming, erros e respostas | não verificado | limite, cancelamento, redaction e teste de payload | por mudança |
@@ -49,7 +49,8 @@ ao repositório antes de declarar cobertura.
 
 ## Rodada #322 — evidência coletada, revisão pendente
 
-Data 2026-09-18, branch `feature/322-fundacao-de-seguranca-auditavel-limites-redactio`.
+Coleta inicial em 2026-09-18 na branch `feature/322-fundacao-de-seguranca-auditavel-limites-redactio`;
+complemento em 2026-09-27 na branch `development`, ainda sem publicação ou revisão humana.
 Nenhuma linha acima muda de estado: toda linha tocada ainda tem lacuna, e `verificado` exige
 revisor humano, que está pendente. A evidência abaixo é reexecutável e fica anexada à
 revisão. Os comandos do banco rodam contra o Supabase local ou, pelo workflow, contra
@@ -57,11 +58,11 @@ o preview.
 
 | ID | Evidência reexecutável (positivo e negativo) | O que falta para `verificado` |
 | --- | --- | --- |
-| API-01 | As 20 rotas de `/api/ai/**` passam pelo `withAiRoute`: limite de corpo e rate limit durável antes do handler; usuário autenticado é limitado pelo pseudônimo do ator e tentativa anônima pela origem (`web/src/lib/__tests__/ai-route.test.ts`, `rate-limit.test.ts`, `request-body-limit.test.ts`) | As outras 7 rotas não têm limite; falta inventário de schema e autorização por rota |
-| API-02 | Cadastro: corpo acima de 32 KiB → 413 antes do Auth e 6ª tentativa por origem → 429 (`web/src/app/api/auth/__tests__/register.test.ts`, `web/src/lib/__tests__/rate-limit.test.ts`); política de senha em `shared/src/auth/password-policy` | **Enumeração aberta:** a resposta diz que o e-mail já tem conta; o limite de 5/h só atenua. Decisão de UX pendente |
-| API-04 | Erro de banco e de modelo sai do BFF só como `name`/`code` (`logger.test.ts`, "não deixa e-mail escapar pelo details") | Limites e cancelamento do SSE sem teste; CSP/HSTS ausentes em `web/next.config.ts` |
-| DB-02 | `scripts/verify-rls.sql`: funções de trigger/event trigger sem `EXECUTE` para papéis da aplicação, `search_path` fixo e RPCs de limite/trilha só para `service_role` (`0060`, `0061`, `0066`, `0070`) | Inventário completo de funções e ownership |
-| AUD-01 | `verify-rls.sql`: cliente não lê a trilha, BFF sem DML, retenção de 365 dias por `pg_cron`, eventos de consentimento/vínculo/papel nascem no banco, pseudônimo com chave do Vault e nenhum UUID de pessoa em `resource_id`. Prova negativa feita em 2026-09-18: hash sem chave, RPC aceitando UUID e trigger gravando UUID fazem o script falhar | Consulta de investigação documentada; eventos de MFA ficam no Auth Audit Log do Supabase (#323) |
+| API-01 | As 20 rotas de `/api/ai/**` passam pelo `withAiRoute`: limite de corpo e rate limit durável antes do handler; usuário autenticado é limitado pelo pseudônimo do ator e tentativa anônima pela origem (`web/src/lib/__tests__/ai-route.test.ts`, `rate-limit.test.ts`, `request-body-limit.test.ts`) | Das outras 9 rotas, os dois cadastros públicos têm guardas próprios; sete não têm limite. Falta inventário de schema e autorização por rota |
+| API-02 | Cadastro: corpo acima de 32 KiB → 413 antes do Auth; o teste da rota prova que a decisão 429 impede criar conta e preserva `Retry-After`/`X-Request-Id` (`web/src/app/api/auth/__tests__/register.test.ts`). A política 5/h está em `web/src/lib/rate-limit.ts` | Falta executar sequência real de seis chamadas no ambiente. **Enumeração aberta:** a resposta diz que o e-mail já tem conta; o limite só atenua. Decisão de UX pendente |
+| API-04 | Erro de banco e de modelo sai do BFF só como `name`/`code` (`logger.test.ts`, "não deixa e-mail escapar pelo details"); HSTS e CSP configurados em `web/next.config.ts` | Testar CSP contra o preview e reduzir `unsafe-inline` com nonce sem quebrar páginas estáticas; limites e cancelamento do SSE sem teste de rota |
+| DB-02 | `scripts/verify-rls.sql`: funções de trigger/event trigger sem `EXECUTE` para papéis da aplicação, `search_path` fixo e RPCs de limite/trilha só para `service_role` (`0060`, `0061`, `0066`, `0070`, `0077`). O teste novo de `consume_rate_limit` prova teto, recusa e janela nova em transação com rollback (preview pendente) | Inventário completo de funções e ownership; executar o teste novo no banco preview |
+| AUD-01 | `verify-rls.sql`: cliente não lê a trilha, BFF sem DML, retenção de 365 dias por `pg_cron`, eventos de consentimento/vínculo/papel nascem no banco, pseudônimo com chave do Vault e nenhum UUID de pessoa em `resource_id`. Prova negativa feita em 2026-09-18: hash sem chave, RPC aceitando UUID e trigger gravando UUID fazem o script falhar. A migration `0077` muda o aceite de convite para a troca real de senha no Auth, testada em `verify-rls.sql` (ainda não executado no preview). Consulta de investigação em `docs/security/audit-investigation.md`; o aceite nasce no Auth e não tem `trace_id`, sendo correlacionado por `subject_hash` e horário com os Auth Audit Logs | Reexecutar no preview; eventos de MFA ficam no Auth Audit Log do Supabase (#323) |
 | OBS-01 | `web/src/lib/logger.ts` redige credencial, e-mail em qualquer valor, medidas e corpo de erro do banco; as rotas da API não usam mais `console.*` (`logger.test.ts`) | Logs de `web/src` fora da API, mobile e crash reporting |
 | OBS-02 | `rate_limit.decision` emite política, `allowed`/`denied`, saldo e `trace_id`, sem origem ou dados pessoais (`rate-limit.test.ts`) | Exportador/alerta operacional fora deste corte |
 

@@ -1,9 +1,11 @@
+import { NextResponse } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../rate-limit", () => ({ enforceRateLimit: vi.fn().mockResolvedValue(null) }));
 vi.mock("../api-auth", () => ({ authenticatedUserId: vi.fn().mockResolvedValue(null) }));
 
 import { withAiRoute } from "../ai-route";
+import { enforceRateLimit } from "../rate-limit";
 
 const CONTEXTO = { params: Promise.resolve({}) };
 
@@ -25,6 +27,7 @@ let original: NodeJS.ProcessEnv;
 beforeEach(() => {
   original = { ...process.env };
   Object.assign(process.env, AMBIENTE_COMPLETO);
+  vi.mocked(enforceRateLimit).mockResolvedValue(null);
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
@@ -34,6 +37,22 @@ afterEach(() => {
 });
 
 describe("withAiRoute", () => {
+  it("recusa com 429 e request ID antes de executar a rota", async () => {
+    const routeAction = vi.fn(async () => Response.json({ reply: "não executar" }));
+    vi.mocked(enforceRateLimit).mockResolvedValue(
+      NextResponse.json(
+        { error: "rate_limit_exceeded" },
+        { status: 429, headers: { "Retry-After": "17" } },
+      ),
+    );
+
+    const response = await withAiRoute(routeAction)(req(), CONTEXTO);
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("17");
+    expect(response.headers.get("X-Request-Id")).toMatch(/^[0-9a-f]{32}$/);
+    expect(routeAction).not.toHaveBeenCalled();
+  });
   it("deixa a resposta do handler passar intacta", async () => {
     const rota = withAiRoute(async () => Response.json({ reply: "oi" }));
 

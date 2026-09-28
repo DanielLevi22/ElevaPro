@@ -24,23 +24,12 @@ describe("POST /api/auth/accept-invite", () => {
     vi.clearAllMocks();
   });
 
-  // O evento basta para investigar sem virar um segundo acervo de dado
-  // pessoal: nenhum e-mail, nome ou token do titular entra nele.
-  it("registra o convite aceito sem e-mail, nome ou token no evento", async () => {
+  // Uma chamada autenticada não prova troca de senha; só o trigger do Auth pode
+  // registrar a evidência. LGPD, art. 6º, X.
+  it("não permite forjar aceite de convite com chamada direta", async () => {
     const res = await POST(request());
 
     expect(res.status).toBe(200);
-    expect(recordSecurityAuditEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        eventType: "identity.invite.accepted",
-        outcome: "succeeded",
-        actorId: "aluno-9",
-        subjectId: "aluno-9",
-        resourceType: "account",
-      }),
-    );
-    const [event] = recordSecurityAuditEvent.mock.calls[0];
-    expect(event).not.toHaveProperty("email");
-    expect(event).not.toHaveProperty("token");
+    expect(recordSecurityAuditEvent).not.toHaveBeenCalled();
   });
 });

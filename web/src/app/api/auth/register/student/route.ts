@@ -8,7 +8,7 @@ import { attachTraceId } from "@/lib/trace";
 import {
   memberRegistrationRequestSchema,
   provisionMemberRegistration,
-} from "@/modules/auth/services";
+} from "@/modules/auth/services/server";
 
 export async function POST(request: Request) {
   const guard = await guardPublicRegistration(request);

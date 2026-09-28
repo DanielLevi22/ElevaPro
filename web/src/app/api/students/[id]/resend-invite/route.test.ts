@@ -73,7 +73,7 @@ describe("POST /api/students/:id/resend-invite", () => {
   });
 
   it("registra o reenvio sem e-mail nem nome no evento", async () => {
-    await POST(request(), params);
+    const response = await POST(request(), params);
 
     expect(recordSecurityAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -85,6 +85,7 @@ describe("POST /api/students/:id/resend-invite", () => {
       }),
     );
     const [event] = recordSecurityAuditEvent.mock.calls[0];
+    expect(event.traceId).toBe(response.headers.get("X-Request-Id"));
     expect(event).not.toHaveProperty("email");
     expect(event).not.toHaveProperty("full_name");
   });

@@ -9,7 +9,6 @@ web/src/app/admin/page.tsx 1
 web/src/app/api/ai/chat/[studentId]/save-workouts/route.ts 2
 web/src/app/api/ai/student/nutribot/route.ts 3
 web/src/app/api/auth/ensure-profile/route.ts 1
-web/src/app/api/students/route.ts 1
 web/src/app/dashboard/briefing/page.tsx 1
 web/src/app/dashboard/workouts/actions.ts 3
 web/src/app/dashboard/workouts/page.tsx 1

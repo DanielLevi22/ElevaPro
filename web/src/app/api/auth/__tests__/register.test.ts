@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "../register/route";
 import { POST as studentPost } from "../register/student/route";
@@ -58,6 +59,22 @@ beforeEach(() => {
 });
 
 describe("POST /api/auth/register", () => {
+  it("bloqueia os dois cadastros com 429 antes de criar conta", async () => {
+    enforceRateLimit.mockResolvedValue(
+      NextResponse.json(
+        { error: "rate_limit_exceeded" },
+        { status: 429, headers: { "Retry-After": "60" } },
+      ),
+    );
+
+    for (const route of [POST, studentPost]) {
+      const response = await route(request(VALID));
+      expect(response.status).toBe(429);
+      expect(response.headers.get("Retry-After")).toBe("60");
+      expect(response.headers.get("X-Request-Id")).toMatch(/^[0-9a-f]{32}$/);
+    }
+    expect(createUser).not.toHaveBeenCalled();
+  });
   it("conclui cadastro member sem inserir o perfil novamente", async () => {
     const response = await studentPost(
       request({

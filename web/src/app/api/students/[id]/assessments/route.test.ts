@@ -51,6 +51,9 @@ describe("GET /api/students/:id/assessments", () => {
     );
     // O ID do aluno só pode chegar como titular, que o banco pseudonimiza.
     expect(recordSecurityAuditEvent.mock.calls[0][0]).not.toHaveProperty("resourceId");
+    expect(recordSecurityAuditEvent.mock.calls[0][0].traceId).toBe(
+      response.headers.get("X-Request-Id"),
+    );
   });
 
   it("não registra leitura quando a coleção está vazia", async () => {

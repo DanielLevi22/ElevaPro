@@ -4,6 +4,7 @@ import { authorizeLinkedSpecialist } from "@/lib/api-auth";
 import { logger } from "@/lib/logger";
 import { recordSecurityAuditEvent } from "@/lib/security-audit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { attachTraceId, traceIdForRequest } from "@/lib/trace";
 
 /**
  * Reenvia o convite de um aluno ainda `invited` (ADR-0035). Mesmo mecanismo
@@ -12,6 +13,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
  * como duplicata.
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const traceId = traceIdForRequest(request);
   try {
     const { id: studentId } = await params;
     const auth = await authorizeLinkedSpecialist(request, studentId);
@@ -49,9 +51,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       actorId: caller.id,
       subjectId: studentId,
       resourceType: "account",
+      traceId,
     });
 
-    return NextResponse.json({ success: true });
+    return attachTraceId(NextResponse.json({ success: true }), traceId);
   } catch (error) {
     logger.error("students.resend_invite_failed", { error });
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
