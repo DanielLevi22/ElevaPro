@@ -64,7 +64,10 @@ export async function POST(request: NextRequest) {
     // de saúde, não algo combinado entre duas pessoas.
     const { data: invited, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       email,
-      { data: { full_name: fullName, account_type: "student" } },
+      {
+        data: { full_name: fullName, account_type: "student" },
+        redirectTo: new URL("/auth/reset-password", request.url).toString(),
+      },
     );
 
     if (inviteError) {
