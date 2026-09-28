@@ -10,6 +10,7 @@ const { inviteUserByEmail } = vi.hoisted(() => ({
 }));
 
 let specialistServiceRows: Array<{ service_type: string }>;
+let specialistServiceError: { message: string } | null;
 let studentSpecialistInserts: Array<Record<string, unknown>>;
 
 vi.mock("@/lib/api-auth", () => ({
@@ -29,7 +30,7 @@ vi.mock("@/lib/supabase-admin", () => ({
       if (table === "specialist_services") {
         return {
           select: () => ({
-            eq: async () => ({ data: specialistServiceRows, error: null }),
+            eq: async () => ({ data: specialistServiceRows, error: specialistServiceError }),
           }),
         };
       }
@@ -58,6 +59,7 @@ function request(body: unknown): NextRequest {
 describe("POST /api/students", () => {
   beforeEach(() => {
     specialistServiceRows = [{ service_type: "personal_training" }];
+    specialistServiceError = null;
     studentSpecialistInserts = [];
     vi.clearAllMocks();
     inviteUserByEmail.mockResolvedValue({
@@ -117,10 +119,53 @@ describe("POST /api/students", () => {
     );
 
     expect(res.status).toBe(422);
+    expect(res.headers.get("X-Request-Id")).toMatch(/^[0-9a-f]{32}$/);
     const json = await res.json();
     expect(json.error).toContain("nutrition_consulting");
     expect(inviteUserByEmail).not.toHaveBeenCalled();
     expect(studentSpecialistInserts).toEqual([]);
+  });
+
+  it("não confunde falha na consulta de serviços com serviço não oferecido", async () => {
+    specialistServiceError = { message: "database unavailable" };
+
+    const res = await POST(
+      request({
+        fullName: "Marina Alves",
+        email: "marina@exemplo.com",
+        serviceTypes: ["personal_training"],
+      }),
+    );
+
+    expect(res.status).toBe(500);
+    expect(res.headers.get("X-Request-Id")).toMatch(/^[0-9a-f]{32}$/);
+    expect(inviteUserByEmail).not.toHaveBeenCalled();
+  });
+
+  it("inclui o identificador da requisição quando o convite é recusado", async () => {
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    inviteUserByEmail.mockResolvedValue({
+      data: { user: null },
+      error: { message: "User already registered", code: "email_exists" },
+    });
+
+    const res = await POST(
+      request({
+        fullName: "Marina Alves",
+        email: "marina@exemplo.com",
+        serviceTypes: ["personal_training"],
+      }),
+    );
+
+    expect(res.status).toBe(422);
+    expect(res.headers.get("X-Request-Id")).toMatch(/^[0-9a-f]{32}$/);
+    expect((await res.json()).error).toBe("Email já cadastrado");
+    expect(JSON.parse(String(warning.mock.calls[0]?.[0]))).toMatchObject({
+      event: "students.invite_rejected",
+      error: { code: "email_exists" },
+      traceId: res.headers.get("X-Request-Id"),
+    });
+    warning.mockRestore();
   });
 
   // Tipo válido cria o vínculo em student_specialists — a criação de conta e
@@ -158,7 +203,7 @@ describe("POST /api/students", () => {
   // O evento precisa bastar para investigar sem virar um segundo acervo de
   // dado pessoal — nome e e-mail do aluno não pertencem à trilha de auditoria.
   it("registra o convite sem e-mail nem nome do aluno no evento", async () => {
-    await POST(
+    const response = await POST(
       request({
         fullName: "Marina Alves",
         email: "marina@exemplo.com",
@@ -176,6 +221,7 @@ describe("POST /api/students", () => {
       }),
     );
     const [event] = recordSecurityAuditEvent.mock.calls[0];
+    expect(event.traceId).toBe(response.headers.get("X-Request-Id"));
     expect(event).not.toHaveProperty("email");
     expect(event).not.toHaveProperty("fullName");
     expect(event).not.toHaveProperty("full_name");

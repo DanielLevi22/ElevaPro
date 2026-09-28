@@ -191,9 +191,8 @@ export const createAuthService = (supabase: SupabaseClient, apiBaseUrl = "") => 
    * A sessão já existe quando esta função roda — veio do link do e-mail, que o
    * Supabase troca por sessão antes da tela abrir. Aqui só falta a senha.
    *
-   * O registro de auditoria (`identity.invite.accepted`) é evidência, não
-   * requisito de negócio: uma falha de rede nele nunca desfaz a troca de senha
-   * que já aconteceu.
+   * A evidência `identity.invite.accepted` nasce no banco quando o Auth muda a
+   * senha. A chamada ao BFF permanece para clientes antigos, sem gerar evento.
    *
    * @example
    * const resultado = await authService.completeAccountInvite(novaSenha);
@@ -219,8 +218,7 @@ export const createAuthService = (supabase: SupabaseClient, apiBaseUrl = "") => 
         });
       }
     } catch {
-      // Sem `catch` aqui a troca de senha, já bem-sucedida, apareceria como
-      // falha inteira por causa só do registro de auditoria.
+      // A confirmação de compatibilidade não pode desfazer a senha já salva.
     }
 
     return { success: true };

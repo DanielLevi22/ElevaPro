@@ -94,13 +94,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoading: false,
         });
       } catch (error) {
-        // Profile not found in DB — user exists in Auth but has no profile row.
-        // Sign out to prevent a broken session state.
-        console.error("Failed to load user profile, signing out:", error);
-        await supabase.auth.signOut();
+        // Falha temporária de leitura não revoga a sessão válida do Auth. Sem
+        // contexto, nenhuma permissão é concedida; um refresh pode tentar de novo.
+        console.error("Failed to load user profile:", error);
+        if (get().user?.id === user.id && get().accountType) {
+          set({ isLoading: false });
+          return;
+        }
         set({
-          session: null,
-          user: null,
+          session,
+          user,
           accountType: null,
           accountStatus: null,
           abilities: null,

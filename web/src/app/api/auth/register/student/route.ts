@@ -5,10 +5,8 @@ import {
   readPublicRegistrationJson,
 } from "@/lib/public-registration-guard";
 import { attachTraceId } from "@/lib/trace";
-import {
-  memberRegistrationRequestSchema,
-  provisionMemberRegistration,
-} from "@/modules/auth/services";
+import { memberRegistrationRequestSchema } from "@/modules/auth/services/registration-request.schema";
+import { provisionMemberRegistration } from "@/modules/auth/services/server-registration.service";
 
 export async function POST(request: Request) {
   const guard = await guardPublicRegistration(request);

@@ -423,6 +423,11 @@ sem também ter lido o sinal original.
   append-only no banco com titular, finalidade e versão da política. O trigger
   roda na mesma transação sob RLS e nunca recebe respostas, métricas ou corpo de
   requisição; a evidência fica por 365 dias (`0063`, issue #322)
+- [ ] Aceite de convite: a migration `0077` propõe registrar o evento somente
+  quando o Supabase Auth altera a senha de uma conta ainda `invited`, com ator e
+  titular pseudonimizados e sem senha/token no evento. O teste positivo e negativo
+  está em `scripts/verify-rls.sql`; falta executá-lo no preview antes de marcar
+  este controle como comprovado (`#322`).
 - [x] Concessão e encerramento de `student_specialists` geram evento append-only
   no banco com ator, titular e UUID opaco do vínculo. O trigger cobre app, RPC e
   BFF na própria transação, não duplica dados protegidos pelo vínculo e preserva

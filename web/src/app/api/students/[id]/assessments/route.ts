@@ -5,7 +5,7 @@ import { authorizeLinkedSpecialist } from "@/lib/api-auth";
 import { logger } from "@/lib/logger";
 import { recordSecurityAuditEvent } from "@/lib/security-audit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { traceIdForRequest } from "@/lib/trace";
+import { attachTraceId, traceIdForRequest } from "@/lib/trace";
 
 type AssessmentInsert = Database["public"]["Tables"]["physical_assessments"]["Insert"];
 
@@ -77,6 +77,7 @@ const NUMERIC_FIELDS: Array<
 ];
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const traceId = traceIdForRequest(request);
   try {
     const { id: studentId } = await params;
 
@@ -98,11 +99,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         actorId: auth.caller.id,
         subjectId: studentId,
         resourceType: "physical_assessment_collection",
-        traceId: traceIdForRequest(request),
+        traceId,
       });
     }
 
-    return NextResponse.json({ assessments: data ?? [] });
+    return attachTraceId(NextResponse.json({ assessments: data ?? [] }), traceId);
   } catch (error) {
     logger.error("students.assessments.read_failed", { error });
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });

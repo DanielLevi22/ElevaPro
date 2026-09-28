@@ -20,6 +20,7 @@ import {
   useAuthStore,
 } from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
+import { PasswordInput } from "@/shared/components/ui/PasswordInput";
 
 const SERVICE_OPTIONS: { value: ServiceType; label: string; description: string }[] = [
   {
@@ -264,16 +265,27 @@ function RegisterForm() {
                   <label htmlFor={field.id} className="block text-sm font-medium text-foreground">
                     {field.label} <span className="text-destructive">*</span>
                   </label>
-                  <input
-                    id={field.id}
-                    type={field.type}
-                    required
-                    {...register(field.id)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                    placeholder={field.placeholder}
-                    minLength={field.type === "password" ? PASSWORD_MIN_LENGTH : undefined}
-                    aria-invalid={Boolean(errors[field.id])}
-                  />
+                  {field.type === "password" ? (
+                    <PasswordInput
+                      id={field.id}
+                      required
+                      {...register(field.id)}
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      placeholder={field.placeholder}
+                      minLength={PASSWORD_MIN_LENGTH}
+                      aria-invalid={Boolean(errors[field.id])}
+                    />
+                  ) : (
+                    <input
+                      id={field.id}
+                      type={field.type}
+                      required
+                      {...register(field.id)}
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      placeholder={field.placeholder}
+                      aria-invalid={Boolean(errors[field.id])}
+                    />
+                  )}
                   {errors[field.id]?.message && (
                     <p className="text-sm text-destructive" role="alert">
                       {errors[field.id]?.message}

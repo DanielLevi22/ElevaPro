@@ -190,6 +190,40 @@ BEGIN
   RAISE NOTICE 'ok  trilha append-only: cliente sem leitura, BFF sem DML e RPC restrita';
 END $$;
 
+-- O bucket deve contar requisições no banco, não apenas ter grants corretos.
+-- Uma janela curta mantém a verificação reexecutável sem deixar linhas de teste.
+BEGIN;
+DO $$
+DECLARE
+  bucket text := 'verify-rls-' || replace(gen_random_uuid()::text, '-', '');
+  subject_hash text := repeat('a', 64);
+  first_decision record;
+  second_decision record;
+  blocked_decision record;
+  renewed_decision record;
+BEGIN
+  PERFORM pg_sleep(1.05 - mod(extract(epoch FROM clock_timestamp())::numeric, 1));
+  SET LOCAL ROLE service_role;
+  SELECT * INTO first_decision FROM public.consume_rate_limit(bucket, subject_hash, 2, 1, 2);
+  SELECT * INTO second_decision FROM public.consume_rate_limit(bucket, subject_hash, 2, 1, 2);
+  SELECT * INTO blocked_decision FROM public.consume_rate_limit(bucket, subject_hash, 2, 1, 2);
+
+  IF first_decision.allowed IS DISTINCT FROM true OR first_decision.remaining <> 1
+    OR second_decision.allowed IS DISTINCT FROM true OR second_decision.remaining <> 0
+    OR blocked_decision.allowed IS DISTINCT FROM false OR blocked_decision.remaining <> 0 THEN
+    RAISE EXCEPTION 'LIMITE FALHOU: bucket não recusou a terceira chamada após teto 2';
+  END IF;
+
+  PERFORM pg_sleep(1.1);
+  SELECT * INTO renewed_decision FROM public.consume_rate_limit(bucket, subject_hash, 2, 1, 2);
+  IF renewed_decision.allowed IS DISTINCT FROM true OR renewed_decision.remaining <> 1 THEN
+    RAISE EXCEPTION 'JANELA NÃO RENOVOU: bucket continuou bloqueado após uma janela nova';
+  END IF;
+  RESET ROLE;
+  RAISE NOTICE 'ok  rate limit: teto, bloqueio e janela nova';
+END $$;
+ROLLBACK;
+
 -- O pseudônimo da trilha só protege se exigir a chave: SHA-256 puro de um UUID
 -- se desfaz com o UUID que aparece em qualquer URL. E um UUID em claro no
 -- resource_id, ao lado do pseudônimo do mesmo titular, desfaz o pseudônimo.
@@ -248,6 +282,99 @@ BEGIN
   RAISE NOTICE 'ok  pseudônimo com chave do Vault e nenhum UUID de pessoa em resource_id';
 END $$;
 
+ROLLBACK;
+
+-- Aceite de convite é a troca real de senha no Auth, não uma requisição que
+-- qualquer cliente autenticado pode enviar ao BFF. LGPD, arts. 6º, X e 46.
+BEGIN;
+DO $$
+DECLARE
+  account_id uuid := gen_random_uuid();
+  accepted_count integer;
+  current_status public.account_status;
+  rejection_message text;
+  attempted_origin text;
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgrelid = 'auth.users'::regclass
+      AND tgname = 'auth_user_invite_password_activation'
+      AND tgenabled <> 'D'
+  ) THEN
+    RAISE EXCEPTION 'ACEITE SEM PROVA: trigger de senha do convite ausente ou desabilitado';
+  END IF;
+  IF has_function_privilege('anon', 'private.audit_invite_password_activation()', 'EXECUTE')
+    OR has_function_privilege('authenticated', 'private.audit_invite_password_activation()', 'EXECUTE')
+    OR has_function_privilege('service_role', 'private.audit_invite_password_activation()', 'EXECUTE') THEN
+    RAISE EXCEPTION 'ACEITE FORJÁVEL: função do trigger está executável fora do Auth';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgrelid = 'private.security_audit_events'::regclass
+      AND tgname = 'security_audit_reject_unproven_invite_acceptance'
+      AND tgenabled <> 'D'
+  ) THEN
+    RAISE EXCEPTION 'ACEITE FORJÁVEL: trilha aceita origem não provada';
+  END IF;
+
+  SET LOCAL ROLE service_role;
+  FOREACH attempted_origin IN ARRAY ARRAY['bff', 'database'] LOOP
+    rejection_message := NULL;
+    BEGIN
+      PERFORM public.record_security_audit_event(
+        p_event_type => 'identity.invite.accepted', p_outcome => 'succeeded',
+        p_resource_type => 'account', p_origin => attempted_origin, p_actor_id => account_id,
+        p_subject_id => account_id
+      );
+    EXCEPTION WHEN raise_exception THEN
+      GET STACKED DIAGNOSTICS rejection_message = MESSAGE_TEXT;
+    END;
+    IF rejection_message NOT LIKE 'invite acceptance requires Auth password change%' THEN
+      RAISE EXCEPTION 'ACEITE FORJÁVEL: BFF com origem % não foi recusado pelo trigger: %',
+        attempted_origin, rejection_message;
+    END IF;
+  END LOOP;
+  RESET ROLE;
+
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES (
+    account_id, '00000000-0000-0000-0000-000000000000',
+    'authenticated', 'authenticated',
+    'verify-invite-' || account_id::text || '@elevapro.local',
+    '{"full_name":"Convite","account_type":"student"}'::jsonb
+  );
+  UPDATE public.profiles SET account_status = 'invited' WHERE id = account_id;
+
+  SELECT count(*) INTO accepted_count FROM private.security_audit_events
+   WHERE event_type = 'identity.invite.accepted'
+     AND subject_hash = private.audit_principal_hash(account_id);
+  IF accepted_count <> 0 THEN
+    RAISE EXCEPTION 'ACEITE FALSO: convite gerou evento antes da senha';
+  END IF;
+
+  UPDATE auth.users SET encrypted_password = 'verify-new-password-hash'
+   WHERE id = account_id;
+  SELECT account_status INTO current_status FROM public.profiles WHERE id = account_id;
+  SELECT count(*) INTO accepted_count FROM private.security_audit_events
+   WHERE event_type = 'identity.invite.accepted'
+     AND actor_hash = private.audit_principal_hash(account_id)
+     AND subject_hash = private.audit_principal_hash(account_id)
+     AND resource_id = private.audit_principal_hash(account_id)
+     AND origin = 'database';
+  IF current_status <> 'active' OR accepted_count <> 1 THEN
+    RAISE EXCEPTION 'ACEITE NÃO PROVADO: mudança de senha não ativou convite e evento mínimo';
+  END IF;
+
+  UPDATE auth.users SET encrypted_password = 'verify-second-password-hash'
+   WHERE id = account_id;
+  SELECT count(*) INTO accepted_count FROM private.security_audit_events
+   WHERE event_type = 'identity.invite.accepted'
+     AND subject_hash = private.audit_principal_hash(account_id);
+  IF accepted_count <> 1 THEN
+    RAISE EXCEPTION 'ACEITE DUPLICADO: troca posterior de senha gerou outro aceite';
+  END IF;
+  RAISE NOTICE 'ok  convite aceito só após senha no Auth, sem evento duplicado';
+END $$;
 ROLLBACK;
 
 -- Papel e status determinam acesso. A prova exige que a trilha não seja uma

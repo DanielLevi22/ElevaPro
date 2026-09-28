@@ -106,6 +106,19 @@ jobs:
       - name: Pull Vercel project config
         run: npx vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
 
+      - name: Conferir variáveis obrigatórias do preview
+        run: |
+          set -euo pipefail
+          lista=$(npx vercel env ls preview --token=${{ secrets.VERCEL_TOKEN }})
+          for nome in NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY \
+                      ANTHROPIC_API_KEY SUPABASE_SERVICE_ROLE_KEY RATE_LIMIT_HMAC_KEY; do
+            if ! echo "$lista" | grep -q "$nome"; then
+              echo "::error::Variável obrigatória ausente no preview: $nome"
+              exit 1
+            fi
+          done
+          echo "✓ variáveis obrigatórias do preview configuradas"
+
       # Sem `env:`. O `vercel pull` acima já baixou as Environment Variables do
       # projeto para este ambiente, e o `vercel build` as lê de lá — inclusive
       # as `NEXT_PUBLIC_*`, que ele inlina no bundle.
@@ -303,7 +316,7 @@ jobs:
           lista=$(npx vercel env ls production --token=${{ secrets.VERCEL_TOKEN }})
           faltando=""
           for nome in NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY \
-                      ANTHROPIC_API_KEY SUPABASE_SERVICE_ROLE_KEY; do
+                      ANTHROPIC_API_KEY SUPABASE_SERVICE_ROLE_KEY RATE_LIMIT_HMAC_KEY; do
             echo "$lista" | grep -q "$nome" || faltando="$faltando $nome"
           done
 

@@ -4,6 +4,7 @@ import { authorizeSpecialist } from "@/lib/api-auth";
 import { logger } from "@/lib/logger";
 import { recordSecurityAuditEvent } from "@/lib/security-audit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { attachTraceId, traceIdForRequest } from "@/lib/trace";
 
 /**
  * O tipo de acompanhamento é escolha do especialista, mas só entre os
@@ -14,10 +15,11 @@ async function findUnauthorizedServiceType(
   specialistId: string,
   serviceTypes: ServiceType[],
 ): Promise<ServiceType | undefined> {
-  const { data: offeredServices } = await supabaseAdmin
+  const { data: offeredServices, error } = await supabaseAdmin
     .from("specialist_services")
     .select("service_type")
     .eq("specialist_id", specialistId);
+  if (error) throw error;
 
   const offered = new Set(
     (offeredServices ?? []).map((s: { service_type: ServiceType }) => s.service_type),
@@ -26,9 +28,10 @@ async function findUnauthorizedServiceType(
 }
 
 export async function POST(request: NextRequest) {
+  const traceId = traceIdForRequest(request);
   try {
     const auth = await authorizeSpecialist(request);
-    if (!auth.ok) return auth.response;
+    if (!auth.ok) return attachTraceId(auth.response, traceId);
     const caller = auth.caller;
 
     const body = await request.json();
@@ -36,17 +39,23 @@ export async function POST(request: NextRequest) {
     const serviceTypes = body.serviceTypes as ServiceType[] | undefined;
 
     if (!fullName || !email || !Array.isArray(serviceTypes) || serviceTypes.length === 0) {
-      return NextResponse.json(
-        { error: "fullName, email e serviceTypes são obrigatórios" },
-        { status: 400 },
+      return attachTraceId(
+        NextResponse.json(
+          { error: "fullName, email e serviceTypes são obrigatórios" },
+          { status: 400 },
+        ),
+        traceId,
       );
     }
 
     const unauthorized = await findUnauthorizedServiceType(caller.id, serviceTypes);
     if (unauthorized) {
-      return NextResponse.json(
-        { error: `Você não presta o serviço "${unauthorized}"` },
-        { status: 422 },
+      return attachTraceId(
+        NextResponse.json(
+          { error: `Você não presta o serviço "${unauthorized}"` },
+          { status: 422 },
+        ),
+        traceId,
       );
     }
 
@@ -59,11 +68,16 @@ export async function POST(request: NextRequest) {
     );
 
     if (inviteError) {
+      logger.warn("students.invite_rejected", {
+        error: inviteError,
+        status: inviteError.status ?? null,
+        traceId,
+      });
       const message =
         inviteError.message.includes("already registered") || inviteError.code === "email_exists"
           ? "Email já cadastrado"
           : userFacingAuthError(inviteError.message);
-      return NextResponse.json({ error: message }, { status: 422 });
+      return attachTraceId(NextResponse.json({ error: message }, { status: 422 }), traceId);
     }
 
     const studentId = invited.user.id;
@@ -110,11 +124,18 @@ export async function POST(request: NextRequest) {
       actorId: caller.id,
       subjectId: studentId,
       resourceType: "account",
+      traceId,
     });
 
-    return NextResponse.json({ success: true, student_id: studentId }, { status: 201 });
+    return attachTraceId(
+      NextResponse.json({ success: true, student_id: studentId }, { status: 201 }),
+      traceId,
+    );
   } catch (error) {
-    logger.error("students.create_failed", { error });
-    return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
+    logger.error("students.create_failed", { error, traceId });
+    return attachTraceId(
+      NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 }),
+      traceId,
+    );
   }
 }
