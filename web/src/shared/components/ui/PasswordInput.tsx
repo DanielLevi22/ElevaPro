@@ -6,7 +6,12 @@ import { cn } from "@/shared/utils/cn";
 
 type PasswordInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "type">;
 
-/** Mostra a senha apenas enquanto a pessoa escolher, mantendo o campo acessível. */
+/**
+ * Mostra a senha apenas enquanto a pessoa escolher, mantendo o campo acessível.
+ *
+ * @example
+ * <PasswordInput aria-label="Senha" autoComplete="current-password" />
+ */
 export function PasswordInput({ className, ...props }: PasswordInputProps) {
   const [visible, setVisible] = useState(false);
 

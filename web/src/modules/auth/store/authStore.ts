@@ -8,6 +8,7 @@ import {
 } from "@elevapro/supabase";
 import type { Session, User } from "@supabase/supabase-js";
 import { create } from "zustand";
+import { logger } from "@/lib/logger";
 
 const authService = createAuthService(supabase);
 
@@ -96,7 +97,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       } catch (error) {
         // Falha temporária de leitura não revoga a sessão válida do Auth. Sem
         // contexto, nenhuma permissão é concedida; um refresh pode tentar de novo.
-        console.error("Failed to load user profile:", error);
+        logger.error("auth.profile_load_failed", { error });
         if (get().user?.id === user.id && get().accountType) {
           set({ isLoading: false });
           return;

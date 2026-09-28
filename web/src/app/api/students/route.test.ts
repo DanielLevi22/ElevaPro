@@ -11,7 +11,9 @@ const { inviteUserByEmail } = vi.hoisted(() => ({
 
 let specialistServiceRows: Array<{ service_type: string }>;
 let specialistServiceError: { message: string } | null;
+let studentProfileError: { code: string; message: string } | null;
 let studentSpecialistInserts: Array<Record<string, unknown>>;
+let studentSpecialistError: { code: string; message: string } | null;
 
 vi.mock("@/lib/api-auth", () => ({
   authorizeSpecialist: async () => ({
@@ -25,7 +27,7 @@ vi.mock("@/lib/supabase-admin", () => ({
     auth: { admin: { inviteUserByEmail } },
     from: (table: string) => {
       if (table === "profiles") {
-        return { upsert: async () => ({ error: null }) };
+        return { upsert: async () => ({ error: studentProfileError }) };
       }
       if (table === "specialist_services") {
         return {
@@ -38,7 +40,7 @@ vi.mock("@/lib/supabase-admin", () => ({
         return {
           upsert: async (rows: Array<Record<string, unknown>>) => {
             studentSpecialistInserts.push(...rows);
-            return { error: null };
+            return { error: studentSpecialistError };
           },
         };
       }
@@ -60,7 +62,9 @@ describe("POST /api/students", () => {
   beforeEach(() => {
     specialistServiceRows = [{ service_type: "personal_training" }];
     specialistServiceError = null;
+    studentProfileError = null;
     studentSpecialistInserts = [];
+    studentSpecialistError = null;
     vi.clearAllMocks();
     inviteUserByEmail.mockResolvedValue({
       data: { user: { id: "aluno-9" } },
@@ -166,6 +170,53 @@ describe("POST /api/students", () => {
       traceId: res.headers.get("X-Request-Id"),
     });
     warning.mockRestore();
+  });
+
+  it("correlaciona a falha de vínculo com o identificador da resposta", async () => {
+    studentSpecialistError = { code: "23503", message: "foreign key violation" };
+    const loggedError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await POST(
+      request({
+        fullName: "Marina Alves",
+        email: "marina@exemplo.com",
+        serviceTypes: ["personal_training"],
+      }),
+    );
+
+    expect(res.status).toBe(500);
+    expect(res.headers.get("X-Request-Id")).toMatch(/^[0-9a-f]{32}$/);
+    expect(JSON.parse(String(loggedError.mock.calls[0]?.[0]))).toMatchObject({
+      event: "students.link_failed",
+      traceId: res.headers.get("X-Request-Id"),
+      error: { code: "23503" },
+    });
+    expect(recordSecurityAuditEvent).not.toHaveBeenCalled();
+    loggedError.mockRestore();
+  });
+
+  it("não confirma cadastro quando a gravação do perfil falha", async () => {
+    studentProfileError = { code: "23505", message: "duplicate profile" };
+    const loggedError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await POST(
+      request({
+        fullName: "Marina Alves",
+        email: "marina@exemplo.com",
+        serviceTypes: ["personal_training"],
+      }),
+    );
+
+    expect(res.status).toBe(500);
+    expect(res.headers.get("X-Request-Id")).toMatch(/^[0-9a-f]{32}$/);
+    expect(JSON.parse(String(loggedError.mock.calls[0]?.[0]))).toMatchObject({
+      event: "students.profile_failed",
+      traceId: res.headers.get("X-Request-Id"),
+      error: { code: "23505" },
+    });
+    expect(studentSpecialistInserts).toEqual([]);
+    expect(recordSecurityAuditEvent).not.toHaveBeenCalled();
+    loggedError.mockRestore();
   });
 
   // Tipo válido cria o vínculo em student_specialists — a criação de conta e

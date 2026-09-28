@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
 
     const studentId = invited.user.id;
 
-    await supabaseAdmin.from("profiles" as never).upsert(
+    const { error: profileError } = await supabaseAdmin.from("profiles" as never).upsert(
       {
         id: studentId,
         email,
@@ -92,6 +92,14 @@ export async function POST(request: NextRequest) {
       } as never,
       { onConflict: "id" },
     );
+
+    if (profileError) {
+      logger.error("students.profile_failed", { error: profileError, traceId });
+      return attachTraceId(
+        NextResponse.json({ error: "Erro ao cadastrar perfil do aluno" }, { status: 500 }),
+        traceId,
+      );
+    }
 
     const links = serviceTypes.map((service_type: ServiceType) => ({
       student_id: studentId,
@@ -108,10 +116,10 @@ export async function POST(request: NextRequest) {
       });
 
     if (linkError) {
-      logger.error("students.link_failed", { error: linkError });
-      return NextResponse.json(
-        { error: "Erro ao vincular aluno ao especialista" },
-        { status: 500 },
+      logger.error("students.link_failed", { error: linkError, traceId });
+      return attachTraceId(
+        NextResponse.json({ error: "Erro ao vincular aluno ao especialista" }, { status: 500 }),
+        traceId,
       );
     }
 
