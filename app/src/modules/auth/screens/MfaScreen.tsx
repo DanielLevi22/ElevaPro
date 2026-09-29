@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
@@ -23,6 +23,7 @@ export function MfaScreen() {
   const [legacyFactor, setLegacyFactor] = useState(false);
   const [verifiedLegacy, setVerifiedLegacy] = useState(false);
   const [registered, setRegistered] = useState(false);
+  const [showDeviceSetup, setShowDeviceSetup] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [passkeyError, setPasskeyError] = useState('');
   const {
@@ -44,15 +45,15 @@ export function MfaScreen() {
     },
   });
 
-  useEffect(() => {
-    if (!passkeyEnabled) return;
-    void hasLegacyTotpFactor()
-      .then((hasFactor) => {
-        setLegacyFactor(hasFactor);
-        void prepareChallenge();
-      })
-      .catch(() => setLegacyFactor(false));
-  }, [passkeyEnabled, prepareChallenge]);
+  async function handleDeviceSetup() {
+    setShowDeviceSetup(true);
+    try {
+      setLegacyFactor(await hasLegacyTotpFactor());
+    } catch {
+      setLegacyFactor(false);
+    }
+    await prepareChallenge();
+  }
 
   async function handleRegister() {
     setPasskeyLoading(true);
@@ -110,12 +111,30 @@ export function MfaScreen() {
           </Text>
         ) : null}
 
-        {passkeyEnabled && (registered || verifiedLegacy) ? (
+        {passkeyEnabled && !verifiedLegacy ? (
+          <Button
+            fullWidth
+            isLoading={passkeyLoading}
+            label="Entrar com Face ID ou PIN"
+            onPress={handlePasskeySignIn}
+          />
+        ) : null}
+
+        {passkeyEnabled && verifiedLegacy ? (
           <Button
             fullWidth
             isLoading={passkeyLoading}
             label={registered ? 'Entrar com o aparelho cadastrado' : 'Cadastrar Face ID ou PIN'}
             onPress={registered ? handlePasskeySignIn : handleRegister}
+          />
+        ) : null}
+
+        {passkeyEnabled && !showDeviceSetup && !verifiedLegacy ? (
+          <Button
+            fullWidth
+            label="Cadastrar ou trocar aparelho"
+            onPress={() => void handleDeviceSetup()}
+            variant="ghost"
           />
         ) : null}
 
@@ -127,7 +146,7 @@ export function MfaScreen() {
           />
         ) : null}
 
-        {!verifiedLegacy ? (
+        {!verifiedLegacy && (!passkeyEnabled || showDeviceSetup) ? (
           <View className="gap-4 border-t border-border pt-4">
             <Text className="text-center text-corpo text-muted-foreground">
               {passkeyEnabled

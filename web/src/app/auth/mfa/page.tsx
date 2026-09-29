@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   hasCurrentPrivilegedProof,
   hasLegacyTotpFactor,
@@ -22,6 +22,7 @@ export default function MfaPage() {
   const [legacyFactor, setLegacyFactor] = useState(false);
   const [registered, setRegistered] = useState(false);
   const [verifiedLegacy, setVerifiedLegacy] = useState(false);
+  const [showDeviceSetup, setShowDeviceSetup] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [passkeyError, setPasskeyError] = useState("");
   const destination = () =>
@@ -34,12 +35,14 @@ export default function MfaPage() {
       },
     });
 
-  useEffect(() => {
-    if (!passkeyEnabled) return;
-    void hasLegacyTotpFactor()
-      .then(setLegacyFactor)
-      .catch(() => setLegacyFactor(false));
-  }, [passkeyEnabled]);
+  const handleDeviceSetup = async () => {
+    setShowDeviceSetup(true);
+    try {
+      setLegacyFactor(await hasLegacyTotpFactor());
+    } catch {
+      setLegacyFactor(false);
+    }
+  };
 
   const handleRegister = async () => {
     setPasskeyLoading(true);
@@ -92,7 +95,12 @@ export default function MfaPage() {
             {passkeyError}
           </p>
         ) : null}
-        {passkeyEnabled && registered ? (
+        {passkeyEnabled && !verifiedLegacy ? (
+          <Button fullWidth isLoading={passkeyLoading} onClick={handleSignIn}>
+            Entrar com Face ID ou PIN
+          </Button>
+        ) : null}
+        {passkeyEnabled && registered && verifiedLegacy ? (
           <Button fullWidth isLoading={passkeyLoading} onClick={handleSignIn}>
             Entrar com o aparelho cadastrado
           </Button>
@@ -102,13 +110,19 @@ export default function MfaPage() {
           </Button>
         ) : null}
 
+        {passkeyEnabled && !showDeviceSetup && !verifiedLegacy ? (
+          <Button fullWidth variant="ghost" onClick={handleDeviceSetup}>
+            Cadastrar ou trocar aparelho
+          </Button>
+        ) : null}
+
         {verifiedLegacy && !passkeyEnabled ? (
           <Button fullWidth onClick={() => router.replace(destination())}>
             Continuar com a sessão atual
           </Button>
         ) : null}
 
-        {!verifiedLegacy ? (
+        {!verifiedLegacy && (!passkeyEnabled || showDeviceSetup) ? (
           <div className="space-y-4 border-t border-white/10 pt-4">
             <p className="text-sm text-muted-foreground">
               {passkeyEnabled
