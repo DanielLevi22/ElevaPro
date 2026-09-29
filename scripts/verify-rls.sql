@@ -608,6 +608,9 @@ BEGIN
   VALUES (aluno_a, espec, 'personal_training', 'active')
   RETURNING id INTO vinculo_id;
 
+  INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
+  VALUES (aluno_a, espec_sem_fator, 'personal_training', 'active');
+
   INSERT INTO public.specialist_services (specialist_id, service_type)
   VALUES (espec, 'nutrition_consulting');
 
@@ -677,8 +680,9 @@ BEGIN
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', espec_sem_fator, 'role', 'authenticated', 'aal', 'aal1',
       'amr', json_build_array(json_build_object('method', 'passkey')))::text, true);
-  IF private.current_session_meets_mfa_requirement() THEN
-    RAISE EXCEPTION 'PASSKEY SEM TOTP: conta sem fator verificado passou pela RLS';
+  SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_a;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'PASSKEY SEM TOTP: conta sem fator verificado leu % anamnese(s)', visiveis;
   END IF;
 
   PERFORM set_config('request.jwt.claims',
