@@ -21,6 +21,11 @@ on:
   # path acima, então alterações no próprio pipeline — como o alias de preview —
   # não se aplicavam até alguém tocar em web/, shared/ ou supabase/.
   workflow_dispatch:
+    inputs:
+      deploy_preview:
+        description: "Publicar a ref selecionada no preview"
+        type: boolean
+        default: false
 
 jobs:
   # ─────────────────────────────────────────
@@ -70,14 +75,14 @@ jobs:
     secrets: inherit
 
   # ─────────────────────────────────────────
-  # 3. DEPLOY PREVIEW (push em development)
+  # 3. DEPLOY PREVIEW (push em development ou disparo manual autorizado)
   # ─────────────────────────────────────────
   deploy-preview:
     name: 🌐 Deploy Preview
     runs-on: ubuntu-latest
     environment: preview
     needs: [validate, migrate]
-    if: github.ref == 'refs/heads/development'
+    if: github.ref == 'refs/heads/development' || (github.event_name == 'workflow_dispatch' && inputs.deploy_preview && startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/main')
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
