@@ -3,9 +3,11 @@ export interface SessionProofClaims {
   amr?: unknown;
 }
 
-/** Aceita MFA legado ou uma autenticação Passkey registrada no JWT assinado. */
-export function hasPrivilegedSessionProof(claims: SessionProofClaims | null): boolean {
-  if (claims?.aal === "aal2") return true;
+/**
+ * Identifica o método Passkey no JWT previamente validado pelo Supabase.
+ * @example hasPasskeySessionProof({ amr: [{ method: "passkey" }] })
+ */
+export function hasPasskeySessionProof(claims: SessionProofClaims | null): boolean {
   if (!Array.isArray(claims?.amr)) return false;
 
   return claims.amr.some(
@@ -15,4 +17,12 @@ export function hasPrivilegedSessionProof(claims: SessionProofClaims | null): bo
       "method" in entry &&
       entry.method === "passkey",
   );
+}
+
+/**
+ * Aceita MFA de migração ou Passkey registrada no JWT assinado.
+ * @example hasPrivilegedSessionProof({ aal: "aal2" })
+ */
+export function hasPrivilegedSessionProof(claims: SessionProofClaims | null): boolean {
+  return claims?.aal === "aal2" || hasPasskeySessionProof(claims);
 }

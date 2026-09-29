@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  */
 
 const authGetClaims = vi.fn();
+const listMfaFactors = vi.fn();
 vi.mock("@supabase/supabase-js", () => ({
   createClient: () => ({ auth: { getClaims: authGetClaims } }),
 }));
@@ -35,7 +36,10 @@ const mockFrom = vi.fn((table: string) => {
 });
 
 vi.mock("@/lib/supabase-admin", () => ({
-  supabaseAdmin: { from: (table: string) => mockFrom(table) },
+  supabaseAdmin: {
+    from: (table: string) => mockFrom(table),
+    auth: { admin: { mfa: { listFactors: listMfaFactors } } },
+  },
 }));
 
 const {
@@ -64,6 +68,10 @@ beforeEach(() => {
   });
   profileRow = { account_type: "specialist" };
   linkRow = { id: "link-1" };
+  listMfaFactors.mockResolvedValue({
+    data: { factors: [{ factor_type: "totp", status: "verified" }] },
+    error: null,
+  });
 });
 
 describe("authorizeUser", () => {
@@ -162,6 +170,28 @@ describe("authorizeMfaSpecialist", () => {
     expect(auth.ok, "PASSKEY VÁLIDA BLOQUEADA: especialista perde acesso aos próprios alunos").toBe(
       true,
     );
+  });
+
+  it("nega Passkey cadastrada sem fator TOTP verificado", async () => {
+    authGetClaims.mockResolvedValue({
+      data: { claims: { sub: "user-1", aal: "aal1", amr: [{ method: "passkey" }] } },
+      error: null,
+    });
+    listMfaFactors.mockResolvedValue({ data: { factors: [] }, error: null });
+    const auth = await authorizeMfaSpecialist(requestWith(VALID));
+    expect(auth.ok).toBe(false);
+    if (!auth.ok) expect(auth.response.status).toBe(403);
+  });
+
+  it("falha fechado se não conseguir consultar os fatores do cadastro", async () => {
+    authGetClaims.mockResolvedValue({
+      data: { claims: { sub: "user-1", aal: "aal1", amr: [{ method: "passkey" }] } },
+      error: null,
+    });
+    listMfaFactors.mockResolvedValue({ data: null, error: new Error("indisponível") });
+    const auth = await authorizeMfaSpecialist(requestWith(VALID));
+    expect(auth.ok).toBe(false);
+    if (!auth.ok) expect(auth.response.status).toBe(503);
   });
 
   // Art. 46: cadastro de uma Passkey não transforma login por senha em sessão forte.

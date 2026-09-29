@@ -49,7 +49,7 @@ export function MfaScreen() {
     void hasLegacyTotpFactor()
       .then((hasFactor) => {
         setLegacyFactor(hasFactor);
-        if (hasFactor) void prepareChallenge();
+        void prepareChallenge();
       })
       .catch(() => setLegacyFactor(false));
   }, [passkeyEnabled, prepareChallenge]);
@@ -110,7 +110,7 @@ export function MfaScreen() {
           </Text>
         ) : null}
 
-        {passkeyEnabled ? (
+        {passkeyEnabled && (registered || verifiedLegacy) ? (
           <Button
             fullWidth
             isLoading={passkeyLoading}
@@ -119,7 +119,7 @@ export function MfaScreen() {
           />
         ) : null}
 
-        {verifiedLegacy ? (
+        {verifiedLegacy && !passkeyEnabled ? (
           <Button
             fullWidth
             label="Continuar com a sessão atual"
@@ -127,11 +127,13 @@ export function MfaScreen() {
           />
         ) : null}
 
-        {((passkeyEnabled && legacyFactor) || !passkeyEnabled) && !verifiedLegacy ? (
+        {!verifiedLegacy ? (
           <View className="gap-4 border-t border-border pt-4">
             <Text className="text-center text-corpo text-muted-foreground">
               {passkeyEnabled
-                ? 'Já usa código autenticador? Confirme uma última vez para cadastrar este aparelho.'
+                ? legacyFactor
+                  ? 'Confirme o código apenas para cadastrar ou substituir um aparelho. No login diário, use a Passkey.'
+                  : 'Na primeira ativação, configure o autenticador uma vez para proteger o cadastro de aparelhos.'
                 : 'Use o código do seu aplicativo autenticador.'}
             </Text>
 

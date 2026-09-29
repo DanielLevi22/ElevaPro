@@ -1,6 +1,7 @@
-import { hasPrivilegedSessionProof } from '@elevapro/shared';
+import { hasPasskeySessionProof, hasPrivilegedSessionProof } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import * as passkeys from 'react-native-passkeys';
+import { hasCurrentMfaAssurance } from './mfa.service';
 
 export interface RegisteredPasskey {
   id: string;
@@ -29,6 +30,8 @@ function requireDeviceSupport(): void {
 /** Confirma a inscrição pelo Supabase depois da cerimônia nativa do aparelho. */
 export async function registerPasskey(): Promise<void> {
   requireDeviceSupport();
+  if (!(await hasCurrentMfaAssurance()))
+    throw new Error('Confirme o código do autenticador antes de cadastrar o aparelho.');
   const { data, error } = await supabase.auth.passkey.startRegistration();
   if (error || !data) throw error ?? new Error('Desafio de cadastro ausente.');
 
@@ -59,6 +62,8 @@ export async function renamePasskey(passkeyId: string, friendlyName: string): Pr
 
 /** Protege o último aparelho contra remoção acidental. */
 export async function removePasskey(passkeyId: string): Promise<void> {
+  if (!(await hasCurrentMfaAssurance()))
+    throw new Error('Confirme o código do autenticador antes de remover o aparelho.');
   const passkeys = await listPasskeys();
   if (passkeys.length < 2) throw new Error('Cadastre outro aparelho antes de remover este.');
   if (!passkeys.some((passkey) => passkey.id === passkeyId))
@@ -89,10 +94,13 @@ export async function signInWithPasskey(): Promise<void> {
 export async function hasCurrentPrivilegedProof(): Promise<boolean> {
   const { data, error } = await supabase.auth.getClaims();
   if (error) throw error;
-  return hasPrivilegedSessionProof(data?.claims ?? null);
+  if (!hasPrivilegedSessionProof(data?.claims ?? null)) return false;
+  if (isPasskeyEnabled() && !hasPasskeySessionProof(data?.claims ?? null)) return false;
+  if (data?.claims?.aal === 'aal2') return true;
+  return hasLegacyTotpFactor();
 }
 
-/** Mantém o TOTP visível apenas na migração de fatores existentes. */
+/** Verifica o fator TOTP que protege o cadastro e a troca de aparelhos. */
 export async function hasLegacyTotpFactor(): Promise<boolean> {
   const { data, error } = await supabase.auth.mfa.listFactors();
   if (error) throw error;

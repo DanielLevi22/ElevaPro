@@ -1,5 +1,6 @@
-import { hasPrivilegedSessionProof } from "@elevapro/shared";
+import { hasPasskeySessionProof, hasPrivilegedSessionProof } from "@elevapro/shared";
 import { supabase } from "@elevapro/supabase";
+import { hasCurrentMfaAssurance } from "./mfa.service";
 
 export interface RegisteredPasskey {
   id: string;
@@ -17,11 +18,16 @@ export function isPasskeyEnabled(): boolean {
 export async function hasCurrentPrivilegedProof(): Promise<boolean> {
   const { data, error } = await supabase.auth.getClaims();
   if (error) throw error;
-  return hasPrivilegedSessionProof(data?.claims ?? null);
+  if (!hasPrivilegedSessionProof(data?.claims ?? null)) return false;
+  if (isPasskeyEnabled() && !hasPasskeySessionProof(data?.claims ?? null)) return false;
+  if (data?.claims?.aal === "aal2") return true;
+  return hasLegacyTotpFactor();
 }
 
 /** Cadastra a credencial no Supabase após a confirmação do aparelho. */
 export async function registerPasskey(): Promise<void> {
+  if (!(await hasCurrentMfaAssurance()))
+    throw new Error("Confirme o código do autenticador antes de cadastrar o aparelho.");
   const { error } = await supabase.auth.registerPasskey();
   if (error) throw error;
 }
@@ -43,6 +49,8 @@ export async function renamePasskey(passkeyId: string, friendlyName: string): Pr
 
 /** Remove uma credencial sem permitir que o usuário perca o único aparelho. */
 export async function removePasskey(passkeyId: string): Promise<void> {
+  if (!(await hasCurrentMfaAssurance()))
+    throw new Error("Confirme o código do autenticador antes de remover o aparelho.");
   const passkeys = await listPasskeys();
   if (passkeys.length < 2) throw new Error("Cadastre outro aparelho antes de remover este.");
   if (!passkeys.some((passkey) => passkey.id === passkeyId))
@@ -57,7 +65,7 @@ export async function signInWithPasskey(): Promise<void> {
   if (error) throw error;
 }
 
-/** Mostra o caminho de transição TOTP apenas para quem já tem fator verificado. */
+/** Verifica o fator TOTP que protege o cadastro e a troca de aparelhos. */
 export async function hasLegacyTotpFactor(): Promise<boolean> {
   const { data, error } = await supabase.auth.mfa.listFactors();
   if (error) throw error;

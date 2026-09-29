@@ -11,7 +11,7 @@ jest.mock('@elevapro/supabase', () => ({
         update: jest.fn(),
         delete: jest.fn(),
       },
-      mfa: { listFactors: jest.fn() },
+      mfa: { listFactors: jest.fn(), getAuthenticatorAssuranceLevel: jest.fn() },
     },
   },
 }));
@@ -33,6 +33,7 @@ import {
 
 const auth = supabase.auth as unknown as {
   getClaims: jest.Mock;
+  mfa: { getAuthenticatorAssuranceLevel: jest.Mock; listFactors: jest.Mock };
   passkey: {
     startRegistration: jest.Mock;
     verifyRegistration: jest.Mock;
@@ -51,6 +52,14 @@ describe('passkey.service', () => {
     process.env.EXPO_PUBLIC_PASSKEY_RP_ID = 'elevapro-preview.vercel.app';
     process.env.EXPO_PUBLIC_PASSKEY_ENABLED = 'true';
     device.isSupported.mockReturnValue(true);
+    auth.mfa.getAuthenticatorAssuranceLevel.mockResolvedValue({
+      data: { currentLevel: 'aal2' },
+      error: null,
+    });
+    auth.mfa.listFactors.mockResolvedValue({
+      data: { all: [{ factor_type: 'totp', status: 'verified' }] },
+      error: null,
+    });
   });
 
   it('não chama o Auth se o aparelho não suportar Passkeys', async () => {
@@ -96,9 +105,33 @@ describe('passkey.service', () => {
     await expect(registerPasskey()).rejects.toThrow('assinatura inválida');
   });
 
+  it('não inicia inscrição com uma sessão apenas de senha', async () => {
+    auth.mfa.getAuthenticatorAssuranceLevel.mockResolvedValue({
+      data: { currentLevel: 'aal1' },
+      error: null,
+    });
+    await expect(registerPasskey()).rejects.toThrow('Confirme o código');
+    expect(auth.passkey.startRegistration).not.toHaveBeenCalled();
+  });
+
   it('não considera senha aal1 uma sessão Passkey', async () => {
     auth.getClaims.mockResolvedValue({
       data: { claims: { aal: 'aal1', amr: [{ method: 'password' }] } },
+    });
+    await expect(hasCurrentPrivilegedProof()).resolves.toBe(false);
+  });
+
+  it('não considera Passkey sem TOTP verificado uma sessão privilegiada', async () => {
+    auth.getClaims.mockResolvedValue({
+      data: { claims: { aal: 'aal1', amr: [{ method: 'passkey' }] } },
+    });
+    auth.mfa.listFactors.mockResolvedValue({ data: { all: [] }, error: null });
+    await expect(hasCurrentPrivilegedProof()).resolves.toBe(false);
+  });
+
+  it('com Passkeys habilitadas, não considera TOTP suficiente para o login diário', async () => {
+    auth.getClaims.mockResolvedValue({
+      data: { claims: { aal: 'aal2', amr: [{ method: 'totp' }] } },
     });
     await expect(hasCurrentPrivilegedProof()).resolves.toBe(false);
   });

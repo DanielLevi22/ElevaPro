@@ -1,5 +1,5 @@
-import { PasskeyManager } from "@/modules/auth/components/PasskeyManager";
+import { PasskeySettings } from "@/modules/auth";
 
 export default function AdminSecurityPage() {
-  return <PasskeyManager />;
+  return <PasskeySettings />;
 }

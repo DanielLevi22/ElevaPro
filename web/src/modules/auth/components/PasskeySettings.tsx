@@ -1,23 +1,39 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/shared/components/ui/Button";
+import { formatDate } from "@/shared/utils/formatDate";
+import { useTotpEnrollment } from "../hooks/useTotpEnrollment";
 import {
+  hasCurrentMfaAssurance,
+  hasLegacyTotpFactor,
   isPasskeyEnabled,
   listPasskeys,
   type RegisteredPasskey,
   registerPasskey,
   removePasskey,
   renamePasskey,
-} from "@/modules/auth";
-import { Button } from "@/shared/components/ui/Button";
-import { formatDate } from "@/shared/utils/formatDate";
+} from "../services";
 
 /** Permite que a conta autenticada administre os próprios aparelhos. */
-export function PasskeyManager() {
+export function PasskeySettings() {
   const [passkeys, setPasskeys] = useState<RegisteredPasskey[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [managementVerified, setManagementVerified] = useState(false);
+  const [hasFactor, setHasFactor] = useState(false);
+  const {
+    challenge,
+    code,
+    setCode,
+    loading: challengeLoading,
+    error: challengeError,
+    prepareChallenge,
+    confirmCode,
+  } = useTotpEnrollment({
+    onVerified: () => setManagementVerified(true),
+  });
 
   const refresh = useCallback(async () => {
     setPasskeys(await listPasskeys());
@@ -25,6 +41,18 @@ export function PasskeyManager() {
 
   useEffect(() => {
     if (!isPasskeyEnabled()) return;
+    void Promise.all([hasCurrentMfaAssurance(), hasLegacyTotpFactor()])
+      .then(([verified, factor]) => {
+        setManagementVerified(verified);
+        setHasFactor(factor);
+      })
+      .catch((cause: unknown) =>
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : "Não foi possível verificar a segurança da conta.",
+        ),
+      );
     void refresh()
       .catch((cause: unknown) =>
         setError(cause instanceof Error ? cause.message : "Não foi possível listar os aparelhos."),
@@ -63,16 +91,59 @@ export function PasskeyManager() {
           {error}
         </p>
       ) : null}
-      <Button isLoading={busy} onClick={() => void run(registerPasskey)}>
-        Cadastrar outro aparelho
-      </Button>
+      {!managementVerified ? (
+        <div className="space-y-3 rounded-xl border border-border p-4">
+          <p className="text-sm text-muted-foreground">
+            {hasFactor
+              ? "Confirme o autenticador apenas para alterar os aparelhos cadastrados."
+              : "Configure o autenticador na tela de proteção da conta antes de cadastrar aparelhos."}
+          </p>
+          {hasFactor && !challenge ? (
+            <Button isLoading={challengeLoading} onClick={() => void prepareChallenge()}>
+              Confirmar autenticador
+            </Button>
+          ) : null}
+          {hasFactor && challenge ? (
+            <form
+              className="flex flex-wrap gap-3"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void confirmCode();
+              }}
+            >
+              <input
+                aria-label="Código do autenticador"
+                autoComplete="one-time-code"
+                inputMode="numeric"
+                pattern="[0-9]{6}"
+                maxLength={6}
+                value={code}
+                onChange={(event) => setCode(event.target.value)}
+                className="rounded-lg border border-border bg-background p-2 text-foreground"
+              />
+              <Button type="submit" isLoading={challengeLoading}>
+                Confirmar código
+              </Button>
+            </form>
+          ) : null}
+          {challengeError ? (
+            <p role="alert" className="text-destructive">
+              {challengeError}
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <Button isLoading={busy} onClick={() => void run(registerPasskey)}>
+          Cadastrar outro aparelho
+        </Button>
+      )}
       <ul className="space-y-3">
         {passkeys.map((passkey) => (
           <PasskeyRow
             key={passkey.id}
             passkey={passkey}
             busy={busy}
-            canRemove={passkeys.length > 1}
+            canRemove={managementVerified && passkeys.length > 1}
             onRename={(name) => run(() => renamePasskey(passkey.id, name))}
             onRemove={() => run(() => removePasskey(passkey.id))}
           />

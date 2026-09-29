@@ -92,12 +92,26 @@ export async function authorizeUser(request: NextRequest): Promise<AuthResult> {
 
   if (!profile) return deny(403, "Perfil não encontrado.");
 
+  const accountType = profile.account_type as AccountType;
+  let hasPrivilegedProof = hasPrivilegedSessionProof(claims ?? null);
+  if (
+    hasPrivilegedProof &&
+    claims?.aal !== "aal2" &&
+    (accountType === "specialist" || accountType === "admin")
+  ) {
+    const { data, error } = await supabaseAdmin.auth.admin.mfa.listFactors({ userId });
+    if (error || !data) return deny(503, "Verificação de segurança indisponível.");
+    hasPrivilegedProof = data.factors.some(
+      (factor) => factor.factor_type === "totp" && factor.status === "verified",
+    );
+  }
+
   return {
     ok: true,
     caller: {
       id: userId,
-      accountType: profile.account_type as AccountType,
-      hasPrivilegedProof: hasPrivilegedSessionProof(claims ?? null),
+      accountType,
+      hasPrivilegedProof,
     },
   };
 }

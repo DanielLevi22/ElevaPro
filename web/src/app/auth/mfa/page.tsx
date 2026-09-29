@@ -96,23 +96,25 @@ export default function MfaPage() {
           <Button fullWidth isLoading={passkeyLoading} onClick={handleSignIn}>
             Entrar com o aparelho cadastrado
           </Button>
-        ) : passkeyEnabled ? (
+        ) : passkeyEnabled && verifiedLegacy ? (
           <Button fullWidth isLoading={passkeyLoading} onClick={handleRegister}>
             Cadastrar Face ID ou PIN
           </Button>
         ) : null}
 
-        {verifiedLegacy ? (
+        {verifiedLegacy && !passkeyEnabled ? (
           <Button fullWidth onClick={() => router.replace(destination())}>
             Continuar com a sessão atual
           </Button>
         ) : null}
 
-        {((passkeyEnabled && legacyFactor) || !passkeyEnabled) && !verifiedLegacy ? (
+        {!verifiedLegacy ? (
           <div className="space-y-4 border-t border-white/10 pt-4">
             <p className="text-sm text-muted-foreground">
               {passkeyEnabled
-                ? "Já usa código autenticador? Confirme uma última vez para cadastrar este aparelho."
+                ? legacyFactor
+                  ? "Confirme o código apenas para cadastrar ou substituir um aparelho. No login diário, use a Passkey."
+                  : "Na primeira ativação, configure o autenticador uma vez para proteger o cadastro de aparelhos."
                 : "Use o código do seu aplicativo autenticador."}
             </p>
             {error ? (

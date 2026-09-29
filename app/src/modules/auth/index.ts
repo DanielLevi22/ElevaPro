@@ -4,6 +4,7 @@
 // Routes
 export * from './routes';
 export { MfaScreen } from './screens/MfaScreen';
+export { PasskeySettingsScreen } from './screens/PasskeySettingsScreen';
 export type { RegisteredPasskey, TotpChallenge } from './services';
 export {
   beginTotpChallenge,

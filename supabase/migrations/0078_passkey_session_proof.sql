@@ -17,7 +17,15 @@ AS $$
     )
       THEN COALESCE(
         (SELECT auth.jwt() ->> 'aal') = 'aal2'
-        OR (SELECT auth.jwt() -> 'amr') @> '[{"method":"passkey"}]'::jsonb,
+        OR (
+          (SELECT auth.jwt() -> 'amr') @> '[{"method":"passkey"}]'::jsonb
+          AND EXISTS (
+            SELECT 1 FROM auth.mfa_factors factor
+            WHERE factor.user_id = (SELECT auth.uid())
+              AND factor.factor_type = 'totp'
+              AND factor.status = 'verified'
+          )
+        ),
         false
       )
     ELSE EXISTS (

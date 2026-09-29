@@ -1,3 +1,4 @@
+export { PasskeySettings } from "./components/PasskeySettings";
 export { useAuth } from "./hooks/useAuth";
 export type { AccountRole, RegisteredPasskey, TotpChallenge } from "./services";
 export {

@@ -572,6 +572,7 @@ DECLARE
   aluno_a  uuid := gen_random_uuid();
   aluno_b  uuid := gen_random_uuid();
   espec    uuid := gen_random_uuid();
+  espec_sem_fator uuid := gen_random_uuid();
   visiveis int;
   afetadas int;
   eventos_auditados int;
@@ -584,15 +585,17 @@ BEGIN
     (aluno_b, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
      'verify-b@elevapro.local', '{"full_name":"B","account_type":"student"}'::jsonb),
     (espec,   '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
-     'verify-e@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb);
+     'verify-e@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb),
+    (espec_sem_fator, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-f@elevapro.local', '{"full_name":"F","account_type":"specialist"}'::jsonb);
 
   -- Art. 46: conta Auth sem perfil não chega ao MFA nem ao CASL. O trigger é
   -- a fronteira que cria identidade de domínio, então esta prova usa o banco real.
   SELECT count(*) INTO visiveis
   FROM public.profiles
-  WHERE id IN (aluno_a, aluno_b, espec);
-  IF visiveis <> 3 THEN
-    RAISE EXCEPTION 'CADASTRO INCOMPLETO: trigger criou % perfis para 3 contas Auth', visiveis;
+  WHERE id IN (aluno_a, aluno_b, espec, espec_sem_fator);
+  IF visiveis <> 4 THEN
+    RAISE EXCEPTION 'CADASTRO INCOMPLETO: trigger criou % perfis para 4 contas Auth', visiveis;
   END IF;
 
   -- Dado de saúde para os DOIS alunos: assim "zero linhas" significa bloqueio e
@@ -607,6 +610,11 @@ BEGIN
 
   INSERT INTO public.specialist_services (specialist_id, service_type)
   VALUES (espec, 'nutrition_consulting');
+
+  -- Uma Passkey só libera dados se a conta também tiver TOTP verificado.
+  INSERT INTO auth.mfa_factors
+    (id, user_id, factor_type, status, created_at, updated_at)
+  VALUES (gen_random_uuid(), espec, 'totp', 'verified', now(), now());
 
   -- A criação do vínculo que libera acesso produz uma única evidência, com
   -- especialista como ator no caminho interno de provisionamento.
@@ -666,6 +674,13 @@ BEGIN
   END IF;
 
   -- Art. 46: uma Passkey confirmada no JWT libera só o aluno vinculado.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec_sem_fator, 'role', 'authenticated', 'aal', 'aal1',
+      'amr', json_build_array(json_build_object('method', 'passkey')))::text, true);
+  IF private.current_session_meets_mfa_requirement() THEN
+    RAISE EXCEPTION 'PASSKEY SEM TOTP: conta sem fator verificado passou pela RLS';
+  END IF;
+
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal1',
       'amr', json_build_array(json_build_object('method', 'passkey')))::text, true);

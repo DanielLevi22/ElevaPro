@@ -5,7 +5,7 @@ const { auth } = vi.hoisted(() => ({
     getClaims: vi.fn(),
     registerPasskey: vi.fn(),
     signInWithPasskey: vi.fn(),
-    mfa: { listFactors: vi.fn() },
+    mfa: { listFactors: vi.fn(), getAuthenticatorAssuranceLevel: vi.fn() },
     passkey: { list: vi.fn(), update: vi.fn(), delete: vi.fn() },
   },
 }));
@@ -22,7 +22,18 @@ import {
 } from "./passkey.service";
 
 describe("passkey.service", () => {
-  beforeEach(() => vi.resetAllMocks());
+  beforeEach(() => {
+    vi.resetAllMocks();
+    delete process.env.NEXT_PUBLIC_PASSKEY_ENABLED;
+    auth.mfa.getAuthenticatorAssuranceLevel.mockResolvedValue({
+      data: { currentLevel: "aal2" },
+      error: null,
+    });
+    auth.mfa.listFactors.mockResolvedValue({
+      data: { all: [{ factor_type: "totp", status: "verified" }] },
+      error: null,
+    });
+  });
 
   it("nega acesso de senha aal1 apesar de haver uma Passkey cadastrada", async () => {
     auth.getClaims.mockResolvedValue({
@@ -38,11 +49,36 @@ describe("passkey.service", () => {
     await expect(hasCurrentPrivilegedProof()).resolves.toBe(true);
   });
 
+  it("na interface habilitada, não aceita continuar só com TOTP", async () => {
+    process.env.NEXT_PUBLIC_PASSKEY_ENABLED = "true";
+    auth.getClaims.mockResolvedValue({
+      data: { claims: { aal: "aal2", amr: [{ method: "totp" }] } },
+    });
+    await expect(hasCurrentPrivilegedProof()).resolves.toBe(false);
+  });
+
+  it("nega Passkey sem fator TOTP verificado para o cadastro", async () => {
+    auth.getClaims.mockResolvedValue({
+      data: { claims: { aal: "aal1", amr: [{ method: "passkey" }] } },
+    });
+    auth.mfa.listFactors.mockResolvedValue({ data: { all: [] }, error: null });
+    await expect(hasCurrentPrivilegedProof()).resolves.toBe(false);
+  });
+
   it("não conclui cadastro nem login se o Auth rejeitar a cerimônia", async () => {
     auth.registerPasskey.mockResolvedValue({ error: new Error("cadastro recusado") });
     auth.signInWithPasskey.mockResolvedValue({ error: new Error("login recusado") });
     await expect(registerPasskey()).rejects.toThrow("cadastro recusado");
     await expect(signInWithPasskey()).rejects.toThrow("login recusado");
+  });
+
+  it("não cadastra Passkey com uma sessão apenas de senha", async () => {
+    auth.mfa.getAuthenticatorAssuranceLevel.mockResolvedValue({
+      data: { currentLevel: "aal1" },
+      error: null,
+    });
+    await expect(registerPasskey()).rejects.toThrow("Confirme o código");
+    expect(auth.registerPasskey).not.toHaveBeenCalled();
   });
 
   it("exibe código legado apenas com fator TOTP verificado", async () => {

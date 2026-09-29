@@ -3,7 +3,8 @@
 ## Garantia de acesso
 
 `admin` e `specialist` só acessam dados de domínio quando o JWT assinado pelo
-Supabase contém `aal2` legado ou uma entrada `amr` com `method: "passkey"`. A
+Supabase contém `aal2` ou uma entrada `amr` com `method: "passkey"` e a conta
+possui um fator TOTP verificado. A
 Passkey é um login sem senha, validado por assinatura WebAuthn no Supabase; Face
 ID, biometria e PIN permanecem no aparelho. Uma sessão `aal1` de senha, OTP ou
 outro método não recebe acesso. BFF e RLS conferem a prova de modo independente;
@@ -44,15 +45,22 @@ repetir a ativação: ela apresentou ainda um custo adicional no CLI.
 
 ## Migração e recuperação
 
-Usuários com TOTP podem confirmar o código uma última vez, cadastrar a Passkey e
-testar um login novo antes de remover o fator antigo. Novos usuários cadastram
-a Passkey após confirmar o e-mail. Não remover TOTP antes da validação real de
-web, Android, iOS e recuperação operacional.
+Usuários com TOTP confirmam o código para cadastrar a Passkey e testam um login
+novo. O fator TOTP permanece na conta para cadastrar e remover aparelhos;
+não é solicitado no login diário por Passkey. Novos usuários confirmam o e-mail,
+configuram e verificam o TOTP uma vez, e só então cadastram a Passkey. Não remover
+o fator enquanto a conta tiver acesso privilegiado. Se senha e e-mail forem
+comprometidos antes da primeira ativação, a recuperação exige verificação do suporte.
+O nome do aparelho é apenas um rótulo e pode ser alterado sem TOTP. Durante a
+migração, `aal2` ainda é aceito por BFF/RLS mesmo quando a UI exige Passkey;
+somente o corte posterior no servidor removerá esse caminho direto.
 
 Quando alguém perde o único aparelho, o suporte confere identidade por canal
 independente, registra o caso e um segundo operador revisa a decisão. Só então
 revoga as Passkeys antigas pelo Admin API do Supabase e as sessões ativas,
-permitindo novo login/cadastro. Nunca pede senha, código TOTP, token ou dado
+permitindo novo login/cadastro após confirmar o TOTP já cadastrado. Se o fator
+TOTP também foi perdido, o suporte executa recuperação com dupla revisão e
+provisiona um novo fator após validar a identidade. Nunca pede senha, código TOTP, token ou dado
 biométrico. A conta fica sem acesso privilegiado até provar uma nova Passkey.
 Registrar IDs opacos, ator, instante, resultado e motivo mínimo no sistema de
 suporte e correlacionar com Auth Audit Logs; não incluir material de credencial.
