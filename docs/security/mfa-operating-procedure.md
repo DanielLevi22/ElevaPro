@@ -29,6 +29,13 @@ exceção não permite alterar serviços, ler dados de alunos nem acessar Storag
    Android usa `FC:6E:8C:EB:88:91:58:B0:A9:73:01:E7:3C:F6:FC:8B:59:2D:85:B3:51:7F:A7:D4:20:09:BC:AE:50:95:1B:14`.
    O EAS iOS ainda não tem credenciais configuradas; obter Team ID e certificado
    antes de construir/testar iOS.
+   O verificador nativo busca esses arquivos sem sessão da Vercel. Enquanto o
+   domínio de preview estiver sob Vercel Authentication, o Android receberá
+   redirecionamento para login e a associação falhará. A exceção de Deployment
+   Protection libera o domínio inteiro, não apenas `/.well-known/*`; usar um
+   ambiente público isolado com dados fictícios para o teste nativo, ou aguardar
+   um domínio público de produção. Não remover a proteção do preview com dados
+   reais apenas para concluir a associação.
 4. No Vercel, definir `PASSKEY_RP_ID`, `PASSKEY_ANDROID_SHA256_FINGERPRINT` e,
    após existir assinatura iOS, `PASSKEY_APPLE_TEAM_ID` por ambiente. Habilitar
    `NEXT_PUBLIC_PASSKEY_ENABLED=true` somente no preview depois de comprovar
