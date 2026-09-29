@@ -16,7 +16,7 @@ ao repositório antes de declarar cobertura.
 
 | ID | Superfície / limite | Estado | Evidência exigida | Frequência |
 | --- | --- | --- | --- | --- |
-| IDN-01 | Cadastro, convite, login, recuperação, sessão e MFA | verificado | `docs/security/mfa-operating-procedure.md`, TOTP/AAL2 e `web/src/lib/__tests__/api-auth.test.ts` | por release e trimestral |
+| IDN-01 | Cadastro, convite, login, recuperação, sessão e autenticação forte | validação de Passkeys pendente | `docs/security/mfa-operating-procedure.md`, `web/src/lib/__tests__/api-auth.test.ts` e `scripts/verify-rls.sql`; provar JWT real de preview antes do corte | por release e trimestral |
 | IDN-02 | Papéis `admin`, `specialist`, `student`/legado `member` | não verificado | fonte da verdade, CASL, RLS e teste de escalada | por mudança |
 | IDN-03 | Vínculo `student_specialists` e masquerade | não verificado | RLS + BFF + teste vinculado/não vinculado | por mudança |
 | WEB-01 | Web pública, layout, proxy e cookies | não verificado | `web/src/proxy.ts`, headers/CSP/CORS e teste de sessão | por release |

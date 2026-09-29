@@ -1,6 +1,7 @@
 jest.mock('../../services', () => ({
   beginTotpChallenge: jest.fn(),
   verifyTotp: jest.fn(),
+  isPasskeyEnabled: () => false,
 }));
 
 import { fireEvent, render, waitFor } from '@testing-library/react-native';

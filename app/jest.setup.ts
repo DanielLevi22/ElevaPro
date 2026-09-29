@@ -3,6 +3,11 @@ global.__DEV__ = true;
 
 // Mock react-native-url-polyfill globally to prevent "URL is not defined" errors
 jest.mock('react-native-url-polyfill/auto', () => ({}));
+jest.mock('react-native-passkeys', () => ({
+  isSupported: jest.fn(() => false),
+  create: jest.fn(),
+  get: jest.fn(),
+}));
 
 process.env.EXPO_PUBLIC_SUPABASE_URL = 'https://mock.supabase.co';
 process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = 'mock-key';

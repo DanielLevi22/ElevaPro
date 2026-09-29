@@ -149,6 +149,38 @@ describe("authorizeMfaSpecialist", () => {
 
     expect(auth.ok).toBe(true);
   });
+
+  // Art. 46: só a prova emitida pelo Auth pode substituir o código TOTP.
+  it("aceita especialista autenticado por Passkey no JWT verificado", async () => {
+    authGetClaims.mockResolvedValue({
+      data: { claims: { sub: "user-1", aal: "aal1", amr: [{ method: "passkey" }] } },
+      error: null,
+    });
+
+    const auth = await authorizeMfaSpecialist(requestWith(VALID));
+
+    expect(auth.ok, "PASSKEY VÁLIDA BLOQUEADA: especialista perde acesso aos próprios alunos").toBe(
+      true,
+    );
+  });
+
+  // Art. 46: cadastro de uma Passkey não transforma login por senha em sessão forte.
+  it.each([
+    null,
+    [],
+    [{ method: "password" }],
+    [{ method: "Passkey" }],
+    ["passkey"],
+  ])("nega especialista em aal1 sem prova Passkey válida: %j", async (amr) => {
+    authGetClaims.mockResolvedValue({
+      data: { claims: { sub: "user-1", aal: "aal1", amr } },
+      error: null,
+    });
+
+    const auth = await authorizeMfaSpecialist(requestWith(VALID));
+
+    expect(auth.ok, "ACESSO SENSÍVEL LIBERADO: senha/claim inválido passou pelo BFF").toBe(false);
+  });
 });
 
 describe("authorizeMfaPrivilegedUser", () => {

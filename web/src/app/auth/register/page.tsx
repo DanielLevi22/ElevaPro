@@ -15,7 +15,7 @@ import { Suspense, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   type AccountRole,
-  hasCurrentMfaAssurance,
+  hasCurrentPrivilegedProof,
   registerAccount,
   useAuthStore,
 } from "@/modules/auth";
@@ -100,7 +100,7 @@ function RegisterForm() {
         });
       });
 
-      if (role === "specialist" && !(await hasCurrentMfaAssurance())) {
+      if (role === "specialist" && !(await hasCurrentPrivilegedProof())) {
         router.replace("/auth/mfa");
         return;
       }

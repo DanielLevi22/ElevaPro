@@ -1,7 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/modules/auth";
+import { useEffect, useState } from "react";
+import {
+  hasCurrentPrivilegedProof,
+  hasLegacyTotpFactor,
+  isPasskeyEnabled,
+  registerPasskey,
+  signInWithPasskey,
+  useAuthStore,
+} from "@/modules/auth";
 import { ManualKeyDisclosure } from "@/modules/auth/components/ManualKeyDisclosure";
 import { QrCodeBlock } from "@/modules/auth/components/QrCodeBlock";
 import { TotpCodeForm } from "@/modules/auth/components/TotpCodeForm";
@@ -10,51 +18,142 @@ import { Button } from "@/shared/components/ui/Button";
 
 export default function MfaPage() {
   const router = useRouter();
+  const passkeyEnabled = isPasskeyEnabled();
+  const [legacyFactor, setLegacyFactor] = useState(false);
+  const [registered, setRegistered] = useState(false);
+  const [verifiedLegacy, setVerifiedLegacy] = useState(false);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [passkeyError, setPasskeyError] = useState("");
+  const destination = () =>
+    useAuthStore.getState().accountType === "admin" ? "/admin" : "/dashboard";
   const { challenge, code, setCode, loading, error, prepareChallenge, confirmCode } =
     useTotpEnrollment({
-      onVerified: () =>
-        router.replace(useAuthStore.getState().accountType === "admin" ? "/admin" : "/dashboard"),
+      onVerified: () => {
+        if (passkeyEnabled) setVerifiedLegacy(true);
+        else router.replace(destination());
+      },
     });
+
+  useEffect(() => {
+    if (!passkeyEnabled) return;
+    void hasLegacyTotpFactor()
+      .then(setLegacyFactor)
+      .catch(() => setLegacyFactor(false));
+  }, [passkeyEnabled]);
+
+  const handleRegister = async () => {
+    setPasskeyLoading(true);
+    setPasskeyError("");
+    try {
+      await registerPasskey();
+      setRegistered(true);
+    } catch (err: unknown) {
+      setPasskeyError(
+        err instanceof Error ? err.message : "Não foi possível cadastrar o aparelho.",
+      );
+    } finally {
+      setPasskeyLoading(false);
+    }
+  };
+
+  const handleSignIn = async () => {
+    setPasskeyLoading(true);
+    setPasskeyError("");
+    try {
+      await signInWithPasskey();
+      if (!(await hasCurrentPrivilegedProof()))
+        throw new Error("Prova do aparelho ausente na sessão.");
+      router.replace(destination());
+    } catch (err: unknown) {
+      setPasskeyError(
+        err instanceof Error ? err.message : "Não foi possível verificar o aparelho.",
+      );
+    } finally {
+      setPasskeyLoading(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-background flex items-center justify-center px-4">
       <section className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-8 space-y-6">
         <header className="space-y-2 text-center">
-          <h1 className="text-2xl font-bold text-foreground">Proteja sua conta</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            {passkeyEnabled ? "Proteja sua conta com o aparelho" : "Proteja sua conta"}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Use um aplicativo autenticador, como Google Authenticator, Microsoft Authenticator ou
-            Authy, para concluir o acesso.
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Se uma configuração anterior foi interrompida, gere um novo QR Code.
+            {passkeyEnabled
+              ? "Cadastre uma Passkey para entrar com Face ID, biometria ou PIN do seu aparelho."
+              : "Confirme o código do seu aplicativo autenticador para concluir o acesso."}
           </p>
         </header>
 
-        {error ? (
+        {passkeyError ? (
           <p className="text-sm text-destructive" role="alert">
-            {error}
+            {passkeyError}
           </p>
         ) : null}
-
-        {!challenge ? (
-          <Button fullWidth isLoading={loading} onClick={prepareChallenge}>
-            Configurar autenticador
+        {passkeyEnabled && registered ? (
+          <Button fullWidth isLoading={passkeyLoading} onClick={handleSignIn}>
+            Entrar com o aparelho cadastrado
           </Button>
-        ) : (
-          <TotpCodeForm
-            code={code}
-            hasQrCode={Boolean(challenge.qrCode)}
-            loading={loading}
-            onChangeCode={setCode}
-            onSubmit={(event) => {
-              event.preventDefault();
-              void confirmCode();
-            }}
-          >
-            {challenge.qrCode ? <QrCodeBlock qrCode={challenge.qrCode} /> : null}
-            {challenge.secret ? <ManualKeyDisclosure secret={challenge.secret} /> : null}
-          </TotpCodeForm>
-        )}
+        ) : passkeyEnabled ? (
+          <Button fullWidth isLoading={passkeyLoading} onClick={handleRegister}>
+            Cadastrar Face ID ou PIN
+          </Button>
+        ) : null}
+
+        {verifiedLegacy ? (
+          <Button fullWidth onClick={() => router.replace(destination())}>
+            Continuar com a sessão atual
+          </Button>
+        ) : null}
+
+        {((passkeyEnabled && legacyFactor) || !passkeyEnabled) && !verifiedLegacy ? (
+          <div className="space-y-4 border-t border-white/10 pt-4">
+            <p className="text-sm text-muted-foreground">
+              {passkeyEnabled
+                ? "Já usa código autenticador? Confirme uma última vez para cadastrar este aparelho."
+                : "Use o código do seu aplicativo autenticador."}
+            </p>
+            {error ? (
+              <p className="text-sm text-destructive" role="alert">
+                {error}
+              </p>
+            ) : null}
+
+            {!challenge ? (
+              <Button fullWidth isLoading={loading} onClick={prepareChallenge}>
+                Configurar autenticador
+              </Button>
+            ) : (
+              <TotpCodeForm
+                code={code}
+                hasQrCode={Boolean(challenge.qrCode)}
+                loading={loading}
+                onChangeCode={setCode}
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void confirmCode();
+                }}
+              >
+                {challenge.qrCode ? <QrCodeBlock qrCode={challenge.qrCode} /> : null}
+                {challenge.secret ? <ManualKeyDisclosure secret={challenge.secret} /> : null}
+              </TotpCodeForm>
+            )}
+          </div>
+        ) : null}
+        <Button
+          fullWidth
+          variant="ghost"
+          onClick={() => {
+            void useAuthStore
+              .getState()
+              .signOut()
+              .then(() => router.replace("/auth/login"));
+          }}
+        >
+          Sair
+        </Button>
       </section>
     </main>
   );

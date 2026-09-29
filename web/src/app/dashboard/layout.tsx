@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { hasCurrentMfaAssurance, useAuth, useAuthStore } from "@/modules/auth";
+import { hasCurrentPrivilegedProof, isPasskeyEnabled, useAuth, useAuthStore } from "@/modules/auth";
 import { DashboardSidebar } from "@/shared/components/layout/DashboardSidebar";
 import { useSidebarCollapsed } from "@/shared/hooks/useSidebarCollapsed";
 
@@ -24,7 +24,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     if (accountType === "specialist" || accountType === "admin") {
       setIsMfaCheckPending(true);
-      void hasCurrentMfaAssurance()
+      void hasCurrentPrivilegedProof()
         .then((hasMfa) => {
           if (!hasMfa) {
             router.replace("/auth/mfa");
@@ -329,6 +329,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     />
                   </svg>
                 ),
+              },
+            ]
+          : []),
+        ...(isPasskeyEnabled()
+          ? [
+              {
+                href: "/dashboard/security",
+                label: "Aparelhos de acesso",
+                icon: <span aria-hidden="true">🔑</span>,
               },
             ]
           : []),

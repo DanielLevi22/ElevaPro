@@ -656,6 +656,28 @@ BEGIN
     RAISE EXCEPTION 'MFA CONTORNADO: especialista AAL1 alterou % serviço(s) próprio(s)', afetadas;
   END IF;
 
+  -- Art. 46: AMR de senha nunca abre a anamnese, mesmo quando o claim existe.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal1',
+      'amr', json_build_array(json_build_object('method', 'password')))::text, true);
+  SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_a;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'ACESSO SENSÍVEL LIBERADO: login por senha leu % anamnese(s)', visiveis;
+  END IF;
+
+  -- Art. 46: uma Passkey confirmada no JWT libera só o aluno vinculado.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal1',
+      'amr', json_build_array(json_build_object('method', 'passkey')))::text, true);
+  SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_a;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'PASSKEY BLOQUEADA: especialista vinculado viu % anamnese(s)', visiveis;
+  END IF;
+  SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_b;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'VAZAMENTO: especialista com Passkey leu aluno sem vínculo';
+  END IF;
+
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', aluno_a, 'role', 'authenticated')::text, true);
   SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_a;

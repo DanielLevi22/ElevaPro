@@ -19,6 +19,7 @@ export const ROUTES = {
     NUTRITION: '/(tabs)/nutrition',
     STUDENTS: '/(tabs)/students',
     PROFILE: '/(tabs)/profile',
+    SECURITY: '/(tabs)/security',
     INDEX: '/(tabs)/index',
     RANKING: '/(tabs)/ranking',
     CARDIO: '/(tabs)/cardio',

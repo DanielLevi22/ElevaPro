@@ -1,10 +1,18 @@
 export { useAuth } from "./hooks/useAuth";
-export type { AccountRole, TotpChallenge } from "./services";
+export type { AccountRole, RegisteredPasskey, TotpChallenge } from "./services";
 export {
   beginTotpChallenge,
   hasCurrentMfaAssurance,
+  hasCurrentPrivilegedProof,
+  hasLegacyTotpFactor,
+  isPasskeyEnabled,
+  listPasskeys,
   MfaSetupUnavailableError,
   registerAccount,
+  registerPasskey,
+  removePasskey,
+  renamePasskey,
+  signInWithPasskey,
   verifyTotp,
 } from "./services";
 export type { AuthState } from "./store/authStore";

@@ -19,7 +19,7 @@ import 'react-native-reanimated';
 import '../global.css';
 
 import { supabase } from '@elevapro/supabase';
-import { hasCurrentMfaAssurance, useAuthStore } from '@/auth';
+import { hasCurrentPrivilegedProof, useAuthStore } from '@/auth';
 import { HealthDataConsentGate } from '@/components/consent/HealthDataConsentGate';
 import { AppAlertHost, showAlert } from '@/components/ui/appAlert';
 import { PushBannerHost } from '@/components/ui/pushBanner';
@@ -123,12 +123,12 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
   const redirectPrivilegedSession = useCallback(async (): Promise<void> => {
     const inMfaRoute = (segments as string[])[1] === 'mfa';
     try {
-      if (!(await hasCurrentMfaAssurance())) {
+      if (!(await hasCurrentPrivilegedProof())) {
         if (!inMfaRoute) router.replace(ROUTES.AUTH.MFA);
         return;
       }
 
-      if (segments[0] === '(auth)') router.replace(ROUTES.TABS.ROOT);
+      if (segments[0] === '(auth)' && !inMfaRoute) router.replace(ROUTES.TABS.ROOT);
     } catch {
       showAlert({
         title: 'Verificação indisponível',

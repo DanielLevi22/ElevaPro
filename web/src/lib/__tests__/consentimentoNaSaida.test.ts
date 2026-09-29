@@ -18,7 +18,8 @@ let consentiu: boolean;
 let explodir: boolean;
 let idConsultado: string | null;
 
-vi.mock("@elevapro/shared", () => ({
+vi.mock("@elevapro/shared", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@elevapro/shared")>()),
   createHealthService: () => ({
     hasCollectionConsent: async (studentId: string) => {
       idConsultado = studentId;

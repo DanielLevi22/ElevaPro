@@ -7,6 +7,7 @@
 export * from "./auth/abilities";
 export * from "./auth/authErrors";
 export * from "./auth/password-policy";
+export * from "./auth/session-proof";
 export * from "./auth/totp";
 export * from "./data/anamnesisAdaptive";
 export * from "./data/anamnesisQuestions";

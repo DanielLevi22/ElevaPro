@@ -9,6 +9,7 @@ import { type ChipDoHero, Hero } from '@/components/ui/Hero';
 import { Input } from '@/components/ui/Input';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { ROUTES } from '@/navigation/types';
+import { isPasskeyEnabled, signInWithPasskey } from '../services';
 import { useAuthStore } from '../store/authStore';
 
 /**
@@ -49,6 +50,22 @@ export function LoginScreen() {
     setLoading(false);
   }
 
+  async function handlePasskeyLogin() {
+    setLoading(true);
+    try {
+      await signInWithPasskey();
+      await barrarContaDesativada();
+    } catch (error: unknown) {
+      showAlert({
+        title: 'Verificação do aparelho',
+        message: error instanceof Error ? error.message : 'Não foi possível entrar com o aparelho.',
+        type: 'error',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <ScreenLayout useSafeArea={false}>
       <ScrollView
@@ -86,6 +103,14 @@ export function LoginScreen() {
 
           <View className="gap-2.5">
             <Button label="Entrar" onPress={handleLogin} isLoading={loading} fullWidth />
+            {isPasskeyEnabled() ? (
+              <Button
+                label="Entrar com Face ID ou PIN"
+                onPress={handlePasskeyLogin}
+                isLoading={loading}
+                fullWidth
+              />
+            ) : null}
             <Button
               label="Esqueci minha senha"
               variant="ghost"

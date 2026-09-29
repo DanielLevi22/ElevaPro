@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { useAuthStore } from '@/auth';
+import { isPasskeyEnabled, useAuthStore } from '@/auth';
 import { showConfirm } from '@/components/ui/appAlert';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { SeletorDeTema } from '@/components/ui/SeletorDeTema';
@@ -173,6 +173,20 @@ export default function ProfileScreen() {
               )}
             </LinearGradient>
           </View>
+
+          {isPasskeyEnabled() &&
+          (profile?.account_type === 'specialist' || profile?.account_type === 'admin') ? (
+            <TouchableOpacity
+              onPress={() => router.push(ROUTES.TABS.SECURITY)}
+              accessibilityRole="button"
+              className="mb-8 rounded-3xl border border-border bg-card p-5"
+            >
+              <Text className="font-bold text-foreground">Aparelhos de acesso</Text>
+              <Text className="mt-1 text-xs text-muted-foreground">
+                Cadastre ou remova Face ID, biometria e PIN
+              </Text>
+            </TouchableOpacity>
+          ) : null}
 
           {/* Health Connect Button */}
           <TouchableOpacity
