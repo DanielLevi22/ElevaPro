@@ -1,6 +1,11 @@
+const mockIsPasskeyEnabled = jest.fn(() => false);
+const mockHasLegacyTotpFactor = jest.fn();
+
 jest.mock('../../services', () => ({
   beginTotpChallenge: jest.fn(),
   verifyTotp: jest.fn(),
+  isPasskeyEnabled: () => mockIsPasskeyEnabled(),
+  hasLegacyTotpFactor: () => mockHasLegacyTotpFactor(),
 }));
 
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
@@ -16,7 +21,33 @@ const mockVerifyTotp = verifyTotp as jest.Mock;
  * coberto em `useTotpEnrollment.test.ts`, sem renderizar nada.
  */
 describe('MfaScreen', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockIsPasskeyEnabled.mockReturnValue(false);
+  });
+
+  it('oferece Face ID ou PIN sem pedir código no login diário', async () => {
+    mockIsPasskeyEnabled.mockReturnValue(true);
+    mockHasLegacyTotpFactor.mockResolvedValue(true);
+    const tela = render(<MfaScreen />);
+
+    expect(tela.getByText('Entrar com Face ID ou PIN')).toBeTruthy();
+    expect(tela.queryByLabelText('Código do autenticador')).toBeNull();
+    expect(mockHasLegacyTotpFactor).not.toHaveBeenCalled();
+    expect(mockBeginTotpChallenge).not.toHaveBeenCalled();
+  });
+
+  it('só prepara o autenticador ao escolher cadastrar aparelho', async () => {
+    mockIsPasskeyEnabled.mockReturnValue(true);
+    mockHasLegacyTotpFactor.mockResolvedValue(true);
+    mockBeginTotpChallenge.mockResolvedValue({ factorId: 'factor-1' });
+    const tela = render(<MfaScreen />);
+
+    fireEvent.press(tela.getByText('Cadastrar ou trocar aparelho'));
+
+    await waitFor(() => expect(tela.getByLabelText('Código do autenticador')).toBeTruthy());
+    expect(mockBeginTotpChallenge).toHaveBeenCalledTimes(1);
+  });
 
   it('mostra o QR Code depois de carregar', async () => {
     mockBeginTotpChallenge.mockResolvedValue({ factorId: 'factor-1', uri: 'otpauth://totp/x' });

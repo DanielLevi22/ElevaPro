@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { isAdminSessionAllowed } from "@/lib/mfa/admin-access";
-import { hasCurrentMfaAssurance } from "@/modules/auth";
+import { hasCurrentPrivilegedProof, isPasskeyEnabled } from "@/modules/auth";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -48,7 +48,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         return;
       }
 
-      if (!isAdminSessionAllowed(profile.account_type, await hasCurrentMfaAssurance())) {
+      if (!isAdminSessionAllowed(profile.account_type, await hasCurrentPrivilegedProof())) {
         router.replace("/auth/mfa");
         return;
       }
@@ -77,6 +77,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { href: "/admin/content/exercises", label: "Exercícios", icon: "💪" },
     { href: "/admin/content/foods", label: "Alimentos", icon: "🍎" },
     { href: "/admin/tecnica", label: "Análise de Técnica", icon: "🏋️" },
+    ...(isPasskeyEnabled()
+      ? [{ href: "/admin/security", label: "Aparelhos de acesso", icon: "🔑" }]
+      : []),
   ];
 
   if (isLoading) {

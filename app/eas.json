@@ -12,6 +12,9 @@
     "preview": {
       "distribution": "internal",
       "environment": "preview",
+      "env": {
+        "EXPO_PUBLIC_PASSKEY_RP_ID": "elevapro-preview.vercel.app"
+      },
       "android": {
         "buildType": "apk"
       }

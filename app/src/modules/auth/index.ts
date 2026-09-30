@@ -4,8 +4,21 @@
 // Routes
 export * from './routes';
 export { MfaScreen } from './screens/MfaScreen';
-export type { TotpChallenge } from './services';
-export { beginTotpChallenge, hasCurrentMfaAssurance, verifyTotp } from './services';
+export { PasskeySettingsScreen } from './screens/PasskeySettingsScreen';
+export type { RegisteredPasskey, TotpChallenge } from './services';
+export {
+  beginTotpChallenge,
+  hasCurrentMfaAssurance,
+  hasCurrentPrivilegedProof,
+  hasLegacyTotpFactor,
+  isPasskeyEnabled,
+  listPasskeys,
+  registerPasskey,
+  removePasskey,
+  renamePasskey,
+  signInWithPasskey,
+  verifyTotp,
+} from './services';
 // Types (re-export from store for now)
 export type { AuthState } from './store/authStore';
 // Store

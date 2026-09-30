@@ -4,6 +4,7 @@ import { beginTotpChallenge, type TotpChallenge, verifyTotp } from '../services'
 export type UseTotpEnrollmentOptions = {
   /** Chamado depois que o código de 6 dígitos é confirmado com sucesso. */
   onVerified?: () => void;
+  autoPrepare?: boolean;
 };
 
 export type UseTotpEnrollmentResult = {
@@ -35,6 +36,7 @@ export type UseTotpEnrollmentResult = {
  */
 export function useTotpEnrollment({
   onVerified,
+  autoPrepare = true,
 }: UseTotpEnrollmentOptions = {}): UseTotpEnrollmentResult {
   const [challenge, setChallenge] = useState<TotpChallenge | null>(null);
   const [code, setCode] = useState('');
@@ -58,8 +60,8 @@ export function useTotpEnrollment({
   }, []);
 
   useEffect(() => {
-    void prepareChallenge();
-  }, [prepareChallenge]);
+    if (autoPrepare) void prepareChallenge();
+  }, [autoPrepare, prepareChallenge]);
 
   const confirmCode = useCallback(async (): Promise<void> => {
     if (!challenge || !/^\d{6}$/.test(code)) {

@@ -54,6 +54,7 @@ const mmkvStorageAdapter = {
 // sempre engolido por um `catch` que só logava.
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
+    experimental: { passkey: true },
     // Entregue na construção. Antes o adapter era atribuído depois, em
     // `supabase.auth.storage`, e o cliente já tinha inicializado com o storage
     // de memória — a sessão nunca chegava ao disco.

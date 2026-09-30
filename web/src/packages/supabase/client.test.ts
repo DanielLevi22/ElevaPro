@@ -18,5 +18,7 @@ it("web usa o mesmo projeto Supabase que o BFF mesmo com variáveis Expo present
 
   await import("./client");
 
-  expect(createBrowserClient).toHaveBeenCalledWith("https://web.supabase.co", "web-anon-key");
+  expect(createBrowserClient).toHaveBeenCalledWith("https://web.supabase.co", "web-anon-key", {
+    auth: { experimental: { passkey: true } },
+  });
 });

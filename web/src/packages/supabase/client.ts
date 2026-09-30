@@ -17,4 +17,5 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createBrowserClient<Database>(
   supabaseUrl || "https://placeholder.supabase.co",
   supabaseAnonKey || "placeholder",
+  { auth: { experimental: { passkey: true } } },
 );

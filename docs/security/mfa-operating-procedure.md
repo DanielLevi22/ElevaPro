@@ -1,60 +1,86 @@
-# MFA para contas privilegiadas
+# Passkeys e acesso privilegiado
 
-## Escopo e garantia
+## Garantia de acesso
 
-`admin` e `specialist` precisam completar TOTP antes de usar recursos privilegiados. O
-Student (inclusive o legado `member`) não é obrigado neste corte. O segredo, o QR Code e
-o código de uso único pertencem exclusivamente ao Supabase Auth e ficam apenas na memória
-da tela durante a configuração; o Eleva Pro não os grava, registra ou envia ao BFF.
+`admin` e `specialist` só acessam dados de domínio quando o JWT assinado pelo
+Supabase contém `aal2` ou uma entrada `amr` com `method: "passkey"` e a conta
+possui um fator TOTP verificado. A
+Passkey é um login sem senha, validado por assinatura WebAuthn no Supabase; Face
+ID, biometria e PIN permanecem no aparelho. Uma sessão `aal1` de senha, OTP ou
+outro método não recebe acesso. BFF e RLS conferem a prova de modo independente;
+CASL e redirecionamento de tela não são fronteiras de segurança.
 
-O BFF confere o claim assinado `aal` em cada rota privilegiada. `aal1` recebe
-`mfa_required`; `aal2` é a única garantia aceita. A policy RLS
-`privileged_session_requires_mfa` aplica a mesma regra às consultas diretas do mobile.
-CASL e o redirecionamento de interface não substituem essas verificações.
+O Student, inclusive `member` legado, mantém o fluxo atual. Para a conta
+privilegiada em `aal1`, só a própria linha em `profiles` e os próprios
+`specialist_services` são legíveis para montar a tela de autenticação. Essa
+exceção não permite alterar serviços, ler dados de alunos nem acessar Storage.
 
-A única exceção AAL1 é a leitura da própria linha em `profiles` e dos próprios
-`specialist_services`, necessária para o cliente descobrir o papel e o contexto de
-autorização da sessão antes de abrir o desafio TOTP. Ela não libera perfis de terceiros,
-dados de alunos, Storage ou qualquer tabela de domínio; criar, alterar ou remover serviços
-continua exigindo AAL2.
+## Ativação por ambiente
 
-## Configuração exigida no Supabase
+1. Escolher RP ID estável. O preview usa `elevapro-preview.vercel.app`; produção
+   exige host e projeto próprios. Alterar o RP ID inutiliza Passkeys já cadastradas.
+2. Configurar em Supabase Authentication → Passkeys o mesmo RP ID, nome e origens
+   HTTPS. Incluir `android:apk-key-hash:<SHA-256 em base64url>` da assinatura do
+   build. O preview usa `_G6M64iRWLCpcwHnPPb8i1kthbNRf6fUIAm8rlCVGxQ` para
+   a assinatura EAS Android consultada em 2026-09-28. Reconfirmar no EAS antes
+   de trocar o keystore.
+3. Publicar `/.well-known/assetlinks.json` com o fingerprint SHA-256 Android e
+   `/.well-known/apple-app-site-association` com Apple Team ID real. O preview
+   Android usa `FC:6E:8C:EB:88:91:58:B0:A9:73:01:E7:3C:F6:FC:8B:59:2D:85:B3:51:7F:A7:D4:20:09:BC:AE:50:95:1B:14`.
+   O EAS iOS ainda não tem credenciais configuradas; obter Team ID e certificado
+   antes de construir/testar iOS.
+   O verificador nativo busca esses arquivos sem sessão da Vercel. Enquanto o
+   domínio de preview estiver sob Vercel Authentication, o Android receberá
+   redirecionamento para login e a associação falhará. A exceção de Deployment
+   Protection libera o domínio inteiro, não apenas `/.well-known/*`; usar um
+   ambiente público isolado com dados fictícios para o teste nativo, ou aguardar
+   um domínio público de produção. Não remover a proteção do preview com dados
+   reais apenas para concluir a associação.
+4. No Vercel, definir `PASSKEY_RP_ID`, `PASSKEY_ANDROID_SHA256_FINGERPRINT` e,
+   após existir assinatura iOS, `PASSKEY_APPLE_TEAM_ID` por ambiente. Habilitar
+   `NEXT_PUBLIC_PASSKEY_ENABLED=true` somente no preview depois de comprovar
+   que o Supabase emite `amr.method=passkey` e o mantém após refresh.
+5. No EAS, `EXPO_PUBLIC_PASSKEY_RP_ID` deve coincidir com o RP ID; o perfil
+   `preview` já declara o host. Definir `EXPO_PUBLIC_PASSKEY_ENABLED=true` só
+   para o build de teste após ativar o Auth de preview. Builds nativos novos são obrigatórios. Expo Go
+   não executa o módulo Passkey. Local usa origem loopback no web, mas Passkeys
+   nativas dependem de domínio associado real e certificado do build local.
 
-No Dashboard > Authentication:
+Até concluir o passo de prova no preview, manter TOTP habilitado. O MFA WebAuthn
+do Supabase hospedado rejeitou a ativação com HTTP 422 em 2026-09-28. Não tentar
+repetir a ativação: ela apresentou ainda um custo adicional no CLI.
 
-1. Em **Multi-Factor**, manter TOTP habilitado e no máximo dois fatores por usuário.
-2. Manter SMS desabilitado neste corte.
-3. Em **Enhanced MFA Security**, habilitar o limite de sessão AAL1 (15 minutos).
-4. Em **Audit Logs**, preservar os eventos Auth de inscrição, desafio, verificação,
-   remoção e recuperação de MFA conforme a retenção operacional do projeto.
+## Migração e recuperação
 
-Os Auth Audit Logs são a fonte autoritativa desses eventos: registram instante de servidor
-e ator da autenticação sem que a aplicação manipule código, segredo, QR, token, e-mail ou
-IP bruto. A trilha `private.security_audit_events` permanece append-only por 365 dias para
-eventos de produto; sua retenção é executada pelo job `purge-security-audit-events`.
+Usuários com TOTP confirmam o código para cadastrar a Passkey e testam um login
+novo. O fator TOTP permanece na conta para cadastrar e remover aparelhos;
+não é solicitado no login diário por Passkey. Novos usuários confirmam o e-mail,
+configuram e verificam o TOTP uma vez, e só então cadastram a Passkey. Não remover
+o fator enquanto a conta tiver acesso privilegiado. Se senha e e-mail forem
+comprometidos antes da primeira ativação, a recuperação exige verificação do suporte.
+O nome do aparelho é apenas um rótulo e pode ser alterado sem TOTP. Durante a
+migração, `aal2` ainda é aceito por BFF/RLS mesmo quando a UI exige Passkey;
+somente o corte posterior no servidor removerá esse caminho direto.
 
-`trace_id` é exigido nos eventos que atravessam o BFF, onde ele é gerado ou validado pelo
-servidor. Eventos de MFA não carregam esse identificador: aceitar um valor informado pelo
-cliente não produziria correlação confiável, e encaminhar QR Code, chave ou código TOTP ao
-BFF aumentaria desnecessariamente a superfície de segredos. A correlação de MFA é feita
-pelos identificadores e instante de servidor dos Auth Audit Logs.
-
-## Recuperação segura
-
-Não há bypass local nem recuperação manual por suporte. Quem perder o autenticador deve
-usar exclusivamente o fluxo documentado do Supabase Auth, com reautenticação e a política
-de fatores da organização. Antes de remover ou reinscrever um fator, o operador confirma a
-identidade fora do aplicativo e consulta os Auth Audit Logs. A remoção, recuperação e nova
-inscrição ficam evidenciadas ali.
+Quando alguém perde o único aparelho, o suporte confere identidade por canal
+independente, registra o caso e um segundo operador revisa a decisão. Só então
+revoga as Passkeys antigas pelo Admin API do Supabase e as sessões ativas,
+permitindo novo login/cadastro após confirmar o TOTP já cadastrado. Se o fator
+TOTP também foi perdido, o suporte executa recuperação com dupla revisão e
+provisiona um novo fator após validar a identidade. Nunca pede senha, código TOTP, token ou dado
+biométrico. A conta fica sem acesso privilegiado até provar uma nova Passkey.
+Registrar IDs opacos, ator, instante, resultado e motivo mínimo no sistema de
+suporte e correlacionar com Auth Audit Logs; não incluir material de credencial.
 
 ## Evidência por release
 
-1. No web e mobile: uma conta privilegiada nova inscreve TOTP, confirma código válido e
-   chega a AAL2; um código inválido é recusado em português.
-2. Com sessão AAL1, chamar uma rota BFF de especialista/admin deve retornar
-   `403 { "error": "mfa_required" }`; com AAL2 deve passar a autorização.
-3. Uma conta Student deve continuar acessando seu fluxo sem MFA.
-4. Uma conta Specialist em AAL1 vê apenas a própria identidade e serviços e é levada para
-   `/auth/mfa`; ela não altera serviços nem lê dietas.
-5. No Dashboard, conferir os eventos Auth de MFA e o período de retenção. Nunca exportar
-   códigos, QR Codes, tokens, e-mails ou IPs brutos para a evidência do release.
+1. JWT real de Passkey no preview: observar apenas `aal`, métodos de `amr` e
+   resultado de refresh; não guardar token. `aal1` de senha continua negado.
+2. BFF e RLS: teste positivo para Passkey e `aal2` legado; teste negativo para
+   `aal1` comum, claim malformado, perfil errado, especialista sem vínculo e
+   consentimento revogado.
+3. Fechar/reabrir aba e app com sessão válida restaura o acesso. Expiração,
+   logout e revogação o retiram.
+4. Cadastro, login, cancelamento e perda do aparelho em web, Android e iOS de
+   preview. Verificar os eventos Auth e a retenção operacional; nunca exportar
+   segredo, token, e-mail ou IP bruto como evidência.

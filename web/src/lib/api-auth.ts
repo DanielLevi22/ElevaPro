@@ -1,11 +1,6 @@
-import { type AccountType, createHealthService } from "@elevapro/shared";
+import { type AccountType, createHealthService, hasPrivilegedSessionProof } from "@elevapro/shared";
 import { createClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
-import {
-  type AuthenticatorAssuranceLevel,
-  assuranceLevelFromClaim,
-  hasSecondFactor,
-} from "./mfa/assurance";
 import { supabaseAdmin } from "./supabase-admin";
 import { clienteDoTitular } from "./supabase-titular";
 
@@ -35,7 +30,7 @@ import { clienteDoTitular } from "./supabase-titular";
 export interface Caller {
   id: string;
   accountType: AccountType;
-  assuranceLevel: AuthenticatorAssuranceLevel;
+  hasPrivilegedProof: boolean;
 }
 
 /**
@@ -97,24 +92,38 @@ export async function authorizeUser(request: NextRequest): Promise<AuthResult> {
 
   if (!profile) return deny(403, "Perfil não encontrado.");
 
+  const accountType = profile.account_type as AccountType;
+  let hasPrivilegedProof = hasPrivilegedSessionProof(claims ?? null);
+  if (
+    hasPrivilegedProof &&
+    claims?.aal !== "aal2" &&
+    (accountType === "specialist" || accountType === "admin")
+  ) {
+    const { data, error } = await supabaseAdmin.auth.admin.mfa.listFactors({ userId });
+    if (error || !data) return deny(503, "Verificação de segurança indisponível.");
+    hasPrivilegedProof = data.factors.some(
+      (factor) => factor.factor_type === "totp" && factor.status === "verified",
+    );
+  }
+
   return {
     ok: true,
     caller: {
       id: userId,
-      accountType: profile.account_type as AccountType,
-      assuranceLevel: assuranceLevelFromClaim(claims?.aal),
+      accountType,
+      hasPrivilegedProof,
     },
   };
 }
 
-/** Conta privilegiada com segundo fator validado na sessão atual. */
+/** Conta privilegiada com MFA legado ou Passkey provada no JWT assinado. */
 export async function authorizeMfaPrivilegedUser(request: NextRequest): Promise<AuthResult> {
   const auth = await authorizeUser(request);
   if (!auth.ok) return auth;
   if (auth.caller.accountType !== "specialist" && auth.caller.accountType !== "admin") {
     return deny(403, "Apenas contas privilegiadas.");
   }
-  if (!hasSecondFactor(auth.caller.assuranceLevel)) return deny(403, "mfa_required");
+  if (!auth.caller.hasPrivilegedProof) return deny(403, "mfa_required");
   return auth;
 }
 

@@ -2,17 +2,55 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { hasCurrentMfaAssurance, useAuthStore } from "@/modules/auth";
+import { useEffect, useState } from "react";
+import {
+  hasCurrentPrivilegedProof,
+  isPasskeyEnabled,
+  signInWithPasskey,
+  useAuthStore,
+} from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
 import { PasswordInput } from "@/shared/components/ui/PasswordInput";
 
 export default function LoginPage() {
   const router = useRouter();
+  const user = useAuthStore((state) => state.user);
+  const accountType = useAuthStore((state) => state.accountType);
+  const isLoading = useAuthStore((state) => state.isLoading);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (isLoading || !user || !accountType) return;
+    let current = true;
+
+    const redirectRestoredSession = async () => {
+      if (
+        (accountType === "admin" || accountType === "specialist") &&
+        !(await hasCurrentPrivilegedProof())
+      ) {
+        if (current) router.replace("/auth/mfa");
+        return;
+      }
+      if (!current) return;
+      const destination =
+        accountType === "admin"
+          ? "/admin"
+          : accountType === "student"
+            ? "/dashboard/coach"
+            : "/dashboard";
+      router.replace(destination);
+    };
+
+    void redirectRestoredSession().catch(() => {
+      if (current) router.replace("/auth/mfa");
+    });
+    return () => {
+      current = false;
+    };
+  }, [accountType, isLoading, router, user]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +90,7 @@ export default function LoginPage() {
 
       if (
         (accountType === "admin" || accountType === "specialist") &&
-        !(await hasCurrentMfaAssurance())
+        !(await hasCurrentPrivilegedProof())
       ) {
         router.replace("/auth/mfa");
         return;
@@ -71,6 +109,36 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  const handlePasskeyLogin = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      await signInWithPasskey();
+      // O listener do provider carrega o perfil; o efeito acima decide o destino.
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Não foi possível entrar com o aparelho.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (isLoading || (user && accountType)) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-background text-foreground">
+        <p>Restaurando sua sessão...</p>
+      </main>
+    );
+  }
+
+  if (user) {
+    return (
+      <main className="min-h-screen flex flex-col gap-4 items-center justify-center bg-background text-foreground">
+        <p>Não foi possível carregar seu perfil.</p>
+        <Button onClick={() => void useAuthStore.getState().initialize()}>Tentar novamente</Button>
+      </main>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
@@ -144,6 +212,18 @@ export default function LoginPage() {
               {loading ? "Entrando..." : "Entrar"}
             </Button>
           </form>
+
+          {isPasskeyEnabled() ? (
+            <Button
+              type="button"
+              size="lg"
+              fullWidth
+              disabled={loading}
+              onClick={handlePasskeyLogin}
+            >
+              Entrar com Face ID ou PIN do aparelho
+            </Button>
+          ) : null}
 
           {/* Footer */}
           <div className="text-center space-y-4">

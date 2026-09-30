@@ -81,6 +81,7 @@ export default function TabLayout() {
             href: null, // Hide from tab bar, accessed via other means if needed
           }}
         />
+        <Tabs.Screen name="security" options={{ title: 'Aparelhos de acesso', href: null }} />
 
         <Tabs.Screen
           name="ranking"
