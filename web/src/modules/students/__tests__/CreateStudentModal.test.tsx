@@ -103,7 +103,10 @@ describe("CreateStudentModal", () => {
     await userEvent.click(screen.getByText("Treino"));
     await userEvent.click(screen.getByRole("button", { name: "Enviar Convite" }));
 
-    await waitFor(() => expect(screen.getByText(/recebeu o convite/i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(/solicitamos o envio do convite/i)).toBeInTheDocument(),
+    );
+    expect(screen.getByText(/Todos os e-mails/i)).toBeInTheDocument();
   });
 
   it("shows error message on failure", async () => {

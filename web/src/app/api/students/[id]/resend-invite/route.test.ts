@@ -53,7 +53,10 @@ describe("POST /api/students/:id/resend-invite", () => {
     expect(res.status).toBe(200);
     expect(inviteUserByEmail).toHaveBeenCalledWith(
       "marina@exemplo.com",
-      expect.objectContaining({ data: expect.objectContaining({ full_name: "Marina Alves" }) }),
+      expect.objectContaining({
+        data: expect.objectContaining({ full_name: "Marina Alves" }),
+        redirectTo: "https://elevapro.test/auth/reset-password",
+      }),
     );
   });
 
@@ -88,5 +91,25 @@ describe("POST /api/students/:id/resend-invite", () => {
     expect(event.traceId).toBe(response.headers.get("X-Request-Id"));
     expect(event).not.toHaveProperty("email");
     expect(event).not.toHaveProperty("full_name");
+  });
+
+  it("correlaciona a recusa do provedor sem expor o endereço do aluno", async () => {
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    inviteUserByEmail.mockResolvedValue({
+      data: { user: null },
+      error: { message: "SMTP indisponível", code: "smtp_failed", status: 500 },
+    });
+
+    const response = await POST(request(), params);
+
+    expect(response.status).toBe(422);
+    expect(response.headers.get("X-Request-Id")).toMatch(/^[0-9a-f]{32}$/);
+    expect(JSON.parse(String(warning.mock.calls[0]?.[0]))).toMatchObject({
+      event: "students.resend_invite_rejected",
+      traceId: response.headers.get("X-Request-Id"),
+      error: { code: "smtp_failed" },
+    });
+    expect(recordSecurityAuditEvent).not.toHaveBeenCalled();
+    warning.mockRestore();
   });
 });
