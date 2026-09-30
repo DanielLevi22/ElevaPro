@@ -51,8 +51,8 @@ vi.mock("@/lib/supabase-admin", () => ({
 
 import { POST } from "./route";
 
-function request(body: unknown): NextRequest {
-  return new NextRequest("https://elevapro.test/api/students", {
+function request(body: unknown, origin = "https://elevapro.test"): NextRequest {
+  return new NextRequest(`${origin}/api/students`, {
     method: "POST",
     body: JSON.stringify(body),
   });
@@ -88,8 +88,28 @@ describe("POST /api/students", () => {
       "marina@exemplo.com",
       expect.objectContaining({
         data: expect.objectContaining({ full_name: "Marina Alves", account_type: "student" }),
+        redirectTo: "https://elevapro.test/auth/reset-password",
       }),
     );
+  });
+
+  it.each([
+    "http://localhost:3000",
+    "https://preview.exemplo.test",
+    "https://app.exemplo.test",
+  ])("monta o destino do convite a partir da origem %s", async (origin) => {
+    await POST(
+      request(
+        {
+          fullName: "Marina Alves",
+          email: "marina@exemplo.com",
+          serviceTypes: ["personal_training"],
+        },
+        origin,
+      ),
+    );
+
+    expect(inviteUserByEmail.mock.calls[0][1].redirectTo).toBe(`${origin}/auth/reset-password`);
   });
 
   // Um cliente desatualizado (ou hostil) que ainda mande senha no corpo não

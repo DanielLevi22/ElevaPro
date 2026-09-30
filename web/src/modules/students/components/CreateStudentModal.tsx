@@ -75,7 +75,7 @@ export function CreateStudentModal({ isOpen, onClose }: CreateStudentModalProps)
 
   if (success) {
     return (
-      <Dialog open={isOpen} onClose={handleClose} title="Convite enviado!">
+      <Dialog open={isOpen} onClose={handleClose} title="Convite solicitado">
         <div className="text-center space-y-4 py-2">
           <div className="w-14 h-14 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto">
             <svg
@@ -93,10 +93,11 @@ export function CreateStudentModal({ isOpen, onClose }: CreateStudentModalProps)
               />
             </svg>
           </div>
+          <p className="text-muted-foreground text-sm">Solicitamos o envio do convite.</p>
           <p className="text-muted-foreground text-sm">
-            <strong className="text-foreground">{fullName}</strong> recebeu o convite em{" "}
-            <strong className="text-foreground">{email}</strong>. Ele entra no app e define a
-            própria senha — sem custo e sem que você a conheça.
+            Peça a <strong className="text-foreground">{fullName}</strong> para conferir o endereço{" "}
+            <strong className="text-foreground">{email}</strong> em Caixa de entrada, Todos os
+            e-mails e spam. Pelo link, ele define a própria senha.
           </p>
           <Button fullWidth onClick={handleClose}>
             Concluir
