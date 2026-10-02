@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useBrilho, useCores, useEscala } from '@/shared/design';
+import { useBottomOffset, useBrilho, useCores, useEscala } from '@/shared/design';
 
 /**
  * O botão redondo do assistente, flutuando no canto acima da tab bar.
@@ -14,7 +13,7 @@ import { useBrilho, useCores, useEscala } from '@/shared/design';
  * @example
  * <BotaoDoAssistente onPress={() => router.push(ROUTES.NUTRITION.ASSISTANT)} />
  */
-const ACIMA_DO_INSET = 70;
+const DO_FUNDO = 104;
 const LADO = 58;
 const TAMANHO_DO_ICONE = 25;
 /** `0 14px 34px -8px` da primária. */
@@ -24,7 +23,7 @@ export function BotaoDoAssistente({ onPress }: { onPress: () => void }) {
   const cores = useCores();
   const escalar = useEscala();
   const brilho = useBrilho();
-  const insets = useSafeAreaInsets();
+  const bottom = useBottomOffset(DO_FUNDO);
 
   return (
     <TouchableOpacity
@@ -34,7 +33,7 @@ export function BotaoDoAssistente({ onPress }: { onPress: () => void }) {
       accessibilityLabel="Falar com o assistente de nutrição"
       className="absolute right-[1.125rem] items-center justify-center rounded-full bg-primary"
       style={{
-        bottom: insets.bottom + escalar(ACIMA_DO_INSET),
+        bottom,
         width: escalar(LADO),
         height: escalar(LADO),
         boxShadow: brilho(BRILHO),

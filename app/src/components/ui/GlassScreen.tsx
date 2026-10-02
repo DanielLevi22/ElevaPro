@@ -1,7 +1,6 @@
 import type { ReactNode, RefObject } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
-import { cn } from '@/lib/utils';
-import { useCores } from '@/shared/design';
+import { ABOVE_TAB_BAR, useBottomOffset, useCores } from '@/shared/design';
 import { AlvoDoVidro } from './AlvoDoVidro';
 import { BRILHO_DA_NUTRICAO, BrilhoAmbiente, type ReceitaDoBrilho } from './BrilhoAmbiente';
 import { ScreenLayout } from './ScreenLayout';
@@ -26,7 +25,8 @@ interface GlassScreenProps {
   /**
    * Espaço no fim da rolagem para o último cartão não ficar atrás do rodapé: a
    * tab bar sozinha (110 no kit), ou a barra de duas ações acima dela (150, mais
-   * os 22 que a barra sobe pelo "+" central).
+   * os 22 que a barra sobe pelo "+" central). Medido do fundo da tela, com a
+   * faixa do sistema do aparelho no lugar da do kit (`useBottomOffset`).
    */
   bottomSpace?: 'tab' | 'actionBar';
   /** Sem ele, a rolagem não tem puxar-para-atualizar. */
@@ -37,7 +37,7 @@ interface GlassScreenProps {
   scrollRef?: RefObject<ScrollView | null>;
 }
 
-const BOTTOM_SPACE = { tab: 'pb-[7.625rem]', actionBar: 'pb-[11.5rem]' } as const;
+const BOTTOM_SPACE = { tab: ABOVE_TAB_BAR, actionBar: 184 } as const;
 
 export function GlassScreen({
   children,
@@ -49,6 +49,7 @@ export function GlassScreen({
   scrollRef,
 }: GlassScreenProps) {
   const cores = useCores();
+  const fimDaRolagem = useBottomOffset(BOTTOM_SPACE[bottomSpace]);
 
   return (
     <ScreenLayout useSafeArea={false}>
@@ -57,10 +58,8 @@ export function GlassScreen({
           ref={scrollRef}
           onContentSizeChange={scrollRef ? () => scrollRef.current?.scrollToEnd() : undefined}
           keyboardShouldPersistTaps="handled"
-          contentContainerClassName={cn(
-            BOTTOM_SPACE[bottomSpace],
-            flushTop ? null : 'px-[1.125rem] pt-[3.625rem]'
-          )}
+          contentContainerClassName={flushTop ? undefined : 'px-[1.125rem] pt-[3.625rem]'}
+          contentContainerStyle={{ paddingBottom: fimDaRolagem }}
           showsVerticalScrollIndicator={false}
           refreshControl={
             refresh ? (

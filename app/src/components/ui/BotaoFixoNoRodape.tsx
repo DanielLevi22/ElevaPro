@@ -1,7 +1,6 @@
 import type { Ionicons } from '@expo/vector-icons';
 import { View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useEscala } from '@/shared/design';
+import { useBottomOffset } from '@/shared/design';
 import { BotaoDeDestaque } from './BotaoDeDestaque';
 
 /**
@@ -26,18 +25,14 @@ interface BotaoFixoNoRodapeProps {
   disabled?: boolean;
 }
 
-/** A tab bar do kit (52), o respiro acima dela (14) e o que o "+" sobressai (22). */
-const ACIMA_DA_TAB_BAR = 88;
+/** O indicador (34), a tab bar do kit (52), o respiro (14) e o que o "+" sobressai (22). */
+const DO_FUNDO = 122;
 
 export function BotaoFixoNoRodape({ rotulo, icone, onPress, disabled }: BotaoFixoNoRodapeProps) {
-  const escalar = useEscala();
-  const insets = useSafeAreaInsets();
+  const bottom = useBottomOffset(DO_FUNDO);
 
   return (
-    <View
-      className="absolute left-[1.125rem] right-[1.125rem]"
-      style={{ bottom: insets.bottom + escalar(ACIMA_DA_TAB_BAR) }}
-    >
+    <View className="absolute left-[1.125rem] right-[1.125rem]" style={{ bottom }}>
       <BotaoDeDestaque rotulo={rotulo} icone={icone} onPress={onPress} disabled={disabled} />
     </View>
   );

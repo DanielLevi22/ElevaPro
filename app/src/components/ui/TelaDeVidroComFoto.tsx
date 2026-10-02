@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { type ImageSourcePropType, RefreshControl, ScrollView } from 'react-native';
 import { cn } from '@/lib/utils';
-import { useCores } from '@/shared/design';
+import { useBottomOffset, useCores } from '@/shared/design';
 import { AlvoDoVidro } from './AlvoDoVidro';
 import { BrilhoAmbiente } from './BrilhoAmbiente';
 import { FundoDeFoto, RECEITA_DA_HOME } from './FundoDeFoto';
@@ -40,12 +40,10 @@ interface TelaDeVidroComFotoProps {
 
 /**
  * O kit: 120 de respiro sob a tab bar; 150 quando o botão fixo está por cima
- * dela, mais os 22 que o botão subiu para não encostar no "+" central.
+ * dela, mais os 22 que o botão subiu para não encostar no "+" central. Medido
+ * do fundo da tela, com a faixa do sistema do aparelho (`useBottomOffset`).
  */
-const BOTTOM_SPACE = {
-  tab: 'px-4 pb-[7.5rem] pt-14',
-  fixedButton: 'px-4 pb-[10.75rem] pt-14',
-} as const;
+const BOTTOM_SPACE = { tab: 120, fixedButton: 172 } as const;
 
 export function TelaDeVidroComFoto({
   image,
@@ -56,6 +54,7 @@ export function TelaDeVidroComFoto({
   refresh,
 }: TelaDeVidroComFotoProps) {
   const colors = useCores();
+  const fimDaRolagem = useBottomOffset(BOTTOM_SPACE[bottomSpace]);
 
   return (
     <ScreenLayout useSafeArea={false}>
@@ -69,10 +68,8 @@ export function TelaDeVidroComFoto({
       >
         <ScrollView
           keyboardShouldPersistTaps="handled"
-          contentContainerClassName={cn(
-            BOTTOM_SPACE[bottomSpace],
-            centered ? 'flex-grow justify-center' : null
-          )}
+          contentContainerClassName={cn('px-4 pt-14', centered ? 'flex-grow justify-center' : null)}
+          contentContainerStyle={{ paddingBottom: fimDaRolagem }}
           showsVerticalScrollIndicator={false}
           refreshControl={
             refresh ? (

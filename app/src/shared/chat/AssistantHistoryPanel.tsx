@@ -6,6 +6,7 @@ import { BRILHO_DA_NUTRICAO, BrilhoAmbiente } from '@/components/ui/BrilhoAmbien
 import { Row } from '@/components/ui/Row';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { Vidro } from '@/components/ui/Vidro';
+import { ABOVE_TAB_BAR, useBottomOffset } from '@/shared/design';
 import type { AssistantConversation, AssistantModule } from './assistantConversations';
 import { AssistantHeader } from './ChatPieces';
 import { useAssistantHistory } from './useAssistantHistory';
@@ -31,6 +32,7 @@ export function AssistantHistoryPanel({
   onSelect,
 }: Props) {
   const history = useAssistantHistory(token, studentId);
+  const listEnd = useBottomOffset(ABOVE_TAB_BAR);
   const blocked = history.loading || history.pending;
   const allowed = (module: AssistantModule) => (module === 'nutrition' ? canNutrition : canWorkout);
   const create = async (module: AssistantModule) => {
@@ -45,7 +47,8 @@ export function AssistantHistoryPanel({
           data={history.sessions.filter((session) => allowed(session.module))}
           keyExtractor={(session) => session.id}
           keyboardShouldPersistTaps="handled"
-          contentContainerClassName="px-[1.125rem] pt-[3.625rem] pb-[7.625rem] gap-3"
+          contentContainerClassName="px-[1.125rem] pt-[3.625rem] gap-3"
+          contentContainerStyle={{ paddingBottom: listEnd }}
           ListHeaderComponent={
             <View className="gap-3">
               <AssistantHeader subject="Histórico de conversas" onBack={onClose} />
