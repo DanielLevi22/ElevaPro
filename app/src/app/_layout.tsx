@@ -19,7 +19,7 @@ import 'react-native-reanimated';
 import '../global.css';
 
 import { supabase } from '@elevapro/supabase';
-import { hasCurrentPrivilegedProof, useAuthStore } from '@/auth';
+import { confirmLocalMfa, hasCurrentPrivilegedProof, useAuthStore } from '@/auth';
 import { HealthDataConsentGate } from '@/components/consent/HealthDataConsentGate';
 import { AppAlertHost, showAlert } from '@/components/ui/appAlert';
 import { PushBannerHost } from '@/components/ui/pushBanner';
@@ -123,7 +123,12 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
   const redirectPrivilegedSession = useCallback(async (): Promise<void> => {
     const inMfaRoute = (segments as string[])[1] === 'mfa';
     try {
-      if (!(await hasCurrentPrivilegedProof())) {
+      // No Supabase local o código do autenticador é confirmado sozinho (#355).
+      const userId = useAuthStore.getState().session?.user.id;
+      const proven =
+        (await hasCurrentPrivilegedProof()) ||
+        (userId !== undefined && (await confirmLocalMfa(userId)));
+      if (!proven) {
         if (!inMfaRoute) router.replace(ROUTES.AUTH.MFA);
         return;
       }

@@ -15,6 +15,15 @@ privilegiada em `aal1`, só a própria linha em `profiles` e os próprios
 `specialist_services` são legíveis para montar a tela de autenticação. Essa
 exceção não permite alterar serviços, ler dados de alunos nem acessar Storage.
 
+## Ambiente local
+
+No Supabase da máquina, o app mobile confirma o TOTP sozinho (#355): cadastra o
+fator, guarda o segredo no aparelho de desenvolvimento e gera o código. A
+sessão é `aal2` real; RLS e BFF não têm exceção para o local. Conta cujo
+autenticador foi cadastrado num celular precisa de `npm run local:reset-mfa`
+uma vez, e o comando recusa qualquer API que não seja `127.0.0.1`/`localhost`.
+E-mails do Auth local param no Mailpit (`http://127.0.0.1:47324`).
+
 ## Ativação por ambiente
 
 1. Escolher RP ID estável. O preview usa `elevapro-preview.vercel.app`; produção

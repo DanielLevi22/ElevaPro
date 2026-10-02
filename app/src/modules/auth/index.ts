@@ -8,6 +8,7 @@ export { PasskeySettingsScreen } from './screens/PasskeySettingsScreen';
 export type { RegisteredPasskey, TotpChallenge } from './services';
 export {
   beginTotpChallenge,
+  confirmLocalMfa,
   hasCurrentMfaAssurance,
   hasCurrentPrivilegedProof,
   hasLegacyTotpFactor,

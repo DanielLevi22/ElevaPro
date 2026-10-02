@@ -20,5 +20,7 @@ fi
 # suficiente para o piso, e nada local disse isso.
 #
 # O custo é alguns segundos por push. O custo do contrário é descobrir depois.
+# Os scripts com efeito colateral (limpeza do MFA local) têm trava própria.
+node --test scripts/__tests__/
 cd app && npx jest --coverage --passWithNoTests --runInBand --forceExit
 cd ../web && npx vitest run --coverage --passWithNoTests
