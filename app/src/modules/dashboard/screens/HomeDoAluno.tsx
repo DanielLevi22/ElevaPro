@@ -10,13 +10,16 @@ import { FundoDeFoto, RECEITA_DA_HOME } from '@/components/ui/FundoDeFoto';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { ROUTES } from '@/navigation/types';
-import { useCores } from '@/shared/design';
+import { useBottomOffset, useCores } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { BlocosDaSaude } from '../components/BlocosDaSaude';
 import { CabecalhoDaHome } from '../components/CabecalhoDaHome';
 import { EntradasDeHoje } from '../components/EntradasDeHoje';
 import { faltaParaFecharODia } from '../services/faltaParaFecharODia';
 import { type DadosDaHomeDoAluno, PERCENTUAL_COMPLETO } from '../types';
+
+/** O respiro da tela inicial do kit sob a tab bar, do fundo da tela. */
+const FIM_DA_ROLAGEM = 112;
 
 /**
  * A entrada do aluno, no desenho de vidro do kit.
@@ -37,6 +40,7 @@ import { type DadosDaHomeDoAluno, PERCENTUAL_COMPLETO } from '../types';
 
 export function HomeDoAluno({ dados }: { dados: DadosDaHomeDoAluno }) {
   const cores = useCores();
+  const fimDaRolagem = useBottomOffset(FIM_DA_ROLAGEM);
   const { treinoSugerido, carregando, recarregar } = dados;
   const foto = fotoDoGrupo(treinoSugerido?.muscle_group);
   // A luz de fundo se ancora nos blocos de métrica, e não na altura da tela.
@@ -58,7 +62,8 @@ export function HomeDoAluno({ dados }: { dados: DadosDaHomeDoAluno }) {
         }
       >
         <ScrollView
-          contentContainerClassName="px-4 pb-28 pt-14"
+          contentContainerClassName="px-4 pt-14"
+          contentContainerStyle={{ paddingBottom: fimDaRolagem }}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl

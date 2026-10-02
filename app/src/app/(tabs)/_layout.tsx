@@ -3,7 +3,7 @@ import { Tabs, useRouter } from 'expo-router';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { TabBar } from '@/components/navigation/TabBar';
-import { comOpacidade, useCores, useEscala } from '@/shared/design';
+import { comOpacidade, useBottomOffset, useCores, useEscala } from '@/shared/design';
 
 export default function TabLayout() {
   const { accountType, abilities, isMasquerading } = useAuthStore();
@@ -122,6 +122,8 @@ export default function TabLayout() {
 }
 
 const EXIT_ICON = 20;
+/** Do fundo da tela, acima da tab bar e do "+" central. */
+const EXIT_FROM_BOTTOM = 120;
 
 /**
  * Sair da visão do aluno. Fica acima da tab bar flutuante, na cor destrutiva: é o
@@ -131,8 +133,9 @@ const EXIT_ICON = 20;
 function ExitStudentViewButton({ onExit }: { onExit: () => void }) {
   const cores = useCores();
   const escalar = useEscala();
+  const bottom = useBottomOffset(EXIT_FROM_BOTTOM);
   return (
-    <View className="absolute bottom-[7.5rem] right-5 z-50">
+    <View className="absolute right-5 z-50" style={{ bottom }}>
       <TouchableOpacity
         onPress={onExit}
         accessibilityRole="button"

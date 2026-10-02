@@ -1,8 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { cn } from '@/lib/utils';
-import { useBrilho, useCores, useEscala } from '@/shared/design';
+import { useBottomOffset, useBrilho, useCores, useEscala } from '@/shared/design';
 
 /**
  * A barra fixa acima da tab bar com duas ações: a secundária em vidro, do
@@ -45,8 +44,9 @@ interface BarraDeDuasAcoesProps {
   semAbas?: boolean;
 }
 
-const ACIMA_DO_INSET = 84;
-const ACIMA_DO_INSET_SEM_ABAS = 62;
+/** Do fundo da tela: os 96 do kit, mais os 22 do "+" quando há tab bar. */
+const DO_FUNDO = 118;
+const DO_FUNDO_SEM_ABAS = 96;
 const TAMANHO_DO_ICONE = 15;
 /** `0 10px 26px -10px` da primária a 80%. */
 const BRILHO_DA_PRINCIPAL = { y: 10, blur: 26, espalhamento: -10 } as const;
@@ -56,15 +56,12 @@ export function BarraDeDuasAcoes({
   principal,
   semAbas = false,
 }: BarraDeDuasAcoesProps) {
-  const escalar = useEscala();
-  const insets = useSafeAreaInsets();
+  const bottom = useBottomOffset(semAbas ? DO_FUNDO_SEM_ABAS : DO_FUNDO);
 
   return (
     <View
       className="absolute left-[1.125rem] right-[1.125rem] flex-row gap-[0.5625rem]"
-      style={{
-        bottom: insets.bottom + escalar(semAbas ? ACIMA_DO_INSET_SEM_ABAS : ACIMA_DO_INSET),
-      }}
+      style={{ bottom }}
     >
       <BotaoDaBarra acao={secundaria} tom="vidro" />
       <BotaoDaBarra acao={principal} tom="principal" />

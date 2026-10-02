@@ -10,13 +10,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { GlassScreen } from '@/components/ui/GlassScreen';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
-import { useBrilho, useCores, useEscala } from '@/shared/design';
+import { useBottomOffset, useBrilho, useCores, useEscala } from '@/shared/design';
 import { CartaoDaSugestao } from '../../components/aluno/CartaoDaSugestao';
 import { ConfirmacaoDoRegistro } from '../../components/aluno/ConfirmacaoDoRegistro';
 import {
@@ -196,7 +195,8 @@ function Digitando() {
 }
 
 /** Mesma altura da barra de duas ações do kit, no mesmo lugar acima da tab bar. */
-const ACIMA_DO_INSET = 84;
+/** Medida do fundo da tela, com o indicador do kit. */
+const DO_FUNDO = 118;
 const BRILHO_DO_ENVIO = { y: 10, blur: 26, espalhamento: -10 } as const;
 
 interface CampoDaConversaProps {
@@ -210,7 +210,7 @@ function CampoDaConversa({ respondendo, onEnviar, onAnexar }: CampoDaConversaPro
   const cores = useCores();
   const escalar = useEscala();
   const brilho = useBrilho();
-  const insets = useSafeAreaInsets();
+  const bottom = useBottomOffset(DO_FUNDO);
   const [texto, setTexto] = useState('');
   const podeEnviar = texto.trim().length > 0 && !respondendo;
 
@@ -223,7 +223,7 @@ function CampoDaConversa({ respondendo, onEnviar, onAnexar }: CampoDaConversaPro
   return (
     <View
       className="absolute left-[1.125rem] right-[1.125rem] flex-row gap-[0.5625rem]"
-      style={{ bottom: insets.bottom + escalar(ACIMA_DO_INSET) }}
+      style={{ bottom }}
     >
       <TouchableOpacity
         onPress={onAnexar}

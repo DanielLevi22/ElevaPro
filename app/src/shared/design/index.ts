@@ -20,3 +20,4 @@ export {
   paleta,
   type Tema,
 } from './tokens';
+export { ABOVE_TAB_BAR, useBottomOffset } from './useBottomOffset';

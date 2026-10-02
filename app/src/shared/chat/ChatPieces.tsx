@@ -3,11 +3,10 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
-import { useBrilho, useCores, useEscala } from '@/shared/design';
+import { useBottomOffset, useBrilho, useCores, useEscala } from '@/shared/design';
 
 /**
  * As peças da conversa com um assistente de IA, no desenho do kit: o cabeçalho
@@ -101,14 +100,15 @@ export function TypingIndicator() {
 }
 
 /** Mesma altura da barra de duas ações do kit, no mesmo lugar acima da tab bar. */
-const ABOVE_INSET = 84;
+/** Medida do fundo da tela, com o indicador do kit. */
+const FROM_BOTTOM = 118;
 const SEND_GLOW = { y: 10, blur: 26, espalhamento: -10 } as const;
 
 export function ChatComposer({ busy, onSend }: { busy: boolean; onSend: (text: string) => void }) {
   const colors = useCores();
   const scale = useEscala();
   const glow = useBrilho();
-  const insets = useSafeAreaInsets();
+  const bottom = useBottomOffset(FROM_BOTTOM);
   const [text, setText] = useState('');
   const canSend = text.trim().length > 0 && !busy;
 
@@ -121,7 +121,7 @@ export function ChatComposer({ busy, onSend }: { busy: boolean; onSend: (text: s
   return (
     <View
       className="absolute left-[1.125rem] right-[1.125rem] flex-row gap-[0.5625rem]"
-      style={{ bottom: insets.bottom + scale(ABOVE_INSET) }}
+      style={{ bottom }}
     >
       <View className="h-[2.625rem] flex-1 justify-center overflow-hidden rounded-[0.8125rem] border border-glass-border bg-background px-3.5">
         <View className="absolute inset-0 bg-glass-strong" />
