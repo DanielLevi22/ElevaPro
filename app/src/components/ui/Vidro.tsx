@@ -173,6 +173,7 @@ export function Vidro({
         )}
         {...props}
       >
+        <BaseSemBlur />
         <CamadaDeBlur escuro={escuro} />
         <LinearGradient
           colors={
@@ -224,6 +225,21 @@ function CamadaDeBlur({ escuro }: { escuro: boolean }) {
       ]}
     />
   );
+}
+
+/**
+ * A cor da tela por baixo do vidro que, no Android, não tem o que desfocar.
+ *
+ * Fora de um alvo o preenchimento fica sozinho, e o `glass-strong` é 11% de
+ * branco: o balão de notificação, que mora na raiz, deixava a tela atravessar
+ * o texto (#351). Sobre a cor da tela o tom é o do kit e nada passa, o mesmo
+ * recurso da `BarraDeDuasAcoes`.
+ */
+function BaseSemBlur() {
+  const alvo = useAlvoDoVidro();
+  if (Platform.OS !== 'android' || alvo) return null;
+
+  return <View testID="base-opaca" className="absolute inset-0 bg-background" />;
 }
 
 /** As sombras do kit no tema, escaladas como o resto do desenho. */

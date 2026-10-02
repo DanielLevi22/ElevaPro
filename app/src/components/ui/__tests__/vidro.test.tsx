@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react-native';
-import { Text } from 'react-native';
+import { Platform, Text } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { coresDoTema } from '@/shared/design';
 import { AlvoDoVidro } from '../AlvoDoVidro';
@@ -318,6 +318,50 @@ describe('Vidro', () => {
     const raio = (1 / reducaoParaOSigma(sigmaEmDp, densidade)) * 4;
 
     expect(raio * 0.57735 + 0.5).toBeCloseTo(sigmaEmDp * densidade, 5);
+  });
+
+  describe('sem blur por trás, no Android', () => {
+    // Fora de um alvo o Android não desfoca nada, e sobrava o `glass-strong`
+    // a 11%: o balão de notificação (#351) mostrava a tela atravessando o texto.
+    const plataformaOriginal = Platform.OS;
+    const naPlataforma = (os: typeof Platform.OS) =>
+      Object.defineProperty(Platform, 'OS', { get: () => os, configurable: true });
+    afterEach(() => naPlataforma(plataformaOriginal));
+
+    it('assenta o vidro sobre a cor da tela', () => {
+      naPlataforma('android');
+      const { queryByTestId } = render(
+        <Vidro>
+          <Text>conteúdo</Text>
+        </Vidro>
+      );
+
+      expect(queryByTestId('base-opaca', OCULTOS)).not.toBeNull();
+    });
+
+    it('continua translúcido dentro do alvo, onde o blur existe', () => {
+      naPlataforma('android');
+      const { queryByTestId } = render(
+        <AlvoDoVidro fundo={<Text>foto</Text>}>
+          <Vidro>
+            <Text>conteúdo</Text>
+          </Vidro>
+        </AlvoDoVidro>
+      );
+
+      expect(queryByTestId('base-opaca', OCULTOS)).toBeNull();
+    });
+
+    it('não muda o iOS, que desfoca sem alvo', () => {
+      naPlataforma('ios');
+      const { queryByTestId } = render(
+        <Vidro>
+          <Text>conteúdo</Text>
+        </Vidro>
+      );
+
+      expect(queryByTestId('base-opaca', OCULTOS)).toBeNull();
+    });
   });
 
   it('renderiza o conteúdo por cima das camadas', () => {
