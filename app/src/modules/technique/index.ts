@@ -1,5 +1,6 @@
 export { Esqueleto } from './components/Esqueleto';
 export { IntroducaoDaTecnica } from './components/IntroducaoDaTecnica';
+export { TecnicaEmDesenvolvimento } from './components/TecnicaEmDesenvolvimento';
 export { type AnaliseDeTecnica, useAnaliseDeTecnica } from './hooks/useAnaliseDeTecnica';
 export {
   type ConsentimentoDaTecnica,

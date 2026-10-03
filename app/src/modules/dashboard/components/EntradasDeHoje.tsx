@@ -3,8 +3,10 @@ import type { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Text } from 'react-native';
 import type { TomDeMetrica } from '@/components/ui/CaixaDeIcone';
+import { Chip } from '@/components/ui/Chip';
 import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
 import { ROUTES } from '@/navigation/types';
+import { TECHNIQUE_RELEASED } from '@/shared/technique/release';
 import { type EstadoDaAnamnese, type FonteDaSaude, PERCENTUAL_COMPLETO } from '../types';
 
 /**
@@ -53,12 +55,16 @@ export function EntradasDeHoje({ metaDoDia, anamnese, fonteDaSaude }: EntradasDe
       {/* Análise de Técnica (issue #194, fase 3).
           Só vira caminho aqui: até este cartão existir, nenhum aluno alcançava
           a tela. Quem barra a câmera é o consentimento próprio da finalidade,
-          não a ausência de rota. */}
+          não a ausência de rota. Em desenvolvimento, o card avisa e a rota
+          mostra o aviso (`TECHNIQUE_RELEASED`). */}
       <LinhaDeVidro
         icon="body"
         tom="marca"
         titulo="Análise de Técnica"
-        sub="Agachamento — conta e julga a profundidade"
+        sub={
+          TECHNIQUE_RELEASED ? 'Agachamento — conta e julga a profundidade' : 'Em desenvolvimento'
+        }
+        direita={TECHNIQUE_RELEASED ? undefined : <Chip>Em breve</Chip>}
         onPress={() => router.push(ROUTES.TECHNIQUE.ROOT)}
       />
 

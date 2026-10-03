@@ -1,12 +1,10 @@
 import type { AdaptiveQuestion } from '@elevapro/shared/data/anamnesisAdaptive';
 import { filtrarEntradaNumerica } from '@elevapro/shared/utils/anamnese';
-import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useCores, useEscala } from '@/shared/design';
-
-/** O tique dentro da caixinha de escolha múltipla. */
-const TAMANHO_DO_CHECK = 10;
+import { Text, TextInput, View } from 'react-native';
+import { cn } from '@/lib/utils';
+import { useCores } from '@/shared/design';
+import { ANSWER_FIELD, ChoiceOptions, YesNoOptions } from './AnswerOptions';
 
 /** O valor de uma resposta da anamnese adaptativa, antes de ir ao banco. */
 export type AnamnesisValue = string | number | string[] | boolean;
@@ -16,7 +14,8 @@ export type AnamnesisValue = string | number | string[] | boolean;
  * unidade, sim ou não, e escolha única ou múltipla.
  *
  * Saiu de `AdaptiveAnamnesisScreen` quando a anamnese do Praticante ganhou as
- * perguntas de medida (#312) e a tela passou do limite de tamanho.
+ * perguntas de medida (#312) e a tela passou do limite de tamanho. As opções são
+ * as mesmas da anamnese do Aluno (`AnswerOptions`, #361).
  *
  * @example <AdaptiveQuestionField question={pergunta} value={respostas[pergunta.id]} onChange={responder} />
  */
@@ -30,7 +29,6 @@ export function AdaptiveQuestionField({
   onChange: (v: AnamnesisValue) => void;
 }) {
   const cores = useCores();
-  const escalar = useEscala();
   // O que está na tela enquanto o aluno digita, que não é o que o pai guardou.
   // O pai recebe o número já convertido; se o campo lesse de lá, a vírgula sumiria
   // no instante em que fosse digitada e o decimal ficaria impossível.
@@ -39,7 +37,7 @@ export function AdaptiveQuestionField({
   if (question.type === 'text') {
     return (
       <TextInput
-        className="min-h-20 rounded-xl border border-glass-border bg-glass-strong px-4 py-3 text-sm text-foreground"
+        className={cn(ANSWER_FIELD, 'min-h-[5rem]')}
         value={(value as string) ?? ''}
         onChangeText={onChange}
         placeholder={question.placeholder ?? 'Sua resposta...'}
@@ -54,7 +52,7 @@ export function AdaptiveQuestionField({
     return (
       <View className="relative">
         <TextInput
-          className="rounded-xl border border-glass-border bg-glass-strong px-4 py-3 pr-16 text-sm text-foreground"
+          className={cn(ANSWER_FIELD, 'pr-16')}
           value={typed ?? (value !== undefined && value !== '' ? String(value) : '')}
           onChangeText={(raw) => {
             // Antes era `onChange(Number(t))` cru: qualquer letra virava `NaN`
@@ -83,86 +81,31 @@ export function AdaptiveQuestionField({
 
   if (question.type === 'boolean') {
     return (
-      <View className="flex-row gap-3">
-        {([true, false] as const).map((opt) => (
-          <TouchableOpacity
-            key={String(opt)}
-            onPress={() => onChange(opt)}
-            className={`flex-1 py-3 rounded-xl border items-center ${
-              value === opt ? 'border-primary bg-primary' : 'border-glass-border bg-glass'
-            }`}
-          >
-            <Text
-              className={`text-sm font-bold ${value === opt ? 'text-primary-foreground' : 'text-muted-foreground'}`}
-            >
-              {opt ? 'Sim' : 'Não'}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <YesNoOptions value={typeof value === 'boolean' ? value : undefined} onChange={onChange} />
     );
   }
 
   if (question.type === 'single_choice' && question.options) {
     return (
-      <View className="gap-2">
-        {question.options.map((opt) => (
-          <TouchableOpacity
-            key={opt}
-            onPress={() => onChange(opt)}
-            className={`w-full px-5 py-3 rounded-xl border ${
-              value === opt ? 'border-primary bg-primary' : 'border-glass-border bg-glass'
-            }`}
-          >
-            <Text
-              className={`text-sm font-medium ${value === opt ? 'text-primary-foreground' : 'text-foreground'}`}
-            >
-              {opt}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <ChoiceOptions
+        options={question.options}
+        selected={typeof value === 'string' ? [value] : []}
+        onToggle={onChange}
+      />
     );
   }
 
   if (question.type === 'multiple_choice' && question.options) {
-    const selected = (value as string[]) ?? [];
-    const toggle = (opt: string) =>
-      onChange(selected.includes(opt) ? selected.filter((s) => s !== opt) : [...selected, opt]);
+    const selected = Array.isArray(value) ? value : [];
     return (
-      <View className="gap-2">
-        {question.options.map((opt) => {
-          const isSelected = selected.includes(opt);
-          return (
-            <TouchableOpacity
-              key={opt}
-              onPress={() => toggle(opt)}
-              className={`w-full px-5 py-3 rounded-xl border flex-row items-center gap-3 ${
-                isSelected ? 'border-primary bg-primary' : 'border-glass-border bg-glass'
-              }`}
-            >
-              <View
-                className={`w-4 h-4 rounded border items-center justify-center ${
-                  isSelected ? 'border-foreground bg-foreground' : 'border-muted-foreground'
-                }`}
-              >
-                {isSelected && (
-                  <Ionicons
-                    name="checkmark"
-                    size={escalar(TAMANHO_DO_CHECK)}
-                    color={cores.primary}
-                  />
-                )}
-              </View>
-              <Text
-                className={`text-sm font-medium flex-1 ${isSelected ? 'text-primary-foreground' : 'text-foreground'}`}
-              >
-                {opt}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+      <ChoiceOptions
+        multiple
+        options={question.options}
+        selected={selected}
+        onToggle={(opt) =>
+          onChange(selected.includes(opt) ? selected.filter((s) => s !== opt) : [...selected, opt])
+        }
+      />
     );
   }
 

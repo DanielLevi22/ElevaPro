@@ -1,11 +1,18 @@
 import type { WorkoutExercise } from '@elevapro/shared';
-import { Image, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { DadoComIcone } from '@/components/ui/DadoComIcone';
 import { Vidro } from '@/components/ui/Vidro';
+import { useCores, useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
+import { techniqueRouteFor } from '@/shared/technique/analyzableExercises';
+import { TECHNIQUE_RELEASED } from '@/shared/technique/release';
 
 /**
  * Um exercício do treino: foto do grupo, nome, séries, carga, descanso e ordem.
+ * O que o app sabe analisar ganha "Analisar técnica" (#361): é no treino que o
+ * aluno está fazendo o movimento.
  *
  * Carga e descanso só aparecem quando o especialista os prescreveu. O kit os
  * mostra sempre; zerá-los aqui seria prescrever "0 kg".
@@ -44,10 +51,38 @@ export function LinhaDoExercicio({ item, ordem }: LinhaDoExercicioProps) {
             <DadoComIcone icone="time-outline" texto={`${item.rest_seconds} s`} />
           ) : null}
         </View>
+        <AnalyzeTechnique exerciseName={item.exercise?.name} />
       </View>
       <Text className="text-micro font-bold text-placeholder">
         {String(ordem).padStart(2, '0')}
       </Text>
     </Vidro>
+  );
+}
+
+const ICON_SIZE = 12;
+
+/** A pílula do kit (`Chip`), na primária e tocável. Some no que não tem análise. */
+function AnalyzeTechnique({ exerciseName }: { exerciseName: string | undefined }) {
+  const router = useRouter();
+  const cores = useCores();
+  const escalar = useEscala();
+  const route = techniqueRouteFor(exerciseName);
+  // Em desenvolvimento, não se oferece o que não abre.
+  if (!TECHNIQUE_RELEASED || !route) return null;
+
+  return (
+    <TouchableOpacity
+      onPress={() => router.push(route)}
+      accessibilityRole="button"
+      accessibilityLabel={`Analisar técnica do ${exerciseName}`}
+      hitSlop={8}
+      className="mt-2 flex-row items-center gap-[0.3125rem] self-start rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1"
+    >
+      <Ionicons name="body-outline" size={escalar(ICON_SIZE)} color={cores.primaryText} />
+      <Text className="text-[0.65625rem] font-extrabold uppercase tracking-wider text-primary-text">
+        Analisar técnica
+      </Text>
+    </TouchableOpacity>
   );
 }
