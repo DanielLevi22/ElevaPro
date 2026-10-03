@@ -11,6 +11,13 @@ import { LinhaDoExercicio } from '../LinhaDoExercicio';
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
 
+let mockReleased = true;
+jest.mock('@/shared/technique/release', () => ({
+  get TECHNIQUE_RELEASED() {
+    return mockReleased;
+  },
+}));
+
 function exercicio(name: string): WorkoutExercise {
   return {
     id: `we-${name}`,
@@ -38,7 +45,10 @@ function exercicio(name: string): WorkoutExercise {
   };
 }
 
-beforeEach(() => mockPush.mockClear());
+beforeEach(() => {
+  mockPush.mockClear();
+  mockReleased = true;
+});
 
 describe('LinhaDoExercicio', () => {
   it('oferece a análise no agachamento e leva até ela', () => {
@@ -47,6 +57,13 @@ describe('LinhaDoExercicio', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Analisar técnica do Agachamento livre' }));
 
     expect(mockPush).toHaveBeenCalledWith(ROUTES.TECHNIQUE.SQUAT);
+  });
+
+  it('não oferece a análise enquanto ela está em desenvolvimento', () => {
+    mockReleased = false;
+    render(<LinhaDoExercicio item={exercicio('Agachamento livre')} ordem={1} />);
+
+    expect(screen.queryByText('Analisar técnica')).toBeNull();
   });
 
   it('não oferece análise no exercício que o app não sabe analisar', () => {

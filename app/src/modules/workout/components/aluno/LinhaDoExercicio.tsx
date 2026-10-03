@@ -7,6 +7,7 @@ import { Vidro } from '@/components/ui/Vidro';
 import { useCores, useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { techniqueRouteFor } from '@/shared/technique/analyzableExercises';
+import { TECHNIQUE_RELEASED } from '@/shared/technique/release';
 
 /**
  * Um exercício do treino: foto do grupo, nome, séries, carga, descanso e ordem.
@@ -67,7 +68,8 @@ function AnalyzeTechnique({ exerciseName }: { exerciseName: string | undefined }
   const cores = useCores();
   const escalar = useEscala();
   const route = techniqueRouteFor(exerciseName);
-  if (!route) return null;
+  // Em desenvolvimento, não se oferece o que não abre.
+  if (!TECHNIQUE_RELEASED || !route) return null;
 
   return (
     <TouchableOpacity
