@@ -29,9 +29,10 @@ module.exports = {
   // Base recomendada em https://docs.expo.dev/develop/unit-testing/, mais
   // react-native-reanimated, que precisa de transform mesmo sendo mockado.
   // O padrao anterior tinha apenas `@exponent/.*` e deixava o escopo `@expo/`
-  // de fora.
+  // de fora. `standard-navigation` é ESM e vem do expo-router: sem ele, o
+  // `renderRouter` dos testes de navegação não carrega (#357).
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg|react-native-reanimated)',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg|react-native-reanimated|standard-navigation)',
   ],
   collectCoverage: true,
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts', '!src/**/__tests__/**'],

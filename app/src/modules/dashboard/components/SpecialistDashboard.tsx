@@ -12,6 +12,12 @@ import { Vidro } from '@/components/ui/Vidro';
 import { ROUTES } from '@/navigation/types';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 
+/**
+ * Vindo da aba Início, a pilha da aba Alunos nasce com a lista por baixo:
+ * voltar do aluno chega à lista, e não à tela inicial (#357).
+ */
+const ENTRE_ABAS = { withAnchor: true } as const;
+
 const SIGNAL_ICON: Record<BriefingSignalKind, keyof typeof Ionicons.glyphMap> = {
   inactive: 'warning-outline',
   pending_invite: 'mail-unread-outline',
@@ -102,7 +108,7 @@ export function SpecialistDashboard({
             <SignalCard
               key={`${signal.studentId}-${signal.kind}`}
               signal={signal}
-              onPress={() => router.push(ROUTES.STUDENTS.DETAILS(signal.studentId))}
+              onPress={() => router.push(ROUTES.STUDENTS.DETAILS(signal.studentId), ENTRE_ABAS)}
             />
           ))}
         </>
@@ -114,7 +120,7 @@ export function SpecialistDashboard({
         tom="marca"
         titulo="Novo aluno"
         sub="Convite por e-mail"
-        onPress={() => router.push(ROUTES.STUDENTS.CREATE)}
+        onPress={() => router.push(ROUTES.STUDENTS.CREATE, ENTRE_ABAS)}
       />
       <LinhaDeVidro
         icon="trophy-outline"
