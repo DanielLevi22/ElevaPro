@@ -33,7 +33,10 @@ enabled = true
 port = 47323
 api_url = "http://127.0.0.1"
 
-[inbucket]
+# Caixa de e-mail local (Mailpit): todo e-mail do Auth local para aqui, e
+# nenhum sai da máquina (#355). Ler em http://127.0.0.1:47324. Era `[inbucket]`,
+# que o CLI marcou como obsoleto.
+[local_smtp]
 enabled = true
 port = 47324
 
@@ -58,6 +61,11 @@ enable_signup = true
 enable_anonymous_sign_ins = false
 minimum_password_length = 6
 
+# Sem SMTP próprio o GoTrue limita o envio a poucos e-mails por hora. No local
+# tudo cai no Mailpit, e o limite só atrapalharia quem testa convites em série.
+[auth.rate_limit]
+email_sent = 100
+
 [auth.email]
 enable_signup = true
 double_confirm_changes = false
@@ -72,23 +80,23 @@ enable_confirmations = false
 subject = "Você foi convidado para o Eleva Pro"
 content_path = "./supabase/templates/invite.html"
 
-# O serviço de e-mail embutido do Supabase é para teste: poucos e-mails por
-# hora, sem SMTP custom. Resend é o SMTP de produção (issue #332) — mesmo
-# template acima, entrega de verdade. A chave nunca vai para este arquivo:
-# `env()` lê do ambiente na hora que o CLI sobe, igual o padrão da ADR-0021.
-# Local: `RESEND_API_KEY` em `supabase/.env` (gitignored). Produção: painel do
-# Supabase → Authentication → SMTP Settings — não é variável da Vercel, porque
-# quem envia o e-mail é a infraestrutura do Supabase, não o Next.js.
-[auth.email.smtp]
-enabled = true
-host = "smtp.resend.com"
-port = 465
-user = "resend"
-pass = "env(RESEND_API_KEY)"
-# PREENCHER: precisa ser um endereço no domínio verificado no Resend — não
-# necessariamente elevapro.app; ver a decisão pendente no wizard da issue #332.
-admin_email = "env(RESEND_SENDER_EMAIL)"
-sender_name = "Eleva Pro"
+# SMTP de entrega real, desligado no local (#355): o convite de teste ia para
+# fora da máquina, e o remetente de teste do Resend só entrega na caixa da dona
+# da conta. Preview e produção configuram o SMTP no painel do Supabase
+# (Authentication → SMTP Settings); este arquivo não chega lá.
+#
+# Para testar entrega real no local, descomente o bloco e preencha
+# `RESEND_API_KEY` e `RESEND_SENDER_EMAIL` em `supabase/.env` (gitignored).
+# A chave nunca vai para este arquivo: `env()` lê do ambiente quando o CLI sobe
+# (ADR-0021).
+# [auth.email.smtp]
+# enabled = true
+# host = "smtp.resend.com"
+# port = 465
+# user = "resend"
+# pass = "env(RESEND_API_KEY)"
+# admin_email = "env(RESEND_SENDER_EMAIL)"
+# sender_name = "Eleva Pro"
 
 [auth.mfa]
 max_enrolled_factors = 2
