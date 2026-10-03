@@ -188,8 +188,8 @@ export const createAuthService = (supabase: SupabaseClient, apiBaseUrl = "") => 
   /**
    * Troca a sessão de convite/recuperação por uma senha definitiva (ADR-0035).
    *
-   * A sessão já existe quando esta função roda — veio do link do e-mail, que o
-   * Supabase troca por sessão antes da tela abrir. Aqui só falta a senha.
+   * A sessão vem do link do e-mail, criada por `sessionFromInviteLink` quando
+   * a tela abre. Aqui só falta a senha.
    *
    * A evidência `identity.invite.accepted` nasce no banco quando o Auth muda a
    * senha. A chamada ao BFF permanece para clientes antigos, sem gerar evento.
@@ -198,6 +198,39 @@ export const createAuthService = (supabase: SupabaseClient, apiBaseUrl = "") => 
    * const resultado = await authService.completeAccountInvite(novaSenha);
    * if (resultado.success) router.replace(ROUTES.TABS.ROOT);
    */
+  /**
+   * Cria a sessão que o link do convite traz, antes de pedir a senha (#359).
+   *
+   * O convite é gerado no servidor e chega no fluxo implícito, com os tokens
+   * depois do `#`. O cliente do web é PKCE e recusa essa URL sozinho, e a
+   * tela abria sem sessão. `setSession` faz o Auth validar os tokens no
+   * servidor: token adulterado volta como falha. Com `?code=` (fluxo PKCE),
+   * troca o código.
+   *
+   * @example
+   * const { success, error } = await authService.sessionFromInviteLink(window.location.href);
+   */
+  sessionFromInviteLink: async (url: string): Promise<{ success: boolean; error?: string }> => {
+    const { searchParams, hash } = new URL(url);
+    const fragment = new URLSearchParams(hash.replace(/^#/, ""));
+
+    const linkError = fragment.get("error_description") ?? searchParams.get("error_description");
+    if (linkError) return { success: false, error: linkError };
+
+    const outcome = ({ error }: { error: { message: string } | null }) =>
+      error ? { success: false, error: error.message } : { success: true };
+
+    const code = searchParams.get("code");
+    if (code) return outcome(await supabase.auth.exchangeCodeForSession(code));
+
+    const access_token = fragment.get("access_token");
+    const refresh_token = fragment.get("refresh_token");
+    if (access_token && refresh_token) {
+      return outcome(await supabase.auth.setSession({ access_token, refresh_token }));
+    }
+    return { success: false, error: "O link não trouxe a sessão do convite." };
+  },
+
   completeAccountInvite: async (
     newPassword: string,
   ): Promise<{ success: boolean; error?: string }> => {

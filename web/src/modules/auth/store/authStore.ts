@@ -26,6 +26,7 @@ export interface AuthState {
   signOut: () => Promise<void>;
   updateSession: (session: Session | null) => Promise<void>;
   completeAccountInvite: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
+  openInviteLink: (url: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -127,6 +128,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         success: false,
         error: error instanceof Error ? error.message : "Erro ao fazer login",
       };
+    }
+  },
+
+  // Sem nada no link (a página recarregada depois de ler os tokens), vale a
+  // sessão aberta. Link com token ou erro nunca cai na sessão de outra pessoa
+  // logada no mesmo navegador.
+  openInviteLink: async (url) => {
+    try {
+      const { hash, search } = new URL(url);
+      if (!hash && !search) {
+        const {
+          data: { session },
+        } = await authService.getSession();
+        if (session) return { success: true };
+      }
+      return await authService.sessionFromInviteLink(url);
+    } catch (error: unknown) {
+      console.error("OpenInviteLink error:", error);
+      return { success: false, error: "Não foi possível abrir o link do convite." };
     }
   },
 

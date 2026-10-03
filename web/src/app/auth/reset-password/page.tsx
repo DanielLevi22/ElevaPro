@@ -2,14 +2,14 @@
 
 import { passwordValidationError } from "@elevapro/shared";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
 
 /**
  * Destino do link de convite/recuperação (ADR-0035), para quem abre o e-mail
- * no computador em vez do celular. A sessão já existe quando esta página
- * abre — o Supabase a troca antes do redirect chegar aqui. Falta só a senha.
+ * no computador em vez do celular. Ao abrir, cria a sessão que o link traz
+ * (#359) e tira os tokens da barra de endereço; depois, falta só a senha.
  */
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -17,6 +17,7 @@ export default function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const link = useInviteLink();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +62,19 @@ export default function ResetPasswordPage() {
             </p>
           </div>
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          {link.status === "checking" && (
+            <p className="text-center text-sm text-muted-foreground">Abrindo seu convite…</p>
+          )}
+          {link.status === "invalid" && (
+            <div className="bg-destructive/10 border border-destructive/50 text-destructive px-4 py-3 rounded-lg text-sm backdrop-blur-sm">
+              Este link não vale mais ({link.error}). Peça ao seu especialista um novo convite.
+            </div>
+          )}
+
+          <form
+            className={link.status === "ready" ? "space-y-6" : "hidden"}
+            onSubmit={handleSubmit}
+          >
             {error && (
               <div className="bg-destructive/10 border border-destructive/50 text-destructive px-4 py-3 rounded-lg text-sm backdrop-blur-sm">
                 {error}
@@ -113,4 +126,37 @@ export default function ResetPasswordPage() {
       </div>
     </div>
   );
+}
+
+type InviteLink =
+  | { status: "checking" }
+  | { status: "ready" }
+  | { status: "invalid"; error: string };
+
+/**
+ * Abre a sessão do link uma vez só: o React de desenvolvimento roda o efeito
+ * duas vezes, e a segunda acharia a URL já limpa.
+ */
+function useInviteLink(): InviteLink {
+  const [link, setLink] = useState<InviteLink>({ status: "checking" });
+  const started = useRef(false);
+
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    void useAuthStore
+      .getState()
+      .openInviteLink(window.location.href)
+      .then((result) => {
+        // Os tokens saem da barra de endereço: não ficam no histórico do navegador.
+        window.history.replaceState(null, "", window.location.pathname);
+        setLink(
+          result.success
+            ? { status: "ready" }
+            : { status: "invalid", error: result.error ?? "link inválido" },
+        );
+      });
+  }, []);
+
+  return link;
 }
