@@ -32,7 +32,9 @@
     "check:file-size:tocados": "node scripts/check-file-size.js --tocados",
     "app:check-hex": "node scripts/check-hex-colors.js",
     "app:check-dead": "cd app && npx knip --no-progress",
-    "app:check-medidas": "node scripts/check-medidas-fixas.js"
+    "app:check-medidas": "node scripts/check-medidas-fixas.js",
+    "local:reset-mfa": "node scripts/local-reset-mfa.mjs",
+    "scripts:test": "node --test scripts/__tests__/"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",
