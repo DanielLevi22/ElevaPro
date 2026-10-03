@@ -1,15 +1,21 @@
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { ScreenLayout } from '@/components/ui/ScreenLayout';
-import { colors } from '@/constants/colors';
+import type { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
+import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
+import { HEALTH_GLOW } from '@/components/ui/BrilhoAmbiente';
+import { CaixaDeIcone, type TomDeMetrica } from '@/components/ui/CaixaDeIcone';
+import { Chip } from '@/components/ui/Chip';
+import { GlassScreen } from '@/components/ui/GlassScreen';
+import { Vidro } from '@/components/ui/Vidro';
 
 /**
  * O que o aluno lê antes de a câmera abrir.
  *
  * Equivalente ao `BodyScanIntroduction`, e pela mesma razão: consentimento
  * informado (Art. 9°) é sobre o texto que a pessoa leu, não sobre o clique. O
- * botão vem depois do texto de propósito.
+ * botão vem depois do texto de propósito — por isso fica no fim da rolagem, e
+ * não na barra fixa do rodapé que o body scan usa (#361).
  *
  * **Não promete precisão.** O critério é geométrico e o limiar ainda não saiu
  * de corpus rotulado — dizer "o app sabe se você agachou certo" seria prometer
@@ -18,23 +24,20 @@ import { colors } from '@/constants/colors';
 
 interface PontoProps {
   icone: keyof typeof Ionicons.glyphMap;
-  cor: string;
+  tom: TomDeMetrica;
   titulo: string;
   children: string;
 }
 
-function Ponto({ icone, cor, titulo, children }: PontoProps) {
+function Ponto({ icone, tom, titulo, children }: PontoProps) {
   return (
-    <View className="flex-row gap-4 mb-5">
-      <View
-        className="w-11 h-11 rounded-2xl items-center justify-center border shrink-0"
-        style={{ backgroundColor: `${cor}15`, borderColor: `${cor}30` }}
-      >
-        <Ionicons color={cor} name={icone} size={20} />
-      </View>
-      <View className="flex-1">
-        <Text className="text-white font-black font-display tracking-tight mb-1">{titulo}</Text>
-        <Text className="text-zinc-400 text-[13px] leading-relaxed">{children}</Text>
+    <View className="flex-row gap-3 py-2">
+      <CaixaDeIcone icon={icone} tom={tom} />
+      <View className="min-w-0 flex-1">
+        <Text className="text-rotulo font-bold tracking-tight text-foreground">{titulo}</Text>
+        <Text className="mt-0.5 text-[0.8125rem] leading-[1.22rem] text-muted-foreground">
+          {children}
+        </Text>
       </View>
     </View>
   );
@@ -47,106 +50,71 @@ interface IntroducaoProps {
 }
 
 export function IntroducaoDaTecnica({ onAutorizar, onCancelar, erro }: IntroducaoProps) {
+  const router = useRouter();
+
   return (
-    <ScreenLayout>
-      <ScrollView
-        contentContainerStyle={{ padding: 24, paddingBottom: 32 }}
-        showsVerticalScrollIndicator={false}
-      >
-        <View className="items-center mb-8">
-          <View className="bg-emerald-500/20 px-3 py-1 rounded-md mb-4 border border-emerald-500/30">
-            <Text className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest">
-              Sua autorização
-            </Text>
-          </View>
-          <Text className="text-white text-3xl font-black font-display text-center leading-tight">
-            Análise de Técnica
+    <GlassScreen glow={HEALTH_GLOW}>
+      <View className="pt-1.5">
+        <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={router.back} />
+      </View>
+
+      <View className="mb-[1.125rem] mt-3.5 items-center">
+        <Chip tom="destaque">Sua autorização</Chip>
+        <Text
+          accessibilityRole="header"
+          className="mt-3 text-center font-display-black text-[1.8125rem] leading-[2rem] tracking-tight text-hero"
+        >
+          Análise de <Text className="text-primary-text">técnica</Text>
+        </Text>
+        <Text className="mt-[0.5625rem] text-center text-[0.8125rem] leading-[1.22rem] text-hero-secondary">
+          O app conta suas repetições de agachamento e diz se cada uma passou da paralela. Antes
+          disso, você precisa saber o que acontece.
+        </Text>
+      </View>
+
+      <Vidro className="px-[0.9375rem] py-2">
+        <Ponto tom="ritmo" icone="videocam-outline" titulo="A câmera fica aberta">
+          Ela não tira fotos: analisa continuamente enquanto a tela está aberta, para conseguir
+          contar e falar no meio do movimento.
+        </Ponto>
+        <Ponto tom="passos" icone="eye-off-outline" titulo="Nada é gravado">
+          Nenhuma imagem é salva, nem aqui nem em servidor. O que se extrai de cada quadro é a
+          posição das suas articulações — um boneco de palito, sem imagem e sem rosto.
+        </Ponto>
+        <Ponto tom="passos" icone="phone-portrait-outline" titulo="Nada sai do aparelho">
+          A análise inteira roda aqui dentro. Nem a imagem nem as posições são enviadas para lugar
+          nenhum, e seu personal não recebe nada disso.
+        </Ponto>
+        <Ponto tom="gordura" icone="volume-high-outline" titulo="O app fala alto">
+          Ele diz "fundo" ou "faltou" a cada repetição. Numa academia, quem estiver por perto vai
+          ouvir.
+        </Ponto>
+        <Ponto tom="cadencia" icone="body-outline" titulo="Não substitui seu personal">
+          O app olha uma coisa só: se o quadril passou da linha do joelho. Não avalia joelho,
+          coluna, ritmo, nem se o exercício é adequado para você.
+        </Ponto>
+        <Ponto tom="marca" icone="arrow-undo-outline" titulo="Você pode voltar atrás">
+          Retire esta autorização quando quiser, no seu perfil, em Minhas Autorizações. A análise
+          para na hora.
+        </Ponto>
+      </Vidro>
+
+      {erro !== null && (
+        <View className="mt-3 rounded-[1.375rem] border border-metrica-batimento/40 bg-metrica-batimento/10 p-4">
+          <Text className="text-[0.8125rem] leading-[1.22rem] text-texto-cardio-batimento">
+            {erro}
           </Text>
-          <Text className="text-zinc-400 text-center text-sm mt-3 leading-relaxed">
-            O app conta suas repetições de agachamento e diz se cada uma passou da paralela. Antes
-            disso, você precisa saber o que acontece.
+        </View>
+      )}
+
+      <View className="mt-6">
+        <BotaoDeDestaque rotulo="Li e autorizo" icone="checkmark" onPress={onAutorizar} />
+        <TouchableOpacity className="mt-1 py-4" onPress={onCancelar} accessibilityRole="button">
+          <Text className="text-center text-xs font-bold uppercase tracking-widest text-muted-foreground">
+            Agora não
           </Text>
-        </View>
-
-        <View className="rounded-[24px] bg-zinc-900/60 border border-white/10 p-5">
-          <Ponto cor={colors.secondary.main} icone="videocam-outline" titulo="A câmera fica aberta">
-            Ela não tira fotos: analisa continuamente enquanto a tela está aberta, para conseguir
-            contar e falar no meio do movimento.
-          </Ponto>
-
-          <Ponto cor={colors.status.success} icone="eye-off-outline" titulo="Nada é gravado">
-            Nenhuma imagem é salva, nem aqui nem em servidor. O que se extrai de cada quadro é a
-            posição das suas articulações — um boneco de palito, sem imagem e sem rosto.
-          </Ponto>
-
-          <Ponto
-            cor={colors.status.success}
-            icone="phone-portrait-outline"
-            titulo="Nada sai do aparelho"
-          >
-            A análise inteira roda aqui dentro. Nem a imagem nem as posições são enviadas para lugar
-            nenhum, e seu personal não recebe nada disso.
-          </Ponto>
-
-          <Ponto cor={colors.status.warning} icone="volume-high-outline" titulo="O app fala alto">
-            Ele diz "fundo" ou "faltou" a cada repetição. Numa academia, quem estiver por perto vai
-            ouvir.
-          </Ponto>
-
-          <Ponto cor={colors.accent.main} icone="body-outline" titulo="Não substitui seu personal">
-            O app olha uma coisa só: se o quadril passou da linha do joelho. Não avalia joelho,
-            coluna, ritmo, nem se o exercício é adequado para você.
-          </Ponto>
-
-          <View className="flex-row gap-4">
-            <View
-              className="w-11 h-11 rounded-2xl items-center justify-center border shrink-0"
-              style={{
-                backgroundColor: `${colors.primary.start}15`,
-                borderColor: `${colors.primary.start}30`,
-              }}
-            >
-              <Ionicons color={colors.primary.start} name="arrow-undo-outline" size={20} />
-            </View>
-            <View className="flex-1">
-              <Text className="text-white font-black font-display tracking-tight mb-1">
-                Você pode voltar atrás
-              </Text>
-              <Text className="text-zinc-400 text-[13px] leading-relaxed">
-                Retire esta autorização quando quiser, no seu perfil, em Minhas Autorizações. A
-                análise para na hora.
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {erro !== null && (
-          <View className="mt-4 bg-red-500/10 border border-red-500/40 px-5 py-4 rounded-2xl">
-            <Text className="text-red-400 text-sm">{erro}</Text>
-          </View>
-        )}
-
-        <View className="mt-8">
-          <TouchableOpacity activeOpacity={0.8} onPress={onAutorizar}>
-            <LinearGradient
-              className="py-4 rounded-2xl items-center shadow-lg shadow-primary-solid/20"
-              colors={colors.gradients.primary as unknown as readonly [string, string, ...string[]]}
-              end={{ x: 1, y: 0 }}
-              start={{ x: 0, y: 0 }}
-            >
-              <Text className="text-white font-black text-lg uppercase tracking-widest">
-                Li e autorizo
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
-
-          <TouchableOpacity className="py-4 mt-1" onPress={onCancelar}>
-            <Text className="text-zinc-500 text-center font-bold uppercase text-xs tracking-widest">
-              Agora não
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </ScreenLayout>
+        </TouchableOpacity>
+      </View>
+    </GlassScreen>
   );
 }

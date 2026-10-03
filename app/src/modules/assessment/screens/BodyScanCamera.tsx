@@ -8,20 +8,19 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Text, TouchableOpacity, Vibration, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { showAlert } from '@/components/ui/appAlert';
+import {
+  CameraPermission,
+  CameraRoundButton,
+  CameraShade,
+  CameraStatusChips,
+  InstructionCard,
+} from '@/components/ui/CameraChrome';
 import { useVoiceCoach } from '@/hooks/useVoiceCoach';
 import BodyScanPoseView, {
   type BodyScanPoseRef,
   type FatosDeVisao,
 } from '../../../../modules/body-scan-pose';
-import {
-  CameraMeasuringOverlay,
-  CameraPermission,
-  CameraRoundButton,
-  CameraShade,
-  CaptureBar,
-  InstructionCard,
-  StatusChips,
-} from '../components/CameraChrome';
+import { CameraMeasuringOverlay, CaptureBar } from '../components/CameraChrome';
 import { CaptureGuide } from '../components/CaptureGuide';
 import { useDeviceLevel } from '../hooks/useDeviceLevel';
 import { cameraChips } from '../services/captureProgress';
@@ -362,7 +361,13 @@ export default function BodyScanCamera() {
   if (!permissao) return <View className="flex-1 bg-black" />;
 
   if (!permissao.granted) {
-    return <CameraPermission onAllow={pedirPermissao} onClose={router.back} />;
+    return (
+      <CameraPermission
+        message="Preciso da câmera para te posicionar e medir o enquadramento. A imagem é analisada no aparelho e não é gravada."
+        onAllow={pedirPermissao}
+        onClose={router.back}
+      />
+    );
   }
 
   const instrucao = portao?.instrucao ?? null;
@@ -416,7 +421,7 @@ export default function BodyScanCamera() {
             />
           </View>
 
-          <StatusChips chips={cameraChips(portao, deviceLevel)} />
+          <CameraStatusChips chips={cameraChips(portao, deviceLevel)} />
           {portao === null && (
             <Text className="mt-3 text-center text-xs text-sobre-imagem-secundario">{estado}</Text>
           )}
