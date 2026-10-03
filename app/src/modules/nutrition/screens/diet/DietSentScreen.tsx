@@ -86,7 +86,10 @@ export default function DietSentScreen() {
           tom="ritmo"
           titulo="Voltar ao perfil"
           sub="Aluno deste plano"
-          onPress={() => router.replace(ROUTES.STUDENTS.DETAILS(studentId))}
+          onPress={() =>
+            // Com a lista por baixo: voltar do aluno não sai da aba Alunos (#357).
+            router.replace(ROUTES.STUDENTS.DETAILS(studentId), { withAnchor: true })
+          }
         />
       )}
     </TelaDeVidroComFoto>
