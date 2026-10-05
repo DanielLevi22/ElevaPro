@@ -130,6 +130,14 @@ export async function authorizeMfaPrivilegedUser(request: NextRequest): Promise<
 /** @deprecated Use authorizeMfaPrivilegedUser para novas ações privilegiadas. */
 export const authorizeMfaSpecialist = authorizeMfaPrivilegedUser;
 
+/** Conta admin com prova privilegiada vigente. @example await authorizeAdmin(request) */
+export async function authorizeAdmin(request: NextRequest): Promise<AuthResult> {
+  const auth = await authorizeMfaPrivilegedUser(request);
+  if (!auth.ok) return auth;
+  if (auth.caller.accountType !== "admin") return deny(403, "Apenas administradores.");
+  return auth;
+}
+
 /** Token válido e conta de especialista. */
 export async function authorizeSpecialist(request: NextRequest): Promise<AuthResult> {
   const auth = await authorizeMfaPrivilegedUser(request);

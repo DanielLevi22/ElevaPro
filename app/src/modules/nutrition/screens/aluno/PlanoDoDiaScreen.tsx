@@ -10,6 +10,7 @@ import { TresMacros } from '../../components/aluno/AnelDeMacro';
 import { BotaoDoAssistente } from '../../components/aluno/BotaoDoAssistente';
 import { FaixaDaSemana } from '../../components/aluno/FaixaDaSemana';
 import { LinhaDaRefeicao } from '../../components/aluno/LinhaDaRefeicao';
+import { SelfGuidedPlanActions } from '../../components/recipes/SelfGuidedPlanActions';
 import { type PlanoDoDia, usePlanoDoDia } from '../../hooks/usePlanoDoDia';
 
 /**
@@ -27,9 +28,14 @@ interface PlanoDoDiaScreenProps {
   alunoId: string;
   /** O especialista vendo como o aluno: lê, e não marca. */
   somenteLeitura: boolean;
+  selfGuided?: boolean;
 }
 
-export function PlanoDoDiaScreen({ alunoId, somenteLeitura }: PlanoDoDiaScreenProps) {
+export function PlanoDoDiaScreen({
+  alunoId,
+  somenteLeitura,
+  selfGuided = false,
+}: PlanoDoDiaScreenProps) {
   const router = useRouter();
   const plano = usePlanoDoDia(alunoId, { somenteLeitura });
 
@@ -60,29 +66,32 @@ export function PlanoDoDiaScreen({ alunoId, somenteLeitura }: PlanoDoDiaScreenPr
           />
         </View>
       </View>
-      <ConteudoDoPlano plano={plano} />
+      {selfGuided && !somenteLeitura ? <SelfGuidedPlanActions /> : null}
+      <PlanContent plan={plano} selfGuided={selfGuided} />
     </GlassScreen>
   );
 }
 
-function ConteudoDoPlano({ plano }: { plano: PlanoDoDia }) {
-  const cores = useCores();
-  if (!plano.temPlano) {
-    return plano.carregando ? (
-      <ActivityIndicator className="mt-16" color={cores.primary} />
+function PlanContent({ plan, selfGuided }: { plan: PlanoDoDia; selfGuided: boolean }) {
+  const colors = useCores();
+  if (!plan.temPlano) {
+    return plan.carregando ? (
+      <ActivityIndicator className="mt-16" color={colors.primary} />
     ) : (
       <Text className="px-6 py-16 text-center text-legenda text-muted-foreground">
-        Seu especialista ainda não montou um plano alimentar para você.
+        {selfGuided
+          ? 'Você ainda não tem um plano alimentar ativo. Crie seu primeiro plano para começar.'
+          : 'Seu especialista ainda não montou um plano alimentar para você.'}
       </Text>
     );
   }
 
   return (
     <>
-      <FaixaDaSemana hoje={plano.hoje} escolhida={plano.data} onEscolher={plano.escolherData} />
-      <AnelDoDia consumidas={plano.consumo.calorias} meta={plano.meta.calorias} />
-      <TresMacros valores={plano.consumo} metas={plano.meta} />
-      <RefeicoesDoDia plano={plano} />
+      <FaixaDaSemana hoje={plan.hoje} escolhida={plan.data} onEscolher={plan.escolherData} />
+      <AnelDoDia consumidas={plan.consumo.calorias} meta={plan.meta.calorias} />
+      <TresMacros valores={plan.consumo} metas={plan.meta} />
+      <RefeicoesDoDia plano={plan} />
     </>
   );
 }

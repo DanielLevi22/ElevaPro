@@ -76,6 +76,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { href: "/admin/analytics", label: "Analytics", icon: "📈" },
     { href: "/admin/content/exercises", label: "Exercícios", icon: "💪" },
     { href: "/admin/content/foods", label: "Alimentos", icon: "🍎" },
+    { href: "/admin/content/meal-media", label: "Imagens do cardápio", icon: "🖼️" },
     { href: "/admin/tecnica", label: "Análise de Técnica", icon: "🏋️" },
     ...(isPasskeyEnabled()
       ? [{ href: "/admin/security", label: "Aparelhos de acesso", icon: "🔑" }]

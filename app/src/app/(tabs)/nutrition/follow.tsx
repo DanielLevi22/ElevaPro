@@ -1,3 +1,7 @@
-import { StudentNutritionScreen } from '@/modules/nutrition/routes/index';
+import { Redirect } from 'expo-router';
+import { ROUTES } from '@/navigation/types';
 
-export default StudentNutritionScreen;
+/** Links antigos seguem para o mesmo fluxo atual de Nutrição. */
+export default function FollowNutritionRoute() {
+  return <Redirect href={ROUTES.NUTRITION.ROOT} />;
+}

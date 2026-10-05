@@ -1,0 +1,79 @@
+# Sanduíche ou torrada — imagens
+
+- [x] `candidate-018df5de97697a14` — Sanduíche ou torrada: Tapioca (goma) + Peito de peru defumado
+- [x] `candidate-038aedb37e36051c` — Sanduíche ou torrada: Pão de forma integral + Ovo inteiro cozido
+- [x] `candidate-06e178ebe3b79af0` — Sanduíche ou torrada: Torrada integral + Queijo minas frescal
+- [ ] `candidate-1033edf0080602c5` — Sanduíche ou torrada: Torrada integral + Queijo parmesão
+- [ ] `candidate-12082e76abe41c54` — Sanduíche ou torrada: Pão integral + Ovo inteiro cozido
+- [ ] `candidate-1285d0c6374b25c0` — Sanduíche ou torrada: Tapioca (goma) + Queijo minas frescal
+- [ ] `candidate-1448f39b5090f6c3` — Sanduíche ou torrada: Tapioca (goma) + Queijo cottage
+- [ ] `candidate-1e22fd75f4bb1fa6` — Sanduíche ou torrada: Tapioca (goma) + Presunto magro
+- [ ] `candidate-20157638309649a3` — Sanduíche ou torrada: Biscoito de arroz + Queijo parmesão
+- [ ] `candidate-224b0b9f3771e8b9` — Sanduíche ou torrada: Pão sírio integral + Queijo minas frescal
+- [ ] `candidate-24ad2222ef1cc89a` — Sanduíche ou torrada: Pão sírio integral + Queijo muçarela
+- [ ] `candidate-277e779790020c9c` — Sanduíche ou torrada: Pão integral + Ricota
+- [ ] `candidate-2820f15aac126e4c` — Sanduíche ou torrada: Biscoito de arroz + Homus
+- [ ] `candidate-28e9af58e15ffb07` — Sanduíche ou torrada: Pão de forma integral + Peito de peru defumado
+- [ ] `candidate-2d13fdcfb371e608` — Sanduíche ou torrada: Torrada integral + Ovo inteiro cozido
+- [ ] `candidate-322314e6525cd794` — Sanduíche ou torrada: Tapioca (goma) + Ovo inteiro cozido
+- [ ] `candidate-3ed81459706820a3` — Sanduíche ou torrada: Biscoito de arroz + Queijo muçarela
+- [ ] `candidate-4461c353dfa45c2e` — Sanduíche ou torrada: Pão francês + Peito de peru defumado
+- [ ] `candidate-44d0f58525d33ec4` — Sanduíche ou torrada: Pão sírio integral + Presunto magro
+- [ ] `candidate-4cd4e38b01ba598a` — Sanduíche ou torrada: Pão francês + Requeijão light
+- [ ] `candidate-4df181f0f6c5d102` — Sanduíche ou torrada: Pão francês + Ovo inteiro cozido
+- [ ] `candidate-534405fe0671f066` — Sanduíche ou torrada: Torrada integral + Ricota
+- [ ] `candidate-5ebb800a770cfab9` — Sanduíche ou torrada: Pão francês + Queijo muçarela
+- [ ] `candidate-67b6348c28e9fd9a` — Sanduíche ou torrada: Tapioca (goma) + Ovo de codorna cozido
+- [ ] `candidate-70101d7f01a5a02f` — Sanduíche ou torrada: Biscoito de arroz + Ovo inteiro cozido
+- [ ] `candidate-73b2c62da8f5164c` — Sanduíche ou torrada: Biscoito de arroz + Ovo de codorna cozido
+- [ ] `candidate-74cb45191448dd18` — Sanduíche ou torrada: Biscoito de arroz + Requeijão light
+- [ ] `candidate-74e2b45058fdceaf` — Sanduíche ou torrada: Pão integral + Peito de peru defumado
+- [ ] `candidate-7c63b3696448c800` — Sanduíche ou torrada: Pão francês + Ovo de codorna cozido
+- [ ] `candidate-7dd8e389d4d12c9a` — Sanduíche ou torrada: Pão de forma integral + Queijo muçarela
+- [ ] `candidate-812c0d873fc2ff3c` — Sanduíche ou torrada: Pão integral + Homus
+- [ ] `candidate-888cd0fbd2c88e6b` — Sanduíche ou torrada: Pão integral + Ovo de codorna cozido
+- [ ] `candidate-898e965b46d7dd0a` — Sanduíche ou torrada: Pão francês + Queijo cottage
+- [ ] `candidate-8ab9bdd7128d4108` — Sanduíche ou torrada: Pão francês + Ricota
+- [ ] `candidate-8d67ea4e3082e9b1` — Sanduíche ou torrada: Torrada integral + Queijo muçarela
+- [ ] `candidate-8d6abc0057bc53b5` — Sanduíche ou torrada: Pão francês + Queijo parmesão
+- [ ] `candidate-94f4a8fca43d79b5` — Sanduíche ou torrada: Pão francês + Homus
+- [ ] `candidate-97e15ed240941122` — Sanduíche ou torrada: Tapioca (goma) + Queijo muçarela
+- [ ] `candidate-993167c89b6c1c1c` — Sanduíche ou torrada: Pão integral + Queijo parmesão
+- [ ] `candidate-99861d961797418c` — Sanduíche ou torrada: Pão de forma integral + Requeijão light
+- [ ] `candidate-9ff18b8ef1e15000` — Sanduíche ou torrada: Pão sírio integral + Ovo de codorna cozido
+- [ ] `candidate-a48ce8de2d88dc6c` — Sanduíche ou torrada: Pão sírio integral + Ricota
+- [ ] `candidate-a5285b7f44025ede` — Sanduíche ou torrada: Biscoito de arroz + Queijo minas frescal
+- [ ] `candidate-a8cf0a9df41c4891` — Sanduíche ou torrada: Pão sírio integral + Requeijão light
+- [ ] `candidate-aaf0a2aa21736769` — Sanduíche ou torrada: Tapioca (goma) + Requeijão light
+- [ ] `candidate-ad939a933134a9a6` — Sanduíche ou torrada: Pão de forma integral + Homus
+- [ ] `candidate-b067660198df4eb5` — Sanduíche ou torrada: Pão integral + Queijo cottage
+- [ ] `candidate-b27b6096a86224d1` — Sanduíche ou torrada: Pão de forma integral + Ricota
+- [ ] `candidate-b3bc7f79d9098a20` — Sanduíche ou torrada: Pão integral + Queijo minas frescal
+- [ ] `candidate-b68145d87829a589` — Sanduíche ou torrada: Pão sírio integral + Homus
+- [ ] `candidate-b975c9f6237dcf4e` — Sanduíche ou torrada: Biscoito de arroz + Peito de peru defumado
+- [ ] `candidate-bdb72decdd7552ad` — Sanduíche ou torrada: Biscoito de arroz + Presunto magro
+- [ ] `candidate-be96d1d83b8c3b63` — Sanduíche ou torrada: Biscoito de arroz + Ricota
+- [ ] `candidate-c01da7c279377d39` — Sanduíche ou torrada: Pão sírio integral + Ovo inteiro cozido
+- [ ] `candidate-c058a022abf0b9ee` — Sanduíche ou torrada: Pão integral + Queijo muçarela
+- [ ] `candidate-c5a0f630a30b8869` — Sanduíche ou torrada: Tapioca (goma) + Homus
+- [ ] `candidate-c76c9120cd13b0c8` — Sanduíche ou torrada: Pão de forma integral + Presunto magro
+- [ ] `candidate-c8a2114d4bcbe518` — Sanduíche ou torrada: Pão francês + Queijo minas frescal
+- [x] `candidate-ca3ab247fb3d1303` — Sanduíche ou torrada: Tapioca (goma) + Ricota
+- [ ] `candidate-d329c77f5d03e5a0` — Sanduíche ou torrada: Pão de forma integral + Ovo de codorna cozido
+- [ ] `candidate-d57a3495a7dbe9b2` — Sanduíche ou torrada: Torrada integral + Presunto magro
+- [ ] `candidate-d629ce1ca036c8bf` — Sanduíche ou torrada: Pão sírio integral + Queijo parmesão
+- [ ] `candidate-d86032eab08cc4a6` — Sanduíche ou torrada: Torrada integral + Peito de peru defumado
+- [ ] `candidate-da5d3c1cc9b3670f` — Sanduíche ou torrada: Torrada integral + Queijo cottage
+- [ ] `candidate-db09ec3417daa5ac` — Sanduíche ou torrada: Torrada integral + Requeijão light
+- [ ] `candidate-ddb278897a5ca787` — Sanduíche ou torrada: Pão de forma integral + Queijo minas frescal
+- [ ] `candidate-e108f83dfdc9dbd6` — Sanduíche ou torrada: Pão de forma integral + Queijo parmesão
+- [x] `candidate-e29353612b5c8047` — Sanduíche ou torrada: Pão de forma integral + Queijo cottage
+- [ ] `candidate-e2d10e3c76fff430` — Sanduíche ou torrada: Pão integral + Presunto magro
+- [ ] `candidate-e3c224e02b726165` — Sanduíche ou torrada: Tapioca (goma) + Queijo parmesão
+- [ ] `candidate-e4752452b95d039d` — Sanduíche ou torrada: Pão integral + Requeijão light
+- [ ] `candidate-e73e40a4b6ebe81a` — Sanduíche ou torrada: Torrada integral + Ovo de codorna cozido
+- [ ] `candidate-e8a4cbb220decdbd` — Sanduíche ou torrada: Biscoito de arroz + Queijo cottage
+- [ ] `candidate-eced793c2704fc3d` — Sanduíche ou torrada: Pão sírio integral + Queijo cottage
+- [ ] `candidate-f58fb4cd3499848d` — Sanduíche ou torrada: Torrada integral + Homus
+- [ ] `candidate-fc4bf35275ab261a` — Sanduíche ou torrada: Pão sírio integral + Peito de peru defumado
+- [ ] `candidate-fd6e5611e0822053` — Sanduíche ou torrada: Pão francês + Presunto magro

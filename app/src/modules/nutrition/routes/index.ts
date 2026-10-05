@@ -13,6 +13,8 @@ export { EscanearPratoScreen } from '../screens/aluno/EscanearPratoScreen';
 export { ListaDeComprasScreen } from '../screens/aluno/ListaDeComprasScreen';
 export { PlanoDoDiaScreen } from '../screens/aluno/PlanoDoDiaScreen';
 export { SubstituirAlimentoScreen } from '../screens/aluno/SubstituirAlimentoScreen';
+// Screens
+export { default as CookingScreen } from '../screens/CookingScreen';
 // Criação de dieta em passos (#337)
 export { default as DietAssistantScreen } from '../screens/diet/DietAssistantScreen';
 export { default as DietFoodSearchScreen } from '../screens/diet/DietFoodSearchScreen';
@@ -23,7 +25,7 @@ export { default as DietPlanViewScreen } from '../screens/diet/DietPlanViewScree
 export { default as DietReviewScreen } from '../screens/diet/DietReviewScreen';
 export { default as DietSentScreen } from '../screens/diet/DietSentScreen';
 export { default as DietStartScreen } from '../screens/diet/DietStartScreen';
-// Screens
+export { MealRecipeScreen } from '../screens/MealRecipeScreen';
 export { MemberNutritionScreen } from '../screens/MemberNutritionScreen';
 export { default as NutritionScreen } from '../screens/NutritionScreen';
 export { StudentNutritionScreen } from '../screens/StudentNutritionScreen';

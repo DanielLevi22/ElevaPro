@@ -161,7 +161,7 @@ export const ROUTES = {
     WIZARD_ASSISTANT: '/(tabs)/workouts/wizard/assistant',
   },
 
-  // Nutrição do aluno, no desenho de vidro (#298). O member segue nas telas antigas.
+  // Nutrição de Aluno e Praticante no mesmo fluxo de vidro.
   NUTRITION: {
     ROOT: '/(tabs)/nutrition',
     /** Leitura do plano enviado; edição é uma ação explícita, em rascunho. */
@@ -183,7 +183,8 @@ export const ROUTES = {
     ASSISTANT: '/(tabs)/nutrition/bot',
     SHOPPING: '/(tabs)/nutrition/shopping-list',
     ADHERENCE: '/(tabs)/nutrition/aderencia',
-    /** O modo de preparo de uma refeição, gerado pelo assistente de receita. */
+    /** Cardápio e preparo são acessos distintos; só ids e data seguem na navegação. */
+    RECIPES: '/(tabs)/nutrition/recipes',
     COOKING: '/(tabs)/nutrition/cooking',
     /**
      * A criação de dieta em passos (#337): ponto de partida, metas, o plano com

@@ -81,6 +81,21 @@ _Avoid_: meal, cardápio
 **DietMealItem**:
 Um alimento específico dentro de uma DietMeal, com quantidade e unidade.
 
+**MealRecipeOption**:
+Um prato alternativo que pode ser montado com os alimentos e porções de uma
+DietMeal. Na interface, o conjunto dessas opções é o "Cardápio" da refeição.
+_Avoid_: substituição de alimento, modo de preparo
+
+**MealPreparation**:
+O passo a passo para preparar uma refeição ou um prato escolhido no Cardápio.
+Concluir o preparo não significa que a refeição foi consumida.
+_Avoid_: cardápio, registro de consumo
+
+**MealImageAsset**:
+Uma foto ilustrativa de catálogo, identificada pelo Eleva Pro, com versão,
+caminho e integridade do arquivo original. Provedor e URL de entrega podem mudar
+sem alterar a identidade usada pelas receitas. Não representa foto pessoal do consumo.
+
 **Food**:
 Item do banco de alimentos, com informação nutricional por porção de referência.
 _Avoid_: alimento genérico, ingrediente

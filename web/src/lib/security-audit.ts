@@ -4,6 +4,8 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 type AuditOutcome = "denied" | "failed" | "succeeded";
 type AuditEventType =
   | "health.assessment.read"
+  | "catalog.media.export"
+  | "catalog.media.restore"
   | "identity.registration.succeeded"
   | "identity.invite.sent"
   | "identity.invite.accepted"
@@ -20,7 +22,7 @@ type SubjectResource = {
 
 // Recurso que não identifica pessoa, como o nome de uma política.
 type NamedResource = {
-  resourceType: "rate_limit_policy";
+  resourceType: "rate_limit_policy" | "meal_media_catalog";
   resourceId: string;
 };
 

@@ -1,0 +1,133 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "id": "photo-chicken-strips-rice",
+      "version": 1,
+      "path": "meal-images/photo-chicken-strips-rice-v1-c5631628c7f6.jpg",
+      "bytes": 129964,
+      "sha256": "c5631628c7f676a9cba985abee5bc9718cd6f5d1b9fee8d1901615a26e59c279",
+      "contentType": "image/jpeg"
+    },
+    {
+      "id": "photo-shredded-chicken-rice",
+      "version": 1,
+      "path": "meal-images/photo-shredded-chicken-rice-v1-90acff552d5c.jpg",
+      "bytes": 125458,
+      "sha256": "90acff552d5c779b57caa877d73f77a2fad6f44de6f3e05ea5ad77bf7cfe091a",
+      "contentType": "image/jpeg"
+    },
+    {
+      "id": "photo-bean-cream-chicken",
+      "version": 1,
+      "path": "meal-images/photo-bean-cream-chicken-v1-cd20b09de0bd.jpg",
+      "bytes": 125154,
+      "sha256": "cd20b09de0bd4a0963b22d72198a52a4f9ed81c2a9e3dc9ca45de5725761aa94",
+      "contentType": "image/jpeg"
+    },
+    {
+      "id": "photo-boiled-egg-sandwich",
+      "version": 1,
+      "path": "meal-images/photo-boiled-egg-sandwich-v1-83f1f1cfadd1.jpg",
+      "bytes": 85177,
+      "sha256": "83f1f1cfadd1968e045a99b7ea913eb2282e0986be036c116dddc9113f5307b1",
+      "contentType": "image/jpeg"
+    },
+    {
+      "id": "photo-beef-rice",
+      "version": 1,
+      "path": "meal-images/photo-beef-rice-v1-a5056367cb9e.jpg",
+      "bytes": 108287,
+      "sha256": "a5056367cb9e6edec3fe12e9c405e70d7c2337bf968e23fd05ed0ff42c024d2c",
+      "contentType": "image/jpeg"
+    },
+    {
+      "id": "photo-fish-rice",
+      "version": 1,
+      "path": "meal-images/photo-fish-rice-v1-3deac179dfa3.jpg",
+      "bytes": 94908,
+      "sha256": "3deac179dfa3f2f1ee14d2964e4a3313226e1ab6e9d5bb3aac4205c792a6f62a",
+      "contentType": "image/jpeg"
+    },
+    {
+      "id": "photo-yogurt-bowl",
+      "version": 1,
+      "path": "meal-images/photo-yogurt-bowl-v1-1672bfaa652a.jpg",
+      "bytes": 82004,
+      "sha256": "1672bfaa652ab6574789702e0ff12401ff3626b26347d365273a3010bb191acd",
+      "contentType": "image/jpeg"
+    },
+    {
+      "id": "photo-overnight-oats",
+      "version": 1,
+      "path": "meal-images/photo-overnight-oats-v1-88cd64579a28.jpg",
+      "bytes": 58656,
+      "sha256": "88cd64579a28ec5e2cfe384f37c03c79821a91f8a7eb82bc7731a00e1760efb3",
+      "contentType": "image/jpeg"
+    },
+    {
+      "id": "photo-chicken-rice",
+      "version": 1,
+      "path": "meal-images/photo-chicken-rice-v1-645b1cb2543d.jpg",
+      "bytes": 97618,
+      "sha256": "645b1cb2543d647ec90d91e9d4c4491db0fa78092bb97800b2e0dce2f5ff0b79",
+      "contentType": "image/jpeg"
+    },
+    {
+      "id": "photo-chicken-rice-bowl",
+      "version": 1,
+      "path": "meal-images/photo-chicken-rice-bowl-v1-f4b7e75fd647.jpg",
+      "bytes": 101081,
+      "sha256": "f4b7e75fd647df779ec71983b4ac5881a2173162b32d5a8a2b89884ad5be7900",
+      "contentType": "image/jpeg"
+    },
+    {
+      "id": "photo-egg-yogurt",
+      "version": 1,
+      "path": "meal-images/photo-egg-yogurt-v1-9914ca63975c.jpg",
+      "bytes": 60838,
+      "sha256": "9914ca63975cc8332c0c80a625482786c84f69f70013d594d6079a48552410a3",
+      "contentType": "image/jpeg"
+    },
+    {
+      "id": "photo-banana-oat-porridge",
+      "version": 1,
+      "path": "meal-images/photo-banana-oat-porridge-v1-cd957294b199.jpg",
+      "bytes": 70659,
+      "sha256": "cd957294b199ec70afcebc8566cd40c06e40227c0f9a551e1d5a227c02d3fdeb",
+      "contentType": "image/jpeg"
+    },
+    {
+      "id": "photo-egg-sandwich",
+      "version": 1,
+      "path": "meal-images/photo-egg-sandwich-v1-589b27ca6426.jpg",
+      "bytes": 90118,
+      "sha256": "589b27ca642670bf7d8375f94431f7f72b84aaa8af06ac0e9be4904fdb09ac9e",
+      "contentType": "image/jpeg"
+    },
+    {
+      "id": "photo-scrambled-toast",
+      "version": 1,
+      "path": "meal-images/photo-scrambled-toast-v1-c4ec388ba891.jpg",
+      "bytes": 81636,
+      "sha256": "c4ec388ba891c8ce48f674382bc55c0189e9782a41f3a658a8cc7dbbe8b12e42",
+      "contentType": "image/jpeg"
+    },
+    {
+      "id": "photo-sweet-potato-chicken",
+      "version": 1,
+      "path": "meal-images/photo-sweet-potato-chicken-v1-9543ff40c0be.jpg",
+      "bytes": 91316,
+      "sha256": "9543ff40c0bed4472e9ecb61beddab7a4b7946eea7c3bd4100fc51ba3fc84286",
+      "contentType": "image/jpeg"
+    },
+    {
+      "id": "photo-sweet-potato-mash",
+      "version": 1,
+      "path": "meal-images/photo-sweet-potato-mash-v1-250ae6ecc2f6.jpg",
+      "bytes": 101440,
+      "sha256": "250ae6ecc2f6d53ef74e73a6e8406947c57b78f0854f284a8ae6f044ba4206b2",
+      "contentType": "image/jpeg"
+    }
+  ]
+}
