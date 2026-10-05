@@ -7,7 +7,7 @@
 - [x] `candidate-0579688ce117c457` — Legumes com finalização: Chuchu cozido + Azeitona verde + Manteiga
 - [x] `candidate-0608649fd2ac975c` — Legumes com finalização: Chuchu cozido + Cebola + Azeite de oliva
 - [x] `candidate-06332e92c0eddcff` — Legumes com finalização: Aspargos cozidos + Limão + Óleo de coco
-- [ ] `candidate-0889989bf6e88cd0` — Legumes com finalização: Couve refogada + Cebola + Azeite de oliva
+- [x] `candidate-0889989bf6e88cd0` — Legumes com finalização: Couve refogada + Cebola + Azeite de oliva
 - [ ] `candidate-08fdb09536b4c8d2` — Legumes com finalização: Aspargos cozidos + Alho + Manteiga ghee
 - [ ] `candidate-092d2dcfbb7b3bd9` — Legumes com finalização: Couve refogada + Alho + Azeite de oliva
 - [ ] `candidate-0bee2cca0d048793` — Legumes com finalização: Abobrinha cozida + Azeitona verde + Manteiga ghee

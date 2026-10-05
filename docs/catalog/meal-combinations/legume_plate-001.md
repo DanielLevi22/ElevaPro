@@ -154,9 +154,9 @@
 - [x] `candidate-08248807f54270f4` — Prato com leguminosa: Batata doce cozida + Feijão fradinho cozido + Aspargos cozidos
 - [x] `candidate-083fd24ec1eb98d8` — Prato com leguminosa: Batata doce cozida + Edamame + Quiabo cozido
 - [x] `candidate-084232ed50867d9f` — Prato com leguminosa: Cuscuz marroquino cozido + Feijão branco cozido + Brócolis cozido
-- [ ] `candidate-0871e8edded0438d` — Prato com leguminosa: Macarrão integral cozido + Feijão carioca cozido + Tomate
-- [ ] `candidate-0883d0235401ee54` — Prato com leguminosa: Macarrão cozido + Lentilha cozida + Brócolis cozido
-- [ ] `candidate-088623e45201f47d` — Prato com leguminosa: Cuscuz de milho + Feijão azuki cozido + Pimentão vermelho
+- [x] `candidate-0871e8edded0438d` — Prato com leguminosa: Macarrão integral cozido + Feijão carioca cozido + Tomate
+- [x] `candidate-0883d0235401ee54` — Prato com leguminosa: Macarrão cozido + Lentilha cozida + Brócolis cozido
+- [x] `candidate-088623e45201f47d` — Prato com leguminosa: Cuscuz de milho + Feijão azuki cozido + Pimentão vermelho
 - [ ] `candidate-08acbe160a90f160` — Prato com leguminosa: Cuscuz marroquino cozido + Feijão preto cozido + Vagem cozida
 - [ ] `candidate-08b6ea0790d0b764` — Prato com leguminosa: Cuscuz marroquino cozido + Tremoço em conserva + Couve-flor cozida
 - [ ] `candidate-08bb75b9b97dd8cd` — Prato com leguminosa: Macarrão cozido + Feijão carioca cozido + Alface
