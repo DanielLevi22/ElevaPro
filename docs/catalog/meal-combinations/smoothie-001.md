@@ -3,14 +3,14 @@
 - [x] `candidate-00004712f72f9d61` — Vitamina: Kefir de leite + Abacate
 - [x] `candidate-02ad3316a20b7820` — Vitamina: Bebida de soja sem açúcar + Banana prata
 - [x] `candidate-06cf50c317a63bc3` — Vitamina: Leite integral + Banana prata
-- [ ] `candidate-0b0b9cb54f24c8b3` — Vitamina: Bebida de amêndoas sem açúcar + Manga
-- [ ] `candidate-0d8645ca0dd89778` — Vitamina: Bebida de soja sem açúcar + Mirtilo
-- [ ] `candidate-10e01d51e98e4f4a` — Vitamina: Bebida de amêndoas sem açúcar + Morango
-- [ ] `candidate-114de11ca037f338` — Vitamina: Kefir de leite + Framboesa
-- [ ] `candidate-1276e1c1f7f0a490` — Vitamina: Leite desnatado + Manga
-- [ ] `candidate-1603497b04085da6` — Vitamina: Kefir de leite + Morango
-- [ ] `candidate-16caf1eac6b6e850` — Vitamina: Kefir de leite + Manga
-- [ ] `candidate-1a814c8c9c491333` — Vitamina: Leite sem lactose desnatado + Mirtilo
+- [x] `candidate-0b0b9cb54f24c8b3` — Vitamina: Bebida de amêndoas sem açúcar + Manga
+- [x] `candidate-0d8645ca0dd89778` — Vitamina: Bebida de soja sem açúcar + Mirtilo
+- [x] `candidate-10e01d51e98e4f4a` — Vitamina: Bebida de amêndoas sem açúcar + Morango
+- [x] `candidate-114de11ca037f338` — Vitamina: Kefir de leite + Framboesa
+- [x] `candidate-1276e1c1f7f0a490` — Vitamina: Leite desnatado + Manga
+- [x] `candidate-1603497b04085da6` — Vitamina: Kefir de leite + Morango
+- [x] `candidate-16caf1eac6b6e850` — Vitamina: Kefir de leite + Manga
+- [x] `candidate-1a814c8c9c491333` — Vitamina: Leite sem lactose desnatado + Mirtilo
 - [ ] `candidate-22b877546f457b26` — Vitamina: Leite sem lactose desnatado + Abacate
 - [ ] `candidate-2439204d6018efde` — Vitamina: Leite integral + Framboesa
 - [ ] `candidate-24b4197cbee9db90` — Vitamina: Leite desnatado + Açaí (polpa sem açúcar)

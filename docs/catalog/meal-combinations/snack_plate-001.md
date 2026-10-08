@@ -6,20 +6,20 @@
 - [x] `candidate-04c52d82edb6425d` — Lanche: Torrada integral + Mamão
 - [x] `candidate-07ac5cd8a3a5b5dc` — Lanche: Biscoito de arroz + Damasco seco
 - [x] `candidate-07aeb392fbd91114` — Lanche: Torrada integral + Kiwi
-- [ ] `candidate-0a9d39d178314ef6` — Lanche: Biscoito de arroz + Uva
-- [ ] `candidate-0cbe3ab648340610` — Lanche: Torrada integral + Maracujá
-- [ ] `candidate-0ce67c60b905da8c` — Lanche: Pão de queijo + Morango
-- [ ] `candidate-0e5db806fac4961c` — Lanche: Torrada integral + Melancia
-- [ ] `candidate-0e91dd146e43c6ff` — Lanche: Pão de queijo + Uva
-- [ ] `candidate-0f7962ed7316f24f` — Lanche: Panqueca de aveia + Mirtilo
-- [ ] `candidate-173710a985f55c34` — Lanche: Pão de queijo + Kiwi
-- [ ] `candidate-17546fbcac75fb02` — Lanche: Barra de proteína + Morango
-- [ ] `candidate-178b9607dbd40edb` — Lanche: Crepioca + Caqui
-- [ ] `candidate-1888b6358fc9cb5a` — Lanche: Torrada integral + Banana nanica
-- [ ] `candidate-19a825eb92053bf6` — Lanche: Panqueca de aveia + Tâmara
-- [ ] `candidate-1ac7dfb99be7b766` — Lanche: Pão de queijo + Maracujá
-- [ ] `candidate-1aea03a181605429` — Lanche: Crepioca + Mirtilo
-- [ ] `candidate-1b1e1e160a3abae8` — Lanche: Barra de proteína + Goiaba
+- [x] `candidate-0a9d39d178314ef6` — Lanche: Biscoito de arroz + Uva
+- [x] `candidate-0cbe3ab648340610` — Lanche: Torrada integral + Maracujá
+- [x] `candidate-0ce67c60b905da8c` — Lanche: Pão de queijo + Morango
+- [x] `candidate-0e5db806fac4961c` — Lanche: Torrada integral + Melancia
+- [x] `candidate-0e91dd146e43c6ff` — Lanche: Pão de queijo + Uva
+- [x] `candidate-0f7962ed7316f24f` — Lanche: Panqueca de aveia + Mirtilo
+- [x] `candidate-173710a985f55c34` — Lanche: Pão de queijo + Kiwi
+- [x] `candidate-17546fbcac75fb02` — Lanche: Barra de proteína + Morango
+- [x] `candidate-178b9607dbd40edb` — Lanche: Crepioca + Caqui
+- [x] `candidate-1888b6358fc9cb5a` — Lanche: Torrada integral + Banana nanica
+- [x] `candidate-19a825eb92053bf6` — Lanche: Panqueca de aveia + Tâmara
+- [x] `candidate-1ac7dfb99be7b766` — Lanche: Pão de queijo + Maracujá
+- [x] `candidate-1aea03a181605429` — Lanche: Crepioca + Mirtilo
+- [x] `candidate-1b1e1e160a3abae8` — Lanche: Barra de proteína + Goiaba
 - [ ] `candidate-1cca77f251a5eb81` — Lanche: Panqueca de aveia + Framboesa
 - [ ] `candidate-1cfd822753a5a5ed` — Lanche: Biscoito de arroz + Caqui
 - [ ] `candidate-1dae84fedfaa1426` — Lanche: Torrada integral + Laranja

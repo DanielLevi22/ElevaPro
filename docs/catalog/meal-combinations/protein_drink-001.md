@@ -1,10 +1,10 @@
 # Bebida com suplemento — imagens
 
-- [ ] `candidate-0a69ad48a753f0e2` — Bebida com suplemento: Leite desnatado + Colágeno hidrolisado (pó)
-- [ ] `candidate-0dd5810cfcca60ab` — Bebida com suplemento: Leite sem lactose desnatado + Proteína vegetal (pó)
-- [ ] `candidate-1178a5bf455e6148` — Bebida com suplemento: Leite integral + Whey protein (pó)
-- [ ] `candidate-155b4975c497b464` — Bebida com suplemento: Bebida de soja sem açúcar + Proteína vegetal (pó)
-- [ ] `candidate-1b36cd91528abd97` — Bebida com suplemento: Leite desnatado + Proteína vegetal (pó)
+- [x] `candidate-0a69ad48a753f0e2` — Bebida com suplemento: Leite desnatado + Colágeno hidrolisado (pó)
+- [x] `candidate-0dd5810cfcca60ab` — Bebida com suplemento: Leite sem lactose desnatado + Proteína vegetal (pó)
+- [x] `candidate-1178a5bf455e6148` — Bebida com suplemento: Leite integral + Whey protein (pó)
+- [x] `candidate-155b4975c497b464` — Bebida com suplemento: Bebida de soja sem açúcar + Proteína vegetal (pó)
+- [x] `candidate-1b36cd91528abd97` — Bebida com suplemento: Leite desnatado + Proteína vegetal (pó)
 - [ ] `candidate-2f9b958677738492` — Bebida com suplemento: Bebida de soja sem açúcar + Caseína (pó)
 - [ ] `candidate-351e64da56b9ee0b` — Bebida com suplemento: Leite sem lactose desnatado + Whey protein (pó)
 - [ ] `candidate-3e227d3443d0f9a6` — Bebida com suplemento: Kefir de leite + Whey isolado (pó)
