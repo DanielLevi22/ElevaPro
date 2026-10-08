@@ -3,6 +3,7 @@ export * from "./assessment";
 export * from "./auth";
 export * from "./gamification";
 export * from "./health";
+export * from "./meal-catalog";
 export * from "./nutrition";
 export * from "./security";
 export * from "./students";

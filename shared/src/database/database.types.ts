@@ -329,6 +329,39 @@ export type Database = {
           },
         ];
       };
+      diet_meal_dishes: {
+        Row: {
+          created_at: string;
+          diet_meal_id: string;
+          dish_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          diet_meal_id: string;
+          dish_id: string;
+        };
+        Update: {
+          created_at?: string;
+          diet_meal_id?: string;
+          dish_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diet_meal_dishes_diet_meal_id_fkey";
+            columns: ["diet_meal_id"];
+            isOneToOne: false;
+            referencedRelation: "diet_meals";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diet_meal_dishes_dish_id_fkey";
+            columns: ["dish_id"];
+            isOneToOne: false;
+            referencedRelation: "meal_dishes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       diet_meal_items: {
         Row: {
           created_at: string;
@@ -712,6 +745,112 @@ export type Database = {
           },
         ];
       };
+      meal_dish_ingredients: {
+        Row: {
+          dish_id: string;
+          food_id: string;
+          order_index: number;
+        };
+        Insert: {
+          dish_id: string;
+          food_id: string;
+          order_index: number;
+        };
+        Update: {
+          dish_id?: string;
+          food_id?: string;
+          order_index?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "meal_dish_ingredients_dish_id_fkey";
+            columns: ["dish_id"];
+            isOneToOne: false;
+            referencedRelation: "meal_dishes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "meal_dish_ingredients_food_id_fkey";
+            columns: ["food_id"];
+            isOneToOne: false;
+            referencedRelation: "foods";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      meal_dish_preparations: {
+        Row: {
+          dish_id: string;
+          equipment: string;
+          id: string;
+          minutes: number;
+          steps: NonNullable<Json>;
+          title: string;
+        };
+        Insert: {
+          dish_id: string;
+          equipment: string;
+          id?: string;
+          minutes: number;
+          steps: NonNullable<Json>;
+          title: string;
+        };
+        Update: {
+          dish_id?: string;
+          equipment?: string;
+          id?: string;
+          minutes?: number;
+          steps?: NonNullable<Json>;
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "meal_dish_preparations_dish_id_fkey";
+            columns: ["dish_id"];
+            isOneToOne: false;
+            referencedRelation: "meal_dishes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      meal_dishes: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          id: string;
+          image_id: string | null;
+          status: string;
+          template: string;
+          title: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          id: string;
+          image_id?: string | null;
+          status?: string;
+          template: string;
+          title: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          image_id?: string | null;
+          status?: string;
+          template?: string;
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "meal_dishes_image_id_fkey";
+            columns: ["image_id"];
+            isOneToOne: false;
+            referencedRelation: "media_assets";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       meal_logs: {
         Row: {
           actual_items: Json | null;
@@ -766,6 +905,42 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      media_assets: {
+        Row: {
+          bytes: number;
+          content_type: string;
+          created_at: string;
+          delivery_base_url: string;
+          id: string;
+          sha256: string;
+          storage_path: string;
+          verified_at: string;
+          version: number;
+        };
+        Insert: {
+          bytes: number;
+          content_type: string;
+          created_at?: string;
+          delivery_base_url: string;
+          id: string;
+          sha256: string;
+          storage_path: string;
+          verified_at: string;
+          version: number;
+        };
+        Update: {
+          bytes?: number;
+          content_type?: string;
+          created_at?: string;
+          delivery_base_url?: string;
+          id?: string;
+          sha256?: string;
+          storage_path?: string;
+          verified_at?: string;
+          version?: number;
+        };
+        Relationships: [];
       };
       physical_assessments: {
         Row: {
@@ -1764,7 +1939,19 @@ export type Database = {
           student_id: string;
         }[];
       };
+      import_meal_catalog: { Args: { p_apply?: boolean; p_catalog: Json }; Returns: Json };
       link_student_by_code: { Args: { p_code: string }; Returns: Json };
+      match_meal_dishes: {
+        Args: { p_food_ids: string[]; p_limit?: number; p_offset?: number };
+        Returns: {
+          dish_id: string;
+          exact_match: boolean;
+          image_id: string;
+          ingredient_ids: string[];
+          remaining_food_ids: string[];
+          title: string;
+        }[];
+      };
       record_security_audit_event: {
         Args: {
           p_actor_id?: string;

@@ -69,6 +69,21 @@ Habilitar e reter, conforme política, logs de Auth, API, Storage, Edge Function
 4. Implantar observabilidade correlacionada, alertas e exercícios de incidente/restauração.
 5. Tornar ASVS, revisão LGPD e teste de RLS gates obrigatórios de entrega.
 
+## Evidência técnica — catálogo de pratos (08/10/2026)
+
+A issue #366 separa catálogo genérico de escolhas individuais em
+`diet_meal_dishes`. Inserção e remoção dessas escolhas registram eventos na trilha
+privada existente, com pseudônimos HMAC de ator, titular e refeição e retenção de
+365 dias. Não registrar prato, alimento, gramagem ou conteúdo de saúde no evento.
+RLS exige titular ou especialista autor com vínculo ativo, consentimento vigente
+e MFA aplicável; exclusão acompanha a refeição/plano.
+
+`scripts/verify-meal-catalog.sql` passou no banco local com rollback, incluindo
+autoria, consentimento, MFA e cascata. Em instância descartável, uma política
+permissiva deliberada fez o teste falhar por exposição de rascunho. Essas evidências
+são revisão técnica; integração ao fluxo de exportação e revisão administrativa
+continua pendente, sem alegação de conformidade jurídica nova.
+
 ## Fontes primárias
 
 - [Lei nº 13.709/2018 — LGPD (Planalto)](https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm)

@@ -21,6 +21,7 @@ const SUBJECTS: Subject[] = [
   "Diet",
   "Exercise",
   "Food",
+  "MealCatalog",
   "Profile",
   "Analytics",
   "Periodization",
@@ -60,6 +61,7 @@ const GERENCIA: Record<string, Subject[]> = {
 /** O que cada papel pode LER além do que gerencia. */
 const LE: Record<string, Subject[]> = {
   "specialist:personal_training": [
+    "MealCatalog",
     "Analytics",
     "Profile",
     "HealthMetric",
@@ -68,6 +70,7 @@ const LE: Record<string, Subject[]> = {
     "Leaderboard",
   ],
   "specialist:nutrition_consulting": [
+    "MealCatalog",
     "Analytics",
     "Profile",
     "HealthMetric",
@@ -76,8 +79,16 @@ const LE: Record<string, Subject[]> = {
     "DeclaredMeasurement",
     "Leaderboard",
   ],
-  student: ["Workout", "Diet", "Exercise", "Profile", "SpecialistNote", "Leaderboard"],
-  member: ["Profile", "Leaderboard"],
+  student: [
+    "Workout",
+    "Diet",
+    "Exercise",
+    "Profile",
+    "SpecialistNote",
+    "Leaderboard",
+    "MealCatalog",
+  ],
+  member: ["Profile", "Leaderboard", "MealCatalog"],
 };
 
 const CONTEXTOS: Record<string, UserContext> = {

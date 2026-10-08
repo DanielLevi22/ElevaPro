@@ -42,6 +42,38 @@ Os usuários do sistema são os titulares dos dados. Têm os seguintes direitos 
 
 ## 2. Mapa de dados — o que coletamos e por quê
 
+### Catálogo de pratos e escolhas de refeição — #366 (08/10/2026)
+
+`meal_dishes`, `meal_dish_ingredients`, `meal_dish_preparations` e `media_assets`
+guardam conteúdo genérico de alimentos públicos e imagens ilustrativas. Não há
+titular, porção individual, diagnóstico ou foto pessoal nessas tabelas. ImageKit
+recebe apenas imagens genéricas; prompts de geração não usam refeições de alunos.
+O catálogo é retido enquanto mantido como conteúdo do produto. Importação de
+candidatos não significa revisão/aprovação culinária: todos nascem rascunho.
+
+`diet_meal_dishes` é dado alimentar individual: liga a opção escolhida à refeição
+já prescrita, sem duplicar alimentos ou gramagens. Finalidade: mostrar as opções
+acordadas no plano e permitir consultar preparo separadamente. Tratamento fica
+no Supabase, sob a finalidade nutricional já documentada, sem novo destinatário
+externo. Escrita exige consentimento de saúde presente; o autor especialista
+precisa de vínculo ativo e MFA, e perde leitura após revogação. O aluno lê seu
+plano enviado; não altera a prescrição do especialista. Eliminar a refeição/plano
+elimina escolhas em cascata; rascunhos herdam a retenção de 90 dias do plano.
+Exportação futura/fluxo de direitos deve incluir esses vínculos junto à refeição,
+sem exportar catálogo genérico como se fosse dado pessoal do titular.
+
+Eventos `health.meal_dish.selected` e `health.meal_dish.removed` registram ator,
+titular e refeição pseudonimizados no banco, sem nome, prato, alimentos ou valores.
+Retenção de 365 dias e leitura restrita seguem a trilha existente. O pipeline de
+catálogo registra só contagens; secrets não entram no artefato SQL. Responsável
+operacional: controlador já identificado na seção 1; incidentes seguem seção 8.
+
+Travas: `scripts/verify-meal-catalog.sql` verifica rascunhos invisíveis, cliente
+sem importação/escrita de catálogo, MFA, autoria, revogação e eliminação em cascata.
+Prova negativa executada em instância descartável: policy que liberava rascunhos
+fez a trava falhar com `RASCUNHO EXPOSTO`. Revisão técnica, sem nova alegação de
+conformidade jurídica ou aprovação de receitas.
+
 > **Última revisão completa:** módulos Auth e Students revisados via `/lgpd-check`. Ver seção 10 para status detalhado por módulo.
 
 ### 2.1 Dados pessoais comuns (Art. 5°, I)

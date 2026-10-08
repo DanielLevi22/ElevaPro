@@ -32,6 +32,7 @@ export type Subject =
   | "Diet"
   | "Exercise"
   | "Food"
+  | "MealCatalog"
   | "Profile"
   | "Analytics"
   | "Periodization"
@@ -72,6 +73,7 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
   }
 
   if (context.accountType === "specialist") {
+    can("read", "MealCatalog");
     can("manage", "Client");
     // O vinculado lê a medida que o aluno declarou antes do vínculo (0056).
     can("read", "DeclaredMeasurement");
@@ -104,6 +106,7 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
   }
 
   if (context.accountType === "student") {
+    can("read", "MealCatalog");
     can("read", "Workout");
     can("read", "Diet");
     can("read", "Exercise");
@@ -133,6 +136,7 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
   // Para o member gerenciar a própria periodização de verdade, primeiro precisa
   // existir política que permita: é migration, não linha de CASL.
   if (context.accountType === "member") {
+    can("read", "MealCatalog");
     can("read", "Profile");
     can("update", "Profile");
     can("manage", [
