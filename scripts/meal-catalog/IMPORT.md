@@ -70,8 +70,10 @@ ao editor e a tela de revisão ainda são etapas da issue #366.
 
 `media_assets` separa caminho/ID da base pública de entrega. Migrar o provedor
 preserva o caminho e o hash; o backup portátil existente guarda os bytes.
-Prompts e histórico de geração permanecem no ledger e nos batch JSONs nesta
-etapa. Não apagar esses registros até substituir retomada e procedência.
+Prompts e histórico das imagens concluídas permanecem no ledger. JSONs de lotes
+concluídos são dispensáveis quando seus registros já estão nele. Lotes pendentes
+e novos ficam em `tmp/meal-catalog-batches/`, ignorada pelo Git; a retomada das
+imagens concluídas depende do ledger, não desses arquivos operacionais.
 
 ## Verificação e incidente local
 

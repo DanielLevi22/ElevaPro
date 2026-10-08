@@ -1,4 +1,4 @@
-import { readdir, writeFile } from "node:fs/promises";
+import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { buildMealCandidates } from "./candidates.mjs";
 import { loadProductionLedger, loadPublicFoods, productionRoot } from "./checklist.mjs";
@@ -19,6 +19,9 @@ const PRESENTATIONS = {
   protein_drink:
     "Show a smooth drink made by mixing the named supplement powder into the named beverage in a clear unbranded glass.",
 };
+
+// Lotes são arquivos operacionais; a procedência concluída permanece no ledger.
+const batchRoot = join(productionRoot, "../../../tmp/meal-catalog-batches");
 
 /** Seleciona a próxima parte da fila, excluindo conclusões verificadas. @example selectImageBatch(candidates, completed, 8) */
 /** @param {import('./candidates.mjs').MealCandidate[]} candidates @param {string[]} completed @param {number} limit */
@@ -56,9 +59,14 @@ export async function queueImageBatch(limit = 8) {
     limit,
   );
   if (!selected.length) return { remaining: 0, batchFile: null };
-  const files = await readdir(productionRoot);
-  const sequence = files.filter((filename) => /^batch-\d{5}\.json$/.test(filename)).length + 1;
-  const batchFile = join(productionRoot, `batch-${String(sequence).padStart(5, "0")}.json`);
+  await mkdir(batchRoot, { recursive: true });
+  const files = await readdir(batchRoot);
+  const sequence =
+    Math.max(
+      0,
+      ...files.map((filename) => Number(/^batch-(\d{5})\.json$/.exec(filename)?.[1] ?? 0)),
+    ) + 1;
+  const batchFile = join(batchRoot, `batch-${String(sequence).padStart(5, "0")}.json`);
   const items = selected.map((candidate) => ({
     candidateId: candidate.id,
     title: candidate.title,
