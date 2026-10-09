@@ -1,0 +1,71 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js"></script>
+<style>*{box-sizing:border-box}body{margin:0;background:#F5F3EE;color:#141311;font-family:var(--font-sans)}</style>
+</head><body><div id="root"></div>
+<script type="text/babel" data-presets="react">
+const I = (name, size=18, color) => <i data-lucide={name} style={{width:size,height:size,display:"block",color}}></i>;
+
+// Ranked by urgency, not alphabetical/grid — this is the point: the dashboard IS a briefing, not a grid of cards.
+const ATTENTION = [
+  { name: "João Silva", note: "Não treina há 5 dias. Risco de abandono alto.", tone: "#B23A2E", size: "lg" },
+  { name: "Ana Costa", note: "Bateu 3 PRs esta semana — ótimo momento para reforçar o plano.", tone: "#3D6B3A", size: "md" },
+  { name: "Marcos Lima", note: "Convite pendente há 4 dias.", tone: "#A8791E", size: "sm" },
+  { name: "Beatriz Souza", note: "Anamnese concluída — pronta para receber o plano.", tone: "#3D6B3A", size: "sm" },
+];
+
+function AttentionCard({ s }) {
+  const isLg = s.size === "lg";
+  return (
+    <div style={{
+      flex: isLg ? "2 1 320px" : "1 1 220px", background: "#fff", border: "1px solid #E7E3D8",
+      borderRadius: 4, padding: isLg ? 28 : 20, position: "relative", overflow: "hidden",
+    }}>
+      <div style={{ position: "absolute", top: 0, left: 0, width: 3, height: "100%", background: s.tone }} />
+      <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: isLg ? 20 : 16, marginBottom: 8 }}>{s.name}</div>
+      <div style={{ fontSize: isLg ? 15 : 13, lineHeight: 1.5, color: "#4A4740" }}>{s.note}</div>
+      <div style={{ marginTop: 14, fontSize: 12, fontWeight: 700, color: s.tone, cursor: "pointer" }}>Revisar →</div>
+    </div>
+  );
+}
+
+function App(){
+  React.useEffect(()=>{ window.lucide?.createIcons(); });
+  const today = "12 de agosto";
+  return (
+    <div style={{ maxWidth: 980, margin: "0 auto", padding: "64px 32px 100px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 56, borderBottom: "1px solid #E7E3D8", paddingBottom: 20 }}>
+        <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 20 }}>Eleva Pro</div>
+        <div style={{ display: "flex", gap: 28, fontSize: 13, fontWeight: 600, color: "#8A867B" }}>
+          <span style={{color:"#141311"}}>Briefing</span><span>Alunos</span><span>Treinos</span><span>Nutrição</span><span>Coach IA</span>
+        </div>
+      </div>
+
+      {/* Hero — a written daily briefing, not stat tiles. This is the product's real differentiator (AI coach) leading the page. */}
+      <div style={{ marginBottom: 48 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#A8791E", marginBottom: 14 }}>Briefing de {today}</div>
+        <div style={{ fontFamily: "var(--font-display)", fontWeight: 500, fontSize: 34, lineHeight: 1.25, letterSpacing: "-0.01em", maxWidth: 760 }}>
+          Você tem <b>24 alunos ativos</b>. <b style={{color:"#B23A2E"}}>1 em risco de abandono</b> precisa de atenção hoje. Ana bateu 3 recordes essa semana — bom momento pra reforçar o plano dela. Suas sessões de IA cresceram 18% no mês.
+        </div>
+      </div>
+
+      {/* Asymmetric bento ranked by urgency — not a uniform grid */}
+      <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#8A867B", marginBottom: 16 }}>Precisa da sua atenção</div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginBottom: 56 }}>
+        {ATTENTION.map(s => <AttentionCard key={s.name} s={s} />)}
+      </div>
+
+      {/* Numbers demoted to a thin inline strip, not hero stat cards */}
+      <div style={{ display: "flex", gap: 40, borderTop: "1px solid #E7E3D8", paddingTop: 24 }}>
+        {[["24","alunos ativos"],["12","modelos de treino"],["86","sessões de IA"],["94%","retenção"]].map(([v,l])=>(
+          <div key={l}><span style={{fontFamily:"var(--font-display)",fontWeight:800,fontSize:22}}>{v}</span><span style={{fontSize:12,color:"#8A867B",marginLeft:8}}>{l}</span></div>
+        ))}
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script></body></html>

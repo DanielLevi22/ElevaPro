@@ -1,0 +1,254 @@
+<!-- @dsCard group="Mobile · Student" viewport="2640x860" name="00 · Login" subtitle="Entrar, criar conta e recuperar acesso · escuro e claro" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css"><link rel="stylesheet" href="../kit/glass.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js"></script>
+<style>
+:root{--ios-bg:#000;--ios-group:#1C1C1E;--ios-sep:rgba(84,84,88,0.65);--ios-label:#fff;--ios-label2:rgba(235,235,245,0.62);--ios-label3:rgba(235,235,245,0.32);--ios-fill:rgba(118,118,128,0.24);--on-hero:#fff;--on-hero-2:rgba(255,255,255,0.88);--hero-chip:rgba(255,255,255,0.18)}
+.light{--ios-bg:#F2F2F7;--ios-group:#fff;--ios-sep:rgba(60,60,67,0.2);--ios-label:#000;--ios-label2:rgba(60,60,67,0.78);--ios-label3:rgba(60,60,67,0.42);--ios-fill:rgba(118,118,128,0.12);--on-hero:#0B0B0F;--on-hero-2:rgba(28,28,32,0.82);--hero-chip:rgba(255,255,255,0.7)}
+.phone{width:390px;height:800px;border-radius:52px;background:var(--ios-bg);border:11px solid #000;box-shadow:0 40px 80px -20px rgba(0,0,0,0.55);overflow:hidden;position:relative;display:flex;flex-direction:column}
+.statusbar{height:52px;flex-shrink:0;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 8px;font-size:15px;font-weight:600;letter-spacing:-0.01em;position:relative;z-index:4}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:122px;height:34px;background:#000;border-radius:20px;z-index:5}
+.hero{position:absolute;top:0;left:0;right:0;height:300px;background-size:cover;background-position:center 28%;z-index:0}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.45) 0%,rgba(0,0,0,.55) 55%,var(--ios-bg) 100%)}
+.light .hero{filter:brightness(1.06) saturate(.92)}
+.light .hero::after{background:linear-gradient(180deg,rgba(242,242,247,.6) 0%,rgba(242,242,247,.72) 55%,var(--ios-bg) 100%)}
+.scroll{flex:1;overflow:auto;padding:0 20px;scrollbar-width:none;position:relative;z-index:2}
+.homebar{height:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative;z-index:4}
+.homebar div{width:140px;height:5px;border-radius:3px;background:var(--ios-label);opacity:.35}
+input{font-family:inherit}
+input::placeholder{color:var(--ios-label3)}
+</style>
+</head><body>
+<div id="root"></div>
+<script type="text/babel" src="../kit/kit.jsx"></script>
+<script type="text/babel" data-presets="react">
+const I = (name, size=20, color) => <i data-lucide={name} style={{width:size,height:size,display:"block",color,flexShrink:0}}></i>;
+
+function StatusBar({ light }){
+  const c = light ? "var(--on-hero)" : "var(--ios-label)";
+  return (
+    <div className="statusbar" style={{color:c}}>
+      <span>9:41</span>
+      <span style={{display:"flex",alignItems:"center",gap:6}}>{I("signal",16,c)}{I("wifi",16,c)}{I("battery-full",20,c)}</span>
+    </div>
+  );
+}
+
+/* iOS grouped-inset list */
+function Group({ children, header, footer }) {
+  const rows = React.Children.toArray(children);
+  return (
+    <div style={{marginBottom:20}}>
+      {header && <div style={{fontSize:13,color:"var(--ios-label2)",padding:"0 16px 7px",textTransform:"uppercase",letterSpacing:"0.03em"}}>{header}</div>}
+      <div style={{background:"var(--ios-group)",borderRadius:12,overflow:"hidden"}}>
+        {rows.map((r,i)=>(<div key={i} style={{borderBottom:i<rows.length-1?"0.5px solid var(--ios-sep)":"none"}}>{r}</div>))}
+      </div>
+      {footer && <div style={{fontSize:13,color:"var(--ios-label2)",padding:"7px 16px 0",lineHeight:1.35}}>{footer}</div>}
+    </div>
+  );
+}
+
+function Field({ icon, placeholder, type="text", trailing }) {
+  return (
+    <div style={{display:"flex",alignItems:"center",gap:12,padding:"0 16px",height:50}}>
+      {icon && I(icon,19,"var(--ios-label2)")}
+      <input type={type} placeholder={placeholder} style={{flex:1,border:"none",outline:"none",background:"transparent",color:"var(--ios-label)",fontSize:17,letterSpacing:"-0.01em",minWidth:0}} />
+      {trailing}
+    </div>
+  );
+}
+
+function SelectRow({ icon, title, sub, selected, onClick }) {
+  return (
+    <div onClick={onClick} style={{display:"flex",alignItems:"center",gap:14,padding:"13px 16px",cursor:"pointer",background:selected?"hsl(var(--primary) / 0.12)":"transparent"}}>
+      <div style={{width:38,height:38,borderRadius:10,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",background:selected?"hsl(var(--primary) / 0.2)":"var(--ios-fill)"}}>
+        {I(icon,19,selected?"hsl(var(--primary-text))":"var(--ios-label2)")}
+      </div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:16,fontWeight:600,color:"var(--ios-label)",letterSpacing:"-0.01em"}}>{title}</div>
+        <div style={{fontSize:13,color:"var(--ios-label2)",marginTop:1}}>{sub}</div>
+      </div>
+      {selected && I("check-circle-2",21,"hsl(var(--primary-text))")}
+    </div>
+  );
+}
+
+function BigButton({ children, kind="primary", disabled }) {
+  const styles = {
+    primary:{background:"hsl(var(--primary))",color:"#0d1a00"},
+    cyan:{background:"hsl(var(--secondary))",color:"#00262b"},
+    tinted:{background:"var(--ios-fill)",color:"var(--ios-label)"},
+    plain:{background:"transparent",color:"hsl(var(--secondary))"},
+  }[kind];
+  return <button style={{width:"100%",height:50,borderRadius:14,border:"none",fontSize:17,fontWeight:600,letterSpacing:"-0.01em",cursor:"pointer",opacity:disabled?0.45:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,...styles}}>{children}</button>;
+}
+
+/* Hero block sits on the photo — ink inverts with the theme (--on-hero) */
+function Hero({ title, sub, chips }) {
+  return (
+    <div style={{paddingTop:66,paddingBottom:26}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:80}}>
+        <div style={{width:34,height:34,borderRadius:9,background:"hsl(var(--primary))",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-display)",fontWeight:900,fontSize:18,color:"#0d1a00"}}>E</div>
+        <span style={{fontFamily:"var(--font-display)",fontWeight:800,fontStyle:"italic",textTransform:"uppercase",fontSize:17,color:"var(--on-hero)"}}>Eleva Pro</span>
+      </div>
+      <div style={{fontSize:32,fontWeight:700,letterSpacing:"-0.03em",color:"var(--on-hero)",lineHeight:1.12}}>{title}</div>
+      <div style={{fontSize:16,color:"var(--on-hero-2)",marginTop:8,letterSpacing:"-0.01em",lineHeight:1.35}}>{sub}</div>
+      {chips && (
+        <div style={{display:"flex",gap:7,marginTop:18,flexWrap:"wrap"}}>
+          {chips.map(c=>(
+            <span key={c.label} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"6px 11px",borderRadius:999,background:"var(--hero-chip)",fontSize:12.5,fontWeight:600,color:"var(--on-hero)",letterSpacing:"-0.01em"}}>
+              {I(c.icon,13,"var(--on-hero)")}{c.label}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const PILLARS = [
+  { icon:"dumbbell", label:"Treino" },
+  { icon:"utensils", label:"Nutrição" },
+  { icon:"heart-pulse", label:"Saúde" },
+  { icon:"sparkles", label:"Assistente" },
+];
+
+function LoginScreen() {
+  const [show,setShow] = React.useState(false);
+  return (
+    <div className="scroll" style={{marginTop:-52}}>
+      <Hero title={<>Eleva seu nível.<br/>Acompanhamento que não para.</>} sub="Treino, nutrição e saúde no mesmo app." chips={PILLARS} />
+      <Group>
+        <Field icon="mail" placeholder="seu@email.com" type="email" />
+        <Field icon="lock" placeholder="••••••••" type={show?"text":"password"}
+          trailing={<button onClick={()=>setShow(v=>!v)} style={{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex"}}>{I(show?"eye-off":"eye",18,"var(--ios-label2)")}</button>} />
+      </Group>
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
+        <BigButton>Entrar</BigButton>
+        <BigButton kind="plain">Esqueci minha senha</BigButton>
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
+        <div style={{flex:1,height:"0.5px",background:"var(--ios-sep)"}}></div>
+        <span style={{fontSize:13,color:"var(--ios-label2)"}}>ou</span>
+        <div style={{flex:1,height:"0.5px",background:"var(--ios-sep)"}}></div>
+      </div>
+      <BigButton kind="tinted">{I("graduation-cap",18,"hsl(var(--secondary))")} Entrar com código de aluno</BigButton>
+      <div style={{textAlign:"center",fontSize:16,color:"var(--ios-label2)",padding:"24px 0 28px",letterSpacing:"-0.01em"}}>
+        É especialista? <span style={{color:"hsl(var(--primary-text))",fontWeight:700}}>Cadastre-se grátis</span>
+      </div>
+    </div>
+  );
+}
+
+const ROLES = [
+  { key:"specialist", icon:"dumbbell", title:"Sou Especialista", sub:"Prescrevo treino e dieta" },
+  { key:"student", icon:"zap", title:"Sou Aluno", sub:"Tenho um especialista e recebi convite" },
+  { key:"member", icon:"user", title:"Sou Praticante", sub:"Treino sem especialista, com o Assistente" },
+];
+const SERVICES = [
+  { key:"personal_training", icon:"dumbbell", title:"Treino", sub:"Montagem e acompanhamento de treinos" },
+  { key:"nutrition_consulting", icon:"utensils", title:"Consultoria Nutricional", sub:"Planos alimentares e macros" },
+];
+
+function RegisterScreen() {
+  const [step,setStep] = React.useState("role");
+  const [role,setRole] = React.useState("specialist");
+  const [services,setServices] = React.useState(["personal_training"]);
+  const toggle = (k)=> setServices(s=> s.includes(k) ? s.filter(x=>x!==k) : [...s,k]);
+  const SUB = { role:"Como você vai usar o Eleva Pro?", services:"Quais serviços você oferece?", personal_data:"Complete seu cadastro" };
+  const idx = ["role","services","personal_data"].indexOf(step);
+  return (
+    <div className="scroll" style={{marginTop:-52}}>
+      <Hero title="Criar Conta" sub={SUB[step]} />
+      <div style={{display:"flex",gap:6,marginBottom:20}}>
+        {[0,1,2].map(i=>(<div key={i} style={{flex:1,height:4,borderRadius:2,background:i<=idx?"hsl(var(--primary))":"var(--ios-fill)"}} />))}
+      </div>
+
+      {step==="role" && (<>
+        <Group header="Tipo de conta">
+          {ROLES.map(r=><SelectRow key={r.key} icon={r.icon} title={r.title} sub={r.sub} selected={role===r.key} onClick={()=>setRole(r.key)} />)}
+        </Group>
+        <BigButton onClick={()=>{}}><span onClick={()=>setStep(role==="specialist"?"services":"personal_data")} style={{width:"100%"}}>Continuar</span></BigButton>
+      </>)}
+
+      {step==="services" && (<>
+        <Group header="Serviços" footer="Selecione um ou mais serviços (pode alterar depois).">
+          {SERVICES.map(s=><SelectRow key={s.key} icon={s.icon} title={s.title} sub={s.sub} selected={services.includes(s.key)} onClick={()=>toggle(s.key)} />)}
+        </Group>
+        <div style={{display:"flex",gap:10}}>
+          <div style={{flex:1}} onClick={()=>setStep("role")}><BigButton kind="tinted">Voltar</BigButton></div>
+          <div style={{flex:1}} onClick={()=>setStep("personal_data")}><BigButton>Continuar</BigButton></div>
+        </div>
+      </>)}
+
+      {step==="personal_data" && (<>
+        <Group header="Dados pessoais" footer="A senha deve ter no mínimo 8 caracteres.">
+          <Field icon="user" placeholder="Seu nome" />
+          <Field icon="mail" placeholder="seu@email.com" type="email" />
+          <Field icon="lock" placeholder="Mínimo 8 caracteres" type="password" />
+          <Field icon="lock" placeholder="Digite a senha novamente" type="password" />
+        </Group>
+        <div style={{display:"flex",gap:10}}>
+          <div style={{flex:1}} onClick={()=>setStep(role==="specialist"?"services":"role")}><BigButton kind="tinted">Voltar</BigButton></div>
+          <div style={{flex:1}}><BigButton>Criar Conta</BigButton></div>
+        </div>
+      </>)}
+
+      <div style={{textAlign:"center",fontSize:16,color:"var(--ios-label2)",padding:"24px 0 28px",letterSpacing:"-0.01em"}}>
+        Já tem uma conta? <span style={{color:"hsl(var(--primary-text))",fontWeight:700}}>Faça login</span>
+      </div>
+    </div>
+  );
+}
+
+function StudentCodeScreen() {
+  const [code,setCode] = React.useState("AB12CD");
+  return (
+    <div className="scroll" style={{marginTop:-52}}>
+      <Hero title="Área do Aluno" sub="Insira o código fornecido pelo seu especialista para acessar seus treinos." />
+      <div style={{fontSize:13,color:"var(--ios-label2)",padding:"0 16px 7px",textTransform:"uppercase",letterSpacing:"0.03em"}}>Código de convite</div>
+      <input value={code} onChange={(e)=>setCode(e.target.value.toUpperCase().slice(0,6))} maxLength={6}
+        style={{width:"100%",height:70,borderRadius:14,border:"none",outline:"none",background:"var(--ios-group)",color:"var(--ios-label)",fontSize:30,fontWeight:700,textAlign:"center",letterSpacing:"10px",marginBottom:8,fontFamily:"var(--font-mono)"}} />
+      <div style={{fontSize:13,color:"var(--ios-label2)",padding:"0 16px 22px"}}>6 caracteres, como <span style={{fontFamily:"var(--font-mono)"}}>AB12CD</span>.</div>
+      <BigButton kind="cyan" disabled={code.length<6}>Acessar Treinos</BigButton>
+      <div style={{textAlign:"center",fontSize:16,color:"var(--ios-label2)",padding:"24px 0 28px",letterSpacing:"-0.01em"}}>
+        Ainda não tem código? <span style={{color:"hsl(var(--secondary))",fontWeight:700}}>Fale com seu especialista</span>
+      </div>
+    </div>
+  );
+}
+
+function Phone(p){return <ThemePair><PhoneOne {...p}/></ThemePair>;}
+function PhoneOne({ label, image, children }) {
+  return (
+    <div>
+      <div style={{color:"hsl(var(--muted-foreground))",fontSize:12,fontWeight:700,marginBottom:10,textTransform:"uppercase",letterSpacing:"0.1em"}}>{label}</div>
+      <div className="phone">
+        <div className="hero" style={{backgroundImage:`url(${image})`}}></div>
+        <div className="island"></div>
+        <StatusBar light />
+        {children}
+        <div className="homebar"><div></div></div>
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const [theme,setTheme] = React.useState("dark");
+  React.useEffect(()=>{document.documentElement.className = theme==="light"?"light":"";window.lucide?.createIcons();});
+  return (
+    <div>
+      <div style={{display:"flex",gap:30}}>
+        <Phone label="Entrar" image="../../foundations/assets/imagery/workout-back.jpg"><LoginScreen/></Phone>
+        <Phone label="Criar conta" image="../../foundations/assets/imagery/workout-chest.jpg"><RegisterScreen/></Phone>
+        <Phone label="Área do aluno" image="../../foundations/assets/imagery/workout-legs.jpg"><StudentCodeScreen/></Phone>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+setTimeout(()=>window.lucide?.createIcons(),50);
+</script></body></html>

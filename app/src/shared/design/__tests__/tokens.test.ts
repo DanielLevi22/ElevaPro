@@ -23,7 +23,7 @@ const PALETA_CORAL = ['#ff6b35', '#ff2e63', '#ff4d5a', '#00d9ff', '#9d4edd', '#0
 
 describe('hslParaHex', () => {
   /**
-   * `design/tokens/colors.css` declara cada cor de marca duas vezes — o
+   * `design/foundations/tokens/colors.css` declara cada cor de marca duas vezes — o
    * triplete e um rótulo hexadecimal ao lado (`--lime` e `--lime-hex`) — e os
    * dois discordam em duas das três:
    *

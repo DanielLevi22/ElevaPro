@@ -1,0 +1,232 @@
+<!-- @dsCard group="Mobile · Propostas em revisão" viewport="3600x3200" name="Proposta · Uso diário · Início" subtitle="Atual × Proposta: dia leve pela Prontidão e sequência em semanas ativas · escuro e claro" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../../styles.css"><link rel="stylesheet" href="../../kit/glass.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js"></script>
+<style>
+:root{
+--on-hero:#fff;--on-hero-2:rgba(255,255,255,.82);--on-hero-3:rgba(255,255,255,.75);--hero-chip:rgba(255,255,255,.16);--hero-chip-brd:rgba(255,255,255,.28);
+}
+.scroll{flex:1;overflow:auto;padding:0 18px 12px;scrollbar-width:none;position:relative;z-index:2;margin-top:-52px;padding-top:52px}
+/* Iconografia fina — traço hairline, cantos arredondados (estilo SF Symbols Ultralight) */
+</style>
+</head><body>
+<div id="root"></div>
+<script type="text/babel" src="../../kit/kit.jsx"></script>
+<script type="text/babel" src="uso-diario/pecas.jsx"></script>
+<script type="text/babel" data-presets="react">
+const I=(n,s=20,c)=><i data-lucide={n} style={{width:s,height:s,display:"block",color:c,flexShrink:0}}></i>;
+const LIME="hsl(var(--primary))";
+
+function StatusBar(){
+  return <div className="statusbar"><span>9:41</span><span style={{display:"flex",alignItems:"center",gap:6}}>{I("signal",16,"var(--on-hero)")}{I("wifi",16,"var(--on-hero)")}{I("battery-full",20,"var(--on-hero)")}</span></div>;
+}
+
+function Ring({ value, max, size=168, stroke=13, color=LIME, label, sub }) {
+  const r=(size-stroke)/2, c=2*Math.PI*r, pct=Math.min(1,value/max);
+  return (
+    <div style={{position:"relative",width:size,height:size}}>
+      <svg width={size} height={size} style={{transform:"rotate(-90deg)",filter:`drop-shadow(0 0 14px ${color})`}}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--glass-strong)" strokeWidth={stroke} />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${c*pct} ${c}`} />
+      </svg>
+      <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+        <div style={{fontFamily:"var(--font-display)",fontSize:size*0.26,fontWeight:800,color:"var(--on-hero)",lineHeight:1,letterSpacing:"-.03em"}}>{label}</div>
+        <div style={{fontSize:11,color:"var(--on-hero-3)",fontWeight:600,marginTop:5,textTransform:"uppercase",letterSpacing:".1em"}}>{sub}</div>
+      </div>
+    </div>
+  );
+}
+
+function GlassTile({ icon, color, value, unit, label }) {
+  return (
+    <div className="glass" style={{flex:1,padding:14}}>
+      <div style={{width:32,height:32,borderRadius:10,background:`color-mix(in srgb, ${color} 18%, transparent)`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:12}}>{I(icon,16,color)}</div>
+      <div style={{display:"flex",alignItems:"baseline",gap:3}}>
+        <span style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{value}</span>
+        <span style={{fontSize:11,color:"var(--ios-label2)",fontWeight:600}}>{unit}</span>
+      </div>
+      <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:2}}>{label}</div>
+    </div>
+  );
+}
+
+function GlassRow({ icon, color, title, sub, right }) {
+  return (
+    <div className="glass" style={{padding:14,display:"flex",alignItems:"center",gap:13,marginBottom:10}}>
+      <div style={{width:40,height:40,borderRadius:13,background:`color-mix(in srgb, ${color} 18%, transparent)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I(icon,19,color)}</div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:15,fontWeight:600,color:"var(--ios-label)",letterSpacing:"-.01em"}}>{title}</div>
+        <div style={{fontSize:12.5,color:"var(--ios-label2)",marginTop:1}}>{sub}</div>
+      </div>
+      {right || I("chevron-right",17,"var(--ios-label3)")}
+    </div>
+  );
+}
+
+function SectionTitle({ children, action }) {
+  return (
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",margin:"22px 2px 11px"}}>
+      <span style={{fontSize:19,fontWeight:700,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{children}</span>
+      {action && <span style={{fontSize:14,color:"hsl(var(--primary-text))",fontWeight:600}}>{action}</span>}
+    </div>
+  );
+}
+
+function Bar({ value, max, color }) {
+  return <div style={{height:6,borderRadius:99,background:"var(--glass-strong)",overflow:"hidden"}}><div style={{width:`${Math.min(100,(value/max)*100)}%`,height:"100%",background:color,borderRadius:99}} /></div>;
+}
+
+function EspCard(){return <div className="glass" style={{padding:12,display:"flex",alignItems:"center",gap:12,marginTop:14}}><div style={{width:40,height:40,borderRadius:99,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,color:"var(--ios-label)"}}>DL</div><div style={{flex:1}}><div style={{fontSize:14,fontWeight:700,color:"var(--ios-label)"}}>Daniel Levi</div><div style={{fontSize:11.5,color:"var(--ios-label2)"}}>Seu especialista</div></div><div style={{height:32,padding:"0 12px",borderRadius:99,background:"var(--glass-strong)",display:"flex",alignItems:"center",gap:6,fontSize:12,fontWeight:700,color:"var(--ios-label)"}}>{I("message-circle",14,"var(--ios-label)")}Mensagens</div></div>;}
+function HomeScreen({aluno}){
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <div style={{fontSize:13,color:"var(--on-hero-2)",fontWeight:600}}>Terça-feira, 12 de agosto</div>
+          <div style={{fontSize:28,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>Olá, João</div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:9}}>
+          <div className="glass" style={{borderRadius:99,padding:"7px 12px",display:"flex",alignItems:"center",gap:5,background:"var(--hero-chip)",borderColor:"var(--hero-chip-brd)"}}>
+            {I("flame",15,LIME)}<span style={{color:"var(--on-hero)",fontWeight:700,fontSize:14}}>12</span>
+          </div>
+          <div style={{width:38,height:38,borderRadius:99,background:"var(--hero-chip)",border:"1.5px solid var(--hero-chip-brd)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--on-hero)",fontWeight:700,fontSize:15}}>J</div>
+        </div>
+      </div>
+
+      <div style={{display:"flex",justifyContent:"center",margin:"26px 0 10px"}}>
+        <Ring value={68} max={100} label="68%" sub="Meta do dia" />
+      </div>
+      <div style={{textAlign:"center",fontSize:13.5,color:"var(--on-hero-2)",marginBottom:22}}>Falta 1 treino e 2 refeições para fechar o dia.</div>
+
+      <div style={{display:"flex",gap:10}}>
+        <GlassTile icon="footprints" color="#34D399" value="8.412" unit="passos" label="84% da meta" />
+        <GlassTile icon="flame" color="#FB923C" value="512" unit="kcal" label="Queimadas hoje" />
+        <GlassTile icon="moon" color="#818CF8" value="7h20" unit="" label="Sono" />
+      </div>
+
+      {aluno&&<EspCard/>}
+      <SectionTitle action="Ver tudo">Treino do dia</SectionTitle>
+      <div style={{borderRadius:24,overflow:"hidden",position:"relative",height:164,backgroundImage:"linear-gradient(rgba(0,0,0,.1),rgba(0,0,0,.82)), url(../../../foundations/assets/imagery/workout-back.jpg)",backgroundSize:"cover",backgroundPosition:"center",padding:16,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+        <span style={{alignSelf:"flex-start",background:LIME,color:"#0d1a00",fontSize:10.5,fontWeight:800,padding:"4px 10px",borderRadius:99,textTransform:"uppercase",letterSpacing:".06em",marginBottom:9}}>Treino B</span>
+        <div style={{color:"#fff",fontSize:21,fontWeight:700,letterSpacing:"-.02em"}}>Costas &amp; Bíceps</div>
+        <div style={{display:"flex",alignItems:"center",gap:14,marginTop:5}}>
+          <span style={{color:"rgba(255,255,255,.85)",fontSize:12.5,display:"flex",alignItems:"center",gap:5}}>{I("dumbbell",13,"rgba(255,255,255,.85)")} 6 exercícios</span>
+          <span style={{color:"rgba(255,255,255,.85)",fontSize:12.5,display:"flex",alignItems:"center",gap:5}}>{I("clock",13,"rgba(255,255,255,.85)")} ~52 min</span>
+        </div>
+      </div>
+
+      <SectionTitle>Hoje</SectionTitle>
+      <GlassRow icon="utensils" color="#34D399" title="Dieta & Macros" sub="2 de 4 refeições registradas"
+        right={<span style={{fontSize:13,fontWeight:700,color:"#34D399"}}>50%</span>} />
+      <GlassRow icon="activity" color="#34D399" title="Sessão de Cardio" sub="Correr, pedalar, caminhar" />
+      <GlassRow icon="scan-line" color={LIME} title="Avaliação IA" sub="Escaneamento corporal" />
+      <GlassRow icon="trophy" color="#FBBF24" title="Ranking de Elite" sub="Você está em 4º nesta semana" />
+      <div style={{height:90}}></div>
+    </div>
+  );
+}
+
+function RestRing({ left=45, total=90, size=178 }){
+  const stroke=5, r=(size-stroke)/2-6, c=2*Math.PI*r, pct=left/total;
+  const ang=(-90+360*pct)*Math.PI/180, dx=size/2+r*Math.cos(ang), dy=size/2+r*Math.sin(ang);
+  const mm=String(Math.floor(left/60)).padStart(2,"0"), ss=String(left%60).padStart(2,"0");
+  return (
+    <div style={{position:"relative",width:size,height:size}}>
+      <svg width={size} height={size}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--glass-strong)" strokeWidth={stroke} strokeDasharray="2 9" strokeLinecap="round" />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={LIME} strokeWidth={stroke} strokeDasharray={`${c*pct} ${c}`} strokeLinecap="round" transform={`rotate(-90 ${size/2} ${size/2})`} style={{filter:`drop-shadow(0 0 10px ${LIME})`}} />
+        <circle cx={dx} cy={dy} r={6} fill={LIME} style={{filter:`drop-shadow(0 0 12px ${LIME})`}} />
+      </svg>
+      <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+        <div style={{fontSize:11,fontWeight:700,letterSpacing:".22em",textTransform:"uppercase",color:"var(--on-hero-2)"}}>Descanso</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:48,fontWeight:800,color:"var(--on-hero)",lineHeight:1.05,letterSpacing:"-.03em",display:"flex",alignItems:"baseline",gap:2,marginTop:4}}>
+          <span>{mm}</span><span style={{color:LIME}}>:</span><span>{ss}</span>
+        </div>
+        <div style={{fontSize:12.5,color:"var(--on-hero-2)",marginTop:4}}>Intervalo de {total} s</div>
+      </div>
+    </div>
+  );
+}
+
+function TabBar({active}){return <KitTabBar active={active}/>;}
+
+function Phone(p){return <ThemePair><PhoneOne {...p}/></ThemePair>;}
+function PhoneOne({ overlay, label, image, active, children }){
+  return (
+    <div>
+      <div style={{color:"hsl(var(--muted-foreground))",fontSize:12,fontWeight:700,marginBottom:10,textTransform:"uppercase",letterSpacing:".1em"}}>{label}</div>
+      <div className="phone">
+        <div className="hero" style={{backgroundImage:`url(${image})`}}></div>
+        <div className="island"></div>
+        <StatusBar/>
+        {children}
+        <TabBar active={active}/>
+        {overlay}
+        <div className="homebar"></div>
+      </div>
+    </div>
+  );
+}
+
+function HomeV2({baixa}){
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <div style={{fontSize:13,color:"var(--on-hero-2)",fontWeight:600}}>Terça-feira, 12 de agosto</div>
+          <div style={{fontSize:28,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>Olá, Marina</div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:9}}>
+          <div className="glass" style={{borderRadius:99,padding:"7px 12px",display:"flex",alignItems:"center",gap:5,background:"var(--hero-chip)",borderColor:"var(--hero-chip-brd)"}}>
+            {I("flame",15,LIME)}<span style={{color:"var(--on-hero)",fontWeight:700,fontSize:13}}>4 semanas</span>
+          </div>
+          <div style={{width:38,height:38,borderRadius:99,background:"var(--hero-chip)",border:"1.5px solid var(--hero-chip-brd)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--on-hero)",fontWeight:700,fontSize:15}}>M</div>
+        </div>
+      </div>
+
+      <div style={{display:"flex",justifyContent:"center",margin:"26px 0 10px"}}>
+        <Ring value={68} max={100} label="68%" sub="Meta do dia" />
+      </div>
+      <div style={{textAlign:"center",fontSize:13.5,color:"var(--on-hero-2)",marginBottom:22}}>Falta 1 treino e 2 refeições para fechar o dia.</div>
+
+      <div style={{display:"flex",gap:10}}>
+        <GlassTile icon="footprints" color="#34D399" value="8.412" unit="passos" label="84% da meta" />
+        <GlassTile icon="flame" color="#FB923C" value="512" unit="kcal" label="Queimadas hoje" />
+        <GlassTile icon="moon" color="#818CF8" value={baixa?"5h10":"7h20"} unit="" label="Sono" />
+      </div>
+
+            <SectionTitle action="Ver tudo">Treino do dia</SectionTitle>
+      {baixa&&<ProntidaoAviso/>}
+      <div style={{borderRadius:24,overflow:"hidden",position:"relative",height:164,backgroundImage:"linear-gradient(rgba(0,0,0,.1),rgba(0,0,0,.82)), url(../../foundations/assets/imagery/workout-back.jpg)",backgroundSize:"cover",backgroundPosition:"center",padding:16,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+        <span style={{alignSelf:"flex-start",background:LIME,color:"#0d1a00",fontSize:10.5,fontWeight:800,padding:"4px 10px",borderRadius:99,textTransform:"uppercase",letterSpacing:".06em",marginBottom:9}}>Treino B</span>
+        <div style={{color:"#fff",fontSize:21,fontWeight:700,letterSpacing:"-.02em"}}>Costas &amp; Bíceps</div>
+        <div style={{display:"flex",alignItems:"center",gap:14,marginTop:5}}>
+          <span style={{color:"rgba(255,255,255,.85)",fontSize:12.5,display:"flex",alignItems:"center",gap:5}}>{I("dumbbell",13,"rgba(255,255,255,.85)")} 6 exercícios</span>
+          <span style={{color:"rgba(255,255,255,.85)",fontSize:12.5,display:"flex",alignItems:"center",gap:5}}>{I("clock",13,"rgba(255,255,255,.85)")} ~52 min</span>
+        </div>
+      </div>
+
+      <SectionTitle>Hoje</SectionTitle>
+      <GlassRow icon="utensils" color="#34D399" title="Dieta & Macros" sub="2 de 4 refeições registradas"
+        right={<span style={{fontSize:13,fontWeight:700,color:"#34D399"}}>50%</span>} />
+      <GlassRow icon="activity" color="#34D399" title="Sessão de Cardio" sub="Correr, pedalar, caminhar" />
+      <GlassRow icon="scan-line" color={LIME} title="Avaliação com IA" sub="Escaneamento corporal" />
+      <GlassRow icon="trophy" color="#FBBF24" title="Ranking de Elite" sub="Você está em 4º nesta semana" />
+      <div style={{height:90}}></div>
+    </div>
+  );
+}
+
+function App(){
+  const P=(c,o)=><PhoneOne label="" image="../../../foundations/assets/imagery/workout-back.jpg" active="home" overlay={o}>{c}</PhoneOne>;
+  return <UDPage title="Uso diário · Início" sub="Marina · 2.150 kcal · 4 treinos de 45 min em casa. Atual (kit de hoje) × Proposta, escuro e claro.">
+    <Compare id="3a" title="Início · Prontidão normal" nota="Sem aviso. O chip de chama passa a contar semanas ativas (4 semanas), não dias." atual={P(<HomeScreen/>)} proposta={P(<HomeV2/>)}/>
+    <Compare id="3b" title="Início · Prontidão baixa" nota="O cartão Treino do dia ganha o aviso com o motivo e a versão leve; duas ações, nada muda sem o toque." atual={P(<HomeScreen/>)} proposta={P(<HomeV2 baixa/>)}/>
+    <Compare id="4a" title="Sequência semanal" novo nota="Toque no chip abre as últimas 8 semanas e a regra. Semana não contada não zera nada; registrar um dia esquecido recupera." proposta={P(<HomeV2/>,<SequenciaSheet/>)}/>
+  </UDPage>;
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+setTimeout(()=>window.lucide?.createIcons(),80);
+</script></body></html>

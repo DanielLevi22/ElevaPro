@@ -1,0 +1,534 @@
+<!-- @dsCard group="Mobile · Student" viewport="3480x1880" name="04 · Cardio" subtitle="Sessões de cardio, zonas e resumo · escuro e claro" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css"><link rel="stylesheet" href="../kit/glass.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js"></script>
+<style>
+:root{
+--tab-bg:rgba(18,19,22,0.72);
+--on-hero:#fff;--on-hero-2:rgba(255,255,255,.82);--hero-chip:rgba(255,255,255,.16);--hero-chip-brd:rgba(255,255,255,.28);
+--slot:rgba(255,255,255,.05);--slot-line:rgba(255,255,255,.07);
+--stage:radial-gradient(70% 60% at 50% 42%,rgba(255,255,255,.09) 0%,transparent 70%);
+--track:rgba(255,255,255,.09);
+--hr:#F87171;--hr-t:#F87171;--pace:#38BDF8;--pace-t:#38BDF8;--cad:#C084FC;--cad-t:#C084FC;
+}
+.light{
+--tab-bg:rgba(255,255,255,0.9);
+--on-hero:#0B0B0F;--on-hero-2:rgba(28,28,32,.82);--hero-chip:rgba(255,255,255,.72);--hero-chip-brd:rgba(60,60,67,.16);
+--slot:rgba(60,60,67,.05);--slot-line:rgba(60,60,67,.09);
+--stage:radial-gradient(70% 60% at 50% 42%,rgba(60,60,67,.07) 0%,transparent 70%);
+--track:rgba(60,60,67,.14);
+--hr-t:#B91C1C;--pace-t:#0369A1;--cad-t:#7E22CE;
+}
+.glow{position:absolute;left:-20%;right:-20%;top:-40px;height:460px;pointer-events:none;z-index:0;background:radial-gradient(50% 50% at 50% 50%,hsl(var(--primary) / .2) 0%,transparent 70%);filter:blur(34px)}
+.light .glow{background:radial-gradient(50% 50% at 50% 50%,hsl(var(--primary) / .14) 0%,transparent 70%)}
+.scroll{flex:1;overflow:auto;padding:0 18px 12px;scrollbar-width:none;position:relative;z-index:2}
+.stage{position:relative;border-radius:26px;background-color:var(--glass);background-image:var(--stage);border:1px solid var(--glass-brd);overflow:hidden}
+.slot{background-color:var(--slot);background-image:repeating-linear-gradient(135deg,var(--slot-line) 0 1px,transparent 1px 9px);display:flex;align-items:center;justify-content:center;text-align:center;padding:8px}
+.slot span{font-family:var(--font-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ios-label3);line-height:1.4}
+.footerbar{position:absolute;left:0;right:0;bottom:118px;z-index:6;padding:0 18px;display:flex;gap:9px;pointer-events:none}
+.btn{height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;gap:7px;font-weight:800;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.btn.primary{background:hsl(var(--primary));color:#0d1a00;box-shadow:0 10px 26px -10px hsl(var(--primary) / .8)}
+.btn.ghost{background:var(--glass-strong);color:var(--ios-label);border:1px solid var(--glass-brd)}
+</style>
+</head><body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react" src="../kit/hero-objects.js"></script>
+<script type="text/babel" src="../kit/kit.jsx"></script>
+<script type="text/babel" data-presets="react">
+const I=(n,s=20,c)=><i data-lucide={n} style={{width:s,height:s,display:"block",color:c,flexShrink:0}}></i>;
+const LIME="hsl(var(--primary))", LIMET="hsl(var(--primary-text))";
+const HR="var(--hr)", HRT="var(--hr-t)", PACE="var(--pace)", PACET="var(--pace-t)", CAD="var(--cad)", CADT="var(--cad-t)";
+
+const MODALIDADES=[
+  {id:"walk",name:"Caminhada",icon:"footprints",met:3.5},
+  {id:"run",name:"Corrida",icon:"zap",met:8.0},
+  {id:"bike",name:"Bicicleta",icon:"bike",met:6.0},
+  {id:"elliptical",name:"Elíptico",icon:"activity",met:5.0},
+  {id:"swim",name:"Natação",icon:"waves",met:7.0},
+];
+
+function StatusBar(){
+  return <div className="statusbar"><span>9:41</span><span style={{display:"flex",alignItems:"center",gap:6}}>{I("signal",16,"var(--on-hero)")}{I("wifi",16,"var(--on-hero)")}{I("battery-full",20,"var(--on-hero)")}</span></div>;
+}
+function RoundBtn({ icon, size=38 }){
+  return <div className="glass" style={{width:size,height:size,borderRadius:99,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:"var(--hero-chip)",borderColor:"var(--hero-chip-brd)"}}>{I(icon,size*0.47,"var(--on-hero)")}</div>;
+}
+function Slot({ label, h=150, r=20, style }){
+  return <div className="slot" style={{height:h,borderRadius:r,...style}}><span>{label}</span></div>;
+}
+function SectionTitle({ children, action }){
+  return (
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",margin:"20px 2px 10px"}}>
+      <span style={{fontSize:10.5,fontWeight:700,letterSpacing:".14em",textTransform:"uppercase",color:"var(--ios-label3)"}}>{children}</span>
+      {action && <span style={{fontSize:11.5,fontWeight:600,color:LIMET}}>{action}</span>}
+    </div>
+  );
+}
+function Chip({ children, tone }){
+  const on = tone==="primary";
+  return <span style={{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:99,fontSize:10.5,fontWeight:800,textTransform:"uppercase",letterSpacing:".06em",background:on?LIME:"var(--glass-strong)",color:on?"#0d1a00":"var(--ios-label2)"}}>{children}</span>;
+}
+/* Mostrador radial em arco aberto — a assinatura visual do cardio */
+function Gauge({ pct=62, size=214, stroke=14, color=LIME, children }){
+  const r=(size-stroke)/2-3, c=2*Math.PI*r, sweep=0.76, ang=(135+270*Math.min(1,pct/100))*Math.PI/180;
+  const dx=size/2+r*Math.cos(ang), dy=size/2+r*Math.sin(ang);
+  return (
+    <div style={{position:"relative",width:size,height:size}}>
+      <svg width={size} height={size} style={{transform:"rotate(135deg)"}}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--track)" strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${c*sweep} ${c}`} />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${c*sweep*Math.min(1,pct/100)} ${c}`} style={{filter:`drop-shadow(0 0 14px ${color})`}} />
+      </svg>
+      <div style={{position:"absolute",left:dx-7,top:dy-7,width:14,height:14,borderRadius:99,background:color,boxShadow:`0 0 16px ${color}`}}></div>
+      <div style={{position:"absolute",inset:stroke+14,borderRadius:99,background:"var(--glass)",border:"1px solid var(--glass-brd)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)"}}>{children}</div>
+    </div>
+  );
+}
+function MetricTile({ icon, value, unit, label, tone="var(--ios-label)" }){
+  return (
+    <div className="glass" style={{flex:1,padding:"13px 8px",display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+      {I(icon,17,tone)}
+      <div style={{display:"flex",alignItems:"baseline",gap:2}}>
+        <span style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{value}</span>
+        <span style={{fontSize:9.5,fontWeight:700,color:"var(--ios-label3)"}}>{unit}</span>
+      </div>
+      <span style={{fontSize:9.5,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"var(--ios-label3)"}}>{label}</span>
+    </div>
+  );
+}
+
+/* ---------- 1. Escolher modalidade ---------- */
+function SelectScreen(){
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:27,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em"}}>Cardio</div>
+          <div style={{fontSize:12.5,color:"var(--on-hero-2)",marginTop:1}}>Escolha sua atividade</div>
+        </div>
+        <RoundBtn icon="history" />
+      </div>
+      <div className="glass" style={{padding:14,marginTop:18,display:"flex",alignItems:"center",gap:13}}>
+        <div style={{width:38,height:38,borderRadius:13,background:"color-mix(in srgb, hsl(var(--primary)) 20%, transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("repeat",18,LIMET)}</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:10.5,fontWeight:800,letterSpacing:".12em",textTransform:"uppercase",color:LIMET}}>Retomar proposta</div>
+          <div style={{fontSize:14.5,fontWeight:700,color:"var(--ios-label)",letterSpacing:"-.01em",marginTop:2}}>Bicicleta · 30 min</div>
+        </div>
+        {I("chevron-right",17,"var(--ios-label3)")}
+      </div>
+      <SectionTitle action="5 modalidades">Modalidades</SectionTitle>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        {MODALIDADES.map((m,i)=>(
+          <div key={m.id} className="glass" style={{padding:14,height:138,display:"flex",flexDirection:"column",justifyContent:"space-between",borderColor:i===2?LIME:"var(--glass-brd)",boxShadow:i===2?`0 0 0 1px ${LIME}, 0 14px 32px -16px ${LIME}`:undefined,gridColumn:i===4?"span 2":undefined}}>
+            <div style={{width:40,height:40,borderRadius:14,background:i===2?LIME:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center"}}>{I(m.icon,20,i===2?"#0d1a00":"var(--ios-label2)")}</div>
+            <div>
+              <div style={{fontFamily:"var(--font-display)",fontSize:17,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{m.name}</div>
+              <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:2}}>~{m.met.toFixed(1)} METs</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <SectionTitle>Como funciona</SectionTitle>
+      <div className="glass" style={{padding:15,display:"flex",gap:12,alignItems:"flex-start"}}>
+        <div style={{width:32,height:32,borderRadius:11,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("info",15,LIMET)}</div>
+        <div style={{fontSize:12.5,color:"var(--ios-label2)",lineHeight:1.45}}>Sessão livre: o app cronometra o tempo e estima as calorias pelo MET da atividade e seu peso atual.</div>
+      </div>
+      <div style={{height:150}}></div>
+    </div>
+  );
+}
+
+/* ---------- 2. Modalidade — bicicleta ---------- */
+function ModalityScreen(){
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",justifyContent:"space-between"}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{display:"flex",gap:9}}><RoundBtn icon="settings-2" /><RoundBtn icon="user-round" /></div>
+      </div>
+      <div className="stage" style={{marginTop:14,padding:"10px 10px 18px"}}>
+        <Pedestal size={212} lift={6}><CardioObject kind="bike" scale={0.96} /></Pedestal>
+        <div style={{textAlign:"center",marginTop:12}}>
+          <div style={{fontSize:11,fontWeight:800,letterSpacing:".2em",textTransform:"uppercase",color:LIMET}}>Cardio livre</div>
+          <div style={{fontFamily:"var(--font-display)",fontSize:31,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.03em",marginTop:3}}>Bicicleta</div>
+        </div>
+        <div style={{display:"flex",gap:9,padding:"14px 8px 0"}}>
+          <MetricTile icon="gauge" value="24" unit="km/h" label="Ritmo alvo" tone={LIMET} />
+          <MetricTile icon="flame" value="6,0" unit="MET" label="Intensidade" tone={LIMET} />
+          <MetricTile icon="timer" value="30" unit="min" label="Duração" tone={LIMET} />
+        </div>
+      </div>
+      <SectionTitle action="Trocar">Sessão sugerida</SectionTitle>
+      <div className="glass" style={{padding:14}}>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:36,height:36,borderRadius:12,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("chart-no-axes-column",17,LIMET)}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:14.5,fontWeight:700,color:"var(--ios-label)",letterSpacing:"-.01em"}}>Intervalado moderado</div>
+            <div style={{fontSize:12,color:"var(--ios-label2)",marginTop:1}}>5 min leve · 4 × (3 min forte / 2 min leve) · 5 min solto</div>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:3,marginTop:13,height:36,alignItems:"flex-end"}}>
+          {[30,30,90,45,90,45,90,45,90,45,35,30].map((v,i)=>(
+            <div key={i} style={{flex:1,height:`${v}%`,borderRadius:5,background:v>60?LIME:"var(--glass-strong)"}}></div>
+          ))}
+        </div>
+      </div>
+      <SectionTitle>Seu histórico nesta modalidade</SectionTitle>
+      <div style={{display:"flex",gap:10}}>
+        {[["Última","12 ago","28 min"],["Melhor","04 ago","42 min"],["Total","Mês","6 h 10"]].map(([k,a,b])=>(
+          <div key={k} className="glass" style={{flex:1,padding:13}}>
+            <div style={{fontSize:9.5,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"var(--ios-label3)"}}>{k}</div>
+            <div style={{fontFamily:"var(--font-display)",fontSize:17,fontWeight:800,color:"var(--ios-label)",marginTop:5,letterSpacing:"-.02em"}}>{b}</div>
+            <div style={{fontSize:11,color:"var(--ios-label2)",marginTop:1}}>{a}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{height:150}}></div>
+    </div>
+  );
+}
+
+/* ---------- 3. Meta de tempo ---------- */
+function GoalScreen(){
+  const PRESETS=[10,15,20,30,45,60];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12,fontWeight:700,color:"var(--on-hero-2)",textTransform:"uppercase",letterSpacing:".04em"}}>Bicicleta</div>
+          <div style={{fontSize:21,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>Meta de tempo</div>
+        </div>
+        <RoundBtn icon="bike" />
+      </div>
+      <div className="stage" style={{marginTop:18,padding:"26px 18px",textAlign:"center"}}>
+        <div style={{fontSize:11,fontWeight:800,letterSpacing:".2em",textTransform:"uppercase",color:"var(--ios-label3)"}}>Duração alvo</div>
+        <div style={{display:"flex",alignItems:"baseline",justifyContent:"center",gap:8,marginTop:8}}>
+          <span style={{fontFamily:"var(--font-display)",fontSize:72,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.05em",lineHeight:1}}>30</span>
+          <span style={{fontSize:20,fontWeight:700,color:LIMET}}>min</span>
+        </div>
+        <div style={{fontSize:12.5,color:"var(--ios-label2)",marginTop:10}}>≈ 265 kcal para 74 kg a 6,0 MET</div>
+      </div>
+      <SectionTitle action="Sem meta">Presets</SectionTitle>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:9}}>
+        {PRESETS.map(p=>(
+          <div key={p} className={p===30?"":"glass"} style={{height:56,borderRadius:18,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1,background:p===30?LIME:undefined,boxShadow:p===30?`0 10px 26px -10px ${LIME}`:undefined}}>
+            <span style={{fontFamily:"var(--font-display)",fontSize:19,fontWeight:800,letterSpacing:"-.02em",color:p===30?"#0d1a00":"var(--ios-label)"}}>{p}</span>
+            <span style={{fontSize:9.5,fontWeight:700,textTransform:"uppercase",letterSpacing:".1em",color:p===30?"#0d1a00":"var(--ios-label3)"}}>min</span>
+          </div>
+        ))}
+      </div>
+      <SectionTitle>Ou digite</SectionTitle>
+      <div className="glass" style={{height:52,borderRadius:16,display:"flex",alignItems:"center",gap:10,padding:"0 15px"}}>
+        {I("timer",17,"var(--ios-label3)")}
+        <span style={{fontSize:14,color:"var(--ios-label3)"}}>Minutos</span>
+        <span style={{marginLeft:"auto",fontSize:13,fontWeight:700,color:"var(--ios-label3)"}}>min</span>
+      </div>
+      <div className="glass" style={{padding:14,marginTop:10,display:"flex",gap:12,alignItems:"flex-start"}}>
+        <div style={{width:32,height:32,borderRadius:11,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("bell-ring",15,LIMET)}</div>
+        <div style={{fontSize:12.5,color:"var(--ios-label2)",lineHeight:1.45}}>Avisamos com vibração ao bater a meta. Você pode continuar pedalando depois disso.</div>
+      </div>
+      <div style={{height:150}}></div>
+    </div>
+  );
+}
+
+/* ---------- 4. Sessão ao vivo ---------- */
+function LiveScreen(){
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-down" />
+        <div style={{flex:1,minWidth:0,textAlign:"center"}}>
+          <div style={{fontSize:10.5,fontWeight:800,letterSpacing:".18em",textTransform:"uppercase",color:LIMET}}>Em andamento</div>
+          <div style={{fontSize:15.5,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.01em",marginTop:1}}>Bicicleta</div>
+        </div>
+        <RoundBtn icon="music" />
+      </div>
+      <div style={{display:"flex",justifyContent:"center",marginTop:16}}>
+        <Gauge pct={62} size={222} stroke={15}>
+          <span style={{fontSize:10.5,fontWeight:800,letterSpacing:".2em",textTransform:"uppercase",color:"var(--ios-label3)"}}>Tempo</span>
+          <div style={{fontFamily:"var(--font-display)",fontSize:46,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.04em",lineHeight:1.05,marginTop:3}}>18:36</div>
+          <span style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:3}}>de 30:00 · 62%</span>
+        </Gauge>
+      </div>
+      <div className="glass" style={{padding:"12px 14px",marginTop:14,display:"flex",alignItems:"center",gap:12}}>
+        <div style={{fontSize:10,fontWeight:800,letterSpacing:".14em",textTransform:"uppercase",color:"var(--ios-label3)",flexShrink:0}}>Intensidade</div>
+        <div style={{flex:1,display:"flex",gap:3,alignItems:"flex-end",height:26}}>
+          {[35,52,44,70,86,64,92,78,58,88,72,96,64,50,80,68].map((v,i)=>(
+            <div key={i} style={{flex:1,height:`${v}%`,borderRadius:4,background:v>75?LIME:"var(--glass-strong)"}}></div>
+          ))}
+        </div>
+        <span style={{fontSize:11,fontWeight:800,color:LIMET,flexShrink:0}}>ALTA</span>
+      </div>
+      <div style={{display:"flex",gap:9,marginTop:10}}>
+        <MetricTile icon="flame" value="164" unit="kcal" label="Queima" tone={LIMET} />
+        <MetricTile icon="heart-pulse" value="142" unit="bpm" label="Batimento" tone={HRT} />
+        <MetricTile icon="route" value="7,4" unit="km" label="Distância" tone={PACET} />
+      </div>
+      <div style={{display:"flex",gap:9,marginTop:9}}>
+        <MetricTile icon="gauge" value="23,8" unit="km/h" label="Velocidade" tone={PACET} />
+        <MetricTile icon="repeat" value="84" unit="rpm" label="Cadência" tone={CADT} />
+        <MetricTile icon="mountain" value="112" unit="m" label="Elevação" tone={"var(--ios-label2)"} />
+      </div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:28,marginTop:18}}>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+          <div className="glass" style={{width:54,height:54,borderRadius:99,display:"flex",alignItems:"center",justifyContent:"center"}}>{I("lock",20,"var(--ios-label)")}</div>
+          <span style={{fontSize:10.5,fontWeight:600,color:"var(--ios-label3)"}}>Travar</span>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+          <div style={{width:76,height:76,borderRadius:99,background:LIME,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 0 34px ${LIME}`}}>{I("pause",30,"#0d1a00")}</div>
+          <span style={{fontSize:10.5,fontWeight:700,color:LIMET}}>Pausar</span>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+          <div className="glass" style={{width:54,height:54,borderRadius:99,display:"flex",alignItems:"center",justifyContent:"center"}}>{I("flag",20,"var(--ios-label)")}</div>
+          <span style={{fontSize:10.5,fontWeight:600,color:"var(--ios-label3)"}}>Volta</span>
+        </div>
+      </div>
+      <div style={{height:120}}></div>
+    </div>
+  );
+}
+
+/* ---------- 5. Pausado ---------- */
+function PausedScreen(){
+  const LAPS=[["Volta 3","06:12","2,4 km","24,1 km/h"],["Volta 2","06:02","2,5 km","24,8 km/h"],["Volta 1","06:22","2,5 km","23,5 km/h"]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-down" />
+        <div style={{flex:1,minWidth:0,textAlign:"center"}}>
+          <div style={{fontSize:10.5,fontWeight:800,letterSpacing:".18em",textTransform:"uppercase",color:"var(--ios-label3)"}}>Pausado</div>
+          <div style={{fontSize:15.5,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.01em",marginTop:1}}>Bicicleta</div>
+        </div>
+        <RoundBtn icon="music" />
+      </div>
+      <div style={{display:"flex",justifyContent:"center",marginTop:16,opacity:.72}}>
+        <Gauge pct={62} size={196} stroke={14} color={"var(--ios-label3)"}>
+          <span style={{fontSize:10.5,fontWeight:800,letterSpacing:".2em",textTransform:"uppercase",color:"var(--ios-label3)"}}>Tempo</span>
+          <div style={{fontFamily:"var(--font-display)",fontSize:42,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.04em",lineHeight:1.05,marginTop:3}}>18:36</div>
+          <span style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:3}}>faltam 11:24</span>
+        </Gauge>
+      </div>
+      <div style={{display:"flex",gap:9,marginTop:12}}>
+        <MetricTile icon="flame" value="164" unit="kcal" label="Queima" tone={LIMET} />
+        <MetricTile icon="route" value="7,4" unit="km" label="Distância" tone={PACET} />
+        <MetricTile icon="heart-pulse" value="128" unit="bpm" label="Recuperação" tone={HRT} />
+      </div>
+      <SectionTitle action="3 voltas">Voltas</SectionTitle>
+      {LAPS.map(([n,t,d,v],i)=>(
+        <div key={n} className="glass" style={{padding:12,display:"flex",alignItems:"center",gap:12,marginBottom:9,borderColor:i===1?LIME:"var(--glass-brd)"}}>
+          <div style={{width:30,height:30,borderRadius:10,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontFamily:"var(--font-display)",fontWeight:800,fontSize:13,color:i===1?LIMET:"var(--ios-label2)"}}>{3-i}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:13.5,fontWeight:600,color:"var(--ios-label)"}}>{n}</div>
+            <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:1}}>{d} · {v}</div>
+          </div>
+          <span style={{fontFamily:"var(--font-display)",fontSize:15,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{t}</span>
+        </div>
+      ))}
+      <div style={{height:150}}></div>
+    </div>
+  );
+}
+
+/* ---------- 6. Percurso (corrida) ---------- */
+function RouteScreen(){
+  const SPLITS=[["1 km","5:42",78],["2 km","5:31",88],["3 km","5:58",64],["4 km","5:24",96],["5 km","5:47",74]];
+  return (
+    <div className="scroll" style={{padding:0}}>
+      <div style={{position:"relative"}}>
+        <Slot label={"mapa · traçado do percurso"} h={302} r={0} />
+        <div style={{position:"absolute",top:14,left:18,right:18,display:"flex",justifyContent:"space-between"}}><RoundBtn icon="chevron-left" /><RoundBtn icon="layers" /></div>
+        <div style={{position:"absolute",left:18,right:18,bottom:38,display:"flex",gap:8}}>
+          <Chip tone="primary">Corrida ao ar livre</Chip><Chip>GPS forte</Chip>
+        </div>
+      </div>
+      <div style={{position:"relative",marginTop:-26,background:"var(--ios-bg)",borderRadius:"28px 28px 0 0",padding:"20px 18px 0"}}>
+        <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between"}}>
+          <div>
+            <div style={{fontSize:11,fontWeight:800,letterSpacing:".16em",textTransform:"uppercase",color:"var(--ios-label3)"}}>Distância</div>
+            <div style={{display:"flex",alignItems:"baseline",gap:6,marginTop:4}}>
+              <span style={{fontFamily:"var(--font-display)",fontSize:44,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.04em",lineHeight:1}}>5,42</span>
+              <span style={{fontSize:15,fontWeight:700,color:"var(--ios-label2)"}}>km</span>
+            </div>
+          </div>
+          <div style={{textAlign:"right"}}>
+            <div style={{fontSize:11,fontWeight:800,letterSpacing:".16em",textTransform:"uppercase",color:"var(--ios-label3)"}}>Pace médio</div>
+            <div style={{fontFamily:"var(--font-display)",fontSize:26,fontWeight:800,color:PACET,letterSpacing:"-.02em",marginTop:6}}>5:38 <span style={{fontSize:12,color:"var(--ios-label2)"}}>/km</span></div>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:9,marginTop:14}}>
+          <MetricTile icon="timer" value="30:34" unit="" label="Tempo" tone={LIMET} />
+          <MetricTile icon="heart-pulse" value="156" unit="bpm" label="FC média" tone={HRT} />
+          <MetricTile icon="footprints" value="172" unit="spm" label="Cadência" tone={CADT} />
+        </div>
+        <SectionTitle action="Por km">Parciais</SectionTitle>
+        {SPLITS.map(([km,pace,w],i)=>(
+          <div key={km} className="glass" style={{padding:"11px 13px",display:"flex",alignItems:"center",gap:12,marginBottom:8}}>
+            <span style={{fontSize:12,fontWeight:700,color:"var(--ios-label2)",width:34,flexShrink:0}}>{km}</span>
+            <div style={{flex:1,height:8,borderRadius:99,background:"var(--track)",overflow:"hidden"}}>
+              <div style={{width:`${w}%`,height:"100%",borderRadius:99,background:i===3?LIME:"color-mix(in srgb, hsl(var(--primary)) 45%, transparent)"}}></div>
+            </div>
+            <span style={{fontFamily:"var(--font-display)",fontSize:14,fontWeight:800,color:i===3?LIMET:"var(--ios-label)",letterSpacing:"-.02em",width:44,textAlign:"right"}}>{pace}</span>
+          </div>
+        ))}
+        <div style={{height:170}}></div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 7. Feedback ---------- */
+function FeedbackScreen(){
+  const FEEL=[["smile","Leve"],["meh","Na medida"],["flame","Puxado"]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",justifyContent:"flex-end"}}><RoundBtn icon="x" /></div>
+      <div style={{paddingTop:16,textAlign:"center"}}>
+        <div style={{display:"flex",justifyContent:"center"}}><OrbObject scale={0.56} icon="bike" glyph={24} /></div>
+        <div style={{fontSize:25,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:16}}>Como foi o cardio?</div>
+        <div style={{fontSize:13.5,color:"var(--on-hero-2)",marginTop:6}}>30:12 · 268 kcal · 11,8 km</div>
+      </div>
+      <div className="glass" style={{padding:16,marginTop:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10}}>
+          <span style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)"}}>Esforço percebido</span>
+          <span style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:800,color:LIMET}}>6</span>
+        </div>
+        <div style={{display:"flex",gap:4}}>
+          {Array.from({length:10}).map((_,i)=>(
+            <div key={i} style={{flex:1,height:30,borderRadius:8,background:i<6?LIME:"var(--glass-strong)",opacity:i<6?(0.5+i*0.08):1,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:i<6?"#0d1a00":"var(--ios-label3)"}}>{i+1}</div>
+          ))}
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:8}}>
+          <span style={{fontSize:11,color:"var(--ios-label3)"}}>Tranquilo</span>
+          <span style={{fontSize:11,color:"var(--ios-label3)"}}>Máximo esforço</span>
+        </div>
+      </div>
+      <SectionTitle>Sensação</SectionTitle>
+      <div style={{display:"flex",gap:9}}>
+        {FEEL.map(([icon,label],i)=>(
+          <div key={label} className="glass" style={{flex:1,padding:"14px 8px",display:"flex",flexDirection:"column",alignItems:"center",gap:7,borderColor:i===1?LIME:"var(--glass-brd)"}}>
+            {I(icon,21,i===1?LIMET:"var(--ios-label2)")}
+            <span style={{fontSize:12,fontWeight:700,color:i===1?LIMET:"var(--ios-label2)"}}>{label}</span>
+          </div>
+        ))}
+      </div>
+      <SectionTitle>Observações</SectionTitle>
+      <div className="glass" style={{padding:14,minHeight:84}}>
+        <div style={{fontSize:13.5,color:"var(--ios-label3)",lineHeight:1.45}}>Subida do km 4 pesou, mas recuperei bem no final.</div>
+      </div>
+      <div style={{height:150}}></div>
+    </div>
+  );
+}
+
+/* ---------- 8. Resumo ---------- */
+function SummaryScreen(){
+  const STATS=[["timer","Duração","30:12",LIMET],["flame","Calorias","268 kcal",LIMET],["route","Distância","11,8 km",PACET],["heart-pulse","FC média","142 bpm",HRT]];
+  const ZONES=[["Z1 Leve",12,"var(--ios-label3)"],["Z2 Moderada",38,PACE],["Z3 Aeróbica",34,LIME],["Z4 Limiar",16,HR]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",justifyContent:"space-between"}}><RoundBtn icon="chevron-left" /><RoundBtn icon="share" /></div>
+      <div style={{paddingTop:22}}>
+        <Chip tone="primary">Cardio finalizado</Chip>
+        <div style={{fontFamily:"var(--font-display)",fontSize:31,fontWeight:800,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:12,lineHeight:1.08,textTransform:"uppercase"}}>Bicicleta</div>
+        <div style={{fontSize:13.5,color:"var(--on-hero-2)",marginTop:7}}>Terça, 12 de agosto · 07:05 · meta batida</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:20}}>
+        {STATS.map(([icon,label,value,tone])=>(
+          <div key={label} className="glass" style={{padding:14}}>
+            <div style={{width:30,height:30,borderRadius:10,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:10}}>{I(icon,15,tone)}</div>
+            <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{value}</div>
+            <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:2}}>{label}</div>
+          </div>
+        ))}
+      </div>
+      <SectionTitle action="Da sessão">Zonas de esforço</SectionTitle>
+      <div className="glass" style={{padding:15}}>
+        <div style={{display:"flex",height:12,borderRadius:99,overflow:"hidden",gap:2}}>
+          {ZONES.map(([n,v,c])=><div key={n} style={{flex:v,background:c}}></div>)}
+        </div>
+        <div style={{marginTop:12,display:"flex",flexDirection:"column",gap:8}}>
+          {ZONES.map(([n,v,c])=>(
+            <div key={n} style={{display:"flex",alignItems:"center",gap:9}}>
+              <span style={{width:9,height:9,borderRadius:3,background:c,display:"block",flexShrink:0}}></span>
+              <span style={{fontSize:12.5,color:"var(--ios-label2)",flex:1}}>{n}</span>
+              <span style={{fontSize:12.5,fontWeight:700,color:"var(--ios-label)"}}>{v}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <SectionTitle>Ganhos</SectionTitle>
+      <div className="glass" style={{padding:14,display:"flex",alignItems:"center",gap:12}}>
+        <div style={{width:34,height:34,borderRadius:11,background:"color-mix(in srgb, hsl(var(--primary)) 18%, transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("trophy",16,LIMET)}</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:14,fontWeight:700,color:"var(--ios-label)"}}>+120 XP · sequência de 12 dias</div>
+          <div style={{fontSize:12,color:"var(--ios-label2)",marginTop:2}}>Você subiu para 4º no ranking da semana</div>
+        </div>
+      </div>
+      <div className="glass" style={{padding:15,marginTop:10,display:"flex",gap:12,alignItems:"flex-start"}}>
+        <div style={{width:34,height:34,borderRadius:11,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("sparkles",16,LIMET)}</div>
+        <div>
+          <div style={{fontSize:14,fontWeight:700,color:"var(--ios-label)"}}>Assistente</div>
+          <div style={{fontSize:12.5,color:"var(--ios-label2)",marginTop:3,lineHeight:1.45}}>Boa constância na zona aeróbica. Na próxima, suba 5 min mantendo a cadência em 84 rpm.</div>
+        </div>
+      </div>
+      <div style={{height:150}}></div>
+    </div>
+  );
+}
+
+function TabBar({active="workouts"}){return <KitTabBar active={active}/>;}
+
+function Phone(p){return <ThemePair><PhoneOne {...p}/></ThemePair>;}
+function PhoneOne({ step, label, footer, children }){
+  return (
+    <div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+        <span style={{width:20,height:20,borderRadius:99,background:LIME,color:"#0d1a00",fontSize:11,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{step}</span>
+        <span style={{color:"hsl(var(--muted-foreground))",fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:".1em"}}>{label}</span>
+      </div>
+      <div className="phone">
+        <div className="glow"></div>
+        <div className="island"></div>
+        <StatusBar/>
+        {children}
+        {footer && (
+          <div className="footerbar">
+            <div className="btn ghost" style={{flex:"0 0 auto",padding:"0 16px"}}>{I(footer[1],15,"var(--ios-label)")} {footer[0]}</div>
+            <div className="btn primary" style={{flex:1}}>{I(footer[3],15,"#0d1a00")} {footer[2]}</div>
+          </div>
+        )}
+        <TabBar/>
+        <div className="homebar"></div>
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const [theme,setTheme]=React.useState("dark");
+  React.useEffect(()=>{window.lucide?.createIcons();});
+  const row={display:"flex",gap:30,marginBottom:36};
+  return (
+    <div>
+      <div style={row}>
+        <Phone step="1" label="Escolher modalidade"><SelectScreen/></Phone>
+        <Phone step="2" label="Modalidade · bicicleta" footer={["Definir meta","timer","Iniciar sessão","play"]}><ModalityScreen/></Phone>
+        <Phone step="3" label="Meta de tempo" footer={["Pular","skip-forward","Confirmar meta","check"]}><GoalScreen/></Phone>
+        <Phone step="4" label="Sessão ao vivo"><LiveScreen/></Phone>
+      </div>
+      <div style={row}>
+        <Phone step="5" label="Pausado" footer={["Finalizar","square","Retomar","play"]}><PausedScreen/></Phone>
+        <Phone step="6" label="Percurso · corrida" footer={["Ver mapa","map","Finalizar","flag"]}><RouteScreen/></Phone>
+        <Phone step="7" label="Feedback da sessão" footer={["Descartar","trash-2","Salvar sessão","check"]}><FeedbackScreen/></Phone>
+        <Phone step="8" label="Resumo do cardio" footer={["Ver histórico","history","Compartilhar","share"]}><SummaryScreen/></Phone>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+setTimeout(()=>window.lucide?.createIcons(),50);
+</script></body></html>

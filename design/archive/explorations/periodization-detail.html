@@ -1,0 +1,87 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js"></script>
+<style>*{box-sizing:border-box}body{margin:0;background:#F5F3EE;color:#141311;font-family:var(--font-sans)}</style>
+</head><body><div id="root"></div>
+<script type="text/babel" data-presets="react">
+const I = (name, size=18, color) => <i data-lucide={name} style={{width:size,height:size,display:"block",color}}></i>;
+
+function Nav(){
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "32px 32px 20px", borderBottom: "1px solid #E7E3D8" }}>
+      <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 20 }}>Eleva Pro</div>
+      <div style={{ display: "flex", gap: 28, fontSize: 13, fontWeight: 600, color: "#8A867B" }}>
+        <span>Briefing</span><span>Alunos</span><span style={{color:"#141311"}}>Treinos</span><span>Nutrição</span><span>Coach IA</span>
+      </div>
+    </div>
+  );
+}
+
+const PHASES = [
+  { name: "Fase 1 — Adaptação", weeks: "4 semanas", workouts: [
+    { name: "Treino A — Peito & Tríceps", exercises: 6 },
+    { name: "Treino B — Costas & Bíceps", exercises: 6 },
+  ]},
+  { name: "Fase 2 — Intensificação", weeks: "6 semanas", workouts: [
+    { name: "Treino A — Superior", exercises: 7 },
+    { name: "Treino B — Inferior", exercises: 8 },
+    { name: "Treino C — Full Body", exercises: 5 },
+  ]},
+  { name: "Fase 3 — Pico", weeks: "3 semanas", workouts: [
+    { name: "Treino A — Força Máxima", exercises: 5 },
+  ]},
+];
+
+function App(){
+  React.useEffect(()=>{ window.lucide?.createIcons(); });
+  return (
+    <div>
+      <Nav/>
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "40px 32px 100px" }}>
+        <nav style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, color: "#8A867B", marginBottom: 20 }}>
+          <a href="periodizations-list.html" style={{color:"#8A867B",textDecoration:"none"}}>Periodizações</a><span>/</span><span style={{color:"#141311",fontWeight:600}}>Hipertrofia — Ciclo 2026</span>
+        </nav>
+
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 32 }}>
+          <div>
+            <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 30, letterSpacing: "-0.02em" }}>Hipertrofia — Ciclo 2026</div>
+            <div style={{ fontSize: 14, color: "#8A867B", marginTop: 6 }}>João Silva · 01 jun → 30 set · 3 fases</div>
+          </div>
+          <button style={{ display: "flex", alignItems: "center", gap: 8, background: "#141311", color: "#F5F3EE", border: "none", borderRadius: 4, padding: "12px 20px", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>{I("plus",15)}Nova Fase</button>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {PHASES.map((phase, pi) => (
+            <div key={phase.name} style={{ background: "#fff", border: "1px solid #E7E3D8", borderRadius: 6, overflow: "hidden" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 22px", borderBottom: "1px solid #EFEBDD" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#141311", color: "#F5F3EE", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700 }}>{pi+1}</div>
+                  <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 16 }}>{phase.name}</div>
+                </div>
+                <div style={{ fontSize: 12, color: "#8A867B" }}>{phase.weeks}</div>
+              </div>
+              <div>
+                {phase.workouts.map((w, wi) => (
+                  <a key={w.name} href="workouts-builder.html" style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 22px", textDecoration: "none", color: "inherit", borderBottom: wi < phase.workouts.length - 1 ? "1px solid #F5F3EE" : "none" }}>
+                    <div style={{color:"#C4BFAF"}}>{I("dumbbell",16)}</div>
+                    <div style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{w.name}</div>
+                    <div style={{ fontSize: 12, color: "#8A867B" }}>{w.exercises} exercícios</div>
+                    <div style={{color:"#C4BFAF"}}>{I("chevron-right",16)}</div>
+                  </a>
+                ))}
+                <div style={{ padding: "12px 22px" }}>
+                  <button style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", color: "#8A867B", fontWeight: 700, fontSize: 13, cursor: "pointer", padding: 0 }}>{I("plus",15)}Adicionar treino</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script></body></html>
