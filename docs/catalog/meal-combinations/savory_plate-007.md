@@ -203,7 +203,7 @@
 - [x] `candidate-251ae816e6b00cc8` — Prato: Milho verde cozido + Frango (peito grelhado) + Chuchu cozido
 - [ ] `candidate-252259ff3cd3dc0a` — Prato: Arroz sete grãos cozido + Seitan + Quiabo cozido
 - [ ] `candidate-25257abb64cdee2f` — Prato: Polenta cozida + Carne moída (patinho) + Alface
-- [ ] `candidate-252cef7aa812ddd5` — Prato: Arroz integral cozido + Frango desfiado cozido + Alface
+- [x] `candidate-252cef7aa812ddd5` — Prato: Arroz integral cozido + Frango desfiado cozido + Alface
 - [ ] `candidate-25398fecae6724a9` — Prato: Arroz integral cozido + Carne bovina (músculo cozido) + Abóbora cabotiá cozida
 - [ ] `candidate-2539a8078897051a` — Prato: Mandioca cozida + Salmão grelhado + Agrião
 - [ ] `candidate-253d10b81e2424aa` — Prato: Polenta cozida + Ovo de codorna cozido + Abóbora cabotiá cozida
@@ -246,7 +246,7 @@
 - [ ] `candidate-25f70eb449c8e03b` — Prato: Macarrão cozido + Proteína de soja texturizada + Pepino
 - [ ] `candidate-25f773dd8e9777e0` — Prato: Quinoa cozida + Clara de ovo + Quiabo cozido
 - [ ] `candidate-25f90d9ba55faeb1` — Prato: Mandioca cozida + Frango desfiado cozido + Repolho cru
-- [ ] `candidate-25fa5355cfbd5eb1` — Prato: Batata inglesa cozida + Carne moída (patinho) + Brócolis cozido
+- [x] `candidate-25fa5355cfbd5eb1` — Prato: Batata inglesa cozida + Carne moída (patinho) + Brócolis cozido
 - [ ] `candidate-25fdd13adc3c3925` — Prato: Cuscuz marroquino cozido + Carne moída (patinho) + Palmito em conserva
 - [ ] `candidate-2606e7d14d4b20b6` — Prato: Arroz parboilizado cozido + Pescada grelhada + Cogumelo champignon
 - [ ] `candidate-2608289d4c6ebf8c` — Prato: Mandioca cozida + Tofu + Beterraba cozida

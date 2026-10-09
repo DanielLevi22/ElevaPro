@@ -54,7 +54,7 @@
 - [ ] `candidate-55a4ce582a7d8650` — Prato: Mandioca cozida + Ovo de codorna cozido + Brócolis cozido
 - [ ] `candidate-55a62f0620434ffd` — Prato: Polenta cozida + Carne moída (patinho) + Vagem cozida
 - [ ] `candidate-55add3a926d4fb8f` — Prato: Batata baroa cozida + Ovo inteiro cozido + Repolho cru
-- [ ] `candidate-55b0f2c941c1381d` — Prato: Arroz branco cozido + Carne bovina (patinho) + Alface
+- [x] `candidate-55b0f2c941c1381d` — Prato: Arroz branco cozido + Carne bovina (patinho) + Alface
 - [ ] `candidate-55b31bdefe019a67` — Prato: Polenta cozida + Merluza grelhada + Brócolis cozido
 - [ ] `candidate-55b65f15e18546cc` — Prato: Quinoa cozida + Tilápia grelhada + Pimentão vermelho
 - [ ] `candidate-55b7236697a0f81c` — Prato: Cuscuz de milho + Salmão grelhado + Quiabo cozido
@@ -102,13 +102,13 @@
 - [ ] `candidate-56a33cdb07517ee5` — Prato: Biscoito de arroz + Ovo inteiro cozido + Alface
 - [ ] `candidate-56ad8792eeaf06b5` — Prato: Batata doce cozida + Carne moída (patinho) + Vagem cozida
 - [ ] `candidate-56ae454b947315ff` — Prato: Polenta cozida + Sardinha (lata, drenada) + Rúcula
-- [ ] `candidate-56b0cc22d753c5ec` — Prato: Macarrão cozido + Ovo inteiro cozido + Beterraba cozida
+- [x] `candidate-56b0cc22d753c5ec` — Prato: Macarrão cozido + Ovo inteiro cozido + Beterraba cozida
 - [ ] `candidate-56b948f5221ab0ce` — Prato: Cará cozido + Atum em água (lata) + Brócolis cozido
 - [ ] `candidate-56bb2dd9cf2c15cf` — Prato: Polenta cozida + Sardinha (lata, drenada) + Repolho cru
-- [ ] `candidate-56bd8a04f703e727` — Prato: Macarrão cozido + Carne moída (patinho) + Alface
+- [x] `candidate-56bd8a04f703e727` — Prato: Macarrão cozido + Carne moída (patinho) + Alface
 - [ ] `candidate-56c65e30bd09e2b4` — Prato: Cará cozido + Carne moída (patinho) + Agrião
 - [ ] `candidate-56d0332bda9573c3` — Prato: Cuscuz marroquino cozido + Ovo de codorna cozido + Alface
-- [ ] `candidate-56d05761e40359ee` — Prato: Arroz branco cozido + Tilápia grelhada + Brócolis cozido
+- [x] `candidate-56d05761e40359ee` — Prato: Arroz branco cozido + Tilápia grelhada + Brócolis cozido
 - [ ] `candidate-56d1b6634b8f6cdc` — Prato: Arroz integral cozido + Carne bovina (coxão mole) + Vagem cozida
 - [ ] `candidate-56d629a517e2de06` — Prato: Batata inglesa cozida + Salmão grelhado + Cogumelo champignon
 - [ ] `candidate-56e3391d162c4d5c` — Prato: Cará cozido + Carne bovina (patinho) + Pepino

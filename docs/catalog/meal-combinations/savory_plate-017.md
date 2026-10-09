@@ -193,9 +193,9 @@
 - [ ] `candidate-5e7c5dbe94d9acdd` — Prato: Arroz sete grãos cozido + Carne bovina (músculo cozido) + Alface
 - [ ] `candidate-5e81d8ef69b7eeae` — Prato: Batata inglesa cozida + Sardinha (lata, drenada) + Chuchu cozido
 - [ ] `candidate-5e852756971fd5d2` — Prato: Cuscuz de milho + Camarão cozido + Pepino
-- [ ] `candidate-5e8b24432d890e03` — Prato: Macarrão cozido + Frango desfiado cozido + Beterraba cozida
+- [x] `candidate-5e8b24432d890e03` — Prato: Macarrão cozido + Frango desfiado cozido + Beterraba cozida
 - [ ] `candidate-5e8cacb1bf632241` — Prato: Batata doce cozida + Tilápia grelhada + Aspargos cozidos
-- [ ] `candidate-5e8fcb9018112da4` — Prato: Macarrão cozido + Ovo inteiro cozido + Brócolis cozido
+- [x] `candidate-5e8fcb9018112da4` — Prato: Macarrão cozido + Ovo inteiro cozido + Brócolis cozido
 - [ ] `candidate-5e947c300ebf5075` — Prato: Macarrão integral cozido + Clara de ovo + Palmito em conserva
 - [ ] `candidate-5ea0431bc555e004` — Prato: Biscoito de arroz + Frango (sobrecoxa assada) + Pimentão verde
 - [ ] `candidate-5ea2790795e818cf` — Prato: Arroz integral cozido + Frango (coxa sem pele assada) + Beterraba cozida
