@@ -33,7 +33,8 @@ export function selectImageBatch(candidates, completed, limit) {
   return [...unique.values()].filter((candidate) => !excluded.has(candidate.id)).slice(0, limit);
 }
 
-function imagePrompt(candidate) {
+/** Prompt oficial do candidato; filas paralelas reusam o mesmo texto da fila sequencial. @example imagePrompt(candidate) */
+export function imagePrompt(candidate) {
   const presentation = PRESENTATIONS[candidate.template];
   if (!presentation)
     throw new Error(`Tipo culinário inválido: ${candidate.template}; esperado tipo do checklist.`);

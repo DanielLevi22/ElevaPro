@@ -11,7 +11,8 @@ import {
 import { publishCandidateImage } from "./meal-catalog/production.mjs";
 import { queueImageBatch } from "./meal-catalog/queue.mjs";
 
-const [operation, candidateId, filename, promptFile] = process.argv.slice(2);
+const [operation, candidateId, filename, promptFile, generator = "imagegen"] =
+  process.argv.slice(2);
 
 async function publish() {
   const candidate = buildMealCandidates(await loadPublicFoods()).find(
@@ -37,7 +38,7 @@ async function publish() {
     title: candidate.title,
     ingredients: candidate.ingredients,
     prompt,
-    generator: "imagegen",
+    generator,
     url: `${endpoint.replace(/\/$/, "")}/${completed.asset.path}`,
   });
   await mkdir(productionRoot, { recursive: true });
@@ -59,7 +60,7 @@ async function main() {
     return;
   }
   throw new Error(
-    "Uso esperado: node scripts/meal-catalog.mjs <checklist|queue TAMANHO|publish ID arquivo.jpg>.",
+    "Uso esperado: node scripts/meal-catalog.mjs <checklist|queue TAMANHO|publish ID arquivo.jpg [prompt.txt] [gerador]>.",
   );
 }
 main().catch((error) => {

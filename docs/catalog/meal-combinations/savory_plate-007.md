@@ -197,10 +197,10 @@
 - [x] `candidate-24f028afdbf83ce2` — Prato: Inhame cozido + Carne bovina (alcatra) + Pimentão verde
 - [x] `candidate-250985e7fc60e408` — Prato: Arroz branco cozido + Sardinha (lata, drenada) + Tomate
 - [x] `candidate-250d6a9f5af442e9` — Prato: Cuscuz de milho + Tilápia grelhada + Pimentão vermelho
-- [ ] `candidate-250da432623642e3` — Prato: Macarrão cozido + Frango (sobrecoxa assada) + Abobrinha cozida
-- [ ] `candidate-251682d1b95db6b2` — Prato: Macarrão integral cozido + Sardinha (lata, drenada) + Abóbora cabotiá cozida
+- [x] `candidate-250da432623642e3` — Prato: Macarrão cozido + Frango (sobrecoxa assada) + Abobrinha cozida
+- [x] `candidate-251682d1b95db6b2` — Prato: Macarrão integral cozido + Sardinha (lata, drenada) + Abóbora cabotiá cozida
 - [ ] `candidate-2518bbd43d00733b` — Prato: Quinoa cozida + Carne bovina (músculo cozido) + Beterraba cozida
-- [ ] `candidate-251ae816e6b00cc8` — Prato: Milho verde cozido + Frango (peito grelhado) + Chuchu cozido
+- [x] `candidate-251ae816e6b00cc8` — Prato: Milho verde cozido + Frango (peito grelhado) + Chuchu cozido
 - [ ] `candidate-252259ff3cd3dc0a` — Prato: Arroz sete grãos cozido + Seitan + Quiabo cozido
 - [ ] `candidate-25257abb64cdee2f` — Prato: Polenta cozida + Carne moída (patinho) + Alface
 - [ ] `candidate-252cef7aa812ddd5` — Prato: Arroz integral cozido + Frango desfiado cozido + Alface

@@ -5,8 +5,8 @@
 - [ ] `candidate-2619f28fc7752e28` — Prato: Cuscuz marroquino cozido + Atum em água (lata) + Pepino
 - [ ] `candidate-2623e07c18b5a557` — Prato: Cuscuz de milho + Pescada grelhada + Couve-flor cozida
 - [ ] `candidate-262463649fc81d9f` — Prato: Mandioca cozida + Frango desfiado cozido + Pimentão verde
-- [ ] `candidate-262f7f1ebbd80d5f` — Prato: Macarrão integral cozido + Clara de ovo + Agrião
-- [ ] `candidate-26301b46b9bac841` — Prato: Milho verde cozido + Carne moída (patinho) + Tomate
+- [x] `candidate-262f7f1ebbd80d5f` — Prato: Macarrão integral cozido + Clara de ovo + Agrião
+- [x] `candidate-26301b46b9bac841` — Prato: Milho verde cozido + Carne moída (patinho) + Tomate
 - [ ] `candidate-2639f1f0aeba5500` — Prato: Milho verde cozido + Frango desfiado cozido + Chuchu cozido
 - [ ] `candidate-263a0b6be94b8269` — Prato: Milho verde cozido + Seitan + Abobrinha cozida
 - [ ] `candidate-26410e115bf5b08f` — Prato: Batata doce cozida + Carne bovina (coxão mole) + Couve refogada
@@ -20,8 +20,8 @@
 - [ ] `candidate-268ade5761c28e7a` — Prato: Inhame cozido + Carne moída (patinho) + Berinjela cozida
 - [ ] `candidate-26967c6383ccea05` — Prato: Batata baroa cozida + Clara de ovo + Abóbora cabotiá cozida
 - [ ] `candidate-269b21d44e1d7a68` — Prato: Batata inglesa cozida + Carne bovina (músculo cozido) + Cogumelo champignon
-- [ ] `candidate-26ae43ca8bb4df2a` — Prato: Macarrão cozido + Frango (peito grelhado) + Quiabo cozido
-- [ ] `candidate-26b3f141543d86ef` — Prato: Inhame cozido + Atum fresco grelhado + Agrião
+- [x] `candidate-26ae43ca8bb4df2a` — Prato: Macarrão cozido + Frango (peito grelhado) + Quiabo cozido
+- [x] `candidate-26b3f141543d86ef` — Prato: Inhame cozido + Atum fresco grelhado + Agrião
 - [ ] `candidate-26ce188775f55084` — Prato: Mandioca cozida + Fígado bovino grelhado + Quiabo cozido
 - [ ] `candidate-26de2ac05211e008` — Prato: Macarrão integral cozido + Ovo inteiro cozido + Tomate
 - [ ] `candidate-26eb6712d0759d0f` — Prato: Arroz branco cozido + Ovo inteiro cozido + Berinjela cozida
