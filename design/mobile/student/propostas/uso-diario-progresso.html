@@ -1,0 +1,784 @@
+<!-- @dsCard group="Mobile · Propostas em revisão" viewport="2000x2400" name="Proposta · Uso diário · Progresso" subtitle="Atual × Proposta: o gráfico de volume por grupo vira o mapa muscular da semana · escuro e claro" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../../styles.css"><link rel="stylesheet" href="../../kit/glass.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js"></script>
+<style>
+:root{
+--tab-bg:rgba(18,19,22,0.72);
+--on-hero:#fff;--on-hero-2:rgba(255,255,255,.82);--hero-chip:rgba(255,255,255,.16);--hero-chip-brd:rgba(255,255,255,.28);
+--slot:rgba(255,255,255,.05);--slot-line:rgba(255,255,255,.07);
+--track:rgba(255,255,255,.09);--grid:rgba(255,255,255,.07);
+--c1:#34D399;--c1t:#34D399;--c2:#38BDF8;--c2t:#38BDF8;--c3:#C084FC;--c3t:#C084FC;--c4:#FBBF24;--c4t:#FBBF24;--c5:#F87171;--c5t:#F87171;
+}
+.light{
+--tab-bg:rgba(255,255,255,0.9);
+--on-hero:#0B0B0F;--on-hero-2:rgba(28,28,32,.82);--hero-chip:rgba(255,255,255,.72);--hero-chip-brd:rgba(60,60,67,.16);
+--slot:rgba(60,60,67,.05);--slot-line:rgba(60,60,67,.09);
+--track:rgba(60,60,67,.14);--grid:rgba(60,60,67,.1);
+--c1t:#0B7A52;--c2t:#0369A1;--c3t:#7E22CE;--c4t:#8A5E03;--c5t:#B91C1C;
+}
+.glow{position:absolute;left:-20%;right:-20%;top:-40px;height:440px;pointer-events:none;z-index:0;background:radial-gradient(50% 50% at 50% 50%,hsl(var(--primary) / .17) 0%,transparent 70%);filter:blur(34px)}
+.light .glow{background:radial-gradient(50% 50% at 50% 50%,hsl(var(--primary) / .12) 0%,transparent 70%)}
+.scroll{flex:1;overflow:auto;padding:0 18px 12px;scrollbar-width:none;position:relative;z-index:2}
+.slot{background-color:var(--slot);background-image:repeating-linear-gradient(135deg,var(--slot-line) 0 1px,transparent 1px 9px);display:flex;align-items:center;justify-content:center;text-align:center;padding:8px}
+.slot span{font-family:var(--font-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ios-label3);line-height:1.4}
+.footerbar{position:absolute;left:0;right:0;bottom:118px;z-index:6;padding:0 18px;display:flex;gap:9px;pointer-events:none}
+.btn{height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;gap:7px;font-weight:800;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.btn.primary{background:hsl(var(--primary));color:#0d1a00;box-shadow:0 10px 26px -10px hsl(var(--primary) / .8)}
+.btn.ghost{background:var(--glass-strong);color:var(--ios-label);border:1px solid var(--glass-brd);backdrop-filter:blur(18px)}
+</style>
+</head><body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react" src="../../kit/hero-objects.js"></script>
+<script type="text/babel" src="../../kit/kit.jsx"></script>
+<script type="text/babel" src="uso-diario/pecas.jsx"></script>
+<script type="text/babel" data-presets="react">
+const I=(n,s=20,c)=><i data-lucide={n} style={{width:s,height:s,display:"block",color:c,flexShrink:0}}></i>;
+const LIME="hsl(var(--primary))", LIMET="hsl(var(--primary-text))";
+const C=["var(--c1)","var(--c2)","var(--c3)","var(--c4)","var(--c5)"];
+const CT=["var(--c1-t,var(--c1t))","var(--c2t)","var(--c3t)","var(--c4t)","var(--c5t)"];
+const G="var(--c1)", GT="var(--c1t)", B="var(--c2)", BT="var(--c2t)", P="var(--c3)", PT="var(--c3t)", A="var(--c4)", AT="var(--c4t)", R="var(--c5)", RT="var(--c5t)";
+
+function StatusBar(){
+  return <div className="statusbar"><span>9:41</span><span style={{display:"flex",alignItems:"center",gap:6}}>{I("signal",16,"var(--on-hero)")}{I("wifi",16,"var(--on-hero)")}{I("battery-full",20,"var(--on-hero)")}</span></div>;
+}
+function RoundBtn({ icon, size=38 }){
+  return <div className="glass" style={{width:size,height:size,borderRadius:99,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:"var(--hero-chip)",borderColor:"var(--hero-chip-brd)"}}>{I(icon,size*0.47,"var(--on-hero)")}</div>;
+}
+function SectionTitle({ children, action }){
+  return (
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",margin:"20px 2px 10px"}}>
+      <span style={{fontSize:10.5,fontWeight:700,letterSpacing:".14em",textTransform:"uppercase",color:"var(--ios-label3)"}}>{children}</span>
+      {action && <span style={{fontSize:11.5,fontWeight:600,color:LIMET}}>{action}</span>}
+    </div>
+  );
+}
+function Chip({ children, tone }){
+  const on=tone==="primary";
+  return <span style={{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:99,fontSize:10.5,fontWeight:800,textTransform:"uppercase",letterSpacing:".06em",background:on?LIME:"var(--glass-strong)",color:on?"#0d1a00":"var(--ios-label2)"}}>{children}</span>;
+}
+function Segmented({ items, active=0 }){
+  return (
+    <div className="glass" style={{display:"flex",padding:4,borderRadius:16,gap:4}}>
+      {items.map((t,i)=>(
+        <div key={t} style={{flex:1,height:34,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11.5,fontWeight:700,background:i===active?LIME:"transparent",color:i===active?"#0d1a00":"var(--ios-label2)"}}>{t}</div>
+      ))}
+    </div>
+  );
+}
+function CardTitle({ children, note }){
+  return (
+    <div style={{marginBottom:12}}>
+      <div style={{fontSize:11,fontWeight:800,letterSpacing:".12em",textTransform:"uppercase",color:"var(--ios-label2)"}}>{children}</div>
+      {note && <div style={{fontSize:11.5,color:"var(--ios-label3)",marginTop:3}}>{note}</div>}
+    </div>
+  );
+}
+
+/* ---- Gráficos ---- */
+let UID=0; const uid=p=>`${p}${++UID}`;
+
+/** Curva monotônica: suave sem inventar picos que os dados não têm. */
+function smoothPath(pts){
+  if(pts.length<2) return "";
+  let d=`M${pts[0][0]},${pts[0][1]}`;
+  for(let i=0;i<pts.length-1;i++){
+    const p0=pts[i-1]||pts[i], p1=pts[i], p2=pts[i+1], p3=pts[i+2]||p2;
+    const c1x=p1[0]+(p2[0]-p0[0])/6, c1y=p1[1]+(p2[1]-p0[1])/6;
+    const c2x=p2[0]-(p3[0]-p1[0])/6, c2y=p2[1]-(p3[1]-p1[1])/6;
+    d+=` C${c1x},${c1y} ${c2x},${c2y} ${p2[0]},${p2[1]}`;
+  }
+  return d;
+}
+
+/** Linha/área com gradiente, faixa de meta, extremos anotados e último valor em destaque. */
+function AreaChart({ series, labels, height=150, goal=null, goalLabel="meta", unit="", format=v=>v, band=null }){
+  const w=304, pad=10, bottom=20, top=16;
+  const all=series.flatMap(s=>s.data).concat(goal!=null?[goal]:[]);
+  const lo=Math.min(...all), hi=Math.max(...all), span=(hi-lo)||1;
+  const min=lo-span*0.16, max=hi+span*0.16, range=max-min;
+  const n=series[0].data.length;
+  const X=i=>pad+(i*(w-pad*2))/(n-1);
+  const Y=v=>top+(1-(v-min)/range)*(height-top-bottom);
+  const gid=series.map(()=>uid("g"));
+  const last=series[0].data[n-1], lastY=Y(last), lastX=X(n-1);
+  const iMax=series[0].data.indexOf(Math.max(...series[0].data));
+  const iMin=series[0].data.indexOf(Math.min(...series[0].data));
+  return (
+    <div>
+      <svg viewBox={`0 0 ${w} ${height}`} style={{width:"100%",height,display:"block",overflow:"visible"}}>
+        <defs>
+          {series.map((s,i)=>(
+            <linearGradient key={i} id={gid[i]} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={s.color} stopOpacity="0.34" />
+              <stop offset="70%" stopColor={s.color} stopOpacity="0.06" />
+              <stop offset="100%" stopColor={s.color} stopOpacity="0" />
+            </linearGradient>
+          ))}
+        </defs>
+        {[0,0.33,0.66,1].map(t=>(
+          <line key={t} x1="0" x2={w} y1={top+t*(height-top-bottom)} y2={top+t*(height-top-bottom)} stroke="var(--grid)" strokeWidth="1" />
+        ))}
+        {band && <rect x="0" y={Y(band[1])} width={w} height={Math.max(2,Y(band[0])-Y(band[1]))} fill={LIME} opacity=".07" />}
+        {goal!=null && (
+          <g>
+            <line x1="0" x2={w} y1={Y(goal)} y2={Y(goal)} stroke="var(--ios-label3)" strokeWidth="1.5" strokeDasharray="5 5" />
+            <text x={w} y={Y(goal)-6} fill="var(--ios-label3)" fontSize="9" fontWeight="700" textAnchor="end">{goalLabel} {format(goal)}</text>
+          </g>
+        )}
+        {series.map((s,i)=>{
+          const pts=s.data.map((v,j)=>[X(j),Y(v)]);
+          const path=smoothPath(pts);
+          return (
+            <g key={i}>
+              {i===0 && <path d={`${path} L${X(n-1)},${height-bottom} L${X(0)},${height-bottom} Z`} fill={`url(#${gid[i]})`} />}
+              <path d={path} fill="none" stroke={s.color} strokeWidth={i===0?2.6:2} strokeDasharray={s.dashed?"5 5":undefined} strokeLinecap="round" style={{filter:`drop-shadow(0 2px 8px color-mix(in srgb, ${s.color} 55%, transparent))`}} />
+            </g>
+          );
+        })}
+        {[iMax,iMin].filter(i=>i!==n-1).map(i=>(
+          <g key={i}>
+            <circle cx={X(i)} cy={Y(series[0].data[i])} r="3" fill="var(--ios-bg)" stroke={series[0].color} strokeWidth="1.6" />
+            <text x={X(i)} y={Y(series[0].data[i])-9} fill="var(--ios-label3)" fontSize="8.5" fontWeight="700" textAnchor="middle">{format(series[0].data[i])}</text>
+          </g>
+        ))}
+        <line x1={lastX} x2={lastX} y1={lastY} y2={height-bottom} stroke={series[0].color} strokeWidth="1" opacity=".35" strokeDasharray="3 3" />
+        <circle cx={lastX} cy={lastY} r="9" fill={series[0].color} opacity=".18" />
+        <circle cx={lastX} cy={lastY} r="4.5" fill={series[0].color} stroke="var(--ios-bg)" strokeWidth="2" />
+        <g transform={`translate(${Math.min(lastX, w-46)}, ${Math.max(top-4, lastY-22)})`}>
+          <rect x="-26" y="-11" width="52" height="19" rx="9.5" fill={series[0].color} />
+          <text x="0" y="3" fill="#0d1a00" fontSize="10.5" fontWeight="800" textAnchor="middle">{format(last)}{unit}</text>
+        </g>
+      </svg>
+      <div style={{display:"flex",justifyContent:"space-between",marginTop:2}}>
+        {labels.map(l=><span key={l} style={{fontSize:9.5,fontWeight:600,color:"var(--ios-label3)"}}>{l}</span>)}
+      </div>
+    </div>
+  );
+}
+const LineChart=AreaChart;
+
+/** Colunas com gradiente, média do período e meta. */
+function ColumnChart({ data, color=LIME, tcolor=LIMET, height=150, format=v=>v, goal=null }){
+  const w=304, pad=4, bottom=20, top=16;
+  const vals=data.map(d=>d[1]);
+  const max=Math.max(...vals, goal||0)*1.12;
+  const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
+  const bw=(w-pad*2)/data.length, gap=bw*0.3;
+  const Y=v=>top+(1-v/max)*(height-top-bottom);
+  const gid=uid("c");
+  return (
+    <div>
+      <svg viewBox={`0 0 ${w} ${height}`} style={{width:"100%",height,display:"block",overflow:"visible"}}>
+        <defs>
+          <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="1" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.28" />
+          </linearGradient>
+        </defs>
+        {[0,0.5,1].map(t=><line key={t} x1="0" x2={w} y1={top+t*(height-top-bottom)} y2={top+t*(height-top-bottom)} stroke="var(--grid)" strokeWidth="1" />)}
+        {data.map(([l,v],i)=>{
+          const x=pad+i*bw+gap/2, bwi=bw-gap, y=Y(v), last=i===data.length-1;
+          return (
+            <g key={l}>
+              <rect x={x} y={top} width={bwi} height={height-top-bottom} rx="6" fill="var(--track)" opacity=".5" />
+              <rect x={x} y={y} width={bwi} height={height-bottom-y} rx="6" fill={last?`url(#${gid})`:color} opacity={last?1:.45} />
+              {last && <rect x={x} y={y} width={bwi} height="3" rx="1.5" fill="#fff" opacity=".5" />}
+              <text x={x+bwi/2} y={y-6} fill={last?tcolor:"var(--ios-label3)"} fontSize="9" fontWeight="800" textAnchor="middle">{format(v)}</text>
+              <text x={x+bwi/2} y={height-6} fill="var(--ios-label3)" fontSize="9.5" fontWeight="700" textAnchor="middle">{l}</text>
+            </g>
+          );
+        })}
+        <line x1="0" x2={w} y1={Y(avg)} y2={Y(avg)} stroke="var(--ios-label3)" strokeWidth="1.4" strokeDasharray="5 4" />
+        <text x="2" y={Y(avg)-5} fill="var(--ios-label3)" fontSize="8.5" fontWeight="700">média {format(Math.round(avg))}</text>
+        {goal!=null && <line x1="0" x2={w} y1={Y(goal)} y2={Y(goal)} stroke={LIME} strokeWidth="1.4" strokeDasharray="4 4" opacity=".8" />}
+      </svg>
+    </div>
+  );
+}
+const BarChart=ColumnChart;
+
+/** Barras horizontais com o período anterior como sombra, para ler a variação. */
+function HBars({ data }){
+  const max=Math.max(...data.map(d=>d[1]));
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:11}}>
+      {data.map(([l,v,c,t,prev])=>{
+        const dv=prev!=null?+(v-prev).toFixed(1):null;
+        return (
+          <div key={l}>
+            <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:5}}>
+              <span style={{fontSize:12,color:"var(--ios-label2)"}}>{l}</span>
+              <span style={{display:"flex",alignItems:"baseline",gap:7}}>
+                {dv!=null && <span style={{fontSize:10.5,fontWeight:700,color:dv>=0?GT:RT}}>{dv>=0?"+":"−"}{Math.abs(dv).toString().replace(".",",")}</span>}
+                <span style={{fontSize:12.5,fontWeight:800,color:t}}>{v.toString().replace(".",",")} t</span>
+              </span>
+            </div>
+            <div style={{position:"relative",height:11,borderRadius:99,background:"var(--track)",overflow:"hidden"}}>
+              {prev!=null && <div style={{position:"absolute",left:0,top:0,bottom:0,width:`${(prev/max)*100}%`,background:c,opacity:.28}}></div>}
+              <div style={{position:"absolute",left:0,top:0,bottom:0,width:`${(v/max)*100}%`,borderRadius:99,background:`linear-gradient(90deg, color-mix(in srgb, ${c} 55%, transparent), ${c})`}}></div>
+            </div>
+          </div>
+        );
+      })}
+      <div style={{display:"flex",alignItems:"center",gap:7,marginTop:2}}>
+        <span style={{width:16,height:7,borderRadius:99,background:"var(--ios-label3)",opacity:.5,display:"block"}}></span>
+        <span style={{fontSize:10.5,color:"var(--ios-label3)"}}>sombra = período anterior</span>
+      </div>
+    </div>
+  );
+}
+
+/** Rosca com gradiente por fatia e leitura do maior segmento no centro. */
+function Donut({ data, size=124, stroke=17, unit="séries" }){
+  const r=(size-stroke)/2, c=2*Math.PI*r, total=data.reduce((a,d)=>a+d[1],0);
+  let acc=0;
+  const top=[...data].sort((a,b)=>b[1]-a[1])[0];
+  return (
+    <div style={{display:"flex",alignItems:"center",gap:16}}>
+      <div style={{position:"relative",width:size,height:size,flexShrink:0}}>
+        <svg width={size} height={size} style={{transform:"rotate(-90deg)"}}>
+          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--track)" strokeWidth={stroke} />
+          {data.map(([l,v,col])=>{
+            const len=(v/total)*c, off=-acc; acc+=len;
+            return <circle key={l} cx={size/2} cy={size/2} r={r} fill="none" stroke={col} strokeWidth={stroke} strokeDasharray={`${Math.max(0,len-4)} ${c}`} strokeDashoffset={off} strokeLinecap="round" style={{filter:`drop-shadow(0 0 6px color-mix(in srgb, ${col} 45%, transparent))`}} />;
+          })}
+        </svg>
+        <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+          <span style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.03em"}}>{total}</span>
+          <span style={{fontSize:8.5,fontWeight:700,textTransform:"uppercase",letterSpacing:".1em",color:"var(--ios-label3)"}}>{unit}</span>
+        </div>
+      </div>
+      <div style={{flex:1,display:"flex",flexDirection:"column",gap:9,minWidth:0}}>
+        {data.map(([l,v,col,tcol])=>{
+          const pct=Math.round((v/total)*100);
+          return (
+            <div key={l}>
+              <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:4}}>
+                <span style={{width:8,height:8,borderRadius:2.5,background:col,display:"block",flexShrink:0}}></span>
+                <span style={{fontSize:11.5,color:"var(--ios-label2)",flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l}</span>
+                <span style={{fontSize:11.5,fontWeight:800,color:tcol}}>{pct}%</span>
+              </div>
+              <div style={{height:4,borderRadius:99,background:"var(--track)",overflow:"hidden"}}><div style={{width:`${pct}%`,height:"100%",background:col,borderRadius:99}}></div></div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** Radar com preenchimento em gradiente e a referência anterior tracejada. */
+function Radar({ axes, now, before, size=214 }){
+  const cx=size/2, cy=size/2, r=size/2-34, n=axes.length, gid=uid("r");
+  const pt=(i,f)=>[cx+r*f*Math.cos(-Math.PI/2+i*2*Math.PI/n), cy+r*f*Math.sin(-Math.PI/2+i*2*Math.PI/n)];
+  const poly=vals=>vals.map((v,i)=>pt(i,v).join(",")).join(" ");
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} style={{width:"100%",height:size,display:"block",overflow:"visible"}}>
+      <defs>
+        <radialGradient id={gid}>
+          <stop offset="0%" stopColor={LIME} stopOpacity="0.42" />
+          <stop offset="100%" stopColor={LIME} stopOpacity="0.12" />
+        </radialGradient>
+      </defs>
+      {[0.25,0.5,0.75,1].map(f=><polygon key={f} points={poly(axes.map(()=>f))} fill="none" stroke="var(--grid)" strokeWidth="1" />)}
+      {axes.map((a,i)=>{const[x,y]=pt(i,1);return <line key={a} x1={cx} y1={cy} x2={x} y2={y} stroke="var(--grid)" strokeWidth="1" />;})}
+      <polygon points={poly(before)} fill="none" stroke="var(--ios-label3)" strokeWidth="1.6" strokeDasharray="4 4" />
+      <polygon points={poly(now)} fill={`url(#${gid})`} stroke={LIME} strokeWidth="2.4" strokeLinejoin="round" style={{filter:`drop-shadow(0 0 9px color-mix(in srgb, ${LIME} 60%, transparent))`}} />
+      {now.map((v,i)=>{const[x,y]=pt(i,v);return <circle key={i} cx={x} cy={y} r="3.6" fill={LIME} stroke="var(--ios-bg)" strokeWidth="1.5" />;})}
+      {axes.map((a,i)=>{const[x,y]=pt(i,1.26);return <text key={a} x={x} y={y} fill="var(--ios-label2)" fontSize="9.5" fontWeight="700" textAnchor="middle" dominantBaseline="middle">{a}</text>;})}
+    </svg>
+  );
+}
+
+/** Heatmap de consistência com meses e dias da semana. */
+function Heatmap({ weeks=13 }){
+  const cells=Array.from({length:weeks*7},(_,i)=>(i>weeks*7-4?0:Math.round((Math.sin(i*1.7)*0.5+0.5)*3+(i%5===0?0:1))%4));
+  const shades=["var(--track)",`color-mix(in srgb, ${LIME} 26%, transparent)`,`color-mix(in srgb, ${LIME} 55%, transparent)`,LIME];
+  const months=["Jun","Jul","Ago"];
+  return (
+    <div>
+      <div style={{display:"flex",gap:6}}>
+        <div style={{display:"flex",flexDirection:"column",justifyContent:"space-between",paddingTop:2,paddingBottom:2,width:16,flexShrink:0}}>
+          {["S","","Q","","S","","D"].map((d,i)=><span key={i} style={{fontSize:8.5,fontWeight:700,color:"var(--ios-label3)",height:9,lineHeight:"9px"}}>{d}</span>)}
+        </div>
+        <div style={{flex:1,display:"grid",gridTemplateColumns:`repeat(${weeks},1fr)`,gap:3.5}}>
+          {Array.from({length:weeks*7}).map((_,i)=>{
+            const col=i%weeks, rowi=Math.floor(i/weeks), v=cells[col*7+rowi];
+            return <div key={i} style={{aspectRatio:"1",borderRadius:3,background:shades[v],boxShadow:v===3?`0 0 8px -2px ${LIME}`:"none"}}></div>;
+          })}
+        </div>
+      </div>
+      <div style={{display:"flex",marginLeft:22,marginTop:7}}>
+        {months.map(m=><span key={m} style={{flex:1,fontSize:9.5,fontWeight:700,color:"var(--ios-label3)"}}>{m}</span>)}
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:6,marginTop:8,justifyContent:"flex-end"}}>
+        <span style={{fontSize:10,color:"var(--ios-label3)"}}>Menos</span>
+        {shades.map((s,i)=><span key={i} style={{width:10,height:10,borderRadius:3,background:s,display:"block"}}></span>)}
+        <span style={{fontSize:10,color:"var(--ios-label3)"}}>Mais</span>
+      </div>
+    </div>
+  );
+}
+
+/** Sparkline para dentro dos cartões de número. */
+function Spark({ data, color, height=26 }){
+  const w=88, min=Math.min(...data), max=Math.max(...data), span=(max-min)||1, gid=uid("s");
+  const pts=data.map((v,i)=>[ (i*w)/(data.length-1), height-2-((v-min)/span)*(height-6) ]);
+  return (
+    <svg viewBox={`0 0 ${w} ${height}`} preserveAspectRatio="none" style={{width:"100%",height,display:"block",marginTop:8}}>
+      <defs><linearGradient id={gid} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={color} stopOpacity=".38" /><stop offset="100%" stopColor={color} stopOpacity="0" /></linearGradient></defs>
+      <path d={`${smoothPath(pts)} L${w},${height} L0,${height} Z`} fill={`url(#${gid})`} />
+      <path d={smoothPath(pts)} fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+      <circle cx={pts[pts.length-1][0]} cy={pts[pts.length-1][1]} r="2.4" fill={color} />
+    </svg>
+  );
+}
+
+/** Barra de progresso de meta com marcador de ritmo esperado. */
+function GoalBar({ value, target, color, tcolor, pace=null, format=v=>v }){
+  const pct=Math.min(100,(value/target)*100);
+  return (
+    <div style={{position:"relative",height:10,borderRadius:99,background:"var(--track)"}}>
+      <div style={{position:"absolute",left:0,top:0,bottom:0,width:`${pct}%`,borderRadius:99,background:`linear-gradient(90deg, color-mix(in srgb, ${color} 50%, transparent), ${color})`,boxShadow:`0 0 12px -3px ${color}`}}></div>
+      {pace!=null && <div style={{position:"absolute",left:`${Math.min(100,(pace/target)*100)}%`,top:-3,bottom:-3,width:2,borderRadius:2,background:"var(--ios-label2)",opacity:.7}}></div>}
+    </div>
+  );
+}
+
+function Delta({ value, unit, good }){
+  const up=value>0;
+  const tone=good===null?"var(--ios-label2)":(good?GT:RT);
+  return (
+    <span style={{display:"inline-flex",alignItems:"center",gap:3,fontSize:11.5,fontWeight:800,color:tone,background:good===null?"var(--glass-strong)":`color-mix(in srgb, ${good?G:R} 16%, transparent)`,padding:"2px 7px",borderRadius:99}}>
+      {I(up?"trending-up":"trending-down",12,tone)}{Math.abs(value).toString().replace(".",",")}{unit?" "+unit:""}
+    </span>
+  );
+}
+function Stat({ icon, label, value, unit, delta, color, tcolor, spark }){
+  return (
+    <div className="glass" style={{flex:1,padding:14,minWidth:0,overflow:"hidden"}}>
+      <div style={{width:28,height:28,borderRadius:9,background:`color-mix(in srgb, ${color} 18%, transparent)`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:10}}>{I(icon,14,tcolor)}</div>
+      <div style={{display:"flex",alignItems:"baseline",gap:3}}>
+        <span style={{fontFamily:"var(--font-display)",fontSize:21,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.03em"}}>{value}</span>
+        {unit && <span style={{fontSize:10.5,fontWeight:700,color:"var(--ios-label2)"}}>{unit}</span>}
+      </div>
+      <div style={{fontSize:11,color:"var(--ios-label2)",marginTop:2}}>{label}</div>
+      {spark && <Spark data={spark} color={color} />}
+      {delta && <div style={{marginTop:7}}>{delta}</div>}
+    </div>
+  );
+}
+
+/* ---------- 1. Progresso (hub) ---------- */
+function HubScreen(){
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12.5,color:"var(--on-hero-2)",fontWeight:600}}>Últimos 90 dias</div>
+          <div style={{fontSize:27,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:1}}>Seu progresso</div>
+        </div>
+        <RoundBtn icon="calendar" /><RoundBtn icon="share" />
+      </div>
+      <div style={{marginTop:16}}><Segmented items={["Geral","Nutrição","Treino"]} active={0} /></div>
+      <div className="glass" style={{padding:18,marginTop:14,overflow:"hidden",borderColor:LIME,boxShadow:`0 0 0 1px ${LIME}, 0 18px 40px -22px ${LIME}`}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+          <div>
+            <div style={{fontSize:10.5,fontWeight:800,letterSpacing:".14em",textTransform:"uppercase",color:LIMET}}>Sequência atual</div>
+            <div style={{display:"flex",alignItems:"baseline",gap:7,marginTop:6}}>
+              <span style={{fontFamily:"var(--font-display)",fontSize:46,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.04em",lineHeight:1}}>12</span>
+              <span style={{fontSize:18,fontWeight:700,color:"var(--ios-label2)"}}>dias</span>
+            </div>
+          </div>
+          <div style={{flexShrink:0}}><OrbObject scale={0.44} icon="flame" glyph={20} /></div>
+        </div>
+        <div style={{display:"flex",gap:9,alignItems:"center",marginTop:14,padding:12,borderRadius:14,background:"var(--glass-strong)"}}>
+          {I("info",15,LIMET)}
+          <span style={{fontSize:11.5,color:"var(--ios-label2)",lineHeight:1.4,flex:1}}>Seu melhor recorde é 18 dias. Faltam 6 para empatar.</span>
+        </div>
+      </div>
+      <div style={{display:"flex",gap:10,marginTop:12}}>
+        <Stat icon="dumbbell" label="Treinos" value="34" color={LIME} tcolor={LIMET} spark={[6,7,5,8,9,8,10,11]} delta={<Delta value={4} unit="mês" good={true} />} />
+        <Stat icon="utensils" label="Aderência" value="86" unit="%" color={G} tcolor={GT} spark={[68,74,71,80,84,79,88,86]} delta={<Delta value={3} unit="pts" good={true} />} />
+        <Stat icon="star" label="Dias top" value="19" color={P} tcolor={PT} spark={[1,2,2,3,2,4,3,5]} delta={<Delta value={2} unit="mês" good={true} />} />
+      </div>
+      <SectionTitle action="13 semanas">Consistência</SectionTitle>
+      <div className="glass" style={{padding:15}}><Heatmap /></div>
+      <SectionTitle action="Ver tudo">Atalhos</SectionTitle>
+      {[["chart-no-axes-column","Evolução em números","Volume, carga e estímulos"],["scale","Composição corporal","Peso, gordura e massa magra"],["ruler","Circunferências","8 medidas acompanhadas"],["history","Histórico de sessões","Corrigir o que você registrou"]].map(([icon,t,d])=>(
+        <div key={t} className="glass" style={{padding:13,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+          <div style={{width:32,height:32,borderRadius:10,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I(icon,15,LIMET)}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:13.5,fontWeight:600,color:"var(--ios-label)"}}>{t}</div>
+            <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:1}}>{d}</div>
+          </div>
+          {I("chevron-right",16,"var(--ios-label3)")}
+        </div>
+      ))}
+      <div style={{height:110}}></div>
+    </div>
+  );
+}
+
+/* ---------- 2. Evolução em números ---------- */
+function VolumeScreen(){
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12,fontWeight:700,color:"var(--on-hero-2)",textTransform:"uppercase",letterSpacing:".04em"}}>Sua evolução</div>
+          <div style={{fontSize:21,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>Em números</div>
+        </div>
+        <RoundBtn icon="sliders-horizontal" />
+      </div>
+      <div style={{display:"flex",gap:7,marginTop:14}}>{["4 sem","12 sem","6 meses","1 ano"].map((p,i)=>(
+        <div key={p} className={i===1?"":"glass"} style={{flex:1,height:34,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,background:i===1?LIME:undefined,color:i===1?"#0d1a00":"var(--ios-label2)"}}>{p}</div>
+      ))}</div>
+      <div className="glass" style={{padding:16,marginTop:12}}>
+        <CardTitle note="Soma de carga × repetições por semana">Carga total levantada</CardTitle>
+        <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:10}}>
+          <span style={{fontFamily:"var(--font-display)",fontSize:30,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.03em"}}>42,6 t</span>
+          <Delta value={8.4} unit="% vs. mês" good={true} />
+        </div>
+        <AreaChart labels={["S1","S3","S5","S7","S9","S11"]} unit=" t" format={v=>v} series={[{color:LIME,data:[28,31,30,35,37,36,39,41,40,43,42,44]}]} goal={45} goalLabel="meta do ciclo" />
+      </div>
+      <div className="glass" style={{padding:16,marginTop:12}}>
+        <CardTitle note="Toneladas movidas no período">Volume por grupo muscular</CardTitle>
+        <HBars data={[["Costas",11.4,LIME,LIMET,9.8],["Peito",9.2,B,BT,8.6],["Pernas",13.8,G,GT,12.1],["Ombros",4.6,P,PT,4.9],["Braços",3.6,A,AT,3.1]]} />
+      </div>
+      <div className="glass" style={{padding:16,marginTop:12}}>
+        <CardTitle note="Séries por tipo de estímulo">Distribuição dos estímulos</CardTitle>
+        <Donut data={[["Hipertrofia",128,LIME,LIMET],["Força",54,B,BT],["Resistência",38,P,PT],["Potência",16,A,AT]]} unit="séries" />
+      </div>
+      <div style={{height:110}}></div>
+    </div>
+  );
+}
+
+/* ---------- 3. Evolução de carga por exercício ---------- */
+function LoadScreen(){
+  const EX=[["Agachamento livre","95 kg",12.5,true],["Supino reto","72,5 kg",6.2,true],["Remada curvada","47,5 kg",5.6,true],["Desenvolvimento","38 kg",-2.4,false],["Levantamento terra","120 kg",9.1,true]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12,fontWeight:700,color:"var(--on-hero-2)",textTransform:"uppercase",letterSpacing:".04em"}}>Por exercício</div>
+          <div style={{fontSize:21,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>Evolução de cargas</div>
+        </div>
+        <RoundBtn icon="search" />
+      </div>
+      <div className="glass" style={{padding:16,marginTop:14}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+          <CardTitle note="Carga máxima por sessão">Agachamento livre</CardTitle>
+          {I("chevron-down",17,"var(--ios-label3)")}
+        </div>
+        <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:10}}>
+          <span style={{fontFamily:"var(--font-display)",fontSize:30,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.03em"}}>95 kg</span>
+          <Delta value={12.5} unit="% em 12 sem" good={true} />
+        </div>
+        <AreaChart labels={["mai","jun","jul","ago"]} unit=" kg" series={[{color:LIME,data:[76,78,80,82,84,86,88,88,90,92,94,95]}]} goal={100} goalLabel="alvo" />
+        <div style={{display:"flex",gap:16,marginTop:12,paddingTop:12,borderTop:"1px solid var(--glass-brd)"}}>
+          {[["Melhor série","95 kg × 5"],["Volume","4,3 t"],["Sessões","18"]].map(([k,v])=>(
+            <div key={k} style={{flex:1}}>
+              <div style={{fontSize:9.5,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"var(--ios-label3)"}}>{k}</div>
+              <div style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)",marginTop:3}}>{v}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <SectionTitle action="12 semanas">Todos os exercícios</SectionTitle>
+      {EX.map(([name,load,pct,up])=>(
+        <div key={name} className="glass" style={{padding:13,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+          <div style={{width:34,height:34,borderRadius:11,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("dumbbell",16,up?LIMET:RT)}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:13.5,fontWeight:600,color:"var(--ios-label)"}}>{name}</div>
+            <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:1}}>Máxima atual · {load}</div>
+          </div>
+          <Delta value={pct} unit="%" good={up} />
+        </div>
+      ))}
+      <div style={{height:110}}></div>
+    </div>
+  );
+}
+
+/* ---------- 4. Composição corporal ---------- */
+function BodyScreen(){
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12,fontWeight:700,color:"var(--on-hero-2)",textTransform:"uppercase",letterSpacing:".04em"}}>Avaliação física</div>
+          <div style={{fontSize:21,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>Composição corporal</div>
+        </div>
+        <RoundBtn icon="plus" />
+      </div>
+      <div style={{display:"flex",gap:7,marginTop:14}}><Chip tone="primary">Medida com fita</Chip><Chip>12 ago 2026</Chip></div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:12}}>
+        <Stat icon="scale" label="Peso" value="78,4" unit="kg" color={LIME} tcolor={LIMET} spark={[82.1,81,80.2,79.4,79,78.8,78.5,78.4]} delta={<Delta value={-1.4} unit="kg" good={true} />} />
+        <Stat icon="percent" label="Gordura" value="17,2" unit="%" color={A} tcolor={AT} spark={[20.4,19.8,19.4,18.7,18.3,17.8,17.4,17.2]} delta={<Delta value={-1.1} unit="pts" good={true} />} />
+        <Stat icon="activity" label="Massa magra" value="64,9" unit="kg" color={G} tcolor={GT} spark={[64.1,64.2,64.4,64.5,64.6,64.7,64.8,64.9]} delta={<Delta value={0.6} unit="kg" good={true} />} />
+        <Stat icon="ruler" label="IMC" value="24,1" color={B} tcolor={BT} spark={[25.2,25,24.8,24.6,24.4,24.3,24.2,24.1]} delta={<Delta value={-0.4} unit="" good={true} />} />
+      </div>
+      <div className="glass" style={{padding:16,marginTop:12}}>
+        <CardTitle note="Peso e gordura ao longo de 6 meses">Tendência</CardTitle>
+        <AreaChart labels={["mar","abr","mai","jun","jul","ago"]} height={156} unit=" kg" format={v=>String(v).replace(".",",")} series={[{color:LIME,data:[82.1,81.4,81,80.2,79.8,79.4,79.1,78.9,78.8,78.6,78.5,78.4]},{color:A,data:[20.4,20.1,19.8,19.4,19,18.7,18.3,18,17.8,17.6,17.4,17.2],dashed:true}]} goal={76} goalLabel="meta de peso" />
+        <div style={{display:"flex",gap:16,marginTop:10}}>
+          <span style={{display:"flex",alignItems:"center",gap:6,fontSize:11.5,color:"var(--ios-label2)"}}><span style={{width:9,height:9,borderRadius:3,background:LIME,display:"block"}}></span> Peso (kg)</span>
+          <span style={{display:"flex",alignItems:"center",gap:6,fontSize:11.5,color:"var(--ios-label2)"}}><span style={{width:9,height:9,borderRadius:3,background:A,display:"block"}}></span> Gordura (%)</span>
+        </div>
+      </div>
+      <div className="glass" style={{padding:16,marginTop:12}}>
+        <CardTitle note="Massa magra vs. massa gorda hoje">Divisão do peso</CardTitle>
+        <div style={{display:"flex",height:16,borderRadius:99,overflow:"hidden",gap:2}}>
+          <div style={{flex:82.8,background:G}}></div><div style={{flex:17.2,background:A}}></div>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:10}}>
+          <span style={{fontSize:12,color:"var(--ios-label2)"}}><b style={{color:GT}}>64,9 kg</b> massa magra</span>
+          <span style={{fontSize:12,color:"var(--ios-label2)"}}><b style={{color:AT}}>13,5 kg</b> gordura</span>
+        </div>
+      </div>
+      <div style={{height:110}}></div>
+    </div>
+  );
+}
+
+/* ---------- 5. Circunferências ---------- */
+function CircScreen(){
+  const CIRC=[["Peito","104,2",1.4,true],["Cintura","81,6",-2.8,true],["Quadril","98,4",-0.6,true],["Braço","38,1",1.1,true],["Coxa","59,8",0.9,true],["Panturrilha","38,4",0.2,true],["Ombro","121,0",1.6,true],["Pescoço","38,0",-0.3,null]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12,fontWeight:700,color:"var(--on-hero-2)",textTransform:"uppercase",letterSpacing:".04em"}}>8 medidas</div>
+          <div style={{fontSize:21,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>Circunferências</div>
+        </div>
+        <RoundBtn icon="ruler" />
+      </div>
+      <div className="glass" style={{padding:"16px 10px 10px",marginTop:14}}>
+        <div style={{padding:"0 6px"}}><CardTitle note="Linha cheia hoje · tracejada há 3 meses">Silhueta comparada</CardTitle></div>
+        <Radar axes={["Peito","Braço","Coxa","Pantur.","Quadril","Cintura"]} now={[0.86,0.78,0.82,0.7,0.74,0.58]} before={[0.8,0.7,0.78,0.68,0.8,0.72]} />
+      </div>
+      <SectionTitle action="vs. 12 mai">Medidas (cm)</SectionTitle>
+      {CIRC.map(([name,v,d,good])=>(
+        <div key={name} className="glass" style={{padding:12,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+          <div style={{width:30,height:30,borderRadius:10,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("minus",15,"var(--ios-label3)")}</div>
+          <span style={{fontSize:13.5,fontWeight:600,color:"var(--ios-label)",flex:1}}>{name}</span>
+          <Delta value={d} unit="cm" good={good} />
+          <span style={{fontFamily:"var(--font-display)",fontSize:16,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.02em",width:56,textAlign:"right"}}>{v}</span>
+        </div>
+      ))}
+      <div className="glass" style={{padding:14,marginTop:4,display:"flex",gap:11,alignItems:"flex-start"}}>
+        {I("info",15,"var(--ios-label3)")}
+        <span style={{fontSize:11.5,color:"var(--ios-label2)",lineHeight:1.5,flex:1}}>Medida com fita e estimativa por imagem não são a mesma coisa — compare sempre com a mesma origem.</span>
+      </div>
+      <div style={{height:110}}></div>
+    </div>
+  );
+}
+
+/* ---------- 6. Comparação de análises ---------- */
+function CompareScreen(){
+  const DELTAS=[["Peso","−1,4","kg",true],["Gordura","−1,1","%",true],["Massa magra","+0,6","kg",true],["IMC","−0,4","",true],["Cintura","−2,8","cm",true],["Peito","+1,4","cm",null],["Braço","+1,1","cm",null]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",justifyContent:"space-between"}}><RoundBtn icon="chevron-left" /><RoundBtn icon="ellipsis" /></div>
+      <div style={{paddingTop:14}}>
+        <div style={{fontSize:21,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em"}}>O que mudou</div>
+        <div style={{fontSize:12.5,color:"var(--on-hero-2)",marginTop:4}}>12 mai → 12 ago · 3 meses</div>
+      </div>
+      <div style={{display:"flex",gap:10,marginTop:14}}>
+        {[["Antes","12 mai"],["Agora","12 ago"]].map(([k,d],i)=>(
+          <div key={k} className="glass" style={{flex:1,padding:9,borderColor:i===1?LIME:"var(--glass-brd)"}}>
+            <div className="slot" style={{height:168,borderRadius:15}}><span>foto {k.toLowerCase()}</span></div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginTop:9,padding:"0 3px"}}>
+              <span style={{fontSize:12,fontWeight:700,color:i===1?LIMET:"var(--ios-label2)"}}>{k}</span>
+              <span style={{fontSize:11,color:"var(--ios-label3)"}}>{d}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="glass" style={{padding:14,marginTop:12,display:"flex",gap:11,alignItems:"flex-start"}}>
+        {I("shield-check",15,LIMET)}
+        <span style={{fontSize:11.5,color:"var(--ios-label2)",lineHeight:1.5,flex:1}}>Duas fotos na mesma pose dão a diferença mais confiável desta tela — o erro da estimativa se repete nas duas e se cancela.</span>
+      </div>
+      <SectionTitle action="7 campos">Diferenças</SectionTitle>
+      {DELTAS.map(([name,v,unit,good])=>{
+        const tone=good===null?"var(--ios-label2)":GT;
+        return (
+          <div key={name} className="glass" style={{padding:12,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+            <span style={{fontSize:13.5,fontWeight:600,color:"var(--ios-label)",flex:1}}>{name}</span>
+            <span style={{fontFamily:"var(--font-display)",fontSize:17,fontWeight:800,letterSpacing:"-.02em",color:tone}}>{v}<span style={{fontSize:11,fontWeight:700,marginLeft:2}}>{unit}</span></span>
+          </div>
+        );
+      })}
+      <div className="glass" style={{padding:14,marginTop:4,display:"flex",gap:11,alignItems:"flex-start"}}>
+        {I("info",15,"var(--ios-label3)")}
+        <span style={{fontSize:11.5,color:"var(--ios-label2)",lineHeight:1.5,flex:1}}>Não pintamos variação de bom ou ruim: se perder cintura é o objetivo, quem sabe é você e seu especialista.</span>
+      </div>
+      <div style={{height:110}}></div>
+    </div>
+  );
+}
+
+/* ---------- 7. Nutrição em números ---------- */
+function NutriMetricsScreen(){
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12.5,color:"var(--on-hero-2)",fontWeight:600}}>Últimas 12 semanas</div>
+          <div style={{fontSize:24,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:1}}>Nutrição em números</div>
+        </div>
+        <RoundBtn icon="share" />
+      </div>
+      <div style={{marginTop:14}}><Segmented items={["Geral","Nutrição","Treino"]} active={1} /></div>
+      <div style={{display:"flex",gap:10,marginTop:12}}>
+        <Stat icon="target" label="Aderência" value="86" unit="%" color={G} tcolor={GT} spark={[68,74,71,80,84,79,88,86]} delta={<Delta value={3} unit="pts" good={true} />} />
+        <Stat icon="flame" label="Média kcal" value="2.180" color={A} tcolor={AT} spark={[2380,2340,2290,2310,2250,2230,2200,2180]} delta={<Delta value={-40} unit="kcal" good={true} />} />
+        <Stat icon="beef" label="Proteína" value="152" unit="g" color={LIME} tcolor={LIMET} spark={[138,141,144,146,148,149,151,152]} delta={<Delta value={8} unit="g" good={true} />} />
+      </div>
+      <div className="glass" style={{padding:16,marginTop:12}}>
+        <CardTitle note="% das refeições marcadas como feitas">Aderência por semana</CardTitle>
+        <ColumnChart data={[["S1",68],["S2",74],["S3",71],["S4",80],["S5",84],["S6",79],["S7",88],["S8",86]]} color={G} tcolor={GT} format={v=>`${v}%`} goal={90} />
+      </div>
+      <div className="glass" style={{padding:16,marginTop:12}}>
+        <CardTitle note="Média diária vs. a meta do plano">Calorias</CardTitle>
+        <AreaChart labels={["S1","S3","S5","S7"]} unit="" series={[{color:A,data:[2380,2340,2290,2310,2250,2230,2200,2180]}]} goal={2150} goalLabel="meta diária" />
+      </div>
+      <div className="glass" style={{padding:16,marginTop:12}}>
+        <CardTitle note="Distribuição média do período">Macros</CardTitle>
+        <Donut data={[["Proteína",152,G,GT],["Carboidrato",214,LIME,LIMET],["Gordura",68,A,AT]]} unit="g / dia" />
+      </div>
+      <div style={{height:110}}></div>
+    </div>
+  );
+}
+
+/* ---------- 8. Relatório do período ---------- */
+function ReportScreen(){
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",justifyContent:"space-between"}}><RoundBtn icon="chevron-left" /><RoundBtn icon="download" /></div>
+      <div style={{paddingTop:16}}>
+        <Chip tone="primary">Relatório trimestral</Chip>
+        <div style={{fontFamily:"var(--font-display)",fontSize:29,fontWeight:800,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:12,lineHeight:1.08,textTransform:"uppercase"}}>Maio → Agosto</div>
+        <div style={{fontSize:13.5,color:"var(--on-hero-2)",marginTop:7}}>Ciclo 2026 · Verão · Proposta do Assistente</div>
+      </div>
+      <div className="glass" style={{padding:16,marginTop:16}}>
+        <CardTitle note="Quanto de cada meta você cumpriu">Painel do período</CardTitle>
+        {[["Treinos concluídos",34,40,LIME,LIMET],["Aderência alimentar",86,100,G,GT],["Sessões de cardio",18,24,B,BT],["Registros de medida",4,6,P,PT]].map(([l,v,t,c,tc])=>(
+          <div key={l} style={{marginBottom:12}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}>
+              <span style={{fontSize:12.5,color:"var(--ios-label2)"}}>{l}</span>
+              <span style={{fontSize:12.5,fontWeight:700,color:tc}}>{v} <span style={{color:"var(--ios-label3)",fontWeight:500}}>/ {t}</span></span>
+            </div>
+            <GoalBar value={v} target={t} color={c} tcolor={tc} pace={Math.round(t*0.82)} />
+          </div>
+        ))}
+      </div>
+      <SectionTitle>Destaques</SectionTitle>
+      {[["trophy","5 recordes pessoais","Agachamento, terra, supino, remada e rosca",LIMET],["trending-down","−1,4 kg com massa magra estável","Perda veio de gordura, não de músculo",GT],["flame","Sequência de 12 dias","Seu segundo melhor registro no app",AT]].map(([icon,t,d,tone])=>(
+        <div key={t} className="glass" style={{padding:13,display:"flex",alignItems:"flex-start",gap:12,marginBottom:9}}>
+          <div style={{width:32,height:32,borderRadius:10,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I(icon,15,tone)}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)"}}>{t}</div>
+            <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:2,lineHeight:1.4}}>{d}</div>
+          </div>
+        </div>
+      ))}
+      <div className="glass" style={{padding:15,marginTop:4,display:"flex",gap:12,alignItems:"flex-start"}}>
+        <div style={{width:34,height:34,borderRadius:11,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontWeight:700,fontSize:14,color:"var(--ios-label)"}}>D</div>
+        <div>
+          <div style={{fontSize:14,fontWeight:700,color:"var(--ios-label)"}}>Assistente</div>
+          <div style={{fontSize:12.5,color:"var(--ios-label2)",marginTop:3,lineHeight:1.45}}>Trimestre sólido. No próximo ciclo vamos subir o volume de ombro e manter a cintura onde está.</div>
+        </div>
+      </div>
+      <div style={{height:130}}></div>
+    </div>
+  );
+}
+
+function TabBar({active="progress"}){return <KitTabBar active={active}/>;}
+
+function Phone(p){return <ThemePair><PhoneOne {...p}/></ThemePair>;}
+function PhoneOne({ overlay, step, label, footer, children }){
+  return (
+    <div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+        <span style={{width:20,height:20,borderRadius:99,background:LIME,color:"#0d1a00",fontSize:11,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{step}</span>
+        <span style={{color:"hsl(var(--muted-foreground))",fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:".1em"}}>{label}</span>
+      </div>
+      <div className="phone">
+        <div className="glow"></div>
+        <div className="island"></div>
+        <StatusBar/>
+        {children}
+        {footer && (
+          <div className="footerbar">
+            <div className="btn ghost" style={{flex:"0 0 auto",padding:"0 16px"}}>{I(footer[1],15,"var(--ios-label)")} {footer[0]}</div>
+            <div className="btn primary" style={{flex:1}}>{I(footer[3],15,"#0d1a00")} {footer[2]}</div>
+          </div>
+        )}
+        <TabBar/>
+        {overlay}
+        <div className="homebar"></div>
+      </div>
+    </div>
+  );
+}
+
+function VolumeV2(){
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12,fontWeight:700,color:"var(--on-hero-2)",textTransform:"uppercase",letterSpacing:".04em"}}>Sua evolução</div>
+          <div style={{fontSize:21,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>Em números</div>
+        </div>
+        <RoundBtn icon="sliders-horizontal" />
+      </div>
+      <div style={{display:"flex",gap:7,marginTop:14}}>{["4 sem","12 sem","6 meses","1 ano"].map((p,i)=>(
+        <div key={p} className={i===1?"":"glass"} style={{flex:1,height:34,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,background:i===1?LIME:undefined,color:i===1?"#0d1a00":"var(--ios-label2)"}}>{p}</div>
+      ))}</div>
+      <div className="glass" style={{padding:16,marginTop:12}}>
+        <CardTitle note="Soma de carga × repetições por semana">Carga total levantada</CardTitle>
+        <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:10}}>
+          <span style={{fontFamily:"var(--font-display)",fontSize:30,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.03em"}}>42,6 t</span>
+          <Delta value={8.4} unit="% vs. mês" good={true} />
+        </div>
+        <AreaChart labels={["S1","S3","S5","S7","S9","S11"]} unit=" t" format={v=>v} series={[{color:LIME,data:[28,31,30,35,37,36,39,41,40,43,42,44]}]} goal={45} goalLabel="meta do ciclo" />
+      </div>
+      <div className="glass" style={{padding:16,marginTop:12}}>
+        <CardTitle note="Séries por músculo nesta semana · 4 treinos">Mapa muscular da semana</CardTitle>
+        <UDMapa vol={{costas:.8,peito:.7,quadriceps:1,posteriores:.7,gluteos:.85,ombros:.45,biceps:.5,triceps:.45,abdomen:.4,panturrilhas:.3}}/>
+        <div style={{height:1,background:"var(--glass-brd)",margin:"14px 0 12px"}}></div>
+        <CardTitle note="Toneladas no período · sombra = período anterior">Volume por grupo</CardTitle>
+        <HBars data={[["Costas",11.4,LIME,LIMET,9.8],["Peito",9.2,B,BT,8.6],["Pernas",13.8,G,GT,12.1],["Ombros",4.6,P,PT,4.9],["Braços",3.6,A,AT,3.1]]} />
+      </div>
+      <div className="glass" style={{padding:16,marginTop:12}}>
+        <CardTitle note="Séries por tipo de estímulo">Distribuição dos estímulos</CardTitle>
+        <Donut data={[["Hipertrofia",128,LIME,LIMET],["Força",54,B,BT],["Resistência",38,P,PT],["Potência",16,A,AT]]} unit="séries" />
+      </div>
+      <div style={{height:110}}></div>
+    </div>
+  );
+}
+
+function App(){
+  const P=(c)=><PhoneOne step="·" label="">{c}</PhoneOne>;
+  return <UDPage title="Uso diário · Progresso" sub="Atual (kit de hoje) × Proposta, escuro e claro.">
+    <Compare id="7b" title="Evolução em números · mapa muscular da semana" nota="O gráfico de volume por grupo que já existia ganha o mapa frente e costas da semana; é volume por músculo, não recuperação." atual={P(<VolumeScreen/>)} proposta={P(<VolumeV2/>)}/>
+  </UDPage>;
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+setTimeout(()=>window.lucide?.createIcons(),80);
+</script></body></html>

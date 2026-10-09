@@ -1,0 +1,82 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js"></script>
+<style>*{box-sizing:border-box}body{margin:0;background:#F5F3EE;color:#141311;font-family:var(--font-sans)}</style>
+</head><body><div id="root"></div>
+<script type="text/babel" data-presets="react">
+const I = (name, size=18, color) => <i data-lucide={name} style={{width:size,height:size,display:"block",color}}></i>;
+
+function Nav(){
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 48, borderBottom: "1px solid #E7E3D8", paddingBottom: 20 }}>
+      <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 20 }}>Eleva Pro</div>
+      <div style={{ display: "flex", gap: 28, fontSize: 13, fontWeight: 600, color: "#8A867B" }}>
+        <span>Briefing</span><span style={{color:"#141311"}}>Alunos</span><span>Treinos</span><span>Nutrição</span><span>Coach IA</span>
+      </div>
+    </div>
+  );
+}
+
+const NEEDS_ATTENTION = [
+  { name: "João Silva", note: "Não treina há 5 dias. Risco de abandono alto.", tone: "#B23A2E" },
+  { name: "Marcos Lima", note: "Convite pendente há 4 dias — reenviar?", tone: "#A8791E" },
+];
+
+const ON_TRACK = [
+  { name: "Ana Costa", plan: "Recomposição — Fase 2", streak: "12 dias seguidos" },
+  { name: "Beatriz Souza", plan: "Força", streak: "8 dias seguidos" },
+  { name: "Rafael Nunes", plan: "Emagrecimento", streak: "5 dias seguidos" },
+  { name: "Carla Dias", plan: "Hipertrofia — Fase 1", streak: "20 dias seguidos" },
+  { name: "Pedro Alves", plan: "Hipertrofia — Fase 1", streak: "3 dias seguidos" },
+];
+
+function Avatar({name, tone}){
+  return <div style={{width:38,height:38,borderRadius:"50%",background:tone?`${tone}1A`:"#EFEBDD",color:tone||"#8A867B",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontFamily:"var(--font-display)",fontSize:14,flexShrink:0}}>{name.charAt(0)}</div>;
+}
+
+function App(){
+  React.useEffect(()=>{ window.lucide?.createIcons(); });
+  return (
+    <div style={{ maxWidth: 980, margin: "0 auto", padding: "64px 32px 100px" }}>
+      <Nav/>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 40 }}>
+        <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 32, letterSpacing: "-0.02em" }}>Alunos</div>
+        <button style={{ display: "flex", alignItems: "center", gap: 8, background: "#141311", color: "#F5F3EE", border: "none", borderRadius: 4, padding: "12px 20px", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>{I("user-plus",15)}Novo Aluno</button>
+      </div>
+
+      <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#B23A2E", marginBottom: 14 }}>Precisa de atenção — {NEEDS_ATTENTION.length}</div>
+      <div style={{ display: "flex", gap: 14, marginBottom: 44 }}>
+        {NEEDS_ATTENTION.map(s => (
+          <div key={s.name} style={{ flex: 1, background: "#fff", border: "1px solid #E7E3D8", borderRadius: 4, padding: 22, position: "relative" }}>
+            <div style={{ position: "absolute", top: 0, left: 0, width: 3, height: "100%", background: s.tone }} />
+            <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 10 }}>
+              <Avatar name={s.name} tone={s.tone} />
+              <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 16 }}>{s.name}</div>
+            </div>
+            <div style={{ fontSize: 13, color: "#4A4740", lineHeight: 1.5 }}>{s.note}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#8A867B", marginBottom: 4 }}>Em dia — {ON_TRACK.length}</div>
+      <div>
+        {ON_TRACK.map(s => (
+          <div key={s.name} style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 0", borderBottom: "1px solid #E7E3D8" }}>
+            <Avatar name={s.name} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: 14 }}>{s.name}</div>
+              <div style={{ fontSize: 12, color: "#8A867B" }}>{s.plan}</div>
+            </div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#3D6B3A", display: "flex", alignItems: "center", gap: 6 }}>{I("flame",14,"#3D6B3A")}{s.streak}</div>
+            <div style={{ color: "#C4BFAF" }}>{I("chevron-right",18)}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script></body></html>

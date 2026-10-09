@@ -1,0 +1,503 @@
+<!-- @dsCard group="Mobile · Student" viewport="3480x1880" name="06 · Saúde" subtitle="Prontidão, sono, relógio e consentimento · escuro e claro" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css"><link rel="stylesheet" href="../kit/glass.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js"></script>
+<style>
+:root{
+--tab-bg:rgba(18,19,22,0.72);
+--on-hero:#fff;--on-hero-2:rgba(255,255,255,.82);--hero-chip:rgba(255,255,255,.16);--hero-chip-brd:rgba(255,255,255,.28);
+--slot:rgba(255,255,255,.05);--slot-line:rgba(255,255,255,.07);
+--track:rgba(255,255,255,.09);--sheet-scrim:rgba(0,0,0,.8);
+--sleep:#818CF8;--sleep-t:#818CF8;--hr:#F87171;--hr-t:#F87171;--steps:#34D399;--steps-t:#34D399;--kcal:#FBBF24;--kcal-t:#FBBF24;--danger:#FB7185;--danger-t:#FB7185;
+}
+.light{
+--tab-bg:rgba(255,255,255,0.9);
+--on-hero:#0B0B0F;--on-hero-2:rgba(28,28,32,.82);--hero-chip:rgba(255,255,255,.72);--hero-chip-brd:rgba(60,60,67,.16);
+--slot:rgba(60,60,67,.05);--slot-line:rgba(60,60,67,.09);
+--track:rgba(60,60,67,.14);--sheet-scrim:rgba(60,60,67,.45);
+--sleep-t:#4338CA;--hr-t:#B91C1C;--steps-t:#0B7A52;--kcal-t:#8A5E03;--danger-t:#BE123C;
+}
+.glow{position:absolute;left:-20%;right:-20%;top:-40px;height:460px;pointer-events:none;z-index:0;background:radial-gradient(50% 50% at 50% 50%,hsl(var(--primary) / .18) 0%,transparent 70%);filter:blur(34px)}
+.light .glow{background:radial-gradient(50% 50% at 50% 50%,hsl(var(--primary) / .12) 0%,transparent 70%)}
+.scroll{flex:1;overflow:auto;padding:0 18px 12px;scrollbar-width:none;position:relative;z-index:2}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:8;background:var(--ios-bg);border-top:1px solid var(--glass-brd);border-radius:32px 32px 0 0;padding:22px 26px 26px;box-shadow:0 -20px 50px -10px rgba(0,0,0,.6)}
+.scrim{position:absolute;inset:0;z-index:7;background:var(--sheet-scrim);backdrop-filter:blur(2px)}
+.slot{background-color:var(--slot);background-image:repeating-linear-gradient(135deg,var(--slot-line) 0 1px,transparent 1px 9px);display:flex;align-items:center;justify-content:center;text-align:center;padding:8px}
+.slot span{font-family:var(--font-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ios-label3);line-height:1.4}
+.footerbar{position:absolute;left:0;right:0;bottom:118px;z-index:6;padding:0 18px;display:flex;gap:9px;pointer-events:none}
+.btn{height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;gap:7px;font-weight:800;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.btn.primary{background:hsl(var(--primary));color:#0d1a00;box-shadow:0 10px 26px -10px hsl(var(--primary) / .8)}
+.btn.ghost{background:var(--glass-strong);color:var(--ios-label);border:1px solid var(--glass-brd)}
+.btn.danger{background:var(--danger);color:#2A0410}
+</style>
+</head><body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react" src="../kit/hero-objects.js"></script>
+<script type="text/babel" src="../kit/kit.jsx"></script>
+<script type="text/babel" data-presets="react">
+const I=(n,s=20,c)=><i data-lucide={n} style={{width:s,height:s,display:"block",color:c,flexShrink:0}}></i>;
+const LIME="hsl(var(--primary))", LIMET="hsl(var(--primary-text))";
+const SLEEP="var(--sleep)", SLEEPT="var(--sleep-t)", HR="var(--hr)", HRT="var(--hr-t)";
+const STEPS="var(--steps)", STEPST="var(--steps-t)", KCAL="var(--kcal)", KCALT="var(--kcal-t)";
+const DANGER="var(--danger)", DANGERT="var(--danger-t)";
+
+function StatusBar(){
+  return <div className="statusbar"><span>9:41</span><span style={{display:"flex",alignItems:"center",gap:6}}>{I("signal",16,"var(--on-hero)")}{I("wifi",16,"var(--on-hero)")}{I("battery-full",20,"var(--on-hero)")}</span></div>;
+}
+function RoundBtn({ icon, size=38 }){
+  return <div className="glass" style={{width:size,height:size,borderRadius:99,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:"var(--hero-chip)",borderColor:"var(--hero-chip-brd)"}}>{I(icon,size*0.47,"var(--on-hero)")}</div>;
+}
+function SectionTitle({ children, action }){
+  return (
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",margin:"20px 2px 10px"}}>
+      <span style={{fontSize:10.5,fontWeight:700,letterSpacing:".14em",textTransform:"uppercase",color:"var(--ios-label3)"}}>{children}</span>
+      {action && <span style={{fontSize:11.5,fontWeight:600,color:LIMET}}>{action}</span>}
+    </div>
+  );
+}
+function Chip({ children, tone }){
+  const map={primary:[LIME,"#0d1a00"],live:["color-mix(in srgb, #34D399 18%, transparent)",STEPST],warn:["color-mix(in srgb, #FBBF24 20%, transparent)",KCALT]};
+  const [bg,fg]=map[tone]||["var(--glass-strong)","var(--ios-label2)"];
+  return <span style={{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:99,fontSize:10.5,fontWeight:800,textTransform:"uppercase",letterSpacing:".06em",background:bg,color:fg}}>{children}</span>;
+}
+function Bullet({ children }){
+  return (
+    <div style={{display:"flex",gap:10,alignItems:"flex-start",marginBottom:9}}>
+      <span style={{width:5,height:5,borderRadius:99,background:LIME,display:"block",flexShrink:0,marginTop:7}}></span>
+      <span style={{fontSize:13,color:"var(--ios-label2)",lineHeight:1.5,flex:1}}>{children}</span>
+    </div>
+  );
+}
+function Metric({ icon, label, value, unit, delta, tone, ttone }){
+  return (
+    <div className="glass" style={{flex:1,padding:14}}>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <div style={{width:28,height:28,borderRadius:9,background:`color-mix(in srgb, ${tone} 18%, transparent)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I(icon,14,ttone)}</div>
+        <span style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"var(--ios-label3)"}}>{label}</span>
+      </div>
+      <div style={{display:"flex",alignItems:"baseline",gap:4,marginTop:10}}>
+        <span style={{fontFamily:"var(--font-display)",fontSize:25,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.03em"}}>{value}</span>
+        {unit && <span style={{fontSize:11.5,fontWeight:700,color:"var(--ios-label2)"}}>{unit}</span>}
+      </div>
+      {delta && <div style={{fontSize:11,color:delta[1]?ttone:"var(--ios-label3)",marginTop:3,fontWeight:delta[1]?700:500}}>{delta[0]}</div>}
+    </div>
+  );
+}
+function Bars({ data, color, tcolor, format }){
+  const max=Math.max(...data.map(d=>d[1]));
+  return (
+    <div style={{display:"flex",alignItems:"flex-end",gap:7,height:112}}>
+      {data.map(([d,v],i)=>(
+        <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:6,height:"100%",justifyContent:"flex-end"}}>
+          <span style={{fontSize:9.5,fontWeight:700,color:i===data.length-1?tcolor:"var(--ios-label3)"}}>{format(v)}</span>
+          <div style={{width:"100%",height:`${Math.max(6,(v/max)*100)}%`,borderRadius:7,background:i===data.length-1?color:`color-mix(in srgb, ${color} 40%, transparent)`}}></div>
+          <span style={{fontSize:10,fontWeight:700,color:"var(--ios-label3)"}}>{d}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- 1. Consentimento de dados de saúde ---------- */
+function ConsentScreen({aluno}){
+  return (
+    <>
+      <div className="scroll" style={{opacity:.35,pointerEvents:"none"}}>
+        <div style={{paddingTop:6,fontSize:27,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em"}}>Início</div>
+        <div className="glass" style={{height:120,marginTop:16}}></div>
+        <div className="glass" style={{height:90,marginTop:12}}></div>
+      </div>
+      <div className="scrim"></div>
+      <div className="sheet" style={{maxHeight:"88%",overflow:"hidden"}}>
+        <Pedestal size={104} lift={4}><LockObject scale={0.56} /></Pedestal>
+        <div style={{fontFamily:"var(--font-display)",fontSize:23,fontWeight:800,color:"var(--ios-label)",textAlign:"center",letterSpacing:"-.03em",marginTop:8}}>Seus dados de saúde</div>
+        <div style={{fontSize:13,color:"var(--ios-label2)",textAlign:"center",lineHeight:1.5,marginTop:7}}>Atualizamos o texto que explica o que guardamos e quem lê. Precisamos do seu aceite outra vez.</div>
+        <div style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)",marginTop:20,marginBottom:9}}>O que é armazenado</div>
+        <Bullet>Avaliação física, anamnese e body scan</Bullet>
+        <Bullet>Passos, calorias, sono e frequência cardíaca de repouso</Bullet>
+        <Bullet>Frequência cardíaca média das suas corridas</Bullet>
+        <div style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)",marginTop:14,marginBottom:6}}>{aluno?"Quem lê":"Privacidade"}</div>
+        <div style={{fontSize:13,color:"var(--ios-label2)",lineHeight:1.5}}>{aluno?"Seu especialista vê estes dados, inclusive o que você escrever no feedback de fim de treino.":"Só você vê estes dados."}</div>
+        <div style={{fontSize:11.5,color:"var(--ios-label2)",lineHeight:1.5,marginTop:14}}>Base legal: Tutela da saúde (Art. 11, II, f) e Consentimento (Art. 11, I) da LGPD. Você pode revogar quando quiser no seu perfil — a revogação vale daqui para frente. Versão 1.3 da política.</div>
+        <div className="btn primary" style={{marginTop:14}}>Aceitar e continuar</div>
+        <div className="btn ghost" style={{marginTop:9}}>Agora não</div>
+        <div style={{fontSize:11.5,color:"var(--ios-label2)",textAlign:"center",lineHeight:1.5,marginTop:12}}>Sem o aceite o app continua funcionando, mas para de registrar treinos, refeições e medidas.</div>
+      </div>
+    </>
+  );
+}
+
+/* ---------- 2. Conectar relógio ---------- */
+function ConnectScreen(){
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1,textAlign:"center",fontSize:14.5,fontWeight:700,color:"var(--on-hero)"}}>Você está quase lá</div>
+        <div style={{width:38}}></div>
+      </div>
+      <div style={{height:4,borderRadius:99,background:"var(--track)",marginTop:14,overflow:"hidden"}}><div style={{width:"90%",height:"100%",background:LIME,borderRadius:99}}></div></div>
+      <Pedestal size={246} lift={10}><WatchObject scale={0.94} /></Pedestal>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:11,marginTop:2}}>
+        <div className="glass" style={{width:44,height:44,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",borderColor:LIME}}>{I("dumbbell",20,LIMET)}</div>
+        {I("arrow-left-right",17,"var(--ios-label3)")}
+        <div className="glass" style={{width:44,height:44,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center"}}>{I("heart-pulse",20,HRT)}</div>
+      </div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:25,fontWeight:800,color:"var(--on-hero)",textAlign:"center",letterSpacing:"-.03em",marginTop:22}}>Sincronizar com<br/>Apple Health</div>
+      <div className="glass" style={{padding:15,marginTop:18}}>
+        <Bullet><b style={{color:"var(--ios-label)"}}>Lemos do seu relógio</b> passos, calorias, sono, frequência cardíaca de repouso e a FC média das corridas — para acompanhar sua atividade entre os treinos.</Bullet>
+        <Bullet>Durante a corrida o GPS mede <b style={{color:"var(--ios-label)"}}>distância e ritmo</b>. O caminho é desenhado na tela e <b style={{color:"var(--ios-label)"}}>descartado ao fim do treino</b> — não é salvo nem enviado.</Bullet>
+        <div style={{display:"flex",gap:10,alignItems:"flex-start",marginTop:12,paddingTop:12,borderTop:"1px solid var(--glass-brd)"}}>
+          {I("lock",14,"var(--ios-label3)")}
+          <span style={{fontSize:11.5,color:"var(--ios-label2)",lineHeight:1.5,flex:1}}>Só você vê estes dados. Você pode desligar quando quiser em Minhas Autorizações — a coleta para na hora.</span>
+        </div>
+      </div>
+      <div style={{height:150}}></div>
+    </div>
+  );
+}
+
+/* ---------- 3. Permissões por tipo ---------- */
+function PermissionsScreen(){
+  const PERMS=[
+    ["footprints","Passos","Total do dia",STEPS,STEPST,true],
+    ["flame","Calorias ativas","Gasto estimado do dia",KCAL,KCALT,true],
+    ["moon","Sono","Minutos dormidos na noite",SLEEP,SLEEPT,true],
+    ["heart-pulse","FC de repouso","Uma leitura por dia",HR,HRT,true],
+    ["activity","FC durante o treino","Média da janela da sessão",HR,HRT,false],
+  ];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12,fontWeight:700,color:"var(--on-hero-2)",textTransform:"uppercase",letterSpacing:".04em"}}>Apple Health</div>
+          <div style={{fontSize:21,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>O que você autoriza</div>
+        </div>
+      </div>
+      <div className="glass" style={{padding:14,marginTop:16,display:"flex",gap:12,alignItems:"flex-start"}}>
+        <div style={{width:32,height:32,borderRadius:11,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("toggle-right",15,LIMET)}</div>
+        <div style={{fontSize:12.5,color:"var(--ios-label2)",lineHeight:1.45}}>Cada tipo é liberado separadamente. Recusar o sono não impede a leitura dos passos.</div>
+      </div>
+      <SectionTitle action="4 de 5 ativos">Tipos de dado</SectionTitle>
+      {PERMS.map(([icon,name,desc,tone,ttone,on])=>(
+        <div key={name} className="glass" style={{padding:13,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+          <div style={{width:34,height:34,borderRadius:11,background:`color-mix(in srgb, ${tone} 18%, transparent)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I(icon,16,ttone)}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:14,fontWeight:600,color:"var(--ios-label)"}}>{name}</div>
+            <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:1}}>{desc}</div>
+          </div>
+          <div style={{width:46,height:28,borderRadius:99,flexShrink:0,background:on?LIME:"var(--glass-strong)",display:"flex",alignItems:"center",padding:3,justifyContent:on?"flex-end":"flex-start"}}>
+            <div style={{width:22,height:22,borderRadius:99,background:on?"#0d1a00":"var(--ios-label3)"}}></div>
+          </div>
+        </div>
+      ))}
+      <SectionTitle>Leitura em segundo plano</SectionTitle>
+      <div className="glass" style={{padding:13,display:"flex",alignItems:"center",gap:12}}>
+        <div style={{width:34,height:34,borderRadius:11,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("refresh-cw",16,LIMET)}</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:14,fontWeight:600,color:"var(--ios-label)"}}>Sincronizar sozinho</div>
+          <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:1}}>Sem ela, os dados só chegam quando você abre o app</div>
+        </div>
+        <div style={{width:46,height:28,borderRadius:99,flexShrink:0,background:LIME,display:"flex",alignItems:"center",padding:3,justifyContent:"flex-end"}}>
+          <div style={{width:22,height:22,borderRadius:99,background:"#0d1a00"}}></div>
+        </div>
+      </div>
+      <div style={{height:150}}></div>
+    </div>
+  );
+}
+
+/* ---------- 4. Dispositivo conectado ---------- */
+function DeviceScreen(){
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:21,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em"}}>Meu relógio</div>
+        </div>
+        <RoundBtn icon="plus" />
+      </div>
+      <div className="glass" style={{padding:20,marginTop:16,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",borderColor:LIME,boxShadow:`0 0 0 1px ${LIME}, 0 18px 40px -20px ${LIME}`}}>
+        <Pedestal size={210} lift={8}><WatchObject scale={0.84} /></Pedestal>
+        <div style={{fontFamily:"var(--font-display)",fontSize:21,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.02em",marginTop:14}}>Apple Watch Series 9</div>
+        <div style={{display:"flex",gap:7,marginTop:9}}><Chip tone="live">● Conectado</Chip><Chip>Sincronizado 9:38</Chip></div>
+      </div>
+      <div style={{display:"flex",gap:10,marginTop:12}}>
+        <div className="glass" style={{flex:1,padding:14}}>
+          <div style={{fontSize:9.5,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"var(--ios-label3)"}}>Bateria</div>
+          <div style={{fontFamily:"var(--font-display)",fontSize:21,fontWeight:800,color:"var(--ios-label)",marginTop:5,letterSpacing:"-.02em"}}>78%</div>
+        </div>
+        <div className="glass" style={{flex:1,padding:14}}>
+          <div style={{fontSize:9.5,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"var(--ios-label3)"}}>Uso hoje</div>
+          <div style={{fontFamily:"var(--font-display)",fontSize:21,fontWeight:800,color:"var(--ios-label)",marginTop:5,letterSpacing:"-.02em"}}>14 h</div>
+        </div>
+        <div className="glass" style={{flex:1,padding:14}}>
+          <div style={{fontSize:9.5,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"var(--ios-label3)"}}>Fonte</div>
+          <div style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)",marginTop:7,letterSpacing:"-.01em"}}>HealthKit</div>
+        </div>
+      </div>
+      <SectionTitle action="Ver tudo">Última sincronização</SectionTitle>
+      {[["footprints","Passos","8.412",STEPST,"há 3 min"],["flame","Calorias ativas","512 kcal",KCALT,"há 3 min"],["moon","Sono","7 h 12",SLEEPT,"hoje, 07:02"],["heart-pulse","FC de repouso","58 bpm",HRT,"hoje, 06:50"]].map(([icon,label,value,tone,when])=>(
+        <div key={label} className="glass" style={{padding:12,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+          <div style={{width:32,height:32,borderRadius:10,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I(icon,15,tone)}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:13.5,fontWeight:600,color:"var(--ios-label)"}}>{label}</div>
+            <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:1}}>{when}</div>
+          </div>
+          <span style={{fontFamily:"var(--font-display)",fontSize:15,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{value}</span>
+        </div>
+      ))}
+      <SectionTitle>Outros dispositivos</SectionTitle>
+      <div className="glass" style={{padding:13,display:"flex",alignItems:"center",gap:12,opacity:.7}}>
+        <div style={{width:32,height:32,borderRadius:10,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("heart",15,"var(--ios-label3)")}</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:13.5,fontWeight:600,color:"var(--ios-label)"}}>Cinta peitoral Polar H10</div>
+          <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:1}}>Desconectada</div>
+        </div>
+        <span style={{fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:".06em",color:LIMET}}>Parear</span>
+      </div>
+      <div style={{height:150}}></div>
+    </div>
+  );
+}
+
+/* ---------- 5. Saúde do dia ---------- */
+function DailyScreen(){
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1,minWidth:0,display:"flex",alignItems:"center",gap:9}}>
+          <span style={{fontSize:21,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em"}}>Saúde do dia</span>
+          <Chip tone="live">Live</Chip>
+        </div>
+        <RoundBtn icon="refresh-cw" />
+      </div>
+      <div className="glass" style={{padding:16,marginTop:16,display:"flex",alignItems:"center",gap:16}}>
+        <div style={{flex:1}}>
+          <div style={{fontSize:10.5,fontWeight:800,letterSpacing:".14em",textTransform:"uppercase",color:"var(--ios-label3)"}}>Prontidão de hoje</div>
+          <div style={{display:"flex",alignItems:"baseline",gap:6,marginTop:5}}>
+            <span style={{fontFamily:"var(--font-display)",fontSize:38,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.04em",lineHeight:1}}>82</span>
+            <span style={{fontSize:13,fontWeight:700,color:STEPST}}>boa</span>
+          </div>
+          <div style={{fontSize:12,color:"var(--ios-label2)",marginTop:5,lineHeight:1.4}}>Sono acima da sua média e FC de repouso estável.</div>
+        </div>
+        <div style={{flexShrink:0}}><OrbObject scale={0.6} color={STEPS} icon="activity" glyph={22} /></div>
+      </div>
+      <SectionTitle>Hoje</SectionTitle>
+      <div style={{display:"flex",gap:10}}>
+        <Metric icon="moon" label="Sono" value="7h 12" delta={["+34 min vs. sua média",true]} tone={SLEEP} ttone={SLEEPT} />
+        <Metric icon="heart-pulse" label="FC repouso" value="58" unit="bpm" delta={["−2 bpm vs. sua média",true]} tone={HR} ttone={HRT} />
+      </div>
+      <div style={{display:"flex",gap:10,marginTop:10}}>
+        <Metric icon="footprints" label="Passos" value="8.412" delta={["+1.240 vs. sua média",true]} tone={STEPS} ttone={STEPST} />
+        <Metric icon="flame" label="Calorias" value="512" unit="kcal" delta={["meta 600 kcal",false]} tone={KCAL} ttone={KCALT} />
+      </div>
+      <SectionTitle action="7 dias">Sono</SectionTitle>
+      <div className="glass" style={{padding:15}}>
+        <Bars data={[["S",372],["T",408],["Q",356],["Q",426],["S",398],["S",464],["D",432]]} color={SLEEP} tcolor={SLEEPT} format={v=>`${Math.round(v/60)}h`} />
+      </div>
+      <SectionTitle action="7 dias">FC de repouso</SectionTitle>
+      <div className="glass" style={{padding:15}}>
+        <Bars data={[["S",61],["T",60],["Q",63],["Q",59],["S",60],["S",58],["D",58]]} color={HR} tcolor={HRT} format={v=>String(v)} />
+      </div>
+      <div className="glass" style={{padding:14,marginTop:14,display:"flex",gap:11,alignItems:"flex-start"}}>
+        {I("lock",15,"var(--ios-label3)")}
+        <span style={{fontSize:11.5,color:"var(--ios-label2)",lineHeight:1.5,flex:1}}>Só você vê estes dados. Você pode desligar quando quiser em Minhas Autorizações: a coleta para na hora e ele perde o acesso — o histórico continua visível só para você.</span>
+      </div>
+      <div style={{height:110}}></div>
+    </div>
+  );
+}
+
+/* ---------- 6. Sem histórico / health check ---------- */
+function CheckScreen(){
+  const CHECKS=[
+    ["shield-check","Consentimento de saúde","Versão 1.3 aceita em 28 ago","ok"],
+    ["watch","Relógio conectado","Apple Watch · sincronizado há 3 min","ok"],
+    ["moon","Permissão de sono","Concedida no HealthKit","ok"],
+    ["heart-pulse","FC durante o treino","Negada — a média da sessão não será gravada","warn"],
+    ["database","Histórico","2 de 7 dias coletados","warn"],
+  ];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12,fontWeight:700,color:"var(--on-hero-2)",textTransform:"uppercase",letterSpacing:".04em"}}>Diagnóstico</div>
+          <div style={{fontSize:21,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>Health check</div>
+        </div>
+        <RoundBtn icon="refresh-cw" />
+      </div>
+      <div className="glass" style={{padding:18,marginTop:16,textAlign:"center"}}>
+        <div style={{width:64,height:64,borderRadius:99,background:"color-mix(in srgb, #FBBF24 16%, transparent)",border:`1.5px solid ${KCAL}`,display:"inline-flex",alignItems:"center",justifyContent:"center"}}>{I("triangle-alert",30,KCALT)}</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:19,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.02em",marginTop:12}}>3 de 5 tudo certo</div>
+        <div style={{fontSize:12.5,color:"var(--ios-label2)",marginTop:6,lineHeight:1.45}}>Dois pontos limitam o que conseguimos acompanhar. Nenhum impede você de treinar.</div>
+      </div>
+      <SectionTitle>Verificações</SectionTitle>
+      {CHECKS.map(([icon,title,desc,state])=>{
+        const ok=state==="ok";
+        return (
+          <div key={title} className="glass" style={{padding:13,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+            <div style={{width:34,height:34,borderRadius:11,background:`color-mix(in srgb, ${ok?STEPS:KCAL} 16%, transparent)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I(icon,16,ok?STEPST:KCALT)}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:14,fontWeight:600,color:"var(--ios-label)"}}>{title}</div>
+              <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:1,lineHeight:1.35}}>{desc}</div>
+            </div>
+            {ok ? I("circle-check",18,STEPST) : <span style={{fontSize:10.5,fontWeight:800,textTransform:"uppercase",letterSpacing:".06em",color:KCALT}}>Ajustar</span>}
+          </div>
+        );
+      })}
+      <div className="glass" style={{padding:18,marginTop:6,textAlign:"center",borderStyle:"dashed"}}>
+        {I("watch",28,"var(--ios-label3)")}
+        <div style={{fontSize:12.5,color:"var(--ios-label2)",marginTop:10,lineHeight:1.5}}>Ainda não há histórico suficiente. Conecte seu relógio e volte amanhã — é a comparação entre os dias que faz esses números valerem alguma coisa.</div>
+      </div>
+      <div style={{height:150}}></div>
+    </div>
+  );
+}
+
+/* ---------- 7. Minhas autorizações ---------- */
+function AuthScreen(){
+  const AUTH=[
+    ["Dados de saúde","Avaliação física, anamnese, body scan, passos e calorias, sono e frequência cardíaca de repouso, e a frequência cardíaca média das corridas.",true,"28 ago 2026 · versão 1.3"],
+    ["Análise de Técnica","A câmera lê seu corpo durante a série. Nada é gravado.",false,null],
+  ];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12,fontWeight:700,color:"var(--on-hero-2)",textTransform:"uppercase",letterSpacing:".04em"}}>Privacidade</div>
+          <div style={{fontSize:21,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>Minhas autorizações</div>
+        </div>
+      </div>
+      <div className="glass" style={{padding:14,marginTop:16,display:"flex",gap:12,alignItems:"flex-start"}}>
+        <div style={{width:32,height:32,borderRadius:11,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("shield",15,LIMET)}</div>
+        <div style={{fontSize:12.5,color:"var(--ios-label2)",lineHeight:1.45}}>Cada finalidade é separada: dá para retirar a câmera durante o exercício e continuar com a avaliação física.</div>
+      </div>
+      <SectionTitle>Finalidades</SectionTitle>
+      {AUTH.map(([title,desc,on,when])=>(
+        <div key={title} className="glass" style={{padding:15,marginBottom:10}}>
+          <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:15,fontWeight:700,color:"var(--ios-label)",letterSpacing:"-.01em"}}>{title}</div>
+              <div style={{fontSize:12,color:"var(--ios-label2)",marginTop:4,lineHeight:1.45}}>{desc}</div>
+            </div>
+            {I(on?"circle-check":"circle-x",21,on?STEPST:"var(--ios-label3)")}
+          </div>
+          {on ? (
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:13,paddingTop:12,borderTop:"1px solid var(--glass-brd)"}}>
+              <span style={{fontSize:11,color:"var(--ios-label3)"}}>{when}</span>
+              <span style={{fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:".08em",color:DANGERT}}>Retirar autorização</span>
+            </div>
+          ) : (
+            <div style={{fontSize:11.5,color:"var(--ios-label3)",marginTop:12,paddingTop:12,borderTop:"1px solid var(--glass-brd)"}}>Não autorizado. O app pede quando você abrir a tela que precisa.</div>
+          )}
+        </div>
+      ))}
+      <SectionTitle>Seus direitos</SectionTitle>
+      {[["download","Exportar meus dados","Receba tudo o que guardamos em um arquivo"],["file-text","Política de privacidade","Versão 1.3 · agosto de 2026"],["life-buoy","Apagar histórico","Fale com o suporte para a exclusão definitiva"]].map(([icon,t,d])=>(
+        <div key={t} className="glass" style={{padding:13,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+          <div style={{width:32,height:32,borderRadius:10,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I(icon,15,"var(--ios-label2)")}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:13.5,fontWeight:600,color:"var(--ios-label)"}}>{t}</div>
+            <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:1}}>{d}</div>
+          </div>
+          {I("chevron-right",16,"var(--ios-label3)")}
+        </div>
+      ))}
+      <div style={{height:120}}></div>
+    </div>
+  );
+}
+
+/* ---------- 8. Retirar autorização ---------- */
+function RevokeScreen({aluno}){
+  return (
+    <>
+      <div className="scroll" style={{opacity:.35,pointerEvents:"none"}}>
+        <div style={{paddingTop:6,fontSize:21,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em"}}>Minhas autorizações</div>
+        <div className="glass" style={{height:140,marginTop:16}}></div>
+        <div className="glass" style={{height:110,marginTop:12}}></div>
+      </div>
+      <div className="scrim"></div>
+      <div className="sheet">
+        <Pedestal size={142} glow={DANGER} lift={4}><LockObject scale={0.72} accent={DANGER} /></Pedestal>
+        <div style={{fontFamily:"var(--font-display)",fontSize:21,fontWeight:800,color:"var(--ios-label)",textAlign:"center",letterSpacing:"-.03em",marginTop:14}}>Retirar “Dados de saúde”?</div>
+        <div style={{fontSize:13,color:"var(--ios-label2)",textAlign:"center",lineHeight:1.5,marginTop:8}}>O tratamento para essa finalidade para na hora. O que já foi registrado antes disso continua no seu histórico — para apagá-lo, fale com o suporte.</div>
+        <div className="glass" style={{padding:14,marginTop:16}}>
+          <div style={{fontSize:10.5,fontWeight:800,letterSpacing:".12em",textTransform:"uppercase",color:"var(--ios-label3)",marginBottom:10}}>O que muda agora</div>
+          {[["watch","O relógio para de enviar passos, sono e FC"],...(aluno?[["eye-off","Seu especialista perde o acesso a estes dados"]]:[]),["chart-no-axes-column","Treinos e refeições deixam de ser registrados"],["eye","Seu histórico continua visível só para você"]].map(([icon,t])=>(
+            <div key={t} style={{display:"flex",gap:10,alignItems:"center",marginBottom:8}}>
+              {I(icon,15,"var(--ios-label3)")}
+              <span style={{fontSize:12.5,color:"var(--ios-label2)",lineHeight:1.4,flex:1}}>{t}</span>
+            </div>
+          ))}
+        </div>
+        <div className="btn danger" style={{marginTop:16}}>Retirar autorização</div>
+        <div className="btn ghost" style={{marginTop:10}}>Manter como está</div>
+        <div style={{fontSize:11.5,color:"var(--ios-label2)",textAlign:"center",lineHeight:1.5,marginTop:12}}>Você pode autorizar de novo quando quiser — é gratuito e leva um toque.</div>
+      </div>
+    </>
+  );
+}
+
+function TabBar({active="health"}){return <KitTabBar active={active}/>;}
+
+function Phone(p){return <ThemePair><PhoneOne {...p}/></ThemePair>;}
+function PhoneOne({ step, label, footer, bare, children }){
+  return (
+    <div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+        <span style={{width:20,height:20,borderRadius:99,background:LIME,color:"#0d1a00",fontSize:11,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{step}</span>
+        <span style={{color:"hsl(var(--muted-foreground))",fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:".1em"}}>{label}</span>
+      </div>
+      <div className="phone">
+        <div className="glow"></div>
+        <div className="island"></div>
+        <StatusBar/>
+        {children}
+        {footer && (
+          <div className="footerbar">
+            <div className="btn ghost" style={{flex:"0 0 auto",padding:"0 16px"}}>{I(footer[1],15,"var(--ios-label)")} {footer[0]}</div>
+            <div className="btn primary" style={{flex:1}}>{I(footer[3],15,"#0d1a00")} {footer[2]}</div>
+          </div>
+        )}
+        {!bare && <TabBar/>}
+        <div className="homebar"></div>
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const [theme,setTheme]=React.useState("dark");
+  React.useEffect(()=>{window.lucide?.createIcons();});
+  const row={display:"flex",gap:30,marginBottom:36};
+  return (
+    <div>
+      <div style={row}>
+        <Phone step="1" label="Consentimento de saúde" bare><ConsentScreen/></Phone>
+        <Phone step="1" label="Consentimento · Variante · Aluno" bare><ConsentScreen aluno/></Phone>
+        <Phone step="2" label="Conectar relógio" bare footer={["Pular","skip-forward","Conectar relógio","link"]}><ConnectScreen/></Phone>
+        <Phone step="3" label="Permissões por tipo" bare footer={["Voltar","chevron-left","Autorizar","check"]}><PermissionsScreen/></Phone>
+        <Phone step="4" label="Relógio conectado" footer={["Desconectar","unlink","Sincronizar agora","refresh-cw"]}><DeviceScreen/></Phone>
+      </div>
+      <div style={row}>
+        <Phone step="5" label="Saúde do dia"><DailyScreen/></Phone>
+        <Phone step="6" label="Health check" footer={["Ignorar","x","Resolver pendências","wrench"]}><CheckScreen/></Phone>
+        <Phone step="7" label="Minhas autorizações"><AuthScreen/></Phone>
+        <Phone step="8" label="Retirar autorização" bare><RevokeScreen/></Phone>
+        <Phone step="8" label="Retirar autorização · Variante · Aluno" bare><RevokeScreen aluno/></Phone>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+setTimeout(()=>window.lucide?.createIcons(),50);
+</script></body></html>

@@ -56,7 +56,7 @@ e isso é o esperado.
 
 ## O triplete manda, não o rótulo
 
-`design/tokens/colors.css` declara cada cor de marca duas vezes, e duas das três
+`design/foundations/tokens/colors.css` declara cada cor de marca duas vezes, e duas das três
 discordam:
 
 | marca | triplete | renderiza | rótulo ao lado |

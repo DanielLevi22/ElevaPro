@@ -1,0 +1,803 @@
+<!-- @dsCard group="Mobile · Propostas em revisão" viewport="3600x6400" name="Proposta · Uso diário · Treino" subtitle="Atual × Proposta: dia leve, recorde na série, descanso na tela bloqueada, trocar exercício, mapa muscular · escuro e claro" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../../styles.css"><link rel="stylesheet" href="../../kit/glass.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js"></script>
+<style>
+.scroll{flex:1;overflow:auto;padding:0 18px 12px;scrollbar-width:none;position:relative;z-index:2;margin-top:-52px;padding-top:52px}
+</style>
+</head><body>
+<div id="root"></div>
+<script type="text/babel" src="../../kit/kit.jsx"></script>
+<script type="text/babel" src="uso-diario/pecas.jsx"></script>
+<script type="text/babel" data-presets="react">
+const I=(n,s=20,c)=><i data-lucide={n} style={{width:s,height:s,display:"block",color:c,flexShrink:0}}></i>;
+const LIME="hsl(var(--primary))";
+const IMG={back:"../../../foundations/assets/imagery/workout-back.jpg",arms:"../../../foundations/assets/imagery/workout-arms.jpg",chest:"../../../foundations/assets/imagery/workout-chest.jpg",legs:"../../../foundations/assets/imagery/workout-legs.jpg"};
+
+function StatusBar(){
+  return <div className="statusbar"><span>9:41</span><span style={{display:"flex",alignItems:"center",gap:6}}>{I("signal",16,"var(--on-hero)")}{I("wifi",16,"var(--on-hero)")}{I("battery-full",20,"var(--on-hero)")}</span></div>;
+}
+function RoundBtn({ icon, size=38 }){
+  return <div className="glass" style={{width:size,height:size,borderRadius:99,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:"var(--hero-chip)",borderColor:"var(--hero-chip-brd)"}}>{I(icon,size*0.47,"var(--on-hero)")}</div>;
+}
+function HeroHeader({ eyebrow, title, right }){
+  return (
+    <div style={{paddingTop:14,display:"flex",alignItems:"center",gap:12}}>
+      <RoundBtn icon="chevron-left" />
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:12,fontWeight:700,color:"var(--on-hero-2)",letterSpacing:".04em",textTransform:"uppercase"}}>{eyebrow}</div>
+        <div style={{fontSize:22,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>{title}</div>
+      </div>
+      {right}
+    </div>
+  );
+}
+function SectionTitle({ children, action }){
+  return (
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",margin:"20px 2px 10px"}}>
+      <span style={{fontSize:10.5,fontWeight:700,letterSpacing:".14em",textTransform:"uppercase",color:"var(--ios-label3)"}}>{children}</span>
+      {action && <span style={{fontSize:11.5,color:"var(--ios-label3)"}}>{action}</span>}
+    </div>
+  );
+}
+function Chip({ children, tone }){
+  const on = tone==="primary";
+  return <span style={{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:99,fontSize:10.5,fontWeight:800,textTransform:"uppercase",letterSpacing:".06em",background:on?LIME:"var(--glass-strong)",color:on?"#0d1a00":"var(--ios-label2)"}}>{children}</span>;
+}
+function Bar({ pct, color=LIME, h=6 }){
+  return <div style={{height:h,borderRadius:99,background:"var(--glass-strong)",overflow:"hidden"}}><div style={{width:`${pct}%`,height:"100%",background:color,borderRadius:99}} /></div>;
+}
+
+/* ---------- 0. Listagem de periodizações ---------- */
+function PeriodizationsScreen({aluno}){
+  const ACTIVE={name:"Ciclo 2026 · Verão",goal:"Hipertrofia",phase:"Fase 2 · Hipertrofia",week:"Semana 7 de 16",pct:44,coach:aluno?"Prescrito por Daniel Levi":"Proposta do Assistente · aprovada por você"};
+  const OTHERS=[
+    {name:"Base de Força",range:"jan – abr 2026",meta:"12 semanas · 3 fases",status:"Concluída",tone:"#34D399",pct:100},
+    {name:"Recomposição",range:"set – dez 2025",meta:"16 semanas · 4 fases",status:"Concluída",tone:"#34D399",pct:100},
+    {name:"Ciclo Outono",range:"a partir de 21 out",meta:"10 semanas · 2 fases",status:"Planejada",tone:"var(--ios-label3)",pct:0},
+  ];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:14,display:"flex",alignItems:"center",gap:12}}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12,fontWeight:700,color:"var(--on-hero-2)",letterSpacing:".04em",textTransform:"uppercase"}}>Meus treinos</div>
+          <div style={{fontSize:22,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>Periodizações</div>
+        </div>
+        <RoundBtn icon="search" /><RoundBtn icon="ellipsis" />
+      </div>
+
+      <div className="glass" style={{marginTop:18,padding:0,overflow:"hidden",borderColor:"color-mix(in srgb, hsl(var(--primary)) 50%, transparent)",boxShadow:`inset 0 1px 0 var(--spec), 0 18px 44px -18px ${LIME}, 0 4px 12px -4px rgba(0,0,0,.4)`}}>
+        <div style={{position:"relative",height:132,backgroundImage:`linear-gradient(rgba(0,0,0,.1),rgba(0,0,0,.78)), url(${IMG.back})`,backgroundSize:"cover",backgroundPosition:"center 28%",padding:14,display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <span style={{padding:"5px 10px",borderRadius:99,background:LIME,color:"#0d1a00",fontSize:9,fontWeight:800,letterSpacing:".12em",textTransform:"uppercase"}}>Em andamento</span>
+            <span style={{padding:"5px 10px",borderRadius:99,background:"rgba(255,255,255,.16)",backdropFilter:"blur(10px)",color:"#fff",fontSize:9,fontWeight:800,letterSpacing:".12em",textTransform:"uppercase"}}>{ACTIVE.goal}</span>
+          </div>
+          <div>
+            <div style={{fontFamily:"var(--font-display)",fontSize:21,fontWeight:800,color:"#fff",letterSpacing:"-.03em"}}>{ACTIVE.name}</div>
+            <div style={{fontSize:11.5,color:"rgba(255,255,255,.8)",marginTop:3,display:"flex",alignItems:"center",gap:6}}>{I("user-round",12,"rgba(255,255,255,.8)")} {ACTIVE.coach} · {ACTIVE.phase}</div>
+          </div>
+        </div>
+        <div style={{padding:"14px 15px 15px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:8}}>
+            <span style={{fontSize:13,fontWeight:700,color:"var(--ios-label)"}}>{ACTIVE.week}</span>
+            <span style={{fontSize:12.5,fontWeight:700,color:"hsl(var(--primary-text))"}}>{ACTIVE.pct}%</span>
+          </div>
+          <Bar pct={ACTIVE.pct} />
+          <div style={{display:"flex",gap:1,marginTop:13,borderRadius:14,overflow:"hidden",background:"var(--glass-strong)"}}>
+            {[["3","Fases"],["48","Treinos"],["21","Restantes"],["92%","Aderência"]].map(([v,l])=>(
+              <div key={l} style={{flex:1,padding:"9px 4px",textAlign:"center"}}>
+                <div style={{fontFamily:"var(--font-display)",fontSize:14,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{v}</div>
+                <div style={{fontSize:8.5,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"var(--ios-label3)",marginTop:2}}>{l}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{height:44,marginTop:13,borderRadius:15,background:LIME,color:"#0d1a00",display:"flex",alignItems:"center",justifyContent:"center",gap:8,fontWeight:800,fontSize:13,letterSpacing:".12em",textTransform:"uppercase",boxShadow:`0 12px 28px -12px ${LIME}`}}>{I("arrow-right",17,"#0d1a00")} Continuar ciclo</div>
+        </div>
+      </div>
+
+      <div style={{display:"flex",gap:7,marginTop:16}}>
+        <Chip tone="primary">Todas · 4</Chip><Chip>Concluídas · 2</Chip><Chip>Planejadas · 1</Chip>
+      </div>
+
+      <SectionTitle action="Mais recentes">Histórico</SectionTitle>
+      {OTHERS.map(p=>(
+        <div key={p.name} className="glass" style={{padding:13,marginBottom:9,opacity:p.pct===0?.7:1}}>
+          <div style={{display:"flex",alignItems:"center",gap:12}}>
+            <div style={{width:38,height:38,borderRadius:12,flexShrink:0,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center"}}>{I(p.pct===100?"circle-check":"calendar-clock",18,p.tone)}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:14.5,fontWeight:700,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{p.name}</div>
+              <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:1}}>{p.range} · {p.meta}</div>
+            </div>
+            <span style={{fontSize:9.5,fontWeight:800,textTransform:"uppercase",letterSpacing:".08em",color:p.tone}}>{p.status}</span>
+          </div>
+        </div>
+      ))}
+      <div style={{height:120}}></div>
+    </div>
+  );
+}
+
+/* ---------- 1. Fases da periodização ---------- */
+function PhasesScreen(){
+  const PHASES=[
+    {n:1,name:"Adaptação",range:"06 mai – 02 jun",status:"Concluída",tone:"#34D399",pct:100},
+    {n:2,name:"Hipertrofia",range:"03 jun – 25 ago",status:"Em andamento",tone:LIME,pct:62},
+    {n:3,name:"Força",range:"26 ago – 20 out",status:"Planejada",tone:"var(--ios-label3)",pct:0},
+  ];
+  return (
+    <div className="scroll">
+      <HeroHeader eyebrow="Periodização" title="Ciclo 2026 · Verão" right={<RoundBtn icon="ellipsis" />} />
+      <div className="glass" style={{padding:16,marginTop:18}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:9}}>
+          <span style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)"}}>Semana 7 de 16</span>
+          <span style={{fontSize:12.5,color:"var(--ios-label2)"}}>44%</span>
+        </div>
+        <Bar pct={44} />
+        <div style={{display:"flex",gap:18,marginTop:13}}>
+          <span style={{fontSize:11.5,color:"var(--ios-label2)",display:"flex",alignItems:"center",gap:5}}>{I("layers",13,"var(--ios-label3)")} 3 fases</span>
+          <span style={{fontSize:11.5,color:"var(--ios-label2)",display:"flex",alignItems:"center",gap:5}}>{I("dumbbell",13,"var(--ios-label3)")} 48 treinos</span>
+          <span style={{fontSize:11.5,color:"var(--ios-label2)",display:"flex",alignItems:"center",gap:5}}>{I("sparkles",13,"var(--ios-label3)")} Proposta do Assistente</span>
+        </div>
+      </div>
+      <SectionTitle>Fases</SectionTitle>
+      {PHASES.map(p=>(
+        <div key={p.n} className="glass" style={{padding:14,marginBottom:10,opacity:p.pct===0?.66:1}}>
+          <div style={{display:"flex",alignItems:"center",gap:13}}>
+            <div style={{width:40,height:40,borderRadius:13,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-display)",fontWeight:800,fontSize:17,color:p.tone,background:"var(--glass-strong)"}}>{p.n}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:15.5,fontWeight:700,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{p.name}</div>
+              <div style={{fontSize:12,color:"var(--ios-label2)",marginTop:1}}>{p.range}</div>
+            </div>
+            <span style={{fontSize:10.5,fontWeight:800,textTransform:"uppercase",letterSpacing:".06em",color:p.tone}}>{p.status}</span>
+          </div>
+          {p.pct>0 && <div style={{marginTop:11}}><Bar pct={p.pct} color={p.tone} h={4} /></div>}
+        </div>
+      ))}
+      <div style={{height:100}}></div>
+    </div>
+  );
+}
+
+/* ---------- 2. Fase ativa — treino do dia ---------- */
+function PhaseScreen(){
+  const WK=[["A","Peito & Tríceps","6 exercícios · ~54 min","done"],["B","Costas & Bíceps","6 exercícios · ~52 min","today"],["C","Pernas","7 exercícios · ~60 min",""],["D","Ombros & Core","5 exercícios · ~40 min",""]];
+  return (
+    <div className="scroll">
+      <HeroHeader eyebrow="Fase 2 · Hipertrofia" title="Treino do dia" right={<RoundBtn icon="calendar" />} />
+      <div style={{borderRadius:24,overflow:"hidden",position:"relative",marginTop:18,backgroundImage:`linear-gradient(rgba(0,0,0,.15),rgba(0,0,0,.85)), url(${IMG.back})`,backgroundSize:"cover",backgroundPosition:"center",padding:16,display:"flex",flexDirection:"column",justifyContent:"flex-end",height:218}}>
+        <div style={{display:"flex",gap:6,marginBottom:9}}><Chip tone="primary">Sugerido para hoje</Chip><Chip>Treino B</Chip></div>
+        <div style={{color:"#fff",fontSize:23,fontWeight:700,letterSpacing:"-.025em"}}>Costas &amp; Bíceps</div>
+        <div style={{display:"flex",alignItems:"center",gap:14,marginTop:5}}>
+          <span style={{color:"rgba(255,255,255,.85)",fontSize:12.5,display:"flex",alignItems:"center",gap:5}}>{I("dumbbell",13,"rgba(255,255,255,.85)")} 6 exercícios</span>
+          <span style={{color:"rgba(255,255,255,.85)",fontSize:12.5,display:"flex",alignItems:"center",gap:5}}>{I("clock",13,"rgba(255,255,255,.85)")} ~52 min</span>
+        </div>
+        <div style={{marginTop:14,height:46,borderRadius:15,background:LIME,color:"#0d1a00",display:"flex",alignItems:"center",justifyContent:"center",gap:8,fontWeight:800,fontSize:13.5,letterSpacing:".08em",textTransform:"uppercase",boxShadow:`0 10px 26px -8px ${LIME}`}}>{I("play",17,"#0d1a00")} Começar treino</div>
+      </div>
+      <SectionTitle action="4 treinos">Treinos da fase</SectionTitle>
+      {WK.map(([letter,name,meta,state])=>(
+        <div key={letter} className="glass" style={{padding:13,display:"flex",alignItems:"center",gap:13,marginBottom:9,borderColor:state==="today"?LIME:"var(--glass-brd)",opacity:state==="done"?.6:1}}>
+          <div style={{width:38,height:38,borderRadius:12,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-display)",fontWeight:800,fontSize:16,background:state==="today"?LIME:"var(--glass-strong)",color:state==="today"?"#0d1a00":"var(--ios-label2)"}}>{letter}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:14.5,fontWeight:600,color:"var(--ios-label)",letterSpacing:"-.01em"}}>{name}</div>
+            <div style={{fontSize:12,color:"var(--ios-label2)",marginTop:1}}>{meta}</div>
+          </div>
+          {state==="done" ? I("circle-check",18,"#34D399") : I("chevron-right",17,"var(--ios-label3)")}
+        </div>
+      ))}
+      <div style={{height:100}}></div>
+    </div>
+  );
+}
+
+/* ---------- 3. Detalhe do treino ---------- */
+function DetailScreen(){
+  const EX=[["Puxada Alta","4 × 8-10","60 kg",IMG.back],["Remada Curvada","4 × 8-10","45 kg",IMG.back],["Remada Unilateral","3 × 12","28 kg",IMG.arms],["Rosca Direta","4 × 10-12","25 kg",IMG.arms],["Rosca Martelo","3 × 12","18 kg",IMG.arms],["Rosca Concentrada","3 × 15","12 kg",IMG.chest]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:14,display:"flex",justifyContent:"space-between"}}><RoundBtn icon="chevron-left" /><RoundBtn icon="share" /></div>
+      <div style={{paddingTop:58}}>
+        <div style={{display:"flex",gap:6,marginBottom:10}}><Chip>Costas</Chip><Chip>Bíceps</Chip><Chip>Hipertrofia</Chip></div>
+        <div style={{fontSize:30,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",lineHeight:1.1}}>Costas &amp; Bíceps</div>
+        <div style={{fontSize:13.5,color:"var(--on-hero-2)",marginTop:7,lineHeight:1.4}}>Foco em amplitude e volume de puxada. Cadência 2-0-2 nas costas.</div>
+      </div>
+      <SectionTitle action="6 movimentos planejados">Lista de exercícios</SectionTitle>
+      {EX.map(([name,sets,load,img],i)=>(
+        <div key={name} className="glass" style={{padding:11,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+          <div style={{width:52,height:44,borderRadius:11,flexShrink:0,backgroundImage:`url(${img})`,backgroundSize:"cover",backgroundPosition:"center"}}></div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:14.5,fontWeight:600,color:"var(--ios-label)",letterSpacing:"-.01em"}}>{name}</div>
+            <div style={{display:"flex",gap:10,marginTop:3}}>
+              <span style={{fontSize:11.5,color:"var(--ios-label2)",display:"flex",alignItems:"center",gap:4}}>{I("repeat",12,"var(--ios-label3)")} {sets}</span>
+              <span style={{fontSize:11.5,color:"var(--ios-label2)",display:"flex",alignItems:"center",gap:4}}>{I("dumbbell",12,"var(--ios-label3)")} {load}</span>
+              <span style={{fontSize:11.5,color:"var(--ios-label2)",display:"flex",alignItems:"center",gap:4}}>{I("clock",12,"var(--ios-label3)")} 90 s</span>
+            </div>
+          </div>
+          <span style={{fontSize:12,fontWeight:700,color:"var(--ios-label3)"}}>{String(i+1).padStart(2,"0")}</span>
+        </div>
+      ))}
+      <div style={{height:130}}></div>
+    </div>
+  );
+}
+
+/* ---------- 4. Pré-início ---------- */
+function PreStartScreen(){
+  return (
+    <div className="scroll" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",paddingBottom:120}}>
+      <div className="glass" style={{width:124,height:124,borderRadius:40,display:"flex",alignItems:"center",justifyContent:"center",transform:"rotate(12deg)",borderColor:LIME,boxShadow:`0 0 44px -6px ${LIME}`}}>
+        <div style={{transform:"rotate(-12deg)"}}>{I("dumbbell",56,LIME)}</div>
+      </div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:36,fontWeight:800,color:"var(--on-hero)",letterSpacing:"-.03em",textTransform:"uppercase",lineHeight:1.05,marginTop:38}}>Costas<br/>&amp; Bíceps</div>
+      <div style={{fontSize:15,color:"var(--on-hero-2)",marginTop:12,fontWeight:500}}>6 exercícios · 22 séries · ~52 min</div>
+      <div style={{display:"flex",gap:7,marginTop:20}}><Chip>Treino B</Chip><Chip>Fase 2</Chip><Chip>Hipertrofia</Chip></div>
+      <div style={{width:"100%",height:62,borderRadius:22,background:LIME,color:"#0d1a00",display:"flex",alignItems:"center",justifyContent:"center",gap:10,fontFamily:"var(--font-display)",fontWeight:800,fontSize:17,letterSpacing:".14em",textTransform:"uppercase",boxShadow:`0 14px 40px -10px ${LIME}`,marginTop:44}}>{I("play",22,"#0d1a00")} Iniciar treino</div>
+      <div style={{fontSize:12.5,color:"var(--ios-label3)",marginTop:16}}>Último: 12 ago · volume 4,0 t</div>
+    </div>
+  );
+}
+
+/* ---------- 5. Execução — registro de séries ---------- */
+function ExecutionScreen(){
+  const DONE=[["Puxada Alta",4,4,"60 kg"]];
+  const NEXT=[["Remada Unilateral","3 × 12","28 kg"],["Rosca Direta","4 × 10-12","25 kg"],["Rosca Martelo","3 × 12","18 kg"]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:14,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="x" />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:16,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.02em"}}>Costas &amp; Bíceps</div>
+          <div style={{fontSize:12,color:"var(--on-hero-2)",display:"flex",alignItems:"center",gap:5,marginTop:2}}>{I("clock",12,"var(--on-hero-2)")} 18:24 em execução</div>
+        </div>
+        <RoundBtn icon="volume-2" /><RoundBtn icon="mic" />
+      </div>
+      <div style={{marginTop:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
+          <span style={{fontSize:12,fontWeight:700,color:"hsl(var(--primary-text))"}}>Exercício 2 de 6</span>
+          <span style={{fontSize:12,fontWeight:700,color:"var(--on-hero-2)"}}>8 de 22 séries</span>
+        </div>
+        <div style={{marginTop:8}}><Bar pct={36} h={3} /></div>
+      </div>
+
+      {DONE.map(([name,c,t,load])=>(
+        <div key={name} className="glass" style={{padding:13,marginTop:14,opacity:.6,display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:34,height:34,borderRadius:99,background:"#34D399",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("check",18,"#06281a")}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:14.5,fontWeight:600,color:"var(--ios-label)",textDecoration:"line-through"}}>{name}</div>
+            <div style={{fontSize:12,color:"var(--ios-label2)",marginTop:1}}>{c}/{t} séries · {load}</div>
+          </div>
+        </div>
+      ))}
+
+      <div className="glass" style={{marginTop:12,padding:0,overflow:"hidden",borderColor:"color-mix(in srgb, hsl(var(--primary)) 55%, transparent)",boxShadow:`inset 0 1px 0 var(--spec), 0 18px 44px -18px ${LIME}, 0 4px 12px -4px rgba(0,0,0,.4)`}}>
+        <div style={{position:"relative",padding:"14px 15px 15px",background:"color-mix(in srgb, hsl(var(--primary)) 9%, transparent)"}}>
+          <div style={{position:"absolute",left:0,top:0,bottom:0,width:3,background:LIME}}></div>
+          <div style={{display:"flex",alignItems:"center",gap:12}}>
+            <div style={{width:52,height:52,borderRadius:15,flexShrink:0,backgroundImage:`url(${IMG.back})`,backgroundSize:"cover",backgroundPosition:"center",border:`1.5px solid color-mix(in srgb, hsl(var(--primary)) 60%, transparent)`}}></div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <span style={{width:6,height:6,borderRadius:99,background:LIME,boxShadow:`0 0 0 3px color-mix(in srgb, hsl(var(--primary)) 25%, transparent)`}}></span>
+                <span style={{fontSize:10,fontWeight:800,letterSpacing:".14em",textTransform:"uppercase",color:"hsl(var(--primary-text))"}}>Em execução</span>
+              </div>
+              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.03em",marginTop:3,overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>Remada Curvada</div>
+            </div>
+            <div style={{width:34,height:34,borderRadius:11,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("pencil",15,"var(--ios-label2)")}</div>
+          </div>
+          <div style={{display:"flex",alignItems:"stretch",gap:1,marginTop:14,borderRadius:14,overflow:"hidden",background:"var(--glass-strong)"}}>
+            {[["4 × 8-10","Séries"],["45 kg","Carga"],["90 s","Descanso"]].map(([v,l])=>(
+              <div key={l} style={{flex:1,padding:"9px 6px",textAlign:"center"}}>
+                <div style={{fontFamily:"var(--font-display)",fontSize:14,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{v}</div>
+                <div style={{fontSize:8.5,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"var(--ios-label3)",marginTop:2}}>{l}</div>
+              </div>
+            ))}
+            <div style={{flex:1,padding:"9px 6px",textAlign:"center",background:"color-mix(in srgb, #34D399 16%, transparent)"}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:14,fontWeight:800,color:"#34D399",letterSpacing:"-.02em",display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>{I("trending-up",12,"#34D399")} 2,5</div>
+              <div style={{fontSize:8.5,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"var(--ios-label3)",marginTop:2}}>Evolução</div>
+            </div>
+          </div>
+        </div>
+        <div style={{padding:"13px 15px 15px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:8}}>
+            <span style={{fontSize:9.5,fontWeight:800,letterSpacing:".14em",textTransform:"uppercase",color:"var(--ios-label3)"}}>Séries</span>
+            <span style={{fontSize:11,fontWeight:700,color:"var(--ios-label2)"}}>1 de 4 concluídas</span>
+          </div>
+          <div style={{display:"flex",gap:6}}>
+            {[1,2,3,4].map(s=>{
+              const done=s===1, active=s===2;
+              return (
+                <div key={s} style={{flex:1,height:52,borderRadius:14,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,background:done?"color-mix(in srgb, #34D399 16%, transparent)":active?"color-mix(in srgb, hsl(var(--primary)) 22%, transparent)":"var(--glass-strong)",border:active?`1.5px solid ${LIME}`:"1.5px solid transparent",boxShadow:active?`0 6px 16px -8px ${LIME}`:"none"}}>
+                  {done?I("check",13,"#34D399"):<span style={{fontSize:8.5,fontWeight:800,letterSpacing:".12em",textTransform:"uppercase",color:active?"hsl(var(--primary-text))":"var(--ios-label3)"}}>S{s}</span>}
+                  <span style={{fontFamily:"var(--font-display)",fontSize:15,fontWeight:800,letterSpacing:"-.02em",color:done?"#34D399":active?"hsl(var(--primary-text))":"var(--ios-label3)"}}>{done?"10":"—"}</span>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{height:44,marginTop:13,borderRadius:15,background:LIME,color:"#0d1a00",display:"flex",alignItems:"center",justifyContent:"center",gap:8,fontWeight:800,fontSize:13,letterSpacing:".12em",textTransform:"uppercase",boxShadow:`0 12px 28px -12px ${LIME}`}}>{I("check",17,"#0d1a00")} Concluir série 2</div>
+        </div>
+      </div>
+
+      <SectionTitle>A seguir</SectionTitle>
+      {NEXT.map(([name,sets,load])=>(
+        <div key={name} className="glass" style={{padding:12,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+          <div style={{width:30,height:30,borderRadius:99,border:"1.5px solid var(--ios-label3)",flexShrink:0}}></div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:14,fontWeight:600,color:"var(--ios-label)"}}>{name}</div>
+            <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:1}}>{sets} · {load}</div>
+          </div>
+          {I("chevron-right",16,"var(--ios-label3)")}
+        </div>
+      ))}
+      <div style={{height:120}}></div>
+    </div>
+  );
+}
+
+/* ---------- 6. Descanso ---------- */
+function RestRing({ left=45, total=90, size=178 }){
+  const stroke=5, r=(size-stroke)/2-6, c=2*Math.PI*r, pct=left/total;
+  const ang=(-90+360*pct)*Math.PI/180, dx=size/2+r*Math.cos(ang), dy=size/2+r*Math.sin(ang);
+  const mm=String(Math.floor(left/60)).padStart(2,"0"), ss=String(left%60).padStart(2,"0");
+  return (
+    <div style={{position:"relative",width:size,height:size}}>
+      <svg width={size} height={size}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--glass-strong)" strokeWidth={stroke} strokeDasharray="2 9" strokeLinecap="round" />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={LIME} strokeWidth={stroke} strokeDasharray={`${c*pct} ${c}`} strokeLinecap="round" transform={`rotate(-90 ${size/2} ${size/2})`} style={{filter:`drop-shadow(0 0 10px ${LIME})`}} />
+        <circle cx={dx} cy={dy} r={6} fill={LIME} style={{filter:`drop-shadow(0 0 12px ${LIME})`}} />
+      </svg>
+      <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+        <div style={{fontSize:11,fontWeight:700,letterSpacing:".22em",textTransform:"uppercase",color:"var(--on-hero-2)"}}>Descanso</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:48,fontWeight:800,color:"var(--on-hero)",lineHeight:1.05,letterSpacing:"-.03em",display:"flex",alignItems:"baseline",gap:2,marginTop:4}}>
+          <span>{mm}</span><span style={{color:LIME}}>:</span><span>{ss}</span>
+        </div>
+        <div style={{fontSize:12.5,color:"var(--on-hero-2)",marginTop:4}}>Intervalo de {total} s</div>
+      </div>
+    </div>
+  );
+}
+function RestScreen(){
+  const SUMMARY=[["repeat","Reps","10",""],["dumbbell","Carga","45,0","kg"],["activity","PSE","7","Pesado"],["circle-check","Status","Concluída",""]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:14,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="x" />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:16,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.02em"}}>Costas &amp; Bíceps</div>
+          <div style={{fontSize:12,color:"var(--on-hero-2)",display:"flex",alignItems:"center",gap:5,marginTop:2}}>{I("clock",12,"var(--on-hero-2)")} 18:24 em execução</div>
+        </div>
+        <RoundBtn icon="music" /><RoundBtn icon="ellipsis" />
+      </div>
+      <div style={{marginTop:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
+          <span style={{fontSize:12,fontWeight:700,color:"hsl(var(--primary-text))"}}>Exercício 2 de 6 <span style={{color:"var(--on-hero-2)",fontWeight:600}}>· Remada Curvada</span></span>
+          <span style={{fontSize:12,fontWeight:700,color:"var(--on-hero-2)"}}>1/4 séries</span>
+        </div>
+        <div style={{display:"flex",gap:4,marginTop:8}}>
+          {[0,1,2,3].map(i=><div key={i} style={{flex:1,height:3,borderRadius:99,background:i<1?LIME:"var(--glass-strong)",boxShadow:i<1?`0 0 8px ${LIME}`:"none"}} />)}
+        </div>
+      </div>
+      <div style={{display:"flex",justifyContent:"center",margin:"8px 0 0"}}><RestRing left={45} total={90} /></div>
+      <div className="glass" style={{padding:"12px 6px",marginTop:6,display:"flex"}}>
+        {SUMMARY.map(([icon,label,value,unit],i)=>(
+          <div key={label} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:5,borderRight:i<3?"1px solid var(--glass-brd)":"none"}}>
+            {I(icon,17,i===3?LIME:"var(--ios-label2)")}
+            <span style={{fontSize:9.5,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"var(--ios-label3)"}}>{label}</span>
+            <span style={{fontFamily:"var(--font-display)",fontSize:i===3?13:19,fontWeight:800,color:i===3?LIME:"var(--ios-label)",letterSpacing:"-.02em",lineHeight:1.2}}>{value}</span>
+            {unit && <span style={{fontSize:10,color:"var(--ios-label3)",marginTop:-2}}>{unit}</span>}
+          </div>
+        ))}
+      </div>
+      <SectionTitle action="Prepare-se para a próxima série">A seguir</SectionTitle>
+      <div className="glass" style={{padding:12,display:"flex",alignItems:"center",gap:13}}>
+        <div style={{width:64,height:52,borderRadius:12,flexShrink:0,backgroundImage:`url(${IMG.back})`,backgroundSize:"cover",backgroundPosition:"center"}}></div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:11,fontWeight:700,color:"hsl(var(--primary-text))",letterSpacing:".04em",textTransform:"uppercase"}}>Série 2 de 4</div>
+          <div style={{fontSize:15.5,fontWeight:700,color:"var(--ios-label)",letterSpacing:"-.02em",marginTop:2}}>Remada Curvada</div>
+          <div style={{display:"flex",gap:12,marginTop:3}}>
+            <span style={{fontSize:11.5,color:"var(--ios-label2)",display:"flex",alignItems:"center",gap:4}}>{I("repeat",12,"var(--ios-label3)")} 8–10 reps</span>
+            <span style={{fontSize:11.5,color:"var(--ios-label2)",display:"flex",alignItems:"center",gap:4}}>{I("clock",12,"var(--ios-label3)")} 90 s descanso</span>
+          </div>
+        </div>
+      </div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:30,marginTop:16}}>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+          <div className="glass" style={{width:54,height:54,borderRadius:99,display:"flex",alignItems:"center",justifyContent:"center"}}>{I("skip-back",21,"var(--ios-label)")}</div>
+          <span style={{fontSize:10.5,fontWeight:600,color:"var(--ios-label3)"}}>−15 s</span>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+          <div style={{width:76,height:76,borderRadius:99,background:LIME,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 0 34px ${LIME}`}}>{I("play",30,"#0d1a00")}</div>
+          <span style={{fontSize:10.5,fontWeight:700,color:"hsl(var(--primary-text))"}}>Retomar</span>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+          <div className="glass" style={{width:54,height:54,borderRadius:99,display:"flex",alignItems:"center",justifyContent:"center"}}>{I("skip-forward",21,"var(--ios-label)")}</div>
+          <span style={{fontSize:10.5,fontWeight:600,color:"var(--ios-label3)"}}>+15 s</span>
+        </div>
+      </div>
+      <div style={{height:110}}></div>
+    </div>
+  );
+}
+
+/* ---------- 7. Feedback ---------- */
+function FeedbackScreen({aluno}){
+  const FEEL=[["smile","Leve"],["meh","Na medida"],["flame","Puxado"]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:14,display:"flex",justifyContent:"flex-end"}}><RoundBtn icon="x" /></div>
+      <div style={{paddingTop:24,textAlign:"center"}}>
+        <div style={{width:76,height:76,borderRadius:99,background:"color-mix(in srgb, hsl(var(--primary)) 20%, transparent)",border:`2px solid ${LIME}`,display:"inline-flex",alignItems:"center",justifyContent:"center",boxShadow:`0 0 34px -4px ${LIME}`}}>{I("check",36,LIME)}</div>
+        <div style={{fontSize:26,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:16}}>Como foi o treino?</div>
+        <div style={{fontSize:13.5,color:"var(--on-hero-2)",marginTop:6}}>{aluno?"Seu feedback vai para Daniel Levi.":"Seu feedback ajusta o seu plano."}</div>
+      </div>
+      <div className="glass" style={{padding:16,marginTop:22}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10}}>
+          <span style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)"}}>Intensidade percebida</span>
+          <span style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:800,color:LIME}}>7</span>
+        </div>
+        <div style={{display:"flex",gap:4}}>
+          {Array.from({length:10}).map((_,i)=>(
+            <div key={i} style={{flex:1,height:30,borderRadius:8,background:i<7?LIME:"var(--glass-strong)",opacity:i<7?(0.45+i*0.08):1,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:i<7?"#0d1a00":"var(--ios-label3)"}}>{i+1}</div>
+          ))}
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:8}}>
+          <span style={{fontSize:11,color:"var(--ios-label3)"}}>Tranquilo</span>
+          <span style={{fontSize:11,color:"var(--ios-label3)"}}>Máximo esforço</span>
+        </div>
+      </div>
+      <SectionTitle>Sensação</SectionTitle>
+      <div style={{display:"flex",gap:9}}>
+        {FEEL.map(([icon,label],i)=>(
+          <div key={label} className="glass" style={{flex:1,padding:"14px 8px",display:"flex",flexDirection:"column",alignItems:"center",gap:7,borderColor:i===2?LIME:"var(--glass-brd)"}}>
+            {I(icon,21,i===2?LIME:"var(--ios-label2)")}
+            <span style={{fontSize:12,fontWeight:700,color:i===2?"hsl(var(--primary-text))":"var(--ios-label2)"}}>{label}</span>
+          </div>
+        ))}
+      </div>
+      <SectionTitle>Observações</SectionTitle>
+      <div className="glass" style={{padding:14,minHeight:88}}>
+        <div style={{fontSize:13.5,color:"var(--ios-label3)",lineHeight:1.45}}>Ombro direito incomodou na última série de remada. Reduzi a carga.</div>
+      </div>
+      <div style={{height:150}}></div>
+    </div>
+  );
+}
+
+/* ---------- 8. Resumo ---------- */
+function SummaryScreen(){
+  const STATS=[["clock","Duração","52:14"],["trending-up","Volume","4,2 t"],["repeat","Séries","22"],["flame","Gasto","512 kcal"]];
+  const PR=[["Remada Curvada","45 kg → 47,5 kg"],["Puxada Alta","4 × 10 (antes 4 × 8)"]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:14,display:"flex",justifyContent:"space-between"}}><RoundBtn icon="chevron-left" /><RoundBtn icon="share" /></div>
+      <div style={{paddingTop:44}}>
+        <Chip tone="primary">Treino concluído</Chip>
+        <div style={{fontFamily:"var(--font-display)",fontSize:32,fontWeight:800,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:12,lineHeight:1.08,textTransform:"uppercase"}}>Costas &amp; Bíceps</div>
+        <div style={{fontSize:13.5,color:"var(--on-hero-2)",marginTop:7}}>Terça, 12 de agosto · 19:42 · Fase 2</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:22}}>
+        {STATS.map(([icon,label,value])=>(
+          <div key={label} className="glass" style={{padding:14}}>
+            <div style={{width:30,height:30,borderRadius:10,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:10}}>{I(icon,15,LIME)}</div>
+            <div style={{fontFamily:"var(--font-display)",fontSize:21,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{value}</div>
+            <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:2}}>{label}</div>
+          </div>
+        ))}
+      </div>
+      <SectionTitle>Evoluções da sessão</SectionTitle>
+      {PR.map(([name,delta])=>(
+        <div key={name} className="glass" style={{padding:13,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+          <div style={{width:34,height:34,borderRadius:11,background:"color-mix(in srgb, #34D399 18%, transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("trending-up",16,"#34D399")}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:14,fontWeight:600,color:"var(--ios-label)"}}>{name}</div>
+            <div style={{fontSize:12,color:"var(--ios-label2)",marginTop:1}}>{delta}</div>
+          </div>
+          <span style={{fontSize:10.5,fontWeight:800,textTransform:"uppercase",letterSpacing:".06em",color:"#34D399"}}>PR</span>
+        </div>
+      ))}
+      <div className="glass" style={{padding:15,marginTop:3,display:"flex",gap:12,alignItems:"flex-start"}}>
+        <div style={{width:34,height:34,borderRadius:11,background:"color-mix(in srgb, hsl(var(--primary)) 18%, transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("sparkles",16,LIME)}</div>
+        <div>
+          <div style={{fontSize:14,fontWeight:700,color:"var(--ios-label)"}}>Assistente</div>
+          <div style={{fontSize:12.5,color:"var(--ios-label2)",marginTop:3,lineHeight:1.45}}>Bom volume de puxada. Na próxima sessão suba 2,5 kg na remada e mantenha o descanso em 90 s.</div>
+        </div>
+      </div>
+      <div style={{height:140}}></div>
+    </div>
+  );
+}
+
+/* ---------- 9. Compartilhar ---------- */
+function ShareScreen(){
+  const FORMATS=[["Story","9:16",true],["Post","1:1",false],["Card","16:9",false]];
+  const DEST=[["instagram","Stories","Instagram"],["message-circle","Conversa","WhatsApp"],["users","Feed","Eleva Pro"],["download","Salvar","Galeria"]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:14,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1}}>
+          <div style={{fontSize:11.5,fontWeight:700,color:"var(--on-hero-2)",letterSpacing:".08em",textTransform:"uppercase"}}>Costas &amp; Bíceps</div>
+          <div style={{fontSize:19,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:1}}>Compartilhar</div>
+        </div>
+        <RoundBtn icon="sliders-horizontal" />
+      </div>
+
+      <div className="glass" style={{marginTop:18,padding:10,borderRadius:26}}>
+        <div style={{position:"relative",borderRadius:18,overflow:"hidden",aspectRatio:"9 / 16",backgroundImage:`url(${IMG.back})`,backgroundSize:"cover",backgroundPosition:"center 30%"}}>
+          <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg, rgba(0,0,0,.25) 0%, rgba(0,0,0,.15) 38%, rgba(0,0,0,.82) 100%)"}}></div>
+          <div style={{position:"absolute",top:14,left:14,right:14,display:"flex",alignItems:"center",gap:8}}>
+            <span style={{padding:"5px 10px",borderRadius:99,background:LIME,color:"#0d1a00",fontSize:9,fontWeight:800,letterSpacing:".12em",textTransform:"uppercase"}}>Treino concluído</span>
+            <span style={{flex:1}}></span>
+            <span style={{fontFamily:"var(--font-display)",fontSize:11,fontWeight:800,letterSpacing:".16em",textTransform:"uppercase",color:"#fff",opacity:.9}}>Eleva Pro</span>
+          </div>
+          <div style={{position:"absolute",left:16,right:16,bottom:16}}>
+            <div style={{fontFamily:"var(--font-display)",fontSize:26,fontWeight:800,color:"#fff",letterSpacing:"-.03em",lineHeight:1.05,textTransform:"uppercase"}}>Costas<br/>&amp; Bíceps</div>
+            <div style={{fontSize:11.5,color:"rgba(255,255,255,.78)",marginTop:6}}>Terça, 12 de agosto · Fase 2</div>
+            <div style={{display:"flex",gap:1,marginTop:12,borderRadius:14,overflow:"hidden",background:"rgba(255,255,255,.14)",backdropFilter:"blur(12px)"}}>
+              {[["52:14","Duração"],["4,2 t","Volume"],["22","Séries"],["2","PRs"]].map(([v,l])=>(
+                <div key={l} style={{flex:1,padding:"9px 4px",textAlign:"center"}}>
+                  <div style={{fontFamily:"var(--font-display)",fontSize:14,fontWeight:800,color:"#fff",letterSpacing:"-.02em"}}>{v}</div>
+                  <div style={{fontSize:8,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"rgba(255,255,255,.65)",marginTop:2}}>{l}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:7,marginTop:10}}>
+          {FORMATS.map(([n,r,on])=>(
+            <div key={n} style={{flex:1,padding:"9px 6px",borderRadius:13,textAlign:"center",background:on?"color-mix(in srgb, hsl(var(--primary)) 20%, transparent)":"var(--glass-strong)",border:on?`1.5px solid ${LIME}`:"1.5px solid transparent"}}>
+              <div style={{fontSize:12,fontWeight:800,color:on?"hsl(var(--primary-text))":"var(--ios-label)"}}>{n}</div>
+              <div style={{fontSize:9,fontWeight:700,letterSpacing:".1em",color:"var(--ios-label3)",marginTop:1}}>{r}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <SectionTitle>Incluir no card</SectionTitle>
+      <div className="glass" style={{padding:"4px 14px"}}>
+        {[["Recordes pessoais",true],["Foto de fundo do treino",true]].map(([t,on],i)=>(
+          <div key={t} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderTop:i?"1px solid var(--glass-brd)":"none"}}>
+            <span style={{flex:1,fontSize:13.5,fontWeight:600,color:"var(--ios-label)"}}>{t}</span>
+            <div style={{width:44,height:26,borderRadius:99,background:on?LIME:"var(--glass-strong)",padding:3,display:"flex",justifyContent:on?"flex-end":"flex-start",flexShrink:0}}><div style={{width:20,height:20,borderRadius:99,background:on?"#fff":"var(--ios-label3)"}}></div></div>
+          </div>
+        ))}
+      </div>
+
+      <SectionTitle>Enviar para</SectionTitle>
+      <div style={{display:"flex",gap:9}}>
+        {DEST.map(([ic,t,s])=>(
+          <div key={s} className="glass" style={{flex:1,padding:"13px 6px",textAlign:"center"}}>
+            <div style={{width:36,height:36,borderRadius:12,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 8px"}}>{I(ic,17,LIME)}</div>
+            <div style={{fontSize:11,fontWeight:700,color:"var(--ios-label)"}}>{t}</div>
+            <div style={{fontSize:9,color:"var(--ios-label3)",marginTop:1}}>{s}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{height:150}}></div>
+    </div>
+  );
+}
+
+function TabBar({active}){return <KitTabBar active={active}/>;}
+
+function Phone(p){return <ThemePair><PhoneOne {...p}/></ThemePair>;}
+function PhoneOne({ overlay, step, label, image, active="workouts", cta, ctaIcon="play", children }){
+  return (
+    <div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+        <span style={{width:20,height:20,borderRadius:99,background:"hsl(var(--primary))",color:"#0d1a00",fontSize:11,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{step}</span>
+        <span style={{color:"hsl(var(--muted-foreground))",fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:".1em"}}>{label}</span>
+      </div>
+      <div className="phone">
+        <div className="hero" style={{backgroundImage:`url(${image})`}}></div>
+        <div className="island"></div>
+        <StatusBar/>
+        {children}
+        {cta && <div className="cta">{I(ctaIcon,17,"#0d1a00")} {cta}</div>}
+        <TabBar active={active}/>
+        {overlay}
+        <div className="homebar"></div>
+      </div>
+    </div>
+  );
+}
+
+function PreStartV2(){
+  return (
+    <div className="scroll" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",paddingBottom:120}}>
+      <div className="glass" style={{width:124,height:124,borderRadius:40,display:"flex",alignItems:"center",justifyContent:"center",transform:"rotate(12deg)",borderColor:LIME,boxShadow:`0 0 44px -6px ${LIME}`}}>
+        <div style={{transform:"rotate(-12deg)"}}>{I("dumbbell",56,LIME)}</div>
+      </div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:36,fontWeight:800,color:"var(--on-hero)",letterSpacing:"-.03em",textTransform:"uppercase",lineHeight:1.05,marginTop:24}}>Costas<br/>&amp; Bíceps</div>
+      <div style={{fontSize:15,color:"var(--on-hero-2)",marginTop:12,fontWeight:500}}>6 exercícios · 22 séries · ~52 min</div>
+      <div style={{display:"flex",gap:7,marginTop:20}}><Chip>Treino B</Chip><Chip>Fase 2</Chip><Chip>Hipertrofia</Chip></div>
+      <div style={{width:"100%",marginTop:30}}><ProntidaoAviso faixa/></div>
+      <div style={{width:"100%",height:62,borderRadius:22,background:LIME,color:"#0d1a00",display:"flex",alignItems:"center",justifyContent:"center",gap:10,fontFamily:"var(--font-display)",fontWeight:800,fontSize:17,letterSpacing:".14em",textTransform:"uppercase",boxShadow:`0 14px 40px -10px ${LIME}`,marginTop:6}}>{I("play",22,"#0d1a00")} Iniciar treino</div>
+      <div style={{fontSize:12.5,color:"var(--ios-label3)",marginTop:16}}>Último: 12 ago · volume 4,0 t</div>
+    </div>
+  );
+}
+
+function ExecutionV2({pr}){
+  const DONE=[["Puxada Alta",4,4,"60 kg"]];
+  const NEXT=[["Remada Unilateral","3 × 12","28 kg"],["Rosca Direta","4 × 10-12","25 kg"],["Rosca Martelo","3 × 12","18 kg"]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:14,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="x" />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:16,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.02em"}}>Costas &amp; Bíceps</div>
+          <div style={{fontSize:12,color:"var(--on-hero-2)",display:"flex",alignItems:"center",gap:5,marginTop:2}}>{I("clock",12,"var(--on-hero-2)")} 18:24 em execução</div>
+        </div>
+        <RoundBtn icon="volume-2" /><RoundBtn icon="mic" />
+      </div>
+      <div style={{marginTop:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
+          <span style={{fontSize:12,fontWeight:700,color:"hsl(var(--primary-text))"}}>Exercício 2 de 6</span>
+          <span style={{fontSize:12,fontWeight:700,color:"var(--on-hero-2)"}}>8 de 22 séries</span>
+        </div>
+        <div style={{marginTop:8}}><Bar pct={36} h={3} /></div>
+      </div>
+
+      {DONE.map(([name,c,t,load])=>(
+        <div key={name} className="glass" style={{padding:13,marginTop:14,opacity:.6,display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:34,height:34,borderRadius:99,background:"#34D399",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("check",18,"#06281a")}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:14.5,fontWeight:600,color:"var(--ios-label)",textDecoration:"line-through"}}>{name}</div>
+            <div style={{fontSize:12,color:"var(--ios-label2)",marginTop:1}}>{c}/{t} séries · {load}</div>
+          </div>
+        </div>
+      ))}
+
+      <div className="glass" style={{marginTop:12,padding:0,overflow:"hidden",borderColor:"color-mix(in srgb, hsl(var(--primary)) 55%, transparent)",boxShadow:`inset 0 1px 0 var(--spec), 0 18px 44px -18px ${LIME}, 0 4px 12px -4px rgba(0,0,0,.4)`}}>
+        <div style={{position:"relative",padding:"14px 15px 15px",background:"color-mix(in srgb, hsl(var(--primary)) 9%, transparent)"}}>
+          <div style={{position:"absolute",left:0,top:0,bottom:0,width:3,background:LIME}}></div>
+          <div style={{display:"flex",alignItems:"center",gap:12}}>
+            <div style={{width:52,height:52,borderRadius:15,flexShrink:0,backgroundImage:`url(${IMG.back})`,backgroundSize:"cover",backgroundPosition:"center",border:`1.5px solid color-mix(in srgb, hsl(var(--primary)) 60%, transparent)`}}></div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <span style={{width:6,height:6,borderRadius:99,background:LIME,boxShadow:`0 0 0 3px color-mix(in srgb, hsl(var(--primary)) 25%, transparent)`}}></span>
+                <span style={{fontSize:10,fontWeight:800,letterSpacing:".14em",textTransform:"uppercase",color:"hsl(var(--primary-text))"}}>Em execução</span>
+              </div>
+              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.03em",marginTop:3,overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>Remada Curvada</div>
+            </div>
+            <div style={{width:34,height:34,borderRadius:11,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("ellipsis",16,"var(--ios-label2)")}</div>
+          </div>
+          <div style={{display:"flex",alignItems:"stretch",gap:1,marginTop:14,borderRadius:14,overflow:"hidden",background:"var(--glass-strong)"}}>
+            {[["4 × 8-10","Séries"],["45 kg","Carga"],["90 s","Descanso"]].map(([v,l])=>(
+              <div key={l} style={{flex:1,padding:"9px 6px",textAlign:"center"}}>
+                <div style={{fontFamily:"var(--font-display)",fontSize:14,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{v}</div>
+                <div style={{fontSize:8.5,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"var(--ios-label3)",marginTop:2}}>{l}</div>
+              </div>
+            ))}
+            <div style={{flex:1,padding:"9px 6px",textAlign:"center",background:"color-mix(in srgb, #34D399 16%, transparent)"}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:14,fontWeight:800,color:"#34D399",letterSpacing:"-.02em",display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>{I("trending-up",12,"#34D399")} 2,5</div>
+              <div style={{fontSize:8.5,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"var(--ios-label3)",marginTop:2}}>Evolução</div>
+            </div>
+          </div>
+        </div>
+        <div style={{padding:"13px 15px 15px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:8}}>
+            <span style={{fontSize:9.5,fontWeight:800,letterSpacing:".14em",textTransform:"uppercase",color:"var(--ios-label3)"}}>Séries</span>
+            <span style={{fontSize:11,fontWeight:700,color:"var(--ios-label2)"}}>{pr?"2 de 4 concluídas":"1 de 4 concluídas"}</span>
+          </div>
+          <div style={{display:"flex",gap:6}}>
+            {[1,2,3,4].map(s=>{
+              const done=s===1||(pr&&s===2), active=pr?s===3:s===2;
+              return (
+                <div key={s} style={{flex:1,height:52,borderRadius:14,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,background:done?"color-mix(in srgb, #34D399 16%, transparent)":active?"color-mix(in srgb, hsl(var(--primary)) 22%, transparent)":"var(--glass-strong)",border:active?`1.5px solid ${LIME}`:"1.5px solid transparent",boxShadow:active?`0 6px 16px -8px ${LIME}`:"none"}}>
+                  {done?I("check",13,"#34D399"):<span style={{fontSize:8.5,fontWeight:800,letterSpacing:".12em",textTransform:"uppercase",color:active?"hsl(var(--primary-text))":"var(--ios-label3)"}}>S{s}</span>}
+                  <span style={{fontFamily:"var(--font-display)",fontSize:15,fontWeight:800,letterSpacing:"-.02em",color:done?"#34D399":active?"hsl(var(--primary-text))":"var(--ios-label3)"}}>{done?"10":(active&&!pr?"10?":"—")}</span>
+                </div>
+              );
+            })}
+          </div>
+          {pr&&<RecordeSelo>Recorde: 10 × 45 kg</RecordeSelo>}
+          <div style={{height:44,marginTop:13,borderRadius:15,background:LIME,color:"#0d1a00",display:"flex",alignItems:"center",justifyContent:"center",gap:8,fontWeight:800,fontSize:13,letterSpacing:".12em",textTransform:"uppercase",boxShadow:`0 12px 28px -12px ${LIME}`}}>{I("check",17,"#0d1a00")} {pr?"Concluir série 3":"Concluir série 2"}</div>
+        </div>
+      </div>
+
+      <SectionTitle>A seguir</SectionTitle>
+      {NEXT.map(([name,sets,load])=>(
+        <div key={name} className="glass" style={{padding:12,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+          <div style={{width:30,height:30,borderRadius:99,border:"1.5px solid var(--ios-label3)",flexShrink:0}}></div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:14,fontWeight:600,color:"var(--ios-label)"}}>{name}</div>
+            <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:1}}>{sets} · {load}</div>
+          </div>
+          {I("chevron-right",16,"var(--ios-label3)")}
+        </div>
+      ))}
+      <div style={{height:120}}></div>
+    </div>
+  );
+}
+
+function DetailV2(){
+  const EX=[["Puxada Alta","4 × 8-10","60 kg",IMG.back],["Remada Curvada","4 × 8-10","45 kg",IMG.back],["Remada Unilateral","3 × 12","28 kg",IMG.arms],["Rosca Direta","4 × 10-12","25 kg",IMG.arms],["Rosca Martelo","3 × 12","18 kg",IMG.arms],["Rosca Concentrada","3 × 15","12 kg",IMG.chest]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:14,display:"flex",justifyContent:"space-between"}}><RoundBtn icon="chevron-left" /><RoundBtn icon="share" /></div>
+      <div style={{paddingTop:58}}>
+        <div style={{display:"flex",gap:6,marginBottom:10}}><Chip>Costas</Chip><Chip>Bíceps</Chip><Chip>Hipertrofia</Chip></div>
+        <div style={{fontSize:30,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",lineHeight:1.1}}>Costas &amp; Bíceps</div>
+        <div style={{fontSize:13.5,color:"var(--on-hero-2)",marginTop:7,lineHeight:1.4}}>Foco em amplitude e volume de puxada. Cadência 2-0-2 nas costas.</div>
+      </div>
+      <SectionTitle action="6 movimentos planejados">Lista de exercícios</SectionTitle>
+      {EX.map(([name,sets,load,img],i)=>(
+        <div key={name} className="glass" style={{padding:11,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+          <div style={{width:52,height:44,borderRadius:11,flexShrink:0,backgroundImage:`url(${img})`,backgroundSize:"cover",backgroundPosition:"center"}}></div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:14.5,fontWeight:600,color:"var(--ios-label)",letterSpacing:"-.01em"}}>{name}</div>
+            <div style={{display:"flex",gap:10,marginTop:3}}>
+              <span style={{fontSize:11.5,color:"var(--ios-label2)",display:"flex",alignItems:"center",gap:4}}>{I("repeat",12,"var(--ios-label3)")} {sets}</span>
+              <span style={{fontSize:11.5,color:"var(--ios-label2)",display:"flex",alignItems:"center",gap:4}}>{I("dumbbell",12,"var(--ios-label3)")} {load}</span>
+              <span style={{fontSize:11.5,color:"var(--ios-label2)",display:"flex",alignItems:"center",gap:4}}>{I("clock",12,"var(--ios-label3)")} 90 s</span>
+            </div>
+          </div>
+          <div style={{width:30,height:30,borderRadius:99,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center"}}>{I("ellipsis",16,"var(--ios-label2)")}</div>
+        </div>
+      ))}
+      <div style={{height:130}}></div>
+    </div>
+  );
+}
+
+function SummaryV2(){
+  const STATS=[["clock","Duração","52:14"],["trending-up","Volume","4,2 t"],["repeat","Séries","22"],["flame","Gasto","512 kcal"]];
+  const PR=[["Remada Curvada","45 kg → 47,5 kg"],["Puxada Alta","4 × 10 (antes 4 × 8)"]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:14,display:"flex",justifyContent:"space-between"}}><RoundBtn icon="chevron-left" /><RoundBtn icon="share" /></div>
+      <div style={{paddingTop:44}}>
+        <Chip tone="primary">Treino concluído</Chip>
+        <div style={{fontFamily:"var(--font-display)",fontSize:32,fontWeight:800,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:12,lineHeight:1.08,textTransform:"uppercase"}}>Costas &amp; Bíceps</div>
+        <div style={{fontSize:13.5,color:"var(--on-hero-2)",marginTop:7}}>Terça, 12 de agosto · 19:42 · Fase 2</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:22}}>
+        {STATS.map(([icon,label,value])=>(
+          <div key={label} className="glass" style={{padding:14}}>
+            <div style={{width:30,height:30,borderRadius:10,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:10}}>{I(icon,15,LIME)}</div>
+            <div style={{fontFamily:"var(--font-display)",fontSize:21,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{value}</div>
+            <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:2}}>{label}</div>
+          </div>
+        ))}
+      </div>
+      <SectionTitle action="volume por músculo">Músculos de hoje</SectionTitle>
+      <div className="glass" style={{padding:14}}><UDMapa compact vol={{costas:1,biceps:.75,ombros:.3,lombar:.35}} legend={[["Costas","12 séries",100],["Bíceps","10 séries",83],["Lombar","4 séries",33],["Ombros (posterior)","3 séries",25]]}/></div>
+      <SectionTitle>Evoluções da sessão</SectionTitle>
+      {PR.map(([name,delta])=>(
+        <div key={name} className="glass" style={{padding:13,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+          <div style={{width:34,height:34,borderRadius:11,background:"color-mix(in srgb, #34D399 18%, transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("trending-up",16,"#34D399")}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:14,fontWeight:600,color:"var(--ios-label)"}}>{name}</div>
+            <div style={{fontSize:12,color:"var(--ios-label2)",marginTop:1}}>{delta}</div>
+          </div>
+          <span style={{fontSize:10.5,fontWeight:800,textTransform:"uppercase",letterSpacing:".06em",color:"#34D399"}}>PR</span>
+        </div>
+      ))}
+      <div className="glass" style={{padding:15,marginTop:3,display:"flex",gap:12,alignItems:"flex-start"}}>
+        <div style={{width:34,height:34,borderRadius:11,background:"color-mix(in srgb, hsl(var(--primary)) 18%, transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("sparkles",16,LIME)}</div>
+        <div>
+          <div style={{fontSize:14,fontWeight:700,color:"var(--ios-label)"}}>Assistente</div>
+          <div style={{fontSize:12.5,color:"var(--ios-label2)",marginTop:3,lineHeight:1.45}}>Bom volume de puxada. Na próxima sessão suba 2,5 kg na remada e mantenha o descanso em 90 s.</div>
+        </div>
+      </div>
+      <div style={{height:140}}></div>
+    </div>
+  );
+}
+
+function App(){
+  const P=(c,img,o,extra={})=><PhoneOne step="·" label="" image={img} overlay={o} {...extra}>{c}</PhoneOne>;
+  return <UDPage title="Uso diário · Treino" sub="Marina · 4 treinos de 45 min em casa. Atual (kit de hoje) × Proposta, escuro e claro.">
+    <Compare id="3c" title="Pré-início · Prontidão baixa" nota="O mesmo aviso do Início, como faixa, para quem entra direto pelo treino." atual={P(<PreStartScreen/>,IMG.arms)} proposta={P(<PreStartV2/>,IMG.arms)}/>
+    <Compare id="6a" title="Execução · antes do recorde" nota="Série 2 em andamento; o “…” do exercício abre Trocar exercício." atual={P(<ExecutionScreen/>,IMG.back)} proposta={P(<ExecutionV2/>,IMG.back)}/>
+    <Compare id="6b" title="Execução · depois do recorde" nota="Ao bater recorde, um selo de vidro com brilho lime aparece na própria série, com rótulo." proposta={P(<ExecutionV2 pr/>,IMG.back)}/>
+    <Compare id="6c" title="Descanso · tela bloqueada" novo nota="Notificação com exercício, timer, próxima série, +15 s e Pular." proposta={<TelaBloqueada/>}/>
+    <Compare id="6d" title="Detalhe do treino · Trocar exercício" novo nota="“…” em cada exercício; a folha oferece só hoje, sempre ou recomendar menos, com 3 alternativas pelo equipamento." atual={P(<DetailScreen/>,IMG.back,null,{cta:"Iniciar treino"})} proposta={P(<DetailV2/>,IMG.back,<TrocarSheet/>)}/>
+    <Compare id="7a" title="Resumo do treino · mapa muscular" nota="Silhueta frente e costas com os músculos de hoje em lime (intensidade pelo volume) e legenda em séries." atual={P(<SummaryScreen/>,IMG.legs,null,{cta:"Compartilhar",ctaIcon:"share"})} proposta={P(<SummaryV2/>,IMG.legs,null,{cta:"Compartilhar",ctaIcon:"share"})}/>
+  </UDPage>;
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+setTimeout(()=>window.lucide?.createIcons(),80);
+</script></body></html>

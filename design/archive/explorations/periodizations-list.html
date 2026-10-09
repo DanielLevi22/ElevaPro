@@ -1,0 +1,92 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js"></script>
+<style>*{box-sizing:border-box}body{margin:0;background:#F5F3EE;color:#141311;font-family:var(--font-sans)}</style>
+</head><body><div id="root"></div>
+<script type="text/babel" data-presets="react">
+const I = (name, size=18, color) => <i data-lucide={name} style={{width:size,height:size,display:"block",color}}></i>;
+
+function Nav(){
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "32px 32px 20px", borderBottom: "1px solid #E7E3D8" }}>
+      <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 20 }}>Eleva Pro</div>
+      <div style={{ display: "flex", gap: 28, fontSize: 13, fontWeight: 600, color: "#8A867B" }}>
+        <span>Briefing</span><span>Alunos</span><span style={{color:"#141311"}}>Treinos</span><span>Nutrição</span><span>Coach IA</span>
+      </div>
+    </div>
+  );
+}
+
+const STEPS = [["1","Periodização","Ciclo macro"],["2","Fase","Bloco temático"],["3","Treino","Ficha A, B, C..."],["4","Exercícios","Séries e reps"]];
+
+const PERIODIZATIONS = [
+  { name: "Hipertrofia — Ciclo 2026", student: "João Silva", objective: "Hipertrofia", status: "active", phases: 3, dates: "01 jun → 30 set" },
+  { name: "Recomposição Corporal", student: "Ana Costa", objective: "Recomposição", status: "active", phases: 2, dates: "15 jul → 15 out" },
+  { name: "Base de Força", student: "Rafael Nunes", objective: "Força", status: "planned", phases: 1, dates: "01 set → —" },
+  { name: "Pré-temporada", student: "Beatriz Souza", objective: "Condicionamento", status: "completed", phases: 4, dates: "01 jan → 30 abr" },
+];
+
+const STATUS = { active: ["Ativa", "#3D6B3A", "#EAF2E4"], planned: ["Planejada", "#2A5C8C", "#E6EEF5"], completed: ["Concluída", "#8A867B", "#EFEBDD"] };
+
+function App(){
+  const [filter, setFilter] = React.useState("all");
+  React.useEffect(()=>{ window.lucide?.createIcons(); },[filter]);
+  const filtered = filter === "all" ? PERIODIZATIONS : PERIODIZATIONS.filter(p => p.status === filter);
+  return (
+    <div>
+      <Nav/>
+      <div style={{ maxWidth: 980, margin: "0 auto", padding: "40px 32px 100px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
+          <div>
+            <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 32, letterSpacing: "-0.02em" }}>Periodizações</div>
+            <div style={{ fontSize: 14, color: "#8A867B", marginTop: 4 }}>Planeje ciclos de treino completos para seus alunos</div>
+          </div>
+          <button style={{ display: "flex", alignItems: "center", gap: 8, background: "#141311", color: "#F5F3EE", border: "none", borderRadius: 4, padding: "12px 20px", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>{I("plus",15)}Nova Periodização</button>
+        </div>
+
+        {/* Construction flow — always visible as a compact strip, not hidden in an empty state */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 32, padding: "14px 18px", background: "#fff", border: "1px solid #E7E3D8", borderRadius: 6 }}>
+          {STEPS.map(([n, label, desc], i) => (
+            <React.Fragment key={n}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 22, height: 22, borderRadius: "50%", background: i===0?"#141311":"#EFEBDD", color: i===0?"#F5F3EE":"#8A867B", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700 }}>{n}</div>
+                <div><div style={{ fontSize: 12, fontWeight: 700 }}>{label}</div></div>
+              </div>
+              {i < STEPS.length - 1 && <div style={{ color: "#C4BFAF" }}>{I("chevron-right",14)}</div>}
+            </React.Fragment>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+          {[["all","Todas"],["active","Ativas"],["planned","Planejadas"],["completed","Concluídas"]].map(([k,l])=>(
+            <button key={k} onClick={()=>setFilter(k)} style={{ padding: "8px 16px", borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: "pointer", border: filter===k?"1px solid #141311":"1px solid #E7E3D8", background: filter===k?"#141311":"#fff", color: filter===k?"#F5F3EE":"#4A4740" }}>{l}</button>
+          ))}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 14 }}>
+          {filtered.map(p => {
+            const [label, color, bg] = STATUS[p.status];
+            return (
+              <a key={p.name} href="periodization-detail.html" style={{ display:"block", background: "#fff", border: "1px solid #E7E3D8", borderRadius: 6, padding: 22, textDecoration: "none", color: "inherit" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+                  <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 17 }}>{p.name}</div>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 999, background: bg, color: color }}>{label}</span>
+                </div>
+                <div style={{ fontSize: 13, color: "#8A867B", marginBottom: 14 }}>{p.student} · {p.objective}</div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#8A867B", borderTop: "1px solid #EFEBDD", paddingTop: 12 }}>
+                  <span>{p.phases} {p.phases === 1 ? "fase" : "fases"} · {p.dates}</span>
+                  <span style={{ color: "#141311", fontWeight: 700 }}>Ver detalhes →</span>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script></body></html>

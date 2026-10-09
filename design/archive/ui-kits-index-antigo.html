@@ -1,0 +1,145 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>*{box-sizing:border-box}body{margin:0;padding:20px;background:hsl(var(--background));font-family:var(--font-sans)}
+.phone{width:380px;height:780px;border-radius:44px;background:hsl(var(--background));border:8px solid #000;box-shadow:0 40px 80px -20px rgba(0,0,0,0.8);overflow:hidden;position:relative;display:flex;flex-direction:column}
+.notch{height:28px;display:flex;justify-content:center;align-items:flex-start;flex-shrink:0}
+.notch div{width:110px;height:18px;background:#000;border-radius:0 0 16px 16px}
+.tabbar{height:78px;display:flex;justify-content:space-around;align-items:center;border-top:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);flex-shrink:0}
+.tabitem{display:flex;flex-direction:column;align-items:center;gap:4px;color:#52525B;font-size:9px;font-weight:700;text-transform:uppercase}
+.tabitem.active{color:hsl(var(--primary))}
+.scroll{flex:1;overflow:auto;padding:20px}
+</style>
+</head><body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { Card, Badge, StatCard, ProgressCard, Avatar, Button } = window.ElevaPro_ea5fe8;
+const I = (name, size=20, color) => <i data-lucide={name} style={{width:size,height:size,display:"block",color}}></i>;
+
+function ThemeToggle({ theme, setTheme }) {
+  return (
+    <button onClick={() => setTheme(theme === "light" ? "dark" : "light")} style={{ display: "flex", alignItems: "center", gap: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--surface))", borderRadius: 999, padding: "8px 16px", cursor: "pointer", color: "hsl(var(--foreground))", fontSize: 12, fontWeight: 700, marginBottom: 16 }}>
+      {I(theme === "light" ? "moon" : "sun", 14)} {theme === "light" ? "Escuro" : "Claro"}
+    </button>
+  );
+}
+
+function RowCard({icon, iconBg, iconColor, title, subtitle}) {
+  return (
+    <div style={{borderRadius:24,padding:20,display:"flex",alignItems:"center",justifyContent:"space-between",border:"1px solid hsl(var(--border))",background:"hsl(var(--surface))",marginBottom:14}}>
+      <div style={{display:"flex",alignItems:"center",gap:14}}>
+        <div style={{background:iconBg,padding:12,borderRadius:14,border:`1px solid ${iconColor}33`}}>{I(icon,22,iconColor)}</div>
+        <div>
+          <div style={{color:"hsl(var(--foreground))",fontFamily:"var(--font-display)",fontWeight:800,fontSize:15}}>{title}</div>
+          <div style={{color:"hsl(var(--muted-foreground))",fontSize:9,fontWeight:700,letterSpacing:"0.15em",textTransform:"uppercase"}}>{subtitle}</div>
+        </div>
+      </div>
+      {I("chevron-right",18,"hsl(var(--muted-foreground))")}
+    </div>
+  );
+}
+
+function StudentHome() {
+  return (
+    <div className="scroll">
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24}}>
+        <div>
+          <div style={{color:"hsl(var(--muted-foreground))",fontSize:12,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.05em"}}>Terça-feira, 12 de agosto</div>
+          <div style={{color:"hsl(var(--foreground))",fontFamily:"var(--font-display)",fontSize:30,fontWeight:800,marginTop:4}}>Olá, João</div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{background:"hsl(var(--primary)/0.15)",border:"1px solid hsl(var(--primary)/0.3)",borderRadius:999,padding:"8px 12px",display:"flex",alignItems:"center",gap:6}}>
+            {I("flame",16,"hsl(var(--primary))")}
+            <span style={{color:"hsl(var(--primary))",fontWeight:800,fontSize:14}}>12</span>
+          </div>
+          <Avatar name="João" online />
+        </div>
+      </div>
+
+      <div style={{color:"hsl(var(--muted-foreground))",fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.2em",marginBottom:10}}>Minha Jornada</div>
+      <div style={{borderRadius:24,overflow:"hidden",marginBottom:16,position:"relative",height:170,backgroundImage:"linear-gradient(rgba(0,0,0,0.2),rgba(0,0,0,0.9)), url(../../foundations/assets/imagery/workout-back.jpg)",backgroundSize:"cover",backgroundPosition:"center",padding:20,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+        <Badge tone="primary" style={{alignSelf:"flex-start",marginBottom:8}}>Treino do Dia</Badge>
+        <div style={{color:"#fff",fontFamily:"var(--font-display)",fontWeight:800,fontSize:22}}>Costas & Bíceps</div>
+        <div style={{color:"#E4E4E7",fontSize:12}}>Geral • Meta de Hoje</div>
+      </div>
+
+      <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:20}}>
+        <ProgressCard title="Dieta & Macronutrientes" current={2} target={4} unit="ref." color="success" />
+        <ProgressCard title="Meta de Treino" current={0} target={1} unit="treino" color="warning" />
+      </div>
+
+      <RowCard icon="gauge" iconBg="rgba(59,130,246,0.1)" iconColor="#3B82F6" title="Sessão de Cardio" subtitle="Correr, Pedalar, Caminhar" />
+      <RowCard icon="trophy" iconBg="rgba(234,179,8,0.1)" iconColor="#EAB308" title="Ranking de Elite" subtitle="Veja sua posição" />
+      <RowCard icon="scan-line" iconBg="hsl(var(--primary)/0.1)" iconColor="hsl(var(--primary))" title="Avaliação IA" subtitle="Escaneamento Corporal" />
+
+      <div style={{color:"hsl(var(--muted-foreground))",fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.2em",margin:"20px 0 10px"}}>Atividade & Saúde</div>
+      <div style={{display:"flex",gap:12}}>
+        <div style={{flex:1}}><StatCard label="Passos" value="8,412" trend="up" change="84%" icon={I("footprints",18)} /></div>
+        <div style={{flex:1}}><StatCard label="Calorias" value="512" trend="up" change="Kcal" icon={I("flame",18)} /></div>
+      </div>
+    </div>
+  );
+}
+
+function SpecialistHome() {
+  return (
+    <div className="scroll">
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24}}>
+        <div>
+          <div style={{color:"hsl(var(--muted-foreground))",fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.2em"}}>Central de Comando</div>
+          <div style={{color:"hsl(var(--foreground))",fontFamily:"var(--font-display)",fontSize:32,fontWeight:800}}>Dashboard</div>
+        </div>
+        <Avatar name="Especialista" />
+      </div>
+      <div style={{display:"flex",gap:14,marginBottom:14}}>
+        <div style={{flex:1,background:"hsl(var(--surface))",border:"1px solid hsl(var(--border))",borderRadius:24,padding:20,height:150,display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
+          <div style={{background:"hsl(var(--overlay-08))",padding:10,borderRadius:12,alignSelf:"flex-start"}}>{I("users",18,"hsl(var(--secondary))")}</div>
+          <div><div style={{color:"hsl(var(--foreground))",fontFamily:"var(--font-display)",fontSize:32,fontWeight:900}}>24</div><div style={{color:"hsl(var(--muted-foreground))",fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.15em"}}>Alunos Ativos</div></div>
+        </div>
+        <div style={{flex:1,background:"hsl(var(--surface))",border:"1px solid hsl(var(--border))",borderRadius:24,padding:20,height:150,display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
+          <div style={{background:"hsl(var(--overlay-08))",padding:10,borderRadius:12,alignSelf:"flex-start"}}>{I("dumbbell",18,"hsl(var(--primary-text))")}</div>
+          <div><div style={{color:"hsl(var(--foreground))",fontFamily:"var(--font-display)",fontSize:32,fontWeight:900}}>12</div><div style={{color:"hsl(var(--muted-foreground))",fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.15em"}}>Modelos</div></div>
+        </div>
+      </div>
+      <RowCard icon="trophy" iconBg="rgba(234,179,8,0.1)" iconColor="#EAB308" title="Ranking de Elite 🏆" subtitle="Competição Semanal" />
+      <Button variant="primary" fullWidth icon={I("user-plus",18)} style={{marginTop:6,height:56}}>Novo Aluno</Button>
+    </div>
+  );
+}
+
+function Phone({ title, active, children }) {
+  return (
+    <div>
+      <div style={{color:"hsl(var(--muted-foreground))",fontSize:12,fontWeight:700,marginBottom:10,textTransform:"uppercase",letterSpacing:"0.1em"}}>{title}</div>
+      <div className="phone">
+        <div className="notch"><div></div></div>
+        {children}
+        <div className="tabbar">
+          {[["home","Início",active==="home"],["dumbbell","Treinos",active==="workouts"],["utensils","Nutrição",false],["trophy","Ranking",false],["user","Perfil",false]].map(([icon,label,isActive])=>(
+            <div key={label} className={"tabitem"+(isActive?" active":"")}>{I(icon,20)}{label}</div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const [theme, setTheme] = React.useState("dark");
+  React.useEffect(() => { document.documentElement.className = theme === "light" ? "light" : ""; window.lucide?.createIcons(); }, [theme]);
+  return (
+    <div>
+      <ThemeToggle theme={theme} setTheme={setTheme} />
+      <div style={{display:"flex",gap:30}}>
+        <Phone title="Aluno Autônomo — Início"><StudentHome/></Phone>
+        <Phone title="Especialista — Início"><SpecialistHome/></Phone>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+setTimeout(()=>window.lucide?.createIcons(), 50);
+</script></body></html>

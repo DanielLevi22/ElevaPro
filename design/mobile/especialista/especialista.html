@@ -1,0 +1,780 @@
+<!-- @dsCard group="Mobile · Especialista" viewport="3480x4620" name="Especialista · fluxo completo" subtitle="Painel → alunos → cadastro → gestão → treino → notificações → dieta · escuro e claro" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css"><link rel="stylesheet" href="../kit/glass.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js"></script>
+<style>
+</style>
+</head><body>
+<div id="root"></div>
+<script type="text/babel" src="../kit/kit.jsx"></script>
+<script type="text/babel" data-presets="react">
+const I=(n,s=20,c)=><i data-lucide={n} style={{width:s,height:s,display:"block",color:c,flexShrink:0}}></i>;
+const LIME="hsl(var(--primary))";
+const BLUE="#00F0FF", PINK="#FF0099", GREEN="#34D399", AMBER="#FBBF24", RED="#FB7185";
+const IMG={back:"../../foundations/assets/imagery/workout-back.jpg",arms:"../../foundations/assets/imagery/workout-arms.jpg",chest:"../../foundations/assets/imagery/workout-chest.jpg",legs:"../../foundations/assets/imagery/workout-legs.jpg"};
+
+function StatusBar(){
+  return <div className="statusbar"><span>9:41</span><span style={{display:"flex",alignItems:"center",gap:6}}>{I("signal",16,"var(--on-hero)")}{I("wifi",16,"var(--on-hero)")}{I("battery-full",20,"var(--on-hero)")}</span></div>;
+}
+function RoundBtn({ icon, size=38 }){
+  return <div className="glass" style={{width:size,height:size,borderRadius:99,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:"var(--hero-chip)",borderColor:"var(--hero-chip-brd)"}}>{I(icon,size*0.47,"var(--on-hero)")}</div>;
+}
+function HeroHeader({ eyebrow, title, right, back=true }){
+  return (
+    <div style={{paddingTop:14,display:"flex",alignItems:"center",gap:12}}>
+      {back && <RoundBtn icon="chevron-left" />}
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:12,fontWeight:700,color:"var(--on-hero-2)",letterSpacing:".04em",textTransform:"uppercase"}}>{eyebrow}</div>
+        <div style={{fontSize:22,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>{title}</div>
+      </div>
+      {right}
+    </div>
+  );
+}
+function SectionTitle({ children, action }){
+  return (
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",margin:"20px 2px 10px"}}>
+      <span style={{fontSize:10.5,fontWeight:700,letterSpacing:".14em",textTransform:"uppercase",color:"var(--ios-label3)"}}>{children}</span>
+      {action && <span style={{fontSize:11.5,color:"var(--ios-label3)"}}>{action}</span>}
+    </div>
+  );
+}
+function Chip({ children, tone, color }){
+  const on = tone==="primary";
+  return <span style={{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:99,fontSize:10.5,fontWeight:800,textTransform:"uppercase",letterSpacing:".06em",background:on?LIME:"var(--glass-strong)",color:on?"#0d1a00":(color||"var(--ios-label2)")}}>{children}</span>;
+}
+function Bar({ pct, color=LIME, h=6 }){
+  return <div style={{height:h,borderRadius:99,background:"var(--glass-strong)",overflow:"hidden"}}><div style={{width:`${pct}%`,height:"100%",background:color,borderRadius:99}} /></div>;
+}
+function Field({ label, value, placeholder, icon, suffix }){
+  return (
+    <div style={{marginBottom:12}}>
+      <div style={{fontSize:10.5,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"var(--ios-label3)",marginBottom:6,paddingLeft:2}}>{label}</div>
+      <div style={{display:"flex",alignItems:"center",gap:10,height:48,padding:"0 14px",borderRadius:14,background:"var(--field)",border:"1px solid var(--field-brd)"}}>
+        {icon && I(icon,17,"var(--ios-label3)")}
+        <span style={{flex:1,fontSize:14.5,fontWeight:value?600:400,color:value?"var(--ios-label)":"var(--ios-label3)",letterSpacing:"-.01em",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{value||placeholder}</span>
+        {suffix && <span style={{fontSize:12.5,color:"var(--ios-label3)",fontWeight:600}}>{suffix}</span>}
+      </div>
+    </div>
+  );
+}
+function Steps({ n, total, label }){
+  return (
+    <div style={{display:"flex",alignItems:"center",gap:9,marginTop:16}}>
+      <div style={{flex:1,display:"flex",gap:5}}>
+        {Array.from({length:total}).map((_,i)=><div key={i} style={{flex:1,height:4,borderRadius:99,background:i<n?LIME:"var(--glass-strong)"}} />)}
+      </div>
+      <span style={{fontSize:11,fontWeight:700,color:"var(--ios-label3)",letterSpacing:".06em"}}>{label}</span>
+    </div>
+  );
+}
+function Avatar({ initials, size=40, tone=LIME, dot }){
+  return (
+    <div style={{position:"relative",flexShrink:0}}>
+      <div style={{width:size,height:size,borderRadius:99,background:"var(--glass-strong)",border:`1px solid ${tone}55`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.33,fontWeight:800,color:tone,letterSpacing:"-.02em"}}>{initials}</div>
+      {dot && <span style={{position:"absolute",right:-1,bottom:-1,width:11,height:11,borderRadius:99,background:dot,border:"2px solid var(--ios-bg)"}} />}
+    </div>
+  );
+}
+function Row({ children, style }){ return <div style={{display:"flex",alignItems:"center",gap:12,...style}}>{children}</div>; }
+
+/* ---------- 1. Painel do especialista ---------- */
+function PanelScreen(){
+  const STATS=[["Alunos ativos","24",LIME],["Aderência","87%",BLUE],["Em risco","3",RED]];
+  const ALERTS=[
+    {icon:"alert-triangle",tone:RED,who:"João Vieira",txt:"Não treina há 5 dias. Risco de abandono alto."},
+    {icon:"trending-up",tone:LIME,who:"Ana Rocha",txt:"3 PRs esta semana — bom momento para reforçar o plano."},
+    {icon:"moon",tone:BLUE,who:"Rafael Dias",txt:"Sono ruim há 3 dias. Sugeri reduzir volume de hoje."},
+  ];
+  return (
+    <div className="scroll">
+      <HeroHeader back={false} eyebrow="Sexta-feira, 12 de setembro" title="Olá, Daniel" right={<RoundBtn icon="bell" />} />
+      <Row style={{gap:10,marginTop:18}}>
+        {STATS.map(([l,v,c])=>(
+          <div key={l} className="glass" style={{flex:1,padding:"13px 12px"}}>
+            <div style={{fontFamily:"var(--font-display)",fontSize:26,fontWeight:800,color:c,letterSpacing:"-.04em"}}>{v}</div>
+            <div style={{fontSize:9.5,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"var(--ios-label3)",marginTop:2}}>{l}</div>
+          </div>
+        ))}
+      </Row>
+      <SectionTitle action="3 novos">Alertas da IA</SectionTitle>
+      {ALERTS.map(a=>(
+        <div key={a.who} className="glass" style={{padding:13,marginBottom:9}}>
+          <Row>
+            <div style={{width:34,height:34,borderRadius:11,background:`${a.tone}1f`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I(a.icon,17,a.tone)}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{a.who}</div>
+              <div style={{fontSize:12,color:"var(--ios-label2)",marginTop:2,lineHeight:1.35}}>{a.txt}</div>
+            </div>
+          </Row>
+        </div>
+      ))}
+      <SectionTitle action="Ver agenda">Hoje</SectionTitle>
+      {[["08:00","Marina Alves","Avaliação física",LIME],["14:30","Pedro Luz","Revisão de dieta",BLUE],["18:00","Ana Rocha","Treino presencial",PINK]].map(([h,n,t,c])=>(
+        <div key={h} className="glass" style={{padding:13,marginBottom:9}}>
+          <Row>
+            <div style={{fontFamily:"var(--font-display)",fontSize:14,fontWeight:800,color:c,width:44,letterSpacing:"-.02em"}}>{h}</div>
+            <div style={{width:1,height:26,background:"var(--glass-brd)"}} />
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)"}}>{n}</div>
+              <div style={{fontSize:11.5,color:"var(--ios-label2)"}}>{t}</div>
+            </div>
+            {I("chevron-right",16,"var(--ios-label3)")}
+          </Row>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- 2. Lista de alunos ---------- */
+const STUDENTS=[
+  {n:"Ana Rocha",i:"AR",plan:"Hipertrofia · Sem 7",adh:94,tone:GREEN,tag:"Em dia"},
+  {n:"João Vieira",i:"JV",plan:"Emagrecimento · Sem 3",adh:41,tone:RED,tag:"Em risco"},
+  {n:"Marina Alves",i:"MA",plan:"Sem plano ativo",adh:0,tone:AMBER,tag:"Pendente"},
+  {n:"Rafael Dias",i:"RD",plan:"Força · Sem 12",adh:78,tone:GREEN,tag:"Em dia"},
+  {n:"Pedro Luz",i:"PL",plan:"Recomposição · Sem 5",adh:66,tone:AMBER,tag:"Atenção"},
+];
+function StudentsScreen(){
+  return (
+    <div className="scroll">
+      <HeroHeader back={false} eyebrow="24 alunos · 3 em risco" title="Alunos" right={<RoundBtn icon="plus" />} />
+      <div className="glass" style={{display:"flex",alignItems:"center",gap:10,height:44,padding:"0 14px",borderRadius:14,marginTop:16}}>
+        {I("search",16,"var(--ios-label3)")}<span style={{fontSize:14,color:"var(--ios-label3)"}}>Buscar aluno</span>
+      </div>
+      <Row style={{gap:7,marginTop:12,overflow:"hidden"}}>
+        <Chip tone="primary">Todos · 24</Chip><Chip>Em risco · 3</Chip><Chip>Pendentes · 2</Chip><Chip>Arquivados</Chip>
+      </Row>
+      <SectionTitle action="A–Z">Lista</SectionTitle>
+      {STUDENTS.map(s=>(
+        <div key={s.n} className="glass" style={{padding:13,marginBottom:9}}>
+          <Row>
+            <Avatar initials={s.i} tone={s.tone} dot={s.tone} />
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:14.5,fontWeight:700,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{s.n}</div>
+              <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:1}}>{s.plan}</div>
+            </div>
+            <div style={{textAlign:"right"}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:15,fontWeight:800,color:s.tone,letterSpacing:"-.03em"}}>{s.adh?`${s.adh}%`:"—"}</div>
+              <div style={{fontSize:9,fontWeight:800,letterSpacing:".08em",textTransform:"uppercase",color:"var(--ios-label3)"}}>{s.tag}</div>
+            </div>
+          </Row>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- 3. Novo aluno · dados ---------- */
+function NewStudent1(){
+  return (
+    <div className="scroll">
+      <HeroHeader eyebrow="Novo aluno" title="Dados básicos" />
+      <Steps n={1} total={3} label="1 de 3" />
+      <div className="glass" style={{padding:16,marginTop:18}}>
+        <Field label="Nome completo" value="Marina Alves" icon="user-round" />
+        <Field label="E-mail" value="marina.alves@email.com" icon="mail" />
+        <Field label="Telefone" value="(11) 98842-1170" icon="phone" />
+        <Row style={{gap:10}}>
+          <div style={{flex:1}}><Field label="Nascimento" value="14/03/1994" /></div>
+          <div style={{flex:1}}><Field label="Sexo" value="Feminino" /></div>
+        </Row>
+      </div>
+      <SectionTitle>Tipo de acompanhamento</SectionTitle>
+      {[["Treino + Nutrição","Plano completo, 2 serviços","dumbbell",true],["Somente treino","Periodização e execução","activity",false],["Somente nutrição","Dieta e macros","apple",false]].map(([t,d,ic,on])=>(
+        <div key={t} className="glass" style={{padding:13,marginBottom:9,borderColor:on?"hsl(var(--primary) / .5)":"var(--glass-brd)"}}>
+          <Row>
+            <div style={{width:34,height:34,borderRadius:11,background:on?LIME:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I(ic,17,on?"#0d1a00":"var(--ios-label2)")}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)"}}>{t}</div>
+              <div style={{fontSize:11.5,color:"var(--ios-label2)"}}>{d}</div>
+            </div>
+            {I(on?"circle-check":"circle",19,on?LIME:"var(--ios-label3)")}
+          </Row>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- 4. Novo aluno · anamnese ---------- */
+function NewStudent2(){
+  return (
+    <div className="scroll">
+      <HeroHeader eyebrow="Novo aluno · Marina Alves" title="Objetivo e anamnese" />
+      <Steps n={2} total={3} label="2 de 3" />
+      <SectionTitle>Objetivo principal</SectionTitle>
+      <Row style={{gap:9,flexWrap:"wrap"}}>
+        {[["Hipertrofia",true],["Emagrecimento",false],["Força",false],["Saúde geral",false]].map(([t,on])=>(
+          <span key={t} style={{padding:"9px 14px",borderRadius:99,fontSize:12.5,fontWeight:700,background:on?LIME:"var(--glass-strong)",color:on?"#0d1a00":"var(--ios-label2)"}}>{t}</span>
+        ))}
+      </Row>
+      <div className="glass" style={{padding:16,marginTop:16}}>
+        <Row style={{gap:10}}>
+          <div style={{flex:1}}><Field label="Altura" value="1,68" suffix="m" /></div>
+          <div style={{flex:1}}><Field label="Peso atual" value="71,4" suffix="kg" /></div>
+        </Row>
+        <Field label="Frequência semanal" value="4 treinos por semana" icon="calendar" />
+        <Field label="Experiência" value="Intermediária · 2 anos" icon="bar-chart-3" />
+      </div>
+      <SectionTitle>Restrições e histórico</SectionTitle>
+      <div className="glass" style={{padding:14}}>
+        <Row style={{gap:8,flexWrap:"wrap",marginBottom:12}}>
+          <Chip color={AMBER}>Lombar sensível</Chip><Chip color={AMBER}>Intolerância a lactose</Chip><Chip>+ Adicionar</Chip>
+        </Row>
+        <div style={{fontSize:12.5,color:"var(--ios-label2)",lineHeight:1.45}}>Cirurgia de menisco em 2023, liberada para agachamento com carga moderada. Sem uso de medicação contínua.</div>
+      </div>
+      <div className="glass" style={{padding:13,marginTop:12,borderColor:"rgba(0,240,255,.35)"}}>
+        <Row>
+          {I("sparkles",17,BLUE)}
+          <div style={{flex:1,fontSize:12,color:"var(--ios-label2)",lineHeight:1.4}}>A IA vai sugerir uma periodização inicial a partir dessas respostas.</div>
+        </Row>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 5. Convite enviado ---------- */
+function InviteScreen(){
+  return (
+    <div className="scroll">
+      <HeroHeader eyebrow="Novo aluno" title="Convite" />
+      <Steps n={3} total={3} label="3 de 3" />
+      <div className="glass" style={{padding:24,marginTop:18,textAlign:"center"}}>
+        <div style={{width:70,height:70,borderRadius:99,background:"hsl(var(--primary) / .16)",border:"1px solid hsl(var(--primary) / .4)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px"}}>{I("send",30,LIME)}</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:21,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.03em"}}>Convite enviado</div>
+        <div style={{fontSize:13,color:"var(--ios-label2)",marginTop:7,lineHeight:1.45}}>Marina recebeu o acesso em marina.alves@email.com. Ela entra como aluna gerenciada — sem custo para ela.</div>
+      </div>
+      <SectionTitle>Link de acesso</SectionTitle>
+      <div className="glass" style={{padding:14}}>
+        <Row>
+          <div style={{flex:1,minWidth:0,fontFamily:"var(--font-mono)",fontSize:12,color:"var(--ios-label2)",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>elevapro.app/convite/mv7k2q</div>
+          {I("copy",17,LIME)}
+        </Row>
+      </div>
+      <SectionTitle>Próximos passos</SectionTitle>
+      {[["Montar treino","Periodização e divisão","dumbbell",LIME],["Montar dieta","Macros e refeições","apple",BLUE],["Agendar avaliação","Medidas e fotos","calendar-check",PINK]].map(([t,d,ic,c])=>(
+        <div key={t} className="glass" style={{padding:13,marginBottom:9}}>
+          <Row>
+            <div style={{width:34,height:34,borderRadius:11,background:`${c==="hsl(var(--primary))"?"hsl(var(--primary) / .18)":c+"1f"}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I(ic,17,c)}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)"}}>{t}</div>
+              <div style={{fontSize:11.5,color:"var(--ios-label2)"}}>{d}</div>
+            </div>
+            {I("chevron-right",16,"var(--ios-label3)")}
+          </Row>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- 6. Perfil do aluno ---------- */
+function StudentProfile(){
+  return (
+    <div className="scroll">
+      <HeroHeader eyebrow="Aluna gerenciada · desde mai/26" title="Ana Rocha" right={<RoundBtn icon="message-circle" />} />
+      <Row style={{gap:10,marginTop:18}}>
+        {[["Aderência","94%",GREEN],["Sequência","12 d",LIME],["Peso","−3,2 kg",BLUE]].map(([l,v,c])=>(
+          <div key={l} className="glass" style={{flex:1,padding:"13px 12px"}}>
+            <div style={{fontFamily:"var(--font-display)",fontSize:21,fontWeight:800,color:c,letterSpacing:"-.03em"}}>{v}</div>
+            <div style={{fontSize:9.5,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"var(--ios-label3)",marginTop:2}}>{l}</div>
+          </div>
+        ))}
+      </Row>
+      <SectionTitle action="Editar">Plano ativo</SectionTitle>
+      <div className="glass" style={{padding:15}}>
+        <Row style={{marginBottom:11}}>
+          <div style={{width:36,height:36,borderRadius:12,background:"hsl(var(--primary) / .18)",display:"flex",alignItems:"center",justifyContent:"center"}}>{I("dumbbell",18,LIME)}</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:14,fontWeight:700,color:"var(--ios-label)"}}>Hipertrofia · Upper/Lower</div>
+            <div style={{fontSize:11.5,color:"var(--ios-label2)"}}>Semana 7 de 16 · 4x/semana</div>
+          </div>
+        </Row>
+        <Bar pct={44} />
+        <Row style={{marginTop:14,marginBottom:11}}>
+          <div style={{width:36,height:36,borderRadius:12,background:"rgba(0,240,255,.14)",display:"flex",alignItems:"center",justifyContent:"center"}}>{I("apple",18,BLUE)}</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:14,fontWeight:700,color:"var(--ios-label)"}}>Dieta 2.240 kcal</div>
+            <div style={{fontSize:11.5,color:"var(--ios-label2)"}}>5 refeições · atualizada há 9 dias</div>
+          </div>
+        </Row>
+        <Bar pct={81} color={BLUE} />
+      </div>
+      <SectionTitle action="7 dias">Evolução</SectionTitle>
+      <div className="glass" style={{padding:15}}>
+        <Row style={{alignItems:"flex-end",gap:7,height:78}}>
+          {[52,64,48,80,71,88,94].map((h,i)=>(
+            <div key={i} style={{flex:1,height:`${h}%`,borderRadius:6,background:i===6?LIME:"var(--glass-strong)"}} />
+          ))}
+        </Row>
+        <Row style={{justifyContent:"space-between",marginTop:8}}>
+          {["S","T","Q","Q","S","S","D"].map((d,i)=><span key={i} style={{flex:1,textAlign:"center",fontSize:10,fontWeight:700,color:"var(--ios-label3)"}}>{d}</span>)}
+        </Row>
+      </div>
+      <SectionTitle>Ações</SectionTitle>
+      <Row style={{gap:9,flexWrap:"wrap"}}>
+        {[["Novo treino","plus"],["Ajustar dieta","sliders-horizontal"],["Avaliação","ruler"],["Arquivar","archive"]].map(([t,ic])=>(
+          <div key={t} className="glass" style={{padding:"10px 13px",borderRadius:99,display:"flex",alignItems:"center",gap:7}}>
+            {I(ic,14,LIME)}<span style={{fontSize:12.5,fontWeight:700,color:"var(--ios-label)"}}>{t}</span>
+          </div>
+        ))}
+      </Row>
+    </div>
+  );
+}
+
+/* ---------- 7. Gestão · histórico e check-ins ---------- */
+function StudentManage(){
+  return (
+    <div className="scroll">
+      <HeroHeader eyebrow="Ana Rocha" title="Acompanhamento" right={<RoundBtn icon="ellipsis" />} />
+      <Row style={{gap:7,marginTop:16}}>
+        <Chip tone="primary">Histórico</Chip><Chip>Treinos</Chip><Chip>Nutrição</Chip><Chip>Medidas</Chip>
+      </Row>
+      <SectionTitle action="Set 2026">Linha do tempo</SectionTitle>
+      {[
+        {d:"Hoje · 07:12",t:"Treino A concluído",s:"52 min · PR no supino 62,5 kg",ic:"check-circle-2",c:GREEN},
+        {d:"Hoje · 06:40",t:"Check-in matinal",s:"Sono 7h30 · energia alta · sem dores",ic:"sunrise",c:LIME},
+        {d:"Ontem · 21:05",t:"Dieta 96% cumprida",s:"2.152 / 2.240 kcal · proteína batida",ic:"apple",c:BLUE},
+        {d:"10 set · 19:20",t:"Mensagem enviada",s:"\u201cReduzi o volume de pernas nesta semana.\u201d",ic:"message-circle",c:PINK},
+        {d:"08 set · 08:00",t:"Avaliação física",s:"71,4 kg · 22,1% BF · −1,1 cm cintura",ic:"ruler",c:LIME},
+      ].map(e=>(
+        <div key={e.d} className="glass" style={{padding:13,marginBottom:9}}>
+          <Row>
+            <div style={{width:34,height:34,borderRadius:11,background:`${e.c}1f`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I(e.ic,17,e.c)}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:9.5,fontWeight:800,letterSpacing:".1em",textTransform:"uppercase",color:"var(--ios-label3)"}}>{e.d}</div>
+              <div style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)",marginTop:2}}>{e.t}</div>
+              <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:1,lineHeight:1.35}}>{e.s}</div>
+            </div>
+          </Row>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- 8. Novo treino · base ---------- */
+function WorkoutBase(){
+  return (
+    <div className="scroll">
+      <HeroHeader eyebrow="Ana Rocha · novo plano" title="Estrutura do treino" />
+      <Steps n={1} total={3} label="1 de 3" />
+      <SectionTitle>Ponto de partida</SectionTitle>
+      {[["Sugestão da IA","Upper/Lower 4x · baseada na anamnese","sparkles",true,BLUE],["Do zero","Montar exercício por exercício","pencil",false,LIME],["Meu modelo","Hipertrofia intermediária (usado 8x)","bookmark",false,LIME]].map(([t,d,ic,on,c])=>(
+        <div key={t} className="glass" style={{padding:13,marginBottom:9,borderColor:on?"rgba(0,240,255,.45)":"var(--glass-brd)"}}>
+          <Row>
+            <div style={{width:34,height:34,borderRadius:11,background:on?`${c}22`:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I(ic,17,on?c:"var(--ios-label2)")}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)"}}>{t}</div>
+              <div style={{fontSize:11.5,color:"var(--ios-label2)"}}>{d}</div>
+            </div>
+            {I(on?"circle-check":"circle",19,on?BLUE:"var(--ios-label3)")}
+          </Row>
+        </div>
+      ))}
+      <div className="glass" style={{padding:16,marginTop:16}}>
+        <Field label="Nome do plano" value="Hipertrofia · Ciclo Verão" icon="type" />
+        <Row style={{gap:10}}>
+          <div style={{flex:1}}><Field label="Duração" value="16" suffix="sem" /></div>
+          <div style={{flex:1}}><Field label="Frequência" value="4" suffix="x/sem" /></div>
+        </Row>
+        <Field label="Divisão" value="Upper / Lower" icon="layout-grid" />
+      </div>
+      <SectionTitle>Fases</SectionTitle>
+      <Row style={{gap:8}}>
+        {[["Adaptação","4 sem"],["Hipertrofia","8 sem"],["Força","4 sem"]].map(([n,w])=>(
+          <div key={n} className="glass" style={{flex:1,padding:"11px 10px",textAlign:"center"}}>
+            <div style={{fontSize:12,fontWeight:700,color:"var(--ios-label)"}}>{n}</div>
+            <div style={{fontSize:10.5,color:"var(--ios-label3)",marginTop:2}}>{w}</div>
+          </div>
+        ))}
+      </Row>
+    </div>
+  );
+}
+
+/* ---------- 9. Montagem do treino ---------- */
+function WorkoutBuilder(){
+  const EX=[
+    {n:"Supino reto com barra",s:"4 × 8-10",r:"90s",m:"Peitoral"},
+    {n:"Remada curvada",s:"4 × 8-10",r:"90s",m:"Dorsal"},
+    {n:"Desenvolvimento halteres",s:"3 × 10-12",r:"75s",m:"Ombro"},
+    {n:"Puxada alta",s:"3 × 10-12",r:"75s",m:"Dorsal"},
+    {n:"Rosca direta",s:"3 × 12",r:"60s",m:"Bíceps"},
+  ];
+  return (
+    <div className="scroll">
+      <HeroHeader eyebrow="Hipertrofia · Ciclo Verão" title="Treino A · Upper" right={<RoundBtn icon="sparkles" />} />
+      <Steps n={2} total={3} label="2 de 3" />
+      <Row style={{gap:7,marginTop:14}}>
+        <Chip tone="primary">Treino A</Chip><Chip>Treino B</Chip><Chip>Treino C</Chip><Chip>+</Chip>
+      </Row>
+      <SectionTitle action="5 exercícios">Exercícios</SectionTitle>
+      {EX.map((e,i)=>(
+        <div key={e.n} className="glass" style={{padding:13,marginBottom:9}}>
+          <Row>
+            {I("grip-vertical",16,"var(--ios-label3)")}
+            <div style={{width:30,height:30,borderRadius:10,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,color:LIME,flexShrink:0}}>{i+1}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)",letterSpacing:"-.02em",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{e.n}</div>
+              <div style={{fontSize:11,color:"var(--ios-label2)",marginTop:2,display:"flex",gap:10}}>
+                <span>{e.s}</span><span>·</span><span>{e.r}</span><span>·</span><span>{e.m}</span>
+              </div>
+            </div>
+            {I("pencil",15,"var(--ios-label3)")}
+          </Row>
+        </div>
+      ))}
+      <div className="glass" style={{padding:13,marginBottom:9,borderStyle:"dashed"}}>
+        <Row style={{justifyContent:"center"}}>{I("plus",16,LIME)}<span style={{fontSize:13,fontWeight:700,color:LIME}}>Adicionar exercício</span></Row>
+      </div>
+      <div className="glass" style={{padding:13,borderColor:"rgba(0,240,255,.35)"}}>
+        <Row>
+          {I("sparkles",17,BLUE)}
+          <div style={{flex:1,fontSize:12,color:"var(--ios-label2)",lineHeight:1.4}}>Volume de puxada 20% abaixo do empurrar. Sugiro trocar rosca direta por remada unilateral.</div>
+        </Row>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 10. Biblioteca de exercícios ---------- */
+function ExerciseLibrary(){
+  const LIB=[
+    {n:"Remada unilateral",m:"Dorsal",eq:"Halter",on:true},
+    {n:"Remada cavalinho",m:"Dorsal",eq:"Barra",on:false},
+    {n:"Pulldown corda",m:"Dorsal",eq:"Polia",on:false},
+    {n:"Face pull",m:"Posterior",eq:"Polia",on:true},
+    {n:"Crucifixo inclinado",m:"Peitoral",eq:"Halter",on:false},
+    {n:"Elevação lateral",m:"Ombro",eq:"Halter",on:false},
+  ];
+  return (
+    <div className="scroll">
+      <HeroHeader eyebrow="Treino A · Upper" title="Biblioteca" right={<RoundBtn icon="sliders-horizontal" />} />
+      <div className="glass" style={{display:"flex",alignItems:"center",gap:10,height:44,padding:"0 14px",borderRadius:14,marginTop:16}}>
+        {I("search",16,"var(--ios-label3)")}<span style={{fontSize:14,color:"var(--ios-label)"}}>remada</span>
+      </div>
+      <Row style={{gap:7,marginTop:12}}>
+        <Chip tone="primary">Dorsal</Chip><Chip>Peitoral</Chip><Chip>Perna</Chip><Chip>Core</Chip>
+      </Row>
+      <SectionTitle action="2 selecionados">Resultados · 218</SectionTitle>
+      {LIB.map(e=>(
+        <div key={e.n} className="glass" style={{padding:11,marginBottom:9,borderColor:e.on?"hsl(var(--primary) / .5)":"var(--glass-brd)"}}>
+          <Row>
+            <div style={{width:44,height:44,borderRadius:12,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("dumbbell",20,"var(--ios-label2)")}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)"}}>{e.n}</div>
+              <div style={{fontSize:11,color:"var(--ios-label2)",marginTop:2}}>{e.m} · {e.eq}</div>
+            </div>
+            <div style={{width:26,height:26,borderRadius:99,background:e.on?LIME:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center"}}>{I(e.on?"check":"plus",15,e.on?"#0d1a00":"var(--ios-label2)")}</div>
+          </Row>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- 11. Revisão e publicação do treino ---------- */
+function WorkoutReview(){
+  return (
+    <div className="scroll">
+      <HeroHeader eyebrow="Ana Rocha" title="Revisar e publicar" />
+      <Steps n={3} total={3} label="3 de 3" />
+      <div className="glass" style={{padding:16,marginTop:18}}>
+        <div style={{fontFamily:"var(--font-display)",fontSize:19,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.03em"}}>Hipertrofia · Ciclo Verão</div>
+        <div style={{fontSize:12.5,color:"var(--ios-label2)",marginTop:3}}>16 semanas · 4x/semana · Upper/Lower</div>
+        <Row style={{gap:8,marginTop:13}}>
+          {[["Treinos","64"],["Exercícios","21"],["Volume/sem","78 séries"]].map(([l,v])=>(
+            <div key={l} style={{flex:1}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:17,fontWeight:800,color:LIME,letterSpacing:"-.03em"}}>{v}</div>
+              <div style={{fontSize:9.5,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"var(--ios-label3)"}}>{l}</div>
+            </div>
+          ))}
+        </Row>
+      </div>
+      <SectionTitle>Divisão semanal</SectionTitle>
+      {[["Seg","Treino A · Upper",LIME],["Ter","Treino B · Lower",LIME],["Qua","Descanso ativo","var(--ios-label3)"],["Qui","Treino C · Upper",LIME],["Sex","Treino D · Lower",LIME]].map(([d,t,c])=>(
+        <div key={d} className="glass" style={{padding:12,marginBottom:8}}>
+          <Row>
+            <span style={{width:34,fontSize:11,fontWeight:800,letterSpacing:".06em",textTransform:"uppercase",color:"var(--ios-label3)"}}>{d}</span>
+            <span style={{flex:1,fontSize:13,fontWeight:700,color:c}}>{t}</span>
+            {I("chevron-right",15,"var(--ios-label3)")}
+          </Row>
+        </div>
+      ))}
+      <SectionTitle>Publicação</SectionTitle>
+      <div className="glass" style={{padding:14}}>
+        <Row style={{marginBottom:12}}>
+          <div style={{flex:1,fontSize:13,fontWeight:600,color:"var(--ios-label)"}}>Notificar a aluna</div>
+          <div style={{width:44,height:26,borderRadius:99,background:LIME,padding:3,display:"flex",justifyContent:"flex-end"}}><div style={{width:20,height:20,borderRadius:99,background:"#fff"}} /></div>
+        </Row>
+        <Row>
+          <div style={{flex:1,fontSize:13,fontWeight:600,color:"var(--ios-label)"}}>Salvar como modelo</div>
+          <div style={{width:44,height:26,borderRadius:99,background:"var(--glass-strong)",padding:3}}><div style={{width:20,height:20,borderRadius:99,background:"var(--ios-label3)"}} /></div>
+        </Row>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 12. Nova dieta · metas ---------- */
+function DietGoals(){
+  return (
+    <div className="scroll">
+      <HeroHeader eyebrow="Ana Rocha · nova dieta" title="Metas e macros" />
+      <Steps n={1} total={3} label="1 de 3" />
+      <div className="glass" style={{padding:16,marginTop:18}}>
+        <Row style={{justifyContent:"space-between",alignItems:"baseline"}}>
+          <span style={{fontSize:10.5,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"var(--ios-label3)"}}>Meta diária</span>
+          <span style={{fontSize:11.5,color:"var(--ios-label2)"}}>TMB 1.520 · GET 2.480</span>
+        </Row>
+        <div style={{fontFamily:"var(--font-display)",fontSize:42,fontWeight:800,color:LIME,letterSpacing:"-.05em",marginTop:4}}>2.240<span style={{fontSize:16,color:"var(--ios-label2)",marginLeft:6,fontWeight:700}}>kcal</span></div>
+        <div style={{fontSize:12,color:"var(--ios-label2)",marginTop:2}}>Déficit leve de 240 kcal · recomposição</div>
+      </div>
+      <SectionTitle>Distribuição de macros</SectionTitle>
+      {[["Proteína","168 g","30%",LIME,30],["Carboidrato","252 g","45%",BLUE,45],["Gordura","62 g","25%",PINK,25]].map(([n,g,p,c,w])=>(
+        <div key={n} className="glass" style={{padding:13,marginBottom:9}}>
+          <Row style={{justifyContent:"space-between",marginBottom:8}}>
+            <span style={{fontSize:13,fontWeight:700,color:"var(--ios-label)"}}>{n}</span>
+            <span style={{fontSize:12.5,color:"var(--ios-label2)"}}><b style={{color:c}}>{g}</b> · {p}</span>
+          </Row>
+          <Bar pct={w*2} color={c} />
+        </div>
+      ))}
+      <SectionTitle>Preferências</SectionTitle>
+      <div className="glass" style={{padding:14}}>
+        <Row style={{gap:8,flexWrap:"wrap",marginBottom:12}}>
+          <Chip color={AMBER}>Sem lactose</Chip><Chip>5 refeições</Chip><Chip>Sem suplementos</Chip>
+        </Row>
+        <Field label="Dias de refeição livre" value="Domingo · 1x por semana" icon="calendar-heart" />
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 13. Montagem das refeições ---------- */
+function DietBuilder(){
+  const MEALS=[
+    {h:"07:00",n:"Café da manhã",k:"420 kcal",f:["Ovos mexidos · 3 un","Pão integral · 2 fatias","Mamão · 120 g"]},
+    {h:"10:00",n:"Lanche da manhã",k:"240 kcal",f:["Iogurte sem lactose · 170 g","Castanhas · 20 g"]},
+    {h:"13:00",n:"Almoço",k:"680 kcal",f:["Frango grelhado · 180 g","Arroz integral · 150 g","Salada verde à vontade"]},
+  ];
+  return (
+    <div className="scroll">
+      <HeroHeader eyebrow="Dieta 2.240 kcal" title="Refeições" right={<RoundBtn icon="sparkles" />} />
+      <Steps n={2} total={3} label="2 de 3" />
+      <div className="glass" style={{padding:13,marginTop:16}}>
+        <Row style={{justifyContent:"space-between",marginBottom:8}}>
+          <span style={{fontSize:12,fontWeight:700,color:"var(--ios-label)"}}>1.340 de 2.240 kcal montadas</span>
+          <span style={{fontSize:12,color:"var(--ios-label2)"}}>60%</span>
+        </Row>
+        <Bar pct={60} />
+      </div>
+      {MEALS.map(m=>(
+        <div key={m.h} className="glass" style={{padding:14,marginTop:10}}>
+          <Row style={{marginBottom:10}}>
+            <div style={{width:34,height:34,borderRadius:11,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10.5,fontWeight:800,color:LIME,flexShrink:0}}>{m.h.slice(0,2)}h</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)"}}>{m.n}</div>
+              <div style={{fontSize:11,color:"var(--ios-label2)"}}>{m.h} · {m.k}</div>
+            </div>
+            {I("pencil",15,"var(--ios-label3)")}
+          </Row>
+          {m.f.map(f=>(
+            <Row key={f} style={{padding:"6px 0",borderTop:"1px solid var(--glass-brd)"}}>
+              <span style={{width:5,height:5,borderRadius:99,background:"var(--ios-label3)"}} />
+              <span style={{flex:1,fontSize:12.5,color:"var(--ios-label2)"}}>{f}</span>
+            </Row>
+          ))}
+        </div>
+      ))}
+      <div className="glass" style={{padding:13,marginTop:10,borderStyle:"dashed"}}>
+        <Row style={{justifyContent:"center"}}>{I("plus",16,LIME)}<span style={{fontSize:13,fontWeight:700,color:LIME}}>Adicionar refeição</span></Row>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 14. Revisão e envio da dieta ---------- */
+function DietReview(){
+  return (
+    <div className="scroll">
+      <HeroHeader eyebrow="Ana Rocha" title="Revisar e enviar" />
+      <Steps n={3} total={3} label="3 de 3" />
+      <div className="glass" style={{padding:16,marginTop:18}}>
+        <Row style={{justifyContent:"space-between",alignItems:"baseline"}}>
+          <span style={{fontFamily:"var(--font-display)",fontSize:19,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.03em"}}>Plano alimentar</span>
+          <Chip tone="primary">Pronto</Chip>
+        </Row>
+        <div style={{fontSize:12.5,color:"var(--ios-label2)",marginTop:4}}>5 refeições · 2.238 kcal · sem lactose</div>
+        <Row style={{gap:8,marginTop:14}}>
+          {[["P","168 g",LIME],["C","250 g",BLUE],["G","63 g",PINK]].map(([l,v,c])=>(
+            <div key={l} style={{flex:1,padding:"10px 11px",borderRadius:14,background:"var(--glass-strong)"}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:16,fontWeight:800,color:c,letterSpacing:"-.03em"}}>{v}</div>
+              <div style={{fontSize:9.5,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"var(--ios-label3)"}}>{l==="P"?"Proteína":l==="C"?"Carbo":"Gordura"}</div>
+            </div>
+          ))}
+        </Row>
+      </div>
+      <div className="glass" style={{padding:13,marginTop:12,borderColor:"rgba(0,240,255,.35)"}}>
+        <Row>
+          {I("sparkles",17,BLUE)}
+          <div style={{flex:1,fontSize:12,color:"var(--ios-label2)",lineHeight:1.4}}>Proteína bate a meta nos 7 dias. Jantar ficou 180 kcal acima nas terças — ajuste opcional.</div>
+        </Row>
+      </div>
+      <SectionTitle>Resumo por refeição</SectionTitle>
+      {[["07:00","Café da manhã","420"],["10:00","Lanche","240"],["13:00","Almoço","680"],["16:30","Pré-treino","320"],["20:00","Jantar","578"]].map(([h,n,k])=>(
+        <div key={h} className="glass" style={{padding:12,marginBottom:8}}>
+          <Row>
+            <span style={{width:44,fontSize:11.5,fontWeight:700,color:"var(--ios-label3)"}}>{h}</span>
+            <span style={{flex:1,fontSize:13,fontWeight:700,color:"var(--ios-label)"}}>{n}</span>
+            <span style={{fontSize:12.5,fontWeight:700,color:LIME}}>{k} kcal</span>
+          </Row>
+        </div>
+      ))}
+      <SectionTitle>Mensagem para a aluna</SectionTitle>
+      <div className="glass" style={{padding:14}}>
+        <div style={{fontSize:12.5,color:"var(--ios-label2)",lineHeight:1.45}}>“Ajustei o carboidrato do pré-treino para sustentar as séries pesadas de segunda. Qualquer desconforto, me avise.”</div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 15. Balões de notificação push ---------- */
+function PushBanner({ icon="bell", tone=LIME, app="Eleva Pro", time="agora", title, body, expanded }){
+  return (
+    <div className="glass" style={{padding:"12px 13px",borderRadius:20}}>
+      <Row style={{alignItems:"flex-start"}}>
+        <div style={{width:34,height:34,borderRadius:10,background:`${tone}22`,border:`1px solid ${tone}55`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I(icon,17,tone)}</div>
+        <div style={{flex:1,minWidth:0}}>
+          <Row style={{gap:6,alignItems:"baseline"}}>
+            <span style={{fontSize:10.5,fontWeight:800,letterSpacing:".1em",textTransform:"uppercase",color:"var(--ios-label3)"}}>{app}</span>
+            <span style={{flex:1}} />
+            <span style={{fontSize:10.5,color:"var(--ios-label3)",fontWeight:600}}>{time}</span>
+          </Row>
+          <div style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)",letterSpacing:"-.02em",marginTop:3}}>{title}</div>
+          <div style={{fontSize:12.5,color:"var(--ios-label2)",marginTop:2,lineHeight:1.35,display:"-webkit-box",WebkitLineClamp:expanded?4:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{body}</div>
+          {expanded && (
+            <Row style={{gap:8,marginTop:11}}>
+              <span style={{flex:1,textAlign:"center",padding:"9px 0",borderRadius:12,background:LIME,color:"#0d1a00",fontSize:12,fontWeight:800}}>{expanded[0]}</span>
+              <span style={{flex:1,textAlign:"center",padding:"9px 0",borderRadius:12,background:"var(--glass-strong)",color:"var(--ios-label)",fontSize:12,fontWeight:700}}>{expanded[1]}</span>
+            </Row>
+          )}
+        </div>
+      </Row>
+    </div>
+  );
+}
+function BannerOverApp(){
+  return (
+    <>
+      <div style={{position:"absolute",left:12,right:12,top:60,zIndex:8}}>
+        <PushBanner icon="alert-triangle" tone={RED} title="João Vieira não treina há 5 dias" body="Risco de abandono alto. Toque para ver a mensagem sugerida." />
+      </div>
+      <PanelScreen/>
+    </>
+  );
+}
+function BannerStack(){
+  return (
+    <div style={{width:390,display:"flex",flexDirection:"column",gap:12}}>
+      <PushBanner icon="utensils" tone={BLUE} time="agora" title="Hora da refeição" body="Jantar: salmão grelhado, arroz integral e salada — 578 kcal." />
+      <PushBanner icon="trophy" tone={LIME} time="2 min" title="Ana Rocha bateu um PR" body="Supino reto 62,5 kg · 3ª semana seguida de evolução." />
+      <PushBanner icon="user-plus" tone={PINK} time="12 min" title="Marina aceitou o convite" body="Conta criada. O plano ainda não foi atribuído." />
+      <PushBanner icon="alert-triangle" tone={RED} time="1 h" title="João Vieira não treina há 5 dias" body="Risco de abandono alto. Enviar a mensagem sugerida pela IA?" expanded={["Enviar","Depois"]} />
+    </div>
+  );
+}
+
+function TabBar({ active }){
+  const items=[["layout-dashboard","Painel","home"],["users","Alunos","students"],["dumbbell","Treinos","workouts"],["apple","Nutrição","nutrition"],["user","Perfil","profile"]];
+  return (
+    <div className="tabbar">
+      {items.map(([icon,label,key])=>{
+        const on=active===key;
+        return (
+          <div key={key} className={"tabitem"+(on?" on":"")} style={{color:on?"hsl(var(--primary-text))":"var(--ios-label3)"}}>
+            {I(icon,23,on?"hsl(var(--primary-text))":"var(--ios-label3)")}
+            <span style={{fontWeight:on?700:600}}>{label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function Phone(p){return <ThemePair><PhoneOne {...p}/></ThemePair>;}
+function PhoneOne({ step, label, image, active="students", cta, ctaIcon="arrow-right", children }){
+  return (
+    <div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+        <span style={{width:20,height:20,borderRadius:99,background:"hsl(var(--primary))",color:"#0d1a00",fontSize:11,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{step}</span>
+        <span style={{color:"hsl(var(--muted-foreground))",fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:".1em"}}>{label}</span>
+      </div>
+      <div className="phone">
+        <div className="hero" style={{backgroundImage:`url(${image})`}}></div>
+        <div className="island"></div>
+        <StatusBar/>
+        {children}
+        {cta && <div className="cta">{I(ctaIcon,17,"#0d1a00")} {cta}</div>}
+        <TabBar active={active}/>
+        <div className="homebar"></div>
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const [theme,setTheme]=React.useState("dark");
+  React.useEffect(()=>{window.lucide?.createIcons();});
+  const row={display:"flex",gap:30,marginBottom:36};
+  const head={color:"hsl(var(--foreground))",fontFamily:"var(--font-display)",fontSize:15,fontWeight:800,letterSpacing:".16em",textTransform:"uppercase",margin:"0 0 14px"};
+  return (
+    <div>
+      <div style={head}>A · Rotina diária e carteira de alunos</div>
+      <div style={row}>
+        <Phone step="1" label="Painel do especialista" image={IMG.chest} active="home"><PanelScreen/></Phone>
+        <Phone step="2" label="Alunos" image={IMG.back} cta="Novo aluno" ctaIcon="plus"><StudentsScreen/></Phone>
+        <Phone step="3" label="Novo aluno · dados" image={IMG.arms} cta="Continuar"><NewStudent1/></Phone>
+        <Phone step="4" label="Novo aluno · anamnese" image={IMG.legs} cta="Enviar convite" ctaIcon="send"><NewStudent2/></Phone>
+      </div>
+      <div style={head}>B · Gestão do aluno</div>
+      <div style={row}>
+        <Phone step="5" label="Convite enviado" image={IMG.chest} cta="Montar treino" ctaIcon="dumbbell"><InviteScreen/></Phone>
+        <Phone step="6" label="Perfil do aluno" image={IMG.back}><StudentProfile/></Phone>
+        <Phone step="7" label="Acompanhamento" image={IMG.arms}><StudentManage/></Phone>
+        <Phone step="8" label="Novo treino · estrutura" image={IMG.legs} active="workouts" cta="Continuar"><WorkoutBase/></Phone>
+      </div>
+      <div style={head}>C · Criação do treino</div>
+      <div style={row}>
+        <Phone step="9" label="Montagem do treino" image={IMG.back} active="workouts" cta="Revisar plano"><WorkoutBuilder/></Phone>
+        <Phone step="10" label="Biblioteca de exercícios" image={IMG.arms} active="workouts" cta="Adicionar 2 exercícios" ctaIcon="plus"><ExerciseLibrary/></Phone>
+        <Phone step="11" label="Revisar e publicar" image={IMG.chest} active="workouts" cta="Publicar treino" ctaIcon="check"><WorkoutReview/></Phone>
+      </div>
+      <div style={head}>D · Notificações push</div>
+      <div style={row}>
+        <Phone step="15" label="Balão sobre o app" image={IMG.chest} active="home"><BannerOverApp/></Phone>
+        <div>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+            <span style={{width:20,height:20,borderRadius:99,background:"hsl(var(--primary))",color:"#0d1a00",fontSize:11,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>16</span>
+            <span style={{color:"hsl(var(--muted-foreground))",fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:".1em"}}>Variações do balão</span>
+          </div>
+          <div style={{padding:18,borderRadius:28,background:"var(--ios-bg)",border:"1px solid hsl(var(--border))"}}><BannerStack/></div>
+        </div>
+      </div>
+      <div style={head}>E · Criação da dieta</div>
+      <div style={row}>
+        <Phone step="17" label="Metas e macros" image={IMG.legs} active="nutrition" cta="Montar refeições"><DietGoals/></Phone>
+        <Phone step="18" label="Montagem das refeições" image={IMG.chest} active="nutrition" cta="Revisar dieta"><DietBuilder/></Phone>
+        <Phone step="19" label="Revisar e enviar" image={IMG.back} active="nutrition" cta="Enviar para a aluna" ctaIcon="send"><DietReview/></Phone>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+setTimeout(()=>window.lucide?.createIcons(),50);
+</script></body></html>

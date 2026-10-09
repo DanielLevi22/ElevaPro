@@ -1,0 +1,559 @@
+<!-- @dsCard group="Mobile · Student" viewport="3480x1880" name="05 · Nutrição" subtitle="Plano do dia → refeição → busca → substituição → foto com IA → Assistente → compras → aderência · escuro e claro" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css"><link rel="stylesheet" href="../kit/glass.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js"></script>
+<style>
+:root{
+--on-hero:#fff;--on-hero-2:rgba(255,255,255,.82);--hero-chip:rgba(255,255,255,.16);--hero-chip-brd:rgba(255,255,255,.28);
+--slot:rgba(255,255,255,.05);--slot-line:rgba(255,255,255,.07);
+--mp:#34D399;--mc:#A3E635;--mf:#FBBF24;--mp-t:#34D399;--mc-t:#A3E635;--mf-t:#FBBF24;
+}
+.light{
+--on-hero:#0B0B0F;--on-hero-2:rgba(28,28,32,.82);--hero-chip:rgba(255,255,255,.72);--hero-chip-brd:rgba(60,60,67,.16);
+--slot:rgba(60,60,67,.05);--slot-line:rgba(60,60,67,.09);
+--mp-t:#0B7A52;--mc-t:#4E7A0B;--mf-t:#8A5E03;
+}
+.glow{position:absolute;left:-15%;right:-15%;top:-60px;height:420px;pointer-events:none;z-index:0;background:radial-gradient(50% 50% at 50% 50%,hsl(var(--primary) / .18) 0%,transparent 70%);filter:blur(30px)}
+.light .glow{background:radial-gradient(50% 50% at 50% 50%,hsl(var(--primary) / .13) 0%,transparent 70%)}
+.scroll{flex:1;overflow:auto;padding:0 18px 12px;scrollbar-width:none;position:relative;z-index:2}
+.slot{background-color:var(--slot);background-image:repeating-linear-gradient(135deg,var(--slot-line) 0 1px,transparent 1px 9px);display:flex;align-items:center;justify-content:center;text-align:center;padding:8px}
+.slot span{font-family:var(--font-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ios-label3);line-height:1.4}
+.footerbar{position:absolute;left:0;right:0;bottom:118px;z-index:6;padding:0 18px;display:flex;gap:9px;pointer-events:none}
+.btn{height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;gap:7px;font-weight:800;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.btn.primary{background:hsl(var(--primary));color:#0d1a00;box-shadow:0 10px 26px -10px hsl(var(--primary) / .8)}
+.btn.ghost{background:var(--glass-strong);color:var(--ios-label);border:1px solid var(--glass-brd)}
+</style>
+</head><body>
+<div id="root"></div>
+<script type="text/babel" src="../kit/kit.jsx"></script>
+<script type="text/babel" data-presets="react">
+const I=(n,s=20,c)=><i data-lucide={n} style={{width:s,height:s,display:"block",color:c,flexShrink:0}}></i>;
+const LIME="hsl(var(--primary))";
+const P="var(--mp)", C="var(--mc)", F="var(--mf)";
+const PT="var(--mp-t)", CT="var(--mc-t)", FT="var(--mf-t)";
+
+function StatusBar(){
+  return <div className="statusbar"><span>9:41</span><span style={{display:"flex",alignItems:"center",gap:6}}>{I("signal",16,"var(--on-hero)")}{I("wifi",16,"var(--on-hero)")}{I("battery-full",20,"var(--on-hero)")}</span></div>;
+}
+function RoundBtn({ icon, size=38 }){
+  return <div className="glass" style={{width:size,height:size,borderRadius:99,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:"var(--hero-chip)",borderColor:"var(--hero-chip-brd)"}}>{I(icon,size*0.47,"var(--on-hero)")}</div>;
+}
+function Slot({ label, h=150, r=20, style }){
+  return <div className="slot" style={{height:h,borderRadius:r,...style}}><span>{label}</span></div>;
+}
+function SectionTitle({ children, action }){
+  return (
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",margin:"20px 2px 10px"}}>
+      <span style={{fontSize:10.5,fontWeight:700,letterSpacing:".14em",textTransform:"uppercase",color:"var(--ios-label3)"}}>{children}</span>
+      {action && <span style={{fontSize:11.5,fontWeight:600,color:"hsl(var(--primary-text))"}}>{action}</span>}
+    </div>
+  );
+}
+function Chip({ children, tone }){
+  const on = tone==="primary";
+  return <span style={{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:99,fontSize:10.5,fontWeight:800,textTransform:"uppercase",letterSpacing:".06em",background:on?LIME:"var(--glass-strong)",color:on?"#0d1a00":"var(--ios-label2)"}}>{children}</span>;
+}
+function Bar({ pct, color=LIME, h=6 }){
+  return <div style={{height:h,borderRadius:99,background:"var(--glass-strong)",overflow:"hidden"}}><div style={{width:`${Math.min(100,pct)}%`,height:"100%",background:color,borderRadius:99}} /></div>;
+}
+function Ring({ pct, color=LIME, size=150, stroke=12, children }){
+  const r=(size-stroke)/2, c=2*Math.PI*r;
+  return (
+    <div style={{position:"relative",width:size,height:size}}>
+      <svg width={size} height={size} style={{transform:"rotate(-90deg)",filter:`drop-shadow(0 0 12px ${color})`}}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--glass-strong)" strokeWidth={stroke} />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${c*Math.min(1,pct/100)} ${c}`} />
+      </svg>
+      <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>{children}</div>
+    </div>
+  );
+}
+function MacroDonut({ label, value, unit, pct, color, tcolor }){
+  return (
+    <div className="glass" style={{flex:1,padding:"12px 6px",display:"flex",flexDirection:"column",alignItems:"center",gap:7}}>
+      <Ring pct={pct} color={color} size={62} stroke={6}>
+        <span style={{fontFamily:"var(--font-display)",fontSize:14,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{value}<span style={{fontSize:9,fontWeight:700}}>{unit}</span></span>
+      </Ring>
+      <div style={{textAlign:"center"}}>
+        <div style={{fontSize:11.5,fontWeight:700,color:"var(--ios-label)"}}>{label}</div>
+        <div style={{fontSize:10.5,fontWeight:700,color:tcolor||color}}>{pct}%</div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 1. Plano do dia ---------- */
+function PlanScreen(){
+  const DAYS=[["S",8],["T",9],["Q",10],["Q",11],["S",12],["S",13],["D",14]];
+  const MEALS=[
+    ["Café da Manhã","07:10","Ovos, aveia, banana",520,true],
+    ["Lanche da Manhã","10:00","Whey + castanhas",280,true],
+    ["Almoço","12:40","Frango, arroz, salada",740,false],
+    ["Lanche da Tarde","16:00","Iogurte + granola",240,false],
+    ["Jantar","19:30","Salmão, batata doce",620,false],
+  ];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <div style={{fontSize:12.5,color:"var(--on-hero-2)",fontWeight:600}}>Plano: Cutting · Fase 2</div>
+          <div style={{fontSize:27,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>Nutrição</div>
+        </div>
+        <div style={{display:"flex",gap:9}}><RoundBtn icon="calendar" /><RoundBtn icon="plus" /></div>
+      </div>
+      <div style={{display:"flex",gap:6,marginTop:16}}>
+        {DAYS.map(([d,n],i)=>(
+          <div key={n} className={i===4?"":"glass"} style={{flex:1,padding:"9px 0",borderRadius:14,display:"flex",flexDirection:"column",alignItems:"center",gap:3,background:i===4?LIME:undefined,boxShadow:i===4?`0 8px 22px -8px ${LIME}`:undefined}}>
+            <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",color:i===4?"#0d1a00":"var(--ios-label3)"}}>{d}</span>
+            <span style={{fontSize:14,fontWeight:800,fontFamily:"var(--font-display)",color:i===4?"#0d1a00":"var(--ios-label)"}}>{n}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{display:"flex",justifyContent:"center",margin:"20px 0 6px"}}>
+        <Ring pct={64} color={P} size={162} stroke={13}>
+          <span style={{fontFamily:"var(--font-display)",fontSize:38,fontWeight:800,color:"var(--on-hero)",letterSpacing:"-.03em",lineHeight:1}}>1540</span>
+          <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:".12em",color:"var(--on-hero-2)",marginTop:6}}>de 2400 kcal</span>
+        </Ring>
+      </div>
+      <div style={{display:"flex",gap:9,marginTop:10}}>
+        <MacroDonut label="Proteína" value="148" unit="g" pct={82} color={P} tcolor={PT} />
+        <MacroDonut label="Carbos" value="162" unit="g" pct={68} color={C} tcolor={CT} />
+        <MacroDonut label="Gordura" value="47" unit="g" pct={67} color={F} tcolor={FT} />
+      </div>
+      <SectionTitle action="Editar">Refeições de hoje</SectionTitle>
+      {MEALS.map(([name,time,desc,kcal,done])=>(
+        <div key={name} className="glass" style={{padding:11,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+          <Slot label={"foto"} h={46} r={13} style={{width:52,flexShrink:0}} />
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{display:"flex",alignItems:"baseline",gap:7}}>
+              <span style={{fontSize:14.5,fontWeight:600,color:"var(--ios-label)",letterSpacing:"-.01em"}}>{name}</span>
+              <span style={{fontSize:11,color:"var(--ios-label3)"}}>{time}</span>
+            </div>
+            <div style={{fontSize:12,color:"var(--ios-label2)",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{desc}</div>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:5}}>
+            <span style={{fontSize:12.5,fontWeight:700,color:"var(--ios-label)"}}>{kcal}</span>
+            <div style={{width:24,height:24,borderRadius:99,display:"flex",alignItems:"center",justifyContent:"center",background:done?P:"transparent",border:done?"none":"1.5px solid var(--ios-label3)"}}>{done && I("check",14,"#06281a")}</div>
+          </div>
+        </div>
+      ))}
+      <div style={{height:110}}></div>
+    </div>
+  );
+}
+
+/* ---------- 2. Detalhe da refeição ---------- */
+function MealScreen(){
+  const FOODS=[["Peito de frango grelhado","180 g",297,"56 g"],["Arroz integral","150 g",186,"4 g"],["Brócolis no vapor","120 g",41,"3 g"],["Azeite de oliva","10 ml",88,"0 g"]];
+  return (
+    <div className="scroll" style={{padding:0}}>
+      <div style={{position:"relative"}}>
+        <Slot label={"foto do prato · almoço"} h={250} r={0} />
+        <div style={{position:"absolute",top:14,left:18,right:18,display:"flex",justifyContent:"space-between"}}><RoundBtn icon="chevron-left" /><RoundBtn icon="heart" /></div>
+      </div>
+      <div style={{position:"relative",marginTop:-28,background:"var(--ios-bg)",borderRadius:"28px 28px 0 0",padding:"20px 18px 0"}}>
+        <div style={{display:"flex",gap:6,marginBottom:10}}><Chip tone="primary">Alta proteína</Chip><Chip>Almoço · 12:40</Chip></div>
+        <div style={{fontSize:24,fontWeight:700,color:"var(--ios-label)",letterSpacing:"-.03em"}}>Frango, arroz &amp; salada</div>
+        <div style={{display:"flex",gap:14,marginTop:7}}>
+          <span style={{fontSize:12.5,color:"var(--ios-label2)",display:"flex",alignItems:"center",gap:5}}>{I("clock",13,"var(--ios-label3)")} 25 min</span>
+          <span style={{fontSize:12.5,color:"var(--ios-label2)",display:"flex",alignItems:"center",gap:5}}>{I("chef-hat",13,"var(--ios-label3)")} Fácil</span>
+          <span style={{fontSize:12.5,color:"var(--ios-label2)",display:"flex",alignItems:"center",gap:5}}>{I("users",13,"var(--ios-label3)")} 1 porção</span>
+        </div>
+        <div className="glass" style={{padding:16,marginTop:16,display:"flex",alignItems:"center",gap:16}}>
+          <div>
+            <div style={{fontSize:11,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"var(--ios-label3)"}}>Total do prato</div>
+            <div style={{display:"flex",alignItems:"baseline",gap:5,marginTop:4}}>
+              <span style={{fontFamily:"var(--font-display)",fontSize:34,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.03em"}}>612</span>
+              <span style={{fontSize:13,fontWeight:700,color:"var(--ios-label2)"}}>kcal</span>
+            </div>
+            <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:3}}>26% da meta diária</div>
+          </div>
+          <div style={{marginLeft:"auto"}}><Ring pct={26} color={LIME} size={76} stroke={8}>{I("flame",26,LIME)}</Ring></div>
+        </div>
+        <div style={{display:"flex",gap:9,marginTop:10}}>
+          <MacroDonut label="Proteína" value="63" unit="g" pct={41} color={P} tcolor={PT} />
+          <MacroDonut label="Carbos" value="52" unit="g" pct={34} color={C} tcolor={CT} />
+          <MacroDonut label="Gordura" value="15" unit="g" pct={22} color={F} tcolor={FT} />
+        </div>
+        <SectionTitle action="Substituir">Alimentos</SectionTitle>
+        {FOODS.map(([name,qty,kcal,prot])=>(
+          <div key={name} className="glass" style={{padding:12,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+            <div style={{width:34,height:34,borderRadius:11,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("utensils",16,"var(--ios-label2)")}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:14,fontWeight:600,color:"var(--ios-label)"}}>{name}</div>
+              <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:1}}>{qty} · {prot} proteína</div>
+            </div>
+            <span style={{fontSize:12.5,fontWeight:700,color:"var(--ios-label)"}}>{kcal}</span>
+          </div>
+        ))}
+        <div style={{height:170}}></div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 3. Buscar alimento ---------- */
+function SearchScreen(){
+  const CATS=[["leaf","Vegano"],["beef","Proteína"],["wheat","Low carb"],["cookie","Snacks"],["cup-soda","Bebidas"]];
+  const PICKS=[["Salada de frango","320 kcal · 20 min","Alta proteína"],["Bowl de abacate","280 kcal · 15 min","Low carb"]];
+  const RESULTS=[["Peito de frango","100 g · 165 kcal","31 g prot"],["Arroz integral","100 g · 124 kcal","2,6 g prot"],["Ovo cozido","1 un · 78 kcal","6,3 g prot"],["Batata doce","100 g · 86 kcal","1,6 g prot"]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:11}}>
+        <div style={{width:40,height:40,borderRadius:99,flexShrink:0,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,color:"var(--on-hero)",fontSize:15}}>J</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:15,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.01em"}}>Olá, João</div>
+          <div style={{fontSize:12,color:"var(--on-hero-2)"}}>Faltam 860 kcal hoje</div>
+        </div>
+        <RoundBtn icon="bell" />
+      </div>
+      <div style={{fontSize:27,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",lineHeight:1.15,marginTop:18}}>O que você vai<br/>comer <span style={{color:"hsl(var(--primary-text))"}}>agora?</span></div>
+      <div style={{display:"flex",gap:10,marginTop:16}}>
+        <div className="glass" style={{flex:1,height:48,borderRadius:16,display:"flex",alignItems:"center",gap:9,padding:"0 14px"}}>
+          {I("search",17,"var(--ios-label3)")}<span style={{fontSize:13.5,color:"var(--ios-label3)"}}>Buscar alimento ou receita…</span>
+        </div>
+        <div style={{width:48,height:48,borderRadius:16,background:LIME,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:`0 10px 24px -10px ${LIME}`}}>{I("sliders-horizontal",19,"#0d1a00")}</div>
+      </div>
+      <SectionTitle action="Ver tudo">Categorias</SectionTitle>
+      <div style={{display:"flex",gap:8}}>
+        {CATS.map(([icon,label],i)=>(
+          <div key={label} className="glass" style={{flex:1,padding:"11px 3px",display:"flex",flexDirection:"column",alignItems:"center",gap:7,borderColor:i===1?LIME:"var(--glass-brd)"}}>
+            {I(icon,19,i===1?LIME:"var(--ios-label2)")}
+            <span style={{fontSize:9.5,fontWeight:700,color:i===1?"hsl(var(--primary-text))":"var(--ios-label2)",textAlign:"center"}}>{label}</span>
+          </div>
+        ))}
+      </div>
+      <SectionTitle action="Ver tudo">Propostas do Assistente</SectionTitle>
+      <div style={{display:"flex",gap:10}}>
+        {PICKS.map(([name,meta,tag])=>(
+          <div key={name} className="glass" style={{flex:1,padding:9}}>
+            <div style={{position:"relative"}}>
+              <Slot label={"foto"} h={104} r={15} />
+              <span style={{position:"absolute",left:8,bottom:8,background:LIME,color:"#0d1a00",fontSize:9,fontWeight:800,padding:"3px 8px",borderRadius:99,textTransform:"uppercase",letterSpacing:".05em"}}>{tag}</span>
+            </div>
+            <div style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)",marginTop:10,letterSpacing:"-.01em"}}>{name}</div>
+            <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:2}}>{meta}</div>
+          </div>
+        ))}
+      </div>
+      <SectionTitle action="4 resultados">Resultados</SectionTitle>
+      {RESULTS.map(([name,meta,prot])=>(
+        <div key={name} className="glass" style={{padding:12,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+          <div style={{width:34,height:34,borderRadius:11,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("apple",16,PT)}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:14,fontWeight:600,color:"var(--ios-label)"}}>{name}</div>
+            <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:1}}>{meta} · {prot}</div>
+          </div>
+          <div style={{width:28,height:28,borderRadius:99,background:LIME,display:"flex",alignItems:"center",justifyContent:"center"}}>{I("plus",16,"#0d1a00")}</div>
+        </div>
+      ))}
+      <div style={{height:110}}></div>
+    </div>
+  );
+}
+
+/* ---------- 4. Substituir alimento ---------- */
+function SwapScreen({aluno}){
+  const ALT=[["Tilápia grelhada","180 g","−12 kcal","+1 g prot",PT],["Patinho moído","150 g","+34 kcal","−2 g prot",FT],["Tofu firme","200 g","−48 kcal","−9 g prot",CT],["Atum em água","165 g","−22 kcal","+3 g prot",PT]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12,fontWeight:700,color:"var(--on-hero-2)",textTransform:"uppercase",letterSpacing:".04em"}}>Almoço · 12:40</div>
+          <div style={{fontSize:21,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>Substituir alimento</div>
+        </div>
+      </div>
+      <SectionTitle>Alimento atual</SectionTitle>
+      <div className="glass" style={{padding:14,display:"flex",alignItems:"center",gap:13,borderColor:LIME}}>
+        <Slot label={"foto"} h={48} r={13} style={{width:54,flexShrink:0}} />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:15,fontWeight:700,color:"var(--ios-label)",letterSpacing:"-.01em"}}>Peito de frango grelhado</div>
+          <div style={{fontSize:12,color:"var(--ios-label2)",marginTop:2}}>180 g · 297 kcal · 56 g proteína</div>
+        </div>
+      </div>
+      <div className="glass" style={{padding:14,marginTop:10,display:"flex",gap:12,alignItems:"flex-start"}}>
+        <div style={{width:32,height:32,borderRadius:11,background:"color-mix(in srgb, hsl(var(--primary)) 18%, transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("sparkles",15,LIME)}</div>
+        <div style={{fontSize:12.5,color:"var(--ios-label2)",lineHeight:1.45}}>Equivalências calculadas para manter sua meta de proteína do dia. {aluno?"Seu especialista vê a troca.":"A troca mantém sua meta do dia."}</div>
+      </div>
+      <SectionTitle action="Ordenar por proteína">Equivalentes</SectionTitle>
+      {ALT.map(([name,qty,kcal,prot,tone])=>(
+        <div key={name} className="glass" style={{padding:12,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+          <Slot label={"foto"} h={42} r={12} style={{width:46,flexShrink:0}} />
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:14,fontWeight:600,color:"var(--ios-label)"}}>{name}</div>
+            <div style={{display:"flex",gap:8,marginTop:3}}>
+              <span style={{fontSize:11,color:"var(--ios-label2)"}}>{qty}</span>
+              <span style={{fontSize:11,fontWeight:700,color:tone}}>{kcal}</span>
+              <span style={{fontSize:11,fontWeight:700,color:tone}}>{prot}</span>
+            </div>
+          </div>
+          <div style={{padding:"7px 13px",borderRadius:99,background:"var(--glass-strong)",fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:".06em",color:"var(--ios-label)"}}>Trocar</div>
+        </div>
+      ))}
+      <div style={{height:150}}></div>
+    </div>
+  );
+}
+
+/* ---------- 5. Escanear com IA ---------- */
+function ScanScreen(){
+  return (
+    <div className="scroll" style={{padding:0}}>
+      <div style={{position:"relative"}}>
+        <Slot label={"câmera · prato reconhecido"} h={296} r={0} />
+        <div style={{position:"absolute",inset:"56px 46px 70px",border:`2px solid ${LIME}`,borderRadius:22,boxShadow:`0 0 34px -6px ${LIME}, inset 0 0 34px -14px ${LIME}`}}></div>
+        <div style={{position:"absolute",top:14,left:18,right:18,display:"flex",justifyContent:"space-between"}}><RoundBtn icon="chevron-left" /><RoundBtn icon="zap" /></div>
+        <div style={{position:"absolute",left:0,right:0,bottom:16,display:"flex",justifyContent:"center"}}>
+          <span style={{display:"inline-flex",alignItems:"center",gap:7,padding:"7px 14px",borderRadius:99,background:"rgba(0,0,0,.6)",color:"#fff",fontSize:11.5,fontWeight:700,backdropFilter:"blur(10px)"}}>{I("sparkles",14,LIME)} Identificando componentes e porções</span>
+        </div>
+      </div>
+      <div style={{position:"relative",marginTop:-26,background:"var(--ios-bg)",borderRadius:"28px 28px 0 0",padding:"20px 18px 0"}}>
+        <div style={{display:"flex",gap:6,marginBottom:10}}><Chip tone="primary">Reconhecido</Chip><Chip>Confiança 92%</Chip></div>
+        <div style={{fontSize:23,fontWeight:700,color:"var(--ios-label)",letterSpacing:"-.03em"}}>Bowl de grão-de-bico</div>
+        <div className="glass" style={{padding:16,marginTop:14,display:"flex",alignItems:"center"}}>
+          <div>
+            <div style={{fontSize:11,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"var(--ios-label3)"}}>Calorias totais</div>
+            <div style={{display:"flex",alignItems:"baseline",gap:5,marginTop:4}}>
+              <span style={{fontFamily:"var(--font-display)",fontSize:40,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.03em"}}>380</span>
+              <span style={{fontSize:13,fontWeight:700,color:"var(--ios-label2)"}}>kcal</span>
+            </div>
+          </div>
+          <div style={{marginLeft:"auto"}}><Ring pct={16} color={F} size={80} stroke={9}>{I("flame",28,F)}</Ring></div>
+        </div>
+        <div style={{display:"flex",gap:9,marginTop:10}}>
+          <MacroDonut label="Proteína" value="22" unit="g" pct={54} color={P} tcolor={PT} />
+          <MacroDonut label="Gordura" value="15" unit="g" pct={30} color={F} tcolor={FT} />
+          <MacroDonut label="Carbos" value="45" unit="g" pct={60} color={C} tcolor={CT} />
+        </div>
+        <SectionTitle action="Ajustar porções">Componentes detectados</SectionTitle>
+        {[["Grão-de-bico assado","120 g",164],["Abacate","60 g",96],["Quinoa","80 g",96],["Tomate-cereja","50 g",24]].map(([n,q,k])=>(
+          <div key={n} className="glass" style={{padding:11,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+            <div style={{width:8,height:8,borderRadius:99,background:LIME,flexShrink:0,marginLeft:4}}></div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13.5,fontWeight:600,color:"var(--ios-label)"}}>{n}</div>
+              <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:1}}>{q}</div>
+            </div>
+            <span style={{fontSize:12.5,fontWeight:700,color:"var(--ios-label)"}}>{k} kcal</span>
+          </div>
+        ))}
+        <div style={{height:170}}></div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 6. Assistente ---------- */
+function BotScreen(){
+  const MSG=[
+    ["bot","Oi, João! Vi que faltam 860 kcal e 32 g de proteína para fechar sua meta de hoje."],
+    ["me","O que eu como no jantar? Só tenho salmão e batata doce."],
+    ["bot","Perfeito: 160 g de salmão + 200 g de batata doce = 612 kcal e 38 g de proteína. Fecha a meta com folga de 2 g de gordura."],
+  ];
+  const QUICK=["Trocar o lanche","Receita rápida","Quanto de água?"];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1,minWidth:0,display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:36,height:36,borderRadius:99,background:"color-mix(in srgb, hsl(var(--primary)) 22%, transparent)",border:`1.5px solid ${LIME}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("sparkles",17,LIME)}</div>
+          <div>
+            <div style={{fontSize:15.5,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.01em"}}>Assistente</div>
+            <div style={{fontSize:11.5,color:PT,fontWeight:600,display:"flex",alignItems:"center",gap:5}}><span style={{width:6,height:6,borderRadius:99,background:P,display:"block"}}></span> online</div>
+          </div>
+        </div>
+        <RoundBtn icon="ellipsis" />
+      </div>
+      <div style={{marginTop:22,display:"flex",flexDirection:"column",gap:12}}>
+        {MSG.map(([who,text],i)=>(
+          <div key={i} style={{display:"flex",justifyContent:who==="me"?"flex-end":"flex-start"}}>
+            <div className={who==="me"?"":"glass"} style={{maxWidth:"84%",padding:"12px 14px",borderRadius:who==="me"?"20px 20px 6px 20px":"20px 20px 20px 6px",background:who==="me"?LIME:undefined,color:who==="me"?"#0d1a00":"var(--ios-label)",fontSize:13.5,lineHeight:1.45,fontWeight:who==="me"?600:400}}>{text}</div>
+          </div>
+        ))}
+        <div className="glass" style={{alignSelf:"flex-start",padding:"12px 14px",borderRadius:"20px 20px 20px 6px",display:"flex",gap:5}}>
+          {[0,1,2].map(d=><span key={d} style={{width:6,height:6,borderRadius:99,background:"var(--ios-label3)",display:"block"}}></span>)}
+        </div>
+      </div>
+      <div className="glass" style={{padding:14,marginTop:16,display:"flex",gap:12,alignItems:"flex-start"}}>
+        <div style={{width:32,height:32,borderRadius:11,background:"color-mix(in srgb, #34D399 18%, transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("clipboard-check",15,PT)}</div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)"}}>Adicionar ao jantar</div>
+          <div style={{fontSize:12,color:"var(--ios-label2)",marginTop:2}}>Salmão 160 g · Batata doce 200 g</div>
+          <div style={{display:"flex",gap:8,marginTop:11}}>
+            <div className="btn primary" style={{flex:1,height:38,fontSize:11.5}}>Adicionar</div>
+            <div className="btn ghost" style={{flex:1,height:38,fontSize:11.5}}>Ver macros</div>
+          </div>
+        </div>
+      </div>
+      <SectionTitle>Perguntas rápidas</SectionTitle>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+        {QUICK.map(q=><span key={q} className="glass" style={{padding:"9px 14px",borderRadius:99,fontSize:12.5,fontWeight:600,color:"var(--ios-label2)"}}>{q}</span>)}
+      </div>
+      <div style={{height:150}}></div>
+    </div>
+  );
+}
+
+/* ---------- 7. Lista de compras ---------- */
+function ShoppingScreen(){
+  const GROUPS=[
+    ["Proteínas",[["Peito de frango","1,4 kg",true],["Salmão fresco","600 g",true],["Ovos","30 un",false]]],
+    ["Carboidratos",[["Arroz integral","2 kg",false],["Batata doce","1,5 kg",false]]],
+    ["Hortifrúti",[["Brócolis","800 g",false],["Banana","12 un",true]]],
+  ];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12,fontWeight:700,color:"var(--on-hero-2)",textTransform:"uppercase",letterSpacing:".04em"}}>Gerada do seu plano</div>
+          <div style={{fontSize:21,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>Lista de compras</div>
+        </div>
+        <RoundBtn icon="share" />
+      </div>
+      <div style={{display:"flex",gap:7,marginTop:16}}>
+        {["7 dias","14 dias","30 dias"].map((d,i)=>(
+          <div key={d} className={i===0?"":"glass"} style={{flex:1,height:40,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12.5,fontWeight:700,background:i===0?LIME:undefined,color:i===0?"#0d1a00":"var(--ios-label2)",boxShadow:i===0?`0 8px 22px -8px ${LIME}`:undefined}}>{d}</div>
+        ))}
+      </div>
+      <div className="glass" style={{padding:16,marginTop:12}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:9}}>
+          <span style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)"}}>3 de 8 itens</span>
+          <span style={{fontSize:12.5,color:"var(--ios-label2)"}}>≈ R$ 284</span>
+        </div>
+        <Bar pct={38} />
+      </div>
+      {GROUPS.map(([group,items])=>(
+        <div key={group}>
+          <SectionTitle action={`${items.length} itens`}>{group}</SectionTitle>
+          {items.map(([name,qty,done])=>(
+            <div key={name} className="glass" style={{padding:12,display:"flex",alignItems:"center",gap:12,marginBottom:9,opacity:done?.55:1}}>
+              <div style={{width:24,height:24,borderRadius:8,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",background:done?P:"transparent",border:done?"none":"1.5px solid var(--ios-label3)"}}>{done && I("check",14,"#06281a")}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:14,fontWeight:600,color:"var(--ios-label)",textDecoration:done?"line-through":"none"}}>{name}</div>
+              </div>
+              <span style={{fontSize:12.5,fontWeight:700,color:"var(--ios-label2)"}}>{qty}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+      <div style={{height:150}}></div>
+    </div>
+  );
+}
+
+/* ---------- 8. Aderência da semana ---------- */
+function AdherenceScreen({aluno}){
+  const WEEK=[["S",92],["T",88],["Q",100],["Q",74],["S",64],["S",0],["D",0]];
+  const STATS=[["target","Aderência","86%",PT],["flame","Média kcal","2.180",FT],["droplet","Água","2,6 L",CT],["trending-down","Peso","−1,4 kg","hsl(var(--primary-text))"]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12,fontWeight:700,color:"var(--on-hero-2)",textTransform:"uppercase",letterSpacing:".04em"}}>Semana 07–13 de agosto</div>
+          <div style={{fontSize:21,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>Sua aderência</div>
+        </div>
+        <RoundBtn icon="calendar" />
+      </div>
+      <div className="glass" style={{padding:16,marginTop:16}}>
+        <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",height:124,gap:8}}>
+          {WEEK.map(([d,v],i)=>(
+            <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:7,height:"100%",justifyContent:"flex-end"}}>
+              <span style={{fontSize:10,fontWeight:700,color:v>=90?"hsl(var(--primary-text))":"var(--ios-label3)"}}>{v||"—"}</span>
+              <div style={{width:"100%",height:`${Math.max(4,v)}%`,borderRadius:8,background:v===0?"var(--glass-strong)":v>=90?LIME:"color-mix(in srgb, hsl(var(--primary)) 45%, transparent)",boxShadow:v>=90?`0 0 14px -2px ${LIME}`:"none"}}></div>
+              <span style={{fontSize:10.5,fontWeight:700,color:"var(--ios-label3)"}}>{d}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:12}}>
+        {STATS.map(([icon,label,value,tone])=>(
+          <div key={label} className="glass" style={{padding:14}}>
+            <div style={{width:30,height:30,borderRadius:10,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:10}}>{I(icon,15,tone)}</div>
+            <div style={{fontFamily:"var(--font-display)",fontSize:21,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{value}</div>
+            <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:2}}>{label}</div>
+          </div>
+        ))}
+      </div>
+      <SectionTitle action="Meta 3 L">Hidratação de hoje</SectionTitle>
+      <div className="glass" style={{padding:16}}>
+        <div style={{display:"flex",gap:6}}>
+          {Array.from({length:8}).map((_,i)=>(
+            <div key={i} style={{flex:1,height:46,borderRadius:11,display:"flex",alignItems:"center",justifyContent:"center",background:i<7?"color-mix(in srgb, #A3E635 22%, transparent)":"var(--glass-strong)",border:i<7?`1px solid ${C}`:"1px solid transparent"}}>{I("droplet",16,i<7?CT:"var(--ios-label3)")}</div>
+          ))}
+        </div>
+        <div style={{fontSize:12,color:"var(--ios-label2)",marginTop:11}}>7 de 8 copos · faltam 250 ml</div>
+      </div>
+      <SectionTitle>{aluno?"Do seu especialista":"Resumo do Assistente"}</SectionTitle>
+      <div className="glass" style={{padding:15,display:"flex",gap:12,alignItems:"flex-start"}}>
+        <div style={{width:34,height:34,borderRadius:11,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontWeight:700,fontSize:14,color:"var(--ios-label)"}}>D</div>
+        <div>
+          <div style={{fontSize:14,fontWeight:700,color:"var(--ios-label)"}}>{aluno?"Daniel Levi":"Assistente"}</div>
+          <div style={{fontSize:12.5,color:"var(--ios-label2)",marginTop:3,lineHeight:1.45}}>{aluno?"Sexta caiu para 64% — antecipe o lanche da tarde para as 15h e mantenha a proteína do jantar.":"Semana boa: 5 de 7 dias no plano. Sexta e sábado ficaram abaixo; deixar o lanche da tarde pronto ajuda."}</div>
+        </div>
+      </div>
+      <div style={{height:120}}></div>
+    </div>
+  );
+}
+
+function TabBar({active="nutrition"}){return <KitTabBar active={active}/>;}
+
+function Phone(p){return <ThemePair><PhoneOne {...p}/></ThemePair>;}
+function PhoneOne({ step, label, footer, fab, children }){
+  return (
+    <div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+        <span style={{width:20,height:20,borderRadius:99,background:LIME,color:"#0d1a00",fontSize:11,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{step}</span>
+        <span style={{color:"hsl(var(--muted-foreground))",fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:".1em"}}>{label}</span>
+      </div>
+      <div className="phone">
+        <div className="glow"></div>
+        <div className="island"></div>
+        <StatusBar/>
+        {children}
+        {fab && (
+          <div style={{position:"absolute",right:18,bottom:126,zIndex:6,width:58,height:58,borderRadius:99,background:LIME,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 14px 34px -8px ${LIME}`}}>{I("sparkles",25,"#0d1a00")}</div>
+        )}
+        {footer && (
+          <div className="footerbar">
+            <div className="btn ghost" style={{flex:"0 0 auto",padding:"0 16px"}}>{I(footer[1],15,"var(--ios-label)")} {footer[0]}</div>
+            <div className="btn primary" style={{flex:1}}>{I(footer[3],15,"#0d1a00")} {footer[2]}</div>
+          </div>
+        )}
+        <TabBar/>
+        <div className="homebar"></div>
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const [theme,setTheme]=React.useState("dark");
+  React.useEffect(()=>{window.lucide?.createIcons();});
+  const row={display:"flex",gap:30,marginBottom:36};
+  return (
+    <div>
+      <div style={row}>
+        <Phone step="1" label="Plano do dia" fab><PlanScreen/></Phone>
+        <Phone step="2" label="Detalhe da refeição" footer={["Ajustar","pencil","Marcar como feita","check"]}><MealScreen/></Phone>
+        <Phone step="3" label="Buscar alimento" fab><SearchScreen/></Phone>
+        <Phone step="4" label="Substituir alimento" footer={["Cancelar","x","Confirmar troca","check"]}><SwapScreen/></Phone>
+        <Phone step="4" label="Substituir alimento · Variante · Aluno" footer={["Cancelar","x","Confirmar troca","check"]}><SwapScreen aluno/></Phone>
+      </div>
+      <div style={row}>
+        <Phone step="5" label="Escanear com IA" footer={["Escanear outro","camera","Adicionar ao diário","plus"]}><ScanScreen/></Phone>
+        <Phone step="6" label="Assistente" footer={["Anexar foto","image","Enviar mensagem","send"]}><BotScreen/></Phone>
+        <Phone step="7" label="Lista de compras" footer={["Limpar","eraser","Compartilhar","share"]}><ShoppingScreen/></Phone>
+        <Phone step="8" label="Aderência da semana"><AdherenceScreen/></Phone>
+        <Phone step="8" label="Aderência da semana · Variante · Aluno"><AdherenceScreen aluno/></Phone>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+setTimeout(()=>window.lucide?.createIcons(),50);
+</script></body></html>
