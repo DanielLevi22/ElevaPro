@@ -67,3 +67,9 @@ supabase/.env
 # Fotos temporárias de produção; originais finais ficam no storage.
 /tmp/meal-catalog/
 /tmp/meal-catalog-*
+
+# Lotes de geração são operacionais; o ledger production.json alimenta a importação.
+/docs/catalog/meal-combinations/batch-*.json
+/docs/catalog/meal-combinations/first-batch.json
+/docs/catalog/meal-combinations/second-batch.json
+/docs/catalog/meal-combinations/third-batch.json

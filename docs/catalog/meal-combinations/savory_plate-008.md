@@ -33,8 +33,8 @@
 - [ ] `candidate-2708385c05954455` — Prato: Mandioca cozida + Sardinha (lata, drenada) + Abobrinha cozida
 - [ ] `candidate-27102ea1bc8f1351` — Prato: Polenta cozida + Pescada grelhada + Rúcula
 - [ ] `candidate-271a0dab1f3160ce` — Prato: Quinoa cozida + Ovo de codorna cozido + Couve refogada
-- [ ] `candidate-2733118a9008d9b4` — Prato: Arroz branco cozido + Frango (coxa sem pele assada) + Vagem cozida
-- [ ] `candidate-273ede7d37968484` — Prato: Batata inglesa cozida + Carne bovina (patinho) + Berinjela cozida
+- [x] `candidate-2733118a9008d9b4` — Prato: Arroz branco cozido + Frango (coxa sem pele assada) + Vagem cozida
+- [x] `candidate-273ede7d37968484` — Prato: Batata inglesa cozida + Carne bovina (patinho) + Berinjela cozida
 - [ ] `candidate-27586218f75cdef8` — Prato: Cuscuz de milho + Clara de ovo + Cogumelo champignon
 - [ ] `candidate-276428b7dec4f199` — Prato: Cará cozido + Carne bovina (alcatra) + Couve-flor cozida
 - [ ] `candidate-2768c362693f2189` — Prato: Arroz parboilizado cozido + Carne bovina (músculo cozido) + Vagem cozida
