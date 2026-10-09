@@ -74,6 +74,15 @@ Prova negativa executada em instância descartável: policy que liberava rascunh
 fez a trava falhar com `RASCUNHO EXPOSTO`. Revisão técnica, sem nova alegação de
 conformidade jurídica ou aprovação de receitas.
 
+A biblioteca administrativa web consulta somente `media_assets` e títulos de
+`meal_dishes`, com dez imagens por página. A rota exige admin com prova
+privilegiada e usa o JWT do chamador para preservar RLS; não usa service role
+para ler rascunhos. Não consulta refeições individuais nem envia identidade
+ou token ao ImageKit. A finalidade e a retenção do catálogo permanecem as mesmas.
+`web/src/app/api/admin/meal-media/route.test.ts` impede consulta de conta recusada
+e exposição de chave privada; prova negativa em cópia descartável com mock de
+autorização invertido retornou 200 em vez de 403 e fez a trava falhar.
+
 > **Última revisão completa:** módulos Auth e Students revisados via `/lgpd-check`. Ver seção 10 para status detalhado por módulo.
 
 ### 2.1 Dados pessoais comuns (Art. 5°, I)

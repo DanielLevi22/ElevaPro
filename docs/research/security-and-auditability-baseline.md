@@ -84,6 +84,13 @@ permissiva deliberada fez o teste falhar por exposição de rascunho. Essas evid
 são revisão técnica; integração ao fluxo de exportação e revisão administrativa
 continua pendente, sem alegação de conformidade jurídica nova.
 
+A biblioteca web de imagens usa a identidade do admin na consulta paginada,
+preservando RLS e a prova privilegiada da rota. Não lê escolhas individuais nem
+adiciona eventos com conteúdo alimentar. O teste da rota bloqueia contas
+recusadas antes da consulta e verifica ausência de chave privada. Mock de
+autorização invertido em cópia descartável fez essa trava falhar; o controle da
+aplicação e o banco não foram alterados para a prova.
+
 ## Fontes primárias
 
 - [Lei nº 13.709/2018 — LGPD (Planalto)](https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm)

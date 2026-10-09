@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   downloadMealMediaBackup,
   loadMealMediaOverview,
@@ -11,23 +11,33 @@ import type { MealMediaOverview } from "../services/mealMedia.types";
 /** Estado do catálogo e operações portáveis do admin. @example const media = useMealMediaAdmin() */
 export function useMealMediaAdmin() {
   const [overview, setOverview] = useState<MealMediaOverview | null>(null);
+  const [page, setPage] = useState(1);
+  const requestVersion = useRef(0);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const refresh = useCallback(async () => {
+    const version = ++requestVersion.current;
     setLoading(true);
     setError(null);
     try {
-      setOverview(await loadMealMediaOverview());
+      const nextOverview = await loadMealMediaOverview(page);
+      if (version === requestVersion.current) {
+        setOverview(nextOverview);
+        setPage(nextOverview.page);
+      }
     } catch (failure) {
-      setError(message(failure));
+      if (version === requestVersion.current) setError(message(failure));
     } finally {
-      setLoading(false);
+      if (version === requestVersion.current) setLoading(false);
     }
-  }, []);
+  }, [page]);
   useEffect(() => {
     void refresh();
+    return () => {
+      requestVersion.current += 1;
+    };
   }, [refresh]);
   const run = async (operation: () => Promise<string>) => {
     if (busy) return;
@@ -44,6 +54,7 @@ export function useMealMediaAdmin() {
   };
   return {
     overview,
+    setPage,
     loading,
     busy,
     error,

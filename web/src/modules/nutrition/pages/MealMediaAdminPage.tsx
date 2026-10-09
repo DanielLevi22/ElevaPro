@@ -1,7 +1,7 @@
 "use client";
 
 import type { MealImage } from "@elevapro/shared";
-import { Download, Images, RefreshCw, Upload } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Images, RefreshCw, Upload } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
@@ -13,6 +13,10 @@ export function MealMediaAdminPage() {
   const media = useMealMediaAdmin();
   const [backup, setBackup] = useState<File | null>(null);
   const images = media.overview?.catalog.images ?? [];
+  const totalImages = media.overview?.totalImages ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalImages / (media.overview?.pageSize ?? 10)));
+  const currentPage = media.overview?.page ?? 1;
+  const pageStart = (currentPage - 1) * (media.overview?.pageSize ?? 10);
   const recipes = media.overview?.catalog.recipes ?? [];
   const available = media.overview?.destinations.imagekit ?? false;
   const columns: DataTableColumn<MealImage>[] = [
@@ -103,9 +107,9 @@ export function MealMediaAdminPage() {
         </p>
       ) : null}
       <div className="grid gap-4 sm:grid-cols-3">
-        <Summary label="Imagens" value={String(images.length)} />
+        <Summary label="Imagens" value={String(totalImages)} />
         <Summary
-          label="Volume dos originais"
+          label="Volume desta página"
           value={`${(images.reduce((total, image) => total + image.bytes, 0) / 1_000_000).toFixed(2)} MB`}
         />
         <Summary
@@ -115,10 +119,11 @@ export function MealMediaAdminPage() {
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="space-y-4 rounded-2xl border border-border bg-surface p-5">
-          <h2 className="font-bold">Exportar originais</h2>
+          <h2 className="font-bold">Exportar catálogo inicial</h2>
           <p className="text-sm text-muted-foreground">
-            O backup reúne as fotos e suas versões. A integridade de cada arquivo é conferida antes
-            do download.
+            Este backup inclui as {media.overview?.backupImageCount ?? 16} fotos do catálogo
+            inicial. Para o catálogo completo, use a exportação por diretório. A integridade de cada
+            arquivo é conferida antes do download.
           </p>
           <Button
             disabled={media.busy || media.loading || !images.length}
@@ -130,7 +135,7 @@ export function MealMediaAdminPage() {
           </Button>
         </section>
         <section className="space-y-4 rounded-2xl border border-border bg-surface p-5">
-          <h2 className="font-bold">Restaurar em outro destino</h2>
+          <h2 className="font-bold">Restaurar catálogo inicial em outro destino</h2>
           <p className="text-sm text-muted-foreground">
             Copie os arquivos preservando os IDs. A origem e a entrega atual são mantidas durante a
             conferência.
@@ -176,6 +181,37 @@ export function MealMediaAdminPage() {
             <p className="p-6 text-sm text-muted-foreground">Nenhuma imagem disponível.</p>
           }
         />
+        {!media.loading && images.length > 0 ? (
+          <nav
+            aria-label="Paginação das imagens do cardápio"
+            className="flex flex-wrap items-center justify-between gap-3"
+          >
+            <p role="status" className="text-sm text-muted-foreground">
+              Mostrando {pageStart + 1}–{pageStart + images.length} de {totalImages} imagens
+            </p>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="secondary"
+                disabled={currentPage === 1}
+                onClick={() => media.setPage(currentPage - 1)}
+              >
+                <ChevronLeft size={16} aria-hidden />
+                Anterior
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Página {currentPage} de {pageCount}
+              </span>
+              <Button
+                variant="secondary"
+                disabled={currentPage === pageCount}
+                onClick={() => media.setPage(currentPage + 1)}
+              >
+                Próxima
+                <ChevronRight size={16} aria-hidden />
+              </Button>
+            </div>
+          </nav>
+        ) : null}
       </section>
       <p className="text-xs text-muted-foreground">
         Fotos ilustrativas do catálogo experimental. A troca da entrega deve ocorrer após conferir a

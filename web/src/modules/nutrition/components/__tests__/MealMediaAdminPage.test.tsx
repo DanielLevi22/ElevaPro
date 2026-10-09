@@ -17,11 +17,73 @@ beforeEach(() => {
     new Response(
       JSON.stringify({
         catalog: { version: 1, recipes: [], images: [] },
+        totalImages: 0,
+        page: 1,
+        pageSize: 10,
+        backupImageCount: 16,
         delivery: "external",
         destinations: { imagekit: true },
       }),
     ),
   );
+});
+
+it("consulta a próxima página no servidor e mostra fotos hospedadas", async () => {
+  const image = {
+    id: "photo-cloud-1",
+    version: 1,
+    path: "meal-images/cloud.jpg",
+    url: "https://cdn.example.test/meal-images/cloud.jpg",
+    bytes: 1234,
+    sha256: "a".repeat(64),
+    contentType: "image/jpeg",
+  };
+  fetchMock.mockReset();
+  fetchMock.mockResolvedValueOnce(
+    new Response(
+      JSON.stringify({
+        catalog: {
+          version: 1,
+          recipes: [{ imageId: image.id, title: "Prato da nuvem" }],
+          images: [image],
+        },
+        totalImages: 11,
+        page: 1,
+        pageSize: 10,
+        backupImageCount: 16,
+        delivery: "external",
+        destinations: { imagekit: true },
+      }),
+    ),
+  );
+  render(<MealMediaAdminPage />);
+  await screen.findByText("Prato da nuvem");
+  expect(screen.getByRole("img")).toHaveAttribute("src", image.url);
+  expect(screen.getByRole("button", { name: "Anterior" })).toBeDisabled();
+  const nextImage = { ...image, id: "photo-cloud-11" };
+  fetchMock.mockResolvedValueOnce(
+    new Response(
+      JSON.stringify({
+        catalog: {
+          version: 1,
+          recipes: [{ imageId: nextImage.id, title: "Último prato" }],
+          images: [nextImage],
+        },
+        totalImages: 11,
+        page: 2,
+        pageSize: 10,
+        backupImageCount: 16,
+        delivery: "external",
+        destinations: { imagekit: true },
+      }),
+    ),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Próxima" }));
+  await screen.findByText("Último prato");
+  expect(fetchMock.mock.calls[1][0]).toBe("/api/admin/meal-media?page=2");
+  expect(screen.getByText("Página 2 de 2")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Próxima" })).toBeDisabled();
+  expect(screen.queryByText("Prato da nuvem")).not.toBeInTheDocument();
 });
 
 it("admin pode repetir restauração após falha, mantendo o arquivo selecionado", async () => {

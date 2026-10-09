@@ -1,9 +1,9 @@
 import { supabase } from "@elevapro/supabase";
 import type { MealMediaOverview } from "./mealMedia.types";
 
-/** Consulta a biblioteca do admin com a sessão vigente. @example await loadMealMediaOverview() */
-export async function loadMealMediaOverview(): Promise<MealMediaOverview> {
-  return (await requestMedia("")).json();
+/** Consulta uma página da biblioteca com a sessão vigente. @example await loadMealMediaOverview(2) */
+export async function loadMealMediaOverview(page = 1): Promise<MealMediaOverview> {
+  return (await requestMedia(`?page=${page}`)).json();
 }
 
 /** Exporta o arquivo de backup para o navegador. @example await downloadMealMediaBackup() */
