@@ -69,7 +69,7 @@
 | [ADR-0005](0005-ai-model-selection.md) | Sonnet para orquestração, Haiku para tarefas estruturadas | accepted |
 | [ADR-0011](0011-ai-architecture.md) | Abstração de provider e hierarquia de orquestradores | accepted |
 | [ADR-0016](0016-chat-de-ia-em-sse-com-estado-em-jsonb.md) | Chat de IA em SSE com estado da sessão em JSONB | accepted |
-| [ADR-0043](0043-a-meta-do-praticante-e-codigo-e-o-plano-e-da-ia-conferido.md) | A meta e as travas do Praticante são código; o plano é da IA, conferido pelo código | accepted, abertura condicionada à validação CREF/CRN e jurídica |
+| [ADR-0044](0044-a-meta-do-praticante-e-codigo-e-o-plano-e-da-ia-conferido.md) | A meta e as travas do Praticante são código; o plano é da IA, conferido pelo código | accepted, abertura condicionada à validação CREF/CRN e jurídica |
 
 ### Produto e negócio
 
