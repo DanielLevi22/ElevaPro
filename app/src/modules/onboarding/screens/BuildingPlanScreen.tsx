@@ -7,6 +7,7 @@ import { PassoDeEspera } from '@/components/ui/PassoDeEspera';
 import { Vidro } from '@/components/ui/Vidro';
 import { registrarFalha } from '@/lib/registro';
 import { ROUTES } from '@/navigation/types';
+import { BuildingHero } from '../components/BuildingHero';
 import { OnboardingFrame, OnboardingTitle } from '../components/OnboardingFrame';
 import { ProjectionCurve } from '../components/ProjectionCurve';
 import { useWeightProjection } from '../hooks/useWeightProjection';
@@ -55,6 +56,7 @@ export function BuildingPlanScreen() {
   if (!falha) {
     return (
       <OnboardingFrame>
+        <BuildingHero />
         <OnboardingTitle eyebrow="Leva uns segundos" sub="Estamos juntando tudo que você contou.">
           Montando seu plano
         </OnboardingTitle>

@@ -1,5 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
+import { type ReactNode, useEffect } from 'react';
 import { Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { cn } from '@/lib/utils';
 import { useCores, useEscala } from '@/shared/design';
 
@@ -53,7 +62,11 @@ export function PassoDeEspera({ rotulo, estado }: PassoDeEsperaProps) {
           estado === 'a_seguir' && 'border border-glass-border'
         )}
       >
-        {icone ? <Ionicons name={icone} size={escalar(ICONE)} color={corDoIcone} /> : null}
+        {icone ? (
+          <Girando ativo={estado === 'agora'}>
+            <Ionicons name={icone} size={escalar(ICONE)} color={corDoIcone} />
+          </Girando>
+        ) : null}
       </View>
       <Text
         className={cn(
@@ -76,3 +89,17 @@ export function PassoDeEspera({ rotulo, estado }: PassoDeEsperaProps) {
 }
 
 export type { PassoDeEsperaProps };
+
+const VOLTA_MS = 1200;
+
+/** O ícone de "Agora" gira: o passo está acontecendo. Parado com "reduzir movimento". */
+function Girando({ ativo, children }: { ativo: boolean; children: ReactNode }) {
+  const reduzir = useReducedMotion();
+  const angulo = useSharedValue(0);
+  useEffect(() => {
+    if (!ativo || reduzir) return;
+    angulo.value = withRepeat(withTiming(360, { duration: VOLTA_MS, easing: Easing.linear }), -1);
+  }, [ativo, reduzir, angulo]);
+  const estilo = useAnimatedStyle(() => ({ transform: [{ rotate: `${angulo.value}deg` }] }));
+  return <Animated.View style={estilo}>{children}</Animated.View>;
+}
