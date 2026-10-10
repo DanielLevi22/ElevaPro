@@ -1,9 +1,9 @@
 /**
  * A regra mora em `@elevapro/shared` (`mealsOfDay`) desde a #312.
  *
- * Este caminho existe só para as duas telas antigas que ainda o importam, a do
- * especialista (`DietPlanViewScreen`) e a do member (`StudentNutritionScreen`). As
- * duas estão acima do limite de tamanho e fora de todo lote de vidro até agora;
- * trocar o import obrigaria a reescrevê-las. Apague quando elas forem refeitas.
+ * Este caminho existe só para a tela antiga do especialista que ainda o importa
+ * (`DietPlanViewScreen`). Ela está acima do limite de tamanho e fora de todo
+ * lote de vidro até agora; trocar o import obrigaria a reescrevê-la. Apague
+ * quando ela for refeita.
  */
 export { mealsOfDay as refeicoesDoDia } from '@elevapro/shared';

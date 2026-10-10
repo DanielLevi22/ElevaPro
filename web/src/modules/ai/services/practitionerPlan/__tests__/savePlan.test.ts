@@ -123,6 +123,8 @@ describe("aprovar o plano do onboarding", () => {
       student_id: "aluno-1",
       specialist_id: null,
       status: "active",
+      // O nome diz o que o plano é, e não que é o primeiro.
+      name: "Hipertrofia · 1x por semana",
     });
     expect(ctx.registrar).toHaveBeenCalledWith(periodizationId);
     expect(treinosGravados).toEqual({
@@ -141,6 +143,7 @@ describe("aprovar o plano do onboarding", () => {
       end_date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
       student_id: "aluno-1",
       specialist_id: null,
+      name: "Hipertrofia · 2.000 kcal por dia",
       target_calories: 2000,
     });
     expect(dietaCriada?.refeicoes).toEqual([

@@ -11,8 +11,8 @@ export default function NutritionRoute() {
 
   if (accountType === 'specialist') return <NutritionScreen />;
   if (!user?.id) return null;
-  // O Praticante vê o mesmo plano do dia do Aluno; criar e editar planos fica em
-  // "Meus planos" (`MemberNutritionScreen`), a que ele chega pelo cabeçalho.
+  // O Praticante vê o mesmo plano do dia do Aluno; o plano dele nasce no
+  // onboarding (#365), e o vazio leva até lá.
   return (
     <PlanoDoDiaScreen
       alunoId={user.id}

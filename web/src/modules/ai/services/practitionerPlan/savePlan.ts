@@ -2,6 +2,7 @@ import { addDays, createNutritionService, localDateOf } from "@elevapro/shared";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { saveWorkoutsWithExercises } from "../workoutPersistence";
+import { dietPlanName, trainingPlanName } from "./planNames";
 import type { OnboardingPlanPending } from "./types";
 
 /**
@@ -72,7 +73,7 @@ function firstBlock(): { start_date: string; end_date: string } {
 
 async function saveTraining(ctx: SavePlanContext, pending: OnboardingPlanPending): Promise<string> {
   const { start_date: start, end_date: end } = firstBlock();
-  const name = "Meu primeiro plano";
+  const name = trainingPlanName(pending);
 
   const { data: period, error } = await supabaseAdmin
     .from("training_periodizations")
@@ -96,7 +97,7 @@ async function saveTraining(ctx: SavePlanContext, pending: OnboardingPlanPending
     .from("training_plans")
     .insert({
       periodization_id: period.id,
-      name,
+      name: `Primeiras ${FIRST_BLOCK_WEEKS} semanas`,
       duration_weeks: FIRST_BLOCK_WEEKS,
       focus: pending.goal,
       order_index: 0,
@@ -137,7 +138,7 @@ async function saveDiet(ctx: SavePlanContext, pending: OnboardingPlanPending): P
     {
       student_id: ctx.studentId,
       specialist_id: null,
-      name: "Minha primeira dieta",
+      name: dietPlanName(pending),
       plan_type: "unique",
       // A mesma vigência do bloco de treino: os dois se recalibram juntos.
       ...firstBlock(),

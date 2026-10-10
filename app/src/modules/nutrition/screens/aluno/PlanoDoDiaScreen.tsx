@@ -29,9 +29,8 @@ interface PlanoDoDiaScreenProps {
   /** O especialista vendo como o aluno: lê, e não marca. */
   somenteLeitura: boolean;
   /**
-   * O Praticante, sem especialista: ganha o atalho "Meus planos", para criar e
-   * editar os próprios planos, e o estado vazio fala com ele, e não do
-   * especialista.
+   * O Praticante, sem especialista: o estado vazio fala com ele, e não do
+   * especialista, e leva a montar o plano pelo onboarding.
    */
   praticante?: boolean;
 }
@@ -59,13 +58,6 @@ export function PlanoDoDiaScreen({
           </Text>
         </View>
         <View className="flex-row gap-[0.5625rem]">
-          {praticante ? (
-            <BotaoRedondo
-              icone="pencil"
-              rotulo="Meus planos"
-              onPress={() => router.push(ROUTES.NUTRITION.MY_PLANS)}
-            />
-          ) : null}
           <BotaoRedondo
             icone="calendar"
             rotulo="Aderência da semana"
@@ -101,9 +93,9 @@ function ConteudoDoPlano({ plano, praticante }: { plano: PlanoDoDia; praticante:
           Você ainda não tem um plano alimentar ativo.
         </Text>
         <BotaoDeDestaque
-          rotulo="Ver meus planos"
+          rotulo="Montar meu plano"
           tamanho="compacto"
-          onPress={() => router.push(ROUTES.NUTRITION.MY_PLANS)}
+          onPress={() => router.push(ROUTES.ONBOARDING.SCOPE)}
         />
       </View>
     );
