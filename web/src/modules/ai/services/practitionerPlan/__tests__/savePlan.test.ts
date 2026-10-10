@@ -6,10 +6,34 @@ let inseridos: { tabela: string; linha: Record<string, unknown> }[];
 let treinosGravados: { titulos: string[]; dono: unknown } | null;
 let dietaCriada: { plano: Record<string, unknown>; refeicoes: unknown[] } | null;
 let ativados: string[];
+let encerrados: {
+  tabela: string;
+  linha: Record<string, unknown>;
+  filtros: Record<string, unknown>;
+}[];
 
 vi.mock("@/lib/supabase-admin", () => ({
   supabaseAdmin: {
     from: (tabela: string) => ({
+      update: (linha: Record<string, unknown>) => {
+        const filtros: Record<string, unknown> = {};
+        const cadeia = {
+          eq: (coluna: string, valor: unknown) => {
+            filtros[coluna] = valor;
+            return cadeia;
+          },
+          is: (coluna: string, valor: unknown) => {
+            filtros[`${coluna} is`] = valor;
+            return cadeia;
+          },
+          neq: async (coluna: string, valor: unknown) => {
+            filtros[`${coluna} !=`] = valor;
+            encerrados.push({ tabela, linha, filtros });
+            return { error: null };
+          },
+        };
+        return cadeia;
+      },
       insert: (linha: Record<string, unknown>) => {
         inseridos.push({ tabela, linha });
         return {
@@ -86,6 +110,7 @@ describe("aprovar o plano do onboarding", () => {
     treinosGravados = null;
     dietaCriada = null;
     ativados = [];
+    encerrados = [];
   });
 
   it("ativa o treino do próprio aluno, sem especialista, com o esporte como opcional", async () => {
@@ -133,5 +158,21 @@ describe("aprovar o plano do onboarding", () => {
     expect(dietPlanId).toBeNull();
     expect(dietaCriada).toBeNull();
     expect(ativados).toEqual([]);
+  });
+
+  it("encerra só o treino ativo anterior do próprio Praticante, e não o novo", async () => {
+    const { periodizationId } = await savePractitionerPlan(contexto(), PENDENTE);
+    expect(encerrados).toEqual([
+      {
+        tabela: "training_periodizations",
+        linha: { status: "completed" },
+        filtros: {
+          student_id: "aluno-1",
+          status: "active",
+          "specialist_id is": null,
+          "id !=": periodizationId,
+        },
+      },
+    ]);
   });
 });

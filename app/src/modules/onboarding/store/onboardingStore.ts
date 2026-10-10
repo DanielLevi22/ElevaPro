@@ -18,6 +18,8 @@ interface OnboardingState {
   chooseGoal: (goal: OnboardingGoal) => void;
   chooseTrack: (track: PersonaTrack) => void;
   declineConsent: () => void;
+  /** Aceitou depois de ter recusado: o cartão de O12 some e o guarda volta a valer. */
+  acceptConsent: () => void;
   setDietAllowed: (allowed: boolean) => void;
 }
 
@@ -42,6 +44,7 @@ export const useOnboardingStore = create<OnboardingState>()(
       chooseGoal: (goal) => set({ goal }),
       chooseTrack: (track) => set({ track }),
       declineConsent: () => set({ consentDeclined: true }),
+      acceptConsent: () => set({ consentDeclined: false }),
       setDietAllowed: (dietAllowed) => set({ dietAllowed }),
     }),
     {

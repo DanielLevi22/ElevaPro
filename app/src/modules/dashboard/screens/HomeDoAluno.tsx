@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { type ImageSourcePropType, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { ConfettiOverlay } from '@/components/gamification/ConfettiOverlay';
 import { AlvoDoVidro } from '@/components/ui/AlvoDoVidro';
@@ -38,7 +38,17 @@ const FIM_DA_ROLAGEM = 112;
  * <HomeDoAluno dados={aluno} />
  */
 
-export function HomeDoAluno({ dados }: { dados: DadosDaHomeDoAluno }) {
+export function HomeDoAluno({
+  dados,
+  aviso,
+}: {
+  dados: DadosDaHomeDoAluno;
+  /**
+   * A próxima ação que vem de outro módulo (ADR-0033), como o "Complete seu
+   * perfil" do onboarding: entra por aqui para o dashboard não importar módulo.
+   */
+  aviso?: ReactNode;
+}) {
   const cores = useCores();
   const fimDaRolagem = useBottomOffset(FIM_DA_ROLAGEM);
   const { treinoSugerido, carregando, recarregar } = dados;
@@ -78,6 +88,7 @@ export function HomeDoAluno({ dados }: { dados: DadosDaHomeDoAluno }) {
             ofensiva={dados.ofensiva}
             streakDays={dados.streakDays}
           />
+          {aviso}
           <MetaDoDia dados={dados} />
           {/* O conteúdo começa no topo da tela (sem safe area), então o `y` no
               contêiner da rolagem é o `y` na tela enquanto ela não rolou. */}

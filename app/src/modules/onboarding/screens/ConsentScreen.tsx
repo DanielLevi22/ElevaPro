@@ -41,8 +41,10 @@ export function ConsentScreen() {
   useEffect(() => {
     if (!userId) return;
     hasCurrentHealthConsent(userId).then((consented) => {
-      if (consented) seguirComOAceite(router);
-      else setChecking(false);
+      if (!consented) return setChecking(false);
+      // Aceitou pela folha da porta depois de recusar aqui: a recusa deixa de valer.
+      useOnboardingStore.getState().acceptConsent();
+      seguirComOAceite(router);
     });
   }, [userId, router]);
 
@@ -51,6 +53,7 @@ export function ConsentScreen() {
     setSaving(true);
     try {
       await createHealthService(supabase).grantCollectionConsent(userId);
+      useOnboardingStore.getState().acceptConsent();
       // As autorizações do perfil mostram o aceite: sem invalidar, diriam "pendente".
       await queryClient.invalidateQueries({ queryKey: ['consentStatus'] });
       seguirComOAceite(router);

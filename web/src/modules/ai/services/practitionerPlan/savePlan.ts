@@ -40,7 +40,26 @@ export async function savePractitionerPlan(
 ): Promise<{ periodizationId: string; dietPlanId: string | null }> {
   const periodizationId = await saveTraining(ctx, pending);
   const dietPlanId = pending.target ? await saveDiet(ctx, pending) : null;
+  await finishPreviousTraining(ctx.studentId, periodizationId);
   return { periodizationId, dietPlanId };
+}
+
+/**
+ * Quem volta ao onboarding pelo "Complete seu perfil" aprova um plano novo: o
+ * anterior do próprio Praticante é encerrado, para não haver dois treinos
+ * ativos. Só no fim, depois de tudo gravado: se a aprovação falhar no meio, o
+ * desfazer apaga o novo e o anterior continua valendo. A dieta não precisa
+ * disto: `activate_diet_plan` já encerra a anterior.
+ */
+async function finishPreviousTraining(studentId: string, keepId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from("training_periodizations")
+    .update({ status: "completed" })
+    .eq("student_id", studentId)
+    .eq("status", "active")
+    .is("specialist_id", null)
+    .neq("id", keepId);
+  if (error) throw new Error(`periodização anterior não foi encerrada: ${error.message}`);
 }
 
 /** O primeiro bloco: de hoje a 4 semanas. O banco exige as duas datas no treino e na dieta. */
