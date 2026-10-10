@@ -8,7 +8,7 @@ import { allowedFoodNames } from "./foodFilter";
 import { type CheckFood, checkPlan, type PractitionerPlanProposal } from "./planCheck";
 import { allowedExerciseNames, type PlanChoices, readPlanChoices } from "./planChoices";
 import { buildPlanPrompt } from "./planPrompt";
-import { scaleToTarget } from "./scaleToTarget";
+import { prepareProposal } from "./prepareProposal";
 import type { OnboardingPlanPending, OnboardingPlanTarget } from "./types";
 
 /** Uma tentativa a mais, com os motivos da recusa: a IA erra conta, e corrige quando sabe onde. */
@@ -113,13 +113,12 @@ async function askUntilAccepted(
 ): Promise<PractitionerPlanProposal | null> {
   let prompt = basePrompt;
   for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
-    const answer = parseProposal(await ask(prompt));
-    // Só as refeições foram pedidas: o treino aprovado na tela volta como estava.
-    const merged = answer && keepWorkouts ? { ...answer, workouts: keepWorkouts } : answer;
-    const proposal = scaled(merged, context);
+    const prepared = prepareProposal(parseProposal(await ask(prompt)), keepWorkouts, context);
+    const proposal = "proposal" in prepared ? prepared.proposal : null;
+    // A conferência continua valendo depois do preparo: é ela que diz se o plano chega à tela.
     const problems = proposal
       ? checkPlan(proposal, context)
-      : ["a resposta não era o JSON pedido, ou as porções estavam longe demais da meta"];
+      : [(prepared as { problem: string }).problem];
     if (proposal && problems.length === 0) return proposal;
     // Só a contagem: os motivos citam alimentos e números do plano, e para
     // diagnosticar basta reproduzir com o usuário de teste.
@@ -130,14 +129,6 @@ async function askUntilAccepted(
     prompt = `${basePrompt}\n\nA resposta anterior foi recusada por: ${problems.join("; ")}. Corrija e responda de novo.`;
   }
   return null;
-}
-
-/** As porções acertadas na meta pelo código, antes de conferir (ver `scaleToTarget`). */
-function scaled(
-  proposal: PractitionerPlanProposal | null,
-  context: Parameters<typeof checkPlan>[1],
-): PractitionerPlanProposal | null {
-  return proposal ? scaleToTarget(proposal, context.allowedFoods, context.targetCalories) : null;
 }
 
 async function ask(prompt: string): Promise<string> {

@@ -51,4 +51,41 @@ describe("scaleToTarget — o código acerta as porções na meta", () => {
     const semDieta = { ...plano(0, 0), meals: null };
     expect(scaleToTarget(semDieta, FOODS, null)).toBe(semDieta);
   });
+
+  /**
+   * Muitos itens pequenos e calóricos (azeite, castanha) arredondados para 5 g
+   * empurravam o dia para longe da meta: 2.447 kcal para 1.989 na IA real.
+   */
+  it("depois de arredondar, acerta a diferença no alimento que mais pesa", () => {
+    const foods = new Map([
+      ["Azeite de oliva", { name: "Azeite de oliva", serving_size: 10, calories: 90 }],
+      ["Arroz branco cozido", { name: "Arroz branco cozido", serving_size: 100, calories: 130 }],
+    ]);
+    const azeites = Array.from({ length: 8 }, () => ({
+      food_name: "Azeite de oliva",
+      quantity: 3,
+    }));
+    const result = scaleToTarget(
+      {
+        workouts: [],
+        meals: [
+          {
+            name: "Almoço",
+            meal_time: "12:00",
+            items: [...azeites, { food_name: "Arroz branco cozido", quantity: 300 }],
+          },
+        ],
+        explanation: "",
+      },
+      foods,
+      500,
+    ) as PractitionerPlanProposal;
+    const total = (result.meals ?? [])
+      .flatMap((m) => m.items)
+      .reduce((soma, item) => {
+        const food = foods.get(item.food_name);
+        return food ? soma + (food.calories * item.quantity) / food.serving_size : soma;
+      }, 0);
+    expect(Math.abs(total - 500)).toBeLessThanOrEqual(500 * 0.05);
+  });
 });

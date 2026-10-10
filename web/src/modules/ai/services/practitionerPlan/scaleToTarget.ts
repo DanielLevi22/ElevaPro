@@ -30,16 +30,44 @@ export function scaleToTarget(
   const factor = total > 0 ? targetCalories / total : 0;
   if (factor < MIN_FACTOR || factor > MAX_FACTOR) return null;
 
-  return {
-    ...plan,
-    meals: plan.meals.map((meal) => ({
-      ...meal,
-      items: meal.items.map((item) => ({
-        ...item,
-        quantity: rounded(item.quantity * factor),
-      })),
-    })),
-  };
+  const meals = plan.meals.map((meal) => ({
+    ...meal,
+    items: meal.items.map((item) => ({ ...item, quantity: rounded(item.quantity * factor) })),
+  }));
+  return { ...plan, meals: absorbRounding(meals, foods, targetCalories) };
+}
+
+type Meals = NonNullable<PractitionerPlanProposal["meals"]>;
+
+/**
+ * Arredondar cada item para 5 g erra pouco por item e muito no dia: muitos itens
+ * pequenos e calóricos (azeite, castanha) somaram 2.447 kcal para 1.989 na IA
+ * real. A diferença vai para o alimento que mais pesa no dia, onde 5 g contam
+ * menos, e o mínimo de 5 g continua valendo.
+ */
+function absorbRounding(
+  meals: Meals,
+  foods: ReadonlyMap<string, CheckFood>,
+  target: number,
+): Meals {
+  const items = meals.flatMap((meal, m) => meal.items.map((item, i) => ({ item, m, i })));
+  const total = items.reduce((sum, { item }) => sum + kcalOf(item, foods), 0);
+  const heaviest = items.reduce((best, entry) =>
+    kcalOf(entry.item, foods) > kcalOf(best.item, foods) ? entry : best,
+  );
+  const food = foods.get(heaviest.item.food_name);
+  if (!food) return meals;
+
+  const gramsToFix = ((target - total) * food.serving_size) / food.calories;
+  const quantity = rounded(heaviest.item.quantity + gramsToFix);
+  return meals.map((meal, m) =>
+    m !== heaviest.m
+      ? meal
+      : {
+          ...meal,
+          items: meal.items.map((item, i) => (i === heaviest.i ? { ...item, quantity } : item)),
+        },
+  );
 }
 
 function kcalOf(

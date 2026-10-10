@@ -60,7 +60,7 @@ export function buildPlanPrompt(input: PlanPromptInput): string {
 
   function trainingSection({ exercises, injuryReported }: PlanPromptInput): string {
     const sports = choices.sports.length
-      ? `Inclua uma sessão opcional (optional: true) para cada esporte praticado: ${choices.sports.join(", ")}. Ela não conta nos ${choices.trainingDays} treinos.`
+      ? `Inclua EXATAMENTE ${choices.sports.length} sessão(ões) opcional(is) (optional: true), uma por esporte praticado: ${choices.sports.join(", ")}. Nenhuma outra sessão opcional; os dias sem treino ficam livres. Elas não contam nos ${choices.trainingDays} treinos.`
       : "Não inclua sessão opcional.";
     const cuidado = injuryReported
       ? "\n- Prefira variações de baixo impacto e cargas moderadas; evite carga axial pesada e saltos."
@@ -79,7 +79,7 @@ ${exercises.join("\n")}`;
     const preference = dietInstruction ? `\n- ${dietInstruction}` : "";
     return `ALIMENTAÇÃO
 - Meta do dia, calculada pelo app e que você não pode mudar: ${meta.calories} kcal, ${meta.protein} g de proteína, ${meta.carbs} g de carboidrato, ${meta.fat} g de gordura. A soma do dia deve ficar a até 5% das calorias.
-- Exatamente ${choices.mealsPerDay} refeições por dia.${budget}
+- Exatamente ${choices.mealsPerDay} refeições por dia, com em média ${Math.round(meta.calories / choices.mealsPerDay)} kcal cada; nenhuma refeição com menos da metade disso.${budget}
 - Comida brasileira do dia a dia, em porções realistas.${preference}
 - Use APENAS alimentos desta lista, com o nome exatamente como está antes do travessão. A quantidade é SEMPRE em gramas (ex.: 150 para 150 g de arroz), nunca em porções:
 ${foods.join("\n")}`;
