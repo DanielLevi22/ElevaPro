@@ -68,7 +68,6 @@ export const ROUTES = {
     FOOD: '/onboarding/food',
     BUILDING: '/onboarding/building',
     PLAN: '/onboarding/plan',
-    ROLE_SELECTION: '/onboarding/role-selection',
     HEALTH_CONNECT: '/onboarding/health-connect',
   },
 
