@@ -73,7 +73,7 @@
 - [ ] `candidate-6b9c7058e28f3496` — Prato: Arroz integral cozido + Camarão cozido + Cogumelo champignon
 - [ ] `candidate-6ba3efd9fa6f7907` — Prato: Batata inglesa cozida + Ovo de codorna cozido + Pepino
 - [ ] `candidate-6ba455f1a8487e3b` — Prato: Batata doce cozida + Camarão cozido + Beterraba cozida
-- [ ] `candidate-6ba66f366dcb3954` — Prato: Cuscuz de milho + Ovo inteiro cozido + Tomate
+- [x] `candidate-6ba66f366dcb3954` — Prato: Cuscuz de milho + Ovo inteiro cozido + Tomate
 - [ ] `candidate-6ba6d7b0cc5f33d8` — Prato: Batata inglesa cozida + Carne suína (lombo assado) + Couve refogada
 - [ ] `candidate-6baf3e25618d04dd` — Prato: Batata baroa cozida + Frango desfiado cozido + Pimentão vermelho
 - [ ] `candidate-6bb34c371e1f82f8` — Prato: Batata doce roxa cozida + Carne bovina (músculo cozido) + Cenoura crua
@@ -119,7 +119,7 @@
 - [ ] `candidate-6cc71324188de0cf` — Prato: Biscoito de arroz + Carne moída (patinho) + Abobrinha cozida
 - [ ] `candidate-6ccbb0424e09ab4d` — Prato: Quinoa cozida + Bacalhau dessalgado cozido + Cogumelo champignon
 - [ ] `candidate-6cccb89465446b5c` — Prato: Inhame cozido + Atum em água (lata) + Quiabo cozido
-- [ ] `candidate-6cce48e32123ab85` — Prato: Arroz branco cozido + Ovo inteiro cozido + Brócolis cozido
+- [x] `candidate-6cce48e32123ab85` — Prato: Arroz branco cozido + Ovo inteiro cozido + Brócolis cozido
 - [ ] `candidate-6ccf81e4518c0a12` — Prato: Quinoa cozida + Clara de ovo + Couve-flor cozida
 - [ ] `candidate-6cd1c299eac7f3bf` — Prato: Arroz parboilizado cozido + Tofu + Palmito em conserva
 - [ ] `candidate-6cd3322e54293b1e` — Prato: Arroz branco cozido + Pescada grelhada + Vagem cozida
@@ -161,7 +161,7 @@
 - [ ] `candidate-6d7126cd37018b7e` — Prato: Batata inglesa cozida + Clara de ovo + Pepino
 - [ ] `candidate-6d78b8a35e5751b4` — Prato: Batata inglesa cozida + Frango (sobrecoxa assada) + Palmito em conserva
 - [ ] `candidate-6d843e8897147a41` — Prato: Mandioca cozida + Carne bovina (alcatra) + Cenoura crua
-- [ ] `candidate-6d847032eb298e8d` — Prato: Cuscuz de milho + Carne moída (patinho) + Abobrinha cozida
+- [x] `candidate-6d847032eb298e8d` — Prato: Cuscuz de milho + Carne moída (patinho) + Abobrinha cozida
 - [ ] `candidate-6d85ec5a72520953` — Prato: Cará cozido + Frango desfiado cozido + Brócolis cozido
 - [ ] `candidate-6d901efc4aa1c0ab` — Prato: Arroz branco cozido + Atum fresco grelhado + Agrião
 - [ ] `candidate-6d954dca374b90c2` — Prato: Batata baroa cozida + Ovo inteiro cozido + Cogumelo champignon

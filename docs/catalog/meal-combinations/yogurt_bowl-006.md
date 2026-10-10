@@ -174,7 +174,7 @@
 - [ ] `candidate-bb1bfe1cd9ca0732` — Bowl: Iogurte grego natural + Açaí (polpa sem açúcar) + Aveia em flocos
 - [ ] `candidate-bb53ca989f69b974` — Bowl: Iogurte grego zero + Banana passa + Coco fresco
 - [ ] `candidate-bb62a3e12fc0993f` — Bowl: Iogurte grego natural + Uva + Aveia em flocos
-- [ ] `candidate-bb7b8835a0f268c1` — Bowl: Iogurte natural desnatado + Banana nanica + Aveia em flocos
+- [x] `candidate-bb7b8835a0f268c1` — Bowl: Iogurte natural desnatado + Banana nanica + Aveia em flocos
 - [ ] `candidate-bb7c745584eb2760` — Bowl: Iogurte grego natural + Uva passa + Avelã
 - [ ] `candidate-bb7ed0ff94fa3836` — Bowl: Iogurte grego zero + Uva passa + Coco fresco
 - [ ] `candidate-bba9150d45747c21` — Bowl: Iogurte natural integral + Ameixa + Castanha de caju

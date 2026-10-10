@@ -56,7 +56,7 @@
 - [ ] `candidate-70a541e64d28ddb7` — Prato: Arroz integral cozido + Fígado bovino grelhado + Pimentão vermelho
 - [ ] `candidate-70b0ea8c439df56f` — Prato: Cuscuz de milho + Merluza grelhada + Agrião
 - [ ] `candidate-70b712468ff89fa9` — Prato: Cuscuz marroquino cozido + Sardinha (lata, drenada) + Couve-flor cozida
-- [ ] `candidate-70be8f2e34717544` — Prato: Arroz integral cozido + Tilápia grelhada + Beterraba cozida
+- [x] `candidate-70be8f2e34717544` — Prato: Arroz integral cozido + Tilápia grelhada + Beterraba cozida
 - [ ] `candidate-70c7997725d33352` — Prato: Macarrão integral cozido + Atum em água (lata) + Aspargos cozidos
 - [ ] `candidate-70ce644e2fd36903` — Prato: Polenta cozida + Carne bovina (alcatra) + Berinjela cozida
 - [ ] `candidate-70d2a27c2a41fbb5` — Prato: Arroz parboilizado cozido + Clara de ovo + Abobrinha cozida
@@ -70,7 +70,7 @@
 - [ ] `candidate-70fa8afb2b73451c` — Prato: Biscoito de arroz + Ovo inteiro cozido + Cenoura crua
 - [ ] `candidate-70fb137449f494d6` — Prato: Batata doce roxa cozida + Carne moída (patinho) + Rúcula
 - [ ] `candidate-70ff9f5786da93b4` — Prato: Batata baroa cozida + Atum fresco grelhado + Quiabo cozido
-- [ ] `candidate-70ffe1e24b286d26` — Prato: Macarrão cozido + Carne bovina (patinho) + Tomate
+- [x] `candidate-70ffe1e24b286d26` — Prato: Macarrão cozido + Carne bovina (patinho) + Tomate
 - [ ] `candidate-7105dd2aea6ca2ef` — Prato: Cuscuz de milho + Carne suína (lombo assado) + Vagem cozida
 - [ ] `candidate-711899f86adb447a` — Prato: Batata doce cozida + Carne bovina (coxão mole) + Agrião
 - [ ] `candidate-7124b85258b3c29a` — Prato: Cuscuz de milho + Tofu + Pimentão vermelho
@@ -80,7 +80,7 @@
 - [ ] `candidate-7138f7ba7efb5950` — Prato: Macarrão cozido + Frango (coxa sem pele assada) + Agrião
 - [ ] `candidate-71390e835dd1645f` — Prato: Macarrão cozido + Carne bovina (alcatra) + Agrião
 - [ ] `candidate-713dd6912bd0b39d` — Prato: Biscoito de arroz + Frango desfiado cozido + Chuchu cozido
-- [ ] `candidate-71427718a55728f8` — Prato: Cuscuz de milho + Carne moída (patinho) + Beterraba cozida
+- [x] `candidate-71427718a55728f8` — Prato: Cuscuz de milho + Carne moída (patinho) + Beterraba cozida
 - [ ] `candidate-714295b4fd4a8469` — Prato: Inhame cozido + Salmão grelhado + Brócolis cozido
 - [ ] `candidate-7152eb9c0fd54775` — Prato: Milho verde cozido + Atum em água (lata) + Pimentão verde
 - [ ] `candidate-715e5122c960bd44` — Prato: Arroz sete grãos cozido + Atum fresco grelhado + Agrião
@@ -145,7 +145,7 @@
 - [ ] `candidate-7284a7b81c48cdfb` — Prato: Arroz parboilizado cozido + Frango (coxa sem pele assada) + Vagem cozida
 - [ ] `candidate-728689738a62c7d7` — Prato: Quinoa cozida + Carne suína (lombo assado) + Alface
 - [ ] `candidate-728a2d6d420a7800` — Prato: Macarrão integral cozido + Atum em água (lata) + Vagem cozida
-- [ ] `candidate-728b23985c6d22e4` — Prato: Mandioca cozida + Carne moída (patinho) + Beterraba cozida
+- [x] `candidate-728b23985c6d22e4` — Prato: Mandioca cozida + Carne moída (patinho) + Beterraba cozida
 - [ ] `candidate-729a1de09e9f1ef0` — Prato: Batata doce roxa cozida + Salmão grelhado + Agrião
 - [ ] `candidate-72a5224f8ca4db1a` — Prato: Arroz integral cozido + Ovo de codorna cozido + Quiabo cozido
 - [ ] `candidate-72ac9ba128ebe566` — Prato: Batata doce roxa cozida + Seitan + Berinjela cozida
@@ -211,7 +211,7 @@
 - [ ] `candidate-7420da89c8d641ed` — Prato: Cará cozido + Frango desfiado cozido + Couve-flor cozida
 - [ ] `candidate-7420fe339a9c3a0d` — Prato: Inhame cozido + Ovo de codorna cozido + Rúcula
 - [ ] `candidate-74245cb993224e31` — Prato: Batata baroa cozida + Pescada grelhada + Abóbora cabotiá cozida
-- [ ] `candidate-74263edb4d1a3218` — Prato: Macarrão cozido + Tilápia grelhada + Brócolis cozido
+- [x] `candidate-74263edb4d1a3218` — Prato: Macarrão cozido + Tilápia grelhada + Brócolis cozido
 - [ ] `candidate-74287404ca6b0ae5` — Prato: Inhame cozido + Seitan + Quiabo cozido
 - [ ] `candidate-74305a9ea4a61017` — Prato: Biscoito de arroz + Frango desfiado cozido + Beterraba cozida
 - [ ] `candidate-74339925c87f0b31` — Prato: Batata baroa cozida + Seitan + Beterraba cozida

@@ -83,7 +83,7 @@
 - [ ] `candidate-451fe00bca7a9042` — Prato: Batata doce roxa cozida + Tofu + Pimentão vermelho
 - [ ] `candidate-45283a9bc4de8fe3` — Prato: Inhame cozido + Bacalhau dessalgado cozido + Rúcula
 - [ ] `candidate-452ca8163d0c95f9` — Prato: Arroz branco cozido + Clara de ovo + Aspargos cozidos
-- [ ] `candidate-453350864d1415a8` — Prato: Arroz integral cozido + Tilápia grelhada + Tomate
+- [x] `candidate-453350864d1415a8` — Prato: Arroz integral cozido + Tilápia grelhada + Tomate
 - [ ] `candidate-4534824007e8d84e` — Prato: Arroz branco cozido + Bacalhau dessalgado cozido + Pimentão verde
 - [ ] `candidate-4537a64d645b09e8` — Prato: Cuscuz marroquino cozido + Bacalhau dessalgado cozido + Vagem cozida
 - [ ] `candidate-45397104cb52f2bb` — Prato: Cará cozido + Frango (coxa sem pele assada) + Brócolis cozido

@@ -6,7 +6,7 @@
 - [ ] `candidate-9759e7e246452516` — Prato: Batata baroa cozida + Salmão grelhado + Abobrinha cozida
 - [ ] `candidate-9765f821ba170d91` — Prato: Milho verde cozido + Frango desfiado cozido + Espinafre
 - [ ] `candidate-976968f7e09488ad` — Prato: Batata doce roxa cozida + Seitan + Tomate
-- [ ] `candidate-976f66acc918634b` — Prato: Macarrão cozido + Carne bovina (patinho) + Cenoura crua
+- [x] `candidate-976f66acc918634b` — Prato: Macarrão cozido + Carne bovina (patinho) + Cenoura crua
 - [ ] `candidate-97700937783e5bbb` — Prato: Cuscuz de milho + Carne bovina (alcatra) + Cogumelo champignon
 - [ ] `candidate-977280cb6866b06b` — Prato: Arroz integral cozido + Ovo de codorna cozido + Alface
 - [ ] `candidate-9779f124ee9665ac` — Prato: Macarrão integral cozido + Ovo de codorna cozido + Espinafre
@@ -68,7 +68,7 @@
 - [ ] `candidate-98c9587429b3c1e0` — Prato: Macarrão cozido + Bacalhau dessalgado cozido + Rúcula
 - [ ] `candidate-98ccceb3fb671be3` — Prato: Milho verde cozido + Carne bovina (músculo cozido) + Pepino
 - [ ] `candidate-98cecd1e6b34fa1a` — Prato: Macarrão integral cozido + Seitan + Espinafre
-- [ ] `candidate-98cfbc9ac227cf46` — Prato: Macarrão cozido + Frango (peito grelhado) + Abobrinha cozida
+- [x] `candidate-98cfbc9ac227cf46` — Prato: Macarrão cozido + Frango (peito grelhado) + Abobrinha cozida
 - [ ] `candidate-98d2cc5653fad33b` — Prato: Biscoito de arroz + Fígado bovino grelhado + Quiabo cozido
 - [ ] `candidate-98d5b3d9190d8505` — Prato: Cuscuz marroquino cozido + Tilápia grelhada + Rúcula
 - [ ] `candidate-98e0981440df4651` — Prato: Quinoa cozida + Carne bovina (patinho) + Aspargos cozidos
@@ -89,7 +89,7 @@
 - [ ] `candidate-992faed21febe948` — Prato: Cará cozido + Carne bovina (alcatra) + Cenoura crua
 - [ ] `candidate-993116fa5f9f20d7` — Prato: Arroz parboilizado cozido + Pescada grelhada + Espinafre
 - [ ] `candidate-9941665e973c32ec` — Prato: Arroz parboilizado cozido + Carne suína (lombo assado) + Chuchu cozido
-- [ ] `candidate-99468a3cf799837f` — Prato: Batata inglesa cozida + Frango (peito grelhado) + Cenoura crua
+- [x] `candidate-99468a3cf799837f` — Prato: Batata inglesa cozida + Frango (peito grelhado) + Cenoura crua
 - [ ] `candidate-994b6938abfb35fa` — Prato: Polenta cozida + Sardinha (lata, drenada) + Couve refogada
 - [ ] `candidate-995777d2e6b770fa` — Prato: Batata doce roxa cozida + Atum em água (lata) + Alface
 - [ ] `candidate-9957ff2c6f9a70e9` — Prato: Cará cozido + Bacalhau dessalgado cozido + Couve-flor cozida

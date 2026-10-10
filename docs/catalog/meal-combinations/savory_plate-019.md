@@ -186,7 +186,7 @@
 - [ ] `candidate-6892b36719b53eef` — Prato: Macarrão cozido + Pescada grelhada + Abóbora cabotiá cozida
 - [ ] `candidate-6893a3adc92e9fa6` — Prato: Batata inglesa cozida + Fígado bovino grelhado + Repolho cru
 - [ ] `candidate-6895b4039a1301d6` — Prato: Macarrão cozido + Frango desfiado cozido + Vagem cozida
-- [ ] `candidate-6899a21965689925` — Prato: Batata doce cozida + Tilápia grelhada + Beterraba cozida
+- [x] `candidate-6899a21965689925` — Prato: Batata doce cozida + Tilápia grelhada + Beterraba cozida
 - [ ] `candidate-689aed0703bc2eef` — Prato: Arroz branco cozido + Clara de ovo + Pepino
 - [ ] `candidate-689b408c043fe365` — Prato: Cuscuz marroquino cozido + Atum em água (lata) + Agrião
 - [ ] `candidate-68a0d5ba74ca0221` — Prato: Arroz branco cozido + Salmão grelhado + Palmito em conserva

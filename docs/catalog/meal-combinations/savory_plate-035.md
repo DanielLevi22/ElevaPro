@@ -172,7 +172,7 @@
 - [ ] `candidate-c2a997d74b540b8c` — Prato: Macarrão cozido + Clara de ovo + Pimentão verde
 - [ ] `candidate-c2adf056634e8902` — Prato: Polenta cozida + Atum fresco grelhado + Chuchu cozido
 - [ ] `candidate-c2b6f51289edd9a5` — Prato: Batata doce cozida + Atum fresco grelhado + Rúcula
-- [ ] `candidate-c2cd58feead78771` — Prato: Arroz integral cozido + Ovo inteiro cozido + Abobrinha cozida
+- [x] `candidate-c2cd58feead78771` — Prato: Arroz integral cozido + Ovo inteiro cozido + Abobrinha cozida
 - [ ] `candidate-c2cf0c161b8e19da` — Prato: Batata baroa cozida + Carne moída (patinho) + Abobrinha cozida
 - [ ] `candidate-c2da99a97a16c970` — Prato: Batata baroa cozida + Fígado bovino grelhado + Cenoura crua
 - [ ] `candidate-c2db91eaf6aff459` — Prato: Batata doce roxa cozida + Pescada grelhada + Pimentão vermelho
@@ -209,7 +209,7 @@
 - [ ] `candidate-c3598ad31bf7abd6` — Prato: Arroz integral cozido + Pescada grelhada + Vagem cozida
 - [ ] `candidate-c36569dd7ad29bea` — Prato: Cuscuz de milho + Merluza grelhada + Berinjela cozida
 - [ ] `candidate-c37323deb46e1a35` — Prato: Arroz parboilizado cozido + Frango (coxa sem pele assada) + Couve-flor cozida
-- [ ] `candidate-c375314ad7537094` — Prato: Arroz integral cozido + Carne bovina (patinho) + Alface
+- [x] `candidate-c375314ad7537094` — Prato: Arroz integral cozido + Carne bovina (patinho) + Alface
 - [ ] `candidate-c3850353e995dc03` — Prato: Inhame cozido + Ovo inteiro cozido + Cogumelo champignon
 - [ ] `candidate-c3854af9a5e38ac5` — Prato: Arroz parboilizado cozido + Atum em água (lata) + Abóbora cabotiá cozida
 - [ ] `candidate-c395b845577cb94f` — Prato: Arroz branco cozido + Camarão cozido + Tomate
