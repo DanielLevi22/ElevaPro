@@ -1,16 +1,12 @@
 import { primeiroNome } from '@elevapro/shared';
 import { tokenDaSessao, useAuthStore } from '@/auth';
 import { AssistenteDeNutricaoScreen } from '@/modules/nutrition/routes/index';
-import NutriBotScreen from '@/modules/nutrition/screens/NutriBotScreen';
 
-/**
- * O assistente de nutrição na tela do papel: o aluno no desenho do kit; o
- * member segue na tela antiga até o plano dele ganhar desenho.
- */
+/** O assistente de nutrição do Aluno e do Praticante, no desenho do kit. */
 export default function NutriBotRoute() {
   const { user, isMasquerading } = useAuthStore();
-  // O Praticante usa a mesma tela do Aluno; a antiga fica só sem sessão.
-  if (!user?.id) return <NutriBotScreen />;
+  // A aba só abre com sessão; sem ela, não há de quem ser o assistente.
+  if (!user?.id) return null;
 
   return (
     <AssistenteDeNutricaoScreen

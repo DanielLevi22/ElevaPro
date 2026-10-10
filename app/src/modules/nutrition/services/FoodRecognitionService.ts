@@ -4,8 +4,7 @@ import { fetchBff, lerRespostaBff } from '@/shared/bff';
 
 /**
  * O contrato da rota vive no `shared`, junto do leitor que a rota usa. O nome
- * antigo fica só para a tela do member (`ScanFoodScreen`); código novo usa
- * `AnaliseDoPrato`.
+ * antigo é só um apelido; código novo usa `AnaliseDoPrato`.
  */
 export type FoodAnalysisResult = AnaliseDoPrato;
 

@@ -4,7 +4,7 @@ import { matchFood, sortByMatch } from '../reverseCalculator';
 /**
  * Caracterização da calculadora reversa da troca de alimento.
  *
- * Fixa o que a `FoodSearchScreen` já fazia antes de a lógica sair da tela
+ * Fixa o que a busca de alimento antiga fazia antes de a lógica sair da tela
  * (#353): a quantidade que entrega os alvos e a nota de quão bem um alimento
  * acerta vários alvos de uma vez.
  */

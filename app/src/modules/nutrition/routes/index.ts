@@ -4,7 +4,6 @@
 // Types (re-export from @elevapro/core)
 export type { DietMeal, DietMealItem, DietPlan, Food } from '@elevapro/core';
 // Components
-export { MealCard } from '../components';
 export { AderenciaDaSemanaScreen } from '../screens/aluno/AderenciaDaSemanaScreen';
 export { AssistenteDeNutricaoScreen } from '../screens/aluno/AssistenteDeNutricaoScreen';
 export { BuscarAlimentoScreen } from '../screens/aluno/BuscarAlimentoScreen';
