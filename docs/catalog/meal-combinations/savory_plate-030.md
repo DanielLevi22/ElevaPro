@@ -150,7 +150,7 @@
 - [ ] `candidate-a5e30f36cb7e9bcc` — Prato: Cuscuz de milho + Bacalhau dessalgado cozido + Chuchu cozido
 - [ ] `candidate-a5ebc9d6a7768ddf` — Prato: Batata doce roxa cozida + Frango desfiado cozido + Couve refogada
 - [ ] `candidate-a5ed0eecd50b7cee` — Prato: Cuscuz marroquino cozido + Frango (peito grelhado) + Aspargos cozidos
-- [ ] `candidate-a5edd5ea873798b3` — Prato: Batata inglesa cozida + Carne bovina (patinho) + Alface
+- [x] `candidate-a5edd5ea873798b3` — Prato: Batata inglesa cozida + Carne bovina (patinho) + Alface
 - [ ] `candidate-a5f75527d387dcd9` — Prato: Macarrão integral cozido + Atum em água (lata) + Alface
 - [ ] `candidate-a5f80c3a3816fe4b` — Prato: Quinoa cozida + Tofu + Abóbora cabotiá cozida
 - [ ] `candidate-a5f8bfde2ea00e24` — Prato: Biscoito de arroz + Sardinha (lata, drenada) + Couve-flor cozida
@@ -176,7 +176,7 @@
 - [ ] `candidate-a6438166f17995e0` — Prato: Inhame cozido + Clara de ovo + Agrião
 - [ ] `candidate-a6489a2ab014208a` — Prato: Macarrão cozido + Carne bovina (patinho) + Chuchu cozido
 - [ ] `candidate-a64ab845ab47788b` — Prato: Mandioca cozida + Atum em água (lata) + Abobrinha cozida
-- [ ] `candidate-a64c1588d34a0ef6` — Prato: Batata inglesa cozida + Frango (peito grelhado) + Beterraba cozida
+- [x] `candidate-a64c1588d34a0ef6` — Prato: Batata inglesa cozida + Frango (peito grelhado) + Beterraba cozida
 - [ ] `candidate-a651116b4d526b02` — Prato: Arroz integral cozido + Frango (coxa sem pele assada) + Espinafre
 - [ ] `candidate-a656b5fd29a1b216` — Prato: Inhame cozido + Ovo de codorna cozido + Couve refogada
 - [ ] `candidate-a656beb311a0f3b2` — Prato: Arroz sete grãos cozido + Carne bovina (patinho) + Espinafre
@@ -247,6 +247,6 @@
 - [ ] `candidate-a7d238347eca2fdb` — Prato: Quinoa cozida + Carne moída (patinho) + Pimentão verde
 - [ ] `candidate-a7d6156d847b25d1` — Prato: Batata inglesa cozida + Carne bovina (patinho) + Agrião
 - [ ] `candidate-a7d62a812856f9f3` — Prato: Arroz parboilizado cozido + Carne moída (patinho) + Agrião
-- [ ] `candidate-a7d9914fb8c008a8` — Prato: Mandioca cozida + Carne bovina (patinho) + Cenoura crua
+- [x] `candidate-a7d9914fb8c008a8` — Prato: Mandioca cozida + Carne bovina (patinho) + Cenoura crua
 - [ ] `candidate-a7df28d62035aca4` — Prato: Arroz parboilizado cozido + Fígado bovino grelhado + Quiabo cozido
 - [ ] `candidate-a7e32c77523f2226` — Prato: Quinoa cozida + Frango desfiado cozido + Pimentão verde

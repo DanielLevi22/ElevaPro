@@ -3,7 +3,7 @@
 - [ ] `candidate-8665f6e69f7f9437` — Prato: Polenta cozida + Carne bovina (coxão mole) + Couve refogada
 - [ ] `candidate-8668799e6134e4a7` — Prato: Cuscuz marroquino cozido + Ovo inteiro cozido + Rúcula
 - [ ] `candidate-8678e230be52cc23` — Prato: Batata baroa cozida + Frango (sobrecoxa assada) + Aspargos cozidos
-- [ ] `candidate-867e5eb755e8632d` — Prato: Arroz branco cozido + Frango desfiado cozido + Beterraba cozida
+- [x] `candidate-867e5eb755e8632d` — Prato: Arroz branco cozido + Frango desfiado cozido + Beterraba cozida
 - [ ] `candidate-86805c688c0b3032` — Prato: Cará cozido + Pescada grelhada + Agrião
 - [ ] `candidate-86808960f4e91fe8` — Prato: Batata doce roxa cozida + Carne moída (patinho) + Quiabo cozido
 - [ ] `candidate-86816158cecd0cee` — Prato: Cuscuz marroquino cozido + Atum em água (lata) + Palmito em conserva

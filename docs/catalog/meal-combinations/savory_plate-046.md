@@ -106,7 +106,7 @@
 - [ ] `candidate-ffaf472eae25a1c8` — Prato: Batata doce cozida + Fígado bovino grelhado + Couve-flor cozida
 - [ ] `candidate-ffb077f967fd8e43` — Prato: Batata baroa cozida + Carne moída (patinho) + Chuchu cozido
 - [ ] `candidate-ffb94fa2f2e288c6` — Prato: Cuscuz de milho + Proteína de soja texturizada + Pimentão vermelho
-- [ ] `candidate-ffd11bf50761dfd4` — Prato: Arroz integral cozido + Frango (peito grelhado) + Brócolis cozido
+- [x] `candidate-ffd11bf50761dfd4` — Prato: Arroz integral cozido + Frango (peito grelhado) + Brócolis cozido
 - [ ] `candidate-ffd4a3647e06b961` — Prato: Arroz integral cozido + Atum fresco grelhado + Cenoura crua
 - [ ] `candidate-ffe32a8a97a8c2cf` — Prato: Batata inglesa cozida + Ovo de codorna cozido + Quiabo cozido
 - [ ] `candidate-ffe573249f6014a3` — Prato: Cará cozido + Ovo inteiro cozido + Cogumelo champignon

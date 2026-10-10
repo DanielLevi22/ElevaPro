@@ -1,10 +1,10 @@
 # Prato — imagens
 
-- [ ] `candidate-260e456dfc8a4cd5` — Prato: Batata doce cozida + Carne bovina (músculo cozido) + Abobrinha cozida
+- [x] `candidate-260e456dfc8a4cd5` — Prato: Batata doce cozida + Carne bovina (músculo cozido) + Abobrinha cozida
 - [ ] `candidate-2617d0f2100cfe93` — Prato: Macarrão cozido + Sardinha (lata, drenada) + Rúcula
 - [ ] `candidate-2619f28fc7752e28` — Prato: Cuscuz marroquino cozido + Atum em água (lata) + Pepino
 - [ ] `candidate-2623e07c18b5a557` — Prato: Cuscuz de milho + Pescada grelhada + Couve-flor cozida
-- [ ] `candidate-262463649fc81d9f` — Prato: Mandioca cozida + Frango desfiado cozido + Pimentão verde
+- [x] `candidate-262463649fc81d9f` — Prato: Mandioca cozida + Frango desfiado cozido + Pimentão verde
 - [x] `candidate-262f7f1ebbd80d5f` — Prato: Macarrão integral cozido + Clara de ovo + Agrião
 - [x] `candidate-26301b46b9bac841` — Prato: Milho verde cozido + Carne moída (patinho) + Tomate
 - [ ] `candidate-2639f1f0aeba5500` — Prato: Milho verde cozido + Frango desfiado cozido + Chuchu cozido

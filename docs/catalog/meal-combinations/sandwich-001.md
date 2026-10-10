@@ -39,12 +39,12 @@
 - [ ] `candidate-94f4a8fca43d79b5` — Sanduíche ou torrada: Pão francês + Homus
 - [x] `candidate-97e15ed240941122` — Sanduíche ou torrada: Tapioca (goma) + Queijo muçarela
 - [ ] `candidate-993167c89b6c1c1c` — Sanduíche ou torrada: Pão integral + Queijo parmesão
-- [ ] `candidate-99861d961797418c` — Sanduíche ou torrada: Pão de forma integral + Requeijão light
+- [x] `candidate-99861d961797418c` — Sanduíche ou torrada: Pão de forma integral + Requeijão light
 - [ ] `candidate-9ff18b8ef1e15000` — Sanduíche ou torrada: Pão sírio integral + Ovo de codorna cozido
 - [ ] `candidate-a48ce8de2d88dc6c` — Sanduíche ou torrada: Pão sírio integral + Ricota
 - [ ] `candidate-a5285b7f44025ede` — Sanduíche ou torrada: Biscoito de arroz + Queijo minas frescal
 - [ ] `candidate-a8cf0a9df41c4891` — Sanduíche ou torrada: Pão sírio integral + Requeijão light
-- [ ] `candidate-aaf0a2aa21736769` — Sanduíche ou torrada: Tapioca (goma) + Requeijão light
+- [x] `candidate-aaf0a2aa21736769` — Sanduíche ou torrada: Tapioca (goma) + Requeijão light
 - [ ] `candidate-ad939a933134a9a6` — Sanduíche ou torrada: Pão de forma integral + Homus
 - [ ] `candidate-b067660198df4eb5` — Sanduíche ou torrada: Pão integral + Queijo cottage
 - [ ] `candidate-b27b6096a86224d1` — Sanduíche ou torrada: Pão de forma integral + Ricota
@@ -57,7 +57,7 @@
 - [ ] `candidate-c058a022abf0b9ee` — Sanduíche ou torrada: Pão integral + Queijo muçarela
 - [ ] `candidate-c5a0f630a30b8869` — Sanduíche ou torrada: Tapioca (goma) + Homus
 - [ ] `candidate-c76c9120cd13b0c8` — Sanduíche ou torrada: Pão de forma integral + Presunto magro
-- [ ] `candidate-c8a2114d4bcbe518` — Sanduíche ou torrada: Pão francês + Queijo minas frescal
+- [x] `candidate-c8a2114d4bcbe518` — Sanduíche ou torrada: Pão francês + Queijo minas frescal
 - [x] `candidate-ca3ab247fb3d1303` — Sanduíche ou torrada: Tapioca (goma) + Ricota
 - [ ] `candidate-d329c77f5d03e5a0` — Sanduíche ou torrada: Pão de forma integral + Ovo de codorna cozido
 - [ ] `candidate-d57a3495a7dbe9b2` — Sanduíche ou torrada: Torrada integral + Presunto magro

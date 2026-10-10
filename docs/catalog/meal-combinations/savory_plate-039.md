@@ -80,7 +80,7 @@
 - [ ] `candidate-d819f60881302aed` — Prato: Arroz parboilizado cozido + Frango (coxa sem pele assada) + Quiabo cozido
 - [ ] `candidate-d81a517763446728` — Prato: Arroz branco cozido + Atum em água (lata) + Alface
 - [ ] `candidate-d820a69370a4a6e7` — Prato: Polenta cozida + Seitan + Abobrinha cozida
-- [ ] `candidate-d82e207faa85e418` — Prato: Mandioca cozida + Tilápia grelhada + Tomate
+- [x] `candidate-d82e207faa85e418` — Prato: Mandioca cozida + Tilápia grelhada + Tomate
 - [ ] `candidate-d837dff52583b920` — Prato: Biscoito de arroz + Frango (sobrecoxa assada) + Chuchu cozido
 - [ ] `candidate-d8381e41287ce754` — Prato: Macarrão cozido + Camarão cozido + Couve-flor cozida
 - [ ] `candidate-d83cc33552173944` — Prato: Inhame cozido + Carne suína (lombo assado) + Cogumelo champignon
@@ -111,7 +111,7 @@
 - [ ] `candidate-d8bf858cecfed099` — Prato: Arroz branco cozido + Seitan + Agrião
 - [ ] `candidate-d8cd96c6d9945074` — Prato: Mandioca cozida + Atum em água (lata) + Pimentão verde
 - [ ] `candidate-d8cdf908525c6b14` — Prato: Macarrão integral cozido + Bacalhau dessalgado cozido + Couve-flor cozida
-- [ ] `candidate-d8d421f8dd649680` — Prato: Cuscuz de milho + Ovo inteiro cozido + Beterraba cozida
+- [x] `candidate-d8d421f8dd649680` — Prato: Cuscuz de milho + Ovo inteiro cozido + Beterraba cozida
 - [ ] `candidate-d8dc70ec02e2c30b` — Prato: Arroz branco cozido + Proteína de soja texturizada + Vagem cozida
 - [ ] `candidate-d8dd8a833c7182c2` — Prato: Batata baroa cozida + Fígado bovino grelhado + Alface
 - [ ] `candidate-d8e9eb40c22a9e75` — Prato: Batata doce roxa cozida + Pescada grelhada + Espinafre
@@ -179,7 +179,7 @@
 - [ ] `candidate-da5e957715f4be0e` — Prato: Cará cozido + Proteína de soja texturizada + Agrião
 - [ ] `candidate-da6691ff9450d3fe` — Prato: Milho verde cozido + Ovo de codorna cozido + Aspargos cozidos
 - [ ] `candidate-da6ef5e25200da7c` — Prato: Arroz parboilizado cozido + Carne bovina (coxão mole) + Tomate
-- [ ] `candidate-da72b6e76614d970` — Prato: Cuscuz de milho + Frango desfiado cozido + Cenoura crua
+- [x] `candidate-da72b6e76614d970` — Prato: Cuscuz de milho + Frango desfiado cozido + Cenoura crua
 - [ ] `candidate-da7310bf9ddbb12b` — Prato: Milho verde cozido + Pescada grelhada + Pimentão vermelho
 - [ ] `candidate-da763394ce096d25` — Prato: Arroz branco cozido + Carne bovina (alcatra) + Brócolis cozido
 - [ ] `candidate-da77c8bd0756917f` — Prato: Milho verde cozido + Atum em água (lata) + Couve-flor cozida
