@@ -68,4 +68,14 @@ describe("buildPlanPrompt", () => {
     expect(prompt).toContain('"workouts": []');
     expect(prompt).not.toContain("Agachamento livre");
   });
+
+  it("em casa, leva o equipamento que a pessoa marcou", () => {
+    const choices = readPlanChoices({
+      gym_type: "Home gym",
+      home_equipment: ["Halteres", "Kettlebell"],
+    });
+    expect(buildPlanPrompt({ ...ENTRADA, choices })).toContain(
+      "Equipamento disponível: Halteres, Kettlebell",
+    );
+  });
 });

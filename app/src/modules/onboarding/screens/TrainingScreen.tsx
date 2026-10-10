@@ -4,7 +4,7 @@ import { ChipPick } from '@/components/ui/ChipPick';
 import { ChoiceTile } from '@/components/ui/ChoiceTile';
 import { GlassSegmented } from '@/components/ui/GlassSegmented';
 import { ROUTES } from '@/navigation/types';
-import { Chips } from '../components/Chips';
+import { ChipsWithOther, withOther } from '../components/ChipsWithOther';
 import { OnboardingFrame, OnboardingLabel, OnboardingTitle } from '../components/OnboardingFrame';
 import { useSaveAndContinue } from '../hooks/useSaveAndContinue';
 import {
@@ -36,9 +36,12 @@ export function TrainingScreen() {
   const [days, setDays] = useState<number | null>(null);
   const [minutes, setMinutes] = useState<Minutes | ''>('');
   const [place, setPlace] = useState<Place | null>(null);
-  // "Desmarque o que não tem": começa tudo marcado, como no desenho.
-  const [equipment, setEquipment] = useState<string[]>([...HOME_EQUIPMENT]);
+  // Começa vazio: com oito opções, marcar tudo presumiria que a pessoa tem
+  // kettlebell e banco em casa.
+  const [equipment, setEquipment] = useState<string[]>([]);
+  const [otherEquipment, setOtherEquipment] = useState('');
   const [sports, setSports] = useState<string[]>([]);
+  const [otherSport, setOtherSport] = useState('');
 
   // Sem dieta pela triagem, O7 não aparece: daqui vai direto montar o plano.
   const next = dietAllowed === false ? ROUTES.ONBOARDING.BUILDING : ROUTES.ONBOARDING.FOOD;
@@ -51,8 +54,8 @@ export function TrainingScreen() {
         training_days: days,
         training_duration: Number(minutes),
         gym_type: place,
-        ...(place === HOME ? { home_equipment: equipment } : {}),
-        sports: sports.filter((sport) => sport !== NO_SPORT),
+        ...(place === HOME ? { home_equipment: withOther(equipment, otherEquipment) } : {}),
+        sports: withOther(sports, otherSport).filter((sport) => sport !== NO_SPORT),
       },
       next
     );
@@ -105,8 +108,8 @@ export function TrainingScreen() {
 
       {place === HOME ? (
         <>
-          <OnboardingLabel right="desmarque o que não tem">Equipamento em casa</OnboardingLabel>
-          <Chips
+          <OnboardingLabel right="marque o que você tem">Equipamento em casa</OnboardingLabel>
+          <ChipsWithOther
             options={HOME_EQUIPMENT}
             selected={equipment}
             onToggle={(item) =>
@@ -114,15 +117,23 @@ export function TrainingScreen() {
                 atual.includes(item) ? atual.filter((x) => x !== item) : [...atual, item]
               )
             }
+            other={otherEquipment}
+            onOtherChange={setOtherEquipment}
+            otherLabel="Qual equipamento?"
+            otherPlaceholder="Ex.: step"
           />
         </>
       ) : null}
 
       <OnboardingLabel right="opcional">Pratica algum esporte?</OnboardingLabel>
-      <Chips
+      <ChipsWithOther
         options={SPORTS}
         selected={sports}
         onToggle={(item) => setSports((atual) => toggleExclusive(atual, item, NO_SPORT))}
+        other={otherSport}
+        onOtherChange={setOtherSport}
+        otherLabel="Qual esporte?"
+        otherPlaceholder="Ex.: natação"
       />
     </OnboardingFrame>
   );

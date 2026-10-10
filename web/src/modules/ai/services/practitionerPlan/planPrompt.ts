@@ -62,11 +62,17 @@ export function buildPlanPrompt(input: PlanPromptInput): string {
     const sports = choices.sports.length
       ? `Inclua EXATAMENTE ${choices.sports.length} sessão(ões) opcional(is) (optional: true), uma por esporte praticado: ${choices.sports.join(", ")}. Nenhuma outra sessão opcional; os dias sem treino ficam livres. Elas não contam nos ${choices.trainingDays} treinos.`
       : "Não inclua sessão opcional.";
+    // Fora da academia, o equipamento que a pessoa tem decide o que dá para fazer.
+    const equipment =
+      choices.place !== "Academia completa" && choices.homeEquipment.length
+        ? `- Equipamento disponível: ${choices.homeEquipment.join(", ")}. Use só o que der para fazer com ele.
+`
+        : "";
     const cuidado = injuryReported
       ? "\n- Prefira variações de baixo impacto e cargas moderadas; evite carga axial pesada e saltos."
       : "";
     return `TREINO
-- Exatamente ${choices.trainingDays} treinos por semana, em dias diferentes, cada um com até ${choices.sessionMinutes} minutos.
+${equipment}- Exatamente ${choices.trainingDays} treinos por semana, em dias diferentes, cada um com até ${choices.sessionMinutes} minutos.
 ${TRAINING_RANGES}${cuidado}
 - ${sports}
 - Use APENAS exercícios desta lista, com o nome exatamente como está:

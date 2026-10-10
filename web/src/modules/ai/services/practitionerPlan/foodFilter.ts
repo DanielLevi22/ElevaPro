@@ -52,8 +52,17 @@ export function allowedFoodNames(
   choices: { exclusions: readonly string[]; style: string },
 ): string[] {
   const rules = [
-    ...choices.exclusions.map((item) => BY_EXCLUSION[item]),
+    // O que não é etiqueta do "Não como" é alimento escolhido na busca: sai pelo nome.
+    ...choices.exclusions.map((item) => BY_EXCLUSION[item] ?? sameFood(item)),
     BY_STYLE[choices.style],
   ].filter((rule): rule is (name: string) => boolean => rule !== undefined);
   return names.filter((name) => !rules.some((excludes) => excludes(name)));
+}
+
+const fold = (text: string) => text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+
+/** O alimento escolhido na busca, comparado sem caixa nem acento. */
+function sameFood(chosen: string): (name: string) => boolean {
+  const wanted = fold(chosen);
+  return (name) => fold(name) === wanted;
 }

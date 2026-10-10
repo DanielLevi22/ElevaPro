@@ -22,7 +22,16 @@ export const TRAINING_PLACES = [
   { value: 'Ao ar livre', label: 'Ao ar livre', icon: 'leaf-outline' },
 ] as const satisfies readonly { value: string; label: string; icon: IconName }[];
 
-export const HOME_EQUIPMENT = ['Halteres', 'Elástico', 'Barra fixa', 'Só o corpo'] as const;
+export const HOME_EQUIPMENT = [
+  'Halteres',
+  'Elástico',
+  'Barra fixa',
+  'Kettlebell',
+  'Anilhas',
+  'Banco',
+  'Corda',
+  'Só o corpo',
+] as const;
 
 export const NO_SPORT = 'Nenhum';
 export const SPORTS = [

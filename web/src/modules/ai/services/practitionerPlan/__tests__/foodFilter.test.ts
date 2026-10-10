@@ -98,4 +98,15 @@ describe("allowedFoodNames", () => {
     expect(lista).toContain("Bebida de soja sem açúcar");
     expect(lista).toContain("Feijão carioca cozido");
   });
+
+  /**
+   * TRAVA — o alimento que a pessoa achou na busca do "Não como" não aparece
+   * (#365). Ele chega pelo nome do banco, e sai pelo mesmo nome.
+   */
+  it("tira o alimento escolhido na busca, pelo nome do banco", () => {
+    const lista = permitidos(["Tilápia grelhada"]);
+    if (lista.includes("Tilápia grelhada"))
+      throw new Error("ALIMENTO EXCLUÍDO NO PLANO: a tilápia ficou");
+    expect(lista).toContain("Salmão grelhado");
+  });
 });
