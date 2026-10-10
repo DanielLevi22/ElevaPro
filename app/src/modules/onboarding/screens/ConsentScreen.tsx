@@ -15,6 +15,7 @@ import { Pedestal } from '@/components/ui/Pedestal';
 import { registrarFalha } from '@/lib/registro';
 import { ROUTES } from '@/navigation/types';
 import { OnboardingFrame, OnboardingTitle } from '../components/OnboardingFrame';
+import { hasCurrentHealthConsent } from '../services/consentStep';
 import { useOnboardingStore } from '../store/onboardingStore';
 
 /**
@@ -33,16 +34,16 @@ export function ConsentScreen() {
   const userId = useAuthStore((state) => state.session?.user.id ?? null);
   const declineConsent = useOnboardingStore((state) => state.declineConsent);
   const [saving, setSaving] = useState(false);
+  // Quem chega pela retomada pode já ter aceitado: até saber, a tela não mostra
+  // o texto, senão ele pisca antes de pular (o O3 já pergunta antes de abrir).
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     if (!userId) return;
-    createHealthService(supabase)
-      .getConsentStatus(userId)
-      .then(({ state }) => {
-        if (state === 'granted') seguirComOAceite(router);
-      })
-      // Falha de rede não é aceite nem recusa: a tela fica, e a pessoa decide.
-      .catch(() => undefined);
+    hasCurrentHealthConsent(userId).then((consented) => {
+      if (consented) seguirComOAceite(router);
+      else setChecking(false);
+    });
   }, [userId, router]);
 
   async function aceitar() {
@@ -71,6 +72,8 @@ export function ConsentScreen() {
     // Provisório até O6 existir: quem recusa segue só com treino, a partir de O6.
     router.replace(ROUTES.TABS.ROOT);
   }
+
+  if (checking) return null;
 
   return (
     <OnboardingFrame

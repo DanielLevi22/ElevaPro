@@ -9,6 +9,7 @@ import { GlassChoice } from '@/components/ui/GlassChoice';
 import { registrarFalha } from '@/lib/registro';
 import { ROUTES } from '@/navigation/types';
 import { OnboardingFrame, OnboardingTitle } from '../components/OnboardingFrame';
+import { hasCurrentHealthConsent } from '../services/consentStep';
 import { LEVEL_OPTIONS } from '../services/onboardingOptions';
 import { useOnboardingStore } from '../store/onboardingStore';
 
@@ -30,7 +31,8 @@ export function LevelScreen() {
     setSaving(true);
     try {
       await createAdaptiveAnamnesisService(supabase).savePersonaTrack(userId, track);
-      router.push(ROUTES.ONBOARDING.CONSENT);
+      const consented = await hasCurrentHealthConsent(userId);
+      router.push(consented ? ROUTES.ONBOARDING.ABOUT : ROUTES.ONBOARDING.CONSENT);
     } catch {
       registrarFalha('onboarding.salvar_nivel');
       showAlert({
