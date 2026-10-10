@@ -1,0 +1,82 @@
+import {
+  createExerciseSwapService,
+  type Exercise,
+  type SwapContext,
+  type Workout,
+  type WorkoutExercise,
+} from '@elevapro/shared';
+import { supabase } from '@elevapro/supabase';
+import { useEffect, useState } from 'react';
+
+const swapService = createExerciseSwapService(supabase);
+
+/**
+ * Treino do próprio Praticante, sem especialista: é onde a troca pode ser de
+ * vez. A mesma regra que o banco confere em `swap_workout_exercise` (0085).
+ *
+ * @example isSelfGuidedWorkout(treino, user.id) // false num treino prescrito
+ */
+export function isSelfGuidedWorkout(
+  workout: Pick<Workout, 'specialist_id' | 'student_id'>,
+  studentId: string
+): boolean {
+  return workout.specialist_id === null && workout.student_id === studentId;
+}
+
+/** Como a troca vale: só hoje, de vez no plano, ou de vez e dizendo para a IA evitar. */
+export type SwapMode = 'today' | 'always' | 'less';
+
+interface ExerciseSwapState {
+  alternatives: Exercise[];
+  context: SwapContext | null;
+  loading: boolean;
+  failed: boolean;
+}
+
+const EMPTY: ExerciseSwapState = { alternatives: [], context: null, loading: false, failed: false };
+
+/**
+ * As alternativas ao exercício aberto na folha "Trocar exercício", e o que cada
+ * modo grava.
+ *
+ * "Só hoje" não grava nada: quem chama aplica na sessão ou no dia. "Sempre"
+ * troca no plano pela função do banco, que recusa treino com especialista.
+ * "Recomendar menos" troca no plano e guarda o exercício para a montagem do
+ * plano evitar.
+ *
+ * @example const { alternatives, persist } = useExerciseSwap(item, alunoId);
+ */
+export function useExerciseSwap(item: WorkoutExercise | null, studentId: string) {
+  const [state, setState] = useState<ExerciseSwapState>(EMPTY);
+  const current = item?.exercise ?? null;
+
+  useEffect(() => {
+    if (!current) return setState(EMPTY);
+    let active = true;
+    setState({ ...EMPTY, loading: true });
+    loadAlternatives(current, studentId)
+      .then((loaded) => active && setState({ ...loaded, loading: false, failed: false }))
+      .catch(() => active && setState({ ...EMPTY, failed: true }));
+    return () => {
+      active = false;
+    };
+  }, [current, studentId]);
+
+  /** Grava a troca que não é só de hoje. */
+  const persist = async (mode: SwapMode, swapped: WorkoutExercise, to: Exercise) => {
+    if (mode === 'today') return;
+    await swapService.swapForever(swapped.id, to.id);
+    if (mode === 'less') await swapService.avoid(studentId, swapped.exercise_id);
+  };
+
+  return { ...state, persist };
+}
+
+async function loadAlternatives(
+  current: Exercise,
+  studentId: string
+): Promise<Pick<ExerciseSwapState, 'alternatives' | 'context'>> {
+  const context = await swapService.contextOf(studentId);
+  const alternatives = await swapService.alternativesTo(current, context);
+  return { alternatives, context };
+}

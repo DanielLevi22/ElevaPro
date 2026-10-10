@@ -240,10 +240,17 @@ export async function loadPlanFoods(choices: PlanChoices): Promise<CatalogFood[]
     }));
 }
 
+/**
+ * Só o catálogo oficial: a leitura é pela chave de serviço, e sem o filtro o
+ * exercício privado de um especialista entraria no plano de quem não é aluno dele.
+ */
 async function loadExercises(choices: PlanChoices): Promise<Set<string>> {
-  const { data, error } = await supabaseAdmin.from("exercises").select("name, venue, category");
+  const { data, error } = await supabaseAdmin
+    .from("exercises")
+    .select("id, name, venue, category")
+    .is("created_by", null);
   if (error) throw error;
-  return new Set(allowedExerciseNames(data ?? [], choices.place));
+  return new Set(allowedExerciseNames(data ?? [], choices.place, choices.avoidedExercises));
 }
 
 /** As calorias de cada refeição pelo banco de alimentos, e não pelo que a IA disser. */

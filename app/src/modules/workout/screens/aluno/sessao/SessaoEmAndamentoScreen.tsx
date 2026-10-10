@@ -8,6 +8,7 @@ import { useRestOnLockScreen } from '../../../hooks/useRestOnLockScreen';
 import { useSessaoEmAndamento } from '../../../hooks/useSessaoEmAndamento';
 import { useVozDaSessao } from '../../../hooks/useVozDaSessao';
 import { type EstadoDaSessao, progressoDaSessao } from '../../../store/maquinaDaSessao';
+import { useTodayExercises } from '../../../store/todaySwapsStore';
 import { MomentoDaSessao } from './MomentoDaSessao';
 
 export interface SessaoEmAndamentoScreenProps {
@@ -42,7 +43,9 @@ export function SessaoEmAndamentoScreen(props: SessaoEmAndamentoScreenProps) {
 /** A sessão montada, com o treino já carregado: liga a máquina, a voz e as saídas. */
 function SessaoDoTreino({ treino, ...props }: SessaoEmAndamentoScreenProps & { treino: Workout }) {
   const router = useRouter();
-  const { sessao, agora, despachar } = useSessaoEmAndamento(treino.exercises ?? []);
+  // A sessão começa com o que foi trocado "só hoje" no detalhe.
+  const itensDeHoje = useTodayExercises(treino.id, treino.exercises ?? []);
+  const { sessao, agora, despachar } = useSessaoEmAndamento(itensDeHoje);
   const sairSemPerguntar = useSaidaSemSalvar(sessao);
   const pedirParaFinalizar = useCallback(
     () =>

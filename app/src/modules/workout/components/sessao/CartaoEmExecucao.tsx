@@ -28,6 +28,8 @@ interface CartaoEmExecucaoProps {
   /** Abre o cronômetro da série. Nada é registrado até o aluno concluir lá. */
   onIniciar: () => void;
   onAjustar: () => void;
+  /** O "…" que abre "Trocar exercício" (desenho 6a). */
+  onTrocar: () => void;
 }
 
 export function CartaoEmExecucao({
@@ -36,6 +38,7 @@ export function CartaoEmExecucao({
   ganho,
   onIniciar,
   onAjustar,
+  onTrocar,
 }: CartaoEmExecucaoProps) {
   const total = item.sets ?? 0;
   const proxima = Math.min(feitas.length + 1, total);
@@ -44,7 +47,7 @@ export function CartaoEmExecucao({
     <Vidro destaque classeExterna="mt-3">
       <View className="bg-primary/10 px-[0.9375rem] pb-[0.9375rem] pt-3.5">
         <View className="absolute bottom-0 left-0 top-0 w-[0.1875rem] bg-primary" />
-        <Identificacao item={item} onAjustar={onAjustar} />
+        <Identificacao item={item} onAjustar={onAjustar} onTrocar={onTrocar} />
         <FaixaDaPrescricao item={item} ganho={ganho} />
       </View>
 
@@ -75,7 +78,13 @@ const TAMANHO_DO_LAPIS = 15;
 /** O anel de 3 em volta do ponto "em execução", a 25% da primária. */
 const ANEL_DO_PONTO = 3;
 
-function Identificacao({ item, onAjustar }: { item: WorkoutExercise; onAjustar: () => void }) {
+interface IdentificacaoProps {
+  item: WorkoutExercise;
+  onAjustar: () => void;
+  onTrocar: () => void;
+}
+
+function Identificacao({ item, onAjustar, onTrocar }: IdentificacaoProps) {
   const cores = useCores();
   const escalar = useEscala();
   const brilho = useBrilho();
@@ -112,6 +121,18 @@ function Identificacao({ item, onAjustar }: { item: WorkoutExercise; onAjustar: 
         className="h-[2.125rem] w-[2.125rem] shrink-0 items-center justify-center rounded-[0.6875rem] bg-glass-strong"
       >
         <Ionicons name="pencil" size={escalar(TAMANHO_DO_LAPIS)} color={cores.mutedForeground} />
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={onTrocar}
+        accessibilityRole="button"
+        accessibilityLabel={`Trocar ${item.exercise?.name ?? 'o exercício'}`}
+        className="h-[2.125rem] w-[2.125rem] shrink-0 items-center justify-center rounded-full bg-glass-strong"
+      >
+        <Ionicons
+          name="ellipsis-horizontal"
+          size={escalar(TAMANHO_DO_LAPIS)}
+          color={cores.mutedForeground}
+        />
       </TouchableOpacity>
     </View>
   );

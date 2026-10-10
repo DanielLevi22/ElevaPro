@@ -47,10 +47,10 @@ describe("readPlanChoices", () => {
 
 describe("allowedExerciseNames", () => {
   const CATALOGO = [
-    { name: "Supino na máquina", venue: "academia", category: "forca" },
-    { name: "Flexão de braço", venue: "ambos", category: "forca" },
-    { name: "Agachamento com halteres", venue: "casa", category: "forca" },
-    { name: "Esteira", venue: "academia", category: "cardio" },
+    { id: "supino", name: "Supino na máquina", venue: "academia", category: "forca" },
+    { id: "flexao", name: "Flexão de braço", venue: "ambos", category: "forca" },
+    { id: "agachamento", name: "Agachamento com halteres", venue: "casa", category: "forca" },
+    { id: "esteira", name: "Esteira", venue: "academia", category: "cardio" },
   ];
 
   it("na academia, toda a força do catálogo", () => {
@@ -68,5 +68,24 @@ describe("allowedExerciseNames", () => {
         "Agachamento com halteres",
       ]);
     }
+  });
+
+  /**
+   * TRAVA — "Recomendar menos" é preferência de treino guardada na anamnese
+   * (#365, 6d). O exercício evitado sai da lista antes do prompt: a IA não
+   * recebe a lista de evitados, só deixa de ver o exercício (Art. 6°, III).
+   */
+  it("o exercício que a pessoa pediu para ver menos não chega à IA", () => {
+    const lista = allowedExerciseNames(CATALOGO, "Academia completa", ["flexao"]);
+    if (lista.includes("Flexão de braço")) {
+      throw new Error("RECOMENDAR MENOS IGNORADO: o exercício evitado foi oferecido à IA");
+    }
+    expect(lista).toEqual(["Supino na máquina", "Agachamento com halteres"]);
+  });
+
+  it("lê os evitados das respostas, e ignora o que não é texto", () => {
+    expect(readPlanChoices({ avoided_exercises: ["flexao", 3] }).avoidedExercises).toEqual([
+      "flexao",
+    ]);
   });
 });

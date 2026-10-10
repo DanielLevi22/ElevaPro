@@ -33,6 +33,7 @@ export * from "./services/progress/progress.service";
 export * from "./services/students/specialistNote.service";
 export * from "./services/students/students.service";
 export * from "./services/workouts/cardioHistory.service";
+export * from "./services/workouts/exerciseSwap";
 export * from "./services/workouts/heartRateProfile.service";
 export type { TrainingSignal } from "./services/workouts/periodizacoes";
 export type { ResumoDaPeriodizacao } from "./services/workouts/resumoDasPeriodizacoes";

@@ -17,6 +17,8 @@ export interface PlanChoices {
   sports: string[];
   mealsPerDay: number;
   foodExclusions: string[];
+  /** IDs dos exercícios marcados como "Recomendar menos" na troca de exercício (6d). */
+  avoidedExercises: string[];
   dietStyle: string;
   foodBudget: string | null;
 }
@@ -45,6 +47,7 @@ export function readPlanChoices(answers: Record<string, unknown>): PlanChoices {
     sports: strings(answers.sports),
     mealsPerDay: oneOf(answers.meals_per_day, MEALS, 4),
     foodExclusions: strings(answers.food_exclusions),
+    avoidedExercises: strings(answers.avoided_exercises),
     dietStyle: oneOf(answers.diet_style, STYLES, "Onívoro"),
     foodBudget: typeof answers.food_budget === "string" ? answers.food_budget : null,
   };
@@ -52,17 +55,20 @@ export function readPlanChoices(answers: Record<string, unknown>): PlanChoices {
 
 /**
  * Os exercícios de força que cabem no local. Fora da academia, só o que o
- * catálogo marca como de casa ou dos dois lugares.
+ * catálogo marca como de casa ou dos dois lugares. O que a pessoa pediu para
+ * ver menos sai antes de a lista ir à IA: ela nunca recebe a lista de evitados.
  *
- * @example allowedExerciseNames(catalogo, "Home gym") // ["Flexão de braço", …]
+ * @example allowedExerciseNames(catalogo, "Home gym", ["id-do-burpee"]) // ["Flexão de braço", …]
  */
 export function allowedExerciseNames(
-  catalog: readonly { name: string; venue: string | null; category: string | null }[],
+  catalog: readonly { id: string; name: string; venue: string | null; category: string | null }[],
   place: string,
+  avoided: readonly string[] = [],
 ): string[] {
   const gym = place === "Academia completa";
   return catalog
     .filter((exercise) => exercise.category === "forca")
+    .filter((exercise) => !avoided.includes(exercise.id))
     .filter((exercise) => gym || exercise.venue === "casa" || exercise.venue === "ambos")
     .map((exercise) => exercise.name);
 }

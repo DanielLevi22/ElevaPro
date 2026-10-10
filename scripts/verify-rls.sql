@@ -3166,3 +3166,109 @@ BEGIN
 END $$;
 
 ROLLBACK;
+
+-- ── workout_exercises: o Praticante troca o exercício do próprio treino (0085, #365)
+-- O aluno não escreve prescrição. A troca "para sempre" do Praticante passa por
+-- uma função que muda só o exercício, só em treino dele sem especialista, e só
+-- para o catálogo oficial. Prescrição de especialista continua intocável.
+
+BEGIN;
+
+DO $$
+DECLARE
+  praticante    uuid := gen_random_uuid();
+  outro         uuid := gen_random_uuid();
+  especialista  uuid := gen_random_uuid();
+  oficial       uuid;
+  destino       uuid;
+  privado       uuid;
+  item_proprio  uuid;
+  item_outro    uuid;
+  item_prescrito uuid;
+  atual         uuid;
+  afetadas      int;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (praticante, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-wa@elevapro.local', '{"full_name":"A","account_type":"member"}'::jsonb),
+    (outro, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-wb@elevapro.local', '{"full_name":"B","account_type":"member"}'::jsonb),
+    (especialista, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-ws@elevapro.local', '{"full_name":"S","account_type":"specialist"}'::jsonb);
+
+  INSERT INTO public.exercises (name) VALUES ('verify-remada-curvada') RETURNING id INTO oficial;
+  INSERT INTO public.exercises (name) VALUES ('verify-remada-halteres') RETURNING id INTO destino;
+  INSERT INTO public.exercises (name, created_by) VALUES ('verify-remada-do-especialista', especialista)
+    RETURNING id INTO privado;
+
+  WITH treino AS (
+    INSERT INTO public.workouts (title, specialist_id, student_id)
+    VALUES ('verify-proprio', NULL, praticante) RETURNING id
+  )
+  INSERT INTO public.workout_exercises (workout_id, exercise_id)
+  SELECT id, oficial FROM treino RETURNING id INTO item_proprio;
+
+  WITH treino AS (
+    INSERT INTO public.workouts (title, specialist_id, student_id)
+    VALUES ('verify-de-outro', NULL, outro) RETURNING id
+  )
+  INSERT INTO public.workout_exercises (workout_id, exercise_id)
+  SELECT id, oficial FROM treino RETURNING id INTO item_outro;
+
+  WITH treino AS (
+    INSERT INTO public.workouts (title, specialist_id, student_id)
+    VALUES ('verify-prescrito', especialista, praticante) RETURNING id
+  )
+  INSERT INTO public.workout_exercises (workout_id, exercise_id)
+  SELECT id, oficial FROM treino RETURNING id INTO item_prescrito;
+
+  IF has_function_privilege('anon', 'public.swap_workout_exercise(uuid, uuid)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'TROCA ANÔNIMA: anon pode executar public.swap_workout_exercise';
+  END IF;
+
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', praticante, 'role', 'authenticated')::text, true);
+
+  PERFORM public.swap_workout_exercise(item_proprio, destino);
+  SELECT exercise_id INTO atual FROM public.workout_exercises WHERE id = item_proprio;
+  IF atual IS DISTINCT FROM destino THEN
+    RAISE EXCEPTION 'o Praticante não troca o exercício do próprio treino';
+  END IF;
+
+  BEGIN
+    PERFORM public.swap_workout_exercise(item_outro, destino);
+    RAISE EXCEPTION 'TREINO ALHEIO ALTERADO: um Praticante trocou exercício do treino de outra pessoa';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  BEGIN
+    PERFORM public.swap_workout_exercise(item_prescrito, destino);
+    RAISE EXCEPTION 'PRESCRIÇÃO REESCRITA: o aluno trocou um exercício que o especialista prescreveu';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  BEGIN
+    PERFORM public.swap_workout_exercise(item_proprio, privado);
+    RAISE EXCEPTION 'CATÁLOGO PRIVADO VAZADO: exercício de um especialista entrou no plano de quem não é aluno dele';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- A função não abre a tabela: séries, carga e ordem seguem sem escrita direta.
+  UPDATE public.workout_exercises SET sets = 99 WHERE id = item_proprio;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 0 THEN
+    RAISE EXCEPTION 'PRESCRIÇÃO EDITADA POR FORA: UPDATE direto em workout_exercises foi aceito para o aluno';
+  END IF;
+
+  RESET ROLE;
+  SELECT exercise_id INTO atual FROM public.workout_exercises WHERE id = item_outro;
+  IF atual IS DISTINCT FROM oficial THEN
+    RAISE EXCEPTION 'TREINO ALHEIO ALTERADO: o item de outra pessoa mudou de exercício';
+  END IF;
+
+  RAISE NOTICE 'ok  troca de exercício: só no próprio treino sem especialista, só para o catálogo oficial';
+END $$;
+
+ROLLBACK;
