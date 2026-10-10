@@ -5,6 +5,7 @@ import {
   SERVICE_TYPE,
   useEndStudentLink,
   useGenerateLinkCode,
+  useRedeemSpecialistCode,
   useStudentLinks,
 } from "../hooks/useStudentLinks";
 
@@ -126,8 +127,48 @@ export function SpecialistLinkSection({ studentId, isMember }: Props) {
           {generatedCode && (
             <p className="text-[10px] text-muted-foreground">Código válido por 24 horas.</p>
           )}
+          <RedeemSpecialistCode studentId={studentId} />
         </div>
       )}
     </div>
+  );
+}
+
+/** O outro sentido do vínculo (0087): o código que o especialista gerou. */
+function RedeemSpecialistCode({ studentId }: { studentId: string }) {
+  const { mutateAsync, isPending, error, isSuccess } = useRedeemSpecialistCode(studentId);
+  const [code, setCode] = useState("");
+
+  return (
+    <form
+      className="flex flex-col gap-2 mt-2"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (code.trim()) void mutateAsync(code).catch(() => undefined);
+      }}
+    >
+      <label htmlFor="specialist-code" className="text-xs text-muted-foreground">
+        Ou digite o código que o seu especialista te passou.
+      </label>
+      <div className="flex gap-2">
+        <input
+          id="specialist-code"
+          value={code}
+          onChange={(event) => setCode(event.target.value.toUpperCase())}
+          placeholder="Ex.: K7Q2MX"
+          autoComplete="off"
+          className="flex-1 bg-surface border border-overlay-10 rounded-xl px-4 py-2.5 text-sm tracking-[0.2em] text-foreground"
+        />
+        <button
+          type="submit"
+          disabled={isPending || !code.trim()}
+          className="px-5 py-2.5 bg-primary text-primary-foreground font-black text-xs uppercase tracking-widest rounded-xl disabled:opacity-50"
+        >
+          {isPending ? "Vinculando..." : "Vincular"}
+        </button>
+      </div>
+      {error && <p className="text-xs text-red-400">{error.message}</p>}
+      {isSuccess && <p className="text-xs text-primary">Vínculo feito.</p>}
+    </form>
   );
 }

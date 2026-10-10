@@ -11,6 +11,7 @@ import type {
   LinkStudentResult,
   Student,
 } from "../../types/students.types";
+import { createLinkCodeService } from "./linkCode.service";
 
 /**
  * @param apiBaseUrl Origem do BFF para as operações que passam por `/api/`.
@@ -184,23 +185,9 @@ export const createStudentsService = (supabase: SupabaseClient, apiBaseUrl = "")
     return (data ?? []) as PhysicalAssessment[];
   },
 
-  generateLinkCode: async (studentId: string): Promise<string> => {
-    const { error: deleteError } = await supabase
-      .from("student_link_codes")
-      .delete()
-      .eq("student_id", studentId);
-    if (deleteError) throw deleteError;
-
-    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-
-    const { error } = await supabase
-      .from("student_link_codes")
-      .insert({ student_id: studentId, code, expires_at: expiresAt });
-
-    if (error) throw error;
-    return code;
-  },
+  /** O código que o aluno compartilha com o especialista. Ver `createLinkCodeService`. */
+  generateLinkCode: (studentId: string): Promise<string> =>
+    createLinkCodeService(supabase).generate({ role: "student", id: studentId }),
 
   /**
    * Vincula um aluno pelo código, via RPC.
@@ -217,13 +204,8 @@ export const createStudentsService = (supabase: SupabaseClient, apiBaseUrl = "")
    *   usa `auth.uid()`. Aceitar quem é o specialist por parâmetro foi justamente
    *   o furo.
    */
-  linkStudent: async (_specialistId: string, code: string): Promise<LinkStudentResult> => {
-    const { data, error } = await supabase.rpc("link_student_by_code", { p_code: code });
-
-    if (error) throw error;
-
-    return data as LinkStudentResult;
-  },
+  linkStudent: (_specialistId: string, code: string): Promise<LinkStudentResult> =>
+    createLinkCodeService(supabase).redeem("specialist", code),
 
   removeStudent: async (
     specialistId: string,

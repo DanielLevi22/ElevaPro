@@ -3401,3 +3401,94 @@ BEGIN
 END $$;
 
 ROLLBACK;
+
+-- ── specialist_link_codes: o especialista também gera código (0087, #365) ────
+-- Quem já tem conta não entra pelo convite por e-mail. O código do especialista
+-- liga o aluno a ele; o código só vale para aluno, vence, e é usado uma vez.
+
+BEGIN;
+
+DO $$
+DECLARE
+  espec        uuid := gen_random_uuid();
+  espec_alheio uuid := gen_random_uuid();
+  praticante   uuid := gen_random_uuid();
+  vinculos     int;
+  visiveis     int;
+  resposta     jsonb;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (espec, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-ca@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb),
+    (espec_alheio, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-cb@elevapro.local', '{"full_name":"F","account_type":"specialist"}'::jsonb),
+    (praticante, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-cc@elevapro.local', '{"full_name":"P","account_type":"member"}'::jsonb);
+
+  INSERT INTO auth.mfa_factors (id, user_id, factor_type, status, created_at, updated_at)
+  VALUES (gen_random_uuid(), espec, 'totp', 'verified', now(), now()),
+         (gen_random_uuid(), espec_alheio, 'totp', 'verified', now(), now());
+  INSERT INTO public.specialist_services (specialist_id, service_type)
+  VALUES (espec, 'personal_training');
+
+  IF has_function_privilege('anon', 'public.link_to_specialist_by_code(text)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'VÍNCULO ANÔNIMO: anon pode executar link_to_specialist_by_code';
+  END IF;
+
+  SET LOCAL ROLE authenticated;
+
+  -- O especialista gera o próprio código.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  INSERT INTO public.specialist_link_codes (specialist_id, code, expires_at)
+  VALUES (espec, 'VERIFYX1', now() + interval '1 day'),
+         (espec, 'VERIFYX0', now() - interval '1 minute');
+
+  -- Outro especialista não lê o código nem o resgata.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec_alheio, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  SELECT count(*) INTO visiveis FROM public.specialist_link_codes WHERE specialist_id = espec;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'CÓDIGO VAZADO: especialista leu o código de outro e pode se passar por ele';
+  END IF;
+  resposta := public.link_to_specialist_by_code('VERIFYX1');
+  IF (resposta->>'success')::boolean THEN
+    RAISE EXCEPTION 'ESPECIALISTA COMO ALUNO: um especialista resgatou o código de outro';
+  END IF;
+
+  -- O Praticante não gera código em nome de especialista.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', praticante, 'role', 'authenticated')::text, true);
+  BEGIN
+    INSERT INTO public.specialist_link_codes (specialist_id, code, expires_at)
+    VALUES (praticante, 'VERIFYX2', now() + interval '1 day');
+    RAISE EXCEPTION 'CÓDIGO FALSO: um aluno gerou código de especialista';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- Código vencido não liga; o válido liga uma vez só.
+  resposta := public.link_to_specialist_by_code('verifyx0');
+  IF (resposta->>'success')::boolean THEN
+    RAISE EXCEPTION 'CÓDIGO VENCIDO ACEITO: vínculo com código expirado';
+  END IF;
+  resposta := public.link_to_specialist_by_code(' verifyx1 ');
+  IF NOT (resposta->>'success')::boolean THEN
+    RAISE EXCEPTION 'o Praticante não se vincula pelo código válido do especialista: %', resposta;
+  END IF;
+  resposta := public.link_to_specialist_by_code('VERIFYX1');
+  IF (resposta->>'success')::boolean THEN
+    RAISE EXCEPTION 'CÓDIGO REUSADO: o mesmo código ligou duas vezes';
+  END IF;
+
+  RESET ROLE;
+  SELECT count(*) INTO vinculos FROM public.student_specialists
+  WHERE student_id = praticante AND specialist_id = espec AND status = 'active';
+  IF vinculos <> 1 THEN
+    RAISE EXCEPTION 'o vínculo pelo código do especialista não ficou ativo: % linha(s)', vinculos;
+  END IF;
+
+  RAISE NOTICE 'ok  código do especialista: só ele gera e lê, só aluno resgata, uma vez, antes de vencer';
+END $$;
+
+ROLLBACK;

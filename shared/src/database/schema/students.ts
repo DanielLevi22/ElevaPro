@@ -36,6 +36,17 @@ export const studentLinkCodes = pgTable("student_link_codes", {
   expires_at: timestamp("expires_at", { withTimezone: true }).notNull(),
 });
 
+// O código que o especialista compartilha (0087, #365); o aluno resgata pela função.
+export const specialistLinkCodes = pgTable("specialist_link_codes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  specialist_id: uuid("specialist_id")
+    .notNull()
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  code: text("code").notNull().unique(),
+  expires_at: timestamp("expires_at", { withTimezone: true }).notNull(),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const studentConsents = pgTable(
   "student_consents",
   {

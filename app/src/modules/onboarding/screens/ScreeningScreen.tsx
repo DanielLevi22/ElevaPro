@@ -1,6 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { View } from 'react-native';
+import { useAuthStore } from '@/auth';
+import { LinkCodeSheet } from '@/components/linkCode/LinkCodeSheet';
 import { CaixaDeIcone } from '@/components/ui/CaixaDeIcone';
 import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
 import { ROUTES } from '@/navigation/types';
@@ -19,9 +22,9 @@ const ICONE_DA_LINHA = 18;
  * Diz o critério e oferece revisão: é decisão automatizada (Art. 20). O texto
  * não repete a condição marcada; ela não sai de O5.
  *
- * O desenho tem "Encontrar um especialista" como ação principal, e o app ainda
- * não tem onde procurar um. Até ter, a ação principal é seguir com o treino, e a
- * linha da dieta diz como chegar ao especialista.
+ * "Encontrar um especialista" abre o vínculo por código (`LinkCodeSheet`): a
+ * pessoa compartilha o dela ou digita o do especialista. O app ainda não tem
+ * onde procurar um. A ação principal é seguir com o treino.
  *
  * @example router.push({ pathname: ROUTES.ONBOARDING.SCREENING, params: { reason: 'undisclosed' } })
  */
@@ -31,6 +34,9 @@ export function ScreeningScreen() {
   const undisclosed = reason === 'undisclosed';
   const dietOnly = useOnboardingStore((state) => state.scope) === 'diet';
   const { saveAndGo } = useSaveAndContinue('onboarding.concluir_sem_plano');
+  const studentId = useAuthStore((state) => state.session?.user.id ?? null);
+  const [findingSpecialist, setFindingSpecialist] = useState(false);
+  const findSpecialist = () => setFindingSpecialist(true);
   // Quem pediu só dieta e não tem dieta liberada não tem o que montar: pode trocar
   // para treino, ou ir para a tela inicial com o onboarding concluído (sem isso o
   // guarda o traria de volta a O1 a cada abertura).
@@ -62,7 +68,7 @@ export function ScreeningScreen() {
                 label: 'Ir para a tela inicial',
                 onPress: () => void saveAndGo({}, ROUTES.TABS.ROOT, true),
               }
-            : undefined
+            : { label: 'Encontrar um especialista', onPress: findSpecialist }
       }
     >
       <View className="mt-[2.125rem] items-start">
@@ -111,12 +117,17 @@ export function ScreeningScreen() {
           sub={
             undisclosed
               ? 'Responda a triagem quando quiser para liberar'
-              : 'Quando um especialista te convidar pelo app, o plano dele aparece aqui'
+              : 'Toque para se conectar ao seu especialista por código'
           }
-          onPress={undisclosed ? () => router.replace(ROUTES.ONBOARDING.HEALTH) : undefined}
-          direita={undisclosed ? undefined : <View />}
+          onPress={undisclosed ? () => router.replace(ROUTES.ONBOARDING.HEALTH) : findSpecialist}
         />
       </View>
+      <LinkCodeSheet
+        visible={findingSpecialist}
+        side="student"
+        userId={studentId}
+        onClose={() => setFindingSpecialist(false)}
+      />
     </OnboardingFrame>
   );
 }

@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
+import { LinkCodeSheet } from '@/components/linkCode/LinkCodeSheet';
 import { showAlert, showConfirm } from '@/components/ui/appAlert';
 import { BotaoFixoNoRodape } from '@/components/ui/BotaoFixoNoRodape';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
@@ -29,7 +30,9 @@ export default function StudentsScreen() {
   const router = useRouter();
   const list = useStudentList();
   const [actionsFor, setActionsFor] = useState<Student | null>(null);
+  const [linking, setLinking] = useState(false);
   const handlers = useStudentActions();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
 
   const openCreate = () => router.push(ROUTES.STUDENTS.CREATE);
 
@@ -40,7 +43,12 @@ export default function StudentsScreen() {
       refresh={{ refreshing: list.isLoading && list.students.length === 0, onRefresh: list.reload }}
       overlay={<BotaoFixoNoRodape rotulo="Novo aluno" icone="add" onPress={openCreate} />}
     >
-      <Header total={list.totalCount} atRisk={list.atRiskCount} onCreate={openCreate} />
+      <Header
+        total={list.totalCount}
+        atRisk={list.atRiskCount}
+        onCreate={openCreate}
+        onLink={() => setLinking(true)}
+      />
       <GlassSearchField
         value={list.search}
         onChangeText={list.setSearch}
@@ -76,6 +84,15 @@ export default function StudentsScreen() {
         onResendInvite={handlers.resendInvite}
         onRemove={handlers.remove}
       />
+      {/* Quem já tem conta (o Praticante) não entra pelo convite por e-mail: o
+          vínculo é por código, nos dois sentidos (#365). */}
+      <LinkCodeSheet
+        visible={linking}
+        side="specialist"
+        userId={userId}
+        onClose={() => setLinking(false)}
+        onLinked={list.reload}
+      />
     </TelaDeVidroComFoto>
   );
 }
@@ -84,10 +101,12 @@ function Header({
   total,
   atRisk,
   onCreate,
+  onLink,
 }: {
   total: number;
   atRisk: number;
   onCreate: () => void;
+  onLink: () => void;
 }) {
   const eyebrow = `${total} ${total === 1 ? 'aluno' : 'alunos'}${atRisk > 0 ? ` · ${atRisk} em risco` : ''}`;
   return (
@@ -103,6 +122,7 @@ function Header({
           Alunos
         </Text>
       </View>
+      <BotaoRedondo icone="link" rotulo="Vincular aluno por código" onPress={onLink} />
       <BotaoRedondo icone="plus" rotulo="Novo aluno" onPress={onCreate} />
     </View>
   );

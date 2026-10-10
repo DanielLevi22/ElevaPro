@@ -30,6 +30,7 @@ export * from "./services/nutrition/hidratacao.service";
 export * from "./services/nutrition/nutrition.service";
 export * from "./services/progress/measurement.service";
 export * from "./services/progress/progress.service";
+export * from "./services/students/linkCode.service";
 export * from "./services/students/specialistNote.service";
 export * from "./services/students/students.service";
 export * from "./services/workouts/cardioHistory.service";
