@@ -1,0 +1,108 @@
+import { suggestDietGoal } from "./dietGoalSuggestion";
+import {
+  type BiologicalSex,
+  calculateMacrosFromCalories,
+  type EnergyGoal,
+  type EnergyMacros,
+} from "./energyTargets";
+
+/**
+ * A meta de dieta do Praticante: a conta da sugestão de meta com as travas de
+ * segurança do onboarding (#365, ADR-0044). A IA nunca escolhe este número; ela
+ * monta as refeições em cima dele.
+ *
+ * Os valores marcados como provisórios vêm da pesquisa
+ * (`docs/research/regras-prescricao-praticante.md`) e esperam a validação de um
+ * nutricionista (CRN) antes da abertura ao público.
+ */
+
+export interface PractitionerDietInput {
+  age: number;
+  sex: BiologicalSex;
+  heightCm: number;
+  weightKg: number;
+  /** Opção de `main_goal`: "Emagrecimento", "Hipertrofia"… */
+  mainGoal?: string;
+  trainingDaysPerWeek?: number;
+  /** O resultado da triagem de O5; a condição nunca chega aqui. */
+  dietScreening: "allowed" | "referred";
+}
+
+/** Qual trava mexeu na meta: a tela de plano explica por esse motivo, e a IA só verbaliza. */
+export type DietGuard = "bmr_floor" | "weekly_rate_cap" | "low_bmi_no_loss" | "reference_weight";
+
+export type PractitionerDietTarget =
+  | { kind: "no_diet" }
+  | {
+      kind: "target";
+      tmb: number;
+      tdee: number;
+      goal: EnergyGoal;
+      targetCalories: number;
+      macros: EnergyMacros;
+      guards: DietGuard[];
+    };
+
+const LOW_BMI = 18.5;
+const OBESITY_BMI = 30;
+/** Provisório (CRN): sem massa magra medida, o peso de referência é o de IMC 25. */
+const REFERENCE_BMI = 25;
+/** ~1% do peso por semana: 1% × 7.700 kcal/kg ÷ 7 dias (Helms 2014; Garthe 2011). */
+const MAX_DEFICIT_KCAL_PER_KG = 11;
+
+/**
+ * @example
+ * practitionerDietTarget({ age: 30, sex: "M", heightCm: 180, weightKg: 80, mainGoal: "Emagrecimento", dietScreening: "allowed" });
+ * // { kind: "target", targetCalories: 1780, guards: ["bmr_floor"], ... }
+ */
+export function practitionerDietTarget(input: PractitionerDietInput): PractitionerDietTarget {
+  if (input.dietScreening === "referred") return { kind: "no_diet" };
+
+  const base = suggestDietGoal(input);
+  // Com os quatro números presentes a sugestão sempre existe; o tipo é que não sabe.
+  if (!base) return { kind: "no_diet" };
+
+  const guards: DietGuard[] = [];
+  const bmi = input.weightKg / (input.heightCm / 100) ** 2;
+  let goal = base.goal;
+  let calories = base.targetCalories;
+
+  if (goal === "cutting" && bmi < LOW_BMI) {
+    goal = "maintenance";
+    calories = base.tdee;
+    guards.push("low_bmi_no_loss");
+  }
+
+  const maxDeficit = MAX_DEFICIT_KCAL_PER_KG * input.weightKg;
+  if (base.tdee - calories > maxDeficit) {
+    calories = base.tdee - maxDeficit;
+    guards.push("weekly_rate_cap");
+  }
+
+  if (calories < base.tmb) {
+    calories = base.tmb;
+    guards.push("bmr_floor");
+  }
+
+  const referenceWeight = macroWeight(input, bmi, guards);
+  return {
+    kind: "target",
+    tmb: base.tmb,
+    tdee: base.tdee,
+    goal,
+    targetCalories: Math.round(calories),
+    macros: calculateMacrosFromCalories(calories, referenceWeight, goal),
+    guards,
+  };
+}
+
+/**
+ * O peso sobre o qual proteína e gordura são calculadas. Em obesidade, o peso
+ * total inflava a proteína (130 kg → 286 g) e espremia o carboidrato até quase
+ * zero; a faixa da literatura é por massa magra (ISSN 2017; Helms 2014).
+ */
+function macroWeight(input: PractitionerDietInput, bmi: number, guards: DietGuard[]): number {
+  if (bmi < OBESITY_BMI) return input.weightKg;
+  guards.push("reference_weight");
+  return REFERENCE_BMI * (input.heightCm / 100) ** 2;
+}
