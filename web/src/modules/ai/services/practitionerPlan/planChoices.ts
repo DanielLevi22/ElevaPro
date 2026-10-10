@@ -1,4 +1,9 @@
-import { DEFAULT_TRAINING_DAYS } from "@elevapro/shared";
+import {
+  DEFAULT_TRAINING_DAYS,
+  TRAINING_PLACES,
+  type TrainingPlace,
+  trainsAtGym,
+} from "@elevapro/shared";
 
 /**
  * As escolhas do onboarding, lidas das respostas gravadas na anamnese, com o
@@ -12,7 +17,7 @@ import { DEFAULT_TRAINING_DAYS } from "@elevapro/shared";
 export interface PlanChoices {
   trainingDays: number;
   sessionMinutes: number;
-  place: string;
+  place: TrainingPlace;
   homeEquipment: string[];
   sports: string[];
   mealsPerDay: number;
@@ -26,7 +31,7 @@ export interface PlanChoices {
 const DAYS = [2, 3, 4, 5, 6];
 const MINUTES = [30, 45, 60, 90];
 const MEALS = [3, 4, 5, 6];
-const PLACES = ["Academia completa", "Home gym", "Ao ar livre"];
+const PLACES: readonly TrainingPlace[] = Object.values(TRAINING_PLACES);
 const STYLES = ["Onívoro", "Vegetariano", "Vegano"];
 
 const oneOf = <T>(value: unknown, options: readonly T[], fallback: T): T =>
@@ -42,7 +47,7 @@ export function readPlanChoices(answers: Record<string, unknown>): PlanChoices {
   return {
     trainingDays: oneOf(answers.training_days, DAYS, DEFAULT_TRAINING_DAYS),
     sessionMinutes: oneOf(answers.training_duration, MINUTES, 45),
-    place: oneOf(answers.gym_type, PLACES, "Academia completa"),
+    place: oneOf<TrainingPlace>(answers.gym_type, PLACES, TRAINING_PLACES.fullGym),
     homeEquipment: strings(answers.home_equipment),
     sports: strings(answers.sports),
     mealsPerDay: oneOf(answers.meals_per_day, MEALS, 4),
@@ -62,10 +67,10 @@ export function readPlanChoices(answers: Record<string, unknown>): PlanChoices {
  */
 export function allowedExerciseNames(
   catalog: readonly { id: string; name: string; venue: string | null; category: string | null }[],
-  place: string,
+  place: TrainingPlace,
   avoided: readonly string[] = [],
 ): string[] {
-  const gym = place === "Academia completa";
+  const gym = trainsAtGym(place);
   return catalog
     .filter((exercise) => exercise.category === "forca")
     .filter((exercise) => !avoided.includes(exercise.id))

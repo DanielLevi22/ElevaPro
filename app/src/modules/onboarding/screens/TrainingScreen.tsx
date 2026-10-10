@@ -1,3 +1,4 @@
+import { TRAINING_PLACES as PLACE } from '@elevapro/shared';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { ChipPick } from '@/components/ui/ChipPick';
@@ -20,7 +21,7 @@ import { useOnboardingStore } from '../store/onboardingStore';
 
 type Minutes = (typeof SESSION_MINUTES)[number]['value'];
 type Place = (typeof TRAINING_PLACES)[number]['value'];
-const HOME: Place = 'Home gym';
+const HOME: Place = PLACE.home;
 
 /**
  * O6 · Seu treino (4 de 5): dias, tempo, onde treina, o equipamento de casa e o

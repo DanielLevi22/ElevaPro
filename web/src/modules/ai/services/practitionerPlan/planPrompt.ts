@@ -1,3 +1,4 @@
+import { trainsAtGym } from "@elevapro/shared";
 import type { PlanChoices } from "./planChoices";
 
 type Track = "beginner" | "returning" | "intermediate" | "advanced";
@@ -64,7 +65,7 @@ export function buildPlanPrompt(input: PlanPromptInput): string {
       : "Não inclua sessão opcional.";
     // Fora da academia, o equipamento que a pessoa tem decide o que dá para fazer.
     const equipment =
-      choices.place !== "Academia completa" && choices.homeEquipment.length
+      !trainsAtGym(choices.place) && choices.homeEquipment.length
         ? `- Equipamento disponível: ${choices.homeEquipment.join(", ")}. Use só o que der para fazer com ele.
 `
         : "";

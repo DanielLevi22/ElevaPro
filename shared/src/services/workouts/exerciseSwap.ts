@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Exercise, ExerciseSwapScope } from "../../types/workouts.types";
+import { readTrainingPlace, trainsAtGym } from "../../utils/trainingPlace";
 
 /** Quantas alternativas a folha "Trocar exercício" oferece (desenho 6d). */
 export const SWAP_ALTERNATIVES = 3;
@@ -62,9 +63,9 @@ export const createExerciseSwapService = (supabase: SupabaseClient) => ({
       .eq("student_id", studentId)
       .maybeSingle();
     if (error) throw error;
-    const place = typeof data?.place === "string" ? data.place : null;
+    const place = readTrainingPlace(data?.place);
     return {
-      atHome: place === null ? null : place !== "Academia completa",
+      atHome: place === null ? null : !trainsAtGym(place),
       avoided: strings(data?.avoided),
     };
   },

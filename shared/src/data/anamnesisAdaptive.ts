@@ -1,4 +1,5 @@
 import { MEASUREMENT_QUESTIONS } from "../utils/anamnesisMeasurement";
+import { TRAINING_PLACES } from "../utils/trainingPlace";
 
 export type PersonaTrack = "beginner" | "returning" | "intermediate" | "advanced";
 
@@ -107,7 +108,7 @@ const BASE_QUESTIONS: AdaptiveQuestion[] = [
     id: "gym_type",
     text: "Onde você vai treinar?",
     type: "single_choice",
-    options: ["Academia completa", "Academia básica", "Home gym", "Ao ar livre"],
+    options: Object.values(TRAINING_PLACES),
     weight: 8,
     whyWeAsk: "Selecionamos exercícios compatíveis com os equipamentos disponíveis.",
   },

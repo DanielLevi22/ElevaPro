@@ -1,3 +1,4 @@
+import { TRAINING_PLACES as PLACE } from '@elevapro/shared';
 import type { Ionicons } from '@expo/vector-icons';
 
 type IconName = keyof typeof Ionicons.glyphMap;
@@ -16,10 +17,11 @@ export const SESSION_MINUTES = [
   { value: '90', label: '90 min' },
 ] as const;
 
+/** O valor é o que a anamnese grava, e mora no `shared`: a regra compara com ele. */
 export const TRAINING_PLACES = [
-  { value: 'Academia completa', label: 'Academia', icon: 'business-outline' },
-  { value: 'Home gym', label: 'Casa', icon: 'home-outline' },
-  { value: 'Ao ar livre', label: 'Ao ar livre', icon: 'leaf-outline' },
+  { value: PLACE.fullGym, label: 'Academia', icon: 'business-outline' },
+  { value: PLACE.home, label: 'Casa', icon: 'home-outline' },
+  { value: PLACE.outdoor, label: 'Ao ar livre', icon: 'leaf-outline' },
 ] as const satisfies readonly { value: string; label: string; icon: IconName }[];
 
 export const HOME_EQUIPMENT = [

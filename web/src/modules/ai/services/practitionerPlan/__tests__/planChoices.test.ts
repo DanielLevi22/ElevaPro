@@ -62,7 +62,7 @@ describe("allowedExerciseNames", () => {
   });
 
   it("em casa e ao ar livre, só o que não depende de academia", () => {
-    for (const place of ["Home gym", "Ao ar livre"]) {
+    for (const place of ["Home gym", "Ao ar livre"] as const) {
       expect(allowedExerciseNames(CATALOGO, place)).toEqual([
         "Flexão de braço",
         "Agachamento com halteres",

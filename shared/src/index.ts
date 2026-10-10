@@ -85,5 +85,6 @@ export * from "./utils/readiness";
 export * from "./utils/respostasDaNutricao";
 export * from "./utils/sessao";
 export * from "./utils/texto";
+export * from "./utils/trainingPlace";
 export * from "./utils/trainingProgress";
 export * from "./utils/treino";
