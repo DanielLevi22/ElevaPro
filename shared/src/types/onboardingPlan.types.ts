@@ -61,6 +61,12 @@ export interface OnboardingPlanPending {
   sessionMinutes: number;
   /** Os dias de treino desta versão: O10 pode mudar sem mexer na resposta de O6. */
   trainingDays: number;
+  /**
+   * A meta de calorias para cada opção de dias de O10, pela mesma conta da meta
+   * (`"4": 2230`): a tela mostra antes → depois e o Δ antes de a pessoa escolher.
+   * `null` sem dieta.
+   */
+  caloriesByTrainingDays: Record<string, number> | null;
   /** A troca de alimento que O10 oferece, calculada pelo banco; `null` sem dieta. */
   suggestedSwap: { mealIndex: number; itemIndex: number; from: string; to: string } | null;
   /**

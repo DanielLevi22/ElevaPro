@@ -1,11 +1,15 @@
 import type { OnboardingAdjustment, OnboardingPlanPending } from '@elevapro/shared';
 import { Text, View } from 'react-native';
 import { AntesDepois } from '@/components/ui/AntesDepois';
-import { ChipPick } from '@/components/ui/ChipPick';
 import { GlassSheet } from '@/components/ui/GlassSheet';
 
 const DAYS = [2, 3, 4, 5, 6] as const;
 const PROTEIN_STEP = 20;
+
+const kcal = (value: number) => `${value.toLocaleString('pt-BR')} kcal`;
+/** "+80 kcal", "−120 kcal", "0 kcal": o sinal diz para onde a meta vai. */
+const delta = (value: number) =>
+  value === 0 ? '0 kcal' : `${value > 0 ? '+' : '−'}${kcal(Math.abs(value))}`;
 
 interface AdjustSheetProps {
   visible: boolean;
@@ -18,8 +22,9 @@ interface AdjustSheetProps {
 }
 
 /**
- * O10 · Ajustar: os cinco ajustes do desenho. Cada um gera uma nova proposta, e
- * nada é gravado até "Aprovar plano" (ADR-0020).
+ * O10 · Ajustar: os cinco ajustes do desenho, cada um com antes → depois e o Δ
+ * kcal. Cada um gera uma nova proposta, e nada é gravado até "Aprovar plano"
+ * (ADR-0020).
  *
  * "Mais barato" e "Mais rápido" dizem que são estimativa: o banco não tem preço
  * nem tempo de preparo, e quem escolhe é a IA.
@@ -68,7 +73,7 @@ export function AdjustSheet({ visible, plan, busy, canUndo, onAdjust, onClose }:
               titulo="Mais barato"
               antes="Plano atual"
               depois="Alimentos mais em conta"
-              selo="estimativa"
+              selo="0 kcal · estimativa"
               disabled={busy}
               onPress={() => onAdjust({ kind: 'cheaper' })}
             />
@@ -77,7 +82,7 @@ export function AdjustSheet({ visible, plan, busy, canUndo, onAdjust, onClose }:
               titulo="Mais rápido"
               antes="Plano atual"
               depois="Preparo de até 15 min"
-              selo="estimativa"
+              selo="0 kcal · estimativa"
               disabled={busy}
               onPress={() => onAdjust({ kind: 'faster' })}
             />
@@ -92,26 +97,45 @@ export function AdjustSheet({ visible, plan, busy, canUndo, onAdjust, onClose }:
             />
           </>
         ) : null}
-        <View className="border-t border-glass-border py-[0.6875rem]">
-          <Text className="text-[0.84375rem] font-bold text-foreground">Mudar dias de treino</Text>
-          <Text className="mt-0.5 text-[0.71875rem] text-muted-foreground">
-            A meta é recalculada com os dias novos.
-          </Text>
-          <View className="mt-2 flex-row gap-[0.4375rem]" accessibilityRole="radiogroup">
-            {DAYS.map((days) => (
-              <ChipPick
-                key={days}
-                rotulo={String(days)}
-                marcado={plan.trainingDays === days}
-                onPress={() => {
-                  if (!busy && days !== plan.trainingDays)
-                    onAdjust({ kind: 'training_days', days });
-                }}
-              />
-            ))}
-          </View>
-        </View>
+        <TrainingDaysOptions plan={plan} busy={busy} onAdjust={onAdjust} />
       </View>
     </GlassSheet>
+  );
+}
+
+interface TrainingDaysOptionsProps {
+  plan: OnboardingPlanPending;
+  busy: boolean;
+  onAdjust: (adjustment: OnboardingAdjustment) => void;
+}
+
+/**
+ * Cada opção de dias como antes → depois, com a meta que o servidor já calculou
+ * para ela. Sem dieta, a meta não muda: mostra só os dias.
+ */
+function TrainingDaysOptions({ plan, busy, onAdjust }: TrainingDaysOptionsProps) {
+  const byDays = plan.caloriesByTrainingDays;
+  const current = plan.target?.calories ?? null;
+  const label = (days: number, calories: number | undefined) =>
+    calories === undefined ? `${days} dias` : `${days} dias · ${kcal(calories)}`;
+
+  return (
+    <>
+      {DAYS.filter((days) => days !== plan.trainingDays).map((days) => {
+        const next = byDays?.[String(days)];
+        return (
+          <AntesDepois
+            key={days}
+            icon="calendar-outline"
+            titulo={`Treinar ${days} dias por semana`}
+            antes={label(plan.trainingDays, current ?? undefined)}
+            depois={label(days, next)}
+            selo={next !== undefined && current !== null ? delta(next - current) : 'sem dieta'}
+            disabled={busy}
+            onPress={() => onAdjust({ kind: 'training_days', days })}
+          />
+        );
+      })}
+    </>
   );
 }

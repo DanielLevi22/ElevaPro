@@ -117,6 +117,7 @@ export async function generatePractitionerPlan(
     mealsPerDay: choices.mealsPerDay,
     sessionMinutes: choices.sessionMinutes,
     trainingDays: choices.trainingDays,
+    caloriesByTrainingDays: target ? caloriesByDays(answers, loaded.bodyFatPct) : null,
     suggestedSwap: null,
     estimate: options.estimate ?? null,
   };
@@ -173,6 +174,21 @@ function parseProposal(texto: string): PractitionerPlanProposal | null {
  * A meta do código; `null` quando a triagem não liberou dieta, `undefined`
  * quando faltam os números do corpo (o onboarding não foi até O4).
  */
+/** As opções de dias que O10 oferece. */
+const ADJUSTABLE_DAYS = [2, 3, 4, 5, 6];
+
+/** A meta de calorias de cada opção de dias, com o mesmo corpo e o mesmo scan. */
+function caloriesByDays(
+  answers: Record<string, unknown>,
+  bodyFatPct: number | undefined,
+): Record<string, number> {
+  const entries = ADJUSTABLE_DAYS.map((days) => {
+    const target = targetOf({ ...answers, training_days: days }, bodyFatPct);
+    return target ? [String(days), target.calories] : null;
+  });
+  return Object.fromEntries(entries.filter((entry) => entry !== null));
+}
+
 function targetOf(
   answers: Record<string, unknown>,
   bodyFatPct: number | undefined,

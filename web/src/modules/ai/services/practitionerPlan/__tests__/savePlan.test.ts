@@ -104,6 +104,7 @@ const PENDENTE: OnboardingPlanPending = {
   mealCalories: [195],
   sessionMinutes: 45,
   trainingDays: 3,
+  caloriesByTrainingDays: null,
   suggestedSwap: null,
   estimate: null,
 };
