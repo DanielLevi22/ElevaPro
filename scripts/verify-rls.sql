@@ -3272,3 +3272,132 @@ BEGIN
 END $$;
 
 ROLLBACK;
+
+-- ── exercise_swaps: a troca do aluno fica registrada para o especialista (0086, #365)
+-- O especialista precisa saber que o treino de hoje não foi o que ele passou.
+-- A linha é evidência: só a função grava, com o autor do JWT e a hora do
+-- servidor; ninguém escreve, corrige nem apaga direto. Quem lê é o aluno e o
+-- especialista com vínculo ativo, nunca outro especialista.
+
+BEGIN;
+
+DO $$
+DECLARE
+  aluno        uuid := gen_random_uuid();
+  outro_aluno  uuid := gen_random_uuid();
+  espec        uuid := gen_random_uuid();
+  espec_alheio uuid := gen_random_uuid();
+  remada       uuid;
+  halteres     uuid;
+  item         uuid;
+  item_proprio uuid;
+  visiveis     int;
+  afetadas     int;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (aluno, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-xa@elevapro.local', '{"full_name":"A","account_type":"student"}'::jsonb),
+    (outro_aluno, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-xb@elevapro.local', '{"full_name":"B","account_type":"member"}'::jsonb),
+    (espec, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-xe@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb),
+    (espec_alheio, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-xf@elevapro.local', '{"full_name":"F","account_type":"specialist"}'::jsonb);
+
+  INSERT INTO auth.mfa_factors (id, user_id, factor_type, status, created_at, updated_at)
+  VALUES (gen_random_uuid(), espec, 'totp', 'verified', now(), now()),
+         (gen_random_uuid(), espec_alheio, 'totp', 'verified', now(), now());
+
+  INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
+  VALUES (aluno, espec, 'personal_training', 'active');
+
+  INSERT INTO public.exercises (name) VALUES ('verify-x-remada') RETURNING id INTO remada;
+  INSERT INTO public.exercises (name) VALUES ('verify-x-halteres') RETURNING id INTO halteres;
+
+  -- O treino que o especialista prescreveu, dentro da periodização do aluno.
+  WITH periodo AS (
+    INSERT INTO public.training_periodizations (specialist_id, student_id, name, start_date, end_date)
+    VALUES (espec, aluno, 'verify-x', current_date, current_date + 28) RETURNING id
+  ), fase AS (
+    INSERT INTO public.training_plans (periodization_id, name, start_date, end_date)
+    SELECT id, 'verify-x', current_date, current_date + 28 FROM periodo RETURNING id
+  ), treino AS (
+    INSERT INTO public.workouts (title, specialist_id, training_plan_id)
+    SELECT 'verify-x', espec, id FROM fase RETURNING id
+  )
+  INSERT INTO public.workout_exercises (workout_id, exercise_id)
+  SELECT id, remada FROM treino RETURNING id INTO item;
+
+  -- O plano do próprio Praticante, como o onboarding grava: periodização e
+  -- fase sem especialista.
+  WITH periodo AS (
+    INSERT INTO public.training_periodizations (specialist_id, student_id, name, start_date, end_date)
+    VALUES (NULL, outro_aluno, 'verify-x-proprio', current_date, current_date + 28) RETURNING id
+  ), fase AS (
+    INSERT INTO public.training_plans (periodization_id, name, start_date, end_date)
+    SELECT id, 'verify-x-proprio', current_date, current_date + 28 FROM periodo RETURNING id
+  ), treino AS (
+    INSERT INTO public.workouts (title, specialist_id, student_id, training_plan_id)
+    SELECT 'verify-x-proprio', NULL, outro_aluno, id FROM fase RETURNING id
+  )
+  INSERT INTO public.workout_exercises (workout_id, exercise_id)
+  SELECT id, remada FROM treino RETURNING id INTO item_proprio;
+
+  SET LOCAL ROLE authenticated;
+
+  -- O aluno registra a troca do treino prescrito, e o banco tira o resto dele.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', aluno, 'role', 'authenticated')::text, true);
+  PERFORM public.record_exercise_swap(item, halteres, 'today');
+
+  BEGIN
+    INSERT INTO public.exercise_swaps (student_id, workout_id, scope)
+    SELECT aluno, workout_id, 'today' FROM public.workout_exercises WHERE id = item;
+    RAISE EXCEPTION 'EVIDÊNCIA FORJADA: o aluno gravou troca direto, sem passar pela função';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  BEGIN
+    DELETE FROM public.exercise_swaps WHERE student_id = aluno;
+    GET DIAGNOSTICS afetadas = ROW_COUNT;
+    IF afetadas <> 0 THEN
+      RAISE EXCEPTION 'EVIDÊNCIA APAGADA: o aluno apagou a troca que o especialista precisa ver';
+    END IF;
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- Outra pessoa não registra troca no treino deste aluno.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', outro_aluno, 'role', 'authenticated')::text, true);
+  BEGIN
+    PERFORM public.record_exercise_swap(item, halteres, 'today');
+    RAISE EXCEPTION 'TROCA EM NOME DE OUTRO: alguém registrou troca no treino prescrito de outro aluno';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  -- O Praticante não tem especialista a avisar: a troca dele não vira registro.
+  BEGIN
+    PERFORM public.record_exercise_swap(item_proprio, halteres, 'today');
+    RAISE EXCEPTION 'REGISTRO SEM DESTINATÁRIO: troca do Praticante gravada sem especialista para ler (Art. 6°, III)';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- O especialista vinculado vê; o de fora, não.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  SELECT count(*) INTO visiveis FROM public.exercise_swaps WHERE student_id = aluno;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'TROCA ESCONDIDA: o especialista vinculado vê % troca(s) do aluno, esperado 1', visiveis;
+  END IF;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec_alheio, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  SELECT count(*) INTO visiveis FROM public.exercise_swaps WHERE student_id = aluno;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'TROCA VAZADA: especialista sem vínculo leu a troca do aluno';
+  END IF;
+
+  RAISE NOTICE 'ok  troca registrada: só pela função, vista pelo aluno e pelo especialista vinculado';
+END $$;
+
+ROLLBACK;

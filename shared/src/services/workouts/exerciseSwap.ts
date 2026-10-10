@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Exercise } from "../../types/workouts.types";
+import type { Exercise, ExerciseSwapScope } from "../../types/workouts.types";
 
 /** Quantas alternativas a folha "Trocar exercício" oferece (desenho 6d). */
 export const SWAP_ALTERNATIVES = 3;
@@ -90,6 +90,26 @@ export const createExerciseSwapService = (supabase: SupabaseClient) => ({
     const { error } = await supabase.rpc("swap_workout_exercise", {
       p_workout_exercise_id: workoutExerciseId,
       p_exercise_id: exerciseId,
+    });
+    if (error) throw error;
+  },
+
+  /**
+   * Registra a troca num treino prescrito, para o especialista ver no
+   * Acompanhamento e no briefing (0086). O banco tira o aluno do JWT e o
+   * exercício de origem do item: o cliente não escolhe nenhum dos dois.
+   *
+   * @example await swap.recordSwap(item.id, alternativa.id, "today");
+   */
+  recordSwap: async (
+    workoutExerciseId: string,
+    exerciseId: string,
+    scope: ExerciseSwapScope,
+  ): Promise<void> => {
+    const { error } = await supabase.rpc("record_exercise_swap", {
+      p_workout_exercise_id: workoutExerciseId,
+      p_to_exercise_id: exerciseId,
+      p_scope: scope,
     });
     if (error) throw error;
   },

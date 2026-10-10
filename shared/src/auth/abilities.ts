@@ -45,6 +45,8 @@ export type Subject =
   | "Leaderboard"
   /** Entrar e sair do ranking global, pelo consentimento `ranking` (0058). */
   | "RankingConsent"
+  /** A troca de exercício que o aluno registra num treino prescrito (0086). */
+  | "ExerciseSwap"
   | "all";
 
 export type AppAbility = MongoAbility<[Action, Subject]>;
@@ -87,6 +89,8 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
     // Só o placar dos próprios alunos: o global é de quem participa, e o
     // especialista não participa (0059).
     can("read", "Leaderboard");
+    // A troca é evidência do aluno: o especialista acompanha e não edita (0086).
+    can("read", "ExerciseSwap");
 
     if (context.services?.includes("personal_training")) {
       can("manage", "Workout");
@@ -121,6 +125,8 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
     can("read", "SpecialistNote");
     can("read", "Leaderboard");
     can("manage", "RankingConsent");
+    // Registra e lê as próprias trocas; não corrige nem apaga (0086).
+    can(["create", "read"], "ExerciseSwap");
   }
 
   // member: usuário independente — cria e gerencia os próprios planos (sem specialist).
@@ -146,6 +152,7 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
       "RankingConsent",
     ]);
     can("read", "Leaderboard");
+    can(["create", "read"], "ExerciseSwap");
   }
 
   return build();

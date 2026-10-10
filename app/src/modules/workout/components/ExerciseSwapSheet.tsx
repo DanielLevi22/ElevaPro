@@ -70,7 +70,7 @@ export function ExerciseSwapSheet(props: ExerciseSwapSheetProps) {
   const choose = async (exercise: Exercise) => {
     setSaving(true);
     try {
-      await swap.persist(mode, item, exercise);
+      await swap.persist(mode, item, exercise, selfGuided);
       swapToday(props.workoutId, item.id, exercise);
       props.onSwapped(item, exercise);
       onClose();

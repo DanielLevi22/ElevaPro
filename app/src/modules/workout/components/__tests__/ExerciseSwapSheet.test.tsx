@@ -5,6 +5,7 @@ import { ExerciseSwapSheet } from '../ExerciseSwapSheet';
 
 const mockSwapForever = jest.fn();
 const mockAvoid = jest.fn();
+const mockRecordSwap = jest.fn();
 
 function exercicio(id: string, name: string): Exercise {
   return {
@@ -31,6 +32,7 @@ jest.mock('@elevapro/shared', () => ({
     alternativesTo: async () => [mockHalteres],
     swapForever: (...args: unknown[]) => mockSwapForever(...args),
     avoid: (...args: unknown[]) => mockAvoid(...args),
+    recordSwap: (...args: unknown[]) => mockRecordSwap(...args),
   }),
 }));
 
@@ -66,6 +68,7 @@ function abrir(selfGuided: boolean) {
 beforeEach(() => {
   mockSwapForever.mockReset().mockResolvedValue(undefined);
   mockAvoid.mockReset().mockResolvedValue(undefined);
+  mockRecordSwap.mockReset().mockResolvedValue(undefined);
   useTodaySwapsStore.setState({ swaps: {} });
 });
 
@@ -87,11 +90,34 @@ describe('a folha Trocar exercício', () => {
     expect(mockAvoid).not.toHaveBeenCalled();
   });
 
-  it('"só hoje" troca a sessão e não toca o plano', async () => {
+  /**
+   * TRAVA — o especialista vê toda troca feita no treino que ele prescreveu
+   * (0086). Troca sem registro seria o aluno mudando a prescrição sem o
+   * responsável saber: sem gravar, a troca não acontece.
+   */
+  it('a troca do Aluno fica registrada para o especialista, e sem registro não vale', async () => {
+    const onSwapped = abrir(false);
+    fireEvent.press(await screen.findByLabelText('Trocar por Remada com halteres'));
+    await waitFor(() => expect(mockRecordSwap).toHaveBeenCalledWith('item-1', 'halteres', 'today'));
+    await waitFor(() => expect(onSwapped).toHaveBeenCalled());
+
+    mockRecordSwap.mockRejectedValueOnce(new Error('sem conexão'));
+    useTodaySwapsStore.setState({ swaps: {} });
+    const semRegistro = abrir(false);
+    const botoes = await screen.findAllByLabelText('Trocar por Remada com halteres');
+    fireEvent.press(botoes[botoes.length - 1]);
+    await waitFor(() => expect(mockRecordSwap).toHaveBeenCalledTimes(2));
+    if (semRegistro.mock.calls.length > 0 || useTodaySwapsStore.getState().swaps['treino-1']) {
+      throw new Error('TROCA ÀS ESCONDIDAS: o exercício mudou sem o especialista ficar sabendo');
+    }
+  });
+
+  it('"só hoje" do Praticante troca a sessão e não grava nada', async () => {
     const onSwapped = abrir(true);
     fireEvent.press(await screen.findByLabelText('Trocar por Remada com halteres'));
     await waitFor(() => expect(onSwapped).toHaveBeenCalledWith(ITEM, mockHalteres));
     expect(mockSwapForever).not.toHaveBeenCalled();
+    expect(mockRecordSwap).not.toHaveBeenCalled();
   });
 
   it('"sempre" troca no plano do Praticante', async () => {

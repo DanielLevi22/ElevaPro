@@ -31,7 +31,11 @@ const URGENCY: Record<BriefingSignalKind, number> = {
   inactive: 0,
   pending_invite: 1,
   anamnesis_ready: 2,
+  exercise_swap: 3,
 };
+
+/** Quantos dias para trás uma troca de exercício ainda vira sinal. */
+const SWAP_SIGNAL_DAYS = 7;
 
 const DAY_MS = 86_400_000;
 
@@ -115,7 +119,7 @@ export const createBriefingService = (supabase: SupabaseClient) => ({
 
     // As sete buscas são independentes. Em série, a tela espera sete idas ao
     // banco antes de pintar o primeiro número.
-    const [profiles, anamneses, periodizations, sessions, templates, diets, aiSessions] =
+    const [profiles, anamneses, periodizations, sessions, templates, diets, aiSessions, swaps] =
       await Promise.all([
         supabase.from("profiles").select("id, full_name, account_status").in("id", studentIds),
 
@@ -155,6 +159,12 @@ export const createBriefingService = (supabase: SupabaseClient) => ({
           .from("ai_chat_sessions")
           .select("id", { count: "exact", head: true })
           .eq("specialist_id", specialistId),
+
+        supabase
+          .from("exercise_swaps")
+          .select("student_id")
+          .in("student_id", studentIds)
+          .gte("swapped_at", isoDaysAgo(SWAP_SIGNAL_DAYS)),
       ]);
 
     const profileRows = (profiles.data ?? []) as ProfileRow[];
@@ -173,6 +183,10 @@ export const createBriefingService = (supabase: SupabaseClient) => ({
       profileRows.filter((p) => p.account_status === "invited").map((p) => p.id),
     );
     const linkedAt = new Map(linkRows.map((l) => [l.student_id, l.created_at]));
+    const swapCount = new Map<string, number>();
+    for (const swap of (swaps.data ?? []) as { student_id: string }[]) {
+      swapCount.set(swap.student_id, (swapCount.get(swap.student_id) ?? 0) + 1);
+    }
 
     const signals: BriefingSignal[] = [];
 
@@ -210,6 +224,21 @@ export const createBriefingService = (supabase: SupabaseClient) => ({
           days,
         });
         continue;
+      }
+
+      const swapped = swapCount.get(studentId) ?? 0;
+      if (swapped > 0) {
+        signals.push({
+          studentId,
+          studentName,
+          kind: "exercise_swap",
+          tone: "warning",
+          message:
+            swapped === 1
+              ? `Trocou 1 exercício nos últimos ${SWAP_SIGNAL_DAYS} dias.`
+              : `Trocou ${swapped} exercícios nos últimos ${SWAP_SIGNAL_DAYS} dias.`,
+          days: 0,
+        });
       }
 
       if (withAnamnesis.has(studentId) && !withActivePlan.has(studentId)) {

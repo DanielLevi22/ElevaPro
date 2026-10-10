@@ -23,6 +23,7 @@ function respostas(opcoes: {
   totalTreinos?: number;
   totalDietas?: number;
   totalSessoesIa?: number;
+  trocas?: unknown[];
 }) {
   return [
     { data: opcoes.vinculos },
@@ -33,6 +34,7 @@ function respostas(opcoes: {
     { data: [], count: opcoes.totalTreinos ?? 0 },
     { data: [], count: opcoes.totalDietas ?? 0 },
     { data: [], count: opcoes.totalSessoesIa ?? 0 },
+    { data: opcoes.trocas ?? [] },
   ];
 }
 
@@ -127,6 +129,30 @@ describe("briefingService — sinais", () => {
 
     const { signals } = await createBriefingService(supabase).fetchBriefing("esp-1");
     expect(signals).toEqual([]);
+  });
+
+  // #365, 6d: o especialista precisa saber que o treino de hoje não foi o que
+  // ele passou. O sinal é o que leva a troca à tela inicial do mobile e ao web.
+  it("avisa quem trocou exercício do treino prescrito na semana", async () => {
+    const { supabase, chamadas } = criarSupabaseFake(
+      respostas({
+        vinculos: [{ student_id: "a", created_at: diasAtras(90) }],
+        perfis: [{ id: "a", full_name: "Ana", account_status: "active" }],
+        sessoes: [{ student_id: "a", completed_at: diasAtras(1) }],
+        trocas: [{ student_id: "a" }, { student_id: "a" }],
+      }),
+    );
+
+    const { signals } = await createBriefingService(supabase).fetchBriefing("esp-1");
+    expect(signals).toEqual([
+      expect.objectContaining({
+        kind: "exercise_swap",
+        studentName: "Ana",
+        message: "Trocou 2 exercícios nos últimos 7 dias.",
+      }),
+    ]);
+    // Só o aluno: nem exercício, nem treino viajam para o sinal.
+    expect(chamadas.find((c) => c.tabela === "exercise_swaps")?.select).toBe("student_id");
   });
 
   // O sinal mais útil do briefing: quem respondeu a anamnese e ainda não

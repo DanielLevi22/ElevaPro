@@ -17,7 +17,7 @@ import {
 export type TimelineFilter = 'all' | 'training' | 'nutrition' | 'measures';
 
 const KINDS_BY_FILTER: Record<Exclude<TimelineFilter, 'all'>, readonly ActivityKind[]> = {
-  training: ['workout', 'cardio'],
+  training: ['workout', 'cardio', 'exercise_swap'],
   nutrition: ['meal', 'diet_plan'],
   measures: ['assessment', 'body_scan', 'anamnesis'],
 };

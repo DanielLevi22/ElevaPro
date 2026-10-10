@@ -1,6 +1,7 @@
 import {
   createExerciseSwapService,
   type Exercise,
+  type ExerciseSwapScope,
   type SwapContext,
   type Workout,
   type WorkoutExercise,
@@ -24,7 +25,7 @@ export function isSelfGuidedWorkout(
 }
 
 /** Como a troca vale: só hoje, de vez no plano, ou de vez e dizendo para a IA evitar. */
-export type SwapMode = 'today' | 'always' | 'less';
+export type SwapMode = ExerciseSwapScope;
 
 interface ExerciseSwapState {
   alternatives: Exercise[];
@@ -39,10 +40,10 @@ const EMPTY: ExerciseSwapState = { alternatives: [], context: null, loading: fal
  * As alternativas ao exercício aberto na folha "Trocar exercício", e o que cada
  * modo grava.
  *
- * "Só hoje" não grava nada: quem chama aplica na sessão ou no dia. "Sempre"
- * troca no plano pela função do banco, que recusa treino com especialista.
- * "Recomendar menos" troca no plano e guarda o exercício para a montagem do
- * plano evitar.
+ * Em treino prescrito (Aluno), a troca é só de hoje e fica registrada para o
+ * especialista ver: sem o registro, a troca não acontece. No treino do
+ * Praticante, "só hoje" não grava nada; "sempre" troca no plano; "recomendar
+ * menos" troca no plano e guarda o exercício para a montagem do plano evitar.
  *
  * @example const { alternatives, persist } = useExerciseSwap(item, alunoId);
  */
@@ -62,8 +63,14 @@ export function useExerciseSwap(item: WorkoutExercise | null, studentId: string)
     };
   }, [current, studentId]);
 
-  /** Grava a troca que não é só de hoje. */
-  const persist = async (mode: SwapMode, swapped: WorkoutExercise, to: Exercise) => {
+  /** Grava o que a troca precisa gravar antes de valer. */
+  const persist = async (
+    mode: SwapMode,
+    swapped: WorkoutExercise,
+    to: Exercise,
+    selfGuided: boolean
+  ) => {
+    if (!selfGuided) return swapService.recordSwap(swapped.id, to.id, 'today');
     if (mode === 'today') return;
     await swapService.swapForever(swapped.id, to.id);
     if (mode === 'less') await swapService.avoid(studentId, swapped.exercise_id);

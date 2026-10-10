@@ -133,6 +133,27 @@ export const workoutExercises = pgTable("workout_exercises", {
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Troca de exercício do aluno num treino prescrito (0086, #365). Gravada só
+// por `record_exercise_swap`; o especialista vinculado lê.
+export const exerciseSwaps = pgTable("exercise_swaps", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  student_id: uuid("student_id")
+    .notNull()
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  workout_id: uuid("workout_id")
+    .notNull()
+    .references(() => workouts.id, { onDelete: "cascade" }),
+  workout_exercise_id: uuid("workout_exercise_id").references(() => workoutExercises.id, {
+    onDelete: "set null",
+  }),
+  from_exercise_id: uuid("from_exercise_id").references(() => exercises.id, {
+    onDelete: "set null",
+  }),
+  to_exercise_id: uuid("to_exercise_id").references(() => exercises.id, { onDelete: "set null" }),
+  scope: text("scope").notNull(),
+  swapped_at: timestamp("swapped_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 // Execução real de um treino pelo aluno
 export const workoutSessions = pgTable("workout_sessions", {
   id: uuid("id").primaryKey().defaultRandom(),

@@ -7,6 +7,7 @@ import type {
   RecentActivityItem,
   WorkoutSessionRow,
 } from "../../types/activity.types";
+import { fetchSwapActivity } from "./exerciseSwapActivity";
 
 /**
  * Quantos itens o bloco "Aconteceu" do briefing mostra.
@@ -177,7 +178,7 @@ export const createActivityService = (supabase: SupabaseClient) => ({
 
     // Independentes: em série, a tela espera três idas ao banco antes de pintar
     // a primeira linha. O bloco anterior fazia exatamente isso.
-    const [sessoes, refeicoes, perfis] = await Promise.all([
+    const [sessoes, refeicoes, perfis, trocas] = await Promise.all([
       supabase
         .from("workout_sessions")
         .select(
@@ -197,6 +198,8 @@ export const createActivityService = (supabase: SupabaseClient) => ({
         .limit(RECENT_SCAN),
 
       supabase.from("profiles").select("id, full_name").in("id", studentIds),
+
+      fetchSwapActivity(supabase, studentIds, RECENT_LIMIT),
     ]);
 
     if (sessoes.error) throw sessoes.error;
@@ -243,6 +246,18 @@ export const createActivityService = (supabase: SupabaseClient) => ({
       });
     }
 
+    for (const troca of trocas) {
+      itens.push({
+        id: `swap-${troca.id}`,
+        studentId: troca.studentId,
+        studentName: nomes.get(troca.studentId) ?? "Aluno",
+        kind: "exercise_swap",
+        title: `Trocou ${troca.summary}`,
+        pse: null,
+        at: troca.at,
+      });
+    }
+
     // Ordena o conjunto inteiro e corta uma vez só.
     itens.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
     return itens.slice(0, RECENT_LIMIT);
@@ -262,7 +277,7 @@ export const createActivityService = (supabase: SupabaseClient) => ({
     studentId: string,
     autoria: ActivityAuthorFilter = "student",
   ): Promise<ActivityDay[]> => {
-    const [sessoes, refeicoes, metas, avaliacoes, dietas] = await Promise.all([
+    const [sessoes, refeicoes, metas, avaliacoes, dietas, trocas] = await Promise.all([
       supabase
         .from("workout_sessions")
         .select(
@@ -302,6 +317,8 @@ export const createActivityService = (supabase: SupabaseClient) => ({
         .eq("student_id", studentId)
         .order("created_at", { ascending: false })
         .limit(RECENT_SCAN),
+
+      fetchSwapActivity(supabase, [studentId], RECENT_SCAN),
     ]);
 
     for (const r of [sessoes, refeicoes, metas, avaliacoes, dietas]) {
@@ -367,6 +384,21 @@ export const createActivityService = (supabase: SupabaseClient) => ({
         at: linha.created_at,
         title: linha.name ?? "Plano alimentar",
         detail: linha.status === "active" ? "Plano ativo" : "Plano encerrado",
+        pse: null,
+        studentNote: null,
+        noteEditedAt: null,
+      });
+    }
+
+    for (const troca of trocas) {
+      eventos.push({
+        id: `swap-${troca.id}`,
+        kind: "exercise_swap",
+        // Só `record_exercise_swap` grava, com o autor tirado do JWT do aluno.
+        author: "student",
+        at: troca.at,
+        title: "Trocou um exercício",
+        detail: `${troca.summary} · ${troca.scopeLabel}`,
         pse: null,
         studentNote: null,
         noteEditedAt: null,

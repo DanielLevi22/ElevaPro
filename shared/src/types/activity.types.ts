@@ -20,7 +20,9 @@ export type ActivityKind =
   | "assessment"
   | "diet_plan"
   | "body_scan"
-  | "anamnesis";
+  | "anamnesis"
+  /** O aluno trocou um exercício de um treino prescrito (#365, 6d). */
+  | "exercise_swap";
 
 export interface ActivityEvent {
   id: string;
