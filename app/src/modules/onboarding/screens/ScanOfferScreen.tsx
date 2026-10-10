@@ -1,44 +1,27 @@
-import type { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { Chip } from '@/components/ui/Chip';
-import { InfoNote } from '@/components/ui/InfoNote';
-import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
+import { GlassChoice } from '@/components/ui/GlassChoice';
 import { ReferenceBody } from '@/components/ui/ReferenceBody';
 import { ROUTES } from '@/navigation/types';
 import { OnboardingFrame, OnboardingTitle } from '../components/OnboardingFrame';
 
-/** As três poses do escaneamento, com a de frente maior no meio. */
+/** As três poses do escaneamento: apresentam o recurso, sem pedir nada. */
 const POSES = [
-  { pose: 'side', height: 132, label: 'Perfil' },
-  { pose: 'front', height: 158, label: 'Frente' },
-  { pose: 'back', height: 132, label: 'Costas' },
+  { pose: 'side', height: 92, label: 'Perfil' },
+  { pose: 'front', height: 108, label: 'Frente' },
+  { pose: 'back', height: 92, label: 'Costas' },
 ] as const;
 
-/** O que a pessoa ganha, em português de gente: sem "massa magra" nem "%" sozinho. */
-const GANHOS: { icon: keyof typeof Ionicons.glyphMap; titulo: string; sub: string }[] = [
-  {
-    icon: 'body-outline',
-    titulo: 'Seu percentual de gordura e suas medidas',
-    sub: 'Cintura, quadril, braço e coxa, sem fita métrica',
-  },
-  {
-    icon: 'nutrition-outline',
-    titulo: 'Um plano ajustado ao seu corpo',
-    sub: 'Não só ao seu peso na balança',
-  },
-  {
-    icon: 'trending-up-outline',
-    titulo: 'Sua evolução, foto a foto',
-    sub: 'Repita quando quiser e compare em Progresso',
-  },
-];
+type Escolha = 'sem_fotos' | 'com_fotos';
 
 /**
- * Depois de O4: o escaneamento corporal por foto, apresentado como o que ele é,
- * uma das coisas que o Eleva faz e outros apps não (ADR-0044). Oferta, nunca
- * passo: pular fica à vista, e diz que o plano sai do mesmo jeito, para ninguém
- * desistir do onboarding por não querer se fotografar agora.
+ * Depois de O4: com ou sem o escaneamento corporal por foto. É uma pergunta, e
+ * não um convite com saída de emergência: as duas respostas têm o mesmo peso,
+ * nenhuma vem marcada, e "sem fotos" vem primeiro para a ordem não empurrar
+ * para a câmera. Fotografar o corpo é escolha da pessoa, e o plano sai igual
+ * sem isso (ADR-0044).
  *
  * O scan não estima peso nem altura (ADR-0022): refina o que O4 coletou.
  *
@@ -46,59 +29,66 @@ const GANHOS: { icon: keyof typeof Ionicons.glyphMap; titulo: string; sub: strin
  */
 export function ScanOfferScreen() {
   const router = useRouter();
+  const [escolha, setEscolha] = useState<Escolha | null>(null);
+
+  function continuar() {
+    if (escolha === 'com_fotos') {
+      router.push({ pathname: ROUTES.ASSESSMENT.BODY_SCAN, params: { retorno: 'onboarding' } });
+      return;
+    }
+    router.push(ROUTES.ONBOARDING.HEALTH);
+  }
 
   return (
     <OnboardingFrame
       step={3}
       primary={{
-        label: 'Fazer meu escaneamento',
-        icon: 'scan-outline',
-        onPress: () =>
-          router.push({ pathname: ROUTES.ASSESSMENT.BODY_SCAN, params: { retorno: 'onboarding' } }),
-      }}
-      secondaryText={{
-        label: 'Pular por agora · seu plano sai do mesmo jeito',
-        onPress: () => router.push(ROUTES.ONBOARDING.HEALTH),
+        label: 'Continuar',
+        onPress: continuar,
+        disabled: escolha === null,
+        hint: 'Escolha uma das duas opções',
       }}
     >
-      <View className="mt-4 items-center">
-        <Chip tom="ia">Tecnologia IA</Chip>
+      <View className="mt-3 items-center">
+        <Chip tom="ia">Escaneamento corporal · Tecnologia IA</Chip>
         <View
-          className="mt-4 flex-row items-end justify-center gap-5"
+          className="mt-3 flex-row items-end justify-center gap-4"
           accessible
-          accessibilityLabel="Três fotos: frente, perfil e costas"
+          accessibilityLabel="O escaneamento usa três fotos: frente, perfil e costas"
         >
           {POSES.map(({ pose, height, label }) => (
             <View key={pose} className="items-center">
-              <ReferenceBody pose={pose} height={height} glow={pose === 'front'} />
-              <Text className="mt-1.5 font-mono text-[0.5625rem] font-bold uppercase tracking-[0.14em] text-placeholder">
+              <ReferenceBody pose={pose} height={height} glow={false} />
+              <Text className="mt-1 font-mono text-[0.5625rem] font-bold uppercase tracking-[0.14em] text-placeholder">
                 {label}
               </Text>
             </View>
           ))}
         </View>
       </View>
-      <OnboardingTitle
-        eyebrow="Escaneamento corporal · opcional"
-        sub="Com três fotos do seu celular, a IA estima como é o seu corpo hoje. Leva cerca de um minuto."
-      >
-        Seu corpo em 3 fotos
+      <OnboardingTitle sub="O Eleva pode estimar seu corpo por foto. É opcional: seu plano sai completo nos dois casos.">
+        Como você quer seguir?
       </OnboardingTitle>
-      <View className="mt-4">
-        {GANHOS.map((ganho) => (
-          <LinhaDeVidro
-            key={ganho.titulo}
-            icon={ganho.icon}
-            tom="marca"
-            titulo={ganho.titulo}
-            sub={ganho.sub}
-            direita={<View />}
-          />
-        ))}
+      <View className="mt-[1.375rem]" accessibilityRole="radiogroup">
+        <GlassChoice
+          icon="arrow-forward-circle-outline"
+          title="Seguir sem fotos"
+          sub="Usamos seu peso e sua altura. Dá para fazer as fotos depois, em Progresso."
+          active={escolha === 'sem_fotos'}
+          onPress={() => setEscolha('sem_fotos')}
+        />
+        <GlassChoice
+          icon="scan-outline"
+          title="Fazer o escaneamento"
+          sub="3 fotos, cerca de 1 minuto. Estima seu percentual de gordura e suas medidas."
+          active={escolha === 'com_fotos'}
+          onPress={() => setEscolha('com_fotos')}
+        />
       </View>
-      <InfoNote icon="shield-checkmark-outline" className="mt-1">
-        As fotos são analisadas e descartadas. Só o resultado fica salvo, e é uma estimativa.
-      </InfoNote>
+      <Text className="mt-2 text-[0.71875rem] leading-[1rem] text-hero-secondary">
+        Se fizer: as fotos são analisadas e descartadas. Só o resultado fica salvo, e é uma
+        estimativa.
+      </Text>
     </OnboardingFrame>
   );
 }
