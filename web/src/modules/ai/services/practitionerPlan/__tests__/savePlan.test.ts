@@ -2,13 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { OnboardingPlanPending } from "../types";
 
-let inseridos: { tabela: string; linha: Record<string, unknown> }[];
-let treinosGravados: { titulos: string[]; dono: unknown } | null;
-let dietaCriada: { plano: Record<string, unknown>; refeicoes: unknown[] } | null;
-let ativados: string[];
-let concluida: Record<string, unknown> | null;
-let falhaAoConcluir: boolean;
-let encerrados: {
+let inserted: { tabela: string; linha: Record<string, unknown> }[];
+let savedWorkouts: { titulos: string[]; dono: unknown } | null;
+let createdDiet: { plano: Record<string, unknown>; refeicoes: unknown[] } | null;
+let activated: string[];
+let completion: Record<string, unknown> | null;
+let completionFails: boolean;
+let finished: {
   tabela: string;
   linha: Record<string, unknown>;
   filtros: Record<string, unknown>;
@@ -30,14 +30,14 @@ vi.mock("@/lib/supabase-admin", () => ({
           },
           neq: async (coluna: string, valor: unknown) => {
             filtros[`${coluna} !=`] = valor;
-            encerrados.push({ tabela, linha, filtros });
+            finished.push({ tabela, linha, filtros });
             return { error: null };
           },
         };
         return cadeia;
       },
       insert: (linha: Record<string, unknown>) => {
-        inseridos.push({ tabela, linha });
+        inserted.push({ tabela, linha });
         return {
           select: () => ({ single: async () => ({ data: { id: `${tabela}-1` }, error: null }) }),
         };
@@ -55,7 +55,7 @@ vi.mock("@/lib/supabase-admin", () => ({
 }));
 vi.mock("../../workoutPersistence", () => ({
   saveWorkoutsWithExercises: async (treinos: { title: string }[], _fase: string, dono: unknown) => {
-    treinosGravados = { titulos: treinos.map((t) => t.title), dono };
+    savedWorkouts = { titulos: treinos.map((t) => t.title), dono };
     return [];
   },
 }));
@@ -63,17 +63,17 @@ vi.mock("@elevapro/shared", async (original) => ({
   ...(await original<typeof import("@elevapro/shared")>()),
   createNutritionService: () => ({
     createDietPlanWithMeals: async (plano: Record<string, unknown>, refeicoes: unknown[]) => {
-      dietaCriada = { plano, refeicoes };
+      createdDiet = { plano, refeicoes };
       return { id: "dieta-1" };
     },
     activateDietPlan: async (id: string) => {
-      ativados.push(id);
+      activated.push(id);
     },
   }),
   createAdaptiveAnamnesisService: () => ({
     save: async (entrada: Record<string, unknown>) => {
-      if (falhaAoConcluir) throw new Error("sem conexão");
-      concluida = entrada;
+      if (completionFails) throw new Error("sem conexão");
+      completion = entrada;
       return "not_applicable";
     },
   }),
@@ -81,7 +81,7 @@ vi.mock("@elevapro/shared", async (original) => ({
 
 const { savePractitionerPlan } = await import("../savePlan");
 
-const PENDENTE: OnboardingPlanPending = {
+const PENDING: OnboardingPlanPending = {
   scope: "both",
   proposal: {
     workouts: [
@@ -110,7 +110,7 @@ const PENDENTE: OnboardingPlanPending = {
 };
 
 /** A sessão do aluno: só lê a anamnese, para concluir o onboarding. */
-const titular = {
+const holder = {
   from: () => ({
     select: () => ({
       eq: () => ({
@@ -120,21 +120,21 @@ const titular = {
   }),
 } as unknown as SupabaseClient;
 
-const contexto = () => ({
+const context = () => ({
   studentId: "aluno-1",
-  titular,
+  titular: holder,
   registrar: vi.fn(),
 });
 
 describe("aprovar o plano do onboarding", () => {
   beforeEach(() => {
-    inseridos = [];
-    treinosGravados = null;
-    dietaCriada = null;
-    ativados = [];
-    encerrados = [];
-    concluida = null;
-    falhaAoConcluir = false;
+    inserted = [];
+    savedWorkouts = null;
+    createdDiet = null;
+    activated = [];
+    finished = [];
+    completion = null;
+    completionFails = false;
   });
 
   /**
@@ -144,18 +144,18 @@ describe("aprovar o plano do onboarding", () => {
    * Falhar ao concluir lança, para a rota desfazer o treino e devolver a proposta.
    */
   it("conclui o onboarding com o plano, e sem concluir a aprovação falha", async () => {
-    await savePractitionerPlan(contexto(), PENDENTE);
-    expect(concluida).toMatchObject({ studentId: "aluno-1", completed: true, selfGuided: true });
+    await savePractitionerPlan(context(), PENDING);
+    expect(completion).toMatchObject({ studentId: "aluno-1", completed: true, selfGuided: true });
 
-    falhaAoConcluir = true;
-    await expect(savePractitionerPlan(contexto(), PENDENTE)).rejects.toThrow();
+    completionFails = true;
+    await expect(savePractitionerPlan(context(), PENDING)).rejects.toThrow();
   });
 
   it("ativa o treino do próprio aluno, sem especialista, com o esporte como opcional", async () => {
-    const ctx = contexto();
-    const { periodizationId } = await savePractitionerPlan(ctx, PENDENTE);
+    const ctx = context();
+    const { periodizationId } = await savePractitionerPlan(ctx, PENDING);
 
-    const periodizacao = inseridos.find((i) => i.tabela === "training_periodizations")?.linha;
+    const periodizacao = inserted.find((i) => i.tabela === "training_periodizations")?.linha;
     expect(periodizacao).toMatchObject({
       student_id: "aluno-1",
       specialist_id: null,
@@ -164,17 +164,17 @@ describe("aprovar o plano do onboarding", () => {
       name: "Hipertrofia · 1x por semana",
     });
     expect(ctx.registrar).toHaveBeenCalledWith(periodizationId);
-    expect(treinosGravados).toEqual({
+    expect(savedWorkouts).toEqual({
       titulos: ["A", "Corrida"],
       dono: { specialistId: null, studentId: "aluno-1" },
     });
   });
 
   it("cria a dieta com a meta do código e as refeições aprovadas, e a ativa", async () => {
-    const { dietPlanId } = await savePractitionerPlan(contexto(), PENDENTE);
+    const { dietPlanId } = await savePractitionerPlan(context(), PENDING);
 
     expect(dietPlanId).toBe("dieta-1");
-    expect(dietaCriada?.plano).toMatchObject({
+    expect(createdDiet?.plano).toMatchObject({
       // O banco exige as datas: sem elas, a aprovação falhava com 23502.
       start_date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
       end_date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
@@ -183,27 +183,27 @@ describe("aprovar o plano do onboarding", () => {
       name: "Hipertrofia · 2.000 kcal por dia",
       target_calories: 2000,
     });
-    expect(dietaCriada?.refeicoes).toEqual([
+    expect(createdDiet?.refeicoes).toEqual([
       {
         name: "Almoço",
         meal_time: "12:00",
         items: [{ food_id: "id-Arroz branco cozido", quantity: 150, unit: "g" }],
       },
     ]);
-    expect(ativados).toEqual(["dieta-1"]);
+    expect(activated).toEqual(["dieta-1"]);
   });
 
   it("sem dieta pela triagem, grava só o treino", async () => {
-    const { dietPlanId } = await savePractitionerPlan(contexto(), { ...PENDENTE, target: null });
+    const { dietPlanId } = await savePractitionerPlan(context(), { ...PENDING, target: null });
 
     expect(dietPlanId).toBeNull();
-    expect(dietaCriada).toBeNull();
-    expect(ativados).toEqual([]);
+    expect(createdDiet).toBeNull();
+    expect(activated).toEqual([]);
   });
 
   it("encerra só o treino ativo anterior do próprio Praticante, e não o novo", async () => {
-    const { periodizationId } = await savePractitionerPlan(contexto(), PENDENTE);
-    expect(encerrados).toEqual([
+    const { periodizationId } = await savePractitionerPlan(context(), PENDING);
+    expect(finished).toEqual([
       {
         tabela: "training_periodizations",
         linha: { status: "completed" },
@@ -218,16 +218,16 @@ describe("aprovar o plano do onboarding", () => {
   });
 
   it("só dieta não cria periodização nem encerra o treino que a pessoa já tem", async () => {
-    const soDieta = {
-      ...PENDENTE,
+    const dietOnly = {
+      ...PENDING,
       scope: "diet" as const,
-      proposal: { ...PENDENTE.proposal, workouts: [] },
+      proposal: { ...PENDING.proposal, workouts: [] },
     };
-    const { periodizationId, dietPlanId } = await savePractitionerPlan(contexto(), soDieta);
+    const { periodizationId, dietPlanId } = await savePractitionerPlan(context(), dietOnly);
 
     expect(periodizationId).toBeNull();
     expect(dietPlanId).toBe("dieta-1");
-    expect(inseridos.filter((i) => i.tabela === "training_periodizations")).toEqual([]);
-    expect(encerrados).toEqual([]);
+    expect(inserted.filter((i) => i.tabela === "training_periodizations")).toEqual([]);
+    expect(finished).toEqual([]);
   });
 });

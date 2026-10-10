@@ -3,16 +3,16 @@ import { join } from 'node:path';
 import { restTimerPalette } from '../restTimerPalette';
 
 const APP = join(__dirname, '../../../../..');
-const MODULO = join(APP, 'modules/rest-timer-activity');
-const ler = (caminho: string) => readFileSync(caminho, 'utf8');
+const MODULE_DIR = join(APP, 'modules/rest-timer-activity');
+const read = (path: string) => readFileSync(path, 'utf8');
 
 /** "secondaryButtonBorder" vira "rest_secondary_button_border", o nome no Android. */
-const nomeAndroid = (nome: string) =>
-  `rest_${nome.replace(/[A-Z]/g, (letra) => `_${letra.toLowerCase()}`)}`;
+const androidName = (name: string) =>
+  `rest_${name.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)}`;
 
-function coresDoXml(caminho: string): Record<string, string> {
-  const cores = [...ler(caminho).matchAll(/<color name="(\w+)">(#[0-9a-f]{6})<\/color>/g)];
-  return Object.fromEntries(cores.map(([, nome, cor]) => [nome, cor]));
+function colorsFromXml(path: string): Record<string, string> {
+  const colors = [...read(path).matchAll(/<color name="(\w+)">(#[0-9a-f]{6})<\/color>/g)];
+  return Object.fromEntries(colors.map(([, name, color]) => [name, color]));
 }
 
 /**
@@ -22,17 +22,21 @@ function coresDoXml(caminho: string): Record<string, string> {
  * valor que o teste espera.
  */
 describe('as cópias nativas do descanso na tela bloqueada', () => {
-  const paleta = JSON.parse(ler(join(MODULO, 'palette.json')));
+  const palette = JSON.parse(read(join(MODULE_DIR, 'palette.json')));
 
   it.each([
     ['dark', 'escuro', 'values-night'],
     ['light', 'claro', 'values'],
-  ] as const)('a paleta %s do iOS e do Android é a do tema', (chave, tema, pasta) => {
-    const esperada = restTimerPalette(tema);
-    expect(paleta[chave]).toEqual(esperada);
-    const android = coresDoXml(join(MODULO, `android/src/main/res/${pasta}/rest_colors.xml`));
+  ] as const)('a paleta %s do iOS e do Android é a do tema', (key, theme, folder) => {
+    const expected = restTimerPalette(theme);
+    expect(palette[key]).toEqual(expected);
+    const android = colorsFromXml(
+      join(MODULE_DIR, `android/src/main/res/${folder}/rest_colors.xml`)
+    );
     expect(android).toEqual(
-      Object.fromEntries(Object.entries(esperada).map(([nome, cor]) => [nomeAndroid(nome), cor]))
+      Object.fromEntries(
+        Object.entries(expected).map(([name, color]) => [androidName(name), color])
+      )
     );
   });
 
@@ -43,9 +47,9 @@ describe('as cópias nativas do descanso na tela bloqueada', () => {
   it.each([
     'RestActivityAttributes.swift',
     'RestActivityIntents.swift',
-  ])('%s é igual no módulo e na extensão', (arquivo) => {
-    expect(ler(join(APP, 'targets/rest-activity', arquivo))).toBe(
-      ler(join(MODULO, 'ios', arquivo))
+  ])('%s é igual no módulo e na extensão', (file) => {
+    expect(read(join(APP, 'targets/rest-activity', file))).toBe(
+      read(join(MODULE_DIR, 'ios', file))
     );
   });
 });
