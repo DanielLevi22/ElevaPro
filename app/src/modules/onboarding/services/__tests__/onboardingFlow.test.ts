@@ -28,18 +28,33 @@ describe('nextOnboardingStep — cada escolha pergunta só o que usa', () => {
     expect(nextOnboardingStep('food', ctx)).toBe(R.building);
   });
 
-  /** TRAVA — necessidade (Art. 6°, III): quem quer só treino não passa pelo peso nem pelo escaneamento. */
-  it('só treino: sem "sobre você", sem escaneamento e sem alimentação', () => {
+  /**
+   * TRAVA — necessidade (Art. 6°, III): quem quer só treino não passa pelo
+   * escaneamento nem pela alimentação. Passa por O4, só para a idade: o plano
+   * automático não atende menor (ADR-0044), e pular O4 deixava o menor passar.
+   * Que O4 só pede a idade nesse caminho, trava `validateAboutYou`.
+   */
+  it('só treino: O4 só para a idade, sem escaneamento e sem alimentação', () => {
     const ctx = { scope: 'training' as const, dietAllowed: null };
-    const caminho = ['welcome', 'scope', 'goal', 'level', 'consent', 'health', 'training'].map(
-      (de) => nextOnboardingStep(de as Parameters<typeof nextOnboardingStep>[0], ctx)
-    );
-    for (const proibida of [R.about, R.scanOffer, R.food]) {
+    const caminho = [
+      'welcome',
+      'scope',
+      'goal',
+      'level',
+      'consent',
+      'about',
+      'health',
+      'training',
+    ].map((de) => nextOnboardingStep(de as Parameters<typeof nextOnboardingStep>[0], ctx));
+    for (const proibida of [R.scanOffer, R.food]) {
       if ((caminho as string[]).includes(proibida)) {
         throw new Error(`DADO DESNECESSÁRIO: "só treino" passou por ${proibida}`);
       }
     }
-    expect(nextOnboardingStep('consent', ctx)).toBe(R.health);
+    if (nextOnboardingStep('consent', ctx) !== R.about) {
+      throw new Error('MENOR SEM BARREIRA: "só treino" pulou a única tela que pergunta a idade');
+    }
+    expect(nextOnboardingStep('about', ctx)).toBe(R.health);
     expect(nextOnboardingStep('training', ctx)).toBe(R.building);
   });
 

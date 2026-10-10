@@ -15,7 +15,8 @@ export function classifyPlanFailure(error: unknown): PlanFailure {
   if (isConsentRequired(error)) return 'aceite';
   if (!(error instanceof BffHttpError)) return 'servidor';
   if (error.code === 'plan_rejected') return 'plano';
-  if (error.code === 'incomplete_answers') return 'respostas';
+  // Sem idade de adulto, a O4 é que diz por que o plano automático não atende.
+  if (error.code === 'incomplete_answers' || error.code === 'under_age') return 'respostas';
   return 'servidor';
 }
 

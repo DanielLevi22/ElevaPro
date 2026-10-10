@@ -57,7 +57,8 @@ async function handlePost(request: NextRequest) {
 
   const outcome = await adjustPractitionerPlan(auth.caller.id, pending, adjustment);
   if (!outcome.ok) {
-    const status = outcome.reason === "plan_rejected" ? 502 : 409;
+    // Sem idade de adulto é recusa (403), como na geração; o resto é conflito de estado.
+    const status = { plan_rejected: 502, under_age: 403 }[outcome.reason as string] ?? 409;
     return NextResponse.json({ error: outcome.reason }, { status });
   }
   await updateSessionState(sessionId, {

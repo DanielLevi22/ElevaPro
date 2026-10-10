@@ -8,6 +8,9 @@ import { getOrCreateStudentCoachSession } from "@/modules/ai/services/studentCoa
 // Duas tentativas de geração cabem com folga; 60s é o máximo do plano Hobby.
 export const maxDuration = 60;
 
+/** Sem idade de adulto é recusa, e não falha: tentar de novo não muda a resposta. */
+const FAILURE_STATUS = { incomplete_answers: 409, under_age: 403, plan_rejected: 502 } as const;
+
 /**
  * O8 · Montando: gera o plano do onboarding do Praticante e o deixa pendente.
  *
@@ -22,7 +25,7 @@ async function handlePost(request: NextRequest) {
 
   const outcome = await generatePractitionerPlan(studentId);
   if (!outcome.ok) {
-    const status = outcome.reason === "incomplete_answers" ? 409 : 502;
+    const status = FAILURE_STATUS[outcome.reason];
     return NextResponse.json({ error: outcome.reason }, { status });
   }
 

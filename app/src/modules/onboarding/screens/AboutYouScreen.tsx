@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useAuthStore } from '@/auth';
@@ -9,9 +8,9 @@ import { GlassSegmented } from '@/components/ui/GlassSegmented';
 import { InfoNote } from '@/components/ui/InfoNote';
 import { Precisao } from '@/components/ui/Precisao';
 import { registrarFalha } from '@/lib/registro';
-import { ROUTES } from '@/navigation/types';
 import { useCores, useEscala } from '@/shared/design';
 import { OnboardingFrame, OnboardingTitle } from '../components/OnboardingFrame';
+import { useNextStep } from '../hooks/useNextStep';
 import { loadOnboardingAnswers, saveOnboardingAnswers } from '../services/onboardingAnswers';
 import { planPrecision } from '../services/planPrecision';
 import { useOnboardingStore } from '../store/onboardingStore';
@@ -34,17 +33,19 @@ const ICONE_DA_NOTA = 15;
  * do plano subindo. É a primeira tela que grava dado de saúde, e só chega aqui
  * quem aceitou o consentimento.
  *
- * Menor de 18 para aqui, sem gravar nada (ADR-0044).
+ * Menor de 18 para aqui, sem gravar nada (ADR-0044). Quem monta só treino
+ * responde só a idade: o corpo só entra na meta da dieta (Art. 6°, III).
  *
  * @example <AboutYouScreen />
  */
 export function AboutYouScreen() {
-  const router = useRouter();
+  const goNext = useNextStep();
   const userId = useAuthStore((state) => state.session?.user.id ?? null);
   const goal = useOnboardingStore((state) => state.goal);
+  const ageOnly = useOnboardingStore((state) => state.scope) === 'training';
   const [input, setInput] = useState<AboutYouInput>(EMPTY);
   const [saving, setSaving] = useState(false);
-  const result = validateAboutYou(input);
+  const result = validateAboutYou(input, ageOnly ? 'ageOnly' : 'full');
 
   useSavedAnswers(userId, setInput);
 
@@ -57,7 +58,7 @@ export function AboutYouScreen() {
         userId,
         goal ? { ...result.answers, main_goal: goal } : result.answers
       );
-      router.push(ROUTES.ONBOARDING.SCAN_OFFER);
+      await goNext('about');
     } catch {
       registrarFalha('onboarding.salvar_sobre_voce');
       showAlert({
@@ -85,7 +86,13 @@ export function AboutYouScreen() {
         hint: HINTS[result.status],
       }}
     >
-      <OnboardingTitle sub="Só quatro respostas. É o que usamos para calcular sua meta.">
+      <OnboardingTitle
+        sub={
+          ageOnly
+            ? 'Só a sua idade: o plano automático é para maiores de 18 anos.'
+            : 'Só quatro respostas. É o que usamos para calcular sua meta.'
+        }
+      >
         Sobre você
       </OnboardingTitle>
       <View className="mt-[1.375rem] gap-3.5">
@@ -97,37 +104,52 @@ export function AboutYouScreen() {
           numerico
           erro={errors.age}
         />
-        <View className="flex-row items-start gap-2.5">
-          <Campo
-            rotulo="Altura"
-            valor={input.height}
-            onChange={set('height')}
-            unidade="cm"
-            numerico
-            erro={errors.height}
-          />
-          <Campo
-            rotulo="Peso"
-            valor={input.weight}
-            onChange={set('weight')}
-            unidade="kg"
-            numerico
-            erro={errors.weight}
-          />
-        </View>
+        {ageOnly ? null : <BodyFields input={input} errors={errors} set={set} />}
       </View>
-      <SexPicker value={input.sex} onChange={(sex) => setInput((atual) => ({ ...atual, sex }))} />
+      {ageOnly ? null : (
+        <SexPicker value={input.sex} onChange={(sex) => setInput((atual) => ({ ...atual, sex }))} />
+      )}
       {result.status === 'minor' ? (
         <InfoNote icon="people-outline" className="mt-5">
           O plano automático do app é para maiores de 18 anos. Com um especialista você usa o app
           normalmente: ele monta o seu treino e a sua dieta.
         </InfoNote>
-      ) : (
+      ) : ageOnly ? null : (
         <View className="mt-5">
           <Precisao percentual={precision.percent} nivel={precision.level} />
         </View>
       )}
     </OnboardingFrame>
+  );
+}
+
+interface BodyFieldsProps {
+  input: AboutYouInput;
+  errors: Partial<Record<'age' | 'height' | 'weight', string>>;
+  set: (campo: keyof AboutYouInput) => (valor: string) => void;
+}
+
+/** Altura e peso, lado a lado: só para quem vai ter dieta. */
+function BodyFields({ input, errors, set }: BodyFieldsProps) {
+  return (
+    <View className="flex-row items-start gap-2.5">
+      <Campo
+        rotulo="Altura"
+        valor={input.height}
+        onChange={set('height')}
+        unidade="cm"
+        numerico
+        erro={errors.height}
+      />
+      <Campo
+        rotulo="Peso"
+        valor={input.weight}
+        onChange={set('weight')}
+        unidade="kg"
+        numerico
+        erro={errors.weight}
+      />
+    </View>
   );
 }
 
@@ -144,7 +166,7 @@ function useSavedAnswers(userId: string | null, setInput: (input: AboutYouInput)
     if (!userId) return;
     loadOnboardingAnswers(userId)
       .then((saved) => {
-        if (saved.height === undefined) return;
+        if (saved.age === undefined && saved.height === undefined) return;
         setInput({
           age: textOf(saved.age),
           height: textOf(saved.height),

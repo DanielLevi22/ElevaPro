@@ -12,12 +12,12 @@ describe('validateAboutYou', () => {
 
   it('aceita a vírgula do teclado do Android no peso', () => {
     const result = validateAboutYou({ ...COMPLETO, weight: '78,5' });
-    expect(result.status === 'ready' && result.answers.weight).toBe(78.5);
+    expect(result).toMatchObject({ status: 'ready', answers: { weight: 78.5 } });
   });
 
   it('lê altura em metro como centímetro, em vez de mandar corrigir um valor certo', () => {
     const result = validateAboutYou({ ...COMPLETO, height: '1,72' });
-    expect(result.status === 'ready' && result.answers.height).toBe(172);
+    expect(result).toMatchObject({ status: 'ready', answers: { height: 172 } });
   });
 
   it('com campo vazio, pede para completar sem acusar erro', () => {
@@ -55,5 +55,21 @@ describe('validateAboutYou', () => {
 
   it('aceita quem faz 18', () => {
     expect(validateAboutYou({ ...COMPLETO, age: '18' }).status).toBe('ready');
+  });
+
+  /**
+   * TRAVA — só treino responde só a idade (Art. 6°, III; ADR-0044). O menor para
+   * em todo caminho, e quem não terá dieta não entrega peso, altura nem sexo.
+   */
+  it('só treino: lê só a idade, barra o menor e não guarda o corpo', () => {
+    const vazio = { age: '', height: '', weight: '', sex: null };
+    expect(validateAboutYou(vazio, 'ageOnly').status).toBe('incomplete');
+    if (validateAboutYou({ ...vazio, age: '16' }, 'ageOnly').status !== 'minor') {
+      throw new Error('MENOR NO PLANO AUTOMÁTICO: "só treino" deixou passar 16 anos');
+    }
+    const pronto = validateAboutYou({ ...COMPLETO, age: '29' }, 'ageOnly');
+    if (pronto.status !== 'ready' || Object.keys(pronto.answers).join() !== 'age') {
+      throw new Error('DADO DESNECESSÁRIO: "só treino" gravou mais que a idade');
+    }
   });
 });

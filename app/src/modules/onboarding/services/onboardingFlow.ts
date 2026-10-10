@@ -25,8 +25,11 @@ type OnboardingRoute = (typeof ROUTES.ONBOARDING)[keyof typeof ROUTES.ONBOARDING
 
 /**
  * A tela seguinte do onboarding, pela escolha do que montar (#365). Cada escolha
- * pergunta só o que usa (Art. 6°, III): só treino não passa por peso, altura nem
- * escaneamento; só dieta pula o nível, que só define o treino.
+ * pergunta só o que usa (Art. 6°, III): só treino passa por O4 só para a idade,
+ * sem peso, altura nem escaneamento; só dieta pula o nível, que só define o treino.
+ *
+ * Todo caminho passa por O4: o plano automático é só para maiores de 18
+ * (ADR-0044), e só treino pulava a única tela que pergunta a idade.
  *
  * Mora aqui, e não em cada tela, para o caminho de cada escolha ser lido e
  * testado num lugar só.
@@ -49,9 +52,9 @@ export function nextOnboardingStep(
     case 'level':
       return ROUTES.ONBOARDING.CONSENT;
     case 'consent':
-      return wantsDiet ? ROUTES.ONBOARDING.ABOUT : ROUTES.ONBOARDING.HEALTH;
+      return ROUTES.ONBOARDING.ABOUT;
     case 'about':
-      return ROUTES.ONBOARDING.SCAN_OFFER;
+      return wantsDiet ? ROUTES.ONBOARDING.SCAN_OFFER : ROUTES.ONBOARDING.HEALTH;
     case 'scanOffer':
       return ROUTES.ONBOARDING.HEALTH;
     case 'health':

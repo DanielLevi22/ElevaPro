@@ -1,4 +1,8 @@
-import { achatarRespostas, practitionerDietTargetFromAnswers } from "@elevapro/shared";
+import {
+  achatarRespostas,
+  isPractitionerAge,
+  practitionerDietTargetFromAnswers,
+} from "@elevapro/shared";
 import { logger } from "@/lib/logger";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { aiProviders } from "../../ai.config";
@@ -33,7 +37,7 @@ export interface GenerationOptions {
 
 export type GenerationOutcome =
   | { ok: true; pending: OnboardingPlanPending }
-  | { ok: false; reason: "incomplete_answers" | "plan_rejected" };
+  | { ok: false; reason: "incomplete_answers" | "under_age" | "plan_rejected" };
 
 interface StudentData {
   answers: Record<string, unknown>;
@@ -65,6 +69,9 @@ export async function generatePractitionerPlan(
 ): Promise<GenerationOutcome> {
   const loaded = await loadStudentData(studentId);
   const answers = { ...loaded.answers, ...options.answersOverride };
+  // A tela barra o menor em O4; o servidor confere de novo, em todo caminho, porque
+  // o aparelho pode pular uma tela, e o plano automático não atende menor (ADR-0044).
+  if (!isPractitionerAge(answers.age)) return { ok: false, reason: "under_age" };
   const track = loaded.track;
   const choices = readPlanChoices(answers);
   const scope = scopeOf(answers);

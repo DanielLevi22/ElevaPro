@@ -1,8 +1,7 @@
-/**
- * O Praticante é só para maiores de 18 anos (ADR-0044): tira do caminho o
- * Art. 14 da LGPD e a Mifflin-St Jeor fora da faixa em que foi validada.
- */
-export const ADULT_AGE = 18;
+import { PRACTITIONER_MIN_AGE } from '@elevapro/shared';
+
+/** A regra mora no `shared`: o servidor recusa o plano pela mesma idade. */
+export const ADULT_AGE = PRACTITIONER_MIN_AGE;
 
 /**
  * Abaixo disto e acima do máximo é digitação errada, e não idade: quem tem 12

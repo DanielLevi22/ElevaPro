@@ -23,6 +23,9 @@ export type AboutYouAnswers = {
 
 export type AboutYouField = 'age' | 'height' | 'weight';
 
+/** Quem monta só treino responde só a idade em O4: o corpo não entra no plano dele. */
+export type AboutYouFields = 'full' | 'ageOnly';
+
 /**
  * O que O4 faz com a digitação.
  *
@@ -30,7 +33,7 @@ export type AboutYouField = 'age' | 'height' | 'weight';
  * orientar, não pedir para corrigir.
  */
 export type AboutYouResult =
-  | { status: 'ready'; answers: AboutYouAnswers }
+  | { status: 'ready'; answers: AboutYouAnswers | Pick<AboutYouAnswers, 'age'> }
   | { status: 'incomplete' }
   | { status: 'invalid'; errors: Partial<Record<AboutYouField, string>> }
   | { status: 'minor' };

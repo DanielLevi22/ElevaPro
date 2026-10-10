@@ -156,6 +156,24 @@ const TRAINING_DAY_OPTIONS = [0, 1, 2, 3, 4, 5, 6];
 export const DEFAULT_TRAINING_DAYS = 3;
 
 /**
+ * O Praticante é só para maiores de 18 anos (ADR-0044): tira do caminho o
+ * Art. 14 da LGPD e a Mifflin-St Jeor fora da faixa em que foi validada.
+ */
+export const PRACTITIONER_MIN_AGE = 18;
+
+/**
+ * Se a idade gravada na anamnese libera o plano automático. Sem idade não
+ * libera: quem não disse a idade não pode ter dito que é adulto.
+ *
+ * @example isPractitionerAge(29) // true
+ * @example isPractitionerAge(undefined) // false
+ */
+export function isPractitionerAge(age: unknown): boolean {
+  const years = typeof age === "string" ? Number(age) : age;
+  return typeof years === "number" && Number.isInteger(years) && years >= PRACTITIONER_MIN_AGE;
+}
+
+/**
  * A meta a partir das respostas gravadas do onboarding, como o BFF e o app as
  * leem: a mesma conta nas duas pontas, para a curva de O8 e o plano de O9 não
  * divergirem. `null` quando faltam os números do corpo (o onboarding não passou
