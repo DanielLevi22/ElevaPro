@@ -56,6 +56,10 @@ export const ROUTES = {
 
   // Onboarding
   ONBOARDING: {
+    /** O1 a O3 do onboarding do Praticante (#365). */
+    WELCOME: '/onboarding/welcome',
+    GOAL: '/onboarding/goal',
+    LEVEL: '/onboarding/level',
     ROLE_SELECTION: '/onboarding/role-selection',
     HEALTH_CONNECT: '/onboarding/health-connect',
   },

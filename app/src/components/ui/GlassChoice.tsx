@@ -15,7 +15,8 @@ import { Vidro } from './Vidro';
 interface GlassChoiceProps {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
-  sub: string;
+  /** O O2 do onboarding não tem: o objetivo se explica pelo título. */
+  sub?: string;
   active: boolean;
   onPress: () => void;
 }
@@ -55,7 +56,7 @@ export function GlassChoice({ icon, title, sub, active, onPress }: GlassChoicePr
         </View>
         <View className="min-w-0 flex-1">
           <Text className="text-[0.84375rem] font-bold text-foreground">{title}</Text>
-          <Text className="text-[0.71875rem] text-muted-foreground">{sub}</Text>
+          {sub ? <Text className="text-[0.71875rem] text-muted-foreground">{sub}</Text> : null}
         </View>
         <Ionicons
           name={active ? 'checkmark-circle-outline' : 'ellipse-outline'}
