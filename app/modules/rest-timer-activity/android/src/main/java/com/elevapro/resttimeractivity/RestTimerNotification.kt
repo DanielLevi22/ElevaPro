@@ -1,11 +1,14 @@
 package com.elevapro.resttimeractivity
 
+import android.app.ActivityManager
+import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
@@ -22,6 +25,8 @@ import android.widget.RemoteViews
  */
 object RestTimerNotification {
   private const val CHANNEL_ID = "rest-timer"
+  /** O fim do descanso alerta: som e vibração, e o mesmo cartão sobe na tela. */
+  private const val DONE_CHANNEL_ID = "rest-timer-done"
   private const val NOTIFICATION_ID = 4815
   private const val PROGRESS_MAX = 1000
   private const val TICK_MS = 1000L
@@ -34,19 +39,33 @@ object RestTimerNotification {
     RestActionStore.saveState(app, state)
     notify(app, state)
     scheduleTick(app, state)
+    scheduleDone(app, state)
   }
 
   fun end(context: Context) {
     val app = context.applicationContext
     stopTick()
+    cancelDone(app)
     RestActionStore.saveState(app, null)
     manager(app).cancel(NOTIFICATION_ID)
   }
 
-  private fun notify(context: Context, state: RestState) {
-    ensureChannel(context)
+  /**
+   * O fim do descanso: o cartão vira "Hora da série N". Com o app fora da
+   * tela, o mesmo cartão alerta, com som e vibração; com o app aberto, a
+   * sessão já avisa, e alertar de novo seria duplicar.
+   */
+  fun finish(context: Context, state: RestState) {
+    val app = context.applicationContext
+    if (!state.isDone(System.currentTimeMillis())) return
+    if (!RestActionStore.claimAlert(app, state.endsAt)) return
+    notify(app, state, alert = !appInForeground())
+  }
+
+  private fun notify(context: Context, state: RestState, alert: Boolean = false) {
+    ensureChannels(context)
     val now = System.currentTimeMillis()
-    val notification = Notification.Builder(context, CHANNEL_ID)
+    val notification = Notification.Builder(context, if (alert) DONE_CHANNEL_ID else CHANNEL_ID)
       .setSmallIcon(R.drawable.rest_timer_icon)
       .setStyle(Notification.DecoratedCustomViewStyle())
       .setCustomContentView(views(context, state, now, R.layout.rest_timer_collapsed))
@@ -55,7 +74,7 @@ object RestTimerNotification {
       .setCategory(Notification.CATEGORY_PROGRESS)
       .setVisibility(Notification.VISIBILITY_PUBLIC)
       .setOngoing(true)
-      .setOnlyAlertOnce(true)
+      .setOnlyAlertOnce(!alert)
       .setShowWhen(false)
       .build()
     manager(context).notify(NOTIFICATION_ID, notification)
@@ -94,8 +113,9 @@ object RestTimerNotification {
     val tick = object : Runnable {
       override fun run() {
         val current = RestActionStore.loadState(context) ?: return
+        if (current.isDone(System.currentTimeMillis())) return finish(context, current)
         notify(context, current)
-        if (!current.isDone(System.currentTimeMillis())) handler.postDelayed(this, TICK_MS)
+        handler.postDelayed(this, TICK_MS)
       }
     }
     ticking = tick
@@ -105,6 +125,35 @@ object RestTimerNotification {
   private fun stopTick() {
     ticking?.let(handler::removeCallbacks)
     ticking = null
+  }
+
+  /**
+   * O alarme do fim, para quando o processo está congelado e o tique não roda.
+   * Sem "Alarmes e lembretes" concedido, o alarme é inexato e pode atrasar; o
+   * tique ainda alerta na hora enquanto o processo vive.
+   */
+  private fun scheduleDone(context: Context, state: RestState) {
+    cancelDone(context)
+    if (state.pausedRemaining != null) return
+    val alarms = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    val done = action(context, RestActionStore.DONE)
+    val exact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarms.canScheduleExactAlarms()
+    if (exact) {
+      alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, state.endsAt, done)
+    } else {
+      alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, state.endsAt, done)
+    }
+  }
+
+  private fun cancelDone(context: Context) {
+    val alarms = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    alarms.cancel(action(context, RestActionStore.DONE))
+  }
+
+  private fun appInForeground(): Boolean {
+    val info = ActivityManager.RunningAppProcessInfo()
+    ActivityManager.getMyMemoryState(info)
+    return info.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
   }
 
   private fun action(context: Context, type: String): PendingIntent {
@@ -123,9 +172,12 @@ object RestTimerNotification {
     return PendingIntent.getActivity(context, 0, launch, PendingIntent.FLAG_IMMUTABLE)
   }
 
-  /** Importância baixa: a notificação muda a cada segundo e não pode tocar a cada vez. */
-  private fun ensureChannel(context: Context) {
-    val channel = NotificationChannel(
+  /**
+   * Dois canais: o do tempo correndo, baixo, porque muda a cada segundo e não
+   * pode tocar a cada vez; e o do fim, alto, que toca e sobe na tela.
+   */
+  private fun ensureChannels(context: Context) {
+    val running = NotificationChannel(
       CHANNEL_ID,
       context.getString(R.string.rest_timer_channel),
       NotificationManager.IMPORTANCE_LOW,
@@ -133,7 +185,16 @@ object RestTimerNotification {
       lockscreenVisibility = Notification.VISIBILITY_PUBLIC
       setShowBadge(false)
     }
-    manager(context).createNotificationChannel(channel)
+    val done = NotificationChannel(
+      DONE_CHANNEL_ID,
+      context.getString(R.string.rest_timer_done_channel),
+      NotificationManager.IMPORTANCE_HIGH,
+    ).apply {
+      lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+      enableVibration(true)
+      setShowBadge(false)
+    }
+    manager(context).createNotificationChannels(listOf(running, done))
   }
 
   private fun manager(context: Context) =

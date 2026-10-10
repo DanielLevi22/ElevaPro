@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="rest_timer_channel">Descanso do treino</string>
+  <string name="rest_timer_done_channel">Fim do descanso</string>
 </resources>

@@ -13,10 +13,13 @@ import org.json.JSONObject
 object RestActionStore {
   const val ADD_TIME = "add_time"
   const val SKIP = "skip"
+  /** O alarme do fim do descanso; não é toque da pessoa e não vai para a sessão. */
+  const val DONE = "done"
 
   private const val PREFS = "elevapro_rest_timer"
   private const val STATE = "state"
   private const val PENDING = "pending"
+  private const val ALERTED_FOR = "alerted_for"
 
   /** Avisa o módulo que há toque novo; nulo quando o JS não está ouvindo. */
   @Volatile var listener: (() -> Unit)? = null
@@ -36,6 +39,19 @@ object RestActionStore {
     pending.put(JSONObject().put("type", type).put("at", at))
     prefs(context).edit().putString(PENDING, pending.toString()).apply()
     listener?.invoke()
+  }
+
+  /**
+   * Marca que o fim deste descanso já alertou. O tique e o alarme chegam os
+   * dois ao fim: sem a marca, o aparelho tocaria duas vezes.
+   *
+   * @return `true` só na primeira vez para este fim.
+   */
+  @Synchronized
+  fun claimAlert(context: Context, endsAt: Long): Boolean {
+    if (prefs(context).getLong(ALERTED_FOR, 0L) == endsAt) return false
+    prefs(context).edit().putLong(ALERTED_FOR, endsAt).apply()
+    return true
   }
 
   /** Devolve os toques guardados e esvazia a fila. */

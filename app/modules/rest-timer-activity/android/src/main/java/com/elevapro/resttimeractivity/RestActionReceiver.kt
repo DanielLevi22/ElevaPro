@@ -13,6 +13,7 @@ class RestActionReceiver : BroadcastReceiver() {
     val type = intent.action ?: return
     val now = System.currentTimeMillis()
     val state = RestActionStore.loadState(context) ?: return
+    if (type == RestActionStore.DONE) return RestTimerNotification.finish(context, state)
 
     when (type) {
       RestActionStore.ADD_TIME -> RestTimerNotification.show(

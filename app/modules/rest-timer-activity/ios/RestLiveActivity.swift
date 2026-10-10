@@ -1,5 +1,6 @@
 import ActivityKit
 import Foundation
+import UIKit
 
 /// Abre, atualiza e encerra a Live Activity do descanso. Só existe uma por vez.
 @available(iOS 16.2, *)
@@ -8,6 +9,7 @@ enum RestLiveActivity {
 
   static func show(_ state: State) async {
     let content = ActivityContent(state: state, staleDate: staleDate(of: state))
+    await refreshDoneAlert(state)
     if let current = Activity<RestActivityAttributes>.activities.first {
       await current.update(content)
       return
@@ -17,6 +19,7 @@ enum RestLiveActivity {
   }
 
   static func end() async {
+    RestDoneAlert.cancel()
     for activity in Activity<RestActivityAttributes>.activities {
       await activity.end(nil, dismissalPolicy: .immediate)
     }
@@ -26,11 +29,24 @@ enum RestLiveActivity {
     guard let current = Activity<RestActivityAttributes>.activities.first else { return }
     switch action {
     case .skip:
+      RestDoneAlert.cancel()
       await current.end(nil, dismissalPolicy: .immediate)
     case .addTime:
       let state = adding(RestActionBridge.addSeconds, to: current.content.state, now: Date())
+      await refreshDoneAlert(state)
       await current.update(ActivityContent(state: state, staleDate: staleDate(of: state)))
     }
+  }
+
+  /// O descanso em exibição, para o módulo reagendar o alerta ao sair do app.
+  static var currentState: State? {
+    Activity<RestActivityAttributes>.activities.first?.content.state
+  }
+
+  /// Com o app fora da tela, o fim do descanso alerta; aberto, a sessão avisa.
+  private static func refreshDoneAlert(_ state: State) async {
+    let active = await MainActor.run { UIApplication.shared.applicationState == .active }
+    if active { RestDoneAlert.cancel() } else { RestDoneAlert.schedule(state) }
   }
 
   /// A mesma conta de `ajustarDescanso` na sessão: soma ao que falta, e a

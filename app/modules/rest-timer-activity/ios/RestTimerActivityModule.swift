@@ -1,4 +1,5 @@
 import ExpoModulesCore
+import UIKit
 
 /// O descanso como o JavaScript manda: tempo em milissegundos desde a época.
 struct RestRecord: Record {
@@ -31,11 +32,35 @@ struct RestRecord: Record {
 /// Activity: as funções não fazem nada e o descanso fica só na tela do app.
 public class RestTimerActivityModule: Module {
   private var observer: NSObjectProtocol?
+  private var lifecycle: [NSObjectProtocol] = []
 
   public func definition() -> ModuleDefinition {
     Name("RestTimerActivity")
 
     Events("onAction")
+
+    // O alerta do fim só fica agendado com o app fora da tela (`RestDoneAlert`).
+    OnCreate {
+      guard #available(iOS 16.2, *) else { return }
+      let center = NotificationCenter.default
+      self.lifecycle = [
+        center.addObserver(
+          forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main
+        ) { _ in
+          if let state = RestLiveActivity.currentState { RestDoneAlert.schedule(state) }
+        },
+        center.addObserver(
+          forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main
+        ) { _ in
+          RestDoneAlert.cancel()
+        },
+      ]
+    }
+
+    OnDestroy {
+      self.lifecycle.forEach { NotificationCenter.default.removeObserver($0) }
+      self.lifecycle = []
+    }
 
     OnStartObserving {
       self.observer = NotificationCenter.default.addObserver(
