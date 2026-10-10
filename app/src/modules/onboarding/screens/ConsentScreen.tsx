@@ -72,7 +72,9 @@ export function ConsentScreen() {
 
   function recusar() {
     declineConsent();
-    // Provisório até O6 existir: quem recusa segue só com treino, a partir de O6.
+    // Sem aceite não há plano gerado: as rotas de IA exigem o consentimento, e o
+    // texto da recusa promete que a IA fica de fora. A tela inicial mostra o
+    // cartão "Libere sua dieta" para quem mudar de ideia (O12).
     router.replace(ROUTES.TABS.ROOT);
   }
 
@@ -87,7 +89,7 @@ export function ConsentScreen() {
         onPress: () => void aceitar(),
         disabled: saving,
       }}
-      secondaryText={{ label: 'Agora não, seguir só com treino', onPress: recusar }}
+      secondaryText={{ label: 'Agora não', onPress: recusar }}
     >
       <View className="mt-6 items-center">
         <Pedestal size={104} lift={4}>
