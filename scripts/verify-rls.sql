@@ -3138,3 +3138,31 @@ BEGIN
 END $$;
 
 ROLLBACK;
+
+-- ── foods: valores por porção (0084, #365) ──────────────────────────────────
+-- O app lê `foods` por porção. O seed gravou valores de 100 g em porções
+-- menores, e 10 g de azeite viraram 884 kcal no diário. A trava existe e recusa
+-- o erro antigo; sem ela, o defeito volta pelo primeiro alimento cadastrado.
+
+BEGIN;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint c JOIN pg_class t ON t.oid = c.conrelid
+    WHERE t.relname = 'foods' AND c.conname = 'foods_values_per_serving_plausible'
+  ) THEN
+    RAISE EXCEPTION 'ERRO DE PORÇÃO SEM BARREIRA: CHECK de plausibilidade ausente em foods';
+  END IF;
+
+  BEGIN
+    INSERT INTO public.foods (name, category, serving_size, calories, fat)
+    VALUES ('verify-azeite-por-100g', 'gordura', 10, 884, 100);
+    RAISE EXCEPTION 'CALORIA DEZ VEZES MAIOR: foods aceitou 10 g com 884 kcal e 100 g de gordura';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
+  RAISE NOTICE 'ok  alimentos: valores por porção, com trava contra os de 100 g';
+END $$;
+
+ROLLBACK;
