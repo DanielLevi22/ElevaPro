@@ -13,6 +13,8 @@ interface OnboardingState {
   consentDeclined: boolean;
   /** O resultado da triagem: sem dieta, O7 não aparece. `null` antes de O5. */
   dietAllowed: boolean | null;
+  /** Quando a pessoa dispensou o cartão do escaneamento: ele some por 30 dias. */
+  scanCardDismissedAt: number | null;
   /** Começa o onboarding de `ownerId`, descartando o de outra conta. */
   start: (ownerId: string) => void;
   chooseGoal: (goal: OnboardingGoal) => void;
@@ -20,10 +22,18 @@ interface OnboardingState {
   declineConsent: () => void;
   /** Aceitou depois de ter recusado: o cartão de O12 some e o guarda volta a valer. */
   acceptConsent: () => void;
+  dismissScanCard: () => void;
   setDietAllowed: (allowed: boolean) => void;
 }
 
-const EMPTY = { ownerId: null, goal: null, track: null, consentDeclined: false, dietAllowed: null };
+const EMPTY = {
+  ownerId: null,
+  goal: null,
+  track: null,
+  consentDeclined: false,
+  dietAllowed: null,
+  scanCardDismissedAt: null,
+};
 
 /**
  * As escolhas de antes do consentimento: objetivo e nível.
@@ -45,6 +55,7 @@ export const useOnboardingStore = create<OnboardingState>()(
       chooseTrack: (track) => set({ track }),
       declineConsent: () => set({ consentDeclined: true }),
       acceptConsent: () => set({ consentDeclined: false }),
+      dismissScanCard: () => set({ scanCardDismissedAt: Date.now() }),
       setDietAllowed: (dietAllowed) => set({ dietAllowed }),
     }),
     {

@@ -59,6 +59,11 @@ export function WelcomeScreen() {
         <Selo icone="restaurant-outline" className="right-1 top-[16.375rem]">
           Dieta · 5 refeições
         </Selo>
+        {/* O escaneamento é um diferencial do Eleva, e quem chega não sabe que existe:
+            a boas-vindas é onde ele aparece primeiro, como o treino e a dieta. */}
+        <Selo icone="scan-outline" className="right-0 top-[7.5rem]">
+          Escaneamento por foto
+        </Selo>
       </View>
       <OnboardingTitle
         eyebrow="Eleva Pro"

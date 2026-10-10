@@ -88,6 +88,7 @@ export function PlanReadyScreen() {
         Seu plano está pronto
       </OnboardingTitle>
       {plan.target ? <TargetCard target={plan.target} /> : null}
+      {plan.target && !plan.target.guards.includes('lean_mass') ? <ScanSuggestion /> : null}
       <Week plan={plan} />
       <ExampleDay plan={plan} />
       {plan.estimate ? (
@@ -246,5 +247,27 @@ function ExampleDay({ plan }: { plan: OnboardingPlanPending }) {
         />
       ))}
     </>
+  );
+}
+
+/**
+ * Para quem seguiu sem fotos: o escaneamento como uma linha, sem cobrança. Se a
+ * pessoa fizer, o plano volta a O8 e é remontado com o % de gordura; nada é
+ * gravado até aprovar.
+ */
+function ScanSuggestion() {
+  const router = useRouter();
+  return (
+    <View className="mt-3">
+      <LinhaDeVidro
+        icon="scan-outline"
+        tom="marca"
+        titulo="Afine seu plano com 3 fotos"
+        sub="Escaneamento corporal · opcional, cerca de 1 minuto"
+        onPress={() =>
+          router.push({ pathname: ROUTES.ASSESSMENT.BODY_SCAN, params: { retorno: 'plano' } })
+        }
+      />
+    </View>
   );
 }

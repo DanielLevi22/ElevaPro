@@ -131,6 +131,8 @@ function useOpenResult() {
     // Vindo do onboarding (#365), a leitura fica para depois: a pessoa segue
     // para a triagem, e o % de gordura já entra na meta do plano.
     if (retorno === 'onboarding') return router.replace(ROUTES.ONBOARDING.HEALTH);
+    // Vindo do plano pronto (O9): o plano é remontado com o % de gordura novo.
+    if (retorno === 'plano') return router.replace(ROUTES.ONBOARDING.BUILDING);
     router.push(ROUTES.PROGRESS.SCAN(scanId));
   };
 }
