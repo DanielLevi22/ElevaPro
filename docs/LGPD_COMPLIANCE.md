@@ -1095,8 +1095,8 @@ Rotas criadas em `web/src/app/api/ai/` que processam dados de saúde via terceir
 | ~~Rota `/api/ai/nutrition/adherence` deve verificar `student_consents` antes de processar~~ | ✅ Resolvido em 2026-09-05, junto das quatro rotas do aluno que tinham o mesmo buraco. `consentimentoNaSaida.test.ts` recusa rota nova que autentique o aluno sem checar consentimento, nomeando o arquivo e o artigo | — |
 | ~~Verificar DPA Google (Gemini) para dado biométrico de voz~~ | Eliminado — voice command removido do escopo | — |
 | O coach do aluno manda `dietary_restrictions` como está para a IA, e a pergunta tem a opção "Diabetes": diagnóstico chegando ao provedor, contra a regra da linha de restrições do plano (2.2). Achado do `/lgpd-check` da #365 | Tirar "Diabetes" da pergunta de restrição e mandar só a exclusão de alimento, com teste de prova negativa no loader | #365, fatia 1 |
-| A política `anamnesis_own` (0017) deixa o aluno gravar a anamnese sem consentimento: quem recusa o portão e responde o questionário grava do mesmo jeito. Achado do `/lgpd-check` da #365 | `WITH CHECK` com `has_health_consent` e trava em `verify-rls.sql` | #365, fatia 1 |
-| O texto do consentimento (`storedItems`) não cita as respostas da anamnese nem a triagem, nem que o sistema decide sozinho se gera dieta (Art. 20). Achado do `/lgpd-check` da #365 | `POLICY_VERSION` 1.9, pedida dentro do onboarding antes de O4 | #365, fatia 1 |
+| ~~A política `anamnesis_own` (0017) deixa o aluno gravar a anamnese sem consentimento~~ | ✅ Resolvido na `0083` (#365): gravar e corrigir exigem `has_health_consent`; ler e apagar o próprio dado, não. Travado em `verify-rls.sql`, com prova negativa (sem a migration, o teste falha com "COLETA SEM CONSENTIMENTO") | — |
+| ~~O texto do consentimento não cita a anamnese, a triagem nem a decisão automatizada (Art. 20)~~ | ✅ Resolvido na `POLICY_VERSION` 1.9 (#365): a lista cita a anamnese e a triagem e diz que a condição marcada não é guardada (trava em `storedItems.test.ts`); um parágrafo diz o que o app decide sozinho. O texto mora em `HealthConsentDetails`, o mesmo na folha da porta e na etapa do onboarding | — |
 
 ---
 

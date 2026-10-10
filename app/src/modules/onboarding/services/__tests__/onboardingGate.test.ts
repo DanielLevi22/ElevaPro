@@ -5,6 +5,7 @@ const PRATICANTE_SEM_ANAMNESE = {
   accountType: 'member' as const,
   anamnesisCompleted: false,
   inOnboarding: false,
+  consentDeclined: false,
 };
 
 describe('shouldEnterOnboarding', () => {
@@ -36,6 +37,14 @@ describe('shouldEnterOnboarding', () => {
 
   it('não desvia quem já está no onboarding', () => {
     expect(shouldEnterOnboarding({ ...PRATICANTE_SEM_ANAMNESE, inOnboarding: true })).toBe(false);
+  });
+
+  it('não volta a pedir o onboarding a quem recusou o consentimento de saúde', () => {
+    // Sem o aceite a anamnese não pode ser gravada (0083): ela nunca fica
+    // concluída, e o guarda prenderia a pessoa no onboarding para sempre.
+    expect(shouldEnterOnboarding({ ...PRATICANTE_SEM_ANAMNESE, consentDeclined: true })).toBe(
+      false
+    );
   });
 
   it('não desvia ninguém com o onboarding desligado no ambiente', () => {

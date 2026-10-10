@@ -30,9 +30,7 @@ export function LevelScreen() {
     setSaving(true);
     try {
       await createAdaptiveAnamnesisService(supabase).savePersonaTrack(userId, track);
-      // Provisório até o consentimento e O4 existirem: a anamnese adaptativa
-      // atual recebe o nível e conclui a anamnese, o que tira a pessoa do guarda.
-      router.push(ROUTES.ASSESSMENT.ANAMNESIS);
+      router.push(ROUTES.ONBOARDING.CONSENT);
     } catch {
       registrarFalha('onboarding.salvar_nivel');
       showAlert({

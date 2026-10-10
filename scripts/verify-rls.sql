@@ -3060,3 +3060,81 @@ BEGIN
 END $$;
 
 ROLLBACK;
+
+-- ── student_anamnesis: gravar exige consentimento (0083, #365) ───────────────
+-- A anamnese é consentimento explícito (Art. 11, I). O onboarding do Praticante
+-- grava peso, altura e a triagem a cada tela, e quem recusou o aceite não pode
+-- gravar por nenhum caminho, nem pelo PostgREST direto.
+
+BEGIN;
+
+DO $$
+DECLARE
+  com_aceite uuid := gen_random_uuid();
+  sem_aceite uuid := gen_random_uuid();
+  revogou    uuid := gen_random_uuid();
+  afetadas   int;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (com_aceite, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-aa@elevapro.local', '{"full_name":"A","account_type":"member"}'::jsonb),
+    (sem_aceite, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-ab@elevapro.local', '{"full_name":"B","account_type":"member"}'::jsonb),
+    (revogou,    '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-ac@elevapro.local', '{"full_name":"C","account_type":"member"}'::jsonb);
+
+  INSERT INTO public.student_consents (student_id, consent_type, given_at, revoked_at, policy_version)
+  VALUES
+    (com_aceite, 'health_data_collection', now(), NULL,  '1.9'),
+    (revogou,    'health_data_collection', now() - interval '1 day', now(), '1.9');
+
+  -- Quem revogou já tinha anamnese: o dado antigo é dele e continua ali.
+  INSERT INTO public.student_anamnesis (student_id, responses)
+  VALUES (revogou, '{"weight":80}'::jsonb);
+
+  SET LOCAL ROLE authenticated;
+
+  -- Com aceite, grava e corrige: é o upsert de cada tela do onboarding.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', com_aceite, 'role', 'authenticated')::text, true);
+  INSERT INTO public.student_anamnesis (student_id, responses) VALUES (com_aceite, '{"weight":70}'::jsonb);
+  UPDATE public.student_anamnesis SET responses = '{"weight":71}'::jsonb WHERE student_id = com_aceite;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 1 THEN
+    RAISE EXCEPTION 'o aluno com aceite não corrige a própria anamnese (Art. 18, III): % linha(s)', afetadas;
+  END IF;
+
+  -- Sem aceite, o banco recusa a coleta.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', sem_aceite, 'role', 'authenticated')::text, true);
+  BEGIN
+    INSERT INTO public.student_anamnesis (student_id, responses) VALUES (sem_aceite, '{"weight":60}'::jsonb);
+    RAISE EXCEPTION 'COLETA SEM CONSENTIMENTO: anamnese gravada por quem não autorizou (Art. 11, I)';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- Revogado, não corrige; mas lê e apaga o que já é dele (§7 e Art. 18, VI).
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', revogou, 'role', 'authenticated')::text, true);
+  BEGIN
+    UPDATE public.student_anamnesis SET responses = '{"weight":90}'::jsonb WHERE student_id = revogou;
+    RAISE EXCEPTION 'COLETA APÓS REVOGAÇÃO: anamnese alterada depois de o aluno retirar o aceite (Art. 8°, §5°)';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  SELECT count(*) INTO afetadas FROM public.student_anamnesis WHERE student_id = revogou;
+  IF afetadas <> 1 THEN
+    RAISE EXCEPTION 'HISTÓRICO ESCONDIDO: quem revogou não lê a própria anamnese (% linha(s))', afetadas;
+  END IF;
+
+  DELETE FROM public.student_anamnesis WHERE student_id = revogou;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 1 THEN
+    RAISE EXCEPTION 'ELIMINAÇÃO NEGADA: quem revogou não apaga a própria anamnese (Art. 18, VI)';
+  END IF;
+
+  RAISE NOTICE 'ok  anamnese: gravar e corrigir exigem aceite; ler e apagar o próprio dado, não';
+END $$;
+
+ROLLBACK;

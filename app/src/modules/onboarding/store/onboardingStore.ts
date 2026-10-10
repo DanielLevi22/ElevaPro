@@ -9,13 +9,16 @@ interface OnboardingState {
   ownerId: string | null;
   goal: OnboardingGoal | null;
   track: PersonaTrack | null;
+  /** Recusou o aceite de saúde: segue só com treino, e o guarda não o traz de volta. */
+  consentDeclined: boolean;
   /** Começa o onboarding de `ownerId`, descartando o de outra conta. */
   start: (ownerId: string) => void;
   chooseGoal: (goal: OnboardingGoal) => void;
   chooseTrack: (track: PersonaTrack) => void;
+  declineConsent: () => void;
 }
 
-const EMPTY = { ownerId: null, goal: null, track: null };
+const EMPTY = { ownerId: null, goal: null, track: null, consentDeclined: false };
 
 /**
  * As escolhas de antes do consentimento: objetivo e nível.
@@ -35,6 +38,7 @@ export const useOnboardingStore = create<OnboardingState>()(
       },
       chooseGoal: (goal) => set({ goal }),
       chooseTrack: (track) => set({ track }),
+      declineConsent: () => set({ consentDeclined: true }),
     }),
     {
       name: 'onboarding',

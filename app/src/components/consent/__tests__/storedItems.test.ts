@@ -21,6 +21,28 @@ describe('storedItems', () => {
     }
   });
 
+  /**
+   * A `1.9` existe por esta linha (#365): a anamnese é consentimento explícito
+   * (Art. 11, I) e nunca esteve na lista, e o onboarding do Praticante passou a
+   * gravar o resultado da triagem. A condição marcada não é guardada (ADR-0044),
+   * e a lista diz isso para o aceite ser sobre o que de fato acontece.
+   */
+  it('cita a anamnese e a triagem, e diz que a condição marcada não é guardada', () => {
+    for (const hasSpecialist of [true, false]) {
+      const listed = storedItems(hasSpecialist).join(' | ');
+      if (!/anamnese/i.test(listed) || !/triagem/i.test(listed)) {
+        throw new Error(
+          `CONSENTIMENTO SEM A ANAMNESE: a lista não cita anamnese e triagem — ${listed}`
+        );
+      }
+      if (!/condição .*não é guardada/i.test(listed)) {
+        throw new Error(
+          `PROMESSA AUSENTE: a lista não diz que a condição de saúde marcada não é guardada — ${listed}`
+        );
+      }
+    }
+  });
+
   it('cita as notas do especialista só para quem tem especialista', () => {
     expect(storedItems(true).some((item) => /notas/i.test(item))).toBe(true);
     expect(storedItems(false).some((item) => /notas/i.test(item))).toBe(false);

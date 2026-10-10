@@ -94,8 +94,15 @@ export interface ConsentPurpose {
  *   medidas, e a lista nunca tinha dito que a medida corporal é guardada; a nota
  *   é texto do especialista sobre a saúde do aluno, e aparece só no texto de quem
  *   tem especialista. As duas entram juntas para a base reconsentir uma vez.
+ * - `1.9` (2026-10-09) — acrescenta **as respostas da anamnese e o resultado da
+ *   triagem de saúde**, e diz que **o app decide sozinho se monta a dieta**. Issue
+ *   #365 e migration `0083`: a anamnese é consentimento explícito e nunca esteve
+ *   na lista, o banco passou a exigir o aceite para gravá-la, e a triagem do
+ *   onboarding do Praticante é decisão automatizada (Art. 20), que o titular
+ *   precisa conhecer antes de aceitar. O texto diz também o que não é guardado:
+ *   a condição marcada na triagem (ADR-0044).
  */
-export const POLICY_VERSION = "1.8";
+export const POLICY_VERSION = "1.9";
 
 /** Coleta de dados de saúde: avaliação, anamnese, métricas diárias, body scan. */
 export const HEALTH_PURPOSE: ConsentPurpose = {
