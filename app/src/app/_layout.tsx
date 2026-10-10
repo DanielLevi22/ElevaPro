@@ -204,10 +204,13 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
   }, [session, segments, isLoading, accountType, router, redirectPrivilegedSession]);
 
   const inOnboarding = segments[0] === 'onboarding';
+  // O scan opcional depois de O4 sai do grupo do onboarding: o guarda não pode
+  // mandar a O1 quem está no meio das fotos (#365).
+  const inScan = (segments as string[]).includes('assessment');
   useOnboardingGate({
     studentId: isLoading ? null : (session?.user?.id ?? null),
     accountType,
-    inOnboarding,
+    inOnboarding: inOnboarding || inScan,
   });
 
   // Removed manual loading view to use Native Splash

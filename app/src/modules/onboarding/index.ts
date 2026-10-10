@@ -9,6 +9,7 @@ export { GoalScreen } from './screens/GoalScreen';
 export { HealthScreen } from './screens/HealthScreen';
 export { LevelScreen } from './screens/LevelScreen';
 export { PlanReadyScreen } from './screens/PlanReadyScreen';
+export { ScanOfferScreen } from './screens/ScanOfferScreen';
 export { ScreeningScreen } from './screens/ScreeningScreen';
 export { TrainingScreen } from './screens/TrainingScreen';
 export { WelcomeScreen } from './screens/WelcomeScreen';

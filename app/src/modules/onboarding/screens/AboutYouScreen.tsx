@@ -57,7 +57,7 @@ export function AboutYouScreen() {
         userId,
         goal ? { ...result.answers, main_goal: goal } : result.answers
       );
-      router.push(ROUTES.ONBOARDING.HEALTH);
+      router.push(ROUTES.ONBOARDING.SCAN_OFFER);
     } catch {
       registrarFalha('onboarding.salvar_sobre_voce');
       showAlert({

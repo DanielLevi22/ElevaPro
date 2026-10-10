@@ -26,10 +26,17 @@ export interface PractitionerDietInput {
   trainingDaysPerWeek?: number;
   /** O resultado da triagem de O5; a condição nunca chega aqui. */
   dietScreening: "allowed" | "referred";
+  /** O % de gordura do scan opcional depois de O4, quando a pessoa fez. */
+  bodyFatPct?: number;
 }
 
 /** Qual trava mexeu na meta: a tela de plano explica por esse motivo, e a IA só verbaliza. */
-export type DietGuard = "bmr_floor" | "weekly_rate_cap" | "low_bmi_no_loss" | "reference_weight";
+export type DietGuard =
+  | "bmr_floor"
+  | "weekly_rate_cap"
+  | "low_bmi_no_loss"
+  | "reference_weight"
+  | "lean_mass";
 
 export type PractitionerDietTarget =
   | { kind: "no_diet" }
@@ -91,9 +98,45 @@ export function practitionerDietTarget(input: PractitionerDietInput): Practition
     tdee: base.tdee,
     goal,
     targetCalories: Math.round(calories),
-    macros: calculateMacrosFromCalories(calories, referenceWeight, goal),
+    macros: withLeanMassProtein(
+      calculateMacrosFromCalories(calories, referenceWeight, goal),
+      input,
+      goal,
+      guards,
+    ),
     guards,
   };
+}
+
+/**
+ * Proteína por kg de massa magra, com o % de gordura do scan. Provisório até o
+ * CRN (ADR-0044): o corte fica em 2,5, dentro de 2,3–3,1 (Helms 2014).
+ */
+const PROTEIN_PER_LEAN_KG: Record<EnergyGoal, number> = {
+  cutting: 2.5,
+  maintenance: 2.0,
+  bulking: 2.2,
+};
+/** O mesmo intervalo que a medida declarada aceita (`FAT_RANGE`): fora dele é erro. */
+const PLAUSIBLE_FAT = { min: 3, max: 70 };
+
+/**
+ * Com o % de gordura medido, a proteína sai da massa magra; a gordura continua
+ * pelo peso de referência e o carboidrato fica com o resto. As calorias não
+ * mudam: só a divisão entre os macros.
+ */
+function withLeanMassProtein(
+  macros: EnergyMacros,
+  input: PractitionerDietInput,
+  goal: EnergyGoal,
+  guards: DietGuard[],
+): EnergyMacros {
+  const fat = input.bodyFatPct;
+  if (fat === undefined || fat < PLAUSIBLE_FAT.min || fat > PLAUSIBLE_FAT.max) return macros;
+  guards.push("lean_mass");
+  const protein = Math.round(input.weightKg * (1 - fat / 100) * PROTEIN_PER_LEAN_KG[goal]);
+  const carbs = Math.max(0, Math.round((macros.calories - protein * 4 - macros.fat * 9) / 4));
+  return { ...macros, protein, carbs };
 }
 
 /**
@@ -121,6 +164,7 @@ export const DEFAULT_TRAINING_DAYS = 3;
  */
 export function practitionerDietTargetFromAnswers(
   answers: Record<string, unknown>,
+  { bodyFatPct }: { bodyFatPct?: number } = {},
 ): PractitionerDietTarget | null {
   if (answers.diet_screening !== "allowed") return { kind: "no_diet" };
   const { age, height, weight, gender } = answers;
@@ -139,5 +183,6 @@ export function practitionerDietTargetFromAnswers(
       ? (answers.training_days as number)
       : DEFAULT_TRAINING_DAYS,
     dietScreening: "allowed",
+    bodyFatPct,
   });
 }

@@ -62,6 +62,7 @@ export const ROUTES = {
     LEVEL: '/onboarding/level',
     CONSENT: '/onboarding/consent',
     ABOUT: '/onboarding/about',
+    SCAN_OFFER: '/onboarding/scan-offer',
     HEALTH: '/onboarding/health',
     SCREENING: '/onboarding/screening',
     TRAINING: '/onboarding/training',

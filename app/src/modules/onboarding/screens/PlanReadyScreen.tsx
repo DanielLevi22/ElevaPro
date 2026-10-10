@@ -30,6 +30,7 @@ const GUARD_TEXT: Record<DietGuard, string> = {
   bmr_floor: 'Sua meta parou no seu gasto em repouso: abaixo dele, não descemos.',
   weekly_rate_cap: 'Limitamos a perda a cerca de 1% do seu peso por semana.',
   low_bmi_no_loss: 'Seu peso já está abaixo da faixa saudável, então a meta é manter, não perder.',
+  lean_mass: 'A proteína saiu da sua massa magra, medida na análise corporal.',
   reference_weight: 'Proteína e gordura saíram de um peso de referência, para a meta não inflar.',
 };
 

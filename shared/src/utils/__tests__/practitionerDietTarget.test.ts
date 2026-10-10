@@ -84,6 +84,29 @@ const GRADE = (() => {
   return casos;
 })();
 
+describe("com o % de gordura do scan", () => {
+  /**
+   * A faixa da literatura é por massa magra (Helms 2014: 2,3–3,1 g/kg no
+   * corte). Com o scan, a proteína deixa de depender do peso total.
+   */
+  it("calcula a proteína pela massa magra e diz que foi assim", () => {
+    // 80 kg com 25% de gordura: 60 kg de massa magra × 2,5 = 150 g.
+    const result = target({ mainGoal: "Emagrecimento", trainingDaysPerWeek: 3, bodyFatPct: 25 });
+    expect(result.macros.protein).toBe(150);
+    expect(result.guards).toContain("lean_mass");
+  });
+
+  it("as calorias continuam as mesmas: só a divisão entre os macros muda", () => {
+    const sem = target({ mainGoal: "Emagrecimento", trainingDaysPerWeek: 3 });
+    const com = target({ mainGoal: "Emagrecimento", trainingDaysPerWeek: 3, bodyFatPct: 25 });
+    expect(com.targetCalories).toBe(sem.targetCalories);
+  });
+
+  it("% de gordura fora do plausível é ignorado, e não vira massa magra inventada", () => {
+    expect(target({ bodyFatPct: 90 }).guards).not.toContain("lean_mass");
+  });
+});
+
 describe("as travas valem para qualquer corpo", () => {
   it("a meta nunca fica abaixo da TMB", () => {
     for (const caso of GRADE) {

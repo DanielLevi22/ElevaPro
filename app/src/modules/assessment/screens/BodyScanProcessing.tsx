@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { BarraDeDuasAcoes } from '@/components/ui/BarraDeDuasAcoes';
@@ -125,8 +125,12 @@ function useSubmitOnce() {
  */
 function useOpenResult() {
   const router = useRouter();
+  const { retorno } = useLocalSearchParams<{ retorno?: string }>();
   return (scanId: string) => {
     if (router.canDismiss()) router.dismissAll();
+    // Vindo do onboarding (#365), a leitura fica para depois: a pessoa segue
+    // para a triagem, e o % de gordura já entra na meta do plano.
+    if (retorno === 'onboarding') return router.replace(ROUTES.ONBOARDING.HEALTH);
     router.push(ROUTES.PROGRESS.SCAN(scanId));
   };
 }

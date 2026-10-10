@@ -38,7 +38,12 @@ export type GenerationOutcome =
 interface StudentData {
   answers: Record<string, unknown>;
   track: Track;
+  /** Do scan opcional depois de O4, se houver um recente. */
+  bodyFatPct: number | undefined;
 }
+
+/** Um scan mais velho que isto já não descreve o corpo de hoje. */
+const SCAN_VALID_DAYS = 30;
 
 /**
  * Gera o plano do onboarding do Praticante: a meta pelo código, treino e
@@ -62,7 +67,7 @@ export async function generatePractitionerPlan(
   const answers = { ...loaded.answers, ...options.answersOverride };
   const track = loaded.track;
   const choices = readPlanChoices(answers);
-  const computed = targetOf(answers);
+  const computed = targetOf(answers, loaded.bodyFatPct);
   if (computed === undefined) return { ok: false, reason: "incomplete_answers" };
   const target = computed && options.targetOverride ? options.targetOverride : computed;
 
@@ -156,28 +161,46 @@ function parseProposal(texto: string): PractitionerPlanProposal | null {
  * A meta do código; `null` quando a triagem não liberou dieta, `undefined`
  * quando faltam os números do corpo (o onboarding não foi até O4).
  */
-function targetOf(answers: Record<string, unknown>): OnboardingPlanTarget | null | undefined {
-  const result = practitionerDietTargetFromAnswers(answers);
+function targetOf(
+  answers: Record<string, unknown>,
+  bodyFatPct: number | undefined,
+): OnboardingPlanTarget | null | undefined {
+  const result = practitionerDietTargetFromAnswers(answers, { bodyFatPct });
   if (result === null) return undefined;
   if (result.kind === "no_diet") return null;
   return { ...result.macros, guards: result.guards };
 }
 
 async function loadStudentData(studentId: string): Promise<StudentData> {
-  const [anamnesis, profile] = await Promise.all([
+  const since = new Date(Date.now() - SCAN_VALID_DAYS * 86_400_000).toISOString();
+  const [anamnesis, profile, scan] = await Promise.all([
     supabaseAdmin
       .from("student_anamnesis")
       .select("responses")
       .eq("student_id", studentId)
       .maybeSingle(),
     supabaseAdmin.from("profiles").select("persona_track").eq("id", studentId).maybeSingle(),
+    supabaseAdmin
+      .from("body_scans")
+      .select("body_fat_pct")
+      .eq("student_id", studentId)
+      .gte("scanned_at", since)
+      .not("body_fat_pct", "is", null)
+      .order("scanned_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
+  if (scan.error) throw scan.error;
   if (anamnesis.error) throw anamnesis.error;
   if (profile.error) throw profile.error;
   const track = profile.data?.persona_track as Track | null;
   return {
     answers: achatarRespostas(anamnesis.data?.responses as Record<string, unknown> | null),
     track: track && TRACKS.includes(track) ? track : "beginner",
+    bodyFatPct:
+      scan.data?.body_fat_pct === undefined || scan.data?.body_fat_pct === null
+        ? undefined
+        : Number(scan.data.body_fat_pct),
   };
 }
 
