@@ -6,6 +6,8 @@ import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
 import { ROUTES } from '@/navigation/types';
 import { useCores, useEscala } from '@/shared/design';
 import { OnboardingFrame, OnboardingTitle } from '../components/OnboardingFrame';
+import { useSaveAndContinue } from '../hooks/useSaveAndContinue';
+import { useOnboardingStore } from '../store/onboardingStore';
 
 const ICONE_DA_LINHA = 18;
 
@@ -27,13 +29,25 @@ export function ScreeningScreen() {
   const router = useRouter();
   const { reason, injury } = useLocalSearchParams<{ reason?: string; injury?: string }>();
   const undisclosed = reason === 'undisclosed';
-  const seguirComTreino = () => router.push(ROUTES.ONBOARDING.TRAINING);
+  const dietOnly = useOnboardingStore((state) => state.scope) === 'diet';
+  const { saveAndGo } = useSaveAndContinue('onboarding.concluir_sem_plano');
+  // Quem pediu só dieta e não tem dieta liberada não tem o que montar: pode trocar
+  // para treino, ou ir para a tela inicial com o onboarding concluído (sem isso o
+  // guarda o traria de volta a O1 a cada abertura).
+  const seguirComTreino = () => {
+    if (dietOnly) useOnboardingStore.getState().chooseScope('training');
+    router.push(ROUTES.ONBOARDING.TRAINING);
+  };
 
   return (
     <OnboardingFrame
       step={3}
       primary={{
-        label: undisclosed ? 'Continuar com o treino' : 'Continuar só com o treino',
+        label: dietOnly
+          ? 'Montar só o treino'
+          : undisclosed
+            ? 'Continuar com o treino'
+            : 'Continuar só com o treino',
         icon: 'barbell-outline',
         onPress: seguirComTreino,
       }}
@@ -43,7 +57,12 @@ export function ScreeningScreen() {
               label: 'Responder a triagem',
               onPress: () => router.replace(ROUTES.ONBOARDING.HEALTH),
             }
-          : undefined
+          : dietOnly
+            ? {
+                label: 'Ir para a tela inicial',
+                onPress: () => void saveAndGo({}, ROUTES.TABS.ROOT, true),
+              }
+            : undefined
       }
     >
       <View className="mt-[2.125rem] items-start">

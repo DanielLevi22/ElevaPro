@@ -37,10 +37,12 @@ export interface SavePlanContext {
 export async function savePractitionerPlan(
   ctx: SavePlanContext,
   pending: OnboardingPlanPending,
-): Promise<{ periodizationId: string; dietPlanId: string | null }> {
-  const periodizationId = await saveTraining(ctx, pending);
+): Promise<{ periodizationId: string | null; dietPlanId: string | null }> {
+  // Só dieta não tem treino: nada de periodização, e o treino anterior fica como está.
+  const hasTraining = pending.proposal.workouts.length > 0;
+  const periodizationId = hasTraining ? await saveTraining(ctx, pending) : null;
   const dietPlanId = pending.target ? await saveDiet(ctx, pending) : null;
-  await finishPreviousTraining(ctx.studentId, periodizationId);
+  if (periodizationId) await finishPreviousTraining(ctx.studentId, periodizationId);
   return { periodizationId, dietPlanId };
 }
 

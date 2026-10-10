@@ -1,15 +1,13 @@
 import { createAdaptiveAnamnesisService } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
-import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { showAlert } from '@/components/ui/appAlert';
 import { GlassChoice } from '@/components/ui/GlassChoice';
 import { registrarFalha } from '@/lib/registro';
-import { ROUTES } from '@/navigation/types';
 import { OnboardingFrame, OnboardingTitle } from '../components/OnboardingFrame';
-import { hasCurrentHealthConsent } from '../services/consentStep';
+import { useNextStep } from '../hooks/useNextStep';
 import { LEVEL_OPTIONS } from '../services/onboardingOptions';
 import { useOnboardingStore } from '../store/onboardingStore';
 
@@ -20,19 +18,18 @@ import { useOnboardingStore } from '../store/onboardingStore';
  * @example <LevelScreen />
  */
 export function LevelScreen() {
-  const router = useRouter();
   const userId = useAuthStore((state) => state.session?.user.id ?? null);
   const track = useOnboardingStore((state) => state.track);
   const chooseTrack = useOnboardingStore((state) => state.chooseTrack);
   const [saving, setSaving] = useState(false);
+  const goNext = useNextStep();
 
   async function continuar() {
     if (!userId || !track) return;
     setSaving(true);
     try {
       await createAdaptiveAnamnesisService(supabase).savePersonaTrack(userId, track);
-      const consented = await hasCurrentHealthConsent(userId);
-      router.push(consented ? ROUTES.ONBOARDING.ABOUT : ROUTES.ONBOARDING.CONSENT);
+      await goNext('level');
     } catch {
       registrarFalha('onboarding.salvar_nivel');
       showAlert({

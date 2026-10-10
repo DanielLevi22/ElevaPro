@@ -1,13 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Text, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { Anel } from '@/components/ui/Anel';
 import { Vidro } from '@/components/ui/Vidro';
-import { ROUTES } from '@/navigation/types';
 import { useCores, useEscala } from '@/shared/design';
 import { OnboardingFrame, OnboardingTitle } from '../components/OnboardingFrame';
+import { useNextStep } from '../hooks/useNextStep';
 import { useOnboardingStore } from '../store/onboardingStore';
 
 const ICONE_DO_SELO = 15;
@@ -21,10 +20,10 @@ const ICONE_DO_SELO = 15;
  * @example <WelcomeScreen />
  */
 export function WelcomeScreen() {
-  const router = useRouter();
   const userId = useAuthStore((state) => state.session?.user.id ?? null);
   const signOut = useAuthStore((state) => state.signOut);
   const start = useOnboardingStore((state) => state.start);
+  const goNext = useNextStep();
 
   useEffect(() => {
     if (userId) start(userId);
@@ -32,7 +31,7 @@ export function WelcomeScreen() {
 
   return (
     <OnboardingFrame
-      primary={{ label: 'Começar', onPress: () => router.push(ROUTES.ONBOARDING.GOAL) }}
+      primary={{ label: 'Começar', onPress: () => void goNext('welcome') }}
       // A conta já existe quando o onboarding abre: "Já tenho conta" é quem criou
       // uma conta nova por engano e quer entrar na antiga.
       secondaryText={{ label: 'Já tenho conta', onPress: () => void signOut() }}

@@ -170,6 +170,12 @@ describe("practitionerDietTargetFromAnswers", () => {
     expect(practitionerDietTargetFromAnswers({ ...RESPOSTAS, weight: undefined })).toBeNull();
   });
 
+  it("no caminho só dieta, 0 dia de exercício conta como sedentário, e não vira o padrão", () => {
+    expect(practitionerDietTargetFromAnswers({ ...RESPOSTAS, training_days: 0 })).toEqual(
+      practitionerDietTarget({ ...BASE, mainGoal: "Hipertrofia", trainingDaysPerWeek: 0 }),
+    );
+  });
+
   it("quem pulou O6 conta com o padrão de 3 dias", () => {
     const { training_days: _, ...semDias } = RESPOSTAS;
     expect(practitionerDietTargetFromAnswers(semDias)).toEqual(

@@ -12,6 +12,7 @@ let estadoGravado: Record<string, unknown> | null;
 let consentiu: boolean;
 
 const PENDENTE = {
+  scope: "both",
   proposal: { workouts: [], meals: null, explanation: "" },
   target: null,
   goal: "Hipertrofia",

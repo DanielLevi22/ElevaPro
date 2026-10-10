@@ -10,6 +10,7 @@ const FOODS = [
 ];
 
 const PENDENTE: OnboardingPlanPending = {
+  scope: "both",
   proposal: {
     workouts: [],
     meals: [

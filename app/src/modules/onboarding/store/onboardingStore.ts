@@ -2,12 +2,15 @@ import type { PersonaTrack } from '@elevapro/shared/data/anamnesisAdaptive';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { armazenamentoNoAparelho } from '@/lib/armazenamentoNoAparelho';
+import type { PlanScope } from '../services/onboardingFlow';
 import type { OnboardingGoal } from '../services/onboardingOptions';
 
 interface OnboardingState {
   /** De quem são as respostas: outra conta no mesmo aparelho começa do zero. */
   ownerId: string | null;
   goal: OnboardingGoal | null;
+  /** O que a pessoa quer montar: decide quais perguntas aparecem (`onboardingFlow`). */
+  scope: PlanScope | null;
   track: PersonaTrack | null;
   /** Recusou o aceite de saúde: segue só com treino, e o guarda não o traz de volta. */
   consentDeclined: boolean;
@@ -18,6 +21,7 @@ interface OnboardingState {
   /** Começa o onboarding de `ownerId`, descartando o de outra conta. */
   start: (ownerId: string) => void;
   chooseGoal: (goal: OnboardingGoal) => void;
+  chooseScope: (scope: PlanScope) => void;
   chooseTrack: (track: PersonaTrack) => void;
   declineConsent: () => void;
   /** Aceitou depois de ter recusado: o cartão de O12 some e o guarda volta a valer. */
@@ -29,6 +33,7 @@ interface OnboardingState {
 const EMPTY = {
   ownerId: null,
   goal: null,
+  scope: null,
   track: null,
   consentDeclined: false,
   dietAllowed: null,
@@ -52,6 +57,7 @@ export const useOnboardingStore = create<OnboardingState>()(
         if (get().ownerId !== ownerId) set({ ...EMPTY, ownerId });
       },
       chooseGoal: (goal) => set({ goal }),
+      chooseScope: (scope) => set({ scope }),
       chooseTrack: (track) => set({ track }),
       declineConsent: () => set({ consentDeclined: true }),
       acceptConsent: () => set({ consentDeclined: false }),

@@ -150,7 +150,8 @@ function macroWeight(input: PractitionerDietInput, bmi: number, guards: DietGuar
   return REFERENCE_BMI * (input.heightCm / 100) ** 2;
 }
 
-const TRAINING_DAY_OPTIONS = [2, 3, 4, 5, 6];
+/** De 0 a 6: no caminho "só dieta", quem não se exercita conta como sedentário. */
+const TRAINING_DAY_OPTIONS = [0, 1, 2, 3, 4, 5, 6];
 /** O padrão de quem pulou O6: o mínimo de força da OMS com cada músculo 2× por semana. */
 export const DEFAULT_TRAINING_DAYS = 3;
 

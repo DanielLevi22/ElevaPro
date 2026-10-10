@@ -5,10 +5,12 @@ import { useAuthStore } from '@/auth';
 import { showAlert } from '@/components/ui/appAlert';
 import { CaixaDeIcone } from '@/components/ui/CaixaDeIcone';
 import { ChipMulti } from '@/components/ui/ChipMulti';
+import { GlassChoice } from '@/components/ui/GlassChoice';
 import { Vidro } from '@/components/ui/Vidro';
 import { registrarFalha } from '@/lib/registro';
 import { ROUTES } from '@/navigation/types';
 import { OnboardingFrame, OnboardingTitle } from '../components/OnboardingFrame';
+import { useSaveAndContinue } from '../hooks/useSaveAndContinue';
 import { saveOnboardingAnswers } from '../services/onboardingAnswers';
 import {
   HEALTH_CONDITIONS,
@@ -30,6 +32,52 @@ import { useOnboardingStore } from '../store/onboardingStore';
  * @example <HealthScreen />
  */
 export function HealthScreen() {
+  const scope = useOnboardingStore((state) => state.scope);
+  return scope === 'training' ? <InjuryQuestion /> : <ScreeningQuestion />;
+}
+
+/**
+ * O5 no caminho "só treino": só a lesão, que muda o treino. As condições
+ * clínicas decidem a dieta, e quem não quer dieta não precisa contá-las (Art.
+ * 6°, III). Grava só se há lesão, nunca onde.
+ */
+function InjuryQuestion() {
+  const [injury, setInjury] = useState<boolean | null>(null);
+  const { saving, saveAndGo } = useSaveAndContinue('onboarding.salvar_lesao');
+
+  return (
+    <OnboardingFrame
+      step={3}
+      primary={{
+        label: saving ? 'Salvando…' : 'Continuar',
+        onPress: () => void saveAndGo({ injury_reported: injury }, ROUTES.ONBOARDING.TRAINING),
+        disabled: injury === null || saving,
+        hint: 'Responda para continuar',
+      }}
+    >
+      <OnboardingTitle sub="Assim evitamos exercícios que pesam no local.">
+        Tem alguma lesão ou dor?
+      </OnboardingTitle>
+      <View className="mt-[1.375rem]" accessibilityRole="radiogroup">
+        <GlassChoice
+          icon="bandage-outline"
+          title="Sim, tenho lesão ou dor"
+          active={injury === true}
+          onPress={() => setInjury(true)}
+        />
+        <GlassChoice
+          icon="checkmark-circle-outline"
+          title="Não"
+          active={injury === false}
+          onPress={() => setInjury(false)}
+        />
+      </View>
+    </OnboardingFrame>
+  );
+}
+
+/** O5 com dieta: a triagem que decide se o app monta a dieta (ADR-0044). */
+function ScreeningQuestion() {
   const router = useRouter();
   const userId = useAuthStore((state) => state.session?.user.id ?? null);
   const setDietAllowed = useOnboardingStore((state) => state.setDietAllowed);

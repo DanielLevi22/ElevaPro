@@ -16,6 +16,8 @@ import { registrarFalha } from '@/lib/registro';
 import { ROUTES } from '@/navigation/types';
 import { OnboardingFrame, OnboardingTitle } from '../components/OnboardingFrame';
 import { hasCurrentHealthConsent } from '../services/consentStep';
+import { saveOnboardingAnswers } from '../services/onboardingAnswers';
+import { nextOnboardingStep } from '../services/onboardingFlow';
 import { useOnboardingStore } from '../store/onboardingStore';
 
 /**
@@ -44,7 +46,7 @@ export function ConsentScreen() {
       if (!consented) return setChecking(false);
       // Aceitou pela folha da porta depois de recusar aqui: a recusa deixa de valer.
       useOnboardingStore.getState().acceptConsent();
-      seguirComOAceite(router);
+      void seguirComOAceite(userId, router);
     });
   }, [userId, router]);
 
@@ -56,7 +58,7 @@ export function ConsentScreen() {
       useOnboardingStore.getState().acceptConsent();
       // As autorizações do perfil mostram o aceite: sem invalidar, diriam "pendente".
       await queryClient.invalidateQueries({ queryKey: ['consentStatus'] });
-      seguirComOAceite(router);
+      await seguirComOAceite(userId, router);
     } catch {
       // Sem o erro: o do PostgREST pode trazer o payload do consentimento.
       registrarFalha('onboarding.registrar_consentimento');
@@ -107,6 +109,16 @@ export function ConsentScreen() {
   );
 }
 
-function seguirComOAceite(router: ReturnType<typeof useRouter>) {
-  router.replace(ROUTES.ONBOARDING.ABOUT);
+/**
+ * Com o aceite, o objetivo e a escolha do que montar vão ao servidor: antes
+ * dele não podiam (0083), e no caminho "só treino" não há O4 para levá-los.
+ * Falhar aqui não prende a pessoa: O4 e O5 gravam de novo, somando.
+ */
+async function seguirComOAceite(userId: string, router: ReturnType<typeof useRouter>) {
+  const { goal, scope, dietAllowed } = useOnboardingStore.getState();
+  await saveOnboardingAnswers(userId, {
+    ...(goal ? { main_goal: goal } : {}),
+    ...(scope ? { plan_scope: scope } : {}),
+  }).catch(() => registrarFalha('onboarding.salvar_escolhas'));
+  router.replace(nextOnboardingStep('consent', { scope, dietAllowed }));
 }

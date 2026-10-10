@@ -183,7 +183,7 @@ export interface AiSessionState {
   pendingOnboardingPlan?: OnboardingPlanPending;
   /** A versão antes do último ajuste de O10: é o que "Desfazer" devolve. */
   previousOnboardingPlan?: OnboardingPlanPending | null;
-  resolvedOnboardingPlan?: { periodizationId: string; dietPlanId: string | null };
+  resolvedOnboardingPlan?: { periodizationId: string | null; dietPlanId: string | null };
 }
 
 export type SseEvent =

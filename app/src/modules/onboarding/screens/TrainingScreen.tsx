@@ -3,10 +3,10 @@ import { View } from 'react-native';
 import { ChipPick } from '@/components/ui/ChipPick';
 import { ChoiceTile } from '@/components/ui/ChoiceTile';
 import { GlassSegmented } from '@/components/ui/GlassSegmented';
-import { ROUTES } from '@/navigation/types';
 import { ChipsWithOther, withOther } from '../components/ChipsWithOther';
 import { OnboardingFrame, OnboardingLabel, OnboardingTitle } from '../components/OnboardingFrame';
 import { useSaveAndContinue } from '../hooks/useSaveAndContinue';
+import { nextOnboardingStep } from '../services/onboardingFlow';
 import {
   HOME_EQUIPMENT,
   NO_SPORT,
@@ -31,6 +31,49 @@ const HOME: Place = 'Home gym';
  * @example <TrainingScreen />
  */
 export function TrainingScreen() {
+  const scope = useOnboardingStore((state) => state.scope);
+  return scope === 'diet' ? <ExerciseDaysQuestion /> : <TrainingQuestions />;
+}
+
+const EXERCISE_DAYS = [0, 1, 2, 3, 4, 5, 6] as const;
+
+/**
+ * O6 no caminho "só dieta": só os dias de exercício, que entram no gasto de
+ * energia da meta. O resto do treino não muda a dieta, e não é perguntado.
+ */
+function ExerciseDaysQuestion() {
+  const { saving, saveAndGo } = useSaveAndContinue('onboarding.salvar_atividade');
+  const [days, setDays] = useState<number | null>(null);
+  const next = nextOnboardingStep('training', useOnboardingStore.getState());
+
+  return (
+    <OnboardingFrame
+      step={4}
+      primary={{
+        label: saving ? 'Salvando…' : 'Continuar',
+        onPress: () => void saveAndGo({ training_days: days }, next),
+        disabled: days === null || saving,
+        hint: 'Escolha quantos dias',
+      }}
+    >
+      <OnboardingTitle sub="Entra na conta do quanto você gasta de energia.">
+        Quantos dias por semana você se exercita?
+      </OnboardingTitle>
+      <View className="mt-[1.375rem] flex-row gap-[0.4375rem]" accessibilityRole="radiogroup">
+        {EXERCISE_DAYS.map((option) => (
+          <ChipPick
+            key={option}
+            rotulo={String(option)}
+            marcado={days === option}
+            onPress={() => setDays(option)}
+          />
+        ))}
+      </View>
+    </OnboardingFrame>
+  );
+}
+
+function TrainingQuestions() {
   const dietAllowed = useOnboardingStore((state) => state.dietAllowed);
   const { saving, saveAndGo } = useSaveAndContinue('onboarding.salvar_treino');
   const [days, setDays] = useState<number | null>(null);
@@ -43,8 +86,9 @@ export function TrainingScreen() {
   const [sports, setSports] = useState<string[]>([]);
   const [otherSport, setOtherSport] = useState('');
 
-  // Sem dieta pela triagem, O7 não aparece: daqui vai direto montar o plano.
-  const next = dietAllowed === false ? ROUTES.ONBOARDING.BUILDING : ROUTES.ONBOARDING.FOOD;
+  const scope = useOnboardingStore((state) => state.scope);
+  // Só treino, ou sem dieta pela triagem: O7 não aparece (`onboardingFlow`).
+  const next = nextOnboardingStep('training', { scope, dietAllowed });
   const ready = days !== null && minutes !== '' && place !== null;
 
   function continuar() {

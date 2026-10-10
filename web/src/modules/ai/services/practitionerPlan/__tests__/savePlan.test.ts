@@ -73,6 +73,7 @@ vi.mock("@elevapro/shared", async (original) => ({
 const { savePractitionerPlan } = await import("../savePlan");
 
 const PENDENTE: OnboardingPlanPending = {
+  scope: "both",
   proposal: {
     workouts: [
       { title: "A", day_of_week: "monday", optional: false, exercises: [] },
@@ -174,5 +175,19 @@ describe("aprovar o plano do onboarding", () => {
         },
       },
     ]);
+  });
+
+  it("só dieta não cria periodização nem encerra o treino que a pessoa já tem", async () => {
+    const soDieta = {
+      ...PENDENTE,
+      scope: "diet" as const,
+      proposal: { ...PENDENTE.proposal, workouts: [] },
+    };
+    const { periodizationId, dietPlanId } = await savePractitionerPlan(contexto(), soDieta);
+
+    expect(periodizationId).toBeNull();
+    expect(dietPlanId).toBe("dieta-1");
+    expect(inseridos.filter((i) => i.tabela === "training_periodizations")).toEqual([]);
+    expect(encerrados).toEqual([]);
   });
 });

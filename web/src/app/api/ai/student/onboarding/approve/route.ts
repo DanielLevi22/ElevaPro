@@ -13,7 +13,7 @@ export const maxDuration = 60;
 export const POST = withAiRoute(
   criarRotaDeAprovacao<
     OnboardingPlanPending,
-    { periodizationId: string; dietPlanId: string | null }
+    { periodizationId: string | null; dietPlanId: string | null }
   >({
     rotulo: "POST student onboarding approve",
     chave: "pendingOnboardingPlan",
@@ -32,10 +32,13 @@ export const POST = withAiRoute(
 
     resolver: (_pendente, resultado) => ({ resolvedOnboardingPlan: resultado }),
 
-    mensagem: (pendente) =>
-      pendente.target
-        ? "✅ Plano aprovado: seu treino e sua dieta já estão ativos."
-        : "✅ Plano aprovado: seu treino já está ativo.",
+    mensagem: (_pendente, { periodizationId, dietPlanId }) => {
+      if (periodizationId && dietPlanId)
+        return "✅ Plano aprovado: seu treino e sua dieta já estão ativos.";
+      return dietPlanId
+        ? "✅ Plano aprovado: sua dieta já está ativa."
+        : "✅ Plano aprovado: seu treino já está ativo.";
+    },
 
     corpo: (_pendente, resultado) => resultado,
   }),

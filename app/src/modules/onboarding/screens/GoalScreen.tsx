@@ -1,8 +1,7 @@
-import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 import { GlassChoice } from '@/components/ui/GlassChoice';
-import { ROUTES } from '@/navigation/types';
 import { OnboardingFrame, OnboardingTitle } from '../components/OnboardingFrame';
+import { useNextStep } from '../hooks/useNextStep';
 import { GOAL_OPTIONS } from '../services/onboardingOptions';
 import { useOnboardingStore } from '../store/onboardingStore';
 
@@ -12,16 +11,16 @@ import { useOnboardingStore } from '../store/onboardingStore';
  * @example <GoalScreen />
  */
 export function GoalScreen() {
-  const router = useRouter();
   const goal = useOnboardingStore((state) => state.goal);
   const chooseGoal = useOnboardingStore((state) => state.chooseGoal);
+  const goNext = useNextStep();
 
   return (
     <OnboardingFrame
       step={1}
       primary={{
         label: 'Continuar',
-        onPress: () => router.push(ROUTES.ONBOARDING.LEVEL),
+        onPress: () => void goNext('goal'),
         disabled: goal === null,
         hint: 'Escolha um objetivo para continuar',
       }}

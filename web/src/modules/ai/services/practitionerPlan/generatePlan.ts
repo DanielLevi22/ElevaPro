@@ -67,9 +67,13 @@ export async function generatePractitionerPlan(
   const answers = { ...loaded.answers, ...options.answersOverride };
   const track = loaded.track;
   const choices = readPlanChoices(answers);
-  const computed = targetOf(answers, loaded.bodyFatPct);
+  const scope = scopeOf(answers);
+  // Só treino não tem meta: nem pede o corpo, que no caminho dele não foi perguntado.
+  const computed = scope === "training" ? null : targetOf(answers, loaded.bodyFatPct);
   if (computed === undefined) return { ok: false, reason: "incomplete_answers" };
   const target = computed && options.targetOverride ? options.targetOverride : computed;
+  // Só dieta não tem treino: a IA monta só as refeições, e a conferência espera zero treinos.
+  const keepWorkouts = scope === "diet" ? [] : options.keepWorkouts;
 
   const [foods, exercises] = await Promise.all([loadPlanFoods(choices), loadExercises(choices)]);
   const goal = typeof answers.main_goal === "string" ? answers.main_goal : "Saúde / Bem-estar";
@@ -82,13 +86,13 @@ export async function generatePractitionerPlan(
     exercises: [...exercises],
     foods: foods.map((food) => `${food.name} — ${food.calories} kcal por ${food.serving_size} g`),
     dietInstruction: options.dietInstruction,
-    mealsOnly: options.keepWorkouts !== undefined,
+    mealsOnly: keepWorkouts !== undefined,
   });
 
-  const proposal = await askUntilAccepted(basePrompt, options.keepWorkouts, {
-    trainingDays: choices.trainingDays,
+  const proposal = await askUntilAccepted(basePrompt, keepWorkouts, {
+    trainingDays: scope === "diet" ? 0 : choices.trainingDays,
     sessionMinutes: choices.sessionMinutes,
-    sports: choices.sports,
+    sports: scope === "diet" ? [] : choices.sports,
     mealsPerDay: choices.mealsPerDay,
     targetCalories: target?.calories ?? null,
     allowedFoods: new Map(foods.map((food) => [food.name, food])),
@@ -97,6 +101,7 @@ export async function generatePractitionerPlan(
   if (!proposal) return { ok: false, reason: "plan_rejected" };
 
   const pending = {
+    scope,
     proposal,
     target,
     mealCalories: mealCaloriesOf(proposal, foods),
@@ -252,4 +257,13 @@ function mealCaloriesOf(proposal: PractitionerPlanProposal, foods: readonly Chec
       }, 0),
     ),
   );
+}
+
+const SCOPES = ["both", "training", "diet"] as const;
+
+/** O que a pessoa pediu para montar; quem passou pelo onboarding antes da escolha, os dois. */
+function scopeOf(answers: Record<string, unknown>): (typeof SCOPES)[number] {
+  return SCOPES.includes(answers.plan_scope as (typeof SCOPES)[number])
+    ? (answers.plan_scope as (typeof SCOPES)[number])
+    : "both";
 }

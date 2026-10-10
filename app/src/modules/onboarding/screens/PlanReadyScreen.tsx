@@ -92,7 +92,7 @@ export function PlanReadyScreen() {
       </OnboardingTitle>
       {plan.target ? <TargetCard target={plan.target} /> : null}
       {plan.target && !plan.target.guards.includes('lean_mass') ? <ScanSuggestion /> : null}
-      <Week plan={plan} />
+      {plan.proposal.workouts.length > 0 ? <Week plan={plan} /> : null}
       <ExampleDay plan={plan} />
       {plan.estimate ? (
         <InfoNote icon="sparkles-outline" className="mt-3">
@@ -240,6 +240,8 @@ function Week({ plan }: { plan: OnboardingPlanPending }) {
 function ExampleDay({ plan }: { plan: OnboardingPlanPending }) {
   const meals = plan.proposal.meals;
   if (!plan.target || !meals) {
+    // Quem escolheu só treino não pediu dieta: não há o que avisar.
+    if (plan.scope === 'training') return null;
     return (
       <InfoNote icon="restaurant-outline" className="mt-5">
         Sem dieta por enquanto: pela sua triagem, a alimentação pede um especialista. Seu treino

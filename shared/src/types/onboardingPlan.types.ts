@@ -44,7 +44,12 @@ export interface OnboardingPlanTarget {
  * O plano que espera "Aprovar plano" (ADR-0020): nada é gravado antes disso. É
  * a cópia que a pessoa vê em O9, e é ela que a aprovação grava.
  */
+/** O que a pessoa escolheu montar logo depois das boas-vindas. */
+export type OnboardingPlanScope = "both" | "training" | "diet";
+
 export interface OnboardingPlanPending {
+  /** O que foi pedido: só treino não tem meta; só dieta não tem treino. */
+  scope: OnboardingPlanScope;
   proposal: PractitionerPlanProposal;
   /** `null` quando a triagem não liberou dieta. */
   target: OnboardingPlanTarget | null;
