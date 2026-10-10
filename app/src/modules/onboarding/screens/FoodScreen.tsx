@@ -4,6 +4,7 @@ import { ChipPick } from '@/components/ui/ChipPick';
 import { GlassSegmented } from '@/components/ui/GlassSegmented';
 import { ROUTES } from '@/navigation/types';
 import { Chips } from '../components/Chips';
+import { FoodExclusionSearch } from '../components/FoodExclusionSearch';
 import { OnboardingFrame, OnboardingLabel, OnboardingTitle } from '../components/OnboardingFrame';
 import { useSaveAndContinue } from '../hooks/useSaveAndContinue';
 import {
@@ -16,6 +17,9 @@ import {
 
 type Style = (typeof DIET_STYLES)[number]['value'];
 type Budget = (typeof FOOD_BUDGETS)[number]['value'];
+
+/** Abre a busca no banco de alimentos: o "Outro" do "Não como" não é texto livre. */
+const OTHER_FOOD = 'Outro alimento';
 
 const toggle = (list: string[], item: string) =>
   list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
@@ -33,6 +37,8 @@ export function FoodScreen() {
   const { saving, saveAndGo } = useSaveAndContinue('onboarding.salvar_alimentacao');
   const [meals, setMeals] = useState<number | null>(null);
   const [exclusions, setExclusions] = useState<string[]>([]);
+  // Os alimentos achados na busca do "Outro alimento", pelo nome do banco.
+  const [searchedFoods, setSearchedFoods] = useState<string[]>([]);
   const [style, setStyle] = useState<Style | ''>('');
   const [routine, setRoutine] = useState<string[]>([]);
   const [budget, setBudget] = useState<Budget | ''>('');
@@ -53,7 +59,10 @@ export function FoodScreen() {
         onPress: () =>
           concluir({
             meals_per_day: meals,
-            food_exclusions: exclusions,
+            food_exclusions: [
+              ...exclusions.filter((item) => item !== OTHER_FOOD),
+              ...searchedFoods,
+            ],
             diet_style: style,
             food_routine: routine,
             ...(budget ? { food_budget: budget } : {}),
@@ -80,10 +89,13 @@ export function FoodScreen() {
 
       <OnboardingLabel right="marque quantos quiser">Não como</OnboardingLabel>
       <Chips
-        options={FOOD_EXCLUSIONS}
+        options={[...FOOD_EXCLUSIONS, OTHER_FOOD]}
         selected={exclusions}
         onToggle={(item) => setExclusions((atual) => toggle(atual, item))}
       />
+      {exclusions.includes(OTHER_FOOD) ? (
+        <FoodExclusionSearch chosen={searchedFoods} onChange={setSearchedFoods} />
+      ) : null}
 
       <OnboardingLabel>Estilo</OnboardingLabel>
       <GlassSegmented<Style | ''> options={DIET_STYLES} value={style} onChange={setStyle} />
