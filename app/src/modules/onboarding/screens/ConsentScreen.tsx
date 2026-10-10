@@ -100,6 +100,5 @@ export function ConsentScreen() {
 }
 
 function seguirComOAceite(router: ReturnType<typeof useRouter>) {
-  // Provisório até O4 existir: a anamnese atual recebe o nível e conclui o fluxo.
-  router.replace(ROUTES.ASSESSMENT.ANAMNESIS);
+  router.replace(ROUTES.ONBOARDING.ABOUT);
 }

@@ -61,6 +61,7 @@ export const ROUTES = {
     GOAL: '/onboarding/goal',
     LEVEL: '/onboarding/level',
     CONSENT: '/onboarding/consent',
+    ABOUT: '/onboarding/about',
     ROLE_SELECTION: '/onboarding/role-selection',
     HEALTH_CONNECT: '/onboarding/health-connect',
   },
