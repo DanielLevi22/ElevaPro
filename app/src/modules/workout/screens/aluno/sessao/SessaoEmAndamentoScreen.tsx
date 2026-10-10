@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { showConfirm } from '@/components/ui/appAlert';
 import { EstadoDaTela } from '../../../components/aluno/EstadoDaTela';
 import { useDetalheDoTreino } from '../../../hooks/useDetalheDoTreino';
+import { useRestOnLockScreen } from '../../../hooks/useRestOnLockScreen';
 import { useSessaoEmAndamento } from '../../../hooks/useSessaoEmAndamento';
 import { useVozDaSessao } from '../../../hooks/useVozDaSessao';
 import { type EstadoDaSessao, progressoDaSessao } from '../../../store/maquinaDaSessao';
@@ -53,6 +54,7 @@ function SessaoDoTreino({ treino, ...props }: SessaoEmAndamentoScreenProps & { t
     [sessao, despachar, sairSemPerguntar, router]
   );
   const voz = useVozDaSessao(sessao, despachar, pedirParaFinalizar);
+  useRestOnLockScreen(sessao, despachar);
 
   return (
     <MomentoDaSessao
