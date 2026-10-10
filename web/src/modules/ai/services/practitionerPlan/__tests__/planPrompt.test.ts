@@ -9,7 +9,10 @@ const ENTRADA = {
   target: { calories: 1850, protein: 150, carbs: 190, fat: 55 },
   injuryReported: true,
   exercises: ["Agachamento livre", "Supino reto"],
-  foods: ["Arroz branco cozido (100 g)", "Frango (peito grelhado) (100 g)"],
+  foods: [
+    "Arroz branco cozido — 130 kcal por 100 g",
+    "Frango (peito grelhado) — 160 kcal por 100 g",
+  ],
 };
 
 describe("buildPlanPrompt", () => {

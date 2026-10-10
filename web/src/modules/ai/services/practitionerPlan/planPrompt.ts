@@ -12,7 +12,7 @@ export interface PlanPromptInput {
   injuryReported: boolean;
   /** Os exercícios do local, já filtrados. */
   exercises: readonly string[];
-  /** Os alimentos permitidos, com a porção-base: "Arroz branco cozido (100 g)". */
+  /** Os alimentos permitidos, com as calorias da porção: "Arroz branco cozido — 130 kcal por 100 g". */
   foods: readonly string[];
 }
 
@@ -74,7 +74,7 @@ ${exercises.join("\n")}`;
 - Meta do dia, calculada pelo app e que você não pode mudar: ${meta.calories} kcal, ${meta.protein} g de proteína, ${meta.carbs} g de carboidrato, ${meta.fat} g de gordura. A soma do dia deve ficar a até 5% das calorias.
 - Exatamente ${choices.mealsPerDay} refeições por dia.${budget}
 - Comida brasileira do dia a dia, em porções realistas.
-- Use APENAS alimentos desta lista, com o nome exatamente como está (sem a porção entre parênteses). A quantidade é na unidade da porção:
+- Use APENAS alimentos desta lista, com o nome exatamente como está antes do travessão. A quantidade é SEMPRE em gramas (ex.: 150 para 150 g de arroz), nunca em porções:
 ${foods.join("\n")}`;
   }
 }

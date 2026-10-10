@@ -9,6 +9,7 @@ const BANCO = [
   "Queijo minas frescal",
   "Iogurte grego natural",
   "Whey protein (pó)",
+  "Barra de proteína",
   "Manteiga",
   "Manteiga ghee",
   "Pão francês",
@@ -45,6 +46,7 @@ describe("allowedFoodNames", () => {
     expect(lista).not.toContain("Queijo minas frescal");
     expect(lista).not.toContain("Pão de queijo");
     expect(lista).not.toContain("Whey protein (pó)");
+    expect(lista).not.toContain("Barra de proteína");
     expect(lista).toContain("Leite sem lactose desnatado");
     expect(lista).toContain("Bebida de soja sem açúcar");
   });

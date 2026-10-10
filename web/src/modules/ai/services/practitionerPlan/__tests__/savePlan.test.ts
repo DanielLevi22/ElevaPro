@@ -107,6 +107,9 @@ describe("aprovar o plano do onboarding", () => {
 
     expect(dietPlanId).toBe("dieta-1");
     expect(dietaCriada?.plano).toMatchObject({
+      // O banco exige as datas: sem elas, a aprovação falhava com 23502.
+      start_date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+      end_date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
       student_id: "aluno-1",
       specialist_id: null,
       target_calories: 2000,

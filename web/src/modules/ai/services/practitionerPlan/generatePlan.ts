@@ -7,6 +7,7 @@ import { allowedFoodNames } from "./foodFilter";
 import { type CheckFood, checkPlan, type PractitionerPlanProposal } from "./planCheck";
 import { allowedExerciseNames, type PlanChoices, readPlanChoices } from "./planChoices";
 import { buildPlanPrompt } from "./planPrompt";
+import { scaleToTarget } from "./scaleToTarget";
 import type { OnboardingPlanPending, OnboardingPlanTarget } from "./types";
 
 /** Uma tentativa a mais, com os motivos da recusa: a IA erra conta, e corrige quando sabe onde. */
@@ -50,7 +51,7 @@ export async function generatePractitionerPlan(studentId: string): Promise<Gener
     target,
     injuryReported: answers.injury_reported === true,
     exercises: [...exercises],
-    foods: foods.map((food) => `${food.name} (${food.serving_size} ${food.unit})`),
+    foods: foods.map((food) => `${food.name} — ${food.calories} kcal por ${food.serving_size} g`),
   });
 
   const proposal = await askUntilAccepted(basePrompt, {
@@ -84,14 +85,28 @@ async function askUntilAccepted(
 ): Promise<PractitionerPlanProposal | null> {
   let prompt = basePrompt;
   for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
-    const proposal = parseProposal(await ask(prompt));
-    const problems = proposal ? checkPlan(proposal, context) : ["a resposta não era o JSON pedido"];
+    const proposal = scaled(parseProposal(await ask(prompt)), context);
+    const problems = proposal
+      ? checkPlan(proposal, context)
+      : ["a resposta não era o JSON pedido, ou as porções estavam longe demais da meta"];
     if (proposal && problems.length === 0) return proposal;
-    // Só a contagem e os motivos, que não têm dado da pessoa: ver `checkPlan`.
-    logger.warn("ai.practitioner_plan.rejected", { attempt, problems: problems.length });
+    // Só a contagem: os motivos citam alimentos e números do plano, e para
+    // diagnosticar basta reproduzir com o usuário de teste.
+    logger.warn("ai.practitioner_plan.rejected", {
+      attempt,
+      problems: problems.length,
+    });
     prompt = `${basePrompt}\n\nA resposta anterior foi recusada por: ${problems.join("; ")}. Corrija e responda de novo.`;
   }
   return null;
+}
+
+/** As porções acertadas na meta pelo código, antes de conferir (ver `scaleToTarget`). */
+function scaled(
+  proposal: PractitionerPlanProposal | null,
+  context: Parameters<typeof checkPlan>[1],
+): PractitionerPlanProposal | null {
+  return proposal ? scaleToTarget(proposal, context.allowedFoods, context.targetCalories) : null;
 }
 
 async function ask(prompt: string): Promise<string> {
@@ -155,10 +170,10 @@ async function loadStudentData(studentId: string): Promise<StudentData> {
   };
 }
 
-async function loadFoods(choices: PlanChoices): Promise<(CheckFood & { unit: string })[]> {
+async function loadFoods(choices: PlanChoices): Promise<CheckFood[]> {
   const { data, error } = await supabaseAdmin
     .from("foods")
-    .select("name, serving_size, serving_unit, calories")
+    .select("name, serving_size, calories")
     .eq("is_custom", false);
   if (error) throw error;
   const rows = (data ?? []).filter((row) => row.calories !== null);
@@ -177,7 +192,6 @@ async function loadFoods(choices: PlanChoices): Promise<(CheckFood & { unit: str
       name: row.name,
       serving_size: Number(row.serving_size),
       calories: Number(row.calories),
-      unit: row.serving_unit,
     }));
 }
 

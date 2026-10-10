@@ -43,9 +43,14 @@ export async function savePractitionerPlan(
   return { periodizationId, dietPlanId };
 }
 
+/** O primeiro bloco: de hoje a 4 semanas. O banco exige as duas datas no treino e na dieta. */
+function firstBlock(): { start_date: string; end_date: string } {
+  const start_date = localDateOf(new Date());
+  return { start_date, end_date: addDays(start_date, FIRST_BLOCK_WEEKS * 7) };
+}
+
 async function saveTraining(ctx: SavePlanContext, pending: OnboardingPlanPending): Promise<string> {
-  const start = localDateOf(new Date());
-  const end = addDays(start, FIRST_BLOCK_WEEKS * 7);
+  const { start_date: start, end_date: end } = firstBlock();
   const name = "Meu primeiro plano";
 
   const { data: period, error } = await supabaseAdmin
@@ -113,6 +118,8 @@ async function saveDiet(ctx: SavePlanContext, pending: OnboardingPlanPending): P
       specialist_id: null,
       name: "Minha primeira dieta",
       plan_type: "unique",
+      // A mesma vigência do bloco de treino: os dois se recalibram juntos.
+      ...firstBlock(),
       target_calories: target.calories,
       target_protein: target.protein,
       target_carbs: target.carbs,

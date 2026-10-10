@@ -10,7 +10,9 @@
  * que servir o que a pessoa não come. Provisório até a revisão do CRN.
  */
 
-const LACTOSE = /leite|queijo|iogurte|requeij|ricota|cottage|kefir|manteiga|whey|case[ií]na/i;
+// A barra de proteína costuma levar whey: sem rótulo, a dúvida exclui.
+const LACTOSE =
+  /leite|queijo|iogurte|requeij|ricota|cottage|kefir|manteiga|whey|case[ií]na|barra de prote/i;
 const LACTOSE_FREE = /sem lactose|bebida de (soja|am[eê]ndoas)/i;
 const GLUTEN =
   /p[aã]o|trigo|macarr|torrada|marroquino|seitan|granola|aveia|barra de prote|cevada|centeio/i;
