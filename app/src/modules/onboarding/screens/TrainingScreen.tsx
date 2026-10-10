@@ -64,8 +64,8 @@ function ExerciseDaysQuestion() {
         {EXERCISE_DAYS.map((option) => (
           <ChipPick
             key={option}
-            rotulo={String(option)}
-            marcado={days === option}
+            label={String(option)}
+            selected={days === option}
             onPress={() => setDays(option)}
           />
         ))}
@@ -124,8 +124,8 @@ function TrainingQuestions() {
         {TRAINING_DAYS.map((option) => (
           <ChipPick
             key={option}
-            rotulo={String(option)}
-            marcado={days === option}
+            label={String(option)}
+            selected={days === option}
             onPress={() => setDays(option)}
           />
         ))}
@@ -144,8 +144,8 @@ function TrainingQuestions() {
           <ChoiceTile
             key={option.value}
             icon={option.icon}
-            rotulo={option.label}
-            marcado={place === option.value}
+            label={option.label}
+            selected={place === option.value}
             onPress={() => setPlace(option.value)}
           />
         ))}

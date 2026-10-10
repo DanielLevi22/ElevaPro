@@ -3,8 +3,8 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { CaixaDeIcone } from '@/components/ui/CaixaDeIcone';
-import { PassoDeEspera } from '@/components/ui/PassoDeEspera';
 import { Vidro } from '@/components/ui/Vidro';
+import { WaitStep } from '@/components/ui/WaitStep';
 import { registrarFalha } from '@/lib/registro';
 import { ROUTES } from '@/navigation/types';
 import { BuildingHero } from '../components/BuildingHero';
@@ -61,7 +61,7 @@ export function BuildingPlanScreen() {
           Montando seu plano
         </OnboardingTitle>
         {projection ? <ProjectionCurve projection={projection} /> : null}
-        <Passos estado="agora" />
+        <WaitSteps state="current" />
       </OnboardingFrame>
     );
   }
@@ -83,7 +83,7 @@ export function BuildingPlanScreen() {
         {texto.titulo}
       </OnboardingTitle>
       {projection ? <ProjectionCurve projection={projection} faded /> : null}
-      <Passos estado="parou" />
+      <WaitSteps state="stopped" />
     </OnboardingFrame>
   );
 }
@@ -144,15 +144,11 @@ const DESTINO_DA_FALHA: Partial<
   respostas: ROUTES.ONBOARDING.ABOUT,
 };
 
-function Passos({ estado }: { estado: 'agora' | 'parou' }) {
+function WaitSteps({ state }: { state: 'current' | 'stopped' }) {
   return (
     <Vidro classeExterna="mt-5" className="px-3.5 pb-0.5">
       {PASSOS.map((passo) => (
-        <PassoDeEspera
-          key={passo}
-          rotulo={passo}
-          estado={estado === 'parou' ? 'a_seguir' : 'agora'}
-        />
+        <WaitStep key={passo} label={passo} state={state === 'stopped' ? 'next' : 'current'} />
       ))}
     </Vidro>
   );

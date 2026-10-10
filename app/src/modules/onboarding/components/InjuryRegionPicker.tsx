@@ -26,8 +26,8 @@ export function InjuryRegionPicker({ selected, onChange }: InjuryRegionPickerPro
         {INJURY_REGIONS.map((region) => (
           <ChipMulti
             key={region}
-            rotulo={region}
-            marcado={selected.includes(region)}
+            label={region}
+            selected={selected.includes(region)}
             onPress={() => toggle(region)}
           />
         ))}

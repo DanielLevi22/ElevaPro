@@ -20,8 +20,8 @@ export function Chips({
       {options.map((option) => (
         <ChipMulti
           key={option}
-          rotulo={option}
-          marcado={selected.includes(option)}
+          label={option}
+          selected={selected.includes(option)}
           onPress={() => onToggle(option)}
         />
       ))}

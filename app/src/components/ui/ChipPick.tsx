@@ -1,34 +1,32 @@
 import { Text, TouchableOpacity } from 'react-native';
 import { cn } from '@/lib/utils';
 
-interface ChipPickProps {
-  rotulo: string;
-  marcado: boolean;
-  onPress: () => void;
-}
+import type { ChoiceProps } from './choiceProps';
+
+type ChipPickProps = ChoiceProps;
 
 /**
  * O chip de escolha única do kit (`ChipPick`): os dias por semana, as refeições
  * por dia. Divide a linha com os irmãos em partes iguais; o escolhido é pintado
  * na primária.
  *
- * @example <ChipPick rotulo="4" marcado={dias === 4} onPress={() => setDias(4)} />
+ * @example <ChipPick label="4" selected={dias === 4} onPress={() => setDias(4)} />
  */
-export function ChipPick({ rotulo, marcado, onPress }: ChipPickProps) {
+export function ChipPick({ label, selected, onPress }: ChipPickProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.8}
       accessibilityRole="radio"
-      accessibilityState={{ selected: marcado }}
-      accessibilityLabel={rotulo}
+      accessibilityState={{ selected: selected }}
+      accessibilityLabel={label}
       className={cn(
         'h-10 flex-1 items-center justify-center rounded-xl border px-3.5',
-        marcado ? 'border-primary bg-primary' : 'border-glass-border bg-glass-strong'
+        selected ? 'border-primary bg-primary' : 'border-glass-border bg-glass-strong'
       )}
     >
-      <Text className={cn('text-sm font-bold', marcado ? 'text-primary-foreground' : 'text-hero')}>
-        {rotulo}
+      <Text className={cn('text-sm font-bold', selected ? 'text-primary-foreground' : 'text-hero')}>
+        {label}
       </Text>
     </TouchableOpacity>
   );

@@ -140,8 +140,8 @@ function ScreeningQuestion() {
         {HEALTH_CONDITIONS.map((condition) => (
           <ChipMulti
             key={condition.id}
-            rotulo={condition.label}
-            marcado={selected.includes(condition.id)}
+            label={condition.label}
+            selected={selected.includes(condition.id)}
             onPress={() => setSelected((atual) => toggleCondition(atual, condition.id))}
           />
         ))}

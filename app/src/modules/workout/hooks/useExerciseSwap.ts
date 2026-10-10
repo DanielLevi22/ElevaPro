@@ -24,9 +24,6 @@ export function isSelfGuidedWorkout(
   return workout.specialist_id === null && workout.student_id === studentId;
 }
 
-/** Como a troca vale: só hoje, de vez no plano, ou de vez e dizendo para a IA evitar. */
-export type SwapMode = ExerciseSwapScope;
-
 interface ExerciseSwapState {
   alternatives: Exercise[];
   context: SwapContext | null;
@@ -65,7 +62,7 @@ export function useExerciseSwap(item: WorkoutExercise | null, studentId: string)
 
   /** Grava o que a troca precisa gravar antes de valer. */
   const persist = async (
-    mode: SwapMode,
+    mode: ExerciseSwapScope,
     swapped: WorkoutExercise,
     to: Exercise,
     selfGuided: boolean

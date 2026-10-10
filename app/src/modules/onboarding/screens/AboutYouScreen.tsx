@@ -3,10 +3,10 @@ import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { showAlert } from '@/components/ui/appAlert';
-import { Campo } from '@/components/ui/Campo';
+import { Field } from '@/components/ui/Field';
 import { GlassSegmented } from '@/components/ui/GlassSegmented';
 import { InfoNote } from '@/components/ui/InfoNote';
-import { Precisao } from '@/components/ui/Precisao';
+import { PrecisionMeter } from '@/components/ui/PrecisionMeter';
 import { registrarFalha } from '@/lib/registro';
 import { useCores, useEscala } from '@/shared/design';
 import { OnboardingFrame, OnboardingTitle } from '../components/OnboardingFrame';
@@ -96,13 +96,13 @@ export function AboutYouScreen() {
         Sobre você
       </OnboardingTitle>
       <View className="mt-[1.375rem] gap-3.5">
-        <Campo
-          rotulo="Idade"
-          valor={input.age}
+        <Field
+          label="Idade"
+          value={input.age}
           onChange={set('age')}
-          unidade="anos"
-          numerico
-          erro={errors.age}
+          unit="anos"
+          numeric
+          error={errors.age}
         />
         {ageOnly ? null : <BodyFields input={input} errors={errors} set={set} />}
       </View>
@@ -116,7 +116,7 @@ export function AboutYouScreen() {
         </InfoNote>
       ) : ageOnly ? null : (
         <View className="mt-5">
-          <Precisao percentual={precision.percent} nivel={precision.level} />
+          <PrecisionMeter percent={precision.percent} level={precision.level} />
         </View>
       )}
     </OnboardingFrame>
@@ -133,21 +133,21 @@ interface BodyFieldsProps {
 function BodyFields({ input, errors, set }: BodyFieldsProps) {
   return (
     <View className="flex-row items-start gap-2.5">
-      <Campo
-        rotulo="Altura"
-        valor={input.height}
+      <Field
+        label="Altura"
+        value={input.height}
         onChange={set('height')}
-        unidade="cm"
-        numerico
-        erro={errors.height}
+        unit="cm"
+        numeric
+        error={errors.height}
       />
-      <Campo
-        rotulo="Peso"
-        valor={input.weight}
+      <Field
+        label="Peso"
+        value={input.weight}
         onChange={set('weight')}
-        unidade="kg"
-        numerico
-        erro={errors.weight}
+        unit="kg"
+        numeric
+        error={errors.weight}
       />
     </View>
   );

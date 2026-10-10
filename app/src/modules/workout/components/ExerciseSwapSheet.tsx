@@ -1,4 +1,4 @@
-import type { Exercise, WorkoutExercise } from '@elevapro/shared';
+import type { Exercise, ExerciseSwapScope, WorkoutExercise } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, Text, TouchableOpacity, View } from 'react-native';
@@ -7,11 +7,11 @@ import { showAlert } from '@/components/ui/appAlert';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { cn } from '@/lib/utils';
 import { useCores, useEscala } from '@/shared/design';
-import { type SwapMode, useExerciseSwap } from '../hooks/useExerciseSwap';
+import { useExerciseSwap } from '../hooks/useExerciseSwap';
 import { useTodaySwapsStore } from '../store/todaySwapsStore';
 
 interface ModeOption {
-  mode: SwapMode;
+  mode: ExerciseSwapScope;
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
 }
@@ -57,7 +57,7 @@ export function ExerciseSwapSheet(props: ExerciseSwapSheetProps) {
   const insets = useSafeAreaInsets();
   const escalar = useEscala();
   const swap = useExerciseSwap(item, studentId);
-  const [mode, setMode] = useState<SwapMode>('today');
+  const [mode, setMode] = useState<ExerciseSwapScope>('today');
   const [saving, setSaving] = useState(false);
   const swapToday = useTodaySwapsStore((state) => state.swapToday);
 
@@ -123,7 +123,13 @@ function subtitleOf(item: WorkoutExercise, selfGuided: boolean): string {
   return selfGuided ? `${name}${prescription}` : `${name}${prescription} · só no treino de hoje`;
 }
 
-function ModeTiles({ mode, onChange }: { mode: SwapMode; onChange: (mode: SwapMode) => void }) {
+function ModeTiles({
+  mode,
+  onChange,
+}: {
+  mode: ExerciseSwapScope;
+  onChange: (mode: ExerciseSwapScope) => void;
+}) {
   const cores = useCores();
   const escalar = useEscala();
   return (

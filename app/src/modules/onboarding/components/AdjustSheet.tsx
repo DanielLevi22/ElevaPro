@@ -1,6 +1,6 @@
 import type { OnboardingAdjustment, OnboardingPlanPending } from '@elevapro/shared';
 import { Text, View } from 'react-native';
-import { AntesDepois } from '@/components/ui/AntesDepois';
+import { BeforeAfterRow } from '@/components/ui/BeforeAfterRow';
 import { GlassSheet } from '@/components/ui/GlassSheet';
 
 const DAYS = [2, 3, 4, 5, 6] as const;
@@ -55,43 +55,43 @@ export function AdjustSheet({ visible, plan, busy, canUndo, onAdjust, onClose }:
       </Text>
       <View className="mt-2.5">
         {swap ? (
-          <AntesDepois
-            primeira
+          <BeforeAfterRow
+            first
             icon="repeat-outline"
-            titulo="Trocar um alimento"
-            antes={swap.from}
-            depois={swap.to}
-            selo="0 kcal"
+            title="Trocar um alimento"
+            before={swap.from}
+            after={swap.to}
+            badge="0 kcal"
             disabled={busy}
             onPress={() => onAdjust({ kind: 'swap_food' })}
           />
         ) : null}
         {target ? (
           <>
-            <AntesDepois
+            <BeforeAfterRow
               icon="cash-outline"
-              titulo="Mais barato"
-              antes="Plano atual"
-              depois="Alimentos mais em conta"
-              selo="0 kcal · estimativa"
+              title="Mais barato"
+              before="Plano atual"
+              after="Alimentos mais em conta"
+              badge="0 kcal · estimativa"
               disabled={busy}
               onPress={() => onAdjust({ kind: 'cheaper' })}
             />
-            <AntesDepois
+            <BeforeAfterRow
               icon="flash-outline"
-              titulo="Mais rápido"
-              antes="Plano atual"
-              depois="Preparo de até 15 min"
-              selo="0 kcal · estimativa"
+              title="Mais rápido"
+              before="Plano atual"
+              after="Preparo de até 15 min"
+              badge="0 kcal · estimativa"
               disabled={busy}
               onPress={() => onAdjust({ kind: 'faster' })}
             />
-            <AntesDepois
+            <BeforeAfterRow
               icon="fish-outline"
-              titulo="Mais proteína"
-              antes={`${target.protein} g`}
-              depois={`${target.protein + PROTEIN_STEP} g por dia`}
-              selo="0 kcal"
+              title="Mais proteína"
+              before={`${target.protein} g`}
+              after={`${target.protein + PROTEIN_STEP} g por dia`}
+              badge="0 kcal"
               disabled={busy}
               onPress={() => onAdjust({ kind: 'more_protein' })}
             />
@@ -124,13 +124,13 @@ function TrainingDaysOptions({ plan, busy, onAdjust }: TrainingDaysOptionsProps)
       {DAYS.filter((days) => days !== plan.trainingDays).map((days) => {
         const next = byDays?.[String(days)];
         return (
-          <AntesDepois
+          <BeforeAfterRow
             key={days}
             icon="calendar-outline"
-            titulo={`Treinar ${days} dias por semana`}
-            antes={label(plan.trainingDays, current ?? undefined)}
-            depois={label(days, next)}
-            selo={next !== undefined && current !== null ? delta(next - current) : 'sem dieta'}
+            title={`Treinar ${days} dias por semana`}
+            before={label(plan.trainingDays, current ?? undefined)}
+            after={label(days, next)}
+            badge={next !== undefined && current !== null ? delta(next - current) : 'sem dieta'}
             disabled={busy}
             onPress={() => onAdjust({ kind: 'training_days', days })}
           />

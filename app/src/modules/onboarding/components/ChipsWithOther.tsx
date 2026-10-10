@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import { Campo } from '@/components/ui/Campo';
+import { Field } from '@/components/ui/Field';
 import { cleanFreeText } from '../services/freeText';
 import { Chips } from './Chips';
 
@@ -36,9 +36,9 @@ export function ChipsWithOther({
       <Chips options={[...options, OTHER]} selected={selected} onToggle={onToggle} />
       {selected.includes(OTHER) ? (
         <View className="mt-3">
-          <Campo
-            rotulo={otherLabel}
-            valor={other}
+          <Field
+            label={otherLabel}
+            value={other}
             onChange={(texto) => onOtherChange(cleanFreeText(texto))}
             placeholder={otherPlaceholder}
           />

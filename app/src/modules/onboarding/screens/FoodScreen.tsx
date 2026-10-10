@@ -80,8 +80,8 @@ export function FoodScreen() {
         {MEALS_PER_DAY.map((option) => (
           <ChipPick
             key={option}
-            rotulo={String(option)}
-            marcado={meals === option}
+            label={String(option)}
+            selected={meals === option}
             onPress={() => setMeals(option)}
           />
         ))}

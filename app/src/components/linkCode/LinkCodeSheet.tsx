@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Share, Text, View } from 'react-native';
 import { showAlert } from '@/components/ui/appAlert';
 import { CaixaDeIcone } from '@/components/ui/CaixaDeIcone';
-import { Campo } from '@/components/ui/Campo';
+import { Field } from '@/components/ui/Field';
 import { GlassSegmented } from '@/components/ui/GlassSegmented';
 import { GlassSheet } from '@/components/ui/GlassSheet';
 import { registrarFalha } from '@/lib/registro';
@@ -113,9 +113,9 @@ export function LinkCodeSheet({ visible, side, userId, onClose, onLinked }: Link
         <MyCode state={mine} />
       ) : (
         <View className="mt-4">
-          <Campo
-            rotulo="Código"
-            valor={typed}
+          <Field
+            label="Código"
+            value={typed}
             onChange={(texto) => setTyped(texto.toUpperCase())}
             placeholder="Ex.: K7Q2MX"
           />

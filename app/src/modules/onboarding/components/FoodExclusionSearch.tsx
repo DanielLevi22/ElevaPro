@@ -2,8 +2,8 @@ import { createNutritionService } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { useEffect, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { Campo } from '@/components/ui/Campo';
 import { ChipMulti } from '@/components/ui/ChipMulti';
+import { Field } from '@/components/ui/Field';
 import { registrarAviso } from '@/lib/registro';
 
 const MIN_QUERY = 2;
@@ -41,19 +41,14 @@ export function FoodExclusionSearch({ chosen, onChange }: FoodExclusionSearchPro
           {chosen.map((name) => (
             <ChipMulti
               key={name}
-              rotulo={name}
-              marcado
+              label={name}
+              selected
               onPress={() => onChange(chosen.filter((item) => item !== name))}
             />
           ))}
         </View>
       ) : null}
-      <Campo
-        rotulo="Buscar alimento"
-        valor={query}
-        onChange={setQuery}
-        placeholder="Ex.: camarão"
-      />
+      <Field label="Buscar alimento" value={query} onChange={setQuery} placeholder="Ex.: camarão" />
       {results.map((name) => (
         <TouchableOpacity
           key={name}
