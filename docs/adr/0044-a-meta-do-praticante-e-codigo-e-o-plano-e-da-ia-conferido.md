@@ -60,9 +60,11 @@ Não é um motor de regras: são poucas funções puras no `shared`, ao lado da
 - A condição clínica não é guardada: o banco recebe só o resultado da triagem
   (dieta liberada ou encaminhada, e se o motivo foi condição ou não informar).
   Lesão continua guardada por região, porque muda o treino.
-- Quem recusa o consentimento de saúde recebe só treino, gerado com objetivo,
-  nível, dias, tempo e local, sem nenhum dado de saúde gravado. Recusar custa a
-  dieta, não o app (Art. 8°).
+- Quem recusa o consentimento de saúde não recebe plano gerado: as rotas de IA
+  exigem o aceite, e o texto da recusa promete que a IA fica de fora. Segue para
+  a tela inicial, onde o cartão "Libere sua dieta" leva de volta ao aceite.
+  Recusar custa o plano, não o app (Art. 8°). Gerar só o treino sem o aceite foi
+  considerado e recusado: contrariaria o que o texto da recusa diz.
 
 ## A análise corporal é etapa opcional, não um segundo fluxo
 
@@ -74,13 +76,14 @@ logo depois dela, num fluxo só:
   peso. Fotos do corpo no primeiro minuto são atrito, e a ativação não pode
   depender delas. Quem pula encontra a oferta de novo em "Complete seu perfil", e
   o plano se recalibra quando o resultado chega.
-- **A análise roda enquanto a pessoa responde.** Ela leva cerca de 30 s; começa
-  depois da terceira foto e a pessoa segue para as telas seguintes. "Montando"
-  espera o resultado se ele ainda não chegou. Falhou, o plano sai pela fórmula
-  padrão.
-- **O resultado muda o plano.** Com % de gordura, a proteína passa a ser por kg
-  de massa magra, o que corrige a meta inflada em obesidade (abaixo), e o gasto
-  em repouso pode vir da massa magra (Katch-McArdle), a validar pelo CRN. As
+- **A análise roda na tela de processamento, por enquanto.** O ideal é rodar
+  enquanto a pessoa responde as telas seguintes (a análise leva cerca de 30 s);
+  isso pede mover o envio do scan para fora da tela de processamento, e ficou
+  para depois. Vindo do onboarding, o fim do scan segue para a triagem.
+- **O resultado muda o plano.** Com um scan dos últimos 30 dias, a proteína
+  passa a ser por kg de massa magra (2,5 g/kg no corte, a validar pelo CRN),
+  sem mudar as calorias. O gasto em repouso pela massa magra (Katch-McArdle)
+  ficou para depois. As
   notas de postura e simetria vão à IA como ênfase do treino; a foto nunca vai.
 - **É estimativa e a tela diz isso,** com o selo de confiança que já existe.
 
