@@ -18,6 +18,8 @@ interface OnboardingState {
   dietAllowed: boolean | null;
   /** Quando a pessoa dispensou o cartão do escaneamento: ele some por 30 dias. */
   scanCardDismissedAt: number | null;
+  /** A última tela do onboarding aberta: fechar o app retoma dela (`resumeRoute`). */
+  lastRoute: string | null;
   /** Começa o onboarding de `ownerId`, descartando o de outra conta. */
   start: (ownerId: string) => void;
   chooseGoal: (goal: OnboardingGoal) => void;
@@ -28,6 +30,7 @@ interface OnboardingState {
   acceptConsent: () => void;
   dismissScanCard: () => void;
   setDietAllowed: (allowed: boolean) => void;
+  visit: (route: string) => void;
 }
 
 const EMPTY = {
@@ -38,6 +41,7 @@ const EMPTY = {
   consentDeclined: false,
   dietAllowed: null,
   scanCardDismissedAt: null,
+  lastRoute: null,
 };
 
 /**
@@ -63,6 +67,7 @@ export const useOnboardingStore = create<OnboardingState>()(
       acceptConsent: () => set({ consentDeclined: false }),
       dismissScanCard: () => set({ scanCardDismissedAt: Date.now() }),
       setDietAllowed: (dietAllowed) => set({ dietAllowed }),
+      visit: (lastRoute) => set({ lastRoute }),
     }),
     {
       name: 'onboarding',

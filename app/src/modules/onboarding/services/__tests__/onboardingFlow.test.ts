@@ -1,4 +1,4 @@
-import { nextOnboardingStep } from '../onboardingFlow';
+import { nextOnboardingStep, resumeRoute } from '../onboardingFlow';
 
 const R = {
   scope: '/onboarding/scope',
@@ -66,5 +66,24 @@ describe('nextOnboardingStep — cada escolha pergunta só o que usa', () => {
 
   it('sem dieta pela triagem, treino e dieta vira só treino depois de O6', () => {
     expect(nextOnboardingStep('training', { scope: 'both', dietAllowed: false })).toBe(R.building);
+  });
+});
+
+/** Seam da issue: "fechar o app e voltar retoma na tela em que parou". */
+describe('retomar o onboarding', () => {
+  it('volta à tela em que a pessoa parou', () => {
+    expect(resumeRoute('/onboarding/food')).toBe('/onboarding/food');
+    expect(resumeRoute('/onboarding/about')).toBe('/onboarding/about');
+  });
+
+  it('o plano não aprovado não fica no aparelho: O8 e O9 voltam a montar', () => {
+    expect(resumeRoute('/onboarding/plan')).toBe('/onboarding/building');
+    expect(resumeRoute('/onboarding/building')).toBe('/onboarding/building');
+  });
+
+  it('a triagem volta às perguntas, e sem tela lembrada começa do início', () => {
+    expect(resumeRoute('/onboarding/screening')).toBe('/onboarding/health');
+    expect(resumeRoute(null)).toBe('/onboarding/welcome');
+    expect(resumeRoute('/(tabs)')).toBe('/onboarding/welcome');
   });
 });

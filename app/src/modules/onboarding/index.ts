@@ -1,6 +1,7 @@
 // Onboarding do Praticante (#365): do cadastro ao primeiro plano aprovado.
 export { CompleteProfileCard } from './components/CompleteProfileCard';
 export { useOnboardingGate } from './hooks/useOnboardingGate';
+export { useRememberOnboardingStep } from './hooks/useRememberOnboardingStep';
 export { AboutYouScreen } from './screens/AboutYouScreen';
 export { BuildingPlanScreen } from './screens/BuildingPlanScreen';
 export { ConsentScreen } from './screens/ConsentScreen';

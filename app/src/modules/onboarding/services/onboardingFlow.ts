@@ -21,7 +21,29 @@ interface FlowContext {
   dietAllowed: boolean | null;
 }
 
-type OnboardingRoute = (typeof ROUTES.ONBOARDING)[keyof typeof ROUTES.ONBOARDING];
+export type OnboardingRoute = (typeof ROUTES.ONBOARDING)[keyof typeof ROUTES.ONBOARDING];
+
+const ROUTES_OF_ONBOARDING: readonly string[] = Object.values(ROUTES.ONBOARDING);
+
+/**
+ * Onde retomar quem fechou o app no meio do onboarding (#365): a tela em que
+ * parou. As respostas dela estão no servidor, e as escolhas de antes do aceite,
+ * no aparelho.
+ *
+ * O8 e O9 voltam a O8: o plano não aprovado não fica no aparelho, e O8 o monta
+ * de novo. A triagem volta a O5, porque o resultado depende das respostas de
+ * lá. Depois de aprovar, ou sem tela lembrada, começa nas boas-vindas.
+ *
+ * @example resumeRoute('/onboarding/food') // '/onboarding/food'
+ * @example resumeRoute('/onboarding/plan') // '/onboarding/building'
+ */
+export function resumeRoute(last: string | null): OnboardingRoute {
+  if (!last || !ROUTES_OF_ONBOARDING.includes(last)) return ROUTES.ONBOARDING.WELCOME;
+  if (last === ROUTES.ONBOARDING.PLAN) return ROUTES.ONBOARDING.BUILDING;
+  if (last === ROUTES.ONBOARDING.SCREENING) return ROUTES.ONBOARDING.HEALTH;
+  if (last === ROUTES.ONBOARDING.HEALTH_CONNECT) return ROUTES.ONBOARDING.WELCOME;
+  return last as OnboardingRoute;
+}
 
 /**
  * A tela seguinte do onboarding, pela escolha do que montar (#365). Cada escolha

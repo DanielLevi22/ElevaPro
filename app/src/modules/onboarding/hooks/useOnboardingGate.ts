@@ -2,8 +2,8 @@ import type { AccountType } from '@elevapro/shared';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { registrarAviso } from '@/lib/registro';
-import { ROUTES } from '@/navigation/types';
 import { hasCompletedAnamnesis } from '../services/anamnesisCompletion';
+import { resumeRoute } from '../services/onboardingFlow';
 import { isOnboardingEnabled, shouldEnterOnboarding } from '../services/onboardingGate';
 import { useOnboardingStore } from '../store/onboardingStore';
 
@@ -14,7 +14,8 @@ interface OnboardingGateParams {
 }
 
 /**
- * Leva o Praticante sem anamnese concluída ao onboarding, na entrada do app.
+ * Leva o Praticante sem anamnese concluída ao onboarding, na entrada do app, na
+ * tela em que ele parou (`resumeRoute`).
  *
  * Consulta de novo cada vez que a pessoa sai do onboarding: quem acabou de
  * concluir não pode ser mandado de volta por uma resposta antiga.
@@ -37,7 +38,9 @@ export function useOnboardingGate({ studentId, accountType, inOnboarding }: Onbo
     hasCompletedAnamnesis(studentId)
       .then((anamnesisCompleted) => {
         if (active && shouldEnterOnboarding({ ...base, anamnesisCompleted })) {
-          router.replace(ROUTES.ONBOARDING.WELCOME);
+          const { lastRoute, ownerId } = useOnboardingStore.getState();
+          // A tela lembrada é só da própria conta: outra conta no aparelho começa do zero.
+          router.replace(resumeRoute(ownerId === studentId ? lastRoute : null));
         }
       })
       .catch(() => registrarAviso('onboarding.consultar_anamnese', { caiuNaTelaInicial: true }));
