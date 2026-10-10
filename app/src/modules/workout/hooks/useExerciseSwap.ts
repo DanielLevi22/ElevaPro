@@ -45,9 +45,19 @@ const EMPTY: ExerciseSwapState = { alternatives: [], context: null, loading: fal
  * @example const { alternatives, persist } = useExerciseSwap(item, alunoId);
  */
 export function useExerciseSwap(item: WorkoutExercise | null, studentId: string) {
-  const [state, setState] = useState<ExerciseSwapState>(EMPTY);
-  const current = item?.exercise ?? null;
+  const state = useAlternatives(item?.exercise ?? null, studentId);
+  const persist = (
+    mode: ExerciseSwapScope,
+    swapped: WorkoutExercise,
+    to: Exercise,
+    selfGuided: boolean
+  ) => persistSwap({ mode, swapped, to, selfGuided, studentId });
+  return { ...state, persist };
+}
 
+/** As alternativas do exercício aberto, recarregadas quando ele muda. */
+function useAlternatives(current: Exercise | null, studentId: string): ExerciseSwapState {
+  const [state, setState] = useState<ExerciseSwapState>(EMPTY);
   useEffect(() => {
     if (!current) return setState(EMPTY);
     let active = true;
@@ -59,21 +69,23 @@ export function useExerciseSwap(item: WorkoutExercise | null, studentId: string)
       active = false;
     };
   }, [current, studentId]);
+  return state;
+}
 
-  /** Grava o que a troca precisa gravar antes de valer. */
-  const persist = async (
-    mode: ExerciseSwapScope,
-    swapped: WorkoutExercise,
-    to: Exercise,
-    selfGuided: boolean
-  ) => {
-    if (!selfGuided) return swapService.recordSwap(swapped.id, to.id, 'today');
-    if (mode === 'today') return;
-    await swapService.swapForever(swapped.id, to.id);
-    if (mode === 'less') await swapService.avoid(studentId, swapped.exercise_id);
-  };
+interface SwapToPersist {
+  mode: ExerciseSwapScope;
+  swapped: WorkoutExercise;
+  to: Exercise;
+  selfGuided: boolean;
+  studentId: string;
+}
 
-  return { ...state, persist };
+/** Grava o que a troca precisa gravar antes de valer. */
+async function persistSwap({ mode, swapped, to, selfGuided, studentId }: SwapToPersist) {
+  if (!selfGuided) return swapService.recordSwap(swapped.id, to.id, 'today');
+  if (mode === 'today') return;
+  await swapService.swapForever(swapped.id, to.id);
+  if (mode === 'less') await swapService.avoid(studentId, swapped.exercise_id);
 }
 
 async function loadAlternatives(

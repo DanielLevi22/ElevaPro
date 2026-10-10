@@ -13,7 +13,7 @@ import { type CheckFood, checkPlan, type PractitionerPlanProposal } from "./plan
 import { allowedExerciseNames, type PlanChoices, readPlanChoices } from "./planChoices";
 import { buildPlanPrompt } from "./planPrompt";
 import { prepareProposal } from "./prepareProposal";
-import type { OnboardingPlanPending, OnboardingPlanTarget } from "./types";
+import type { OnboardingPlanPending, OnboardingPlanScope, OnboardingPlanTarget } from "./types";
 
 /** Uma tentativa a mais, com os motivos da recusa: a IA erra conta, e corrige quando sabe onde. */
 const ATTEMPTS = 2;
@@ -67,61 +67,131 @@ export async function generatePractitionerPlan(
   studentId: string,
   options: GenerationOptions = {},
 ): Promise<GenerationOutcome> {
+  const prepared = await prepareGeneration(studentId, options);
+  if (!prepared.ok) return prepared;
+  const generation = prepared.generation;
+  const [foods, exercises] = await Promise.all([
+    loadPlanFoods(generation.choices),
+    loadExercises(generation.choices),
+  ]);
+  const proposal = await askUntilAccepted(
+    promptOf(generation, foods, exercises),
+    generation.keepWorkouts,
+    checkContextOf(generation, foods, exercises),
+  );
+  if (!proposal) return { ok: false, reason: "plan_rejected" };
+  return { ok: true, pending: pendingOf(generation, proposal, foods) };
+}
+
+/** O que cada escolha monta: só treino não tem meta; só dieta não tem treino. */
+const SCOPE_PARTS: Record<OnboardingPlanScope, { diet: boolean; training: boolean }> = {
+  both: { diet: true, training: true },
+  training: { diet: false, training: true },
+  diet: { diet: true, training: false },
+};
+
+/** Tudo que a geração decide antes de pedir à IA, lido das respostas do servidor. */
+interface Generation {
+  answers: Record<string, unknown>;
+  bodyFatPct: number | undefined;
+  track: Track;
+  choices: PlanChoices;
+  scope: OnboardingPlanScope;
+  goal: string;
+  target: OnboardingPlanTarget | null;
+  /** Treinos que ficam como estão: só as refeições são remontadas. */
+  keepWorkouts: PractitionerPlanProposal["workouts"] | undefined;
+  options: GenerationOptions;
+}
+
+async function prepareGeneration(
+  studentId: string,
+  options: GenerationOptions,
+): Promise<{ ok: true; generation: Generation } | Extract<GenerationOutcome, { ok: false }>> {
   const loaded = await loadStudentData(studentId);
   const answers = { ...loaded.answers, ...options.answersOverride };
   // A tela barra o menor em O4; o servidor confere de novo, em todo caminho, porque
   // o aparelho pode pular uma tela, e o plano automático não atende menor (ADR-0044).
   if (!isPractitionerAge(answers.age)) return { ok: false, reason: "under_age" };
-  const track = loaded.track;
-  const choices = readPlanChoices(answers);
   const scope = scopeOf(answers);
+  const parts = SCOPE_PARTS[scope];
   // Só treino não tem meta: nem pede o corpo, que no caminho dele não foi perguntado.
-  const computed = scope === "training" ? null : targetOf(answers, loaded.bodyFatPct);
+  const computed = parts.diet ? targetOf(answers, loaded.bodyFatPct) : null;
   if (computed === undefined) return { ok: false, reason: "incomplete_answers" };
-  const target = computed && options.targetOverride ? options.targetOverride : computed;
-  // Só dieta não tem treino: a IA monta só as refeições, e a conferência espera zero treinos.
-  const keepWorkouts = scope === "diet" ? [] : options.keepWorkouts;
-
-  const [foods, exercises] = await Promise.all([loadPlanFoods(choices), loadExercises(choices)]);
   const goal = typeof answers.main_goal === "string" ? answers.main_goal : "Saúde / Bem-estar";
-  const basePrompt = buildPlanPrompt({
-    goal,
-    level: track,
+  return {
+    ok: true,
+    generation: {
+      answers,
+      bodyFatPct: loaded.bodyFatPct,
+      track: loaded.track,
+      choices: readPlanChoices(answers),
+      scope,
+      goal,
+      target: computed && options.targetOverride ? options.targetOverride : computed,
+      // Só dieta não tem treino: a IA monta só as refeições, e a conferência espera zero.
+      keepWorkouts: parts.training ? options.keepWorkouts : [],
+      options,
+    },
+  };
+}
+
+function promptOf(generation: Generation, foods: CatalogFood[], exercises: Set<string>): string {
+  const { answers, choices, target, options } = generation;
+  return buildPlanPrompt({
+    goal: generation.goal,
+    level: generation.track,
     choices,
     target,
     injuryReported: answers.injury_reported === true,
     exercises: [...exercises],
     foods: foods.map((food) => `${food.name} — ${food.calories} kcal por ${food.serving_size} g`),
     dietInstruction: options.dietInstruction,
-    mealsOnly: keepWorkouts !== undefined,
+    mealsOnly: generation.keepWorkouts !== undefined,
   });
+}
 
-  const proposal = await askUntilAccepted(basePrompt, keepWorkouts, {
-    trainingDays: scope === "diet" ? 0 : choices.trainingDays,
+function checkContextOf(
+  generation: Generation,
+  foods: CatalogFood[],
+  exercises: Set<string>,
+): Parameters<typeof checkPlan>[1] {
+  const { choices } = generation;
+  const training = SCOPE_PARTS[generation.scope].training;
+  return {
+    trainingDays: training ? choices.trainingDays : 0,
     sessionMinutes: choices.sessionMinutes,
-    sports: scope === "diet" ? [] : choices.sports,
+    sports: training ? choices.sports : [],
     mealsPerDay: choices.mealsPerDay,
-    targetCalories: target?.calories ?? null,
+    targetCalories: generation.target?.calories ?? null,
     allowedFoods: new Map(foods.map((food) => [food.name, food])),
     allowedExercises: exercises,
-  });
-  if (!proposal) return { ok: false, reason: "plan_rejected" };
+  };
+}
 
-  const pending = {
-    scope,
+function pendingOf(
+  generation: Generation,
+  proposal: PractitionerPlanProposal,
+  foods: CatalogFood[],
+): OnboardingPlanPending {
+  const { choices, target } = generation;
+  const pending: OnboardingPlanPending = {
+    scope: generation.scope,
     proposal,
     target,
     mealCalories: mealCaloriesOf(proposal, foods),
-    goal,
-    level: track,
+    goal: generation.goal,
+    level: generation.track,
     mealsPerDay: choices.mealsPerDay,
     sessionMinutes: choices.sessionMinutes,
     trainingDays: choices.trainingDays,
-    caloriesByTrainingDays: target ? caloriesByDays(answers, loaded.bodyFatPct) : null,
+    caloriesByTrainingDays: target
+      ? caloriesByDays(generation.answers, generation.bodyFatPct)
+      : null,
     suggestedSwap: null,
-    estimate: options.estimate ?? null,
+    estimate: generation.options.estimate ?? null,
   };
-  return { ok: true, pending: { ...pending, suggestedSwap: suggestSwap(pending, foods) } };
+  return { ...pending, suggestedSwap: suggestSwap(pending, foods) };
 }
 
 async function askUntilAccepted(
@@ -289,11 +359,10 @@ function mealCaloriesOf(proposal: PractitionerPlanProposal, foods: readonly Chec
   );
 }
 
-const SCOPES = ["both", "training", "diet"] as const;
-
-/** O que a pessoa pediu para montar; quem passou pelo onboarding antes da escolha, os dois. */
-function scopeOf(answers: Record<string, unknown>): (typeof SCOPES)[number] {
-  return SCOPES.includes(answers.plan_scope as (typeof SCOPES)[number])
-    ? (answers.plan_scope as (typeof SCOPES)[number])
+/** A escolha de O1b gravada; sem ela, ou com valor estranho, monta os dois. */
+function scopeOf(answers: Record<string, unknown>): OnboardingPlanScope {
+  const scope = answers.plan_scope;
+  return typeof scope === "string" && scope in SCOPE_PARTS
+    ? (scope as OnboardingPlanScope)
     : "both";
 }

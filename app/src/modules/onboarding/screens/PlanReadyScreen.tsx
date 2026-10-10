@@ -42,51 +42,11 @@ const GUARD_TEXT: Record<DietGuard, string> = {
  * @example <PlanReadyScreen />
  */
 export function PlanReadyScreen() {
-  const router = useRouter();
-  const plan = usePlanDraftStore((state) => state.plan);
-  const canUndo = usePlanDraftStore((state) => state.canUndo);
-  const { approving, adjusting, approve, adjust } = usePlanActions();
-  const [adjustOpen, setAdjustOpen] = useState(false);
-
-  // Sem plano na memória AO ABRIR (o app fechou), volta a O8 para gerar de novo.
-  // Só na abertura: a aprovação limpa o plano antes de a tela sair, e reagir a
-  // essa limpeza mandava a pessoa de volta a O8 e gerava outro plano, em laço.
-  const openedWithoutPlan = useRef(plan === null);
-  useEffect(() => {
-    if (openedWithoutPlan.current) router.replace(ROUTES.ONBOARDING.BUILDING);
-  }, [router]);
+  const plan = usePlanOrRebuild();
   if (!plan) return null;
 
   return (
-    <OnboardingFrame
-      overlay={
-        <>
-          <BarraDeDuasAcoes
-            semAbas
-            secundaria={{
-              rotulo: 'Ajustar',
-              icone: 'options-outline',
-              onPress: () => setAdjustOpen(true),
-              desabilitada: approving,
-            }}
-            principal={{
-              rotulo: approving ? 'Aprovando…' : 'Aprovar plano',
-              icone: 'checkmark',
-              onPress: () => void approve(),
-              desabilitada: approving || adjusting,
-            }}
-          />
-          <AdjustSheet
-            visible={adjustOpen}
-            plan={plan}
-            busy={adjusting}
-            canUndo={canUndo}
-            onAdjust={(adjustment) => void adjust(adjustment)}
-            onClose={() => setAdjustOpen(false)}
-          />
-        </>
-      }
-    >
+    <OnboardingFrame overlay={<PlanActions plan={plan} />}>
       <OnboardingTitle sub="Revise e aprove. Você pode ajustar quando quiser.">
         Seu plano está pronto
       </OnboardingTitle>
@@ -94,6 +54,64 @@ export function PlanReadyScreen() {
       {plan.target && !plan.target.guards.includes('lean_mass') ? <ScanSuggestion /> : null}
       {plan.proposal.workouts.length > 0 ? <Week plan={plan} /> : null}
       <ExampleDay plan={plan} />
+      <PlanNotes plan={plan} />
+    </OnboardingFrame>
+  );
+}
+
+/**
+ * O plano da memória. Sem plano AO ABRIR (o app fechou), volta a O8 para gerar
+ * de novo. Só na abertura: a aprovação limpa o plano antes de a tela sair, e
+ * reagir a essa limpeza mandava a pessoa de volta a O8 e gerava outro plano, em laço.
+ */
+function usePlanOrRebuild(): OnboardingPlanPending | null {
+  const router = useRouter();
+  const plan = usePlanDraftStore((state) => state.plan);
+  const openedWithoutPlan = useRef(plan === null);
+  useEffect(() => {
+    if (openedWithoutPlan.current) router.replace(ROUTES.ONBOARDING.BUILDING);
+  }, [router]);
+  return plan;
+}
+
+/** "Ajustar" e "Aprovar plano", com a folha de O10. */
+function PlanActions({ plan }: { plan: OnboardingPlanPending }) {
+  const canUndo = usePlanDraftStore((state) => state.canUndo);
+  const { approving, adjusting, approve, adjust } = usePlanActions();
+  const [adjustOpen, setAdjustOpen] = useState(false);
+  return (
+    <>
+      <BarraDeDuasAcoes
+        semAbas
+        secundaria={{
+          rotulo: 'Ajustar',
+          icone: 'options-outline',
+          onPress: () => setAdjustOpen(true),
+          desabilitada: approving,
+        }}
+        principal={{
+          rotulo: approving ? 'Aprovando…' : 'Aprovar plano',
+          icone: 'checkmark',
+          onPress: () => void approve(),
+          desabilitada: approving || adjusting,
+        }}
+      />
+      <AdjustSheet
+        visible={adjustOpen}
+        plan={plan}
+        busy={adjusting}
+        canUndo={canUndo}
+        onAdjust={(adjustment) => void adjust(adjustment)}
+        onClose={() => setAdjustOpen(false)}
+      />
+    </>
+  );
+}
+
+/** A nota de estimativa da IA e a explicação do plano, quando há. */
+function PlanNotes({ plan }: { plan: OnboardingPlanPending }) {
+  return (
+    <>
       {plan.estimate ? (
         <InfoNote icon="sparkles-outline" className="mt-3">
           {ESTIMATE_TEXT[plan.estimate]}
@@ -104,7 +122,7 @@ export function PlanReadyScreen() {
           {plan.proposal.explanation}
         </Text>
       ) : null}
-    </OnboardingFrame>
+    </>
   );
 }
 
@@ -116,8 +134,43 @@ const ESTIMATE_TEXT = {
     'Mais rápido: as refeições foram escolhidas pela IA como de preparo rápido. É estimativa; o app não mede tempo de preparo.',
 } as const;
 
-function TargetCard({ target }: { target: NonNullable<OnboardingPlanPending['target']> }) {
-  const macros = [
+type Target = NonNullable<OnboardingPlanPending['target']>;
+
+function TargetCard({ target }: { target: Target }) {
+  return (
+    <>
+      <Vidro classeExterna="mt-4" className="flex-row items-center gap-3.5 p-3">
+        <CaloriesRing calories={target.calories} />
+        <MacroBars target={target} />
+      </Vidro>
+      {target.guards.map((guard) => (
+        <Text key={guard} className="mt-2 text-[0.71875rem] leading-[1rem] text-hero-secondary">
+          {GUARD_TEXT[guard]}
+        </Text>
+      ))}
+    </>
+  );
+}
+
+/**
+ * As calorias do dia no anel. Miolo próprio: no anel de 96 do kit o valor é 0,2
+ * do diâmetro, e o rótulo padrão do Anel (feito para o de 168) cortava na borda.
+ */
+function CaloriesRing({ calories }: { calories: number }) {
+  const text = calories.toLocaleString('pt-BR');
+  return (
+    <Anel valor={100} meta={100} rotulo={text} tamanho={96} espessura={9}>
+      <Text className="font-display-black text-[1.1875rem] leading-[1.25rem] tracking-tight text-hero">
+        {text}
+      </Text>
+      <Text className="mt-0.5 text-[0.59375rem] font-bold text-hero-secondary">kcal por dia</Text>
+    </Anel>
+  );
+}
+
+/** As kcal de cada grama: proteína e carboidrato 4, gordura 9. */
+function macrosOf(target: Target) {
+  return [
     {
       label: 'Proteína',
       grams: target.protein,
@@ -132,49 +185,27 @@ function TargetCard({ target }: { target: NonNullable<OnboardingPlanPending['tar
     },
     { label: 'Gordura', grams: target.fat, kcal: target.fat * 9, tom: 'gordura' as const },
   ];
+}
+
+function MacroBars({ target }: { target: Target }) {
   return (
-    <>
-      <Vidro classeExterna="mt-4" className="flex-row items-center gap-3.5 p-3">
-        {/* Miolo próprio: no anel de 96 do kit o valor é 0,2 do diâmetro, e o
-            rótulo padrão do Anel (feito para o de 168) cortava na borda. */}
-        <Anel
-          valor={100}
-          meta={100}
-          rotulo={target.calories.toLocaleString('pt-BR')}
-          tamanho={96}
-          espessura={9}
-        >
-          <Text className="font-display-black text-[1.1875rem] leading-[1.25rem] tracking-tight text-hero">
-            {target.calories.toLocaleString('pt-BR')}
-          </Text>
-          <Text className="mt-0.5 text-[0.59375rem] font-bold text-hero-secondary">
-            kcal por dia
-          </Text>
-        </Anel>
-        <View className="flex-1 gap-[0.5625rem]">
-          {macros.map((macro) => (
-            <View key={macro.label}>
-              <View className="mb-1 flex-row justify-between">
-                <Text className="text-[0.71875rem] font-semibold text-hero-secondary">
-                  {macro.label}
-                </Text>
-                <Text className="text-xs font-extrabold text-hero">{`${macro.grams} g`}</Text>
-              </View>
-              <BarraDeProgresso
-                percentual={Math.round((macro.kcal / target.calories) * 100)}
-                tom={macro.tom}
-                espessura="fina"
-              />
-            </View>
-          ))}
+    <View className="flex-1 gap-[0.5625rem]">
+      {macrosOf(target).map((macro) => (
+        <View key={macro.label}>
+          <View className="mb-1 flex-row justify-between">
+            <Text className="text-[0.71875rem] font-semibold text-hero-secondary">
+              {macro.label}
+            </Text>
+            <Text className="text-xs font-extrabold text-hero">{`${macro.grams} g`}</Text>
+          </View>
+          <BarraDeProgresso
+            percentual={Math.round((macro.kcal / target.calories) * 100)}
+            tom={macro.tom}
+            espessura="fina"
+          />
         </View>
-      </Vidro>
-      {target.guards.map((guard) => (
-        <Text key={guard} className="mt-2 text-[0.71875rem] leading-[1rem] text-hero-secondary">
-          {GUARD_TEXT[guard]}
-        </Text>
       ))}
-    </>
+    </View>
   );
 }
 
