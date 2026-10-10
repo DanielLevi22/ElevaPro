@@ -30,6 +30,8 @@ interface OnboardingFrameProps {
   };
   /** O texto embaixo do botão: "Já tenho conta", "Prefiro não informar". */
   secondaryText?: { label: string; onPress: () => void };
+  /** "Pular por enquanto" no cabeçalho: O6 e O7 seguem com o padrão (#365). */
+  onSkip?: () => void;
 }
 
 /**
@@ -39,7 +41,13 @@ interface OnboardingFrameProps {
  * @example
  * <OnboardingFrame step={1} primary={{ label: 'Continuar', onPress: seguir }}>…</OnboardingFrame>
  */
-export function OnboardingFrame({ children, step, primary, secondaryText }: OnboardingFrameProps) {
+export function OnboardingFrame({
+  children,
+  step,
+  primary,
+  secondaryText,
+  onSkip,
+}: OnboardingFrameProps) {
   const router = useRouter();
 
   return (
@@ -53,6 +61,11 @@ export function OnboardingFrame({ children, step, primary, secondaryText }: Onbo
           <View className="flex-1">
             <StepBar current={step} total={TOTAL_STEPS} />
           </View>
+          {onSkip ? (
+            <TouchableOpacity onPress={onSkip} accessibilityRole="button" className="mt-4">
+              <Text className="text-xs font-semibold text-hero-secondary">Pular por enquanto</Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
       ) : null}
       {children}
@@ -60,7 +73,10 @@ export function OnboardingFrame({ children, step, primary, secondaryText }: Onbo
   );
 }
 
-function Footer({ primary, secondaryText }: Omit<OnboardingFrameProps, 'children' | 'step'>) {
+function Footer({
+  primary,
+  secondaryText,
+}: Pick<OnboardingFrameProps, 'primary' | 'secondaryText'>) {
   const primaryBottom = useBottomOffset(secondaryText ? PRIMARY_OVER_TEXT : PRIMARY_ALONE);
   const secondaryBottom = useBottomOffset(SECONDARY_TEXT);
 
@@ -133,6 +149,23 @@ export function OnboardingTitle({
       {sub ? (
         <Text className="mt-2 text-[0.84375rem] leading-[1.18rem] text-hero-secondary">{sub}</Text>
       ) : null}
+    </View>
+  );
+}
+
+/**
+ * O rótulo de seção do kit (`Label`): mono em caixa alta, com a nota à direita
+ * ("opcional", "marque quantos quiser").
+ *
+ * @example <OnboardingLabel right="opcional">Pratica algum esporte?</OnboardingLabel>
+ */
+export function OnboardingLabel({ children, right }: { children: string; right?: string }) {
+  return (
+    <View className="mx-0.5 mb-[0.5625rem] mt-5 flex-row items-baseline justify-between">
+      <Text className="font-mono text-[0.625rem] font-bold uppercase tracking-[0.14em] text-placeholder">
+        {children}
+      </Text>
+      {right ? <Text className="text-[0.71875rem] text-placeholder">{right}</Text> : null}
     </View>
   );
 }

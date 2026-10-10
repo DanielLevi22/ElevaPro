@@ -33,8 +33,11 @@ export type TomDeMetrica =
 interface CaixaDeIconeProps {
   icon: keyof typeof Ionicons.glyphMap;
   tom: TomDeMetrica;
-  /** `bloco` é o quadrado de 32 do bloco de métrica; `linha`, o de 40. */
-  tamanho?: 'bloco' | 'linha';
+  /**
+   * `bloco` é o quadrado de 32 do bloco de métrica; `linha`, o de 40; `destaque`,
+   * o de 60 no topo da triagem do onboarding (O5b).
+   */
+  tamanho?: 'bloco' | 'linha' | 'destaque';
 }
 
 /** Classe literal por tom — ver a nota sobre `color-mix` acima. */
@@ -71,9 +74,10 @@ const COR_DO_ICONE: Record<TomDeMetrica, NomeDeCor> = {
 const CAIXA = {
   bloco: 'h-[2rem] w-[2rem] rounded-[0.625rem]',
   linha: 'h-[2.5rem] w-[2.5rem] rounded-[0.8125rem]',
+  destaque: 'h-[3.75rem] w-[3.75rem] rounded-[1.1875rem]',
 } as const;
 
-const TAMANHO_DO_ICONE = { bloco: 16, linha: 19 } as const;
+const TAMANHO_DO_ICONE = { bloco: 16, linha: 19, destaque: 30 } as const;
 
 export function CaixaDeIcone({ icon, tom, tamanho = 'linha' }: CaixaDeIconeProps) {
   const cores = useCores();

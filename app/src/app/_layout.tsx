@@ -204,13 +204,10 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
   }, [session, segments, isLoading, accountType, router, redirectPrivilegedSession]);
 
   const inOnboarding = segments[0] === 'onboarding';
-  // Provisório até O4 existir: depois de O3 a anamnese atual completa o fluxo, e
-  // o guarda não pode mandar de volta a O1 quem está respondendo.
-  const inAnamnesis = segments[0] === 'student' && (segments as string[])[1] === 'anamnesis';
   useOnboardingGate({
     studentId: isLoading ? null : (session?.user?.id ?? null),
     accountType,
-    inOnboarding: inOnboarding || inAnamnesis,
+    inOnboarding,
   });
 
   // Removed manual loading view to use Native Splash

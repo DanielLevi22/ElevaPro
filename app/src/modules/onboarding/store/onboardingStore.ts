@@ -11,14 +11,17 @@ interface OnboardingState {
   track: PersonaTrack | null;
   /** Recusou o aceite de saúde: segue só com treino, e o guarda não o traz de volta. */
   consentDeclined: boolean;
+  /** O resultado da triagem: sem dieta, O7 não aparece. `null` antes de O5. */
+  dietAllowed: boolean | null;
   /** Começa o onboarding de `ownerId`, descartando o de outra conta. */
   start: (ownerId: string) => void;
   chooseGoal: (goal: OnboardingGoal) => void;
   chooseTrack: (track: PersonaTrack) => void;
   declineConsent: () => void;
+  setDietAllowed: (allowed: boolean) => void;
 }
 
-const EMPTY = { ownerId: null, goal: null, track: null, consentDeclined: false };
+const EMPTY = { ownerId: null, goal: null, track: null, consentDeclined: false, dietAllowed: null };
 
 /**
  * As escolhas de antes do consentimento: objetivo e nível.
@@ -39,6 +42,7 @@ export const useOnboardingStore = create<OnboardingState>()(
       chooseGoal: (goal) => set({ goal }),
       chooseTrack: (track) => set({ track }),
       declineConsent: () => set({ consentDeclined: true }),
+      setDietAllowed: (dietAllowed) => set({ dietAllowed }),
     }),
     {
       name: 'onboarding',

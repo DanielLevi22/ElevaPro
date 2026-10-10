@@ -28,13 +28,15 @@ export async function loadOnboardingAnswers(studentId: string): Promise<Record<s
  */
 export async function saveOnboardingAnswers(
   studentId: string,
-  screenAnswers: Record<string, unknown>
+  screenAnswers: Record<string, unknown>,
+  { complete = false }: { complete?: boolean } = {}
 ): Promise<void> {
   const saved = await loadOnboardingAnswers(studentId);
   await createAdaptiveAnamnesisService(supabase).save({
     studentId,
     answers: { ...saved, ...screenAnswers },
-    completed: false,
+    // Concluir é o que tira a pessoa do guarda de rotas: só a última tela conclui.
+    completed: complete,
     selfGuided: true,
   });
 }

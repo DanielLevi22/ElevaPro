@@ -57,8 +57,7 @@ export function AboutYouScreen() {
         userId,
         goal ? { ...result.answers, main_goal: goal } : result.answers
       );
-      // Provisório até O5 existir: a anamnese atual conclui o fluxo.
-      router.push(ROUTES.ASSESSMENT.ANAMNESIS);
+      router.push(ROUTES.ONBOARDING.HEALTH);
     } catch {
       registrarFalha('onboarding.salvar_sobre_voce');
       showAlert({
