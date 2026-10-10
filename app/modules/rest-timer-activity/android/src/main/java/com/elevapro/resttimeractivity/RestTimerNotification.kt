@@ -24,7 +24,14 @@ import android.widget.RemoteViews
  * título chama para a próxima série.
  */
 object RestTimerNotification {
-  private const val CHANNEL_ID = "rest-timer"
+  /**
+   * O canal do tempo correndo. Era `rest-timer`, de importância baixa: o
+   * sistema o põe em "Silenciosas", que o Android 13+ esconde da tela
+   * bloqueada por padrão — o cartão sumia justamente de onde ele existe. A
+   * importância de um canal criado não muda, por isso o id novo.
+   */
+  private const val CHANNEL_ID = "rest-timer-running"
+  private const val OLD_CHANNEL_ID = "rest-timer"
   /** O fim do descanso alerta: som e vibração, e o mesmo cartão sobe na tela. */
   private const val DONE_CHANNEL_ID = "rest-timer-done"
   private const val NOTIFICATION_ID = 4815
@@ -98,8 +105,8 @@ object RestTimerNotification {
     val progress = if (done) PROGRESS_MAX else (elapsed * PROGRESS_MAX / maxOf(1, state.totalSeconds)).toInt()
     views.setProgressBar(R.id.rest_progress, PROGRESS_MAX, progress, false)
     if (layout == R.layout.rest_timer_expanded) {
-      views.setTextViewText(R.id.rest_add, state.addLabel)
-      views.setTextViewText(R.id.rest_skip, state.skipLabel)
+      views.setTextViewText(R.id.rest_add_label, state.addLabel)
+      views.setTextViewText(R.id.rest_skip_label, state.skipLabel)
       views.setOnClickPendingIntent(R.id.rest_add, action(context, RestActionStore.ADD_TIME))
       views.setOnClickPendingIntent(R.id.rest_skip, action(context, RestActionStore.SKIP))
     }
@@ -173,18 +180,23 @@ object RestTimerNotification {
   }
 
   /**
-   * Dois canais: o do tempo correndo, baixo, porque muda a cada segundo e não
+   * Dois canais: o do tempo correndo, sem som, porque muda a cada segundo e não
    * pode tocar a cada vez; e o do fim, alto, que toca e sobe na tela.
    */
   private fun ensureChannels(context: Context) {
+    // Importância normal para aparecer na tela bloqueada, mas sem som nem
+    // vibração: o tempo muda a cada segundo e não pode tocar a cada vez.
     val running = NotificationChannel(
       CHANNEL_ID,
       context.getString(R.string.rest_timer_channel),
-      NotificationManager.IMPORTANCE_LOW,
+      NotificationManager.IMPORTANCE_DEFAULT,
     ).apply {
       lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+      setSound(null, null)
+      enableVibration(false)
       setShowBadge(false)
     }
+    manager(context).deleteNotificationChannel(OLD_CHANNEL_ID)
     val done = NotificationChannel(
       DONE_CHANNEL_ID,
       context.getString(R.string.rest_timer_done_channel),
