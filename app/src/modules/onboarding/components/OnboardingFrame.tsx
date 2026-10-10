@@ -33,6 +33,8 @@ interface OnboardingFrameProps {
   secondaryText?: { label: string; onPress: () => void };
   /** "Pular por enquanto" no cabeçalho: O6 e O7 seguem com o padrão (#365). */
   onSkip?: () => void;
+  /** Um rodapé próprio no lugar do botão: a barra de duas ações de O9, a folha de O10. */
+  overlay?: ReactNode;
 }
 
 /**
@@ -48,13 +50,16 @@ export function OnboardingFrame({
   primary,
   secondaryText,
   onSkip,
+  overlay,
 }: OnboardingFrameProps) {
   const router = useRouter();
 
   return (
     <GlassScreen
       bottomSpace="actionBar"
-      overlay={primary ? <Footer primary={primary} secondaryText={secondaryText} /> : null}
+      overlay={
+        overlay ?? (primary ? <Footer primary={primary} secondaryText={secondaryText} /> : null)
+      }
     >
       {step ? (
         <View className="min-h-[3.25rem] flex-row items-center gap-3">

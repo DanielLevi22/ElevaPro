@@ -3,7 +3,9 @@ import { create } from 'zustand';
 
 interface PlanDraftState {
   plan: OnboardingPlanPending | null;
-  setPlan: (plan: OnboardingPlanPending | null) => void;
+  /** Há um ajuste de O10 para desfazer. */
+  canUndo: boolean;
+  setPlan: (plan: OnboardingPlanPending | null, canUndo?: boolean) => void;
 }
 
 /**
@@ -16,5 +18,6 @@ interface PlanDraftState {
  */
 export const usePlanDraftStore = create<PlanDraftState>()((set) => ({
   plan: null,
-  setPlan: (plan) => set({ plan }),
+  canUndo: false,
+  setPlan: (plan, canUndo = false) => set({ plan, canUndo }),
 }));

@@ -2,19 +2,17 @@ import type { DietGuard, OnboardingPlanPending, PlanDayOfWeek } from '@elevapro/
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
-import { useAuthStore } from '@/auth';
 import { Anel } from '@/components/ui/Anel';
-import { showAlert } from '@/components/ui/appAlert';
+import { BarraDeDuasAcoes } from '@/components/ui/BarraDeDuasAcoes';
 import { BarraDeProgresso } from '@/components/ui/BarraDeProgresso';
 import { InfoNote } from '@/components/ui/InfoNote';
 import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
 import { Vidro } from '@/components/ui/Vidro';
-import { registrarFalha } from '@/lib/registro';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/navigation/types';
+import { AdjustSheet } from '../components/AdjustSheet';
 import { OnboardingFrame, OnboardingLabel, OnboardingTitle } from '../components/OnboardingFrame';
-import { saveOnboardingAnswers } from '../services/onboardingAnswers';
-import { approveOnboardingPlan } from '../services/planService';
+import { usePlanActions } from '../hooks/usePlanActions';
 import { usePlanDraftStore } from '../store/planDraftStore';
 
 const WEEK: { day: PlanDayOfWeek; letter: string }[] = [
@@ -40,15 +38,14 @@ const GUARD_TEXT: Record<DietGuard, string> = {
  * exemplo. "Aprovar plano" grava a cópia pendente e conclui o onboarding; antes
  * disso nada está gravado (ADR-0020).
  *
- * "Ajustar" (O10) ainda não existe, e por isso não aparece.
- *
  * @example <PlanReadyScreen />
  */
 export function PlanReadyScreen() {
   const router = useRouter();
   const plan = usePlanDraftStore((state) => state.plan);
-  const userId = useAuthStore((state) => state.session?.user.id ?? null);
-  const [saving, setSaving] = useState(false);
+  const canUndo = usePlanDraftStore((state) => state.canUndo);
+  const { approving, adjusting, approve, adjust } = usePlanActions();
+  const [adjustOpen, setAdjustOpen] = useState(false);
 
   // Sem plano na memória (o app fechou), volta a O8 para gerar de novo.
   useEffect(() => {
@@ -56,35 +53,35 @@ export function PlanReadyScreen() {
   }, [plan, router]);
   if (!plan) return null;
 
-  async function aprovar() {
-    if (!userId) return;
-    setSaving(true);
-    try {
-      await approveOnboardingPlan();
-      // Concluir a anamnese é o que tira a pessoa do guarda de rotas.
-      await saveOnboardingAnswers(userId, {}, { complete: true });
-      usePlanDraftStore.getState().setPlan(null);
-      router.replace(ROUTES.ONBOARDING.HEALTH_CONNECT);
-    } catch {
-      registrarFalha('onboarding.aprovar_plano');
-      showAlert({
-        title: 'Não foi possível aprovar',
-        message: 'Seu plano continua aqui. Confira sua conexão e tente de novo.',
-        type: 'error',
-      });
-    } finally {
-      setSaving(false);
-    }
-  }
-
   return (
     <OnboardingFrame
-      primary={{
-        label: saving ? 'Aprovando…' : 'Aprovar plano',
-        icon: 'checkmark',
-        onPress: () => void aprovar(),
-        disabled: saving,
-      }}
+      overlay={
+        <>
+          <BarraDeDuasAcoes
+            semAbas
+            secundaria={{
+              rotulo: 'Ajustar',
+              icone: 'options-outline',
+              onPress: () => setAdjustOpen(true),
+              desabilitada: approving,
+            }}
+            principal={{
+              rotulo: approving ? 'Aprovando…' : 'Aprovar plano',
+              icone: 'checkmark',
+              onPress: () => void approve(),
+              desabilitada: approving || adjusting,
+            }}
+          />
+          <AdjustSheet
+            visible={adjustOpen}
+            plan={plan}
+            busy={adjusting}
+            canUndo={canUndo}
+            onAdjust={(adjustment) => void adjust(adjustment)}
+            onClose={() => setAdjustOpen(false)}
+          />
+        </>
+      }
     >
       <OnboardingTitle sub="Revise e aprove. Você pode ajustar quando quiser.">
         Seu plano está pronto
@@ -92,6 +89,11 @@ export function PlanReadyScreen() {
       {plan.target ? <TargetCard target={plan.target} /> : null}
       <Week plan={plan} />
       <ExampleDay plan={plan} />
+      {plan.estimate ? (
+        <InfoNote icon="sparkles-outline" className="mt-3">
+          {ESTIMATE_TEXT[plan.estimate]}
+        </InfoNote>
+      ) : null}
       {plan.proposal.explanation ? (
         <Text className="mt-4 text-[0.78125rem] leading-[1.1rem] text-hero-secondary">
           {plan.proposal.explanation}
@@ -100,6 +102,14 @@ export function PlanReadyScreen() {
     </OnboardingFrame>
   );
 }
+
+/** O app não tem preço nem tempo de preparo: a escolha é da IA, e a tela diz. */
+const ESTIMATE_TEXT = {
+  cheaper:
+    'Mais barato: os alimentos foram escolhidos pela IA como mais em conta. É estimativa; o app não tem preço.',
+  faster:
+    'Mais rápido: as refeições foram escolhidas pela IA como de preparo rápido. É estimativa; o app não mede tempo de preparo.',
+} as const;
 
 function TargetCard({ target }: { target: NonNullable<OnboardingPlanPending['target']> }) {
   const macros = [

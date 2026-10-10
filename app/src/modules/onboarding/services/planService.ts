@@ -1,4 +1,4 @@
-import type { OnboardingPlanPending } from '@elevapro/shared';
+import type { OnboardingAdjustment, OnboardingPlanPending } from '@elevapro/shared';
 import { tokenDaSessao } from '@/auth';
 import { postBff } from '@/shared/bff';
 
@@ -24,4 +24,16 @@ export async function generateOnboardingPlan(): Promise<OnboardingPlanPending> {
  */
 export async function approveOnboardingPlan(): Promise<void> {
   await postBff('/api/ai/student/onboarding/approve', {}, { token: tokenDaSessao() });
+}
+
+/**
+ * Pede um ajuste de O10 (ou desfaz o último). O servidor troca a proposta
+ * pendente e devolve a nova; nada é gravado até aprovar.
+ *
+ * @example const { plan, canUndo } = await adjustOnboardingPlan({ kind: 'cheaper' });
+ */
+export async function adjustOnboardingPlan(
+  adjustment: OnboardingAdjustment
+): Promise<{ plan: OnboardingPlanPending; canUndo: boolean }> {
+  return postBff('/api/ai/student/onboarding/adjust', adjustment, { token: tokenDaSessao() });
 }
