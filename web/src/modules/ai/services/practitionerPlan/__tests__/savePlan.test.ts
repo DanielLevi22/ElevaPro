@@ -6,6 +6,8 @@ let inseridos: { tabela: string; linha: Record<string, unknown> }[];
 let treinosGravados: { titulos: string[]; dono: unknown } | null;
 let dietaCriada: { plano: Record<string, unknown>; refeicoes: unknown[] } | null;
 let ativados: string[];
+let concluida: Record<string, unknown> | null;
+let falhaAoConcluir: boolean;
 let encerrados: {
   tabela: string;
   linha: Record<string, unknown>;
@@ -68,6 +70,13 @@ vi.mock("@elevapro/shared", async (original) => ({
       ativados.push(id);
     },
   }),
+  createAdaptiveAnamnesisService: () => ({
+    save: async (entrada: Record<string, unknown>) => {
+      if (falhaAoConcluir) throw new Error("sem conexão");
+      concluida = entrada;
+      return "not_applicable";
+    },
+  }),
 }));
 
 const { savePractitionerPlan } = await import("../savePlan");
@@ -99,9 +108,20 @@ const PENDENTE: OnboardingPlanPending = {
   estimate: null,
 };
 
+/** A sessão do aluno: só lê a anamnese, para concluir o onboarding. */
+const titular = {
+  from: () => ({
+    select: () => ({
+      eq: () => ({
+        maybeSingle: async () => ({ data: { responses: { age: 29, height: 172 } }, error: null }),
+      }),
+    }),
+  }),
+} as unknown as SupabaseClient;
+
 const contexto = () => ({
   studentId: "aluno-1",
-  titular: {} as SupabaseClient,
+  titular,
   registrar: vi.fn(),
 });
 
@@ -112,6 +132,22 @@ describe("aprovar o plano do onboarding", () => {
     dietaCriada = null;
     ativados = [];
     encerrados = [];
+    concluida = null;
+    falhaAoConcluir = false;
+  });
+
+  /**
+   * TRAVA — aprovar conclui o onboarding na mesma operação. Em duas chamadas, a
+   * segunda podia falhar com o plano já ativo: a tela dizia que não aprovou e o
+   * guarda devolvia a pessoa ao onboarding sem proposta para aprovar de novo.
+   * Falhar ao concluir lança, para a rota desfazer o treino e devolver a proposta.
+   */
+  it("conclui o onboarding com o plano, e sem concluir a aprovação falha", async () => {
+    await savePractitionerPlan(contexto(), PENDENTE);
+    expect(concluida).toMatchObject({ studentId: "aluno-1", completed: true, selfGuided: true });
+
+    falhaAoConcluir = true;
+    await expect(savePractitionerPlan(contexto(), PENDENTE)).rejects.toThrow();
   });
 
   it("ativa o treino do próprio aluno, sem especialista, com o esporte como opcional", async () => {

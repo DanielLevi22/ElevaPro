@@ -5,7 +5,6 @@ import { useAuthStore } from '@/auth';
 import { showAlert } from '@/components/ui/appAlert';
 import { registrarFalha } from '@/lib/registro';
 import { ROUTES } from '@/navigation/types';
-import { saveOnboardingAnswers } from '../services/onboardingAnswers';
 import { adjustOnboardingPlan, approveOnboardingPlan } from '../services/planService';
 import { usePlanDraftStore } from '../store/planDraftStore';
 
@@ -25,9 +24,9 @@ export function usePlanActions() {
     if (!userId) return;
     setApproving(true);
     try {
+      // Aprovar também conclui a anamnese, no servidor e na mesma operação: é o
+      // que tira a pessoa do guarda de rotas, e não fica meio feito.
       await approveOnboardingPlan();
-      // Concluir a anamnese é o que tira a pessoa do guarda de rotas.
-      await saveOnboardingAnswers(userId, {}, { complete: true });
       // Sai antes de limpar: o plano na memória é dado de saúde e não fica, mas
       // limpar com O9 ainda na tela fazia a tela reagir à ausência dele.
       router.replace(ROUTES.ONBOARDING.HEALTH_CONNECT);

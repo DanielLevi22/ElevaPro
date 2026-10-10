@@ -1,4 +1,10 @@
-import { addDays, createNutritionService, localDateOf } from "@elevapro/shared";
+import {
+  achatarRespostas,
+  addDays,
+  createAdaptiveAnamnesisService,
+  createNutritionService,
+  localDateOf,
+} from "@elevapro/shared";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { saveWorkoutsWithExercises } from "../workoutPersistence";
@@ -33,6 +39,12 @@ export interface SavePlanContext {
  * em periodização; a dieta vai pela sessão dele, porque tem, e porque ativar
  * confere `auth.uid()`.
  *
+ * Concluir o onboarding é o último passo, e na mesma aprovação. Antes o app
+ * aprovava e só depois concluía, em outra chamada: se a segunda falhasse, o plano
+ * ficava ativo, a tela dizia que não aprovou, e o guarda devolvia a pessoa ao
+ * onboarding sem proposta para aprovar de novo. Aqui, falhar ao concluir desfaz
+ * o treino e devolve a proposta, e tentar de novo funciona.
+ *
  * @example const { periodizationId } = await savePractitionerPlan(ctx, pendente);
  */
 export async function savePractitionerPlan(
@@ -44,7 +56,27 @@ export async function savePractitionerPlan(
   const periodizationId = hasTraining ? await saveTraining(ctx, pending) : null;
   const dietPlanId = pending.target ? await saveDiet(ctx, pending) : null;
   if (periodizationId) await finishPreviousTraining(ctx.studentId, periodizationId);
+  await completeOnboarding(ctx);
   return { periodizationId, dietPlanId };
+}
+
+/**
+ * Conclui a anamnese pela sessão do aluno, com o mesmo `save` que o app usava:
+ * ele também cria a primeira medida declarada a partir da altura e do peso.
+ */
+async function completeOnboarding(ctx: SavePlanContext): Promise<void> {
+  const { data, error } = await ctx.titular
+    .from("student_anamnesis")
+    .select("responses")
+    .eq("student_id", ctx.studentId)
+    .maybeSingle();
+  if (error) throw new Error(`anamnese do onboarding não foi lida: ${error.message}`);
+  await createAdaptiveAnamnesisService(ctx.titular).save({
+    studentId: ctx.studentId,
+    answers: achatarRespostas(data?.responses as Record<string, unknown> | null),
+    completed: true,
+    selfGuided: true,
+  });
 }
 
 /**
