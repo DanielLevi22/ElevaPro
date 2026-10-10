@@ -1,4 +1,4 @@
-import { HEALTH_CONDITIONS, screen, screeningRecord } from '../screening';
+import { HEALTH_CONDITIONS, injuryRecord, screen, screeningRecord } from '../screening';
 
 const CLINICAL = ['diabetes', 'kidney', 'pregnancy', 'eating_disorder'] as const;
 
@@ -58,10 +58,24 @@ describe('screeningRecord', () => {
       diet_screening: 'referred',
       diet_screening_reason: 'clinical_condition',
       injury_reported: true,
+      injuries: [],
     });
     expect(screeningRecord({ kind: 'answered', conditions: ['none'] })).toEqual({
       diet_screening: 'allowed',
       injury_reported: false,
+      injuries: [],
     });
+  });
+
+  /** A issue: "Lesão continua guardada por região." */
+  it('guarda a lesão por região, na mesma chave da anamnese longa', () => {
+    expect(
+      screeningRecord({ kind: 'answered', conditions: ['injury'], injuryRegions: ['Joelhos'] })
+    ).toEqual({ diet_screening: 'allowed', injury_reported: true, injuries: ['Joelhos'] });
+    expect(injuryRecord(['Ombros', 'Coluna'])).toEqual({
+      injury_reported: true,
+      injuries: ['Ombros', 'Coluna'],
+    });
+    expect(injuryRecord([])).toEqual({ injury_reported: false, injuries: [] });
   });
 });

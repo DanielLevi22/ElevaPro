@@ -1,3 +1,4 @@
+import type { InjuryRegion } from '@elevapro/shared/data/anamnesisAdaptive';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
@@ -9,12 +10,14 @@ import { GlassChoice } from '@/components/ui/GlassChoice';
 import { Vidro } from '@/components/ui/Vidro';
 import { registrarFalha } from '@/lib/registro';
 import { ROUTES } from '@/navigation/types';
+import { InjuryRegionPicker } from '../components/InjuryRegionPicker';
 import { OnboardingFrame, OnboardingTitle } from '../components/OnboardingFrame';
 import { useSaveAndContinue } from '../hooks/useSaveAndContinue';
 import { saveOnboardingAnswers } from '../services/onboardingAnswers';
 import {
   HEALTH_CONDITIONS,
   type HealthCondition,
+  injuryRecord,
   type ScreeningAnswer,
   screen,
   screeningRecord,
@@ -39,20 +42,23 @@ export function HealthScreen() {
 /**
  * O5 no caminho "só treino": só a lesão, que muda o treino. As condições
  * clínicas decidem a dieta, e quem não quer dieta não precisa contá-las (Art.
- * 6°, III). Grava só se há lesão, nunca onde.
+ * 6°, III). A lesão é gravada por região, como na anamnese longa.
  */
 function InjuryQuestion() {
   const [injury, setInjury] = useState<boolean | null>(null);
+  const [regions, setRegions] = useState<InjuryRegion[]>([]);
   const { saving, saveAndGo } = useSaveAndContinue('onboarding.salvar_lesao');
+  const ready = injury === false || (injury === true && regions.length > 0);
 
   return (
     <OnboardingFrame
       step={3}
       primary={{
         label: saving ? 'Salvando…' : 'Continuar',
-        onPress: () => void saveAndGo({ injury_reported: injury }, ROUTES.ONBOARDING.TRAINING),
-        disabled: injury === null || saving,
-        hint: 'Responda para continuar',
+        onPress: () =>
+          void saveAndGo(injuryRecord(injury ? regions : []), ROUTES.ONBOARDING.TRAINING),
+        disabled: !ready || saving,
+        hint: injury ? 'Marque onde dói' : 'Responda para continuar',
       }}
     >
       <OnboardingTitle sub="Assim evitamos exercícios que pesam no local.">
@@ -72,6 +78,7 @@ function InjuryQuestion() {
           onPress={() => setInjury(false)}
         />
       </View>
+      {injury ? <InjuryRegionPicker selected={regions} onChange={setRegions} /> : null}
     </OnboardingFrame>
   );
 }
@@ -82,7 +89,9 @@ function ScreeningQuestion() {
   const userId = useAuthStore((state) => state.session?.user.id ?? null);
   const setDietAllowed = useOnboardingStore((state) => state.setDietAllowed);
   const [selected, setSelected] = useState<HealthCondition[]>([]);
+  const [regions, setRegions] = useState<InjuryRegion[]>([]);
   const [saving, setSaving] = useState(false);
+  const injured = selected.includes('injury');
 
   async function concluir(answer: ScreeningAnswer) {
     if (!userId) return;
@@ -116,9 +125,10 @@ function ScreeningQuestion() {
       step={3}
       primary={{
         label: saving ? 'Salvando…' : 'Continuar',
-        onPress: () => void concluir({ kind: 'answered', conditions: selected }),
-        disabled: selected.length === 0 || saving,
-        hint: 'Marque uma opção, ou "Nenhum"',
+        onPress: () =>
+          void concluir({ kind: 'answered', conditions: selected, injuryRegions: regions }),
+        disabled: selected.length === 0 || (injured && regions.length === 0) || saving,
+        hint: injured && regions.length === 0 ? 'Marque onde dói' : 'Marque uma opção, ou "Nenhum"',
       }}
       secondaryText={{
         label: 'Prefiro não informar',
@@ -136,6 +146,7 @@ function ScreeningQuestion() {
           />
         ))}
       </View>
+      {injured ? <InjuryRegionPicker selected={regions} onChange={setRegions} /> : null}
       <Vidro classeExterna="mt-[1.375rem]" className="flex-row items-center gap-3 p-3.5">
         <CaixaDeIcone icon="shield-checkmark-outline" tom="marca" />
         <Text className="flex-1 text-[0.78125rem] leading-[1.1rem] text-hero-secondary">

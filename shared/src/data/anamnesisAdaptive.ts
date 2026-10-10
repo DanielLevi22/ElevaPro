@@ -3,6 +3,24 @@ import { TRAINING_PLACES } from "../utils/trainingPlace";
 
 export type PersonaTrack = "beginner" | "returning" | "intermediate" | "advanced";
 
+/**
+ * As regiões de lesão ou dor, como a anamnese grava em `injuries`. O onboarding
+ * (#365) e a anamnese longa usam a mesma lista, para o especialista ler as duas
+ * do mesmo jeito.
+ */
+export const INJURY_REGIONS = [
+  "Coluna",
+  "Ombros",
+  "Joelhos",
+  "Quadril",
+  "Cotovelo",
+  "Punhos",
+  "Tornozelos",
+  "Outra região",
+] as const;
+
+export type InjuryRegion = (typeof INJURY_REGIONS)[number];
+
 export interface AdaptiveQuestion {
   id: string;
   text: string;
@@ -133,7 +151,7 @@ const BASE_QUESTIONS: AdaptiveQuestion[] = [
     id: "injuries",
     text: "Tem alguma dor ou lesão que devo saber?",
     type: "multiple_choice",
-    options: ["Nenhuma", "Coluna", "Ombros", "Joelhos", "Quadril", "Cotovelo", "Punhos"],
+    options: ["Nenhuma", ...INJURY_REGIONS],
     weight: 6,
     whyWeAsk: "Adaptamos os exercícios para proteger regiões sensíveis.",
   },

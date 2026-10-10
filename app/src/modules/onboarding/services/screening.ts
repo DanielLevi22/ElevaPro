@@ -1,3 +1,4 @@
+import type { InjuryRegion } from '@elevapro/shared/data/anamnesisAdaptive';
 import { toggleExclusive } from './toggleExclusive';
 
 /**
@@ -22,7 +23,12 @@ export type HealthCondition = (typeof HEALTH_CONDITIONS)[number]['id'];
 const CLINICAL: readonly HealthCondition[] = ['diabetes', 'kidney', 'pregnancy', 'eating_disorder'];
 
 export type ScreeningAnswer =
-  | { kind: 'answered'; conditions: HealthCondition[] }
+  | {
+      kind: 'answered';
+      conditions: HealthCondition[];
+      /** Onde dói, quando marcou "Lesão ou dor". */
+      injuryRegions?: readonly InjuryRegion[];
+    }
   /** "Prefiro não informar": a triagem é obrigatória, mas responder não é. */
   | { kind: 'declined' };
 
@@ -43,21 +49,37 @@ export function screen(answer: ScreeningAnswer): ScreeningResult {
  * O que a anamnese grava da triagem: o resultado, nunca a condição (ADR-0044).
  *
  * Quem lê depois — o plano, a IA, um especialista que se vincule — recebe "dieta
- * encaminhada", e não "diabetes". A lesão é a exceção, como sim ou não: o treino
- * precisa saber que há uma para evitar carga no local.
+ * encaminhada", e não "diabetes". A lesão é a exceção, por região: o treino
+ * precisa saber que há uma, e o especialista que se vincule, onde (`injuryRecord`).
  *
  * @example screeningRecord({ kind: 'answered', conditions: ['none'] }) // { diet_screening: 'allowed', injury_reported: false }
  */
-export function screeningRecord(answer: ScreeningAnswer): Record<string, string | boolean> {
+export function screeningRecord(answer: ScreeningAnswer): Record<string, unknown> {
   const result = screen(answer);
-  const injury = answer.kind === 'answered' && answer.conditions.includes('injury');
-  if (result.diet === 'allowed') return { diet_screening: 'allowed', injury_reported: injury };
+  const injured = answer.kind === 'answered' && answer.conditions.includes('injury');
+  // Marcou lesão é lesão, mesmo sem região: a região diz onde, não se há.
+  const injury = {
+    injury_reported: injured,
+    injuries: injured && answer.kind === 'answered' ? [...(answer.injuryRegions ?? [])] : [],
+  };
+  if (result.diet === 'allowed') return { diet_screening: 'allowed', ...injury };
   return {
     diet_screening: 'referred',
     diet_screening_reason: result.reason,
     // Quem não informou não disse se tem lesão: ausente, e não "não".
-    ...(answer.kind === 'answered' ? { injury_reported: injury } : {}),
+    ...(answer.kind === 'answered' ? injury : {}),
   };
+}
+
+/**
+ * A lesão como a anamnese grava: se há, e onde. `injuries` é a mesma chave da
+ * anamnese longa, que o especialista já lê. A região não vai à IA: ela recebe
+ * só a regra de treino (`planPrompt`).
+ *
+ * @example injuryRecord(['Joelhos']) // { injury_reported: true, injuries: ['Joelhos'] }
+ */
+export function injuryRecord(regions: readonly InjuryRegion[]): Record<string, unknown> {
+  return { injury_reported: regions.length > 0, injuries: [...regions] };
 }
 
 /**
