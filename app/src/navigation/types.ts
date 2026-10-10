@@ -192,6 +192,8 @@ export const ROUTES = {
     ): `/(tabs)/nutrition/substituir?refeicaoId=${string}&itemId=${string}&data=${string}` =>
       `/(tabs)/nutrition/substituir?refeicaoId=${refeicaoId}&itemId=${itemId}&data=${data}`,
     SEARCH: '/(tabs)/nutrition/buscar',
+    /** Os planos do Praticante: criar, editar e trocar. O dia a dia é o plano do dia. */
+    MY_PLANS: '/(tabs)/nutrition/planos',
     SCAN: '/(tabs)/nutrition/scan',
     ASSISTANT: '/(tabs)/nutrition/bot',
     SHOPPING: '/(tabs)/nutrition/shopping-list',

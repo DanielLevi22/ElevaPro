@@ -8,8 +8,9 @@ import NutriBotScreen from '@/modules/nutrition/screens/NutriBotScreen';
  * member segue na tela antiga até o plano dele ganhar desenho.
  */
 export default function NutriBotRoute() {
-  const { user, accountType, isMasquerading } = useAuthStore();
-  if (accountType === 'member' || !user?.id) return <NutriBotScreen />;
+  const { user, isMasquerading } = useAuthStore();
+  // O Praticante usa a mesma tela do Aluno; a antiga fica só sem sessão.
+  if (!user?.id) return <NutriBotScreen />;
 
   return (
     <AssistenteDeNutricaoScreen

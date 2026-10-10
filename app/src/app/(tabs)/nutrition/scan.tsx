@@ -7,8 +7,9 @@ import ScanFoodScreen from '@/modules/nutrition/screens/ScanFoodScreen';
  * no diário; o member segue na tela antiga até o plano dele ganhar desenho.
  */
 export default function ScanFoodRoute() {
-  const { user, accountType, isMasquerading } = useAuthStore();
-  if (accountType === 'member' || !user?.id) return <ScanFoodScreen />;
+  const { user, isMasquerading } = useAuthStore();
+  // O Praticante usa a mesma tela do Aluno; a antiga fica só sem sessão.
+  if (!user?.id) return <ScanFoodScreen />;
 
   return (
     <EscanearPratoScreen

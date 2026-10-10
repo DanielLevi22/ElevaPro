@@ -7,7 +7,8 @@ import ShoppingListScreen from '@/modules/nutrition/screens/ShoppingListScreen';
  * que monta o próprio plano, segue na tela com o assistente de lista.
  */
 export default function ShoppingListRoute() {
-  const { user, accountType } = useAuthStore();
-  if (accountType === 'member' || !user?.id) return <ShoppingListScreen />;
+  const { user } = useAuthStore();
+  // O Praticante usa a mesma tela do Aluno; a antiga fica só sem sessão.
+  if (!user?.id) return <ShoppingListScreen />;
   return <ListaDeComprasScreen alunoId={user.id} obterToken={tokenDaSessao} />;
 }
