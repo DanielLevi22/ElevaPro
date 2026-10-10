@@ -20,6 +20,7 @@ import { Row } from '@/components/ui/Row';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/navigation/types';
+import { routeAfterSignUp } from '@/shared/onboarding';
 import {
   type Etapa,
   type PapelNoCadastro,
@@ -111,7 +112,7 @@ export function RegisterScreen() {
         service_types: etapas.servicos,
       });
       if (!result.success) throw new Error(result.error ?? 'Não foi possível criar a conta.');
-      router.replace(ROUTES.TABS.ROOT);
+      router.replace(routeAfterSignUp(etapas.papel));
     } catch (erro: unknown) {
       showAlert({
         title: 'Erro no Cadastro',

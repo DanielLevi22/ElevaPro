@@ -48,6 +48,13 @@ describe("checkPlan — o plano gerado respeita as escolhas", () => {
     expect(checkPlan(PLANO, semEsporte)).toContainEqual(expect.stringMatching(/opcional/));
   });
 
+  it("recusa o plano em que o esporte que a pessoa pratica sumiu", () => {
+    const plano = { ...PLANO, workouts: [treino("A"), treino("B"), treino("C")] };
+    expect(checkPlan(plano, CONTEXTO)).toContainEqual(
+      expect.stringMatching(/0 sessão.*esperado 1, uma por esporte/),
+    );
+  });
+
   it("recusa exercício fora do catálogo filtrado", () => {
     const plano = {
       ...PLANO,

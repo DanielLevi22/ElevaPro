@@ -57,9 +57,11 @@ function checkWorkouts(plan: PractitionerPlanProposal, ctx: PlanCheckContext): s
       `${regular.length} treinos na semana; esperado ${ctx.trainingDays}, os dias escolhidos`,
     );
   }
-  if (optional.length > ctx.sports.length) {
+  // Exatamente uma por esporte: a mais é sessão inventada, a menos é o esporte
+  // que a pessoa disse praticar sumindo do plano (#365).
+  if (optional.length !== ctx.sports.length) {
     errors.push(
-      `${optional.length} sessão(ões) opcional(is); esperado no máximo ${ctx.sports.length}, um por esporte praticado`,
+      `${optional.length} sessão(ões) opcional(is); esperado ${ctx.sports.length}, uma por esporte praticado`,
     );
   }
 

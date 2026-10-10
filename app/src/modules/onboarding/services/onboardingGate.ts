@@ -1,14 +1,6 @@
 import type { AccountType } from '@elevapro/shared';
 
-/**
- * Ligado por ambiente, como as Passkeys: o onboarding só abre ao público depois
- * da validação do CREF, do CRN e do parecer jurídico (ADR-0044).
- *
- * @example if (isOnboardingEnabled()) router.replace(ROUTES.ONBOARDING.WELCOME);
- */
-export function isOnboardingEnabled(): boolean {
-  return process.env.EXPO_PUBLIC_ONBOARDING_ENABLED === 'true';
-}
+export { isOnboardingEnabled } from '@/shared/onboarding';
 
 export interface OnboardingGateInput {
   enabled: boolean;
