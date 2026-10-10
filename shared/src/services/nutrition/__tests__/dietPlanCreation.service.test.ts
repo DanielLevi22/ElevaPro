@@ -276,3 +276,61 @@ describe("nutritionService — clonar plano", () => {
     ).rejects.toEqual({ message: "23503" });
   });
 });
+
+describe("nutritionService — plano com refeições e alimentos (onboarding, #365)", () => {
+  const meals = [
+    {
+      name: "Café da manhã",
+      meal_type: "breakfast",
+      meal_time: "07:00",
+      items: [
+        { food_id: "ovo", quantity: 2, unit: "un" },
+        { food_id: "pao", quantity: 50, unit: "g" },
+      ],
+    },
+    {
+      name: "Almoço",
+      meal_type: "lunch",
+      meal_time: "12:30",
+      items: [{ food_id: "arroz", quantity: 120, unit: "g" }],
+    },
+  ];
+
+  // Plano, refeição 1, itens 1, refeição 2, itens 2.
+  const respostas = [
+    { data: { id: "plano-novo" } },
+    { data: { id: "refeicao-1" } },
+    { data: [] },
+    { data: { id: "refeicao-2" } },
+    { data: [] },
+  ];
+
+  it("grava cada refeição na ordem, com os alimentos dela, num plano em rascunho", async () => {
+    const { supabase, chamadas } = criarSupabaseFake(respostas);
+
+    const created = await createNutritionService(supabase).createDietPlanWithMeals(plan, meals);
+
+    expect(created.id).toBe("plano-novo");
+    expect(chamadas.find((c) => c.tabela === "diet_plans")?.payload).toMatchObject({
+      status: "draft",
+    });
+    const refeicoes = chamadas.filter((c) => c.tabela === "diet_meals").map((c) => c.payload);
+    expect(refeicoes).toEqual([
+      expect.objectContaining({
+        diet_plan_id: "plano-novo",
+        name: "Café da manhã",
+        meal_order: 0,
+        day_of_week: null,
+      }),
+      expect.objectContaining({ diet_plan_id: "plano-novo", name: "Almoço", meal_order: 1 }),
+    ]);
+    const itens = chamadas.filter((c) => c.tabela === "diet_meal_items").map((c) => c.payload);
+    expect(itens[0]).toEqual([
+      expect.objectContaining({ diet_meal_id: "refeicao-1", food_id: "ovo", order_index: 0 }),
+      expect.objectContaining({ diet_meal_id: "refeicao-1", food_id: "pao", order_index: 1 }),
+    ]);
+    expect(itens[1]).toEqual([
+      expect.objectContaining({ diet_meal_id: "refeicao-2", food_id: "arroz" }),
+    ]);
+  });
+});
