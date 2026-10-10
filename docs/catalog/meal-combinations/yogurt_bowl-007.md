@@ -121,7 +121,7 @@
 - [ ] `candidate-d373299edde5a3b9` — Bowl: Iogurte grego natural + Pera + Pasta de amendoim
 - [ ] `candidate-d3b87b2471cd9cc3` — Bowl: Iogurte natural integral + Laranja + Gergelim
 - [ ] `candidate-d3c227750381ffd0` — Bowl: Iogurte natural integral + Tâmara + Gergelim
-- [ ] `candidate-d3cc0bf1364d85d1` — Bowl: Iogurte natural desnatado + Melancia + Pasta de amendoim
+- [x] `candidate-d3cc0bf1364d85d1` — Bowl: Iogurte natural desnatado + Melancia + Pasta de amendoim
 - [ ] `candidate-d3daad0c1e3d8763` — Bowl: Iogurte grego natural + Uva passa + Semente de girassol
 - [ ] `candidate-d41ebf25d4675232` — Bowl: Iogurte natural integral + Maçã + Gergelim
 - [ ] `candidate-d43dfd7fec9f9aa5` — Bowl: Kefir de leite + Maçã + Chia

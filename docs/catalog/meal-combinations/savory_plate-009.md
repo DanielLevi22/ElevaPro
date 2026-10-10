@@ -22,7 +22,7 @@
 - [ ] `candidate-2ca0df29ff364a87` — Prato: Milho verde cozido + Frango (peito grelhado) + Agrião
 - [ ] `candidate-2ca3c233be1761a6` — Prato: Arroz sete grãos cozido + Carne moída (patinho) + Beterraba cozida
 - [ ] `candidate-2cac7df1a2a1a8c1` — Prato: Arroz branco cozido + Carne bovina (músculo cozido) + Cogumelo champignon
-- [ ] `candidate-2cb00908e30346e4` — Prato: Mandioca cozida + Frango (coxa sem pele assada) + Tomate
+- [x] `candidate-2cb00908e30346e4` — Prato: Mandioca cozida + Frango (coxa sem pele assada) + Tomate
 - [ ] `candidate-2cc4434b7aaee218` — Prato: Batata doce roxa cozida + Fígado bovino grelhado + Abóbora cabotiá cozida
 - [ ] `candidate-2cc7a3ffdbbfae46` — Prato: Cuscuz de milho + Ovo de codorna cozido + Brócolis cozido
 - [ ] `candidate-2ccfc226797ba4b5` — Prato: Milho verde cozido + Carne bovina (músculo cozido) + Pimentão vermelho

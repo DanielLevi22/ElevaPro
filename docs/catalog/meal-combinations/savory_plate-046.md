@@ -1,6 +1,6 @@
 # Prato — imagens
 
-- [ ] `candidate-fd7ffa59dc283fa0` — Prato: Arroz branco cozido + Frango desfiado cozido + Brócolis cozido
+- [x] `candidate-fd7ffa59dc283fa0` — Prato: Arroz branco cozido + Frango desfiado cozido + Brócolis cozido
 - [ ] `candidate-fd806f0ae18cc68f` — Prato: Arroz branco cozido + Bacalhau dessalgado cozido + Pimentão vermelho
 - [ ] `candidate-fd831cdcd074f50c` — Prato: Batata doce cozida + Fígado bovino grelhado + Aspargos cozidos
 - [ ] `candidate-fd988651d2c8600c` — Prato: Arroz sete grãos cozido + Tilápia grelhada + Quiabo cozido
@@ -38,7 +38,7 @@
 - [ ] `candidate-fe264d14bd80b407` — Prato: Milho verde cozido + Proteína de soja texturizada + Alface
 - [ ] `candidate-fe28dc1f30118f1b` — Prato: Batata inglesa cozida + Atum fresco grelhado + Cogumelo champignon
 - [ ] `candidate-fe2a8cddd973c880` — Prato: Cuscuz marroquino cozido + Bacalhau dessalgado cozido + Agrião
-- [ ] `candidate-fe2afdf01200f1b1` — Prato: Batata inglesa cozida + Tilápia grelhada + Abobrinha cozida
+- [x] `candidate-fe2afdf01200f1b1` — Prato: Batata inglesa cozida + Tilápia grelhada + Abobrinha cozida
 - [ ] `candidate-fe2e10bbf63f6156` — Prato: Mandioca cozida + Seitan + Brócolis cozido
 - [ ] `candidate-fe3129648f707b53` — Prato: Milho verde cozido + Fígado bovino grelhado + Palmito em conserva
 - [ ] `candidate-fe31b27619448c6d` — Prato: Macarrão cozido + Tofu + Tomate

@@ -9,7 +9,7 @@
 - [ ] `candidate-d63f6db0811c554b` — Prato: Arroz integral cozido + Frango desfiado cozido + Pimentão verde
 - [ ] `candidate-d641f185760cdd2d` — Prato: Biscoito de arroz + Frango (sobrecoxa assada) + Tomate
 - [ ] `candidate-d647ea3b334ee62d` — Prato: Mandioca cozida + Merluza grelhada + Aspargos cozidos
-- [ ] `candidate-d654e192f6d228e6` — Prato: Mandioca cozida + Frango (peito grelhado) + Alface
+- [x] `candidate-d654e192f6d228e6` — Prato: Mandioca cozida + Frango (peito grelhado) + Alface
 - [ ] `candidate-d65738b822e36973` — Prato: Polenta cozida + Salmão grelhado + Pepino
 - [ ] `candidate-d659d67cc4168293` — Prato: Arroz integral cozido + Tofu + Palmito em conserva
 - [ ] `candidate-d66f9ab54082084c` — Prato: Batata doce cozida + Carne bovina (patinho) + Couve-flor cozida
@@ -22,7 +22,7 @@
 - [ ] `candidate-d69bc492bda73ff2` — Prato: Milho verde cozido + Carne suína (lombo assado) + Aspargos cozidos
 - [ ] `candidate-d6a11aaa2674890f` — Prato: Mandioca cozida + Carne bovina (músculo cozido) + Rúcula
 - [ ] `candidate-d6a9bb055ea53e6e` — Prato: Polenta cozida + Frango (peito grelhado) + Aspargos cozidos
-- [ ] `candidate-d6b191cd2ff73306` — Prato: Arroz branco cozido + Carne bovina (patinho) + Beterraba cozida
+- [x] `candidate-d6b191cd2ff73306` — Prato: Arroz branco cozido + Carne bovina (patinho) + Beterraba cozida
 - [ ] `candidate-d6b31d93ae85634d` — Prato: Mandioca cozida + Carne suína (lombo assado) + Brócolis cozido
 - [ ] `candidate-d6b41719b504ef52` — Prato: Batata baroa cozida + Carne bovina (coxão mole) + Pimentão vermelho
 - [ ] `candidate-d6b9f106a533c561` — Prato: Batata doce roxa cozida + Carne bovina (patinho) + Chuchu cozido
