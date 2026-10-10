@@ -69,6 +69,9 @@ const PENDENTE: OnboardingPlanPending = {
   mealsPerDay: 1,
   mealCalories: [195],
   sessionMinutes: 45,
+  trainingDays: 3,
+  suggestedSwap: null,
+  estimate: null,
 };
 
 const contexto = () => ({

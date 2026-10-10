@@ -3,6 +3,7 @@ import { logger } from "@/lib/logger";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { aiProviders } from "../../ai.config";
 import { responderEmUmTurno } from "../../providers/turnoUnico";
+import { type CatalogFood, suggestSwap } from "./adjustments";
 import { allowedFoodNames } from "./foodFilter";
 import { type CheckFood, checkPlan, type PractitionerPlanProposal } from "./planCheck";
 import { allowedExerciseNames, type PlanChoices, readPlanChoices } from "./planChoices";
@@ -16,6 +17,19 @@ const MAX_TOKENS = 6000;
 
 type Track = "beginner" | "returning" | "intermediate" | "advanced";
 const TRACKS: Track[] = ["beginner", "returning", "intermediate", "advanced"];
+
+export interface GenerationOptions {
+  /** Respostas trocadas só nesta geração: os dias de O10. */
+  answersOverride?: Record<string, unknown>;
+  /** A meta com outros macros, mesmas calorias: "Mais proteína". */
+  targetOverride?: OnboardingPlanTarget;
+  /** "Mais barato", "Mais rápido": a IA estima, sem dado de preço ou preparo. */
+  dietInstruction?: string;
+  /** O treino fica como está, e só as refeições são remontadas. */
+  keepWorkouts?: PractitionerPlanProposal["workouts"];
+  /** Marca a versão como estimativa da IA ("Mais barato", "Mais rápido"). */
+  estimate?: "cheaper" | "faster";
+}
 
 export type GenerationOutcome =
   | { ok: true; pending: OnboardingPlanPending }
@@ -34,15 +48,25 @@ interface StudentData {
  * Lê as respostas no servidor, nunca do aparelho: o que o app mandasse poderia
  * divergir do que foi gravado e aceito.
  *
+ * Os ajustes de O10 regeneram por aqui, com `options`: outros dias, outra meta
+ * de macros, uma instrução para a dieta, ou o treino mantido e só as refeições
+ * remontadas.
+ *
  * @example const outcome = await generatePractitionerPlan(user.id);
  */
-export async function generatePractitionerPlan(studentId: string): Promise<GenerationOutcome> {
-  const { answers, track } = await loadStudentData(studentId);
+export async function generatePractitionerPlan(
+  studentId: string,
+  options: GenerationOptions = {},
+): Promise<GenerationOutcome> {
+  const loaded = await loadStudentData(studentId);
+  const answers = { ...loaded.answers, ...options.answersOverride };
+  const track = loaded.track;
   const choices = readPlanChoices(answers);
-  const target = targetOf(answers);
-  if (target === undefined) return { ok: false, reason: "incomplete_answers" };
+  const computed = targetOf(answers);
+  if (computed === undefined) return { ok: false, reason: "incomplete_answers" };
+  const target = computed && options.targetOverride ? options.targetOverride : computed;
 
-  const [foods, exercises] = await Promise.all([loadFoods(choices), loadExercises(choices)]);
+  const [foods, exercises] = await Promise.all([loadPlanFoods(choices), loadExercises(choices)]);
   const goal = typeof answers.main_goal === "string" ? answers.main_goal : "Saúde / Bem-estar";
   const basePrompt = buildPlanPrompt({
     goal,
@@ -52,9 +76,11 @@ export async function generatePractitionerPlan(studentId: string): Promise<Gener
     injuryReported: answers.injury_reported === true,
     exercises: [...exercises],
     foods: foods.map((food) => `${food.name} — ${food.calories} kcal por ${food.serving_size} g`),
+    dietInstruction: options.dietInstruction,
+    mealsOnly: options.keepWorkouts !== undefined,
   });
 
-  const proposal = await askUntilAccepted(basePrompt, {
+  const proposal = await askUntilAccepted(basePrompt, options.keepWorkouts, {
     trainingDays: choices.trainingDays,
     sessionMinutes: choices.sessionMinutes,
     sports: choices.sports,
@@ -65,27 +91,32 @@ export async function generatePractitionerPlan(studentId: string): Promise<Gener
   });
   if (!proposal) return { ok: false, reason: "plan_rejected" };
 
-  return {
-    ok: true,
-    pending: {
-      proposal,
-      target,
-      mealCalories: mealCaloriesOf(proposal, foods),
-      goal,
-      level: track,
-      mealsPerDay: choices.mealsPerDay,
-      sessionMinutes: choices.sessionMinutes,
-    },
+  const pending = {
+    proposal,
+    target,
+    mealCalories: mealCaloriesOf(proposal, foods),
+    goal,
+    level: track,
+    mealsPerDay: choices.mealsPerDay,
+    sessionMinutes: choices.sessionMinutes,
+    trainingDays: choices.trainingDays,
+    suggestedSwap: null,
+    estimate: options.estimate ?? null,
   };
+  return { ok: true, pending: { ...pending, suggestedSwap: suggestSwap(pending, foods) } };
 }
 
 async function askUntilAccepted(
   basePrompt: string,
+  keepWorkouts: PractitionerPlanProposal["workouts"] | undefined,
   context: Parameters<typeof checkPlan>[1],
 ): Promise<PractitionerPlanProposal | null> {
   let prompt = basePrompt;
   for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
-    const proposal = scaled(parseProposal(await ask(prompt)), context);
+    const answer = parseProposal(await ask(prompt));
+    // Só as refeições foram pedidas: o treino aprovado na tela volta como estava.
+    const merged = answer && keepWorkouts ? { ...answer, workouts: keepWorkouts } : answer;
+    const proposal = scaled(merged, context);
     const problems = proposal
       ? checkPlan(proposal, context)
       : ["a resposta não era o JSON pedido, ou as porções estavam longe demais da meta"];
@@ -122,7 +153,9 @@ async function ask(prompt: string): Promise<string> {
 function parseProposal(texto: string): PractitionerPlanProposal | null {
   try {
     const parsed = JSON.parse(texto.replace(/```json|```/g, "").trim()) as PractitionerPlanProposal;
-    return Array.isArray(parsed.workouts) ? parsed : null;
+    return Array.isArray(parsed.workouts) || parsed.meals
+      ? { ...parsed, workouts: parsed.workouts ?? [] }
+      : null;
   } catch {
     return null;
   }
@@ -170,10 +203,15 @@ async function loadStudentData(studentId: string): Promise<StudentData> {
   };
 }
 
-async function loadFoods(choices: PlanChoices): Promise<CheckFood[]> {
+/**
+ * Os alimentos que o plano pode usar, já sem as exclusões e no estilo escolhido.
+ *
+ * @example const alimentos = await loadPlanFoods(readPlanChoices(respostas));
+ */
+export async function loadPlanFoods(choices: PlanChoices): Promise<CatalogFood[]> {
   const { data, error } = await supabaseAdmin
     .from("foods")
-    .select("name, serving_size, calories")
+    .select("name, category, serving_size, calories")
     .eq("is_custom", false);
   if (error) throw error;
   const rows = (data ?? []).filter((row) => row.calories !== null);
@@ -190,6 +228,7 @@ async function loadFoods(choices: PlanChoices): Promise<CheckFood[]> {
     .filter((row) => allowed.has(row.name))
     .map((row) => ({
       name: row.name,
+      category: row.category,
       serving_size: Number(row.serving_size),
       calories: Number(row.calories),
     }));

@@ -181,6 +181,8 @@ export interface AiSessionState {
   resolvedDietMeals?: DietMealsProposal;
   /** O plano do onboarding do Praticante (#365), antes e depois de aprovado. */
   pendingOnboardingPlan?: OnboardingPlanPending;
+  /** A versão antes do último ajuste de O10: é o que "Desfazer" devolve. */
+  previousOnboardingPlan?: OnboardingPlanPending | null;
   resolvedOnboardingPlan?: { periodizationId: string; dietPlanId: string | null };
 }
 

@@ -19,6 +19,9 @@ const PENDENTE = {
   mealsPerDay: 4,
   mealCalories: [],
   sessionMinutes: 45,
+  trainingDays: 3,
+  suggestedSwap: null,
+  estimate: null,
 };
 
 vi.mock("@/lib/ai-route", () => ({ withAiRoute: (handler: unknown) => handler }));

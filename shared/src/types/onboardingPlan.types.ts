@@ -54,4 +54,22 @@ export interface OnboardingPlanPending {
   level: string;
   mealsPerDay: number;
   sessionMinutes: number;
+  /** Os dias de treino desta versão: O10 pode mudar sem mexer na resposta de O6. */
+  trainingDays: number;
+  /** A troca de alimento que O10 oferece, calculada pelo banco; `null` sem dieta. */
+  suggestedSwap: { mealIndex: number; itemIndex: number; from: string; to: string } | null;
+  /**
+   * O ajuste que gerou esta versão, quando foi "Mais barato" ou "Mais rápido":
+   * sem preço nem tempo de preparo no banco, são estimativa da IA, e a tela diz.
+   */
+  estimate: "cheaper" | "faster" | null;
 }
+
+/** O que O10 pode pedir. Cada um gera uma nova proposta, sem gravar até aprovar. */
+export type OnboardingAdjustment =
+  | { kind: "swap_food" }
+  | { kind: "more_protein" }
+  | { kind: "cheaper" }
+  | { kind: "faster" }
+  | { kind: "training_days"; days: number }
+  | { kind: "undo" };

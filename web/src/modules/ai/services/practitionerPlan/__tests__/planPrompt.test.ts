@@ -57,4 +57,15 @@ describe("buildPlanPrompt", () => {
       }
     }
   });
+
+  it("o ajuste de O10 pede só as refeições, com a preferência, sem a lista de exercícios", () => {
+    const prompt = buildPlanPrompt({
+      ...ENTRADA,
+      mealsOnly: true,
+      dietInstruction: "Prefira alimentos mais baratos.",
+    });
+    expect(prompt).toContain("Prefira alimentos mais baratos.");
+    expect(prompt).toContain('"workouts": []');
+    expect(prompt).not.toContain("Agachamento livre");
+  });
 });

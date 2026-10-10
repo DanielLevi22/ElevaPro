@@ -14,6 +14,10 @@ export interface PlanPromptInput {
   exercises: readonly string[];
   /** Os alimentos permitidos, com as calorias da porção: "Arroz branco cozido — 130 kcal por 100 g". */
   foods: readonly string[];
+  /** Uma preferência extra para a dieta, vinda de O10 ("mais barato", "mais rápido"). */
+  dietInstruction?: string;
+  /** O treino já está aprovado na tela: pede só as refeições. */
+  mealsOnly?: boolean;
 }
 
 const LEVEL: Record<Track, string> = {
@@ -45,7 +49,9 @@ export function buildPlanPrompt(input: PlanPromptInput): string {
   const { choices } = input;
   return [
     `Monte o plano semanal de um app de treino. Objetivo: ${input.goal}. Nível de treino: ${LEVEL[input.level]}.`,
-    trainingSection(input),
+    input.mealsOnly
+      ? 'Monte SÓ as refeições; o treino já está pronto. Responda com "workouts": [].'
+      : trainingSection(input),
     input.target
       ? dietSection(input)
       : 'SEM DIETA: não monte refeições. Responda com "meals": null.',
@@ -67,13 +73,14 @@ ${TRAINING_RANGES}${cuidado}
 ${exercises.join("\n")}`;
   }
 
-  function dietSection({ target, foods }: PlanPromptInput): string {
+  function dietSection({ target, foods, dietInstruction }: PlanPromptInput): string {
     const meta = target as NonNullable<PlanPromptInput["target"]>;
     const budget = choices.foodBudget ? ` Orçamento: ${choices.foodBudget}.` : "";
+    const preference = dietInstruction ? `\n- ${dietInstruction}` : "";
     return `ALIMENTAÇÃO
 - Meta do dia, calculada pelo app e que você não pode mudar: ${meta.calories} kcal, ${meta.protein} g de proteína, ${meta.carbs} g de carboidrato, ${meta.fat} g de gordura. A soma do dia deve ficar a até 5% das calorias.
 - Exatamente ${choices.mealsPerDay} refeições por dia.${budget}
-- Comida brasileira do dia a dia, em porções realistas.
+- Comida brasileira do dia a dia, em porções realistas.${preference}
 - Use APENAS alimentos desta lista, com o nome exatamente como está antes do travessão. A quantidade é SEMPRE em gramas (ex.: 150 para 150 g de arroz), nunca em porções:
 ${foods.join("\n")}`;
   }
