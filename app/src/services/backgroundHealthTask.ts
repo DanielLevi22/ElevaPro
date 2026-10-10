@@ -55,13 +55,3 @@ export async function registerHealthSyncAsync(): Promise<void> {
     console.log('[HealthSync] Falha ao registrar task de background:', String(error));
   }
 }
-
-export async function unregisterHealthSyncAsync(): Promise<void> {
-  try {
-    if (await TaskManager.isTaskRegisteredAsync(BACKGROUND_HEALTH_SYNC)) {
-      await BackgroundFetch.unregisterTaskAsync(BACKGROUND_HEALTH_SYNC);
-    }
-  } catch (error: unknown) {
-    console.log('[HealthSync] Falha ao desregistrar task de background:', String(error));
-  }
-}
