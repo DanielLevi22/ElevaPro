@@ -121,7 +121,8 @@ const BASE_QUESTIONS: AdaptiveQuestion[] = [
       "Vegano",
       "Intolerante a Lactose",
       "Intolerante a Glúten",
-      "Diabetes",
+      // Sem "Diabetes": diagnóstico não é restrição alimentar. No Praticante a
+      // condição clínica passa pela triagem, que guarda só o resultado (ADR-0044).
       "Outra",
     ],
     weight: 6,
