@@ -50,6 +50,7 @@ export * from "./types/briefing.types";
 export * from "./types/gamification.types";
 export * from "./types/health.types";
 export * from "./types/nutrition.types";
+export * from "./types/onboardingPlan.types";
 export * from "./types/physicalAssessment.types";
 export * from "./types/respostasDaNutricao.types";
 export * from "./types/specialistNote.types";

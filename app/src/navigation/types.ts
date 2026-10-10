@@ -66,6 +66,8 @@ export const ROUTES = {
     SCREENING: '/onboarding/screening',
     TRAINING: '/onboarding/training',
     FOOD: '/onboarding/food',
+    BUILDING: '/onboarding/building',
+    PLAN: '/onboarding/plan',
     ROLE_SELECTION: '/onboarding/role-selection',
     HEALTH_CONNECT: '/onboarding/health-connect',
   },

@@ -17,6 +17,8 @@ const PENDENTE = {
   goal: "Hipertrofia",
   level: "beginner",
   mealsPerDay: 4,
+  mealCalories: [],
+  sessionMinutes: 45,
 };
 
 vi.mock("@/lib/ai-route", () => ({ withAiRoute: (handler: unknown) => handler }));

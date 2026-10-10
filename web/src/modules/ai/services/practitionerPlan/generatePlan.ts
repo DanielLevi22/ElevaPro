@@ -66,7 +66,15 @@ export async function generatePractitionerPlan(studentId: string): Promise<Gener
 
   return {
     ok: true,
-    pending: { proposal, target, goal, level: track, mealsPerDay: choices.mealsPerDay },
+    pending: {
+      proposal,
+      target,
+      mealCalories: mealCaloriesOf(proposal, foods),
+      goal,
+      level: track,
+      mealsPerDay: choices.mealsPerDay,
+      sessionMinutes: choices.sessionMinutes,
+    },
   };
 }
 
@@ -177,4 +185,17 @@ async function loadExercises(choices: PlanChoices): Promise<Set<string>> {
   const { data, error } = await supabaseAdmin.from("exercises").select("name, venue, category");
   if (error) throw error;
   return new Set(allowedExerciseNames(data ?? [], choices.place));
+}
+
+/** As calorias de cada refeição pelo banco de alimentos, e não pelo que a IA disser. */
+function mealCaloriesOf(proposal: PractitionerPlanProposal, foods: readonly CheckFood[]): number[] {
+  const byName = new Map(foods.map((food) => [food.name, food]));
+  return (proposal.meals ?? []).map((meal) =>
+    Math.round(
+      meal.items.reduce((total, item) => {
+        const food = byName.get(item.food_name);
+        return food ? total + (food.calories * item.quantity) / food.serving_size : total;
+      }, 0),
+    ),
+  );
 }

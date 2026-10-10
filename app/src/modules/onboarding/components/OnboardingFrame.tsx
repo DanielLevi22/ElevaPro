@@ -20,7 +20,8 @@ interface OnboardingFrameProps {
   children: ReactNode;
   /** A etapa de 1 a 5. Sem ela, o cabeçalho some: a boas-vindas não conta como etapa. */
   step?: number;
-  primary: {
+  /** Sem ele, a tela não tem rodapé: a espera de O8 não tem o que tocar. */
+  primary?: {
     label: string;
     onPress: () => void;
     icon?: keyof typeof Ionicons.glyphMap;
@@ -53,7 +54,7 @@ export function OnboardingFrame({
   return (
     <GlassScreen
       bottomSpace="actionBar"
-      overlay={<Footer primary={primary} secondaryText={secondaryText} />}
+      overlay={primary ? <Footer primary={primary} secondaryText={secondaryText} /> : null}
     >
       {step ? (
         <View className="min-h-[3.25rem] flex-row items-center gap-3">
@@ -76,7 +77,7 @@ export function OnboardingFrame({
 function Footer({
   primary,
   secondaryText,
-}: Pick<OnboardingFrameProps, 'primary' | 'secondaryText'>) {
+}: Required<Pick<OnboardingFrameProps, 'primary'>> & Pick<OnboardingFrameProps, 'secondaryText'>) {
   const primaryBottom = useBottomOffset(secondaryText ? PRIMARY_OVER_TEXT : PRIMARY_ALONE);
   const secondaryBottom = useBottomOffset(SECONDARY_TEXT);
 

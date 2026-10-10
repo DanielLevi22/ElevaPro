@@ -67,6 +67,8 @@ const PENDENTE: OnboardingPlanPending = {
   goal: "Hipertrofia",
   level: "beginner",
   mealsPerDay: 1,
+  mealCalories: [195],
+  sessionMinutes: 45,
 };
 
 const contexto = () => ({

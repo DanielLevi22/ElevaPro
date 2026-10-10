@@ -6,30 +6,9 @@
  * escolhas" da #365: plano que não passa não chega à tela.
  */
 
-export type DayOfWeek =
-  | "monday"
-  | "tuesday"
-  | "wednesday"
-  | "thursday"
-  | "friday"
-  | "saturday"
-  | "sunday";
+import type { PractitionerPlanProposal } from "@elevapro/shared";
 
-export interface PractitionerPlanProposal {
-  workouts: {
-    title: string;
-    day_of_week: DayOfWeek;
-    muscle_group?: string;
-    /** O esporte praticado entra como sessão opcional, marcada como tal (#365). */
-    optional: boolean;
-    exercises: { exercise_name: string; sets: number; reps: string; rest_seconds: number }[];
-  }[];
-  /** `null` quando a triagem não liberou dieta. */
-  meals:
-    | { name: string; meal_time: string; items: { food_name: string; quantity: number }[] }[]
-    | null;
-  explanation: string;
-}
+export type { PractitionerPlanProposal };
 
 export interface CheckFood {
   name: string;

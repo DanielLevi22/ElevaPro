@@ -25,7 +25,7 @@ const toggle = (list: string[], item: string) =>
  * orçamento. O plano respeita exatamente as refeições e as exclusões daqui
  * (#365). "Pular por enquanto" segue com o padrão.
  *
- * É a última pergunta: conclui a anamnese, o que tira a pessoa do guarda.
+ * É a última pergunta: "Montar meu plano" leva a O8.
  *
  * @example <FoodScreen />
  */
@@ -38,10 +38,9 @@ export function FoodScreen() {
   const [budget, setBudget] = useState<Budget | ''>('');
   const ready = meals !== null && style !== '';
 
-  // O fim provisório até O8 existir: "Montar meu plano" conclui e leva à tela
-  // inicial; a geração do plano é a fatia 2.
+  // Não conclui a anamnese: quem conclui é "Aprovar plano", em O9.
   function concluir(answers: Record<string, unknown>) {
-    void saveAndGo(answers, ROUTES.TABS.ROOT, true);
+    void saveAndGo(answers, ROUTES.ONBOARDING.BUILDING);
   }
 
   return (

@@ -26,7 +26,7 @@ const HOME: Place = 'Home gym';
  * O6 · Seu treino (4 de 5): dias, tempo, onde treina, o equipamento de casa e o
  * esporte praticado. "Pular por enquanto" segue com o padrão (#365).
  *
- * Sem dieta pela triagem, O7 não aparece: o onboarding termina aqui.
+ * Sem dieta pela triagem, O7 não aparece: daqui vai a O8.
  *
  * @example <TrainingScreen />
  */
@@ -40,9 +40,8 @@ export function TrainingScreen() {
   const [equipment, setEquipment] = useState<string[]>([...HOME_EQUIPMENT]);
   const [sports, setSports] = useState<string[]>([]);
 
-  // O fim provisório até O8 existir: concluir leva à tela inicial.
-  const lastStep = dietAllowed === false;
-  const next = lastStep ? ROUTES.TABS.ROOT : ROUTES.ONBOARDING.FOOD;
+  // Sem dieta pela triagem, O7 não aparece: daqui vai direto montar o plano.
+  const next = dietAllowed === false ? ROUTES.ONBOARDING.BUILDING : ROUTES.ONBOARDING.FOOD;
   const ready = days !== null && minutes !== '' && place !== null;
 
   function continuar() {
@@ -55,15 +54,14 @@ export function TrainingScreen() {
         ...(place === HOME ? { home_equipment: equipment } : {}),
         sports: sports.filter((sport) => sport !== NO_SPORT),
       },
-      next,
-      lastStep
+      next
     );
   }
 
   return (
     <OnboardingFrame
       step={4}
-      onSkip={() => void saveAndGo({}, next, lastStep)}
+      onSkip={() => void saveAndGo({}, next)}
       primary={{
         label: saving ? 'Salvando…' : 'Continuar',
         onPress: continuar,
