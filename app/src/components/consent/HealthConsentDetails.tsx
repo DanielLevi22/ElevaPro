@@ -30,6 +30,13 @@ export function HealthConsentDetails({ hasSpecialist }: { hasSpecialist: boolean
         inteligência artificial externo, só para gerar a resposta. A foto não é guardada, e seu nome
         não vai junto.
       </Paragraph>
+      {/* A 1.9 existe também por este parágrafo (#365): a geração do plano manda
+          ao mesmo serviço as escolhas do onboarding, e só elas. */}
+      <Paragraph>
+        Para montar o seu plano, vão ao mesmo serviço o seu objetivo, o seu nível, as suas escolhas
+        de treino e de alimentação e a meta de calorias que o app calculou. Sua idade, seu peso, sua
+        altura e a sua triagem de saúde não vão.
+      </Paragraph>
 
       {/* A 1.9 existe também por este parágrafo: a triagem é decisão automatizada
           (Art. 20), e quem é afetado por ela tem direito de saber o critério e de

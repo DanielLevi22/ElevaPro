@@ -1,7 +1,9 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeLinkedSpecialist, authorizeStudent } from "@/lib/api-auth";
 import { logger } from "@/lib/logger";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { clienteDoTitular } from "@/lib/supabase-titular";
 import type { AiSessionState, ChatModule } from "../types";
 import { aprovarProposta, type ChaveDeProposta } from "./aprovacaoDaProposta";
 import {
@@ -50,7 +52,17 @@ export type Acesso = (
   request: NextRequest,
   params: { studentId?: string },
 ) => Promise<
-  | { ok: true; studentId: string; specialistId?: string; sessionId: string }
+  | {
+      ok: true;
+      studentId: string;
+      specialistId?: string;
+      sessionId: string;
+      /**
+       * O cliente com a sessão de quem aprova, criado só se a gravação pedir: o
+       * que precisa da RLS dele grava por aqui.
+       */
+      titular?: () => SupabaseClient;
+    }
   | { ok: false; response: NextResponse }
 >;
 
@@ -100,7 +112,12 @@ export const acessoDoAluno: Acesso = async (request) => {
   if (!auth.ok) return { ok: false, response: auth.response };
 
   const studentId = auth.caller.id;
-  return { ok: true, studentId, sessionId: await getOrCreateStudentCoachSession(studentId) };
+  return {
+    ok: true,
+    studentId,
+    sessionId: await getOrCreateStudentCoachSession(studentId),
+    titular: () => clienteDoTitular(request),
+  };
 };
 
 /** O que a gravação recebe, além da proposta. */
@@ -111,6 +128,11 @@ export interface ContextoDaAprovacao {
   sessionId: string;
   /** O `state` como estava antes da reivindicação. */
   estado: AiSessionState;
+  /**
+   * O cliente com a sessão do aluno, quando é ele quem aprova. O plano de dieta
+   * do Praticante grava e ativa por aqui: a ativação confere `auth.uid()`.
+   */
+  titular?: () => SupabaseClient;
   /**
    * Registra um id criado agora, para o desfazer alcançá-lo.
    *
@@ -205,10 +227,10 @@ export function criarRotaDeAprovacao<Proposta, Resultado>(
 
     const acesso = await aprovacao.acesso(request, params);
     if (!acesso.ok) return acesso.response;
-    const { studentId, specialistId, sessionId } = acesso;
+    const { studentId, specialistId, sessionId, titular } = acesso;
 
     const estado = await getSessionState(sessionId);
-    const base = { studentId, specialistId, sessionId, estado };
+    const base = { studentId, specialistId, sessionId, estado, titular };
 
     const recusa = await aprovacao.verificar?.(base);
     if (recusa) return NextResponse.json({ error: recusa.erro }, { status: recusa.status });

@@ -100,7 +100,8 @@ export interface ConsentPurpose {
  *   na lista, o banco passou a exigir o aceite para gravá-la, e a triagem do
  *   onboarding do Praticante é decisão automatizada (Art. 20), que o titular
  *   precisa conhecer antes de aceitar. O texto diz também o que não é guardado:
- *   a condição marcada na triagem (ADR-0044).
+ *   a condição marcada na triagem (ADR-0044), e o que a geração do plano manda
+ *   à IA: objetivo, nível, escolhas e a meta, nunca o corpo nem a triagem.
  */
 export const POLICY_VERSION = "1.9";
 

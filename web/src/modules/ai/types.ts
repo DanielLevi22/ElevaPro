@@ -1,4 +1,5 @@
 import type { DietMealsProposal, DietPlanPreferences, DietPlanProposal } from "@elevapro/shared";
+import type { OnboardingPlanPending } from "./services/practitionerPlan/types";
 import type { PlanProposalData } from "./tools/studentCoachTools";
 
 export type { PlanProposalData };
@@ -178,6 +179,9 @@ export interface AiSessionState {
    */
   resolvedDietPlan?: DietPlanProposal;
   resolvedDietMeals?: DietMealsProposal;
+  /** O plano do onboarding do Praticante (#365), antes e depois de aprovado. */
+  pendingOnboardingPlan?: OnboardingPlanPending;
+  resolvedOnboardingPlan?: { periodizationId: string; dietPlanId: string | null };
 }
 
 export type SseEvent =
