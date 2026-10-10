@@ -8,6 +8,8 @@ import { registrarFalha } from '@/lib/registro';
 import { ROUTES } from '@/navigation/types';
 import { BffHttpError } from '@/shared/bff';
 import { OnboardingFrame, OnboardingTitle } from '../components/OnboardingFrame';
+import { ProjectionCurve } from '../components/ProjectionCurve';
+import { useWeightProjection } from '../hooks/useWeightProjection';
 import { generateOnboardingPlan } from '../services/planService';
 import { usePlanDraftStore } from '../store/planDraftStore';
 
@@ -33,6 +35,7 @@ export function BuildingPlanScreen() {
   const router = useRouter();
   const setPlan = usePlanDraftStore((state) => state.setPlan);
   const [falha, setFalha] = useState<Falha | null>(null);
+  const projection = useWeightProjection();
 
   const montar = useCallback(async () => {
     setFalha(null);
@@ -56,6 +59,7 @@ export function BuildingPlanScreen() {
         <OnboardingTitle eyebrow="Leva uns segundos" sub="Estamos juntando tudo que você contou.">
           Montando seu plano
         </OnboardingTitle>
+        {projection ? <ProjectionCurve projection={projection} /> : null}
         <Passos estado="agora" />
       </OnboardingFrame>
     );
@@ -87,6 +91,7 @@ export function BuildingPlanScreen() {
           Vamos montar de novo
         </OnboardingTitle>
       )}
+      {projection ? <ProjectionCurve projection={projection} faded /> : null}
       <Passos estado="parou" />
     </OnboardingFrame>
   );

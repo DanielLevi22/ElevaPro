@@ -106,3 +106,38 @@ function macroWeight(input: PractitionerDietInput, bmi: number, guards: DietGuar
   guards.push("reference_weight");
   return REFERENCE_BMI * (input.heightCm / 100) ** 2;
 }
+
+const TRAINING_DAY_OPTIONS = [2, 3, 4, 5, 6];
+/** O padrão de quem pulou O6: o mínimo de força da OMS com cada músculo 2× por semana. */
+export const DEFAULT_TRAINING_DAYS = 3;
+
+/**
+ * A meta a partir das respostas gravadas do onboarding, como o BFF e o app as
+ * leem: a mesma conta nas duas pontas, para a curva de O8 e o plano de O9 não
+ * divergirem. `null` quando faltam os números do corpo (o onboarding não passou
+ * de O4); sem dieta quando a triagem não liberou.
+ *
+ * @example practitionerDietTargetFromAnswers({ age: 30, height: 180, weight: 80, gender: "Masculino", diet_screening: "allowed" })
+ */
+export function practitionerDietTargetFromAnswers(
+  answers: Record<string, unknown>,
+): PractitionerDietTarget | null {
+  if (answers.diet_screening !== "allowed") return { kind: "no_diet" };
+  const { age, height, weight, gender } = answers;
+  if (typeof age !== "number" || typeof height !== "number" || typeof weight !== "number") {
+    return null;
+  }
+  if (gender !== "Masculino" && gender !== "Feminino") return null;
+
+  return practitionerDietTarget({
+    age,
+    heightCm: height,
+    weightKg: weight,
+    sex: gender === "Masculino" ? "M" : "F",
+    mainGoal: typeof answers.main_goal === "string" ? answers.main_goal : undefined,
+    trainingDaysPerWeek: TRAINING_DAY_OPTIONS.includes(answers.training_days as number)
+      ? (answers.training_days as number)
+      : DEFAULT_TRAINING_DAYS,
+    dietScreening: "allowed",
+  });
+}

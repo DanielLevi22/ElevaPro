@@ -1,4 +1,4 @@
-import { achatarRespostas, practitionerDietTarget } from "@elevapro/shared";
+import { achatarRespostas, practitionerDietTargetFromAnswers } from "@elevapro/shared";
 import { logger } from "@/lib/logger";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { aiProviders } from "../../ai.config";
@@ -157,21 +157,8 @@ function parseProposal(texto: string): PractitionerPlanProposal | null {
  * quando faltam os números do corpo (o onboarding não foi até O4).
  */
 function targetOf(answers: Record<string, unknown>): OnboardingPlanTarget | null | undefined {
-  const { age, height, weight, gender } = answers;
-  if (answers.diet_screening !== "allowed") return null;
-  if (typeof age !== "number" || typeof height !== "number" || typeof weight !== "number")
-    return undefined;
-  if (gender !== "Masculino" && gender !== "Feminino") return undefined;
-
-  const result = practitionerDietTarget({
-    age,
-    heightCm: height,
-    weightKg: weight,
-    sex: gender === "Masculino" ? "M" : "F",
-    mainGoal: typeof answers.main_goal === "string" ? answers.main_goal : undefined,
-    trainingDaysPerWeek: readPlanChoices(answers).trainingDays,
-    dietScreening: "allowed",
-  });
+  const result = practitionerDietTargetFromAnswers(answers);
+  if (result === null) return undefined;
   if (result.kind === "no_diet") return null;
   return { ...result.macros, guards: result.guards };
 }

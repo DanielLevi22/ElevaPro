@@ -1,3 +1,5 @@
+import { DEFAULT_TRAINING_DAYS } from "@elevapro/shared";
+
 /**
  * As escolhas do onboarding, lidas das respostas gravadas na anamnese, com o
  * padrão de quem tocou em "Pular por enquanto" (#365).
@@ -36,7 +38,7 @@ const strings = (value: unknown): string[] =>
  */
 export function readPlanChoices(answers: Record<string, unknown>): PlanChoices {
   return {
-    trainingDays: oneOf(answers.training_days, DAYS, 3),
+    trainingDays: oneOf(answers.training_days, DAYS, DEFAULT_TRAINING_DAYS),
     sessionMinutes: oneOf(answers.training_duration, MINUTES, 45),
     place: oneOf(answers.gym_type, PLACES, "Academia completa"),
     homeEquipment: strings(answers.home_equipment),

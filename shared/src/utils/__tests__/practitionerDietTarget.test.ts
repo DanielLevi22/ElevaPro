@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { calculateTMB } from "../energyTargets";
-import { practitionerDietTarget } from "../practitionerDietTarget";
+import {
+  practitionerDietTarget,
+  practitionerDietTargetFromAnswers,
+} from "../practitionerDietTarget";
 
 /** 80 kg, 180 cm, 30 anos: TMB 1780 (o exemplo da `energyTargets`). */
 const BASE = {
@@ -112,5 +115,42 @@ describe("as travas valem para qualquer corpo", () => {
       const { macros } = target(caso);
       expect(Math.min(macros.protein, macros.carbs, macros.fat)).toBeGreaterThanOrEqual(0);
     }
+  });
+});
+
+describe("practitionerDietTargetFromAnswers", () => {
+  const RESPOSTAS = {
+    age: 30,
+    height: 180,
+    weight: 80,
+    gender: "Masculino",
+    main_goal: "Hipertrofia",
+    training_days: 4,
+    diet_screening: "allowed",
+  };
+
+  it("lê as respostas gravadas e faz a mesma conta da meta", () => {
+    expect(practitionerDietTargetFromAnswers(RESPOSTAS)).toEqual(
+      practitionerDietTarget({ ...BASE, mainGoal: "Hipertrofia", trainingDaysPerWeek: 4 }),
+    );
+  });
+
+  it("sem a triagem liberada, não há dieta, mesmo com o corpo completo", () => {
+    expect(practitionerDietTargetFromAnswers({ ...RESPOSTAS, diet_screening: "referred" })).toEqual(
+      {
+        kind: "no_diet",
+      },
+    );
+  });
+
+  it("sem os números do corpo, não inventa meta", () => {
+    expect(practitionerDietTargetFromAnswers({ ...RESPOSTAS, weight: undefined })).toBeNull();
+  });
+
+  it("quem pulou O6 conta com o padrão de 3 dias", () => {
+    const { training_days: _, ...semDias } = RESPOSTAS;
+    expect(practitionerDietTargetFromAnswers(semDias)).toEqual(
+      practitionerDietTarget({ ...BASE, mainGoal: "Hipertrofia", trainingDaysPerWeek: 3 }),
+    );
   });
 });
