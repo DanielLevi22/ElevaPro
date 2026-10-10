@@ -28,8 +28,10 @@ export function usePlanActions() {
       await approveOnboardingPlan();
       // Concluir a anamnese é o que tira a pessoa do guarda de rotas.
       await saveOnboardingAnswers(userId, {}, { complete: true });
-      usePlanDraftStore.getState().setPlan(null);
+      // Sai antes de limpar: o plano na memória é dado de saúde e não fica, mas
+      // limpar com O9 ainda na tela fazia a tela reagir à ausência dele.
       router.replace(ROUTES.ONBOARDING.HEALTH_CONNECT);
+      usePlanDraftStore.getState().setPlan(null);
     } catch {
       falhou('onboarding.aprovar_plano', 'Não foi possível aprovar');
     } finally {
