@@ -17,15 +17,19 @@ import { TECHNIQUE_RELEASED } from '@/shared/technique/release';
  * Carga e descanso só aparecem quando o especialista os prescreveu. O kit os
  * mostra sempre; zerá-los aqui seria prescrever "0 kg".
  *
+ * Com `onMais`, o número da ordem dá lugar ao "…" que abre "Trocar exercício"
+ * (desenho 6d).
+ *
  * @example
- * <LinhaDoExercicio item={item} ordem={1} />
+ * <LinhaDoExercicio item={item} ordem={1} onMais={() => abrirTroca(item)} />
  */
 interface LinhaDoExercicioProps {
   item: WorkoutExercise;
   ordem: number;
+  onMais?: () => void;
 }
 
-export function LinhaDoExercicio({ item, ordem }: LinhaDoExercicioProps) {
+export function LinhaDoExercicio({ item, ordem, onMais }: LinhaDoExercicioProps) {
   return (
     <Vidro classeExterna="mb-[0.5625rem]" className="flex-row items-center gap-3 p-[0.6875rem]">
       <Image
@@ -53,10 +57,37 @@ export function LinhaDoExercicio({ item, ordem }: LinhaDoExercicioProps) {
         </View>
         <AnalyzeTechnique exerciseName={item.exercise?.name} />
       </View>
-      <Text className="text-micro font-bold text-placeholder">
-        {String(ordem).padStart(2, '0')}
-      </Text>
+      {onMais ? (
+        <BotaoDeMais exerciseName={item.exercise?.name} onPress={onMais} />
+      ) : (
+        <Text className="text-micro font-bold text-placeholder">
+          {String(ordem).padStart(2, '0')}
+        </Text>
+      )}
     </Vidro>
+  );
+}
+
+const MORE_SIZE = 16;
+
+/** O "…" redondo do kit, que abre a troca do exercício. */
+function BotaoDeMais({ exerciseName, onPress }: { exerciseName?: string; onPress: () => void }) {
+  const cores = useCores();
+  const escalar = useEscala();
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Trocar ${exerciseName ?? 'o exercício'}`}
+      hitSlop={8}
+      className="h-[1.875rem] w-[1.875rem] items-center justify-center rounded-full bg-glass-strong"
+    >
+      <Ionicons
+        name="ellipsis-horizontal"
+        size={escalar(MORE_SIZE)}
+        color={cores.mutedForeground}
+      />
+    </TouchableOpacity>
   );
 }
 

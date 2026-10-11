@@ -40,6 +40,7 @@ export interface PropsDoMomento {
 interface ExecucaoDoTreinoProps extends PropsDoMomento {
   anteriores: Record<string, SerieFeita[]>;
   onAjustar: (itemId: string) => void;
+  onTrocar: (itemId: string) => void;
 }
 
 export function ExecucaoDoTreino({
@@ -51,6 +52,7 @@ export function ExecucaoDoTreino({
   onFechar,
   anteriores,
   onAjustar,
+  onTrocar,
 }: ExecucaoDoTreinoProps) {
   const atual = sessao.itens.find((item) => item.id === sessao.atualId);
   const outros = sessao.itens.filter((i) => i.id !== atual?.id);
@@ -80,6 +82,7 @@ export function ExecucaoDoTreino({
           ganho={ganhoDeCarga(numeroDaPrescricao(atual.weight), anteriores[atual.id])}
           onIniciar={() => despachar({ tipo: 'abrirSerie' })}
           onAjustar={() => onAjustar(atual.id)}
+          onTrocar={() => onTrocar(atual.id)}
         />
       ) : null}
 

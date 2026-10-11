@@ -1,5 +1,4 @@
 export { ExerciseConfigModal } from './components/ExerciseConfigModal';
-export { StudentAssignmentModal } from './components/StudentAssignmentModal';
 export * from './routes';
 export * from './screens';
 export type { VoiceAction } from './services/VoiceCommandService';

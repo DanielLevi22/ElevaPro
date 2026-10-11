@@ -21,7 +21,8 @@ export type ChaveDeProposta =
   | "pendingWorkoutProposal"
   | "pendingDietPlan"
   | "pendingDietMeals"
-  | "pendingStudentPlan";
+  | "pendingStudentPlan"
+  | "pendingOnboardingPlan";
 
 export interface Gravacao<Proposta, Resultado> {
   /** Grava a proposta reivindicada. Lançar aqui aciona o `desfazer`. */

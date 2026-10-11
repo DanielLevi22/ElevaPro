@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cópia de restTimerPalette (app/src/modules/workout/services). Um teste trava as duas. -->
+<resources>
+  <color name="rest_surface">#ffffff</color>
+  <color name="rest_label">#000000</color>
+  <color name="rest_secondary_label">#636369</color>
+  <color name="rest_primary">#6da022</color>
+  <color name="rest_primary_text">#4a7619</color>
+  <color name="rest_on_primary">#ffffff</color>
+  <color name="rest_track">#e9e9eb</color>
+  <color name="rest_secondary_button">#e9e9eb</color>
+  <color name="rest_secondary_button_border">#e4e4e5</color>
+</resources>

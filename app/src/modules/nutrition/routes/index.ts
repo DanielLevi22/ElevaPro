@@ -4,7 +4,6 @@
 // Types (re-export from @elevapro/core)
 export type { DietMeal, DietMealItem, DietPlan, Food } from '@elevapro/core';
 // Components
-export { MealCard } from '../components';
 export { AderenciaDaSemanaScreen } from '../screens/aluno/AderenciaDaSemanaScreen';
 export { AssistenteDeNutricaoScreen } from '../screens/aluno/AssistenteDeNutricaoScreen';
 export { BuscarAlimentoScreen } from '../screens/aluno/BuscarAlimentoScreen';
@@ -24,9 +23,7 @@ export { default as DietReviewScreen } from '../screens/diet/DietReviewScreen';
 export { default as DietSentScreen } from '../screens/diet/DietSentScreen';
 export { default as DietStartScreen } from '../screens/diet/DietStartScreen';
 // Screens
-export { MemberNutritionScreen } from '../screens/MemberNutritionScreen';
 export { default as NutritionScreen } from '../screens/NutritionScreen';
-export { StudentNutritionScreen } from '../screens/StudentNutritionScreen';
 // Store
 export { useNutritionStore } from '../store/nutritionStore';
 

@@ -7,6 +7,9 @@
  * @example storedItems(hasSpecialist).map((item) => <Bullet key={item}>{item}</Bullet>)
  */
 const ITEMS = [
+  // A 1.9 existe por esta linha (#365): a anamnese nunca esteve na lista, e o
+  // onboarding passou a gravar o resultado da triagem, não a condição (ADR-0044).
+  'As respostas da sua anamnese — idade, altura, peso, objetivo, rotina e lesões — e o resultado da triagem de saúde. A condição que você marcar na triagem não é guardada: só se a dieta foi liberada',
   'Passos e calorias do dia',
   // A 1.7 existe por esta linha: a prontidão é inferência gravada (ADR-0029). O
   // sono e a FC de repouso, da 1.3, faltavam na lista e entram junto.

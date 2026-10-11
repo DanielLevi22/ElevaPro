@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { Anel } from '@/components/ui/Anel';
+import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { GlassScreen } from '@/components/ui/GlassScreen';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
@@ -27,9 +28,18 @@ interface PlanoDoDiaScreenProps {
   alunoId: string;
   /** O especialista vendo como o aluno: lê, e não marca. */
   somenteLeitura: boolean;
+  /**
+   * O Praticante, sem especialista: o estado vazio fala com ele, e não do
+   * especialista, e leva a montar o plano pelo onboarding.
+   */
+  praticante?: boolean;
 }
 
-export function PlanoDoDiaScreen({ alunoId, somenteLeitura }: PlanoDoDiaScreenProps) {
+export function PlanoDoDiaScreen({
+  alunoId,
+  somenteLeitura,
+  praticante = false,
+}: PlanoDoDiaScreenProps) {
   const router = useRouter();
   const plano = usePlanoDoDia(alunoId, { somenteLeitura });
 
@@ -60,20 +70,34 @@ export function PlanoDoDiaScreen({ alunoId, somenteLeitura }: PlanoDoDiaScreenPr
           />
         </View>
       </View>
-      <ConteudoDoPlano plano={plano} />
+      <ConteudoDoPlano plano={plano} praticante={praticante} />
     </GlassScreen>
   );
 }
 
-function ConteudoDoPlano({ plano }: { plano: PlanoDoDia }) {
+function ConteudoDoPlano({ plano, praticante }: { plano: PlanoDoDia; praticante: boolean }) {
   const cores = useCores();
+  const router = useRouter();
   if (!plano.temPlano) {
-    return plano.carregando ? (
-      <ActivityIndicator className="mt-16" color={cores.primary} />
-    ) : (
-      <Text className="px-6 py-16 text-center text-legenda text-muted-foreground">
-        Seu especialista ainda não montou um plano alimentar para você.
-      </Text>
+    if (plano.carregando) return <ActivityIndicator className="mt-16" color={cores.primary} />;
+    if (!praticante) {
+      return (
+        <Text className="px-6 py-16 text-center text-legenda text-muted-foreground">
+          Seu especialista ainda não montou um plano alimentar para você.
+        </Text>
+      );
+    }
+    return (
+      <View className="items-center gap-4 px-6 py-16">
+        <Text className="text-center text-legenda text-muted-foreground">
+          Você ainda não tem um plano alimentar ativo.
+        </Text>
+        <BotaoDeDestaque
+          rotulo="Montar meu plano"
+          tamanho="compacto"
+          onPress={() => router.push(ROUTES.ONBOARDING.SCOPE)}
+        />
+      </View>
     );
   }
 

@@ -22,6 +22,7 @@ export function BriefingSummary({ signals, activeStudents, today }: BriefingSumm
   const inactive = signals.filter((s) => s.kind === "inactive").length;
   const invites = signals.filter((s) => s.kind === "pending_invite").length;
   const ready = signals.filter((s) => s.kind === "anamnesis_ready").length;
+  const swapped = signals.filter((s) => s.kind === "exercise_swap").length;
 
   return (
     <section>
@@ -55,7 +56,13 @@ export function BriefingSummary({ signals, activeStudents, today }: BriefingSumm
                 {plural(ready, "aluno está pronto", "alunos estão prontos")} para receber o plano.{" "}
               </>
             )}
-            {inactive === 0 && invites === 0 && ready === 0 && (
+            {swapped > 0 && (
+              <>
+                {plural(swapped, "aluno trocou", "alunos trocaram")} exercício do treino nesta
+                semana.{" "}
+              </>
+            )}
+            {inactive === 0 && invites === 0 && ready === 0 && swapped === 0 && (
               <>Nada exige ação agora — todo mundo está em dia.</>
             )}
           </>

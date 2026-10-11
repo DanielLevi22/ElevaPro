@@ -160,7 +160,11 @@ function useEligibility() {
 /** Zera o scan anterior e segue para o preparo, que vem sempre antes da câmera. */
 function useStartScan() {
   const router = useRouter();
-  const { studentId, id } = useLocalSearchParams<{ studentId?: string; id?: string }>();
+  const { studentId, id, retorno } = useLocalSearchParams<{
+    studentId?: string;
+    id?: string;
+    retorno?: string;
+  }>();
   const authUserId = useAuthStore((s) => s.session?.user?.id ?? null);
   const { startScan, setStudentId } = useAssessmentStore();
 
@@ -170,7 +174,7 @@ function useStartScan() {
     await startScan();
     // O preparo muda a cada sessão: o cômodo de hoje não é o de duas semanas
     // atrás (`ADR-0022`).
-    router.push({ pathname: ROUTES.ASSESSMENT.TUTORIAL, params: { studentId: targetId } });
+    router.push({ pathname: ROUTES.ASSESSMENT.TUTORIAL, params: { studentId: targetId, retorno } });
   };
 }
 

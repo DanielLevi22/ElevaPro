@@ -1,24 +1,27 @@
 "use client";
 
 import type { Student } from "@elevapro/shared";
-import { Plus } from "lucide-react";
+import { Link2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
 import { FilterBar } from "@/shared/components/ui/FilterBar";
 import { PageHeader } from "@/shared/components/ui/PageHeader";
 import { CreateStudentModal } from "../components/CreateStudentModal";
+import { LinkByCodeDialog } from "../components/LinkByCodeDialog";
 import { StudentsTable } from "../components/StudentsTable";
 import { TransferRequestsList } from "../components/TransferRequestsList";
 
 interface StudentsClientProps {
   initialStudents: Student[];
+  specialistId: string | null;
 }
 
-export function StudentsClient({ initialStudents }: StudentsClientProps) {
+export function StudentsClient({ initialStudents, specialistId }: StudentsClientProps) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isLinkOpen, setIsLinkOpen] = useState(false);
 
   const filtered = initialStudents.filter(
     (s) =>
@@ -37,14 +40,29 @@ export function StudentsClient({ initialStudents }: StudentsClientProps) {
         eyebrow="Gestão"
         title="Alunos"
         actions={
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            <Plus className="w-3.5 h-3.5" />
-            Novo Aluno
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => setIsLinkOpen(true)}>
+              <Link2 className="w-3.5 h-3.5" />
+              Vincular por código
+            </Button>
+            <Button onClick={() => setIsCreateModalOpen(true)}>
+              <Plus className="w-3.5 h-3.5" />
+              Novo Aluno
+            </Button>
+          </div>
         }
       />
 
       <CreateStudentModal isOpen={isCreateModalOpen} onClose={handleStudentCreated} />
+      <LinkByCodeDialog
+        open={isLinkOpen}
+        specialistId={specialistId}
+        onClose={() => setIsLinkOpen(false)}
+        onLinked={() => {
+          setIsLinkOpen(false);
+          router.refresh();
+        }}
+      />
 
       <TransferRequestsList />
 

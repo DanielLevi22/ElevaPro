@@ -2,8 +2,10 @@ import { evolucoesDaSessao, resumoDaSessao, seriesDaSessaoAnterior } from '@elev
 import { useMemo, useState } from 'react';
 import { showAlert } from '@/components/ui/appAlert';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
+import { ExerciseSwapSheet } from '../../../components/ExerciseSwapSheet';
 import { AjusteDoExercicio } from '../../../components/sessao/AjusteDoExercicio';
 import { TelaDeFeedback } from '../../../components/sessao/TelaDeFeedback';
+import { isSelfGuidedWorkout } from '../../../hooks/useExerciseSwap';
 import { usePesoDoAluno } from '../../../hooks/usePesoDoAluno';
 import { useUltimaSessaoDoTreino } from '../../../hooks/useUltimaSessaoDoTreino';
 import { gravarSessaoDeForca, montarSessaoDeForca } from '../../../services/registroDaSessao';
@@ -62,14 +64,32 @@ export function MomentoDaSessao(props: MomentoDaSessaoProps) {
   }
 }
 
-/** A lista da execução com a folha de ajuste do exercício tocado no lápis. */
+/**
+ * A lista da execução com a folha de ajuste do lápis e a de troca do "…". A
+ * troca entra na sessão na hora; se for de vez, o plano também muda.
+ */
 function ExecucaoComAjuste(props: MomentoDaSessaoProps & { anteriores: SeriesAnteriores }) {
-  const { sessao, despachar, podeEditarVideo } = props;
+  const { treino, sessao, despachar, podeEditarVideo, alunoId, mascarado } = props;
   const [ajustando, setAjustando] = useState<string | null>(null);
+  const [trocando, setTrocando] = useState<string | null>(null);
 
   return (
     <>
-      <ExecucaoDoTreino {...props} onAjustar={setAjustando} />
+      <ExecucaoDoTreino {...props} onAjustar={setAjustando} onTrocar={setTrocando} />
+      <ExerciseSwapSheet
+        item={sessao.itens.find((item) => item.id === trocando) ?? null}
+        workoutId={treino.id}
+        studentId={alunoId}
+        // Vendo como o aluno, o especialista não muda o plano de ninguém.
+        selfGuided={!mascarado && isSelfGuidedWorkout(treino, alunoId)}
+        onSwapped={(item, exercise) =>
+          despachar({
+            tipo: 'ajustarExercicio',
+            item: { ...item, exercise_id: exercise.id, exercise },
+          })
+        }
+        onClose={() => setTrocando(null)}
+      />
       <AjusteDoExercicio
         item={sessao.itens.find((item) => item.id === ajustando) ?? null}
         podeEditarVideo={podeEditarVideo}

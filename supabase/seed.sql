@@ -4,15 +4,21 @@
 
 -- Seed: catálogo de alimentos
 --
--- Macros por 100 g, salvo quando `serving_size` diz outra coisa.
--- Fonte de referência: TACO (Tabela Brasileira de Composição de Alimentos).
+-- A tabela abaixo está por 100 g, como a fonte: TACO (Tabela Brasileira de
+-- Composição de Alimentos). O insert grava **por porção** (`serving_size`),
+-- que é como o app inteiro lê `foods`: a quantidade dividida pela porção. Antes
+-- gravava o valor de 100 g em toda linha, e 10 g de azeite viravam 884 kcal no
+-- diário (ver a migration 0084).
 --
 -- Toda linha nasce categorizada. O vocabulário é fechado por CHECK na 0047, e
 -- alimento sem categoria é alimento que a busca por "proteínas" não acha —
 -- pior que não filtrar, porque a lista incompleta parece completa.
 
 insert into foods (name, category, calories, protein, carbs, fat, fiber, serving_size)
-select v.name, v.category, v.calories, v.protein, v.carbs, v.fat, v.fiber, v.serving_size
+select v.name, v.category,
+       round(v.calories * v.serving_size / 100.0, 2), round(v.protein * v.serving_size / 100.0, 2),
+       round(v.carbs * v.serving_size / 100.0, 2), round(v.fat * v.serving_size / 100.0, 2),
+       round(v.fiber * v.serving_size / 100.0, 2), v.serving_size
 from (values
 -- Proteínas animais
 ('Frango (peito grelhado)',           'proteina',   159, 32.0, 0.0,  2.7,  0.0,  100),

@@ -1,0 +1,121 @@
+<!-- O desenho 6c: o cabeçalho "Eleva Pro · agora" é o do próprio sistema.
+     Notificação só infla as views que o RemoteViews permite: nada de View solta. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:orientation="vertical">
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="bottom"
+    android:orientation="horizontal">
+
+    <LinearLayout
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:orientation="vertical">
+
+      <TextView
+        android:id="@+id/rest_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/rest_label"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+      <TextView
+        android:id="@+id/rest_subtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/rest_secondary_label"
+        android:textSize="12.5sp" />
+    </LinearLayout>
+
+    <Chronometer
+      android:id="@+id/rest_timer"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginStart="8dp"
+      android:fontFamily="sans-serif-black"
+      android:includeFontPadding="false"
+      android:letterSpacing="-0.03"
+      android:textColor="@color/rest_primary_text"
+      android:textSize="34sp" />
+  </LinearLayout>
+
+  <ProgressBar
+    android:id="@+id/rest_progress"
+    style="@android:style/Widget.ProgressBar.Horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="4dp"
+    android:layout_marginTop="12dp"
+    android:max="1000"
+    android:progressDrawable="@drawable/rest_progress" />
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="40dp"
+    android:layout_marginTop="12dp"
+    android:orientation="horizontal">
+
+    <LinearLayout
+      android:id="@+id/rest_add"
+      android:layout_width="0dp"
+      android:layout_height="match_parent"
+      android:layout_weight="1"
+      android:layout_marginEnd="8dp"
+      android:background="@drawable/rest_button_secondary"
+      android:gravity="center"
+      android:orientation="horizontal">
+
+      <ImageView
+        android:layout_width="14dp"
+        android:layout_height="14dp"
+        android:layout_marginEnd="6dp"
+        android:src="@drawable/rest_icon_plus" />
+
+      <TextView
+        android:id="@+id/rest_add_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:letterSpacing="0.06"
+        android:textAllCaps="true"
+        android:textColor="@color/rest_label"
+        android:textSize="11.5sp"
+        android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+      android:id="@+id/rest_skip"
+      android:layout_width="0dp"
+      android:layout_height="match_parent"
+      android:layout_weight="1"
+      android:background="@drawable/rest_button_primary"
+      android:gravity="center"
+      android:orientation="horizontal">
+
+      <ImageView
+        android:layout_width="14dp"
+        android:layout_height="14dp"
+        android:layout_marginEnd="6dp"
+        android:src="@drawable/rest_icon_skip" />
+
+      <TextView
+        android:id="@+id/rest_skip_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:letterSpacing="0.06"
+        android:textAllCaps="true"
+        android:textColor="@color/rest_on_primary"
+        android:textSize="11.5sp"
+        android:textStyle="bold" />
+    </LinearLayout>
+  </LinearLayout>
+</LinearLayout>

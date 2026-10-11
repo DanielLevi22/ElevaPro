@@ -19,6 +19,7 @@ const ICON_BY_KIND: Record<ActivityKind, keyof typeof Ionicons.glyphMap> = {
   assessment: 'body-outline',
   body_scan: 'scan-outline',
   anamnesis: 'document-text-outline',
+  exercise_swap: 'swap-horizontal-outline',
 };
 
 /** O verde do kit para o que o aluno cumpriu, o azul para a dieta, a marca para a medida. */
@@ -30,6 +31,7 @@ const TONE_BY_KIND: Record<ActivityKind, TomDeMetrica> = {
   assessment: 'marca',
   body_scan: 'cadencia',
   anamnesis: 'gordura',
+  exercise_swap: 'gordura',
 };
 
 export function TimelineCard({ entry }: { entry: TimelineEntry }) {

@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["RestTimerActivityModule"]
+  },
+  "android": {
+    "modules": ["com.elevapro.resttimeractivity.RestTimerActivityModule"]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "dark": {
+    "surface": "#1c1c1e",
+    "label": "#ffffff",
+    "secondaryLabel": "#a5a5ac",
+    "primary": "#99ff00",
+    "primaryText": "#87da0b",
+    "onPrimary": "#000000",
+    "track": "#353537",
+    "secondaryButton": "#353537",
+    "secondaryButtonBorder": "#3a3a3b"
+  },
+  "light": {
+    "surface": "#ffffff",
+    "label": "#000000",
+    "secondaryLabel": "#636369",
+    "primary": "#6da022",
+    "primaryText": "#4a7619",
+    "onPrimary": "#ffffff",
+    "track": "#e9e9eb",
+    "secondaryButton": "#e9e9eb",
+    "secondaryButtonBorder": "#e4e4e5"
+  }
+}

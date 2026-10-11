@@ -27,22 +27,3 @@ export function useCreateExercise() {
     },
   });
 }
-
-export function useUpdateExercise() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<CreateExerciseInput> }) =>
-      workoutsService.updateExercise(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['exercises'] });
-    },
-    onError: (error: Error) => {
-      showAlert({
-        title: 'Erro',
-        message: error.message || 'Não foi possível atualizar o exercício.',
-        type: 'error',
-      });
-    },
-  });
-}

@@ -1,5 +1,6 @@
 import { contagem, gruposDoTreino, treinouHoje, type Workout } from '@elevapro/shared';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { showConfirm } from '@/components/ui/appAlert';
 import { BotaoFixoNoRodape } from '@/components/ui/BotaoFixoNoRodape';
@@ -11,9 +12,12 @@ import { ROUTES } from '@/navigation/types';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { EstadoDaTela } from '../../components/aluno/EstadoDaTela';
 import { LinhaDoExercicio } from '../../components/aluno/LinhaDoExercicio';
+import { ExerciseSwapSheet } from '../../components/ExerciseSwapSheet';
 import { useDetalheDoTreino } from '../../hooks/useDetalheDoTreino';
+import { isSelfGuidedWorkout } from '../../hooks/useExerciseSwap';
 import { useSessoesDoAluno } from '../../hooks/useSessoesDoAluno';
 import { comModo, type ModoDaRota } from '../../routes/visaoDoAluno';
+import { useTodayExercises } from '../../store/todaySwapsStore';
 
 /**
  * O treino antes de começar, na visão do aluno — tela 3 do fluxo do kit.
@@ -37,8 +41,13 @@ export function DetalheDoTreinoScreen({ treinoId, alunoId, modo }: DetalheDoTrei
 
   if (!treino)
     return <EstadoDaTela naoEncontrado={naoEncontrado} mensagem="Treino não encontrado." />;
+  return <DetalheCarregado treino={treino} alunoId={alunoId} modo={modo} />;
+}
 
-  const exercicios = treino.exercises ?? [];
+/** O treino carregado, com as trocas de hoje e a folha "Trocar exercício" (6d). */
+function DetalheCarregado({ treino, alunoId, modo }: IniciarTreinoProps) {
+  const exercicios = useTodayExercises(treino.id, treino.exercises ?? []);
+  const [trocando, setTrocando] = useState<string | null>(null);
 
   return (
     <TelaDeVidroComFoto
@@ -58,8 +67,21 @@ export function DetalheDoTreinoScreen({ treinoId, alunoId, modo }: DetalheDoTrei
         Lista de exercícios
       </TituloDeSecao>
       {exercicios.map((item, indice) => (
-        <LinhaDoExercicio key={item.id} item={item} ordem={indice + 1} />
+        <LinhaDoExercicio
+          key={item.id}
+          item={item}
+          ordem={indice + 1}
+          onMais={() => setTrocando(item.id)}
+        />
       ))}
+      <ExerciseSwapSheet
+        item={exercicios.find((item) => item.id === trocando) ?? null}
+        workoutId={treino.id}
+        studentId={alunoId}
+        selfGuided={isSelfGuidedWorkout(treino, alunoId)}
+        onSwapped={() => undefined}
+        onClose={() => setTrocando(null)}
+      />
     </TelaDeVidroComFoto>
   );
 }

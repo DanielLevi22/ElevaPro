@@ -1,5 +1,10 @@
 /** Por que este aluno aparece no briefing. Ordena a lista: menor = mais urgente. */
-export type BriefingSignalKind = "inactive" | "pending_invite" | "anamnesis_ready";
+export type BriefingSignalKind =
+  | "inactive"
+  | "pending_invite"
+  | "anamnesis_ready"
+  /** Trocou exercício de treino prescrito nos últimos dias (#365, 6d). */
+  | "exercise_swap";
 
 export type BriefingTone = "danger" | "warning" | "success";
 

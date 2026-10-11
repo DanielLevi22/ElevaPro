@@ -69,13 +69,7 @@ export const AnamnesisService = {
   },
 
   async savePersonaTrack(studentId: string, track: string): Promise<void> {
-    // O update não devolvia nada e o erro sumia: gravar a trilha podia falhar
-    // em silêncio e a tela seguia como se tivesse salvo.
-    const { error } = await supabase
-      .from('profiles')
-      .update({ persona_track: track })
-      .eq('id', studentId);
-    if (error) throw error;
+    await createAdaptiveAnamnesisService(supabase).savePersonaTrack(studentId, track);
   },
 
   async getPersonaTrack(studentId: string): Promise<string | null> {

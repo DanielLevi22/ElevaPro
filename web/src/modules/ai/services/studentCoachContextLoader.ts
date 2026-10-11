@@ -1,4 +1,8 @@
-import { achatarRespostas } from "@elevapro/shared";
+import {
+  achatarRespostas,
+  DIETARY_RESTRICTION_LABELS,
+  restrictionsFromAnamnesis,
+} from "@elevapro/shared";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export interface StudentCoachContext {
@@ -137,7 +141,8 @@ export function formatStudentCoachContext(ctx: StudentCoachContext): string {
     }
     if (a.training_duration) lines.push(`Tempo por sessão: ${a.training_duration} min`);
     if (a.gym_type) lines.push(`Local de treino: ${a.gym_type}`);
-    if (a.dietary_restrictions) lines.push(`Restrições alimentares: ${a.dietary_restrictions}`);
+    const restricoes = foodRestrictions(a);
+    if (restricoes) lines.push(`Restrições alimentares: ${restricoes}`);
     if (a.injuries) lines.push(`Lesões/Contraindicações: ${a.injuries}`);
     if (a.sleep_hours) lines.push(`Horas de sono: ${a.sleep_hours}h`);
     if (a.stress_level) lines.push(`Nível de estresse: ${a.stress_level}`);
@@ -187,7 +192,28 @@ export function buildProfileSummary(ctx: StudentCoachContext): Record<string, st
         ? `${a.training_days}x/semana · ${duracaoPorTreino(a.training_duration)}`
         : null,
     local: (a.gym_type as string) ?? null,
-    dieta: (a.dietary_restrictions as string) ?? "Sem restrições",
+    dieta: foodRestrictions(a) ?? "Sem restrições",
     lesoes: (a.injuries as string) ?? "Nenhuma",
   };
+}
+
+/**
+ * O que o aluno não come, nunca do que ele sofre (Art. 6°, III; ADR-0044).
+ *
+ * A pergunta de restrição da anamnese mistura exclusão de alimento com
+ * diagnóstico ("Diabetes", "Outra"). Ao provedor vai só o vocabulário fechado de
+ * exclusão — o mesmo das etiquetas do plano — e o que a pessoa marcou em "Não
+ * como" no onboarding, que já nasce como alimento.
+ */
+function foodRestrictions(a: Record<string, unknown>): string | null {
+  const daAnamnese = restrictionsFromAnamnesis(a.dietary_restrictions).map(
+    (tag) => DIETARY_RESTRICTION_LABELS[tag],
+  );
+  const doOnboarding = Array.isArray(a.food_exclusions)
+    ? a.food_exclusions
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => `sem ${item.toLowerCase()}`)
+    : [];
+  const todas = [...daAnamnese, ...doOnboarding];
+  return todas.length > 0 ? todas.join(", ") : null;
 }

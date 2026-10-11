@@ -11,12 +11,6 @@ export const SLEEP_MINUTES: Bounds = { min: 1, max: 1440 };
 export const RESTING_BPM: Bounds = { min: 20, max: 200 };
 
 /**
- * FC média em esforço. 30 bpm é abaixo do atleta de endurance mais bradicárdico;
- * 230 é acima da FC máxima de qualquer adulto. É a faixa do CHECK da `0049`.
- */
-export const WORKOUT_BPM: Bounds = { min: 30, max: 230 };
-
-/**
  * Barreira entre o que a plataforma de saúde devolve e o que o app usa.
  *
  * O dado vem de um app de terceiro — Zepp, Mi Fitness, Garmin Connect — que pode

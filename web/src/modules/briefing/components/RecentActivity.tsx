@@ -1,6 +1,14 @@
 import type { ActivityKind, RecentActivityItem } from "@elevapro/shared";
 import { formatPse } from "@elevapro/shared";
-import { Apple, ClipboardList, Dumbbell, Footprints, HeartPulse, Salad } from "lucide-react";
+import {
+  Apple,
+  ArrowLeftRight,
+  ClipboardList,
+  Dumbbell,
+  Footprints,
+  HeartPulse,
+  Salad,
+} from "lucide-react";
 import Link from "next/link";
 
 const ICONE: Record<ActivityKind, typeof Dumbbell> = {
@@ -11,6 +19,7 @@ const ICONE: Record<ActivityKind, typeof Dumbbell> = {
   diet_plan: Salad,
   body_scan: HeartPulse,
   anamnesis: ClipboardList,
+  exercise_swap: ArrowLeftRight,
 };
 
 const MINUTO = 60_000;

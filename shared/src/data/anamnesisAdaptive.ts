@@ -1,6 +1,25 @@
 import { MEASUREMENT_QUESTIONS } from "../utils/anamnesisMeasurement";
+import { TRAINING_PLACES } from "../utils/trainingPlace";
 
 export type PersonaTrack = "beginner" | "returning" | "intermediate" | "advanced";
+
+/**
+ * As regiões de lesão ou dor, como a anamnese grava em `injuries`. O onboarding
+ * (#365) e a anamnese longa usam a mesma lista, para o especialista ler as duas
+ * do mesmo jeito.
+ */
+export const INJURY_REGIONS = [
+  "Coluna",
+  "Ombros",
+  "Joelhos",
+  "Quadril",
+  "Cotovelo",
+  "Punhos",
+  "Tornozelos",
+  "Outra região",
+] as const;
+
+export type InjuryRegion = (typeof INJURY_REGIONS)[number];
 
 export interface AdaptiveQuestion {
   id: string;
@@ -107,7 +126,7 @@ const BASE_QUESTIONS: AdaptiveQuestion[] = [
     id: "gym_type",
     text: "Onde você vai treinar?",
     type: "single_choice",
-    options: ["Academia completa", "Academia básica", "Home gym", "Ao ar livre"],
+    options: Object.values(TRAINING_PLACES),
     weight: 8,
     whyWeAsk: "Selecionamos exercícios compatíveis com os equipamentos disponíveis.",
   },
@@ -121,7 +140,8 @@ const BASE_QUESTIONS: AdaptiveQuestion[] = [
       "Vegano",
       "Intolerante a Lactose",
       "Intolerante a Glúten",
-      "Diabetes",
+      // Sem "Diabetes": diagnóstico não é restrição alimentar. No Praticante a
+      // condição clínica passa pela triagem, que guarda só o resultado (ADR-0044).
       "Outra",
     ],
     weight: 6,
@@ -131,7 +151,7 @@ const BASE_QUESTIONS: AdaptiveQuestion[] = [
     id: "injuries",
     text: "Tem alguma dor ou lesão que devo saber?",
     type: "multiple_choice",
-    options: ["Nenhuma", "Coluna", "Ombros", "Joelhos", "Quadril", "Cotovelo", "Punhos"],
+    options: ["Nenhuma", ...INJURY_REGIONS],
     weight: 6,
     whyWeAsk: "Adaptamos os exercícios para proteger regiões sensíveis.",
   },
