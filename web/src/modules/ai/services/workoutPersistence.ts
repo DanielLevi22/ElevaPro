@@ -47,10 +47,13 @@ async function saveExercises(
 
   const names = exercises.map((e: BulkWorkoutExercise) => e.exercise_name);
 
-  const { data: exerciseRows } = await supabaseAdmin
+  const { data: exerciseRows, error } = await supabaseAdmin
     .from("exercises" as never)
     .select("id, name")
     .in("name" as never, names as never);
+  // Sem ler o erro, catálogo fora do ar virava "nenhum exercício encontrado" e o
+  // treino era gravado vazio.
+  if (error) throw new Error(`exercícios do treino não foram lidos: ${error.message}`);
 
   const exerciseMap = new Map(
     ((exerciseRows as { id: string; name: string }[] | null) ?? []).map((e) => [
@@ -62,12 +65,15 @@ async function saveExercises(
   // Fuzzy fallback for names not found exactly
   const notFound = names.filter((n) => !exerciseMap.has(n.toLowerCase()));
   for (const name of notFound as string[]) {
-    const { data: fuzzy } = await supabaseAdmin
+    const { data: fuzzy, error: fuzzyError } = await supabaseAdmin
       .from("exercises" as never)
       .select("id, name")
       .ilike("name" as never, `%${name}%` as never)
       .limit(1)
       .maybeSingle();
+    if (fuzzyError) {
+      throw new Error(`busca do exercício "${name}" falhou: ${fuzzyError.message}`);
+    }
     if (fuzzy) {
       const row = fuzzy as { id: string; name: string };
       exerciseMap.set(name.toLowerCase(), row.id);
@@ -90,8 +96,13 @@ async function saveExercises(
     })
     .filter(Boolean);
 
-  if (rows.length > 0) {
-    await supabaseAdmin.from("workout_exercises" as never).insert(rows as never[]);
+  if (rows.length === 0) return;
+  const { error: insertError } = await supabaseAdmin
+    .from("workout_exercises" as never)
+    .insert(rows as never[]);
+  // Lançar aciona o desfazer da aprovação: sem isto, o treino ficava sem exercícios.
+  if (insertError) {
+    throw new Error(`exercícios do treino ${workoutId} não foram gravados: ${insertError.message}`);
   }
 }
 
