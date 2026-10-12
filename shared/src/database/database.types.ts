@@ -518,6 +518,75 @@ export type Database = {
           },
         ];
       };
+      exercise_swaps: {
+        Row: {
+          from_exercise_id: string | null;
+          id: string;
+          scope: string;
+          student_id: string;
+          swapped_at: string;
+          to_exercise_id: string | null;
+          workout_exercise_id: string | null;
+          workout_id: string;
+        };
+        Insert: {
+          from_exercise_id?: string | null;
+          id?: string;
+          scope: string;
+          student_id: string;
+          swapped_at?: string;
+          to_exercise_id?: string | null;
+          workout_exercise_id?: string | null;
+          workout_id: string;
+        };
+        Update: {
+          from_exercise_id?: string | null;
+          id?: string;
+          scope?: string;
+          student_id?: string;
+          swapped_at?: string;
+          to_exercise_id?: string | null;
+          workout_exercise_id?: string | null;
+          workout_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "exercise_swaps_from_exercise_id_fkey";
+            columns: ["from_exercise_id"];
+            isOneToOne: false;
+            referencedRelation: "exercises";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "exercise_swaps_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "exercise_swaps_to_exercise_id_fkey";
+            columns: ["to_exercise_id"];
+            isOneToOne: false;
+            referencedRelation: "exercises";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "exercise_swaps_workout_exercise_id_fkey";
+            columns: ["workout_exercise_id"];
+            isOneToOne: false;
+            referencedRelation: "workout_exercises";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "exercise_swaps_workout_id_fkey";
+            columns: ["workout_id"];
+            isOneToOne: false;
+            referencedRelation: "workouts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       exercises: {
         Row: {
           category: string;
@@ -949,6 +1018,38 @@ export type Database = {
           {
             foreignKeyName: "ranking_scores_student_id_fkey";
             columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      specialist_link_codes: {
+        Row: {
+          code: string;
+          created_at: string;
+          expires_at: string;
+          id: string;
+          specialist_id: string;
+        };
+        Insert: {
+          code: string;
+          created_at?: string;
+          expires_at: string;
+          id?: string;
+          specialist_id: string;
+        };
+        Update: {
+          code?: string;
+          created_at?: string;
+          expires_at?: string;
+          id?: string;
+          specialist_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "specialist_link_codes_specialist_id_fkey";
+            columns: ["specialist_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
@@ -1765,6 +1866,11 @@ export type Database = {
         }[];
       };
       link_student_by_code: { Args: { p_code: string }; Returns: Json };
+      link_to_specialist_by_code: { Args: { p_code: string }; Returns: Json };
+      record_exercise_swap: {
+        Args: { p_scope: string; p_to_exercise_id: string; p_workout_exercise_id: string };
+        Returns: undefined;
+      };
       record_security_audit_event: {
         Args: {
           p_actor_id?: string;
@@ -1781,6 +1887,10 @@ export type Database = {
       reivindicar_proposta: { Args: { p_chave: string; p_session_id: string }; Returns: Json };
       set_own_account_type: {
         Args: { p_account_type: Database["public"]["Enums"]["account_type"]; p_full_name?: string };
+        Returns: undefined;
+      };
+      swap_workout_exercise: {
+        Args: { p_exercise_id: string; p_workout_exercise_id: string };
         Returns: undefined;
       };
     };
