@@ -2028,10 +2028,7 @@ export type Database = {
         Returns: undefined;
       };
       submit_weekly_check_in: {
-        Args: {
-          p_logging: Database["public"]["Enums"]["check_in_logging"];
-          p_weight_kg: number;
-        };
+        Args: { p_logging: Database["public"]["Enums"]["check_in_logging"]; p_weight_kg: number };
         Returns: {
           assessment_id: string | null;
           created_at: string;
