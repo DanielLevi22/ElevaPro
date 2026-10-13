@@ -13,5 +13,5 @@ export default async function StudentsPage() {
     ? (await createStudentsService(supabase).fetchStudents(user.id, { limit: 200 })).students
     : [];
 
-  return <StudentsClient initialStudents={students} />;
+  return <StudentsClient initialStudents={students} specialistId={user?.id ?? null} />;
 }

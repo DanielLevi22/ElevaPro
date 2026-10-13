@@ -1,14 +1,13 @@
-import { type ConsentState, createHealthService, POLICY_VERSION } from '@elevapro/shared';
+import { type ConsentState, createHealthService } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { Text } from 'react-native';
-import { Bullet } from '@/components/ui/Bullet';
 import { GlassSheet } from '@/components/ui/GlassSheet';
 import { LockHero } from '@/components/ui/LockHero';
 import { Pedestal } from '@/components/ui/Pedestal';
 import { useConsentPromptStore } from './consentPromptStore';
-import { storedItems } from './storedItems';
+import { CONSENT_REFUSAL_NOTE, HealthConsentDetails } from './HealthConsentDetails';
 
 /**
  * Pede o consentimento de dados de saúde na versão vigente da política, e
@@ -118,13 +117,7 @@ export function HealthDataConsentGate({
         accessibilityLabel: 'Agora não, seguir sem registrar dados de saúde',
         onPress: close,
       }}
-      // Dizia que sem o aceite o app "para de registrar treinos, refeições e
-      // medidas", e não para: treino e refeição não consultam o aceite. O que
-      // consulta é a leitura do relógio, a anotação e a FC da sessão, a água (a RLS
-      // da 0052) e as rotas de inteligência artificial
-      // (`authorizeStudentWithHealthConsent`). Quem
-      // recusa decide pelo que perde, e o texto precisa dizer o que é (#308).
-      footnote="Sem o aceite o app continua funcionando e seus treinos e refeições seguem registrados. Ficam de fora os dados do relógio, a água do dia, as medidas que você registra, as anotações e a frequência cardíaca dos treinos, e as funções de inteligência artificial."
+      footnote={CONSENT_REFUSAL_NOTE}
     >
       <Text className="mt-2 text-center font-display-black text-[1.4375rem] tracking-tight text-foreground">
         Seus dados de saúde
@@ -135,56 +128,7 @@ export function HealthDataConsentGate({
           : 'Antes de guardar qualquer dado de saúde, leia o que guardamos, o que sai do aparelho e quem lê.'}
       </Text>
 
-      <SheetHeading>O que é armazenado</SheetHeading>
-      {storedItems(hasSpecialist).map((item) => (
-        <Bullet key={item}>{item}</Bullet>
-      ))}
-
-      {/* A 1.5 existe por este parágrafo: o scan e o assistente mandavam foto
-          e contexto do dia para fora do aparelho, e o texto não dizia. */}
-      <SheetHeading>O que sai do aparelho</SheetHeading>
-      <Paragraph>
-        Quando você fotografa um prato ou pergunta ao assistente de nutrição, a foto, a pergunta,
-        seu plano alimentar e o que falta de calorias e macros do dia vão a um serviço de
-        inteligência artificial externo, só para gerar a resposta. A foto não é guardada, e seu nome
-        não vai junto.
-      </Paragraph>
-
-      <SheetHeading>Quem lê</SheetHeading>
-      <Paragraph>{hasSpecialist ? QUEM_LE_COM_ESPECIALISTA : QUEM_LE_SEM_ESPECIALISTA}</Paragraph>
-
-      {/* Opacidade cheia: com `/70` este parágrafo ficava em 4.04:1 sobre a
-          superfície, abaixo do mínimo de 4.5:1 — e é justamente o texto que
-          declara a base legal do tratamento. */}
-      <Text className="mt-3.5 text-[0.71875rem] leading-[1.08rem] text-muted-foreground">
-        Base legal: Tutela da saúde (Art. 11, II, f) e Consentimento (Art. 11, I) da LGPD. Você pode
-        revogar quando quiser no seu perfil, em Minhas autorizações — a revogação vale daqui para
-        frente e não apaga o que já foi registrado. Versão {POLICY_VERSION} da política.
-      </Text>
+      <HealthConsentDetails hasSpecialist={hasSpecialist} />
     </GlassSheet>
-  );
-}
-
-/**
- * O Praticante não tem especialista: dizer a ele que "o especialista vinculado"
- * lê seria descrever um tratamento que não acontece. O texto diz o de hoje e o que
- * muda se ele se vincular, porque o aceite de agora vale para esse dia (#308).
- */
-const QUEM_LE_COM_ESPECIALISTA =
-  'O especialista vinculado a você — inclusive o que você escrever no feedback de fim de treino. É para esse acompanhamento que o feedback existe: é ele que permite ajustar a sua prescrição quando algo dói ou some.';
-const QUEM_LE_SEM_ESPECIALISTA =
-  'Hoje, só você. Se você se vincular a um especialista, ele passa a ler estes dados — inclusive o que você escrever no feedback de fim de treino, que é para esse acompanhamento que ele existe.';
-
-function SheetHeading({ children }: { children: string }) {
-  return (
-    <Text className="mb-[0.5625rem] mt-5 text-[0.84375rem] font-bold text-foreground">
-      {children}
-    </Text>
-  );
-}
-
-function Paragraph({ children }: { children: string }) {
-  return (
-    <Text className="text-[0.8125rem] leading-[1.2rem] text-muted-foreground">{children}</Text>
   );
 }

@@ -13,6 +13,7 @@ vi.mock("@elevapro/shared", () => ({
     generateLinkCode: mockGenerateLinkCode,
     endStudentLink: mockEndStudentLink,
   }),
+  createLinkCodeService: () => ({ redeem: vi.fn(), generate: vi.fn() }),
 }));
 
 vi.mock("@elevapro/supabase", () => ({ supabase: {} }));

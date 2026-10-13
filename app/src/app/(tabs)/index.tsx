@@ -2,6 +2,7 @@ import { Text } from 'react-native';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { useDadosDaHome } from '@/hooks/useDadosDaHome';
 import { HomeDoAluno, SpecialistDashboard } from '@/modules/dashboard';
+import { CompleteProfileCard } from '@/modules/onboarding';
 
 /**
  * A entrada do app, e só a escolha de qual delas.
@@ -34,5 +35,5 @@ export default function TelaInicial() {
     );
   }
 
-  return <HomeDoAluno dados={aluno} />;
+  return <HomeDoAluno dados={aluno} aviso={<CompleteProfileCard />} />;
 }

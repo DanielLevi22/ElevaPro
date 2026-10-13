@@ -209,3 +209,52 @@ describe("as colunas que este loader pede", () => {
     await expect(loadStudentCoachContext("aluno-1")).rejects.toMatchObject({ code: "42703" });
   });
 });
+
+/**
+ * TRAVA — diagnóstico não vai à IA (Art. 6°, III; ADR-0044). Achado do
+ * `/lgpd-check` da #365.
+ *
+ * A pergunta de restrição da anamnese tem "Diabetes" entre as opções, e o
+ * contexto mandava a resposta como estava: o diagnóstico chegava ao provedor no
+ * prompt do coach. O modelo precisa saber o que o aluno não come, não do que ele
+ * sofre — a mesma regra que já vale para as etiquetas do plano (`0074`). A
+ * triagem do onboarding também não sai daqui: só o resultado, nunca a condição.
+ */
+describe("restrições alimentares no contexto do coach", () => {
+  const base = {
+    studentId: "aluno-1",
+    name: "Aluno",
+    coachMode: "express" as const,
+    personaTrack: "beginner" as const,
+    lastAssessment: null,
+    activePlan: null,
+  };
+
+  const comAnamnese = (anamnesis: Record<string, unknown>) => ({ ...base, anamnesis });
+
+  it("leva só a exclusão de alimento, e nunca o diagnóstico, ao prompt e ao resumo", () => {
+    const ctx = comAnamnese({
+      dietary_restrictions: ["Diabetes", "Intolerante a Lactose", "Outra"],
+    });
+    const prompt = formatStudentCoachContext(ctx);
+    const resumo = JSON.stringify(buildProfileSummary(ctx));
+
+    for (const [onde, texto] of [
+      ["prompt", prompt],
+      ["resumo", resumo],
+    ]) {
+      if (/diabetes/i.test(texto)) {
+        throw new Error(`DIAGNÓSTICO NA IA: "Diabetes" chegou ao ${onde} do coach — ${texto}`);
+      }
+      expect(texto).toContain("Sem lactose");
+    }
+  });
+
+  it("leva o que a pessoa disse que não come no onboarding", () => {
+    const prompt = formatStudentCoachContext(
+      comAnamnese({ food_exclusions: ["Carne vermelha", "Ovo"] }),
+    );
+    expect(prompt).toContain("sem carne vermelha");
+    expect(prompt).toContain("sem ovo");
+  });
+});

@@ -1,0 +1,133 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js"></script>
+<style>*{box-sizing:border-box}body{margin:0;background:#F5F3EE;color:#141311;font-family:var(--font-sans)}</style>
+</head><body><div id="root"></div>
+<script type="text/babel" data-presets="react">
+const I = (name, size=18, color) => <i data-lucide={name} style={{width:size,height:size,display:"block",color}}></i>;
+
+function Nav(){
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "0 32px 20px", borderBottom: "1px solid #E7E3D8" }}>
+      <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 20 }}>Eleva Pro</div>
+      <div style={{ display: "flex", gap: 28, fontSize: 13, fontWeight: 600, color: "#8A867B" }}>
+        <span>Briefing</span><span>Alunos</span><span style={{color:"#141311"}}>Treinos</span><span>Nutrição</span><span>Coach IA</span>
+      </div>
+    </div>
+  );
+}
+
+const TEMPLATES = [
+  { name: "Hipertrofia — Fase 2", muscle: "Peito & Tríceps", exercises: 6, assigned: 9 },
+  { name: "Recomposição", muscle: "Full body", exercises: 8, assigned: 6 },
+  { name: "Força — Base", muscle: "Pernas", exercises: 5, assigned: 4 },
+  { name: "Emagrecimento — Circuito", muscle: "Full body", exercises: 7, assigned: 2 },
+];
+
+const EXERCISES = [
+  { name: "Supino Reto", sets: "4x8-10", load: "60kg" },
+  { name: "Supino Inclinado c/ Halteres", sets: "3x10-12", load: "22kg" },
+  { name: "Crucifixo Máquina", sets: "3x12-15", load: "35kg" },
+  { name: "Tríceps Corda", sets: "4x10-12", load: "25kg" },
+  { name: "Tríceps Francês", sets: "3x10-12", load: "18kg" },
+  { name: "Mergulho no Banco", sets: "3x até a falha", load: "peso corporal" },
+];
+
+const LIBRARY = ["Rosca Direta", "Rosca Alternada", "Elevação Lateral", "Remada Curvada", "Puxada Alta", "Leg Press", "Cadeira Extensora", "Panturrilha em Pé"];
+
+function ExercisePicker({ onClose }) {
+  const [q, setQ] = React.useState("");
+  const filtered = LIBRARY.filter(e => e.toLowerCase().includes(q.toLowerCase()));
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 50 }}>
+      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(20,19,17,0.3)" }} />
+      <div style={{ position: "absolute", top: 0, right: 0, height: "100%", width: 380, background: "#F5F3EE", borderLeft: "1px solid #E7E3D8", padding: 28, display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+          <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 20 }}>Biblioteca</div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#8A867B" }}>{I("x",20)}</button>
+        </div>
+        <div style={{ position: "relative", marginBottom: 16 }}>
+          <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}>{I("search",15,"#8A867B")}</span>
+          <input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar exercícios..." style={{ width: "100%", padding: "10px 12px 10px 36px", borderRadius: 4, border: "1px solid #E7E3D8", background: "#fff", fontSize: 13, boxSizing: "border-box" }} />
+        </div>
+        <div style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
+          {filtered.map(name => (
+            <div key={name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", background: "#fff", border: "1px solid #E7E3D8", borderRadius: 4, fontSize: 13, fontWeight: 600 }}>
+              {name}
+              <button style={{ background: "none", border: "none", color: "#141311", cursor: "pointer" }}>{I("plus",16)}</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const [selected, setSelected] = React.useState(0);
+  const [pickerOpen, setPickerOpen] = React.useState(false);
+  React.useEffect(()=>{ window.lucide?.createIcons(); },[pickerOpen]);
+  const t = TEMPLATES[selected];
+  return (
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+      {pickerOpen && <ExercisePicker onClose={()=>setPickerOpen(false)} />}
+      <div style={{paddingTop:32}}><Nav/></div>
+      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+
+        {/* Left — library of templates being managed, not a feed */}
+        <div style={{ width: 300, borderRight: "1px solid #E7E3D8", padding: "28px 20px", overflow: "auto" }}>
+          <button style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "#141311", color: "#F5F3EE", border: "none", borderRadius: 4, padding: "12px 0", fontWeight: 700, fontSize: 13, cursor: "pointer", marginBottom: 20 }}>{I("plus",15)}Novo Modelo</button>
+          {TEMPLATES.map((tpl, i) => (
+            <div key={tpl.name} onClick={() => setSelected(i)} style={{
+              padding: "14px 12px", borderRadius: 6, cursor: "pointer", marginBottom: 4,
+              background: i === selected ? "#fff" : "transparent", border: i === selected ? "1px solid #E7E3D8" : "1px solid transparent",
+            }}>
+              <div style={{ fontWeight: 700, fontSize: 14 }}>{tpl.name}</div>
+              <div style={{ fontSize: 12, color: "#8A867B", marginTop: 2 }}>{tpl.muscle} · {tpl.exercises} exercícios</div>
+              <div style={{ fontSize: 11, color: "#3D6B3A", marginTop: 4, fontWeight: 700 }}>{tpl.assigned} alunos atribuídos</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Right — the actual construction surface: build/edit this template for students */}
+        <div style={{ flex: 1, padding: "36px 44px", overflow: "auto" }}>
+          <nav style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12, color: "#8A867B", marginBottom: 18 }}>
+            <a href="periodizations-list.html" style={{color:"#8A867B",textDecoration:"none"}}>Periodizações</a><span>/</span>
+            <a href="periodization-detail.html" style={{color:"#8A867B",textDecoration:"none"}}>Fase 2</a><span>/</span>
+            <span style={{color:"#141311",fontWeight:600}}>{t.name}</span>
+          </nav>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#8A867B", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{t.muscle}</div>
+              <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 28, letterSpacing: "-0.01em" }}>{t.name}</div>
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button style={{ background: "#fff", border: "1px solid #E7E3D8", borderRadius: 4, padding: "10px 18px", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Duplicar</button>
+              <button style={{ background: "#141311", color: "#F5F3EE", border: "none", borderRadius: 4, padding: "10px 18px", fontWeight: 700, fontSize: 13, cursor: "pointer", display:"flex", alignItems:"center", gap:8 }}>{I("send",14)}Atribuir a aluno</button>
+            </div>
+          </div>
+
+          <div style={{ background: "#fff", border: "1px solid #E7E3D8", borderRadius: 6 }}>
+            {EXERCISES.map((ex, i) => (
+              <div key={ex.name} style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 20px", borderBottom: i < EXERCISES.length - 1 ? "1px solid #EFEBDD" : "none" }}>
+                <div style={{ color: "#C4BFAF", cursor: "grab" }}>{I("grip-vertical", 16)}</div>
+                <div style={{ flex: 1, fontWeight: 600, fontSize: 14 }}>{ex.name}</div>
+                <div style={{ fontSize: 13, color: "#8A867B", width: 100 }}>{ex.sets}</div>
+                <div style={{ fontSize: 13, color: "#8A867B", width: 100 }}>{ex.load}</div>
+                <div style={{ color: "#C4BFAF", cursor: "pointer" }}>{I("more-horizontal", 18)}</div>
+              </div>
+            ))}
+            <div style={{ padding: "14px 20px" }}>
+              <button onClick={()=>setPickerOpen(true)} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", color: "#8A867B", fontWeight: 700, fontSize: 13, cursor: "pointer", padding: 0 }}>{I("plus", 15)}Adicionar exercício</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script></body></html>

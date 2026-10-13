@@ -1,6 +1,6 @@
 /**
- * Fonte única de cor do app, derivada do projeto Claude Design "ElevaPro"
- * (`design/tokens/` no repo espelha a nuvem).
+ * Fonte única de cor do app, derivada do design em `design/` (ADR-0043)
+ * — os tokens estão em `design/foundations/tokens/`.
  *
  * Daqui saem duas coisas, e só duas:
  *
@@ -383,7 +383,7 @@ export type NomeDeCor = keyof TokensHsl | keyof TokensLiterais | NomeDeMetrica;
 /**
  * Escalas que não dependem do tema.
  *
- * Espaço, raio e duração vêm de `design/tokens/`. A escala de **texto** não:
+ * Espaço, raio e duração vêm de `design/foundations/tokens/`. A escala de **texto** não:
  * aquela é a do dashboard (14 de corpo), e as telas do mobile são iOS — corpo
  * 17, título de linha 16, legenda 13. Mesma divisão que já vale na cor: marca
  * e ritmo atravessam, métrica de superfície e de texto é por plataforma.

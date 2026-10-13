@@ -102,15 +102,3 @@ export async function registerBackgroundFetchAsync() {
     console.error('❌ Task Register failed:', err);
   }
 }
-
-export async function unregisterBackgroundFetchAsync() {
-  try {
-    const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_DIET_SYNC);
-    if (isRegistered) {
-      await BackgroundFetch.unregisterTaskAsync(BACKGROUND_DIET_SYNC);
-      console.log('✅ Background Fetch unregistered');
-    }
-  } catch (err) {
-    console.error('❌ Task Unregister failed:', err);
-  }
-}

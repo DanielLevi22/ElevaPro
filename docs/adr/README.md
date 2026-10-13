@@ -25,6 +25,7 @@
 | [ADR-0009](0009-migration-strategy.md) | Migrations aplicadas pelo pipeline, não à mão | accepted |
 | [ADR-0019](0019-coluna-substituida-sai-na-mesma-migration.md) | Coluna substituída sai na mesma migration, não é deprecada | accepted |
 | [ADR-0041](0041-o-alarme-exato-do-android-vira-modulo-nativo-proprio.md) | O alarme exato do Android vira módulo nativo próprio | accepted |
+| [ADR-0043](0043-o-design-mora-no-repo.md) | O design mora no repo | accepted |
 
 ### Arquitetura web
 
@@ -68,6 +69,7 @@
 | [ADR-0005](0005-ai-model-selection.md) | Sonnet para orquestração, Haiku para tarefas estruturadas | accepted |
 | [ADR-0011](0011-ai-architecture.md) | Abstração de provider e hierarquia de orquestradores | accepted |
 | [ADR-0016](0016-chat-de-ia-em-sse-com-estado-em-jsonb.md) | Chat de IA em SSE com estado da sessão em JSONB | accepted |
+| [ADR-0044](0044-a-meta-do-praticante-e-codigo-e-o-plano-e-da-ia-conferido.md) | A meta e as travas do Praticante são código; o plano é da IA, conferido pelo código | accepted, abertura condicionada à validação CREF/CRN e jurídica |
 
 ### Produto e negócio
 

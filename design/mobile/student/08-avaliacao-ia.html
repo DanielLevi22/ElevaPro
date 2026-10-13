@@ -1,0 +1,545 @@
+<!-- @dsCard group="Mobile · Student" viewport="3480x1880" name="08 · Avaliação com IA" subtitle="Introdução → preparo → captura → processamento → confiança → medidas → histórico · escuro e claro" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css"><link rel="stylesheet" href="../kit/glass.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js"></script>
+<style>
+:root{
+--tab-bg:rgba(18,19,22,0.72);
+--on-hero:#fff;--on-hero-2:rgba(255,255,255,.82);--hero-chip:rgba(255,255,255,.16);--hero-chip-brd:rgba(255,255,255,.28);
+--slot:rgba(255,255,255,.05);--slot-line:rgba(255,255,255,.07);
+--track:rgba(255,255,255,.09);--grid:rgba(255,255,255,.07);--sheet-scrim:rgba(0,0,0,.8);
+--ok:#34D399;--okt:#34D399;--warn:#FBBF24;--warnt:#FBBF24;--bad:#FB7185;--badt:#FB7185;--info:#38BDF8;--infot:#38BDF8;--ai:#C084FC;--ait:#C084FC;
+}
+.light{
+--tab-bg:rgba(255,255,255,0.9);
+--on-hero:#0B0B0F;--on-hero-2:rgba(28,28,32,.82);--hero-chip:rgba(255,255,255,.72);--hero-chip-brd:rgba(60,60,67,.16);
+--slot:rgba(60,60,67,.05);--slot-line:rgba(60,60,67,.09);
+--track:rgba(60,60,67,.14);--grid:rgba(60,60,67,.1);--sheet-scrim:rgba(60,60,67,.45);
+--okt:#0B7A52;--warnt:#8A5E03;--badt:#BE123C;--infot:#0369A1;--ait:#7E22CE;
+}
+.phone.cam{background:#000}
+.glow{position:absolute;left:-20%;right:-20%;top:-40px;height:460px;pointer-events:none;z-index:0;background:radial-gradient(50% 50% at 50% 50%,hsl(var(--primary) / .18) 0%,transparent 70%);filter:blur(34px)}
+.light .glow{background:radial-gradient(50% 50% at 50% 50%,hsl(var(--primary) / .12) 0%,transparent 70%)}
+.statusbar.onCam{color:#fff}
+.scroll{flex:1;overflow:auto;padding:0 18px 12px;scrollbar-width:none;position:relative;z-index:2}
+.dark-glass{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:#fff}
+.slot{background-color:var(--slot);background-image:repeating-linear-gradient(135deg,var(--slot-line) 0 1px,transparent 1px 9px);display:flex;align-items:center;justify-content:center;text-align:center;padding:8px}
+.slot span{font-family:var(--font-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ios-label3);line-height:1.4}
+.camslot{background-color:#0B0C0E;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.05) 0 1px,transparent 1px 10px);display:flex;align-items:center;justify-content:center;text-align:center}
+.camslot span{font-family:var(--font-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.34)}
+.homebar.onCam{background:#fff}
+.footerbar{position:absolute;left:0;right:0;bottom:118px;z-index:6;padding:0 18px;display:flex;gap:9px;pointer-events:none}
+.footerbar.bare{bottom:26px}
+.btn{height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;gap:7px;font-weight:800;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.btn.primary{background:hsl(var(--primary));color:#0d1a00;box-shadow:0 10px 26px -10px hsl(var(--primary) / .8)}
+.btn.ghost{background:var(--glass-strong);color:var(--ios-label);border:1px solid var(--glass-brd);backdrop-filter:blur(18px)}
+</style>
+</head><body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react" src="../kit/hero-objects.js"></script>
+<script type="text/babel" src="../kit/kit.jsx"></script>
+<script type="text/babel" data-presets="react">
+const I=(n,s=20,c)=><i data-lucide={n} style={{width:s,height:s,display:"block",color:c,flexShrink:0}}></i>;
+const LIME="hsl(var(--primary))", LIMET="hsl(var(--primary-text))";
+const OK="var(--ok)", OKT="var(--okt)", WARN="var(--warn)", WARNT="var(--warnt)", BAD="var(--bad)", BADT="var(--badt)";
+const INFO="var(--info)", INFOT="var(--infot)", AI="var(--ai)", AIT="var(--ait)";
+
+function StatusBar({ onCam }){
+  const c=onCam?"#fff":"var(--on-hero)";
+  return <div className={"statusbar"+(onCam?" onCam":"")}><span>9:41</span><span style={{display:"flex",alignItems:"center",gap:6}}>{I("signal",16,c)}{I("wifi",16,c)}{I("battery-full",20,c)}</span></div>;
+}
+function RoundBtn({ icon, size=38, onCam }){
+  return <div className={onCam?"dark-glass":"glass"} style={{width:size,height:size,borderRadius:99,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:onCam?"rgba(255,255,255,.12)":"var(--hero-chip)",borderColor:onCam?"rgba(255,255,255,.2)":"var(--hero-chip-brd)"}}>{I(icon,size*0.47,onCam?"#fff":"var(--on-hero)")}</div>;
+}
+function SectionTitle({ children, action }){
+  return (
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",margin:"20px 2px 10px"}}>
+      <span style={{fontSize:10.5,fontWeight:700,letterSpacing:".14em",textTransform:"uppercase",color:"var(--ios-label3)"}}>{children}</span>
+      {action && <span style={{fontSize:11.5,fontWeight:600,color:LIMET}}>{action}</span>}
+    </div>
+  );
+}
+function Chip({ children, tone }){
+  const map={primary:[LIME,"#0d1a00"],ai:["color-mix(in srgb, var(--ai) 18%, transparent)",AIT],ok:["color-mix(in srgb, var(--ok) 18%, transparent)",OKT],warn:["color-mix(in srgb, var(--warn) 20%, transparent)",WARNT]};
+  const [bg,fg]=map[tone]||["var(--glass-strong)","var(--ios-label2)"];
+  return <span style={{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:99,fontSize:10.5,fontWeight:800,textTransform:"uppercase",letterSpacing:".06em",background:bg,color:fg}}>{children}</span>;
+}
+/* Corpo de referência desenhado em três vistas: frente, costas e perfil. */
+let BID=0;
+const FRONT={
+  head:"M100,12 C114,12 126,25 126,45 C126,63 116,78 100,79 C84,78 74,63 74,45 C74,25 86,12 100,12 Z",
+  neck:"M92,74 L108,74 L110,94 L90,94 Z",
+  torso:"M60,100 C72,92 88,88 100,88 C112,88 128,92 140,100 C147,113 147,141 143,171 C139,197 127,207 125,223 C125,251 133,263 133,288 L67,288 C67,263 75,251 75,223 C73,207 61,197 57,171 C53,141 53,113 60,100 Z",
+  armL:"M58,104 C46,115 40,139 38,167 L32,240 C31,252 36,259 42,257 C46,255 48,249 49,241 L56,179 C58,159 59,131 63,117 Z",
+  armR:"M142,104 C154,115 160,139 162,167 L168,240 C169,252 164,259 158,257 C154,255 152,249 151,241 L144,179 C142,159 141,131 137,117 Z",
+  legL:"M70,290 C64,322 62,354 64,388 L68,454 C69,480 70,494 72,502 L92,502 C93,488 92,468 92,448 L94,386 C96,348 98,320 98,292 Z",
+  legR:"M130,290 C136,322 138,354 136,388 L132,454 C131,480 130,494 128,502 L108,502 C107,488 108,468 108,448 L106,386 C104,348 102,320 102,292 Z",
+  footL:"M68,498 C62,506 62,514 72,514 L92,514 C97,514 97,506 94,502 Z",
+  footR:"M132,498 C138,506 138,514 128,514 L108,514 C103,514 103,506 106,502 Z",
+  handL:"M32,252 C26,258 26,270 33,272 C40,274 45,266 44,256 Z",
+  handR:"M168,252 C174,258 174,270 167,272 C160,274 155,266 156,256 Z",
+};
+const SIDE={
+  head:"M98,14 C112,13 122,26 122,44 C122,52 120,58 118,62 C123,64 123,69 117,71 C117,79 111,84 103,84 C94,84 87,76 87,65 C83,58 83,38 88,27 C90,20 93,15 98,14 Z",
+  neck:"M94,78 L108,80 L108,98 L92,96 Z",
+  torso:"M96,88 C106,90 116,99 122,112 C130,131 132,156 129,181 C126,204 120,219 118,238 C118,258 122,268 122,290 L80,290 C80,268 84,255 82,238 C78,215 74,197 74,170 C74,139 82,110 90,97 Z",
+  armL:"M106,108 C116,121 118,150 116,180 L112,240 C111,252 103,254 101,243 L102,182 C102,152 100,124 102,112 Z",
+  legL:"M84,292 C80,324 80,356 82,390 L84,456 C85,482 86,494 88,502 L110,502 C111,488 110,468 110,448 L112,388 C114,350 116,322 116,292 Z",
+  footL:"M82,498 C78,506 80,514 90,514 L122,514 C130,514 130,505 122,502 L104,496 Z",
+  handL:"M100,238 C94,244 95,256 102,258 C109,260 113,251 112,242 Z",
+};
+function BodyFigure({ pose="front", h=300, color=LIME, opacity=1, glow=true }){
+  const id=`bg${++BID}`;
+  const back=pose==="back", side=pose==="side";
+  const S=side?SIDE:FRONT;
+  const parts=side?[S.head,S.neck,S.torso,S.legL,S.footL,S.armL,S.handL]:[S.head,S.neck,S.torso,S.legL,S.legR,S.footL,S.footR,S.armL,S.armR,S.handL,S.handR];
+  return (
+    <svg viewBox="0 0 200 528" style={{height:h,width:"auto",maxWidth:"100%",display:"block",opacity,filter:glow?`drop-shadow(0 0 16px color-mix(in srgb, ${color} 50%, transparent))`:"none"}}>
+      <defs>
+        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.42" />
+          <stop offset="55%" stopColor={color} stopOpacity="0.18" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.34" />
+        </linearGradient>
+      </defs>
+      <g transform={back?"translate(200,0) scale(-1,1)":undefined}>
+        {parts.map((d,i)=><path key={i} d={d} fill={`url(#${id})`} stroke={color} strokeWidth="2" strokeLinejoin="round" />)}
+        {!side && !back && (
+          <g stroke={color} strokeWidth="1.2" opacity=".55" fill="none">
+            <path d="M100,96 L100,286" /><path d="M74,132 C86,142 114,142 126,132" />
+            <path d="M82,186 L118,186 M84,210 L116,210 M86,234 L114,234" />
+          </g>
+        )}
+        {!side && back && (
+          <g stroke={color} strokeWidth="1.2" opacity=".55" fill="none">
+            <path d="M100,96 L100,288" />
+            <path d="M72,126 C84,150 88,168 86,188 M128,126 C116,150 112,168 114,188" />
+            <path d="M78,236 C92,246 108,246 122,236" />
+          </g>
+        )}
+        {side && (
+          <g stroke={color} strokeWidth="1.2" opacity=".55" fill="none">
+            <path d="M92,98 C86,140 82,200 84,288" />
+            <path d="M110,116 C118,140 120,170 116,196" />
+          </g>
+        )}
+      </g>
+    </svg>
+  );
+}
+function Silhouette({ h=300, opacity=1, dashed=false, glow=true, stroke=LIME, pose="front" }){
+  return <BodyFigure pose={pose} h={h} color={stroke===LIME?LIME:"var(--ios-label3)"} opacity={dashed?opacity*0.7:opacity} glow={glow} />;
+}
+
+function Bullet({ children, tone=LIME }){
+  return (
+    <div style={{display:"flex",gap:10,alignItems:"flex-start",marginBottom:9}}>
+      <span style={{width:5,height:5,borderRadius:99,background:tone,display:"block",flexShrink:0,marginTop:7}}></span>
+      <span style={{fontSize:12.5,color:"var(--ios-label2)",lineHeight:1.5,flex:1}}>{children}</span>
+    </div>
+  );
+}
+
+/* ---------- 1. Introdução ---------- */
+function IntroScreen(){
+  const ORBIT=[["Bíceps","32","cm",INFO,INFOT],["Massa magra","62","kg",WARN,WARNT],["Gordura","17","%",OK,OKT],["IMC","22,1","",AI,AIT]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",justifyContent:"space-between"}}><RoundBtn icon="chevron-left" /><RoundBtn icon="history" /></div>
+      <div style={{textAlign:"center",marginTop:14}}>
+        <Chip tone="ai">Tecnologia IA</Chip>
+        <div style={{fontFamily:"var(--font-display)",fontSize:29,fontWeight:800,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:12,lineHeight:1.1}}>Escaneamento <span style={{color:LIMET}}>corporal</span></div>
+        <div style={{fontSize:13,color:"var(--on-hero-2)",lineHeight:1.5,marginTop:9}}>Três fotos viram uma estimativa de proporção, simetria e postura, para acompanhar sua evolução entre as avaliações. Não substitui a fita métrica.</div>
+      </div>
+      <div style={{position:"relative",height:292,display:"flex",alignItems:"center",justifyContent:"center",marginTop:6}}>
+        <div style={{position:"absolute",width:210,height:210,borderRadius:99,background:`radial-gradient(closest-side, color-mix(in srgb, ${LIME} 22%, transparent), transparent 70%)`,filter:"blur(12px)"}}></div>
+        <Silhouette h={286} />
+        {ORBIT.map(([l,v,u,c,tc],i)=>{
+          const pos=[{top:22,left:0},{top:96,right:0},{bottom:78,left:-2},{bottom:10,right:4}][i];
+          return (
+            <div key={l} className="glass" style={{position:"absolute",...pos,padding:"8px 11px",borderRadius:14,display:"flex",alignItems:"center",gap:8}}>
+              <span style={{width:7,height:7,borderRadius:99,background:c,display:"block"}}></span>
+              <div>
+                <div style={{fontSize:9,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"var(--ios-label3)"}}>{l}</div>
+                <div style={{fontFamily:"var(--font-display)",fontSize:15,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{v}<span style={{fontSize:9.5,marginLeft:1}}>{u}</span></div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="glass" style={{padding:15}}>
+        <Bullet><b style={{color:"var(--ios-label)"}}>Suas fotos saem do aparelho.</b> Elas são enviadas a um serviço de inteligência artificial externo (Anthropic, nos Estados Unidos) só para gerar a análise.</Bullet>
+        <Bullet><b style={{color:"var(--ios-label)"}}>Nenhuma foto é guardada.</b> O que fica salvo é o resultado — as medidas estimadas e as notas de postura.</Bullet>
+      </div>
+      <div style={{height:130}}></div>
+    </div>
+  );
+}
+
+/* ---------- 2. Preparo ---------- */
+function PrepScreen(){
+  const PREP=[
+    ["shirt","Roupa justa","A silhueta é o que dá as medidas, e ela enxerga o tecido, não você. Moletom devolve uma cintura que não é a sua."],
+    ["footprints","Descalço","O solado entra na altura e desloca a escala da foto inteira."],
+    ["smartphone","Celular apoiado e em pé","Encostado numa parede ou móvel, na altura da cintura. Na mão de outra pessoa ele oscila."],
+    ["sun","Luz na sua frente","Janela ou lâmpada atrás de você apaga o contorno do corpo."],
+    ["users","Ninguém atrás de você","A análise mede uma pessoa por vez, e quem passar no fundo pode roubar a medida."],
+  ];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6}}><RoundBtn icon="chevron-left" /></div>
+      <div style={{marginTop:18}}>
+        <div style={{fontSize:10.5,fontWeight:800,letterSpacing:".2em",textTransform:"uppercase",color:LIMET}}>Antes de começar</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:26,fontWeight:800,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:8,lineHeight:1.15}}>Cinco coisas que só você pode ajustar</div>
+        <div style={{fontSize:13,color:"var(--on-hero-2)",lineHeight:1.5,marginTop:9}}>Do resto o app cuida: ele vai te dizer, por voz, onde ficar e quando está certo.</div>
+      </div>
+      <div style={{marginTop:18}}>
+        {PREP.map(([icon,t,d],i)=>(
+          <div key={t} className="glass" style={{padding:14,display:"flex",gap:13,marginBottom:10}}>
+            <div style={{width:38,height:38,borderRadius:13,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,position:"relative"}}>
+              {I(icon,17,LIMET)}
+              <span style={{position:"absolute",top:-5,left:-5,width:17,height:17,borderRadius:99,background:LIME,color:"#0d1a00",fontSize:9.5,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{i+1}</span>
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:14.5,fontWeight:700,color:"var(--ios-label)",letterSpacing:"-.01em"}}>{t}</div>
+              <div style={{fontSize:12,color:"var(--ios-label2)",marginTop:3,lineHeight:1.45}}>{d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="glass" style={{padding:14,display:"flex",gap:11,alignItems:"flex-start"}}>
+        {I("volume-2",15,LIMET)}
+        <span style={{fontSize:11.5,color:"var(--ios-label2)",lineHeight:1.5,flex:1}}>Enquadramento, distância e nível do celular o app corrige sozinho — por voz, durante a captura.</span>
+      </div>
+      <div style={{height:130}}></div>
+    </div>
+  );
+}
+
+/* ---------- 3. Captura de fotos (grade de poses) ---------- */
+function GridScreen(){
+  const POSES=[["Frente","Braços levemente afastados","done","front"],["Costas","De costas, mesma distância","done","back"],["Perfil","Lado direito, braços soltos","","side"]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1,textAlign:"center",fontSize:15.5,fontWeight:700,color:"var(--on-hero)"}}>Captura de fotos</div>
+        <div style={{width:38}}></div>
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginTop:16}}>
+        <div style={{flex:1,height:5,borderRadius:99,background:"var(--track)",overflow:"hidden"}}><div style={{width:"66%",height:"100%",background:LIME,borderRadius:99,boxShadow:`0 0 10px ${LIME}`}}></div></div>
+        <span style={{fontSize:11.5,fontWeight:800,color:LIMET}}>2 / 3</span>
+      </div>
+      <div style={{fontSize:12.5,color:"var(--on-hero-2)",textAlign:"center",marginTop:14}}>Toque em um quadro para capturar o ângulo.</div>
+      <div style={{display:"flex",gap:10,marginTop:14}}>
+        {POSES.map(([name,desc,state,pose],i)=>{
+          const done=state==="done";
+          return (
+            <div key={name} className="glass" style={{flex:1,padding:8,borderColor:done?LIME:"var(--glass-brd)",boxShadow:done?`0 0 0 1px ${LIME}`:undefined}}>
+              <div style={{height:150,borderRadius:14,background:done?"var(--glass-strong)":"transparent",backgroundImage:done?"none":"repeating-linear-gradient(135deg,var(--slot-line) 0 1px,transparent 1px 9px)",backgroundColor:done?undefined:"var(--slot)",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
+                <Silhouette h={148} pose={pose} stroke={done?LIME:"var(--ios-label3)"} opacity={done?1:.7} dashed={!done} glow={done} />
+                {done && <span style={{position:"absolute",top:7,right:7,width:20,height:20,borderRadius:99,background:LIME,display:"flex",alignItems:"center",justifyContent:"center"}}>{I("check",12,"#0d1a00")}</span>}
+              </div>
+              <div style={{fontSize:12,fontWeight:700,color:"var(--ios-label)",marginTop:9,textAlign:"center"}}>{name}</div>
+              <div style={{fontSize:9.5,color:"var(--ios-label3)",textAlign:"center",marginTop:2,lineHeight:1.3}}>{desc}</div>
+            </div>
+          );
+        })}
+      </div>
+      <SectionTitle>Checagem automática</SectionTitle>
+      {[["move-3d","Nível do aparelho","Dentro de 2°","ok"],["scan","Enquadramento","Corpo inteiro visível","ok"],["sun","Iluminação","Contraluz na foto de costas","warn"]].map(([icon,t,d,s])=>{
+        const ok=s==="ok";
+        return (
+          <div key={t} className="glass" style={{padding:12,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+            <div style={{width:32,height:32,borderRadius:10,background:`color-mix(in srgb, ${ok?OK:WARN} 16%, transparent)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I(icon,15,ok?OKT:WARNT)}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13.5,fontWeight:600,color:"var(--ios-label)"}}>{t}</div>
+              <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:1}}>{d}</div>
+            </div>
+            {ok?I("circle-check",17,OKT):<span style={{fontSize:10.5,fontWeight:800,textTransform:"uppercase",letterSpacing:".06em",color:WARNT}}>Refazer</span>}
+          </div>
+        );
+      })}
+      <div style={{height:130}}></div>
+    </div>
+  );
+}
+
+/* ---------- 4. Câmera guiada ---------- */
+function CameraScreen(){
+  return (
+    <>
+      <div style={{position:"absolute",inset:0,zIndex:0}} className="camslot"><span>câmera · pose de perfil</span></div>
+      <div style={{position:"absolute",inset:0,zIndex:1,background:"linear-gradient(180deg,rgba(0,0,0,.65) 0%,transparent 22%,transparent 62%,rgba(0,0,0,.8) 100%)"}}></div>
+      <div style={{position:"relative",zIndex:3,flex:1,display:"flex",flexDirection:"column",padding:"0 18px 18px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,paddingTop:6}}>
+          <RoundBtn icon="x" onCam />
+          <div style={{flex:1,textAlign:"center"}}>
+            <div style={{fontSize:10.5,fontWeight:800,letterSpacing:".18em",textTransform:"uppercase",color:LIME}}>Foto 3 de 3</div>
+            <div style={{fontSize:15,fontWeight:700,color:"#fff",marginTop:1}}>Perfil direito</div>
+          </div>
+          <RoundBtn icon="volume-2" onCam />
+        </div>
+        <div style={{display:"flex",gap:8,marginTop:14,justifyContent:"center"}}>
+          {[["Nível 1°",true],["Distância ok",true],["Corpo inteiro",false]].map(([t,ok])=>(
+            <span key={t} className="dark-glass" style={{padding:"5px 10px",borderRadius:99,fontSize:10,fontWeight:700,display:"inline-flex",alignItems:"center",gap:5,background:ok?"rgba(52,211,153,.2)":"rgba(251,191,36,.22)",borderColor:ok?"rgba(52,211,153,.45)":"rgba(251,191,36,.5)",color:"#fff"}}>
+              {I(ok?"check":"loader",11,ok?"#6EE7B7":"#FCD34D")} {t}
+            </span>
+          ))}
+        </div>
+        <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
+          <Silhouette h={346} pose="side" stroke={LIME} opacity={0.85} />
+          <div style={{position:"absolute",left:0,right:0,top:"50%",height:2,background:`linear-gradient(90deg,transparent,${LIME},transparent)`,boxShadow:`0 0 18px ${LIME}`}}></div>
+          <div style={{position:"absolute",inset:"6% 12%",border:"1px solid rgba(255,255,255,.18)",borderRadius:18}}></div>
+        </div>
+        <div className="dark-glass" style={{padding:"12px 14px",borderRadius:16,display:"flex",alignItems:"center",gap:11}}>
+          {I("volume-2",17,LIME)}
+          <span style={{fontSize:13,color:"#fff",lineHeight:1.4,flex:1}}>“Dê um passo para trás — seus pés estão fora do quadro.”</span>
+        </div>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:16,padding:"0 6px"}}>
+          <div style={{width:48,height:48,borderRadius:12,overflow:"hidden",border:"1.5px solid rgba(255,255,255,.3)"}} className="camslot"><span>2</span></div>
+          <div style={{width:76,height:76,borderRadius:99,border:`4px solid ${LIME}`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 0 30px -4px ${LIME}`}}>
+            <div style={{width:58,height:58,borderRadius:99,background:LIME,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-display)",fontSize:23,fontWeight:800,color:"#0d1a00"}}>3</div>
+          </div>
+          <div style={{width:48,height:48,borderRadius:99,display:"flex",alignItems:"center",justifyContent:"center"}} className="dark-glass">{I("timer",20,"#fff")}</div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ---------- 5. Processando ---------- */
+function ProcessingScreen(){
+  const STEPS=[["Fotos enviadas com segurança","done"],["Silhueta e escala detectadas","done"],["Estimando proporções e simetria","doing"],["Gerando notas de postura",""]];
+  return (
+    <div className="scroll" style={{display:"flex",flexDirection:"column"}}>
+      <div style={{paddingTop:6,display:"flex",justifyContent:"flex-end"}}><RoundBtn icon="x" /></div>
+      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",paddingBottom:60}}>
+        <div style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{position:"absolute",width:212,height:212,borderRadius:99,border:`1px dashed color-mix(in srgb, ${LIME} 45%, transparent)`}}></div>
+          <div style={{position:"absolute",width:164,height:164,borderRadius:99,background:`radial-gradient(closest-side, color-mix(in srgb, ${LIME} 24%, transparent), transparent 70%)`,filter:"blur(10px)"}}></div>
+          <Silhouette h={250} />
+          <div style={{position:"absolute",left:"14%",right:"14%",top:"42%",height:2.5,background:`linear-gradient(90deg,transparent,${LIME},transparent)`,boxShadow:`0 0 22px ${LIME}`}}></div>
+        </div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:23,fontWeight:800,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:26}}>Analisando suas fotos</div>
+        <div style={{fontSize:13,color:"var(--on-hero-2)",marginTop:7,lineHeight:1.5,maxWidth:270}}>Leva cerca de 15 segundos. Não feche o app — as fotos não são guardadas depois da análise.</div>
+        <div className="glass" style={{padding:15,marginTop:22,width:"100%",textAlign:"left"}}>
+          {STEPS.map(([t,s],i)=>{
+            const done=s==="done", doing=s==="doing";
+            return (
+              <div key={t} style={{display:"flex",alignItems:"center",gap:11,marginBottom:i<3?11:0}}>
+                <div style={{width:22,height:22,borderRadius:99,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",background:done?LIME:doing?"color-mix(in srgb, hsl(var(--primary)) 22%, transparent)":"var(--track)",border:doing?`1.5px solid ${LIME}`:"none"}}>
+                  {done?I("check",12,"#0d1a00"):doing?I("loader",12,LIMET):null}
+                </div>
+                <span style={{fontSize:12.5,color:done||doing?"var(--ios-label)":"var(--ios-label3)",fontWeight:doing?700:500,flex:1}}>{t}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 6. Confiança da captura ---------- */
+function TrustScreen(){
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",justifyContent:"space-between"}}><RoundBtn icon="chevron-left" /><RoundBtn icon="share" /></div>
+      <div style={{paddingTop:16}}>
+        <Chip tone="ai">Análise pronta</Chip>
+        <div style={{fontFamily:"var(--font-display)",fontSize:26,fontWeight:800,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:12}}>Leitura das fotos</div>
+        <div style={{fontSize:13,color:"var(--on-hero-2)",marginTop:6}}>12 de agosto · 3 fotos · escala pela altura informada</div>
+      </div>
+      <div style={{padding:16,marginTop:16,borderRadius:22,background:`color-mix(in srgb, ${WARN} 12%, transparent)`,border:`1px solid color-mix(in srgb, ${WARN} 38%, transparent)`}}>
+        <div style={{display:"flex",alignItems:"center",gap:9}}>
+          {I("triangle-alert",19,WARNT)}
+          <span style={{fontSize:15,fontWeight:700,color:"var(--ios-label)"}}>Confiança parcial</span>
+        </div>
+        <div style={{fontSize:13,color:"var(--ios-label2)",lineHeight:1.5,marginTop:9}}>Duas das três fotos saíram dentro do esperado. A leitura serve para comparar com o próximo scan, mas não vale como medida absoluta.</div>
+        <div style={{marginTop:12,paddingTop:12,borderTop:`1px solid color-mix(in srgb, ${WARN} 28%, transparent)`}}>
+          <Bullet tone={WARN}>A foto de costas saiu contra a luz — o contorno do ombro ficou incompleto.</Bullet>
+          <Bullet tone={WARN}>O tronco estava levemente rotacionado na foto frontal.</Bullet>
+        </div>
+      </div>
+      <SectionTitle action="Não são medidas">Notas estimadas</SectionTitle>
+      <div className="glass" style={{padding:16}}>
+        {[["Simetria",78,LIME,LIMET],["Postura",64,WARN,WARNT],["Proporção",85,OK,OKT]].map(([l,v,c,tc])=>(
+          <div key={l} style={{marginBottom:13}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}>
+              <span style={{fontSize:12.5,color:"var(--ios-label2)"}}>{l}</span>
+              <span style={{fontFamily:"var(--font-display)",fontSize:15,fontWeight:800,color:tc,letterSpacing:"-.02em"}}>{v}<span style={{fontSize:10,color:"var(--ios-label3)",fontWeight:600}}>/100</span></span>
+            </div>
+            <div style={{height:8,borderRadius:99,background:"var(--track)",overflow:"hidden"}}><div style={{width:`${v}%`,height:"100%",borderRadius:99,background:`linear-gradient(90deg, color-mix(in srgb, ${c} 50%, transparent), ${c})`}}></div></div>
+          </div>
+        ))}
+        <div style={{fontSize:11.5,color:"var(--ios-label3)",lineHeight:1.5,marginTop:4}}>São notas que a análise estimou a partir das imagens — não substituem avaliação presencial.</div>
+      </div>
+      <SectionTitle>Insights da I.A.</SectionTitle>
+      {[["Ombro direito mais baixo","Atenção",WARN,WARNT,"Desnível de 1,8 cm na foto frontal. Vale checar mobilidade torácica antes de subir carga em desenvolvimento."],["Base estável","Tudo certo",OK,OKT,"Alinhamento de joelho e tornozelo dentro do esperado nas três fotos."]].map(([t,tag,c,tc,d])=>(
+        <div key={t} className="glass" style={{padding:15,marginBottom:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10}}>
+            <span style={{fontSize:14.5,fontWeight:700,color:"var(--ios-label)",letterSpacing:"-.01em"}}>{t}</span>
+            <span style={{fontSize:9.5,fontWeight:800,textTransform:"uppercase",letterSpacing:".06em",color:tc,background:`color-mix(in srgb, ${c} 16%, transparent)`,padding:"3px 8px",borderRadius:99,flexShrink:0}}>{tag}</span>
+          </div>
+          <div style={{fontSize:12.5,color:"var(--ios-label2)",marginTop:6,lineHeight:1.45}}>{d}</div>
+        </div>
+      ))}
+      <div style={{height:130}}></div>
+    </div>
+  );
+}
+
+/* ---------- 7. Medidas estimadas ---------- */
+function MeasuresScreen(){
+  const COMP=[["Peso","78,4","kg"],["Gordura","17,2","%"],["Massa magra","64,9","kg"],["IMC","24,1",""]];
+  const CIRC=[["Ombro","121,0",1.6],["Peito","104,2",1.4],["Cintura","81,6",-2.8],["Quadril","98,4",-0.6],["Braço","38,1",1.1],["Coxa","59,8",0.9]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12,fontWeight:700,color:"var(--on-hero-2)",textTransform:"uppercase",letterSpacing:".04em"}}>Estimado por imagem</div>
+          <div style={{fontSize:21,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>Suas medidas</div>
+        </div>
+        <RoundBtn icon="ruler" />
+      </div>
+      <div className="glass" style={{padding:14,marginTop:14,display:"flex",gap:11,alignItems:"flex-start"}}>
+        {I("info",15,LIMET)}
+        <span style={{fontSize:11.5,color:"var(--ios-label2)",lineHeight:1.5,flex:1}}>Duas fotos na mesma pose dão a diferença mais confiável desta tela. Compare sempre estimativa com estimativa — fita é outra origem.</span>
+      </div>
+      <SectionTitle action="vs. 12 mai">Composição</SectionTitle>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        {COMP.map(([l,v,u],i)=>(
+          <div key={l} className="glass" style={{padding:14}}>
+            <div style={{fontSize:10,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"var(--ios-label3)"}}>{l}</div>
+            <div style={{display:"flex",alignItems:"baseline",gap:3,marginTop:7}}>
+              <span style={{fontFamily:"var(--font-display)",fontSize:23,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.03em"}}>{v}</span>
+              <span style={{fontSize:11,fontWeight:700,color:"var(--ios-label2)"}}>{u}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <SectionTitle action="cm">Circunferências estimadas</SectionTitle>
+      {CIRC.map(([l,v,d])=>(
+        <div key={l} className="glass" style={{padding:12,display:"flex",alignItems:"center",gap:12,marginBottom:9}}>
+          <span style={{fontSize:13.5,fontWeight:600,color:"var(--ios-label)",flex:1}}>{l}</span>
+          <span style={{display:"inline-flex",alignItems:"center",gap:3,fontSize:11,fontWeight:800,color:d>0?OKT:INFOT,background:`color-mix(in srgb, ${d>0?OK:INFO} 14%, transparent)`,padding:"2px 7px",borderRadius:99}}>
+            {I(d>0?"trending-up":"trending-down",11,d>0?OKT:INFOT)}{Math.abs(d).toString().replace(".",",")}
+          </span>
+          <span style={{fontFamily:"var(--font-display)",fontSize:16,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.02em",width:54,textAlign:"right"}}>{v}</span>
+        </div>
+      ))}
+      <div className="glass" style={{padding:14,marginTop:4,display:"flex",gap:11,alignItems:"flex-start"}}>
+        {I("shield-check",15,"var(--ios-label3)")}
+        <span style={{fontSize:11.5,color:"var(--ios-label2)",lineHeight:1.5,flex:1}}>As três fotos foram descartadas depois da análise. O que ficou salvo são estes números e as notas de postura.</span>
+      </div>
+      <div style={{height:130}}></div>
+    </div>
+  );
+}
+
+/* ---------- 8. Histórico de scans ---------- */
+function HistoryScreen(){
+  const SCANS=[["12 ago 2026","78,4 kg","~17,2% gordura (est.)","Confiança parcial",WARN,WARNT],["12 mai 2026","79,8 kg","~18,3% gordura (est.)","Captura confiável",OK,OKT],["10 fev 2026","81,2 kg","~20,4% gordura (est.)","Captura confiável",OK,OKT],["04 nov 2025","82,6 kg","—","Melhor repetir",BAD,BADT]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:6,display:"flex",alignItems:"center",gap:12}}>
+        <RoundBtn icon="chevron-left" />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12,fontWeight:700,color:"var(--on-hero-2)",textTransform:"uppercase",letterSpacing:".04em"}}>4 análises</div>
+          <div style={{fontSize:21,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>Histórico de scans</div>
+        </div>
+        <RoundBtn icon="plus" />
+      </div>
+      <div className="glass" style={{padding:16,marginTop:14}}>
+        <div style={{fontSize:11,fontWeight:800,letterSpacing:".12em",textTransform:"uppercase",color:"var(--ios-label2)"}}>Evolução estimada</div>
+        <div style={{display:"flex",alignItems:"flex-end",gap:10,height:104,marginTop:14}}>
+          {[[ "nov",82.6],["fev",81.2],["mai",79.8],["ago",78.4]].map(([m,v],i,arr)=>{
+            const max=83.5, min=77;
+            return (
+              <div key={m} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:6,height:"100%",justifyContent:"flex-end"}}>
+                <span style={{fontSize:10,fontWeight:700,color:i===arr.length-1?LIMET:"var(--ios-label3)"}}>{String(v).replace(".",",")}</span>
+                <div style={{width:"100%",height:`${((v-min)/(max-min))*100}%`,borderRadius:8,background:i===arr.length-1?LIME:`color-mix(in srgb, ${LIME} 34%, transparent)`,boxShadow:i===arr.length-1?`0 0 14px -3px ${LIME}`:"none"}}></div>
+                <span style={{fontSize:10,fontWeight:700,color:"var(--ios-label3)"}}>{m}</span>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{fontSize:11.5,color:"var(--ios-label3)",marginTop:10}}>Peso estimado por imagem — 4,2 kg em 9 meses.</div>
+      </div>
+      <SectionTitle action="Comparar">Análises</SectionTitle>
+      {SCANS.map(([date,w,fat,tag,c,tc],i)=>(
+        <div key={date} className="glass" style={{padding:12,display:"flex",alignItems:"center",gap:12,marginBottom:9,borderColor:i===0?LIME:"var(--glass-brd)"}}>
+          <div className="slot" style={{width:44,height:56,borderRadius:11,flexShrink:0}}><span>3</span></div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:13.5,fontWeight:700,color:"var(--ios-label)"}}>{date}</div>
+            <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:2}}>{w} · {fat}</div>
+            <span style={{display:"inline-flex",marginTop:6,fontSize:9.5,fontWeight:800,textTransform:"uppercase",letterSpacing:".06em",color:tc,background:`color-mix(in srgb, ${c} 15%, transparent)`,padding:"3px 8px",borderRadius:99}}>{tag}</span>
+          </div>
+          {I("chevron-right",16,"var(--ios-label3)")}
+        </div>
+      ))}
+      <div className="glass" style={{padding:14,marginTop:4,display:"flex",gap:11,alignItems:"flex-start"}}>
+        {I("trash-2",15,"var(--ios-label3)")}
+        <span style={{fontSize:11.5,color:"var(--ios-label2)",lineHeight:1.5,flex:1}}>Ao apagar uma análise, as medidas estimadas por ela somem e não voltam. Suas outras análises continuam.</span>
+      </div>
+      <div style={{height:130}}></div>
+    </div>
+  );
+}
+
+function TabBar({active="progress"}){return <KitTabBar active={active}/>;}
+
+function Phone(p){return <ThemePair><PhoneOne {...p}/></ThemePair>;}
+function PhoneOne({ step, label, footer, bare, cam, children }){
+  return (
+    <div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+        <span style={{width:20,height:20,borderRadius:99,background:LIME,color:"#0d1a00",fontSize:11,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{step}</span>
+        <span style={{color:"hsl(var(--muted-foreground))",fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:".1em"}}>{label}</span>
+      </div>
+      <div className={"phone"+(cam?" cam":"")}>
+        {!cam && <div className="glow"></div>}
+        <div className="island"></div>
+        <StatusBar onCam={cam} />
+        {children}
+        {footer && (
+          <div className={"footerbar"+(bare||cam?" bare":"")}>
+            <div className="btn ghost" style={{flex:"0 0 auto",padding:"0 16px"}}>{I(footer[1],15,"var(--ios-label)")} {footer[0]}</div>
+            <div className="btn primary" style={{flex:1}}>{I(footer[3],15,"#0d1a00")} {footer[2]}</div>
+          </div>
+        )}
+        {!bare && !cam && <TabBar/>}
+        <div className={"homebar"+(cam?" onCam":"")}></div>
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const [theme,setTheme]=React.useState("dark");
+  React.useEffect(()=>{window.lucide?.createIcons();});
+  const row={display:"flex",gap:30,marginBottom:36};
+  return (
+    <div>
+      <div style={row}>
+        <Phone step="1" label="Introdução" bare footer={["Como funciona","info","Começar scan","scan"]}><IntroScreen/></Phone>
+        <Phone step="2" label="Preparo" bare footer={["Voltar","chevron-left","Estou pronto","check"]}><PrepScreen/></Phone>
+        <Phone step="3" label="Captura de fotos" bare footer={["Refazer","rotate-ccw","Analisar 3 fotos","sparkles"]}><GridScreen/></Phone>
+        <Phone step="4" label="Câmera guiada" cam><CameraScreen/></Phone>
+      </div>
+      <div style={row}>
+        <Phone step="5" label="Processando" bare><ProcessingScreen/></Phone>
+        <Phone step="6" label="Confiança da captura" footer={["Repetir scan","rotate-ccw","Ver medidas","ruler"]}><TrustScreen/></Phone>
+        <Phone step="7" label="Medidas estimadas" footer={["Comparar","git-compare","Salvar no histórico","check"]}><MeasuresScreen/></Phone>
+        <Phone step="8" label="Histórico de scans"><HistoryScreen/></Phone>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+setTimeout(()=>window.lucide?.createIcons(),50);
+</script></body></html>

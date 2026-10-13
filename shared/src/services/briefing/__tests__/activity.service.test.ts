@@ -46,6 +46,7 @@ describe("activityService — bloco recente do briefing", () => {
       { data: [sessao({ session_type: "cardio", activity_name: "Corrida" })] },
       { data: [] },
       PERFIS,
+      { data: [] },
     ]);
 
     const itens = await createActivityService(supabase).fetchRecentActivity("espec-1");
@@ -206,6 +207,7 @@ describe("activityService — atividades do aluno", () => {
       { data: [] },
       { data: [] },
       dietas,
+      { data: [] },
     ]);
 
     const todos = await createActivityService(supabase).fetchStudentActivities("aluno-1", "all");
@@ -298,5 +300,70 @@ describe("activityService — atividades do aluno", () => {
       workoutCompleted: 1,
       completed: false,
     });
+  });
+});
+
+/**
+ * A troca de exercício do aluno chega ao especialista (#365, 6d): no "Aconteceu"
+ * do briefing (web) e na linha do tempo do Acompanhamento (mobile e web), com o
+ * nome dos dois exercícios — e só isso.
+ */
+describe("activityService — troca de exercício", () => {
+  const TROCA = {
+    data: [
+      {
+        id: "t1",
+        student_id: "aluno-1",
+        swapped_at: "2026-08-28T12:00:00Z",
+        scope: "today",
+        from_exercise_id: "ex-remada",
+        to_exercise_id: "ex-halteres",
+      },
+    ],
+  };
+  const NOMES = {
+    data: [
+      { id: "ex-remada", name: "Remada curvada" },
+      { id: "ex-halteres", name: "Remada com halteres" },
+    ],
+  };
+
+  it("aparece no Aconteceu do especialista", async () => {
+    const { supabase } = criarSupabaseFake([
+      VINCULOS,
+      { data: [] },
+      { data: [] },
+      PERFIS,
+      TROCA,
+      NOMES,
+    ]);
+    const itens = await createActivityService(supabase).fetchRecentActivity("espec-1");
+    expect(itens).toEqual([
+      expect.objectContaining({
+        kind: "exercise_swap",
+        studentName: "Marina Costa",
+        title: "Trocou Remada curvada → Remada com halteres",
+      }),
+    ]);
+  });
+
+  it("aparece na linha do tempo do aluno, como coisa que o aluno fez", async () => {
+    const { supabase } = criarSupabaseFake([
+      { data: [] },
+      { data: [] },
+      { data: [] },
+      { data: [] },
+      { data: [] },
+      TROCA,
+      NOMES,
+    ]);
+    const [dia] = await createActivityService(supabase).fetchStudentActivities("aluno-1");
+    expect(dia.events).toEqual([
+      expect.objectContaining({
+        kind: "exercise_swap",
+        author: "student",
+        detail: "Remada curvada → Remada com halteres · Só no treino de hoje",
+      }),
+    ]);
   });
 });

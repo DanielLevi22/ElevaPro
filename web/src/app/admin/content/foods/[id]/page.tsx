@@ -211,7 +211,10 @@ export default function EditFoodPage() {
 
           <div className="border-t border-border pt-4">
             <h2 className="text-xl font-bold text-foreground pt-4">
-              Informação Nutricional (por 100g)
+              {/* Por porção, e não por 100 g: é como o app lê `foods` (quantidade ÷
+                  porção). O rótulo antigo dizia 100 g e levou o catálogo a gravar
+                  10 g de azeite com 884 kcal (migration 0084). */}
+              Informação Nutricional (por porção de {formData.serving_size || 0} g)
             </h2>
             <div className="grid grid-cols-2 gap-4">
               <div>

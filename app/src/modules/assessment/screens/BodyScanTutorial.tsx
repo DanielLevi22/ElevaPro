@@ -57,8 +57,9 @@ const ICON_SIZE = 17;
 
 export default function BodyScanTutorial() {
   const router = useRouter();
-  const { studentId } = useLocalSearchParams<{ studentId?: string }>();
-  const ready = () => router.replace({ pathname: ROUTES.ASSESSMENT.GRID, params: { studentId } });
+  const { studentId, retorno } = useLocalSearchParams<{ studentId?: string; retorno?: string }>();
+  const ready = () =>
+    router.replace({ pathname: ROUTES.ASSESSMENT.GRID, params: { studentId, retorno } });
 
   return (
     <GlassScreen

@@ -10,7 +10,7 @@ import {
 
 interface SourceMealItem {
   food_id: string;
-  quantity: string;
+  quantity: string | number;
   unit: string;
   order_index: number;
 }
@@ -23,6 +23,14 @@ interface SourceMeal {
   meal_time: string | null;
   target_calories: string | null;
   diet_meal_items: SourceMealItem[] | null;
+}
+
+/** Uma refeição nova com os alimentos dela, já com o id do banco de alimentos. */
+export interface NewDietMeal {
+  name: string;
+  meal_type?: string | null;
+  meal_time?: string | null;
+  items: { food_id: string; quantity: number; unit: string }[];
 }
 
 const COPIED_MEAL_COLUMNS =
@@ -90,6 +98,20 @@ export const createDietPlanCreation = (supabase: SupabaseClient) => {
   };
 
   // Uma refeição por vez: cada item precisa do id da refeição recém-criada.
+  const insertMeal = async (
+    meal: Omit<SourceMeal, "diet_meal_items">,
+    items: SourceMealItem[],
+    planId: string,
+  ): Promise<void> => {
+    const { data: created, error } = await supabase
+      .from("diet_meals")
+      .insert({ ...meal, diet_plan_id: planId })
+      .select("id")
+      .single();
+    if (error) throw error;
+    await copyMealItems(items, (created as { id: string }).id);
+  };
+
   const copyMeals = async (sourcePlanId: string, targetPlanId: string): Promise<void> => {
     const { data: sourceMeals, error } = await supabase
       .from("diet_meals")
@@ -98,13 +120,7 @@ export const createDietPlanCreation = (supabase: SupabaseClient) => {
     if (error) throw error;
 
     for (const { diet_meal_items, ...meal } of (sourceMeals ?? []) as SourceMeal[]) {
-      const { data: created, error: mealError } = await supabase
-        .from("diet_meals")
-        .insert({ ...meal, diet_plan_id: targetPlanId })
-        .select("id")
-        .single();
-      if (mealError) throw mealError;
-      await copyMealItems(diet_meal_items ?? [], (created as { id: string }).id);
+      await insertMeal(meal, diet_meal_items ?? [], targetPlanId);
     }
   };
 
@@ -151,6 +167,36 @@ export const createDietPlanCreation = (supabase: SupabaseClient) => {
         .from("diet_meals")
         .insert(rows.map((row) => ({ ...row, diet_plan_id: created.id })));
       if (error) throw error;
+      return created;
+    },
+
+    /**
+     * Cria o rascunho já com as refeições e os alimentos de cada uma: o plano que
+     * o onboarding do Praticante aprova (#365). Ativar é outro passo
+     * (`activateDietPlan`), para criar não tirar a dieta que a pessoa segue.
+     *
+     * @example
+     * const draft = await nutritionService.createDietPlanWithMeals(plan, [{ name: "Almoço", items: [{ food_id, quantity: 120, unit: "g" }] }]);
+     */
+    createDietPlanWithMeals: async (
+      plan: CreateDietPlanInput,
+      meals: NewDietMeal[],
+    ): Promise<DietPlan> => {
+      const created = await createDietPlan(plan);
+      for (const [order, meal] of meals.entries()) {
+        await insertMeal(
+          {
+            name: meal.name,
+            meal_type: meal.meal_type ?? null,
+            meal_order: order,
+            day_of_week: null,
+            meal_time: meal.meal_time ?? null,
+            target_calories: null,
+          },
+          meal.items.map((item, index) => ({ ...item, order_index: index })),
+          created.id,
+        );
+      }
       return created;
     },
 

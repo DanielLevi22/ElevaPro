@@ -1,14 +1,11 @@
 import { tokenDaSessao, useAuthStore } from '@/auth';
 import { EscanearPratoScreen } from '@/modules/nutrition/routes/index';
-import ScanFoodScreen from '@/modules/nutrition/screens/ScanFoodScreen';
 
-/**
- * O scan do prato na tela do papel: o aluno no desenho do kit, com o registro
- * no diário; o member segue na tela antiga até o plano dele ganhar desenho.
- */
+/** O scan do prato do Aluno e do Praticante, com o registro no diário. */
 export default function ScanFoodRoute() {
-  const { user, accountType, isMasquerading } = useAuthStore();
-  if (accountType === 'member' || !user?.id) return <ScanFoodScreen />;
+  const { user, isMasquerading } = useAuthStore();
+  // A aba só abre com sessão; sem ela, não há diário onde registrar.
+  if (!user?.id) return null;
 
   return (
     <EscanearPratoScreen

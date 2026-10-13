@@ -1,4 +1,3 @@
-app/src/modules/ai/services/AssistantService.ts 1
 app/src/modules/assessment/screens/AdaptiveAnamnesisScreen.tsx 1
 app/src/modules/assessment/screens/BodyScanIntroduction.tsx 1
 app/src/modules/assessment/screens/BodyScanProcessing.tsx 1

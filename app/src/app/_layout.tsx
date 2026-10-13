@@ -25,6 +25,7 @@ import { AppAlertHost, showAlert } from '@/components/ui/appAlert';
 import { PushBannerHost } from '@/components/ui/pushBanner';
 import { useColorScheme } from '@/components/useColorScheme';
 import { queryClient } from '@/lib/query-client';
+import { useOnboardingGate } from '@/modules/onboarding';
 import { ROUTES } from '@/navigation/types';
 import { registerHealthSyncAsync } from '@/services/backgroundHealthTask';
 import { registerBackgroundFetchAsync } from '@/services/backgroundTask';
@@ -202,6 +203,16 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
     }
   }, [session, segments, isLoading, accountType, router, redirectPrivilegedSession]);
 
+  const inOnboarding = segments[0] === 'onboarding';
+  // O scan opcional depois de O4 sai do grupo do onboarding: o guarda não pode
+  // mandar a O1 quem está no meio das fotos (#365).
+  const inScan = (segments as string[]).includes('assessment');
+  useOnboardingGate({
+    studentId: isLoading ? null : (session?.user?.id ?? null),
+    accountType,
+    inOnboarding: inOnboarding || inScan,
+  });
+
   // Removed manual loading view to use Native Splash
 
   return (
@@ -226,8 +237,13 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
             caminho que grava dado de saúde, que é o desenho que já deixou
             passar `toggleMealCompletion`.
           */}
+          {/*
+            Dentro do onboarding o aceite é uma etapa do fluxo, pedida antes de O4
+            (ADR-0044): a folha da porta por cima de O1 pediria o aceite antes de a
+            pessoa saber para que serve.
+          */}
           <HealthDataConsentGate
-            studentId={session?.user?.id ?? null}
+            studentId={inOnboarding ? null : (session?.user?.id ?? null)}
             isStudent={accountType === 'student' || accountType === 'member'}
             hasSpecialist={accountType === 'student'}
           />

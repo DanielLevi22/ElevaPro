@@ -8,6 +8,7 @@ import Download from 'lucide-react-native/icons/download';
 import Ellipsis from 'lucide-react-native/icons/ellipsis';
 import Heart from 'lucide-react-native/icons/heart';
 import Info from 'lucide-react-native/icons/info';
+import Link from 'lucide-react-native/icons/link';
 import Mic from 'lucide-react-native/icons/mic';
 import MicOff from 'lucide-react-native/icons/mic-off';
 import Music from 'lucide-react-native/icons/music';
@@ -46,6 +47,7 @@ import { useCores, useEscala } from '@/shared/design';
  * aqui de propósito.
  */
 const ICONS = {
+  link: Link,
   'chevron-left': ChevronLeft,
   'chevron-down': ChevronDown,
   x: X,

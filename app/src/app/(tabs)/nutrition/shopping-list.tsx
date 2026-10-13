@@ -1,13 +1,10 @@
 import { tokenDaSessao, useAuthStore } from '@/auth';
 import { ListaDeComprasScreen } from '@/modules/nutrition/routes/index';
-import ShoppingListScreen from '@/modules/nutrition/screens/ShoppingListScreen';
 
-/**
- * A lista de compras na tela do papel: o aluno no desenho do kit; o member,
- * que monta o próprio plano, segue na tela com o assistente de lista.
- */
+/** A lista de compras do Aluno e do Praticante, a partir do plano ativo. */
 export default function ShoppingListRoute() {
-  const { user, accountType } = useAuthStore();
-  if (accountType === 'member' || !user?.id) return <ShoppingListScreen />;
+  const { user } = useAuthStore();
+  // A aba só abre com sessão; sem ela, não há plano de onde tirar a lista.
+  if (!user?.id) return null;
   return <ListaDeComprasScreen alunoId={user.id} obterToken={tokenDaSessao} />;
 }

@@ -1,0 +1,237 @@
+<!-- @dsCard group="Mobile · Student" viewport="2640x880" name="09 · Ranking e perfil" subtitle="Ranking, conquistas e perfil · escuro e claro" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css"><link rel="stylesheet" href="../kit/glass.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js"></script>
+<style>
+:root{
+--on-hero:#fff;--on-hero-2:rgba(255,255,255,.82);--on-hero-3:rgba(255,255,255,.7);--hero-chip:rgba(255,255,255,.18);--hero-chip-brd:rgba(255,255,255,.3);
+}
+.scroll{flex:1;overflow:auto;padding:0 18px 12px;scrollbar-width:none;position:relative;z-index:2;margin-top:-52px;padding-top:52px}
+.tabitem{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10px;font-weight:600;letter-spacing:-.01em}
+</style>
+</head><body>
+<div id="root"></div>
+<script type="text/babel" src="../kit/kit.jsx"></script>
+<script type="text/babel" data-presets="react">
+const I=(n,s=20,c)=><i data-lucide={n} style={{width:s,height:s,display:"block",color:c,flexShrink:0}}></i>;
+const LIME="hsl(var(--primary))";
+
+function StatusBar(){
+  return <div className="statusbar"><span>9:41</span><span style={{display:"flex",alignItems:"center",gap:6}}>{I("signal",16,"var(--on-hero)")}{I("wifi",16,"var(--on-hero)")}{I("battery-full",20,"var(--on-hero)")}</span></div>;
+}
+
+function GlassTile({ icon, color, value, unit, label }) {
+  return (
+    <div className="glass" style={{flex:1,padding:14}}>
+      <div style={{width:32,height:32,borderRadius:10,background:`color-mix(in srgb, ${color} 18%, transparent)`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:12}}>{I(icon,16,color)}</div>
+      <div style={{display:"flex",alignItems:"baseline",gap:3}}>
+        <span style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:800,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{value}</span>
+        <span style={{fontSize:11,color:"var(--ios-label2)",fontWeight:600}}>{unit}</span>
+      </div>
+      <div style={{fontSize:11.5,color:"var(--ios-label2)",marginTop:2}}>{label}</div>
+    </div>
+  );
+}
+
+function GlassRow({ icon, color, title, sub, right, danger }) {
+  return (
+    <div className="glass" style={{padding:14,display:"flex",alignItems:"center",gap:13,marginBottom:10}}>
+      <div style={{width:40,height:40,borderRadius:13,background:`color-mix(in srgb, ${color} 18%, transparent)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I(icon,19,color)}</div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:15,fontWeight:600,color:danger?"#F87171":"var(--ios-label)",letterSpacing:"-.01em"}}>{title}</div>
+        {sub && <div style={{fontSize:12.5,color:"var(--ios-label2)",marginTop:1}}>{sub}</div>}
+      </div>
+      {right || I("chevron-right",17,"var(--ios-label3)")}
+    </div>
+  );
+}
+
+function SectionTitle({ children, action }) {
+  return (
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",margin:"22px 2px 11px"}}>
+      <span style={{fontSize:19,fontWeight:700,color:"var(--ios-label)",letterSpacing:"-.02em"}}>{children}</span>
+      {action && <span style={{fontSize:14,color:"hsl(var(--primary-text))",fontWeight:600}}>{action}</span>}
+    </div>
+  );
+}
+
+const PODIUM=[{pos:2,name:"Ana C.",pts:"2.840",h:86},{pos:1,name:"Rafael N.",pts:"3.120",h:112},{pos:3,name:"Carla D.",pts:"2.610",h:68}];
+const RANKS=[
+  {pos:4,name:"João Silva",pts:"2.480",you:true,delta:"+2"},
+  {pos:5,name:"Beatriz Souza",pts:"2.310",delta:"-1"},
+  {pos:6,name:"Marcos Lima",pts:"2.150",delta:"+3"},
+  {pos:7,name:"Pedro Alves",pts:"1.980",delta:"0"},
+  {pos:8,name:"Lucas Reis",pts:"1.870",delta:"-2"},
+];
+
+function RankingScreen(){
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <div style={{fontSize:13,color:"var(--on-hero-2)",fontWeight:600}}>Competição semanal</div>
+          <div style={{fontSize:28,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:2}}>Ranking de Elite</div>
+        </div>
+        <div className="glass" style={{width:38,height:38,borderRadius:99,display:"flex",alignItems:"center",justifyContent:"center"}}>{I("info",18,"var(--on-hero)")}</div>
+      </div>
+
+      <div className="glass" style={{marginTop:18,padding:"14px 16px",display:"flex",alignItems:"center",gap:10}}>
+        {I("clock",16,"#FBBF24")}<span style={{fontSize:13.5,color:"var(--on-hero)",fontWeight:600}}>Encerra em 2 dias e 14 horas</span>
+      </div>
+
+      <div style={{display:"flex",alignItems:"flex-end",justifyContent:"center",gap:10,margin:"26px 0 6px"}}>
+        {PODIUM.map(p=>(
+          <div key={p.pos} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center"}}>
+            <div style={{width:p.pos===1?58:48,height:p.pos===1?58:48,borderRadius:99,background:"var(--hero-chip)",border:p.pos===1?`2.5px solid ${LIME}`:"2px solid var(--hero-chip-brd)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--on-hero)",fontWeight:700,fontSize:p.pos===1?21:17,marginBottom:8,boxShadow:p.pos===1?`0 0 22px ${LIME}`:"none"}}>{p.name.charAt(0)}</div>
+            {p.pos===1 && <div style={{marginBottom:6}}>{I("crown",18,"#FBBF24")}</div>}
+            <div style={{fontSize:12.5,fontWeight:700,color:"var(--on-hero)"}}>{p.name}</div>
+            <div style={{fontSize:11,color:"var(--on-hero-3)",marginBottom:8}}>{p.pts} pts</div>
+            <div className="glass" style={{width:"100%",height:p.h,borderRadius:"16px 16px 0 0",display:"flex",alignItems:"flex-start",justifyContent:"center",paddingTop:10,background:p.pos===1?`linear-gradient(160deg, color-mix(in srgb, ${LIME} 34%, transparent) 0%, color-mix(in srgb, ${LIME} 12%, transparent) 100%)`:undefined}}>
+              <span style={{fontFamily:"var(--font-display)",fontSize:24,fontWeight:800,color:"var(--on-hero)"}}>{p.pos}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <SectionTitle>Classificação</SectionTitle>
+      {RANKS.map(r=>(
+        <div key={r.pos} className="glass" style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12,marginBottom:9,borderColor:r.you?LIME:"var(--glass-brd)"}}>
+          <span style={{width:22,fontSize:14,fontWeight:700,color:"var(--ios-label2)",flexShrink:0}}>{r.pos}</span>
+          <div style={{width:36,height:36,borderRadius:99,background:"var(--glass-strong)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--ios-label)",fontWeight:700,fontSize:14,flexShrink:0}}>{r.name.charAt(0)}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:14.5,fontWeight:600,color:"var(--ios-label)",letterSpacing:"-.01em"}}>{r.name}{r.you && <span style={{marginLeft:7,fontSize:10,fontWeight:800,color:"#0d1a00",background:LIME,padding:"2px 7px",borderRadius:99,textTransform:"uppercase"}}>Você</span>}</div>
+            <div style={{fontSize:12,color:"var(--ios-label2)",marginTop:1}}>{r.pts} pts</div>
+          </div>
+          <span style={{fontSize:12,fontWeight:700,color:r.delta.startsWith("+")?"#34D399":r.delta.startsWith("-")?"#F87171":"var(--ios-label3)"}}>{r.delta}</span>
+        </div>
+      ))}
+      <div style={{height:100}}></div>
+    </div>
+  );
+}
+
+function ProfileScreen({aluno}){
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:14,display:"flex",justifyContent:"flex-end"}}>
+        <div className="glass" style={{width:38,height:38,borderRadius:99,display:"flex",alignItems:"center",justifyContent:"center"}}>{I("settings",18,"var(--on-hero)")}</div>
+      </div>
+
+      <div style={{display:"flex",flexDirection:"column",alignItems:"center",paddingTop:18}}>
+        <div style={{width:88,height:88,borderRadius:99,background:"var(--hero-chip)",border:`3px solid ${LIME}`,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--on-hero)",fontWeight:700,fontSize:34,boxShadow:`0 0 28px ${LIME}`}}>J</div>
+        <div style={{fontSize:24,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.02em",marginTop:14}}>João Silva</div>
+        <div style={{fontSize:13.5,color:"var(--on-hero-2)",marginTop:3}}>Aluno · Hipertrofia — Ciclo 2026</div>
+        <div className="glass" style={{marginTop:12,borderRadius:99,padding:"6px 14px",display:"flex",alignItems:"center",gap:6}}>
+          {I("flame",14,LIME)}<span style={{color:"var(--on-hero)",fontWeight:700,fontSize:13}}>12 dias seguidos</span>
+        </div>
+      </div>
+
+      <div style={{display:"flex",gap:10,marginTop:26}}>
+        <GlassTile icon="dumbbell" color={LIME} value="86" unit="" label="Treinos feitos" />
+        <GlassTile icon="trending-up" color="#34D399" value="+6,2" unit="kg" label="Massa magra" />
+        <GlassTile icon="award" color="#FBBF24" value="14" unit="" label="Conquistas" />
+      </div>
+
+      <SectionTitle>Meu acompanhamento</SectionTitle>
+      {aluno?<GlassRow icon="user-round" color={LIME} title="Meu especialista" sub="Daniel Levi · Especialista" />:<GlassRow icon="sparkles" color={LIME} title="Meu plano" sub="Proposta do Assistente · aprovada por você" />}
+      <GlassRow icon="clipboard-list" color="#34D399" title="Anamnese" sub="Atualizada em 02 de agosto" />
+      <GlassRow icon="ruler" color="#FBBF24" title="Avaliações físicas" sub="3 registros" />
+      <GlassRow icon="scan-line" color="#A78BFA" title="Mapa muscular" sub="Volume por grupo muscular" />
+
+      <SectionTitle>Conta</SectionTitle>
+      <GlassRow icon="bell" color="#34D399" title="Notificações" sub="Lembretes de treino e refeição" />
+      <GlassRow icon="shield" color="#FBBF24" title="Privacidade e dados" />
+      <GlassRow icon="log-out" color="#F87171" title="Sair da conta" danger right={<span></span>} />
+      <div style={{height:100}}></div>
+    </div>
+  );
+}
+
+function ScanScreen(){
+  const GROUPS=[["Peitoral",82,LIME],["Costas",74,LIME],["Pernas",58,"#FBBF24"],["Ombros",66,LIME],["Braços",71,LIME],["Core",44,"#F87171"]];
+  return (
+    <div className="scroll">
+      <div style={{paddingTop:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div className="glass" style={{width:38,height:38,borderRadius:99,display:"flex",alignItems:"center",justifyContent:"center"}}>{I("chevron-left",19,"var(--on-hero)")}</div>
+        <div className="glass" style={{width:38,height:38,borderRadius:99,display:"flex",alignItems:"center",justifyContent:"center"}}>{I("share",17,"var(--on-hero)")}</div>
+      </div>
+
+      <div style={{paddingTop:26}}>
+        <span style={{background:LIME,color:"#0d1a00",fontSize:10.5,fontWeight:800,padding:"4px 10px",borderRadius:99,textTransform:"uppercase",letterSpacing:".06em"}}>Avaliação com IA</span>
+        <div style={{fontSize:30,fontWeight:700,color:"var(--on-hero)",letterSpacing:"-.03em",marginTop:12,lineHeight:1.12}}>Escaneamento corporal</div>
+        <div style={{fontSize:14.5,color:"var(--on-hero-2)",marginTop:7,lineHeight:1.4}}>Último scan há 6 dias. Seu core segue como ponto fraco do ciclo.</div>
+      </div>
+
+      <div style={{display:"flex",justifyContent:"center",margin:"18px 0"}}>
+        <img src="../../foundations/assets/illustrations/body-scan-hologram.png" alt="Escaneamento corporal" style={{height:230,objectFit:"contain",filter:`drop-shadow(0 0 30px ${LIME})`}} />
+      </div>
+
+      <div style={{display:"flex",gap:10}}>
+        <GlassTile icon="percent" color="#34D399" value="14,2" unit="%" label="Gordura" />
+        <GlassTile icon="scale" color={LIME} value="78,4" unit="kg" label="Peso" />
+        <GlassTile icon="activity" color="#FBBF24" value="1.812" unit="kcal" label="TMB" />
+      </div>
+
+      <SectionTitle>Volume por grupo muscular</SectionTitle>
+      <div className="glass" style={{padding:16}}>
+        {GROUPS.map(([name,v,c])=>(
+          <div key={name} style={{marginBottom:13}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+              <span style={{fontSize:13.5,fontWeight:600,color:"var(--ios-label)"}}>{name}</span>
+              <span style={{fontSize:12.5,color:"var(--ios-label2)"}}>{v}%</span>
+            </div>
+            <div style={{height:6,borderRadius:99,background:"var(--glass-strong)",overflow:"hidden"}}><div style={{width:`${v}%`,height:"100%",background:c,borderRadius:99}} /></div>
+          </div>
+        ))}
+      </div>
+
+      <div className="glass" style={{padding:16,marginTop:12,display:"flex",gap:12,alignItems:"flex-start"}}>
+        <div style={{width:36,height:36,borderRadius:12,background:`color-mix(in srgb, ${LIME} 18%, transparent)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{I("sparkles",17,LIME)}</div>
+        <div>
+          <div style={{fontSize:14.5,fontWeight:700,color:"var(--ios-label)",letterSpacing:"-.01em"}}>Proposta do Assistente</div>
+          <div style={{fontSize:13,color:"var(--ios-label2)",marginTop:3,lineHeight:1.45}}>Adicione uma sessão de core na Fase 2 e aumente o volume de pernas em 15%.</div>
+        </div>
+      </div>
+      <div style={{height:100}}></div>
+    </div>
+  );
+}
+
+function TabBar({active}){return <KitTabBar active={active}/>;}
+
+function Phone(p){return <ThemePair><PhoneOne {...p}/></ThemePair>;}
+function PhoneOne({ label, image, active, children }){
+  return (
+    <div>
+      <div style={{color:"hsl(var(--muted-foreground))",fontSize:12,fontWeight:700,marginBottom:10,textTransform:"uppercase",letterSpacing:".1em"}}>{label}</div>
+      <div className="phone">
+        <div className="hero" style={{backgroundImage:`url(${image})`}}></div>
+        <div className="island"></div>
+        <StatusBar/>
+        {children}
+        <TabBar active={active}/>
+        <div className="homebar"></div>
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const [theme,setTheme]=React.useState("dark");
+  React.useEffect(()=>{window.lucide?.createIcons();});
+  return (
+    <div>
+      <div style={{display:"flex",gap:30}}>
+        <Phone label="Ranking" image="../../foundations/assets/imagery/workout-legs.jpg" active="rank"><RankingScreen/></Phone>
+        <Phone label="Perfil" image="../../foundations/assets/imagery/workout-chest.jpg" active="profile"><ProfileScreen/></Phone>
+        <Phone label="Perfil · Variante · Aluno" image="../../foundations/assets/imagery/workout-chest.jpg" active="profile"><ProfileScreen aluno/></Phone>
+        <Phone label="Avaliação com IA" image="../../foundations/assets/imagery/workout-back.jpg" active="home"><ScanScreen/></Phone>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+setTimeout(()=>window.lucide?.createIcons(),50);
+</script></body></html>

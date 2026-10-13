@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { Anel } from '@/components/ui/Anel';
+import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { GlassScreen } from '@/components/ui/GlassScreen';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
@@ -28,6 +29,10 @@ interface PlanoDoDiaScreenProps {
   alunoId: string;
   /** O especialista vendo como o aluno: lê, e não marca. */
   somenteLeitura: boolean;
+  /**
+   * O Praticante, sem especialista: o estado vazio fala com ele, e não do
+   * especialista, e leva a montar o plano pelo onboarding.
+   */
   selfGuided?: boolean;
 }
 
@@ -74,15 +79,27 @@ export function PlanoDoDiaScreen({
 
 function PlanContent({ plan, selfGuided }: { plan: PlanoDoDia; selfGuided: boolean }) {
   const colors = useCores();
+  const router = useRouter();
   if (!plan.temPlano) {
-    return plan.carregando ? (
-      <ActivityIndicator className="mt-16" color={colors.primary} />
-    ) : (
-      <Text className="px-6 py-16 text-center text-legenda text-muted-foreground">
-        {selfGuided
-          ? 'Você ainda não tem um plano alimentar ativo. Crie seu primeiro plano para começar.'
-          : 'Seu especialista ainda não montou um plano alimentar para você.'}
-      </Text>
+    if (plan.carregando) return <ActivityIndicator className="mt-16" color={colors.primary} />;
+    if (!selfGuided) {
+      return (
+        <Text className="px-6 py-16 text-center text-legenda text-muted-foreground">
+          Seu especialista ainda não montou um plano alimentar para você.
+        </Text>
+      );
+    }
+    return (
+      <View className="items-center gap-4 px-6 py-16">
+        <Text className="text-center text-legenda text-muted-foreground">
+          Você ainda não tem um plano alimentar ativo.
+        </Text>
+        <BotaoDeDestaque
+          rotulo="Montar meu plano"
+          tamanho="compacto"
+          onPress={() => router.push(ROUTES.ONBOARDING.SCOPE)}
+        />
+      </View>
     );
   }
 

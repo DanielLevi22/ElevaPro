@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { type Action, defineAbilitiesFor, type Subject, type UserContext } from "../abilities";
 
 /**
- * Tabela de permissões: 4 papéis × 17 subjects.
+ * Tabela de permissões: 4 papéis × 18 subjects.
  *
  * Existe porque `abilities.ts` viveu duplicado no mobile e no web até divergir
  * sem ninguém notar — o mobile concedia `manage Periodization` ao `member` e o
@@ -31,6 +31,7 @@ const SUBJECTS: Subject[] = [
   "SpecialistNote",
   "Leaderboard",
   "RankingConsent",
+  "ExerciseSwap",
   "all",
 ];
 
@@ -68,6 +69,7 @@ const LE: Record<string, Subject[]> = {
     "Diet",
     "DeclaredMeasurement",
     "Leaderboard",
+    "ExerciseSwap",
   ],
   "specialist:nutrition_consulting": [
     "MealCatalog",
@@ -78,6 +80,7 @@ const LE: Record<string, Subject[]> = {
     "Periodization",
     "DeclaredMeasurement",
     "Leaderboard",
+    "ExerciseSwap",
   ],
   student: [
     "Workout",
@@ -87,8 +90,9 @@ const LE: Record<string, Subject[]> = {
     "SpecialistNote",
     "Leaderboard",
     "MealCatalog",
+    "ExerciseSwap",
   ],
-  member: ["Profile", "Leaderboard", "MealCatalog"],
+  member: ["Profile", "Leaderboard", "MealCatalog", "ExerciseSwap"],
 };
 
 const CONTEXTOS: Record<string, UserContext> = {
@@ -137,6 +141,20 @@ describe("defineAbilitiesFor — tabela de permissões", () => {
     const ability = defineAbilitiesFor(CONTEXTOS.member);
     if (ability.can("read", "SpecialistNote")) {
       throw new Error("NOTA NO PRATICANTE: conta sem especialista recebeu leitura da nota clínica");
+    }
+  });
+
+  // A troca de exercício é evidência do que o aluno fez com a prescrição (0086).
+  // A tela não oferece corrigir nem apagar: o banco recusaria, e o especialista
+  // leria um histórico que o próprio aluno pode reescrever.
+  it("ninguém além do admin corrige ou apaga a troca de exercício", () => {
+    for (const papel of ["specialist:personal_training", "student", "member"]) {
+      const ability = defineAbilitiesFor(CONTEXTOS[papel]);
+      if (ability.can("update", "ExerciseSwap") || ability.can("delete", "ExerciseSwap")) {
+        throw new Error(
+          `EVIDÊNCIA EDITÁVEL: ${papel} pode corrigir ou apagar a troca de exercício`,
+        );
+      }
     }
   });
 

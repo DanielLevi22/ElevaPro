@@ -3060,3 +3060,435 @@ BEGIN
 END $$;
 
 ROLLBACK;
+
+-- ── student_anamnesis: gravar exige consentimento (0083, #365) ───────────────
+-- A anamnese é consentimento explícito (Art. 11, I). O onboarding do Praticante
+-- grava peso, altura e a triagem a cada tela, e quem recusou o aceite não pode
+-- gravar por nenhum caminho, nem pelo PostgREST direto.
+
+BEGIN;
+
+DO $$
+DECLARE
+  com_aceite uuid := gen_random_uuid();
+  sem_aceite uuid := gen_random_uuid();
+  revogou    uuid := gen_random_uuid();
+  afetadas   int;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (com_aceite, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-aa@elevapro.local', '{"full_name":"A","account_type":"member"}'::jsonb),
+    (sem_aceite, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-ab@elevapro.local', '{"full_name":"B","account_type":"member"}'::jsonb),
+    (revogou,    '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-ac@elevapro.local', '{"full_name":"C","account_type":"member"}'::jsonb);
+
+  INSERT INTO public.student_consents (student_id, consent_type, given_at, revoked_at, policy_version)
+  VALUES
+    (com_aceite, 'health_data_collection', now(), NULL,  '1.9'),
+    (revogou,    'health_data_collection', now() - interval '1 day', now(), '1.9');
+
+  -- Quem revogou já tinha anamnese: o dado antigo é dele e continua ali.
+  INSERT INTO public.student_anamnesis (student_id, responses)
+  VALUES (revogou, '{"weight":80}'::jsonb);
+
+  SET LOCAL ROLE authenticated;
+
+  -- Com aceite, grava e corrige: é o upsert de cada tela do onboarding.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', com_aceite, 'role', 'authenticated')::text, true);
+  INSERT INTO public.student_anamnesis (student_id, responses) VALUES (com_aceite, '{"weight":70}'::jsonb);
+  UPDATE public.student_anamnesis SET responses = '{"weight":71}'::jsonb WHERE student_id = com_aceite;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 1 THEN
+    RAISE EXCEPTION 'o aluno com aceite não corrige a própria anamnese (Art. 18, III): % linha(s)', afetadas;
+  END IF;
+
+  -- Sem aceite, o banco recusa a coleta.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', sem_aceite, 'role', 'authenticated')::text, true);
+  BEGIN
+    INSERT INTO public.student_anamnesis (student_id, responses) VALUES (sem_aceite, '{"weight":60}'::jsonb);
+    RAISE EXCEPTION 'COLETA SEM CONSENTIMENTO: anamnese gravada por quem não autorizou (Art. 11, I)';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- Revogado, não corrige; mas lê e apaga o que já é dele (§7 e Art. 18, VI).
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', revogou, 'role', 'authenticated')::text, true);
+  BEGIN
+    UPDATE public.student_anamnesis SET responses = '{"weight":90}'::jsonb WHERE student_id = revogou;
+    RAISE EXCEPTION 'COLETA APÓS REVOGAÇÃO: anamnese alterada depois de o aluno retirar o aceite (Art. 8°, §5°)';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  SELECT count(*) INTO afetadas FROM public.student_anamnesis WHERE student_id = revogou;
+  IF afetadas <> 1 THEN
+    RAISE EXCEPTION 'HISTÓRICO ESCONDIDO: quem revogou não lê a própria anamnese (% linha(s))', afetadas;
+  END IF;
+
+  DELETE FROM public.student_anamnesis WHERE student_id = revogou;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 1 THEN
+    RAISE EXCEPTION 'ELIMINAÇÃO NEGADA: quem revogou não apaga a própria anamnese (Art. 18, VI)';
+  END IF;
+
+  RAISE NOTICE 'ok  anamnese: gravar e corrigir exigem aceite; ler e apagar o próprio dado, não';
+END $$;
+
+ROLLBACK;
+
+-- ── foods: valores por porção (0084, #365) ──────────────────────────────────
+-- O app lê `foods` por porção. O seed gravou valores de 100 g em porções
+-- menores, e 10 g de azeite viraram 884 kcal no diário. A trava existe e recusa
+-- o erro antigo; sem ela, o defeito volta pelo primeiro alimento cadastrado.
+
+BEGIN;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint c JOIN pg_class t ON t.oid = c.conrelid
+    WHERE t.relname = 'foods' AND c.conname = 'foods_values_per_serving_plausible'
+  ) THEN
+    RAISE EXCEPTION 'ERRO DE PORÇÃO SEM BARREIRA: CHECK de plausibilidade ausente em foods';
+  END IF;
+
+  BEGIN
+    INSERT INTO public.foods (name, category, serving_size, calories, fat)
+    VALUES ('verify-azeite-por-100g', 'gordura', 10, 884, 100);
+    RAISE EXCEPTION 'CALORIA DEZ VEZES MAIOR: foods aceitou 10 g com 884 kcal e 100 g de gordura';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
+  RAISE NOTICE 'ok  alimentos: valores por porção, com trava contra os de 100 g';
+END $$;
+
+ROLLBACK;
+
+-- ── workout_exercises: o Praticante troca o exercício do próprio treino (0085, #365)
+-- O aluno não escreve prescrição. A troca "para sempre" do Praticante passa por
+-- uma função que muda só o exercício, só em treino dele sem especialista, e só
+-- para o catálogo oficial. Prescrição de especialista continua intocável.
+
+BEGIN;
+
+DO $$
+DECLARE
+  praticante    uuid := gen_random_uuid();
+  outro         uuid := gen_random_uuid();
+  especialista  uuid := gen_random_uuid();
+  oficial       uuid;
+  destino       uuid;
+  privado       uuid;
+  item_proprio  uuid;
+  item_outro    uuid;
+  item_prescrito uuid;
+  atual         uuid;
+  afetadas      int;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (praticante, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-wa@elevapro.local', '{"full_name":"A","account_type":"member"}'::jsonb),
+    (outro, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-wb@elevapro.local', '{"full_name":"B","account_type":"member"}'::jsonb),
+    (especialista, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-ws@elevapro.local', '{"full_name":"S","account_type":"specialist"}'::jsonb);
+
+  INSERT INTO public.exercises (name) VALUES ('verify-remada-curvada') RETURNING id INTO oficial;
+  INSERT INTO public.exercises (name) VALUES ('verify-remada-halteres') RETURNING id INTO destino;
+  INSERT INTO public.exercises (name, created_by) VALUES ('verify-remada-do-especialista', especialista)
+    RETURNING id INTO privado;
+
+  WITH treino AS (
+    INSERT INTO public.workouts (title, specialist_id, student_id)
+    VALUES ('verify-proprio', NULL, praticante) RETURNING id
+  )
+  INSERT INTO public.workout_exercises (workout_id, exercise_id)
+  SELECT id, oficial FROM treino RETURNING id INTO item_proprio;
+
+  WITH treino AS (
+    INSERT INTO public.workouts (title, specialist_id, student_id)
+    VALUES ('verify-de-outro', NULL, outro) RETURNING id
+  )
+  INSERT INTO public.workout_exercises (workout_id, exercise_id)
+  SELECT id, oficial FROM treino RETURNING id INTO item_outro;
+
+  WITH treino AS (
+    INSERT INTO public.workouts (title, specialist_id, student_id)
+    VALUES ('verify-prescrito', especialista, praticante) RETURNING id
+  )
+  INSERT INTO public.workout_exercises (workout_id, exercise_id)
+  SELECT id, oficial FROM treino RETURNING id INTO item_prescrito;
+
+  IF has_function_privilege('anon', 'public.swap_workout_exercise(uuid, uuid)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'TROCA ANÔNIMA: anon pode executar public.swap_workout_exercise';
+  END IF;
+
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', praticante, 'role', 'authenticated')::text, true);
+
+  PERFORM public.swap_workout_exercise(item_proprio, destino);
+  SELECT exercise_id INTO atual FROM public.workout_exercises WHERE id = item_proprio;
+  IF atual IS DISTINCT FROM destino THEN
+    RAISE EXCEPTION 'o Praticante não troca o exercício do próprio treino';
+  END IF;
+
+  BEGIN
+    PERFORM public.swap_workout_exercise(item_outro, destino);
+    RAISE EXCEPTION 'TREINO ALHEIO ALTERADO: um Praticante trocou exercício do treino de outra pessoa';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  BEGIN
+    PERFORM public.swap_workout_exercise(item_prescrito, destino);
+    RAISE EXCEPTION 'PRESCRIÇÃO REESCRITA: o aluno trocou um exercício que o especialista prescreveu';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  BEGIN
+    PERFORM public.swap_workout_exercise(item_proprio, privado);
+    RAISE EXCEPTION 'CATÁLOGO PRIVADO VAZADO: exercício de um especialista entrou no plano de quem não é aluno dele';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- A função não abre a tabela: séries, carga e ordem seguem sem escrita direta.
+  UPDATE public.workout_exercises SET sets = 99 WHERE id = item_proprio;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 0 THEN
+    RAISE EXCEPTION 'PRESCRIÇÃO EDITADA POR FORA: UPDATE direto em workout_exercises foi aceito para o aluno';
+  END IF;
+
+  RESET ROLE;
+  SELECT exercise_id INTO atual FROM public.workout_exercises WHERE id = item_outro;
+  IF atual IS DISTINCT FROM oficial THEN
+    RAISE EXCEPTION 'TREINO ALHEIO ALTERADO: o item de outra pessoa mudou de exercício';
+  END IF;
+
+  RAISE NOTICE 'ok  troca de exercício: só no próprio treino sem especialista, só para o catálogo oficial';
+END $$;
+
+ROLLBACK;
+
+-- ── exercise_swaps: a troca do aluno fica registrada para o especialista (0086, #365)
+-- O especialista precisa saber que o treino de hoje não foi o que ele passou.
+-- A linha é evidência: só a função grava, com o autor do JWT e a hora do
+-- servidor; ninguém escreve, corrige nem apaga direto. Quem lê é o aluno e o
+-- especialista com vínculo ativo, nunca outro especialista.
+
+BEGIN;
+
+DO $$
+DECLARE
+  aluno        uuid := gen_random_uuid();
+  outro_aluno  uuid := gen_random_uuid();
+  espec        uuid := gen_random_uuid();
+  espec_alheio uuid := gen_random_uuid();
+  remada       uuid;
+  halteres     uuid;
+  item         uuid;
+  item_proprio uuid;
+  visiveis     int;
+  afetadas     int;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (aluno, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-xa@elevapro.local', '{"full_name":"A","account_type":"student"}'::jsonb),
+    (outro_aluno, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-xb@elevapro.local', '{"full_name":"B","account_type":"member"}'::jsonb),
+    (espec, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-xe@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb),
+    (espec_alheio, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-xf@elevapro.local', '{"full_name":"F","account_type":"specialist"}'::jsonb);
+
+  INSERT INTO auth.mfa_factors (id, user_id, factor_type, status, created_at, updated_at)
+  VALUES (gen_random_uuid(), espec, 'totp', 'verified', now(), now()),
+         (gen_random_uuid(), espec_alheio, 'totp', 'verified', now(), now());
+
+  INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
+  VALUES (aluno, espec, 'personal_training', 'active');
+
+  INSERT INTO public.exercises (name) VALUES ('verify-x-remada') RETURNING id INTO remada;
+  INSERT INTO public.exercises (name) VALUES ('verify-x-halteres') RETURNING id INTO halteres;
+
+  -- O treino que o especialista prescreveu, dentro da periodização do aluno.
+  WITH periodo AS (
+    INSERT INTO public.training_periodizations (specialist_id, student_id, name, start_date, end_date)
+    VALUES (espec, aluno, 'verify-x', current_date, current_date + 28) RETURNING id
+  ), fase AS (
+    INSERT INTO public.training_plans (periodization_id, name, start_date, end_date)
+    SELECT id, 'verify-x', current_date, current_date + 28 FROM periodo RETURNING id
+  ), treino AS (
+    INSERT INTO public.workouts (title, specialist_id, training_plan_id)
+    SELECT 'verify-x', espec, id FROM fase RETURNING id
+  )
+  INSERT INTO public.workout_exercises (workout_id, exercise_id)
+  SELECT id, remada FROM treino RETURNING id INTO item;
+
+  -- O plano do próprio Praticante, como o onboarding grava: periodização e
+  -- fase sem especialista.
+  WITH periodo AS (
+    INSERT INTO public.training_periodizations (specialist_id, student_id, name, start_date, end_date)
+    VALUES (NULL, outro_aluno, 'verify-x-proprio', current_date, current_date + 28) RETURNING id
+  ), fase AS (
+    INSERT INTO public.training_plans (periodization_id, name, start_date, end_date)
+    SELECT id, 'verify-x-proprio', current_date, current_date + 28 FROM periodo RETURNING id
+  ), treino AS (
+    INSERT INTO public.workouts (title, specialist_id, student_id, training_plan_id)
+    SELECT 'verify-x-proprio', NULL, outro_aluno, id FROM fase RETURNING id
+  )
+  INSERT INTO public.workout_exercises (workout_id, exercise_id)
+  SELECT id, remada FROM treino RETURNING id INTO item_proprio;
+
+  SET LOCAL ROLE authenticated;
+
+  -- O aluno registra a troca do treino prescrito, e o banco tira o resto dele.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', aluno, 'role', 'authenticated')::text, true);
+  PERFORM public.record_exercise_swap(item, halteres, 'today');
+
+  BEGIN
+    INSERT INTO public.exercise_swaps (student_id, workout_id, scope)
+    SELECT aluno, workout_id, 'today' FROM public.workout_exercises WHERE id = item;
+    RAISE EXCEPTION 'EVIDÊNCIA FORJADA: o aluno gravou troca direto, sem passar pela função';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  BEGIN
+    DELETE FROM public.exercise_swaps WHERE student_id = aluno;
+    GET DIAGNOSTICS afetadas = ROW_COUNT;
+    IF afetadas <> 0 THEN
+      RAISE EXCEPTION 'EVIDÊNCIA APAGADA: o aluno apagou a troca que o especialista precisa ver';
+    END IF;
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- Outra pessoa não registra troca no treino deste aluno.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', outro_aluno, 'role', 'authenticated')::text, true);
+  BEGIN
+    PERFORM public.record_exercise_swap(item, halteres, 'today');
+    RAISE EXCEPTION 'TROCA EM NOME DE OUTRO: alguém registrou troca no treino prescrito de outro aluno';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  -- O Praticante não tem especialista a avisar: a troca dele não vira registro.
+  BEGIN
+    PERFORM public.record_exercise_swap(item_proprio, halteres, 'today');
+    RAISE EXCEPTION 'REGISTRO SEM DESTINATÁRIO: troca do Praticante gravada sem especialista para ler (Art. 6°, III)';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- O especialista vinculado vê; o de fora, não.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  SELECT count(*) INTO visiveis FROM public.exercise_swaps WHERE student_id = aluno;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'TROCA ESCONDIDA: o especialista vinculado vê % troca(s) do aluno, esperado 1', visiveis;
+  END IF;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec_alheio, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  SELECT count(*) INTO visiveis FROM public.exercise_swaps WHERE student_id = aluno;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'TROCA VAZADA: especialista sem vínculo leu a troca do aluno';
+  END IF;
+
+  RAISE NOTICE 'ok  troca registrada: só pela função, vista pelo aluno e pelo especialista vinculado';
+END $$;
+
+ROLLBACK;
+
+-- ── specialist_link_codes: o especialista também gera código (0087, #365) ────
+-- Quem já tem conta não entra pelo convite por e-mail. O código do especialista
+-- liga o aluno a ele; o código só vale para aluno, vence, e é usado uma vez.
+
+BEGIN;
+
+DO $$
+DECLARE
+  espec        uuid := gen_random_uuid();
+  espec_alheio uuid := gen_random_uuid();
+  praticante   uuid := gen_random_uuid();
+  vinculos     int;
+  visiveis     int;
+  resposta     jsonb;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (espec, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-ca@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb),
+    (espec_alheio, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-cb@elevapro.local', '{"full_name":"F","account_type":"specialist"}'::jsonb),
+    (praticante, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-cc@elevapro.local', '{"full_name":"P","account_type":"member"}'::jsonb);
+
+  INSERT INTO auth.mfa_factors (id, user_id, factor_type, status, created_at, updated_at)
+  VALUES (gen_random_uuid(), espec, 'totp', 'verified', now(), now()),
+         (gen_random_uuid(), espec_alheio, 'totp', 'verified', now(), now());
+  INSERT INTO public.specialist_services (specialist_id, service_type)
+  VALUES (espec, 'personal_training');
+
+  IF has_function_privilege('anon', 'public.link_to_specialist_by_code(text)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'VÍNCULO ANÔNIMO: anon pode executar link_to_specialist_by_code';
+  END IF;
+
+  SET LOCAL ROLE authenticated;
+
+  -- O especialista gera o próprio código.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  INSERT INTO public.specialist_link_codes (specialist_id, code, expires_at)
+  VALUES (espec, 'VERIFYX1', now() + interval '1 day'),
+         (espec, 'VERIFYX0', now() - interval '1 minute');
+
+  -- Outro especialista não lê o código nem o resgata.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', espec_alheio, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  SELECT count(*) INTO visiveis FROM public.specialist_link_codes WHERE specialist_id = espec;
+  IF visiveis <> 0 THEN
+    RAISE EXCEPTION 'CÓDIGO VAZADO: especialista leu o código de outro e pode se passar por ele';
+  END IF;
+  resposta := public.link_to_specialist_by_code('VERIFYX1');
+  IF (resposta->>'success')::boolean THEN
+    RAISE EXCEPTION 'ESPECIALISTA COMO ALUNO: um especialista resgatou o código de outro';
+  END IF;
+
+  -- O Praticante não gera código em nome de especialista.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', praticante, 'role', 'authenticated')::text, true);
+  BEGIN
+    INSERT INTO public.specialist_link_codes (specialist_id, code, expires_at)
+    VALUES (praticante, 'VERIFYX2', now() + interval '1 day');
+    RAISE EXCEPTION 'CÓDIGO FALSO: um aluno gerou código de especialista';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- Código vencido não liga; o válido liga uma vez só.
+  resposta := public.link_to_specialist_by_code('verifyx0');
+  IF (resposta->>'success')::boolean THEN
+    RAISE EXCEPTION 'CÓDIGO VENCIDO ACEITO: vínculo com código expirado';
+  END IF;
+  resposta := public.link_to_specialist_by_code(' verifyx1 ');
+  IF NOT (resposta->>'success')::boolean THEN
+    RAISE EXCEPTION 'o Praticante não se vincula pelo código válido do especialista: %', resposta;
+  END IF;
+  resposta := public.link_to_specialist_by_code('VERIFYX1');
+  IF (resposta->>'success')::boolean THEN
+    RAISE EXCEPTION 'CÓDIGO REUSADO: o mesmo código ligou duas vezes';
+  END IF;
+
+  RESET ROLE;
+  SELECT count(*) INTO vinculos FROM public.student_specialists
+  WHERE student_id = praticante AND specialist_id = espec AND status = 'active';
+  IF vinculos <> 1 THEN
+    RAISE EXCEPTION 'o vínculo pelo código do especialista não ficou ativo: % linha(s)', vinculos;
+  END IF;
+
+  RAISE NOTICE 'ok  código do especialista: só ele gera e lê, só aluno resgata, uma vez, antes de vencer';
+END $$;
+
+ROLLBACK;

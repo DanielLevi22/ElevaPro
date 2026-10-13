@@ -25,8 +25,6 @@ export const POSES: readonly Pose[] = [
   { id: 'side', label: 'Perfil', title: 'Perfil direito', hint: 'Lado direito, braços soltos' },
 ];
 
-export const POSE_COUNT = POSES.length;
-
 /**
  * A posição da pose no scan, contando de 1.
  *

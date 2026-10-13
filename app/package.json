@@ -17,6 +17,7 @@
     "format": "biome format --write ."
   },
   "dependencies": {
+    "@bacons/apple-targets": "^5.0.0",
     "@casl/ability": "^6.7.1",
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@expo-google-fonts/outfit": "^0.4.3",

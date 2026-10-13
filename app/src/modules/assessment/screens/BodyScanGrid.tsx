@@ -39,13 +39,14 @@ export default function BodyScanGrid() {
   const router = useRouter();
   const { capturedImages, studentId, captureFraming, qualidade, discardCapture } =
     useAssessmentStore();
+  const { retorno } = useLocalSearchParams<{ retorno?: string }>();
   const done = POSES.filter((pose) => capturedImages[pose.id]).length;
   const allDone = done === POSES.length;
   useStudentGuard();
   useDiscardOnLeave();
 
   const analyze = () =>
-    router.push({ pathname: ROUTES.ASSESSMENT.PROCESSING, params: { studentId } });
+    router.push({ pathname: ROUTES.ASSESSMENT.PROCESSING, params: { studentId, retorno } });
 
   return (
     <GlassScreen

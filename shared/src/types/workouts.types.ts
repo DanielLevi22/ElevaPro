@@ -84,6 +84,9 @@ export interface Exercise {
   created_at: string;
 }
 
+/** Como a troca de exercício vale (#365, 6d). */
+export type ExerciseSwapScope = "today" | "always" | "less";
+
 export interface WorkoutExercise {
   id: string;
   workout_id: string;
