@@ -4,6 +4,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { armazenamentoNoAparelho } from '@/lib/armazenamentoNoAparelho';
 import type { PlanScope } from '../services/onboardingFlow';
 import type { OnboardingGoal } from '../services/onboardingOptions';
+import type { ScanCardDismissal } from '../services/scanCardSnooze';
 
 interface OnboardingState {
   /** De quem são as respostas: outra conta no mesmo aparelho começa do zero. */
@@ -16,8 +17,12 @@ interface OnboardingState {
   consentDeclined: boolean;
   /** O resultado da triagem: sem dieta, O7 não aparece. `null` antes de O5. */
   dietAllowed: boolean | null;
-  /** Quando a pessoa dispensou o cartão do escaneamento: ele some por 30 dias. */
-  scanCardDismissedAt: number | null;
+  /**
+   * Quem dispensou o cartão do escaneamento, e quando: ele some por 30 dias.
+   * Guarda a conta porque o `ownerId` só existe para quem fez o onboarding
+   * neste aparelho.
+   */
+  scanCardDismissal: ScanCardDismissal | null;
   /** A última tela do onboarding aberta: fechar o app retoma dela (`resumeRoute`). */
   lastRoute: string | null;
   /** Começa o onboarding de `ownerId`, descartando o de outra conta. */
@@ -28,7 +33,7 @@ interface OnboardingState {
   declineConsent: () => void;
   /** Aceitou depois de ter recusado: o cartão de O12 some e o guarda volta a valer. */
   acceptConsent: () => void;
-  dismissScanCard: () => void;
+  dismissScanCard: (ownerId: string) => void;
   setDietAllowed: (allowed: boolean) => void;
   visit: (route: string) => void;
 }
@@ -40,7 +45,7 @@ const EMPTY = {
   track: null,
   consentDeclined: false,
   dietAllowed: null,
-  scanCardDismissedAt: null,
+  scanCardDismissal: null,
   lastRoute: null,
 };
 
@@ -65,7 +70,7 @@ export const useOnboardingStore = create<OnboardingState>()(
       chooseTrack: (track) => set({ track }),
       declineConsent: () => set({ consentDeclined: true }),
       acceptConsent: () => set({ consentDeclined: false }),
-      dismissScanCard: () => set({ scanCardDismissedAt: Date.now() }),
+      dismissScanCard: (ownerId) => set({ scanCardDismissal: { ownerId, at: Date.now() } }),
       setDietAllowed: (dietAllowed) => set({ dietAllowed }),
       visit: (lastRoute) => set({ lastRoute }),
     }),
