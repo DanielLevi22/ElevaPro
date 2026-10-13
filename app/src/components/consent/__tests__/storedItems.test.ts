@@ -43,6 +43,21 @@ describe('storedItems', () => {
     }
   });
 
+  /**
+   * A `1.10` existe por esta linha (#376): o check-in guarda como foi a semana e
+   * o histórico dos ajustes de meta. Sem ela, o aceite não cobre o que a 0088 grava.
+   */
+  it('cita o check-in da semana e os ajustes de meta', () => {
+    for (const hasSpecialist of [true, false]) {
+      const listed = storedItems(hasSpecialist).join(' | ');
+      if (!/check-in/i.test(listed) || !/ajustes de meta/i.test(listed)) {
+        throw new Error(
+          `CONSENTIMENTO SEM O CHECK-IN: a lista não cita o check-in e os ajustes — ${listed}`
+        );
+      }
+    }
+  });
+
   it('cita as notas do especialista só para quem tem especialista', () => {
     expect(storedItems(true).some((item) => /notas/i.test(item))).toBe(true);
     expect(storedItems(false).some((item) => /notas/i.test(item))).toBe(false);

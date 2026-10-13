@@ -48,6 +48,14 @@ export function HealthConsentDetails({ hasSpecialist }: { hasSpecialist: boolean
         indica um especialista. A meta de calorias sai de uma fórmula, nunca da inteligência
         artificial. Você pode refazer a triagem quando quiser.
       </Paragraph>
+      {/* A 1.10 existe por este parágrafo (#376): o peso da semana passou a
+          propor mudança na meta, e quem aceita precisa saber o freio e que a
+          decisão final é dele. */}
+      <Paragraph>
+        Toda semana, no check-in, o app compara o seu peso com o ritmo da sua meta e pode propor um
+        ajuste de até 200 kcal. Nada muda sem você aprovar. Com especialista, o check-in vai para
+        ele, e o app não ajusta nada sozinho.
+      </Paragraph>
 
       <Heading>Quem lê</Heading>
       <Paragraph>{hasSpecialist ? QUEM_LE_COM_ESPECIALISTA : QUEM_LE_SEM_ESPECIALISTA}</Paragraph>

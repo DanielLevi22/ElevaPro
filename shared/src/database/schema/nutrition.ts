@@ -12,6 +12,7 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
+import { physicalAssessments } from "./assessment";
 import { profiles } from "./auth";
 
 export const dietPlanStatusEnum = pgEnum("diet_plan_status", ["active", "finished", "draft"]);
@@ -119,3 +120,48 @@ export const mealLogs = pgTable(
   },
   (table) => [unique().on(table.student_id, table.diet_meal_id, table.logged_date)],
 );
+
+// Check-in da semana (#376): como foi o registro e o peso, que mora em
+// `physical_assessments` como medida declarada. Só as funções da 0088 gravam.
+export const checkInLoggingEnum = pgEnum("check_in_logging", [
+  "all",
+  "partial",
+  "followed_unlogged",
+  "not_followed",
+]);
+export const checkInStatusEnum = pgEnum("check_in_status", ["pending", "approved", "kept"]);
+export const planAdjustmentKindEnum = pgEnum("plan_adjustment_kind", ["calories"]);
+
+export const weeklyCheckIns = pgTable(
+  "weekly_check_ins",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    student_id: uuid("student_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    week_start: date("week_start").notNull(),
+    logging: checkInLoggingEnum("logging").notNull(),
+    assessment_id: uuid("assessment_id").references(() => physicalAssessments.id, {
+      onDelete: "set null",
+    }),
+    status: checkInStatusEnum("status").notNull().default("pending"),
+    created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [unique("weekly_check_ins_once_per_week").on(table.student_id, table.week_start)],
+);
+
+// Ajuste aprovado no plano: antes, depois e o motivo. Append-only.
+export const planAdjustments = pgTable("plan_adjustments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  student_id: uuid("student_id")
+    .notNull()
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  check_in_id: uuid("check_in_id").references(() => weeklyCheckIns.id, { onDelete: "set null" }),
+  kind: planAdjustmentKindEnum("kind").notNull(),
+  before_value: numeric("before_value").notNull(),
+  after_value: numeric("after_value").notNull(),
+  reason: text("reason").notNull(),
+  source: text("source").notNull(),
+  diet_plan_id: uuid("diet_plan_id").references(() => dietPlans.id, { onDelete: "set null" }),
+  approved_at: timestamp("approved_at", { withTimezone: true }).notNull().defaultNow(),
+});

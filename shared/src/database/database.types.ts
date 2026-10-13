@@ -956,6 +956,67 @@ export type Database = {
           },
         ];
       };
+      plan_adjustments: {
+        Row: {
+          after_value: number;
+          approved_at: string;
+          before_value: number;
+          check_in_id: string | null;
+          diet_plan_id: string | null;
+          id: string;
+          kind: Database["public"]["Enums"]["plan_adjustment_kind"];
+          reason: string;
+          source: string;
+          student_id: string;
+        };
+        Insert: {
+          after_value: number;
+          approved_at?: string;
+          before_value: number;
+          check_in_id?: string | null;
+          diet_plan_id?: string | null;
+          id?: string;
+          kind: Database["public"]["Enums"]["plan_adjustment_kind"];
+          reason: string;
+          source: string;
+          student_id: string;
+        };
+        Update: {
+          after_value?: number;
+          approved_at?: string;
+          before_value?: number;
+          check_in_id?: string | null;
+          diet_plan_id?: string | null;
+          id?: string;
+          kind?: Database["public"]["Enums"]["plan_adjustment_kind"];
+          reason?: string;
+          source?: string;
+          student_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "plan_adjustments_check_in_id_fkey";
+            columns: ["check_in_id"];
+            isOneToOne: false;
+            referencedRelation: "weekly_check_ins";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "plan_adjustments_diet_plan_id_fkey";
+            columns: ["diet_plan_id"];
+            isOneToOne: false;
+            referencedRelation: "diet_plans";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "plan_adjustments_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           account_status: Database["public"]["Enums"]["account_status"];
@@ -1429,6 +1490,51 @@ export type Database = {
           },
         ];
       };
+      weekly_check_ins: {
+        Row: {
+          assessment_id: string | null;
+          created_at: string;
+          id: string;
+          logging: Database["public"]["Enums"]["check_in_logging"];
+          status: Database["public"]["Enums"]["check_in_status"];
+          student_id: string;
+          week_start: string;
+        };
+        Insert: {
+          assessment_id?: string | null;
+          created_at?: string;
+          id?: string;
+          logging: Database["public"]["Enums"]["check_in_logging"];
+          status?: Database["public"]["Enums"]["check_in_status"];
+          student_id: string;
+          week_start: string;
+        };
+        Update: {
+          assessment_id?: string | null;
+          created_at?: string;
+          id?: string;
+          logging?: Database["public"]["Enums"]["check_in_logging"];
+          status?: Database["public"]["Enums"]["check_in_status"];
+          student_id?: string;
+          week_start?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "weekly_check_ins_assessment_id_fkey";
+            columns: ["assessment_id"];
+            isOneToOne: false;
+            referencedRelation: "physical_assessments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "weekly_check_ins_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       workout_exercises: {
         Row: {
           created_at: string;
@@ -1805,6 +1911,37 @@ export type Database = {
           name: string;
         }[];
       };
+      apply_weekly_calorie_adjustment: {
+        Args: { p_check_in_id: string; p_new_calories: number; p_reason: string };
+        Returns: {
+          allows_supplements: boolean | null;
+          created_at: string;
+          dietary_restrictions: string[];
+          end_date: string;
+          free_meal_days: number[];
+          id: string;
+          meals_per_day: number | null;
+          name: string | null;
+          notes: string | null;
+          plan_type: Database["public"]["Enums"]["diet_plan_type"];
+          source_plan_id: string | null;
+          specialist_id: string | null;
+          start_date: string;
+          status: Database["public"]["Enums"]["diet_plan_status"];
+          student_id: string;
+          target_calories: number | null;
+          target_carbs: number | null;
+          target_fat: number | null;
+          target_protein: number | null;
+          version: number;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "diet_plans";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       consume_rate_limit: {
         Args: {
           p_bucket: string;
@@ -1865,6 +2002,7 @@ export type Database = {
           student_id: string;
         }[];
       };
+      keep_weekly_target: { Args: { p_check_in_id: string }; Returns: undefined };
       link_student_by_code: { Args: { p_code: string }; Returns: Json };
       link_to_specialist_by_code: { Args: { p_code: string }; Returns: Json };
       record_exercise_swap: {
@@ -1889,6 +2027,27 @@ export type Database = {
         Args: { p_account_type: Database["public"]["Enums"]["account_type"]; p_full_name?: string };
         Returns: undefined;
       };
+      submit_weekly_check_in: {
+        Args: {
+          p_logging: Database["public"]["Enums"]["check_in_logging"];
+          p_weight_kg: number;
+        };
+        Returns: {
+          assessment_id: string | null;
+          created_at: string;
+          id: string;
+          logging: Database["public"]["Enums"]["check_in_logging"];
+          status: Database["public"]["Enums"]["check_in_status"];
+          student_id: string;
+          week_start: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "weekly_check_ins";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       swap_workout_exercise: {
         Args: { p_exercise_id: string; p_workout_exercise_id: string };
         Returns: undefined;
@@ -1897,6 +2056,8 @@ export type Database = {
     Enums: {
       account_status: "active" | "inactive" | "invited";
       account_type: "admin" | "specialist" | "student" | "member";
+      check_in_logging: "all" | "partial" | "followed_unlogged" | "not_followed";
+      check_in_status: "pending" | "approved" | "kept";
       consent_type: "health_data_collection" | "technique_analysis" | "ranking";
       day_of_week:
         | "monday"
@@ -1910,6 +2071,7 @@ export type Database = {
       diet_plan_type: "unique" | "cyclic";
       link_status: "active" | "inactive";
       measurement_source: "specialist" | "self";
+      plan_adjustment_kind: "calories";
       scale_source: "assessment" | "anamnese" | "self";
       service_type: "personal_training" | "nutrition_consulting";
       training_status: "planned" | "active" | "completed";
@@ -2032,12 +2194,15 @@ export const Constants = {
     Enums: {
       account_status: ["active", "inactive", "invited"],
       account_type: ["admin", "specialist", "student", "member"],
+      check_in_logging: ["all", "partial", "followed_unlogged", "not_followed"],
+      check_in_status: ["pending", "approved", "kept"],
       consent_type: ["health_data_collection", "technique_analysis", "ranking"],
       day_of_week: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
       diet_plan_status: ["active", "finished", "draft"],
       diet_plan_type: ["unique", "cyclic"],
       link_status: ["active", "inactive"],
       measurement_source: ["specialist", "self"],
+      plan_adjustment_kind: ["calories"],
       scale_source: ["assessment", "anamnese", "self"],
       service_type: ["personal_training", "nutrition_consulting"],
       training_status: ["planned", "active", "completed"],
