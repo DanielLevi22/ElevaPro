@@ -119,6 +119,8 @@ function WithEffortPrompt({
       {children}
       <EffortPrompt
         name={pending.exercise?.name ?? 'o exercício'}
+        // Só o feedback tem botão fixo no rodapé ("Salvar e finalizar").
+        aboveButton={sessao.momento === 'feedback'}
         onAnswer={(effort) => despachar({ tipo: 'rateEffort', itemId: pending.id, effort })}
       />
     </View>

@@ -11,25 +11,30 @@ const OPTIONS: { effort: ExerciseEffort; label: string }[] = [
 ];
 
 /**
- * Acima do botão fixo do rodapé: os 122 dele, a altura do botão e o respiro.
+ * Onde o botão fixo do rodapé fica (122) e, havendo um, acima dele: a altura
+ * do botão e o respiro. Sem botão, a pergunta desce até ali — mais alto, ela
+ * cobriria o pausar do descanso.
  */
-const FROM_BOTTOM = 196;
+const FROM_BOTTOM = { aboveButton: 196, atFooter: 122 } as const;
 
 /**
  * A pergunta do esforço (A2 do kit), depois da última série de um exercício.
  * Um toque responde e some; "Pular" some sem gravar nada, e a próxima carga
  * fica a mesma.
  *
- * @example <EffortPrompt name="Supino" onAnswer={(effort) => …} />
+ * @example <EffortPrompt name="Supino" aboveButton={false} onAnswer={(effort) => …} />
  */
 export function EffortPrompt({
   name,
+  aboveButton,
   onAnswer,
 }: {
   name: string;
+  /** A tela tem botão fixo no rodapé (o feedback). */
+  aboveButton: boolean;
   onAnswer: (effort: ExerciseEffort | null) => void;
 }) {
-  const bottom = useBottomOffset(FROM_BOTTOM);
+  const bottom = useBottomOffset(aboveButton ? FROM_BOTTOM.aboveButton : FROM_BOTTOM.atFooter);
 
   return (
     <View className="absolute left-[1.125rem] right-[1.125rem]" style={{ bottom }}>
