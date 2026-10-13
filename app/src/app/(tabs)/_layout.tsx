@@ -73,14 +73,7 @@ export default function TabLayout() {
           }}
         />
 
-        {/* Previously Visible Tabs now Hidden from bar but accessible if needed (or we remove them) */}
-        <Tabs.Screen
-          name="menu"
-          options={{
-            title: 'Menu',
-            href: null, // Hide from tab bar, accessed via other means if needed
-          }}
-        />
+        <Tabs.Screen name="menu" options={{ title: 'Menu', href: null }} />
         <Tabs.Screen name="security" options={{ title: 'Aparelhos de acesso', href: null }} />
 
         <Tabs.Screen

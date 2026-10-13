@@ -23,6 +23,8 @@ export const ROUTES = {
     INDEX: '/(tabs)/index',
     RANKING: '/(tabs)/ranking',
     CARDIO: '/(tabs)/cardio',
+    /** O menu: aberto pelo "Menu" do + e pela engrenagem do perfil. */
+    MENU: '/(tabs)/menu',
   },
 
   // Assessment Flows
@@ -52,6 +54,12 @@ export const ROUTES = {
      */
     ROOT: '/tecnica',
     SQUAT: '/tecnica/agachamento',
+  },
+
+  // Ajuda
+  HELP: {
+    /** Os comandos de voz da execução do treino. */
+    VOICE_COMMANDS: '/help/voice-commands',
   },
 
   // Onboarding
