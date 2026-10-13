@@ -122,11 +122,11 @@ export async function scheduleMealNotifications(
   meals: MealNotification[]
 ): Promise<void> {
   try {
-    // Só o que é deste plano. Cancelar tudo levava junto o lembrete de treino,
-    // que é agendado em outro lugar e não tem nada com o plano alimentar — e o
-    // identificador de cada notificação já começa com o id do plano justamente
-    // para permitir esta distinção.
-    await cancelPlanNotifications(planId);
+    // Só os lembretes de refeição, de qualquer plano. Cancelar tudo levava junto
+    // o lembrete de treino, que não tem nada com o plano alimentar; cancelar só
+    // os deste plano deixava tocando os da versão anterior, que o check-in da
+    // semana troca a cada ajuste aprovado (#376) — cada refeição avisava duas vezes.
+    await cancelMealNotifications();
 
     for (const meal of meals) {
       if (!meal.mealTime || meal.dayOfWeek === undefined || meal.dayOfWeek === null) {
@@ -227,6 +227,20 @@ export async function scheduleMealNotifications(
     console.log(`Scheduled ${meals.length} meal notifications for plan ${planId}`);
   } catch (error) {
     console.error('Error scheduling meal notifications:', error);
+  }
+}
+
+/**
+ * Cancela os lembretes de refeição de todos os planos. O aluno segue uma dieta
+ * por vez, e quem agenda em seguida é o plano ativo. O lembrete de refeição se
+ * reconhece pelo `mealId` no conteúdo.
+ */
+async function cancelMealNotifications(): Promise<void> {
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  for (const notification of scheduled) {
+    if (notification.content.data?.mealId) {
+      await Notifications.cancelScheduledNotificationAsync(notification.identifier);
+    }
   }
 }
 
