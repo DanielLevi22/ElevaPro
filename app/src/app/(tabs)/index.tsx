@@ -1,6 +1,7 @@
 import { Text } from 'react-native';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { useDadosDaHome } from '@/hooks/useDadosDaHome';
+import { CheckInCard } from '@/modules/checkin';
 import { HomeDoAluno, SpecialistDashboard } from '@/modules/dashboard';
 import { CompleteProfileCard } from '@/modules/onboarding';
 
@@ -35,5 +36,16 @@ export default function TelaInicial() {
     );
   }
 
-  return <HomeDoAluno dados={aluno} aviso={<CompleteProfileCard />} />;
+  // O check-in vem antes: é a ação da semana; completar o perfil espera.
+  return (
+    <HomeDoAluno
+      dados={aluno}
+      aviso={
+        <>
+          <CheckInCard />
+          <CompleteProfileCard />
+        </>
+      }
+    />
+  );
 }

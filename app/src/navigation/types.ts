@@ -73,6 +73,13 @@ export const ROUTES = {
     HEALTH_CONNECT: '/onboarding/health-connect',
   },
 
+  // Check-in da semana (#376). A entrada mora em `checkin.tsx`, e não em
+  // `checkin/index.tsx`, pelo mesmo motivo da técnica: o typegen erra a segunda.
+  CHECKIN: {
+    ROOT: '/checkin',
+    RESULT: '/checkin/result',
+  },
+
   // Student Flows
   STUDENTS: {
     ROOT: '/(tabs)/students',
