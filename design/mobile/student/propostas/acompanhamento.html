@@ -1,0 +1,83 @@
+<!-- @dsCard group="Mobile · Propostas em revisão" viewport="3600x15000" name="Proposta · Acompanhamento" subtitle="Relatório da semana → fim de bloco e reavaliação → mudar o plano antes do fim → histórico e jornada → avisos do dia → retenção · em revisão" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Acompanhamento do praticante</title><link rel="stylesheet" href="../../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js"></script>
+<style>
+*{box-sizing:border-box}
+.th{--ios-bg:#07080A;--ios-label:#fff;--ios-label2:rgba(235,235,245,0.66);--ios-label3:rgba(235,235,245,0.34);--glass:rgba(255,255,255,0.07);--glass-strong:rgba(255,255,255,0.11);--glass-brd:rgba(255,255,255,0.13);--glass-top:rgba(255,255,255,0.13);--glass-bot:rgba(255,255,255,0.035);--spec:rgba(255,255,255,0.22);--spec-bot:rgba(0,0,0,0.18);--tab-bg:rgba(18,19,22,0.72);--scrim:rgba(0,0,0,.55);--sheet:rgba(18,19,22,0.94);--field:rgba(255,255,255,0.06);--field-brd:rgba(255,255,255,0.12)}
+.th.light{--ios-bg:#EFEFF4;--ios-label:#0B0B0F;--ios-label2:rgba(60,60,67,0.8);--ios-label3:rgba(60,60,67,0.45);--glass:rgba(255,255,255,0.86);--glass-strong:rgba(118,118,128,0.16);--glass-brd:rgba(60,60,67,0.14);--glass-top:rgba(255,255,255,0.98);--glass-bot:rgba(255,255,255,0.78);--spec:rgba(255,255,255,1);--spec-bot:rgba(0,0,0,0.04);--tab-bg:rgba(255,255,255,0.9);--scrim:rgba(239,239,244,.62);--sheet:rgba(255,255,255,0.96);--field:rgba(118,118,128,0.1);--field-brd:rgba(60,60,67,0.14)}
+body{margin:0;padding:40px;background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans);-webkit-font-smoothing:antialiased}
+a{color:hsl(var(--primary))}a:hover{color:hsl(var(--primary-text))}
+.phone{width:390px;height:820px;border-radius:52px;background:var(--ios-bg);color:var(--ios-label);font-family:var(--font-sans);border:11px solid #000;box-shadow:0 40px 80px -20px rgba(0,0,0,.55);overflow:hidden;position:relative;display:flex;flex-direction:column}
+.phone::after{content:"";position:absolute;left:-15%;right:-15%;top:120px;height:340px;pointer-events:none;z-index:1;background:radial-gradient(50% 50% at 50% 50%,hsl(var(--primary) / .14) 0%,transparent 70%);filter:blur(40px)}
+.light .phone::after{background:radial-gradient(50% 50% at 50% 50%,hsl(var(--primary) / .10) 0%,transparent 70%)}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:122px;height:34px;background:#000;border-radius:20px;z-index:9}
+.statusbar{height:52px;flex-shrink:0;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 8px;font-size:15px;font-weight:600;position:relative;z-index:5;color:var(--ios-label)}
+.scroll{flex:1;overflow:hidden;padding:0 18px 150px;position:relative;z-index:2}
+.glass{position:relative;background:linear-gradient(160deg,var(--glass-top) 0%,var(--glass) 55%,var(--glass-bot) 100%);backdrop-filter:blur(26px) saturate(140%);-webkit-backdrop-filter:blur(26px) saturate(140%);border:1px solid var(--glass-brd);border-radius:22px;box-shadow:inset 0 1px 0 var(--spec),inset 0 -1px 0 var(--spec-bot),0 10px 26px -10px rgba(0,0,0,.55),0 2px 6px -2px rgba(0,0,0,.35)}
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(120% 80% at 12% -10%,rgba(255,255,255,.14) 0%,transparent 55%)}
+.light .glass{box-shadow:inset 0 1px 0 var(--spec),0 8px 20px -10px rgba(16,18,24,.22),0 2px 5px -2px rgba(16,18,24,.12)}
+.light .glass::before{background:radial-gradient(120% 80% at 12% -10%,rgba(255,255,255,.9) 0%,transparent 60%)}
+.tabbar{position:absolute;bottom:0;left:0;right:0;height:86px;z-index:5;background:var(--tab-bg);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:.5px solid var(--glass-brd);display:flex;justify-content:space-around;align-items:flex-start;padding-top:12px}
+.tabitem{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10px;font-weight:600;color:var(--ios-label3)}
+.homebar{position:absolute;bottom:9px;left:50%;transform:translateX(-50%);width:140px;height:5px;border-radius:3px;background:var(--ios-label);opacity:.4;z-index:9}
+svg.lucide{stroke-width:1.5px;stroke-linecap:round;stroke-linejoin:round}
+</style></head><body>
+<div id="root"></div>
+<script type="text/babel" src="../../kit/kit.jsx"></script>
+<script type="text/babel" src="ajuste-do-plano/aj-a.jsx"></script>
+<script type="text/babel" src="acompanhamento/ac-a.jsx"></script>
+<script type="text/babel" src="acompanhamento/ac-b.jsx"></script>
+<script type="text/babel" src="acompanhamento/ac-c.jsx"></script>
+<script type="text/babel" src="acompanhamento/ac-d.jsx"></script>
+<script type="text/babel">
+const sub={fontFamily:"var(--font-mono)",fontSize:10,fontWeight:700,letterSpacing:".14em",textTransform:"uppercase",color:"hsl(var(--muted-foreground))"};
+function Pair({id,label,S,state}){
+  return <div data-screen-label={id} style={{display:"flex",flexDirection:"column",gap:12}}>
+    <div style={{display:"flex",alignItems:"center",gap:10}}>
+      <span style={{padding:"4px 9px",borderRadius:99,background:"hsl(var(--primary))",color:"hsl(var(--primary-foreground))",fontFamily:"var(--font-mono)",fontSize:11,fontWeight:700}}>{id}</span>
+      <span style={{fontFamily:"var(--font-display)",fontWeight:800,fontSize:18,letterSpacing:"-.02em"}}>{label}</span>
+      {state&&<span style={{...sub,padding:"3px 8px",borderRadius:99,border:"1px solid hsl(var(--border))"}}>Estado · {state}</span>}
+    </div>
+    <div style={{display:"flex",gap:14}}>
+      {["","light"].map(t=><div key={t} className={"th "+t} style={{display:"flex",flexDirection:"column",gap:8}}><span style={sub}>{t?"Claro":"Escuro"}</span><S/></div>)}
+    </div>
+  </div>;
+}
+function Arrow({label,down}){
+  return <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:8,width:96,alignSelf:"center",textAlign:"center"}}>
+    <div style={{width:44,height:44,borderRadius:99,border:"1px solid hsl(var(--border))",display:"flex",alignItems:"center",justifyContent:"center"}}>{I(down?"corner-down-right":"arrow-right",20,"hsl(var(--primary))")}</div>
+    {label&&<span style={{...sub,fontSize:9,lineHeight:1.4,letterSpacing:".1em"}}>{label}</span>}
+  </div>;
+}
+function Section({title,children}){
+  return <div style={{marginBottom:64}}><div style={{...sub,fontSize:13,color:"hsl(var(--foreground))",marginBottom:20}}>{title}</div><div style={{display:"flex",alignItems:"flex-start"}}>{children}</div></div>;
+}
+function App(){
+  React.useEffect(()=>{window.lucide?.createIcons();});
+  const gap=<div style={{width:60}}></div>;
+  return <div>
+    <div style={{fontFamily:"var(--font-display)",fontWeight:800,fontSize:40,letterSpacing:"-.03em",marginBottom:6}}>Acompanhamento do praticante</div>
+    <div style={{fontSize:15,color:"hsl(var(--muted-foreground))",marginBottom:44,maxWidth:980}}>Continua o Ajuste do plano. O check-in ajusta a meta toda semana; o relatório mostra o que mudou e por quê; a cada 4 semanas a reavaliação fecha o bloco e monta o próximo. Plano trocado antes do fim é encerrado, nunca apagado. Os avisos lembram só o que ficou para trás, com ação no próprio aviso e no máximo 3 por dia. Exemplo: Marina, 29, iniciante, Bloco 1 de 14 set a 11 out.</div>
+    <Section title="A · Relatório da semana"><Pair id="R0" label="Início · relatório chegou" S={R0}/><Arrow/><Pair id="R1" label="Relatório da semana" S={R1}/><Arrow label="Rolando" down/><Pair id="R1" label="Relatório · continuação" S={R1b}/></Section>
+    <Section title="A · Variantes do relatório"><Pair id="R1a" label="Semana difícil" S={R1Dificil}/>{gap}<Pair id="R1" label="Relatório · Variante · Aluno" S={R1Aluno}/></Section>
+    <Section title="B · Fim do bloco e reavaliação"><Pair id="B1" label="Hora da reavaliação" S={B1}/><Arrow label="Body scan e medidas"/><Pair id="B2" label="Mudou alguma coisa?" S={B2}/><Arrow/><Pair id="B3" label="Montando o bloco" state="calculando" S={B3}/></Section>
+    <Section title="B · Relatório do bloco e próximo bloco"><Pair id="B4" label="Relatório do bloco" S={B4}/><Arrow label="Rolando" down/><Pair id="B4" label="Relatório · continuação" S={B4b}/><Arrow/><Pair id="B5" label="Próximo bloco" S={B5}/></Section>
+    <Section title="Variante · Aluno"><Pair id="B5" label="Próximo bloco · Variante · Aluno" S={B5Aluno}/></Section>
+    <Section title="C · Mudar o plano antes do fim"><Pair id="C1" label="Mudar meu plano" S={C1}/><Arrow label="Mudei de objetivo"/><Pair id="C2" label="Encerrar o bloco atual" S={C2}/><Arrow label="Depois"/><Pair id="C3" label="Seus blocos" S={C3}/></Section>
+    <Section title="D · Progresso"><Pair id="D1" label="Sua jornada" S={D1}/></Section>
+    <Section title="E · Avisos do dia"><Pair id="E1" label="Tela bloqueada · fim da tarde" S={E1}/><Arrow label="Segurar o aviso"/><Pair id="E2" label="Refeição · marcar daqui" S={E2}/>{gap}<Pair id="E3" label="Treino · começar ou mover" S={E3}/></Section>
+    <Section title="E · No app"><Pair id="E4" label="Início · falta hoje" S={E4}/>{gap}<Pair id="E5" label="Preferências de avisos" S={E5}/>{gap}<Pair id="E6" label="Aviso ignorado 3 vezes" S={E6}/></Section>
+    <Section title="F · Retenção · avisar o que deu certo e no horário certo"><Pair id="F1" label="Aviso de vitória" S={F1}/>{gap}<Pair id="F2" label="Horário aprendido" S={F2}/></Section>
+    <Section title="F · Retenção · dia corrido e semana sumida"><Pair id="F3" label="Só tenho 20 min" S={F3}/><Arrow/><Pair id="F3" label="Versão curta" S={F3b}/>{gap}<Pair id="F4" label="3 dias sem treino" S={F4}/><Arrow label="7 dias"/><Pair id="F5" label="Semana corrida?" S={F5}/></Section>
+    <Section title="F · Retenção · privacidade, widget, especialista e balança"><Pair id="F6" label="Detalhes escondidos" S={F6}/><Arrow/><Pair id="F6" label="Na tela bloqueada" S={F6b}/>{gap}<Pair id="F7" label="Widget de hoje" S={F7}/></Section>
+    <Section title=" "><Pair id="F8" label="Especialista · precisam de atenção" S={F8}/>{gap}<Pair id="F9" label="Check-in · peso da balança" S={F9}/></Section>
+    <Section title="Decidido · Formato do relatório da semana: tela rolável"><Pair id="R1" label="Escolhido · tela rolável" S={R1}/>{gap}<Pair id="S1" label="Descartado · stories" state="não usar" S={S1}/></Section>
+    <Section title="Decidido · Tom do aviso: leve, nunca cobrança"><Pair id="E1" label="Escolhido · ainda dá tempo" S={TomLeve}/>{gap}<Pair id="E1" label="Descartado · você não treinou" state="não usar" S={TomDireto}/></Section>
+  </div>;
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+setTimeout(()=>window.lucide?.createIcons(),80);
+</script></body></html>
