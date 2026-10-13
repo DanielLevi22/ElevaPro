@@ -76,12 +76,12 @@
 - [ ] `candidate-2dae53b8a272d852` — Prato: Macarrão integral cozido + Atum em água (lata) + Pimentão vermelho
 - [ ] `candidate-2db67b1150a6fa39` — Prato: Arroz branco cozido + Frango (sobrecoxa assada) + Pepino
 - [ ] `candidate-2dbbf024efa78f3e` — Prato: Macarrão cozido + Pescada grelhada + Repolho cru
-- [ ] `candidate-2dc29eee45b772e3` — Prato: Batata doce cozida + Frango desfiado cozido + Couve refogada
+- [x] `candidate-2dc29eee45b772e3` — Prato: Batata doce cozida + Frango desfiado cozido + Couve refogada
 - [ ] `candidate-2dc3cce5bd68c507` — Prato: Arroz branco cozido + Atum em água (lata) + Vagem cozida
 - [ ] `candidate-2dc42e11117d515d` — Prato: Arroz branco cozido + Tofu + Pimentão vermelho
 - [x] `candidate-2dc57b818acf56b2` — Prato: Arroz branco cozido + Carne moída (patinho) + Tomate
 - [ ] `candidate-2dc58cb4cfcd77f4` — Prato: Cuscuz de milho + Carne suína (lombo assado) + Aspargos cozidos
-- [ ] `candidate-2dc9a22d58b30a4b` — Prato: Batata inglesa cozida + Carne moída (patinho) + Abóbora cabotiá cozida
+- [x] `candidate-2dc9a22d58b30a4b` — Prato: Batata inglesa cozida + Carne moída (patinho) + Abóbora cabotiá cozida
 - [ ] `candidate-2dca0a292171648a` — Prato: Batata baroa cozida + Carne bovina (patinho) + Abobrinha cozida
 - [ ] `candidate-2dcc7ea84d90fcff` — Prato: Arroz integral cozido + Seitan + Agrião
 - [ ] `candidate-2dcd61445983d526` — Prato: Inhame cozido + Bacalhau dessalgado cozido + Couve refogada
@@ -186,7 +186,7 @@
 - [ ] `candidate-30261b0d898a5c8c` — Prato: Batata inglesa cozida + Seitan + Aspargos cozidos
 - [ ] `candidate-30294f8a5a1ba7a8` — Prato: Biscoito de arroz + Tofu + Couve refogada
 - [ ] `candidate-303bc458790a67c2` — Prato: Biscoito de arroz + Tofu + Aspargos cozidos
-- [ ] `candidate-30406d0c4e64bbcb` — Prato: Batata doce cozida + Carne moída (patinho) + Agrião
+- [x] `candidate-30406d0c4e64bbcb` — Prato: Batata doce cozida + Carne moída (patinho) + Agrião
 - [ ] `candidate-304555cbc6bdbb9a` — Prato: Batata doce cozida + Sardinha (lata, drenada) + Couve refogada
 - [ ] `candidate-3046bf93a79695eb` — Prato: Batata baroa cozida + Tofu + Couve-flor cozida
 - [ ] `candidate-30471e638a272246` — Prato: Milho verde cozido + Tofu + Pimentão verde
