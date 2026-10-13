@@ -80,6 +80,7 @@ describe('gravarSessaoDeForca', () => {
       {
         workoutExerciseId: 'we-1',
         exerciseId: 'ex-remada',
+        effort: 'hard' as const,
         sets: [
           { reps_actual: 10, weight_actual: 40, completed: true },
           { reps_actual: 8, weight_actual: 42.5, completed: true },
@@ -419,6 +420,7 @@ describe('montarSessaoDeForca', () => {
       {
         itens: [ajustada, prescricao('puxada')],
         feitas: { remada: [{ reps: 10, carga: 45 }] },
+        efforts: { remada: 'easy' },
         iniciadaEm: INICIO,
         concluidaEm: FIM,
       },
@@ -430,6 +432,7 @@ describe('montarSessaoDeForca', () => {
       {
         workoutExerciseId: 'remada',
         exerciseId: 'ex-remada',
+        effort: 'easy',
         sets: [
           {
             reps_prescribed: '10-12',
@@ -447,7 +450,13 @@ describe('montarSessaoDeForca', () => {
   it('leva os instantes da sessão e o feedback', () => {
     const gravar = montarSessaoDeForca(
       treino,
-      { itens: treino.exercises ?? [], feitas: {}, iniciadaEm: INICIO, concluidaEm: FIM },
+      {
+        itens: treino.exercises ?? [],
+        feitas: {},
+        efforts: {},
+        iniciadaEm: INICIO,
+        concluidaEm: FIM,
+      },
       FEEDBACK,
       FIM + 5000
     );
@@ -466,7 +475,7 @@ describe('montarSessaoDeForca', () => {
   it('usa o instante da gravação quando a sessão não tem conclusão', () => {
     const gravar = montarSessaoDeForca(
       treino,
-      { itens: [], feitas: {}, iniciadaEm: INICIO, concluidaEm: null },
+      { itens: [], feitas: {}, efforts: {}, iniciadaEm: INICIO, concluidaEm: null },
       FEEDBACK,
       FIM
     );

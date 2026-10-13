@@ -1,5 +1,6 @@
 import {
   createWorkoutsService,
+  type ExerciseEffort,
   numeroDaPrescricao,
   type SaveSessionSetInput,
   type SerieFeita,
@@ -41,7 +42,12 @@ export interface SessaoDeForcaParaGravar {
   studentId: string;
   startedAt: string;
   completedAt: string;
-  items: { workoutExerciseId: string; exerciseId: string; sets: SaveSessionSetInput[] }[];
+  items: {
+    workoutExerciseId: string;
+    exerciseId: string;
+    effort: ExerciseEffort | null;
+    sets: SaveSessionSetInput[];
+  }[];
   /** PSE de 1 a 10, como o aluno respondeu no feedback. */
   perceivedExertion: number;
   notes?: string;
@@ -54,7 +60,10 @@ export interface FeedbackDaSessao {
   notas: string;
 }
 
-type SessaoExecutada = Pick<EstadoDaSessao, 'itens' | 'feitas' | 'iniciadaEm' | 'concluidaEm'>;
+type SessaoExecutada = Pick<
+  EstadoDaSessao,
+  'itens' | 'feitas' | 'iniciadaEm' | 'concluidaEm' | 'efforts'
+>;
 
 /**
  * A sessão executada no formato da gravação: só os exercícios com série feita,
@@ -87,6 +96,7 @@ export function montarSessaoDeForca(
       .map((item) => ({
         workoutExerciseId: item.id,
         exerciseId: item.exercise_id,
+        effort: sessao.efforts[item.id] ?? null,
         sets: seriesParaGravar(prescritos.get(item.id), sessao.feitas[item.id] ?? []),
       })),
   };
@@ -138,6 +148,7 @@ export async function gravarSessaoDeForca(
       sessao.items.map((item) => ({
         workout_exercise_id: item.workoutExerciseId,
         exercise_id: item.exerciseId,
+        effort: item.effort,
         sets: item.sets,
       }))
     );

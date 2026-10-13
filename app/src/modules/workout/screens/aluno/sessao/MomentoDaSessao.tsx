@@ -1,14 +1,24 @@
 import { evolucoesDaSessao, resumoDaSessao, seriesDaSessaoAnterior } from '@elevapro/shared';
-import { useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
+import { View } from 'react-native';
 import { showAlert } from '@/components/ui/appAlert';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { ExerciseSwapSheet } from '../../../components/ExerciseSwapSheet';
 import { AjusteDoExercicio } from '../../../components/sessao/AjusteDoExercicio';
+import { EffortPrompt } from '../../../components/sessao/EffortPrompt';
 import { TelaDeFeedback } from '../../../components/sessao/TelaDeFeedback';
+import { useExerciseHistory } from '../../../hooks/useExerciseHistory';
 import { isSelfGuidedWorkout } from '../../../hooks/useExerciseSwap';
 import { usePesoDoAluno } from '../../../hooks/usePesoDoAluno';
 import { useUltimaSessaoDoTreino } from '../../../hooks/useUltimaSessaoDoTreino';
 import { gravarSessaoDeForca, montarSessaoDeForca } from '../../../services/registroDaSessao';
+import {
+  type ExerciseHistory,
+  type LoadSuggestions,
+  nextTimeSuggestions,
+  todaySuggestions,
+  weightsToApply,
+} from '../../../services/sessionLoadSuggestions';
 import type { EstadoDaSessao } from '../../../store/maquinaDaSessao';
 import { CompartilharTreino } from './CompartilharTreino';
 import { CronometroDoTreino } from './CronometroDoTreino';
@@ -34,6 +44,14 @@ export function MomentoDaSessao(props: MomentoDaSessaoProps) {
   const anterior = useUltimaSessaoDoTreino(treino.id, alunoId);
   const anteriores = useMemo(() => seriesDaSessaoAnterior(anterior), [anterior]);
   const gravacao = useGravacaoDaSessao(props);
+  // A carga sugerida é só do treino do próprio Praticante (#376): no
+  // prescrito, quem decide a carga é o especialista.
+  const selfGuided = !props.mascarado && isSelfGuidedWorkout(treino, alunoId);
+  const history = useExerciseHistory(treino.id, alunoId, selfGuided);
+  const today = useMemo(
+    () => (selfGuided ? todaySuggestions(treino.exercises ?? [], history) : {}),
+    [selfGuided, treino.exercises, history]
+  );
 
   switch (sessao.momento) {
     case 'preInicio':
@@ -41,27 +59,70 @@ export function MomentoDaSessao(props: MomentoDaSessaoProps) {
         <PreInicioDoTreino
           treino={treino}
           anterior={anterior}
-          onIniciar={() => despachar({ tipo: 'iniciar', agora: Date.now() })}
+          loadSuggestions={today}
+          onIniciar={() => {
+            despachar({
+              tipo: 'applySuggestedLoads',
+              weights: weightsToApply(sessao.itens, today),
+            });
+            despachar({ tipo: 'iniciar', agora: Date.now() });
+          }}
           onVoltar={props.onSair}
         />
       );
     case 'execucao':
-      return <ExecucaoComAjuste {...props} anteriores={anteriores} />;
+      return (
+        <WithEffortPrompt {...props} enabled={selfGuided}>
+          <ExecucaoComAjuste {...props} anteriores={anteriores} />
+        </WithEffortPrompt>
+      );
     case 'serie':
     case 'descanso':
-      return <CronometroDoTreino {...props} />;
+      return (
+        <WithEffortPrompt {...props} enabled={selfGuided && sessao.momento === 'descanso'}>
+          <CronometroDoTreino {...props} />
+        </WithEffortPrompt>
+      );
     case 'feedback':
       return (
-        <TelaDeFeedback
-          imagem={fotoDoGrupo(treino.muscle_group)}
-          salvando={gravacao.salvando}
-          onFechar={() => despachar({ tipo: 'voltarAoTreino' })}
-          onSalvar={gravacao.salvar}
-        />
+        <WithEffortPrompt {...props} enabled={selfGuided}>
+          <TelaDeFeedback
+            imagem={fotoDoGrupo(treino.muscle_group)}
+            salvando={gravacao.salvando}
+            onFechar={() => despachar({ tipo: 'voltarAoTreino' })}
+            onSalvar={gravacao.salvar}
+          />
+        </WithEffortPrompt>
       );
     case 'resumo':
-      return <Resumo {...props} anteriores={anteriores} />;
+      return (
+        <Resumo {...props} anteriores={anteriores} history={history} selfGuided={selfGuided} />
+      );
   }
+}
+
+/**
+ * A tela do momento com a pergunta do esforço por cima, enquanto houver um
+ * exercício terminado sem resposta (A2). No meio da série ela espera: a
+ * pessoa está com a carga na mão.
+ */
+function WithEffortPrompt({
+  sessao,
+  despachar,
+  enabled,
+  children,
+}: MomentoDaSessaoProps & { enabled: boolean; children: ReactNode }) {
+  const pending = sessao.itens.find((item) => item.id === sessao.pendingEffortId);
+  if (!enabled || !pending) return children;
+  return (
+    <View className="flex-1">
+      {children}
+      <EffortPrompt
+        name={pending.exercise?.name ?? 'o exercício'}
+        onAnswer={(effort) => despachar({ tipo: 'rateEffort', itemId: pending.id, effort })}
+      />
+    </View>
+  );
 }
 
 /**
@@ -137,16 +198,29 @@ function useGravacaoDaSessao({
   return { salvando, salvar };
 }
 
+interface ResumoExtras {
+  anteriores: SeriesAnteriores;
+  history: ExerciseHistory;
+  selfGuided: boolean;
+}
+
 /** O resumo e, pelo botão dele, a tela de compartilhar. */
 function Resumo({
   treino,
   sessao,
   alunoId,
   anteriores,
+  history,
+  selfGuided,
   onSair,
-}: MomentoDaSessaoProps & { anteriores: SeriesAnteriores }) {
+}: MomentoDaSessaoProps & ResumoExtras) {
   const [compartilhando, setCompartilhando] = useState(false);
   const { resumo, evolucoes, concluidaEm } = useResumoDaSessao(sessao, alunoId, anteriores);
+  const nextTime = useMemo<LoadSuggestions>(
+    () =>
+      selfGuided ? nextTimeSuggestions(sessao.itens, sessao.feitas, sessao.efforts, history) : {},
+    [selfGuided, sessao.itens, sessao.feitas, sessao.efforts, history]
+  );
 
   if (compartilhando) {
     return (
@@ -164,6 +238,8 @@ function Resumo({
       treino={treino}
       resumo={resumo}
       evolucoes={evolucoes}
+      itens={sessao.itens}
+      nextTime={nextTime}
       concluidaEm={concluidaEm}
       onSair={onSair}
       onCompartilhar={() => setCompartilhando(true)}

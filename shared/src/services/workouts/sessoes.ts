@@ -211,6 +211,7 @@ export const criarServicoDeSessoes = (supabase: SupabaseClient) => ({
           session_id: sessionId,
           workout_exercise_id: item.workout_exercise_id ?? null,
           exercise_id: item.exercise_id ?? null,
+          effort: item.effort ?? null,
         })),
       )
       .select();

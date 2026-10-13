@@ -258,6 +258,9 @@ export const workoutSessionExercises = pgTable("workout_session_exercises", {
   // schema, a divergência era invisível para elas também.
   exercise_id: uuid("exercise_id"),
   notes: text("notes"),
+  // "Fácil", "Ok" ou "Difícil" depois da última série (0089, #376): o sinal da
+  // carga sugerida no próximo treino.
+  effort: text("effort"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

@@ -408,5 +408,7 @@ export interface SaveSessionExerciseInput {
   workout_exercise_id?: string | null;
   /** Exercício efetivamente feito, quando difere do prescrito. */
   exercise_id?: string | null;
+  /** "Fácil", "Ok" ou "Difícil" depois da última série; nulo quando pulou (#376). */
+  effort?: "easy" | "ok" | "hard" | null;
   sets: SaveSessionSetInput[];
 }

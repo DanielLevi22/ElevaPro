@@ -16,7 +16,9 @@ import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { Vidro } from '@/components/ui/Vidro';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
+import { TodayLoads } from '../../../components/sessao/LoadSuggestionList';
 import { useContextoDoTreino } from '../../../hooks/useContextoDoTreino';
+import type { LoadSuggestions } from '../../../services/sessionLoadSuggestions';
 
 /**
  * O pré-início do kit (tela 4): o treino em letra grande, quantas séries tem e
@@ -36,6 +38,8 @@ import { useContextoDoTreino } from '../../../hooks/useContextoDoTreino';
 interface PreInicioDoTreinoProps {
   treino: Workout;
   anterior: SessaoComSeries | null;
+  /** As cargas de hoje (#376, A1); vazio fora do treino do Praticante. */
+  loadSuggestions: LoadSuggestions;
   onIniciar: () => void;
   onVoltar: () => void;
 }
@@ -46,6 +50,7 @@ const BRILHO_DO_ICONE = { blur: 44, espalhamento: -6 } as const;
 export function PreInicioDoTreino({
   treino,
   anterior,
+  loadSuggestions,
   onIniciar,
   onVoltar,
 }: PreInicioDoTreinoProps) {
@@ -98,6 +103,7 @@ export function PreInicioDoTreino({
             )}
           </Text>
         ) : null}
+        <TodayLoads items={exercicios} suggestions={loadSuggestions} />
       </View>
     </TelaDeVidroComFoto>
   );

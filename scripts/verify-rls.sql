@@ -3708,3 +3708,37 @@ BEGIN
 END $$;
 
 ROLLBACK;
+
+-- ── workout_session_exercises.effort: o esforço do exercício (0089, #376) ──────
+-- "Fácil", "Ok" ou "Difícil" e nada mais: o valor é a entrada de uma regra em
+-- código, e texto livre aqui viraria um campo de anotação sem a base legal das
+-- anotações (Art. 11), que é outra.
+
+BEGIN;
+
+DO $$
+DECLARE
+  student uuid := gen_random_uuid();
+  session uuid;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES (student, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+          'verify-ea@elevapro.local', '{"full_name":"P","account_type":"member"}'::jsonb);
+  INSERT INTO public.workout_sessions (student_id, started_at) VALUES (student, now())
+    RETURNING id INTO session;
+
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', student, 'role', 'authenticated')::text, true);
+
+  INSERT INTO public.workout_session_exercises (session_id, effort) VALUES (session, 'hard');
+  BEGIN
+    INSERT INTO public.workout_session_exercises (session_id, effort) VALUES (session, 'cansei, joelho doeu');
+    RAISE EXCEPTION 'ESFORÇO VIROU ANOTAÇÃO: o banco aceitou texto livre no esforço do exercício';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
+  RAISE NOTICE 'ok  esforço do exercício: só easy, ok ou hard';
+END $$;
+
+ROLLBACK;
