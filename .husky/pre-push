@@ -21,6 +21,9 @@ fi
 #
 # O custo é alguns segundos por push. O custo do contrário é descobrir depois.
 # Os scripts com efeito colateral (limpeza do MFA local) têm trava própria.
-node --test scripts/__tests__/
+# Os arquivos, e não a pasta: no Node 24 do Windows, `node --test` com a pasta
+# tenta carregá-la como módulo ("Cannot find module") e o push falha sem
+# nenhum teste ter rodado.
+node --test scripts/__tests__/*.test.mjs
 cd app && npx jest --coverage --passWithNoTests --runInBand --forceExit
 cd ../web && npx vitest run --coverage --passWithNoTests
