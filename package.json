@@ -45,7 +45,7 @@
     "drizzle-orm": "^0.45.2",
     "husky": "^9.1.7",
     "knip": "^6.35.1",
-    "supabase": "2.118.0",
+    "supabase": "2.120.0",
     "typescript": "~6.0.3"
   },
   "engines": {
