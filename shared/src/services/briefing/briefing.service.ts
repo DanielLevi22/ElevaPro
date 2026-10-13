@@ -6,7 +6,7 @@ import type {
   BriefingStats,
 } from "../../types/briefing.types";
 import { currentWeekStart } from "../nutrition/weeklyCheckIn.service";
-import { CHECK_IN_LOGGING_LABEL } from "./checkInActivity";
+import { CHECK_IN_LOGGING_LABEL, checkInSentence } from "./checkInActivity";
 
 /**
  * Dias sem sessão concluída que caracterizam risco de abandono.
@@ -209,7 +209,7 @@ export const createBriefingService = (supabase: SupabaseClient) => ({
       swapCount.set(swap.student_id, (swapCount.get(swap.student_id) ?? 0) + 1);
     }
 
-    const checkInOf = new Map(
+    const loggingLabelOf = new Map(
       (
         (checkIns.data ?? []) as {
           student_id: string;
@@ -271,14 +271,14 @@ export const createBriefingService = (supabase: SupabaseClient) => ({
         });
       }
 
-      const checkIn = checkInOf.get(studentId);
-      if (checkIn) {
+      const loggingLabel = loggingLabelOf.get(studentId);
+      if (loggingLabel) {
         signals.push({
           studentId,
           studentName,
           kind: "weekly_check_in",
           tone: "warning",
-          message: `Fez o check-in da semana: ${checkIn}.`,
+          message: `${checkInSentence(loggingLabel)}.`,
           days: 0,
         });
       }

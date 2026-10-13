@@ -12,7 +12,7 @@ import { CompleteProfileCard } from '@/modules/onboarding';
  * tela e recebe o seu recorte. O painel do especialista e a home do aluno não
  * compartilham nada além do arquivo em que moravam.
  */
-export default function TelaInicial() {
+export default function HomeTab() {
   const { accountType, isMasquerading, aluno, especialista } = useDadosDaHome();
 
   if (aluno.carregando && !aluno.perfil && !accountType) {

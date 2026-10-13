@@ -262,3 +262,45 @@ export async function cancelPlanNotifications(planId: string): Promise<void> {
     console.error('Error cancelling notifications:', error);
   }
 }
+
+const DAILY_LOG_REMINDER_ID = 'daily-log-reminder';
+const DAILY_LOG_HOUR = 20;
+
+/**
+ * Liga o lembrete diário das 20h para registrar o dia (A5b, #376): quem
+ * registrou só parte da semana não tem dado para o ajuste, e o lembrete é o
+ * que o desenho oferece no lugar da bronca. Sem dado de saúde no texto: ele
+ * aparece na tela bloqueada.
+ *
+ * @example if (await scheduleDailyLogReminder()) mostrarLigado();
+ */
+export async function scheduleDailyLogReminder(): Promise<boolean> {
+  if (!(await requestNotificationPermissions())) return false;
+  await Notifications.scheduleNotificationAsync({
+    identifier: DAILY_LOG_REMINDER_ID,
+    content: {
+      title: 'Hora de registrar o dia',
+      body: 'Marque o que você comeu hoje. Leva um minuto.',
+      data: { kind: 'daily-log', tone: 'info', icon: 'utensils' },
+      sound: true,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour: DAILY_LOG_HOUR,
+      minute: 0,
+      channelId: MEAL_CHANNEL_ID,
+    },
+  });
+  return true;
+}
+
+/** @example await cancelDailyLogReminder(); */
+export async function cancelDailyLogReminder(): Promise<void> {
+  await Notifications.cancelScheduledNotificationAsync(DAILY_LOG_REMINDER_ID);
+}
+
+/** Se o lembrete das 20h está agendado. @example const ligado = await hasDailyLogReminder(); */
+export async function hasDailyLogReminder(): Promise<boolean> {
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  return scheduled.some((notification) => notification.identifier === DAILY_LOG_REMINDER_ID);
+}

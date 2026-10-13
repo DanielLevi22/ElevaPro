@@ -119,6 +119,25 @@ describe("recalibrar a meta da semana", () => {
     expect(result.proposedCalories).toBe(2001);
   });
 
+  /** Regressão: quem pulou check-in comparava três semanas de perda com o ritmo de uma só. */
+  it("divide a variação pelas semanas desde a pesagem anterior", () => {
+    const result = recalibrateWeeklyTarget({ ...CUT, weightKg: 76.5, weeksSincePrevious: 3 });
+    expect(result.actualChangeKg).toBeCloseTo(-0.5, 5);
+    expect(result.verdict).toBe("on_pace");
+  });
+
+  it("nunca sobe a meta além do ganho de ~0,5% do peso por semana", () => {
+    // 78 kg × 5,5 = 429 kcal acima do gasto: teto em 3.120 (2.700 + 429, para baixo).
+    const result = recalibrateWeeklyTarget({
+      ...CUT,
+      targetCalories: 3050,
+      weightKg: 78,
+      previousWeightKg: 78,
+    });
+    expect(result.proposedCalories).toBe(3120);
+    expect(result.guard).toBe("weekly_gain_cap");
+  });
+
   it("devolve a variação esperada e a real para a tela explicar o porquê", () => {
     const result = recalibrateWeeklyTarget({ ...CUT, weightKg: 77.9 });
     expect(result.expectedChangeKg).toBeCloseTo(-0.5, 1);

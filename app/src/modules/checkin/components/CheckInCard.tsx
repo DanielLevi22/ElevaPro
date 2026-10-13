@@ -1,15 +1,20 @@
-import type { WeeklyCheckIn } from '@elevapro/shared';
+import { isTodayInBrazil, type RecordedAdjustment, type WeeklyCheckIn } from '@elevapro/shared';
 import { useRouter } from 'expo-router';
-import { Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
+import { showAlert } from '@/components/ui/appAlert';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
 import { CaixaDeIcone } from '@/components/ui/CaixaDeIcone';
 import { Vidro } from '@/components/ui/Vidro';
+import { registrarFalha } from '@/lib/registro';
 import { ROUTES } from '@/navigation/types';
-import { useCheckInProposal, useCheckInSummary } from '../hooks/useWeeklyCheckIn';
+import {
+  useCheckInActions,
+  useCheckInProposal,
+  useCheckInSummary,
+} from '../hooks/useWeeklyCheckIn';
 import { adjustmentCopy } from '../services/adjustmentCopy';
-
-const kcal = (value: number) => `${value.toLocaleString('pt-BR')} kcal`;
+import { formatKcal } from '../services/formatCalories';
 
 /**
  * A6 · O check-in na tela inicial: a próxima ação quando a semana pede
@@ -24,8 +29,8 @@ export function CheckInCard() {
   if (!summary) return null;
   if (summary.state === 'due') return <DueCard />;
   if (summary.state === 'pending') return <PendingCard userId={userId} checkIn={summary.checkIn} />;
-  if (summary.state === 'approved' && summary.targetCalories !== null) {
-    return <ApprovedCard targetCalories={summary.targetCalories} />;
+  if (summary.state === 'approved' && summary.adjustment) {
+    return <ApprovedCard checkInId={summary.checkIn.id} adjustment={summary.adjustment} />;
   }
   return null;
 }
@@ -56,7 +61,7 @@ function PendingCard({ userId, checkIn }: { userId: string | null; checkIn: Week
   if (proposal?.kind !== 'proposal') return null;
   const copy = adjustmentCopy(proposal.recalibration, checkIn.logging);
   const title = copy.proposesChange
-    ? `Meta proposta: ${kcal(proposal.recalibration.proposedCalories)}`
+    ? `Meta proposta: ${formatKcal(proposal.recalibration.proposedCalories)}`
     : 'Sua meta segue igual';
 
   return (
@@ -70,16 +75,56 @@ function PendingCard({ userId, checkIn }: { userId: string | null; checkIn: Week
   );
 }
 
-function ApprovedCard({ targetCalories }: { targetCalories: number }) {
+/**
+ * "Plano atualizado", com o "Desfazer" do mesmo dia: depois disso, a meta só
+ * muda no próximo check-in. O banco confere o dia de novo.
+ */
+function ApprovedCard({
+  checkInId,
+  adjustment,
+}: {
+  checkInId: string;
+  adjustment: RecordedAdjustment;
+}) {
+  const { undo } = useCheckInActions();
+  const undoable = isTodayInBrazil(adjustment.approvedAt);
+
+  async function undoAdjustment() {
+    try {
+      await undo.mutateAsync(checkInId);
+    } catch {
+      registrarFalha('checkin.undo');
+      showAlert({
+        title: 'Não foi possível desfazer',
+        message: 'Sua meta continua a nova. Confira sua conexão e tente de novo.',
+        type: 'error',
+      });
+    }
+  }
+
   return (
     <Vidro classeExterna="mt-5" className="flex-row items-center gap-3 p-3.5">
       <CaixaDeIcone icon="checkmark-circle-outline" tom="marca" tamanho="linha" />
       <View className="flex-1">
-        <Text className="text-[0.90625rem] font-bold text-hero">{`Plano atualizado · ${kcal(targetCalories)}`}</Text>
+        <Text className="text-[0.90625rem] font-bold text-hero">
+          {`Plano atualizado · ${formatKcal(adjustment.afterCalories)}`}
+        </Text>
         <Text className="mt-0.5 text-xs text-hero-secondary">
           Cardápio refeito para a nova meta
         </Text>
       </View>
+      {undoable ? (
+        <TouchableOpacity
+          onPress={() => void undoAdjustment()}
+          disabled={undo.isPending}
+          accessibilityRole="button"
+          className="py-2"
+        >
+          <Text className="text-xs font-semibold text-hero-secondary">
+            {undo.isPending ? 'Desfazendo…' : 'Desfazer'}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
     </Vidro>
   );
 }

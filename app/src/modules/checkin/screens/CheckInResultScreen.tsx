@@ -5,17 +5,19 @@ import { Text, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { showAlert } from '@/components/ui/appAlert';
 import { BarraDeDuasAcoes } from '@/components/ui/BarraDeDuasAcoes';
-import { BeforeAfterRow } from '@/components/ui/BeforeAfterRow';
-import { FlowFrame, FlowLabel, FlowTitle } from '@/components/ui/FlowFrame';
+import { FlowFrame, FlowTitle } from '@/components/ui/FlowFrame';
 import { Vidro } from '@/components/ui/Vidro';
 import { registrarFalha } from '@/lib/registro';
 import { ROUTES } from '@/navigation/types';
 import { useCores, useEscala } from '@/shared/design';
 import {
   CalculatingState,
+  DecidedState,
   NoTargetState,
   SpecialistReviewState,
 } from '../components/CheckInStates';
+import { DailyLogReminder } from '../components/DailyLogReminder';
+import { TargetChange } from '../components/TargetChange';
 import { WeightTrend } from '../components/WeightTrend';
 import {
   useCheckInActions,
@@ -26,7 +28,6 @@ import { adjustmentCopy } from '../services/adjustmentCopy';
 
 type Proposal = Extract<CheckInProposal, { kind: 'proposal' }>;
 
-const kcal = (value: number) => `${value.toLocaleString('pt-BR')} kcal`;
 const STATUS_ICON = 13;
 
 /**
@@ -52,9 +53,21 @@ export function CheckInResultScreen() {
     );
   }
   if (!checkIn || !proposal.data) return <CalculatingState failed={false} onRetry={home} />;
-  if (proposal.data.kind === 'specialist') return <SpecialistReviewState onDone={home} />;
-  if (proposal.data.kind === 'no_diet') return <NoTargetState onDone={home} />;
-  return <ProposalView checkIn={checkIn} proposal={proposal.data} onDone={home} />;
+  const result = proposal.data;
+  if (result.kind === 'specialist') {
+    return (
+      <SpecialistReviewState
+        specialistName={result.specialistName}
+        lastMeasurement={result.lastMeasurement}
+        onDone={home}
+      />
+    );
+  }
+  if (result.kind === 'decided') {
+    return <DecidedState status={result.status} adjustment={result.adjustment} onDone={home} />;
+  }
+  if (result.kind === 'no_diet') return <NoTargetState onDone={home} />;
+  return <ProposalView checkIn={checkIn} proposal={result} onDone={home} />;
 }
 
 function ProposalView({
@@ -69,7 +82,8 @@ function ProposalView({
   const { approve, keep } = useCheckInActions();
   const copy = adjustmentCopy(proposal.recalibration, checkIn.logging);
   const busy = approve.isPending || keep.isPending;
-  const decided = checkIn.status !== 'pending';
+  const withoutData =
+    proposal.recalibration.verdict === 'insufficient_data' && checkIn.logging === 'partial';
 
   async function decide(action: 'approve' | 'keep') {
     try {
@@ -89,7 +103,7 @@ function ProposalView({
     }
   }
 
-  const twoActions = copy.proposesChange && !decided;
+  const twoActions = copy.proposesChange;
   return (
     <FlowFrame
       header={{}}
@@ -97,9 +111,9 @@ function ProposalView({
         twoActions
           ? undefined
           : {
-              label: decided ? 'Voltar ao início' : 'Seguir igual',
+              label: withoutData ? 'Entendi' : 'Seguir igual',
               icon: 'checkmark',
-              onPress: decided ? onDone : () => void decide('keep'),
+              onPress: () => void decide('keep'),
               disabled: busy,
             }
       }
@@ -136,20 +150,13 @@ function ProposalView({
       </Vidro>
       <Text className="mt-3.5 text-[0.875rem] leading-[1.27rem] text-hero">{copy.reason}</Text>
       {copy.proposesChange ? (
-        <>
-          <FlowLabel right="o cardápio é refeito na nova meta">Proposta</FlowLabel>
-          <Vidro className="px-3.5 py-0.5">
-            <BeforeAfterRow
-              first
-              icon="locate-outline"
-              title="Meta diária"
-              before={kcal(proposal.targetCalories)}
-              after={kcal(proposal.recalibration.proposedCalories)}
-              badge={`${proposal.recalibration.deltaCalories > 0 ? '+' : '−'}${kcal(Math.abs(proposal.recalibration.deltaCalories))}`}
-            />
-          </Vidro>
-        </>
+        <TargetChange
+          label="Proposta"
+          before={proposal.targetCalories}
+          after={proposal.recalibration.proposedCalories}
+        />
       ) : null}
+      {withoutData ? <DailyLogReminder /> : null}
     </FlowFrame>
   );
 }

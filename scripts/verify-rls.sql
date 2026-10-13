@@ -3496,106 +3496,107 @@ ROLLBACK;
 
 -- ── weekly_check_ins e plan_adjustments: o check-in da semana (0088, #376) ─────
 -- O Praticante diz como foi a semana e o peso; o ajuste da meta só vale
--- aprovado, no máximo 200 kcal, e fica registrado. O Aluno faz o check-in sem
--- peso e sem ajuste: com especialista, quem mede e muda o plano é ele
--- (ADR-0030). As duas tabelas são de Art. 11: o especialista vinculado lê com
--- consentimento, e ninguém grava, corrige nem apaga direto.
+-- aprovado, no máximo 200 kcal, e fica registrado; o "Desfazer" do mesmo dia
+-- volta a meta e registra o inverso. O Aluno faz o check-in sem peso e sem
+-- ajuste: com especialista, quem mede e muda o plano é ele (ADR-0030). As duas
+-- tabelas são de Art. 11: o especialista vinculado lê com consentimento, e
+-- ninguém grava, corrige nem apaga direto.
 
 BEGIN;
 
 DO $$
 DECLARE
-  praticante   uuid := gen_random_uuid();
-  aluno        uuid := gen_random_uuid();
-  sem_aceite   uuid := gen_random_uuid();
-  espec        uuid := gen_random_uuid();
-  espec_alheio uuid := gen_random_uuid();
-  arroz        uuid;
-  dieta        uuid;
-  refeicao     uuid;
-  semana       public.weekly_check_ins;
-  do_aluno     public.weekly_check_ins;
-  ativa        public.diet_plans;
-  visiveis     int;
-  afetadas     int;
-  gramas       numeric;
+  practitioner      uuid := gen_random_uuid();
+  student           uuid := gen_random_uuid();
+  no_consent        uuid := gen_random_uuid();
+  specialist        uuid := gen_random_uuid();
+  other_specialist  uuid := gen_random_uuid();
+  rice              uuid;
+  diet              uuid;
+  meal              uuid;
+  week_check_in     public.weekly_check_ins;
+  student_check_in  public.weekly_check_ins;
+  active_plan       public.diet_plans;
+  visible           int;
+  affected          int;
+  grams             numeric;
 BEGIN
   INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
   VALUES
-    (praticante, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+    (practitioner, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
      'verify-ca@elevapro.local', '{"full_name":"P","account_type":"member"}'::jsonb),
-    (aluno, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+    (student, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
      'verify-cb@elevapro.local', '{"full_name":"A","account_type":"student"}'::jsonb),
-    (sem_aceite, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+    (no_consent, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
      'verify-cc@elevapro.local', '{"full_name":"S","account_type":"member"}'::jsonb),
-    (espec, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+    (specialist, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
      'verify-ce@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb),
-    (espec_alheio, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+    (other_specialist, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
      'verify-cf@elevapro.local', '{"full_name":"F","account_type":"specialist"}'::jsonb);
 
   INSERT INTO auth.mfa_factors (id, user_id, factor_type, status, created_at, updated_at)
-  VALUES (gen_random_uuid(), espec, 'totp', 'verified', now(), now()),
-         (gen_random_uuid(), espec_alheio, 'totp', 'verified', now(), now());
+  VALUES (gen_random_uuid(), specialist, 'totp', 'verified', now(), now()),
+         (gen_random_uuid(), other_specialist, 'totp', 'verified', now(), now());
 
   INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
-  VALUES (aluno, espec, 'nutrition_consulting', 'active');
+  VALUES (student, specialist, 'nutrition_consulting', 'active');
   INSERT INTO public.student_consents (student_id, consent_type, given_at, policy_version)
-  VALUES (praticante, 'health_data_collection', now(), '1.10'),
-         (aluno, 'health_data_collection', now(), '1.10');
+  VALUES (practitioner, 'health_data_collection', now(), '1.10'),
+         (student, 'health_data_collection', now(), '1.10');
   -- Todos com altura e o Aluno com dieta própria: cada recusa abaixo tem de
   -- vir da regra que ela testa, não de um dado que faltou.
   INSERT INTO public.student_anamnesis (student_id, responses)
-  VALUES (praticante, '{"height":"172"}'::jsonb),
-         (aluno, '{"height":"180"}'::jsonb),
-         (sem_aceite, '{"height":"165"}'::jsonb);
+  VALUES (practitioner, '{"height":"172"}'::jsonb),
+         (student, '{"height":"180"}'::jsonb),
+         (no_consent, '{"height":"165"}'::jsonb);
 
   -- A dieta do próprio Praticante, como o onboarding grava.
-  INSERT INTO public.foods (name) VALUES ('verify-c-arroz') RETURNING id INTO arroz;
+  INSERT INTO public.foods (name) VALUES ('verify-c-arroz') RETURNING id INTO rice;
   INSERT INTO public.diet_plans (student_id, specialist_id, name, plan_type, status, version,
                                  start_date, end_date, target_calories, target_carbs)
-  VALUES (praticante, NULL, 'verify-c', 'unique', 'active', 1, current_date, current_date + 28, 2150, 250)
-  RETURNING id INTO dieta;
+  VALUES (practitioner, NULL, 'verify-c', 'unique', 'active', 1, current_date, current_date + 28, 2150, 250)
+  RETURNING id INTO diet;
   INSERT INTO public.diet_plans (student_id, specialist_id, name, plan_type, status, version,
                                  start_date, end_date, target_calories, target_carbs)
-  VALUES (aluno, NULL, 'verify-c-aluno', 'unique', 'active', 1, current_date, current_date + 28, 2000, 230);
-  INSERT INTO public.diet_meals (diet_plan_id, name) VALUES (dieta, 'Almoço') RETURNING id INTO refeicao;
+  VALUES (student, NULL, 'verify-c-aluno', 'unique', 'active', 1, current_date, current_date + 28, 2000, 230);
+  INSERT INTO public.diet_meals (diet_plan_id, name) VALUES (diet, 'Almoço') RETURNING id INTO meal;
   INSERT INTO public.diet_meal_items (diet_meal_id, food_id, quantity, unit)
-  VALUES (refeicao, arroz, 200, 'g');
+  VALUES (meal, rice, 200, 'g');
 
   SET LOCAL ROLE authenticated;
 
   -- O Praticante faz o check-in; o peso vira medida declarada.
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', praticante, 'role', 'authenticated')::text, true);
-  semana := public.submit_weekly_check_in('all', 77.6);
-  IF semana.assessment_id IS NULL THEN
+    json_build_object('sub', practitioner, 'role', 'authenticated')::text, true);
+  week_check_in := public.submit_weekly_check_in('all', 77.6);
+  IF week_check_in.assessment_id IS NULL THEN
     RAISE EXCEPTION 'PESO PERDIDO: o check-in do Praticante não apontou para a medida declarada';
   END IF;
 
   BEGIN
     INSERT INTO public.weekly_check_ins (student_id, week_start, logging)
-    VALUES (praticante, current_date - 7, 'all');
+    VALUES (practitioner, current_date - 7, 'all');
     RAISE EXCEPTION 'EVIDÊNCIA FORJADA: o aluno gravou check-in direto, sem passar pela função';
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
 
   -- Passo maior que 200 kcal, ou motivo que contradiz o número: recusados.
   BEGIN
-    PERFORM public.apply_weekly_calorie_adjustment(semana.id, 1850, 'weight_above_pace');
+    PERFORM public.apply_weekly_calorie_adjustment(week_check_in.id, 1850, 'weight_above_pace');
     RAISE EXCEPTION 'META SEM FREIO: ajuste de 300 kcal numa semana foi aceito';
   EXCEPTION WHEN invalid_parameter_value THEN NULL;
   END;
   BEGIN
-    PERFORM public.apply_weekly_calorie_adjustment(semana.id, 2300, 'weight_above_pace');
+    PERFORM public.apply_weekly_calorie_adjustment(week_check_in.id, 2300, 'weight_above_pace');
     RAISE EXCEPTION 'MOTIVO TROCADO: peso acima do ritmo subiu a meta';
   EXCEPTION WHEN invalid_parameter_value THEN NULL;
   END;
 
   -- Outra pessoa não decide o check-in do Praticante.
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', sem_aceite, 'role', 'authenticated')::text, true);
+    json_build_object('sub', no_consent, 'role', 'authenticated')::text, true);
   BEGIN
-    PERFORM public.keep_weekly_target(semana.id);
+    PERFORM public.keep_weekly_target(week_check_in.id);
     RAISE EXCEPTION 'DECISÃO EM NOME DE OUTRO: alguém manteve a meta do check-in alheio';
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
@@ -3608,76 +3609,102 @@ BEGIN
 
   -- O Praticante aprova: dieta nova, porções refeitas, ajuste registrado.
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', praticante, 'role', 'authenticated')::text, true);
-  ativa := public.apply_weekly_calorie_adjustment(semana.id, 2000, 'weight_above_pace');
-  IF ativa.id = dieta OR ativa.target_calories <> 2000 OR ativa.status <> 'active' THEN
+    json_build_object('sub', practitioner, 'role', 'authenticated')::text, true);
+  active_plan := public.apply_weekly_calorie_adjustment(week_check_in.id, 2000, 'weight_above_pace');
+  IF active_plan.id = diet OR active_plan.target_calories <> 2000 OR active_plan.status <> 'active' THEN
     RAISE EXCEPTION 'AJUSTE SEM VERSÃO: a meta aprovada não virou a versão ativa da dieta';
   END IF;
-  SELECT i.quantity INTO gramas FROM public.diet_meal_items i
-    JOIN public.diet_meals m ON m.id = i.diet_meal_id WHERE m.diet_plan_id = ativa.id;
-  IF gramas <> 185 THEN
-    RAISE EXCEPTION 'CARDÁPIO NA META ANTIGA: 200 g × 2000/2150 deveria virar 185 g, virou %', gramas;
+  SELECT i.quantity INTO grams FROM public.diet_meal_items i
+    JOIN public.diet_meals m ON m.id = i.diet_meal_id WHERE m.diet_plan_id = active_plan.id;
+  IF grams <> 185 THEN
+    RAISE EXCEPTION 'CARDÁPIO NA META ANTIGA: 200 g × 2000/2150 deveria virar 185 g, virou %', grams;
   END IF;
-  SELECT count(*) INTO visiveis FROM public.plan_adjustments
-    WHERE student_id = praticante AND before_value = 2150 AND after_value = 2000;
-  IF visiveis <> 1 THEN
+  SELECT count(*) INTO visible FROM public.plan_adjustments
+    WHERE student_id = practitioner AND before_value = 2150 AND after_value = 2000;
+  IF visible <> 1 THEN
     RAISE EXCEPTION 'AJUSTE SEM REGISTRO: a mudança da meta não ficou no histórico';
   END IF;
 
   BEGIN
-    UPDATE public.plan_adjustments SET after_value = 2500 WHERE student_id = praticante;
-    GET DIAGNOSTICS afetadas = ROW_COUNT;
-    IF afetadas <> 0 THEN
+    UPDATE public.plan_adjustments SET after_value = 2500 WHERE student_id = practitioner;
+    GET DIAGNOSTICS affected = ROW_COUNT;
+    IF affected <> 0 THEN
       RAISE EXCEPTION 'HISTÓRICO REESCRITO: o aluno alterou um ajuste já aprovado';
     END IF;
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
 
+  -- Outra pessoa não desfaz o ajuste do Praticante.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', no_consent, 'role', 'authenticated')::text, true);
+  BEGIN
+    PERFORM public.undo_weekly_calorie_adjustment(week_check_in.id);
+    RAISE EXCEPTION 'DESFEITO EM NOME DE OUTRO: alguém desfez o ajuste alheio';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- O Praticante desfaz no mesmo dia: a meta volta, e o histórico guarda os dois.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', practitioner, 'role', 'authenticated')::text, true);
+  active_plan := public.undo_weekly_calorie_adjustment(week_check_in.id);
+  IF active_plan.target_calories <> 2150 THEN
+    RAISE EXCEPTION 'DESFAZER SEM EFEITO: a meta ficou em % em vez de voltar a 2150', active_plan.target_calories;
+  END IF;
+  SELECT count(*) INTO visible FROM public.plan_adjustments WHERE student_id = practitioner;
+  IF visible <> 2 THEN
+    RAISE EXCEPTION 'HISTÓRICO APAGADO: desfazer deixou % ajuste(s), esperado o original e o inverso', visible;
+  END IF;
+  BEGIN
+    PERFORM public.undo_weekly_calorie_adjustment(week_check_in.id);
+    RAISE EXCEPTION 'DESFEITO DUAS VEZES: o mesmo ajuste foi desfeito de novo';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
   -- O Aluno faz o check-in sem peso; peso e ajuste são do especialista.
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', aluno, 'role', 'authenticated')::text, true);
+    json_build_object('sub', student, 'role', 'authenticated')::text, true);
   BEGIN
     PERFORM public.submit_weekly_check_in('all', 80);
     RAISE EXCEPTION 'PESO AO LADO DA FITA: aluno com especialista declarou peso no check-in (ADR-0030)';
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
-  do_aluno := public.submit_weekly_check_in('partial', NULL);
+  student_check_in := public.submit_weekly_check_in('partial', NULL);
   BEGIN
-    PERFORM public.apply_weekly_calorie_adjustment(do_aluno.id, 1900, 'weight_above_pace');
+    PERFORM public.apply_weekly_calorie_adjustment(student_check_in.id, 1900, 'weight_above_pace');
     RAISE EXCEPTION 'AJUSTE SEM O ESPECIALISTA: aluno acompanhado mudou a própria meta';
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
 
   -- O especialista vinculado vê o check-in; o de fora, não; revogado, ninguém.
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
-  SELECT count(*) INTO visiveis FROM public.weekly_check_ins WHERE student_id = aluno;
-  IF visiveis <> 1 THEN
-    RAISE EXCEPTION 'CHECK-IN ESCONDIDO: o especialista vinculado vê % check-in(s) do aluno, esperado 1', visiveis;
+    json_build_object('sub', specialist, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  SELECT count(*) INTO visible FROM public.weekly_check_ins WHERE student_id = student;
+  IF visible <> 1 THEN
+    RAISE EXCEPTION 'CHECK-IN ESCONDIDO: o especialista vinculado vê % check-in(s) do aluno, esperado 1', visible;
   END IF;
 
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec_alheio, 'role', 'authenticated', 'aal', 'aal2')::text, true);
-  SELECT count(*) INTO visiveis FROM public.weekly_check_ins WHERE student_id IN (aluno, praticante);
-  IF visiveis <> 0 THEN
+    json_build_object('sub', other_specialist, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  SELECT count(*) INTO visible FROM public.weekly_check_ins WHERE student_id IN (student, practitioner);
+  IF visible <> 0 THEN
     RAISE EXCEPTION 'CHECK-IN VAZADO: especialista sem vínculo leu o check-in de outro aluno';
   END IF;
-  SELECT count(*) INTO visiveis FROM public.plan_adjustments WHERE student_id = praticante;
-  IF visiveis <> 0 THEN
+  SELECT count(*) INTO visible FROM public.plan_adjustments WHERE student_id = practitioner;
+  IF visible <> 0 THEN
     RAISE EXCEPTION 'AJUSTE VAZADO: especialista sem vínculo leu a meta de outro aluno';
   END IF;
 
   RESET ROLE;
-  UPDATE public.student_consents SET revoked_at = now() WHERE student_id = aluno;
+  UPDATE public.student_consents SET revoked_at = now() WHERE student_id = student;
   SET LOCAL ROLE authenticated;
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal2')::text, true);
-  SELECT count(*) INTO visiveis FROM public.weekly_check_ins WHERE student_id = aluno;
-  IF visiveis <> 0 THEN
+    json_build_object('sub', specialist, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  SELECT count(*) INTO visible FROM public.weekly_check_ins WHERE student_id = student;
+  IF visible <> 0 THEN
     RAISE EXCEPTION 'REVOGAÇÃO SEM EFEITO: o especialista segue lendo o check-in de quem revogou';
   END IF;
 
-  RAISE NOTICE 'ok  check-in da semana: só pelas funções, ajuste com freio e registro, Aluno sem peso nem ajuste';
+  RAISE NOTICE 'ok  check-in da semana: só pelas funções, ajuste com freio, registro e desfazer, Aluno sem peso nem ajuste';
 END $$;
 
 ROLLBACK;

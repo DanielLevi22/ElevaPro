@@ -2052,6 +2052,37 @@ export type Database = {
         Args: { p_exercise_id: string; p_workout_exercise_id: string };
         Returns: undefined;
       };
+      undo_weekly_calorie_adjustment: {
+        Args: { p_check_in_id: string };
+        Returns: {
+          allows_supplements: boolean | null;
+          created_at: string;
+          dietary_restrictions: string[];
+          end_date: string;
+          free_meal_days: number[];
+          id: string;
+          meals_per_day: number | null;
+          name: string | null;
+          notes: string | null;
+          plan_type: Database["public"]["Enums"]["diet_plan_type"];
+          source_plan_id: string | null;
+          specialist_id: string | null;
+          start_date: string;
+          status: Database["public"]["Enums"]["diet_plan_status"];
+          student_id: string;
+          target_calories: number | null;
+          target_carbs: number | null;
+          target_fat: number | null;
+          target_protein: number | null;
+          version: number;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "diet_plans";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
     };
     Enums: {
       account_status: "active" | "inactive" | "invited";

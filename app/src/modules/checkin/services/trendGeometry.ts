@@ -1,4 +1,4 @@
-import type { WeightPoint } from '@elevapro/shared';
+import { PACE_TOLERANCE_KG, type WeightPoint } from '@elevapro/shared';
 
 export interface TrendGeometry {
   points: { key: string; x: number; y: number }[];
@@ -10,8 +10,6 @@ export interface TrendGeometry {
   label: string;
 }
 
-/** A mesma tolerância da recalibração (`weeklyRecalibration`). */
-const PACE_TOLERANCE_KG = 0.2;
 const PADDING = 10;
 const MARGIN_KG = 0.15;
 const DAY_MS = 86_400_000;

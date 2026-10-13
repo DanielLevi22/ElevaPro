@@ -1,9 +1,17 @@
 import { describe, expect, it } from "vitest";
 import type { Recalibration } from "../../../utils/weeklyRecalibration";
 import { criarSupabaseFake } from "../../__tests__/supabaseFake";
-import { createWeeklyCheckInService, currentWeekStart } from "../weeklyCheckIn.service";
+import {
+  createWeeklyCheckInService,
+  currentWeekStart,
+  isTodayInBrazil,
+} from "../weeklyCheckIn.service";
 
 const SEMANA = currentWeekStart();
+/** A segunda anterior: a pesagem de uma semana antes. */
+const SEMANA_ANTERIOR = new Date(Date.parse(`${SEMANA}T12:00:00Z`) - 7 * 86_400_000)
+  .toISOString()
+  .slice(0, 10);
 const CHECK_IN = {
   id: "check-1",
   week_start: SEMANA,
@@ -30,7 +38,7 @@ describe("o check-in da semana", () => {
       {
         data: [
           { id: "medida-nova", assessed_at: `${SEMANA}T10:00:00Z`, weight_kg: 77.9 },
-          { id: "medida-antiga", assessed_at: "2026-01-05T10:00:00Z", weight_kg: 78 },
+          { id: "medida-antiga", assessed_at: `${SEMANA_ANTERIOR}T10:00:00Z`, weight_kg: 78 },
         ],
       },
     ]);
@@ -68,21 +76,72 @@ describe("o check-in da semana", () => {
 
   /**
    * TRAVA — o Aluno não ajusta a própria meta (ADR-0030, #376): com
-   * especialista, o app não lê peso nem dieta para propor nada.
+   * especialista, o app não lê a dieta, a anamnese nem o peso declarado para
+   * propor nada. Lê só quem revisa e a última medida dele.
    */
-  it("com especialista ativo, a proposta é do especialista e nada mais é lido", async () => {
-    const { supabase, chamadas } = criarSupabaseFake([{ count: 1 }]);
+  it("com especialista ativo, mostra quem revisa e a medida dele, sem ler o peso declarado", async () => {
+    const { supabase, chamadas } = criarSupabaseFake([
+      { count: 1 },
+      { data: { specialist_id: "espec-1" } },
+      { data: { assessed_at: "2026-10-01T10:00:00Z", weight_kg: 80.5 } },
+      { data: { full_name: "Daniel Levi Souza" } },
+    ]);
     const proposta = await createWeeklyCheckInService(supabase).proposal("aluno-1", {
       ...CHECK_IN,
       assessment_id: null,
     });
 
-    expect(proposta).toEqual({ kind: "specialist" });
-    if (chamadas.length !== 1) {
-      throw new Error(
-        `AJUSTE SEM O ESPECIALISTA: o app leu ${chamadas.map((c) => c.tabela).join(", ")} para o Aluno`,
-      );
+    expect(proposta).toEqual({
+      kind: "specialist",
+      specialistName: "Daniel S.",
+      lastMeasurement: { assessedAt: "2026-10-01T10:00:00Z", weightKg: 80.5 },
+    });
+    const lidas = chamadas.map((c) => c.tabela);
+    const medidas = chamadas.filter((c) => c.tabela === "physical_assessments");
+    if (
+      lidas.includes("diet_plans") ||
+      lidas.includes("student_anamnesis") ||
+      medidas.some((c) => c.filtros.measured_by !== "specialist")
+    ) {
+      throw new Error(`AJUSTE SEM O ESPECIALISTA: o app leu ${lidas.join(", ")} para o Aluno`);
     }
+  });
+
+  it("decidido, devolve o ajuste gravado em vez de recalcular sobre a meta nova", async () => {
+    const { supabase, chamadas } = criarSupabaseFake([
+      { data: { before_value: 3231, after_value: 3081, approved_at: "2026-10-13T13:20:00Z" } },
+    ]);
+    const proposta = await createWeeklyCheckInService(supabase).proposal("aluno-1", {
+      ...CHECK_IN,
+      status: "approved",
+    });
+    expect(proposta).toEqual({
+      kind: "decided",
+      status: "approved",
+      adjustment: { beforeCalories: 3231, afterCalories: 3081, approvedAt: "2026-10-13T13:20:00Z" },
+    });
+    expect(chamadas.map((c) => c.tabela)).toEqual(["plan_adjustments"]);
+  });
+
+  /** Regressão: quem pulou check-in comparava três semanas com o ritmo de uma só. */
+  it("divide a variação do peso pelas semanas desde a pesagem anterior", async () => {
+    const { supabase } = criarSupabaseFake([
+      { count: 0 },
+      { data: { target_calories: 2150 } },
+      { data: RESPOSTAS },
+      {
+        data: [
+          { id: "medida-nova", assessed_at: "2026-10-26T10:00:00Z", weight_kg: 76.5 },
+          { id: "medida-antiga", assessed_at: "2026-10-05T10:00:00Z", weight_kg: 78 },
+        ],
+      },
+    ]);
+    const proposta = await createWeeklyCheckInService(supabase).proposal("aluno-1", {
+      ...CHECK_IN,
+      week_start: "2026-10-26",
+    });
+    if (proposta.kind !== "proposal") throw new Error(`esperava proposta, veio ${proposta.kind}`);
+    expect(proposta.recalibration.actualChangeKg).toBeCloseTo(-0.5, 5);
   });
 
   it("aprova pela função do banco, com o motivo da regra", async () => {
@@ -100,6 +159,14 @@ describe("o check-in da semana", () => {
         nome: "apply_weekly_calorie_adjustment",
         args: [{ p_check_in_id: "check-1", p_new_calories: 2000, p_reason: "weight_above_pace" }],
       },
+    ]);
+  });
+
+  it("desfaz pela função do banco", async () => {
+    const { supabase, rpcs } = criarSupabaseFake([{ data: null }]);
+    await createWeeklyCheckInService(supabase).undo("check-1");
+    expect(rpcs).toEqual([
+      { nome: "undo_weekly_calorie_adjustment", args: [{ p_check_in_id: "check-1" }] },
     ]);
   });
 
@@ -143,14 +210,14 @@ describe("o estado da semana na tela inicial", () => {
     expect((await createWeeklyCheckInService(supabase).summary("aluno-1")).state).toBe("due");
   });
 
-  it("aprovado nesta semana, traz a meta nova para o cartão", async () => {
+  it("aprovado nesta semana, traz o ajuste gravado para o cartão", async () => {
     const { supabase } = criarSupabaseFake([
       { data: { ...CHECK_IN, status: "approved" } },
-      { data: { target_calories: 2000 } },
+      { data: { before_value: 2150, after_value: 2000, approved_at: "2026-10-13T13:20:00Z" } },
     ]);
     expect(await createWeeklyCheckInService(supabase).summary("aluno-1")).toMatchObject({
       state: "approved",
-      targetCalories: 2000,
+      adjustment: { beforeCalories: 2150, afterCalories: 2000 },
     });
   });
 });
@@ -163,5 +230,11 @@ describe("a semana do check-in", () => {
   it("a semana vira na segunda à meia-noite do Brasil, não do UTC", () => {
     expect(currentWeekStart(new Date("2026-10-12T00:30:00-03:00"))).toBe("2026-10-12");
     expect(currentWeekStart(new Date("2026-10-12T01:00:00Z"))).toBe("2026-10-05");
+  });
+
+  it("o dia do desfazer é o do Brasil: 22h de ontem no Brasil já é amanhã em UTC", () => {
+    const agora = new Date("2026-10-13T12:00:00-03:00");
+    expect(isTodayInBrazil("2026-10-13T00:30:00-03:00", agora)).toBe(true);
+    expect(isTodayInBrazil("2026-10-12T22:00:00-03:00", agora)).toBe(false);
   });
 });

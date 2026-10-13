@@ -37,9 +37,9 @@ export function BeforeAfterRow({
 }: BeforeAfterRowProps) {
   const cores = useCores();
   const escalar = useEscala();
-  const Linha = onPress ? TouchableOpacity : View;
+  const Container = onPress ? TouchableOpacity : View;
   return (
-    <Linha
+    <Container
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.8}
@@ -64,7 +64,7 @@ export function BeforeAfterRow({
       <Text className="rounded-full bg-glass-strong px-2 py-1 font-mono text-[0.65625rem] font-bold text-foreground">
         {badge}
       </Text>
-    </Linha>
+    </Container>
   );
 }
 

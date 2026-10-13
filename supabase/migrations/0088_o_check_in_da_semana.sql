@@ -55,8 +55,9 @@ CREATE TABLE "plan_adjustments" (
   "diet_plan_id" uuid
     REFERENCES "public"."diet_plans"("id") ON DELETE SET NULL,
   "approved_at" timestamp with time zone NOT NULL DEFAULT now(),
-  CONSTRAINT "plan_adjustments_reason" CHECK ("reason" IN ('weight_above_pace', 'weight_below_pace')),
-  CONSTRAINT "plan_adjustments_source" CHECK ("source" IN ('rule', 'specialist'))
+  -- `undo` é o "Desfazer" do mesmo dia: o histórico ganha o ajuste inverso, nunca perde o original.
+  CONSTRAINT "plan_adjustments_reason" CHECK ("reason" IN ('weight_above_pace', 'weight_below_pace', 'undo')),
+  CONSTRAINT "plan_adjustments_source" CHECK ("source" IN ('rule', 'specialist', 'student'))
 );
 --> statement-breakpoint
 
@@ -263,9 +264,65 @@ END;
 $$;
 --> statement-breakpoint
 
--- Aprova o ajuste de calorias do Praticante: nova versão da dieta, porções em
--- gramas e mililitros refeitas na proporção, carboidrato absorvendo a
--- diferença, a versão ativada e o ajuste registrado. Tudo ou nada.
+-- A dieta própria ativa de quem pode ajustar a meta sozinho: o Praticante, sem
+-- especialista e com consentimento. Travada para a troca de versão.
+CREATE OR REPLACE FUNCTION private.own_diet_for_adjustment(p_student_id uuid)
+RETURNS public.diet_plans
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_plan public.diet_plans;
+BEGIN
+  IF EXISTS (SELECT 1 FROM public.student_specialists s
+             WHERE s.student_id = p_student_id AND s.status = 'active') THEN
+    RAISE EXCEPTION 'ajuste recusado: com especialista ativo, quem muda o plano é ele'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+  IF NOT private.has_health_consent(p_student_id) THEN
+    RAISE EXCEPTION 'ajuste recusado: exige o consentimento de dados de saúde vigente'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  SELECT * INTO v_plan FROM public.diet_plans
+    WHERE student_id = p_student_id AND specialist_id IS NULL AND status = 'active'
+    FOR UPDATE;
+  IF v_plan.id IS NULL OR v_plan.target_calories IS NULL THEN
+    RAISE EXCEPTION 'ajuste recusado: nenhuma dieta própria ativa com meta de calorias'
+      USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN v_plan;
+END;
+$$;
+--> statement-breakpoint
+
+-- Uma versão nova da dieta na meta nova: porções em gramas e mililitros
+-- refeitas na proporção, o carboidrato absorvendo a diferença, e a versão
+-- ativada. Quem chama já conferiu quem pode e quanto pode mudar.
+CREATE OR REPLACE FUNCTION private.retarget_own_diet(p_plan public.diet_plans, p_new_calories integer)
+RETURNS public.diet_plans
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_draft public.diet_plans := public.create_diet_plan_version(p_plan.id);
+  v_factor numeric := p_new_calories::numeric / p_plan.target_calories;
+BEGIN
+  UPDATE public.diet_meal_items SET quantity = GREATEST(5, round(quantity * v_factor / 5) * 5)
+    WHERE unit IN ('g', 'ml')
+      AND diet_meal_id IN (SELECT id FROM public.diet_meals WHERE diet_plan_id = v_draft.id);
+  UPDATE public.diet_plans
+     SET target_calories = p_new_calories,
+         target_carbs = GREATEST(0, target_carbs + round((p_new_calories - p_plan.target_calories) / 4.0))
+   WHERE id = v_draft.id;
+  RETURN public.activate_diet_plan(v_draft.id);
+END;
+$$;
+--> statement-breakpoint
+
+-- Aprova o ajuste de calorias do Praticante. Tudo ou nada.
 --
 -- A regra que escolhe o número mora no código (`weeklyRecalibration`); o banco
 -- garante o que não pode passar mesmo com o cliente adulterado: só o próprio
@@ -283,30 +340,10 @@ AS $$
 DECLARE
   v_me uuid := (SELECT auth.uid());
   v_check_in public.weekly_check_ins := private.pending_check_in(p_check_in_id);
-  v_plan public.diet_plans;
-  v_draft public.diet_plans;
-  v_delta integer;
-  v_factor numeric;
+  v_plan public.diet_plans := private.own_diet_for_adjustment(v_me);
+  v_before numeric := v_plan.target_calories;
+  v_delta integer := p_new_calories - v_plan.target_calories;
 BEGIN
-  IF EXISTS (SELECT 1 FROM public.student_specialists s
-             WHERE s.student_id = v_me AND s.status = 'active') THEN
-    RAISE EXCEPTION 'ajuste recusado: com especialista ativo, quem muda o plano é ele'
-      USING ERRCODE = 'insufficient_privilege';
-  END IF;
-  IF NOT private.has_health_consent(v_me) THEN
-    RAISE EXCEPTION 'ajuste recusado: exige o consentimento de dados de saúde vigente'
-      USING ERRCODE = 'insufficient_privilege';
-  END IF;
-
-  SELECT * INTO v_plan FROM public.diet_plans
-    WHERE student_id = v_me AND specialist_id IS NULL AND status = 'active'
-    FOR UPDATE;
-  IF v_plan.id IS NULL OR v_plan.target_calories IS NULL THEN
-    RAISE EXCEPTION 'ajuste recusado: nenhuma dieta própria ativa com meta de calorias'
-      USING ERRCODE = 'check_violation';
-  END IF;
-
-  v_delta := p_new_calories - v_plan.target_calories;
   IF v_delta = 0 OR abs(v_delta) > 200 THEN
     RAISE EXCEPTION 'ajuste de % kcal fora do passo semanal: use de 1 a 200 kcal para mais ou para menos', v_delta
       USING ERRCODE = 'invalid_parameter_value';
@@ -319,25 +356,63 @@ BEGIN
       USING ERRCODE = 'invalid_parameter_value';
   END IF;
 
-  v_draft := public.create_diet_plan_version(v_plan.id);
-  v_factor := p_new_calories::numeric / v_plan.target_calories;
-
-  UPDATE public.diet_meal_items SET quantity = GREATEST(5, round(quantity * v_factor / 5) * 5)
-    WHERE unit IN ('g', 'ml')
-      AND diet_meal_id IN (SELECT id FROM public.diet_meals WHERE diet_plan_id = v_draft.id);
-  UPDATE public.diet_plans
-     SET target_calories = p_new_calories,
-         target_carbs = GREATEST(0, target_carbs + round(v_delta / 4.0))
-   WHERE id = v_draft.id;
-
-  v_plan := public.activate_diet_plan(v_draft.id);
+  v_plan := private.retarget_own_diet(v_plan, p_new_calories);
 
   INSERT INTO public.plan_adjustments
     (student_id, check_in_id, kind, before_value, after_value, reason, source, diet_plan_id)
   VALUES
-    (v_me, v_check_in.id, 'calories', v_plan.target_calories - v_delta, p_new_calories,
-     p_reason, 'rule', v_plan.id);
+    (v_me, v_check_in.id, 'calories', v_before, p_new_calories, p_reason, 'rule', v_plan.id);
   UPDATE public.weekly_check_ins SET status = 'approved' WHERE id = v_check_in.id;
+
+  RETURN v_plan;
+END;
+$$;
+--> statement-breakpoint
+
+-- "Desfazer" (A6): no mesmo dia, a meta volta à de antes, numa versão nova da
+-- dieta, e o histórico ganha o ajuste inverso, sem apagar o original. Recusado
+-- se a dieta mudou depois do ajuste: desfazer não pode atropelar outra mudança.
+CREATE OR REPLACE FUNCTION public.undo_weekly_calorie_adjustment(p_check_in_id uuid)
+RETURNS public.diet_plans
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_me uuid := (SELECT auth.uid());
+  v_adjustment public.plan_adjustments;
+  v_plan public.diet_plans;
+BEGIN
+  SELECT a.* INTO v_adjustment
+    FROM public.plan_adjustments a
+    JOIN public.weekly_check_ins c ON c.id = a.check_in_id
+   WHERE c.id = p_check_in_id AND c.student_id = v_me AND c.status = 'approved'
+     AND c.week_start = private.current_check_in_week()
+     AND a.reason IN ('weight_above_pace', 'weight_below_pace')
+     AND (a.approved_at AT TIME ZONE 'America/Sao_Paulo')::date
+         = (now() AT TIME ZONE 'America/Sao_Paulo')::date
+   ORDER BY a.approved_at DESC
+   LIMIT 1
+   FOR UPDATE OF c;
+  IF v_adjustment.id IS NULL THEN
+    RAISE EXCEPTION 'desfazer recusado: o check-in % não tem ajuste aprovado hoje por você', p_check_in_id
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  v_plan := private.own_diet_for_adjustment(v_me);
+  IF v_plan.target_calories <> v_adjustment.after_value THEN
+    RAISE EXCEPTION 'desfazer recusado: a meta é % kcal, e o ajuste deixou % kcal', v_plan.target_calories, v_adjustment.after_value
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  v_plan := private.retarget_own_diet(v_plan, v_adjustment.before_value::integer);
+
+  INSERT INTO public.plan_adjustments
+    (student_id, check_in_id, kind, before_value, after_value, reason, source, diet_plan_id)
+  VALUES
+    (v_me, p_check_in_id, 'calories', v_adjustment.after_value, v_adjustment.before_value,
+     'undo', 'student', v_plan.id);
+  UPDATE public.weekly_check_ins SET status = 'kept' WHERE id = p_check_in_id;
 
   RETURN v_plan;
 END;
@@ -350,6 +425,10 @@ REVOKE ALL ON FUNCTION private.declared_height(uuid) FROM PUBLIC, anon, authenti
 --> statement-breakpoint
 REVOKE ALL ON FUNCTION private.pending_check_in(uuid) FROM PUBLIC, anon, authenticated;
 --> statement-breakpoint
+REVOKE ALL ON FUNCTION private.own_diet_for_adjustment(uuid) FROM PUBLIC, anon, authenticated;
+--> statement-breakpoint
+REVOKE ALL ON FUNCTION private.retarget_own_diet(public.diet_plans, integer) FROM PUBLIC, anon, authenticated;
+--> statement-breakpoint
 REVOKE ALL ON FUNCTION public.submit_weekly_check_in(public.check_in_logging, numeric) FROM PUBLIC, anon;
 --> statement-breakpoint
 GRANT EXECUTE ON FUNCTION public.submit_weekly_check_in(public.check_in_logging, numeric) TO authenticated;
@@ -361,3 +440,7 @@ GRANT EXECUTE ON FUNCTION public.keep_weekly_target(uuid) TO authenticated;
 REVOKE ALL ON FUNCTION public.apply_weekly_calorie_adjustment(uuid, integer, text) FROM PUBLIC, anon;
 --> statement-breakpoint
 GRANT EXECUTE ON FUNCTION public.apply_weekly_calorie_adjustment(uuid, integer, text) TO authenticated;
+--> statement-breakpoint
+REVOKE ALL ON FUNCTION public.undo_weekly_calorie_adjustment(uuid) FROM PUBLIC, anon;
+--> statement-breakpoint
+GRANT EXECUTE ON FUNCTION public.undo_weekly_calorie_adjustment(uuid) TO authenticated;

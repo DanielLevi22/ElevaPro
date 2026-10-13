@@ -37,7 +37,7 @@ export function WeeklyCheckInScreen() {
       await submit.mutateAsync({ logging: result.logging, weightKg: result.weightKg });
       router.replace(ROUTES.CHECKIN.RESULT);
     } catch {
-      registrarFalha('checkin.enviar');
+      registrarFalha('checkin.submit');
       showAlert({
         title: 'Não foi possível enviar',
         message: 'Suas respostas continuam aqui. Confira sua conexão e tente de novo.',

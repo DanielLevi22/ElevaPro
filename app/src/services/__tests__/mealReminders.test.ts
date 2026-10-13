@@ -10,7 +10,7 @@ jest.mock('../../../modules/exact-alarm-permission', () => ({
 const scheduled = Notifications.getAllScheduledNotificationsAsync as jest.Mock;
 const cancel = Notifications.cancelScheduledNotificationAsync as jest.Mock;
 
-const agendada = (identifier: string, data: Record<string, unknown>) => ({
+const scheduledNotification = (identifier: string, data: Record<string, unknown>) => ({
   identifier,
   content: { data },
 });
@@ -28,21 +28,21 @@ describe('os lembretes de refeição ao trocar de versão da dieta', () => {
 
   it('cancela os lembretes da versão anterior da dieta', async () => {
     scheduled.mockResolvedValue([
-      agendada('plano-antigo-almoco', { planId: 'plano-antigo', mealId: 'almoco' }),
+      scheduledNotification('plano-antigo-almoco', { planId: 'plano-antigo', mealId: 'almoco' }),
     ]);
 
     await scheduleMealNotifications('plano-novo', [
       { mealId: 'almoco', mealName: 'Almoço', mealTime: '12:30', dayOfWeek: 1 },
     ]);
 
-    const canceladas = cancel.mock.calls.map(([id]) => id);
-    if (!canceladas.includes('plano-antigo-almoco')) {
+    const cancelled = cancel.mock.calls.map(([id]) => id);
+    if (!cancelled.includes('plano-antigo-almoco')) {
       throw new Error('LEMBRETE EM DOBRO: o almoço da versão anterior da dieta seguiu agendado');
     }
   });
 
   it('não cancela o lembrete de treino, que não é da dieta', async () => {
-    scheduled.mockResolvedValue([agendada('treino-segunda', { kind: 'workout' })]);
+    scheduled.mockResolvedValue([scheduledNotification('treino-segunda', { kind: 'workout' })]);
 
     await scheduleMealNotifications('plano-novo', []);
 

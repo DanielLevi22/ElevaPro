@@ -19,6 +19,15 @@ export const CHECK_IN_LOGGING_LABEL: Record<CheckInLogging, string> = {
 };
 
 /**
+ * A frase que o especialista lê, no "Aconteceu" e no sinal do briefing.
+ *
+ * @example checkInSentence("registrou parte") // "Fez o check-in da semana: registrou parte"
+ */
+export function checkInSentence(loggingLabel: string): string {
+  return `Fez o check-in da semana: ${loggingLabel}`;
+}
+
+/**
  * Os check-ins dos alunos, mais recentes primeiro, para o "Aconteceu" do
  * especialista (#376). Só a resposta do registro: o peso do Aluno nem existe
  * (ADR-0030), e o do Praticante não tem especialista para ler.
