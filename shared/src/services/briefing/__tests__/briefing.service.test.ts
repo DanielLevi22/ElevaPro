@@ -10,7 +10,7 @@ function diasAtras(dias: number): string {
 }
 
 /**
- * As sete consultas do `Promise.all` na ordem em que `fetchBriefing` as monta.
+ * As consultas do `Promise.all` na ordem em que `fetchBriefing` as monta.
  * Nomear cada uma evita o teste virar um array de objetos anônimos onde trocar
  * duas posições passa despercebido.
  */
@@ -24,6 +24,7 @@ function respostas(opcoes: {
   totalDietas?: number;
   totalSessoesIa?: number;
   trocas?: unknown[];
+  checkIns?: unknown[];
 }) {
   return [
     { data: opcoes.vinculos },
@@ -35,6 +36,7 @@ function respostas(opcoes: {
     { data: [], count: opcoes.totalDietas ?? 0 },
     { data: [], count: opcoes.totalSessoesIa ?? 0 },
     { data: opcoes.trocas ?? [] },
+    { data: opcoes.checkIns ?? [] },
   ];
 }
 
@@ -235,6 +237,42 @@ describe("briefingService — sinais", () => {
 
     const { signals } = await createBriefingService(supabase).fetchBriefing("esp-1");
     expect(signals[0].studentName).toBe("Aluno");
+  });
+});
+
+describe("briefingService — check-in da semana", () => {
+  it("o check-in sem decisão vira sinal com a resposta do registro", async () => {
+    const { supabase } = criarSupabaseFake(
+      respostas({
+        vinculos: [{ student_id: "aluno-1", created_at: diasAtras(30) }],
+        perfis: [{ id: "aluno-1", full_name: "Marina", account_status: "active" }],
+        sessoes: [{ student_id: "aluno-1", completed_at: diasAtras(1) }],
+        checkIns: [{ student_id: "aluno-1", logging: "partial" }],
+      }),
+    );
+    const { signals } = await createBriefingService(supabase).fetchBriefing("esp-1");
+    expect(signals).toContainEqual(
+      expect.objectContaining({
+        kind: "weekly_check_in",
+        message: "Fez o check-in da semana: registrou parte.",
+      }),
+    );
+  });
+
+  /**
+   * TRAVA — o sinal é "fez o check-in", nunca o corpo: o briefing não lê peso
+   * nem medida, e a tela não tem como mostrar o que não chegou (LGPD Art. 6°, III).
+   */
+  it("lê do check-in só o aluno e a resposta, desta semana e sem decisão", async () => {
+    const { supabase, chamadas } = criarSupabaseFake(
+      respostas({ vinculos: [{ student_id: "aluno-1", created_at: diasAtras(30) }] }),
+    );
+    await createBriefingService(supabase).fetchBriefing("esp-1");
+    const consulta = chamadas.find((c) => c.tabela === "weekly_check_ins");
+    if (consulta?.select !== "student_id, logging") {
+      throw new Error(`CORPO NO BRIEFING: o check-in pediu "${consulta?.select}"`);
+    }
+    expect(consulta.filtros).toMatchObject({ status: "pending" });
   });
 });
 

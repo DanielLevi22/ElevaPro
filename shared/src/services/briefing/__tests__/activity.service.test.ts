@@ -335,6 +335,8 @@ describe("activityService — troca de exercício", () => {
       { data: [] },
       PERFIS,
       TROCA,
+      // Os check-ins da semana: a consulta sai antes dos nomes dos exercícios.
+      { data: [] },
       NOMES,
     ]);
     const itens = await createActivityService(supabase).fetchRecentActivity("espec-1");
@@ -363,6 +365,32 @@ describe("activityService — troca de exercício", () => {
         kind: "exercise_swap",
         author: "student",
         detail: "Remada curvada → Remada com halteres · Só no treino de hoje",
+      }),
+    ]);
+  });
+});
+
+/** O check-in da semana chega ao "Aconteceu" do especialista (#376), só com a resposta. */
+describe("activityService — check-in da semana", () => {
+  it("aparece no Aconteceu do especialista", async () => {
+    const { supabase } = criarSupabaseFake([
+      VINCULOS,
+      { data: [] },
+      { data: [] },
+      PERFIS,
+      { data: [] },
+      {
+        data: [
+          { id: "c1", student_id: "aluno-1", created_at: "2026-10-12T10:00:00Z", logging: "all" },
+        ],
+      },
+    ]);
+    const itens = await createActivityService(supabase).fetchRecentActivity("espec-1");
+    expect(itens).toEqual([
+      expect.objectContaining({
+        kind: "weekly_check_in",
+        studentName: "Marina Costa",
+        title: "Fez o check-in da semana: registrou tudo",
       }),
     ]);
   });

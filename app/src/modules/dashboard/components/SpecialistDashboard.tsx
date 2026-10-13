@@ -23,6 +23,7 @@ const SIGNAL_ICON: Record<BriefingSignalKind, keyof typeof Ionicons.glyphMap> = 
   pending_invite: 'mail-unread-outline',
   anamnesis_ready: 'sparkles-outline',
   exercise_swap: 'swap-horizontal-outline',
+  weekly_check_in: 'clipboard-outline',
 };
 
 /** O vermelho do kit para risco, a marca para boa notícia, o âmbar para o resto. */

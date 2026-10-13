@@ -4,7 +4,9 @@ export type BriefingSignalKind =
   | "pending_invite"
   | "anamnesis_ready"
   /** Trocou exercício de treino prescrito nos últimos dias (#365, 6d). */
-  | "exercise_swap";
+  | "exercise_swap"
+  /** Fez o check-in da semana, e o especialista decide se o plano muda (#376). */
+  | "weekly_check_in";
 
 export type BriefingTone = "danger" | "warning" | "success";
 

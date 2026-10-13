@@ -5,6 +5,8 @@ import type {
   BriefingSignalKind,
   BriefingStats,
 } from "../../types/briefing.types";
+import { currentWeekStart } from "../nutrition/weeklyCheckIn.service";
+import { CHECK_IN_LOGGING_LABEL } from "./checkInActivity";
 
 /**
  * Dias sem sessão concluída que caracterizam risco de abandono.
@@ -32,6 +34,7 @@ const URGENCY: Record<BriefingSignalKind, number> = {
   pending_invite: 1,
   anamnesis_ready: 2,
   exercise_swap: 3,
+  weekly_check_in: 4,
 };
 
 /** Quantos dias para trás uma troca de exercício ainda vira sinal. */
@@ -119,53 +122,71 @@ export const createBriefingService = (supabase: SupabaseClient) => ({
 
     // As sete buscas são independentes. Em série, a tela espera sete idas ao
     // banco antes de pintar o primeiro número.
-    const [profiles, anamneses, periodizations, sessions, templates, diets, aiSessions, swaps] =
-      await Promise.all([
-        supabase.from("profiles").select("id, full_name, account_status").in("id", studentIds),
+    const [
+      profiles,
+      anamneses,
+      periodizations,
+      sessions,
+      templates,
+      diets,
+      aiSessions,
+      swaps,
+      checkIns,
+    ] = await Promise.all([
+      supabase.from("profiles").select("id, full_name, account_status").in("id", studentIds),
 
-        // Só `completed_at`. `responses` é o conteúdo da anamnese e não entra
-        // aqui em hipótese nenhuma.
-        supabase
-          .from("student_anamnesis")
-          .select("student_id, completed_at")
-          .in("student_id", studentIds)
-          .not("completed_at", "is", null),
+      // Só `completed_at`. `responses` é o conteúdo da anamnese e não entra
+      // aqui em hipótese nenhuma.
+      supabase
+        .from("student_anamnesis")
+        .select("student_id, completed_at")
+        .in("student_id", studentIds)
+        .not("completed_at", "is", null),
 
-        supabase
-          .from("training_periodizations")
-          .select("student_id")
-          .in("student_id", studentIds)
-          .eq("status", "active"),
+      supabase
+        .from("training_periodizations")
+        .select("student_id")
+        .in("student_id", studentIds)
+        .eq("status", "active"),
 
-        supabase
-          .from("workout_sessions")
-          .select("student_id, completed_at")
-          .in("student_id", studentIds)
-          .not("completed_at", "is", null)
-          .gte("completed_at", isoDaysAgo(SESSION_LOOKBACK_DAYS)),
+      supabase
+        .from("workout_sessions")
+        .select("student_id, completed_at")
+        .in("student_id", studentIds)
+        .not("completed_at", "is", null)
+        .gte("completed_at", isoDaysAgo(SESSION_LOOKBACK_DAYS)),
 
-        supabase
-          .from("workouts")
-          .select("id", { count: "exact", head: true })
-          .eq("specialist_id", specialistId),
+      supabase
+        .from("workouts")
+        .select("id", { count: "exact", head: true })
+        .eq("specialist_id", specialistId),
 
-        supabase
-          .from("diet_plans")
-          .select("id", { count: "exact", head: true })
-          .eq("specialist_id", specialistId)
-          .eq("status", "active"),
+      supabase
+        .from("diet_plans")
+        .select("id", { count: "exact", head: true })
+        .eq("specialist_id", specialistId)
+        .eq("status", "active"),
 
-        supabase
-          .from("ai_chat_sessions")
-          .select("id", { count: "exact", head: true })
-          .eq("specialist_id", specialistId),
+      supabase
+        .from("ai_chat_sessions")
+        .select("id", { count: "exact", head: true })
+        .eq("specialist_id", specialistId),
 
-        supabase
-          .from("exercise_swaps")
-          .select("student_id")
-          .in("student_id", studentIds)
-          .gte("swapped_at", isoDaysAgo(SWAP_SIGNAL_DAYS)),
-      ]);
+      supabase
+        .from("exercise_swaps")
+        .select("student_id")
+        .in("student_id", studentIds)
+        .gte("swapped_at", isoDaysAgo(SWAP_SIGNAL_DAYS)),
+
+      // Só a resposta do registro, e só o check-in desta semana ainda sem
+      // decisão: é o que o especialista tem de revisar (#376).
+      supabase
+        .from("weekly_check_ins")
+        .select("student_id, logging")
+        .in("student_id", studentIds)
+        .eq("week_start", currentWeekStart())
+        .eq("status", "pending"),
+    ]);
 
     const profileRows = (profiles.data ?? []) as ProfileRow[];
     const nameById = new Map(profileRows.map((p) => [p.id, p.full_name?.trim() || "Aluno"]));
@@ -187,6 +208,15 @@ export const createBriefingService = (supabase: SupabaseClient) => ({
     for (const swap of (swaps.data ?? []) as { student_id: string }[]) {
       swapCount.set(swap.student_id, (swapCount.get(swap.student_id) ?? 0) + 1);
     }
+
+    const checkInOf = new Map(
+      (
+        (checkIns.data ?? []) as {
+          student_id: string;
+          logging: keyof typeof CHECK_IN_LOGGING_LABEL;
+        }[]
+      ).map((row) => [row.student_id, CHECK_IN_LOGGING_LABEL[row.logging]]),
+    );
 
     const signals: BriefingSignal[] = [];
 
@@ -237,6 +267,18 @@ export const createBriefingService = (supabase: SupabaseClient) => ({
             swapped === 1
               ? `Trocou 1 exercício nos últimos ${SWAP_SIGNAL_DAYS} dias.`
               : `Trocou ${swapped} exercícios nos últimos ${SWAP_SIGNAL_DAYS} dias.`,
+          days: 0,
+        });
+      }
+
+      const checkIn = checkInOf.get(studentId);
+      if (checkIn) {
+        signals.push({
+          studentId,
+          studentName,
+          kind: "weekly_check_in",
+          tone: "warning",
+          message: `Fez o check-in da semana: ${checkIn}.`,
           days: 0,
         });
       }

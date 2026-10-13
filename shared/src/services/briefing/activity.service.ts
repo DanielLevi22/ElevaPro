@@ -7,6 +7,7 @@ import type {
   RecentActivityItem,
   WorkoutSessionRow,
 } from "../../types/activity.types";
+import { fetchCheckInActivity } from "./checkInActivity";
 import { fetchSwapActivity } from "./exerciseSwapActivity";
 
 /**
@@ -178,7 +179,7 @@ export const createActivityService = (supabase: SupabaseClient) => ({
 
     // Independentes: em série, a tela espera três idas ao banco antes de pintar
     // a primeira linha. O bloco anterior fazia exatamente isso.
-    const [sessoes, refeicoes, perfis, trocas] = await Promise.all([
+    const [sessoes, refeicoes, perfis, trocas, checkIns] = await Promise.all([
       supabase
         .from("workout_sessions")
         .select(
@@ -200,6 +201,8 @@ export const createActivityService = (supabase: SupabaseClient) => ({
       supabase.from("profiles").select("id, full_name").in("id", studentIds),
 
       fetchSwapActivity(supabase, studentIds, RECENT_LIMIT),
+
+      fetchCheckInActivity(supabase, studentIds, RECENT_LIMIT),
     ]);
 
     if (sessoes.error) throw sessoes.error;
@@ -255,6 +258,18 @@ export const createActivityService = (supabase: SupabaseClient) => ({
         title: `Trocou ${troca.summary}`,
         pse: null,
         at: troca.at,
+      });
+    }
+
+    for (const checkIn of checkIns) {
+      itens.push({
+        id: `check-in-${checkIn.id}`,
+        studentId: checkIn.studentId,
+        studentName: nomes.get(checkIn.studentId) ?? "Aluno",
+        kind: "weekly_check_in",
+        title: `Fez o check-in da semana: ${checkIn.loggingLabel}`,
+        pse: null,
+        at: checkIn.at,
       });
     }
 
