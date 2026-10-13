@@ -112,6 +112,13 @@ describe("recalibrar a meta da semana", () => {
     expect(result.guard).toBe("weekly_rate_cap");
   });
 
+  /** Regressão: com a meta em 3.231, arredondar a nova para 10 dava "−151 kcal" na tela. */
+  it("o passo é sempre de 150 kcal, mesmo com meta que não é múltiplo de 10", () => {
+    const result = recalibrateWeeklyTarget({ ...CUT, targetCalories: 2151, weightKg: 77.9 });
+    expect(result.deltaCalories).toBe(-150);
+    expect(result.proposedCalories).toBe(2001);
+  });
+
   it("devolve a variação esperada e a real para a tela explicar o porquê", () => {
     const result = recalibrateWeeklyTarget({ ...CUT, weightKg: 77.9 });
     expect(result.expectedChangeKg).toBeCloseTo(-0.5, 1);

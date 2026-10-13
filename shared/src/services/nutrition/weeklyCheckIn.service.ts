@@ -163,12 +163,17 @@ export type WeeklyCheckInService = ReturnType<typeof createWeeklyCheckInService>
  * @example currentWeekStart(new Date("2026-10-11T23:00:00-03:00")) // "2026-10-05"
  */
 export function currentWeekStart(now: Date = new Date()): string {
-  const brazil = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-  const sinceMonday = (brazil.getDay() + 6) % 7;
-  brazil.setDate(brazil.getDate() - sinceMonday);
-  const pad = (value: number) => String(value).padStart(2, "0");
-  return `${brazil.getFullYear()}-${pad(brazil.getMonth() + 1)}-${pad(brazil.getDate())}`;
+  // Conta, e não `new Date(now.toLocaleString(...))`: o Hermes não lê data em
+  // texto fora do ISO, a semana virava "NaN-NaN-NaN" e o cartão sumia no
+  // aparelho com os testes passando no Node. O Brasil está em UTC−3 fixo
+  // desde 2019, sem horário de verão.
+  const brazil = new Date(now.getTime() - BRAZIL_OFFSET_MS);
+  const sinceMonday = (brazil.getUTCDay() + 6) % 7;
+  brazil.setUTCDate(brazil.getUTCDate() - sinceMonday);
+  return brazil.toISOString().slice(0, 10);
 }
+
+const BRAZIL_OFFSET_MS = 3 * 60 * 60 * 1000;
 
 async function latestCheckIn(supabase: SupabaseClient, studentId: string) {
   const { data, error } = await supabase

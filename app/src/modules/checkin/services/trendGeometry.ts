@@ -2,7 +2,7 @@ import type { WeightPoint } from '@elevapro/shared';
 
 export interface TrendGeometry {
   points: { key: string; x: number; y: number }[];
-  /** A média móvel de três pesagens: o peso de um dia oscila com água. */
+  /** A média móvel de três pesagens: o peso de um dia oscila com água. Com menos, liga os pontos. */
   trend: string | null;
   last: { x: number; y: number } | null;
   /** A faixa do ritmo da meta a partir da primeira pesagem. */
@@ -70,7 +70,11 @@ function daysBetween(from: string, to: string): number {
   return Math.round((Date.parse(to) - Date.parse(from)) / DAY_MS);
 }
 
+/** Com menos de três pesagens não há o que suavizar: a média juntava as duas num ponto só. */
+const MIN_FOR_AVERAGE = 3;
+
 function movingAverage(values: number[]): number[] {
+  if (values.length < MIN_FOR_AVERAGE) return values;
   return values.map((_, i) => {
     const window = values.slice(Math.max(0, i - 1), i + 2);
     return window.reduce((sum, value) => sum + value, 0) / window.length;

@@ -87,7 +87,9 @@ function stepTowardPace(
   verdict: "weight_above_pace" | "weight_below_pace",
 ): Pick<Recalibration, "verdict" | "proposedCalories" | "deltaCalories" | "guard"> {
   const step = verdict === "weight_above_pace" ? -WEEKLY_STEP_KCAL : WEEKLY_STEP_KCAL;
-  const stepped = Math.round((input.targetCalories + step) / ROUNDING) * ROUNDING;
+  // O passo não é arredondado: com a meta em 3.231, arredondar a nova para 10
+  // mostrava "−151 kcal". Só o piso arredonda, e para cima.
+  const stepped = input.targetCalories + step;
   const floor = lowestAllowed(input);
   // Arredondar o piso para cima: para baixo, a meta furaria a trava por 1 a 9 kcal.
   const proposed = Math.max(stepped, Math.ceil(floor.value / ROUNDING) * ROUNDING);

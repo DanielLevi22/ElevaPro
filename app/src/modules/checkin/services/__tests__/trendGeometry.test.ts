@@ -21,6 +21,13 @@ describe('o gráfico da tendência do peso', () => {
     expect(geometry.trend).toMatch(/^M/);
   });
 
+  /** Regressão: com duas pesagens a média juntava as duas e a linha ficava reta, longe dos pontos. */
+  it('com duas pesagens, a tendência liga os dois pontos', () => {
+    const geometry = trendGeometry(WEEKS.slice(0, 2), -0.5, BOX);
+    const [first, last] = geometry.points.sort((a, b) => a.x - b.x);
+    expect(geometry.trend).toBe(`M${first.x} ${first.y} L${last.x} ${last.y}`);
+  });
+
   it('com uma pesagem só, não inventa tendência nem faixa', () => {
     const geometry = trendGeometry(WEEKS.slice(0, 1), -0.5, BOX);
     expect(geometry.trend).toBeNull();
