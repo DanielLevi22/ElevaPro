@@ -3,7 +3,7 @@
 - [ ] `candidate-48d7138022f31599` — Prato: Arroz sete grãos cozido + Pescada grelhada + Couve refogada
 - [x] `candidate-48da79ed3d488941` — Prato: Cuscuz de milho + Carne moída (patinho) + Tomate
 - [ ] `candidate-48e2dd05393e4b1e` — Prato: Batata inglesa cozida + Ovo de codorna cozido + Alface
-- [ ] `candidate-48e5c97399a3d198` — Prato: Arroz integral cozido + Atum em água (lata) + Beterraba cozida
+- [x] `candidate-48e5c97399a3d198` — Prato: Arroz integral cozido + Atum em água (lata) + Beterraba cozida
 - [ ] `candidate-48ebd6aca5a1c68f` — Prato: Inhame cozido + Ovo inteiro cozido + Rúcula
 - [ ] `candidate-48ec0e828d27123b` — Prato: Cará cozido + Frango (coxa sem pele assada) + Vagem cozida
 - [ ] `candidate-48ec31279cfa3d06` — Prato: Inhame cozido + Frango (sobrecoxa assada) + Rúcula
