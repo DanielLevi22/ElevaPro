@@ -4,18 +4,28 @@ import {
   type BlockChanges,
   type CurrentBlockSummary,
   compareBlocks,
+  createBlockService,
   type NextBlockPending,
   type OnboardingPlanTarget,
 } from "@elevapro/shared";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { generatePractitionerPlan } from "./generatePlan";
+
+const blocks = createBlockService(supabaseAdmin);
+
 import { readPlanChoices } from "./planChoices";
 
 export type NextBlockOutcome =
   | { ok: true; pending: NextBlockPending }
   | {
       ok: false;
-      reason: "no_block" | "block_running" | "incomplete_answers" | "under_age" | "plan_rejected";
+      reason:
+        | "no_block"
+        | "block_running"
+        | "level_not_available"
+        | "incomplete_answers"
+        | "under_age"
+        | "plan_rejected";
     };
 
 interface BlockRow {
@@ -54,11 +64,17 @@ export async function prepareNextBlock(
   if (!block) return { ok: false, reason: "no_block" };
   if (today < block.end_date) return { ok: false, reason: "block_running" };
 
+  // O app só pergunta a quem pode; o servidor confere de novo, porque o pedido
+  // pode chegar sem passar pela tela.
+  if (changes.level && !(await blocks.levelUpAvailable(studentId, today))) {
+    return { ok: false, reason: "level_not_available" };
+  }
   const diet = await activeDietTarget(studentId);
   const keepsTarget = diet && !changes.main_goal && !changes.training_days;
   const outcome = await generatePractitionerPlan(studentId, {
     answersOverride: answersWithChanges({}, changes),
     targetOverride: keepsTarget ? diet.target : undefined,
+    trackOverride: changes.level,
   });
   if (!outcome.ok) return outcome;
 
@@ -66,6 +82,7 @@ export async function prepareNextBlock(
     trainingDays: await answeredTrainingDays(studentId),
     exerciseNames: exerciseNamesOf(block),
     calories: diet?.target.calories ?? null,
+    level: await currentTrack(studentId),
   };
   return {
     ok: true,
@@ -77,6 +94,17 @@ export async function prepareNextBlock(
       changes,
     },
   };
+}
+
+/** A trilha de hoje, como a geração lê: sem trilha gravada, iniciante. */
+async function currentTrack(studentId: string): Promise<string> {
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .select("persona_track")
+    .eq("id", studentId)
+    .maybeSingle();
+  if (error) throw new Error(`trilha de ${studentId} não foi lida: ${error.message}`);
+  return (data as { persona_track: string | null } | null)?.persona_track ?? "beginner";
 }
 
 async function ownActiveBlock(studentId: string): Promise<BlockRow | null> {

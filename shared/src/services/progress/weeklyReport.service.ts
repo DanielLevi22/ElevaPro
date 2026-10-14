@@ -48,7 +48,7 @@ export const createWeeklyReportService = (supabase: SupabaseClient) => {
         progress.listCompletedSets(studentId, addDays(weekStart, -RECORD_LOOKBACK_DAYS)),
         measurements.listMeasurements(studentId),
         countPrescribedWorkouts(supabase, studentId),
-        weekAdjustments(supabase, studentId, weekStart, weekEnd),
+        planAdjustmentsBetween(supabase, studentId, weekStart, addDays(weekEnd, 1)),
       ]);
       const days = dailyActivities({
         from: addDays(weekStart, -STREAK_LOOKBACK_DAYS),
@@ -70,15 +70,20 @@ export const createWeeklyReportService = (supabase: SupabaseClient) => {
 
 export type WeeklyReportService = ReturnType<typeof createWeeklyReportService>;
 
-/** Os ajustes de meta aprovados e as trocas que mudaram o plano, dentro da semana. */
-async function weekAdjustments(
+/**
+ * Os ajustes de meta aprovados e as trocas que mudaram o plano entre duas
+ * datas (a segunda fora): a semana do relatório ou o bloco inteiro.
+ *
+ * @example const ajustes = await planAdjustmentsBetween(supabase, aluno.id, "2026-10-05", "2026-10-12");
+ */
+export async function planAdjustmentsBetween(
   supabase: SupabaseClient,
   studentId: string,
-  weekStart: string,
-  weekEnd: string,
+  fromDate: string,
+  untilDate: string,
 ): Promise<WeekAdjustment[]> {
-  const from = brazilDayStart(weekStart);
-  const until = brazilDayStart(addDays(weekEnd, 1));
+  const from = brazilDayStart(fromDate);
+  const until = brazilDayStart(untilDate);
   const [calories, swaps] = await Promise.all([
     supabase
       .from("plan_adjustments")

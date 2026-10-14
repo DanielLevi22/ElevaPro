@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { OnboardingPlanPending } from "../../../types/onboardingPlan.types";
-import { answersWithChanges, compareBlocks, readBlockChanges } from "..";
+import { answersWithChanges, canLevelUp, compareBlocks, readBlockChanges } from "..";
 
 describe("as mudanças da reavaliação (B2)", () => {
   it("sem mudança nenhuma, o bloco novo sai das respostas de antes", () => {
@@ -20,6 +20,7 @@ describe("as mudanças da reavaliação (B2)", () => {
     expect(readBlockChanges({ training_days: 4, injuries: ["dói tudo"] })).toBeNull();
     expect(readBlockChanges({ training_days: 9 })).toBeNull();
     expect(readBlockChanges({ main_goal: "Ficar monstro" })).toBeNull();
+    expect(readBlockChanges({ level: "advanced" })).toBeNull();
     expect(readBlockChanges([])).toBeNull();
   });
 
@@ -60,12 +61,18 @@ describe("o que muda no próximo bloco (B5)", () => {
     },
     target: { calories: 1950, protein: 0, carbs: 0, fat: 0, guards: [] },
     trainingDays: 2,
+    level: "intermediate",
   } as unknown as OnboardingPlanPending;
 
   it("compara os dias escolhidos, os exercícios novos e a meta", () => {
     expect(
       compareBlocks(
-        { trainingDays: 3, exerciseNames: ["supino reto", "Remada"], calories: 2000 },
+        {
+          trainingDays: 3,
+          exerciseNames: ["supino reto", "Remada"],
+          calories: 2000,
+          level: "beginner",
+        },
         next,
       ),
     ).toEqual({
@@ -73,6 +80,23 @@ describe("o que muda no próximo bloco (B5)", () => {
       newExercises: ["Leg press", "Puxada frontal"],
       keptExercises: 1,
       calories: { before: 2000, after: 1950 },
+      level: { before: "beginner", after: "intermediate" },
     });
+  });
+});
+
+describe("subir de nível (A7)", () => {
+  const base = { track: "beginner", done: 26, plannedPerWeek: 4, weeksWithPlan: 8 };
+
+  it("8 semanas com 80% dos treinos: iniciante ou voltando recebe a proposta", () => {
+    expect(canLevelUp(base)).toBe(true);
+    expect(canLevelUp({ ...base, track: "returning" })).toBe(true);
+  });
+
+  it("menos de 80%, menos de 8 semanas, ou já intermediário: nada", () => {
+    expect(canLevelUp({ ...base, done: 25 })).toBe(false);
+    expect(canLevelUp({ ...base, weeksWithPlan: 4 })).toBe(false);
+    expect(canLevelUp({ ...base, track: "intermediate" })).toBe(false);
+    expect(canLevelUp({ ...base, plannedPerWeek: null })).toBe(false);
   });
 });

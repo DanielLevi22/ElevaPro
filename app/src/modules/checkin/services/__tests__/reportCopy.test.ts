@@ -1,11 +1,5 @@
-import type { WeeklyReport } from '@elevapro/shared';
-import {
-  adjustmentLine,
-  recordLine,
-  reportHeadline,
-  reportNumbers,
-  weekRange,
-} from '../reportCopy';
+import { shortDateRange, type WeeklyReport } from '@elevapro/shared';
+import { adjustmentLine, recordLine, reportHeadline, reportNumbers } from '../reportCopy';
 
 const report = (extra: Partial<WeeklyReport> = {}): WeeklyReport => ({
   weekStart: '2026-10-05',
@@ -22,8 +16,8 @@ const report = (extra: Partial<WeeklyReport> = {}): WeeklyReport => ({
 
 describe('o texto do relatório da semana', () => {
   it('a semana que vira o mês leva o mês dos dois lados', () => {
-    expect(weekRange('2026-09-28', '2026-10-04')).toBe('28 set a 4 out');
-    expect(weekRange('2026-10-05', '2026-10-11')).toBe('5 a 11 out');
+    expect(shortDateRange('2026-09-28', '2026-10-04')).toBe('28 set a 4 out');
+    expect(shortDateRange('2026-10-05', '2026-10-11')).toBe('5 a 11 out');
   });
 
   it('semana completa conta os exercícios em que ficou mais forte', () => {

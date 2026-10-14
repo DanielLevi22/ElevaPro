@@ -1,5 +1,8 @@
 import {
+  type ActiveBlock,
   type BlockChoices,
+  type BlockReport,
+  createBlockReportService,
   createBlockService,
   createMeasurementService,
   type DeclaredMeasurementInput,
@@ -7,11 +10,29 @@ import {
 import { supabase } from '@elevapro/supabase';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { avisandoSeFalhar } from '@/lib/registro';
+import { localDateKey } from '@/services/healthSync';
 import { approveNextBlock, requestNextBlock } from '../services/nextBlockService';
 import { useReviewStore } from '../store/reviewStore';
 
 const blocks = createBlockService(supabase);
 const measurements = createMeasurementService(supabase);
+const reports = createBlockReportService(supabase);
+
+/**
+ * O relatório do bloco que acaba (B4), sob a sessão do aluno.
+ *
+ * @example const { data: relatorio } = useBlockReport(user.id, bloco);
+ */
+export function useBlockReport(studentId: string | null, block: ActiveBlock | null) {
+  return useQuery<BlockReport>({
+    queryKey: ['block-report', studentId, block?.id],
+    enabled: Boolean(studentId && block),
+    queryFn: () =>
+      avisandoSeFalhar('block.read_report', () =>
+        reports.fetchBlockReport(studentId as string, block as ActiveBlock)
+      ),
+  });
+}
 
 /**
  * O que a pessoa respondeu sobre objetivo, dias, local e lesão (B2).
@@ -24,6 +45,22 @@ export function useBlockChoices(studentId: string | null) {
     enabled: Boolean(studentId),
     queryFn: () =>
       avisandoSeFalhar('block.read_choices', () => blocks.currentChoices(studentId as string)),
+  });
+}
+
+/**
+ * Se a pessoa já pode subir para intermediário (A7): só então a B2 pergunta.
+ *
+ * @example const { data: podeSubir } = useLevelUpAvailable(user.id);
+ */
+export function useLevelUpAvailable(studentId: string | null) {
+  return useQuery({
+    queryKey: ['level-up-available', studentId],
+    enabled: Boolean(studentId),
+    queryFn: () =>
+      avisandoSeFalhar('block.read_level_up', () =>
+        blocks.levelUpAvailable(studentId as string, localDateKey())
+      ),
   });
 }
 

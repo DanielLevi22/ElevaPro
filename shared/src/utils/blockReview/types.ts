@@ -12,6 +12,8 @@ export interface BlockChanges {
   gym_type?: TrainingPlace;
   /** As regiões com dor ou lesão hoje; vazio é "nenhuma". */
   injuries?: InjuryRegion[];
+  /** "Quer passar para intermediário?" respondido com sim (A7). */
+  level?: "intermediate";
 }
 
 /** O bloco que acaba, no que a B5 compara. */
@@ -20,6 +22,8 @@ export interface CurrentBlockSummary {
   exerciseNames: string[];
   /** Nulo sem dieta ativa. */
   calories: number | null;
+  /** A trilha de hoje: beginner, returning, intermediate, advanced. */
+  level: string;
 }
 
 /** O "antes → depois" da B5. */
@@ -30,6 +34,8 @@ export interface BlockComparison {
   /** Quantos exercícios do bloco anterior continuam. */
   keptExercises: number;
   calories: { before: number | null; after: number | null };
+  /** O nível antes e depois, quando a pessoa aceitou subir. */
+  level: { before: string; after: string } | null;
 }
 
 /** O próximo bloco que espera "Aprovar" (ADR-0020): nada é gravado antes disso. */

@@ -27,5 +27,6 @@ export function compareBlocks(
     newExercises: nextNames.filter((name) => !before.has(key(name))),
     keptExercises: nextNames.filter((name) => before.has(key(name))).length,
     calories: { before: current.calories, after: next.target?.calories ?? null },
+    level: current.level === next.level ? null : { before: current.level, after: next.level },
   };
 }

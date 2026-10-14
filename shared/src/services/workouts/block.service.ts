@@ -2,8 +2,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { type InjuryRegion, MAIN_GOALS, type MainGoal } from "../../data/anamnesisAdaptive";
 import { achatarRespostas } from "../../utils/anamnese";
 import type { BlockDates } from "../../utils/blockCycle";
+import { canLevelUp, LEVEL_UP_WEEKS } from "../../utils/blockReview";
+import { addDays, daysBetween } from "../../utils/dateOnly";
 import { DEFAULT_TRAINING_DAYS } from "../../utils/practitionerDietTarget";
 import { TRAINING_PLACES, type TrainingPlace } from "../../utils/trainingPlace";
+import { countPrescribedWorkouts } from "../adherence/prescribedWorkouts";
 
 /** O bloco ativo do próprio Praticante, com as fases: o treino sabe se é dele. */
 export interface ActiveBlock extends BlockDates {
@@ -91,6 +94,43 @@ export const createBlockService = (supabase: SupabaseClient) => ({
         : TRAINING_PLACES.fullGym,
       injuries: Array.isArray(answers.injuries) ? (answers.injuries as InjuryRegion[]) : [],
     };
+  },
+
+  /**
+   * Se a pessoa já pode subir para intermediário (A7): o app pergunta, e o
+   * servidor confere de novo antes de montar o bloco com o nível novo.
+   *
+   * @example if (await blocks.levelUpAvailable(user.id, "2026-10-13")) perguntar();
+   */
+  levelUpAvailable: async (studentId: string, today: string): Promise<boolean> => {
+    const since = addDays(today, -LEVEL_UP_WEEKS * 7);
+    const [profile, firstBlock, sessions, plannedPerWeek] = await Promise.all([
+      supabase.from("profiles").select("persona_track").eq("id", studentId).maybeSingle(),
+      supabase
+        .from("training_periodizations")
+        .select("start_date")
+        .eq("student_id", studentId)
+        .is("specialist_id", null)
+        .order("start_date", { ascending: true })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("workout_sessions")
+        .select("id", { count: "exact", head: true })
+        .eq("student_id", studentId)
+        .not("completed_at", "is", null)
+        .or("session_type.is.null,session_type.neq.cardio")
+        .gte("completed_at", since),
+      countPrescribedWorkouts(supabase, studentId),
+    ]);
+    for (const result of [profile, firstBlock, sessions]) if (result.error) throw result.error;
+    const start = (firstBlock.data as { start_date: string } | null)?.start_date ?? today;
+    return canLevelUp({
+      track: (profile.data as { persona_track: string | null } | null)?.persona_track ?? null,
+      done: sessions.count ?? 0,
+      plannedPerWeek,
+      weeksWithPlan: Math.floor(daysBetween(start, today) / 7),
+    });
   },
 });
 

@@ -89,6 +89,7 @@ export const ROUTES = {
     MEASURES: '/block/measures',
     CHANGES: '/block/changes',
     BUILDING: '/block/building',
+    REPORT: '/block/report',
     NEXT: '/block/next',
   },
 

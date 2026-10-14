@@ -13,6 +13,7 @@ export const maxDuration = 60;
 const FAILURE_STATUS = {
   no_block: 409,
   block_running: 409,
+  level_not_available: 409,
   incomplete_answers: 409,
   under_age: 403,
   plan_rejected: 502,

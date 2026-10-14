@@ -1,4 +1,8 @@
-import { answersWithChanges, type NextBlockPending } from "@elevapro/shared";
+import {
+  answersWithChanges,
+  createAdaptiveAnamnesisService,
+  type NextBlockPending,
+} from "@elevapro/shared";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { StartingLoads } from "../workoutPersistence";
 import { trainingPlanName } from "./planNames";
@@ -43,6 +47,12 @@ export async function saveNextBlock(
   const dietPlanId = next.plan.target ? await saveDiet(ctx, next.plan) : null;
   if (Object.keys(next.changes).length > 0) {
     await saveAnswers(ctx, answersWithChanges({}, next.changes));
+  }
+  if (next.changes.level) {
+    await createAdaptiveAnamnesisService(ctx.titular).savePersonaTrack(
+      ctx.studentId,
+      next.changes.level,
+    );
   }
   await finishPreviousTraining(ctx.studentId, periodizationId, "block_completed");
   if (dietPlanId) await markEndedDiet(previousDietId, "block_completed");

@@ -1,5 +1,6 @@
 // O ciclo do bloco do Praticante (#376): a descarga da semana 4 e o fim do bloco.
 export { BlockCard } from './components/BlockCard';
+export { BlockReportScreen } from './screens/BlockReportScreen';
 export { BuildingScreen } from './screens/BuildingScreen';
 export { ChangesScreen } from './screens/ChangesScreen';
 export { DeloadScreen } from './screens/DeloadScreen';

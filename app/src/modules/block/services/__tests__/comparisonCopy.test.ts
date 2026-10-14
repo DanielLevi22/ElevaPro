@@ -5,6 +5,7 @@ const comparison = {
   newExercises: ['Leg press', 'Puxada frontal', 'Supino reto', 'Remada baixa'],
   keptExercises: 2,
   calories: { before: 2000, after: 1950 },
+  level: null,
 };
 
 describe('o que muda no próximo bloco (B5)', () => {
@@ -33,6 +34,14 @@ describe('o que muda no próximo bloco (B5)', () => {
     });
     expect(rows.map((row) => row.title)).toEqual(['Dias por semana', 'Exercícios novos']);
     expect(rows[0].badge).toBe('igual');
+  });
+
+  it('quem aceitou subir de nível vê a mudança em primeiro lugar', () => {
+    const rows = comparisonRows({
+      ...comparison,
+      level: { before: 'beginner', after: 'intermediate' },
+    });
+    expect(rows[0]).toMatchObject({ title: 'Nível', before: 'Iniciante', after: 'Intermediário' });
   });
 
   it('diz o que continua, para o bloco novo não parecer recomeço', () => {

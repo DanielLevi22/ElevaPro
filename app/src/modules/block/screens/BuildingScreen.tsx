@@ -37,7 +37,7 @@ export function BuildingScreen() {
     if (asked.current) return;
     asked.current = true;
     build.mutate(changes, {
-      onSuccess: () => router.replace(ROUTES.BLOCK.NEXT),
+      onSuccess: () => router.replace(ROUTES.BLOCK.REPORT),
       onError: () => registrarFalha('block.build_next'),
     });
   }, [build, changes, router]);

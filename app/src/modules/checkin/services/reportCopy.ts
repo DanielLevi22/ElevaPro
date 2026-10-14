@@ -3,7 +3,7 @@ import {
   formatarCarga,
   formatarDecimal,
   type LoadRecord,
-  shortMonthOf,
+  shortDateRange,
   type WeekAdjustment,
   type WeeklyReport,
 } from '@elevapro/shared';
@@ -29,25 +29,13 @@ export interface ReportLine {
 }
 
 /**
- * "5 a 11 out", e o mês dos dois lados quando a semana vira o mês.
- *
- * @example weekRange("2026-09-28", "2026-10-04") // "28 set a 4 out"
- */
-export function weekRange(start: string, end: string): string {
-  const day = (date: string) => String(Number(date.slice(8, 10)));
-  const sameMonth = start.slice(5, 7) === end.slice(5, 7);
-  const from = sameMonth ? day(start) : `${day(start)} ${shortMonthOf(start)}`;
-  return `${from} a ${day(end)} ${shortMonthOf(end)}`;
-}
-
-/**
  * O título do relatório pelo tom da semana. A semana difícil não leva bronca
  * (R1a): diz que acontece, e só.
  *
  * @example reportHeadline(report, 'Marina').title // "Semana completa, Marina"
  */
 export function reportHeadline(report: WeeklyReport, name: string): ReportHeadline {
-  const eyebrow = weekRange(report.weekStart, report.weekEnd);
+  const eyebrow = shortDateRange(report.weekStart, report.weekEnd);
   const records = report.records.length;
   switch (report.tone) {
     case 'complete':

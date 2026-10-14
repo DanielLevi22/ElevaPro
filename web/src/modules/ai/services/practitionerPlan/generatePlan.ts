@@ -33,6 +33,8 @@ export interface GenerationOptions {
   keepWorkouts?: PractitionerPlanProposal["workouts"];
   /** Marca a versão como estimativa da IA ("Mais barato", "Mais rápido"). */
   estimate?: "cheaper" | "faster";
+  /** O nível desta geração: o próximo bloco de quem aceitou subir (#376, A7). */
+  trackOverride?: Track;
 }
 
 export type GenerationOutcome =
@@ -124,7 +126,7 @@ async function prepareGeneration(
     generation: {
       answers,
       bodyFatPct: loaded.bodyFatPct,
-      track: loaded.track,
+      track: options.trackOverride ?? loaded.track,
       choices: readPlanChoices(answers),
       scope,
       goal,

@@ -6,16 +6,18 @@ import {
 } from '@elevapro/shared';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useAuthStore } from '@/auth';
+import { CaixaDeIcone } from '@/components/ui/CaixaDeIcone';
 import { ChipMulti } from '@/components/ui/ChipMulti';
 import { ChipPick } from '@/components/ui/ChipPick';
 import { ChoiceTile } from '@/components/ui/ChoiceTile';
 import { FlowFrame, FlowTitle } from '@/components/ui/FlowFrame';
+import { Vidro } from '@/components/ui/Vidro';
 import { ROUTES } from '@/navigation/types';
 import { GOAL_OPTIONS, TRAINING_DAYS, TRAINING_PLACES } from '@/shared/onboarding/choices';
 import { ChangeQuestion } from '../components/ChangeQuestion';
-import { useBlockChoices } from '../hooks/useBlockReview';
+import { useBlockChoices, useLevelUpAvailable } from '../hooks/useBlockReview';
 import { useReviewStore } from '../store/reviewStore';
 
 const goalLabel = (goal: BlockChoices['goal']) =>
@@ -36,6 +38,7 @@ export function ChangesScreen() {
   const router = useRouter();
   const userId = useAuthStore((state) => state.session?.user.id ?? null);
   const { data: today } = useBlockChoices(userId);
+  const { data: canLevelUp } = useLevelUpAvailable(userId);
   const setChanges = useReviewStore((state) => state.setChanges);
   const [changes, setLocal] = useState<BlockChanges>({});
 
@@ -67,6 +70,12 @@ export function ChangesScreen() {
     >
       <FlowTitle sub="Toque em Mudou só no que for diferente.">Mudou alguma coisa?</FlowTitle>
       <View className="mt-4">
+        {canLevelUp ? (
+          <LevelUpQuestion
+            accepted={changes.level === 'intermediate'}
+            onAnswer={(yes) => toggle('level', yes ? 'intermediate' : undefined)}
+          />
+        ) : null}
         <ChangeQuestion
           icon="flag-outline"
           title="Objetivo"
@@ -139,6 +148,42 @@ export function ChangesScreen() {
         </ChangeQuestion>
       </View>
     </FlowFrame>
+  );
+}
+
+/**
+ * A7 · Subir de nível, como proposta: só muda se a pessoa disser sim, e o
+ * próximo bloco já sai no nível novo.
+ */
+function LevelUpQuestion({
+  accepted,
+  onAnswer,
+}: {
+  accepted: boolean;
+  onAnswer: (yes: boolean) => void;
+}) {
+  return (
+    <Vidro classeExterna="mb-[0.5625rem]" destaque className="gap-2.5 p-[0.8125rem]">
+      <View className="flex-row items-center gap-3">
+        <CaixaDeIcone icon="trending-up-outline" tom="marca" tamanho="bloco" />
+        <View className="flex-1">
+          <Text className="text-[0.84375rem] font-bold text-foreground">
+            Quer passar para intermediário?
+          </Text>
+          <Text className="mt-0.5 text-[0.71875rem] text-muted-foreground">
+            8 semanas com 80% dos treinos feitos.
+          </Text>
+        </View>
+      </View>
+      <View className="flex-row gap-[0.4375rem]">
+        <ChipPick
+          label="Continuar como estou"
+          selected={!accepted}
+          onPress={() => onAnswer(false)}
+        />
+        <ChipPick label="Quero subir" selected={accepted} onPress={() => onAnswer(true)} />
+      </View>
+    </Vidro>
   );
 }
 

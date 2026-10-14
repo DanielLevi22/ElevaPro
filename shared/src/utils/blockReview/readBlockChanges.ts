@@ -31,6 +31,10 @@ export function readBlockChanges(input: unknown): BlockChanges | null {
     if (!isOneOf(raw.gym_type, PLACES)) return null;
     changes.gym_type = raw.gym_type as BlockChanges["gym_type"];
   }
+  if ("level" in raw) {
+    if (raw.level !== "intermediate") return null;
+    changes.level = "intermediate";
+  }
   if ("injuries" in raw) {
     const regions = raw.injuries;
     if (!Array.isArray(regions) || !regions.every((r) => isOneOf(r, INJURY_REGIONS))) return null;
@@ -49,7 +53,8 @@ export function answersWithChanges(
   answers: Record<string, unknown>,
   changes: BlockChanges,
 ): Record<string, unknown> {
-  const { injuries, ...rest } = changes;
+  // O nível não é resposta da anamnese: mora no perfil (`persona_track`).
+  const { injuries, level: _level, ...rest } = changes;
   const injury =
     injuries === undefined ? {} : { injury_reported: injuries.length > 0, injuries: [...injuries] };
   return { ...answers, ...rest, ...injury };

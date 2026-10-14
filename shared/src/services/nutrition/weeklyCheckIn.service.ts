@@ -7,6 +7,7 @@ import {
   recalibrateWeeklyTarget,
 } from "../../utils/weeklyRecalibration";
 import { createMeasurementService } from "../progress/measurement.service";
+import { ownTargetCalories, targetAnswers } from "./practitionerEnergy";
 
 export type CheckInStatus = "pending" | "approved" | "kept";
 
@@ -64,9 +65,6 @@ const CHECK_IN_COLUMNS = "id, week_start, logging, assessment_id, status";
 /** A tendência da tela mostra até oito semanas. */
 const WEIGHT_HISTORY = 8;
 const DAY_MS = 86_400_000;
-/** Só o que a meta usa: a anamnese tem dado de saúde que o check-in não precisa. */
-const TARGET_FIELDS =
-  "age:responses->age, height:responses->height, weight:responses->weight, gender:responses->gender, main_goal:responses->main_goal, training_days:responses->training_days, diet_screening:responses->diet_screening";
 
 /**
  * O check-in da semana (#376): a pessoa diz como foi o registro e o peso, e a
@@ -301,31 +299,6 @@ async function hasDietBefore(supabase: SupabaseClient, studentId: string, weekSt
     .lt("start_date", weekStart);
   if (error) throw error;
   return (count ?? 0) > 0;
-}
-
-async function ownTargetCalories(supabase: SupabaseClient, studentId: string) {
-  const { data, error } = await supabase
-    .from("diet_plans")
-    .select("target_calories")
-    .eq("student_id", studentId)
-    .is("specialist_id", null)
-    .eq("status", "active")
-    .maybeSingle();
-  if (error) throw error;
-  return data?.target_calories ?? null;
-}
-
-async function targetAnswers(
-  supabase: SupabaseClient,
-  studentId: string,
-): Promise<Record<string, unknown>> {
-  const { data, error } = await supabase
-    .from("student_anamnesis")
-    .select(TARGET_FIELDS)
-    .eq("student_id", studentId)
-    .maybeSingle();
-  if (error) throw error;
-  return (data ?? {}) as Record<string, unknown>;
 }
 
 async function declaredWeights(

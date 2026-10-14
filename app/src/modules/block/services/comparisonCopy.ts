@@ -11,6 +11,13 @@ export interface ComparisonRow {
 
 const MAX_LISTED = 3;
 
+const LEVELS: Record<string, string> = {
+  beginner: 'Iniciante',
+  returning: 'Voltando',
+  intermediate: 'Intermediário',
+  advanced: 'Avançado',
+};
+
 const dayDelta = (delta: number) => signed(delta, Math.abs(delta) === 1 ? 'dia' : 'dias');
 
 const signed = (delta: number, unit: string) =>
@@ -25,8 +32,19 @@ const signed = (delta: number, unit: string) =>
  * @example comparisonRows(comparacao)[0] // { title: 'Dias por semana', before: '3', after: '4', badge: '+1 dia' }
  */
 export function comparisonRows(comparison: BlockComparison): ComparisonRow[] {
-  const { trainingDays, newExercises, calories } = comparison;
+  const { trainingDays, newExercises, calories, level } = comparison;
   const rows: ComparisonRow[] = [
+    ...(level
+      ? [
+          {
+            icon: 'trending-up-outline' as const,
+            title: 'Nível',
+            before: LEVELS[level.before] ?? level.before,
+            after: LEVELS[level.after] ?? level.after,
+            badge: 'novo',
+          },
+        ]
+      : []),
     {
       icon: 'calendar-outline',
       title: 'Dias por semana',

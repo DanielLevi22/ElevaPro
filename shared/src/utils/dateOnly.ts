@@ -79,3 +79,16 @@ export function withinDays<Item extends { date: string }>(
   const start = addDays(end, -(length - 1));
   return items.filter((item) => item.date >= start && item.date <= end);
 }
+
+/**
+ * Um intervalo como o kit escreve: "5 a 11 out", e o mês dos dois lados quando
+ * vira o mês. A semana do relatório e o bloco usam o mesmo.
+ *
+ * @example shortDateRange("2026-09-28", "2026-10-04") // "28 set a 4 out"
+ */
+export function shortDateRange(start: string, end: string): string {
+  const day = (date: string) => String(Number(date.slice(8, 10)));
+  const sameMonth = start.slice(5, 7) === end.slice(5, 7);
+  const from = sameMonth ? day(start) : `${day(start)} ${shortMonthOf(start)}`;
+  return `${from} a ${day(end)} ${shortMonthOf(end)}`;
+}

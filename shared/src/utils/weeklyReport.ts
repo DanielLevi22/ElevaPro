@@ -108,7 +108,7 @@ export function summarizeWeek(input: WeeklyReportInput): WeeklyReport {
     done: week.reduce((total, day) => total + day.workouts - day.cardioSessions, 0),
     planned: input.plannedWorkouts,
   };
-  const diet = dietOf(week);
+  const diet = dietDays(week);
   const weightChange = weightChangeOf(input.measurements, input.weekStart, weekEnd);
   const records = loadRecords(input.sets, input.weekStart, weekEnd);
   const adjustments = [...input.adjustments].sort((a, b) => a.at.localeCompare(b.at));
@@ -125,7 +125,13 @@ export function summarizeWeek(input: WeeklyReportInput): WeeklyReport {
   };
 }
 
-function dietOf(week: readonly DailyActivity[]): WeekDiet | null {
+/**
+ * Os dias na meta, registrados e planejados de uma janela: a semana do
+ * relatório ou o bloco inteiro (B4).
+ *
+ * @example dietDays(diasDaSemana) // { daysOnTarget: 6, daysLogged: 7, daysPlanned: 7 }
+ */
+export function dietDays(week: readonly DailyActivity[]): WeekDiet | null {
   const planned = week.filter((day) => day.plannedMeals > 0);
   if (planned.length === 0) return null;
   return {
@@ -176,9 +182,11 @@ function weightChangeOf(
 
 /**
  * Semanas seguidas com ao menos um treino, contando para trás desde a semana
- * do relatório. Em semanas, nunca em dias: um dia de folga não zera nada.
+ * dada. Em semanas, nunca em dias: um dia de folga não zera nada.
+ *
+ * @example streakWeeks(dias, "2026-10-05") // 3
  */
-function streakWeeks(days: readonly DailyActivity[], weekStart: string): number {
+export function streakWeeks(days: readonly DailyActivity[], weekStart: string): number {
   const trained = new Set(
     days
       .filter((day) => day.workouts > 0)

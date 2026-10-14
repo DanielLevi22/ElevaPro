@@ -81,6 +81,16 @@ vi.mock("../savePlan", () => ({
 
 vi.mock("../generatePlan", () => ({ generatePractitionerPlan: vi.fn() }));
 
+let tracks: string[];
+vi.mock("@elevapro/shared", async (original) => ({
+  ...(await original<typeof import("@elevapro/shared")>()),
+  createAdaptiveAnamnesisService: () => ({
+    savePersonaTrack: async (_id: string, track: string) => {
+      tracks.push(track);
+    },
+  }),
+}));
+
 const { saveNextBlock } = await import("../saveNextBlock");
 const { prepareNextBlock } = await import("../nextBlock");
 
@@ -99,6 +109,7 @@ const next = (changes: NextBlockPending["changes"]): NextBlockPending => ({
     newExercises: [],
     keptExercises: 0,
     calories: { before: 2000, after: 2000 },
+    level: null,
   },
   changes,
 });
@@ -114,6 +125,7 @@ describe("aprovar o próximo bloco", () => {
     steps = [];
     namings = [];
     answers = [];
+    tracks = [];
     activeBlock = undefined;
   });
 
@@ -136,6 +148,14 @@ describe("aprovar o próximo bloco", () => {
       "finish-training:bloco-2:block_completed",
       "finish-diet:dieta-1:block_completed",
     ]);
+  });
+
+  // A7: subir de nível é proposta aceita na reavaliação; sem o "sim", nada muda.
+  it("quem aceitou subir grava o nível novo; quem não aceitou, não", async () => {
+    await saveNextBlock(ctx(), next({ level: "intermediate" }));
+    await saveNextBlock(ctx(), next({}));
+
+    expect(tracks).toEqual(["intermediate"]);
   });
 
   it("a anamnese só muda com o que mudou na reavaliação", async () => {
