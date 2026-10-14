@@ -8,4 +8,6 @@ export { DeloadScreen } from './screens/DeloadScreen';
 export { EarlyChangeScreen } from './screens/EarlyChangeScreen';
 export { MeasuresScreen } from './screens/MeasuresScreen';
 export { NextBlockScreen } from './screens/NextBlockScreen';
+export { RestModeScreen } from './screens/RestModeScreen';
+export { ReturnScreen } from './screens/ReturnScreen';
 export { ReviewScreen } from './screens/ReviewScreen';

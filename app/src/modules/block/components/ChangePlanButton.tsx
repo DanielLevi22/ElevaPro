@@ -76,6 +76,10 @@ export function ChangePlanButton() {
         visible={open}
         sub={`Você está na semana ${Math.max(1, week.week)} de ${week.total} do ${block.name.split(' · ')[0]}.`}
         onChoose={choose}
+        onRest={() => {
+          setOpen(false);
+          router.push(ROUTES.BLOCK.REST);
+        }}
         onClose={() => setOpen(false)}
       />
     </>
@@ -86,11 +90,13 @@ function ChangePlanSheet({
   visible,
   sub,
   onChoose,
+  onRest,
   onClose,
 }: {
   visible: boolean;
   sub: string;
   onChoose: (focus: ChangeFocus) => void;
+  onRest: () => void;
   onClose: () => void;
 }) {
   const insets = useSafeAreaInsets();
@@ -126,6 +132,13 @@ function ChangePlanSheet({
               onPress={() => onChoose(option.focus)}
             />
           ))}
+          <LinhaDeVidro
+            icon="pause-circle-outline"
+            tom="marca"
+            titulo="Preciso de uma pausa"
+            sub="Modo Descanso: doença, lesão ou viagem"
+            onPress={onRest}
+          />
           <InfoNote icon="information-circle-outline">
             Só um exercício incomodando? Troque pelo "…" no treino, sem mudar o plano.
           </InfoNote>

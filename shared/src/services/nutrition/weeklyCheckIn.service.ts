@@ -1,12 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { nomeCurto } from "../../utils/nome";
 import { practitionerDietTargetFromAnswers } from "../../utils/practitionerDietTarget";
+import { restingNow } from "../../utils/restMode";
 import {
   type CheckInLogging,
   type Recalibration,
   recalibrateWeeklyTarget,
 } from "../../utils/weeklyRecalibration";
 import { createMeasurementService } from "../progress/measurement.service";
+import { createRestService } from "../workouts/rest.service";
 import { ownTargetCalories, targetAnswers } from "./practitionerEnergy";
 
 export type CheckInStatus = "pending" | "approved" | "kept";
@@ -89,6 +91,9 @@ export const createWeeklyCheckInService = (supabase: SupabaseClient) => {
      * @example const semana = await checkIn.summary(user.id);
      */
     summary: async (studentId: string): Promise<CheckInSummary> => {
+      // No Modo Descanso o check-in espera (#376, A8): não há semana para contar.
+      const rests = await createRestService(supabase).recent(studentId);
+      if (restingNow(rests, brazilToday())) return { state: "none" };
       const weekStart = currentWeekStart();
       const checkIn = await latestCheckIn(supabase, studentId);
       if (checkIn?.week_start === weekStart) {
@@ -207,6 +212,11 @@ function toBrazilTime(instant: Date): Date {
 }
 
 const BRAZIL_OFFSET_MS = 3 * 60 * 60 * 1000;
+
+/** O dia de hoje no Brasil, como a pausa grava (`start_rest`). */
+function brazilToday(): string {
+  return toBrazilTime(new Date()).toISOString().slice(0, 10);
+}
 
 async function practitionerProposal(
   supabase: SupabaseClient,

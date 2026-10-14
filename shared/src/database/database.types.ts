@@ -1088,6 +1088,41 @@ export type Database = {
           },
         ];
       };
+      rest_periods: {
+        Row: {
+          created_at: string;
+          ended_on: string | null;
+          id: string;
+          planned_until: string | null;
+          starts_on: string;
+          student_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          ended_on?: string | null;
+          id?: string;
+          planned_until?: string | null;
+          starts_on: string;
+          student_id: string;
+        };
+        Update: {
+          created_at?: string;
+          ended_on?: string | null;
+          id?: string;
+          planned_until?: string | null;
+          starts_on?: string;
+          student_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "rest_periods_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       specialist_link_codes: {
         Row: {
           code: string;
@@ -2003,6 +2038,23 @@ export type Database = {
         Args: { p_chave: string; p_session_id: string; p_valor: Json };
         Returns: undefined;
       };
+      end_rest: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          created_at: string;
+          ended_on: string | null;
+          id: string;
+          planned_until: string | null;
+          starts_on: string;
+          student_id: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "rest_periods";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       get_leaderboard: {
         Args: { p_scope: string; p_week_start?: string };
         Returns: {
@@ -2038,6 +2090,23 @@ export type Database = {
       set_own_account_type: {
         Args: { p_account_type: Database["public"]["Enums"]["account_type"]; p_full_name?: string };
         Returns: undefined;
+      };
+      start_rest: {
+        Args: { p_until: string };
+        Returns: {
+          created_at: string;
+          ended_on: string | null;
+          id: string;
+          planned_until: string | null;
+          starts_on: string;
+          student_id: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "rest_periods";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       submit_weekly_check_in: {
         Args: { p_logging: Database["public"]["Enums"]["check_in_logging"]; p_weight_kg: number };

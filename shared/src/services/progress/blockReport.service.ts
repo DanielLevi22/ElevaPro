@@ -3,8 +3,10 @@ import type { BlockDates } from "../../utils/blockCycle";
 import { type BlockReport, summarizeBlock } from "../../utils/blockReport";
 import { dailyActivities } from "../../utils/dailyActivity";
 import { addDays } from "../../utils/dateOnly";
+import { pausedDays } from "../../utils/restMode";
 import { countPrescribedWorkouts } from "../adherence/prescribedWorkouts";
 import { practitionerEnergy } from "../nutrition/practitionerEnergy";
+import { createRestService } from "../workouts/rest.service";
 import { createMeasurementService } from "./measurement.service";
 import { createProgressService } from "./progress.service";
 import { planAdjustmentsBetween } from "./weeklyReport.service";
@@ -27,15 +29,17 @@ export const createBlockReportService = (supabase: SupabaseClient) => {
   return {
     fetchBlockReport: async (studentId: string, block: BlockDates): Promise<BlockReport> => {
       const { start_date: start, end_date: end } = block;
-      const [history, outline, sets, measured, planned, energy, adjustments] = await Promise.all([
-        progress.listActivityHistory(studentId),
-        progress.getMealPlanOutline(studentId),
-        progress.listCompletedSets(studentId, addDays(start, -RECORD_LOOKBACK_DAYS)),
-        measurements.listMeasurements(studentId),
-        countPrescribedWorkouts(supabase, studentId),
-        practitionerEnergy(supabase, studentId),
-        planAdjustmentsBetween(supabase, studentId, start, addDays(end, 1)),
-      ]);
+      const [history, outline, sets, measured, planned, energy, adjustments, rests] =
+        await Promise.all([
+          progress.listActivityHistory(studentId),
+          progress.getMealPlanOutline(studentId),
+          progress.listCompletedSets(studentId, addDays(start, -RECORD_LOOKBACK_DAYS)),
+          measurements.listMeasurements(studentId),
+          countPrescribedWorkouts(supabase, studentId),
+          practitionerEnergy(supabase, studentId),
+          planAdjustmentsBetween(supabase, studentId, start, addDays(end, 1)),
+          createRestService(supabase).recent(studentId),
+        ]);
       return summarizeBlock({
         start,
         end,
@@ -53,6 +57,7 @@ export const createBlockReportService = (supabase: SupabaseClient) => {
           swaps: adjustments.filter((item) => item.kind === "swap").length,
           targets: adjustments.filter((item) => item.kind === "calories").length,
         },
+        paused: pausedDays(rests, end),
       });
     },
   };

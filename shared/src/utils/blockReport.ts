@@ -50,6 +50,8 @@ export interface BlockReportInput {
   /** O gasto e a meta da dieta do bloco; nulos sem dieta. */
   energy: { tdee: number; targetCalories: number } | null;
   adjustments: { swaps: number; targets: number };
+  /** Os dias do Modo Descanso: a sequência atravessa a pausa. */
+  paused?: ReadonlySet<string>;
 }
 
 const WEEK_DAYS = 7;
@@ -84,7 +86,7 @@ export function summarizeBlock(input: BlockReportInput): BlockReport {
     },
     records,
     diet: dietDays(inBlock),
-    streakWeeks: streakWeeks(input.days, lastMonday(addDays(input.end, -1))),
+    streakWeeks: streakWeeks(input.days, lastMonday(addDays(input.end, -1)), input.paused),
     changes: { loads: records, ...input.adjustments },
   };
 }

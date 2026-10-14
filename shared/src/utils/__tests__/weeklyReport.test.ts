@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 import type { PhysicalAssessment } from "../../types/physicalAssessment.types";
 import type { DailyActivity } from "../dailyActivity";
 import type { CompletedSet } from "../trainingProgress";
-import { reportWeekStart, summarizeWeek, type WeeklyReportInput } from "../weeklyReport";
+import {
+  reportWeekStart,
+  streakWeeks,
+  summarizeWeek,
+  type WeeklyReportInput,
+} from "../weeklyReport";
 
 const MONDAY = "2026-10-05";
 
@@ -149,5 +154,12 @@ describe("summarizeWeek", () => {
       "calories",
       "swap",
     ]);
+  });
+
+  it("a semana do Modo Descanso, sem treino, não quebra a sequência nem conta", () => {
+    const days = [day("2026-09-22", { workouts: 1 }), day("2026-10-06", { workouts: 1 })];
+    const paused = new Set(["2026-09-29", "2026-09-30"]);
+    expect(summarizeWeek(input({ days })).streakWeeks).toBe(1);
+    expect(streakWeeks(days, "2026-10-05", paused)).toBe(2);
   });
 });

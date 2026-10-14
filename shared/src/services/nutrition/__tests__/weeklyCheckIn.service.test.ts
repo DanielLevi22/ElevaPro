@@ -186,17 +186,32 @@ describe("o check-in da semana", () => {
   });
 });
 
+/** Nenhuma pausa do Modo Descanso: a primeira consulta do estado da semana. */
+const SEM_PAUSA = { data: [] };
+
 describe("o estado da semana na tela inicial", () => {
+  // Modo Descanso (#376, A8): na pausa não há semana para contar.
+  it("no Modo Descanso o check-in espera, mesmo devido", async () => {
+    const hoje = new Date(Date.now() - 3 * 3_600_000).toISOString().slice(0, 10);
+    const { supabase, chamadas } = criarSupabaseFake([
+      { data: [{ id: "p", starts_on: hoje, planned_until: null, ended_on: null }] },
+    ]);
+    expect(await createWeeklyCheckInService(supabase).summary("aluno-1")).toEqual({
+      state: "none",
+    });
+    expect(chamadas).toHaveLength(1);
+  });
+
   it("o check-in é devido quando há dieta ativa desde antes desta semana", async () => {
-    const { supabase, chamadas } = criarSupabaseFake([{ data: null }, { count: 1 }]);
+    const { supabase, chamadas } = criarSupabaseFake([SEM_PAUSA, { data: null }, { count: 1 }]);
     expect(await createWeeklyCheckInService(supabase).summary("aluno-1")).toEqual({
       state: "due",
     });
-    expect(chamadas[1].metodos).toContainEqual({ nome: "lt", args: ["start_date", SEMANA] });
+    expect(chamadas[2].metodos).toContainEqual({ nome: "lt", args: ["start_date", SEMANA] });
   });
 
   it("na primeira semana do plano não há o que comparar", async () => {
-    const { supabase } = criarSupabaseFake([{ data: null }, { count: 0 }]);
+    const { supabase } = criarSupabaseFake([SEM_PAUSA, { data: null }, { count: 0 }]);
     expect(await createWeeklyCheckInService(supabase).summary("aluno-1")).toEqual({
       state: "none",
     });
@@ -204,6 +219,7 @@ describe("o estado da semana na tela inicial", () => {
 
   it("o check-in de uma semana antiga não conta para esta", async () => {
     const { supabase } = criarSupabaseFake([
+      SEM_PAUSA,
       { data: { ...CHECK_IN, week_start: "2026-01-05", status: "approved" } },
       { count: 1 },
     ]);
@@ -212,6 +228,7 @@ describe("o estado da semana na tela inicial", () => {
 
   it("aprovado nesta semana, traz o ajuste gravado para o cartão", async () => {
     const { supabase } = criarSupabaseFake([
+      SEM_PAUSA,
       { data: { ...CHECK_IN, status: "approved" } },
       { data: { before_value: 2150, after_value: 2000, approved_at: "2026-10-13T13:20:00Z" } },
     ]);

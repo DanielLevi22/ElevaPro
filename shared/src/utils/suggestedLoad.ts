@@ -9,6 +9,8 @@
  * Os valores provisórios esperam a validação do CREF (ADR-0044).
  */
 
+import { RETURN_LOAD_FACTOR } from "./restMode";
+
 export type ExerciseEffort = "easy" | "ok" | "hard";
 
 /** Uma sessão anterior do exercício, da mais recente para a mais antiga. */
@@ -26,6 +28,8 @@ export interface LoadInput {
   history: ExerciseHistoryEntry[];
   /** Semana de descarga: a carga fica, só as séries caem (`blockCycle`). */
   deload?: boolean;
+  /** Semana de retorno do Modo Descanso: a carga cai para reacostumar (`restMode`). */
+  returnWeek?: boolean;
 }
 
 export type LoadSuggestion =
@@ -35,7 +39,7 @@ export type LoadSuggestion =
       reason: "no_history" | "no_answer" | "ok" | "hard_once" | "deload";
     }
   | { kind: "increase"; weightKg: number; deltaKg: number; reason: "easy" }
-  | { kind: "decrease"; weightKg: number; deltaKg: number; reason: "hard_twice" }
+  | { kind: "decrease"; weightKg: number; deltaKg: number; reason: "hard_twice" | "return" }
   | { kind: "add_reps"; reps: number; reason: "easy" }
   | { kind: "add_seconds"; seconds: number; reason: "easy" };
 
@@ -59,6 +63,7 @@ export function suggestLoad(input: LoadInput): LoadSuggestion {
   if (!last) return { kind: "keep", weightKg: input.prescribedWeight, reason: "no_history" };
 
   const weight = last.maxWeightKg > 0 ? last.maxWeightKg : input.prescribedWeight;
+  if (input.returnWeek && weight) return afterRest(weight);
   if (input.deload) return { kind: "keep", weightKg: weight, reason: "deload" };
   if (last.effort === null) return { kind: "keep", weightKg: weight, reason: "no_answer" };
   if (last.effort === "ok") return { kind: "keep", weightKg: weight, reason: "ok" };
@@ -74,6 +79,13 @@ function afterEasy(weight: number | null, reps: string | null): LoadSuggestion {
   }
   const step = weight < LIGHT_LOAD_KG ? LIGHT_STEP_KG : STEP_KG;
   return { kind: "increase", weightKg: weight + step, deltaKg: step, reason: "easy" };
+}
+
+/** Provisório (CREF): 80% da carga de antes, para reacostumar depois da pausa. */
+function afterRest(weight: number): LoadSuggestion {
+  const lowered = Math.round((weight * RETURN_LOAD_FACTOR) / HALF_KG) * HALF_KG;
+  const next = Math.min(lowered, weight - HALF_KG);
+  return { kind: "decrease", weightKg: next, deltaKg: next - weight, reason: "return" };
 }
 
 function afterHard(weight: number | null, twice: boolean): LoadSuggestion {

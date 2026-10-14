@@ -4,10 +4,13 @@ import { useAuthStore } from '@/auth';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
 import { Vidro } from '@/components/ui/Vidro';
 import { useActiveBlock } from '@/hooks/useActiveBlock';
+import { useRestPeriods } from '@/hooks/useRestPeriods';
 import { ROUTES } from '@/navigation/types';
 import { localDateKey } from '@/services/healthSync';
 import { blockCardState } from '../services/blockCardState';
+import { restCardState } from '../services/restCopy';
 import { useBlockStore } from '../store/blockStore';
+import { RestCard } from './RestCard';
 
 const CARDS = {
   deload: {
@@ -42,7 +45,12 @@ export function BlockCard() {
   const snoozedUntil = useBlockStore((state) =>
     block ? (state.reviewSnoozedUntil[block.id] ?? null) : null
   );
+  const rests = useRestPeriods(userId);
+  const returnSeen = useBlockStore((state) => state.returnSeen);
+  // A pausa vem primeiro: no Modo Descanso o bloco espera também (#376, A8).
+  const rest = restCardState(rests, localDateKey(), returnSeen);
   const state = block ? blockCardState(block, localDateKey(), { deloadSeen, snoozedUntil }) : null;
+  if (rest) return <RestCard state={rest} />;
   if (!state) return null;
   const card = CARDS[state];
 

@@ -12,32 +12,41 @@ import { suggestedWeightText } from './loadSuggestionCopy';
 export type ExerciseHistory = Record<string, ExerciseHistoryEntry[]>;
 export type LoadSuggestions = Record<string, LoadSuggestion>;
 
+/** As semanas especiais do plano: descarga (A7) e retorno do Modo Descanso (A8). */
+export interface WeekKind {
+  deload: boolean;
+  returnWeek: boolean;
+}
+
+const NORMAL_WEEK: WeekKind = { deload: false, returnWeek: false };
+
 function suggestionFor(
   item: WorkoutExercise,
   history: ExerciseHistoryEntry[],
-  deload = false
+  week: WeekKind = NORMAL_WEEK
 ): LoadSuggestion {
   return suggestLoad({
     prescribedWeight: numeroDaPrescricao(item.weight),
     prescribedReps: item.reps ?? null,
     history,
-    deload,
+    ...week,
   });
 }
 
 /**
  * As cargas de hoje (A1): a sugestão de cada exercício pelo que a pessoa
- * sentiu nas últimas sessões. Na semana de descarga, a carga fica a mesma.
+ * sentiu nas últimas sessões. Na semana de descarga, a carga fica a mesma; na
+ * de retorno do Modo Descanso, cai para reacostumar.
  *
- * @example const hoje = todaySuggestions(treino.exercises, historico, false);
+ * @example const hoje = todaySuggestions(treino.exercises, historico, { deload: false, returnWeek: false });
  */
 export function todaySuggestions(
   items: readonly WorkoutExercise[],
   history: ExerciseHistory,
-  deload: boolean
+  week: WeekKind
 ): LoadSuggestions {
   return Object.fromEntries(
-    items.map((item) => [item.id, suggestionFor(item, history[item.id] ?? [], deload)])
+    items.map((item) => [item.id, suggestionFor(item, history[item.id] ?? [], week)])
   );
 }
 

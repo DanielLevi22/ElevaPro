@@ -4,11 +4,13 @@ import {
   createProgressService,
   type DailyActivity,
   dailyActivities,
+  pausedDays,
   type StreakStanding,
 } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { useRestPeriods } from '@/hooks/useRestPeriods';
 import { avisandoSeFalhar } from '@/lib/registro';
 import { localDateKey } from '@/services/healthSync';
 
@@ -63,6 +65,11 @@ export function useDailyActivity(studentId: string | undefined): DailyActivitySt
     return dailyActivities({ from: earliest, to: today, ...history, ...outline });
   }, [data, today]);
 
-  const streak = useMemo(() => activityStreak(days, today), [days, today]);
+  const rests = useRestPeriods(studentId);
+  // A sequência atravessa o Modo Descanso (#376, A8): a pausa não quebra.
+  const streak = useMemo(
+    () => activityStreak(days, today, pausedDays(rests, today)),
+    [days, today, rests]
+  );
   return { days, streak, today, loading: isLoading, reload: refetch };
 }

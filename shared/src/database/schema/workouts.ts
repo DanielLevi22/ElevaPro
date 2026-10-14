@@ -80,6 +80,21 @@ export const trainingPeriodizations = pgTable("training_periodizations", {
   updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// O Modo Descanso (#376, A8): de quando a quando o plano ficou pausado. Sem o
+// motivo, que é dado de saúde; gravado só por start_rest e end_rest (0092).
+export const restPeriods = pgTable("rest_periods", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  student_id: uuid("student_id")
+    .notNull()
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  starts_on: date("starts_on").notNull(),
+  // O fim previsto; nulo é "não sei".
+  planned_until: date("planned_until"),
+  // O dia da volta; nulo enquanto descansa.
+  ended_on: date("ended_on"),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 // Fase/mesociclo dentro de uma periodização (ex: "Fase de Adaptação")
 export const trainingPlans = pgTable("training_plans", {
   id: uuid("id").primaryKey().defaultRandom(),

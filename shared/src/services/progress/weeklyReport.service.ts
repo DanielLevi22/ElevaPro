@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { dailyActivities } from "../../utils/dailyActivity";
 import { addDays } from "../../utils/dateOnly";
+import { pausedDays } from "../../utils/restMode";
 import {
   brazilDayStart,
   reportWeekStart,
@@ -10,6 +11,7 @@ import {
 } from "../../utils/weeklyReport";
 import { countPrescribedWorkouts } from "../adherence/prescribedWorkouts";
 import { fetchSwapActivity } from "../briefing/exerciseSwapActivity";
+import { createRestService } from "../workouts/rest.service";
 import { createMeasurementService } from "./measurement.service";
 import { createProgressService } from "./progress.service";
 
@@ -42,13 +44,14 @@ export const createWeeklyReportService = (supabase: SupabaseClient) => {
     fetchWeeklyReport: async (studentId: string, today: string): Promise<WeeklyReport> => {
       const weekStart = reportWeekStart(today);
       const weekEnd = addDays(weekStart, 6);
-      const [history, outline, sets, measured, planned, adjustments] = await Promise.all([
+      const [history, outline, sets, measured, planned, adjustments, rests] = await Promise.all([
         progress.listActivityHistory(studentId),
         progress.getMealPlanOutline(studentId),
         progress.listCompletedSets(studentId, addDays(weekStart, -RECORD_LOOKBACK_DAYS)),
         measurements.listMeasurements(studentId),
         countPrescribedWorkouts(supabase, studentId),
         planAdjustmentsBetween(supabase, studentId, weekStart, addDays(weekEnd, 1)),
+        createRestService(supabase).recent(studentId),
       ]);
       const days = dailyActivities({
         from: addDays(weekStart, -STREAK_LOOKBACK_DAYS),
@@ -63,6 +66,7 @@ export const createWeeklyReportService = (supabase: SupabaseClient) => {
         plannedWorkouts: planned,
         measurements: measured,
         adjustments,
+        paused: pausedDays(rests, today),
       });
     },
   };

@@ -17,6 +17,7 @@ const REASON: Record<LoadSuggestion['reason'], string> = {
   ok: 'tente mais repetições',
   hard_once: 'foi difícil da última vez',
   deload: 'semana de descarga',
+  return: 'semana de retorno',
   hard_twice: 'difícil duas vezes seguidas',
   easy: 'foi fácil da última vez',
 };

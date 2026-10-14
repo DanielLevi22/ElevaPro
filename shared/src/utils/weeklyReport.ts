@@ -68,6 +68,8 @@ export interface WeeklyReportInput {
   plannedWorkouts: number | null;
   measurements: readonly PhysicalAssessment[];
   adjustments: readonly WeekAdjustment[];
+  /** Os dias do Modo Descanso: a sequência atravessa a pausa. */
+  paused?: ReadonlySet<string>;
 }
 
 const WEEK_DAYS = 7;
@@ -121,7 +123,7 @@ export function summarizeWeek(input: WeeklyReportInput): WeeklyReport {
     weightChange,
     records,
     adjustments,
-    streakWeeks: streakWeeks(input.days, input.weekStart),
+    streakWeeks: streakWeeks(input.days, input.weekStart, input.paused),
   };
 }
 
@@ -186,14 +188,24 @@ function weightChangeOf(
  *
  * @example streakWeeks(dias, "2026-10-05") // 3
  */
-export function streakWeeks(days: readonly DailyActivity[], weekStart: string): number {
-  const trained = new Set(
-    days
-      .filter((day) => day.workouts > 0)
-      .map((day) => addDays(day.date, -weekdayFromMonday(day.date))),
-  );
+export function streakWeeks(
+  days: readonly DailyActivity[],
+  weekStart: string,
+  paused: ReadonlySet<string> = new Set(),
+): number {
+  const mondayOf = (date: string) => addDays(date, -weekdayFromMonday(date));
+  const trained = new Set(days.filter((day) => day.workouts > 0).map((day) => mondayOf(day.date)));
+  // A semana com pausa do Modo Descanso (#376, A8) e sem treino não quebra a
+  // sequência: ela atravessa, sem contar.
+  const restWeeks = new Set([...paused].map(mondayOf));
   let count = 0;
-  for (let monday = weekStart; trained.has(monday); monday = addDays(monday, -WEEK_DAYS)) count++;
+  for (
+    let monday = weekStart;
+    trained.has(monday) || restWeeks.has(monday);
+    monday = addDays(monday, -WEEK_DAYS)
+  ) {
+    if (trained.has(monday)) count++;
+  }
   return count;
 }
 

@@ -91,6 +91,8 @@ export const ROUTES = {
     EARLY: '/block/early',
     BUILDING: '/block/building',
     REPORT: '/block/report',
+    REST: '/block/rest',
+    RETURN: '/block/return',
     HISTORY: (id: string) => ({ pathname: '/block/history/[id]', params: { id } }) as const,
     NEXT: '/block/next',
   },

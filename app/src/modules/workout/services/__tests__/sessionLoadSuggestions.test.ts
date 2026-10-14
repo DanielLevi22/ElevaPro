@@ -9,7 +9,7 @@ describe('as cargas da sessão', () => {
     const hoje = todaySuggestions(
       [supino, prancha],
       { 'item-1': [{ maxWeightKg: 12.5, effort: 'easy' }] },
-      false
+      { deload: false, returnWeek: false }
     );
 
     expect(hoje['item-1']).toMatchObject({ kind: 'increase', weightKg: 15 });
@@ -41,5 +41,14 @@ describe('as cargas da sessão', () => {
     });
 
     expect(weights).toEqual({ 'item-1': '12,5' });
+  });
+
+  it('na semana de retorno do Modo Descanso, a carga de hoje cai', () => {
+    const hoje = todaySuggestions(
+      [supino],
+      { 'item-1': [{ maxWeightKg: 20, effort: 'easy' }] },
+      { deload: false, returnWeek: true }
+    );
+    expect(hoje['item-1']).toMatchObject({ kind: 'decrease', weightKg: 16, reason: 'return' });
   });
 });

@@ -3784,3 +3784,79 @@ BEGIN
 END $$;
 
 ROLLBACK;
+
+-- ── rest_periods: o Modo Descanso (0092, #376) ─────────────────────────────────
+-- A pausa guarda só de quando a quando: o motivo ("doente", "machucada") é dado
+-- de saúde que a pausa não precisa, e não tem onde ser gravado. Só pelas
+-- funções, uma aberta por vez, e o especialista sem vínculo não lê.
+
+BEGIN;
+
+DO $$
+DECLARE
+  student           uuid := gen_random_uuid();
+  specialist        uuid := gen_random_uuid();
+  other_specialist  uuid := gen_random_uuid();
+  rest              public.rest_periods;
+  visible           int;
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = 'public' AND table_name = 'rest_periods'
+               AND column_name NOT IN ('id', 'student_id', 'starts_on', 'planned_until', 'ended_on', 'created_at')) THEN
+    RAISE EXCEPTION 'PAUSA COM MOTIVO: rest_periods ganhou coluna além das datas — o motivo é dado de saúde';
+  END IF;
+
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (student, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-da@elevapro.local', '{"full_name":"A","account_type":"student"}'::jsonb),
+    (specialist, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-de@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb),
+    (other_specialist, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-df@elevapro.local', '{"full_name":"F","account_type":"specialist"}'::jsonb);
+  INSERT INTO auth.mfa_factors (id, user_id, factor_type, status, created_at, updated_at)
+  VALUES (gen_random_uuid(), specialist, 'totp', 'verified', now(), now()),
+         (gen_random_uuid(), other_specialist, 'totp', 'verified', now(), now());
+  INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
+  VALUES (student, specialist, 'personal_training', 'active');
+
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', student, 'role', 'authenticated')::text, true);
+
+  rest := public.start_rest(current_date + 7);
+  BEGIN
+    PERFORM public.start_rest(NULL);
+    RAISE EXCEPTION 'PAUSA DUPLICADA: duas pausas abertas ao mesmo tempo';
+  EXCEPTION WHEN unique_violation THEN NULL;
+  END;
+  BEGIN
+    INSERT INTO public.rest_periods (student_id, starts_on) VALUES (student, current_date);
+    RAISE EXCEPTION 'GRAVAÇÃO DIRETA: o cliente inseriu pausa sem passar pela função';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', specialist, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  SELECT count(*) INTO visible FROM public.rest_periods WHERE student_id = student;
+  IF visible <> 1 THEN
+    RAISE EXCEPTION 'ESPECIALISTA CEGO: o vinculado não vê que o aluno está pausado';
+  END IF;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', other_specialist, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  SELECT count(*) INTO visible FROM public.rest_periods WHERE student_id = student;
+  IF visible <> 0 THEN
+    RAISE EXCEPTION 'PAUSA VAZADA: especialista sem vínculo leu a pausa de outro aluno';
+  END IF;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', student, 'role', 'authenticated')::text, true);
+  rest := public.end_rest();
+  IF rest.ended_on IS NULL THEN
+    RAISE EXCEPTION 'VOLTA PERDIDA: encerrar a pausa não gravou o dia da volta';
+  END IF;
+
+  RAISE NOTICE 'ok  Modo Descanso: só as datas, só pelas funções, uma aberta, sem vazamento';
+END $$;
+
+ROLLBACK;

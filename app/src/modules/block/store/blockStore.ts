@@ -9,6 +9,9 @@ interface BlockState {
   /** "Lembrar amanhã" da reavaliação: até que dia o cartão espera, por bloco. */
   reviewSnoozedUntil: Record<string, string>;
   snoozeReview: (blockId: string, until: string) => void;
+  /** As voltas do Modo Descanso cujas boas-vindas a pessoa já abriu, pelo id da pausa. */
+  returnSeen: string[];
+  markReturnSeen: (restId: string) => void;
 }
 
 /**
@@ -22,6 +25,11 @@ export const useBlockStore = create<BlockState>()(
     (set) => ({
       deloadSeen: [],
       reviewSnoozedUntil: {},
+      returnSeen: [],
+      markReturnSeen: (restId) =>
+        set((state) =>
+          state.returnSeen.includes(restId) ? state : { returnSeen: [...state.returnSeen, restId] }
+        ),
       snoozeReview: (blockId, until) =>
         set((state) => ({ reviewSnoozedUntil: { ...state.reviewSnoozedUntil, [blockId]: until } })),
       markDeloadSeen: (blockId) =>

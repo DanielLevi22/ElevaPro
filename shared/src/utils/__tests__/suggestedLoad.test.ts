@@ -89,4 +89,15 @@ describe("a carga sugerida do próximo treino", () => {
       }),
     ).toEqual({ kind: "keep", weightKg: 12.5, reason: "deload" });
   });
+
+  it("na semana de retorno do Modo Descanso, a carga cai 20% para reacostumar", () => {
+    expect(
+      suggestLoad({
+        prescribedWeight: 10,
+        prescribedReps: "10-12",
+        history: [{ maxWeightKg: 40, effort: "easy" }],
+        returnWeek: true,
+      }),
+    ).toEqual({ kind: "decrease", weightKg: 32, deltaKg: -8, reason: "return" });
+  });
 });

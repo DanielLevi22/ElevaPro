@@ -2,6 +2,7 @@ import {
   blockWeek,
   evolucoesDaSessao,
   resumoDaSessao,
+  returnWeekOf,
   seriesDaSessaoAnterior,
   type Workout,
 } from '@elevapro/shared';
@@ -9,6 +10,7 @@ import { type ReactNode, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { showAlert } from '@/components/ui/appAlert';
 import { useActiveBlock } from '@/hooks/useActiveBlock';
+import { useRestPeriods } from '@/hooks/useRestPeriods';
 import { localDateKey } from '@/services/healthSync';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { ExerciseSwapSheet } from '../../../components/ExerciseSwapSheet';
@@ -57,9 +59,12 @@ export function MomentoDaSessao(props: MomentoDaSessaoProps) {
   const selfGuided = !props.mascarado && isSelfGuidedWorkout(treino, alunoId);
   const history = useExerciseHistory(treino.id, alunoId, selfGuided);
   const deload = useDeloadWeek(treino, selfGuided ? alunoId : null);
+  const rests = useRestPeriods(selfGuided ? alunoId : null);
+  const returnWeek = returnWeekOf(rests, localDateKey()) !== null;
   const today = useMemo(
-    () => (selfGuided ? todaySuggestions(treino.exercises ?? [], history, deload) : {}),
-    [selfGuided, treino.exercises, history, deload]
+    () =>
+      selfGuided ? todaySuggestions(treino.exercises ?? [], history, { deload, returnWeek }) : {},
+    [selfGuided, treino.exercises, history, deload, returnWeek]
   );
 
   switch (sessao.momento) {
