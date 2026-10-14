@@ -29,6 +29,17 @@ describe('o texto do relatório do bloco (B4)', () => {
     );
   });
 
+  it('encerrado antes do fim não é concluído, e as semanas vêm das datas', () => {
+    const early = report({ start: '2026-10-13', end: '2026-10-20', verdict: 'no_promise' });
+    expect(blockHeadline(early, 'Bloco 2', true)).toMatchObject({
+      title: 'Encerrado antes do fim',
+      sub: '1 semana de treino até você mudar o plano.',
+    });
+    expect(blockHeadline(report({ verdict: 'no_promise' }), 'Bloco 1').sub).toBe(
+      '4 semanas de treino. Veja o que mudou.'
+    );
+  });
+
   it('o prometido e o real na mesma linha, com o menos tipográfico', () => {
     expect(promiseLine(report())).toBe('Prometido no 1º dia: −1,2 a −2 kg · Real: −1,5 kg');
     expect(promiseLine(report({ promisedKg: null }))).toBeNull();

@@ -144,11 +144,16 @@ export interface Periodization {
   // insert — que o banco recusa.
   start_date: string;
   end_date: string;
+  /** Por que acabou (0090, 0091); nulo enquanto ativa ou de antes do #376. */
+  end_reason?: PlanEndReason | null;
   created_at: string;
   updated_at: string;
   student?: { id: string; full_name: string | null; email: string };
   training_plans_count?: number;
 }
+
+/** Por que o plano acabou: fim do bloco, trocado por outro, ou mudado antes do fim. */
+export type PlanEndReason = "block_completed" | "replaced" | "changed_early";
 
 export interface WorkoutSession {
   id: string;

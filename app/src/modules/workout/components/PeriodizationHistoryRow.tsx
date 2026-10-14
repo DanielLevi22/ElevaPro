@@ -14,6 +14,25 @@ interface PeriodizationHistoryRowProps {
 const TAMANHO_DO_ICONE = 18;
 
 /**
+ * Como o plano acabou (#376, C3): o bloco que fechou antes do fim não é
+ * "concluído", e o trocado por outro também não.
+ *
+ * @example rotuloDoFim({ status: 'completed', end_reason: 'changed_early' }) // "Encerrada antes"
+ */
+export function rotuloDoFim(periodizacao: Pick<Periodization, 'status' | 'end_reason'>): string {
+  if (periodizacao.status !== 'completed') return 'Planejada';
+  if (periodizacao.end_reason === 'changed_early') return 'Encerrada antes';
+  if (periodizacao.end_reason === 'replaced') return 'Trocada';
+  return 'Concluída';
+}
+
+/** Uma classe só: duas cores no `cn` dependeriam de qual o merge escolhe. */
+function corDoRotulo(periodizacao: Pick<Periodization, 'status' | 'end_reason'>): string {
+  if (periodizacao.status !== 'completed') return 'text-placeholder';
+  return periodizacao.end_reason === 'changed_early' ? 'text-warning' : 'text-metrica-passos';
+}
+
+/**
  * Uma periodização que não está em andamento, na mesma linha de histórico
  * do aluno (`LinhaDoHistoricoDePeriodizacoes`) — o nome do aluno entra no
  * lugar do resumo de semanas, já que o especialista gerencia mais de um (#335).
@@ -22,6 +41,7 @@ export function PeriodizationHistoryRow({ periodizacao, onPress }: Periodization
   const cores = useCores();
   const escalar = useEscala();
   const concluido = periodizacao.status === 'completed';
+  const rotulo = rotuloDoFim(periodizacao);
   const hoje = new Date();
   const semanas = progressoDaPeriodizacao(
     periodizacao.start_date,
@@ -41,7 +61,7 @@ export function PeriodizationHistoryRow({ periodizacao, onPress }: Periodization
       onPress={onPress}
       activeOpacity={0.8}
       accessibilityRole="button"
-      accessibilityLabel={`${periodizacao.name}, ${concluido ? 'concluída' : 'planejada'}`}
+      accessibilityLabel={`${periodizacao.name}, ${rotulo.toLowerCase()}`}
       className={cn('mb-[0.5625rem]', concluido ? null : 'opacity-70')}
     >
       <Vidro className="flex-row items-center gap-3 p-[0.8125rem]">
@@ -66,10 +86,10 @@ export function PeriodizationHistoryRow({ periodizacao, onPress }: Periodization
         <Text
           className={cn(
             'text-[0.59375rem] font-extrabold uppercase tracking-wider',
-            concluido ? 'text-metrica-passos' : 'text-placeholder'
+            corDoRotulo(periodizacao)
           )}
         >
-          {concluido ? 'Concluída' : 'Planejada'}
+          {rotulo}
         </Text>
       </Vidro>
     </TouchableOpacity>

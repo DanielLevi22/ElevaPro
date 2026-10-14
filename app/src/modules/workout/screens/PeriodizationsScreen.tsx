@@ -211,7 +211,12 @@ export default function PeriodizationsScreen({
           <PeriodizationHistoryRow
             key={periodizacao.id}
             periodizacao={periodizacao}
-            onPress={() => abrir(periodizacao)}
+            onPress={() =>
+              // O bloco do Praticante que acabou abre o relatório dele (#376, C3).
+              isMember && periodizacao.status === 'completed' && !periodizacao.specialist_id
+                ? router.push(ROUTES.BLOCK.HISTORY(periodizacao.id))
+                : abrir(periodizacao)
+            }
           />
         ))}
         {historico.length === 0 ? (

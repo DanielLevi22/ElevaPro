@@ -23,14 +23,30 @@ const reports = createBlockReportService(supabase);
  *
  * @example const { data: relatorio } = useBlockReport(user.id, bloco);
  */
-export function useBlockReport(studentId: string | null, block: ActiveBlock | null) {
+export function useBlockReport(studentId: string | null, block: BlockRef | null) {
   return useQuery<BlockReport>({
     queryKey: ['block-report', studentId, block?.id],
     enabled: Boolean(studentId && block),
     queryFn: () =>
       avisandoSeFalhar('block.read_report', () =>
-        reports.fetchBlockReport(studentId as string, block as ActiveBlock)
+        reports.fetchBlockReport(studentId as string, block as BlockRef)
       ),
+  });
+}
+
+/** O que o relatório precisa de um bloco: o id, o nome e as datas. */
+type BlockRef = Pick<ActiveBlock, 'id' | 'name' | 'start_date' | 'end_date'>;
+
+/**
+ * Um bloco antigo pelo id, para o relatório dele no histórico (C3).
+ *
+ * @example const { data: bloco } = useBlockById(id);
+ */
+export function useBlockById(id: string | null) {
+  return useQuery({
+    queryKey: ['block-by-id', id],
+    enabled: Boolean(id),
+    queryFn: () => avisandoSeFalhar('block.read_by_id', () => blocks.blockById(id as string)),
   });
 }
 

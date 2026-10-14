@@ -12,37 +12,46 @@ import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import { useActiveBlock } from '@/hooks/useActiveBlock';
 import { ROUTES } from '@/navigation/types';
-import { useBlockReport } from '../hooks/useBlockReview';
+import { useBlockById, useBlockReport } from '../hooks/useBlockReview';
 import { blockHeadline, changesLine, promiseLine } from '../services/blockReportCopy';
 import { useReviewStore } from '../store/reviewStore';
 
 /**
  * B4 · O relatório do bloco que acaba: o prometido no primeiro dia contra o
  * real, o antes e o depois, os números do bloco e quantas vezes o plano mudou
- * com a pessoa. Daqui ela segue para o próximo bloco, que já está montado.
+ * com a pessoa. Daqui ela segue para o próximo bloco, que já está montado; ou,
+ * com `blockId`, é o relatório de um bloco antigo, aberto pelo histórico (C3).
  *
  * @example <BlockReportScreen />
  */
-export function BlockReportScreen() {
+export function BlockReportScreen({ blockId }: { blockId?: string } = {}) {
   const router = useRouter();
   const userId = useAuthStore((state) => state.session?.user.id ?? null);
-  const block = useActiveBlock(userId);
+  const active = useActiveBlock(blockId ? null : userId);
+  const { data: past } = useBlockById(blockId ?? null);
+  const block = blockId ? (past ?? null) : active;
   const pending = useReviewStore((state) => state.pending);
   const { data: report } = useBlockReport(userId, block);
-  const next = () => router.replace(ROUTES.BLOCK.NEXT);
-  const label = pending ? `Ver o Bloco ${pending.blockNumber}` : 'Ver o próximo bloco';
+  // Pelo histórico (C3) não há próximo bloco para ver: o botão volta.
+  const next = blockId ? router.back : () => router.replace(ROUTES.BLOCK.NEXT);
+  const label = blockId
+    ? 'Voltar'
+    : pending
+      ? `Ver o Bloco ${pending.blockNumber}`
+      : 'Ver o próximo bloco';
+  const icon = blockId ? 'chevron-back' : 'arrow-forward';
 
   if (!report || !block) {
     return (
-      <FlowFrame header={{}} primary={{ label, icon: 'arrow-forward', onPress: next }}>
+      <FlowFrame header={{}} primary={{ label, icon, onPress: next }}>
         <FlowTitle>Juntando os números do bloco…</FlowTitle>
       </FlowFrame>
     );
   }
-  const headline = blockHeadline(report, block.name);
+  const headline = blockHeadline(report, block.name, past?.end_reason === 'changed_early');
   const promise = promiseLine(report);
   return (
-    <FlowFrame header={{}} primary={{ label, icon: 'arrow-forward', onPress: next }}>
+    <FlowFrame header={{}} primary={{ label, icon, onPress: next }}>
       <FlowTitle eyebrow={headline.eyebrow} sub={headline.sub}>
         {headline.title}
       </FlowTitle>

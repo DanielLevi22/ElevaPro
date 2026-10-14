@@ -2,6 +2,7 @@ import {
   type BlockReport,
   type BlockVerdict,
   contagem,
+  daysBetween,
   formatarDecimal,
   shortDateRange,
 } from '@elevapro/shared';
@@ -12,7 +13,7 @@ export interface BlockHeadline {
   sub: string;
 }
 
-const HEADLINES: Record<BlockVerdict, { title: string; sub: string }> = {
+const HEADLINES: Record<Exclude<BlockVerdict, 'no_promise'>, { title: string; sub: string }> = {
   ahead: {
     title: 'À frente do combinado',
     sub: 'Seu peso andou mais do que a gente prometeu no primeiro dia.',
@@ -25,25 +26,42 @@ const HEADLINES: Record<BlockVerdict, { title: string; sub: string }> = {
     title: 'Um pouco atrás do combinado',
     sub: 'Acontece. O próximo bloco parte de onde você está.',
   },
-  no_promise: {
-    title: 'Bloco concluído',
-    sub: '4 semanas de treino. Veja o que mudou.',
-  },
 };
+
+const weeksOf = (report: BlockReport) =>
+  contagem(Math.max(1, Math.round(daysBetween(report.start, report.end) / 7)), 'semana', 'semanas');
 
 /**
  * O título do relatório do bloco (B4) pelo prometido × real. Atrás do
  * combinado não leva bronca: o próximo bloco parte de onde a pessoa está.
  *
+ * O bloco encerrado antes do fim (C2) não é "concluído": diz até onde foi.
+ *
  * @example blockHeadline(relatorio, 'Meu primeiro plano').title // "À frente do combinado"
  */
-export function blockHeadline(report: BlockReport, name: string): BlockHeadline {
+export function blockHeadline(
+  report: BlockReport,
+  name: string,
+  endedEarly = false
+): BlockHeadline {
   // "Bloco 2 · Hipertrofia · 4x por semana" vira "Bloco 2": a linha é curta.
   const [shortName] = name.split(' · ');
-  return {
-    eyebrow: `${shortName} · ${shortDateRange(report.start, report.end)}`,
-    ...HEADLINES[report.verdict],
-  };
+  const eyebrow = `${shortName} · ${shortDateRange(report.start, report.end)}`;
+  if (endedEarly) {
+    return {
+      eyebrow,
+      title: 'Encerrado antes do fim',
+      sub: `${weeksOf(report)} de treino até você mudar o plano.`,
+    };
+  }
+  if (report.verdict === 'no_promise') {
+    return {
+      eyebrow,
+      title: 'Bloco concluído',
+      sub: `${weeksOf(report)} de treino. Veja o que mudou.`,
+    };
+  }
+  return { eyebrow, ...HEADLINES[report.verdict] };
 }
 
 const kg = (value: number) =>

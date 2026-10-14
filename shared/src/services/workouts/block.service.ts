@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { type InjuryRegion, MAIN_GOALS, type MainGoal } from "../../data/anamnesisAdaptive";
+import type { PlanEndReason } from "../../types/workouts.types";
 import { achatarRespostas } from "../../utils/anamnese";
 import type { BlockDates } from "../../utils/blockCycle";
 import { canLevelUp, LEVEL_UP_WEEKS } from "../../utils/blockReview";
@@ -13,6 +14,13 @@ export interface ActiveBlock extends BlockDates {
   id: string;
   name: string;
   planIds: string[];
+}
+
+/** Um bloco que já acabou, para o relatório no histórico (C3). */
+export interface PastBlock extends BlockDates {
+  id: string;
+  name: string;
+  end_reason: PlanEndReason | null;
 }
 
 /** As respostas que a reavaliação mostra como "Hoje: …" (B2). */
@@ -105,6 +113,22 @@ export const createBlockService = (supabase: SupabaseClient) => ({
         : TRAINING_PLACES.fullGym,
       injuries: Array.isArray(answers.injuries) ? (answers.injuries as InjuryRegion[]) : [],
     };
+  },
+
+  /**
+   * Um bloco do próprio Praticante pelo id, para o relatório dele no histórico
+   * (C3). A RLS só devolve o que é da pessoa.
+   *
+   * @example const bloco = await blocks.blockById(id);
+   */
+  blockById: async (id: string): Promise<PastBlock | null> => {
+    const { data, error } = await supabase
+      .from("training_periodizations")
+      .select("id, name, start_date, end_date, end_reason")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    return data as PastBlock | null;
   },
 
   /**
