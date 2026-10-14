@@ -3,6 +3,7 @@ import type { DietMeal, DietPlan, ItemRegistrado, MealLog } from "../../types/nu
 import { localDateOf } from "../../utils/dateOnly";
 import { firstOfEmbed } from "../../utils/postgrest";
 import type { CompletedSet } from "../../utils/trainingProgress";
+import { readAllPages } from "../readAllPages";
 
 /**
  * O que a evolução do treino lê do banco (issue #312): as séries concluídas do
@@ -43,9 +44,6 @@ interface SessionRow {
   completed_at: string;
   exercises: ExerciseRow[] | null;
 }
-
-/** O teto de linhas por resposta do PostgREST (`max_rows`). */
-const PAGE_SIZE = 1000;
 
 export interface ActivityHistory {
   /** O dia local de cada sessão concluída, repetido quando há duas no dia. */
@@ -275,19 +273,6 @@ function splitPlan(row: NutritionPlanRow | null): Omit<NutritionSources, "logs">
     meals: (meals ?? []).map(({ id, day_of_week }) => ({ id, day_of_week })),
     items: Object.fromEntries((meals ?? []).map((meal) => [meal.id, meal.items ?? []])),
   };
-}
-
-type Page<T> = PromiseLike<{ data: T[] | null; error: unknown }>;
-
-/** Lê até a página vir incompleta: o PostgREST corta cada resposta em `PAGE_SIZE`. */
-async function readAllPages<T>(page: (from: number, to: number) => Page<T>): Promise<T[]> {
-  const rows: T[] = [];
-  for (let from = 0; ; from += PAGE_SIZE) {
-    const { data, error } = await page(from, from + PAGE_SIZE - 1);
-    if (error) throw error;
-    rows.push(...(data ?? []));
-    if ((data ?? []).length < PAGE_SIZE) return rows;
-  }
 }
 
 /** Meia-noite local de `date`, como instante: a sessão das 23h30 é do dia. */

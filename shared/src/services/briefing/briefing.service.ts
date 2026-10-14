@@ -5,18 +5,12 @@ import type {
   BriefingSignalKind,
   BriefingStats,
 } from "../../types/briefing.types";
-import { currentWeekStart } from "../nutrition/weeklyCheckIn.service";
+import { addDays } from "../../utils/dateOnly";
+import { type RestPeriod, restingNow } from "../../utils/restMode";
+import { brazilToday, currentWeekStart } from "../nutrition/weeklyCheckIn.service";
+import { readAllPages } from "../readAllPages";
 import { CHECK_IN_LOGGING_LABEL, checkInSentence } from "./checkInActivity";
-
-/**
- * Dias sem sessão concluída que caracterizam risco de abandono.
- *
- * Sete, não um número redondo qualquer: a prescrição é semanal — `workouts` tem
- * `day_of_week` — então quem treina em qualquer frequência deveria ter ao menos
- * uma sessão em sete dias. Com quatro ou cinco, o alerta dispararia para quem
- * treina 3x por semana e descansou o fim de semana.
- */
-const INACTIVITY_DAYS = 7;
+import { engagementSignals, INACTIVITY_DAYS } from "./engagementSignals";
 
 /** Dias de convite não aceito antes de virar sinal. */
 const PENDING_INVITE_DAYS = 3;
@@ -32,9 +26,11 @@ const SESSION_LOOKBACK_DAYS = 60;
 const URGENCY: Record<BriefingSignalKind, number> = {
   inactive: 0,
   pending_invite: 1,
-  anamnesis_ready: 2,
-  exercise_swap: 3,
-  weekly_check_in: 4,
+  meals_unlogged: 2,
+  check_in_skipped: 3,
+  anamnesis_ready: 4,
+  exercise_swap: 5,
+  weekly_check_in: 6,
 };
 
 /** Quantos dias para trás uma troca de exercício ainda vira sinal. */
@@ -89,11 +85,6 @@ function lastSessionByStudent(rows: { student_id: string; completed_at: string |
   return latest;
 }
 
-function inactivityMessage(days: number): string {
-  if (days > SESSION_LOOKBACK_DAYS) return "Sem treino registrado nos últimos dois meses.";
-  return `Não treina há ${days} dias. Risco de abandono.`;
-}
-
 export const createBriefingService = (supabase: SupabaseClient) => ({
   /**
    * O que precisa da atenção do especialista hoje, e os números do rodapé.
@@ -132,6 +123,7 @@ export const createBriefingService = (supabase: SupabaseClient) => ({
       aiSessions,
       swaps,
       checkIns,
+      engagement,
     ] = await Promise.all([
       supabase.from("profiles").select("id, full_name, account_status").in("id", studentIds),
 
@@ -186,6 +178,8 @@ export const createBriefingService = (supabase: SupabaseClient) => ({
         .in("student_id", studentIds)
         .eq("week_start", currentWeekStart())
         .eq("status", "pending"),
+
+      fetchEngagement(supabase, studentIds),
     ]);
 
     const profileRows = (profiles.data ?? []) as ProfileRow[];
@@ -241,20 +235,22 @@ export const createBriefingService = (supabase: SupabaseClient) => ({
       }
 
       const last = lastSession.get(studentId);
-      const days =
-        last === undefined ? SESSION_LOOKBACK_DAYS + 1 : daysSince(new Date(last).toISOString());
-
-      if (days >= INACTIVITY_DAYS) {
-        signals.push({
+      const attention = engagementSignals(
+        {
           studentId,
           studentName,
-          kind: "inactive",
-          tone: "danger",
-          message: inactivityMessage(days),
-          days,
-        });
-        continue;
-      }
+          sessionDays:
+            last === undefined
+              ? SESSION_LOOKBACK_DAYS + 1
+              : daysSince(new Date(last).toISOString()),
+          ...engagement.factsOf(studentId),
+        },
+        engagement.today,
+        engagement.lastWeekStart,
+      );
+      signals.push(...attention);
+      // Quem sumiu precisa de uma coisa só: o resto do cartão seria ruído.
+      if (attention.some((signal) => signal.kind === "inactive")) continue;
 
       const swapped = swapCount.get(studentId) ?? 0;
       if (swapped > 0) {
@@ -312,4 +308,95 @@ export const createBriefingService = (supabase: SupabaseClient) => ({
 });
 
 export type BriefingService = ReturnType<typeof createBriefingService>;
+
+interface EngagementRows {
+  today: string;
+  lastWeekStart: string;
+  factsOf: (studentId: string) => {
+    dietSince: string | null;
+    lastMealLog: string | null;
+    lastWeekCheckIn: boolean;
+    resting: boolean;
+    healthVisible: boolean;
+  };
+}
+
+/**
+ * As datas do engajamento (F8): dieta ativa, refeições marcadas na janela,
+ * check-in da semana que fechou e pausa. Só datas: nem o que foi comido nem
+ * as respostas do check-in.
+ */
+async function fetchEngagement(
+  supabase: SupabaseClient,
+  studentIds: string[],
+): Promise<EngagementRows> {
+  const today = brazilToday();
+  const lastWeekStart = addDays(currentWeekStart(), -7);
+  const [diets, meals, checkIns, rests, revoked] = await Promise.all([
+    supabase
+      .from("diet_plans")
+      .select("student_id, start_date")
+      .in("student_id", studentIds)
+      .eq("status", "active"),
+    readAllPages<{ student_id: string; logged_date: string }>((from, to) =>
+      supabase
+        .from("meal_logs")
+        .select("student_id, logged_date")
+        .in("student_id", studentIds)
+        .eq("completed", true)
+        .gte("logged_date", addDays(today, -INACTIVITY_DAYS))
+        .range(from, to),
+    ),
+    supabase
+      .from("weekly_check_ins")
+      .select("student_id")
+      .in("student_id", studentIds)
+      .eq("week_start", lastWeekStart),
+    supabase
+      .from("rest_periods")
+      .select("student_id, id, starts_on, planned_until, ended_on")
+      .in("student_id", studentIds)
+      .is("ended_on", null),
+    supabase
+      .from("student_consents")
+      .select("student_id")
+      .in("student_id", studentIds)
+      .eq("consent_type", "health_data_collection")
+      .not("revoked_at", "is", null),
+  ]);
+  const revokedIds = new Set(
+    ((revoked.data ?? []) as { student_id: string }[]).map((row) => row.student_id),
+  );
+  const dietSince = new Map(
+    ((diets.data ?? []) as { student_id: string; start_date: string }[]).map((row) => [
+      row.student_id,
+      row.start_date,
+    ]),
+  );
+  const lastMeal = new Map<string, string>();
+  for (const row of meals) {
+    if ((lastMeal.get(row.student_id) ?? "") < row.logged_date)
+      lastMeal.set(row.student_id, row.logged_date);
+  }
+  const checkedIn = new Set(
+    ((checkIns.data ?? []) as { student_id: string }[]).map((row) => row.student_id),
+  );
+  const restRows = (rests.data ?? []) as (RestPeriod & { student_id: string })[];
+  return {
+    today,
+    lastWeekStart,
+    factsOf: (studentId) => ({
+      dietSince: dietSince.get(studentId) ?? null,
+      lastMealLog: lastMeal.get(studentId) ?? null,
+      lastWeekCheckIn: checkedIn.has(studentId),
+      healthVisible: !revokedIds.has(studentId),
+      resting:
+        restingNow(
+          restRows.filter((row) => row.student_id === studentId),
+          today,
+        ) !== null,
+    }),
+  };
+}
+
 export { INACTIVITY_DAYS, PENDING_INVITE_DAYS, SESSION_LOOKBACK_DAYS };

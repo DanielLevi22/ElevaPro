@@ -358,6 +358,20 @@ tem 2 pendências de hoje", sem refeição, caloria, peso, treino nem exercício
 prova negativa). O lembrete de refeição antigo, que mostrava os alimentos na
 tela bloqueada, foi retirado e é cancelado no aparelho de quem atualiza.
 
+**Painel "precisam de atenção" (#376, F8).** O briefing do especialista passou
+a derivar, além de "não treina há N dias", "sem marcar refeição há N dias" e
+"pulou o check-in da semana passada", com o limite de 5 dias (decidido no
+#376). Lê só datas, sob a RLS que já existe: `meal_logs.logged_date`,
+`diet_plans.start_date`, a existência do `weekly_check_ins` da semana e as
+pausas de `rest_periods` (em Modo Descanso, nenhum sinal). O que foi comido e
+as respostas do check-in não são lidos, e o sinal chega pronto à tela, como
+os outros do briefing. **Com o consentimento de saúde revogado, os dois sinais
+de dado de saúde não aparecem**: a RLS esconde as refeições e o check-in, e
+"nada visível" não pode virar "não marcou" (trava em
+`shared/src/services/briefing/__tests__/engagementSignals.test.ts`). O botão
+"Mensagem" grava uma nota do especialista (`specialist_notes`, 0057), que o
+aluno lê no relatório.
+
 **Regra do consentimento (Art. 8°):** Quando usamos consentimento como base, ele precisa ser:
 - **Livre**: o aluno não pode ser forçado a aceitar para usar o serviço principal
 - **Informado**: explicar em linguagem simples o que será coletado e por quê

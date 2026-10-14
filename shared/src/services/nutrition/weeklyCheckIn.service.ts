@@ -213,8 +213,8 @@ function toBrazilTime(instant: Date): Date {
 
 const BRAZIL_OFFSET_MS = 3 * 60 * 60 * 1000;
 
-/** O dia de hoje no Brasil, como a pausa grava (`start_rest`). */
-function brazilToday(): string {
+/** O dia de hoje no Brasil, como a pausa grava (`start_rest`). @example brazilToday() // "2026-10-14" */
+export function brazilToday(): string {
   return toBrazilTime(new Date()).toISOString().slice(0, 10);
 }
 

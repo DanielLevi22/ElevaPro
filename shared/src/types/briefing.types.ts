@@ -6,7 +6,11 @@ export type BriefingSignalKind =
   /** Trocou exercício de treino prescrito nos últimos dias (#365, 6d). */
   | "exercise_swap"
   /** Fez o check-in da semana, e o especialista decide se o plano muda (#376). */
-  | "weekly_check_in";
+  | "weekly_check_in"
+  /** Dieta ativa e nenhuma refeição marcada nos últimos dias (#376, F8). */
+  | "meals_unlogged"
+  /** O check-in da semana que fechou não veio (#376, F8). */
+  | "check_in_skipped";
 
 export type BriefingTone = "danger" | "warning" | "success";
 
