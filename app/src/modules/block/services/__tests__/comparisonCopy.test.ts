@@ -48,5 +48,6 @@ describe('o que muda no próximo bloco (B5)', () => {
     expect(keptNote(comparison)).toBe(
       'Continuam 2 exercícios do bloco anterior, com as cargas que você conquistou.'
     );
+    expect(keptNote({ ...comparison, keptExercises: 1 })).toMatch(/^Continua 1 exercício /);
   });
 });

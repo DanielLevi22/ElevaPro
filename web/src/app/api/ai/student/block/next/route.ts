@@ -14,6 +14,7 @@ const FAILURE_STATUS = {
   no_block: 409,
   has_specialist: 403,
   block_running: 409,
+  no_changes: 409,
   level_not_available: 409,
   incomplete_answers: 409,
   under_age: 403,
@@ -30,7 +31,10 @@ async function handlePost(request: NextRequest) {
   const auth = await authorizeStudentWithHealthConsent(request);
   if (!auth.ok) return auth.response;
 
-  const body = (await request.json().catch(() => null)) as { changes?: unknown } | null;
+  const body = (await request.json().catch(() => null)) as {
+    changes?: unknown;
+    early?: unknown;
+  } | null;
   const changes = readBlockChanges(body?.changes);
   if (!changes) {
     return NextResponse.json(
@@ -39,7 +43,12 @@ async function handlePost(request: NextRequest) {
     );
   }
 
-  const outcome = await prepareNextBlock(auth.caller.id, changes, localDateOf(new Date()));
+  const outcome = await prepareNextBlock(
+    auth.caller.id,
+    changes,
+    localDateOf(new Date()),
+    body?.early === true,
+  );
   if (!outcome.ok) {
     return NextResponse.json({ error: outcome.reason }, { status: FAILURE_STATUS[outcome.reason] });
   }

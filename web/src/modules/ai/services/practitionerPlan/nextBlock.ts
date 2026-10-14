@@ -22,6 +22,7 @@ export type NextBlockOutcome =
       reason:
         | "no_block"
         | "has_specialist"
+        | "no_changes"
         | "block_running"
         | "level_not_available"
         | "incomplete_answers"
@@ -51,7 +52,8 @@ interface BlockRow {
  * junto com a proposta e entram ao aprovar.
  *
  * Só para quem não tem especialista: o do Aluno reavalia e monta o bloco dele.
- * Só depois do fim do bloco: antes dele, mudar o plano é outro caminho (fatia 5).
+ * Depois do fim do bloco, ou antes dele com `early` e alguma mudança (C1): aí
+ * o bloco atual fecha hoje, e o novo começa amanhã.
  * A meta recalibrada pelos check-ins continua, a menos que o objetivo ou os dias
  * tenham mudado: aí a conta parte do zero, como no onboarding.
  *
@@ -61,12 +63,16 @@ export async function prepareNextBlock(
   studentId: string,
   changes: BlockChanges,
   today: string,
+  early = false,
 ): Promise<NextBlockOutcome> {
   // Com especialista, a reavaliação e o próximo bloco são dele (#376).
   if (await hasActiveSpecialist(studentId)) return { ok: false, reason: "has_specialist" };
   const block = await ownActiveBlock(studentId);
   if (!block) return { ok: false, reason: "no_block" };
-  if (today < block.end_date) return { ok: false, reason: "block_running" };
+  // Antes do fim, só com alguma mudança: sem ela, o bloco atual segue (C1).
+  const running = today < block.end_date;
+  if (running && !early) return { ok: false, reason: "block_running" };
+  if (running && Object.keys(changes).length === 0) return { ok: false, reason: "no_changes" };
 
   // O app só pergunta a quem pode; o servidor confere de novo, porque o pedido
   // pode chegar sem passar pela tela.
@@ -96,6 +102,7 @@ export async function prepareNextBlock(
       previousBlockId: block.id,
       comparison: compareBlocks(current, outcome.pending),
       changes,
+      early: running,
     },
   };
 }

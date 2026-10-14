@@ -87,5 +87,6 @@ export function keptNote(comparison: BlockComparison): string {
   if (comparison.keptExercises === 0) {
     return 'Os exercícios mudam, e as cargas partem do que você já levanta.';
   }
-  return `Continuam ${contagem(comparison.keptExercises, 'exercício', 'exercícios')} do bloco anterior, com as cargas que você conquistou.`;
+  const verb = comparison.keptExercises === 1 ? 'Continua' : 'Continuam';
+  return `${verb} ${contagem(comparison.keptExercises, 'exercício', 'exercícios')} do bloco anterior, com as cargas que você conquistou.`;
 }

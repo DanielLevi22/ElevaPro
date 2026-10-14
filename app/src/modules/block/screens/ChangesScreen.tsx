@@ -5,7 +5,7 @@ import {
   type InjuryRegion,
 } from '@elevapro/shared';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { CaixaDeIcone } from '@/components/ui/CaixaDeIcone';
@@ -18,7 +18,7 @@ import { ROUTES } from '@/navigation/types';
 import { GOAL_OPTIONS, TRAINING_DAYS, TRAINING_PLACES } from '@/shared/onboarding/choices';
 import { ChangeQuestion } from '../components/ChangeQuestion';
 import { useBlockChoices, useLevelUpAvailable } from '../hooks/useBlockReview';
-import { useReviewStore } from '../store/reviewStore';
+import { type ChangeFocus, useReviewStore } from '../store/reviewStore';
 
 const goalLabel = (goal: BlockChoices['goal']) =>
   GOAL_OPTIONS.find((option) => option.value === goal)?.label.toLowerCase() ?? 'não informado';
@@ -40,7 +40,17 @@ export function ChangesScreen() {
   const { data: today } = useBlockChoices(userId);
   const { data: canLevelUp } = useLevelUpAvailable(userId);
   const setChanges = useReviewStore((state) => state.setChanges);
+  const early = useReviewStore((state) => state.early);
+  const focus = useReviewStore((state) => state.focus);
   const [changes, setLocal] = useState<BlockChanges>({});
+
+  // Vinda de "Mudar meu plano" (C1), a mudança escolhida já abre como "Mudou".
+  useEffect(() => {
+    if (!today || !focus) return;
+    setLocal((current) =>
+      focus in current ? current : { ...current, [focus]: currentValue(today, focus) }
+    );
+  }, [today, focus]);
 
   function toggle<Key extends keyof BlockChanges>(key: Key, value: BlockChanges[Key] | undefined) {
     setLocal((current) => {
@@ -53,7 +63,7 @@ export function ChangesScreen() {
 
   function build() {
     setChanges(changes);
-    router.push(ROUTES.BLOCK.BUILDING);
+    router.push(early ? ROUTES.BLOCK.EARLY : ROUTES.BLOCK.BUILDING);
   }
 
   if (!today) {
@@ -66,11 +76,18 @@ export function ChangesScreen() {
   return (
     <FlowFrame
       header={{}}
-      primary={{ label: 'Montar o próximo bloco', icon: 'sparkles-outline', onPress: build }}
+      primary={{
+        label: early ? 'Continuar' : 'Montar o próximo bloco',
+        icon: early ? 'arrow-forward' : 'sparkles-outline',
+        onPress: build,
+        // Antes do fim, mudar o plano sem mudar nada não fecha o bloco à toa.
+        disabled: early && Object.keys(changes).length === 0,
+        hint: 'Marque o que mudou',
+      }}
     >
       <FlowTitle sub="Toque em Mudou só no que for diferente.">Mudou alguma coisa?</FlowTitle>
       <View className="mt-4">
-        {canLevelUp ? (
+        {canLevelUp && !early ? (
           <LevelUpQuestion
             accepted={changes.level === 'intermediate'}
             onAnswer={(yes) => toggle('level', yes ? 'intermediate' : undefined)}
@@ -185,6 +202,17 @@ function LevelUpQuestion({
       </View>
     </Vidro>
   );
+}
+
+/** O valor de hoje, para a pergunta abrir marcada sem mudar nada ainda. */
+function currentValue(today: BlockChoices, focus: ChangeFocus): BlockChanges[ChangeFocus] {
+  const values: { [Key in ChangeFocus]: BlockChanges[Key] } = {
+    main_goal: today.goal ?? 'Saúde / Bem-estar',
+    training_days: today.trainingDays,
+    gym_type: today.place,
+    injuries: [...today.injuries],
+  };
+  return values[focus];
 }
 
 /** As regiões, como o onboarding grava; nenhuma marcada é "nenhuma dor". */

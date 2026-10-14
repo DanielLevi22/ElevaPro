@@ -47,4 +47,6 @@ export interface NextBlockPending {
   comparison: BlockComparison;
   /** O que mudou na B2: entra na anamnese só ao aprovar, junto com o bloco. */
   changes: BlockChanges;
+  /** Trocado antes do fim (C2): o atual fecha hoje, e o novo começa amanhã. */
+  early: boolean;
 }

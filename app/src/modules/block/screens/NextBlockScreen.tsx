@@ -35,7 +35,7 @@ export function NextBlockScreen() {
       router.replace(ROUTES.TABS.ROOT);
       showAlert({
         title: 'Bloco aprovado',
-        message: 'Seu novo bloco começa hoje.',
+        message: `Seu novo bloco começa ${pending?.early ? 'amanhã' : 'hoje'}.`,
         type: 'success',
       });
     } catch (error) {
@@ -79,7 +79,7 @@ export function NextBlockScreen() {
     >
       <FlowTitle
         eyebrow={`Bloco ${pending.blockNumber} · 4 semanas`}
-        sub="Começa hoje, das cargas que você já levanta."
+        sub={`Começa ${pending.early ? 'amanhã' : 'hoje'}, das cargas que você já levanta.`}
       >
         Seu próximo bloco
       </FlowTitle>

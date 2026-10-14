@@ -3,7 +3,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 let steps: string[];
-let namings: { name: string; phaseName: string; loads?: ReadonlyMap<string, string> }[];
+let namings: {
+  name: string;
+  phaseName: string;
+  loads?: ReadonlyMap<string, string>;
+  startDate?: string;
+}[];
 let answers: Record<string, unknown>[];
 /** Se o aluno tem especialista ativo. */
 let linked = false;
@@ -105,7 +110,7 @@ const plan = {
   goal: "Hipertrofia",
 } as unknown as OnboardingPlanPending;
 
-const next = (changes: NextBlockPending["changes"]): NextBlockPending => ({
+const next = (changes: NextBlockPending["changes"], early = false): NextBlockPending => ({
   plan,
   blockNumber: 2,
   previousBlockId: "bloco-1",
@@ -117,6 +122,7 @@ const next = (changes: NextBlockPending["changes"]): NextBlockPending => ({
     level: null,
   },
   changes,
+  early,
 });
 
 const ctx = () => ({
@@ -163,6 +169,16 @@ describe("aprovar o próximo bloco", () => {
     expect(tracks).toEqual(["intermediate"]);
   });
 
+  // C2: trocado antes do fim, nada é apagado; o atual fecha com o motivo, e o
+  // novo começa amanhã, para o treino de hoje ainda ser o do bloco atual.
+  it("trocado antes do fim, o novo começa amanhã e o atual fecha como encerrado antes", async () => {
+    await saveNextBlock(ctx(), next({ main_goal: "Hipertrofia" }, true));
+
+    expect(namings[0].startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(steps).toContain("finish-training:bloco-2:changed_early");
+    expect(steps).toContain("finish-diet:dieta-1:changed_early");
+  });
+
   it("a anamnese só muda com o que mudou na reavaliação", async () => {
     await saveNextBlock(ctx(), next({ gym_type: "Home gym", injuries: ["Joelhos"] }));
 
@@ -192,6 +208,14 @@ describe("montar o próximo bloco", () => {
     await expect(prepareNextBlock("aluno-1", {}, "2026-10-17")).resolves.toEqual({
       ok: false,
       reason: "no_block",
+    });
+  });
+
+  it("antes do fim, só com alguma mudança: sem ela, o bloco atual segue", async () => {
+    activeBlock = { id: "bloco-1", end_date: "2026-10-17", plans: [] };
+    await expect(prepareNextBlock("aluno-1", {}, "2026-10-10", true)).resolves.toEqual({
+      ok: false,
+      reason: "no_changes",
     });
   });
 

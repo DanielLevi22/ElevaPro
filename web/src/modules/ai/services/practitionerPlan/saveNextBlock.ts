@@ -1,6 +1,8 @@
 import {
+  addDays,
   answersWithChanges,
   createAdaptiveAnamnesisService,
+  localDateOf,
   type NextBlockPending,
 } from "@elevapro/shared";
 import { supabaseAdmin } from "@/lib/supabase-admin";
@@ -39,12 +41,16 @@ export async function saveNextBlock(
 ): Promise<{ periodizationId: string; dietPlanId: string | null }> {
   const loads = await conqueredLoads(ctx.studentId, next.previousBlockId);
   const previousDietId = next.plan.target ? await activeOwnDietId(ctx.studentId) : null;
+  // Trocado antes do fim, o bloco atual fecha hoje e o novo começa amanhã.
+  const startDate = next.early ? addDays(localDateOf(new Date()), 1) : undefined;
+  const reason = next.early ? "changed_early" : "block_completed";
   const periodizationId = await saveTraining(ctx, next.plan, {
     name: `Bloco ${next.blockNumber} · ${trainingPlanName(next.plan)}`,
     phaseName: `Bloco ${next.blockNumber}`,
     loads,
+    startDate,
   });
-  const dietPlanId = next.plan.target ? await saveDiet(ctx, next.plan) : null;
+  const dietPlanId = next.plan.target ? await saveDiet(ctx, next.plan, startDate) : null;
   if (Object.keys(next.changes).length > 0) {
     await saveAnswers(ctx, answersWithChanges({}, next.changes));
   }
@@ -54,8 +60,8 @@ export async function saveNextBlock(
       next.changes.level,
     );
   }
-  await finishPreviousTraining(ctx.studentId, periodizationId, "block_completed");
-  if (dietPlanId) await markEndedDiet(previousDietId, "block_completed");
+  await finishPreviousTraining(ctx.studentId, periodizationId, reason);
+  if (dietPlanId) await markEndedDiet(previousDietId, reason);
   return { periodizationId, dietPlanId };
 }
 

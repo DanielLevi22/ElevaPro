@@ -27,6 +27,7 @@ const STEP_MS = 4000;
 export function BuildingScreen() {
   const router = useRouter();
   const changes = useReviewStore((state) => state.changes);
+  const early = useReviewStore((state) => state.early);
   const { build } = useNextBlockActions();
   const step = useStepClock(build.isPending);
   const asked = useRef(false);
@@ -36,11 +37,15 @@ export function BuildingScreen() {
   useEffect(() => {
     if (asked.current) return;
     asked.current = true;
-    build.mutate(changes, {
-      onSuccess: () => router.replace(ROUTES.BLOCK.REPORT),
-      onError: () => registrarFalha('block.build_next'),
-    });
-  }, [build, changes, router]);
+    build.mutate(
+      { changes, early },
+      {
+        // Antes do fim não há bloco fechado para relatar: direto ao próximo.
+        onSuccess: () => router.replace(early ? ROUTES.BLOCK.NEXT : ROUTES.BLOCK.REPORT),
+        onError: () => registrarFalha('block.build_next'),
+      }
+    );
+  }, [build, changes, early, router]);
 
   const failed = build.isError;
   return (
@@ -48,7 +53,11 @@ export function BuildingScreen() {
       header={failed ? {} : undefined}
       primary={
         failed
-          ? { label: 'Tentar de novo', icon: 'refresh', onPress: () => build.mutate(changes) }
+          ? {
+              label: 'Tentar de novo',
+              icon: 'refresh',
+              onPress: () => build.mutate({ changes, early }),
+            }
           : undefined
       }
     >

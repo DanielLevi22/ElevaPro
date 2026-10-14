@@ -40,8 +40,17 @@ const STATUS_DO_FILTRO: Record<Exclude<Filtro, 'todas'>, Periodization['status']
  * @example
  * <PeriodizationsScreen />
  * <PeriodizationsScreen studentId={aluno.id} />
+ *
+ * `acaoDoBloco` é o "…" do Praticante: mudar o plano antes do fim do bloco
+ * (#376, C1). Vem de fora porque mora no módulo do bloco.
  */
-export default function PeriodizationsScreen({ studentId }: { studentId?: string } = {}) {
+export default function PeriodizationsScreen({
+  studentId,
+  acaoDoBloco,
+}: {
+  studentId?: string;
+  acaoDoBloco?: React.ReactNode;
+} = {}) {
   const router = useRouter();
   const { user, accountType } = useAuthStore();
   const isSpecialist = accountType === 'specialist';
@@ -146,6 +155,7 @@ export default function PeriodizationsScreen({ studentId }: { studentId?: string
         onVoltar={studentId ? router.back : undefined}
         direita={
           <View className="flex-row items-center gap-2">
+            {acaoDoBloco}
             <BotaoRedondo
               icone="search"
               rotulo="Buscar periodização"

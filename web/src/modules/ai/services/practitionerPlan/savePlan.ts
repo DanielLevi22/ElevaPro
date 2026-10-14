@@ -109,9 +109,12 @@ export async function finishPreviousTraining(
   keepId: string,
   reason: PlanEndReason,
 ): Promise<void> {
+  // Encerrado antes do fim, o bloco termina hoje: o histórico mostra até onde
+  // ele foi, e não as semanas que não aconteceram.
+  const ended = reason === "changed_early" ? { end_date: localDateOf(new Date()) } : {};
   const { error } = await supabaseAdmin
     .from("training_periodizations")
-    .update({ status: "completed", end_reason: reason })
+    .update({ status: "completed", end_reason: reason, ...ended })
     .eq("student_id", studentId)
     .eq("status", "active")
     .is("specialist_id", null)
@@ -153,8 +156,8 @@ export async function markEndedDiet(dietId: string | null, reason: PlanEndReason
 }
 
 /** O primeiro bloco: de hoje a 4 semanas. O banco exige as duas datas no treino e na dieta. */
-function firstBlock(): { start_date: string; end_date: string } {
-  const start_date = localDateOf(new Date());
+function firstBlock(start?: string): { start_date: string; end_date: string } {
+  const start_date = start ?? localDateOf(new Date());
   return { start_date, end_date: addDays(start_date, FIRST_BLOCK_WEEKS * 7) };
 }
 
@@ -163,10 +166,12 @@ export interface BlockNaming {
   name: string;
   phaseName: string;
   loads?: StartingLoads;
+  /** O primeiro dia; sem ele, hoje. O bloco trocado antes do fim começa amanhã. */
+  startDate?: string;
 }
 
-/** Por que o plano anterior acabou (0090): fim do bloco ou trocado por outro. */
-export type PlanEndReason = "block_completed" | "replaced";
+/** Por que o plano anterior acabou (0090, 0091): fim do bloco, trocado, ou mudado antes do fim. */
+export type PlanEndReason = "block_completed" | "replaced" | "changed_early";
 
 export async function saveTraining(
   ctx: SavePlanContext,
@@ -176,7 +181,7 @@ export async function saveTraining(
     phaseName: `Primeiras ${FIRST_BLOCK_WEEKS} semanas`,
   },
 ): Promise<string> {
-  const { start_date: start, end_date: end } = firstBlock();
+  const { start_date: start, end_date: end } = firstBlock(naming.startDate);
   const name = naming.name;
 
   const { data: period, error } = await supabaseAdmin
@@ -234,6 +239,7 @@ export async function saveTraining(
 export async function saveDiet(
   ctx: SavePlanContext,
   pending: OnboardingPlanPending,
+  startDate?: string,
 ): Promise<string> {
   const target = pending.target as NonNullable<OnboardingPlanPending["target"]>;
   const meals = pending.proposal.meals ?? [];
@@ -249,7 +255,7 @@ export async function saveDiet(
       name: dietPlanName(pending),
       plan_type: "unique",
       // A mesma vigência do bloco de treino: os dois se recalibram juntos.
-      ...firstBlock(),
+      ...firstBlock(startDate),
       target_calories: target.calories,
       target_protein: target.protein,
       target_carbs: target.carbs,
