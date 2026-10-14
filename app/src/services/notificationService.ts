@@ -1,3 +1,4 @@
+import type { NoticeKind, ScheduledNotice } from '@elevapro/shared';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { showConfirm } from '@/components/ui/appAlert';
@@ -109,158 +110,59 @@ function promptExactAlarmIfNeeded(): void {
   });
 }
 
-interface MealNotification {
-  mealId: string;
-  mealName: string;
-  mealTime: string; // Format: "HH:MM"
-  dayOfWeek: number; // 0-6
-  foodNames?: string[];
-}
-
-export async function scheduleMealNotifications(
-  planId: string,
-  meals: MealNotification[]
-): Promise<void> {
-  try {
-    // Só os lembretes de refeição, de qualquer plano. Cancelar tudo levava junto
-    // o lembrete de treino, que não tem nada com o plano alimentar; cancelar só
-    // os deste plano deixava tocando os da versão anterior, que o check-in da
-    // semana troca a cada ajuste aprovado (#376) — cada refeição avisava duas vezes.
-    await cancelMealNotifications();
-
-    for (const meal of meals) {
-      if (!meal.mealTime || meal.dayOfWeek === undefined || meal.dayOfWeek === null) {
-        console.warn('Skipping invalid meal notification:', meal);
-        continue;
-      }
-
-      const [hours, minutes] = meal.mealTime.split(':').map(Number);
-      const dayOfWeek = Number(meal.dayOfWeek);
-
-      if (Number.isNaN(hours) || Number.isNaN(minutes) || Number.isNaN(dayOfWeek)) {
-        console.warn('Invalid time or day for meal:', meal);
-        continue;
-      }
-
-      // Expo uses 1-7 (Sunday=1, Saturday=7)
-      // Our DB uses 0-6 (Sunday=0, Saturday=6)
-      const weekday = dayOfWeek + 1;
-
-      if (weekday < 1 || weekday > 7) {
-        console.warn('Invalid weekday calculated:', weekday, 'from dayOfWeek:', dayOfWeek);
-        continue;
-      }
-
-      // Format body text
-      let bodyText = `Não esqueça: ${meal.mealName || 'Refeição'}`;
-      if (meal.foodNames && meal.foodNames.length > 0) {
-        const foodsList = meal.foodNames.join(', ');
-        bodyText += `\n${foodsList}`;
-      }
-
-      if (Platform.OS === 'android') {
-        // Android doesn't support "weekly" repeating triggers reliably with expo-notifications
-        // Strategy: Schedule individual notifications for the next 4 weeks
-        const now = new Date();
-        const weeksToSchedule = 4;
-
-        for (let i = 0; i < weeksToSchedule; i++) {
-          // Calculate date for this week's occurrence
-          const targetDate = new Date();
-          targetDate.setDate(now.getDate() + i * 7); // Move to future weeks
-
-          // Adjust to the correct day of week
-          // dayOfWeek: 0 (Sun) - 6 (Sat)
-          // targetDate.getDay(): 0 (Sun) - 6 (Sat)
-          const currentDay = targetDate.getDay();
-          const daysUntilTarget = (dayOfWeek + 7 - currentDay) % 7;
-
-          targetDate.setDate(targetDate.getDate() + daysUntilTarget);
-          targetDate.setHours(hours, minutes, 0, 0);
-
-          // Logs removed to reduce noise
-          // if (targetDate.getTime() <= now.getTime()) { ... } logic remains
-          if (targetDate.getTime() <= now.getTime()) {
-            continue;
-          }
-
-          const trigger: Notifications.DateTriggerInput = {
-            type: Notifications.SchedulableTriggerInputTypes.DATE,
-            date: targetDate,
-            channelId: MEAL_CHANNEL_ID,
-          };
-
-          await Notifications.scheduleNotificationAsync({
-            identifier: `${planId}-${meal.mealId}-${i}`, // Unique ID for each instance
-            content: {
-              title: '🍽️ Hora da refeição!',
-              body: bodyText,
-              data: { planId, mealId: meal.mealId, tone: 'info', icon: 'utensils' },
-              sound: true,
-            },
-            trigger,
-          });
-        }
-      } else {
-        // iOS supports weekly repeating triggers
-        const trigger: Notifications.CalendarTriggerInput = {
-          type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
-          hour: hours,
-          minute: minutes,
-          repeats: true,
-          weekday: weekday,
-        };
-
-        await Notifications.scheduleNotificationAsync({
-          identifier: `${planId}-${meal.mealId}`,
-          content: {
-            title: '🍽️ Hora da refeição!',
-            body: `Não esqueça: ${meal.mealName || 'Refeição'}`,
-            data: { planId, mealId: meal.mealId, tone: 'info', icon: 'utensils' },
-            sound: true,
-          },
-          trigger,
-        });
-      }
-    }
-
-    console.log(`Scheduled ${meals.length} meal notifications for plan ${planId}`);
-  } catch (error) {
-    console.error('Error scheduling meal notifications:', error);
-  }
-}
+const DAILY_NOTICE_KIND = 'daily-notice';
+/** Onde o toque leva, pela rota de `ROUTES`: a refeição abre a dieta, o treino abre os treinos. */
+const NOTICE_URL: Record<NoticeKind, string> = {
+  meal: '/(tabs)/nutrition',
+  workout: '/(tabs)/workouts',
+};
 
 /**
- * Cancela os lembretes de refeição de todos os planos. O aluno segue uma dieta
- * por vez, e quem agenda em seguida é o plano ativo. O lembrete de refeição se
- * reconhece pelo `mealId` no conteúdo.
+ * Troca os avisos do dia agendados pelos novos (#376, item G). Quem decide o
+ * quê e quando é o `planNotices`; aqui só vira notificação do aparelho, na
+ * data e hora locais.
+ *
+ * Cancela também o lembrete de refeição antigo, que tocava na hora da
+ * refeição com os alimentos na tela bloqueada: quem atualiza o app não fica
+ * com os dois.
+ *
+ * @example await scheduleDailyNotices(planNotices(estado, preferencias));
  */
-async function cancelMealNotifications(): Promise<void> {
+export async function scheduleDailyNotices(notices: readonly ScheduledNotice[]): Promise<void> {
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   for (const notification of scheduled) {
-    if (notification.content.data?.mealId) {
+    const data = notification.content.data;
+    if (data?.kind === DAILY_NOTICE_KIND || data?.mealId) {
       await Notifications.cancelScheduledNotificationAsync(notification.identifier);
     }
   }
+  for (const notice of notices) {
+    await Notifications.scheduleNotificationAsync({
+      identifier: notice.id,
+      content: {
+        title: notice.title,
+        body: notice.body,
+        data: {
+          kind: DAILY_NOTICE_KIND,
+          url: NOTICE_URL[notice.kind],
+          tone: 'info',
+          icon: notice.kind === 'meal' ? 'utensils' : 'dumbbell',
+        },
+        sound: true,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: localInstant(notice.date, notice.minutes),
+        channelId: notice.kind === 'meal' ? MEAL_CHANNEL_ID : WORKOUT_CHANNEL_ID,
+      },
+    });
+  }
 }
 
-export async function cancelPlanNotifications(planId: string): Promise<void> {
-  try {
-    const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
-
-    const notificationsToCancel = scheduledNotifications
-      .filter((n) => n.identifier.startsWith(`${planId}-`))
-      .map((n) => n.identifier);
-
-    if (notificationsToCancel.length > 0) {
-      for (const id of notificationsToCancel) {
-        await Notifications.cancelScheduledNotificationAsync(id);
-      }
-      console.log(`Cancelled ${notificationsToCancel.length} notifications for plan ${planId}`);
-    }
-  } catch (error) {
-    console.error('Error cancelling notifications:', error);
-  }
+/** O dia e os minutos no fuso do aparelho. */
+function localInstant(date: string, minutes: number): Date {
+  const [year, month, day] = date.split('-').map(Number);
+  return new Date(year, month - 1, day, Math.floor(minutes / 60), minutes % 60);
 }
 
 const DAILY_LOG_REMINDER_ID = 'daily-log-reminder';

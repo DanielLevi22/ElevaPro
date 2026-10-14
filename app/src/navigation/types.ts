@@ -57,6 +57,11 @@ export const ROUTES = {
   },
 
   // Ajuda
+  SETTINGS: {
+    /** As preferências dos avisos do dia (#376, E5). */
+    NOTICES: '/settings/notices',
+  },
+
   HELP: {
     /** Os comandos de voz da execução do treino. */
     VOICE_COMMANDS: '/help/voice-commands',

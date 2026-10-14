@@ -344,6 +344,20 @@ chegou"), sem número de treino, recorde, peso nem meta (trava em
 negativa); (2) o "já vi o relatório" guarda no MMKV do aparelho só a data da
 semana, nunca o conteúdo.
 
+**Avisos do dia (#376, item G).** Sem tabela nova nem base legal nova. Os avisos
+são locais (`expo-notifications`): o aparelho lê, sob a sessão do aluno e a RLS
+que já existe, só o nome e o horário das refeições e dos treinos do plano ativo,
+se cada um foi feito hoje e o horário de início dos treinos das últimas quatro
+semanas (`dailyNotices.service.ts`). Nada do que foi comido, nenhuma carga. A
+proposta de tabela `notification_preferences` foi trocada por preferências no
+MMKV do aparelho (minimização, Art. 6°, III): os avisos já são do aparelho, e o
+servidor não precisa saber a que horas a pessoa quer ser lembrada. **Esconder
+detalhes na tela bloqueada vem ligado** (decidido no #376): o aviso diz só "Você
+tem 2 pendências de hoje", sem refeição, caloria, peso, treino nem exercício
+(trava em `shared/src/utils/dailyNotices/__tests__/planNotices.test.ts`, com
+prova negativa). O lembrete de refeição antigo, que mostrava os alimentos na
+tela bloqueada, foi retirado e é cancelado no aparelho de quem atualiza.
+
 **Regra do consentimento (Art. 8°):** Quando usamos consentimento como base, ele precisa ser:
 - **Livre**: o aluno não pode ser forçado a aceitar para usar o serviço principal
 - **Informado**: explicar em linguagem simples o que será coletado e por quê

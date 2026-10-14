@@ -11,6 +11,7 @@ import {
 } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { registrarAviso, registrarFalha } from '@/lib/registro';
+import { refreshDailyNotices } from '@/shared/notices';
 import type { CardioModality } from '../cardioModalities';
 import type { CardioSessionState } from '../store/cardioSessionMachine';
 import type { EstadoDaSessao } from '../store/maquinaDaSessao';
@@ -152,6 +153,8 @@ export async function gravarSessaoDeForca(
         sets: item.sets,
       }))
     );
+    // O treino de hoje está feito: o aviso dele não toca mais.
+    void refreshDailyNotices(sessao.studentId);
     return gravada.id;
   } catch (erro) {
     // Sem o objeto de erro: o do PostgREST pode carregar o payload da linha, e

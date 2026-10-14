@@ -19,7 +19,8 @@ import { useProfileOverview } from '../hooks/useProfileOverview';
  */
 export function MenuScreen() {
   const router = useRouter();
-  const { user, signOut } = useAuthStore();
+  const { user, signOut, accountType } = useAuthStore();
+  const isStudent = accountType === 'student' || accountType === 'member';
   const { data: overview } = useProfileOverview(user?.id ?? null);
   const name = overview?.fullName ?? user?.email?.split('@')[0] ?? '';
 
@@ -74,6 +75,15 @@ export function MenuScreen() {
 
       <TituloDeSecao estilo="rotulo">Ajustes</TituloDeSecao>
       <ThemePicker />
+      {isStudent ? (
+        <LinhaDeVidro
+          icon="notifications-outline"
+          tom="marca"
+          titulo="Avisos"
+          sub="O que avisar, quando e o que aparece na tela bloqueada"
+          onPress={() => router.push(ROUTES.SETTINGS.NOTICES)}
+        />
+      ) : null}
       <LinhaDeVidro
         icon="log-out-outline"
         tom="batimento"

@@ -36,6 +36,7 @@ import {
 } from '@/services/notificationService';
 import { assertBffConfigured } from '@/shared/bff';
 import { ajustarEscalaDeTexto } from '@/shared/design';
+import { useDailyNotices } from '@/shared/notices';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -206,6 +207,11 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
 
   // O toque no aviso (o relatório de domingo, #376) abre a tela dele.
   useNotificationTap(!isLoading && Boolean(session));
+
+  // Os avisos do dia (#376) são do aluno, e nunca do especialista vendo como ele.
+  const isMasquerading = useAuthStore((state) => state.isMasquerading);
+  const isStudent = accountType === 'student' || accountType === 'member';
+  useDailyNotices(!isLoading && isStudent && !isMasquerading ? (session?.user?.id ?? null) : null);
 
   const inOnboarding = segments[0] === 'onboarding';
   // O scan opcional depois de O4 sai do grupo do onboarding: o guarda não pode
