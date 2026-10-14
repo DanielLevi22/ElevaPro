@@ -12,6 +12,7 @@ export const maxDuration = 60;
 /** Sem bloco, ou bloco ainda correndo, é conflito de estado; menor de idade é recusa. */
 const FAILURE_STATUS = {
   no_block: 409,
+  has_specialist: 403,
   block_running: 409,
   level_not_available: 409,
   incomplete_answers: 409,

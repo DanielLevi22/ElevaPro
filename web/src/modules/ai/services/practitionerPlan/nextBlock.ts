@@ -21,6 +21,7 @@ export type NextBlockOutcome =
       ok: false;
       reason:
         | "no_block"
+        | "has_specialist"
         | "block_running"
         | "level_not_available"
         | "incomplete_answers"
@@ -49,6 +50,7 @@ interface BlockRow {
  * pendente. Nada é gravado aqui, nem a anamnese (ADR-0020): as mudanças vão
  * junto com a proposta e entram ao aprovar.
  *
+ * Só para quem não tem especialista: o do Aluno reavalia e monta o bloco dele.
  * Só depois do fim do bloco: antes dele, mudar o plano é outro caminho (fatia 5).
  * A meta recalibrada pelos check-ins continua, a menos que o objetivo ou os dias
  * tenham mudado: aí a conta parte do zero, como no onboarding.
@@ -60,6 +62,8 @@ export async function prepareNextBlock(
   changes: BlockChanges,
   today: string,
 ): Promise<NextBlockOutcome> {
+  // Com especialista, a reavaliação e o próximo bloco são dele (#376).
+  if (await hasActiveSpecialist(studentId)) return { ok: false, reason: "has_specialist" };
   const block = await ownActiveBlock(studentId);
   if (!block) return { ok: false, reason: "no_block" };
   if (today < block.end_date) return { ok: false, reason: "block_running" };
@@ -105,6 +109,16 @@ async function currentTrack(studentId: string): Promise<string> {
     .maybeSingle();
   if (error) throw new Error(`trilha de ${studentId} não foi lida: ${error.message}`);
   return (data as { persona_track: string | null } | null)?.persona_track ?? "beginner";
+}
+
+async function hasActiveSpecialist(studentId: string): Promise<boolean> {
+  const { count, error } = await supabaseAdmin
+    .from("student_specialists")
+    .select("id", { count: "exact", head: true })
+    .eq("student_id", studentId)
+    .eq("status", "active");
+  if (error) throw new Error(`vínculo de ${studentId} não foi lido: ${error.message}`);
+  return (count ?? 0) > 0;
 }
 
 async function ownActiveBlock(studentId: string): Promise<BlockRow | null> {

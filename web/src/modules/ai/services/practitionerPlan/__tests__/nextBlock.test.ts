@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 let steps: string[];
 let namings: { name: string; phaseName: string; loads?: ReadonlyMap<string, string> }[];
 let answers: Record<string, unknown>[];
+/** Se o aluno tem especialista ativo. */
+let linked = false;
 /** `undefined` é a gravação lendo o início do bloco; `null` é não haver bloco ativo. */
 let activeBlock: { id: string; end_date: string; plans: unknown[] } | null | undefined;
 
@@ -43,6 +45,9 @@ vi.mock("@/lib/supabase-admin", () => {
             ],
             error: null,
           }));
+        }
+        if (table === "student_specialists") {
+          return chain(() => ({ count: linked ? 1 : 0, error: null }));
         }
         if (table === "training_periodizations") {
           return chain(() => ({
@@ -170,6 +175,17 @@ describe("aprovar o próximo bloco", () => {
 describe("montar o próximo bloco", () => {
   beforeEach(() => {
     activeBlock = null;
+    linked = false;
+  });
+
+  // O Aluno é reavaliado pelo especialista, que monta o bloco dele (#376).
+  it("com especialista ativo, o app não monta bloco nenhum", async () => {
+    linked = true;
+    activeBlock = { id: "bloco-1", end_date: "2026-10-17", plans: [] };
+    await expect(prepareNextBlock("aluno-1", {}, "2026-10-17")).resolves.toEqual({
+      ok: false,
+      reason: "has_specialist",
+    });
   });
 
   it("sem bloco do próprio Praticante, não há o que montar", async () => {

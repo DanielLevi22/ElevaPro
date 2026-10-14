@@ -41,23 +41,34 @@ interface BlockRow extends BlockDates {
  */
 export const createBlockService = (supabase: SupabaseClient) => ({
   /**
-   * A periodização ativa que o próprio Praticante aprovou. A do especialista
-   * não entra: o ciclo dela é dele, e o app não muda nada sozinho.
+   * A periodização ativa que o próprio Praticante aprovou. Quem tem
+   * especialista ativo não tem bloco próprio: a descarga, a reavaliação e o
+   * próximo bloco são dele, e o app não muda nada sozinho — nem num plano que
+   * a pessoa montou antes de se vincular.
    *
    * @example const block = await blocks.activeBlock(user.id); // null para o Aluno
    */
   activeBlock: async (studentId: string): Promise<ActiveBlock | null> => {
-    const { data, error } = await supabase
-      .from("training_periodizations")
-      .select("id, name, start_date, end_date, plans:training_plans(id)")
-      .eq("student_id", studentId)
-      .eq("status", "active")
-      .is("specialist_id", null)
-      .order("start_date", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (error) throw error;
-    const row = data as BlockRow | null;
+    const [periodization, link] = await Promise.all([
+      supabase
+        .from("training_periodizations")
+        .select("id, name, start_date, end_date, plans:training_plans(id)")
+        .eq("student_id", studentId)
+        .eq("status", "active")
+        .is("specialist_id", null)
+        .order("start_date", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("student_specialists")
+        .select("id", { count: "exact", head: true })
+        .eq("student_id", studentId)
+        .eq("status", "active"),
+    ]);
+    if (periodization.error) throw periodization.error;
+    if (link.error) throw link.error;
+    if ((link.count ?? 0) > 0) return null;
+    const row = periodization.data as BlockRow | null;
     if (!row) return null;
     return {
       id: row.id,
