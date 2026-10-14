@@ -45,10 +45,24 @@ interface NoticeChoicesState extends NoticeChoices {
   respond: (noticeId: string) => void;
   settle: (now: number, done: readonly string[], next: TrackedNotice[]) => void;
   resolveIgnored: (refKey: string, change: 'later' | 'mute' | 'keep') => void;
+  /** Ao sair da conta: as escolhas eram da pessoa que saiu. */
+  reset: () => void;
 }
 
 const RESPONDED_KEPT = 60;
 const LATER_MINUTES = 60;
+
+const EMPTY_CHOICES = {
+  day: '',
+  skippedMeals: [],
+  skippedWorkout: false,
+  movedWorkout: null,
+  mutedMeals: [],
+  mealDelays: {},
+  scheduled: [],
+  responded: [],
+  ignored: {},
+};
 
 /** O "pulei" de ontem não vale hoje: o dia muda e as escolhas do dia somem. */
 const ofDay = (state: NoticeChoices, day: string) =>
@@ -64,15 +78,8 @@ const ofDay = (state: NoticeChoices, day: string) =>
 export const useNoticeChoicesStore = create<NoticeChoicesState>()(
   persist(
     (set) => ({
-      day: '',
-      skippedMeals: [],
-      skippedWorkout: false,
-      movedWorkout: null,
-      mutedMeals: [],
-      mealDelays: {},
-      scheduled: [],
-      responded: [],
-      ignored: {},
+      ...EMPTY_CHOICES,
+      reset: () => set(EMPTY_CHOICES),
       skipMeal: (day, mealId) =>
         set((state) => {
           const today = ofDay(state, day);

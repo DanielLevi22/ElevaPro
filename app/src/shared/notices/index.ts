@@ -6,6 +6,7 @@ export { handleNoticeAction, noticeDataOf } from './noticeActions';
 export { useNoticeChoicesStore } from './noticeChoicesStore';
 export { currentPreferences, useNoticePreferencesStore } from './noticePreferencesStore';
 export { refreshDailyNotices } from './refreshDailyNotices';
+export { resetNotices } from './resetNotices';
 export { TodayChecklistCard } from './TodayChecklistCard';
 export { useDailyNotices } from './useDailyNotices';
 export { useLearnedWorkoutTime } from './useLearnedWorkoutTime';

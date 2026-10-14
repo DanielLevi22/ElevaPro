@@ -58,6 +58,24 @@
           "NSHealthShareUsageDescription": "Lemos do seu relógio passos, calorias, duração do sono, frequência cardíaca de repouso e a frequência cardíaca das suas corridas, guardando só a média e o tempo em cada zona, para acompanhar sua atividade entre os treinos. No check-in da semana, se você pedir, lemos as pesagens da semana e guardamos só a média. Você escolhe o que compartilhar e pode desligar quando quiser."
         }
       ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "Today",
+              "label": "Eleva Pro · Hoje",
+              "description": "Treino, próxima refeição e água do dia",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ],
       "react-native-health-connect",
       "./plugins/withHealthConnectDelegate",
       [

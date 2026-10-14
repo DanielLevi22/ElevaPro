@@ -97,7 +97,7 @@ export function NoticePreferencesScreen() {
       <LinhaDeVidro
         icon="lock-closed-outline"
         tom="passos"
-        titulo="Esconder detalhes na tela bloqueada"
+        titulo="Esconder detalhes na tela bloqueada e no widget"
         sub='Mostra só "Você tem 2 pendências de hoje"'
         direita={
           <Switch

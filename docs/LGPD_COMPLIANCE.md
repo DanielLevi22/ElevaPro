@@ -365,6 +365,16 @@ tem 2 pendências de hoje", sem refeição, caloria, peso, treino nem exercício
 prova negativa). O lembrete de refeição antigo, que mostrava os alimentos na
 tela bloqueada, foi retirado e é cancelado no aparelho de quem atualiza.
 
+**Widget de hoje no Android (#376, F7).** O widget da tela inicial mostra o
+treino do dia, a próxima refeição sem marcar e a água, a partir do mesmo
+estado dos avisos. Fica num MMKV próprio do aparelho (`today-widget`) para o
+Android redesenhar com o app fechado: só nomes e horários do plano e o total de
+água, nada do que foi comido. **Segue o "esconder detalhes"**, que vem ligado:
+a tela inicial é vista por qualquer um, e o widget diz só "Você tem 2
+pendências hoje". **Sair da conta apaga o retrato, redesenha o widget vazio e
+cancela os avisos agendados**: no aparelho compartilhado, quem entra depois não
+recebe o almoço do outro. O widget do iOS fica para a sua issue.
+
 **Painel "precisam de atenção" (#376, F8).** O briefing do especialista passou
 a derivar, além de "não treina há N dias", "sem marcar refeição há N dias" e
 "pulou o check-in da semana passada", com o limite de 5 dias (decidido no
