@@ -304,3 +304,53 @@ export async function hasDailyLogReminder(): Promise<boolean> {
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   return scheduled.some((notification) => notification.identifier === DAILY_LOG_REMINDER_ID);
 }
+
+const WEEKLY_REPORT_ID = 'weekly-report';
+/** Domingo, no `weekday` do expo-notifications: 1 é domingo. */
+const SUNDAY = 1;
+const WEEKLY_REPORT_HOUR = 18;
+/** A rota do relatório, como em `ROUTES.CHECKIN.REPORT`; o toque no aviso abre ela. */
+const WEEKLY_REPORT_URL = '/checkin/report';
+
+/**
+ * O aviso de domingo às 18h de que o relatório da semana chegou (#376, R0).
+ *
+ * Só agenda se a permissão já foi dada: quem chama é a tela inicial, e ela não
+ * é lugar de pedir permissão. Agendar de novo troca o anterior, pelo mesmo
+ * `identifier`. O texto é genérico de propósito: aparece na tela bloqueada, e
+ * o número de treinos ou o peso da semana são dado de saúde.
+ *
+ * @example await scheduleWeeklyReportNotification();
+ */
+export async function scheduleWeeklyReportNotification(): Promise<boolean> {
+  const { status } = await Notifications.getPermissionsAsync();
+  if (status !== 'granted') return false;
+  await Notifications.scheduleNotificationAsync({
+    identifier: WEEKLY_REPORT_ID,
+    content: {
+      title: 'Seu relatório da semana chegou',
+      body: 'Veja como foi a semana e o que mudou no seu plano.',
+      data: { kind: 'weekly-report', url: WEEKLY_REPORT_URL, tone: 'info', icon: 'dumbbell' },
+      sound: true,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+      weekday: SUNDAY,
+      hour: WEEKLY_REPORT_HOUR,
+      minute: 0,
+      channelId: WORKOUT_CHANNEL_ID,
+    },
+  });
+  return true;
+}
+
+/**
+ * A rota que um aviso tocado pede, se ela for nossa: só caminho interno, nunca
+ * URL de fora, para o conteúdo do aviso não abrir o que quiser.
+ *
+ * @example routeOfNotification({ url: '/checkin/report' }) // "/checkin/report"
+ */
+export function routeOfNotification(data: Record<string, unknown> | undefined): string | null {
+  const url = data?.url;
+  return typeof url === 'string' && url.startsWith('/') && !url.startsWith('//') ? url : null;
+}

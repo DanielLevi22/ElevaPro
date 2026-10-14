@@ -86,6 +86,7 @@ export const ROUTES = {
   CHECKIN: {
     ROOT: '/checkin',
     RESULT: '/checkin/result',
+    REPORT: '/checkin/report',
   },
 
   // Student Flows

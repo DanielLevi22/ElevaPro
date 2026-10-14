@@ -328,6 +328,19 @@ mostrei esse alerta pra esse aluno") guarda só `kind` + `days` no MMKV do
 aparelho, nunca a frase montada — quem lê o cache não reconstrói a inferência
 sem também ter lido o sinal original.
 
+**Relatório da semana (#376, R0–R1).** Sem tratamento novo nem base legal nova:
+a tela do aluno lê, sob a sessão dele e a RLS que já existe, o que o relatório do
+período (#312) já mostra — sessões e séries, refeições registradas, medidas,
+ajustes de meta (`plan_adjustments`) e trocas de exercício, numa janela de uma
+semana. O Aluno vê também a última nota do especialista na semana, com o mesmo
+recorte de CASL (`read SpecialistNote`) do relatório do período. Duas garantias
+que a superfície nova não pode afrouxar: (1) o aviso de domingo às 18h aparece
+na tela bloqueada, e por isso o texto é genérico ("Seu relatório da semana
+chegou"), sem número de treino, recorde, peso nem meta (trava em
+`app/src/services/__tests__/weeklyReportNotification.test.ts`, com prova
+negativa); (2) o "já vi o relatório" guarda no MMKV do aparelho só a data da
+semana, nunca o conteúdo.
+
 **Regra do consentimento (Art. 8°):** Quando usamos consentimento como base, ele precisa ser:
 - **Livre**: o aluno não pode ser forçado a aceitar para usar o serviço principal
 - **Informado**: explicar em linguagem simples o que será coletado e por quê

@@ -13,7 +13,15 @@ const FOLHA: ReportSheet = {
   },
   // A data vem como `LoadRecord` a carrega, do dia local da série: ISO, e não já
   // formatada. Era isso que a fixture antiga escondia — o PDF imprimia o ISO cru.
-  records: [{ exerciseId: 'supino', name: 'Supino reto', weight: 95.5, date: '2026-08-12' }],
+  records: [
+    {
+      exerciseId: 'supino',
+      name: 'Supino reto',
+      weight: 95.5,
+      previousWeight: 90,
+      date: '2026-08-12',
+    },
+  ],
   streak: { current: 12, best: 18 },
   composition: { weightDelta: -1.4, fatDelta: -1.5, source: 'declarada por você' },
   note: { body: 'Boa evolução na puxada.', author: 'Marina Dias', date: '10 set' },
@@ -47,6 +55,7 @@ describe('reportHtml', () => {
           exerciseId: '3f1c0a52-6d21-4a3e-9c88-1b2d3e4f5a6b',
           name: 'Supino reto',
           weight: 95,
+          previousWeight: 90,
           date: '2026-08-12',
         },
       ],

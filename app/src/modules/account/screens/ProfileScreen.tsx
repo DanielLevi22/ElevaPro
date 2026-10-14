@@ -173,6 +173,13 @@ function FollowUp({
         />
       )}
       <LinhaDeVidro
+        icon="stats-chart-outline"
+        tom="marca"
+        titulo="Relatório da semana"
+        sub="Treinos, recordes e o que mudou"
+        onPress={() => router.push(ROUTES.CHECKIN.REPORT)}
+      />
+      <LinhaDeVidro
         icon="clipboard-outline"
         tom="passos"
         titulo="Anamnese"

@@ -24,6 +24,7 @@ import { HealthDataConsentGate } from '@/components/consent/HealthDataConsentGat
 import { AppAlertHost, showAlert } from '@/components/ui/appAlert';
 import { PushBannerHost } from '@/components/ui/pushBanner';
 import { useColorScheme } from '@/components/useColorScheme';
+import { useNotificationTap } from '@/hooks/useNotificationTap';
 import { queryClient } from '@/lib/query-client';
 import { useOnboardingGate } from '@/modules/onboarding';
 import { ROUTES } from '@/navigation/types';
@@ -202,6 +203,9 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
       router.replace('/(tabs)');
     }
   }, [session, segments, isLoading, accountType, router, redirectPrivilegedSession]);
+
+  // O toque no aviso (o relatório de domingo, #376) abre a tela dele.
+  useNotificationTap(!isLoading && Boolean(session));
 
   const inOnboarding = segments[0] === 'onboarding';
   // O scan opcional depois de O4 sai do grupo do onboarding: o guarda não pode

@@ -37,6 +37,8 @@ export interface LoadRecord {
   exerciseId: string;
   name: string;
   weight: number;
+  /** A melhor carga antes do recorde: o "10 kg" de "10 kg → 12,5 kg". */
+  previousWeight: number;
   date: string;
 }
 
@@ -128,11 +130,21 @@ export function loadRecords(sets: readonly CompletedSet[], from: string, to: str
 function recordOf(sets: readonly CompletedSet[], from: string, to: string): LoadRecord[] {
   const ordered = [...sets].sort((a, b) => a.date.localeCompare(b.date));
   let previousBest: number | null = null;
+  let bestBeforePeriod: number | null = null;
   let record: LoadRecord | null = null;
   for (const item of ordered) {
     const weight = item.weight as number;
+    if (item.date < from) bestBeforePeriod = Math.max(bestBeforePeriod ?? weight, weight);
     if (item.date >= from && item.date <= to && previousBest !== null && weight > previousBest) {
-      record = { exerciseId: item.exerciseId, name: item.exerciseName, weight, date: item.date };
+      record = {
+        exerciseId: item.exerciseId,
+        name: item.exerciseName,
+        weight,
+        // Contra o que havia antes do período, e não contra o recorde da véspera:
+        // duas subidas na mesma semana são um ganho só, do começo ao fim.
+        previousWeight: bestBeforePeriod ?? previousBest,
+        date: item.date,
+      };
     }
     previousBest = previousBest === null ? weight : Math.max(previousBest, weight);
   }
