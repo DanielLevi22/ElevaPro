@@ -1,17 +1,21 @@
+import { MIN_STARTS_TO_LEARN, timeOf, WORKOUT_DELAY_MINUTES } from '@elevapro/shared';
 import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
+import { useAuthStore } from '@/auth';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { ChipPick } from '@/components/ui/ChipPick';
+import { StartTimes } from '@/components/ui/charts/StartTimes';
 import { GlassScreen } from '@/components/ui/GlassScreen';
 import { GlassSegmented } from '@/components/ui/GlassSegmented';
 import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
 import { ProgressHeader } from '@/components/ui/ProgressHeader';
 import { Switch } from '@/components/ui/Switch';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
+import { Vidro } from '@/components/ui/Vidro';
 import { requestNotificationPermissions } from '@/services/notificationService';
-import { useNoticePreferencesStore } from '@/shared/notices';
+import { useLearnedWorkoutTime, useNoticePreferencesStore } from '@/shared/notices';
 
 const WORKOUT_MODES = [
   { value: 'learned' as const, label: 'Meu horário' },
@@ -116,6 +120,7 @@ function WorkoutTime() {
         value={prefs.workoutMode}
         onChange={(workoutMode) => prefs.update({ workoutMode })}
       />
+      {prefs.workoutMode === 'learned' ? <LearnedTime /> : null}
       {prefs.workoutMode === 'fixed' ? (
         <View className="flex-row gap-2">
           {FIXED_TIMES.map((time) => (
@@ -129,6 +134,27 @@ function WorkoutTime() {
         </View>
       ) : null}
     </View>
+  );
+}
+
+/** F2 · Quando a pessoa costuma começar, e a que horas o aviso vem. */
+function LearnedTime() {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const { data: learned } = useLearnedWorkoutTime(userId);
+  if (!learned) return null;
+  const noticeAt = timeOf(learned.usual + WORKOUT_DELAY_MINUTES);
+  return (
+    <Vidro className="p-3.5">
+      <Text className="text-[0.84375rem] font-bold text-foreground">
+        {learned.starts.length < MIN_STARTS_TO_LEARN
+          ? `Com ${MIN_STARTS_TO_LEARN} treinos, o app aprende seu horário`
+          : `Você costuma começar às ${timeOf(learned.usual)}`}
+      </Text>
+      <Text className="mb-3 mt-0.5 text-[0.71875rem] text-muted-foreground">
+        {`O aviso vem às ${noticeAt}, nos dias de treino. Últimas 4 semanas:`}
+      </Text>
+      <StartTimes starts={learned.starts} usual={learned.usual} />
+    </Vidro>
   );
 }
 

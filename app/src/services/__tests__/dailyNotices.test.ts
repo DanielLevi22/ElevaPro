@@ -36,7 +36,7 @@ describe('scheduleDailyNotices', () => {
       existing('weekly-report', { kind: 'weekly-report' }),
     ]);
 
-    await scheduleDailyNotices([lunch]);
+    await scheduleDailyNotices([lunch], { withActions: false });
 
     expect(cancel.mock.calls.map(([id]) => id)).toEqual([
       'notice-2026-10-13-meal-almoco',
@@ -47,11 +47,21 @@ describe('scheduleDailyNotices', () => {
   it('agenda no dia e na hora locais, e o toque abre a dieta', async () => {
     scheduled.mockResolvedValue([]);
 
-    await scheduleDailyNotices([lunch]);
+    await scheduleDailyNotices([lunch], { withActions: false });
 
     const [request] = schedule.mock.calls[0];
     expect(request.identifier).toBe(lunch.id);
     expect(request.trigger.date).toEqual(new Date(2026, 9, 14, 13, 30));
     expect(request.content.data.url).toBe('/(tabs)/nutrition');
+    expect(request.content.categoryIdentifier).toBeUndefined();
+  });
+
+  it('com detalhes, o aviso da refeição ganha os botões de marcar', async () => {
+    scheduled.mockResolvedValue([]);
+
+    await scheduleDailyNotices([lunch], { withActions: true });
+
+    expect(schedule.mock.calls[0][0].content.categoryIdentifier).toBe('notice-meal');
+    expect(Notifications.setNotificationCategoryAsync).toHaveBeenCalled();
   });
 });

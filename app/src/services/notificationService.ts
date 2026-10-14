@@ -3,6 +3,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { showConfirm } from '@/components/ui/appAlert';
 import { showPushBanner } from '@/components/ui/pushBanner';
+import { ROUTES } from '@/navigation/types';
 import { coresDoTema } from '@/shared/design';
 import { isExactAlarmGranted, openExactAlarmSettings } from '../../modules/exact-alarm-permission';
 import { pushBannerFromNotification } from './pushBannerFromNotification';
@@ -111,24 +112,68 @@ function promptExactAlarmIfNeeded(): void {
 }
 
 const DAILY_NOTICE_KIND = 'daily-notice';
-/** Onde o toque leva, pela rota de `ROUTES`: a refeição abre a dieta, o treino abre os treinos. */
+/** Onde o toque leva: a refeição abre a dieta, o treino abre os treinos. */
 const NOTICE_URL: Record<NoticeKind, string> = {
-  meal: '/(tabs)/nutrition',
-  workout: '/(tabs)/workouts',
+  meal: ROUTES.TABS.NUTRITION,
+  workout: ROUTES.TABS.WORKOUTS,
 };
+
+/** As ações no próprio aviso (E2, E3). O id é o que o toque devolve em `actionIdentifier`. */
+export const NOTICE_ACTIONS = {
+  mealDone: 'meal-done',
+  mealOther: 'meal-other',
+  mealSkip: 'meal-skip',
+  workoutStart: 'workout-start',
+  workoutTomorrow: 'workout-tomorrow',
+  workoutSkip: 'workout-skip',
+} as const;
+
+const NOTICE_CATEGORY: Record<NoticeKind, string> = {
+  meal: 'notice-meal',
+  workout: 'notice-workout',
+};
+
+/**
+ * Os botões dos avisos, curtos: o Android corta o rótulo de três botões numa
+ * linha ("Comi o do pla…"). Todos abrem o app: a resposta precisa da sessão para
+ * gravar, e no Android a ação em segundo plano não tem o JS de pé.
+ */
+async function ensureNoticeCategories(): Promise<void> {
+  const action = (identifier: string, buttonTitle: string) => ({
+    identifier,
+    buttonTitle,
+    options: { opensAppToForeground: true },
+  });
+  await Notifications.setNotificationCategoryAsync(NOTICE_CATEGORY.meal, [
+    action(NOTICE_ACTIONS.mealDone, 'Comi'),
+    action(NOTICE_ACTIONS.mealOther, 'Outra coisa'),
+    action(NOTICE_ACTIONS.mealSkip, 'Pulei'),
+  ]);
+  await Notifications.setNotificationCategoryAsync(NOTICE_CATEGORY.workout, [
+    action(NOTICE_ACTIONS.workoutStart, 'Começar'),
+    action(NOTICE_ACTIONS.workoutTomorrow, 'Amanhã'),
+    action(NOTICE_ACTIONS.workoutSkip, 'Hoje não'),
+  ]);
+}
 
 /**
  * Troca os avisos do dia agendados pelos novos (#376, item G). Quem decide o
  * quê e quando é o `planNotices`; aqui só vira notificação do aparelho, na
  * data e hora locais.
  *
+ * Com `withActions`, o aviso ganha os botões de E2 e E3.
+ *
  * Cancela também o lembrete de refeição antigo, que tocava na hora da
  * refeição com os alimentos na tela bloqueada: quem atualiza o app não fica
  * com os dois.
  *
- * @example await scheduleDailyNotices(planNotices(estado, preferencias));
+ * @example await scheduleDailyNotices(planNotices(estado, preferencias), { withActions: false });
  */
-export async function scheduleDailyNotices(notices: readonly ScheduledNotice[]): Promise<void> {
+export async function scheduleDailyNotices(
+  notices: readonly ScheduledNotice[],
+  { withActions }: { withActions: boolean }
+): Promise<void> {
+  if (withActions) await ensureNoticeCategories();
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   for (const notification of scheduled) {
     const data = notification.content.data;
@@ -142,8 +187,14 @@ export async function scheduleDailyNotices(notices: readonly ScheduledNotice[]):
       content: {
         title: notice.title,
         body: notice.body,
+        // Sem detalhes, sem botões: "Comi o do plano" num aviso que não diz qual
+        // refeição marcaria uma às cegas.
+        ...(withActions ? { categoryIdentifier: NOTICE_CATEGORY[notice.kind] } : {}),
         data: {
           kind: DAILY_NOTICE_KIND,
+          noticeKind: notice.kind,
+          refId: notice.refId,
+          date: notice.date,
           url: NOTICE_URL[notice.kind],
           tone: 'info',
           icon: notice.kind === 'meal' ? 'utensils' : 'dumbbell',

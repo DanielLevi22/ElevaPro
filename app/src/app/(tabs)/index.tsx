@@ -5,6 +5,7 @@ import { BlockCard } from '@/modules/block';
 import { CheckInCard, WeeklyReportCard } from '@/modules/checkin';
 import { HomeDoAluno, SpecialistDashboard } from '@/modules/dashboard';
 import { CompleteProfileCard } from '@/modules/onboarding';
+import { TodayChecklistCard } from '@/shared/notices';
 
 /**
  * A entrada do app, e só a escolha de qual delas.
@@ -45,6 +46,7 @@ export default function HomeTab() {
       aviso={
         <>
           <CheckInCard />
+          <TodayChecklistCard studentId={isMasquerading ? null : (aluno.perfil?.id ?? null)} />
           <WeeklyReportCard />
           <BlockCard />
           <CompleteProfileCard />

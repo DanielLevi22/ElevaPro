@@ -16,6 +16,15 @@ const DAY_NAMES: readonly DayOfWeek[] = [
   "saturday",
 ];
 
+/**
+ * O dia da semana da data como os treinos gravam.
+ *
+ * @example dayNameOf("2026-10-14") // "wednesday"
+ */
+export function dayNameOf(date: string): DayOfWeek {
+  return DAY_NAMES[weekdayOf(date)];
+}
+
 interface Candidate {
   kind: NoticeKind;
   refId: string;
@@ -75,7 +84,7 @@ function candidatesOf(
           ];
         })
     : [];
-  const workout = state.workouts.find((item) => item.day === DAY_NAMES[weekdayOf(day)]);
+  const workout = state.workouts.find((item) => item.day === dayNameOf(day));
   if (!prefs.workout || !workout || (isToday && state.trainedToday)) return meals;
   return [
     ...meals,

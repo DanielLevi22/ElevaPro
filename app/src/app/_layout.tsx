@@ -36,7 +36,7 @@ import {
 } from '@/services/notificationService';
 import { assertBffConfigured } from '@/shared/bff';
 import { ajustarEscalaDeTexto } from '@/shared/design';
-import { useDailyNotices } from '@/shared/notices';
+import { IgnoredNoticePrompt, useDailyNotices } from '@/shared/notices';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -206,7 +206,7 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
   }, [session, segments, isLoading, accountType, router, redirectPrivilegedSession]);
 
   // O toque no aviso (o relatório de domingo, #376) abre a tela dele.
-  useNotificationTap(!isLoading && Boolean(session));
+  useNotificationTap(isLoading ? null : (session?.user?.id ?? null));
 
   // Os avisos do dia (#376) são do aluno, e nunca do especialista vendo como ele.
   const isMasquerading = useAuthStore((state) => state.isMasquerading);
@@ -257,6 +257,7 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
             isStudent={accountType === 'student' || accountType === 'member'}
             hasSpecialist={accountType === 'student'}
           />
+          {isStudent && !inOnboarding && !isMasquerading ? <IgnoredNoticePrompt /> : null}
         </ThemeProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
