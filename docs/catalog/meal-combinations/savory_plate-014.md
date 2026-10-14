@@ -242,7 +242,7 @@
 - [ ] `candidate-4e133122ff87bff2` — Prato: Biscoito de arroz + Carne bovina (patinho) + Repolho cru
 - [ ] `candidate-4e1478f08a89cd10` — Prato: Arroz branco cozido + Ovo de codorna cozido + Berinjela cozida
 - [ ] `candidate-4e148144ebfa38db` — Prato: Batata inglesa cozida + Frango desfiado cozido + Espinafre
-- [ ] `candidate-4e188bebe350a750` — Prato: Batata doce cozida + Frango desfiado cozido + Couve-flor cozida
+- [x] `candidate-4e188bebe350a750` — Prato: Batata doce cozida + Frango desfiado cozido + Couve-flor cozida
 - [ ] `candidate-4e18a5582d9a30d6` — Prato: Mandioca cozida + Carne bovina (alcatra) + Quiabo cozido
 - [ ] `candidate-4e19f817ed72657a` — Prato: Batata inglesa cozida + Fígado bovino grelhado + Quiabo cozido
 - [ ] `candidate-4e1e80daab9a87b7` — Prato: Mandioca cozida + Pescada grelhada + Berinjela cozida

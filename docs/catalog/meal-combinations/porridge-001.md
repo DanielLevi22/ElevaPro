@@ -44,7 +44,7 @@
 - [ ] `candidate-5b1f982b60dc1993` — Mingau: Leite sem lactose desnatado + Farinha de aveia + Banana prata
 - [ ] `candidate-5b40767432d16ad0` — Mingau: Bebida de soja sem açúcar + Farinha de aveia + Maçã
 - [ ] `candidate-5ce6ff64c31427e6` — Mingau: Kefir de leite + Aveia em flocos + Damasco seco
-- [ ] `candidate-5ea9b4c676fb58e8` — Mingau: Leite sem lactose desnatado + Aveia em flocos + Banana prata
+- [x] `candidate-5ea9b4c676fb58e8` — Mingau: Leite sem lactose desnatado + Aveia em flocos + Banana prata
 - [ ] `candidate-690fed0a461f68e9` — Mingau: Bebida de amêndoas sem açúcar + Farinha de aveia + Banana nanica
 - [ ] `candidate-6b2f36c7ba4c0234` — Mingau: Bebida de amêndoas sem açúcar + Aveia em flocos + Banana nanica
 - [ ] `candidate-6c7fd79b9e681fe2` — Mingau: Leite integral + Farinha de aveia + Uva passa
