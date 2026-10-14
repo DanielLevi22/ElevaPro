@@ -270,6 +270,10 @@ export const ROUTES = {
     MEASUREMENTS: '/(tabs)/progress/measurements',
     /** O relatório dos últimos 90 dias, com a exportação em PDF. */
     REPORT: '/(tabs)/progress/report',
+    /** A tendência de peso, com a faixa do ritmo e os ajustes (#376, A10). */
+    WEIGHT_TREND: '/(tabs)/progress/weight',
+    /** Sua jornada: a linha do tempo desde o primeiro plano (#376, D1). */
+    JOURNEY: '/(tabs)/progress/journey',
     /**
      * O histórico de body scans (#316). Arquivo simples com a pasta `scans/`
      * irmã: `scans/index` sai tipado como `/scans/index`, que o roteador não serve.

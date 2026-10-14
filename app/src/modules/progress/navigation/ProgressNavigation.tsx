@@ -36,6 +36,9 @@ export interface ProgressRoutes {
   measurementForm: ((id?: string) => Href) | null;
   /** O histórico onde o aluno corrige as próprias sessões; `null` para o especialista. */
   sessionHistory: Href | null;
+  /** A tendência de peso (A10) e a jornada (D1) do próprio aluno; `null` para o especialista. */
+  weightTrend: Href | null;
+  journey: Href | null;
 }
 
 export interface ProgressNavigation {
@@ -65,6 +68,8 @@ const SELF: ProgressNavigation = {
         ? { pathname: ROUTES.PROGRESS.MEASUREMENT_FORM, params: { id } }
         : ROUTES.PROGRESS.MEASUREMENT_FORM,
     sessionHistory: ROUTES.STUDENT.SESSION_HISTORY,
+    weightTrend: ROUTES.PROGRESS.WEIGHT_TREND,
+    journey: ROUTES.PROGRESS.JOURNEY,
   },
 };
 
@@ -104,6 +109,8 @@ export function SpecialistProgressProvider({
       report: routes.REPORT(studentId),
       measurementForm: null,
       sessionHistory: null,
+      weightTrend: null,
+      journey: null,
     },
   };
   return <Context.Provider value={value}>{children}</Context.Provider>;

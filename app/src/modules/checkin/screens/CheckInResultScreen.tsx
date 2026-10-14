@@ -5,6 +5,7 @@ import { Text, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { showAlert } from '@/components/ui/appAlert';
 import { BarraDeDuasAcoes } from '@/components/ui/BarraDeDuasAcoes';
+import { WeightTrend } from '@/components/ui/charts/WeightTrend';
 import { FlowFrame, FlowTitle } from '@/components/ui/FlowFrame';
 import { Vidro } from '@/components/ui/Vidro';
 import { registrarFalha } from '@/lib/registro';
@@ -18,7 +19,6 @@ import {
 } from '../components/CheckInStates';
 import { DailyLogReminder } from '../components/DailyLogReminder';
 import { TargetChange } from '../components/TargetChange';
-import { WeightTrend } from '../components/WeightTrend';
 import {
   useCheckInActions,
   useCheckInProposal,

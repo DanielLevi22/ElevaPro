@@ -2,7 +2,7 @@ import type { WeightPoint } from '@elevapro/shared';
 import { Text, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { comOpacidade, useCores, useEscala } from '@/shared/design';
-import { trendGeometry } from '../services/trendGeometry';
+import { trendGeometry } from './weightTrendGeometry';
 
 const WIDTH = 320;
 const HEIGHT = 110;

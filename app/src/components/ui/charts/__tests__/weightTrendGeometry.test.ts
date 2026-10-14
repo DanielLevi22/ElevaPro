@@ -1,4 +1,4 @@
-import { trendGeometry } from '../trendGeometry';
+import { trendGeometry } from '../weightTrendGeometry';
 
 const BOX = { width: 320, height: 110 };
 const WEEKS = [
