@@ -39,9 +39,13 @@ async function saveWorkout(
   return { workoutId: (data as { id: string }).id, title: workout.title };
 }
 
+/** A carga de partida por exercício do catálogo: o próximo bloco começa da conquistada. */
+export type StartingLoads = ReadonlyMap<string, string>;
+
 async function saveExercises(
   workoutId: string,
   exercises: BulkWorkoutItem["exercises"],
+  loads?: StartingLoads,
 ): Promise<void> {
   if (!exercises?.length) return;
 
@@ -90,6 +94,7 @@ async function saveExercises(
         sets: e.sets,
         reps: e.reps,
         rest_seconds: e.rest_seconds,
+        weight: loads?.get(exerciseId) ?? null,
         notes: e.notes ?? null,
         order_index: idx,
       };
@@ -118,12 +123,13 @@ export async function saveWorkoutsWithExercises(
   phaseId: string,
   owner: WorkoutOwner,
   registrar: (id: string) => void,
+  loads?: StartingLoads,
 ): Promise<{ id: string; title: string }[]> {
   const salvos: { id: string; title: string }[] = [];
   for (const workout of workouts) {
     const { workoutId, title } = await saveWorkout(workout, phaseId, owner);
     registrar(workoutId);
-    await saveExercises(workoutId, workout.exercises);
+    await saveExercises(workoutId, workout.exercises, loads);
     salvos.push({ id: workoutId, title });
   }
   return salvos;

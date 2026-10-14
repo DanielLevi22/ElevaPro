@@ -3742,3 +3742,45 @@ BEGIN
 END $$;
 
 ROLLBACK;
+
+-- ── end_reason: o motivo do fim do plano (0090, #376) ──────────────────────────
+-- O motivo é uma lista fechada, gravada pelo BFF: texto livre aqui viraria lugar
+-- de anotar lesão sem a base legal de dado de saúde (Art. 11), e o Praticante
+-- não reescreve por que o próprio bloco acabou (histórico, Art. 6°, V).
+
+BEGIN;
+
+DO $$
+DECLARE
+  student uuid := gen_random_uuid();
+  block uuid;
+  changed int;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES (student, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+          'verify-er@elevapro.local', '{"full_name":"P","account_type":"member"}'::jsonb);
+  INSERT INTO public.training_periodizations
+    (student_id, specialist_id, name, status, start_date, end_date, end_reason)
+  VALUES (student, NULL, 'Bloco 1', 'completed', CURRENT_DATE - 28, CURRENT_DATE, 'block_completed')
+  RETURNING id INTO block;
+
+  BEGIN
+    UPDATE public.training_periodizations SET end_reason = 'machuquei o joelho' WHERE id = block;
+    RAISE EXCEPTION 'MOTIVO VIROU ANOTAÇÃO: o banco aceitou texto livre no motivo do fim do plano';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', student, 'role', 'authenticated')::text, true);
+
+  UPDATE public.training_periodizations SET end_reason = 'replaced' WHERE id = block;
+  GET DIAGNOSTICS changed = ROW_COUNT;
+  IF changed <> 0 THEN
+    RAISE EXCEPTION 'HISTÓRICO REESCRITO: o aluno mudou o motivo do fim do próprio bloco';
+  END IF;
+
+  RAISE NOTICE 'ok  motivo do fim do plano: lista fechada, e o aluno não reescreve';
+END $$;
+
+ROLLBACK;

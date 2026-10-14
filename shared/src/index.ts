@@ -64,6 +64,7 @@ export * from "./types/workouts.types";
 export * from "./utils/anamnese";
 export * from "./utils/anamnesisMeasurement";
 export * from "./utils/blockCycle";
+export * from "./utils/blockReview";
 export * from "./utils/bodyMeasurements";
 export * from "./utils/calendario";
 export * from "./utils/dailyActivity";

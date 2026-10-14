@@ -85,6 +85,11 @@ export const ROUTES = {
   // `checkin/index.tsx`, pelo mesmo motivo da técnica: o typegen erra a segunda.
   BLOCK: {
     DELOAD: '/block/deload',
+    REVIEW: '/block/review',
+    MEASURES: '/block/measures',
+    CHANGES: '/block/changes',
+    BUILDING: '/block/building',
+    NEXT: '/block/next',
   },
 
   CHECKIN: {

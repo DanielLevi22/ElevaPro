@@ -71,6 +71,8 @@ export const trainingPeriodizations = pgTable("training_periodizations", {
   // IA e criar ficha de treino ficaram quebrados sem sintoma no compilador.
   start_date: date("start_date").notNull(),
   end_date: date("end_date").notNull(),
+  // Por que o plano acabou: block_completed ou replaced (0090, #376).
+  end_reason: text("end_reason"),
   // Vieram na `0004` e nunca entraram neste schema (dívida #40).
   level: text("level"),
   duration_weeks: integer("duration_weeks"),

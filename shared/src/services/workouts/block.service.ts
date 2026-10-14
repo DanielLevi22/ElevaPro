@@ -1,5 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { type InjuryRegion, MAIN_GOALS, type MainGoal } from "../../data/anamnesisAdaptive";
+import { achatarRespostas } from "../../utils/anamnese";
 import type { BlockDates } from "../../utils/blockCycle";
+import { DEFAULT_TRAINING_DAYS } from "../../utils/practitionerDietTarget";
+import { TRAINING_PLACES, type TrainingPlace } from "../../utils/trainingPlace";
 
 /** O bloco ativo do próprio Praticante, com as fases: o treino sabe se é dele. */
 export interface ActiveBlock extends BlockDates {
@@ -7,6 +11,18 @@ export interface ActiveBlock extends BlockDates {
   name: string;
   planIds: string[];
 }
+
+/** As respostas que a reavaliação mostra como "Hoje: …" (B2). */
+export interface BlockChoices {
+  goal: MainGoal | null;
+  trainingDays: number;
+  place: TrainingPlace;
+  injuries: InjuryRegion[];
+}
+
+/** Só as quatro respostas: a anamnese tem dado de saúde que a B2 não precisa. */
+const CHOICE_FIELDS =
+  "main_goal:responses->main_goal, training_days:responses->training_days, gym_type:responses->gym_type, injuries:responses->injuries";
 
 interface BlockRow extends BlockDates {
   id: string;
@@ -46,6 +62,34 @@ export const createBlockService = (supabase: SupabaseClient) => ({
       start_date: row.start_date,
       end_date: row.end_date,
       planIds: (row.plans ?? []).map((plan) => plan.id),
+    };
+  },
+
+  /**
+   * O que a pessoa respondeu sobre objetivo, dias, local e lesão, com os
+   * padrões da geração para o que ela pulou.
+   *
+   * @example const hoje = await blocks.currentChoices(user.id); // { trainingDays: 3, … }
+   */
+  currentChoices: async (studentId: string): Promise<BlockChoices> => {
+    const { data, error } = await supabase
+      .from("student_anamnesis")
+      .select(CHOICE_FIELDS)
+      .eq("student_id", studentId)
+      .maybeSingle();
+    if (error) throw error;
+    const answers = achatarRespostas((data ?? {}) as Record<string, unknown>);
+    const places: readonly string[] = Object.values(TRAINING_PLACES);
+    return {
+      goal: MAIN_GOALS.includes(answers.main_goal as MainGoal)
+        ? (answers.main_goal as MainGoal)
+        : null,
+      trainingDays:
+        typeof answers.training_days === "number" ? answers.training_days : DEFAULT_TRAINING_DAYS,
+      place: places.includes(answers.gym_type as string)
+        ? (answers.gym_type as TrainingPlace)
+        : TRAINING_PLACES.fullGym,
+      injuries: Array.isArray(answers.injuries) ? (answers.injuries as InjuryRegion[]) : [],
     };
   },
 });

@@ -433,6 +433,7 @@ export type Database = {
           created_at: string;
           dietary_restrictions: string[];
           end_date: string;
+          end_reason: string | null;
           free_meal_days: number[];
           id: string;
           meals_per_day: number | null;
@@ -455,6 +456,7 @@ export type Database = {
           created_at?: string;
           dietary_restrictions?: string[];
           end_date: string;
+          end_reason?: string | null;
           free_meal_days?: number[];
           id?: string;
           meals_per_day?: number | null;
@@ -477,6 +479,7 @@ export type Database = {
           created_at?: string;
           dietary_restrictions?: string[];
           end_date?: string;
+          end_reason?: string | null;
           free_meal_days?: number[];
           id?: string;
           meals_per_day?: number | null;
@@ -1388,6 +1391,7 @@ export type Database = {
           created_at: string;
           duration_weeks: number | null;
           end_date: string;
+          end_reason: string | null;
           id: string;
           level: string | null;
           name: string;
@@ -1402,6 +1406,7 @@ export type Database = {
           created_at?: string;
           duration_weeks?: number | null;
           end_date: string;
+          end_reason?: string | null;
           id?: string;
           level?: string | null;
           name: string;
@@ -1416,6 +1421,7 @@ export type Database = {
           created_at?: string;
           duration_weeks?: number | null;
           end_date?: string;
+          end_reason?: string | null;
           id?: string;
           level?: string | null;
           name?: string;
@@ -1883,6 +1889,7 @@ export type Database = {
           created_at: string;
           dietary_restrictions: string[];
           end_date: string;
+          end_reason: string | null;
           free_meal_days: number[];
           id: string;
           meals_per_day: number | null;
@@ -1921,6 +1928,7 @@ export type Database = {
           created_at: string;
           dietary_restrictions: string[];
           end_date: string;
+          end_reason: string | null;
           free_meal_days: number[];
           id: string;
           meals_per_day: number | null;
@@ -1966,6 +1974,7 @@ export type Database = {
           created_at: string;
           dietary_restrictions: string[];
           end_date: string;
+          end_reason: string | null;
           free_meal_days: number[];
           id: string;
           meals_per_day: number | null;
@@ -2059,6 +2068,7 @@ export type Database = {
           created_at: string;
           dietary_restrictions: string[];
           end_date: string;
+          end_reason: string | null;
           free_meal_days: number[];
           id: string;
           meals_per_day: number | null;
