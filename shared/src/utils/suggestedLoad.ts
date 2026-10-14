@@ -24,13 +24,15 @@ export interface LoadInput {
   /** A repetição como está na prescrição: "10-12", "12", "40 s". */
   prescribedReps: string | null;
   history: ExerciseHistoryEntry[];
+  /** Semana de descarga: a carga fica, só as séries caem (`blockCycle`). */
+  deload?: boolean;
 }
 
 export type LoadSuggestion =
   | {
       kind: "keep";
       weightKg: number | null;
-      reason: "no_history" | "no_answer" | "ok" | "hard_once";
+      reason: "no_history" | "no_answer" | "ok" | "hard_once" | "deload";
     }
   | { kind: "increase"; weightKg: number; deltaKg: number; reason: "easy" }
   | { kind: "decrease"; weightKg: number; deltaKg: number; reason: "hard_twice" }
@@ -57,6 +59,7 @@ export function suggestLoad(input: LoadInput): LoadSuggestion {
   if (!last) return { kind: "keep", weightKg: input.prescribedWeight, reason: "no_history" };
 
   const weight = last.maxWeightKg > 0 ? last.maxWeightKg : input.prescribedWeight;
+  if (input.deload) return { kind: "keep", weightKg: weight, reason: "deload" };
   if (last.effort === null) return { kind: "keep", weightKg: weight, reason: "no_answer" };
   if (last.effort === "ok") return { kind: "keep", weightKg: weight, reason: "ok" };
   if (last.effort === "hard") return afterHard(weight, beforeLast?.effort === "hard");

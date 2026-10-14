@@ -83,6 +83,10 @@ export const ROUTES = {
 
   // Check-in da semana (#376). A entrada mora em `checkin.tsx`, e não em
   // `checkin/index.tsx`, pelo mesmo motivo da técnica: o typegen erra a segunda.
+  BLOCK: {
+    DELOAD: '/block/deload',
+  },
+
   CHECKIN: {
     ROOT: '/checkin',
     RESULT: '/checkin/result',

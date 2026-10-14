@@ -1,6 +1,7 @@
 import { Text } from 'react-native';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { useDadosDaHome } from '@/hooks/useDadosDaHome';
+import { BlockCard } from '@/modules/block';
 import { CheckInCard, WeeklyReportCard } from '@/modules/checkin';
 import { HomeDoAluno, SpecialistDashboard } from '@/modules/dashboard';
 import { CompleteProfileCard } from '@/modules/onboarding';
@@ -45,6 +46,7 @@ export default function HomeTab() {
         <>
           <CheckInCard />
           <WeeklyReportCard />
+          <BlockCard />
           <CompleteProfileCard />
         </>
       }

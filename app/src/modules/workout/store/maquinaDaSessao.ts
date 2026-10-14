@@ -1,4 +1,5 @@
 import {
+  deloadSets,
   type ExerciseEffort,
   MS_POR_SEGUNDO,
   numeroDaPrescricao,
@@ -87,6 +88,8 @@ interface DadosDasAcoes {
   rateEffort: { itemId: string; effort: ExerciseEffort | null };
   /** A carga sugerida de cada exercício, antes de começar (#376, A1). */
   applySuggestedLoads: { weights: Record<string, string> };
+  /** A semana de descarga do bloco: metade das séries, a mesma carga (#376, A7). */
+  applyDeload: SemDados;
 }
 
 type TipoDaAcao = keyof DadosDasAcoes;
@@ -175,7 +178,17 @@ const TRANSICOES: {
   salva: (estado) => (estado.momento === 'feedback' ? { ...estado, momento: 'resumo' } : estado),
   rateEffort: (estado, { itemId, effort }) => rateEffort(estado, itemId, effort),
   applySuggestedLoads: (estado, { weights }) => applySuggestedLoads(estado, weights),
+  applyDeload: (estado) => applyDeload(estado),
 };
+
+/** Como a carga sugerida: só antes de começar, e a prescrição fica intacta no treino. */
+function applyDeload(estado: EstadoDaSessao): EstadoDaSessao {
+  if (estado.momento !== 'preInicio') return estado;
+  const itens = estado.itens.map((item) =>
+    item.sets ? { ...item, sets: deloadSets(item.sets) } : item
+  );
+  return { ...estado, itens };
+}
 
 /** Só o exercício que espera a pergunta: o resto não tem o que responder. */
 function rateEffort(

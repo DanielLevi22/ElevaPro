@@ -347,4 +347,13 @@ describe('o esforço do exercício e a carga sugerida (#376)', () => {
       correndo
     );
   });
+
+  it('na semana de descarga cada exercício perde metade das séries, antes de começar', () => {
+    const descarga = transicionar(inicial, { tipo: 'applyDeload' });
+    expect(descarga.itens.map((item) => item.sets)).toEqual(
+      inicial.itens.map((item) => (item.sets ? Math.max(1, Math.ceil(item.sets / 2)) : item.sets))
+    );
+    const correndo = aplicar(inicial, { tipo: 'iniciar', agora: T0 });
+    expect(transicionar(correndo, { tipo: 'applyDeload' })).toBe(correndo);
+  });
 });

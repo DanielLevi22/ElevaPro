@@ -12,26 +12,32 @@ import { suggestedWeightText } from './loadSuggestionCopy';
 export type ExerciseHistory = Record<string, ExerciseHistoryEntry[]>;
 export type LoadSuggestions = Record<string, LoadSuggestion>;
 
-function suggestionFor(item: WorkoutExercise, history: ExerciseHistoryEntry[]): LoadSuggestion {
+function suggestionFor(
+  item: WorkoutExercise,
+  history: ExerciseHistoryEntry[],
+  deload = false
+): LoadSuggestion {
   return suggestLoad({
     prescribedWeight: numeroDaPrescricao(item.weight),
     prescribedReps: item.reps ?? null,
     history,
+    deload,
   });
 }
 
 /**
  * As cargas de hoje (A1): a sugestão de cada exercício pelo que a pessoa
- * sentiu nas últimas sessões.
+ * sentiu nas últimas sessões. Na semana de descarga, a carga fica a mesma.
  *
- * @example const hoje = todaySuggestions(treino.exercises, historico);
+ * @example const hoje = todaySuggestions(treino.exercises, historico, false);
  */
 export function todaySuggestions(
   items: readonly WorkoutExercise[],
-  history: ExerciseHistory
+  history: ExerciseHistory,
+  deload: boolean
 ): LoadSuggestions {
   return Object.fromEntries(
-    items.map((item) => [item.id, suggestionFor(item, history[item.id] ?? [])])
+    items.map((item) => [item.id, suggestionFor(item, history[item.id] ?? [], deload)])
   );
 }
 

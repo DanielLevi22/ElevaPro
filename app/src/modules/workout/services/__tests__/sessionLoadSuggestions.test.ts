@@ -6,9 +6,11 @@ const prancha = { id: 'item-2', weight: null, reps: '40 s', sets: 3 } as Workout
 
 describe('as cargas da sessão', () => {
   it('hoje: sobe a carga de quem achou fácil, e sem histórico mantém a prescrição', () => {
-    const hoje = todaySuggestions([supino, prancha], {
-      'item-1': [{ maxWeightKg: 12.5, effort: 'easy' }],
-    });
+    const hoje = todaySuggestions(
+      [supino, prancha],
+      { 'item-1': [{ maxWeightKg: 12.5, effort: 'easy' }] },
+      false
+    );
 
     expect(hoje['item-1']).toMatchObject({ kind: 'increase', weightKg: 15 });
     expect(hoje['item-2']).toMatchObject({ kind: 'keep', reason: 'no_history' });

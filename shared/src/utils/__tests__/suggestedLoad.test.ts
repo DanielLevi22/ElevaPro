@@ -78,4 +78,15 @@ describe("a carga sugerida do próximo treino", () => {
       }),
     ).toEqual({ kind: "add_seconds", seconds: 10, reason: "easy" });
   });
+
+  it("na semana de descarga a carga fica a mesma, mesmo depois de fácil", () => {
+    expect(
+      suggestLoad({
+        prescribedWeight: 10,
+        prescribedReps: "10-12",
+        history: [{ maxWeightKg: 12.5, effort: "easy" }],
+        deload: true,
+      }),
+    ).toEqual({ kind: "keep", weightKg: 12.5, reason: "deload" });
+  });
 });

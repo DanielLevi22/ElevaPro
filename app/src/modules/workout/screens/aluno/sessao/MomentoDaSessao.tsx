@@ -1,7 +1,15 @@
-import { evolucoesDaSessao, resumoDaSessao, seriesDaSessaoAnterior } from '@elevapro/shared';
+import {
+  blockWeek,
+  evolucoesDaSessao,
+  resumoDaSessao,
+  seriesDaSessaoAnterior,
+  type Workout,
+} from '@elevapro/shared';
 import { type ReactNode, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { showAlert } from '@/components/ui/appAlert';
+import { useActiveBlock } from '@/hooks/useActiveBlock';
+import { localDateKey } from '@/services/healthSync';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { ExerciseSwapSheet } from '../../../components/ExerciseSwapSheet';
 import { AjusteDoExercicio } from '../../../components/sessao/AjusteDoExercicio';
@@ -48,9 +56,10 @@ export function MomentoDaSessao(props: MomentoDaSessaoProps) {
   // prescrito, quem decide a carga é o especialista.
   const selfGuided = !props.mascarado && isSelfGuidedWorkout(treino, alunoId);
   const history = useExerciseHistory(treino.id, alunoId, selfGuided);
+  const deload = useDeloadWeek(treino, selfGuided ? alunoId : null);
   const today = useMemo(
-    () => (selfGuided ? todaySuggestions(treino.exercises ?? [], history) : {}),
-    [selfGuided, treino.exercises, history]
+    () => (selfGuided ? todaySuggestions(treino.exercises ?? [], history, deload) : {}),
+    [selfGuided, treino.exercises, history, deload]
   );
 
   switch (sessao.momento) {
@@ -60,11 +69,13 @@ export function MomentoDaSessao(props: MomentoDaSessaoProps) {
           treino={treino}
           anterior={anterior}
           loadSuggestions={today}
+          deload={deload}
           onIniciar={() => {
             despachar({
               tipo: 'applySuggestedLoads',
               weights: weightsToApply(sessao.itens, today),
             });
+            if (deload) despachar({ tipo: 'applyDeload' });
             despachar({ tipo: 'iniciar', agora: Date.now() });
           }}
           onVoltar={props.onSair}
@@ -99,6 +110,19 @@ export function MomentoDaSessao(props: MomentoDaSessaoProps) {
         <Resumo {...props} anteriores={anteriores} history={history} selfGuided={selfGuided} />
       );
   }
+}
+
+/**
+ * Se o treino é do bloco do próprio Praticante e o bloco está na semana de
+ * descarga (#376, A7). O treino de outro plano, ou do especialista, segue como
+ * está.
+ */
+function useDeloadWeek(treino: Workout, studentId: string | null): boolean {
+  const block = useActiveBlock(studentId);
+  if (!block || !treino.training_plan_id || !block.planIds.includes(treino.training_plan_id)) {
+    return false;
+  }
+  return blockWeek(block, localDateKey()).deload;
 }
 
 /**
