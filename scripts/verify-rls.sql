@@ -3573,6 +3573,21 @@ BEGIN
     RAISE EXCEPTION 'PESO PERDIDO: o check-in do Praticante não apontou para a medida declarada';
   END IF;
 
+  -- A origem do peso (0093, F9): digitado por padrão, a média do app Saúde
+  -- quando veio de lá, e nada além dessas duas.
+  IF week_check_in.weight_origin IS DISTINCT FROM 'manual' THEN
+    RAISE EXCEPTION 'ORIGEM PERDIDA: peso digitado gravou origem %', week_check_in.weight_origin;
+  END IF;
+  week_check_in := public.submit_weekly_check_in('all', 77.6, 'health_app');
+  IF week_check_in.weight_origin IS DISTINCT FROM 'health_app' THEN
+    RAISE EXCEPTION 'ORIGEM TROCADA: o peso do app Saúde foi gravado como %', week_check_in.weight_origin;
+  END IF;
+  BEGIN
+    PERFORM public.submit_weekly_check_in('all', 77.6, 'balanca-do-vizinho');
+    RAISE EXCEPTION 'ORIGEM INVENTADA: o check-in aceitou uma origem fora de manual e health_app';
+  EXCEPTION WHEN invalid_parameter_value THEN NULL;
+  END;
+
   BEGIN
     INSERT INTO public.weekly_check_ins (student_id, week_start, logging)
     VALUES (practitioner, current_date - 7, 'all');

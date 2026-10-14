@@ -1540,6 +1540,7 @@ export type Database = {
           status: Database["public"]["Enums"]["check_in_status"];
           student_id: string;
           week_start: string;
+          weight_origin: string | null;
         };
         Insert: {
           assessment_id?: string | null;
@@ -1549,6 +1550,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["check_in_status"];
           student_id: string;
           week_start: string;
+          weight_origin?: string | null;
         };
         Update: {
           assessment_id?: string | null;
@@ -1558,6 +1560,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["check_in_status"];
           student_id?: string;
           week_start?: string;
+          weight_origin?: string | null;
         };
         Relationships: [
           {
@@ -2109,7 +2112,11 @@ export type Database = {
         };
       };
       submit_weekly_check_in: {
-        Args: { p_logging: Database["public"]["Enums"]["check_in_logging"]; p_weight_kg: number };
+        Args: {
+          p_logging: Database["public"]["Enums"]["check_in_logging"];
+          p_weight_kg: number;
+          p_weight_origin?: string;
+        };
         Returns: {
           assessment_id: string | null;
           created_at: string;
@@ -2118,6 +2125,7 @@ export type Database = {
           status: Database["public"]["Enums"]["check_in_status"];
           student_id: string;
           week_start: string;
+          weight_origin: string | null;
         };
         SetofOptions: {
           from: "*";

@@ -21,6 +21,13 @@ const HEALTH_CONNECT_TYPES: Record<Capability, readonly HealthConnectType[]> = {
   workoutHeartRate: ['HeartRate'],
 };
 
+/**
+ * O peso não é capacidade do relógio: é a balança. Fica fora das capacidades,
+ * para o pedido do onboarding não levar junto um tipo que só o check-in lê (F9).
+ */
+export const HEALTH_CONNECT_WEIGHT = 'Weight' satisfies HealthConnectType;
+export const HEALTH_KIT_WEIGHT = 'HKQuantityTypeIdentifierBodyMass' satisfies HealthKitType;
+
 const HEALTH_KIT_TYPES: Record<Capability, readonly HealthKitType[]> = {
   dailyActivity: [
     'HKQuantityTypeIdentifierStepCount',

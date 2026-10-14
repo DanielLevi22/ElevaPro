@@ -1,5 +1,5 @@
 import type { DailyAggregate } from './daily';
-import type { Capability, WearableReader } from './types';
+import type { Capability, TimeRange, WearableReader } from './types';
 
 /**
  * Onde a leitura acontece. Em background não há tela: o HealthKit não pode abrir
@@ -36,6 +36,13 @@ export interface WearablePlatform {
   /** Deixa a leitura do dia pronta, pedindo acesso onde a plataforma o faz sem diálogo novo. */
   ensureTodayAccess(context: ReadContext): Promise<boolean>;
   readToday(): Promise<DailyAggregate>;
+  /**
+   * Pede a leitura do peso, à parte das capacidades: só o check-in a usa, e só
+   * quando a pessoa toca "Usar o peso do app Saúde" (F9). Devolve as pesagens do
+   * intervalo em kg, ou vazio sem permissão. Nunca sai do módulo: fora dele, só a
+   * média (`readWeekAverageWeight`).
+   */
+  readWeights(range: TimeRange): Promise<number[]>;
   backgroundReadStatus(): Promise<BackgroundReadStatus>;
   /** A tela do sistema onde o Student muda o que concedeu. */
   openSettings(): Promise<void>;

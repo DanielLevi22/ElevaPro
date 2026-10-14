@@ -1,4 +1,4 @@
-import { type CheckInLogging, diaPorExtenso } from '@elevapro/shared';
+import { type CheckInLogging, diaPorExtenso, type WeightOrigin } from '@elevapro/shared';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -10,6 +10,7 @@ import { FlowFrame, FlowLabel, FlowTitle } from '@/components/ui/FlowFrame';
 import { InfoNote } from '@/components/ui/InfoNote';
 import { registrarFalha } from '@/lib/registro';
 import { ROUTES } from '@/navigation/types';
+import { HealthWeightButton } from '../components/HealthWeightButton';
 import { useCheckInActions, useHasSpecialist } from '../hooks/useWeeklyCheckIn';
 import { LOGGING_OPTIONS, validateCheckIn } from '../validation';
 
@@ -28,13 +29,19 @@ export function WeeklyCheckInScreen() {
   const { submit } = useCheckInActions();
   const [logging, setLogging] = useState<CheckInLogging | null>(null);
   const [weight, setWeight] = useState('');
+  // A média do app Saúde, até a pessoa mexer no número: aí ele é dela (F9).
+  const [origin, setOrigin] = useState<WeightOrigin>('manual');
   const withWeight = hasSpecialist.data === false;
   const result = validateCheckIn({ logging, weight }, withWeight ? 'withWeight' : 'withoutWeight');
 
   async function send() {
     if (result.status !== 'ready') return;
     try {
-      await submit.mutateAsync({ logging: result.logging, weightKg: result.weightKg });
+      await submit.mutateAsync({
+        logging: result.logging,
+        weightKg: result.weightKg,
+        weightOrigin: origin,
+      });
       router.replace(ROUTES.CHECKIN.RESULT);
     } catch {
       registrarFalha('checkin.submit');
@@ -74,12 +81,22 @@ export function WeeklyCheckInScreen() {
       {withWeight ? (
         <View className="mt-5">
           <Field
-            label="Seu peso hoje"
+            label={origin === 'health_app' ? 'Média da semana no app Saúde' : 'Seu peso hoje'}
             value={weight}
-            onChange={setWeight}
+            onChange={(typed) => {
+              setWeight(typed);
+              setOrigin('manual');
+            }}
             unit="kg"
             numeric
             error={result.status === 'invalid' ? result.error : undefined}
+          />
+          <HealthWeightButton
+            studentId={userId}
+            onWeight={(average) => {
+              setWeight(average);
+              setOrigin('health_app');
+            }}
           />
           {result.status === 'invalid' ? null : (
             <InfoNote icon="information-circle-outline" className="mt-[0.5625rem]">

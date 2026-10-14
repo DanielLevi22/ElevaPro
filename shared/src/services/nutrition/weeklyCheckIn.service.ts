@@ -19,12 +19,19 @@ export interface WeeklyCheckIn {
   logging: CheckInLogging;
   assessment_id: string | null;
   status: CheckInStatus;
+  /** De onde veio o peso; nulo sem peso (0093, F9). */
+  weight_origin: WeightOrigin | null;
 }
+
+/** Digitado, ou a média da semana do app Saúde / Health Connect (F9). */
+export type WeightOrigin = "manual" | "health_app";
 
 /** O que a pessoa responde no check-in (A4). O Aluno manda sem peso (ADR-0030). */
 export interface CheckInSubmission {
   logging: CheckInLogging;
   weightKg: number | null;
+  /** Sem ela, "manual": é o que a pessoa digitou. */
+  weightOrigin?: WeightOrigin;
 }
 
 /** Uma pesagem, para a tendência da tela de ajuste e a medida do especialista. */
@@ -63,7 +70,7 @@ export type CheckInSummary =
   | { state: "pending" | "kept"; checkIn: WeeklyCheckIn }
   | { state: "approved"; checkIn: WeeklyCheckIn; adjustment: RecordedAdjustment | null };
 
-const CHECK_IN_COLUMNS = "id, week_start, logging, assessment_id, status";
+const CHECK_IN_COLUMNS = "id, week_start, logging, assessment_id, status, weight_origin";
 /** A tendência da tela mostra até oito semanas. */
 const WEIGHT_HISTORY = 8;
 const DAY_MS = 86_400_000;
@@ -115,6 +122,7 @@ export const createWeeklyCheckInService = (supabase: SupabaseClient) => {
       const { data, error } = await supabase.rpc("submit_weekly_check_in", {
         p_logging: input.logging,
         p_weight_kg: input.weightKg,
+        p_weight_origin: input.weightOrigin ?? "manual",
       });
       if (error) throw error;
       return data as WeeklyCheckIn;
