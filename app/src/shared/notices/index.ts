@@ -1,5 +1,6 @@
 // Os avisos do dia (#376, item G) no aparelho: as preferências e o agendamento.
 
+export { celebrateSession } from './celebrateSession';
 export { IgnoredNoticePrompt } from './IgnoredNoticePrompt';
 export { handleNoticeAction, noticeDataOf } from './noticeActions';
 export { useNoticeChoicesStore } from './noticeChoicesStore';

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_PREFERENCES, type NoticeState, planNotices, usualWorkoutMinutes } from "..";
+import {
+  DEFAULT_PREFERENCES,
+  type NoticeState,
+  planNotices,
+  usualWorkoutMinutes,
+  victoryCopy,
+} from "..";
 
 // 2026-10-14 é quarta.
 const TODAY = "2026-10-14";
@@ -18,6 +24,8 @@ function state(over: Partial<NoticeState> = {}): NoticeState {
     trainedToday: false,
     workoutStarts: [],
     rests: [],
+    lastWorkoutDate: null,
+    workoutsThisWeek: 0,
     ...over,
   };
 }
@@ -102,8 +110,8 @@ describe("planNotices", () => {
 
   it("agenda uma semana, e o tipo desligado não avisa", () => {
     const notices = planNotices(state(), { ...prefs, meal: false });
-    expect(new Set(notices.map((notice) => notice.date)).size).toBe(1);
-    expect(notices.every((notice) => notice.kind === "workout")).toBe(true);
+    // O treino de quarta e, três dias sem treino depois de abrir o app, o F4.
+    expect(notices.map((notice) => notice.kind)).toEqual(["workout", "comeback"]);
   });
 
   it("com detalhes escondidos, nada do plano vai para a tela bloqueada (LGPD)", () => {
@@ -123,5 +131,45 @@ describe("planNotices", () => {
     ]) {
       expect(text).not.toContain(leaked);
     }
+  });
+
+  it("sem treino: um aviso no 3º dia, a pergunta no 7º, e depois silêncio", () => {
+    const notices = planNotices(state({ lastWorkoutDate: "2026-10-12", meals: [] }), prefs);
+    expect(notices.map((notice) => [notice.date, notice.kind])).toEqual([
+      ["2026-10-14", "workout"],
+      ["2026-10-15", "comeback"],
+      ["2026-10-19", "busyWeek"],
+    ]);
+    expect(notices[2].title).toBe("Semana corrida?");
+  });
+
+  it("passada a pergunta, abrir o app recomeça a conta de hoje", () => {
+    const notices = planNotices(state({ lastWorkoutDate: "2026-09-30", meals: [] }), prefs);
+    expect(notices.map((notice) => notice.kind)).toEqual(["workout", "comeback"]);
+    expect(notices[1].date).toBe("2026-10-17");
+  });
+});
+
+describe("victoryCopy", () => {
+  const record = { name: "Supino", text: "45 kg → 47,5 kg" };
+
+  it("comemora a semana que fecha, e depois o recorde", () => {
+    expect(victoryCopy({ record, weekDone: 4, weekTarget: 4 }, false)?.title).toBe(
+      "Semana completa: 4 de 4",
+    );
+    expect(victoryCopy({ record, weekDone: 5, weekTarget: 4 }, false)?.title).toBe(
+      "Recorde: Supino",
+    );
+    expect(victoryCopy({ record: null, weekDone: 2, weekTarget: 4 }, false)).toBeNull();
+  });
+
+  it("sem detalhes, nem o exercício nem a carga (LGPD)", () => {
+    const text = [
+      victoryCopy({ record, weekDone: 4, weekTarget: 4 }, true),
+      victoryCopy({ record, weekDone: 1, weekTarget: 4 }, true),
+    ]
+      .map((copy) => `${copy?.title} ${copy?.body}`)
+      .join(" ");
+    for (const leaked of ["Supino", "kg", "45", "4 de 4"]) expect(text).not.toContain(leaked);
   });
 });

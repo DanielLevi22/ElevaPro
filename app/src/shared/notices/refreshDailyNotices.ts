@@ -35,7 +35,11 @@ export async function refreshDailyNotices(studentId: string): Promise<void> {
       const state = applyNoticeChoices(await notices.fetchNoticeState(studentId, now), choices);
       const preferences = currentPreferences();
       const planned = planNotices(state, preferences);
-      choices.settle(now.getTime(), doneToday(state), planned.map(trackOf(state)));
+      // O reengajamento toca uma vez e não volta: não tem o que ignorar três vezes.
+      const tracked = planned.filter(
+        (notice) => notice.kind === 'meal' || notice.kind === 'workout'
+      );
+      choices.settle(now.getTime(), doneToday(state), tracked.map(trackOf(state)));
       await scheduleDailyNotices(planned, { withActions: !preferences.hideDetails });
     });
   } catch {

@@ -1,7 +1,8 @@
 import type { DayOfWeek } from "../../types/workouts.types";
 import type { RestPeriod } from "../restMode";
 
-export type NoticeKind = "meal" | "workout";
+/** O aviso do dia, e os dois de reengajamento (F4, F5). */
+export type NoticeKind = "meal" | "workout" | "comeback" | "busyWeek";
 
 /** As escolhas da pessoa em Avisos (E5). Ficam no aparelho, como os avisos. */
 export interface NoticePreferences {
@@ -45,6 +46,10 @@ export interface NoticeState {
   /** Os inícios de treino das últimas 4 semanas, em minutos desde a meia-noite. */
   workoutStarts: readonly number[];
   rests: readonly RestPeriod[];
+  /** O último dia com treino nas 4 semanas; nulo sem nenhum. */
+  lastWorkoutDate: string | null;
+  /** Os treinos feitos desde segunda. */
+  workoutsThisWeek: number;
 }
 
 export interface ScheduledNotice {

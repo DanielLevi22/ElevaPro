@@ -100,6 +100,8 @@ export const ROUTES = {
     RETURN: '/block/return',
     HISTORY: (id: string) => ({ pathname: '/block/history/[id]', params: { id } }) as const,
     NEXT: '/block/next',
+    /** "Semana corrida?" (#376, F5): o aviso do 7º dia sem treino abre aqui. */
+    BUSY_WEEK: '/block/busy-week',
   },
 
   CHECKIN: {

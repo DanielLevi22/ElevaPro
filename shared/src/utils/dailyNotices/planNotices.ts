@@ -2,8 +2,14 @@ import type { DayOfWeek } from "../../types/workouts.types";
 import { addDays, weekdayOf } from "../dateOnly";
 import type { RestPeriod } from "../restMode";
 import { inQuietHours, MINUTES_PER_DAY, minutesOf, usualWorkoutMinutes } from "./clock";
-import { HORIZON_DAYS, MEAL_DELAY_MINUTES, WORKOUT_DELAY_MINUTES } from "./constants";
-import { detailedCopy, hiddenCopy } from "./copy";
+import {
+  BUSY_WEEK_AFTER_DAYS,
+  COMEBACK_AFTER_DAYS,
+  HORIZON_DAYS,
+  MEAL_DELAY_MINUTES,
+  WORKOUT_DELAY_MINUTES,
+} from "./constants";
+import { detailedCopy, hiddenCopy, reengagementCopy } from "./copy";
 import type { NoticeKind, NoticePreferences, NoticeState, ScheduledNotice } from "./types";
 
 const DAY_NAMES: readonly DayOfWeek[] = [
@@ -49,20 +55,26 @@ interface Candidate {
  */
 export function planNotices(state: NoticeState, prefs: NoticePreferences): ScheduledNotice[] {
   const workoutAt = workoutMinutes(state, prefs);
-  return Array.from({ length: HORIZON_DAYS }, (_, offset) => addDays(state.today, offset))
-    .filter((day) => !restingOn(state.rests, day))
-    .flatMap((day) => {
-      const due = candidatesOf(state, prefs, day, workoutAt)
-        .filter((item) => item.minutes < MINUTES_PER_DAY)
-        .filter((item) => day !== state.today || item.minutes > state.nowMinutes)
-        .filter((item) => !inQuietHours(item.minutes, prefs.quietStart, prefs.quietEnd))
-        // O treino entra antes: com seis refeições, as três primeiras tomariam o
-        // limite e o treino nunca avisaria.
-        .sort((a, b) => priority(a) - priority(b) || a.minutes - b.minutes)
-        .slice(0, prefs.dailyLimit)
-        .sort((a, b) => a.minutes - b.minutes);
-      return due.map((item, index) => toNotice(item, day, index + 1, prefs.hideDetails));
-    });
+  const anchor = reengagementAnchor(state);
+  const busyDay = anchor && addDays(anchor, BUSY_WEEK_AFTER_DAYS);
+  return (
+    Array.from({ length: HORIZON_DAYS }, (_, offset) => addDays(state.today, offset))
+      .filter((day) => !restingOn(state.rests, day))
+      // Depois da pergunta do 7º dia, silêncio até a pessoa abrir o app (F5).
+      .filter((day) => !busyDay || day <= busyDay)
+      .flatMap((day) => {
+        const due = candidatesOf(state, prefs, day, workoutAt)
+          .filter((item) => item.minutes < MINUTES_PER_DAY)
+          .filter((item) => day !== state.today || item.minutes > state.nowMinutes)
+          .filter((item) => !inQuietHours(item.minutes, prefs.quietStart, prefs.quietEnd))
+          // O treino entra antes: com seis refeições, as três primeiras tomariam o
+          // limite e o treino nunca avisaria.
+          .sort((a, b) => priority(a) - priority(b) || a.minutes - b.minutes)
+          .slice(0, prefs.dailyLimit)
+          .sort((a, b) => a.minutes - b.minutes);
+        return due.map((item, index) => toNotice(item, day, index + 1, prefs.hideDetails));
+      })
+  );
 }
 
 function candidatesOf(
@@ -84,6 +96,10 @@ function candidatesOf(
           ];
         })
     : [];
+  const comeback = reengagementOf(reengagementAnchor(state), day);
+  if (prefs.workout && comeback) {
+    return [...meals, { kind: comeback, refId: comeback, name: "", minutes: workoutAt }];
+  }
   const workout = state.workouts.find((item) => item.day === dayNameOf(day));
   if (!prefs.workout || !workout || (isToday && state.trainedToday)) return meals;
   return [
@@ -92,7 +108,28 @@ function candidatesOf(
   ];
 }
 
-const priority = (item: Candidate) => (item.kind === "workout" ? 0 : 1);
+const priority = (item: Candidate) => (item.kind === "meal" ? 1 : 0);
+
+/**
+ * De quando contam os dias sem treino: do último treino, enquanto a pergunta
+ * do 7º dia não passou. Passada, abrir o app (que é quando isto roda) acaba
+ * com o silêncio, e a conta recomeça de hoje. Sem treino no plano, não há o
+ * que lembrar.
+ */
+function reengagementAnchor(state: NoticeState): string | null {
+  if (state.workouts.length === 0) return null;
+  const last = state.lastWorkoutDate;
+  if (last && addDays(last, BUSY_WEEK_AFTER_DAYS) >= state.today) return last;
+  return state.today;
+}
+
+/** O 3º e o 7º dia sem treino (F4, F5), contados da âncora. */
+function reengagementOf(anchor: string | null, day: string): "comeback" | "busyWeek" | null {
+  if (!anchor) return null;
+  if (day === addDays(anchor, COMEBACK_AFTER_DAYS)) return "comeback";
+  if (day === addDays(anchor, BUSY_WEEK_AFTER_DAYS)) return "busyWeek";
+  return null;
+}
 
 function workoutMinutes(state: NoticeState, prefs: NoticePreferences): number {
   const fixed = prefs.workoutMode === "fixed" ? minutesOf(prefs.workoutTime) : null;
@@ -110,7 +147,12 @@ function restingOn(rests: readonly RestPeriod[], day: string): boolean {
 }
 
 function toNotice(item: Candidate, day: string, pending: number, hide: boolean): ScheduledNotice {
-  const copy = hide ? hiddenCopy(pending) : detailedCopy(item.kind, item.name);
+  const copy =
+    item.kind === "comeback" || item.kind === "busyWeek"
+      ? reengagementCopy(item.kind)
+      : hide
+        ? hiddenCopy(pending)
+        : detailedCopy(item.kind, item.name);
   return {
     id: `notice-${day}-${item.kind}-${item.refId}`,
     kind: item.kind,

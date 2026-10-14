@@ -6,6 +6,7 @@ export {
   MIN_STARTS_TO_LEARN,
   WORKOUT_DELAY_MINUTES,
 } from "./constants";
+export { type NoticeCopy, type VictoryInput, victoryCopy } from "./copy";
 export { dayNameOf, planNotices } from "./planNotices";
 export type {
   NoticeKind,

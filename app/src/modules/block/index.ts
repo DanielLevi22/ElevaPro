@@ -3,6 +3,7 @@ export { BlockCard } from './components/BlockCard';
 export { ChangePlanButton } from './components/ChangePlanButton';
 export { BlockReportScreen } from './screens/BlockReportScreen';
 export { BuildingScreen } from './screens/BuildingScreen';
+export { BusyWeekScreen } from './screens/BusyWeekScreen';
 export { ChangesScreen } from './screens/ChangesScreen';
 export { DeloadScreen } from './screens/DeloadScreen';
 export { EarlyChangeScreen } from './screens/EarlyChangeScreen';

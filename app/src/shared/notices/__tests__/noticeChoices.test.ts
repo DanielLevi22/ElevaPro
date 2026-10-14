@@ -16,6 +16,8 @@ const state: NoticeState = {
   trainedToday: false,
   workoutStarts: [],
   rests: [],
+  lastWorkoutDate: null,
+  workoutsThisWeek: 0,
 };
 
 const none: NoticeChoices = {

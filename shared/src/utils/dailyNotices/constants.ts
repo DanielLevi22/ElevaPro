@@ -15,6 +15,10 @@ export const DEFAULT_WORKOUT_TIME = "18:00";
 export const LEARNING_WINDOW_DAYS = 28;
 /** Menos inícios que isto não é costume: vale o horário padrão. */
 export const MIN_STARTS_TO_LEARN = 3;
+/** Sem treino há 3 dias, um aviso só: "Sua semana ainda dá para salvar" (F4). */
+export const COMEBACK_AFTER_DAYS = 3;
+/** Sem treino há 7 dias, a pergunta "Semana corrida?" (F5), e depois silêncio. */
+export const BUSY_WEEK_AFTER_DAYS = 7;
 /** Os dias agendados de uma vez: quem some recebe uma semana e depois silêncio. */
 export const HORIZON_DAYS = 7;
 

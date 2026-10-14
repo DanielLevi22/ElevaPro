@@ -6,13 +6,15 @@ import {
   seriesDaSessaoAnterior,
   type Workout,
 } from '@elevapro/shared';
-import { type ReactNode, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { showAlert } from '@/components/ui/appAlert';
 import { useActiveBlock } from '@/hooks/useActiveBlock';
 import { useRestPeriods } from '@/hooks/useRestPeriods';
 import { localDateKey } from '@/services/healthSync';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
+import { useLightWeek } from '@/shared/lightWeek';
+import { celebrateSession } from '@/shared/notices';
 import { ExerciseSwapSheet } from '../../../components/ExerciseSwapSheet';
 import { AjusteDoExercicio } from '../../../components/sessao/AjusteDoExercicio';
 import { EffortPrompt } from '../../../components/sessao/EffortPrompt';
@@ -60,7 +62,9 @@ export function MomentoDaSessao(props: MomentoDaSessaoProps) {
   const history = useExerciseHistory(treino.id, alunoId, selfGuided);
   const deload = useDeloadWeek(treino, selfGuided ? alunoId : null);
   const rests = useRestPeriods(selfGuided ? alunoId : null);
-  const returnWeek = returnWeekOf(rests, localDateKey()) !== null;
+  // A semana leve do "Semana corrida?" (F5) pesa como a volta do descanso.
+  const lightWeek = useLightWeek(localDateKey());
+  const returnWeek = lightWeek || returnWeekOf(rests, localDateKey()) !== null;
   const today = useMemo(
     () =>
       selfGuided ? todaySuggestions(treino.exercises ?? [], history, { deload, returnWeek }) : {},
@@ -240,6 +244,7 @@ function Resumo({
   treino,
   sessao,
   alunoId,
+  mascarado,
   anteriores,
   history,
   selfGuided,
@@ -247,6 +252,7 @@ function Resumo({
 }: MomentoDaSessaoProps & ResumoExtras) {
   const [compartilhando, setCompartilhando] = useState(false);
   const { resumo, evolucoes, concluidaEm } = useResumoDaSessao(sessao, alunoId, anteriores);
+  useVictoryOnce(mascarado ? null : alunoId, evolucoes[0] ?? null);
   const nextTime = useMemo<LoadSuggestions>(
     () =>
       selfGuided ? nextTimeSuggestions(sessao.itens, sessao.feitas, sessao.efforts, history) : {},
@@ -276,6 +282,16 @@ function Resumo({
       onCompartilhar={() => setCompartilhando(true)}
     />
   );
+}
+
+/** F1 · O aviso de vitória, uma vez por resumo: cada re-render o mandaria de novo. */
+function useVictoryOnce(studentId: string | null, record: { nome: string; texto: string } | null) {
+  const sent = useRef(false);
+  useEffect(() => {
+    if (!studentId || sent.current) return;
+    sent.current = true;
+    void celebrateSession(studentId, record);
+  }, [studentId, record]);
 }
 
 /** Volume, gasto e evoluções da sessão — o gasto usa o peso do aluno quando há. */

@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DayOfWeek } from "../../types/workouts.types";
 import type { NoticeMeal, NoticeState, NoticeWorkout } from "../../utils/dailyNotices";
 import { LEARNING_WINDOW_DAYS } from "../../utils/dailyNotices";
-import { addDays, localDateOf } from "../../utils/dateOnly";
+import { addDays, localDateOf, weekdayFromMonday } from "../../utils/dateOnly";
 import { createRestService } from "../workouts/rest.service";
 
 interface MealRow {
@@ -15,6 +15,7 @@ interface MealRow {
 interface SessionRow {
   started_at: string | null;
   completed_at: string;
+  session_type: string | null;
 }
 
 const MINUTES_PER_HOUR = 60;
@@ -45,15 +46,20 @@ export const createDailyNoticesService = (supabase: SupabaseClient) => {
         recentSessions(supabase, studentId, addDays(today, -LEARNING_WINDOW_DAYS)),
         rests.recent(studentId),
       ]);
+      const days = sessions.map((row) => localDateOf(new Date(row.completed_at))).sort();
+      const monday = addDays(today, -weekdayFromMonday(today));
       return {
         today,
         nowMinutes: now.getHours() * MINUTES_PER_HOUR + now.getMinutes(),
         meals,
         loggedMealIds,
         workouts,
-        trainedToday: sessions.some((row) => localDateOf(new Date(row.completed_at)) === today),
+        trainedToday: days.includes(today),
+        lastWorkoutDate: days.at(-1) ?? null,
+        workoutsThisWeek: days.filter((day) => day >= monday).length,
+        // O horário de costume é o da musculação: o cardio tem hora própria.
         workoutStarts: sessions.flatMap((row) => {
-          if (!row.started_at) return [];
+          if (!row.started_at || row.session_type !== "strength") return [];
           const start = new Date(row.started_at);
           return [start.getHours() * MINUTES_PER_HOUR + start.getMinutes()];
         }),
@@ -133,9 +139,8 @@ async function recentSessions(
 ): Promise<SessionRow[]> {
   const { data, error } = await supabase
     .from("workout_sessions")
-    .select("started_at, completed_at")
+    .select("started_at, completed_at, session_type")
     .eq("student_id", studentId)
-    .eq("session_type", "strength")
     .not("completed_at", "is", null)
     .gte("completed_at", since);
   if (error) throw error;

@@ -116,6 +116,8 @@ const DAILY_NOTICE_KIND = 'daily-notice';
 const NOTICE_URL: Record<NoticeKind, string> = {
   meal: ROUTES.TABS.NUTRITION,
   workout: ROUTES.TABS.WORKOUTS,
+  comeback: ROUTES.TABS.WORKOUTS,
+  busyWeek: ROUTES.BLOCK.BUSY_WEEK,
 };
 
 /** As ações no próprio aviso (E2, E3). O id é o que o toque devolve em `actionIdentifier`. */
@@ -128,7 +130,8 @@ export const NOTICE_ACTIONS = {
   workoutSkip: 'workout-skip',
 } as const;
 
-const NOTICE_CATEGORY: Record<NoticeKind, string> = {
+/** Só a refeição e o treino têm botões: o reengajamento só abre o app. */
+const NOTICE_CATEGORY: Partial<Record<NoticeKind, string>> = {
   meal: 'notice-meal',
   workout: 'notice-workout',
 };
@@ -144,12 +147,12 @@ async function ensureNoticeCategories(): Promise<void> {
     buttonTitle,
     options: { opensAppToForeground: true },
   });
-  await Notifications.setNotificationCategoryAsync(NOTICE_CATEGORY.meal, [
+  await Notifications.setNotificationCategoryAsync('notice-meal', [
     action(NOTICE_ACTIONS.mealDone, 'Comi'),
     action(NOTICE_ACTIONS.mealOther, 'Outra coisa'),
     action(NOTICE_ACTIONS.mealSkip, 'Pulei'),
   ]);
-  await Notifications.setNotificationCategoryAsync(NOTICE_CATEGORY.workout, [
+  await Notifications.setNotificationCategoryAsync('notice-workout', [
     action(NOTICE_ACTIONS.workoutStart, 'Começar'),
     action(NOTICE_ACTIONS.workoutTomorrow, 'Amanhã'),
     action(NOTICE_ACTIONS.workoutSkip, 'Hoje não'),
@@ -189,7 +192,9 @@ export async function scheduleDailyNotices(
         body: notice.body,
         // Sem detalhes, sem botões: "Comi o do plano" num aviso que não diz qual
         // refeição marcaria uma às cegas.
-        ...(withActions ? { categoryIdentifier: NOTICE_CATEGORY[notice.kind] } : {}),
+        ...(withActions && NOTICE_CATEGORY[notice.kind]
+          ? { categoryIdentifier: NOTICE_CATEGORY[notice.kind] }
+          : {}),
         data: {
           kind: DAILY_NOTICE_KIND,
           noticeKind: notice.kind,
@@ -214,6 +219,22 @@ export async function scheduleDailyNotices(
 function localInstant(date: string, minutes: number): Date {
   const [year, month, day] = date.split('-').map(Number);
   return new Date(year, month - 1, day, Math.floor(minutes / 60), minutes % 60);
+}
+
+/**
+ * O aviso de vitória (F1) na hora: com o app aberto, vira o balão de sucesso.
+ *
+ * @example await presentVictoryNotice({ title: 'Semana completa: 4 de 4', body: 'Sua sequência segue.' });
+ */
+export async function presentVictoryNotice(copy: { title: string; body: string }): Promise<void> {
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      ...copy,
+      data: { kind: 'victory', tone: 'success', icon: 'dumbbell' },
+      sound: true,
+    },
+    trigger: null,
+  });
 }
 
 const DAILY_LOG_REMINDER_ID = 'daily-log-reminder';
