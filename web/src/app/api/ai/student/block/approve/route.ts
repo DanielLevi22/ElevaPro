@@ -29,7 +29,9 @@ export const POST = withAiRoute(
 
     resolver: (_pendente, resultado) => ({ resolvedNextBlock: resultado }),
 
-    mensagem: (pendente) => `✅ Bloco ${pendente.blockNumber} aprovado: começa hoje.`,
+    // Trocado antes do fim (C2), o atual fecha hoje e o novo começa amanhã.
+    mensagem: (pendente) =>
+      `✅ Bloco ${pendente.blockNumber} aprovado: começa ${pendente.early ? "amanhã" : "hoje"}.`,
 
     corpo: (_pendente, resultado) => resultado,
   }),
