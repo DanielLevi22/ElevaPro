@@ -1,5 +1,6 @@
 import { addDays, createNutritionService } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
+import type { Href } from 'expo-router';
 import { ROUTES } from '@/navigation/types';
 import { NOTICE_ACTIONS } from '@/services/notificationService';
 import { useNoticeChoicesStore } from './noticeChoicesStore';
@@ -15,7 +16,7 @@ export interface NoticeData {
 }
 
 /** Para onde a ação leva; nulo fica onde está. */
-type ActionRoute = string | null;
+type ActionRoute = Href | null;
 
 /**
  * Responde um botão do aviso (E2, E3). Marca a refeição, pula, move o treino
@@ -51,6 +52,8 @@ async function applyAction(
       return null;
     case NOTICE_ACTIONS.workoutStart:
       return ROUTES.WORKOUTS.EXECUTE(notice.refId);
+    case NOTICE_ACTIONS.workoutShort:
+      return ROUTES.WORKOUTS.EXECUTE_SHORT(notice.refId);
     case NOTICE_ACTIONS.workoutTomorrow:
       choices.moveWorkout(notice.date, {
         date: addDays(notice.date, 1),

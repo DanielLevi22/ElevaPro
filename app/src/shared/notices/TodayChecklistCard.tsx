@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Text, TouchableOpacity } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { registrarFalha } from '@/lib/registro';
@@ -67,16 +67,28 @@ function PendingRow({ item, studentId }: { item: ChecklistItem; studentId: strin
       titulo={item.name}
       sub={item.kind === 'meal' ? `${item.time} · ainda não marcada` : 'Ainda dá tempo hoje'}
       direita={
-        <TouchableOpacity
-          accessibilityRole="button"
-          disabled={saving}
-          onPress={act}
-          className="rounded-full bg-primary px-3.5 py-2"
-        >
-          <Text className="text-[0.78125rem] font-bold text-primary-foreground">
-            {item.kind === 'meal' ? 'Marcar' : 'Começar'}
-          </Text>
-        </TouchableOpacity>
+        <View className="flex-row items-center gap-1.5">
+          {item.kind === 'workout' ? (
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Só tenho 20 minutos"
+              onPress={() => router.push(ROUTES.WORKOUTS.EXECUTE_SHORT(item.id))}
+              className="rounded-full border border-primary/50 px-3 py-2"
+            >
+              <Text className="text-[0.78125rem] font-bold text-primary">20 min</Text>
+            </TouchableOpacity>
+          ) : null}
+          <TouchableOpacity
+            accessibilityRole="button"
+            disabled={saving}
+            onPress={act}
+            className="rounded-full bg-primary px-3.5 py-2"
+          >
+            <Text className="text-[0.78125rem] font-bold text-primary-foreground">
+              {item.kind === 'meal' ? 'Marcar' : 'Começar'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       }
     />
   );

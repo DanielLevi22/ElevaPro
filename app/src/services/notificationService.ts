@@ -126,6 +126,7 @@ export const NOTICE_ACTIONS = {
   mealOther: 'meal-other',
   mealSkip: 'meal-skip',
   workoutStart: 'workout-start',
+  workoutShort: 'workout-short',
   workoutTomorrow: 'workout-tomorrow',
   workoutSkip: 'workout-skip',
 } as const;
@@ -154,6 +155,8 @@ async function ensureNoticeCategories(): Promise<void> {
   ]);
   await Notifications.setNotificationCategoryAsync('notice-workout', [
     action(NOTICE_ACTIONS.workoutStart, 'Começar'),
+    // O Android mostra três: "Hoje não" fica para o iOS, e no Android é deslizar o aviso.
+    action(NOTICE_ACTIONS.workoutShort, 'Só 20 min'),
     action(NOTICE_ACTIONS.workoutTomorrow, 'Amanhã'),
     action(NOTICE_ACTIONS.workoutSkip, 'Hoje não'),
   ]);

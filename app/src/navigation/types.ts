@@ -200,6 +200,9 @@ export const ROUTES = {
     ): `/(tabs)/workouts/periodizations/${string}/phases/${string}` =>
       `/(tabs)/workouts/periodizations/${periodizationId}/phases/${phaseId}`,
     EXECUTE: (id: string): `/(tabs)/workouts/execute/${string}` => `/(tabs)/workouts/execute/${id}`,
+    /** "Só tenho 20 min" (#376, F3): a mesma sessão, com os três primeiros exercícios. */
+    EXECUTE_SHORT: (id: string) =>
+      ({ pathname: '/(tabs)/workouts/execute/[id]', params: { id, short: '1' } }) as const,
     // Wizard de criação (#335) — substitui a antiga CreatePeriodizationScreen
     // e a criação inline de fase/treino que ainda mora em
     // PeriodizationDetailsScreen/PhaseDetailsScreen.

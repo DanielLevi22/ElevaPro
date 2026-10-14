@@ -98,6 +98,7 @@ export * from "./utils/readiness";
 export * from "./utils/respostasDaNutricao";
 export * from "./utils/restMode";
 export * from "./utils/sessao";
+export * from "./utils/shortSession";
 export * from "./utils/suggestedLoad";
 export * from "./utils/texto";
 export * from "./utils/trainingPlace";

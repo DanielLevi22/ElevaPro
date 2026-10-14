@@ -44,6 +44,8 @@ interface PreInicioDoTreinoProps {
   loadSuggestions: LoadSuggestions;
   /** Semana de descarga do bloco: as séries mostradas já são a metade. */
   deload: boolean;
+  /** "Só tenho 20 min" (#376, F3): os três primeiros, e o aviso disso. */
+  curta: boolean;
   onIniciar: () => void;
   onVoltar: () => void;
 }
@@ -56,6 +58,7 @@ export function PreInicioDoTreino({
   anterior,
   loadSuggestions,
   deload,
+  curta,
   onIniciar,
   onVoltar,
 }: PreInicioDoTreinoProps) {
@@ -65,7 +68,9 @@ export function PreInicioDoTreino({
     0
   );
   const { letra, fase, objetivo } = useContextoDoTreino(treino);
-  const chips = [letra, fase, objetivo].filter((chip): chip is string => chip !== null);
+  const chips = [curta ? 'Versão curta' : null, letra, fase, objetivo].filter(
+    (chip): chip is string => chip !== null
+  );
 
   return (
     <TelaDeVidroComFoto

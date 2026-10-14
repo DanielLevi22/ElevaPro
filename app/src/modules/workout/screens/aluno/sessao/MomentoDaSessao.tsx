@@ -79,6 +79,7 @@ export function MomentoDaSessao(props: MomentoDaSessaoProps) {
           anterior={anterior}
           loadSuggestions={today}
           deload={deload}
+          curta={props.curta ?? false}
           onIniciar={() => {
             despachar({
               tipo: 'applySuggestedLoads',

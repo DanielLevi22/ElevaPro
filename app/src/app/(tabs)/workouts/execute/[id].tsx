@@ -11,7 +11,7 @@ import { primeiroValor, SessaoEmAndamentoScreen } from '@/workout';
  * que precisa.
  */
 export default function SessaoDeTreinoRoute() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, short } = useLocalSearchParams<{ id: string; short?: string }>();
   const { user, isMasquerading, abilities } = useAuthStore();
   const incrementWorkoutProgress = useGamificationStore((s) => s.incrementWorkoutProgress);
   const aoRegistrar = useCallback(
@@ -27,6 +27,7 @@ export default function SessaoDeTreinoRoute() {
       mascarado={isMasquerading}
       podeEditarVideo={abilities?.can('update', 'Exercise') ?? false}
       onTreinoRegistrado={aoRegistrar}
+      curta={primeiroValor(short) === '1'}
     />
   );
 }
