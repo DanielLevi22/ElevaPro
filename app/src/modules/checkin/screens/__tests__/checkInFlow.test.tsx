@@ -73,6 +73,19 @@ beforeEach(() => {
 });
 
 describe('CheckInCard (A6)', () => {
+  // A5c: a semana fora do plano não fala de meta; o cartão anuncia o plano mais simples.
+  it('semana fora do plano: o cartão anuncia o plano mais simples', () => {
+    mockSummary = { state: 'pending', checkIn: CHECK_IN };
+    mockProposal = {
+      ...PROPOSAL,
+      recalibration: { ...PROPOSAL.recalibration, verdict: 'low_adherence', deltaCalories: 0 },
+      simplerPlan: { adherenceDays: 0, mealsPerDay: 6, nextMealsPerDay: 5 },
+    };
+    render(<CheckInCard />);
+    expect(screen.getByText('Plano mais simples: 5 refeições')).toBeTruthy();
+    expect(screen.getByText(/Você seguiu 0 de 7 dias/)).toBeTruthy();
+  });
+
   it('semana pedindo check-in: a próxima ação', () => {
     mockSummary = { state: 'due' };
     render(<CheckInCard />);

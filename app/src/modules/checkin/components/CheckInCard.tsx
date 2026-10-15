@@ -1,4 +1,9 @@
-import { isTodayInBrazil, type RecordedAdjustment, type WeeklyCheckIn } from '@elevapro/shared';
+import {
+  type CheckInProposal,
+  isTodayInBrazil,
+  type RecordedAdjustment,
+  type WeeklyCheckIn,
+} from '@elevapro/shared';
 import { useRouter } from 'expo-router';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore, useCan } from '@/auth';
@@ -15,6 +20,7 @@ import {
 } from '../hooks/useWeeklyCheckIn';
 import { adjustmentCopy } from '../services/adjustmentCopy';
 import { formatKcal } from '../services/formatCalories';
+import { simplerPlanReason } from '../services/simplerPlanCopy';
 
 /**
  * A6 · O check-in na tela inicial: a próxima ação quando a semana pede
@@ -60,13 +66,10 @@ function PendingCard({ userId, checkIn }: { userId: string | null; checkIn: Week
   const router = useRouter();
   const { data: proposal } = useCheckInProposal(userId, checkIn);
   if (proposal?.kind !== 'proposal') return null;
-  const copy = adjustmentCopy(proposal.recalibration, checkIn.logging);
-  const title = copy.proposesChange
-    ? `Meta proposta: ${formatKcal(proposal.recalibration.proposedCalories)}`
-    : 'Sua meta segue igual';
+  const copy = cardCopy(proposal, checkIn);
 
   return (
-    <Card eyebrow="Ajuste da semana" aside={copy.status.label} title={title} sub={copy.reason}>
+    <Card eyebrow="Ajuste da semana" aside={copy.aside} title={copy.title} sub={copy.sub}>
       <BotaoDeDestaque
         rotulo="Ver ajuste"
         tamanho="cartao"
@@ -74,6 +77,25 @@ function PendingCard({ userId, checkIn }: { userId: string | null; checkIn: Week
       />
     </Card>
   );
+}
+
+/** O texto do cartão: a meta proposta, a meta igual, ou o plano mais simples (A5c). */
+function cardCopy(
+  proposal: Extract<CheckInProposal, { kind: 'proposal' }>,
+  checkIn: WeeklyCheckIn
+): { aside: string; title: string; sub: string } {
+  const copy = adjustmentCopy(proposal.recalibration, checkIn.logging);
+  if (proposal.simplerPlan) {
+    return {
+      aside: copy.status.label,
+      title: `Plano mais simples: ${proposal.simplerPlan.nextMealsPerDay} refeições`,
+      sub: simplerPlanReason(proposal.simplerPlan),
+    };
+  }
+  const title = copy.proposesChange
+    ? `Meta proposta: ${formatKcal(proposal.recalibration.proposedCalories)}`
+    : 'Sua meta segue igual';
+  return { aside: copy.status.label, title, sub: copy.reason };
 }
 
 /**

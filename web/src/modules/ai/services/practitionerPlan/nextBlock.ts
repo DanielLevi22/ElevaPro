@@ -237,16 +237,20 @@ async function activeDietTarget(
 }
 
 /**
- * Os blocos que chegaram ao fim. O bloco que acaba agora é o seguinte a eles, e
- * o próximo, o depois: plano trocado no onboarding não conta como bloco.
+ * Os blocos que chegaram ao fim, no prazo ou trocados antes (C2). O bloco que
+ * acaba agora é o seguinte a eles, e o próximo, o depois: plano trocado no
+ * onboarding (`replaced`) não conta como bloco. Sem o trocado antes, o bloco
+ * depois de uma troca repetia o número do atual.
  */
+const BLOCK_END_REASONS = ["block_completed", "changed_early"] as const;
+
 async function countCompletedBlocks(studentId: string): Promise<number> {
   const { count, error } = await supabaseAdmin
     .from("training_periodizations")
     .select("id", { count: "exact", head: true })
     .eq("student_id", studentId)
     .is("specialist_id", null)
-    .eq("end_reason", "block_completed");
+    .in("end_reason", BLOCK_END_REASONS);
   if (error) throw new Error(`blocos de ${studentId} não foram contados: ${error.message}`);
   return count ?? 0;
 }

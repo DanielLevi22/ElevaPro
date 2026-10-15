@@ -95,6 +95,15 @@ describe('EarlyChangeScreen (C2)', () => {
     fireEvent.press(screen.getByText(/Gerar plano novo/i));
     expect(mockPush).toHaveBeenCalledWith('/block/building');
   });
+
+  // #376: pelo peso parado nada mudou, e a tela não fala de mudança.
+  it('pela estagnação, o motivo é o peso parado e não uma mudança', () => {
+    useReviewStore.getState().startStalledReview();
+    render(<EarlyChangeScreen />);
+
+    expect(screen.getByText('Peso parado há 3 semanas')).toBeTruthy();
+    expect(screen.getByText('4 semanas, montado a partir do que você levanta hoje')).toBeTruthy();
+  });
 });
 
 describe('BlockReportScreen (B4, C3)', () => {

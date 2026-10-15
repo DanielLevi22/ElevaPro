@@ -14,6 +14,9 @@ let answers: Record<string, unknown>[];
 let linked = false;
 /** `undefined` é a gravação lendo o início do bloco; `null` é não haver bloco ativo. */
 let activeBlock: { id: string; end_date: string; plans: unknown[] } | null | undefined;
+/** Os motivos de fim que a contagem dos blocos pediu, e quantos blocos ela acha. */
+let countedReasons: string[];
+let endedBlocks = 0;
 
 /** O admin: o bloco ativo, o início do bloco que acaba e as séries feitas nele. */
 vi.mock("@/lib/supabase-admin", () => {
@@ -55,10 +58,15 @@ vi.mock("@/lib/supabase-admin", () => {
           return chain(() => ({ count: linked ? 1 : 0, error: null }));
         }
         if (table === "training_periodizations") {
-          return chain(() => ({
+          const node = chain(() => ({
             data: activeBlock === undefined ? { start_date: "2026-09-19" } : activeBlock,
             error: null,
           }));
+          node.in = (_column: string, reasons: string[]) => {
+            countedReasons = reasons;
+            return chain(() => ({ count: endedBlocks, error: null }));
+          };
+          return node;
         }
         return chain(() => ({ data: null, error: null }));
       },
@@ -236,6 +244,21 @@ describe("montar o próximo bloco", () => {
     });
     expect(generatePractitionerPlan).toHaveBeenCalled();
     stalled = null;
+  });
+
+  // O bloco trocado antes do fim também é um bloco: sem contá-lo, o próximo
+  // repetia o número do atual ("Bloco 3" depois do Bloco 3).
+  it("o número do próximo bloco conta os trocados antes do fim", async () => {
+    activeBlock = { id: "bloco-3", end_date: "2026-10-17", plans: [] };
+    endedBlocks = 2;
+    vi.mocked(generatePractitionerPlan).mockResolvedValue({ ok: true, pending: plan });
+
+    const outcome = await prepareNextBlock("aluno-1", {}, "2026-10-17");
+
+    if (!outcome.ok) throw new Error(`esperava o bloco, veio ${outcome.reason}`);
+    expect(outcome.pending.blockNumber).toBe(4);
+    expect(countedReasons).toEqual(["block_completed", "changed_early"]);
+    endedBlocks = 0;
   });
 
   it("com o bloco ainda correndo, o próximo espera", async () => {

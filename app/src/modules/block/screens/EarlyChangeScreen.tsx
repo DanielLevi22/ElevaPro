@@ -25,6 +25,7 @@ export function EarlyChangeScreen() {
   const userId = useAuthStore((state) => state.session?.user.id ?? null);
   const block = useActiveBlock(userId);
   const changes = useReviewStore((state) => state.changes);
+  const stalled = useReviewStore((state) => state.stalled);
   const { data: report } = useBlockReport(userId, block);
   const shortName = block?.name.split(' · ')[0] ?? 'bloco atual';
   const weeks = block ? Math.max(1, blockWeek(block, localDateKey()).week) : 0;
@@ -76,7 +77,7 @@ export function EarlyChangeScreen() {
           icon="calendar-outline"
           tom="marca"
           titulo="O próximo bloco começa amanhã"
-          sub="4 semanas, montado a partir da mudança"
+          sub={`4 semanas, montado a partir ${stalled && Object.keys(changes).length === 0 ? 'do que você levanta hoje' : 'da mudança'}`}
           direita={<View />}
         />
       </View>
