@@ -26,7 +26,7 @@
 - [ ] `candidate-755283200a4021a8` — Prato: Cuscuz marroquino cozido + Tilápia grelhada + Espinafre
 - [ ] `candidate-7557f8ea45e3fb43` — Prato: Arroz integral cozido + Tofu + Quiabo cozido
 - [ ] `candidate-7559054280247af7` — Prato: Cuscuz marroquino cozido + Sardinha (lata, drenada) + Agrião
-- [ ] `candidate-7559f5929f9b9bf8` — Prato: Macarrão cozido + Ovo inteiro cozido + Abóbora cabotiá cozida
+- [x] `candidate-7559f5929f9b9bf8` — Prato: Macarrão cozido + Ovo inteiro cozido + Abóbora cabotiá cozida
 - [ ] `candidate-75630cc2edaf3ee3` — Prato: Arroz sete grãos cozido + Seitan + Couve-flor cozida
 - [ ] `candidate-7564a8122e884198` — Prato: Macarrão cozido + Merluza grelhada + Abobrinha cozida
 - [ ] `candidate-75660e49c818c25e` — Prato: Arroz parboilizado cozido + Carne bovina (alcatra) + Espinafre
@@ -54,11 +54,11 @@
 - [ ] `candidate-75e23760df1e9317` — Prato: Arroz sete grãos cozido + Fígado bovino grelhado + Pepino
 - [ ] `candidate-75e7fbfa59e421c9` — Prato: Cará cozido + Fígado bovino grelhado + Palmito em conserva
 - [ ] `candidate-75f2cfde0e19052d` — Prato: Quinoa cozida + Frango (sobrecoxa assada) + Beterraba cozida
-- [ ] `candidate-75f905347b27d375` — Prato: Mandioca cozida + Frango (peito grelhado) + Quiabo cozido
-- [ ] `candidate-75fb87e19bdc5710` — Prato: Batata inglesa cozida + Carne bovina (músculo cozido) + Brócolis cozido
+- [x] `candidate-75f905347b27d375` — Prato: Mandioca cozida + Frango (peito grelhado) + Quiabo cozido
+- [x] `candidate-75fb87e19bdc5710` — Prato: Batata inglesa cozida + Carne bovina (músculo cozido) + Brócolis cozido
 - [ ] `candidate-75fd05c2de86da75` — Prato: Batata baroa cozida + Pescada grelhada + Agrião
 - [ ] `candidate-75fd8384bb16ff8a` — Prato: Quinoa cozida + Carne suína (lombo assado) + Agrião
-- [ ] `candidate-7606b425f3f38f7a` — Prato: Cuscuz de milho + Salmão grelhado + Brócolis cozido
+- [x] `candidate-7606b425f3f38f7a` — Prato: Cuscuz de milho + Salmão grelhado + Brócolis cozido
 - [ ] `candidate-760936d500b9ab92` — Prato: Quinoa cozida + Tilápia grelhada + Cogumelo champignon
 - [ ] `candidate-760a9948e0cb9ade` — Prato: Batata baroa cozida + Carne bovina (patinho) + Pepino
 - [ ] `candidate-760f2f6b35381364` — Prato: Mandioca cozida + Carne suína (lombo assado) + Agrião
@@ -134,8 +134,8 @@
 - [ ] `candidate-779785f2d13d3857` — Prato: Macarrão cozido + Carne bovina (músculo cozido) + Couve-flor cozida
 - [ ] `candidate-779ae7864a9cbe47` — Prato: Cará cozido + Salmão grelhado + Alface
 - [ ] `candidate-779e713f6fa542d0` — Prato: Arroz sete grãos cozido + Seitan + Pimentão vermelho
-- [ ] `candidate-77a17da83909a86f` — Prato: Macarrão cozido + Frango (coxa sem pele assada) + Alface
-- [ ] `candidate-77a29bbf3bed794d` — Prato: Cuscuz de milho + Frango (peito grelhado) + Quiabo cozido
+- [x] `candidate-77a17da83909a86f` — Prato: Macarrão cozido + Frango (coxa sem pele assada) + Alface
+- [x] `candidate-77a29bbf3bed794d` — Prato: Cuscuz de milho + Frango (peito grelhado) + Quiabo cozido
 - [ ] `candidate-77a2d1c9bdd24169` — Prato: Mandioca cozida + Pescada grelhada + Repolho cru
 - [ ] `candidate-77b4c680af3cb9bf` — Prato: Batata inglesa cozida + Frango (sobrecoxa assada) + Espinafre
 - [ ] `candidate-77b5623421277723` — Prato: Arroz sete grãos cozido + Ovo de codorna cozido + Repolho cru
@@ -144,7 +144,7 @@
 - [ ] `candidate-77c693d91af2299f` — Prato: Cuscuz de milho + Frango desfiado cozido + Palmito em conserva
 - [ ] `candidate-77d1159661e81187` — Prato: Milho verde cozido + Tilápia grelhada + Pepino
 - [ ] `candidate-77d2c80e0a7c6a49` — Prato: Polenta cozida + Carne bovina (músculo cozido) + Espinafre
-- [ ] `candidate-77db38a3624a0110` — Prato: Batata doce cozida + Frango desfiado cozido + Rúcula
+- [x] `candidate-77db38a3624a0110` — Prato: Batata doce cozida + Frango desfiado cozido + Rúcula
 - [ ] `candidate-77dbc3c4f892157f` — Prato: Macarrão cozido + Fígado bovino grelhado + Pimentão verde
 - [ ] `candidate-77ddea5734a74752` — Prato: Macarrão cozido + Tilápia grelhada + Couve refogada
 - [ ] `candidate-77e0069d287df6cb` — Prato: Mandioca cozida + Bacalhau dessalgado cozido + Brócolis cozido
