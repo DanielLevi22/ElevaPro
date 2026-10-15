@@ -32,7 +32,7 @@
 - [ ] `candidate-875b22809570abcb` — Prato: Batata doce roxa cozida + Salmão grelhado + Pepino
 - [ ] `candidate-8763ac76102458a1` — Prato: Inhame cozido + Carne bovina (músculo cozido) + Rúcula
 - [ ] `candidate-8766fadf3d8dad4c` — Prato: Arroz parboilizado cozido + Pescada grelhada + Couve-flor cozida
-- [ ] `candidate-876ed23c05c354e1` — Prato: Macarrão cozido + Salmão grelhado + Beterraba cozida
+- [x] `candidate-876ed23c05c354e1` — Prato: Macarrão cozido + Salmão grelhado + Beterraba cozida
 - [ ] `candidate-8773ef64ca8bc3c5` — Prato: Cuscuz marroquino cozido + Frango desfiado cozido + Alface
 - [ ] `candidate-87765e07ffc45278` — Prato: Cará cozido + Carne bovina (coxão mole) + Pimentão vermelho
 - [ ] `candidate-8781524b60ab30ac` — Prato: Quinoa cozida + Frango (peito grelhado) + Agrião
