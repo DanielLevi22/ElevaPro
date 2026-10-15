@@ -31,7 +31,7 @@
 - [ ] `candidate-bba2399d632a8b68` — Prato com leguminosa: Cará cozido + Edamame + Pimentão vermelho
 - [ ] `candidate-bba730a3fa7dd843` — Prato com leguminosa: Polenta cozida + Feijão preto cozido + Vagem cozida
 - [ ] `candidate-bbb4efac1e0b23e0` — Prato com leguminosa: Batata doce cozida + Feijão branco cozido + Cogumelo champignon
-- [ ] `candidate-bbd110e2433637a4` — Prato com leguminosa: Batata inglesa cozida + Grão de bico cozido + Brócolis cozido
+- [x] `candidate-bbd110e2433637a4` — Prato com leguminosa: Batata inglesa cozida + Grão de bico cozido + Brócolis cozido
 - [ ] `candidate-bbdca0d04f45f12f` — Prato com leguminosa: Batata inglesa cozida + Edamame + Cenoura crua
 - [ ] `candidate-bbf2026692749f5a` — Prato com leguminosa: Arroz parboilizado cozido + Soja cozida + Alface
 - [ ] `candidate-bc1d4f830027304b` — Prato com leguminosa: Mandioca cozida + Feijão fradinho cozido + Agrião

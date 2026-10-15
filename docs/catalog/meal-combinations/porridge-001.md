@@ -69,7 +69,7 @@
 - [ ] `candidate-a5e72d798af8f874` — Mingau: Kefir de leite + Panqueca de aveia + Tâmara
 - [ ] `candidate-a83f6c1fa3f40364` — Mingau: Bebida de amêndoas sem açúcar + Aveia em flocos + Tâmara
 - [ ] `candidate-a8782e951c2ba189` — Mingau: Leite sem lactose desnatado + Aveia em flocos + Damasco seco
-- [ ] `candidate-ad274e0b6a9c97ff` — Mingau: Leite sem lactose desnatado + Aveia em flocos + Banana nanica
+- [x] `candidate-ad274e0b6a9c97ff` — Mingau: Leite sem lactose desnatado + Aveia em flocos + Banana nanica
 - [ ] `candidate-ae18c415c16f4010` — Mingau: Leite sem lactose desnatado + Aveia em flocos + Tâmara
 - [ ] `candidate-ae74f7c408fe5deb` — Mingau: Bebida de amêndoas sem açúcar + Aveia em flocos + Damasco seco
 - [ ] `candidate-af4735f2afac44f4` — Mingau: Bebida de soja sem açúcar + Farinha de aveia + Tâmara

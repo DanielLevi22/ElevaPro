@@ -140,9 +140,9 @@
 - [ ] `candidate-a40c1bacbcc00a37` — Legumes com finalização: Aspargos cozidos + Alho + Manteiga
 - [x] `candidate-a683909326fa42ea` — Legumes com finalização: Beterraba cozida + Alho + Manteiga
 - [ ] `candidate-a7d4106f538e32c6` — Legumes com finalização: Brócolis cozido + Limão + Manteiga ghee
-- [ ] `candidate-a8c50518344a269b` — Legumes com finalização: Beterraba cozida + Cebola + Manteiga
+- [x] `candidate-a8c50518344a269b` — Legumes com finalização: Beterraba cozida + Cebola + Manteiga
 - [ ] `candidate-acab9af55256542b` — Legumes com finalização: Brócolis cozido + Cebola + Manteiga ghee
-- [ ] `candidate-ad31f481f95803ca` — Legumes com finalização: Beterraba cozida + Alho + Azeite de oliva
+- [x] `candidate-ad31f481f95803ca` — Legumes com finalização: Beterraba cozida + Alho + Azeite de oliva
 - [ ] `candidate-af60a95f77d07b6e` — Legumes com finalização: Aspargos cozidos + Alho + Óleo de coco
 - [ ] `candidate-afee1780f900f2ad` — Legumes com finalização: Vagem cozida + Limão + Óleo de canola
 - [ ] `candidate-b185ca8743a7f227` — Legumes com finalização: Chuchu cozido + Alho + Azeite de oliva
