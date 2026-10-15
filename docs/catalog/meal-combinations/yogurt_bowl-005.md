@@ -81,9 +81,9 @@
 - [ ] `candidate-8f03603420c1727a` — Bowl: Iogurte grego zero + Ameixa + Coco fresco
 - [ ] `candidate-8f10db494f70ebe5` — Bowl: Iogurte grego zero + Morango + Avelã
 - [ ] `candidate-8f43aef4ecaf9b80` — Bowl: Kefir de leite + Banana passa + Semente de abóbora
-- [ ] `candidate-8f45761e2554be36` — Bowl: Iogurte natural desnatado + Mamão + Amendoim
+- [x] `candidate-8f45761e2554be36` — Bowl: Iogurte natural desnatado + Mamão + Amendoim
 - [ ] `candidate-8f4591d0766b7115` — Bowl: Iogurte natural integral + Uva passa + Granola sem açúcar
-- [ ] `candidate-8f8773d938cf78c2` — Bowl: Iogurte natural desnatado + Banana prata + Castanha do Pará
+- [x] `candidate-8f8773d938cf78c2` — Bowl: Iogurte natural desnatado + Banana prata + Castanha do Pará
 - [ ] `candidate-8f8dcea44eda0ff0` — Bowl: Kefir de leite + Goiaba + Nozes
 - [ ] `candidate-8f94f2b7b0caef09` — Bowl: Iogurte natural desnatado + Tâmara + Avelã
 - [ ] `candidate-8fa78ebd7aa9ee69` — Bowl: Iogurte natural integral + Uva passa + Amêndoas
@@ -140,11 +140,11 @@
 - [ ] `candidate-9541bb78b543fd36` — Bowl: Iogurte natural integral + Uva + Amêndoas
 - [ ] `candidate-95563be7e1ebd372` — Bowl: Iogurte natural desnatado + Tangerina + Castanha de caju
 - [ ] `candidate-9577347fa356a4f5` — Bowl: Iogurte grego zero + Banana prata + Coco fresco
-- [ ] `candidate-95826e2a77500d8c` — Bowl: Iogurte natural integral + Banana nanica + Pasta de amendoim
+- [x] `candidate-95826e2a77500d8c` — Bowl: Iogurte natural integral + Banana nanica + Pasta de amendoim
 - [ ] `candidate-95885fa69dd15d7b` — Bowl: Iogurte natural desnatado + Uva passa + Semente de abóbora
 - [ ] `candidate-95e205aedcb6243b` — Bowl: Kefir de leite + Manga + Amendoim
 - [ ] `candidate-96764f84654b5b63` — Bowl: Iogurte grego zero + Uva + Nozes
-- [ ] `candidate-9692ab712b599a29` — Bowl: Iogurte grego zero + Maçã + Aveia em flocos
+- [x] `candidate-9692ab712b599a29` — Bowl: Iogurte grego zero + Maçã + Aveia em flocos
 - [ ] `candidate-9697906a9b4f8fa0` — Bowl: Iogurte natural desnatado + Mirtilo + Castanha de caju
 - [ ] `candidate-96a2263ffe0c1394` — Bowl: Iogurte natural desnatado + Tangerina + Gergelim
 - [ ] `candidate-96bbc78fcd41b7af` — Bowl: Iogurte natural integral + Kiwi + Coco fresco
@@ -181,7 +181,7 @@
 - [ ] `candidate-99dde9aa8a139d84` — Bowl: Iogurte grego zero + Maçã + Nozes
 - [ ] `candidate-9a086ad7bf2f20a2` — Bowl: Kefir de leite + Morango + Chia
 - [ ] `candidate-9a0b4b01164393d0` — Bowl: Iogurte grego natural + Maracujá + Linhaça
-- [ ] `candidate-9a3d693809cfcc6d` — Bowl: Iogurte grego natural + Mamão + Granola sem açúcar
+- [x] `candidate-9a3d693809cfcc6d` — Bowl: Iogurte grego natural + Mamão + Granola sem açúcar
 - [ ] `candidate-9a3ecc89d19a2600` — Bowl: Iogurte natural integral + Manga + Semente de abóbora
 - [ ] `candidate-9a8bd81bf64e8033` — Bowl: Iogurte grego zero + Abacaxi + Amendoim
 - [ ] `candidate-9a96a4163f6e34a0` — Bowl: Iogurte natural integral + Abacate + Aveia em flocos
@@ -193,7 +193,7 @@
 - [ ] `candidate-9b2de9c1ff90bf4c` — Bowl: Iogurte natural desnatado + Açaí (polpa sem açúcar) + Castanha de caju
 - [ ] `candidate-9b330b6025b5b4c1` — Bowl: Iogurte natural integral + Açaí (polpa sem açúcar) + Amendoim
 - [ ] `candidate-9b401a92e400babf` — Bowl: Kefir de leite + Banana prata + Avelã
-- [ ] `candidate-9b9d7c9a78b2a3b1` — Bowl: Iogurte natural desnatado + Melancia + Chia
+- [x] `candidate-9b9d7c9a78b2a3b1` — Bowl: Iogurte natural desnatado + Melancia + Chia
 - [ ] `candidate-9bfa2e17cfe90e38` — Bowl: Iogurte natural desnatado + Damasco seco + Granola sem açúcar
 - [ ] `candidate-9c322d2bccbdb259` — Bowl: Kefir de leite + Maçã + Avelã
 - [ ] `candidate-9c3d0c7d465757d3` — Bowl: Iogurte natural integral + Uva passa + Aveia em flocos
