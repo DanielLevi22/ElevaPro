@@ -16,5 +16,7 @@ export function changeLabel(changes: BlockChanges): string {
     const place = TRAINING_PLACES.find((option) => option.value === changes.gym_type);
     return `Novo local: ${place?.label.toLowerCase() ?? changes.gym_type}`;
   }
-  return 'O plano evita a região da dor';
+  if (changes.injuries) return 'O plano evita a região da dor';
+  // Sem mudança, só a estagnação abre a troca antes do fim (#376).
+  return 'Peso parado há 3 semanas';
 }

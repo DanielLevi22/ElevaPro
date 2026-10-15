@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
 import { Vidro } from '@/components/ui/Vidro';
@@ -7,9 +7,11 @@ import { useActiveBlock } from '@/hooks/useActiveBlock';
 import { useRestPeriods } from '@/hooks/useRestPeriods';
 import { ROUTES } from '@/navigation/types';
 import { localDateKey } from '@/services/healthSync';
+import { useStalledWeek } from '../hooks/useBlockReview';
 import { blockCardState } from '../services/blockCardState';
 import { restCardState } from '../services/restCopy';
 import { useBlockStore } from '../store/blockStore';
+import { useReviewStore } from '../store/reviewStore';
 import { RestCard } from './RestCard';
 
 const CARDS = {
@@ -29,11 +31,20 @@ const CARDS = {
     action: 'Começar',
     route: ROUTES.BLOCK.REVIEW,
   },
+  stalled: {
+    eyebrow: 'Últimas 3 semanas',
+    aside: '2 min',
+    title: 'Seu peso parou',
+    sub: 'Você seguiu a meta e o peso não andou. Dá para reavaliar o bloco agora, sem esperar o fim.',
+    action: 'Reavaliar agora',
+    route: ROUTES.BLOCK.CHANGES,
+  },
 } as const;
 
 /**
- * O bloco do Praticante na tela inicial: o aviso da semana de descarga (A7) e,
- * no fim do bloco, a reavaliação (B1). Fora disso, e para o Aluno, não aparece.
+ * O bloco do Praticante na tela inicial: o aviso da semana de descarga (A7),
+ * no fim do bloco a reavaliação (B1), e no meio dele a reavaliação antecipada
+ * pelo peso parado (#376). Fora disso, e para o Aluno, não aparece.
  *
  * @example <HomeDoAluno dados={aluno} aviso={<BlockCard />} />
  */
@@ -47,12 +58,23 @@ export function BlockCard() {
   );
   const rests = useRestPeriods(userId);
   const returnSeen = useBlockStore((state) => state.returnSeen);
+  const stallSeen = useBlockStore((state) => state.stallSeen);
+  const markStallSeen = useBlockStore((state) => state.markStallSeen);
+  const startStalledReview = useReviewStore((state) => state.startStalledReview);
+  const stalledWeek = useStalledWeek(userId).data ?? null;
   // A pausa vem primeiro: no Modo Descanso o bloco espera também (#376, A8).
   const rest = restCardState(rests, localDateKey(), returnSeen);
-  const state = block ? blockCardState(block, localDateKey(), { deloadSeen, snoozedUntil }) : null;
+  const state = block
+    ? blockCardState(block, localDateKey(), { deloadSeen, snoozedUntil, stalledWeek, stallSeen })
+    : null;
   if (rest) return <RestCard state={rest} />;
   if (!state) return null;
   const card = CARDS[state];
+
+  function open() {
+    if (state === 'stalled') startStalledReview();
+    router.push(card.route);
+  }
 
   return (
     <Vidro classeExterna="mt-5" destaque className="gap-3 p-4">
@@ -70,11 +92,16 @@ export function BlockCard() {
           {card.sub}
         </Text>
       </View>
-      <BotaoDeDestaque
-        rotulo={card.action}
-        tamanho="cartao"
-        onPress={() => router.push(card.route)}
-      />
+      <BotaoDeDestaque rotulo={card.action} tamanho="cartao" onPress={open} />
+      {state === 'stalled' && stalledWeek ? (
+        <Pressable
+          onPress={() => markStallSeen(stalledWeek)}
+          accessibilityRole="button"
+          className="items-center"
+        >
+          <Text className="text-[0.78125rem] font-semibold text-hero-secondary">Agora não</Text>
+        </Pressable>
+      ) : null}
     </Vidro>
   );
 }

@@ -17,6 +17,7 @@ const mockApprove = jest.fn();
 let mockBlock: unknown = null;
 let mockRests: unknown[] = [];
 let mockLevelUp = false;
+let mockStalled: string | null = null;
 
 // O passo animado usa o movimento reduzido, que o mock do Reanimated não tem.
 jest.mock('@/components/ui/WaitStep', () => {
@@ -42,6 +43,7 @@ jest.mock('../../hooks/useBlockReview', () => ({
     data: { goal: 'Hipertrofia', trainingDays: 4, place: 'Academia completa', injuries: [] },
   }),
   useLevelUpAvailable: () => ({ data: mockLevelUp }),
+  useStalledWeek: () => ({ data: mockStalled }),
   useLatestDeclaredMeasure: () => ({ data: { weight_kg: 80, circ_waist: 84, height_cm: 178 } }),
   useDeclareMeasure: () => ({ mutateAsync: mockDeclare, isPending: false }),
   useNextBlockActions: () => ({
@@ -61,10 +63,16 @@ const BLOCK = {
 beforeEach(() => {
   jest.clearAllMocks();
   useReviewStore.getState().reset();
-  useBlockStore.setState({ deloadSeen: [], reviewSnoozedUntil: {}, returnSeen: [] });
+  useBlockStore.setState({
+    deloadSeen: [],
+    reviewSnoozedUntil: {},
+    returnSeen: [],
+    stallSeen: null,
+  });
   mockBlock = BLOCK;
   mockRests = [];
   mockLevelUp = false;
+  mockStalled = null;
 });
 
 describe('ReviewScreen (B1)', () => {
@@ -123,6 +131,14 @@ describe('ChangesScreen (B2)', () => {
     fireEvent.press(screen.getByText(/Montar|Continuar|Próximo/i));
 
     expect(useReviewStore.getState().changes).toEqual({ gym_type: 'Home gym' });
+    expect(mockPush).toHaveBeenCalledWith('/block/early');
+  });
+
+  // #376: pelo peso parado, a estagnação já é o motivo; nada precisa mudar.
+  it('na reavaliação pela estagnação, segue antes do fim sem mudança', () => {
+    useReviewStore.getState().startStalledReview();
+    render(<ChangesScreen />);
+    fireEvent.press(screen.getByText(/Continuar/i));
     expect(mockPush).toHaveBeenCalledWith('/block/early');
   });
 
@@ -186,6 +202,27 @@ describe('BlockCard (A7, B1)', () => {
     render(<BlockCard />);
     expect(screen.queryByText('Hora da reavaliação')).toBeNull();
     expect(screen.getByText('Sem data para voltar')).toBeTruthy();
+  });
+
+  describe('no meio do bloco, com o peso parado há 3 semanas', () => {
+    beforeEach(() => {
+      mockBlock = { ...BLOCK, start_date: '2026-10-20', end_date: '2026-11-16' };
+      mockStalled = '2026-10-26';
+    });
+
+    it('oferece reavaliar agora, sem mudança escolhida', () => {
+      render(<BlockCard />);
+      fireEvent.press(screen.getByText('Reavaliar agora'));
+      expect(useReviewStore.getState()).toMatchObject({ early: true, stalled: true, focus: null });
+      expect(mockPush).toHaveBeenCalledWith('/block/changes');
+    });
+
+    // Nunca cobrar: "Agora não" tira o cartão até um check-in novo mudar o quadro.
+    it('"Agora não" guarda a semana e o cartão some', () => {
+      render(<BlockCard />);
+      fireEvent.press(screen.getByText('Agora não'));
+      expect(useBlockStore.getState().stallSeen).toBe('2026-10-26');
+    });
   });
 
   it('sem bloco próprio (o Aluno), não aparece', () => {

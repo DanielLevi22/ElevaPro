@@ -15,6 +15,23 @@ const CUT: RecalibrationInput = {
 };
 
 describe("recalibrar a meta da semana", () => {
+  // A5c: registrou tudo, mas cumpriu o plano em 2 dias ou menos. Cortar
+  // calorias de quem não seguiu o plano só o tornaria mais difícil.
+  it("com o registro completo e 2 dias no plano, não mexe nas calorias", () => {
+    const result = recalibrateWeeklyTarget({ ...CUT, weightKg: 78.2, adherenceDays: 2 });
+    expect(result.verdict).toBe("low_adherence");
+    expect(result.deltaCalories).toBe(0);
+  });
+
+  it("com 3 dias no plano, a semana conta e a meta segue a regra do peso", () => {
+    const result = recalibrateWeeklyTarget({ ...CUT, weightKg: 77.9, adherenceDays: 3 });
+    expect(result.verdict).toBe("weight_above_pace");
+  });
+
+  it("sem como contar os dias, vale o que a pessoa respondeu", () => {
+    expect(recalibrateWeeklyTarget({ ...CUT, adherenceDays: null }).verdict).toBe("on_pace");
+  });
+
   it("mantém a meta quando o peso andou no ritmo esperado", () => {
     const result = recalibrateWeeklyTarget(CUT);
     expect(result.verdict).toBe("on_pace");

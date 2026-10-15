@@ -35,6 +35,22 @@ describe('o texto do ajuste da semana', () => {
     expect(copy.reason).toContain('Vamos subir a meta em 150 kcal.');
   });
 
+  // Regressão: no teto de ganho a tela dizia "mínimo seguro".
+  it('no teto seguro, segue igual e diz que é o máximo', () => {
+    const copy = adjustmentCopy(
+      {
+        ...BASE,
+        verdict: 'weight_below_pace',
+        proposedCalories: 2150,
+        deltaCalories: 0,
+        guard: 'weekly_gain_cap',
+      },
+      'all'
+    );
+    expect(copy.reason).toContain('já está no máximo seguro');
+    expect(copy.reason).not.toContain('mínimo');
+  });
+
   it('no piso seguro, segue igual e diz por quê', () => {
     const copy = adjustmentCopy(
       { ...BASE, proposedCalories: 2150, deltaCalories: 0, guard: 'bmr_floor' },

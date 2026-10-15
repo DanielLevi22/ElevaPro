@@ -20,7 +20,14 @@ export interface JourneyBlock {
   end_reason: PlanEndReason | null;
 }
 
-export type JourneyEventKind = "start" | "block" | "record" | "target" | "swap" | "rest";
+export type JourneyEventKind =
+  | "start"
+  | "block"
+  | "record"
+  | "target"
+  | "swap"
+  | "rest"
+  | "simplified";
 
 export interface JourneyEvent {
   kind: JourneyEventKind;
@@ -37,7 +44,7 @@ export interface Journey {
   weightChange: number | null;
   records: number;
   streakWeeks: number;
-  /** Quantas vezes o plano mudou: recordes, metas e trocas. */
+  /** Quantas vezes o plano mudou: metas revistas, plano simplificado e trocas. */
   changes: number;
   /** Da mais recente para a mais antiga. */
   events: JourneyEvent[];
@@ -94,7 +101,9 @@ export function summarizeJourney(input: JourneyInput): Journey {
       addDays(input.today, -weekdayFromMonday(input.today)),
       pausedDays(input.rests, input.today),
     ),
-    changes: input.records.length + input.adjustments.length,
+    // O recorde é da pessoa, e o "desfazer" volta ao que era: não mudam o plano.
+    changes: input.adjustments.filter((item) => item.kind !== "calories" || item.reason !== "undo")
+      .length,
     events,
   };
 }
@@ -153,6 +162,14 @@ function adjustmentEvent(adjustment: WeekAdjustment): JourneyEvent {
   const date = adjustment.at.slice(0, 10);
   if (adjustment.kind === "swap") {
     return { kind: "swap", date, title: "Troca de exercício", sub: adjustment.summary };
+  }
+  if (adjustment.kind === "simplified") {
+    return {
+      kind: "simplified",
+      date,
+      title: `Plano mais simples: ${adjustment.before} → ${adjustment.after} refeições`,
+      sub: "Mesma meta, receitas mais rápidas",
+    };
   }
   return {
     kind: "target",

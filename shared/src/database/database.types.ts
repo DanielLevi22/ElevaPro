@@ -2076,6 +2076,32 @@ export type Database = {
         Args: { p_scope: string; p_to_exercise_id: string; p_workout_exercise_id: string };
         Returns: undefined;
       };
+      record_plan_simplification: {
+        Args: {
+          p_check_in_id: string;
+          p_diet_plan_id: string;
+          p_meals_after: number;
+          p_meals_before: number;
+        };
+        Returns: {
+          after_value: number;
+          approved_at: string;
+          before_value: number;
+          check_in_id: string | null;
+          diet_plan_id: string | null;
+          id: string;
+          kind: Database["public"]["Enums"]["plan_adjustment_kind"];
+          reason: string;
+          source: string;
+          student_id: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "plan_adjustments";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       record_security_audit_event: {
         Args: {
           p_actor_id?: string;
@@ -2189,7 +2215,7 @@ export type Database = {
       diet_plan_type: "unique" | "cyclic";
       link_status: "active" | "inactive";
       measurement_source: "specialist" | "self";
-      plan_adjustment_kind: "calories";
+      plan_adjustment_kind: "calories" | "plan_simplified";
       scale_source: "assessment" | "anamnese" | "self";
       service_type: "personal_training" | "nutrition_consulting";
       training_status: "planned" | "active" | "completed";
@@ -2320,7 +2346,7 @@ export const Constants = {
       diet_plan_type: ["unique", "cyclic"],
       link_status: ["active", "inactive"],
       measurement_source: ["specialist", "self"],
-      plan_adjustment_kind: ["calories"],
+      plan_adjustment_kind: ["calories", "plan_simplified"],
       scale_source: ["assessment", "anamnese", "self"],
       service_type: ["personal_training", "nutrition_consulting"],
       training_status: ["planned", "active", "completed"],

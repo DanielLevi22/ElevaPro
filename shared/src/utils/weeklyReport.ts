@@ -24,7 +24,9 @@ export type WeekAdjustment =
       at: string;
     }
   /** "Desenvolvimento → Elevação lateral": só as trocas que mudaram o plano. */
-  | { kind: "swap"; summary: string; at: string };
+  | { kind: "swap"; summary: string; at: string }
+  /** O plano mais simples (A5c): refeições por dia, antes e depois. */
+  | { kind: "simplified"; before: number; after: number; at: string };
 
 /**
  * - **complete**: todos os treinos prescritos;

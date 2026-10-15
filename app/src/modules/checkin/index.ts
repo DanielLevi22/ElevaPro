@@ -2,5 +2,6 @@
 export { CheckInCard } from './components/CheckInCard';
 export { WeeklyReportCard } from './components/WeeklyReportCard';
 export { CheckInResultScreen } from './screens/CheckInResultScreen';
+export { SimplerDietScreen } from './screens/SimplerDietScreen';
 export { WeeklyCheckInScreen } from './screens/WeeklyCheckInScreen';
 export { WeeklyReportScreen } from './screens/WeeklyReportScreen';

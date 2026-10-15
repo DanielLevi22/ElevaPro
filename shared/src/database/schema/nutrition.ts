@@ -132,7 +132,10 @@ export const checkInLoggingEnum = pgEnum("check_in_logging", [
   "not_followed",
 ]);
 export const checkInStatusEnum = pgEnum("check_in_status", ["pending", "approved", "kept"]);
-export const planAdjustmentKindEnum = pgEnum("plan_adjustment_kind", ["calories"]);
+export const planAdjustmentKindEnum = pgEnum("plan_adjustment_kind", [
+  "calories",
+  "plan_simplified",
+]);
 
 export const weeklyCheckIns = pgTable(
   "weekly_check_ins",

@@ -35,8 +35,11 @@ export interface BlockReport {
   records: number;
   diet: WeekDiet | null;
   streakWeeks: number;
-  /** As mudanças do plano no bloco, para "seu plano mudou N vezes com você". */
-  changes: { loads: number; swaps: number; targets: number };
+  /**
+   * As mudanças do plano no bloco, para "seu plano mudou N vezes com você":
+   * trocas de exercício e metas revistas. O recorde é da pessoa, não do plano.
+   */
+  changes: { swaps: number; targets: number; simplified: number };
 }
 
 export interface BlockReportInput {
@@ -49,7 +52,7 @@ export interface BlockReportInput {
   plannedPerWeek: number | null;
   /** O gasto e a meta da dieta do bloco; nulos sem dieta. */
   energy: { tdee: number; targetCalories: number } | null;
-  adjustments: { swaps: number; targets: number };
+  adjustments: { swaps: number; targets: number; simplified: number };
   /** Os dias do Modo Descanso: a sequência atravessa a pausa. */
   paused?: ReadonlySet<string>;
 }
@@ -87,7 +90,7 @@ export function summarizeBlock(input: BlockReportInput): BlockReport {
     records,
     diet: dietDays(inBlock),
     streakWeeks: streakWeeks(input.days, lastMonday(addDays(input.end, -1)), input.paused),
-    changes: { loads: records, ...input.adjustments },
+    changes: { ...input.adjustments },
   };
 }
 

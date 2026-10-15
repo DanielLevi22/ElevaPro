@@ -97,7 +97,7 @@ describe("fetchBlockReport", () => {
     });
     // A sessão do dia 14 é depois do fim do bloco: não entra.
     expect(report.workouts).toEqual({ done: 2, planned: 16 });
-    expect(report.changes).toEqual({ loads: 0, swaps: 0, targets: 1 });
+    expect(report.changes).toEqual({ swaps: 0, targets: 1, simplified: 0 });
   });
 });
 

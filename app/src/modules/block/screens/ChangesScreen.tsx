@@ -41,6 +41,7 @@ export function ChangesScreen() {
   const { data: canLevelUp } = useLevelUpAvailable(userId);
   const setChanges = useReviewStore((state) => state.setChanges);
   const early = useReviewStore((state) => state.early);
+  const stalled = useReviewStore((state) => state.stalled);
   const focus = useReviewStore((state) => state.focus);
   const [changes, setLocal] = useState<BlockChanges>({});
 
@@ -80,8 +81,9 @@ export function ChangesScreen() {
         label: early ? 'Continuar' : 'Montar o próximo bloco',
         icon: early ? 'arrow-forward' : 'sparkles-outline',
         onPress: build,
-        // Antes do fim, mudar o plano sem mudar nada não fecha o bloco à toa.
-        disabled: early && Object.keys(changes).length === 0,
+        // Antes do fim, mudar o plano sem mudar nada não fecha o bloco à toa;
+        // pelo peso parado, a estagnação já é o motivo.
+        disabled: early && !stalled && Object.keys(changes).length === 0,
         hint: 'Marque o que mudou',
       }}
     >

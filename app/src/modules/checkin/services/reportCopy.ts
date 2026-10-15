@@ -144,6 +144,12 @@ export function adjustmentLine(adjustment: WeekAdjustment): ReportLine {
   if (adjustment.kind === 'swap') {
     return { title: adjustment.summary, sub: 'Troca de exercício no plano.' };
   }
+  if (adjustment.kind === 'simplified') {
+    return {
+      title: `Plano mais simples: ${adjustment.before} → ${adjustment.after} refeições`,
+      sub: 'Aprovado no check-in: mesma meta, mais fácil de seguir.',
+    };
+  }
   return {
     title: `Meta ${Math.round(adjustment.before).toLocaleString('pt-BR')} → ${formatKcal(adjustment.after)}`,
     sub: CALORIE_REASON[adjustment.reason],

@@ -22,9 +22,10 @@ const STREAK_LOOKBACK_DAYS = 364;
 const SWAP_LIMIT = 50;
 
 interface AdjustmentRow {
+  kind: "calories" | "plan_simplified";
   before_value: number;
   after_value: number;
-  reason: "weight_above_pace" | "weight_below_pace" | "undo";
+  reason: "weight_above_pace" | "weight_below_pace" | "undo" | "low_adherence";
   approved_at: string;
 }
 
@@ -91,7 +92,7 @@ export async function planAdjustmentsBetween(
   const [calories, swaps] = await Promise.all([
     supabase
       .from("plan_adjustments")
-      .select("before_value, after_value, reason, approved_at")
+      .select("kind, before_value, after_value, reason, approved_at")
       .eq("student_id", studentId)
       .gte("approved_at", from)
       .lt("approved_at", until),
@@ -99,15 +100,20 @@ export async function planAdjustmentsBetween(
   ]);
   if (calories.error) throw calories.error;
   return [
-    ...((calories.data ?? []) as AdjustmentRow[]).map((row) => ({
-      kind: "calories" as const,
-      before: Number(row.before_value),
-      after: Number(row.after_value),
-      reason: row.reason,
-      at: row.approved_at,
-    })),
+    ...((calories.data ?? []) as AdjustmentRow[]).map(adjustmentOfRow),
     ...swaps
       .filter((swap) => swap.inPlan && swap.at < until)
       .map((swap) => ({ kind: "swap" as const, summary: swap.summary, at: swap.at })),
   ];
+}
+
+/** A linha do histórico como a tela lê: a meta, ou o plano mais simples (A5c). */
+function adjustmentOfRow(row: AdjustmentRow): WeekAdjustment {
+  const before = Number(row.before_value);
+  const after = Number(row.after_value);
+  if (row.kind === "plan_simplified") {
+    return { kind: "simplified", before, after, at: row.approved_at };
+  }
+  const reason = row.reason as Extract<WeekAdjustment, { kind: "calories" }>["reason"];
+  return { kind: "calories", before, after, reason, at: row.approved_at };
 }

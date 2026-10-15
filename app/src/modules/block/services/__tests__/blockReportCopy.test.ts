@@ -13,7 +13,7 @@ const report = (extra: Partial<BlockReport> = {}): BlockReport => ({
   records: 5,
   diet: null,
   streakWeeks: 4,
-  changes: { loads: 5, swaps: 1, targets: 1 },
+  changes: { swaps: 1, targets: 1, simplified: 0 },
   ...extra,
 });
 
@@ -45,12 +45,13 @@ describe('o texto do relatório do bloco (B4)', () => {
     expect(promiseLine(report({ promisedKg: null }))).toBeNull();
   });
 
-  it('conta as mudanças do plano com o que mudou', () => {
-    expect(changesLine({ loads: 5, swaps: 1, targets: 1 })).toEqual({
-      title: 'Seu plano mudou 7 vezes com você',
-      sub: '5 cargas subiram, 1 exercício trocado e a meta revista 1 vez.',
+  // O recorde é da pessoa: o plano mudou quando a meta ou o exercício mudaram.
+  it('conta as mudanças do plano, sem os recordes', () => {
+    expect(changesLine({ swaps: 1, targets: 2, simplified: 0 })).toEqual({
+      title: 'Seu plano mudou 3 vezes com você',
+      sub: '1 exercício trocado e a meta revista 2 vezes.',
     });
-    expect(changesLine({ loads: 0, swaps: 0, targets: 0 }).title).toBe(
+    expect(changesLine({ swaps: 0, targets: 0, simplified: 0 }).title).toBe(
       'Seu plano seguiu como estava'
     );
   });

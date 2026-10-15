@@ -56,8 +56,11 @@ function reasonOf(recalibration: Recalibration, logging: CheckInLogging): string
     return `Tudo no ritmo, seguimos igual. ${moved}, dentro da faixa da sua meta.`;
 
   const pace = `${moved}; o ritmo da sua meta era ${pacePhrase(expectedChangeKg ?? 0)}.`;
-  if (deltaCalories === 0)
-    return `${pace} Sua meta já está no mínimo seguro, então seguimos igual.`;
+  if (deltaCalories === 0) {
+    // A trava diz qual limite segurou: o teto de ganho, ou o piso da TMB.
+    const limit = recalibration.guard === 'weekly_gain_cap' ? 'máximo' : 'mínimo';
+    return `${pace} Sua meta já está no ${limit} seguro, então seguimos igual.`;
+  }
   const direction = deltaCalories < 0 ? 'baixar' : 'subir';
   return `${pace} Vamos ${direction} a meta em ${Math.abs(deltaCalories)} kcal.`;
 }

@@ -1,13 +1,20 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { OnboardingPlanPending } from "../../types/onboardingPlan.types";
+import { dailyActivities } from "../../utils/dailyActivity";
+import { addDays } from "../../utils/dateOnly";
 import { nomeCurto } from "../../utils/nome";
 import { practitionerDietTargetFromAnswers } from "../../utils/practitionerDietTarget";
 import { restingNow } from "../../utils/restMode";
+import { STALL_WEEKS, stalledWeek } from "../../utils/stagnation";
 import {
   type CheckInLogging,
+  expectedWeeklyKg,
   type Recalibration,
   recalibrateWeeklyTarget,
 } from "../../utils/weeklyRecalibration";
+import { dietDays } from "../../utils/weeklyReport";
 import { createMeasurementService } from "../progress/measurement.service";
+import { createProgressService } from "../progress/progress.service";
 import { createRestService } from "../workouts/rest.service";
 import { ownTargetCalories, targetAnswers } from "./practitionerEnergy";
 
@@ -61,7 +68,34 @@ export type CheckInProposal =
       recalibration: Recalibration;
       targetCalories: number;
       weights: WeightPoint[];
+      /** Com aderência baixa, o plano mais simples (A5c); nulo fora disso. */
+      simplerPlan: SimplerPlan | null;
     };
+
+/**
+ * O plano mais simples (A5c): a mesma meta, uma refeição a menos e receitas
+ * mais rápidas. Só para quem tem mais de 3 refeições por dia.
+ */
+export interface SimplerPlan {
+  /** Os dias da semana passada com o plano do dia cumprido. */
+  adherenceDays: number;
+  mealsPerDay: number;
+  nextMealsPerDay: number;
+}
+
+/**
+ * O cardápio mais simples que espera "Aprovar" (ADR-0020): montado pelo BFF a
+ * partir do check-in, e gravado só com a aprovação.
+ */
+export interface SimplerDietPending {
+  checkInId: string;
+  mealsBefore: number;
+  mealsAfter: number;
+  plan: OnboardingPlanPending;
+}
+
+/** Menos de 3 refeições por dia o plano não fica: é o mínimo do onboarding. */
+const MIN_MEALS_PER_DAY = 3;
 
 /** A semana na tela inicial: nada a fazer, check-in devido, ou o que já foi feito. */
 export type CheckInSummary =
@@ -164,6 +198,34 @@ export const createWeeklyCheckInService = (supabase: SupabaseClient) => {
       if (error) throw error;
     },
 
+    /**
+     * A semana em que o peso parou há 3 semanas com a meta seguida, ou nula: o
+     * gatilho da reavaliação antecipada (#376). Só do Praticante; o do Aluno
+     * fica com o especialista.
+     *
+     * @example const semana = await checkIn.stalledWeek(user.id); // "2026-10-12"
+     */
+    stalledWeek: async (studentId: string): Promise<string | null> => {
+      if (await measurements.hasActiveSpecialist(studentId)) return null;
+      const [targetCalories, answers, weights, checkIns] = await Promise.all([
+        ownTargetCalories(supabase, studentId),
+        targetAnswers(supabase, studentId),
+        declaredWeights(supabase, studentId),
+        recentCheckIns(supabase, studentId),
+      ]);
+      if (targetCalories === null) return null;
+      const target = practitionerDietTargetFromAnswers({
+        ...answers,
+        weight: weights[0]?.weightKg ?? answers.weight,
+      });
+      if (!target || target.kind === "no_diet") return null;
+      return stalledWeek({
+        checkIns,
+        weights,
+        expectedWeeklyKg: expectedWeeklyKg(targetCalories, target.tdee),
+      });
+    },
+
     /** "Manter mais uma semana". @example await checkIn.keep(semana.id); */
     keep: async (checkInId: string): Promise<void> => {
       const { error } = await supabase.rpc("keep_weekly_target", { p_check_in_id: checkInId });
@@ -231,10 +293,11 @@ async function practitionerProposal(
   studentId: string,
   checkIn: WeeklyCheckIn,
 ): Promise<CheckInProposal> {
-  const [targetCalories, answers, weights] = await Promise.all([
+  const [targetCalories, answers, weights, week] = await Promise.all([
     ownTargetCalories(supabase, studentId),
     targetAnswers(supabase, studentId),
     declaredWeights(supabase, studentId),
+    lastWeekAdherence(supabase, studentId, checkIn.week_start),
   ]);
   if (targetCalories === null) return { kind: "no_diet" };
 
@@ -254,8 +317,45 @@ async function practitionerProposal(
     targetCalories,
     tdee: target.tdee,
     tmb: target.tmb,
+    adherenceDays: week.adherenceDays,
   });
-  return { kind: "proposal", recalibration, targetCalories, weights };
+  const simplerPlan =
+    recalibration.verdict === "low_adherence" &&
+    week.adherenceDays !== null &&
+    week.mealsPerDay > MIN_MEALS_PER_DAY
+      ? {
+          adherenceDays: week.adherenceDays,
+          mealsPerDay: week.mealsPerDay,
+          nextMealsPerDay: week.mealsPerDay - 1,
+        }
+      : null;
+  return { kind: "proposal", recalibration, targetCalories, weights, simplerPlan };
+}
+
+/**
+ * A semana que o check-in olha, a de antes da atual: quantos dias o plano do
+ * dia foi cumprido (nulo sem dieta planejada) e quantas refeições o plano tem.
+ */
+async function lastWeekAdherence(
+  supabase: SupabaseClient,
+  studentId: string,
+  weekStart: string,
+): Promise<{ adherenceDays: number | null; mealsPerDay: number }> {
+  const progress = createProgressService(supabase);
+  const [history, outline] = await Promise.all([
+    progress.listActivityHistory(studentId),
+    progress.getMealPlanOutline(studentId),
+  ]);
+  const week = dailyActivities({
+    from: addDays(weekStart, -7),
+    to: addDays(weekStart, -1),
+    ...history,
+    ...outline,
+  });
+  return {
+    adherenceDays: dietDays(week)?.daysOnTarget ?? null,
+    mealsPerDay: Math.max(0, ...week.map((day) => day.plannedMeals)),
+  };
 }
 
 /** As semanas entre duas pesagens, arredondadas: o check-in é semanal. */
@@ -274,6 +374,23 @@ async function specialistReview(
     lastSpecialistMeasurement(supabase, studentId),
   ]);
   return { kind: "specialist", specialistName, lastMeasurement };
+}
+
+async function recentCheckIns(
+  supabase: SupabaseClient,
+  studentId: string,
+): Promise<{ weekStart: string; logging: CheckInLogging }[]> {
+  const { data, error } = await supabase
+    .from("weekly_check_ins")
+    .select("week_start, logging")
+    .eq("student_id", studentId)
+    .order("week_start", { ascending: false })
+    .limit(STALL_WEEKS);
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    weekStart: row.week_start,
+    logging: row.logging as CheckInLogging,
+  }));
 }
 
 async function latestCheckIn(supabase: SupabaseClient, studentId: string) {
@@ -296,6 +413,8 @@ async function adjustmentOf(
     .from("plan_adjustments")
     .select("before_value, after_value, approved_at")
     .eq("check_in_id", checkInId)
+    // O "Desfazer" e o "Plano atualizado" são da meta: a simplificação tem tela própria.
+    .eq("kind", "calories")
     .order("approved_at", { ascending: false })
     .limit(1)
     .maybeSingle();

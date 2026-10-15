@@ -3875,3 +3875,92 @@ BEGIN
 END $$;
 
 ROLLBACK;
+
+-- ── plan_adjustments: o plano mais simples (0094, #376 A5c) ────────────────────
+-- Com aderência baixa, a meta não muda: o plano perde uma refeição. O registro
+-- é da própria pessoa, sobre o próprio check-in pendente e a própria dieta
+-- ativa, uma refeição a menos de cada vez, e só pela função.
+
+BEGIN;
+
+DO $$
+DECLARE
+  practitioner  uuid := gen_random_uuid();
+  intruder      uuid := gen_random_uuid();
+  diet          uuid;
+  other_diet    uuid;
+  check_in      public.weekly_check_ins;
+  adjustment    public.plan_adjustments;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (practitioner, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-sa@elevapro.local', '{"full_name":"P","account_type":"member"}'::jsonb),
+    (intruder, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-sb@elevapro.local', '{"full_name":"I","account_type":"member"}'::jsonb);
+  INSERT INTO public.student_consents (student_id, consent_type, given_at, policy_version)
+  VALUES (practitioner, 'health_data_collection', now(), '1.10'),
+         (intruder, 'health_data_collection', now(), '1.10');
+  INSERT INTO public.student_anamnesis (student_id, responses)
+  VALUES (practitioner, '{"height":"172"}'::jsonb);
+  INSERT INTO public.diet_plans (student_id, specialist_id, name, plan_type, status, version,
+                                 start_date, end_date, target_calories)
+  VALUES (practitioner, NULL, 'verify-s', 'unique', 'active', 1, current_date - 14, current_date + 14, 2150)
+  RETURNING id INTO diet;
+  INSERT INTO public.diet_plans (student_id, specialist_id, name, plan_type, status, version,
+                                 start_date, end_date, target_calories)
+  VALUES (intruder, NULL, 'verify-s-outro', 'unique', 'active', 1, current_date, current_date + 28, 2000)
+  RETURNING id INTO other_diet;
+
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', practitioner, 'role', 'authenticated')::text, true);
+  check_in := public.submit_weekly_check_in('all', NULL);
+
+  -- Outra pessoa não simplifica o plano de ninguém.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', intruder, 'role', 'authenticated')::text, true);
+  BEGIN
+    PERFORM public.record_plan_simplification(check_in.id, diet, 5, 4);
+    RAISE EXCEPTION 'SIMPLIFICAÇÃO ALHEIA: alguém registrou o ajuste do check-in de outra pessoa';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', practitioner, 'role', 'authenticated')::text, true);
+  -- Uma refeição a menos de cada vez, e nunca abaixo de três.
+  BEGIN
+    PERFORM public.record_plan_simplification(check_in.id, diet, 5, 3);
+    RAISE EXCEPTION 'PLANO CORTADO DEMAIS: a simplificação tirou duas refeições de uma vez';
+  EXCEPTION WHEN invalid_parameter_value THEN NULL;
+  END;
+  BEGIN
+    PERFORM public.record_plan_simplification(check_in.id, diet, 3, 2);
+    RAISE EXCEPTION 'PLANO SEM REFEIÇÃO: a simplificação foi abaixo de três refeições';
+  EXCEPTION WHEN invalid_parameter_value THEN NULL;
+  END;
+  -- A dieta é a própria: a de outra pessoa não vira a "nova" de ninguém.
+  BEGIN
+    PERFORM public.record_plan_simplification(check_in.id, other_diet, 5, 4);
+    RAISE EXCEPTION 'DIETA ALHEIA: o ajuste apontou para a dieta de outra pessoa';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  BEGIN
+    INSERT INTO public.plan_adjustments (student_id, kind, before_value, after_value, reason, source)
+    VALUES (practitioner, 'plan_simplified', 5, 4, 'low_adherence', 'student');
+    RAISE EXCEPTION 'EVIDÊNCIA FORJADA: o aluno gravou ajuste direto, sem passar pela função';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  adjustment := public.record_plan_simplification(check_in.id, diet, 5, 4);
+  IF adjustment.kind <> 'plan_simplified' OR adjustment.reason <> 'low_adherence' THEN
+    RAISE EXCEPTION 'AJUSTE TROCADO: a simplificação foi gravada como % (%)', adjustment.kind, adjustment.reason;
+  END IF;
+  IF (SELECT status FROM public.weekly_check_ins WHERE id = check_in.id) <> 'approved' THEN
+    RAISE EXCEPTION 'CHECK-IN ABERTO: a simplificação aprovada não fechou o check-in';
+  END IF;
+
+  RAISE NOTICE 'ok  plano mais simples: só pela função, da própria pessoa, uma refeição a menos';
+END $$;
+
+ROLLBACK;

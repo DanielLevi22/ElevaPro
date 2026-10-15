@@ -375,6 +375,20 @@ agendamentos avulsos: entram no agendador, dentro do limite do dia, do silêncio
 e do Modo Descanso. **Sair da conta cancela todos os avisos do app, tira da
 bandeja os que já tocaram e volta as preferências ao padrão** (`resetNotices`).
 
+**Plano mais simples e estagnação (#376, A5c, `0094`).** Com 2 dias ou menos no
+plano na semana, o check-in não corta calorias: propõe a mesma meta com uma
+refeição a menos e receitas rápidas. O ajuste vai para `plan_adjustments` como
+`plan_simplified`, motivo `low_adherence`, com as refeições por dia antes e
+depois: é estado do plano, não dado de saúde novo, e herda a RLS, a base legal
+e a retenção da `0088`. Gravado só por `record_plan_simplification`, que exige
+o check-in pendente da própria pessoa, a dieta própria ativa e uma refeição a
+menos, de 6 até 3 (trava em `verify-rls.sql`, com prova negativa). O cardápio é
+gerado pelo BFF só com o consentimento de saúde vigente e nada é gravado antes
+de "Aprovar cardápio" (ADR-0020). A **estagnação** (3 semanas seguindo a meta
+com o peso parado) é calculada na hora, dos check-ins e das pesagens que já
+existem, sem tabela nem coluna nova: só oferece reavaliar o bloco antes do fim.
+"Agora não" guarda no aparelho apenas a data da semana.
+
 **Widget de hoje no Android (#376, F7).** O widget da tela inicial mostra o
 treino do dia, a próxima refeição sem marcar e a água, a partir do mesmo
 estado dos avisos. Fica num MMKV próprio do aparelho (`today-widget`) para o

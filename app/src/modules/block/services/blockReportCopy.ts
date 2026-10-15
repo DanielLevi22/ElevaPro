@@ -81,23 +81,23 @@ export function promiseLine(report: BlockReport): string | null {
 /**
  * "Seu plano mudou N vezes com você", com o que mudou.
  *
- * @example changesLine({ loads: 5, swaps: 1, targets: 1 })
+ * @example changesLine({ swaps: 1, targets: 1, simplified: 0 })
  * // { title: 'Seu plano mudou 7 vezes com você', sub: '5 cargas subiram, 1 exercício trocado e a meta revista 1 vez.' }
  */
 export function changesLine(changes: BlockReport['changes']): { title: string; sub: string } {
-  const total = changes.loads + changes.swaps + changes.targets;
+  const total = changes.swaps + changes.targets + changes.simplified;
   if (total === 0) {
     return {
       title: 'Seu plano seguiu como estava',
-      sub: 'Nenhuma carga, troca ou meta mudou neste bloco.',
+      sub: 'Nenhuma troca ou meta mudou neste bloco.',
     };
   }
   const parts = [
-    changes.loads > 0 ? `${contagem(changes.loads, 'carga subiu', 'cargas subiram')}` : null,
     changes.swaps > 0
       ? `${contagem(changes.swaps, 'exercício trocado', 'exercícios trocados')}`
       : null,
     changes.targets > 0 ? `a meta revista ${contagem(changes.targets, 'vez', 'vezes')}` : null,
+    changes.simplified > 0 ? 'o plano simplificado' : null,
   ].filter((part): part is string => part !== null);
   const sentence =
     parts.length > 1 ? `${parts.slice(0, -1).join(', ')} e ${parts.at(-1)}` : parts[0];

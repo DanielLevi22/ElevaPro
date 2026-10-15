@@ -144,6 +144,40 @@ describe('CheckInResultScreen (A5)', () => {
     mockCan.mockImplementation(() => true);
   });
 
+  // A5c: semana fora do plano não corta calorias; o plano fica mais simples, e
+  // "Aprovar" só abre o cardápio novo, que ainda espera a aprovação dele.
+  it('aderência baixa propõe o plano mais simples, sem gravar ao aprovar', () => {
+    mockProposal = {
+      ...PROPOSAL,
+      recalibration: { ...PROPOSAL.recalibration, verdict: 'low_adherence', deltaCalories: 0 },
+      simplerPlan: { adherenceDays: 2, mealsPerDay: 5, nextMealsPerDay: 4 },
+    };
+    render(<CheckInResultScreen />);
+
+    expect(screen.getByText('Plano mais simples')).toBeTruthy();
+    expect(screen.getByText(/Você seguiu 2 de 7 dias/)).toBeTruthy();
+    expect(screen.getByText('mesma meta')).toBeTruthy();
+    fireEvent.press(screen.getByText(/^Aprovar$/i));
+
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/checkin/simpler',
+      params: { checkInId: 'c1' },
+    });
+    expect(mockApprove).not.toHaveBeenCalled();
+  });
+
+  it('o plano mais simples também deixa manter mais uma semana', async () => {
+    mockProposal = {
+      ...PROPOSAL,
+      recalibration: { ...PROPOSAL.recalibration, verdict: 'low_adherence', deltaCalories: 0 },
+      simplerPlan: { adherenceDays: 1, mealsPerDay: 4, nextMealsPerDay: 3 },
+    };
+    mockKeep.mockResolvedValue({});
+    render(<CheckInResultScreen />);
+    fireEvent.press(screen.getByText(/Manter mais uma semana/i));
+    await waitFor(() => expect(mockKeep).toHaveBeenCalledWith('c1'));
+  });
+
   it('o Aluno vê que o especialista revisa, e nada muda sozinho', () => {
     mockProposal = { kind: 'specialist', specialistName: 'Carla', lastMeasurement: null };
     render(<CheckInResultScreen />);

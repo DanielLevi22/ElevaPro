@@ -3,6 +3,7 @@ import type {
   DietPlanPreferences,
   DietPlanProposal,
   NextBlockPending,
+  SimplerDietPending,
 } from "@elevapro/shared";
 import type { OnboardingPlanPending } from "./services/practitionerPlan/types";
 import type { PlanProposalData } from "./tools/studentCoachTools";
@@ -192,6 +193,9 @@ export interface AiSessionState {
   /** O próximo bloco do Praticante (#376, B5), antes e depois de aprovado. */
   pendingNextBlock?: NextBlockPending;
   resolvedNextBlock?: { periodizationId: string; dietPlanId: string | null };
+  /** O plano mais simples do check-in (#376, A5c), esperando "Aprovar". */
+  pendingSimplerDiet?: SimplerDietPending;
+  resolvedSimplerDiet?: { dietPlanId: string };
 }
 
 export type SseEvent =

@@ -52,7 +52,7 @@ const REPORT: BlockReport = {
   records: 3,
   diet: null,
   streakWeeks: 4,
-  changes: { loads: 0, swaps: 1, targets: 2 },
+  changes: { swaps: 1, targets: 2, simplified: 0 },
 };
 
 beforeEach(() => {

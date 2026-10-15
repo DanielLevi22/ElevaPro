@@ -107,6 +107,7 @@ export const ROUTES = {
   CHECKIN: {
     ROOT: '/checkin',
     RESULT: '/checkin/result',
+    SIMPLER: '/checkin/simpler',
     REPORT: '/checkin/report',
   },
 

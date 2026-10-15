@@ -26,6 +26,12 @@ export interface RecalibrationInput {
   /** Gasto e TMB recalculados com o peso desta semana. */
   tdee: number;
   tmb: number;
+  /**
+   * Os dias da semana com o plano do dia cumprido, contados nos registros;
+   * nulo sem como contar. Com o registro completo e 2 dias ou menos, a semana
+   * fica fora do plano (A5c), mesmo sem a pessoa dizer.
+   */
+  adherenceDays?: number | null;
 }
 
 /**
@@ -74,7 +80,7 @@ const ROUNDING = 10;
  * // { verdict: "weight_above_pace", proposedCalories: 2000, deltaCalories: -150, ... }
  */
 export function recalibrateWeeklyTarget(input: RecalibrationInput): Recalibration {
-  const expected = ((input.targetCalories - input.tdee) * 7) / KCAL_PER_KG;
+  const expected = expectedWeeklyKg(input.targetCalories, input.tdee);
   const keep = (verdict: RecalibrationVerdict, actual: number | null = null): Recalibration => ({
     verdict,
     proposedCalories: input.targetCalories,
@@ -85,7 +91,7 @@ export function recalibrateWeeklyTarget(input: RecalibrationInput): Recalibratio
 
   // Registro parcial não sustenta ajuste; quem não seguiu não ganha corte.
   if (input.logging === "partial") return keep("insufficient_data");
-  if (input.logging === "not_followed") return keep("low_adherence");
+  if (input.logging === "not_followed" || lowAdherence(input)) return keep("low_adherence");
   if (input.weightKg === null || input.previousWeightKg === null) return keep("insufficient_data");
 
   const weeks = Math.max(1, input.weeksSincePrevious ?? 1);
@@ -95,6 +101,23 @@ export function recalibrateWeeklyTarget(input: RecalibrationInput): Recalibratio
 
   const verdict = deviation > 0 ? "weight_above_pace" : "weight_below_pace";
   return { ...stepTowardPace(input, verdict), expectedChangeKg: expected, actualChangeKg: actual };
+}
+
+/**
+ * Quanto o peso deve mudar por semana com a meta: negativo é perda.
+ *
+ * @example expectedWeeklyKg(2150, 2700) // -0.5
+ */
+export function expectedWeeklyKg(targetCalories: number, tdee: number): number {
+  return ((targetCalories - tdee) * 7) / KCAL_PER_KG;
+}
+
+/** Provisório (CRN): 2 de 7 dias no plano é semana fora dele (A5c). */
+export const LOW_ADHERENCE_DAYS = 2;
+
+function lowAdherence(input: RecalibrationInput): boolean {
+  const days = input.adherenceDays ?? null;
+  return input.logging === "all" && days !== null && days <= LOW_ADHERENCE_DAYS;
 }
 
 /** Um passo só, por mais longe que o peso esteja: a meta não compensa atraso. */

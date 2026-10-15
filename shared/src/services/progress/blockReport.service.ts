@@ -55,7 +55,10 @@ export const createBlockReportService = (supabase: SupabaseClient) => {
         energy,
         adjustments: {
           swaps: adjustments.filter((item) => item.kind === "swap").length,
-          targets: adjustments.filter((item) => item.kind === "calories").length,
+          simplified: adjustments.filter((item) => item.kind === "simplified").length,
+          // O "desfazer" volta ao que era: não é mais uma mudança.
+          targets: adjustments.filter((item) => item.kind === "calories" && item.reason !== "undo")
+            .length,
         },
         paused: pausedDays(rests, end),
       });

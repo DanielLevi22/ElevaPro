@@ -92,8 +92,11 @@ vi.mock("../savePlan", () => ({
 vi.mock("../generatePlan", () => ({ generatePractitionerPlan: vi.fn() }));
 
 let tracks: string[];
+/** A semana em que o peso parou há 3 semanas, ou nula. */
+let stalled: string | null = null;
 vi.mock("@elevapro/shared", async (original) => ({
   ...(await original<typeof import("@elevapro/shared")>()),
+  createWeeklyCheckInService: () => ({ stalledWeek: async () => stalled }),
   createAdaptiveAnamnesisService: () => ({
     savePersonaTrack: async (_id: string, track: string) => {
       tracks.push(track);
@@ -101,6 +104,7 @@ vi.mock("@elevapro/shared", async (original) => ({
   }),
 }));
 
+const { generatePractitionerPlan } = await import("../generatePlan");
 const { saveNextBlock } = await import("../saveNextBlock");
 const { prepareNextBlock } = await import("../nextBlock");
 
@@ -217,6 +221,21 @@ describe("montar o próximo bloco", () => {
       ok: false,
       reason: "no_changes",
     });
+  });
+
+  // #376: estagnação de 3 semanas com a meta seguida antecipa a reavaliação,
+  // mesmo sem nada ter mudado. O servidor confere: o app só oferece.
+  it("antes do fim, o peso parado há 3 semanas basta para montar", async () => {
+    activeBlock = { id: "bloco-1", end_date: "2026-10-17", plans: [] };
+    stalled = "2026-10-05";
+    vi.mocked(generatePractitionerPlan).mockResolvedValue({ ok: false, reason: "plan_rejected" });
+
+    await expect(prepareNextBlock("aluno-1", {}, "2026-10-10", true)).resolves.toEqual({
+      ok: false,
+      reason: "plan_rejected",
+    });
+    expect(generatePractitionerPlan).toHaveBeenCalled();
+    stalled = null;
   });
 
   it("com o bloco ainda correndo, o próximo espera", async () => {

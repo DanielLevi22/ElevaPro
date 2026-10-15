@@ -8,6 +8,11 @@ interface ReviewState {
   changes: BlockChanges;
   /** Trocar o plano antes do fim do bloco (C1, C2), e não a reavaliação do fim. */
   early: boolean;
+  /**
+   * Antes do fim pelo peso parado há 3 semanas (#376): aí o bloco pode sair
+   * sem mudança nenhuma, e o servidor confere de novo.
+   */
+  stalled: boolean;
   /** A pergunta que já abre como "Mudou". */
   focus: ChangeFocus | null;
   /** O próximo bloco que a B3 montou e a B5 mostra. */
@@ -18,9 +23,11 @@ interface ReviewState {
   reset: () => void;
   /** Começa a troca antes do fim, já com a mudança escolhida. */
   startEarly: (focus: ChangeFocus) => void;
+  /** Começa a reavaliação antecipada pela estagnação, sem mudança escolhida. */
+  startStalledReview: () => void;
 }
 
-const EMPTY = { changes: {}, early: false, focus: null, pending: null };
+const EMPTY = { changes: {}, early: false, stalled: false, focus: null, pending: null };
 
 /**
  * O caminho da reavaliação, de B2 a B5, e o da troca antes do fim (C1, C2).
@@ -35,4 +42,5 @@ export const useReviewStore = create<ReviewState>((set) => ({
   setPending: (pending) => set({ pending }),
   reset: () => set(EMPTY),
   startEarly: (focus) => set({ ...EMPTY, early: true, focus }),
+  startStalledReview: () => set({ ...EMPTY, early: true, stalled: true }),
 }));

@@ -5,15 +5,16 @@ import {
   type CurrentBlockSummary,
   compareBlocks,
   createBlockService,
+  createWeeklyCheckInService,
   type NextBlockPending,
   type OnboardingPlanTarget,
 } from "@elevapro/shared";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { generatePractitionerPlan } from "./generatePlan";
+import { type GenerationOutcome, generatePractitionerPlan } from "./generatePlan";
+import { readPlanChoices } from "./planChoices";
 
 const blocks = createBlockService(supabaseAdmin);
-
-import { readPlanChoices } from "./planChoices";
+const checkIns = createWeeklyCheckInService(supabaseAdmin);
 
 export type NextBlockOutcome =
   | { ok: true; pending: NextBlockPending }
@@ -52,10 +53,8 @@ interface BlockRow {
  * junto com a proposta e entram ao aprovar.
  *
  * Só para quem não tem especialista: o do Aluno reavalia e monta o bloco dele.
- * Depois do fim do bloco, ou antes dele com `early` e alguma mudança (C1): aí
- * o bloco atual fecha hoje, e o novo começa amanhã.
- * A meta recalibrada pelos check-ins continua, a menos que o objetivo ou os dias
- * tenham mudado: aí a conta parte do zero, como no onboarding.
+ * Depois do fim do bloco, ou antes dele com `early` e alguma mudança ou o peso
+ * parado há 3 semanas (C1): aí o bloco atual fecha hoje, e o novo começa amanhã.
  *
  * @example const outcome = await prepareNextBlock(user.id, { gym_type: "Home gym" }, "2026-10-17");
  */
@@ -65,45 +64,93 @@ export async function prepareNextBlock(
   today: string,
   early = false,
 ): Promise<NextBlockOutcome> {
-  // Com especialista, a reavaliação e o próximo bloco são dele (#376).
-  if (await hasActiveSpecialist(studentId)) return { ok: false, reason: "has_specialist" };
-  const block = await ownActiveBlock(studentId);
-  if (!block) return { ok: false, reason: "no_block" };
-  // Antes do fim, só com alguma mudança: sem ela, o bloco atual segue (C1).
-  const running = today < block.end_date;
-  if (running && !early) return { ok: false, reason: "block_running" };
-  if (running && Object.keys(changes).length === 0) return { ok: false, reason: "no_changes" };
-
-  // O app só pergunta a quem pode; o servidor confere de novo, porque o pedido
-  // pode chegar sem passar pela tela.
-  if (changes.level && !(await blocks.levelUpAvailable(studentId, today))) {
-    return { ok: false, reason: "level_not_available" };
-  }
+  const allowed = await nextBlockAllowed(studentId, changes, today, early);
+  if (!allowed.ok) return allowed;
   const diet = await activeDietTarget(studentId);
-  const keepsTarget = diet && !changes.main_goal && !changes.training_days;
-  const outcome = await generatePractitionerPlan(studentId, {
-    answersOverride: answersWithChanges({}, changes),
-    targetOverride: keepsTarget ? diet.target : undefined,
-    trackOverride: changes.level,
-  });
+  const outcome = await generateBlock(studentId, changes, diet);
   if (!outcome.ok) return outcome;
-
-  const current: CurrentBlockSummary = {
-    trainingDays: await answeredTrainingDays(studentId),
-    exerciseNames: exerciseNamesOf(block),
-    calories: diet?.target.calories ?? null,
-    level: await currentTrack(studentId),
-  };
   return {
     ok: true,
     pending: {
       plan: outcome.pending,
       blockNumber: (await countCompletedBlocks(studentId)) + 2,
-      previousBlockId: block.id,
-      comparison: compareBlocks(current, outcome.pending),
+      previousBlockId: allowed.block.id,
+      comparison: compareBlocks(
+        await currentSummary(studentId, allowed.block, diet),
+        outcome.pending,
+      ),
       changes,
-      early: running,
+      early: allowed.running,
     },
+  };
+}
+
+type Allowed =
+  | { ok: true; block: BlockRow; running: boolean }
+  | Extract<NextBlockOutcome, { ok: false }>;
+
+/**
+ * Se o próximo bloco pode sair agora. O app só pergunta a quem pode; o
+ * servidor confere de novo, porque o pedido pode chegar sem passar pela tela.
+ */
+async function nextBlockAllowed(
+  studentId: string,
+  changes: BlockChanges,
+  today: string,
+  early: boolean,
+): Promise<Allowed> {
+  // Com especialista, a reavaliação e o próximo bloco são dele (#376).
+  if (await hasActiveSpecialist(studentId)) return { ok: false, reason: "has_specialist" };
+  const block = await ownActiveBlock(studentId);
+  if (!block) return { ok: false, reason: "no_block" };
+  const running = today < block.end_date;
+  if (running && !early) return { ok: false, reason: "block_running" };
+  // Antes do fim, só com alguma mudança ou com o peso parado há 3 semanas
+  // (C1): sem nenhum dos dois, o bloco atual segue.
+  if (running && !(await earlyReason(studentId, changes)))
+    return { ok: false, reason: "no_changes" };
+  if (changes.level && !(await blocks.levelUpAvailable(studentId, today))) {
+    return { ok: false, reason: "level_not_available" };
+  }
+  return { ok: true, block, running };
+}
+
+async function earlyReason(studentId: string, changes: BlockChanges): Promise<boolean> {
+  if (Object.keys(changes).length > 0) return true;
+  return (await checkIns.stalledWeek(studentId)) !== null;
+}
+
+/**
+ * A meta recalibrada pelos check-ins continua, a menos que o objetivo ou os
+ * dias tenham mudado: aí a conta parte do zero, como no onboarding.
+ */
+function generateBlock(
+  studentId: string,
+  changes: BlockChanges,
+  diet: { target: OnboardingPlanTarget } | null,
+): Promise<GenerationOutcome> {
+  const keepsTarget = diet && !changes.main_goal && !changes.training_days;
+  return generatePractitionerPlan(studentId, {
+    answersOverride: answersWithChanges({}, changes),
+    targetOverride: keepsTarget ? diet.target : undefined,
+    trackOverride: changes.level,
+  });
+}
+
+async function currentSummary(
+  studentId: string,
+  block: BlockRow,
+  diet: { target: OnboardingPlanTarget } | null,
+): Promise<CurrentBlockSummary> {
+  const [trainingDays, level] = await Promise.all([
+    answeredTrainingDays(studentId),
+    currentTrack(studentId),
+  ]);
+  return {
+    trainingDays,
+    exerciseNames: exerciseNamesOf(block),
+    calories: diet?.target.calories ?? null,
+    level,
   };
 }
 

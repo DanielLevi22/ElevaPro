@@ -45,8 +45,21 @@ describe("sua jornada (D1)", () => {
       weeks: 4,
       weightChange: -1.9,
       records: 1,
-      changes: 2,
+      // O recorde é da pessoa: o plano mudou uma vez, com a meta.
+      changes: 1,
     });
+  });
+
+  it("desfazer o ajuste não conta como outra mudança", () => {
+    const undo = {
+      kind: "calories" as const,
+      before: 2000,
+      after: 2150,
+      reason: "undo" as const,
+      at: "2026-09-28T15:00:00Z",
+    };
+    const journey = summarizeJourney(input({ adjustments: [...input().adjustments, undo] }));
+    expect(journey.changes).toBe(1);
   });
 
   it("a linha do tempo vai de hoje ao dia em que o plano nasceu", () => {

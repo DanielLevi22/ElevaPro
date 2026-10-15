@@ -5,6 +5,7 @@ import {
   createBlockReportService,
   createBlockService,
   createMeasurementService,
+  createWeeklyCheckInService,
   type DeclaredMeasurementInput,
 } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
@@ -17,6 +18,7 @@ import { useReviewStore } from '../store/reviewStore';
 const blocks = createBlockService(supabase);
 const measurements = createMeasurementService(supabase);
 const reports = createBlockReportService(supabase);
+const checkIns = createWeeklyCheckInService(supabase);
 
 /**
  * O relatório do bloco que acaba (B4), sob a sessão do aluno.
@@ -61,6 +63,21 @@ export function useBlockChoices(studentId: string | null) {
     enabled: Boolean(studentId),
     queryFn: () =>
       avisandoSeFalhar('block.read_choices', () => blocks.currentChoices(studentId as string)),
+  });
+}
+
+/**
+ * A semana em que o peso parou há 3 semanas com a meta seguida, ou nula: o
+ * cartão do bloco oferece reavaliar antes do fim (#376).
+ *
+ * @example const { data: semanaParada } = useStalledWeek(user.id);
+ */
+export function useStalledWeek(studentId: string | null) {
+  return useQuery({
+    queryKey: ['stalled-week', studentId],
+    enabled: Boolean(studentId),
+    queryFn: () =>
+      avisandoSeFalhar('block.read_stall', () => checkIns.stalledWeek(studentId as string)),
   });
 }
 

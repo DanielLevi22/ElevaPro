@@ -23,6 +23,7 @@ const ICONS: Record<JourneyEvent['kind'], keyof typeof Ionicons.glyphMap> = {
   target: 'locate-outline',
   swap: 'swap-horizontal',
   rest: 'pause-outline',
+  simplified: 'list-outline',
 };
 const ICON_SIZE = 15;
 
@@ -97,7 +98,7 @@ export function JourneyScreen({ studentId }: { studentId: string }) {
                     ? 'Seu plano mudou 1 vez com você'
                     : `Seu plano mudou ${journey.changes} vezes com você`
               }
-              sub="Cargas, meta e exercícios, sempre com o porquê"
+              sub="Metas e exercícios, sempre com o porquê"
               direita={<View />}
             />
           </View>

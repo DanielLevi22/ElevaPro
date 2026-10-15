@@ -12,6 +12,9 @@ interface BlockState {
   /** As voltas do Modo Descanso cujas boas-vindas a pessoa já abriu, pelo id da pausa. */
   returnSeen: string[];
   markReturnSeen: (restId: string) => void;
+  /** "Agora não" da estagnação: a semana do check-in que a fechou. Um novo muda o quadro. */
+  stallSeen: string | null;
+  markStallSeen: (week: string) => void;
 }
 
 /**
@@ -26,6 +29,8 @@ export const useBlockStore = create<BlockState>()(
       deloadSeen: [],
       reviewSnoozedUntil: {},
       returnSeen: [],
+      stallSeen: null,
+      markStallSeen: (week) => set({ stallSeen: week }),
       markReturnSeen: (restId) =>
         set((state) =>
           state.returnSeen.includes(restId) ? state : { returnSeen: [...state.returnSeen, restId] }

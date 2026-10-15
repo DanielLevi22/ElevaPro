@@ -37,7 +37,7 @@ const input = (extra: Partial<BlockReportInput> = {}): BlockReportInput => ({
   ],
   plannedPerWeek: 4,
   energy: { tdee: 2539, targetCalories: 1989 },
-  adjustments: { swaps: 1, targets: 1 },
+  adjustments: { swaps: 1, targets: 1, simplified: 0 },
   ...extra,
 });
 

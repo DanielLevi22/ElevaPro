@@ -11,4 +11,8 @@ describe('o que mudou, na sobrelinha da C2', () => {
   it('a dor não vira texto com a região', () => {
     expect(changeLabel({ injuries: ['Joelhos'] })).toBe('O plano evita a região da dor');
   });
+
+  it('sem mudança, o motivo é o peso parado', () => {
+    expect(changeLabel({})).toBe('Peso parado há 3 semanas');
+  });
 });

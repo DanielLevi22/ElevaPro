@@ -12,6 +12,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { avisandoSeFalhar } from '@/lib/registro';
 import { requestNotificationPermissions } from '@/services/notificationService';
 import { useNoticePreferencesStore } from '@/shared/notices';
+import { approveSimplerDiet, requestSimplerDiet } from '../services/simplerDietService';
 
 const checkIns = createWeeklyCheckInService(supabase);
 const measurements = createMeasurementService(supabase);
@@ -101,6 +102,22 @@ export function useCheckInActions() {
     onSuccess: settle,
   });
   return { submit, approve, keep, undo };
+}
+
+/**
+ * O plano mais simples (A5c): montar o cardápio, que fica pendente no BFF, e
+ * aprovar, que grava e fecha o check-in. Depois de aprovar, a semana é relida.
+ *
+ * @example const { build, approve } = useSimplerDiet(); build.mutate(semana.checkIn.id);
+ */
+export function useSimplerDiet() {
+  const queryClient = useQueryClient();
+  const build = useMutation({ mutationFn: requestSimplerDiet });
+  const approve = useMutation({
+    mutationFn: approveSimplerDiet,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [SUMMARY_KEY] }),
+  });
+  return { build, approve };
 }
 
 /**

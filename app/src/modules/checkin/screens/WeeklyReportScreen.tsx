@@ -1,4 +1,10 @@
-import { primeiroNome, type SpecialistNoteWithAuthor, type WeeklyReport } from '@elevapro/shared';
+import {
+  primeiroNome,
+  type SpecialistNoteWithAuthor,
+  type WeekAdjustment,
+  type WeeklyReport,
+} from '@elevapro/shared';
+import type { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Text, View } from 'react-native';
@@ -19,6 +25,12 @@ import {
   streakTitle,
 } from '../services/reportCopy';
 import { useWeeklyReportStore } from '../store/weeklyReportStore';
+
+const ADJUSTMENT_ICON: Record<WeekAdjustment['kind'], keyof typeof Ionicons.glyphMap> = {
+  calories: 'flag-outline',
+  swap: 'swap-horizontal',
+  simplified: 'list-outline',
+};
 
 /**
  * R1 · O relatório da semana: os números, o que ficou mais forte, o que mudou
@@ -162,7 +174,7 @@ function Adjustments({ report }: { report: WeeklyReport }) {
         return (
           <LinhaDeVidro
             key={`${adjustment.kind}-${adjustment.at}`}
-            icon={adjustment.kind === 'swap' ? 'swap-horizontal' : 'flag-outline'}
+            icon={ADJUSTMENT_ICON[adjustment.kind]}
             tom="marca"
             titulo={line.title}
             sub={line.sub}
