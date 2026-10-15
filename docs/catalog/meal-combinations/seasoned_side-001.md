@@ -108,7 +108,7 @@
 - [ ] `candidate-8081a23e3b684080` — Legumes com finalização: Couve-flor cozida + Cebola + Óleo de coco
 - [ ] `candidate-81038158dbc03146` — Legumes com finalização: Brócolis cozido + Azeitona verde + Óleo de canola
 - [ ] `candidate-831aac93a0c15986` — Legumes com finalização: Quiabo cozido + Cebola + Azeite de oliva
-- [ ] `candidate-843afc007b9fb132` — Legumes com finalização: Abobrinha cozida + Cebola + Azeite de oliva
+- [x] `candidate-843afc007b9fb132` — Legumes com finalização: Abobrinha cozida + Cebola + Azeite de oliva
 - [ ] `candidate-859a9913fe43035d` — Legumes com finalização: Couve-flor cozida + Cebola + Azeite de oliva
 - [ ] `candidate-85c4f536e0994829` — Legumes com finalização: Vagem cozida + Limão + Óleo de coco
 - [ ] `candidate-862074b1550abd7b` — Legumes com finalização: Chuchu cozido + Limão + Óleo de canola

@@ -185,7 +185,7 @@
 - [ ] `candidate-7cacc457918b7b8a` — Bowl: Iogurte grego zero + Morango + Castanha do Pará
 - [ ] `candidate-7cb4aa57031d078d` — Bowl: Iogurte natural integral + Framboesa + Linhaça
 - [ ] `candidate-7d09a5cc17ecefe8` — Bowl: Iogurte grego zero + Tâmara + Nozes
-- [ ] `candidate-7d56d0cb89748c8b` — Bowl: Iogurte natural desnatado + Laranja + Nozes
+- [x] `candidate-7d56d0cb89748c8b` — Bowl: Iogurte natural desnatado + Laranja + Nozes
 - [ ] `candidate-7d74be558684cfb9` — Bowl: Iogurte grego zero + Framboesa + Semente de girassol
 - [ ] `candidate-7dadd0a48752a36a` — Bowl: Iogurte grego zero + Damasco seco + Nozes
 - [ ] `candidate-7db352adb6d1fc81` — Bowl: Iogurte natural integral + Laranja + Castanha do Pará

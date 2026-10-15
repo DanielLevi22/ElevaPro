@@ -112,7 +112,7 @@
 - [ ] `candidate-7d2edf267bc9f912` — Prato com leguminosa: Arroz branco cozido + Feijão azuki cozido + Pimentão vermelho
 - [ ] `candidate-7d3432e60b14af6b` — Prato com leguminosa: Arroz integral cozido + Soja cozida + Repolho cru
 - [ ] `candidate-7d3cc5ce5c963593` — Prato com leguminosa: Arroz branco cozido + Ervilha cozida + Chuchu cozido
-- [ ] `candidate-7d451e41f1691959` — Prato com leguminosa: Macarrão cozido + Ervilha cozida + Tomate
+- [x] `candidate-7d451e41f1691959` — Prato com leguminosa: Macarrão cozido + Ervilha cozida + Tomate
 - [ ] `candidate-7d536e02258021c9` — Prato com leguminosa: Batata inglesa cozida + Edamame + Aspargos cozidos
 - [ ] `candidate-7d65f656fa414e51` — Prato com leguminosa: Batata baroa cozida + Feijão fradinho cozido + Couve refogada
 - [ ] `candidate-7d830eb773861ef3` — Prato com leguminosa: Arroz parboilizado cozido + Ervilha cozida + Vagem cozida
@@ -226,10 +226,10 @@
 - [ ] `candidate-83e80f52b9ebc5c2` — Prato com leguminosa: Milho verde cozido + Ervilha cozida + Beterraba cozida
 - [ ] `candidate-840583365188d40a` — Prato com leguminosa: Inhame cozido + Soja cozida + Aspargos cozidos
 - [ ] `candidate-8417abe8235c9a8c` — Prato com leguminosa: Arroz parboilizado cozido + Feijão preto cozido + Pimentão verde
-- [ ] `candidate-8425baccefd020ea` — Prato com leguminosa: Batata inglesa cozida + Feijão preto cozido + Berinjela cozida
+- [x] `candidate-8425baccefd020ea` — Prato com leguminosa: Batata inglesa cozida + Feijão preto cozido + Berinjela cozida
 - [ ] `candidate-843c1d729ed499d3` — Prato com leguminosa: Arroz branco cozido + Tremoço em conserva + Couve refogada
 - [ ] `candidate-84405649e0dde9dd` — Prato com leguminosa: Batata inglesa cozida + Edamame + Couve-flor cozida
-- [ ] `candidate-844164b7b344ed74` — Prato com leguminosa: Mandioca cozida + Feijão preto cozido + Quiabo cozido
+- [x] `candidate-844164b7b344ed74` — Prato com leguminosa: Mandioca cozida + Feijão preto cozido + Quiabo cozido
 - [ ] `candidate-8446cec660041f48` — Prato com leguminosa: Arroz branco cozido + Feijão azuki cozido + Pimentão verde
 - [ ] `candidate-8449529d43b3cf28` — Prato com leguminosa: Arroz parboilizado cozido + Soja cozida + Repolho cru
 - [ ] `candidate-8449bf92cfb5c98b` — Prato com leguminosa: Arroz integral cozido + Feijão branco cozido + Tomate
