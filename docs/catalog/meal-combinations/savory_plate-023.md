@@ -163,7 +163,7 @@
 - [ ] `candidate-7e642d73af1e575d` — Prato: Macarrão cozido + Camarão cozido + Pimentão verde
 - [x] `candidate-7e66a9040e3bc1eb` — Prato: Arroz branco cozido + Carne moída (patinho) + Berinjela cozida
 - [x] `candidate-7e675c5c2b421cac` — Prato: Inhame cozido + Frango (peito grelhado) + Brócolis cozido
-- [ ] `candidate-7e6932cd13e68f3c` — Prato: Arroz integral cozido + Carne suína (lombo assado) + Tomate
+- [x] `candidate-7e6932cd13e68f3c` — Prato: Arroz integral cozido + Carne suína (lombo assado) + Tomate
 - [ ] `candidate-7e6bd8e32812896f` — Prato: Arroz integral cozido + Frango (peito grelhado) + Espinafre
 - [ ] `candidate-7e7065ddad0720f8` — Prato: Inhame cozido + Frango (coxa sem pele assada) + Pimentão vermelho
 - [ ] `candidate-7e75e3474d35d4a7` — Prato: Cuscuz de milho + Bacalhau dessalgado cozido + Couve-flor cozida
@@ -174,7 +174,7 @@
 - [ ] `candidate-7e92fde1e6b7245e` — Prato: Arroz parboilizado cozido + Atum em água (lata) + Beterraba cozida
 - [ ] `candidate-7ea042be021ea8d7` — Prato: Batata doce cozida + Camarão cozido + Agrião
 - [ ] `candidate-7eb328b15251c73d` — Prato: Batata doce roxa cozida + Ovo inteiro cozido + Repolho cru
-- [ ] `candidate-7eb3374c60efa39b` — Prato: Batata inglesa cozida + Carne moída (patinho) + Pepino
+- [x] `candidate-7eb3374c60efa39b` — Prato: Batata inglesa cozida + Carne moída (patinho) + Pepino
 - [ ] `candidate-7eb8078bc8712a2a` — Prato: Macarrão integral cozido + Frango (coxa sem pele assada) + Pepino
 - [ ] `candidate-7ebd14340781fcc1` — Prato: Polenta cozida + Ovo inteiro cozido + Abóbora cabotiá cozida
 - [ ] `candidate-7ec44a603c25474b` — Prato: Cuscuz de milho + Proteína de soja texturizada + Beterraba cozida
@@ -186,7 +186,7 @@
 - [ ] `candidate-7eedcea5ee5ce8fe` — Prato: Batata inglesa cozida + Tofu + Chuchu cozido
 - [ ] `candidate-7eefec70764b3f54` — Prato: Milho verde cozido + Atum fresco grelhado + Aspargos cozidos
 - [ ] `candidate-7ef33779789fe224` — Prato: Milho verde cozido + Proteína de soja texturizada + Abóbora cabotiá cozida
-- [ ] `candidate-7ef4c4abf526bd55` — Prato: Batata doce cozida + Ovo inteiro cozido + Repolho cru
+- [x] `candidate-7ef4c4abf526bd55` — Prato: Batata doce cozida + Ovo inteiro cozido + Repolho cru
 - [ ] `candidate-7f07d10c19735ab4` — Prato: Biscoito de arroz + Carne bovina (alcatra) + Pimentão verde
 - [ ] `candidate-7f089f15321d88b8` — Prato: Biscoito de arroz + Frango (sobrecoxa assada) + Agrião
 - [ ] `candidate-7f0a90268b4d5bf3` — Prato: Mandioca cozida + Atum fresco grelhado + Cogumelo champignon
