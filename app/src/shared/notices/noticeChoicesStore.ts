@@ -1,12 +1,33 @@
+import type { ActionableNoticeKind } from '@elevapro/shared';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { armazenamentoNoAparelho } from '@/lib/armazenamentoNoAparelho';
 
+/** O aviso com ação de uma refeição ou de um treino, como chave: "meal:almoco". */
+export type NoticeRefKey = `${ActionableNoticeKind}:${string}`;
+
+/**
+ * A chave do aviso de um item.
+ *
+ * @example refKeyOf('meal', 'almoco') // "meal:almoco"
+ */
+export function refKeyOf(kind: ActionableNoticeKind, id: string): NoticeRefKey {
+  return `${kind}:${id}`;
+}
+
+/** O tipo e o item de uma chave. @example refOf('meal:almoco') // { kind: 'meal', id: 'almoco' } */
+export function refOf(key: NoticeRefKey): { kind: ActionableNoticeKind; id: string } {
+  const [kind, ...rest] = key.split(':');
+  return { kind: kind as ActionableNoticeKind, id: rest.join(':') };
+}
+
+/** A resposta à pergunta do aviso ignorado (E6). */
+export type IgnoredChoice = 'later' | 'mute' | 'keep';
+
 /** Um aviso agendado, lembrado para saber depois se foi ignorado (E6). */
 export interface TrackedNotice {
   id: string;
-  /** `meal:<id>` ou `workout:<id>`. */
-  refKey: string;
+  refKey: NoticeRefKey;
   /** O nome que a pergunta do E6 usa: "almoço", "treino". */
   label: string;
   /** Quando toca, em ms. */
@@ -38,13 +59,13 @@ interface NoticeChoicesState extends NoticeChoices {
   scheduled: TrackedNotice[];
   responded: string[];
   /** Quantas vezes seguidas cada aviso tocou sem resposta, com o nome dele. */
-  ignored: Record<string, IgnoredCount>;
+  ignored: Partial<Record<NoticeRefKey, IgnoredCount>>;
   skipMeal: (day: string, mealId: string) => void;
   skipWorkout: (day: string) => void;
   moveWorkout: (today: string, moved: NonNullable<NoticeChoices['movedWorkout']>) => void;
   respond: (noticeId: string) => void;
-  settle: (now: number, done: readonly string[], next: TrackedNotice[]) => void;
-  resolveIgnored: (refKey: string, change: 'later' | 'mute' | 'keep') => void;
+  settle: (now: number, done: readonly NoticeRefKey[], next: TrackedNotice[]) => void;
+  resolveIgnored: (refKey: NoticeRefKey, change: IgnoredChoice) => void;
   /** Ao sair da conta: as escolhas eram da pessoa que saiu. */
   reset: () => void;
 }
@@ -108,7 +129,7 @@ export const useNoticeChoicesStore = create<NoticeChoicesState>()(
 function settleIgnored(
   state: NoticeChoicesState,
   now: number,
-  done: readonly string[],
+  done: readonly NoticeRefKey[],
   next: TrackedNotice[]
 ): Partial<NoticeChoicesState> {
   const ignored = { ...state.ignored };
@@ -122,11 +143,11 @@ function settleIgnored(
 
 function resolve(
   state: NoticeChoicesState,
-  refKey: string,
-  change: 'later' | 'mute' | 'keep'
+  refKey: NoticeRefKey,
+  change: IgnoredChoice
 ): Partial<NoticeChoicesState> {
   const { [refKey]: _answered, ...ignored } = state.ignored;
-  const [kind, id] = refKey.split(':');
+  const { kind, id } = refOf(refKey);
   if (kind !== 'meal' || change === 'keep') return { ignored };
   if (change === 'mute') return { ignored, mutedMeals: [...state.mutedMeals, id] };
   return {

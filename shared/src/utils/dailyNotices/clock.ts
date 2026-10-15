@@ -51,3 +51,19 @@ export function inQuietHours(minutes: number, start: string, end: string): boole
   if (from < until) return minutes >= from && minutes < until;
   return minutes >= from || minutes < until;
 }
+
+/**
+ * O dia e os minutos no fuso do aparelho, como instante: é quando o aviso toca.
+ *
+ * @example localInstant("2026-10-14", 810) // 14/10/2026 13:30, hora local
+ */
+export function localInstant(date: string, minutes: number): Date {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(
+    year,
+    month - 1,
+    day,
+    Math.floor(minutes / MINUTES_PER_HOUR),
+    minutes % MINUTES_PER_HOUR,
+  );
+}

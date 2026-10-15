@@ -43,6 +43,8 @@ const STATE = {
   rests: [],
   lastWorkoutDate: null,
   workoutsThisWeek: 0,
+  checkInDue: false,
+  healthConsent: true,
 };
 
 beforeEach(() => jest.clearAllMocks());

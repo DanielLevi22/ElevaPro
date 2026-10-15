@@ -1,9 +1,10 @@
 import {
+  type ActionableNoticeKind,
   createDailyNoticesService,
-  dayNameOf,
+  mealsOn,
   minutesOf,
   type NoticeState,
-  weekdayOf,
+  workoutOn,
 } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { useQuery } from '@tanstack/react-query';
@@ -14,7 +15,7 @@ import { useNoticeChoicesStore } from './noticeChoicesStore';
 const notices = createDailyNoticesService(supabase);
 
 export interface ChecklistItem {
-  kind: 'meal' | 'workout';
+  kind: ActionableNoticeKind;
   id: string;
   name: string;
   /** "HH:MM"; nulo no treino. */
@@ -44,9 +45,7 @@ export function useTodayChecklist(studentId: string | null) {
 
 /** As refeições cujo horário já passou, na ordem, e o treino, se hoje é dia dele. */
 export function checklistOf(state: NoticeState): ChecklistItem[] {
-  const weekday = weekdayOf(state.today);
-  const meals = state.meals
-    .filter((meal) => meal.dayOfWeek === null || meal.dayOfWeek === weekday)
+  const meals = mealsOn(state.meals, state.today)
     // A refeição que ainda não chegou não falta.
     .filter((meal) => (minutesOf(meal.time) ?? 0) <= state.nowMinutes)
     .sort((a, b) => a.time.localeCompare(b.time))
@@ -57,7 +56,7 @@ export function checklistOf(state: NoticeState): ChecklistItem[] {
       time: meal.time,
       done: state.loggedMealIds.includes(meal.id),
     }));
-  const workout = state.workouts.find((item) => item.day === dayNameOf(state.today));
+  const workout = workoutOn(state.workouts, state.today);
   if (!workout) return meals;
   const item = { kind: 'workout' as const, id: workout.id, name: workout.title, time: null };
   return [{ ...item, done: state.trainedToday }, ...meals];

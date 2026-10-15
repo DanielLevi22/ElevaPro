@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Modal, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuthStore } from '@/auth';
+import { useAuthStore, useCan } from '@/auth';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { InfoNote } from '@/components/ui/InfoNote';
 import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
@@ -60,6 +60,7 @@ export function ChangePlanButton() {
   const block = useActiveBlock(userId);
   const startEarly = useReviewStore((state) => state.startEarly);
   const [open, setOpen] = useState(false);
+  const canRest = useCan('create', 'RestPeriod');
   if (!block) return null;
   const week = blockWeek(block, localDateKey());
 
@@ -76,10 +77,14 @@ export function ChangePlanButton() {
         visible={open}
         sub={`Você está na semana ${Math.max(1, week.week)} de ${week.total} do ${block.name.split(' · ')[0]}.`}
         onChoose={choose}
-        onRest={() => {
-          setOpen(false);
-          router.push(ROUTES.BLOCK.REST);
-        }}
+        onRest={
+          canRest
+            ? () => {
+                setOpen(false);
+                router.push(ROUTES.BLOCK.REST);
+              }
+            : null
+        }
         onClose={() => setOpen(false)}
       />
     </>
@@ -96,7 +101,8 @@ function ChangePlanSheet({
   visible: boolean;
   sub: string;
   onChoose: (focus: ChangeFocus) => void;
-  onRest: () => void;
+  /** Nulo sem permissão de pausar: a opção some. */
+  onRest: (() => void) | null;
   onClose: () => void;
 }) {
   const insets = useSafeAreaInsets();
@@ -132,13 +138,15 @@ function ChangePlanSheet({
               onPress={() => onChoose(option.focus)}
             />
           ))}
-          <LinhaDeVidro
-            icon="pause-circle-outline"
-            tom="marca"
-            titulo="Preciso de uma pausa"
-            sub="Modo Descanso: doença, lesão ou viagem"
-            onPress={onRest}
-          />
+          {onRest ? (
+            <LinhaDeVidro
+              icon="pause-circle-outline"
+              tom="marca"
+              titulo="Preciso de uma pausa"
+              sub="Modo Descanso: doença, lesão ou viagem"
+              onPress={onRest}
+            />
+          ) : null}
           <InfoNote icon="information-circle-outline">
             Só um exercício incomodando? Troque pelo "…" no treino, sem mudar o plano.
           </InfoNote>

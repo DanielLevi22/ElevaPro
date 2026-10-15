@@ -1,14 +1,11 @@
 import type { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
 import { Text, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
 import { CaixaDeIcone } from '@/components/ui/CaixaDeIcone';
 import { Vidro } from '@/components/ui/Vidro';
-import { registrarAviso } from '@/lib/registro';
 import { ROUTES } from '@/navigation/types';
-import { scheduleWeeklyReportNotification } from '@/services/notificationService';
 import { useWeeklyReport } from '../hooks/useWeeklyReport';
 import { showReportCard } from '../services/reportCardVisibility';
 import { reportHeadline, reportNumbers } from '../services/reportCopy';
@@ -16,8 +13,7 @@ import { useWeeklyReportStore } from '../store/weeklyReportStore';
 
 /**
  * R0 · O relatório da semana na tela inicial, de domingo a terça, até ser
- * aberto. Também deixa o aviso de domingo agendado: é a tela que todo aluno
- * abre, e agendar de novo só troca o anterior.
+ * aberto. O aviso de domingo é do agendador dos avisos do dia.
  *
  * @example <HomeDoAluno dados={aluno} aviso={<WeeklyReportCard />} />
  */
@@ -26,11 +22,6 @@ export function WeeklyReportCard() {
   const userId = useAuthStore((state) => state.session?.user.id ?? null);
   const { data: report, today } = useWeeklyReport(userId);
   const seenWeek = useWeeklyReportStore((state) => (userId ? state.seenWeek[userId] : null));
-
-  useEffect(() => {
-    if (!userId) return;
-    scheduleWeeklyReportNotification().catch(() => registrarAviso('checkin.schedule_report'));
-  }, [userId]);
 
   if (!report || !showReportCard(report, today, seenWeek ?? null)) return null;
   const headline = reportHeadline(report, '');

@@ -1,4 +1,4 @@
-import { addDays, createNutritionService } from '@elevapro/shared';
+import { type ActionableNoticeKind, addDays, createNutritionService } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import type { Href } from 'expo-router';
 import { ROUTES } from '@/navigation/types';
@@ -10,7 +10,7 @@ const nutrition = createNutritionService(supabase);
 
 /** O que o aviso carrega em `data` (ver `scheduleDailyNotices`). */
 export interface NoticeData {
-  noticeKind: 'meal' | 'workout';
+  noticeKind: ActionableNoticeKind;
   refId: string;
   date: string;
 }

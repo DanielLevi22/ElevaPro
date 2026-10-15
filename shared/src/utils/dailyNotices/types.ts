@@ -1,8 +1,16 @@
 import type { DayOfWeek } from "../../types/workouts.types";
 import type { RestPeriod } from "../restMode";
 
-/** O aviso do dia, e os dois de reengajamento (F4, F5). */
-export type NoticeKind = "meal" | "workout" | "comeback" | "busyWeek";
+/** Os avisos que pedem uma ação: têm botões e contam como pendência (E2, E3). */
+export type ActionableNoticeKind = "meal" | "workout";
+
+/**
+ * Os avisos de texto fixo, sem dado de saúde: o reengajamento (F4, F5), o
+ * lembrete das 20h (A5b), o relatório de domingo (R0) e o check-in da semana.
+ */
+export type FixedNoticeKind = "comeback" | "busyWeek" | "dailyLog" | "weeklyReport" | "checkIn";
+
+export type NoticeKind = ActionableNoticeKind | FixedNoticeKind;
 
 /** As escolhas da pessoa em Avisos (E5). Ficam no aparelho, como os avisos. */
 export interface NoticePreferences {
@@ -17,6 +25,8 @@ export interface NoticePreferences {
   dailyLimit: number;
   /** Na tela bloqueada, só "Você tem 2 pendências de hoje" (F6). */
   hideDetails: boolean;
+  /** O lembrete das 20h para registrar o dia (A5b): só quem pediu. */
+  dailyLog: boolean;
 }
 
 export interface NoticeMeal {
@@ -50,13 +60,20 @@ export interface NoticeState {
   lastWorkoutDate: string | null;
   /** Os treinos feitos desde segunda. */
   workoutsThisWeek: number;
+  /** O check-in desta semana ainda não foi feito. */
+  checkInDue: boolean;
+  /**
+   * O consentimento de saúde vigente. Sem ele, nada que dependa de dado de
+   * saúde avisa: nem a refeição, nem o lembrete de registrar o dia (#344).
+   */
+  healthConsent: boolean;
 }
 
 export interface ScheduledNotice {
   /** Estável por dia e item: agendar de novo troca o anterior. */
   id: string;
   kind: NoticeKind;
-  /** A refeição ou o treino que o toque abre. */
+  /** A refeição ou o treino que o toque abre; nos de texto fixo, o próprio tipo. */
   refId: string;
   date: string;
   minutes: number;

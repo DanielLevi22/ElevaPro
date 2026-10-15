@@ -8,6 +8,7 @@ import { MeasuresScreen } from '../MeasuresScreen';
 import { NextBlockScreen } from '../NextBlockScreen';
 import { ReviewScreen } from '../ReviewScreen';
 
+const mockCan = jest.fn((_action: string, _subject: string) => true);
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
 const mockDeclare = jest.fn();
@@ -26,6 +27,7 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace, back: jest.fn() }),
 }));
 jest.mock('@/auth', () => ({
+  useCan: (action: string, subject: string) => mockCan(action, subject),
   useAuthStore: (select: (state: unknown) => unknown) =>
     select({ session: { user: { id: 'aluno' } } }),
 }));

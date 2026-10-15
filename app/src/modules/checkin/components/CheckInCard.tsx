@@ -1,7 +1,7 @@
 import { isTodayInBrazil, type RecordedAdjustment, type WeeklyCheckIn } from '@elevapro/shared';
 import { useRouter } from 'expo-router';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { useAuthStore } from '@/auth';
+import { useAuthStore, useCan } from '@/auth';
 import { showAlert } from '@/components/ui/appAlert';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
 import { CaixaDeIcone } from '@/components/ui/CaixaDeIcone';
@@ -26,8 +26,9 @@ import { formatKcal } from '../services/formatCalories';
 export function CheckInCard() {
   const userId = useAuthStore((state) => state.session?.user.id ?? null);
   const { data: summary } = useCheckInSummary(userId);
+  const canCheckIn = useCan('create', 'WeeklyCheckIn');
   if (!summary) return null;
-  if (summary.state === 'due') return <DueCard />;
+  if (summary.state === 'due') return canCheckIn ? <DueCard /> : null;
   if (summary.state === 'pending') return <PendingCard userId={userId} checkIn={summary.checkIn} />;
   if (summary.state === 'approved' && summary.adjustment) {
     return <ApprovedCard checkInId={summary.checkIn.id} adjustment={summary.adjustment} />;

@@ -1,4 +1,4 @@
-import { dayNameOf, minutesOf, type NoticeState, weekdayOf } from '@elevapro/shared';
+import { mealsOn, minutesOf, type NoticeState, workoutOn } from '@elevapro/shared';
 
 /** O que o widget de hoje mostra (#376, F7). Só nomes e horários do plano. */
 export interface TodaySnapshot {
@@ -8,7 +8,8 @@ export interface TodaySnapshot {
   pending: number;
   workout: { id: string; title: string; done: boolean } | null;
   nextMeal: { name: string; time: string } | null;
-  waterMl: number;
+  /** Nula sem o consentimento de saúde: a água não é lida (#344). */
+  waterMl: number | null;
 }
 
 /** A refeição que passou há menos que isto ainda é "a próxima": a pessoa pode estar comendo. */
@@ -23,17 +24,15 @@ const MEAL_GRACE_MINUTES = 60;
  */
 export function buildTodaySnapshot(
   state: NoticeState,
-  waterMl: number,
+  waterMl: number | null,
   hidden: boolean
 ): TodaySnapshot {
-  const weekday = weekdayOf(state.today);
-  const unlogged = state.meals
-    .filter((meal) => meal.dayOfWeek === null || meal.dayOfWeek === weekday)
+  const unlogged = mealsOn(state.meals, state.today)
     .filter((meal) => !state.loggedMealIds.includes(meal.id))
     .sort((a, b) => a.time.localeCompare(b.time));
   const at = (time: string) => minutesOf(time) ?? 0;
   const next = unlogged.find((meal) => at(meal.time) >= state.nowMinutes - MEAL_GRACE_MINUTES);
-  const plan = state.workouts.find((item) => item.day === dayNameOf(state.today));
+  const plan = workoutOn(state.workouts, state.today);
   const workout = plan ? { id: plan.id, title: plan.title, done: state.trainedToday } : null;
   const overdueMeals = unlogged.filter((meal) => at(meal.time) <= state.nowMinutes).length;
   return {

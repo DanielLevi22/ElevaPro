@@ -16,6 +16,8 @@ const state: NoticeState = {
   rests: [],
   lastWorkoutDate: null,
   workoutsThisWeek: 0,
+  checkInDue: false,
+  healthConsent: true,
 };
 
 describe('buildTodaySnapshot (F7)', () => {

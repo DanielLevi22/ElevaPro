@@ -5,6 +5,7 @@ import { refreshDailyNotices } from '../refreshDailyNotices';
 
 const mockFetchState = jest.fn();
 const mockWater = jest.fn();
+const mockCount = jest.fn();
 const mockSchedule = jest.fn();
 const mockVictory = jest.fn();
 const mockWidget = jest.fn();
@@ -13,6 +14,7 @@ jest.mock('@elevapro/shared', () => ({
   ...jest.requireActual('@elevapro/shared'),
   createDailyNoticesService: () => ({
     fetchNoticeState: (id: string, now: Date) => mockFetchState(id, now),
+    countWorkouts: () => mockCount(),
   }),
   createHidratacao: () => ({ lerDia: (id: string, day: string) => mockWater(id, day) }),
 }));
@@ -41,12 +43,15 @@ const state = {
   rests: [],
   lastWorkoutDate: '2026-10-14',
   workoutsThisWeek: 2,
+  checkInDue: false,
+  healthConsent: true,
 };
 
 beforeEach(() => {
   jest.clearAllMocks();
   mockFetchState.mockResolvedValue(state);
   mockWater.mockResolvedValue(750);
+  mockCount.mockResolvedValue(7);
   useNoticePreferencesStore.getState().update({ hideDetails: true });
 });
 

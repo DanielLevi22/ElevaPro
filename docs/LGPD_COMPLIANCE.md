@@ -365,6 +365,16 @@ tem 2 pendências de hoje", sem refeição, caloria, peso, treino nem exercício
 prova negativa). O lembrete de refeição antigo, que mostrava os alimentos na
 tela bloqueada, foi retirado e é cancelado no aparelho de quem atualiza.
 
+**Avisos e consentimento (#376, revisão do PR).** Sem o consentimento de saúde
+vigente, o aparelho nem lê a dieta, os registros de refeição e a água: a
+refeição e o lembrete das 20h não avisam, e o widget não mostra refeição nem
+água. Retirar o consentimento em "Privacidade e dados" reagenda na hora (trava
+em `useAuthorizations.test.tsx` e `dailyNotices.service.test.ts`, com prova
+negativa). O lembrete das 20h e o aviso do relatório de domingo deixaram de ser
+agendamentos avulsos: entram no agendador, dentro do limite do dia, do silêncio
+e do Modo Descanso. **Sair da conta cancela todos os avisos do app, tira da
+bandeja os que já tocaram e volta as preferências ao padrão** (`resetNotices`).
+
 **Widget de hoje no Android (#376, F7).** O widget da tela inicial mostra o
 treino do dia, a próxima refeição sem marcar e a água, a partir do mesmo
 estado dos avisos. Fica num MMKV próprio do aparelho (`today-widget`) para o

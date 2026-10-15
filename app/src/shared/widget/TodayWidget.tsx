@@ -1,4 +1,4 @@
-import { formatarDecimal } from '@elevapro/shared';
+import { formatarDecimal, pendingTitle } from '@elevapro/shared';
 import { type ColorProp, FlexWidget, TextWidget } from 'react-native-android-widget';
 import { coresDoTema } from '@/shared/design';
 import type { TodaySnapshot } from './todaySnapshot';
@@ -49,13 +49,12 @@ export function TodayWidget({ snapshot }: { snapshot: TodaySnapshot | null }) {
 }
 
 function Hidden({ pending }: { pending: number }) {
-  const title =
-    pending === 0
-      ? 'Tudo em dia'
-      : pending === 1
-        ? 'Você tem 1 pendência hoje'
-        : `Você tem ${pending} pendências hoje`;
-  return <Line title={title} sub="Toque para ver no app" />;
+  return (
+    <Line
+      title={pending === 0 ? 'Tudo em dia' : pendingTitle(pending)}
+      sub="Toque para ver no app"
+    />
+  );
 }
 
 function Details({ snapshot }: { snapshot: TodaySnapshot }) {
@@ -78,11 +77,13 @@ function Details({ snapshot }: { snapshot: TodaySnapshot }) {
           uri={`${SCHEME}nutrition`}
         />
       ) : null}
-      <Line
-        title={`Água · ${formatarDecimal(snapshot.waterMl / ML_PER_LITER)} L`}
-        sub="Toque para registrar"
-        uri={`${SCHEME}nutrition`}
-      />
+      {snapshot.waterMl === null ? null : (
+        <Line
+          title={`Água · ${formatarDecimal(snapshot.waterMl / ML_PER_LITER)} L`}
+          sub="Toque para registrar"
+          uri={`${SCHEME}nutrition`}
+        />
+      )}
     </FlexWidget>
   );
 }

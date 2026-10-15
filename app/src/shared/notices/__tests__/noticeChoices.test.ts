@@ -18,6 +18,8 @@ const state: NoticeState = {
   rests: [],
   lastWorkoutDate: null,
   workoutsThisWeek: 0,
+  checkInDue: false,
+  healthConsent: true,
 };
 
 const none: NoticeChoices = {
@@ -63,7 +65,12 @@ describe('applyNoticeChoices', () => {
 });
 
 describe('o aviso ignorado (E6)', () => {
-  const lunch = (id: string, at: number) => ({ id, refKey: 'meal:almoco', label: 'Almoço', at });
+  const lunch = (id: string, at: number) => ({
+    id,
+    refKey: 'meal:almoco' as const,
+    label: 'Almoço',
+    at,
+  });
 
   it('soma quando toca sem resposta, e zera com resposta ou com a refeição feita', () => {
     const store = useNoticeChoicesStore.getState();
@@ -76,7 +83,7 @@ describe('o aviso ignorado (E6)', () => {
 
     useNoticeChoicesStore.getState().respond('c');
     useNoticeChoicesStore.getState().settle(40, [], []);
-    expect(useNoticeChoicesStore.getState().ignored['meal:almoco'].count).toBe(0);
+    expect(useNoticeChoicesStore.getState().ignored['meal:almoco']?.count).toBe(0);
   });
 
   it('"outro horário" empurra o aviso uma hora, e "parar" tira a refeição', () => {

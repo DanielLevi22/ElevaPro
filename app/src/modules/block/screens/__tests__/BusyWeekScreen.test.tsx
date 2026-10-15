@@ -3,7 +3,9 @@ import { useLightWeekStore } from '@/shared/lightWeek';
 import { BusyWeekScreen } from '../BusyWeekScreen';
 
 const mockReplace = jest.fn();
+let mockCanPause = true;
 
+jest.mock('@/auth', () => ({ useCan: () => mockCanPause }));
 jest.mock('expo-router', () => ({
   useRouter: () => ({ replace: mockReplace, back: jest.fn(), push: jest.fn() }),
 }));
@@ -18,6 +20,7 @@ describe('BusyWeekScreen (F5)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     useLightWeekStore.setState({ until: null });
+    mockCanPause = true;
   });
 
   it('voltar com semana leve liga sete dias de cargas menores e vai aos treinos', () => {
@@ -36,5 +39,12 @@ describe('BusyWeekScreen (F5)', () => {
     pick('Continuar como está');
     expect(useLightWeekStore.getState().until).toBeNull();
     expect(mockReplace).toHaveBeenCalledWith('/(tabs)/workouts');
+  });
+
+  it('sem permissão de pausar, a opção nem aparece', () => {
+    mockCanPause = false;
+    render(<BusyWeekScreen />);
+    expect(screen.queryByText('Pausar o plano')).toBeNull();
+    expect(screen.getByText('Voltar com semana leve')).toBeTruthy();
   });
 });

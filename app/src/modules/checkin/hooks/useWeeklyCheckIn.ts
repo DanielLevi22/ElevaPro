@@ -10,18 +10,14 @@ import {
 import { supabase } from '@elevapro/supabase';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { avisandoSeFalhar } from '@/lib/registro';
-import {
-  cancelDailyLogReminder,
-  hasDailyLogReminder,
-  scheduleDailyLogReminder,
-} from '@/services/notificationService';
+import { requestNotificationPermissions } from '@/services/notificationService';
+import { useNoticePreferencesStore } from '@/shared/notices';
 
 const checkIns = createWeeklyCheckInService(supabase);
 const measurements = createMeasurementService(supabase);
 
 const SUMMARY_KEY = 'weekly-check-in';
 const PROPOSAL_KEY = 'weekly-check-in-proposal';
-const REMINDER_KEY = 'daily-log-reminder';
 
 /**
  * O estado da semana para a tela inicial e para a tela de ajuste.
@@ -108,22 +104,20 @@ export function useCheckInActions() {
 }
 
 /**
- * O lembrete das 20h da A5b: se está ligado, e ligar ou desligar.
+ * O lembrete das 20h da A5b: se está ligado, e ligar ou desligar. É uma
+ * preferência de Avisos: o agendador o põe no dia, dentro do limite e fora do
+ * Modo Descanso. Ligar pede a permissão do aparelho.
  *
  * @example const lembrete = useDailyLogReminder(); lembrete.toggle.mutate();
  */
 export function useDailyLogReminder() {
-  const queryClient = useQueryClient();
-  const enabled = useQuery({
-    queryKey: [REMINDER_KEY],
-    queryFn: () => avisandoSeFalhar('checkin.reminder_status', hasDailyLogReminder),
-  });
+  const enabled = useNoticePreferencesStore((state) => state.dailyLog);
+  const update = useNoticePreferencesStore((state) => state.update);
   const toggle = useMutation({
     mutationFn: async () => {
-      if (enabled.data) return cancelDailyLogReminder();
-      await scheduleDailyLogReminder();
+      if (!enabled && !(await requestNotificationPermissions())) return;
+      update({ dailyLog: !enabled });
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [REMINDER_KEY] }),
   });
-  return { enabled: enabled.data ?? false, toggle };
+  return { enabled, toggle };
 }

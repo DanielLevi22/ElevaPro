@@ -7,13 +7,13 @@ import { useWeeklyReportStore } from '../../store/weeklyReportStore';
 import { CheckInResultScreen } from '../CheckInResultScreen';
 import { WeeklyReportScreen } from '../WeeklyReportScreen';
 
+const mockCan = jest.fn((_action: string, _subject: string) => true);
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
 const mockApprove = jest.fn();
 const mockKeep = jest.fn();
 const mockUndo = jest.fn();
 const mockToggle = jest.fn();
-const mockScheduleReport = jest.fn();
 let mockSummary: unknown;
 let mockProposal: unknown;
 let mockReport: WeeklyReport | undefined;
@@ -22,6 +22,7 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace, back: jest.fn() }),
 }));
 jest.mock('@/auth', () => ({
+  useCan: (action: string, subject: string) => mockCan(action, subject),
   useAuthStore: (select: (state: unknown) => unknown) =>
     select({ session: { user: { id: 'aluno' } }, user: { user_metadata: { full_name: 'Ana' } } }),
 }));
@@ -43,9 +44,6 @@ jest.mock('../../hooks/useWeeklyReport', () => ({
     refetch: jest.fn(),
   }),
   useWeekNote: () => ({ data: null }),
-}));
-jest.mock('@/services/notificationService', () => ({
-  scheduleWeeklyReportNotification: () => mockScheduleReport(),
 }));
 
 const CHECK_IN = {
@@ -72,7 +70,6 @@ const PROPOSAL = {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockScheduleReport.mockResolvedValue(true);
 });
 
 describe('CheckInCard (A6)', () => {
@@ -136,6 +133,17 @@ describe('CheckInResultScreen (A5)', () => {
     expect(mockApprove).not.toHaveBeenCalled();
   });
 
+  // CASL + ADR-0030: sem a permissão de aprovar ajuste, o botão não existe.
+  it('sem permissão de aprovar, só há o "seguir igual"', () => {
+    mockProposal = PROPOSAL;
+    mockCan.mockImplementation(
+      (action, subject) => !(action === 'create' && subject === 'PlanAdjustment')
+    );
+    render(<CheckInResultScreen />);
+    expect(screen.queryByText(/^Aprovar$/i)).toBeNull();
+    mockCan.mockImplementation(() => true);
+  });
+
   it('o Aluno vê que o especialista revisa, e nada muda sozinho', () => {
     mockProposal = { kind: 'specialist', specialistName: 'Carla', lastMeasurement: null };
     render(<CheckInResultScreen />);
@@ -162,11 +170,10 @@ describe('o relatório da semana (R0, R1)', () => {
     useWeeklyReportStore.setState({ seenWeek: {} });
   });
 
-  it('o cartão aparece na semana que fechou, agenda o aviso de domingo e abre o relatório', async () => {
+  it('o cartão aparece na semana que fechou e abre o relatório', () => {
     render(<WeeklyReportCard />);
     fireEvent.press(screen.getByText(/Ver relatório/i));
     expect(mockPush).toHaveBeenCalledWith('/checkin/report');
-    await waitFor(() => expect(mockScheduleReport).toHaveBeenCalled());
   });
 
   it('abrir o relatório marca a semana como vista: o cartão sai', () => {

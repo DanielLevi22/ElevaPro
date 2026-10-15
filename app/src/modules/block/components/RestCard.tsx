@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { Text, View } from 'react-native';
+import { useCan } from '@/auth';
 import { showAlert } from '@/components/ui/appAlert';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
 import { Vidro } from '@/components/ui/Vidro';
@@ -17,6 +18,8 @@ import { type RestCardState, restingTitle } from '../services/restCopy';
 export function RestCard({ state }: { state: NonNullable<RestCardState> }) {
   const router = useRouter();
   const { end } = useRestActions();
+  // Voltar é o fim da pausa (`end_rest`): a mesma permissão de quem pausou.
+  const canEnd = useCan('update', 'RestPeriod');
 
   async function comeBack() {
     try {
@@ -47,12 +50,14 @@ export function RestCard({ state }: { state: NonNullable<RestCardState> }) {
             : 'Esta semana começa mais leve, com cargas menores.'}
         </Text>
       </View>
-      <BotaoDeDestaque
-        rotulo={resting ? (end.isPending ? 'Voltando…' : 'Voltar agora') : 'Ver a semana'}
-        tamanho="cartao"
-        disabled={end.isPending}
-        onPress={() => (resting ? void comeBack() : router.push(ROUTES.BLOCK.RETURN))}
-      />
+      {resting && !canEnd ? null : (
+        <BotaoDeDestaque
+          rotulo={resting ? (end.isPending ? 'Voltando…' : 'Voltar agora') : 'Ver a semana'}
+          tamanho="cartao"
+          disabled={end.isPending}
+          onPress={() => (resting ? void comeBack() : router.push(ROUTES.BLOCK.RETURN))}
+        />
+      )}
     </Vidro>
   );
 }

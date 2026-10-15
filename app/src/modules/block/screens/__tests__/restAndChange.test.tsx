@@ -4,6 +4,7 @@ import { RestCard } from '../../components/RestCard';
 import { useReviewStore } from '../../store/reviewStore';
 import { RestModeScreen } from '../RestModeScreen';
 
+const mockCan = jest.fn((_action: string, _subject: string) => true);
 const mockReplace = jest.fn();
 const mockPush = jest.fn();
 const mockStart = jest.fn();
@@ -21,6 +22,7 @@ jest.mock('@/hooks/useRestPeriods', () => ({
 }));
 jest.mock('@/hooks/useActiveBlock', () => ({ useActiveBlock: () => mockBlock }));
 jest.mock('@/auth', () => ({
+  useCan: (action: string, subject: string) => mockCan(action, subject),
   useAuthStore: (select: (state: unknown) => unknown) =>
     select({ session: { user: { id: 'aluno' } } }),
 }));
@@ -74,6 +76,13 @@ describe('RestCard', () => {
     expect(screen.getByText('Até 21 out')).toBeTruthy();
     fireEvent.press(screen.getByText('Voltar agora'));
     await waitFor(() => expect(mockEnd).toHaveBeenCalled());
+  });
+
+  it('sem permissão de encerrar a pausa, o botão de voltar não aparece', () => {
+    mockCan.mockImplementation(() => false);
+    render(<RestCard state={{ kind: 'resting', rest }} />);
+    expect(screen.queryByText('Voltar agora')).toBeNull();
+    mockCan.mockImplementation(() => true);
   });
 
   it('na semana de retorno: abre as boas-vindas', () => {

@@ -26,6 +26,8 @@ const STATE: NoticeState = {
   rests: [],
   lastWorkoutDate: null,
   workoutsThisWeek: 0,
+  checkInDue: false,
+  healthConsent: true,
 };
 
 describe('checklistOf (E4)', () => {

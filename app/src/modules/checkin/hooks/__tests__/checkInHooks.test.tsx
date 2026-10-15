@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
+import { useNoticePreferencesStore } from '@/shared/notices';
 import { useCheckInActions, useCheckInSummary, useDailyLogReminder } from '../useWeeklyCheckIn';
 import { useWeeklyReport, useWeekNote } from '../useWeeklyReport';
 
@@ -8,7 +9,6 @@ const mockSummary = jest.fn();
 const mockSubmit = jest.fn();
 const mockReport = jest.fn();
 const mockNote = jest.fn();
-const mockHasReminder = jest.fn();
 const mockSchedule = jest.fn();
 let mockCanReadNote = false;
 
@@ -27,9 +27,7 @@ jest.mock('@elevapro/shared', () => ({
   }),
 }));
 jest.mock('@/services/notificationService', () => ({
-  hasDailyLogReminder: () => mockHasReminder(),
-  scheduleDailyLogReminder: () => mockSchedule(),
-  cancelDailyLogReminder: jest.fn(),
+  requestNotificationPermissions: () => mockSchedule(),
 }));
 jest.mock('@/services/healthSync', () => ({ localDateKey: () => '2026-10-13' }));
 jest.mock('@/auth', () => ({
@@ -75,16 +73,27 @@ describe('useCheckInSummary / useCheckInActions', () => {
 });
 
 describe('useDailyLogReminder (A5b)', () => {
-  it('desligado, o toque liga o lembrete das 20h', async () => {
-    mockHasReminder.mockResolvedValue(false);
+  it('ligar pede a permissão e liga a preferência: quem agenda é o agendador', async () => {
+    useNoticePreferencesStore.getState().update({ dailyLog: false });
     mockSchedule.mockResolvedValue(true);
     const { wrapper } = setup();
     const { result } = renderHook(() => useDailyLogReminder(), { wrapper });
-    await waitFor(() => expect(mockHasReminder).toHaveBeenCalled());
 
     await act(() => result.current.toggle.mutateAsync());
 
     expect(mockSchedule).toHaveBeenCalled();
+    expect(useNoticePreferencesStore.getState().dailyLog).toBe(true);
+  });
+
+  it('sem a permissão do aparelho, não liga', async () => {
+    useNoticePreferencesStore.getState().update({ dailyLog: false });
+    mockSchedule.mockResolvedValue(false);
+    const { wrapper } = setup();
+    const { result } = renderHook(() => useDailyLogReminder(), { wrapper });
+
+    await act(() => result.current.toggle.mutateAsync());
+
+    expect(useNoticePreferencesStore.getState().dailyLog).toBe(false);
   });
 });
 

@@ -29,11 +29,13 @@ const lunch: ScheduledNotice = {
 describe('scheduleDailyNotices', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('troca os avisos do dia e o lembrete de refeição antigo, e deixa o relatório', async () => {
+  it('troca os avisos do dia e os agendamentos avulsos de antes, e deixa os de outros', async () => {
     scheduled.mockResolvedValue([
       existing('notice-2026-10-13-meal-almoco', { kind: 'daily-notice' }),
       existing('plano-antigo-almoco-0', { planId: 'plano-antigo', mealId: 'almoco' }),
       existing('weekly-report', { kind: 'weekly-report' }),
+      existing('daily-log-reminder', { kind: 'daily-log' }),
+      existing('descanso', { kind: 'rest-timer' }),
     ]);
 
     await scheduleDailyNotices([lunch], { withActions: false });
@@ -41,6 +43,8 @@ describe('scheduleDailyNotices', () => {
     expect(cancel.mock.calls.map(([id]) => id)).toEqual([
       'notice-2026-10-13-meal-almoco',
       'plano-antigo-almoco-0',
+      'weekly-report',
+      'daily-log-reminder',
     ]);
   });
 

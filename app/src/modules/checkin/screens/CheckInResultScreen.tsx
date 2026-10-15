@@ -2,7 +2,7 @@ import type { CheckInProposal, WeeklyCheckIn } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Text, View } from 'react-native';
-import { useAuthStore } from '@/auth';
+import { useAuthStore, useCan } from '@/auth';
 import { showAlert } from '@/components/ui/appAlert';
 import { BarraDeDuasAcoes } from '@/components/ui/BarraDeDuasAcoes';
 import { WeightTrend } from '@/components/ui/charts/WeightTrend';
@@ -103,7 +103,9 @@ function ProposalView({
     }
   }
 
-  const twoActions = copy.proposesChange;
+  // O Aluno não aprova: quem muda o plano dele é o especialista (CASL + 0088).
+  const canApprove = useCan('create', 'PlanAdjustment');
+  const twoActions = copy.proposesChange && canApprove;
   return (
     <FlowFrame
       header={{}}

@@ -2,7 +2,13 @@ import { useRouter } from 'expo-router';
 import { Text, TouchableOpacity } from 'react-native';
 import { GlassSheet } from '@/components/ui/GlassSheet';
 import { ROUTES } from '@/navigation/types';
-import { IGNORED_TO_ASK, useNoticeChoicesStore } from './noticeChoicesStore';
+import {
+  IGNORED_TO_ASK,
+  type IgnoredCount,
+  type NoticeRefKey,
+  refOf,
+  useNoticeChoicesStore,
+} from './noticeChoicesStore';
 import { useNoticePreferencesStore } from './noticePreferencesStore';
 
 /**
@@ -17,10 +23,12 @@ export function IgnoredNoticePrompt() {
   const ignored = useNoticeChoicesStore((state) => state.ignored);
   const resolveIgnored = useNoticeChoicesStore((state) => state.resolveIgnored);
   const update = useNoticePreferencesStore((state) => state.update);
-  const asking = Object.entries(ignored).find(([, item]) => item.count >= IGNORED_TO_ASK);
+  const asking = (Object.entries(ignored) as [NoticeRefKey, IgnoredCount][]).find(
+    ([, item]) => item.count >= IGNORED_TO_ASK
+  );
   if (!asking) return null;
   const [refKey, { label }] = asking;
-  const isWorkout = refKey.startsWith('workout:');
+  const isWorkout = refOf(refKey).kind === 'workout';
 
   const later = () => {
     resolveIgnored(refKey, isWorkout ? 'keep' : 'later');

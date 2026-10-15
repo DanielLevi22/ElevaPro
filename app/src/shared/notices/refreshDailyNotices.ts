@@ -1,6 +1,7 @@
 import {
   createDailyNoticesService,
   createHidratacao,
+  localInstant,
   type NoticeState,
   planNotices,
   type ScheduledNotice,
@@ -12,7 +13,12 @@ import { localDateKey } from '@/services/healthSync';
 import { scheduleDailyNotices } from '@/services/notificationService';
 import { buildTodaySnapshot, updateTodayWidget } from '@/shared/widget';
 import { applyNoticeChoices } from './applyNoticeChoices';
-import { type TrackedNotice, useNoticeChoicesStore } from './noticeChoicesStore';
+import {
+  type NoticeRefKey,
+  refKeyOf,
+  type TrackedNotice,
+  useNoticeChoicesStore,
+} from './noticeChoicesStore';
 import { currentPreferences } from './noticePreferencesStore';
 
 const notices = createDailyNoticesService(supabase);
@@ -34,21 +40,22 @@ export async function refreshDailyNotices(studentId: string): Promise<void> {
     await avisandoSeFalhar('notices.refresh', async () => {
       const now = new Date();
       const choices = useNoticeChoicesStore.getState();
-      const [fetched, waterMl, permission] = await Promise.all([
+      const [fetched, permission] = await Promise.all([
         notices.fetchNoticeState(studentId, now),
-        water.lerDia(studentId, localDateKey(now)),
         Notifications.getPermissionsAsync(),
       ]);
+      // A água é dado de saúde: sem o consentimento, nem é lida (#344).
+      const waterMl = fetched.healthConsent
+        ? await water.lerDia(studentId, localDateKey(now))
+        : null;
       const state = applyNoticeChoices(fetched, choices);
       const preferences = currentPreferences();
       await updateTodayWidget(buildTodaySnapshot(state, waterMl, preferences.hideDetails));
       if (permission.status !== 'granted') return;
       const planned = planNotices(state, preferences);
-      // O reengajamento toca uma vez e não volta: não tem o que ignorar três vezes.
-      const tracked = planned.filter(
-        (notice) => notice.kind === 'meal' || notice.kind === 'workout'
-      );
-      choices.settle(now.getTime(), doneToday(state), tracked.map(trackOf(state)));
+      // Os de texto fixo tocam e não voltam: não têm o que ignorar três vezes.
+      const tracked = planned.flatMap(trackOf(state));
+      choices.settle(now.getTime(), doneToday(state), tracked);
       await scheduleDailyNotices(planned, { withActions: !preferences.hideDetails });
     });
   } catch {
@@ -56,20 +63,24 @@ export async function refreshDailyNotices(studentId: string): Promise<void> {
   }
 }
 
-function doneToday(state: NoticeState): string[] {
-  const meals = state.loggedMealIds.map((id) => `meal:${id}`);
-  return state.trainedToday ? [...meals, ...state.workouts.map((w) => `workout:${w.id}`)] : meals;
+function doneToday(state: NoticeState): NoticeRefKey[] {
+  const meals = state.loggedMealIds.map((id) => refKeyOf('meal', id));
+  if (!state.trainedToday) return meals;
+  return [...meals, ...state.workouts.map((workout) => refKeyOf('workout', workout.id))];
 }
 
+/** O aviso com ação, lembrado para a conta do ignorado (E6); os outros, nada. */
 function trackOf(state: NoticeState) {
-  return (notice: ScheduledNotice): TrackedNotice => {
-    const [year, month, day] = notice.date.split('-').map(Number);
+  return (notice: ScheduledNotice): TrackedNotice[] => {
+    if (notice.kind !== 'meal' && notice.kind !== 'workout') return [];
     const meal = state.meals.find((item) => item.id === notice.refId);
-    return {
-      id: notice.id,
-      refKey: `${notice.kind}:${notice.refId}`,
-      label: notice.kind === 'meal' ? (meal?.name ?? 'refeição') : 'treino',
-      at: new Date(year, month - 1, day, 0, notice.minutes).getTime(),
-    };
+    return [
+      {
+        id: notice.id,
+        refKey: refKeyOf(notice.kind, notice.refId),
+        label: notice.kind === 'meal' ? (meal?.name ?? 'refeição') : 'treino',
+        at: localInstant(notice.date, notice.minutes).getTime(),
+      },
+    ];
   };
 }

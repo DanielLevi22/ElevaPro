@@ -72,7 +72,7 @@ describe('TodayWidget (F7)', () => {
         throw new Error(`WIDGET COM DETALHE: "${leaked}" apareceu com detalhes escondidos`);
       }
     }
-    expect(texts).toContain('Você tem 2 pendências hoje');
+    expect(texts).toContain('Você tem 2 pendências de hoje');
   });
 
   it('sem retrato, pede para abrir o app', () => {

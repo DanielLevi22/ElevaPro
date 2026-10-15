@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
+import { useCan } from '@/auth';
 import { FlowFrame, FlowTitle } from '@/components/ui/FlowFrame';
 import { GlassChoice } from '@/components/ui/GlassChoice';
 import { ROUTES } from '@/navigation/types';
@@ -40,6 +41,8 @@ export function BusyWeekScreen() {
   const router = useRouter();
   const startLightWeek = useLightWeekStore((state) => state.start);
   const [choice, setChoice] = useState<Choice>('light');
+  const canPause = useCan('create', 'RestPeriod');
+  const options = OPTIONS.filter((option) => option.key !== 'pause' || canPause);
 
   function confirm() {
     if (choice === 'pause') {
@@ -59,7 +62,7 @@ export function BusyWeekScreen() {
         Semana corrida?
       </FlowTitle>
       <View className="mt-4 gap-2">
-        {OPTIONS.map((option) => (
+        {options.map((option) => (
           <GlassChoice
             key={option.key}
             icon={option.icon}

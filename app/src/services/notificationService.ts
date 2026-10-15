@@ -1,4 +1,4 @@
-import type { NoticeKind, ScheduledNotice } from '@elevapro/shared';
+import { localInstant, type NoticeKind, type ScheduledNotice } from '@elevapro/shared';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { showConfirm } from '@/components/ui/appAlert';
@@ -112,13 +112,35 @@ function promptExactAlarmIfNeeded(): void {
 }
 
 const DAILY_NOTICE_KIND = 'daily-notice';
-/** Onde o toque leva: a refeição abre a dieta, o treino abre os treinos. */
+
+/** Onde o toque leva, por tipo de aviso. */
 const NOTICE_URL: Record<NoticeKind, string> = {
   meal: ROUTES.TABS.NUTRITION,
   workout: ROUTES.TABS.WORKOUTS,
   comeback: ROUTES.TABS.WORKOUTS,
   busyWeek: ROUTES.BLOCK.BUSY_WEEK,
+  dailyLog: ROUTES.TABS.NUTRITION,
+  weeklyReport: ROUTES.CHECKIN.REPORT,
+  checkIn: ROUTES.CHECKIN.ROOT,
 };
+
+/** O canal do Android: o de refeição para o que é de dieta, o de treino para o resto. */
+const NOTICE_CHANNEL: Record<NoticeKind, string> = {
+  meal: MEAL_CHANNEL_ID,
+  dailyLog: MEAL_CHANNEL_ID,
+  workout: WORKOUT_CHANNEL_ID,
+  comeback: WORKOUT_CHANNEL_ID,
+  busyWeek: WORKOUT_CHANNEL_ID,
+  weeklyReport: WORKOUT_CHANNEL_ID,
+  checkIn: WORKOUT_CHANNEL_ID,
+};
+
+/**
+ * Os agendamentos de antes do agendador (#376): o lembrete de refeição na
+ * hora dela, com os alimentos na tela bloqueada, o lembrete das 20h e o
+ * relatório de domingo avulsos. Quem atualiza o app não fica com os dois.
+ */
+const LEGACY_KINDS = ['daily-log', 'weekly-report'];
 
 /** As ações no próprio aviso (E2, E3). O id é o que o toque devolve em `actionIdentifier`. */
 export const NOTICE_ACTIONS = {
@@ -131,7 +153,7 @@ export const NOTICE_ACTIONS = {
   workoutSkip: 'workout-skip',
 } as const;
 
-/** Só a refeição e o treino têm botões: o reengajamento só abre o app. */
+/** Só a refeição e o treino têm botões: os de texto fixo só abrem o app. */
 const NOTICE_CATEGORY: Partial<Record<NoticeKind, string>> = {
   meal: 'notice-meal',
   workout: 'notice-workout',
@@ -163,15 +185,9 @@ async function ensureNoticeCategories(): Promise<void> {
 }
 
 /**
- * Troca os avisos do dia agendados pelos novos (#376, item G). Quem decide o
- * quê e quando é o `planNotices`; aqui só vira notificação do aparelho, na
- * data e hora locais.
- *
- * Com `withActions`, o aviso ganha os botões de E2 e E3.
- *
- * Cancela também o lembrete de refeição antigo, que tocava na hora da
- * refeição com os alimentos na tela bloqueada: quem atualiza o app não fica
- * com os dois.
+ * Troca os avisos agendados pelos novos (#376, item G). Quem decide o quê e
+ * quando é o `planNotices`; aqui só vira notificação do aparelho, na data e
+ * hora locais. Com `withActions`, o aviso ganha os botões de E2 e E3.
  *
  * @example await scheduleDailyNotices(planNotices(estado, preferencias), { withActions: false });
  */
@@ -180,48 +196,53 @@ export async function scheduleDailyNotices(
   { withActions }: { withActions: boolean }
 ): Promise<void> {
   if (withActions) await ensureNoticeCategories();
-  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-  for (const notification of scheduled) {
-    const data = notification.content.data;
-    if (data?.kind === DAILY_NOTICE_KIND || data?.mealId) {
-      await Notifications.cancelScheduledNotificationAsync(notification.identifier);
-    }
-  }
+  await cancelOurNotices();
   for (const notice of notices) {
-    await Notifications.scheduleNotificationAsync({
-      identifier: notice.id,
-      content: {
-        title: notice.title,
-        body: notice.body,
-        // Sem detalhes, sem botões: "Comi o do plano" num aviso que não diz qual
-        // refeição marcaria uma às cegas.
-        ...(withActions && NOTICE_CATEGORY[notice.kind]
-          ? { categoryIdentifier: NOTICE_CATEGORY[notice.kind] }
-          : {}),
-        data: {
-          kind: DAILY_NOTICE_KIND,
-          noticeKind: notice.kind,
-          refId: notice.refId,
-          date: notice.date,
-          url: NOTICE_URL[notice.kind],
-          tone: 'info',
-          icon: notice.kind === 'meal' ? 'utensils' : 'dumbbell',
-        },
-        sound: true,
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DATE,
-        date: localInstant(notice.date, notice.minutes),
-        channelId: notice.kind === 'meal' ? MEAL_CHANNEL_ID : WORKOUT_CHANNEL_ID,
-      },
-    });
+    await Notifications.scheduleNotificationAsync(requestOf(notice, withActions));
   }
 }
 
-/** O dia e os minutos no fuso do aparelho. */
-function localInstant(date: string, minutes: number): Date {
-  const [year, month, day] = date.split('-').map(Number);
-  return new Date(year, month - 1, day, Math.floor(minutes / 60), minutes % 60);
+/** Cancela os avisos do app: os do agendador e os antigos, avulsos. */
+async function cancelOurNotices(): Promise<void> {
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  for (const notification of scheduled) {
+    const data = notification.content.data;
+    const ours =
+      data?.kind === DAILY_NOTICE_KIND || data?.mealId || LEGACY_KINDS.includes(String(data?.kind));
+    if (ours) await Notifications.cancelScheduledNotificationAsync(notification.identifier);
+  }
+}
+
+function requestOf(
+  notice: ScheduledNotice,
+  withActions: boolean
+): Notifications.NotificationRequestInput {
+  const category = withActions ? NOTICE_CATEGORY[notice.kind] : undefined;
+  return {
+    identifier: notice.id,
+    content: {
+      title: notice.title,
+      body: notice.body,
+      // Sem detalhes, sem botões: "Comi o do plano" num aviso que não diz qual
+      // refeição marcaria uma às cegas.
+      ...(category ? { categoryIdentifier: category } : {}),
+      data: {
+        kind: DAILY_NOTICE_KIND,
+        noticeKind: notice.kind,
+        refId: notice.refId,
+        date: notice.date,
+        url: NOTICE_URL[notice.kind],
+        tone: 'info',
+        icon: NOTICE_CHANNEL[notice.kind] === MEAL_CHANNEL_ID ? 'utensils' : 'dumbbell',
+      },
+      sound: true,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: localInstant(notice.date, notice.minutes),
+      channelId: NOTICE_CHANNEL[notice.kind],
+    },
+  };
 }
 
 /**
@@ -240,85 +261,15 @@ export async function presentVictoryNotice(copy: { title: string; body: string }
   });
 }
 
-const DAILY_LOG_REMINDER_ID = 'daily-log-reminder';
-const DAILY_LOG_HOUR = 20;
-
 /**
- * Liga o lembrete diário das 20h para registrar o dia (A5b, #376): quem
- * registrou só parte da semana não tem dado para o ajuste, e o lembrete é o
- * que o desenho oferece no lugar da bronca. Sem dado de saúde no texto: ele
- * aparece na tela bloqueada.
+ * Ao sair da conta: cancela tudo o que o app agendou e tira da bandeja o que
+ * já tocou. No aparelho compartilhado, quem entra depois não vê o dia do outro.
  *
- * @example if (await scheduleDailyLogReminder()) mostrarLigado();
+ * @example await clearAllNotices();
  */
-export async function scheduleDailyLogReminder(): Promise<boolean> {
-  if (!(await requestNotificationPermissions())) return false;
-  await Notifications.scheduleNotificationAsync({
-    identifier: DAILY_LOG_REMINDER_ID,
-    content: {
-      title: 'Hora de registrar o dia',
-      body: 'Marque o que você comeu hoje. Leva um minuto.',
-      data: { kind: 'daily-log', tone: 'info', icon: 'utensils' },
-      sound: true,
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.DAILY,
-      hour: DAILY_LOG_HOUR,
-      minute: 0,
-      channelId: MEAL_CHANNEL_ID,
-    },
-  });
-  return true;
-}
-
-/** @example await cancelDailyLogReminder(); */
-export async function cancelDailyLogReminder(): Promise<void> {
-  await Notifications.cancelScheduledNotificationAsync(DAILY_LOG_REMINDER_ID);
-}
-
-/** Se o lembrete das 20h está agendado. @example const ligado = await hasDailyLogReminder(); */
-export async function hasDailyLogReminder(): Promise<boolean> {
-  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-  return scheduled.some((notification) => notification.identifier === DAILY_LOG_REMINDER_ID);
-}
-
-const WEEKLY_REPORT_ID = 'weekly-report';
-/** Domingo, no `weekday` do expo-notifications: 1 é domingo. */
-const SUNDAY = 1;
-const WEEKLY_REPORT_HOUR = 18;
-/** A rota do relatório, como em `ROUTES.CHECKIN.REPORT`; o toque no aviso abre ela. */
-const WEEKLY_REPORT_URL = '/checkin/report';
-
-/**
- * O aviso de domingo às 18h de que o relatório da semana chegou (#376, R0).
- *
- * Só agenda se a permissão já foi dada: quem chama é a tela inicial, e ela não
- * é lugar de pedir permissão. Agendar de novo troca o anterior, pelo mesmo
- * `identifier`. O texto é genérico de propósito: aparece na tela bloqueada, e
- * o número de treinos ou o peso da semana são dado de saúde.
- *
- * @example await scheduleWeeklyReportNotification();
- */
-export async function scheduleWeeklyReportNotification(): Promise<boolean> {
-  const { status } = await Notifications.getPermissionsAsync();
-  if (status !== 'granted') return false;
-  await Notifications.scheduleNotificationAsync({
-    identifier: WEEKLY_REPORT_ID,
-    content: {
-      title: 'Seu relatório da semana chegou',
-      body: 'Veja como foi a semana e o que mudou no seu plano.',
-      data: { kind: 'weekly-report', url: WEEKLY_REPORT_URL, tone: 'info', icon: 'dumbbell' },
-      sound: true,
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
-      weekday: SUNDAY,
-      hour: WEEKLY_REPORT_HOUR,
-      minute: 0,
-      channelId: WORKOUT_CHANNEL_ID,
-    },
-  });
-  return true;
+export async function clearAllNotices(): Promise<void> {
+  await Notifications.cancelAllScheduledNotificationsAsync();
+  await Notifications.dismissAllNotificationsAsync();
 }
 
 /**
