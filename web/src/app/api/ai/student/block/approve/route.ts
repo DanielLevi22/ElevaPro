@@ -18,21 +18,21 @@ export const POST = withAiRoute(
     // Treinos, exercícios e fase caem por cascata a partir da periodização.
     desfazerEm: "training_periodizations",
 
-    gravar: (ctx, pendente) => {
+    gravar: (ctx, pending) => {
       // `acessoDoAluno` sempre entrega o titular; sem ele, falhar alto.
       if (!ctx.titular) throw new Error("aprovação do próximo bloco sem a sessão do aluno");
       return saveNextBlock(
         { studentId: ctx.studentId, titular: ctx.titular(), registrar: ctx.registrar },
-        pendente,
+        pending,
       );
     },
 
-    resolver: (_pendente, resultado) => ({ resolvedNextBlock: resultado }),
+    resolver: (_pending, result) => ({ resolvedNextBlock: result }),
 
     // Trocado antes do fim (C2), o atual fecha hoje e o novo começa amanhã.
-    mensagem: (pendente) =>
-      `✅ Bloco ${pendente.blockNumber} aprovado: começa ${pendente.early ? "amanhã" : "hoje"}.`,
+    mensagem: (pending) =>
+      `✅ Bloco ${pending.blockNumber} aprovado: começa ${pending.early ? "amanhã" : "hoje"}.`,
 
-    corpo: (_pendente, resultado) => resultado,
+    corpo: (_pending, result) => result,
   }),
 );

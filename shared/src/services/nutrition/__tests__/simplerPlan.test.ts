@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { addDays } from "../../../utils/dateOnly";
+import { addDays, currentWeekStart } from "../../../utils/dateOnly";
 import { supabaseByTable } from "../../__tests__/supabaseByTable";
-import {
-  createWeeklyCheckInService,
-  currentWeekStart,
-  type WeeklyCheckIn,
-} from "../weeklyCheckIn.service";
+import { createWeeklyCheckInService, type WeeklyCheckIn } from "../weeklyCheckIn.service";
 
 const WEEK = currentWeekStart();
 const MEALS = ["cafe", "lanche", "almoco", "tarde", "jantar"].map((id) => ({

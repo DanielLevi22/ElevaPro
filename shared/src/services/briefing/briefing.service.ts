@@ -5,9 +5,8 @@ import type {
   BriefingSignalKind,
   BriefingStats,
 } from "../../types/briefing.types";
-import { addDays } from "../../utils/dateOnly";
+import { addDays, brazilToday, currentWeekStart } from "../../utils/dateOnly";
 import { type RestPeriod, restingNow } from "../../utils/restMode";
-import { brazilToday, currentWeekStart } from "../nutrition/weeklyCheckIn.service";
 import { readAllPages } from "../readAllPages";
 import { CHECK_IN_LOGGING_LABEL, checkInSentence } from "./checkInActivity";
 import { engagementSignals, INACTIVITY_DAYS } from "./engagementSignals";

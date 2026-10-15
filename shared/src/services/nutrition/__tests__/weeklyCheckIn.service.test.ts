@@ -1,11 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { currentWeekStart, isTodayInBrazil } from "../../../utils/dateOnly";
 import type { Recalibration } from "../../../utils/weeklyRecalibration";
 import { criarSupabaseFake } from "../../__tests__/supabaseFake";
-import {
-  createWeeklyCheckInService,
-  currentWeekStart,
-  isTodayInBrazil,
-} from "../weeklyCheckIn.service";
+import { createWeeklyCheckInService } from "../weeklyCheckIn.service";
 
 const SEMANA = currentWeekStart();
 /** A segunda anterior: a pesagem de uma semana antes. */

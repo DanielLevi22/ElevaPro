@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { OnboardingPlanPending } from "../../types/onboardingPlan.types";
 import { dailyActivities } from "../../utils/dailyActivity";
-import { addDays } from "../../utils/dateOnly";
+import { addDays, brazilToday, currentWeekStart, daysBetween } from "../../utils/dateOnly";
 import { nomeCurto } from "../../utils/nome";
 import { practitionerDietTargetFromAnswers } from "../../utils/practitionerDietTarget";
 import { restingNow } from "../../utils/restMode";
@@ -107,7 +107,6 @@ export type CheckInSummary =
 const CHECK_IN_COLUMNS = "id, week_start, logging, assessment_id, status, weight_origin";
 /** A tendência da tela mostra até oito semanas. */
 const WEIGHT_HISTORY = 8;
-const DAY_MS = 86_400_000;
 
 /**
  * O check-in da semana (#376): a pessoa diz como foi o registro e o peso, e a
@@ -248,46 +247,6 @@ export const createWeeklyCheckInService = (supabase: SupabaseClient) => {
 
 export type WeeklyCheckInService = ReturnType<typeof createWeeklyCheckInService>;
 
-/**
- * A segunda-feira desta semana no fuso do Brasil, como `private.current_check_in_week`.
- *
- * @example currentWeekStart(new Date("2026-10-11T23:00:00-03:00")) // "2026-10-05"
- */
-export function currentWeekStart(now: Date = new Date()): string {
-  const brazil = toBrazilTime(now);
-  const sinceMonday = (brazil.getUTCDay() + 6) % 7;
-  brazil.setUTCDate(brazil.getUTCDate() - sinceMonday);
-  return brazil.toISOString().slice(0, 10);
-}
-
-/**
- * Se o instante cai no mesmo dia, no Brasil, que agora: o "Desfazer" só vale no
- * dia do ajuste, a mesma regra de `undo_weekly_calorie_adjustment`.
- *
- * @example isTodayInBrazil(ajuste.approvedAt) // true no dia da aprovação
- */
-export function isTodayInBrazil(instant: string, now: Date = new Date()): boolean {
-  const day = (date: Date) => toBrazilTime(date).toISOString().slice(0, 10);
-  return day(new Date(instant)) === day(now);
-}
-
-/**
- * Conta, e não `new Date(now.toLocaleString(...))`: o Hermes não lê data em
- * texto fora do ISO, a semana virava "NaN-NaN-NaN" e o cartão sumia no
- * aparelho com os testes passando no Node. O Brasil está em UTC−3 fixo desde
- * 2019, sem horário de verão.
- */
-function toBrazilTime(instant: Date): Date {
-  return new Date(instant.getTime() - BRAZIL_OFFSET_MS);
-}
-
-const BRAZIL_OFFSET_MS = 3 * 60 * 60 * 1000;
-
-/** O dia de hoje no Brasil, como a pausa grava (`start_rest`). @example brazilToday() // "2026-10-14" */
-export function brazilToday(): string {
-  return toBrazilTime(new Date()).toISOString().slice(0, 10);
-}
-
 async function practitionerProposal(
   supabase: SupabaseClient,
   studentId: string,
@@ -360,7 +319,7 @@ async function lastWeekAdherence(
 
 /** As semanas entre duas pesagens, arredondadas: o check-in é semanal. */
 function weeksBetween(previous: WeightPoint, current: WeightPoint): number {
-  const days = (Date.parse(current.assessedAt) - Date.parse(previous.assessedAt)) / DAY_MS;
+  const days = daysBetween(previous.assessedAt.slice(0, 10), current.assessedAt.slice(0, 10));
   return Math.max(1, Math.round(days / 7));
 }
 
@@ -393,7 +352,10 @@ async function recentCheckIns(
   }));
 }
 
-async function latestCheckIn(supabase: SupabaseClient, studentId: string) {
+async function latestCheckIn(
+  supabase: SupabaseClient,
+  studentId: string,
+): Promise<WeeklyCheckIn | null> {
   const { data, error } = await supabase
     .from("weekly_check_ins")
     .select(CHECK_IN_COLUMNS)
@@ -427,7 +389,11 @@ async function adjustmentOf(
   };
 }
 
-async function hasDietBefore(supabase: SupabaseClient, studentId: string, weekStart: string) {
+async function hasDietBefore(
+  supabase: SupabaseClient,
+  studentId: string,
+  weekStart: string,
+): Promise<boolean> {
   const { count, error } = await supabase
     .from("diet_plans")
     .select("id", { count: "exact", head: true })
@@ -458,7 +424,10 @@ async function declaredWeights(
 }
 
 /** O nome curto do especialista ativo: a política da 0016 deixa o aluno ler só esse perfil. */
-async function linkedSpecialistName(supabase: SupabaseClient, studentId: string) {
+async function linkedSpecialistName(
+  supabase: SupabaseClient,
+  studentId: string,
+): Promise<string | null> {
   const { data: link, error } = await supabase
     .from("student_specialists")
     .select("specialist_id")

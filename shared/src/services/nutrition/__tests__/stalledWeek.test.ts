@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { addDays } from "../../../utils/dateOnly";
+import { addDays, currentWeekStart } from "../../../utils/dateOnly";
 import { supabaseByTable } from "../../__tests__/supabaseByTable";
-import { createWeeklyCheckInService, currentWeekStart } from "../weeklyCheckIn.service";
+import { createWeeklyCheckInService } from "../weeklyCheckIn.service";
 
 const WEEK = currentWeekStart();
 const weekAgo = (weeks: number) => addDays(WEEK, -7 * weeks);

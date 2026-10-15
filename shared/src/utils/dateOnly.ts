@@ -92,3 +92,43 @@ export function shortDateRange(start: string, end: string): string {
   const from = sameMonth ? day(start) : `${day(start)} ${shortMonthOf(start)}`;
   return `${from} a ${day(end)} ${shortMonthOf(end)}`;
 }
+
+/**
+ * A segunda-feira desta semana no fuso do Brasil, como `private.current_check_in_week`.
+ *
+ * @example currentWeekStart(new Date("2026-10-11T23:00:00-03:00")) // "2026-10-05"
+ */
+export function currentWeekStart(now: Date = new Date()): string {
+  const brazil = toBrazilTime(now);
+  const sinceMonday = (brazil.getUTCDay() + 6) % 7;
+  brazil.setUTCDate(brazil.getUTCDate() - sinceMonday);
+  return brazil.toISOString().slice(0, 10);
+}
+
+/**
+ * Se o instante cai no mesmo dia, no Brasil, que agora: o "Desfazer" só vale no
+ * dia do ajuste, a mesma regra de `undo_weekly_calorie_adjustment`.
+ *
+ * @example isTodayInBrazil(ajuste.approvedAt) // true no dia da aprovação
+ */
+export function isTodayInBrazil(instant: string, now: Date = new Date()): boolean {
+  const day = (date: Date) => toBrazilTime(date).toISOString().slice(0, 10);
+  return day(new Date(instant)) === day(now);
+}
+
+/**
+ * Conta, e não `new Date(now.toLocaleString(...))`: o Hermes não lê data em
+ * texto fora do ISO, a semana virava "NaN-NaN-NaN" e o cartão sumia no
+ * aparelho com os testes passando no Node. O Brasil está em UTC−3 fixo desde
+ * 2019, sem horário de verão.
+ */
+function toBrazilTime(instant: Date): Date {
+  return new Date(instant.getTime() - BRAZIL_OFFSET_MS);
+}
+
+const BRAZIL_OFFSET_MS = 3 * 60 * 60 * 1000;
+
+/** O dia de hoje no Brasil, como a pausa grava (`start_rest`). @example brazilToday() // "2026-10-14" */
+export function brazilToday(): string {
+  return toBrazilTime(new Date()).toISOString().slice(0, 10);
+}

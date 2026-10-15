@@ -1,19 +1,16 @@
 import { blockWeek } from '@elevapro/shared';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Modal, Pressable, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text } from 'react-native';
 import { useAuthStore, useCan } from '@/auth';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
+import { BottomSheet } from '@/components/ui/BottomSheet';
 import { InfoNote } from '@/components/ui/InfoNote';
 import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
 import { useActiveBlock } from '@/hooks/useActiveBlock';
 import { ROUTES } from '@/navigation/types';
 import { localDateKey } from '@/services/healthSync';
-import { useEscala } from '@/shared/design';
 import { type ChangeFocus, useReviewStore } from '../store/reviewStore';
-
-const BOTTOM_GAP = 40;
 
 const OPTIONS: {
   focus: ChangeFocus;
@@ -105,53 +102,36 @@ function ChangePlanSheet({
   onRest: (() => void) | null;
   onClose: () => void;
 }) {
-  const insets = useSafeAreaInsets();
-  const escalar = useEscala();
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View className="flex-1 justify-end">
-        <Pressable
-          className="absolute inset-0 bg-veu-da-folha"
-          onPress={onClose}
-          accessibilityRole="button"
-          accessibilityLabel="Fechar sem mudar"
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title="Mudar meu plano"
+      closeLabel="Fechar sem mudar"
+    >
+      <Text className="mb-3 mt-1 text-[0.78125rem] text-muted-foreground">{sub}</Text>
+      {OPTIONS.map((option) => (
+        <LinhaDeVidro
+          key={option.focus}
+          icon={option.icon}
+          tom="marca"
+          titulo={option.title}
+          sub={option.sub}
+          onPress={() => onChoose(option.focus)}
         />
-        <View
-          className="rounded-t-[1.75rem] border-t border-glass-border bg-background px-[1.125rem] pt-2.5"
-          style={{ paddingBottom: insets.bottom + escalar(BOTTOM_GAP) }}
-        >
-          <View className="mx-auto mb-3.5 h-[0.3125rem] w-[2.375rem] rounded-full bg-placeholder" />
-          <View className="flex-row items-center justify-between gap-3">
-            <Text className="font-display-black text-[1.3125rem] tracking-tight text-foreground">
-              Mudar meu plano
-            </Text>
-            <BotaoRedondo icone="x" rotulo="Fechar sem mudar" onPress={onClose} />
-          </View>
-          <Text className="mb-3 mt-1 text-[0.78125rem] text-muted-foreground">{sub}</Text>
-          {OPTIONS.map((option) => (
-            <LinhaDeVidro
-              key={option.focus}
-              icon={option.icon}
-              tom="marca"
-              titulo={option.title}
-              sub={option.sub}
-              onPress={() => onChoose(option.focus)}
-            />
-          ))}
-          {onRest ? (
-            <LinhaDeVidro
-              icon="pause-circle-outline"
-              tom="marca"
-              titulo="Preciso de uma pausa"
-              sub="Modo Descanso: doença, lesão ou viagem"
-              onPress={onRest}
-            />
-          ) : null}
-          <InfoNote icon="information-circle-outline">
-            Só um exercício incomodando? Troque pelo "…" no treino, sem mudar o plano.
-          </InfoNote>
-        </View>
-      </View>
-    </Modal>
+      ))}
+      {onRest ? (
+        <LinhaDeVidro
+          icon="pause-circle-outline"
+          tom="marca"
+          titulo="Preciso de uma pausa"
+          sub="Modo Descanso: doença, lesão ou viagem"
+          onPress={onRest}
+        />
+      ) : null}
+      <InfoNote icon="information-circle-outline">
+        Só um exercício incomodando? Troque pelo "…" no treino, sem mudar o plano.
+      </InfoNote>
+    </BottomSheet>
   );
 }

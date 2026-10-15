@@ -6,6 +6,9 @@ const mockMarkEnded = vi.fn();
 let rpcError: { message: string } | null;
 
 vi.mock("@/lib/supabase-admin", () => ({ supabaseAdmin: {} }));
+// A geração não é o que se testa aqui, e carregá-la puxa o SDK da IA.
+vi.mock("../generatePlan", () => ({ generatePractitionerPlan: vi.fn() }));
+vi.mock("../adjustPlan", () => ({ FASTER: "rápido" }));
 vi.mock("../savePlan", () => ({
   activeOwnDietId: async () => "dieta-anterior",
   saveDiet: async () => "dieta-nova",

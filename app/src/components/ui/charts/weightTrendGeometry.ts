@@ -1,4 +1,4 @@
-import { PACE_TOLERANCE_KG, type WeightPoint } from '@elevapro/shared';
+import { daysBetween, PACE_TOLERANCE_KG, type WeightPoint } from '@elevapro/shared';
 
 export interface TrendGeometry {
   points: { key: string; x: number; y: number }[];
@@ -12,7 +12,6 @@ export interface TrendGeometry {
 
 const PADDING = 10;
 const MARGIN_KG = 0.15;
-const DAY_MS = 86_400_000;
 
 const kg = (value: number) => value.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
 
@@ -32,7 +31,7 @@ export function trendGeometry(
     return { points: [], trend: null, last: null, band: null, label: 'Sem pesagens ainda' };
   }
 
-  const days = sorted.map((point) => daysBetween(sorted[0].assessedAt, point.assessedAt));
+  const days = sorted.map((point) => daysApart(sorted[0].assessedAt, point.assessedAt));
   const span = Math.max(days[days.length - 1], 1);
   const bandAt = (day: number) => sorted[0].weightKg + ((expectedChangeKg ?? 0) * day) / 7;
   const withBand = expectedChangeKg !== null && sorted.length > 1;
@@ -64,8 +63,9 @@ export function trendGeometry(
   };
 }
 
-function daysBetween(from: string, to: string): number {
-  return Math.round((Date.parse(to) - Date.parse(from)) / DAY_MS);
+/** Os dias entre duas pesagens, pela data delas: a hora do dia não conta no gráfico. */
+function daysApart(from: string, to: string): number {
+  return daysBetween(from.slice(0, 10), to.slice(0, 10));
 }
 
 /** Com menos de três pesagens não há o que suavizar: a média juntava as duas num ponto só. */
