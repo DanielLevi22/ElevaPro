@@ -836,6 +836,55 @@ export type Database = {
           },
         ];
       };
+      physical_assessment_revisions: {
+        Row: {
+          assessment_id: string;
+          corrected_at: string;
+          corrected_by: string | null;
+          id: string;
+          previous_values: Json;
+          student_id: string;
+        };
+        Insert: {
+          assessment_id: string;
+          corrected_at?: string;
+          corrected_by?: string | null;
+          id?: string;
+          previous_values: Json;
+          student_id: string;
+        };
+        Update: {
+          assessment_id?: string;
+          corrected_at?: string;
+          corrected_by?: string | null;
+          id?: string;
+          previous_values?: Json;
+          student_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "physical_assessment_revisions_assessment_id_fkey";
+            columns: ["assessment_id"];
+            isOneToOne: false;
+            referencedRelation: "physical_assessments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "physical_assessment_revisions_corrected_by_fkey";
+            columns: ["corrected_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "physical_assessment_revisions_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       physical_assessments: {
         Row: {
           assessed_at: string;
@@ -1818,6 +1867,17 @@ export type Database = {
           remaining: number;
           retry_after_seconds: number;
         }[];
+      };
+      correct_physical_assessment: {
+        Args: {
+          p_actor_id: string;
+          p_assessment_id: string;
+          p_changes: Json;
+          p_expected: Json;
+          p_student_id: string;
+          p_trace_id?: string;
+        };
+        Returns: Json;
       };
       create_diet_plan_version: {
         Args: { p_plan_id: string };

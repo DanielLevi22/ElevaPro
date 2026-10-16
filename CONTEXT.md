@@ -151,7 +151,8 @@ _Avoid_ (na UI): XP, score, pontuação
 **Assessment**:
 Avaliação física de um aluno numa data: peso, medidas e composição corporal.
 Tem duas origens, e uma série nunca mistura as duas (ADR-0030):
-- **do especialista** — medida com fita; imutável, o remédio para erro é medir de novo.
+- **do especialista** — medida com fita; erro de registro se retifica preservando a
+  versão anterior, sem trocar a data nem criar nova medição (ADR-0045).
 - **declarada** — digitada pelo próprio Praticante, que corrige e apaga. Só quem não
   tem especialista ativo declara: com especialista, quem mede é ele.
 _Avoid_: medição

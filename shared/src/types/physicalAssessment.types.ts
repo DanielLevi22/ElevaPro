@@ -16,7 +16,7 @@ export interface PhysicalAssessment {
   id: string;
   student_id: string;
   specialist_id: string | null;
-  /** `specialist` é imutável; `self` foi declarada pelo aluno e ele corrige (0056). */
+  /** `specialist` só se retifica com versão anterior preservada (0095); `self` é corrigida pelo titular (0056). */
   measured_by: MeasurementSource;
   assessed_at: string;
 

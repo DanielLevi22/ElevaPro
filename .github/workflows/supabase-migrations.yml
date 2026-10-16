@@ -23,6 +23,7 @@ on:
       - "supabase/seed.sql"
       - "scripts/verify-rls.sql"
       - "scripts/verify-diet-plan-versions.sql"
+      - "scripts/verify-assessment-corrections.sql"
   workflow_call:
   # Permite reverificar um ambiente sem push. `db push` é forward-only e a
   # verificação não escreve nada, então rodar de novo é seguro.
@@ -110,6 +111,7 @@ jobs:
         run: |
           psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/verify-rls.sql
           psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/verify-diet-plan-versions.sql
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/verify-assessment-corrections.sql
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
 
