@@ -34,7 +34,7 @@ function AssessmentCard({
     return Number((curr - prev).toFixed(1));
   };
 
-  const weightDelta = delta(assessment.weight, previous?.weight ?? null);
+  const weightDelta = delta(assessment.weight_kg, previous?.weight_kg ?? null);
 
   return (
     <div className="bg-surface border border-white/10 rounded-2xl p-5 space-y-4">
@@ -58,30 +58,33 @@ function AssessmentCard({
             )}
           </div>
         </div>
-        {assessment.weight && assessment.height && (
+        {assessment.weight_kg && assessment.height_cm && (
           <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 text-muted-foreground">
-            IMC {(assessment.weight / (assessment.height / 100) ** 2).toFixed(1)}
+            IMC {(assessment.weight_kg / (assessment.height_cm / 100) ** 2).toFixed(1)}
           </span>
         )}
       </div>
 
       {/* Composição */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-1 border-t border-white/5">
-        <StatCell label="Peso" value={assessment.weight} unit=" kg" />
-        <StatCell label="Altura" value={assessment.height} unit=" cm" />
-        <StatCell label="Cintura" value={assessment.waist} unit=" cm" />
-        <StatCell label="Quadril" value={assessment.hips} unit=" cm" />
+        <StatCell label="Peso" value={assessment.weight_kg} unit=" kg" />
+        <StatCell label="Altura" value={assessment.height_cm} unit=" cm" />
+        <StatCell label="Cintura" value={assessment.circ_waist} unit=" cm" />
+        <StatCell label="Quadril" value={assessment.circ_hip} unit=" cm" />
       </div>
 
       {/* Circunferências — só exibe se tiver algum valor */}
-      {[assessment.waist, assessment.hips, assessment.chest, assessment.arm_right_relaxed].some(
-        (v) => v !== null,
-      ) && (
+      {[
+        assessment.circ_waist,
+        assessment.circ_hip,
+        assessment.circ_chest,
+        assessment.circ_right_arm,
+      ].some((v) => v !== null) && (
         <div className="grid grid-cols-4 gap-4 pt-3 border-t border-white/5">
-          <StatCell label="Cintura" value={assessment.waist} unit=" cm" />
-          <StatCell label="Quadril" value={assessment.hips} unit=" cm" />
-          <StatCell label="Peito" value={assessment.chest} unit=" cm" />
-          <StatCell label="Braço D" value={assessment.arm_right_relaxed} unit=" cm" />
+          <StatCell label="Cintura" value={assessment.circ_waist} unit=" cm" />
+          <StatCell label="Quadril" value={assessment.circ_hip} unit=" cm" />
+          <StatCell label="Peito" value={assessment.circ_chest} unit=" cm" />
+          <StatCell label="Braço D" value={assessment.circ_right_arm} unit=" cm" />
         </div>
       )}
 
