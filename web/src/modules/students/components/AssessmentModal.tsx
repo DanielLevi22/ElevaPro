@@ -13,7 +13,7 @@ interface AssessmentModalProps {
   onClose: () => void;
 }
 
-type Tab = "composicao" | "circunferencias" | "dobras";
+type Tab = "composition" | "circumferences" | "skinfolds";
 
 // As listas vivem em `@elevapro/shared`: antes cada plataforma tinha a sua, e
 // elas já discordavam sobre lateralidade — o web pedia "antebraço" e o mobile
@@ -25,9 +25,10 @@ function numericField(
   fields: ReadonlyArray<{ readonly key: string; readonly label: string }>,
   values: Record<string, string>,
   onChange: (key: string, val: string) => void,
+  unit = "cm",
 ) {
   return fields.map(({ key, label }) => (
-    <FormField key={key} label={`${label} (cm)`} htmlFor={`assess-${key}`} optional>
+    <FormField key={key} label={`${label} (${unit})`} htmlFor={`assess-${key}`} optional>
       <Input
         id={`assess-${key}`}
         type="number"
@@ -41,7 +42,7 @@ function numericField(
 }
 
 export function AssessmentModal({ studentId, onClose }: AssessmentModalProps) {
-  const [tab, setTab] = useState<Tab>("composicao");
+  const [tab, setTab] = useState<Tab>("composition");
   const [error, setError] = useState<string | null>(null);
 
   // Composição corporal
@@ -57,7 +58,7 @@ export function AssessmentModal({ studentId, onClose }: AssessmentModalProps) {
 
   const handleClose = () => {
     setError(null);
-    setTab("composicao");
+    setTab("composition");
     onClose();
   };
 
@@ -74,41 +75,20 @@ export function AssessmentModal({ studentId, onClose }: AssessmentModalProps) {
     // especialista ainda está com a ficha aberta, em vez de depois de salvar.
     if (toNum(weight) === null || toNum(height) === null) {
       setError("Peso e altura são obrigatórios: são eles que dão escala à análise do aluno.");
-      setTab("composicao");
+      setTab("composition");
       return;
     }
 
     try {
       await createAssessment.mutateAsync({
         studentId,
-        weight: toNum(weight),
-        height: toNum(height),
+        weight_kg: toNum(weight),
+        height_cm: toNum(height),
         notes: notes || null,
-        neck: toNum(circumferences.neck ?? ""),
-        shoulder: toNum(circumferences.shoulder ?? ""),
-        chest: toNum(circumferences.chest ?? ""),
-        waist: toNum(circumferences.waist ?? ""),
-        abdomen: toNum(circumferences.abdomen ?? ""),
-        hips: toNum(circumferences.hips ?? ""),
-        arm_right_relaxed: toNum(circumferences.arm_right_relaxed ?? ""),
-        arm_left_relaxed: toNum(circumferences.arm_left_relaxed ?? ""),
-        arm_right_contracted: toNum(circumferences.arm_right_contracted ?? ""),
-        arm_left_contracted: toNum(circumferences.arm_left_contracted ?? ""),
-        forearm_right: toNum(circumferences.forearm ?? ""),
-        forearm_left: null,
-        thigh_proximal_right: toNum(circumferences.thigh_proximal ?? ""),
-        thigh_proximal_left: null,
-        thigh_medial_right: toNum(circumferences.thigh_distal ?? ""),
-        thigh_medial_left: null,
-        calf_right: toNum(circumferences.calf ?? ""),
-        calf_left: null,
-        skinfold_chest: toNum(skinfolds.skinfold_chest ?? ""),
-        skinfold_abdominal: toNum(skinfolds.skinfold_abdominal ?? ""),
-        skinfold_thigh: toNum(skinfolds.skinfold_thigh ?? ""),
-        skinfold_triceps: toNum(skinfolds.skinfold_triceps ?? ""),
-        skinfold_suprailiac: toNum(skinfolds.skinfold_suprailiac ?? ""),
-        skinfold_subscapular: toNum(skinfolds.skinfold_subscapular ?? ""),
-        skinfold_midaxillary: toNum(skinfolds.skinfold_midaxillary ?? ""),
+        ...Object.fromEntries(
+          CIRCUMFERENCE_FIELDS.map(({ key }) => [key, toNum(circumferences[key] ?? "")]),
+        ),
+        ...Object.fromEntries(SKINFOLD_FIELDS.map(({ key }) => [key, toNum(skinfolds[key] ?? "")])),
       });
       handleClose();
     } catch (err) {
@@ -117,9 +97,9 @@ export function AssessmentModal({ studentId, onClose }: AssessmentModalProps) {
   };
 
   const TAB_LABELS: Record<Tab, string> = {
-    composicao: "Composição",
-    circunferencias: "Circunferências",
-    dobras: "Dobras",
+    composition: "Composição",
+    circumferences: "Circunferências",
+    skinfolds: "Dobras",
   };
 
   return (
@@ -144,7 +124,7 @@ export function AssessmentModal({ studentId, onClose }: AssessmentModalProps) {
         </div>
 
         {/* Tab: Composição Corporal */}
-        {tab === "composicao" && (
+        {tab === "composition" && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <FormField label="Peso (kg)" htmlFor="assess-weight">
@@ -191,7 +171,7 @@ export function AssessmentModal({ studentId, onClose }: AssessmentModalProps) {
         )}
 
         {/* Tab: Circunferências */}
-        {tab === "circunferencias" && (
+        {tab === "circumferences" && (
           <div className="grid grid-cols-2 gap-3">
             {numericField(CIRCUMFERENCE_FIELDS, circumferences, (key, val) =>
               setCircumferences((prev) => ({ ...prev, [key]: val })),
@@ -200,12 +180,13 @@ export function AssessmentModal({ studentId, onClose }: AssessmentModalProps) {
         )}
 
         {/* Tab: Dobras Cutâneas */}
-        {tab === "dobras" && (
+        {tab === "skinfolds" && (
           <div className="grid grid-cols-2 gap-3">
             {numericField(
-              SKINFOLD_FIELDS.map((f) => ({ ...f, key: f.key })),
+              SKINFOLD_FIELDS,
               skinfolds,
               (key, val) => setSkinfolds((prev) => ({ ...prev, [key]: val })),
+              "mm",
             )}
             <p className="col-span-2 text-xs text-muted-foreground mt-1">
               Valores em milímetros (mm)

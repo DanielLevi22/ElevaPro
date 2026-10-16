@@ -1,8 +1,8 @@
 "use client";
 
+import type { PhysicalAssessment as Assessment } from "@elevapro/shared";
 import { supabase } from "@elevapro/supabase";
 import { useQuery } from "@tanstack/react-query";
-import type { Assessment } from "@/app/api/students/[id]/assessments/route";
 
 export type { Assessment };
 
