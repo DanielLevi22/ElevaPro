@@ -842,7 +842,7 @@ export type Database = {
           corrected_at: string;
           corrected_by: string | null;
           id: string;
-          previous_values: Json;
+          previous_values: NonNullable<Json>;
           student_id: string;
         };
         Insert: {
@@ -850,7 +850,7 @@ export type Database = {
           corrected_at?: string;
           corrected_by?: string | null;
           id?: string;
-          previous_values: Json;
+          previous_values: NonNullable<Json>;
           student_id: string;
         };
         Update: {
@@ -858,7 +858,7 @@ export type Database = {
           corrected_at?: string;
           corrected_by?: string | null;
           id?: string;
-          previous_values?: Json;
+          previous_values?: NonNullable<Json>;
           student_id?: string;
         };
         Relationships: [
