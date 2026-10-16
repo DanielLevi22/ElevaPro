@@ -3,7 +3,7 @@
 - [ ] `candidate-dbddb228587021f1` — Prato: Arroz branco cozido + Seitan + Berinjela cozida
 - [ ] `candidate-dbe3133c87b2c0f1` — Prato: Milho verde cozido + Frango (peito grelhado) + Couve refogada
 - [ ] `candidate-dbe49cc094145333` — Prato: Mandioca cozida + Tofu + Espinafre
-- [ ] `candidate-dbe9e9298b579fb4` — Prato: Cuscuz de milho + Salmão grelhado + Alface
+- [x] `candidate-dbe9e9298b579fb4` — Prato: Cuscuz de milho + Salmão grelhado + Alface
 - [ ] `candidate-dbee2a48048f48b9` — Prato: Inhame cozido + Tofu + Agrião
 - [ ] `candidate-dbfa62fa86ede1a5` — Prato: Macarrão integral cozido + Ovo inteiro cozido + Berinjela cozida
 - [ ] `candidate-dbfc073a4a7d1cea` — Prato: Macarrão integral cozido + Proteína de soja texturizada + Alface

@@ -180,12 +180,12 @@
 - [ ] `candidate-c3871c0e922581f9` — Prato com leguminosa: Arroz integral cozido + Ervilha cozida + Couve-flor cozida
 - [ ] `candidate-c38cd38086bbf347` — Prato com leguminosa: Arroz sete grãos cozido + Tremoço em conserva + Couve refogada
 - [ ] `candidate-c38d79ca0bab8ddd` — Prato com leguminosa: Milho verde cozido + Soja cozida + Abobrinha cozida
-- [ ] `candidate-c39f649ab1953d84` — Prato com leguminosa: Cuscuz de milho + Feijão carioca cozido + Repolho cru
+- [x] `candidate-c39f649ab1953d84` — Prato com leguminosa: Cuscuz de milho + Feijão carioca cozido + Repolho cru
 - [ ] `candidate-c3aa6d9fc24c02c4` — Prato com leguminosa: Milho verde cozido + Feijão carioca cozido + Palmito em conserva
 - [ ] `candidate-c3ab5bee5a690297` — Prato com leguminosa: Batata doce cozida + Lentilha cozida + Agrião
 - [ ] `candidate-c3afacdc2c246218` — Prato com leguminosa: Cará cozido + Edamame + Berinjela cozida
 - [ ] `candidate-c3dc6dd79d9667a7` — Prato com leguminosa: Arroz sete grãos cozido + Soja cozida + Aspargos cozidos
-- [ ] `candidate-c3e7838484778383` — Prato com leguminosa: Mandioca cozida + Grão de bico cozido + Abobrinha cozida
+- [x] `candidate-c3e7838484778383` — Prato com leguminosa: Mandioca cozida + Grão de bico cozido + Abobrinha cozida
 - [ ] `candidate-c3e8ea53e86dbfb0` — Prato com leguminosa: Arroz parboilizado cozido + Feijão branco cozido + Abóbora cabotiá cozida
 - [ ] `candidate-c408790cee1531dd` — Prato com leguminosa: Macarrão cozido + Grão de bico cozido + Repolho cru
 - [ ] `candidate-c4395cf7ee9db84a` — Prato com leguminosa: Cará cozido + Soja cozida + Espinafre
