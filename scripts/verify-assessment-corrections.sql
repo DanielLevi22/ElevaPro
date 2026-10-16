@@ -6,6 +6,13 @@ DECLARE
   author_a uuid := gen_random_uuid(); author_b uuid := gen_random_uuid();
   assessment_a uuid; assessment_b uuid; expected_a jsonb; expected_b jsonb;
   result jsonb; current_values jsonb; visible_count int;
+  public_keys text[] := ARRAY['id','student_id','specialist_id','measured_by','assessed_at','created_at',
+    'weight_kg','height_cm','body_fat_pct','muscle_mass_kg','notes',
+    'circ_neck','circ_shoulder','circ_chest','circ_waist','circ_abdomen','circ_hip',
+    'circ_right_arm','circ_left_arm','circ_right_forearm','circ_left_forearm',
+    'circ_right_thigh','circ_left_thigh','circ_right_calf','circ_left_calf',
+    'skinfold_chest','skinfold_abdomen','skinfold_thigh','skinfold_tricep',
+    'skinfold_suprailiac','skinfold_subscapular','skinfold_midaxillary'];
 BEGIN
   INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data) VALUES
     (student_a,'00000000-0000-0000-0000-000000000000','authenticated','authenticated', 'correction-a-' || student_a || '@elevapro.local','{"full_name":"A","account_type":"student"}'),
@@ -26,10 +33,12 @@ BEGIN
     VALUES(student_a,author_a,92,175,'Nota original','2026-10-01T12:00:00Z') RETURNING id INTO assessment_a;
   INSERT INTO public.physical_assessments(student_id,specialist_id,weight_kg,height_cm)
     VALUES(student_b,author_b,80,180) RETURNING id INTO assessment_b;
-  SELECT to_jsonb(a) - ARRAY['id','student_id','specialist_id','measured_by','assessed_at','created_at']
-    INTO expected_a FROM public.physical_assessments a WHERE id=assessment_a;
-  SELECT to_jsonb(a) - ARRAY['id','student_id','specialist_id','measured_by','assessed_at','created_at']
-    INTO expected_b FROM public.physical_assessments a WHERE id=assessment_b;
+  SELECT jsonb_object_agg(key,value) INTO expected_a FROM public.physical_assessments a,
+    LATERAL jsonb_each(to_jsonb(a) - ARRAY['id','student_id','specialist_id','measured_by','assessed_at','created_at'])
+    WHERE a.id=assessment_a AND key=ANY(public_keys);
+  SELECT jsonb_object_agg(key,value) INTO expected_b FROM public.physical_assessments a,
+    LATERAL jsonb_each(to_jsonb(a) - ARRAY['id','student_id','specialist_id','measured_by','assessed_at','created_at'])
+    WHERE a.id=assessment_b AND key=ANY(public_keys);
 
   SET LOCAL ROLE authenticated;
   PERFORM set_config('request.jwt.claims',json_build_object('sub',author_a,'role','authenticated','aal','aal2')::text,true);
@@ -38,6 +47,10 @@ BEGIN
   THEN RAISE EXCEPTION 'BFF CONTORNADO: cliente pode executar RPC reservada ao servidor'; END IF;
   SET LOCAL ROLE service_role;
   result := public.correct_physical_assessment(assessment_a,student_a,author_a,expected_a,'{"weight_kg":91}');
+  -- Art. 6º, III: uma coluna futura sensível não pode sair pela correção sem revisão de finalidade.
+  IF EXISTS (SELECT 1 FROM jsonb_object_keys(result) key WHERE NOT key=ANY(public_keys)) THEN
+    RAISE EXCEPTION 'SAÚDE EXPOSTA: correção devolveu coluna fora do contrato público';
+  END IF;
   IF (result->>'id')::uuid <> assessment_a OR (result->>'weight_kg')::numeric <> 91 OR result->>'notes' <> 'Nota original'
     OR (result->>'assessed_at')::timestamptz <> '2026-10-01T12:00:00Z'::timestamptz THEN
     RAISE EXCEPTION 'CORREÇÃO PERDIDA: retificação mudou a identidade ou descartou campos';

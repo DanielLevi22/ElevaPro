@@ -43,6 +43,7 @@ DECLARE
   original public.physical_assessments%ROWTYPE;
   corrected public.physical_assessments%ROWTYPE;
   previous_values jsonb;
+  response_values jsonb;
   editable_keys text[] := ARRAY[
     'weight_kg','height_cm','body_fat_pct','muscle_mass_kg','notes',
     'circ_neck','circ_shoulder','circ_chest','circ_waist','circ_abdomen','circ_hip',
@@ -85,7 +86,10 @@ BEGIN
   IF corrected.weight_kg IS NULL OR corrected.height_cm IS NULL
     OR corrected.weight_kg <= 0 OR corrected.height_cm <= 0
   THEN RAISE EXCEPTION 'weight_and_height_must_be_positive' USING ERRCODE = '22023'; END IF;
-  IF previous_values @> p_changes THEN RETURN to_jsonb(original); END IF;
+  -- A linha interna pode ganhar campos; o contrato público não cresce por acidente.
+  SELECT jsonb_object_agg(key, value) INTO response_values FROM jsonb_each(to_jsonb(corrected))
+    WHERE key = ANY(editable_keys || ARRAY['id','student_id','specialist_id','measured_by','assessed_at','created_at']);
+  IF previous_values @> p_changes THEN RETURN response_values; END IF;
 
   INSERT INTO public.physical_assessment_revisions (assessment_id, student_id, corrected_by, previous_values)
     VALUES (original.id, original.student_id, p_actor_id, previous_values);
@@ -107,7 +111,7 @@ BEGIN
   -- A evidência técnica tem só metadados e segue a retenção própria da trilha.
   PERFORM public.record_security_audit_event('health.assessment.corrected', 'succeeded',
     'physical_assessment_collection', 'bff', p_actor_id, original.student_id, NULL, p_trace_id);
-  RETURN to_jsonb(corrected);
+  RETURN response_values;
 END;
 $$;
 --> statement-breakpoint

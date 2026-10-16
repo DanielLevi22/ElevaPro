@@ -21,6 +21,7 @@ fi
 #
 # O custo é alguns segundos por push. O custo do contrário é descobrir depois.
 # Os scripts com efeito colateral (limpeza do MFA local) têm trava própria.
-node --test "scripts/__tests__/*.test.mjs"
+# Node 20 não expande glob em argumento literal; a expansão precisa ser do shell.
+node --test scripts/__tests__/*.test.mjs
 cd app && npx jest --coverage --passWithNoTests --runInBand --forceExit
 cd ../web && npx vitest run --coverage --passWithNoTests
