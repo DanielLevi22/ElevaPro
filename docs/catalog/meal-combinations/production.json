@@ -95460,6 +95460,1294 @@
       "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Iogurte natural desnatado; Açaí (polpa sem açúcar); Aveia em flocos. Show the yogurt beneath the named fruit and topping in a white ceramic bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
       "generator": "imagegen",
       "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b8f0547b0dbd43cf-v1-8f88098e38d9.jpg"
+    },
+    {
+      "candidateId": "candidate-bc864777d4936f29",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-bc864777d4936f29",
+        "version": 1,
+        "path": "meal-images/photo-candidate-bc864777d4936f29-v1-492d6234c364.jpg",
+        "bytes": 184125,
+        "sha256": "492d6234c3647cdb9b64f69b707a4c376ea0334636aa7f78e3404ae5b11d9675",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:51:41.014Z",
+      "title": "Prato: Arroz integral cozido + Frango (peito grelhado) + Abóbora cabotiá cozida",
+      "ingredients": [
+        "Arroz integral cozido",
+        "Frango (peito grelhado)",
+        "Abóbora cabotiá cozida"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Arroz integral cozido; Frango (peito grelhado); Abóbora cabotiá cozida. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-bc864777d4936f29-v1-492d6234c364.jpg"
+    },
+    {
+      "candidateId": "candidate-b502f05003416c8b",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b502f05003416c8b",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b502f05003416c8b-v1-736aff2a9869.jpg",
+        "bytes": 169504,
+        "sha256": "736aff2a986959c8882d0fff52ed8782012543c84623853594ac51936ffbf5a2",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:52:14.310Z",
+      "title": "Prato com leguminosa: Macarrão cozido + Feijão carioca cozido + Abóbora cabotiá cozida",
+      "ingredients": [
+        "Macarrão cozido",
+        "Feijão carioca cozido",
+        "Abóbora cabotiá cozida"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Macarrão cozido; Feijão carioca cozido; Abóbora cabotiá cozida. Arrange grains, cooked legumes and vegetables in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b502f05003416c8b-v1-736aff2a9869.jpg"
+    },
+    {
+      "candidateId": "candidate-b512ea48c164e5c9",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b512ea48c164e5c9",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b512ea48c164e5c9-v1-bc5101516bba.jpg",
+        "bytes": 183954,
+        "sha256": "bc5101516bbacdd7f454a54be01a820f6d37848a6b1d916de0fde183a3694b14",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:52:17.444Z",
+      "title": "Prato: Macarrão cozido + Frango (peito grelhado) + Rúcula",
+      "ingredients": [
+        "Macarrão cozido",
+        "Frango (peito grelhado)",
+        "Rúcula"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Macarrão cozido; Frango (peito grelhado); Rúcula. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b512ea48c164e5c9-v1-bc5101516bba.jpg"
+    },
+    {
+      "candidateId": "candidate-bca3f308111540f6",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-bca3f308111540f6",
+        "version": 1,
+        "path": "meal-images/photo-candidate-bca3f308111540f6-v1-4a8f77331c27.jpg",
+        "bytes": 170536,
+        "sha256": "4a8f77331c27ee35a760cb82ac68cbdb8bb46f2e4d04855927edbe529db5f21d",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:52:20.517Z",
+      "title": "Prato com leguminosa: Milho verde cozido + Feijão carioca cozido + Beterraba cozida",
+      "ingredients": [
+        "Milho verde cozido",
+        "Feijão carioca cozido",
+        "Beterraba cozida"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Milho verde cozido; Feijão carioca cozido; Beterraba cozida. Arrange grains, cooked legumes and vegetables in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-bca3f308111540f6-v1-4a8f77331c27.jpg"
+    },
+    {
+      "candidateId": "candidate-bcc6be0c5f15d39a",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-bcc6be0c5f15d39a",
+        "version": 1,
+        "path": "meal-images/photo-candidate-bcc6be0c5f15d39a-v1-a73b6724bd36.jpg",
+        "bytes": 181240,
+        "sha256": "a73b6724bd3675a61dae7d9e6866434dda83eb30e16282dd55c05efe68bf6b76",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:52:53.755Z",
+      "title": "Prato: Batata inglesa cozida + Tilápia grelhada + Agrião",
+      "ingredients": [
+        "Batata inglesa cozida",
+        "Tilápia grelhada",
+        "Agrião"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Batata inglesa cozida; Tilápia grelhada; Agrião. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-bcc6be0c5f15d39a-v1-a73b6724bd36.jpg"
+    },
+    {
+      "candidateId": "candidate-b1d373620a360755",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b1d373620a360755",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b1d373620a360755-v1-6a21a8370304.jpg",
+        "bytes": 194368,
+        "sha256": "6a21a83703043f874658a55faff758aff47f38420ddef0ffc5b266c4b94d1aa5",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:53:12.035Z",
+      "title": "Prato: Cuscuz de milho + Tilápia grelhada + Agrião",
+      "ingredients": [
+        "Cuscuz de milho",
+        "Tilápia grelhada",
+        "Agrião"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Cuscuz de milho; Tilápia grelhada; Agrião. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b1d373620a360755-v1-6a21a8370304.jpg"
+    },
+    {
+      "candidateId": "candidate-b1e2a997fdd13bac",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b1e2a997fdd13bac",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b1e2a997fdd13bac-v1-814eaa14cfd0.jpg",
+        "bytes": 173188,
+        "sha256": "814eaa14cfd0e77cd3f27c002232a373a3aa71d8a746ede9151b97a1a2fae0a9",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:53:30.198Z",
+      "title": "Prato com leguminosa: Batata doce cozida + Feijão carioca cozido + Pimentão vermelho",
+      "ingredients": [
+        "Batata doce cozida",
+        "Feijão carioca cozido",
+        "Pimentão vermelho"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Batata doce cozida; Feijão carioca cozido; Pimentão vermelho. Arrange grains, cooked legumes and vegetables in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b1e2a997fdd13bac-v1-814eaa14cfd0.jpg"
+    },
+    {
+      "candidateId": "candidate-b220d5659fc57fd1",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b220d5659fc57fd1",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b220d5659fc57fd1-v1-08eba53a48ef.jpg",
+        "bytes": 164683,
+        "sha256": "08eba53a48efe5834587a2578bc0c2f952cfe8a15adafcb674e8ee1d1469b9e3",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:53:33.417Z",
+      "title": "Prato: Arroz branco cozido + Frango desfiado cozido + Couve-flor cozida",
+      "ingredients": [
+        "Arroz branco cozido",
+        "Frango desfiado cozido",
+        "Couve-flor cozida"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Arroz branco cozido; Frango desfiado cozido; Couve-flor cozida. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b220d5659fc57fd1-v1-08eba53a48ef.jpg"
+    },
+    {
+      "candidateId": "candidate-b22146c9276c4407",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b22146c9276c4407",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b22146c9276c4407-v1-4f29ddaeaedc.jpg",
+        "bytes": 181007,
+        "sha256": "4f29ddaeaedc6381b5fcf2a3db5870219d2e28d086ca3cb57a03ef9ba752c9dc",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:53:36.624Z",
+      "title": "Prato: Mandioca cozida + Frango desfiado cozido + Pimentão vermelho",
+      "ingredients": [
+        "Mandioca cozida",
+        "Frango desfiado cozido",
+        "Pimentão vermelho"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Mandioca cozida; Frango desfiado cozido; Pimentão vermelho. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b22146c9276c4407-v1-4f29ddaeaedc.jpg"
+    },
+    {
+      "candidateId": "candidate-bcccbc49659cc0d1",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-bcccbc49659cc0d1",
+        "version": 1,
+        "path": "meal-images/photo-candidate-bcccbc49659cc0d1-v1-657774985efa.jpg",
+        "bytes": 201182,
+        "sha256": "657774985efab5f46d7c930a8eb40d163feb477ece707da5ecb9ad46e6995ab3",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:53:40.051Z",
+      "title": "Prato: Biscoito de arroz + Frango desfiado cozido + Alface",
+      "ingredients": [
+        "Biscoito de arroz",
+        "Frango desfiado cozido",
+        "Alface"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Biscoito de arroz; Frango desfiado cozido; Alface. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-bcccbc49659cc0d1-v1-657774985efa.jpg"
+    },
+    {
+      "candidateId": "candidate-b24fef579994252d",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b24fef579994252d",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b24fef579994252d-v1-ff51b05291ad.jpg",
+        "bytes": 197298,
+        "sha256": "ff51b05291ad4562c0afefe9c53c639738c736261e5fa498a0e4e82e73917e6e",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:53:58.242Z",
+      "title": "Prato: Arroz integral cozido + Pescada grelhada + Beterraba cozida",
+      "ingredients": [
+        "Arroz integral cozido",
+        "Pescada grelhada",
+        "Beterraba cozida"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Arroz integral cozido; Pescada grelhada; Beterraba cozida. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b24fef579994252d-v1-ff51b05291ad.jpg"
+    },
+    {
+      "candidateId": "candidate-b8f6409bd7dfb0e9",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b8f6409bd7dfb0e9",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b8f6409bd7dfb0e9-v1-53aa4dc64ad7.jpg",
+        "bytes": 167861,
+        "sha256": "53aa4dc64ad79e51ff03f9e1874b0676976ca5f3ffac99bdcbc6a03200a91dbe",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:54:01.327Z",
+      "title": "Prato: Milho verde cozido + Carne bovina (patinho) + Abobrinha cozida",
+      "ingredients": [
+        "Milho verde cozido",
+        "Carne bovina (patinho)",
+        "Abobrinha cozida"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Milho verde cozido; Carne bovina (patinho); Abobrinha cozida. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b8f6409bd7dfb0e9-v1-53aa4dc64ad7.jpg"
+    },
+    {
+      "candidateId": "candidate-b8f935177dc53fe2",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b8f935177dc53fe2",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b8f935177dc53fe2-v1-7b01ac97aba0.jpg",
+        "bytes": 184573,
+        "sha256": "7b01ac97aba02484f956187b253d42f8d62cce2a4f3b00d794441e0fa4504349",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:54:04.401Z",
+      "title": "Prato: Batata inglesa cozida + Carne moída (patinho) + Berinjela cozida",
+      "ingredients": [
+        "Batata inglesa cozida",
+        "Carne moída (patinho)",
+        "Berinjela cozida"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Batata inglesa cozida; Carne moída (patinho); Berinjela cozida. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b8f935177dc53fe2-v1-7b01ac97aba0.jpg"
+    },
+    {
+      "candidateId": "candidate-b9126d5f1bc60355",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b9126d5f1bc60355",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b9126d5f1bc60355-v1-f62fe1a9f2b8.jpg",
+        "bytes": 178819,
+        "sha256": "f62fe1a9f2b8b367a0b8b6e7c2a1ce8391cb9ea2e9c987f69043dbc0d1a3919e",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:54:07.589Z",
+      "title": "Prato: Macarrão cozido + Carne suína (lombo assado) + Abobrinha cozida",
+      "ingredients": [
+        "Macarrão cozido",
+        "Carne suína (lombo assado)",
+        "Abobrinha cozida"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Macarrão cozido; Carne suína (lombo assado); Abobrinha cozida. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b9126d5f1bc60355-v1-f62fe1a9f2b8.jpg"
+    },
+    {
+      "candidateId": "candidate-b92156ed5ffa518c",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b92156ed5ffa518c",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b92156ed5ffa518c-v1-e79386c108be.jpg",
+        "bytes": 143843,
+        "sha256": "e79386c108beaf67ee5b0e5f5d1b12fa73194f61e364d736ef118f3d0fe62e13",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:54:10.535Z",
+      "title": "Bowl: Iogurte natural desnatado + Banana nanica + Castanha de caju",
+      "ingredients": [
+        "Iogurte natural desnatado",
+        "Banana nanica",
+        "Castanha de caju"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Iogurte natural desnatado; Banana nanica; Castanha de caju. Show the yogurt beneath the named fruit and topping in a white ceramic bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b92156ed5ffa518c-v1-e79386c108be.jpg"
+    },
+    {
+      "candidateId": "candidate-b92fc3e5b391bda2",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b92fc3e5b391bda2",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b92fc3e5b391bda2-v1-349e4b35e540.jpg",
+        "bytes": 181956,
+        "sha256": "349e4b35e54083aba1cbefd3f1ec8e662aeddc85a69fd993dac1e39e9b251bf8",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:54:13.488Z",
+      "title": "Prato com leguminosa: Batata doce cozida + Lentilha cozida + Alface",
+      "ingredients": [
+        "Batata doce cozida",
+        "Lentilha cozida",
+        "Alface"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Batata doce cozida; Lentilha cozida; Alface. Arrange grains, cooked legumes and vegetables in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b92fc3e5b391bda2-v1-349e4b35e540.jpg"
+    },
+    {
+      "candidateId": "candidate-b983bdc5b11713f8",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b983bdc5b11713f8",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b983bdc5b11713f8-v1-90d0a8ddd30f.jpg",
+        "bytes": 190861,
+        "sha256": "90d0a8ddd30fe3fc5034a73ebf8059241e26f59cc6e17975b5755a64a987bb05",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:54:16.788Z",
+      "title": "Prato: Batata doce cozida + Carne bovina (patinho) + Rúcula",
+      "ingredients": [
+        "Batata doce cozida",
+        "Carne bovina (patinho)",
+        "Rúcula"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Batata doce cozida; Carne bovina (patinho); Rúcula. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b983bdc5b11713f8-v1-90d0a8ddd30f.jpg"
+    },
+    {
+      "candidateId": "candidate-b52f2e56e1c277df",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b52f2e56e1c277df",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b52f2e56e1c277df-v1-6e0a86767794.jpg",
+        "bytes": 180728,
+        "sha256": "6e0a86767794677f8a8e2c948384472631d19e7f3310b9632097612bb7561ff8",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:54:50.030Z",
+      "title": "Prato com leguminosa: Arroz integral cozido + Feijão preto cozido + Abóbora cabotiá cozida",
+      "ingredients": [
+        "Arroz integral cozido",
+        "Feijão preto cozido",
+        "Abóbora cabotiá cozida"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Arroz integral cozido; Feijão preto cozido; Abóbora cabotiá cozida. Arrange grains, cooked legumes and vegetables in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b52f2e56e1c277df-v1-6e0a86767794.jpg"
+    },
+    {
+      "candidateId": "candidate-b543adb4e9421774",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b543adb4e9421774",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b543adb4e9421774-v1-99c057497354.jpg",
+        "bytes": 203633,
+        "sha256": "99c05749735422e5bc5d86a7e1482b2327ceb5f3a501b8619c1d6bdcf58419cd",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:54:53.039Z",
+      "title": "Prato: Milho verde cozido + Tilápia grelhada + Brócolis cozido",
+      "ingredients": [
+        "Milho verde cozido",
+        "Tilápia grelhada",
+        "Brócolis cozido"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Milho verde cozido; Tilápia grelhada; Brócolis cozido. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b543adb4e9421774-v1-99c057497354.jpg"
+    },
+    {
+      "candidateId": "candidate-b5e1e8ad506f650e",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b5e1e8ad506f650e",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b5e1e8ad506f650e-v1-29860eca1117.jpg",
+        "bytes": 162294,
+        "sha256": "29860eca1117217ec2080a70039469f413cbde8b41acd101a15f1c8cc55a7fe2",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:54:55.886Z",
+      "title": "Prato: Macarrão cozido + Ovo inteiro cozido + Rúcula",
+      "ingredients": [
+        "Macarrão cozido",
+        "Ovo inteiro cozido",
+        "Rúcula"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Macarrão cozido; Ovo inteiro cozido; Rúcula. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b5e1e8ad506f650e-v1-29860eca1117.jpg"
+    },
+    {
+      "candidateId": "candidate-bcf80e84ed195835",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-bcf80e84ed195835",
+        "version": 1,
+        "path": "meal-images/photo-candidate-bcf80e84ed195835-v1-3db3127d5e3e.jpg",
+        "bytes": 171384,
+        "sha256": "3db3127d5e3ec866d0d9b150591510d469f58b2855f210cae91c38bbed0428d7",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:54:59.148Z",
+      "title": "Prato: Arroz branco cozido + Frango (coxa sem pele assada) + Alface",
+      "ingredients": [
+        "Arroz branco cozido",
+        "Frango (coxa sem pele assada)",
+        "Alface"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Arroz branco cozido; Frango (coxa sem pele assada); Alface. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-bcf80e84ed195835-v1-3db3127d5e3e.jpg"
+    },
+    {
+      "candidateId": "candidate-b27f89e81ecd98a2",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b27f89e81ecd98a2",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b27f89e81ecd98a2-v1-02da2bee3c3f.jpg",
+        "bytes": 185995,
+        "sha256": "02da2bee3c3f953558e7bac53a5ab0fcc92872c3326b9f08c7c036c7d9648068",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:56:17.556Z",
+      "title": "Prato: Batata doce cozida + Carne bovina (alcatra) + Cenoura crua",
+      "ingredients": [
+        "Batata doce cozida",
+        "Carne bovina (alcatra)",
+        "Cenoura crua"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Batata doce cozida; Carne bovina (alcatra); Cenoura crua. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b27f89e81ecd98a2-v1-02da2bee3c3f.jpg"
+    },
+    {
+      "candidateId": "candidate-b28dbc4263969530",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b28dbc4263969530",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b28dbc4263969530-v1-ed2e8f96b49e.jpg",
+        "bytes": 210148,
+        "sha256": "ed2e8f96b49e1fa2febedffd16a580d4817ed44eb92bdd69133c003ca71c04b0",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:56:20.764Z",
+      "title": "Prato: Arroz integral cozido + Frango (peito grelhado) + Agrião",
+      "ingredients": [
+        "Arroz integral cozido",
+        "Frango (peito grelhado)",
+        "Agrião"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Arroz integral cozido; Frango (peito grelhado); Agrião. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b28dbc4263969530-v1-ed2e8f96b49e.jpg"
+    },
+    {
+      "candidateId": "candidate-b2941feceb79210a",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b2941feceb79210a",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b2941feceb79210a-v1-c0e289efece2.jpg",
+        "bytes": 185279,
+        "sha256": "c0e289efece29e719ceaec79aefaa5a30c361033f96f0f30b93f6fe5e7183ecb",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:56:23.861Z",
+      "title": "Prato com leguminosa: Batata doce cozida + Grão de bico cozido + Alface",
+      "ingredients": [
+        "Batata doce cozida",
+        "Grão de bico cozido",
+        "Alface"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Batata doce cozida; Grão de bico cozido; Alface. Arrange grains, cooked legumes and vegetables in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b2941feceb79210a-v1-c0e289efece2.jpg"
+    },
+    {
+      "candidateId": "candidate-bd1f83a2d34e09e7",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-bd1f83a2d34e09e7",
+        "version": 1,
+        "path": "meal-images/photo-candidate-bd1f83a2d34e09e7-v1-f2777841f2cb.jpg",
+        "bytes": 214071,
+        "sha256": "f2777841f2cb07cc233ab1f03c3115d165902627767ab80f56248c8225f4d65c",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:56:27.453Z",
+      "title": "Prato: Cuscuz de milho + Tilápia grelhada + Couve refogada",
+      "ingredients": [
+        "Cuscuz de milho",
+        "Tilápia grelhada",
+        "Couve refogada"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Cuscuz de milho; Tilápia grelhada; Couve refogada. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-bd1f83a2d34e09e7-v1-f2777841f2cb.jpg"
+    },
+    {
+      "candidateId": "candidate-bd4caa7c663daf45",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-bd4caa7c663daf45",
+        "version": 1,
+        "path": "meal-images/photo-candidate-bd4caa7c663daf45-v1-1b9651ed8952.jpg",
+        "bytes": 191923,
+        "sha256": "1b9651ed895240a1b334fb1e020000344cb71d8a84be76a0a577b1be5db2c2df",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:56:30.648Z",
+      "title": "Legumes com finalização: Brócolis cozido + Alho + Azeite de oliva",
+      "ingredients": [
+        "Brócolis cozido",
+        "Alho",
+        "Azeite de oliva"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Brócolis cozido; Alho; Azeite de oliva. Show the named cooked vegetable finished with only the named seasoning and fat in a white ceramic bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-bd4caa7c663daf45-v1-1b9651ed8952.jpg"
+    },
+    {
+      "candidateId": "candidate-b2af6c69bf17cc4d",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b2af6c69bf17cc4d",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b2af6c69bf17cc4d-v1-a1d4ee927241.jpg",
+        "bytes": 197521,
+        "sha256": "a1d4ee9272414c50ca45f5e4559fff9c3e2d31119a4302a8372190d24f4164bb",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:56:48.948Z",
+      "title": "Prato: Milho verde cozido + Carne bovina (patinho) + Brócolis cozido",
+      "ingredients": [
+        "Milho verde cozido",
+        "Carne bovina (patinho)",
+        "Brócolis cozido"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Milho verde cozido; Carne bovina (patinho); Brócolis cozido. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b2af6c69bf17cc4d-v1-a1d4ee927241.jpg"
+    },
+    {
+      "candidateId": "candidate-b9c27a356ff956cd",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b9c27a356ff956cd",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b9c27a356ff956cd-v1-00e100564863.jpg",
+        "bytes": 173790,
+        "sha256": "00e1005648634db5e3674fd787b7931603205020c000386a6c26651909dd0fb0",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:56:52.048Z",
+      "title": "Prato: Macarrão cozido + Pescada grelhada + Cenoura crua",
+      "ingredients": [
+        "Macarrão cozido",
+        "Pescada grelhada",
+        "Cenoura crua"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Macarrão cozido; Pescada grelhada; Cenoura crua. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b9c27a356ff956cd-v1-00e100564863.jpg"
+    },
+    {
+      "candidateId": "candidate-b9cc10d5bd50168f",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b9cc10d5bd50168f",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b9cc10d5bd50168f-v1-765ac35831cc.jpg",
+        "bytes": 169312,
+        "sha256": "765ac35831cc5bf649f212bc04468cbacf77f6e8a8c82e308fa916fd04992ba8",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:56:55.100Z",
+      "title": "Prato: Arroz branco cozido + Frango desfiado cozido + Repolho cru",
+      "ingredients": [
+        "Arroz branco cozido",
+        "Frango desfiado cozido",
+        "Repolho cru"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Arroz branco cozido; Frango desfiado cozido; Repolho cru. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b9cc10d5bd50168f-v1-765ac35831cc.jpg"
+    },
+    {
+      "candidateId": "candidate-ba0ad5c48f624eac",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-ba0ad5c48f624eac",
+        "version": 1,
+        "path": "meal-images/photo-candidate-ba0ad5c48f624eac-v1-483c4d375430.jpg",
+        "bytes": 179055,
+        "sha256": "483c4d37543048e1c9654528fbfd9985187d1cd4c6dd395f7d5ad24d5f4036b8",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:56:58.290Z",
+      "title": "Prato: Arroz branco cozido + Carne bovina (patinho) + Quiabo cozido",
+      "ingredients": [
+        "Arroz branco cozido",
+        "Carne bovina (patinho)",
+        "Quiabo cozido"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Arroz branco cozido; Carne bovina (patinho); Quiabo cozido. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-ba0ad5c48f624eac-v1-483c4d375430.jpg"
+    },
+    {
+      "candidateId": "candidate-bd67d120cbd7eb9d",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-bd67d120cbd7eb9d",
+        "version": 1,
+        "path": "meal-images/photo-candidate-bd67d120cbd7eb9d-v1-266df9ba57c4.jpg",
+        "bytes": 174556,
+        "sha256": "266df9ba57c4cc8c7e5043f88a42e0ae081d499b4cd797f07c7335f032b0dcfe",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:57:01.384Z",
+      "title": "Prato: Mandioca cozida + Carne bovina (patinho) + Couve-flor cozida",
+      "ingredients": [
+        "Mandioca cozida",
+        "Carne bovina (patinho)",
+        "Couve-flor cozida"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Mandioca cozida; Carne bovina (patinho); Couve-flor cozida. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-bd67d120cbd7eb9d-v1-266df9ba57c4.jpg"
+    },
+    {
+      "candidateId": "candidate-b2c1d848a6ae0ace",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b2c1d848a6ae0ace",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b2c1d848a6ae0ace-v1-10161593b63b.jpg",
+        "bytes": 177338,
+        "sha256": "10161593b63b28e103facc8cdefa4a0096ccb87058265833d0d4129cd2242698",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:57:19.479Z",
+      "title": "Prato: Batata doce cozida + Carne suína (lombo assado) + Cenoura crua",
+      "ingredients": [
+        "Batata doce cozida",
+        "Carne suína (lombo assado)",
+        "Cenoura crua"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Batata doce cozida; Carne suína (lombo assado); Cenoura crua. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b2c1d848a6ae0ace-v1-10161593b63b.jpg"
+    },
+    {
+      "candidateId": "candidate-b5f4054780d0175e",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b5f4054780d0175e",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b5f4054780d0175e-v1-eca1ba4b517a.jpg",
+        "bytes": 192886,
+        "sha256": "eca1ba4b517a0cc13b8ea9f21e0466d3785984c8bf666356ece8c19dafe6ff45",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:57:22.755Z",
+      "title": "Prato: Macarrão cozido + Salmão grelhado + Alface",
+      "ingredients": [
+        "Macarrão cozido",
+        "Salmão grelhado",
+        "Alface"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Macarrão cozido; Salmão grelhado; Alface. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b5f4054780d0175e-v1-eca1ba4b517a.jpg"
+    },
+    {
+      "candidateId": "candidate-b60cfa184e94bbea",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b60cfa184e94bbea",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b60cfa184e94bbea-v1-52c90f96cc55.jpg",
+        "bytes": 199165,
+        "sha256": "52c90f96cc5535397975ee68296c7d83b31d35014db9a2c7a8f272945dd5d6de",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:57:25.767Z",
+      "title": "Prato: Cuscuz de milho + Frango (peito grelhado) + Rúcula",
+      "ingredients": [
+        "Cuscuz de milho",
+        "Frango (peito grelhado)",
+        "Rúcula"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Cuscuz de milho; Frango (peito grelhado); Rúcula. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b60cfa184e94bbea-v1-52c90f96cc55.jpg"
+    },
+    {
+      "candidateId": "candidate-b63b35f0fb9c95ec",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b63b35f0fb9c95ec",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b63b35f0fb9c95ec-v1-d0f83b9c8065.jpg",
+        "bytes": 198595,
+        "sha256": "d0f83b9c8065355542550ca78e38344f34988745249ef82a759d4c257a0c79e8",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:57:29.070Z",
+      "title": "Prato: Cuscuz de milho + Pescada grelhada + Alface",
+      "ingredients": [
+        "Cuscuz de milho",
+        "Pescada grelhada",
+        "Alface"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Cuscuz de milho; Pescada grelhada; Alface. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b63b35f0fb9c95ec-v1-d0f83b9c8065.jpg"
+    },
+    {
+      "candidateId": "candidate-b65031a63c173150",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b65031a63c173150",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b65031a63c173150-v1-b219a89d2881.jpg",
+        "bytes": 163151,
+        "sha256": "b219a89d28811e5d66fdb00d7835611f4ee900845ea8f3de8158f4af7960c53f",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:57:31.990Z",
+      "title": "Prato com leguminosa: Arroz branco cozido + Lentilha cozida + Beterraba cozida",
+      "ingredients": [
+        "Arroz branco cozido",
+        "Lentilha cozida",
+        "Beterraba cozida"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Arroz branco cozido; Lentilha cozida; Beterraba cozida. Arrange grains, cooked legumes and vegetables in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b65031a63c173150-v1-b219a89d2881.jpg"
+    },
+    {
+      "candidateId": "candidate-b6aa6b377e67d046",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b6aa6b377e67d046",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b6aa6b377e67d046-v1-0945ee2aa721.jpg",
+        "bytes": 175856,
+        "sha256": "0945ee2aa721caff54fbec1e4d8ee2da06cd0453c7e09e12e62e289531805d81",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:57:35.168Z",
+      "title": "Prato: Mandioca cozida + Frango (coxa sem pele assada) + Alface",
+      "ingredients": [
+        "Mandioca cozida",
+        "Frango (coxa sem pele assada)",
+        "Alface"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Mandioca cozida; Frango (coxa sem pele assada); Alface. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b6aa6b377e67d046-v1-0945ee2aa721.jpg"
+    },
+    {
+      "candidateId": "candidate-b2c204a2402f7bcf",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b2c204a2402f7bcf",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b2c204a2402f7bcf-v1-12c359e174d5.jpg",
+        "bytes": 176284,
+        "sha256": "12c359e174d57f6cac182b3da27b44ec025c97ddeaffdbacb73cd28eb9114a8e",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:57:53.094Z",
+      "title": "Prato: Batata doce cozida + Atum em água (lata) + Tomate",
+      "ingredients": [
+        "Batata doce cozida",
+        "Atum em água (lata)",
+        "Tomate"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Batata doce cozida; Atum em água (lata); Tomate. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b2c204a2402f7bcf-v1-12c359e174d5.jpg"
+    },
+    {
+      "candidateId": "candidate-bd6dd2001f9489d7",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-bd6dd2001f9489d7",
+        "version": 1,
+        "path": "meal-images/photo-candidate-bd6dd2001f9489d7-v1-9871231b2782.jpg",
+        "bytes": 175583,
+        "sha256": "9871231b2782a854ff4532c0277ed2a6b8b649f36ec626ec8a6dbda06d5c4c9e",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:58:11.135Z",
+      "title": "Prato com leguminosa: Cuscuz de milho + Feijão carioca cozido + Couve refogada",
+      "ingredients": [
+        "Cuscuz de milho",
+        "Feijão carioca cozido",
+        "Couve refogada"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Cuscuz de milho; Feijão carioca cozido; Couve refogada. Arrange grains, cooked legumes and vegetables in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-bd6dd2001f9489d7-v1-9871231b2782.jpg"
+    },
+    {
+      "candidateId": "candidate-bdc7aac9a5614054",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-bdc7aac9a5614054",
+        "version": 1,
+        "path": "meal-images/photo-candidate-bdc7aac9a5614054-v1-6357938e41c7.jpg",
+        "bytes": 166397,
+        "sha256": "6357938e41c7c62f0937eb581eb21db3ec6698d390437f5684472256beca5303",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:58:29.294Z",
+      "title": "Prato: Batata inglesa cozida + Salmão grelhado + Brócolis cozido",
+      "ingredients": [
+        "Batata inglesa cozida",
+        "Salmão grelhado",
+        "Brócolis cozido"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Batata inglesa cozida; Salmão grelhado; Brócolis cozido. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-bdc7aac9a5614054-v1-6357938e41c7.jpg"
+    },
+    {
+      "candidateId": "candidate-ba116d121c282482",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-ba116d121c282482",
+        "version": 1,
+        "path": "meal-images/photo-candidate-ba116d121c282482-v1-06fa82c633a5.jpg",
+        "bytes": 175146,
+        "sha256": "06fa82c633a535932b09b3cab00dc750d27d4cb5e56b76c4ac913e9a8888801c",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:59:17.295Z",
+      "title": "Prato com leguminosa: Arroz integral cozido + Feijão carioca cozido + Berinjela cozida",
+      "ingredients": [
+        "Arroz integral cozido",
+        "Feijão carioca cozido",
+        "Berinjela cozida"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Arroz integral cozido; Feijão carioca cozido; Berinjela cozida. Arrange grains, cooked legumes and vegetables in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-ba116d121c282482-v1-06fa82c633a5.jpg"
+    },
+    {
+      "candidateId": "candidate-bab43e9e662898a6",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-bab43e9e662898a6",
+        "version": 1,
+        "path": "meal-images/photo-candidate-bab43e9e662898a6-v1-e059c04a91b8.jpg",
+        "bytes": 174640,
+        "sha256": "e059c04a91b89717385d963a63f29352b48c458bc7b572069fe89a6d36c44d5d",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:59:20.446Z",
+      "title": "Prato com leguminosa: Cuscuz de milho + Feijão carioca cozido + Pepino",
+      "ingredients": [
+        "Cuscuz de milho",
+        "Feijão carioca cozido",
+        "Pepino"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Cuscuz de milho; Feijão carioca cozido; Pepino. Arrange grains, cooked legumes and vegetables in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-bab43e9e662898a6-v1-e059c04a91b8.jpg"
+    },
+    {
+      "candidateId": "candidate-bdc881566def0647",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-bdc881566def0647",
+        "version": 1,
+        "path": "meal-images/photo-candidate-bdc881566def0647-v1-361f5f8532d9.jpg",
+        "bytes": 196922,
+        "sha256": "361f5f8532d9dfa3b25def020aa20ee3e2ddbdfc417ffdf51245335b31440cd7",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:59:23.815Z",
+      "title": "Prato: Biscoito de arroz + Frango (peito grelhado) + Abobrinha cozida",
+      "ingredients": [
+        "Biscoito de arroz",
+        "Frango (peito grelhado)",
+        "Abobrinha cozida"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Biscoito de arroz; Frango (peito grelhado); Abobrinha cozida. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-bdc881566def0647-v1-361f5f8532d9.jpg"
+    },
+    {
+      "candidateId": "candidate-bac03a7b28f459be",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-bac03a7b28f459be",
+        "version": 1,
+        "path": "meal-images/photo-candidate-bac03a7b28f459be-v1-1939e4815827.jpg",
+        "bytes": 179491,
+        "sha256": "1939e4815827ac02da82e5d4718231989de183a208618e556820df611fc3c45b",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:59:26.523Z",
+      "title": "Prato: Cuscuz de milho + Clara de ovo + Cenoura crua",
+      "ingredients": [
+        "Cuscuz de milho",
+        "Clara de ovo",
+        "Cenoura crua"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Cuscuz de milho; Clara de ovo; Cenoura crua. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-bac03a7b28f459be-v1-1939e4815827.jpg"
+    },
+    {
+      "candidateId": "candidate-bad8a5029756d5a0",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-bad8a5029756d5a0",
+        "version": 1,
+        "path": "meal-images/photo-candidate-bad8a5029756d5a0-v1-f5eb454f920c.jpg",
+        "bytes": 190629,
+        "sha256": "f5eb454f920ce6726f430ffb3bb58af8e5a90c89b91de849dabb8cabf0261c81",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:59:29.467Z",
+      "title": "Prato: Cuscuz de milho + Carne suína (lombo assado) + Brócolis cozido",
+      "ingredients": [
+        "Cuscuz de milho",
+        "Carne suína (lombo assado)",
+        "Brócolis cozido"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Cuscuz de milho; Carne suína (lombo assado); Brócolis cozido. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-bad8a5029756d5a0-v1-f5eb454f920c.jpg"
+    },
+    {
+      "candidateId": "candidate-bb1bfe1cd9ca0732",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-bb1bfe1cd9ca0732",
+        "version": 1,
+        "path": "meal-images/photo-candidate-bb1bfe1cd9ca0732-v1-5145ef5a3361.jpg",
+        "bytes": 187501,
+        "sha256": "5145ef5a33614e244be987d38140bc26bd5ef54458b83245e58cfee387dcf387",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:59:32.922Z",
+      "title": "Bowl: Iogurte grego natural + Açaí (polpa sem açúcar) + Aveia em flocos",
+      "ingredients": [
+        "Iogurte grego natural",
+        "Açaí (polpa sem açúcar)",
+        "Aveia em flocos"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Iogurte grego natural; Açaí (polpa sem açúcar); Aveia em flocos. Show the yogurt beneath the named fruit and topping in a white ceramic bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-bb1bfe1cd9ca0732-v1-5145ef5a3361.jpg"
+    },
+    {
+      "candidateId": "candidate-be9e927e0a466813",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-be9e927e0a466813",
+        "version": 1,
+        "path": "meal-images/photo-candidate-be9e927e0a466813-v1-65d800915e80.jpg",
+        "bytes": 201157,
+        "sha256": "65d800915e802bda6b8919b7c7171cf249f60f65712d7211d4bdf9c193123956",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:59:36.174Z",
+      "title": "Prato: Cuscuz de milho + Atum em água (lata) + Alface",
+      "ingredients": [
+        "Cuscuz de milho",
+        "Atum em água (lata)",
+        "Alface"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Cuscuz de milho; Atum em água (lata); Alface. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-be9e927e0a466813-v1-65d800915e80.jpg"
+    },
+    {
+      "candidateId": "candidate-b6af80db6e553b5e",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b6af80db6e553b5e",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b6af80db6e553b5e-v1-7c2ba054ac66.jpg",
+        "bytes": 155643,
+        "sha256": "7c2ba054ac662e7b121ef536375012c8077f2b5343b2a7b319091d64bc160396",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:59:54.463Z",
+      "title": "Prato: Mandioca cozida + Frango (peito grelhado) + Chuchu cozido",
+      "ingredients": [
+        "Mandioca cozida",
+        "Frango (peito grelhado)",
+        "Chuchu cozido"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Mandioca cozida; Frango (peito grelhado); Chuchu cozido. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b6af80db6e553b5e-v1-7c2ba054ac66.jpg"
+    },
+    {
+      "candidateId": "candidate-b6b0b44229d539c9",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b6b0b44229d539c9",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b6b0b44229d539c9-v1-619752278c5c.jpg",
+        "bytes": 181847,
+        "sha256": "619752278c5c1be4449051b03c7f751d2f41c55ead83151ef1b2ba403cef1aa5",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T17:59:57.497Z",
+      "title": "Prato: Batata doce cozida + Carne bovina (alcatra) + Beterraba cozida",
+      "ingredients": [
+        "Batata doce cozida",
+        "Carne bovina (alcatra)",
+        "Beterraba cozida"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Batata doce cozida; Carne bovina (alcatra); Beterraba cozida. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b6b0b44229d539c9-v1-619752278c5c.jpg"
+    },
+    {
+      "candidateId": "candidate-b6d280fda72d2b9e",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b6d280fda72d2b9e",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b6d280fda72d2b9e-v1-617863fbe5aa.jpg",
+        "bytes": 148277,
+        "sha256": "617863fbe5aa86e08986c99046b7b734e300c9ff2bd11d0be589f034c960d1fe",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T18:00:00.234Z",
+      "title": "Prato com leguminosa: Arroz branco cozido + Grão de bico cozido + Abobrinha cozida",
+      "ingredients": [
+        "Arroz branco cozido",
+        "Grão de bico cozido",
+        "Abobrinha cozida"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Arroz branco cozido; Grão de bico cozido; Abobrinha cozida. Arrange grains, cooked legumes and vegetables in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b6d280fda72d2b9e-v1-617863fbe5aa.jpg"
+    },
+    {
+      "candidateId": "candidate-b71d4e920db06c41",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b71d4e920db06c41",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b71d4e920db06c41-v1-1359fdfd6eef.jpg",
+        "bytes": 177313,
+        "sha256": "1359fdfd6eefb493e5460964d837ffb5ef69d1c89e1968d6745998d032231bfb",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T18:00:03.602Z",
+      "title": "Prato: Mandioca cozida + Sardinha (lata, drenada) + Cenoura crua",
+      "ingredients": [
+        "Mandioca cozida",
+        "Sardinha (lata, drenada)",
+        "Cenoura crua"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Mandioca cozida; Sardinha (lata, drenada); Cenoura crua. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b71d4e920db06c41-v1-1359fdfd6eef.jpg"
+    },
+    {
+      "candidateId": "candidate-b75887a86c964685",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b75887a86c964685",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b75887a86c964685-v1-c2459955e216.jpg",
+        "bytes": 180257,
+        "sha256": "c2459955e2168055cac8027281238698084caf7f9b860455d4f2a93cbb17a892",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T18:00:06.502Z",
+      "title": "Prato: Batata doce cozida + Frango (peito grelhado) + Berinjela cozida",
+      "ingredients": [
+        "Batata doce cozida",
+        "Frango (peito grelhado)",
+        "Berinjela cozida"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Batata doce cozida; Frango (peito grelhado); Berinjela cozida. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b75887a86c964685-v1-c2459955e216.jpg"
+    },
+    {
+      "candidateId": "candidate-bb62a3e12fc0993f",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-bb62a3e12fc0993f",
+        "version": 1,
+        "path": "meal-images/photo-candidate-bb62a3e12fc0993f-v1-f7f5afcc5278.jpg",
+        "bytes": 181371,
+        "sha256": "f7f5afcc5278290a25454f5699f8c621d2d1a10665d337e1a4daa17c9e76d801",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T18:00:09.664Z",
+      "title": "Bowl: Iogurte grego natural + Uva + Aveia em flocos",
+      "ingredients": [
+        "Iogurte grego natural",
+        "Uva",
+        "Aveia em flocos"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Iogurte grego natural; Uva; Aveia em flocos. Show the yogurt beneath the named fruit and topping in a white ceramic bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-bb62a3e12fc0993f-v1-f7f5afcc5278.jpg"
+    },
+    {
+      "candidateId": "candidate-b7653b91b31527ff",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b7653b91b31527ff",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b7653b91b31527ff-v1-f0573b7eb92a.jpg",
+        "bytes": 183065,
+        "sha256": "f0573b7eb92a11d47096952fe7e1587e30d2dcc8307d51925acf1a66e6c6b634",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T18:00:27.751Z",
+      "title": "Prato: Mandioca cozida + Carne suína (lombo assado) + Alface",
+      "ingredients": [
+        "Mandioca cozida",
+        "Carne suína (lombo assado)",
+        "Alface"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Mandioca cozida; Carne suína (lombo assado); Alface. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b7653b91b31527ff-v1-f0573b7eb92a.jpg"
+    },
+    {
+      "candidateId": "candidate-bb80bea1b11ddd0c",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-bb80bea1b11ddd0c",
+        "version": 1,
+        "path": "meal-images/photo-candidate-bb80bea1b11ddd0c-v1-55c2b135db97.jpg",
+        "bytes": 189727,
+        "sha256": "55c2b135db97218a44a9a91d2380b9b34c8963142ddbeb6597c825671ed5c9d7",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T18:00:31.072Z",
+      "title": "Prato: Arroz branco cozido + Carne bovina (coxão mole) + Brócolis cozido",
+      "ingredients": [
+        "Arroz branco cozido",
+        "Carne bovina (coxão mole)",
+        "Brócolis cozido"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Arroz branco cozido; Carne bovina (coxão mole); Brócolis cozido. Arrange the three foods in adjacent sections in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-bb80bea1b11ddd0c-v1-55c2b135db97.jpg"
+    },
+    {
+      "candidateId": "candidate-b777a9b5fc0edb84",
+      "imageStatus": "completed",
+      "reviewStatus": "pending",
+      "asset": {
+        "id": "photo-candidate-b777a9b5fc0edb84",
+        "version": 1,
+        "path": "meal-images/photo-candidate-b777a9b5fc0edb84-v1-323873965490.jpg",
+        "bytes": 181557,
+        "sha256": "3238739654905d4e1edde8e2c712536100b2d092331586f79e225d947a0506cf",
+        "contentType": "image/jpeg"
+      },
+      "verifiedAt": "2026-10-15T18:01:03.887Z",
+      "title": "Prato com leguminosa: Arroz integral cozido + Lentilha cozida + Tomate",
+      "ingredients": [
+        "Arroz integral cozido",
+        "Lentilha cozida",
+        "Tomate"
+      ],
+      "prompt": "Use case: photorealistic-natural. Asset type: illustrative meal photograph for a nutrition recipe catalog. Primary request: a realistic appetizing serving containing ONLY these named catalog foods (names in Brazilian Portuguese): Arroz integral cozido; Lentilha cozida; Tomate. Arrange grains, cooked legumes and vegetables in a white ceramic shallow bowl. Respect the named food varieties and preparation states: cozido means boiled/cooked, grelhado grilled, assado roasted, cru raw, sem pele means SKINLESS with all skin removed before cooking. Keep raw vegetables raw. Meat, fish, seafood and egg whites must be fully cooked. Skinless chicken must show bare cooked meat fibers, never a golden skin sheet. Whole boiled eggs have firm yolks. Tofu and seitan are ready to eat. Tapioca goma is prepared as a white cassava crepe; it is not raw powder or a wheat pancake. Supplement powders are mixed into the named liquid, never served as loose powder. Do not invent sauces, herbs, toppings, other fruit or any ingredient that was not named. Whole prepared foods such as bread, pancakes, cheese bread, hummus and granola retain their normal appearance. Remove fruit peels, pits or cores that would not be eaten; do not add ingredient props beside the serving. Variety details when named: Ameixa means fresh juicy plum wedges with smooth purple-red skin and golden flesh, not dried wrinkled prunes; batata baroa is yellow arracacha (mandioquinha), not fibrous cassava; cuscuz marroquino is fine fluffy wheat couscous, not large pearl couscous; edamame is cooked shelled green soybeans, no inedible pods; feijao means the named bean variety, not lentils or chickpeas. Atum fresco grelhado is fully cooked grilled tuna: opaque beige-tan flaky muscle chunks with browned edges, no pink or red center, no rare sliced steaks. Frango coxa sem pele is skinless roasted thigh muscle: serve small irregular shredded fibrous pieces with matte beige flesh and very light browning on a few tips. No intact drumsticks or whole thighs, no glossy orange-brown surface sheets or crust, no skin layered over the meat. Style: realistic editorial food photography with natural food textures. Composition: square 1:1 overhead view, entire vessel fully visible and centered, neutral warm light-gray tabletop, soft natural daylight and gentle realistic shadows. Constraints: single photo, no collage, no people, hands, packaging, utensils, straws, text, logos or watermark. This is an illustrative photo, not an exact portion measurement.",
+      "generator": "imagegen",
+      "url": "https://ik.imagekit.io/q5oy5p6xj/meal-images/photo-candidate-b777a9b5fc0edb84-v1-323873965490.jpg"
     }
   ]
 }

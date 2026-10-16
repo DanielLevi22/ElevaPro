@@ -159,7 +159,7 @@
 - [ ] `candidate-bb52a9f8f50910be` — Legumes com finalização: Vagem cozida + Limão + Manteiga
 - [ ] `candidate-bb7a1c1522943992` — Legumes com finalização: Chuchu cozido + Alho + Óleo de coco
 - [ ] `candidate-bd4212bb2dacc61b` — Legumes com finalização: Abóbora cabotiá cozida + Limão + Óleo de canola
-- [ ] `candidate-bd4caa7c663daf45` — Legumes com finalização: Brócolis cozido + Alho + Azeite de oliva
+- [x] `candidate-bd4caa7c663daf45` — Legumes com finalização: Brócolis cozido + Alho + Azeite de oliva
 - [ ] `candidate-bd7bb568c10773cf` — Legumes com finalização: Brócolis cozido + Azeitona verde + Manteiga ghee
 - [ ] `candidate-be0bf05397a6b0bb` — Legumes com finalização: Vagem cozida + Limão + Azeite de oliva
 - [ ] `candidate-bf6c17270f874b38` — Legumes com finalização: Berinjela cozida + Alho + Óleo de coco
