@@ -30,7 +30,8 @@ export function NoteSheet({
     if (!student || !body.trim()) return;
     setSending(true);
     try {
-      const { data } = await supabase.auth.getUser();
+      const { data, error } = await supabase.auth.getUser();
+      if (error) throw error;
       if (!data.user) throw new Error('sem sessão');
       await notes.writeNote({ studentId: student.id, specialistId: data.user.id, body });
       setBody('');
