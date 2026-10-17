@@ -14,6 +14,7 @@ export type Database = {
           title: string;
           type: string;
         };
+        ComputedFields: never;
         Insert: {
           description?: string | null;
           earned_at?: string;
@@ -53,6 +54,7 @@ export type Database = {
           role: string;
           session_id: string;
         };
+        ComputedFields: never;
         Insert: {
           content: string;
           created_at?: string | null;
@@ -91,6 +93,7 @@ export type Database = {
           title: string | null;
           updated_at: string | null;
         };
+        ComputedFields: never;
         Insert: {
           archived_at?: string | null;
           created_at?: string | null;
@@ -178,6 +181,7 @@ export type Database = {
           trunk_rotated: boolean | null;
           weight_kg: number | null;
         };
+        ComputedFields: never;
         Insert: {
           axis_deviation_cm?: number | null;
           bmi?: number | null;
@@ -295,6 +299,7 @@ export type Database = {
           workout_completed: number;
           workout_target: number;
         };
+        ComputedFields: never;
         Insert: {
           completed?: boolean;
           completion_percentage?: number;
@@ -339,6 +344,7 @@ export type Database = {
           quantity: number;
           unit: string;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           diet_meal_id: string;
@@ -389,6 +395,7 @@ export type Database = {
           servings: number | null;
           target_calories: number | null;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           day_of_week?: number | null;
@@ -433,6 +440,7 @@ export type Database = {
           created_at: string;
           dietary_restrictions: string[];
           end_date: string;
+          end_reason: string | null;
           free_meal_days: number[];
           id: string;
           meals_per_day: number | null;
@@ -450,11 +458,13 @@ export type Database = {
           target_protein: number | null;
           version: number;
         };
+        ComputedFields: never;
         Insert: {
           allows_supplements?: boolean | null;
           created_at?: string;
           dietary_restrictions?: string[];
           end_date: string;
+          end_reason?: string | null;
           free_meal_days?: number[];
           id?: string;
           meals_per_day?: number | null;
@@ -477,6 +487,7 @@ export type Database = {
           created_at?: string;
           dietary_restrictions?: string[];
           end_date?: string;
+          end_reason?: string | null;
           free_meal_days?: number[];
           id?: string;
           meals_per_day?: number | null;
@@ -529,6 +540,7 @@ export type Database = {
           workout_exercise_id: string | null;
           workout_id: string;
         };
+        ComputedFields: never;
         Insert: {
           from_exercise_id?: string | null;
           id?: string;
@@ -600,6 +612,7 @@ export type Database = {
           venue: string;
           video_url: string | null;
         };
+        ComputedFields: never;
         Insert: {
           category?: string;
           created_at?: string;
@@ -652,6 +665,7 @@ export type Database = {
           serving_unit: string;
           source: string | null;
         };
+        ComputedFields: never;
         Insert: {
           calories?: number | null;
           carbs?: number | null;
@@ -710,6 +724,7 @@ export type Database = {
           student_id: string;
           synced_at: string;
         };
+        ComputedFields: never;
         Insert: {
           active_calories?: number;
           created_at?: string;
@@ -755,6 +770,7 @@ export type Database = {
           updated_at: string;
           water_ml: number;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           date: string;
@@ -792,6 +808,7 @@ export type Database = {
           logged_date: string;
           student_id: string;
         };
+        ComputedFields: never;
         Insert: {
           actual_items?: Json | null;
           completed?: boolean;
@@ -845,6 +862,7 @@ export type Database = {
           previous_values: NonNullable<Json>;
           student_id: string;
         };
+        ComputedFields: never;
         Insert: {
           assessment_id: string;
           corrected_at?: string;
@@ -921,6 +939,7 @@ export type Database = {
           student_id: string;
           weight_kg: number;
         };
+        ComputedFields: never;
         Insert: {
           assessed_at?: string;
           body_fat_pct?: number | null;
@@ -1008,6 +1027,68 @@ export type Database = {
           },
         ];
       };
+      plan_adjustments: {
+        Row: {
+          after_value: number;
+          approved_at: string;
+          before_value: number;
+          check_in_id: string | null;
+          diet_plan_id: string | null;
+          id: string;
+          kind: Database["public"]["Enums"]["plan_adjustment_kind"];
+          reason: string;
+          source: string;
+          student_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          after_value: number;
+          approved_at?: string;
+          before_value: number;
+          check_in_id?: string | null;
+          diet_plan_id?: string | null;
+          id?: string;
+          kind: Database["public"]["Enums"]["plan_adjustment_kind"];
+          reason: string;
+          source: string;
+          student_id: string;
+        };
+        Update: {
+          after_value?: number;
+          approved_at?: string;
+          before_value?: number;
+          check_in_id?: string | null;
+          diet_plan_id?: string | null;
+          id?: string;
+          kind?: Database["public"]["Enums"]["plan_adjustment_kind"];
+          reason?: string;
+          source?: string;
+          student_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "plan_adjustments_check_in_id_fkey";
+            columns: ["check_in_id"];
+            isOneToOne: false;
+            referencedRelation: "weekly_check_ins";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "plan_adjustments_diet_plan_id_fkey";
+            columns: ["diet_plan_id"];
+            isOneToOne: false;
+            referencedRelation: "diet_plans";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "plan_adjustments_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           account_status: Database["public"]["Enums"]["account_status"];
@@ -1021,6 +1102,7 @@ export type Database = {
           id: string;
           persona_track: string | null;
         };
+        ComputedFields: never;
         Insert: {
           account_status?: Database["public"]["Enums"]["account_status"];
           account_type: Database["public"]["Enums"]["account_type"];
@@ -1054,6 +1136,7 @@ export type Database = {
           updated_at: string;
           week_start_date: string;
         };
+        ComputedFields: never;
         Insert: {
           points: number;
           student_id: string;
@@ -1076,6 +1159,42 @@ export type Database = {
           },
         ];
       };
+      rest_periods: {
+        Row: {
+          created_at: string;
+          ended_on: string | null;
+          id: string;
+          planned_until: string | null;
+          starts_on: string;
+          student_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          ended_on?: string | null;
+          id?: string;
+          planned_until?: string | null;
+          starts_on: string;
+          student_id: string;
+        };
+        Update: {
+          created_at?: string;
+          ended_on?: string | null;
+          id?: string;
+          planned_until?: string | null;
+          starts_on?: string;
+          student_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "rest_periods_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       specialist_link_codes: {
         Row: {
           code: string;
@@ -1084,6 +1203,7 @@ export type Database = {
           id: string;
           specialist_id: string;
         };
+        ComputedFields: never;
         Insert: {
           code: string;
           created_at?: string;
@@ -1117,6 +1237,7 @@ export type Database = {
           student_id: string;
           updated_at: string;
         };
+        ComputedFields: never;
         Insert: {
           body: string;
           created_at?: string;
@@ -1157,6 +1278,7 @@ export type Database = {
           service_type: Database["public"]["Enums"]["service_type"];
           specialist_id: string;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           id?: string;
@@ -1188,6 +1310,7 @@ export type Database = {
           student_id: string;
           updated_at: string;
         };
+        ComputedFields: never;
         Insert: {
           completed_at?: string | null;
           created_at?: string;
@@ -1223,6 +1346,7 @@ export type Database = {
           revoked_at: string | null;
           student_id: string;
         };
+        ComputedFields: never;
         Insert: {
           consent_type: Database["public"]["Enums"]["consent_type"];
           given_at?: string;
@@ -1256,6 +1380,7 @@ export type Database = {
           id: string;
           student_id: string;
         };
+        ComputedFields: never;
         Insert: {
           code: string;
           expires_at: string;
@@ -1289,6 +1414,7 @@ export type Database = {
           status: Database["public"]["Enums"]["link_status"];
           student_id: string;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           ended_at?: string | null;
@@ -1344,6 +1470,7 @@ export type Database = {
           student_id: string;
           updated_at: string;
         };
+        ComputedFields: never;
         Insert: {
           current_streak?: number;
           freeze_available?: number;
@@ -1379,6 +1506,7 @@ export type Database = {
           created_at: string;
           duration_weeks: number | null;
           end_date: string;
+          end_reason: string | null;
           id: string;
           level: string | null;
           name: string;
@@ -1389,10 +1517,12 @@ export type Database = {
           student_id: string;
           updated_at: string;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           duration_weeks?: number | null;
           end_date: string;
+          end_reason?: string | null;
           id?: string;
           level?: string | null;
           name: string;
@@ -1407,6 +1537,7 @@ export type Database = {
           created_at?: string;
           duration_weeks?: number | null;
           end_date?: string;
+          end_reason?: string | null;
           id?: string;
           level?: string | null;
           name?: string;
@@ -1447,6 +1578,7 @@ export type Database = {
           start_date: string;
           status: Database["public"]["Enums"]["training_status"];
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           duration_weeks?: number | null;
@@ -1481,6 +1613,55 @@ export type Database = {
           },
         ];
       };
+      weekly_check_ins: {
+        Row: {
+          assessment_id: string | null;
+          created_at: string;
+          id: string;
+          logging: Database["public"]["Enums"]["check_in_logging"];
+          status: Database["public"]["Enums"]["check_in_status"];
+          student_id: string;
+          week_start: string;
+          weight_origin: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          assessment_id?: string | null;
+          created_at?: string;
+          id?: string;
+          logging: Database["public"]["Enums"]["check_in_logging"];
+          status?: Database["public"]["Enums"]["check_in_status"];
+          student_id: string;
+          week_start: string;
+          weight_origin?: string | null;
+        };
+        Update: {
+          assessment_id?: string | null;
+          created_at?: string;
+          id?: string;
+          logging?: Database["public"]["Enums"]["check_in_logging"];
+          status?: Database["public"]["Enums"]["check_in_status"];
+          student_id?: string;
+          week_start?: string;
+          weight_origin?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "weekly_check_ins_assessment_id_fkey";
+            columns: ["assessment_id"];
+            isOneToOne: false;
+            referencedRelation: "physical_assessments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "weekly_check_ins_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       workout_exercises: {
         Row: {
           created_at: string;
@@ -1494,6 +1675,7 @@ export type Database = {
           weight: string | null;
           workout_id: string;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           exercise_id: string;
@@ -1538,14 +1720,17 @@ export type Database = {
       workout_session_exercises: {
         Row: {
           created_at: string;
+          effort: string | null;
           exercise_id: string | null;
           id: string;
           notes: string | null;
           session_id: string;
           workout_exercise_id: string | null;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
+          effort?: string | null;
           exercise_id?: string | null;
           id?: string;
           notes?: string | null;
@@ -1554,6 +1739,7 @@ export type Database = {
         };
         Update: {
           created_at?: string;
+          effort?: string | null;
           exercise_id?: string | null;
           id?: string;
           notes?: string | null;
@@ -1599,6 +1785,7 @@ export type Database = {
           weight_actual: number | null;
           weight_prescribed: number | null;
         };
+        ComputedFields: never;
         Insert: {
           completed?: boolean;
           created_at?: string;
@@ -1648,6 +1835,7 @@ export type Database = {
           zone_4_pct: number | null;
           zone_5_pct: number | null;
         };
+        ComputedFields: never;
         Insert: {
           avg_heart_rate: number;
           created_at?: string;
@@ -1697,6 +1885,7 @@ export type Database = {
           student_id: string;
           workout_id: string | null;
         };
+        ComputedFields: never;
         Insert: {
           active_calories?: number | null;
           activity_name?: string | null;
@@ -1764,6 +1953,7 @@ export type Database = {
           training_plan_id: string | null;
           updated_at: string;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           day_of_week?: Database["public"]["Enums"]["day_of_week"] | null;
@@ -1826,6 +2016,7 @@ export type Database = {
           created_at: string;
           dietary_restrictions: string[];
           end_date: string;
+          end_reason: string | null;
           free_meal_days: number[];
           id: string;
           meals_per_day: number | null;
@@ -1856,6 +2047,38 @@ export type Database = {
           id: string;
           name: string;
         }[];
+      };
+      apply_weekly_calorie_adjustment: {
+        Args: { p_check_in_id: string; p_new_calories: number; p_reason: string };
+        Returns: {
+          allows_supplements: boolean | null;
+          created_at: string;
+          dietary_restrictions: string[];
+          end_date: string;
+          end_reason: string | null;
+          free_meal_days: number[];
+          id: string;
+          meals_per_day: number | null;
+          name: string | null;
+          notes: string | null;
+          plan_type: Database["public"]["Enums"]["diet_plan_type"];
+          source_plan_id: string | null;
+          specialist_id: string | null;
+          start_date: string;
+          status: Database["public"]["Enums"]["diet_plan_status"];
+          student_id: string;
+          target_calories: number | null;
+          target_carbs: number | null;
+          target_fat: number | null;
+          target_protein: number | null;
+          version: number;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "diet_plans";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       consume_rate_limit: {
         Args: {
@@ -1889,6 +2112,7 @@ export type Database = {
           created_at: string;
           dietary_restrictions: string[];
           end_date: string;
+          end_reason: string | null;
           free_meal_days: number[];
           id: string;
           meals_per_day: number | null;
@@ -1917,6 +2141,23 @@ export type Database = {
         Args: { p_chave: string; p_session_id: string; p_valor: Json };
         Returns: undefined;
       };
+      end_rest: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          created_at: string;
+          ended_on: string | null;
+          id: string;
+          planned_until: string | null;
+          starts_on: string;
+          student_id: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "rest_periods";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       get_leaderboard: {
         Args: { p_scope: string; p_week_start?: string };
         Returns: {
@@ -1928,11 +2169,38 @@ export type Database = {
           student_id: string;
         }[];
       };
+      keep_weekly_target: { Args: { p_check_in_id: string }; Returns: undefined };
       link_student_by_code: { Args: { p_code: string }; Returns: Json };
       link_to_specialist_by_code: { Args: { p_code: string }; Returns: Json };
       record_exercise_swap: {
         Args: { p_scope: string; p_to_exercise_id: string; p_workout_exercise_id: string };
         Returns: undefined;
+      };
+      record_plan_simplification: {
+        Args: {
+          p_check_in_id: string;
+          p_diet_plan_id: string;
+          p_meals_after: number;
+          p_meals_before: number;
+        };
+        Returns: {
+          after_value: number;
+          approved_at: string;
+          before_value: number;
+          check_in_id: string | null;
+          diet_plan_id: string | null;
+          id: string;
+          kind: Database["public"]["Enums"]["plan_adjustment_kind"];
+          reason: string;
+          source: string;
+          student_id: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "plan_adjustments";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       record_security_audit_event: {
         Args: {
@@ -1952,14 +2220,88 @@ export type Database = {
         Args: { p_account_type: Database["public"]["Enums"]["account_type"]; p_full_name?: string };
         Returns: undefined;
       };
+      start_rest: {
+        Args: { p_until: string };
+        Returns: {
+          created_at: string;
+          ended_on: string | null;
+          id: string;
+          planned_until: string | null;
+          starts_on: string;
+          student_id: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "rest_periods";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      submit_weekly_check_in: {
+        Args: {
+          p_logging: Database["public"]["Enums"]["check_in_logging"];
+          p_weight_kg: number;
+          p_weight_origin?: string;
+        };
+        Returns: {
+          assessment_id: string | null;
+          created_at: string;
+          id: string;
+          logging: Database["public"]["Enums"]["check_in_logging"];
+          status: Database["public"]["Enums"]["check_in_status"];
+          student_id: string;
+          week_start: string;
+          weight_origin: string | null;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "weekly_check_ins";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       swap_workout_exercise: {
         Args: { p_exercise_id: string; p_workout_exercise_id: string };
         Returns: undefined;
+      };
+      undo_weekly_calorie_adjustment: {
+        Args: { p_check_in_id: string };
+        Returns: {
+          allows_supplements: boolean | null;
+          created_at: string;
+          dietary_restrictions: string[];
+          end_date: string;
+          end_reason: string | null;
+          free_meal_days: number[];
+          id: string;
+          meals_per_day: number | null;
+          name: string | null;
+          notes: string | null;
+          plan_type: Database["public"]["Enums"]["diet_plan_type"];
+          source_plan_id: string | null;
+          specialist_id: string | null;
+          start_date: string;
+          status: Database["public"]["Enums"]["diet_plan_status"];
+          student_id: string;
+          target_calories: number | null;
+          target_carbs: number | null;
+          target_fat: number | null;
+          target_protein: number | null;
+          version: number;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "diet_plans";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
     };
     Enums: {
       account_status: "active" | "inactive" | "invited";
       account_type: "admin" | "specialist" | "student" | "member";
+      check_in_logging: "all" | "partial" | "followed_unlogged" | "not_followed";
+      check_in_status: "pending" | "approved" | "kept";
       consent_type: "health_data_collection" | "technique_analysis" | "ranking";
       day_of_week:
         | "monday"
@@ -1973,6 +2315,7 @@ export type Database = {
       diet_plan_type: "unique" | "cyclic";
       link_status: "active" | "inactive";
       measurement_source: "specialist" | "self";
+      plan_adjustment_kind: "calories" | "plan_simplified";
       scale_source: "assessment" | "anamnese" | "self";
       service_type: "personal_training" | "nutrition_consulting";
       training_status: "planned" | "active" | "completed";
@@ -2095,12 +2438,15 @@ export const Constants = {
     Enums: {
       account_status: ["active", "inactive", "invited"],
       account_type: ["admin", "specialist", "student", "member"],
+      check_in_logging: ["all", "partial", "followed_unlogged", "not_followed"],
+      check_in_status: ["pending", "approved", "kept"],
       consent_type: ["health_data_collection", "technique_analysis", "ranking"],
       day_of_week: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
       diet_plan_status: ["active", "finished", "draft"],
       diet_plan_type: ["unique", "cyclic"],
       link_status: ["active", "inactive"],
       measurement_source: ["specialist", "self"],
+      plan_adjustment_kind: ["calories", "plan_simplified"],
       scale_source: ["assessment", "anamnese", "self"],
       service_type: ["personal_training", "nutrition_consulting"],
       training_status: ["planned", "active", "completed"],

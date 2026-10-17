@@ -23,6 +23,7 @@ export function BriefingSummary({ signals, activeStudents, today }: BriefingSumm
   const invites = signals.filter((s) => s.kind === "pending_invite").length;
   const ready = signals.filter((s) => s.kind === "anamnesis_ready").length;
   const swapped = signals.filter((s) => s.kind === "exercise_swap").length;
+  const checkedIn = signals.filter((s) => s.kind === "weekly_check_in").length;
 
   return (
     <section>
@@ -62,7 +63,13 @@ export function BriefingSummary({ signals, activeStudents, today }: BriefingSumm
                 semana.{" "}
               </>
             )}
-            {inactive === 0 && invites === 0 && ready === 0 && swapped === 0 && (
+            {checkedIn > 0 && (
+              <>
+                {plural(checkedIn, "check-in da semana espera", "check-ins da semana esperam")} a
+                sua revisão.{" "}
+              </>
+            )}
+            {inactive === 0 && invites === 0 && ready === 0 && swapped === 0 && checkedIn === 0 && (
               <>Nada exige ação agora — todo mundo está em dia.</>
             )}
           </>

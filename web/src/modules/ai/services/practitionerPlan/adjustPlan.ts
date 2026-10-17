@@ -6,7 +6,8 @@ import { readPlanChoices } from "./planChoices";
 /** O que a IA recebe em "Mais barato" e "Mais rápido": sem dado, ela estima. */
 const CHEAPER =
   "Prefira alimentos mais baratos e comuns no Brasil (feijão, ovo, frango, arroz, banana, legumes da estação).";
-const FASTER =
+/** Também o plano mais simples do check-in (A5c). */
+export const FASTER =
   "Prefira refeições de preparo rápido, de até 15 minutos, ou que não precisem de fogão.";
 
 export type AdjustmentOutcome = GenerationOutcome | { ok: false; reason: "nothing_to_adjust" };

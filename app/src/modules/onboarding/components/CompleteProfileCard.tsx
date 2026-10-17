@@ -1,6 +1,7 @@
 import type { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { useAuthStore } from '@/auth';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
 import { CaixaDeIcone } from '@/components/ui/CaixaDeIcone';
 import { Vidro } from '@/components/ui/Vidro';
@@ -57,6 +58,7 @@ const DESTINO: Record<
 export function CompleteProfileCard() {
   const router = useRouter();
   const gap = useProfileCompletion();
+  const studentId = useAuthStore((state) => state.session?.user.id ?? null);
   if (!gap) return null;
   const copy = COPY[gap];
 
@@ -78,7 +80,7 @@ export function CompleteProfileCard() {
       />
       {gap === 'scan_never_done' ? (
         <TouchableOpacity
-          onPress={() => useOnboardingStore.getState().dismissScanCard()}
+          onPress={() => studentId && useOnboardingStore.getState().dismissScanCard(studentId)}
           accessibilityRole="button"
           className="items-center py-1"
         >

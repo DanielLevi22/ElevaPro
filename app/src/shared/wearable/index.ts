@@ -7,6 +7,7 @@
  */
 
 import type { SessionVitals } from '@elevapro/shared';
+import { averageWeight } from './bodyWeight';
 import { clearCapabilityReport } from './capabilityCache';
 import { currentPlatform } from './currentPlatform';
 import type { DailyAggregate } from './daily';
@@ -101,6 +102,19 @@ export async function readSessionVitals(
 ): Promise<SessionVitals | null> {
   const platform = currentPlatform();
   return platform ? vitalsFromReader(platform.reader, { start, end }, maxHeartRate) : null;
+}
+
+/**
+ * A média das pesagens do intervalo no app Saúde / Health Connect, ou `null`
+ * sem plataforma, sem permissão ou sem pesagem (F9). Pede a leitura do peso na
+ * hora: é o toque em "Usar o peso do app Saúde". As pesagens nunca saem daqui.
+ *
+ * @example const kg = await readWeekAverageWeight(segunda, agora);
+ */
+export async function readWeekAverageWeight(start: Date, end: Date): Promise<number | null> {
+  const platform = currentPlatform();
+  if (!platform) return null;
+  return averageWeight(await platform.readWeights({ start, end }));
 }
 
 /**

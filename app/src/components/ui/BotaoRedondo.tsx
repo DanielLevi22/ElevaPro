@@ -9,6 +9,7 @@ import Ellipsis from 'lucide-react-native/icons/ellipsis';
 import Heart from 'lucide-react-native/icons/heart';
 import Info from 'lucide-react-native/icons/info';
 import Link from 'lucide-react-native/icons/link';
+import MessageCircle from 'lucide-react-native/icons/message-circle';
 import Mic from 'lucide-react-native/icons/mic';
 import MicOff from 'lucide-react-native/icons/mic-off';
 import Music from 'lucide-react-native/icons/music';
@@ -17,6 +18,7 @@ import Plus from 'lucide-react-native/icons/plus';
 import RefreshCw from 'lucide-react-native/icons/refresh-cw';
 import Ruler from 'lucide-react-native/icons/ruler';
 import Search from 'lucide-react-native/icons/search';
+import Settings from 'lucide-react-native/icons/settings';
 import Share from 'lucide-react-native/icons/share';
 import Sparkles from 'lucide-react-native/icons/sparkles';
 // No lucide 1.46 o `trash-2` do kit é apelido do arquivo `trash`.
@@ -76,6 +78,10 @@ const ICONS = {
   /** O assistente de IA na montagem das refeições, e as opções do plano (#337). */
   sparkles: Sparkles,
   ellipsis: Ellipsis,
+  /** A engrenagem do perfil, que abre o menu (09 · Perfil, #376). */
+  settings: Settings,
+  /** A mensagem do especialista no sinal do painel (#376, F8). */
+  'message-circle': MessageCircle,
 } as const satisfies Record<string, LucideIcon>;
 
 export type RoundIcon = keyof typeof ICONS;

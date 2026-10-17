@@ -11,7 +11,8 @@ interface BeforeAfterRowProps {
   after: string;
   /** O selo à direita: "0 kcal", "+80 kcal", "estimativa". */
   badge: string;
-  onPress: () => void;
+  /** Sem ele a linha só mostra: o ajuste proposto do check-in não se toca. */
+  onPress?: () => void;
   disabled?: boolean;
   first?: boolean;
 }
@@ -20,7 +21,7 @@ const ARROW_SIZE = 12;
 
 /**
  * A linha de ajuste do kit (`AntesDepois` no desenho): o que é hoje riscado, a
- * seta e o que passa a ser, com o efeito à direita. Toque aplica.
+ * seta e o que passa a ser, com o efeito à direita. Com `onPress`, toque aplica.
  *
  * @example <BeforeAfterRow icon="repeat" title="Trocar um alimento" before="Frango" after="Tilápia" badge="0 kcal" onPress={trocar} />
  */
@@ -36,14 +37,15 @@ export function BeforeAfterRow({
 }: BeforeAfterRowProps) {
   const cores = useCores();
   const escalar = useEscala();
+  const Container = onPress ? TouchableOpacity : View;
   return (
-    <TouchableOpacity
+    <Container
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.8}
-      accessibilityRole="button"
+      accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={`${title}: de ${before} para ${after}`}
-      accessibilityState={{ disabled }}
+      accessibilityState={onPress ? { disabled } : undefined}
       className={cn(
         'flex-row items-start gap-3 py-[0.6875rem]',
         !first && 'border-t border-glass-border',
@@ -62,7 +64,7 @@ export function BeforeAfterRow({
       <Text className="rounded-full bg-glass-strong px-2 py-1 font-mono text-[0.65625rem] font-bold text-foreground">
         {badge}
       </Text>
-    </TouchableOpacity>
+    </Container>
   );
 }
 

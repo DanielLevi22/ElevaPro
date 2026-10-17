@@ -370,8 +370,10 @@ describe("workoutsService — colunas das leituras do aluno", () => {
 
     await createWorkoutsService(supabase).fetchStudentPeriodizations("aluno-1");
 
+    // `end_reason` entrou com o histórico de blocos (#376, C3), que mostra como
+    // cada plano acabou.
     expect(chamadas[0].select).toBe(
-      "id, specialist_id, student_id, name, objective, status, start_date, end_date, created_at, updated_at",
+      "id, specialist_id, student_id, name, objective, status, start_date, end_date, end_reason, created_at, updated_at",
     );
     expect(chamadas[0].filtros).toEqual({ student_id: "aluno-1" });
   });

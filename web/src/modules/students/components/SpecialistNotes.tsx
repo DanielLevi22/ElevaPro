@@ -59,7 +59,8 @@ export function SpecialistNotes({ studentId, studentName }: SpecialistNotesProps
   };
 
   return (
-    <section className="mt-6">
+    // `notes`: o "Mensagem" do painel de atenção abre aqui (#376, F8).
+    <section id="notes" className="mt-6 scroll-mt-6">
       <h2 className="text-sm font-black uppercase tracking-[0.2em] text-foreground">
         Notas de progresso
       </h2>

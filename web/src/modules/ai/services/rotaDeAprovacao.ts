@@ -178,7 +178,7 @@ export interface Aprovacao<Proposta, Resultado> {
    * apagar a refeição leva os alimentos. Ausente quando a gravação é um insert
    * só — aí não existe "meio".
    */
-  desfazerEm?: "workouts" | "diet_meals" | "training_periodizations";
+  desfazerEm?: "workouts" | "diet_meals" | "training_periodizations" | "diet_plans";
   /**
    * Checagem que roda **antes** da reivindicação.
    *

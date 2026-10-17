@@ -6,7 +6,7 @@ import {
 } from '@kingstinct/react-native-healthkit';
 import { Linking } from 'react-native';
 import { ASLEEP_STAGES, type DailyAggregate, sleepRange, todayRange } from './daily';
-import { healthKitReadTypes } from './permissions';
+import { HEALTH_KIT_WEIGHT, healthKitReadTypes } from './permissions';
 import type { ReadContext, WearablePlatform } from './platform';
 import { plausibleInteger, RESTING_BPM, SLEEP_MINUTES } from './plausible';
 import { minutesBetween } from './time';
@@ -199,6 +199,20 @@ async function openSettings(): Promise<void> {
   }
 }
 
+async function readWeights(range: TimeRange): Promise<number[]> {
+  try {
+    await requestAuthorization({ toRead: [HEALTH_KIT_WEIGHT] });
+    const samples = await queryQuantitySamples(HEALTH_KIT_WEIGHT, {
+      ...dateFilter(range),
+      limit: ALL_SAMPLES,
+      unit: 'kg',
+    });
+    return samples.map((sample) => sample.quantity);
+  } catch {
+    return [];
+  }
+}
+
 /** O HealthKit, no iPhone. */
 export const healthKitPlatform: WearablePlatform = {
   name: 'healthkit',
@@ -209,6 +223,7 @@ export const healthKitPlatform: WearablePlatform = {
   requestBackgroundRead: async () => {},
   ensureTodayAccess,
   readToday,
+  readWeights,
   // O iOS entrega em segundo plano pela própria tarefa, sem permissão à parte.
   backgroundReadStatus: async () => 'not_applicable',
   openSettings,

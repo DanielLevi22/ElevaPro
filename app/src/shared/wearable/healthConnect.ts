@@ -8,7 +8,7 @@ import {
 } from 'react-native-health-connect';
 import { registrarAviso } from '@/lib/registro';
 import { ASLEEP_STAGES, type DailyAggregate, sleepRange, todayRange } from './daily';
-import { healthConnectReadTypes } from './permissions';
+import { HEALTH_CONNECT_WEIGHT, healthConnectReadTypes } from './permissions';
 import type {
   BackgroundReadStatus,
   DisconnectResult,
@@ -237,6 +237,20 @@ async function disconnect(): Promise<DisconnectResult> {
   return 'revoked';
 }
 
+async function readWeights(range: TimeRange): Promise<number[]> {
+  if (!(await isAvailable())) return [];
+  try {
+    const granted = await requestPermission([
+      { accessType: 'read', recordType: HEALTH_CONNECT_WEIGHT },
+    ]);
+    if (!granted.some((permission) => permission.recordType === HEALTH_CONNECT_WEIGHT)) return [];
+    const { records } = await readRecords(HEALTH_CONNECT_WEIGHT, between(range));
+    return records.map((record) => record.weight.inKilograms);
+  } catch {
+    return [];
+  }
+}
+
 /** O Health Connect, no Android. */
 export const healthConnectPlatform: WearablePlatform = {
   name: 'health_connect',
@@ -246,6 +260,7 @@ export const healthConnectPlatform: WearablePlatform = {
   requestBackgroundRead,
   ensureTodayAccess,
   readToday,
+  readWeights,
   backgroundReadStatus,
   openSettings,
   disconnect,

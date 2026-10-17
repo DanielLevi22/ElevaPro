@@ -301,3 +301,59 @@ describe('máquina da sessão de treino', () => {
     expect(tempoDaSessao(emExecucao, segundos(90))).toBe(90);
   });
 });
+
+describe('o esforço do exercício e a carga sugerida (#376)', () => {
+  const inicial = estadoInicial([item('puxada', 1), item('remada', 1)]);
+
+  it('ao fechar a última série de um exercício, ele espera a pergunta do esforço', () => {
+    const depois = aplicar(inicial, { tipo: 'iniciar', agora: T0 }, ...fazerSerie(1, 30));
+    expect(depois.pendingEffortId).toBe('puxada');
+  });
+
+  it('responder grava o esforço e fecha a pergunta; pular fecha sem gravar', () => {
+    const feita = aplicar(inicial, { tipo: 'iniciar', agora: T0 }, ...fazerSerie(1, 30));
+    const respondida = transicionar(feita, {
+      tipo: 'rateEffort',
+      itemId: 'puxada',
+      effort: 'easy',
+    });
+    expect(respondida.efforts).toEqual({ puxada: 'easy' });
+    expect(respondida.pendingEffortId).toBeNull();
+
+    const pulada = transicionar(feita, { tipo: 'rateEffort', itemId: 'puxada', effort: null });
+    expect(pulada.efforts).toEqual({});
+    expect(pulada.pendingEffortId).toBeNull();
+  });
+
+  it('não responde por um exercício que não está esperando a pergunta', () => {
+    const feita = aplicar(inicial, { tipo: 'iniciar', agora: T0 }, ...fazerSerie(1, 30));
+    expect(transicionar(feita, { tipo: 'rateEffort', itemId: 'remada', effort: 'hard' })).toBe(
+      feita
+    );
+  });
+
+  it('a carga sugerida entra antes de começar, e é ela que a série grava', () => {
+    const sugerida = transicionar(inicial, {
+      tipo: 'applySuggestedLoads',
+      weights: { puxada: '42,5' },
+    });
+    const feita = aplicar(sugerida, { tipo: 'iniciar', agora: T0 }, ...fazerSerie(1, 30));
+    expect(feita.feitas.puxada).toEqual([{ reps: 10, carga: 42.5 }]);
+  });
+
+  it('com o treino correndo, a carga sugerida não muda mais nada', () => {
+    const correndo = aplicar(inicial, { tipo: 'iniciar', agora: T0 });
+    expect(transicionar(correndo, { tipo: 'applySuggestedLoads', weights: { puxada: '99' } })).toBe(
+      correndo
+    );
+  });
+
+  it('na semana de descarga cada exercício perde metade das séries, antes de começar', () => {
+    const descarga = transicionar(inicial, { tipo: 'applyDeload' });
+    expect(descarga.itens.map((item) => item.sets)).toEqual(
+      inicial.itens.map((item) => (item.sets ? Math.max(1, Math.ceil(item.sets / 2)) : item.sets))
+    );
+    const correndo = aplicar(inicial, { tipo: 'iniciar', agora: T0 });
+    expect(transicionar(correndo, { tipo: 'applyDeload' })).toBe(correndo);
+  });
+});

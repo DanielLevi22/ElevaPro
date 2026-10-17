@@ -8,6 +8,7 @@ import {
 } from '@elevapro/supabase';
 import type { Session, User } from '@supabase/supabase-js';
 import { create } from 'zustand';
+import { resetNotices } from '@/shared/notices';
 // Direto do arquivo do cache, e não do índice do módulo: o índice arrasta os
 // adaptadores nativos do Health Connect e do HealthKit para dentro do login.
 import { clearCapabilityReport } from '@/shared/wearable/capabilityCache';
@@ -250,6 +251,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // O próximo Student do aparelho pode usar outro relógio: o relatório de um não
     // pode liberar tela para o outro (Art. 18).
     clearCapabilityReport();
+    // Os avisos agendados e o widget eram de quem saiu (#376).
+    await resetNotices();
   },
 
   signIn: async (email, password) => {

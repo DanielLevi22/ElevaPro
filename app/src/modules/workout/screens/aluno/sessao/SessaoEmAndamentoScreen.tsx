@@ -1,4 +1,4 @@
-import type { Workout } from '@elevapro/shared';
+import { shortSession, type Workout } from '@elevapro/shared';
 import { useNavigation, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef } from 'react';
 import { showConfirm } from '@/components/ui/appAlert';
@@ -20,6 +20,8 @@ export interface SessaoEmAndamentoScreenProps {
   podeEditarVideo: boolean;
   /** Depois de gravar: a ofensiva e a meta do dia, que moram em outro módulo. */
   onTreinoRegistrado: () => void;
+  /** "Só tenho 20 min" (#376, F3): os três primeiros exercícios, e conta como treino. */
+  curta?: boolean;
 }
 
 /**
@@ -36,8 +38,13 @@ export function SessaoEmAndamentoScreen(props: SessaoEmAndamentoScreenProps) {
   if (!treino) {
     return <EstadoDaTela naoEncontrado={naoEncontrado} mensagem="Treino não encontrado." />;
   }
+  // A versão curta é o mesmo treino com menos exercícios: o pré-início, a
+  // sessão e o resumo contam só os três.
+  const daSessao = props.curta
+    ? { ...treino, exercises: shortSession(treino.exercises ?? []) }
+    : treino;
   // A chave recria a sessão se o treino mudar: os exercícios são o estado inicial.
-  return <SessaoDoTreino key={treino.id} treino={treino} {...props} />;
+  return <SessaoDoTreino key={treino.id} treino={daSessao} {...props} />;
 }
 
 /** A sessão montada, com o treino já carregado: liga a máquina, a voz e as saídas. */

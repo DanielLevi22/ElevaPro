@@ -1,10 +1,10 @@
+import type { WeightProjection } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
 import { comOpacidade, useCores, useEscala } from '@/shared/design';
-import type { WeightProjection } from '../services/projection';
 
 /** O desenho do kit (`Curva`): 320 × 120, a linha e a faixa provável em volta. */
 const VIEWBOX = '0 0 320 120';

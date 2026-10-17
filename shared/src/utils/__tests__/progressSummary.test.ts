@@ -127,6 +127,18 @@ describe("activityStreak", () => {
     expect(activityStreak(days, TODAY).current).toBe(2);
   });
 
+  // Modo Descanso (#376, A8): a pausa não quebra a sequência, e também não conta.
+  it("os dias pausados atravessam a sequência sem contar", () => {
+    const days = [
+      day("2026-09-12", { workouts: 1 }),
+      day("2026-09-13"),
+      day("2026-09-14"),
+      day("2026-09-15", { workouts: 1 }),
+    ];
+
+    expect(activityStreak(days, TODAY, new Set(["2026-09-13", "2026-09-14"])).current).toBe(2);
+  });
+
   // O dia ainda não acabou: acordar sem ter treinado não zera a sequência de ontem.
   it("hoje sem nada ainda, a sequência vale até ontem", () => {
     const days = [

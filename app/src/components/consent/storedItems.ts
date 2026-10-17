@@ -22,6 +22,9 @@ const ITEMS = [
   // medida (0056), e a lista nunca tinha dito que a medida corporal é guardada.
   'Peso, gordura e medidas corporais, registradas por você ou pelo seu especialista',
   'Refeições registradas do seu plano',
+  // A 1.10 existe por esta linha (#376): o check-in guarda a resposta da semana e
+  // o histórico dos ajustes de meta, que nunca tinham sido gravados.
+  'Como foi a sua semana no check-in e os ajustes de meta que você aprovar',
   'A água que você registra no dia',
   'O que você escreve no feedback de fim de treino',
 ];

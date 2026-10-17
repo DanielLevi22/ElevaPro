@@ -21,6 +21,16 @@ export const INJURY_REGIONS = [
 
 export type InjuryRegion = (typeof INJURY_REGIONS)[number];
 
+/** Os objetivos que `main_goal` grava: o onboarding, a anamnese e a reavaliação do bloco leem os mesmos. */
+export const MAIN_GOALS = [
+  "Hipertrofia",
+  "Emagrecimento",
+  "Força / Performance",
+  "Saúde / Bem-estar",
+] as const;
+
+export type MainGoal = (typeof MAIN_GOALS)[number];
+
 export interface AdaptiveQuestion {
   id: string;
   text: string;
@@ -75,7 +85,7 @@ const BASE_QUESTIONS: AdaptiveQuestion[] = [
     id: "main_goal",
     text: "Qual é o seu objetivo principal?",
     type: "single_choice",
-    options: ["Hipertrofia", "Emagrecimento", "Força / Performance", "Saúde / Bem-estar"],
+    options: [...MAIN_GOALS],
     weight: 10,
     whyWeAsk:
       "É a bússola de todo o seu plano — treino, volume e dieta mudam completamente conforme o objetivo.",

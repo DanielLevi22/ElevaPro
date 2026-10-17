@@ -1,4 +1,6 @@
 import {
+  deloadSets,
+  type ExerciseEffort,
   MS_POR_SEGUNDO,
   numeroDaPrescricao,
   type SerieFeita,
@@ -55,6 +57,10 @@ export interface EstadoDaSessao {
   ultima: SerieFeita | null;
   /** Quanto a última série levou, em segundos. Mostrado, não gravado. */
   duracaoDaUltima: number | null;
+  /** "Fácil", "Ok" ou "Difícil" por exercício, depois da última série (#376, A2). */
+  efforts: Record<string, ExerciseEffort>;
+  /** O exercício que acabou de terminar e espera a pergunta do esforço. */
+  pendingEffortId: string | null;
 }
 
 type SemDados = Record<never, never>;
@@ -78,6 +84,12 @@ interface DadosDasAcoes {
   finalizar: { agora: number };
   voltarAoTreino: SemDados;
   salva: SemDados;
+  /** Responder a pergunta do esforço; `null` é "Pular". */
+  rateEffort: { itemId: string; effort: ExerciseEffort | null };
+  /** A carga sugerida de cada exercício, antes de começar (#376, A1). */
+  applySuggestedLoads: { weights: Record<string, string> };
+  /** A semana de descarga do bloco: metade das séries, a mesma carga (#376, A7). */
+  applyDeload: SemDados;
 }
 
 type TipoDaAcao = keyof DadosDasAcoes;
@@ -101,6 +113,8 @@ export function estadoInicial(itens: WorkoutExercise[]): EstadoDaSessao {
     descanso: null,
     ultima: null,
     duracaoDaUltima: null,
+    efforts: {},
+    pendingEffortId: null,
   };
 }
 
@@ -162,7 +176,46 @@ const TRANSICOES: {
   voltarAoTreino: (estado) =>
     estado.momento === 'feedback' ? { ...estado, momento: 'execucao', concluidaEm: null } : estado,
   salva: (estado) => (estado.momento === 'feedback' ? { ...estado, momento: 'resumo' } : estado),
+  rateEffort: (estado, { itemId, effort }) => rateEffort(estado, itemId, effort),
+  applySuggestedLoads: (estado, { weights }) => applySuggestedLoads(estado, weights),
+  applyDeload: (estado) => applyDeload(estado),
 };
+
+/** Como a carga sugerida: só antes de começar, e a prescrição fica intacta no treino. */
+function applyDeload(estado: EstadoDaSessao): EstadoDaSessao {
+  if (estado.momento !== 'preInicio') return estado;
+  const itens = estado.itens.map((item) =>
+    item.sets ? { ...item, sets: deloadSets(item.sets) } : item
+  );
+  return { ...estado, itens };
+}
+
+/** Só o exercício que espera a pergunta: o resto não tem o que responder. */
+function rateEffort(
+  estado: EstadoDaSessao,
+  itemId: string,
+  effort: ExerciseEffort | null
+): EstadoDaSessao {
+  if (estado.pendingEffortId !== itemId) return estado;
+  const efforts = effort ? { ...estado.efforts, [itemId]: effort } : estado.efforts;
+  return { ...estado, efforts, pendingEffortId: null };
+}
+
+/**
+ * A carga sugerida vira a carga da sessão, e é ela que a série grava; a
+ * prescrição fica intacta no treino. Só antes de começar: no meio do treino,
+ * quem muda a carga é o lápis.
+ */
+function applySuggestedLoads(
+  estado: EstadoDaSessao,
+  weights: Record<string, string>
+): EstadoDaSessao {
+  if (estado.momento !== 'preInicio') return estado;
+  const itens = estado.itens.map((item) =>
+    weights[item.id] ? { ...item, weight: weights[item.id] } : item
+  );
+  return { ...estado, itens };
+}
 
 function paraExecucao(estado: EstadoDaSessao): EstadoDaSessao {
   return { ...estado, momento: 'execucao', serie: null, descanso: null };
@@ -232,9 +285,11 @@ function concluirSerie(estado: EstadoDaSessao, agora: number): EstadoDaSessao {
     carga: numeroDaPrescricao(item.weight),
   };
   const feitas = { ...estado.feitas, [item.id]: [...(estado.feitas[item.id] ?? []), serie] };
+  const terminou = (feitas[item.id]?.length ?? 0) >= seriesDo(item);
   const depois: EstadoDaSessao = {
     ...estado,
     feitas,
+    pendingEffortId: terminou ? item.id : estado.pendingEffortId,
     ultima: serie,
     duracaoDaUltima: estado.serie ? segundosDoCronometro(estado.serie, agora) : null,
     serie: null,

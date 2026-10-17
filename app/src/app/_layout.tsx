@@ -24,6 +24,7 @@ import { HealthDataConsentGate } from '@/components/consent/HealthDataConsentGat
 import { AppAlertHost, showAlert } from '@/components/ui/appAlert';
 import { PushBannerHost } from '@/components/ui/pushBanner';
 import { useColorScheme } from '@/components/useColorScheme';
+import { useNotificationTap } from '@/hooks/useNotificationTap';
 import { queryClient } from '@/lib/query-client';
 import { useOnboardingGate } from '@/modules/onboarding';
 import { ROUTES } from '@/navigation/types';
@@ -35,6 +36,7 @@ import {
 } from '@/services/notificationService';
 import { assertBffConfigured } from '@/shared/bff';
 import { ajustarEscalaDeTexto } from '@/shared/design';
+import { IgnoredNoticePrompt, useDailyNotices } from '@/shared/notices';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -203,6 +205,14 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
     }
   }, [session, segments, isLoading, accountType, router, redirectPrivilegedSession]);
 
+  // O toque no aviso (o relatório de domingo, #376) abre a tela dele.
+  useNotificationTap(isLoading ? null : (session?.user?.id ?? null));
+
+  // Os avisos do dia (#376) são do aluno, e nunca do especialista vendo como ele.
+  const isMasquerading = useAuthStore((state) => state.isMasquerading);
+  const isStudent = accountType === 'student' || accountType === 'member';
+  useDailyNotices(!isLoading && isStudent && !isMasquerading ? (session?.user?.id ?? null) : null);
+
   const inOnboarding = segments[0] === 'onboarding';
   // O scan opcional depois de O4 sai do grupo do onboarding: o guarda não pode
   // mandar a O1 quem está no meio das fotos (#365).
@@ -247,6 +257,7 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
             isStudent={accountType === 'student' || accountType === 'member'}
             hasSpecialist={accountType === 'student'}
           />
+          {isStudent && !inOnboarding && !isMasquerading ? <IgnoredNoticePrompt /> : null}
         </ThemeProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

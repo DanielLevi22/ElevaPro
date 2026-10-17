@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/auth';
+import { ChangePlanButton } from '@/modules/block';
 import { ehVisaoDoAluno, PeriodizacoesDoAlunoScreen, PeriodizationsScreen } from '@/workout';
 
 /**
@@ -12,5 +13,6 @@ export default function TreinosRoute() {
   if (user?.id && ehVisaoDoAluno(accountType, undefined)) {
     return <PeriodizacoesDoAlunoScreen alunoId={user.id} />;
   }
-  return <PeriodizationsScreen />;
+  // O Praticante tem bloco próprio: o "…" muda o plano antes do fim (#376, C1).
+  return <PeriodizationsScreen acaoDoBloco={<ChangePlanButton />} />;
 }

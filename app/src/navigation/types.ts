@@ -23,6 +23,8 @@ export const ROUTES = {
     INDEX: '/(tabs)/index',
     RANKING: '/(tabs)/ranking',
     CARDIO: '/(tabs)/cardio',
+    /** O menu: aberto pelo "Menu" do + e pela engrenagem do perfil. */
+    MENU: '/(tabs)/menu',
   },
 
   // Assessment Flows
@@ -54,6 +56,17 @@ export const ROUTES = {
     SQUAT: '/tecnica/agachamento',
   },
 
+  // Ajuda
+  SETTINGS: {
+    /** As preferências dos avisos do dia (#376, E5). */
+    NOTICES: '/settings/notices',
+  },
+
+  HELP: {
+    /** Os comandos de voz da execução do treino. */
+    VOICE_COMMANDS: '/help/voice-commands',
+  },
+
   // Onboarding
   ONBOARDING: {
     /** O1 a O3 do onboarding do Praticante (#365). */
@@ -71,6 +84,31 @@ export const ROUTES = {
     BUILDING: '/onboarding/building',
     PLAN: '/onboarding/plan',
     HEALTH_CONNECT: '/onboarding/health-connect',
+  },
+
+  // Check-in da semana (#376). A entrada mora em `checkin.tsx`, e não em
+  // `checkin/index.tsx`, pelo mesmo motivo da técnica: o typegen erra a segunda.
+  BLOCK: {
+    DELOAD: '/block/deload',
+    REVIEW: '/block/review',
+    MEASURES: '/block/measures',
+    CHANGES: '/block/changes',
+    EARLY: '/block/early',
+    BUILDING: '/block/building',
+    REPORT: '/block/report',
+    REST: '/block/rest',
+    RETURN: '/block/return',
+    HISTORY: (id: string) => ({ pathname: '/block/history/[id]', params: { id } }) as const,
+    NEXT: '/block/next',
+    /** "Semana corrida?" (#376, F5): o aviso do 7º dia sem treino abre aqui. */
+    BUSY_WEEK: '/block/busy-week',
+  },
+
+  CHECKIN: {
+    ROOT: '/checkin',
+    RESULT: '/checkin/result',
+    SIMPLER: '/checkin/simpler',
+    REPORT: '/checkin/report',
   },
 
   // Student Flows
@@ -163,6 +201,9 @@ export const ROUTES = {
     ): `/(tabs)/workouts/periodizations/${string}/phases/${string}` =>
       `/(tabs)/workouts/periodizations/${periodizationId}/phases/${phaseId}`,
     EXECUTE: (id: string): `/(tabs)/workouts/execute/${string}` => `/(tabs)/workouts/execute/${id}`,
+    /** "Só tenho 20 min" (#376, F3): a mesma sessão, com os três primeiros exercícios. */
+    EXECUTE_SHORT: (id: string) =>
+      ({ pathname: '/(tabs)/workouts/execute/[id]', params: { id, short: '1' } }) as const,
     // Wizard de criação (#335) — substitui a antiga CreatePeriodizationScreen
     // e a criação inline de fase/treino que ainda mora em
     // PeriodizationDetailsScreen/PhaseDetailsScreen.
@@ -240,6 +281,10 @@ export const ROUTES = {
     MEASUREMENTS: '/(tabs)/progress/measurements',
     /** O relatório dos últimos 90 dias, com a exportação em PDF. */
     REPORT: '/(tabs)/progress/report',
+    /** A tendência de peso, com a faixa do ritmo e os ajustes (#376, A10). */
+    WEIGHT_TREND: '/(tabs)/progress/weight',
+    /** Sua jornada: a linha do tempo desde o primeiro plano (#376, D1). */
+    JOURNEY: '/(tabs)/progress/journey',
     /**
      * O histórico de body scans (#316). Arquivo simples com a pasta `scans/`
      * irmã: `scans/index` sai tipado como `/scans/index`, que o roteador não serve.

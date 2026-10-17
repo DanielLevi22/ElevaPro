@@ -1,6 +1,7 @@
 import {
   contagem,
   dataCurtaDoInstante,
+  deloadSets,
   formatarVolume,
   type SessaoComSeries,
   seriesDaSessaoAnterior,
@@ -11,12 +12,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
+import { CaixaDeIcone } from '@/components/ui/CaixaDeIcone';
 import { Chip } from '@/components/ui/Chip';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { Vidro } from '@/components/ui/Vidro';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
+import { TodayLoads } from '../../../components/sessao/LoadSuggestionList';
 import { useContextoDoTreino } from '../../../hooks/useContextoDoTreino';
+import type { LoadSuggestions } from '../../../services/sessionLoadSuggestions';
 
 /**
  * O pré-início do kit (tela 4): o treino em letra grande, quantas séries tem e
@@ -36,6 +40,12 @@ import { useContextoDoTreino } from '../../../hooks/useContextoDoTreino';
 interface PreInicioDoTreinoProps {
   treino: Workout;
   anterior: SessaoComSeries | null;
+  /** As cargas de hoje (#376, A1); vazio fora do treino do Praticante. */
+  loadSuggestions: LoadSuggestions;
+  /** Semana de descarga do bloco: as séries mostradas já são a metade. */
+  deload: boolean;
+  /** "Só tenho 20 min" (#376, F3): os três primeiros, e o aviso disso. */
+  curta: boolean;
   onIniciar: () => void;
   onVoltar: () => void;
 }
@@ -46,13 +56,21 @@ const BRILHO_DO_ICONE = { blur: 44, espalhamento: -6 } as const;
 export function PreInicioDoTreino({
   treino,
   anterior,
+  loadSuggestions,
+  deload,
+  curta,
   onIniciar,
   onVoltar,
 }: PreInicioDoTreinoProps) {
   const exercicios = treino.exercises ?? [];
-  const series = exercicios.reduce((soma, item) => soma + (item.sets ?? 0), 0);
+  const series = exercicios.reduce(
+    (soma, item) => soma + (deload && item.sets ? deloadSets(item.sets) : (item.sets ?? 0)),
+    0
+  );
   const { letra, fase, objetivo } = useContextoDoTreino(treino);
-  const chips = [letra, fase, objetivo].filter((chip): chip is string => chip !== null);
+  const chips = [curta ? 'Versão curta' : null, letra, fase, objetivo].filter(
+    (chip): chip is string => chip !== null
+  );
 
   return (
     <TelaDeVidroComFoto
@@ -82,6 +100,7 @@ export function PreInicioDoTreino({
             ))}
           </View>
         ) : null}
+        {deload ? <AvisoDeDescarga /> : null}
         <View className="mt-11 w-full">
           <BotaoDeDestaque
             rotulo="Iniciar treino"
@@ -98,8 +117,24 @@ export function PreInicioDoTreino({
             )}
           </Text>
         ) : null}
+        <TodayLoads items={exercicios} suggestions={loadSuggestions} />
       </View>
     </TelaDeVidroComFoto>
+  );
+}
+
+/** A semana 4 do bloco, dita antes de começar: menos séries não é erro do app. */
+function AvisoDeDescarga() {
+  return (
+    <Vidro classeExterna="mt-6 w-full" className="flex-row items-center gap-3 p-3.5">
+      <CaixaDeIcone icon="battery-charging-outline" tom="marca" tamanho="linha" />
+      <View className="flex-1">
+        <Text className="text-[0.90625rem] font-bold text-foreground">Semana de descarga</Text>
+        <Text className="mt-0.5 text-xs text-muted-foreground">
+          Metade das séries, a mesma carga. O corpo recupera para o próximo bloco.
+        </Text>
+      </View>
+    </Vidro>
   );
 }
 

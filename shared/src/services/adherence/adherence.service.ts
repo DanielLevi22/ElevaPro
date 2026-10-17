@@ -4,6 +4,7 @@ import { dailyActivities } from "../../utils/dailyActivity";
 import { addDays } from "../../utils/dateOnly";
 import { mealAdherence } from "../../utils/progressSummary";
 import { createProgressService } from "../progress/progress.service";
+import { countPrescribedWorkouts } from "./prescribedWorkouts";
 
 /**
  * Aderência do especialista sobre seus alunos: treino e dieta combinados,
@@ -63,32 +64,7 @@ export const createAdherenceService = (supabase: SupabaseClient) => {
     studentId: string,
     today: string,
   ): Promise<number | null> => {
-    const { data: periodization, error: perError } = await supabase
-      .from("training_periodizations")
-      .select("id")
-      .eq("student_id", studentId)
-      .eq("status", "active")
-      .limit(1)
-      .maybeSingle();
-    if (perError) throw perError;
-    if (!periodization) return null;
-
-    const { data: plan, error: planError } = await supabase
-      .from("training_plans")
-      .select("id")
-      .eq("periodization_id", (periodization as { id: string }).id)
-      .eq("status", "active")
-      .limit(1)
-      .maybeSingle();
-    if (planError) throw planError;
-    if (!plan) return null;
-
-    const { count: prescribed, error: workoutsError } = await supabase
-      .from("workouts")
-      .select("id", { count: "exact", head: true })
-      .eq("training_plan_id", (plan as { id: string }).id)
-      .not("day_of_week", "is", null);
-    if (workoutsError) throw workoutsError;
+    const prescribed = await countPrescribedWorkouts(supabase, studentId);
     if (!prescribed) return null;
 
     const from = addDays(today, -(WINDOW_DAYS - 1));

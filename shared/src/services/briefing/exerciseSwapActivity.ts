@@ -9,6 +9,8 @@ export interface SwapActivity {
   summary: string;
   /** "Só no treino de hoje" ou "No plano". */
   scopeLabel: string;
+  /** A troca mudou o plano, e não só o treino do dia. */
+  inPlan: boolean;
 }
 
 interface SwapRow {
@@ -27,19 +29,22 @@ const REMOVED = "exercício removido";
  * tempo e o "Aconteceu" do especialista (#365, 6d). Duas consultas, e não um
  * embed: a guarda de colunas confere `.select()` literal contra a tabela.
  *
+ * `since` corta pelo instante da troca: o relatório da semana só quer as dela.
+ *
  * @example const trocas = await fetchSwapActivity(supabase, [alunoId], 50);
  */
 export async function fetchSwapActivity(
   supabase: SupabaseClient,
   studentIds: readonly string[],
   limit: number,
+  since?: string,
 ): Promise<SwapActivity[]> {
-  const { data, error } = await supabase
+  let query = supabase
     .from("exercise_swaps")
     .select("id, student_id, swapped_at, scope, from_exercise_id, to_exercise_id")
-    .in("student_id", [...studentIds])
-    .order("swapped_at", { ascending: false })
-    .limit(limit);
+    .in("student_id", [...studentIds]);
+  if (since) query = query.gte("swapped_at", since);
+  const { data, error } = await query.order("swapped_at", { ascending: false }).limit(limit);
   if (error) throw error;
   const rows = (data ?? []) as SwapRow[];
   const names = await exerciseNames(supabase, rows);
@@ -49,6 +54,7 @@ export async function fetchSwapActivity(
     at: row.swapped_at,
     summary: `${nameOf(names, row.from_exercise_id)} → ${nameOf(names, row.to_exercise_id)}`,
     scopeLabel: row.scope === "today" ? "Só no treino de hoje" : "No plano",
+    inPlan: row.scope !== "today",
   }));
 }
 

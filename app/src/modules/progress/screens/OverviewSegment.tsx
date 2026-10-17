@@ -94,10 +94,26 @@ function SummaryStats({ summary }: { summary: ProgressSummary }) {
 function Shortcuts({ onOpenTraining }: { onOpenTraining: () => void }) {
   const router = useRouter();
   const { routes } = useProgressNavigation();
-  const { sessionHistory } = routes;
+  const { sessionHistory, weightTrend, journey } = routes;
   return (
     <>
       <TituloDeSecao estilo="rotulo">Atalhos</TituloDeSecao>
+      {journey ? (
+        <ShortcutRow
+          icon="git-branch-outline"
+          title="Sua jornada"
+          subtitle="Tudo o que mudou desde o primeiro plano"
+          onPress={() => router.push(journey)}
+        />
+      ) : null}
+      {weightTrend ? (
+        <ShortcutRow
+          icon="trending-down-outline"
+          title="Tendência de peso"
+          subtitle="Pesagens, ritmo da meta e ajustes"
+          onPress={() => router.push(weightTrend)}
+        />
+      ) : null}
       <ShortcutRow
         icon="stats-chart"
         title="Evolução em números"

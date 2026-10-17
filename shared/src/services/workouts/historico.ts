@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SessaoComSeries, SessaoDoHistorico } from "../../types/workouts.types";
+import type { ExerciseEffort, ExerciseHistoryEntry } from "../../utils/suggestedLoad";
 
 /**
  * As leituras do que o aluno já treinou: o histórico, a última execução de um
@@ -28,6 +29,35 @@ function achatarVitals(linha: Record<string, unknown>): SessaoDoHistorico {
   const medida = Array.isArray(vitals) ? vitals[0] : vitals;
   const bpm = (medida as { avg_heart_rate?: number } | null | undefined)?.avg_heart_rate;
   return { ...sessao, avg_heart_rate: bpm ?? null } as SessaoDoHistorico;
+}
+
+/** Duas sessões: "difícil duas vezes seguidas" é o que mais longe a regra olha. */
+const HISTORY_SESSIONS = 2;
+
+interface HistoryRow {
+  exercises: {
+    workout_exercise_id: string | null;
+    effort: ExerciseEffort | null;
+    sets: { weight_actual: number | null; completed: boolean }[];
+  }[];
+}
+
+/** Por item da prescrição, a carga máxima e o esforço de cada sessão, da mais recente. */
+function exerciseHistoryOf(rows: readonly HistoryRow[]): Record<string, ExerciseHistoryEntry[]> {
+  const byItem: Record<string, ExerciseHistoryEntry[]> = {};
+  for (const row of rows) {
+    for (const exercise of row.exercises) {
+      if (!exercise.workout_exercise_id) continue;
+      const done = exercise.sets.filter((set) => set.completed);
+      const maxWeightKg = done.reduce(
+        (max, set) => Math.max(max, Number(set.weight_actual ?? 0)),
+        0,
+      );
+      const id = exercise.workout_exercise_id;
+      byItem[id] = [...(byItem[id] ?? []), { maxWeightKg, effort: exercise.effort }];
+    }
+  }
+  return byItem;
 }
 
 export const criarServicoDeHistorico = (supabase: SupabaseClient) => ({
@@ -73,6 +103,31 @@ export const criarServicoDeHistorico = (supabase: SupabaseClient) => ({
       .maybeSingle();
     if (error) throw error;
     return data as SessaoComSeries | null;
+  },
+
+  /**
+   * O histórico de cada exercício do treino nas duas últimas sessões: a carga
+   * máxima e o esforço, que é o que a carga sugerida lê (#376). Sem notas nem
+   * PSE: não mudam a conta.
+   *
+   * @example const historico = await service.fetchExerciseHistory(treino.id, aluno.id);
+   */
+  fetchExerciseHistory: async (
+    workoutId: string,
+    studentId: string,
+  ): Promise<Record<string, ExerciseHistoryEntry[]>> => {
+    const { data, error } = await supabase
+      .from("workout_sessions")
+      .select(
+        "id, completed_at, exercises:workout_session_exercises(workout_exercise_id, effort, sets:workout_session_sets(weight_actual, completed))",
+      )
+      .eq("workout_id", workoutId)
+      .eq("student_id", studentId)
+      .not("completed_at", "is", null)
+      .order("completed_at", { ascending: false })
+      .limit(HISTORY_SESSIONS);
+    if (error) throw error;
+    return exerciseHistoryOf((data ?? []) as unknown as HistoryRow[]);
   },
 
   /**

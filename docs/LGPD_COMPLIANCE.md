@@ -80,6 +80,8 @@ Dados referentes à saúde exigem **base legal específica** e proteção refor�
 | **Código de vínculo do especialista** (#365, O5b) | `specialist_link_codes` (desde a `0087`): especialista, código de 6 caracteres e validade de 24 h | Execução de contrato (Art. 7°, V) | Ligar ao especialista quem já tem conta, que o convite por e-mail recusa. O especialista gera e lê só os próprios códigos; o aluno não lê a tabela e resgata pela `link_to_specialist_by_code`, com ele mesmo saindo do JWT. O código some ao ser usado e vence em 24 h. O vínculo não abre dado de saúde sozinho: o acesso do especialista continua exigindo o aceite do aluno. Trava: `verify-rls.sql` (0087), com prova negativa |
 | **Troca de exercício do aluno em treino prescrito** (#365, desenho 6d) | `exercise_swaps` (desde a `0086`): aluno, treino, item, exercício de origem e de destino, escopo e hora do servidor | Execução de contrato (Art. 7°, V) — acompanhamento da prescrição, não dado de saúde | Avisar o especialista de que o treino feito não foi o prescrito: aparece no Acompanhamento do aluno (mobile e web), no "Aconteceu" e como sinal do briefing. Gravada só por `record_exercise_swap`, com o autor do JWT; sem INSERT, UPDATE nem DELETE para o cliente. Lida pelo aluno e pelo especialista com vínculo ativo; ao desvincular, o especialista perde o acesso pela RLS. Só troca de treino prescrito é gravada: a do Praticante não tem destinatário (Art. 6°, III). Retenção: enquanto a conta existir; cai com o perfil ou o treino (`ON DELETE CASCADE`). Trava: `verify-rls.sql` (0086), `abilities.test.ts` e `ExerciseSwapSheet.test.tsx`, com prova negativa |
 | **Exercícios que o Praticante pediu para ver menos** (#365, desenho 6d) | `student_anamnesis.responses` (campo `avoided_exercises`: só IDs do catálogo) | Execução de contrato (Art. 7°, V) — preferência de treino, não dado de saúde; mora na anamnese, que já exige o aceite (0083) | A montagem do plano tira esses exercícios do catálogo antes do pedido à IA: ela nunca recebe a lista de evitados (Art. 6°, III). Gravado só pelo titular, em treino sem especialista; lido campo a campo (`responses->avoided_exercises`), nunca `responses` inteiro. Sai com a exportação e a exclusão da anamnese. Trava: `planChoices.test.ts` e `ExerciseSwapSheet.test.tsx`, com prova negativa |
+| **Check-in da semana** (#376) — como foi o registro (tudo, parte, seguiu sem registrar, não seguiu) e a referência ao peso da semana | `weekly_check_ins` (desde a `0097`) | Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I) — aderência à dieta | Recalibrar a meta do Praticante e avisar o especialista do Aluno. **O peso não é coluna desta tabela**: vai para `physical_assessments` como medida declarada, que já tem correção e exclusão (Art. 6°, III); o check-in só aponta para ela (`SET NULL` se a medida for apagada). O Aluno não informa peso (ADR-0030). `weight_origin` (`0102`) diz se o peso foi digitado ou é a média da semana lida do app Saúde / Health Connect (F9): não é dado de saúde, é a procedência do número. Gravado só por `submit_weekly_check_in`, com o autor do JWT, a semana do servidor e consentimento **presente**; sem INSERT, UPDATE nem DELETE do cliente. Especialista lê com vínculo ativo e consentimento. Trava: `verify-rls.sql` (0097), com prova negativa |
+| **Ajuste aprovado no plano** (#376) — meta antes e depois, motivo (peso acima ou abaixo do ritmo), origem e a versão da dieta criada | `plan_adjustments` (desde a `0097`) | Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I) — meta da dieta | Mostrar ao aluno o que mudou e por quê, e ao especialista o histórico. Gravado só por `apply_weekly_calorie_adjustment`, que exige o próprio Praticante sem especialista e recusa passo maior que 200 kcal, e por `undo_weekly_calorie_adjustment`, o "Desfazer" do mesmo dia, que grava o ajuste inverso em vez de apagar o original; ninguém corrige nem apaga (histórico, Art. 6°, V e X). **Decisão automatizada (Art. 20):** a regra é código (`weeklyRecalibration`), sem IA; a tela mostra o motivo e só vale com a aprovação da pessoa, que pode manter a meta |
 | Altura e peso declarados | `student_anamnesis.responses` (campos `height`, `weight`) | Tutela da saúde (Art. 11, II, f) + Consentimento | **Origem secundária da Escala**: calibram o Body scan quando não há avaliação física. Lidos por campo nomeado no banco, nunca `responses` inteiro |
 | Origem da Escala | `body_scans.scale_source` | Tutela da saúde + Consentimento | Registrar se a altura que calibrou o scan foi medida com fita (`assessment`), declarada numa medida (`self`, desde a `0056`) ou declarada na anamnese — o especialista precisa saber se pondera ou confia no número |
 | **Geometria medida no aparelho** — régua px/cm, larguras de silhueta, ângulos de assimetria e postura | `body_scans` (colunas do ADR-0022) | Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I) | Substituir a estimativa visual do modelo por medida reprodutível. A régua fica gravada porque sem ela não há como saber se dois escaneamentos são comparáveis — mesma razão de `framing_camera` |
@@ -88,6 +90,10 @@ Dados referentes à saúde exigem **base legal específica** e proteção refor�
 | **Imagem do corpo processada ao vivo durante o exercício** (Análise de Técnica) | *não persiste em lugar nenhum* | Tutela da saúde (Art. 11, II, f) + **Consentimento explícito** (Art. 11, I) | Contar repetições e julgar a profundidade do agachamento. Mesma doutrina do Body scan: não armazenar não é não tratar (Art. 5°, X). **Finalidade nova**, e por isso ganhou `consent_type` próprio (`technique_analysis`, migration 0041) em vez de entrar no do Body scan — ver a nota abaixo da Seção 3 |
 | **Vídeo de calibração processado no browser** (painel `/admin/tecnica`) | *não persiste em lugar nenhum* — nem banco, nem bucket, nem disco | Consentimento explícito (Art. 11, I) dos dois profissionais filmados, por termo escrito | Calibrar o limiar do Critério. O vídeo morre ao fechar a aba; o que se exporta são os 33 landmarks por quadro — boneco de palito, sem imagem e sem rosto — como fixture versionada no repositório |
 | Dados de treino executado (séries, cargas, datas, PSE em `perceived_exertion`) | `workout_sessions` | Execução de contrato | Acompanhamento de desempenho |
+| **Esforço do exercício** (#376) — "fácil", "ok" ou "difícil", respondido depois da última série | `workout_session_exercises.effort` (desde a `0098`) | Execução de contrato — mesma natureza da PSE, escala de percepção sobre a carga, sem relato de sintoma | Sugerir a carga do próximo treino do Praticante. A sugestão não é gravada: é recalculada da última sessão a cada pré-início. **Decisão automatizada (Art. 20):** a regra é código (`suggestedLoad`), sem IA; a tela mostra o motivo, e o lápis troca a carga a qualquer momento. Nulo quando a pessoa pula a pergunta. Sem política nova: herda as de `workout_session_exercises`. Trava: `verify-rls.sql` (0098) |
+| **Motivo do fim do plano** (#376) — `block_completed` (o bloco de 4 semanas acabou), `replaced` (trocado por outro plano do Praticante) ou `changed_early` (mudado antes do fim, C2) | `training_periodizations.end_reason` e `diet_plans.end_reason` (desde a `0099`; `changed_early` na `0100`) | Execução de contrato — ciclo de vida do plano, sem condição de saúde | "Encerrar, nunca apagar": o histórico de blocos mostra por que cada um acabou. Gravado pelo BFF ao aprovar o próximo bloco ou o plano refeito. Lista fechada (texto livre viraria lugar de anotar lesão sem a base do Art. 11). **Um motivo só para a troca antes do fim**, e não qual mudança: "tenho dor ou lesão" gravado no plano seria dado de saúde fora da anamnese, onde ele já mora com consentimento. Trava: `verify-rls.sql` (0099), o aluno não reescreve o motivo, com prova negativa |
+| **Reavaliação do fim do bloco** (#376, B1–B5) — peso e cintura de hoje; objetivo, dias, local e regiões de dor que mudaram | `physical_assessments` (medida declarada, `measured_by = 'self'`) e `student_anamnesis.responses` | Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I), os mesmos da anamnese e da medida declarada | Montar o próximo bloco pela mesma geração do onboarding. As mudanças só vão para a anamnese ao aprovar o bloco (ADR-0020); antes disso, ficam na proposta pendente, que é da conversa do próprio aluno. A rota de geração exige o consentimento de saúde, e o servidor recusa valor fora das opções da tela (`readBlockChanges`). A medida é corrigível e apagável no histórico de medidas (Art. 18, III) |
+| **Modo Descanso** (#376, A8) — de quando a quando o plano ficou pausado | `rest_periods` (desde a `0101`) | Execução de contrato — estado do plano | A sequência atravessa a pausa, o check-in não fica devido, e depois de pausa de 10 dias ou mais a semana de retorno sugere cargas 20% menores. **O motivo ("doente", "machucada", "viagem") não é gravado**: só muda o texto da tela na hora; gravá-lo seria dado de saúde que a pausa não precisa (Art. 6°, III). Gravada só por `start_rest` e `end_rest`; o aluno lê a sua, e o especialista com vínculo ativo lê para saber que o aluno está pausado. Trava: `verify-rls.sql` (0101), com prova negativa de que a tabela não ganha coluna de motivo |
 | **Observações do aluno sobre a própria sessão** | `workout_sessions.notes` | **Tutela da saúde (Art. 11, II, f) + Consentimento (Art. 11, I)** | Ajuste de prescrição a partir do que o aluno relata |
 | Tipo, duração e calorias da sessão | `workout_sessions.session_type`, `.duration_seconds`, `.active_calories` | Execução de contrato | Distinguir cardio de musculação e medir a sessão |
 | **Distância, ritmo e cadência da corrida** | `workout_sessions.distance_meters`, `.avg_pace_seconds_per_km`, `.avg_cadence_spm` | Execução de contrato (Art. 7°, V) | Medir a corrida para ajustar a prescrição. Mesma classificação de duração e calorias: é a medida da sessão contratada, não relato clínico. Derivados no aparelho — **a série de coordenadas que os produz não é gravada** (ver §2.3) |
@@ -221,6 +227,13 @@ Dados que foram explicitamente rejeitados do schema por violar o princípio da n
   só o derivado guardado, não a série. Sem consentimento vigente a série nem é
   lida: o portão (`vitalsIfConsented`) vem antes da consulta ao relógio, porque
   ler para descartar ainda é tratamento
+- **As pesagens do app Saúde** (#376, F9, `0102`) — o check-in lê as pesagens
+  da semana (`Weight` no Health Connect, `BodyMass` no HealthKit) só quando a
+  pessoa toca "Usar o peso do app Saúde", e só com o consentimento de saúde
+  vigente (`weekWeightIfConsented`, trava com prova negativa). A média é feita
+  no aparelho e entra no campo, editável; as pesagens individuais morrem ali.
+  O peso não é capacidade do relógio: fica fora do pedido do onboarding, e é
+  pedido na hora do toque
 - **Leituras do acelerômetro da sessão ao vivo** (lote do cardio em vidro) — as
   dezesseis últimas magnitudes desenham as barras de intensidade e morrem com a
   tela. Não são gravadas, não vão ao log e não se confundem com a PSE, que é o
@@ -263,6 +276,7 @@ Para cada tipo de tratamento, deve existir uma base legal documentada. Não exis
 | Sinal derivado de inatividade para o especialista vinculado (briefing) | Mesma base do dado de origem — Execução de contrato para `workout_sessions`, Consentimento explícito para a data de conclusão da anamnese | Art. 7°, V + Art. 11, I |
 | **Aderência combinada (treino + dieta), sinal derivado para o especialista vinculado** (issue #332) | Mesma doutrina do briefing — herda a base do dado de origem: Execução de contrato para `workout_sessions`, Tutela da saúde + Consentimento para `meal_logs` (nunca `diet_logs`, campo legado). Roda sob a sessão do especialista, nunca `service_role`, para que a RLS de `meal_logs` feche a fatia de dieta quando o aluno revogar o consentimento de saúde — só o percentual agregado chega à tela, nunca a refeição ou o treino em si | Art. 7°, V + Art. 11, II f + I |
 | **Acompanhamento e Evolução geral do aluno no app do especialista** (issue #334): linha do tempo, e o hub de Progresso do aluno (sequência, consistência, cargas, composição, circunferências, relatório) aberto pelo especialista | Mesma doutrina da aderência — herda a base do dado de origem. O app lê `createActivityService` e os serviços do Progresso **sob a sessão do especialista, nunca pela rota `/api/students/[id]/activities`** (que roda com `service_role`), para a RLS de `meal_logs` e `physical_assessments` fechar a fatia de saúde na revogação. A nota do aluno (`workout_sessions.notes`) é descartada no mapeamento e não chega à tela; travado em `app/src/modules/students/services/__tests__/followUp.test.ts` (prova negativa feita). No Progresso, declarar e corrigir medida seguem só do titular (Art. 18, III): as rotas do especialista não levam ao formulário. Nada é persistido no aparelho | Art. 7°, V + Art. 11, II f + I |
+| **Check-in da semana e ajuste da meta** (`weekly_check_ins`, `plan_adjustments`, #376) | Tutela da saúde + Consentimento, versão `1.10` do texto: o peso declarado passou a propor mudança de meta, finalidade nova que a `1.9` não cobria. Revogar fecha o acesso do especialista e impede check-in novo | Art. 11, II, f + I |
 | **Processamento local contínuo da imagem do corpo durante a captura** (ADR-0022) | Tutela da saúde + Consentimento explícito | Art. 11, II, f + I |
 | **Processamento local contínuo da imagem do corpo durante o exercício** (Análise de Técnica) | Tutela da saúde + Consentimento explícito **próprio da finalidade** (`technique_analysis`) | Art. 11, II, f + I; Art. 8°, §4° |
 
@@ -323,6 +337,81 @@ vale para o balão como já valia para o card da lista; (2) o dedupe local ("já
 mostrei esse alerta pra esse aluno") guarda só `kind` + `days` no MMKV do
 aparelho, nunca a frase montada — quem lê o cache não reconstrói a inferência
 sem também ter lido o sinal original.
+
+**Relatório da semana (#376, R0–R1).** Sem tratamento novo nem base legal nova:
+a tela do aluno lê, sob a sessão dele e a RLS que já existe, o que o relatório do
+período (#312) já mostra — sessões e séries, refeições registradas, medidas,
+ajustes de meta (`plan_adjustments`) e trocas de exercício, numa janela de uma
+semana. O Aluno vê também a última nota do especialista na semana, com o mesmo
+recorte de CASL (`read SpecialistNote`) do relatório do período. Duas garantias
+que a superfície nova não pode afrouxar: (1) o aviso de domingo às 18h aparece
+na tela bloqueada, e por isso o texto é genérico ("Seu relatório da semana
+chegou"), sem número de treino, recorde, peso nem meta (trava em
+`app/src/services/__tests__/weeklyReportNotification.test.ts`, com prova
+negativa); (2) o "já vi o relatório" guarda no MMKV do aparelho só a data da
+semana, nunca o conteúdo.
+
+**Avisos do dia (#376, item G).** Sem tabela nova nem base legal nova. Os avisos
+são locais (`expo-notifications`): o aparelho lê, sob a sessão do aluno e a RLS
+que já existe, só o nome e o horário das refeições e dos treinos do plano ativo,
+se cada um foi feito hoje e o horário de início dos treinos das últimas quatro
+semanas (`dailyNotices.service.ts`). Nada do que foi comido, nenhuma carga. A
+proposta de tabela `notification_preferences` foi trocada por preferências no
+MMKV do aparelho (minimização, Art. 6°, III): os avisos já são do aparelho, e o
+servidor não precisa saber a que horas a pessoa quer ser lembrada. **Esconder
+detalhes na tela bloqueada vem ligado** (decidido no #376): o aviso diz só "Você
+tem 2 pendências de hoje", sem refeição, caloria, peso, treino nem exercício
+(trava em `shared/src/utils/dailyNotices/__tests__/planNotices.test.ts`, com
+prova negativa). O lembrete de refeição antigo, que mostrava os alimentos na
+tela bloqueada, foi retirado e é cancelado no aparelho de quem atualiza.
+
+**Avisos e consentimento (#376, revisão do PR).** Sem o consentimento de saúde
+vigente, o aparelho nem lê a dieta, os registros de refeição e a água: a
+refeição e o lembrete das 20h não avisam, e o widget não mostra refeição nem
+água. Retirar o consentimento em "Privacidade e dados" reagenda na hora (trava
+em `useAuthorizations.test.tsx` e `dailyNotices.service.test.ts`, com prova
+negativa). O lembrete das 20h e o aviso do relatório de domingo deixaram de ser
+agendamentos avulsos: entram no agendador, dentro do limite do dia, do silêncio
+e do Modo Descanso. **Sair da conta cancela todos os avisos do app, tira da
+bandeja os que já tocaram e volta as preferências ao padrão** (`resetNotices`).
+
+**Plano mais simples e estagnação (#376, A5c, `0103`).** Com 2 dias ou menos no
+plano na semana, o check-in não corta calorias: propõe a mesma meta com uma
+refeição a menos e receitas rápidas. O ajuste vai para `plan_adjustments` como
+`plan_simplified`, motivo `low_adherence`, com as refeições por dia antes e
+depois: é estado do plano, não dado de saúde novo, e herda a RLS, a base legal
+e a retenção da `0097`. Gravado só por `record_plan_simplification`, que exige
+o check-in pendente da própria pessoa, a dieta própria ativa e uma refeição a
+menos, de 6 até 3 (trava em `verify-rls.sql`, com prova negativa). O cardápio é
+gerado pelo BFF só com o consentimento de saúde vigente e nada é gravado antes
+de "Aprovar cardápio" (ADR-0020). A **estagnação** (3 semanas seguindo a meta
+com o peso parado) é calculada na hora, dos check-ins e das pesagens que já
+existem, sem tabela nem coluna nova: só oferece reavaliar o bloco antes do fim.
+"Agora não" guarda no aparelho apenas a data da semana.
+
+**Widget de hoje no Android (#376, F7).** O widget da tela inicial mostra o
+treino do dia, a próxima refeição sem marcar e a água, a partir do mesmo
+estado dos avisos. Fica num MMKV próprio do aparelho (`today-widget`) para o
+Android redesenhar com o app fechado: só nomes e horários do plano e o total de
+água, nada do que foi comido. **Segue o "esconder detalhes"**, que vem ligado:
+a tela inicial é vista por qualquer um, e o widget diz só "Você tem 2
+pendências hoje". **Sair da conta apaga o retrato, redesenha o widget vazio e
+cancela os avisos agendados**: no aparelho compartilhado, quem entra depois não
+recebe o almoço do outro. O widget do iOS fica para a sua issue.
+
+**Painel "precisam de atenção" (#376, F8).** O briefing do especialista passou
+a derivar, além de "não treina há N dias", "sem marcar refeição há N dias" e
+"pulou o check-in da semana passada", com o limite de 5 dias (decidido no
+#376). Lê só datas, sob a RLS que já existe: `meal_logs.logged_date`,
+`diet_plans.start_date`, a existência do `weekly_check_ins` da semana e as
+pausas de `rest_periods` (em Modo Descanso, nenhum sinal). O que foi comido e
+as respostas do check-in não são lidos, e o sinal chega pronto à tela, como
+os outros do briefing. **Com o consentimento de saúde revogado, os dois sinais
+de dado de saúde não aparecem**: a RLS esconde as refeições e o check-in, e
+"nada visível" não pode virar "não marcou" (trava em
+`shared/src/services/briefing/__tests__/engagementSignals.test.ts`). O botão
+"Mensagem" grava uma nota do especialista (`specialist_notes`, 0057), que o
+aluno lê no relatório.
 
 **Regra do consentimento (Art. 8°):** Quando usamos consentimento como base, ele precisa ser:
 - **Livre**: o aluno não pode ser forçado a aceitar para usar o serviço principal
@@ -556,7 +645,7 @@ banco. O critério é a **base legal**, não o vínculo.
 
 | Base legal | Tabelas | Revogar o consentimento… | Migration |
 |---|---|---|---|
-| Art. 11 (tutela da saúde **+** consentimento) | `health_daily_metrics`, `meal_logs`, `physical_assessments`, `student_anamnesis`, `body_scans`, `workout_session_vitals`, `specialist_notes`, `diet_plans`, `diet_meals`, `diet_meal_items` | **fecha** o acesso do especialista | 0043, 0044, 0045, 0049, 0057, 0073 |
+| Art. 11 (tutela da saúde **+** consentimento) | `health_daily_metrics`, `meal_logs`, `physical_assessments`, `student_anamnesis`, `body_scans`, `workout_session_vitals`, `specialist_notes`, `diet_plans`, `diet_meals`, `diet_meal_items`, `weekly_check_ins`, `plan_adjustments` | **fecha** o acesso do especialista | 0043, 0044, 0045, 0049, 0057, 0073, 0097 |
 | Art. 11, só do titular | `hydration_daily` | não há acesso do especialista a fechar; **revogar interrompe a gravação**, que a política de INSERT e UPDATE recusa sem consentimento | 0052 |
 | Art. 7°, V (execução de contrato) | `profiles`, `specialist_services`, `workout_sessions`, `workout_session_sets`, `workout_session_exercises`, `achievements`, `daily_goals`, `student_streaks`, `ranking_scores` | não alcança — o caminho é encerrar o vínculo | — |
 
@@ -617,6 +706,7 @@ A LGPD exige que dados sejam eliminados quando deixam de ser necessários (Art. 
 | Avaliações físicas | Enquanto existir vínculo com especialista | Histórico clínico necessário ao especialista |
 | Nota do especialista (`specialist_notes`) | Enquanto a conta do aluno existir | É o registro do acompanhamento, e some junto com a conta por `ON DELETE CASCADE`. A conta do especialista apagada deixa a nota sem autor (`SET NULL`) em vez de levar o histórico do aluno junto |
 | Medida declarada (`measured_by = 'self'`) | Enquanto a conta estiver ativa, ou até o aluno apagar | É o acompanhamento do próprio Praticante e não depende de vínculo. Apagável por item pelo titular; `ON DELETE CASCADE` a partir de `profiles` elimina o resto junto com a conta |
+| Check-in da semana e ajustes aprovados (`weekly_check_ins`, `plan_adjustments`) | Enquanto a conta estiver ativa | O histórico dos ajustes é o que mostra ao aluno o que o plano fez por ele. `ON DELETE CASCADE` a partir de `profiles` elimina junto com a conta; o peso de cada semana mora na medida declarada e é apagável por item. **Pendente:** entrar na exportação de "Meus Dados", que ainda não existe no projeto |
 | Anamnese | Enquanto a conta estiver ativa | Auto-relato do aluno |
 | Histórico de treinos | Enquanto a conta estiver ativa | Histórico de evolução |
 | FC média e tempo por zona das sessões (`workout_session_vitals`) | Enquanto a conta estiver ativa | Comparar esforço entre corridas é a finalidade, e ela precisa do histórico. Eliminada por cascade em dois saltos: a conta apaga a sessão, e a sessão apaga a FC |

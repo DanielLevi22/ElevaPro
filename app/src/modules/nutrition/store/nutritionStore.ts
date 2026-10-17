@@ -10,8 +10,7 @@ import { supabase } from '@elevapro/supabase';
 import { create } from 'zustand';
 import { useAuthStore } from '@/auth';
 import { useGamificationStore } from '@/modules/gamification/store/gamificationStore';
-import { cancelPlanNotifications, scheduleMealNotifications } from '@/services/notificationService';
-import { lembretesDaDieta } from '../services/lembretesDaDieta';
+import { refreshDailyNotices } from '@/shared/notices';
 import { useDietWizardStore } from './dietWizardStore';
 
 export type { Food };
@@ -122,6 +121,8 @@ export const useNutritionStore = create<NutritionStore>((set, get) => ({
       const updatedLogs = get().dailyLogs;
       const completedCount = Object.values(updatedLogs).filter((log) => log.completed).length;
       useGamificationStore.getState().updateMealProgress(completedCount, date);
+      // A refeição marcada não avisa mais; a desmarcada volta a avisar.
+      void refreshDailyNotices(currentDietPlan.student_id);
     } catch (error) {
       console.error('Error toggling meal completion:', error);
       get().fetchDailyLogs(currentDietPlan.student_id, date);
@@ -170,16 +171,6 @@ export const useNutritionStore = create<NutritionStore>((set, get) => ({
     try {
       const data = await nutritionService.fetchActiveDietPlan(studentId);
       set({ currentDietPlan: data });
-
-      if (!data) return;
-
-      // O agendamento em si mora em `fetchMeals`: lembrete de refeição precisa
-      // das refeições, e aqui só o plano foi carregado. Aqui ficam apenas os
-      // lembretes de um plano que deixou de valer.
-      const currentUser = useAuthStore.getState().user;
-      if (data.id && currentUser?.id === studentId && data.status !== 'active') {
-        await cancelPlanNotifications(data.id);
-      }
     } catch (error) {
       console.error('Error fetching diet plan:', error);
       set({ currentDietPlan: null });
@@ -202,17 +193,6 @@ export const useNutritionStore = create<NutritionStore>((set, get) => ({
         meals: mealsValues,
         mealItems: { ...state.mealItems, ...itemsMap },
       }));
-
-      // O agendamento acontece aqui e não em `fetchDietPlan` porque é aqui que
-      // as refeições existem — sem elas não há hora nem dia para avisar.
-      //
-      // Só o plano do próprio aluno: o especialista abre o plano de vários e
-      // não pode receber lembrete de refeição de nenhum deles.
-      const plano = get().currentDietPlan;
-      const usuario = useAuthStore.getState().user;
-      if (plano?.id === dietPlanId && usuario?.id === plano?.student_id) {
-        await scheduleMealNotifications(plano.id, lembretesDaDieta(mealsValues, itemsMap));
-      }
     } catch (error) {
       console.error('Error fetching meals:', error);
     }

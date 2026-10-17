@@ -3,6 +3,7 @@ import { formatPse } from "@elevapro/shared";
 import {
   Apple,
   ArrowLeftRight,
+  ClipboardCheck,
   ClipboardList,
   Dumbbell,
   Footprints,
@@ -20,6 +21,7 @@ const ICONE: Record<ActivityKind, typeof Dumbbell> = {
   body_scan: HeartPulse,
   anamnesis: ClipboardList,
   exercise_swap: ArrowLeftRight,
+  weekly_check_in: ClipboardCheck,
 };
 
 const MINUTO = 60_000;

@@ -32,6 +32,9 @@ const SUBJECTS: Subject[] = [
   "Leaderboard",
   "RankingConsent",
   "ExerciseSwap",
+  "WeeklyCheckIn",
+  "PlanAdjustment",
+  "RestPeriod",
   "all",
 ];
 
@@ -69,6 +72,9 @@ const LE: Record<string, Subject[]> = {
     "DeclaredMeasurement",
     "Leaderboard",
     "ExerciseSwap",
+    "WeeklyCheckIn",
+    "PlanAdjustment",
+    "RestPeriod",
   ],
   "specialist:nutrition_consulting": [
     "Analytics",
@@ -79,6 +85,9 @@ const LE: Record<string, Subject[]> = {
     "DeclaredMeasurement",
     "Leaderboard",
     "ExerciseSwap",
+    "WeeklyCheckIn",
+    "PlanAdjustment",
+    "RestPeriod",
   ],
   student: [
     "Workout",
@@ -88,8 +97,18 @@ const LE: Record<string, Subject[]> = {
     "SpecialistNote",
     "Leaderboard",
     "ExerciseSwap",
+    "WeeklyCheckIn",
+    "PlanAdjustment",
+    "RestPeriod",
   ],
-  member: ["Profile", "Leaderboard", "ExerciseSwap"],
+  member: [
+    "Profile",
+    "Leaderboard",
+    "ExerciseSwap",
+    "WeeklyCheckIn",
+    "PlanAdjustment",
+    "RestPeriod",
+  ],
 };
 
 const CONTEXTOS: Record<string, UserContext> = {
@@ -163,6 +182,33 @@ describe("defineAbilitiesFor — tabela de permissões", () => {
         );
       }
     }
+  });
+
+  // ADR-0030 e #376: com especialista, nada muda no plano sem ele. O Aluno faz o
+  // check-in e lê o ajuste que o especialista decidiu; aprovar é do Praticante.
+  it("o Aluno não aprova ajuste do plano: quem decide é o especialista", () => {
+    if (defineAbilitiesFor(CONTEXTOS.student).can("create", "PlanAdjustment")) {
+      throw new Error(
+        "AJUSTE SEM ESPECIALISTA: o Aluno ganhou o botão de aprovar o próprio ajuste",
+      );
+    }
+    expect(defineAbilitiesFor(CONTEXTOS.member).can("create", "PlanAdjustment")).toBe(true);
+  });
+
+  // O histórico de check-ins, ajustes e pausas é evidência: ninguém além do
+  // admin corrige ou apaga, e o especialista só lê (0097, 0101).
+  it("check-in, ajuste e pausa não se corrigem nem se apagam", () => {
+    for (const papel of ["specialist:personal_training", "student", "member"]) {
+      const ability = defineAbilitiesFor(CONTEXTOS[papel]);
+      for (const subject of ["WeeklyCheckIn", "PlanAdjustment", "RestPeriod"] as const) {
+        if (ability.can("delete", subject)) {
+          throw new Error(`HISTÓRICO APAGÁVEL: ${papel} pode apagar ${subject}`);
+        }
+      }
+    }
+    const specialist = defineAbilitiesFor(CONTEXTOS["specialist:personal_training"]);
+    expect(specialist.can("create", "RestPeriod")).toBe(false);
+    expect(specialist.can("create", "WeeklyCheckIn")).toBe(false);
   });
 
   // O specialist recebe permissão por serviço contratado, não pelo papel: sem
