@@ -36,8 +36,10 @@ export type Subject =
   | "Analytics"
   | "Periodization"
   | "HealthMetric"
+  /** Retificação rastreável de avaliação do especialista; autoria é conferida no banco. */
+  | "PhysicalAssessment"
   | "Hydration"
-  /** A medida corporal declarada pelo próprio aluno (0056); a do especialista não é editável. */
+  /** A medida corporal declarada pelo titular (0056), distinta da retificação profissional (0095). */
   | "DeclaredMeasurement"
   /** A nota que o especialista escreve sobre o progresso do Aluno (0057). */
   | "SpecialistNote"
@@ -75,6 +77,7 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
 
   if (context.accountType === "specialist") {
     can("manage", "Client");
+    can(["read", "update"], "PhysicalAssessment");
     // O vinculado lê a medida que o aluno declarou antes do vínculo (0056).
     can("read", "DeclaredMeasurement");
     // A nota é do autor: quem escreveu lê, corrige e apaga. A RLS (0057) é quem
@@ -108,6 +111,7 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
   }
 
   if (context.accountType === "student") {
+    can("read", "PhysicalAssessment");
     can("read", "Workout");
     can("read", "Diet");
     can("read", "Exercise");
@@ -139,6 +143,7 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
   // Para o member gerenciar a própria periodização de verdade, primeiro precisa
   // existir política que permita: é migration, não linha de CASL.
   if (context.accountType === "member") {
+    can("read", "PhysicalAssessment");
     can("read", "Profile");
     can("update", "Profile");
     can("manage", [

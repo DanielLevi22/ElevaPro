@@ -1,16 +1,18 @@
 "use client";
 
-import { CIRCUMFERENCE_FIELDS, SKINFOLD_FIELDS } from "@elevapro/shared";
+import { CIRCUMFERENCE_FIELDS, type PhysicalAssessment, SKINFOLD_FIELDS } from "@elevapro/shared";
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
 import { Dialog } from "@/shared/components/ui/Dialog";
 import { FormField } from "@/shared/components/ui/FormField";
 import { Input } from "@/shared/components/ui/Input";
+import { useCorrectAssessment } from "../hooks/useCorrectAssessment";
 import { useCreateAssessment } from "../hooks/useCreateAssessment";
 
 interface AssessmentModalProps {
   studentId: string | null;
   onClose: () => void;
+  assessment?: PhysicalAssessment | null;
 }
 
 type Tab = "composition" | "circumferences" | "skinfolds";
@@ -41,22 +43,39 @@ function numericField(
   ));
 }
 
-export function AssessmentModal({ studentId, onClose }: AssessmentModalProps) {
+/** Abre ficha nova ou uma retificação, descartando rascunhos ao fechar. Ex.: <AssessmentModal studentId={id} onClose={close} />. */
+export function AssessmentModal(props: AssessmentModalProps) {
+  if (!props.studentId) return null;
+  return <AssessmentForm key={props.assessment?.id ?? props.studentId} {...props} />;
+}
+
+function AssessmentForm({ studentId, onClose, assessment }: AssessmentModalProps) {
   const [tab, setTab] = useState<Tab>("composition");
   const [error, setError] = useState<string | null>(null);
 
   // Composição corporal
-  const [weight, setWeight] = useState("");
-  const [height, setHeight] = useState("");
-  const [notes, setNotes] = useState("");
+  const [weight, setWeight] = useState(assessment?.weight_kg?.toString() ?? "");
+  const [height, setHeight] = useState(assessment?.height_cm?.toString() ?? "");
+  const [notes, setNotes] = useState(assessment?.notes ?? "");
 
   // Circunferências e dobras como objetos
-  const [circumferences, setCircumferences] = useState<Record<string, string>>({});
-  const [skinfolds, setSkinfolds] = useState<Record<string, string>>({});
+  const [circumferences, setCircumferences] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      CIRCUMFERENCE_FIELDS.map(({ key }) => [key, assessment?.[key]?.toString() ?? ""]),
+    ),
+  );
+  const [skinfolds, setSkinfolds] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      SKINFOLD_FIELDS.map(({ key }) => [key, assessment?.[key]?.toString() ?? ""]),
+    ),
+  );
 
   const createAssessment = useCreateAssessment();
+  const correctAssessment = useCorrectAssessment();
+  const isPending = createAssessment.isPending || correctAssessment.isPending;
 
   const handleClose = () => {
+    if (isPending) return;
     setError(null);
     setTab("composition");
     onClose();
@@ -64,7 +83,7 @@ export function AssessmentModal({ studentId, onClose }: AssessmentModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!studentId) return;
+    if (!studentId || isPending) return;
     setError(null);
 
     const toNum = (v: string) => (v !== "" ? Number(v) : null);
@@ -80,8 +99,7 @@ export function AssessmentModal({ studentId, onClose }: AssessmentModalProps) {
     }
 
     try {
-      await createAssessment.mutateAsync({
-        studentId,
+      const changes = {
         weight_kg: toNum(weight),
         height_cm: toNum(height),
         notes: notes || null,
@@ -89,7 +107,9 @@ export function AssessmentModal({ studentId, onClose }: AssessmentModalProps) {
           CIRCUMFERENCE_FIELDS.map(({ key }) => [key, toNum(circumferences[key] ?? "")]),
         ),
         ...Object.fromEntries(SKINFOLD_FIELDS.map(({ key }) => [key, toNum(skinfolds[key] ?? "")])),
-      });
+      };
+      if (assessment) await correctAssessment.mutateAsync({ assessment, changes });
+      else await createAssessment.mutateAsync({ studentId, ...changes });
       handleClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar avaliação");
@@ -103,8 +123,19 @@ export function AssessmentModal({ studentId, onClose }: AssessmentModalProps) {
   };
 
   return (
-    <Dialog open={!!studentId} onClose={handleClose} title="Nova Avaliação Física" maxWidth="lg">
+    <Dialog
+      open={!!studentId}
+      onClose={handleClose}
+      title={assessment ? "Corrigir Avaliação Física" : "Nova Avaliação Física"}
+      maxWidth="lg"
+    >
       <form onSubmit={handleSubmit} className="space-y-5">
+        {assessment && (
+          <p className="text-sm text-muted-foreground">
+            A correção atualiza esta avaliação nos gráficos. A versão anterior fica disponível no
+            histórico de correções.
+          </p>
+        )}
         {/* Tabs */}
         <div className="flex border-b border-white/10">
           {(Object.keys(TAB_LABELS) as Tab[]).map((t) => (
@@ -204,11 +235,17 @@ export function AssessmentModal({ studentId, onClose }: AssessmentModalProps) {
         )}
 
         <div className="flex gap-3 pt-1">
-          <Button type="button" variant="ghost" fullWidth onClick={handleClose}>
+          <Button
+            type="button"
+            variant="ghost"
+            fullWidth
+            onClick={handleClose}
+            disabled={isPending}
+          >
             Cancelar
           </Button>
-          <Button type="submit" fullWidth isLoading={createAssessment.isPending}>
-            {createAssessment.isPending ? "Salvando..." : "Salvar Avaliação"}
+          <Button type="submit" fullWidth isLoading={isPending}>
+            {isPending ? "Salvando..." : assessment ? "Salvar correção" : "Salvar Avaliação"}
           </Button>
         </div>
       </form>

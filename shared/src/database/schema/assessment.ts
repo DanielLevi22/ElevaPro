@@ -1,5 +1,9 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
+  index,
+  integer,
   jsonb,
   numeric,
   pgEnum,
@@ -21,7 +25,8 @@ export const scaleSourceEnum = pgEnum("scale_source", ["assessment", "anamnese",
 
 /**
  * Quem mediu uma avaliação física (0056): o especialista, com fita, ou o próprio
- * aluno, que declara. A do especialista é imutável; a declarada, o aluno corrige.
+ * aluno, que declara. A do especialista exige retificação rastreável (0095);
+ * a declarada, o aluno corrige diretamente.
  */
 export const measurementSourceEnum = pgEnum("measurement_source", ["specialist", "self"]);
 
@@ -47,6 +52,7 @@ export const physicalAssessments = pgTable("physical_assessments", {
   specialist_id: uuid("specialist_id").references(() => profiles.id, { onDelete: "set null" }),
   measured_by: measurementSourceEnum("measured_by").notNull().default("specialist"),
   assessed_at: timestamp("assessed_at", { withTimezone: true }).notNull().defaultNow(),
+  correction_version: integer("correction_version").notNull().default(0),
   // Básico
   // Obrigatórios: os dois formam a Escala que calibra o Body scan, e avaliação
   // sem eles não serve de fonte. Antes eram opcionais, e uma avaliação com só
@@ -85,6 +91,36 @@ export const physicalAssessments = pgTable("physical_assessments", {
   notes: text("notes"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** Conteúdo anterior de retificações; segue a eliminação da avaliação (0095). */
+export const physicalAssessmentRevisions = pgTable(
+  "physical_assessment_revisions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    assessment_id: uuid("assessment_id")
+      .notNull()
+      .references(() => physicalAssessments.id, { onDelete: "cascade" }),
+    student_id: uuid("student_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    corrected_by: uuid("corrected_by").references(() => profiles.id, { onDelete: "set null" }),
+    corrected_at: timestamp("corrected_at", { withTimezone: true })
+      .notNull()
+      .default(sql`clock_timestamp()`),
+    previous_values: jsonb("previous_values").notNull(),
+  },
+  (table) => [
+    check(
+      "physical_assessment_revisions_previous_values_check",
+      sql`jsonb_typeof(${table.previous_values}) = 'object'`,
+    ),
+    index("physical_assessment_revisions_assessment_date_idx").on(
+      table.assessment_id,
+      table.corrected_at.desc(),
+    ),
+    index("physical_assessment_revisions_student_idx").on(table.student_id),
+  ],
+);
 
 export const bodyScans = pgTable("body_scans", {
   id: uuid("id").primaryKey().defaultRandom(),

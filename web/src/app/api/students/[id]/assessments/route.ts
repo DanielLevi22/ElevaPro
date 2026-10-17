@@ -9,7 +9,9 @@ import { authorizeLinkedSpecialist } from "@/lib/api-auth";
 import { logger } from "@/lib/logger";
 import { recordSecurityAuditEvent } from "@/lib/security-audit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { clienteDoTitular } from "@/lib/supabase-titular";
 import { attachTraceId, traceIdForRequest } from "@/lib/trace";
+import { authorizeAssessmentReader } from "@/modules/students/server";
 
 type AssessmentInsert = Database["public"]["Tables"]["physical_assessments"]["Insert"];
 
@@ -23,10 +25,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id: studentId } = await params;
 
-    const auth = await authorizeLinkedSpecialist(request, studentId);
+    const auth = await authorizeAssessmentReader(request, studentId);
     if (!auth.ok) return auth.response;
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await clienteDoTitular(request)
       .from("physical_assessments")
       .select(PHYSICAL_ASSESSMENT_COLUMNS)
       .eq("student_id", studentId)
