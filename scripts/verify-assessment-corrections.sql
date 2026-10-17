@@ -7,7 +7,7 @@ DECLARE
   assessment_a uuid; assessment_b uuid; expected_a jsonb; expected_b jsonb;
   result jsonb; current_values jsonb; visible_count int;
   public_keys text[] := ARRAY['id','student_id','specialist_id','measured_by','assessed_at','created_at',
-    'weight_kg','height_cm','body_fat_pct','muscle_mass_kg','notes',
+    'correction_version','weight_kg','height_cm','body_fat_pct','muscle_mass_kg','notes',
     'circ_neck','circ_shoulder','circ_chest','circ_waist','circ_abdomen','circ_hip',
     'circ_right_arm','circ_left_arm','circ_right_forearm','circ_left_forearm',
     'circ_right_thigh','circ_left_thigh','circ_right_calf','circ_left_calf',
@@ -51,16 +51,30 @@ BEGIN
   IF EXISTS (SELECT 1 FROM jsonb_object_keys(result) key WHERE NOT key=ANY(public_keys)) THEN
     RAISE EXCEPTION 'SAÚDE EXPOSTA: correção devolveu coluna fora do contrato público';
   END IF;
-  IF (result->>'id')::uuid <> assessment_a OR (result->>'weight_kg')::numeric <> 91 OR result->>'notes' <> 'Nota original'
+  IF (result->>'correction_version')::int <> 1
+    OR (result->>'id')::uuid <> assessment_a OR (result->>'weight_kg')::numeric <> 91 OR result->>'notes' <> 'Nota original'
     OR (result->>'assessed_at')::timestamptz <> '2026-10-01T12:00:00Z'::timestamptz THEN
     RAISE EXCEPTION 'CORREÇÃO PERDIDA: retificação mudou a identidade ou descartou campos';
   END IF;
   current_values := result - ARRAY['id','student_id','specialist_id','measured_by','assessed_at','created_at'];
+  result := public.correct_physical_assessment(assessment_a,student_a,author_a,current_values,'{"weight_kg":91}');
+  IF (result->>'correction_version')::int <> 1 THEN
+    RAISE EXCEPTION 'VERSÃO ARTIFICIAL: salvar sem mudança incrementou o contador';
+  END IF;
   -- Art. 6º, V: duas abas não podem substituir silenciosamente a correção uma da outra.
   BEGIN
     PERFORM public.correct_physical_assessment(assessment_a,student_a,author_a,expected_a,'{"weight_kg":90}');
     RAISE EXCEPTION 'CORREÇÃO SOBRESCRITA: versão obsoleta foi aceita';
   EXCEPTION WHEN serialization_failure THEN NULL; END;
+  -- Art. 6º, V: voltar ao valor inicial não torna um formulário antigo vigente.
+  result := public.correct_physical_assessment(assessment_a,student_a,author_a,current_values,'{"weight_kg":92}');
+  BEGIN
+    PERFORM public.correct_physical_assessment(assessment_a,student_a,author_a,expected_a,'{"weight_kg":90}');
+    RAISE EXCEPTION 'CORREÇÃO SOBRESCRITA: retorno ao valor original escondeu versões intermediárias';
+  EXCEPTION WHEN serialization_failure THEN NULL; END;
+  current_values := result - ARRAY['id','student_id','specialist_id','measured_by','assessed_at','created_at'];
+  result := public.correct_physical_assessment(assessment_a,student_a,author_a,current_values,'{"weight_kg":91}');
+  current_values := result - ARRAY['id','student_id','specialist_id','measured_by','assessed_at','created_at'];
   -- Arts. 6º, VII e 46: autoria, aluno e origem não são editáveis nem por payload forjado.
   BEGIN
     PERFORM public.correct_physical_assessment(assessment_a,student_a,author_a,current_values,jsonb_build_object('student_id',student_b));
@@ -93,7 +107,7 @@ BEGIN
   EXCEPTION WHEN insufficient_privilege THEN NULL; END;
   SELECT count(*) INTO visible_count FROM public.physical_assessment_revisions
     WHERE assessment_id=assessment_a AND (previous_values->>'weight_kg')::numeric=92;
-  IF visible_count <> 1 THEN RAISE EXCEPTION 'RETIFICAÇÃO INVISÍVEL: autor não consulta versão anterior'; END IF;
+  IF visible_count <> 2 THEN RAISE EXCEPTION 'RETIFICAÇÃO INVISÍVEL: autor não consulta versão anterior'; END IF;
   SELECT count(*) INTO visible_count FROM public.physical_assessment_revisions WHERE assessment_id=assessment_b;
   IF visible_count <> 0 THEN RAISE EXCEPTION 'SAÚDE EXPOSTA: autor leu versão de outro aluno'; END IF;
   -- Arts. 6º, VII e 46: nem outro profissional vinculado recebe o acervo de retificação do autor.
@@ -102,7 +116,7 @@ BEGIN
   IF visible_count <> 0 THEN RAISE EXCEPTION 'SAÚDE EXPOSTA: outro autor vinculado leu a versão retificada'; END IF;
   PERFORM set_config('request.jwt.claims',json_build_object('sub',student_a,'role','authenticated')::text,true);
   SELECT count(*) INTO visible_count FROM public.physical_assessment_revisions;
-  IF visible_count <> 1 THEN RAISE EXCEPTION 'ACESSO DO TITULAR QUEBRADO: aluno não lê só suas versões'; END IF;
+  IF visible_count <> 3 THEN RAISE EXCEPTION 'ACESSO DO TITULAR QUEBRADO: aluno não lê só suas versões'; END IF;
   PERFORM set_config('request.jwt.claims',json_build_object('sub',author_a,'role','authenticated','aal','aal1')::text,true);
   SELECT count(*) INTO visible_count FROM public.physical_assessment_revisions;
   IF visible_count <> 0 THEN RAISE EXCEPTION 'MFA CONTORNADO: sessão sem prova leu saúde'; END IF;

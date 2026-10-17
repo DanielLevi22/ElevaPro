@@ -5,8 +5,9 @@ import userEvent from "@testing-library/user-event";
 import { NextRequest, NextResponse } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { authorizeLinkedSpecialist, getSession, authProfile } = vi.hoisted(() => ({
+const { authorizeLinkedSpecialist, authorizeUser, getSession, authProfile } = vi.hoisted(() => ({
   authorizeLinkedSpecialist: vi.fn(),
+  authorizeUser: vi.fn(),
   getSession: vi.fn(),
   authProfile: { id: "specialist-1", accountType: "specialist" },
 }));
@@ -18,7 +19,7 @@ let rejectWrite: boolean;
 let savedRevisions: Record<string, unknown>[];
 const allowedColumns = new Set(PHYSICAL_ASSESSMENT_COLUMNS.split(", "));
 
-vi.mock("@/lib/api-auth", () => ({ authorizeLinkedSpecialist }));
+vi.mock("@/lib/api-auth", () => ({ authorizeLinkedSpecialist, authorizeUser }));
 vi.mock("@/lib/security-audit", () => ({ recordSecurityAuditEvent: vi.fn() }));
 vi.mock("@elevapro/supabase", () => ({ supabase: { auth: { getSession } } }));
 vi.mock("next/navigation", () => ({ useParams: () => ({ id: "student-1" }) }));
@@ -55,9 +56,17 @@ vi.mock("@/lib/supabase-admin", () => ({
 }));
 vi.mock("@/lib/supabase-titular", () => ({
   clienteDoTitular: () => ({
-    from: () => ({
+    from: (table: string) => ({
       select: () => ({
-        eq: () => ({ eq: () => ({ order: async () => ({ data: savedRevisions, error: null }) }) }),
+        eq: () => ({
+          order: async () => ({ data: savedAssessments, error: null }),
+          eq: () => ({
+            order: async () => ({
+              data: table === "physical_assessment_revisions" ? savedRevisions : savedAssessments,
+              error: null,
+            }),
+          }),
+        }),
       }),
     }),
   }),
@@ -76,7 +85,12 @@ function persistAssessment(record: Record<string, unknown>) {
     return { data: null, error: { code: "PGRST204", message: "Escrita recusada" } };
   }
   const assessment = Object.fromEntries([...allowedColumns].map((key) => [key, null]));
-  Object.assign(assessment, record, { id: "assessment-1", created_at: "2026-10-16T12:00:00Z" });
+  Object.assign(assessment, record, {
+    id: "assessment-1",
+    created_at: "2026-10-16T12:00:00Z",
+    correction_version: 0,
+    measured_by: record.measured_by ?? "specialist",
+  });
   savedAssessments = [assessment, ...savedAssessments];
   return { data: assessment, error: null };
 }
@@ -109,6 +123,7 @@ describe("avaliação física: formulário → API → histórico", () => {
     authProfile.accountType = "specialist";
     rejectWrite = false;
     authorizeLinkedSpecialist.mockResolvedValue({ ok: true, caller: { id: "specialist-1" } });
+    authorizeUser.mockImplementation(async () => ({ ok: true, caller: { ...authProfile } }));
     getSession.mockResolvedValue({ data: { session: { access_token: "test-token" } } });
     vi.stubGlobal(
       "fetch",
@@ -135,6 +150,62 @@ describe("avaliação física: formulário → API → histórico", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.clearAllMocks();
+  });
+
+  it("titular consulta a versão retificada sem receber edição profissional", async () => {
+    authProfile.id = "student-1";
+    authProfile.accountType = "student";
+    authorizeLinkedSpecialist.mockResolvedValue({
+      ok: false,
+      response: NextResponse.json({ error: "Apenas especialistas" }, { status: 403 }),
+    });
+    persistAssessment({
+      student_id: "student-1",
+      specialist_id: "specialist-1",
+      measured_by: "specialist",
+      weight_kg: 91,
+      height_cm: 175,
+    });
+    savedRevisions = [
+      {
+        id: "revision-1",
+        corrected_at: "2026-10-16T13:00:00Z",
+        previous_values: { weight_kg: 92 },
+      },
+    ];
+    renderPage();
+    await screen.findByText("91 kg");
+    expect(screen.queryByRole("button", { name: "Corrigir avaliação" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Nova Avaliação/ })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Histórico de correções" }));
+    expect(await screen.findByText("92 kg")).toBeInTheDocument();
+  });
+
+  it("não compara medida declarada com avaliação profissional no histórico do titular", async () => {
+    authProfile.id = "student-1";
+    authProfile.accountType = "student";
+    persistAssessment({ measured_by: "self", weight_kg: 80, height_cm: 175 });
+    savedAssessments[0].id = "self-assessment";
+    persistAssessment({
+      measured_by: "specialist",
+      specialist_id: "specialist-1",
+      weight_kg: 82,
+      height_cm: 175,
+    });
+    renderPage();
+    await screen.findByText("82 kg");
+    expect(screen.queryByText(/desde avaliação anterior/)).not.toBeInTheDocument();
+    expect(screen.queryByText("80 kg")).not.toBeInTheDocument();
+  });
+
+  // LGPD, arts. 6º, VII e 46: o titular não pode usar a URL para ler saúde alheia.
+  it("titular não consulta versões de outro aluno", async () => {
+    authProfile.id = "student-2";
+    authProfile.accountType = "student";
+    savedRevisions = [{ id: "revision-1", previous_values: { weight_kg: 92 } }];
+    const response = await fetch("/api/students/student-1/assessments/assessment-1");
+    expect(response.status, "SAÚDE EXPOSTA: titular recebeu histórico alheio").toBe(403);
+    expect(await response.text()).not.toContain("previous_values");
   });
 
   it("salva só a primeira aba e mostra peso, altura, IMC e observações no histórico", async () => {
@@ -286,7 +357,7 @@ describe("avaliação física: formulário → API → histórico", () => {
     "student",
     "specialist",
   ])("não oferece correção a %s que não é autor", async (accountType) => {
-    authProfile.id = "other-account";
+    authProfile.id = accountType === "student" ? "student-1" : "other-account";
     authProfile.accountType = accountType;
     persistAssessment({
       specialist_id: "specialist-1",

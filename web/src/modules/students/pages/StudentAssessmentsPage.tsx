@@ -100,14 +100,18 @@ function AssessmentCard({
           {assessment.notes}
         </p>
       )}
-      {onCorrect && (
+      {(onCorrect || onHistory) && (
         <div className="flex flex-wrap gap-2">
-          <Button variant="ghost" onClick={onCorrect}>
-            Corrigir avaliação
-          </Button>
-          <Button variant="ghost" onClick={onHistory}>
-            Histórico de correções
-          </Button>
+          {onCorrect && (
+            <Button variant="ghost" onClick={onCorrect}>
+              Corrigir avaliação
+            </Button>
+          )}
+          {onHistory && (
+            <Button variant="ghost" onClick={onHistory}>
+              Histórico de correções
+            </Button>
+          )}
         </div>
       )}
     </div>
@@ -116,8 +120,8 @@ function AssessmentCard({
 
 export default function StudentAssessmentsPage() {
   const params = useParams();
-  const studentId = params.id as string;
   const { data: currentUser } = useAuthUser();
+  const studentId = (params.id as string | undefined) ?? currentUser?.id ?? "";
   return (
     <StudentAssessmentContent
       key={`${studentId}:${currentUser?.id ?? "pending"}`}
@@ -137,9 +141,10 @@ function StudentAssessmentContent({
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
   const [historyAssessmentId, setHistoryAssessmentId] = useState<string | null>(null);
-  const canCorrect = defineAbilitiesFor({
+  const abilities = defineAbilitiesFor({
     accountType: currentUser?.accountType === "specialist" ? "specialist" : "student",
-  }).can("update", "PhysicalAssessment");
+  });
+  const canCorrect = abilities.can("update", "PhysicalAssessment");
   const closeAssessment = () => {
     setModalOpen(false);
     setSelectedAssessment(null);
@@ -148,7 +153,11 @@ function StudentAssessmentContent({
   const { data: students = [] } = useStudents();
   const student = students.find((s) => s.id === studentId);
 
-  const { data: assessments = [], isLoading, isError } = useStudentAssessments(studentId);
+  const { data: recordedAssessments = [], isLoading, isError } = useStudentAssessments(studentId);
+  // ADR-0030: a série profissional nunca compara uma medida declarada pelo aluno.
+  const assessments = recordedAssessments.filter(
+    (assessment) => assessment.measured_by === "specialist",
+  );
 
   return (
     <div className="space-y-6">
@@ -161,7 +170,7 @@ function StudentAssessmentContent({
           </div>
         </div>
 
-        <Button onClick={() => setModalOpen(true)}>+ Nova Avaliação</Button>
+        {canCorrect && <Button onClick={() => setModalOpen(true)}>+ Nova Avaliação</Button>}
       </div>
 
       {/* Content */}
@@ -202,7 +211,7 @@ function StudentAssessmentContent({
           <p className="text-sm text-muted-foreground mb-6">
             Registre a primeira avaliação física deste aluno.
           </p>
-          <Button onClick={() => setModalOpen(true)}>Nova Avaliação</Button>
+          {canCorrect && <Button onClick={() => setModalOpen(true)}>Nova Avaliação</Button>}
         </div>
       )}
 
@@ -222,7 +231,13 @@ function StudentAssessmentContent({
                     }
                   : undefined
               }
-              onHistory={() => setHistoryAssessmentId(a.id)}
+              onHistory={
+                abilities.can("read", "PhysicalAssessment") &&
+                (currentUser?.id === studentId ||
+                  (canCorrect && a.specialist_id === currentUser?.id))
+                  ? () => setHistoryAssessmentId(a.id)
+                  : undefined
+              }
             />
           ))}
         </div>

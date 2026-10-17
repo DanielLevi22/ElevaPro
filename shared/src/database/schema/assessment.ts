@@ -3,6 +3,7 @@ import {
   boolean,
   check,
   index,
+  integer,
   jsonb,
   numeric,
   pgEnum,
@@ -51,6 +52,7 @@ export const physicalAssessments = pgTable("physical_assessments", {
   specialist_id: uuid("specialist_id").references(() => profiles.id, { onDelete: "set null" }),
   measured_by: measurementSourceEnum("measured_by").notNull().default("specialist"),
   assessed_at: timestamp("assessed_at", { withTimezone: true }).notNull().defaultNow(),
+  correction_version: integer("correction_version").notNull().default(0),
   // Básico
   // Obrigatórios: os dois formam a Escala que calibra o Body scan, e avaliação
   // sem eles não serve de fonte. Antes eram opcionais, e uma avaliação com só

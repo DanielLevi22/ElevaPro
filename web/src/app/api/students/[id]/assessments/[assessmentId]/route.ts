@@ -5,6 +5,7 @@ import { clienteDoTitular } from "@/lib/supabase-titular";
 import { attachTraceId, traceIdForRequest } from "@/lib/trace";
 import {
   assessmentCorrectionSchema,
+  authorizeAssessmentReader,
   correctAssessment,
   readAssessmentRevisions,
 } from "@/modules/students/server";
@@ -61,7 +62,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { id: studentId, assessmentId } = await params;
-  const auth = await authorizeLinkedSpecialist(request, studentId);
+  const auth = await authorizeAssessmentReader(request, studentId);
   if (!auth.ok) return auth.response;
   const traceId = traceIdForRequest(request);
   try {

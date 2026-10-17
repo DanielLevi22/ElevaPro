@@ -903,6 +903,7 @@ export type Database = {
           circ_right_thigh: number | null;
           circ_shoulder: number | null;
           circ_waist: number | null;
+          correction_version: number;
           created_at: string;
           height_cm: number;
           id: string;
@@ -937,6 +938,7 @@ export type Database = {
           circ_right_thigh?: number | null;
           circ_shoulder?: number | null;
           circ_waist?: number | null;
+          correction_version?: number;
           created_at?: string;
           height_cm: number;
           id?: string;
@@ -971,6 +973,7 @@ export type Database = {
           circ_right_thigh?: number | null;
           circ_shoulder?: number | null;
           circ_waist?: number | null;
+          correction_version?: number;
           created_at?: string;
           height_cm?: number;
           id?: string;

@@ -1146,6 +1146,17 @@ aparelho. O julgador é função pura em `shared/src/technique/`.
 
 ## Retificação de avaliação física — issue #385 / migration 0095
 
+A revisão do PR acrescenta a `0096`: `physical_assessments.correction_version` é
+metadado técnico necessário para recusar rascunhos antigos, inclusive após voltar
+ao mesmo valor. Não coleta nova informação de saúde nem muda finalidade ou retenção.
+O titular consulta avaliações e versões em Progresso → Avaliações e histórico de
+correções. GET usa sua sessão e RLS; aluno não recebe edição profissional. O BFF
+recusa explicitamente a URL de outro titular, e o autor mantém vínculo/MFA exigidos.
+Regressões: `AssessmentFlow.test.tsx` cobre acesso próprio e recusa de acesso alheio;
+`verify-assessment-corrections.sql` cobre A→B→A (falhou antes da `0096` e passou depois).
+Prova negativa do BFF: retirar temporariamente a comparação do ID do titular fez
+o teste de acesso alheio falhar com 200 em vez de 403; controle restaurado.
+
 - **Necessidade e finalidade:** corrigir erro de registro e permitir ao titular/autor conferir a retificação; não é nova coleta, medição ou finalidade de saúde. A versão inexata sai dos cálculos na persistência. Leituras ativas no web são invalidadas após sucesso; body scans já derivados não são recalculados retroativamente.
 - **Mapa sensível:** `physical_assessment_revisions.previous_values` contém apenas os campos corrigíveis anteriores (medidas e nota); `assessment_id`, `student_id`, `corrected_by` e `corrected_at` ligam a retificação ao registro e ao ator. Não vai a logs, analytics ou IA. Base do tratamento de saúde é a documentada para a avaliação, sujeita à validação de aplicabilidade pelo responsável; guardar versões não cria base legal própria.
 - **Acesso:** titular lê o próprio acervo; autor especialista lê enquanto vinculado, com consentimento não revogado e prova MFA/Passkey. Outro profissional, mesmo vinculado ao mesmo aluno, não lê versões do autor. CASL oferece a correção; BFF deriva ator do JWT, e RPC revalida autoria, origem, vínculo e consentimento. Nenhum cliente escreve diretamente no acervo ou executa a RPC.

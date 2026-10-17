@@ -13,6 +13,19 @@ let assessmentRows: Array<{ id: string }>;
 
 vi.mock("@/lib/api-auth", () => ({
   authorizeLinkedSpecialist,
+  authorizeUser: async () => ({
+    ok: true,
+    caller: { id: "specialist-1", accountType: "specialist" },
+  }),
+}));
+vi.mock("@/lib/supabase-titular", () => ({
+  clienteDoTitular: () => ({
+    from: () => ({
+      select: () => ({
+        eq: () => ({ order: async () => ({ data: assessmentRows, error: null }) }),
+      }),
+    }),
+  }),
 }));
 vi.mock("@/lib/security-audit", () => ({ recordSecurityAuditEvent }));
 vi.mock("@/lib/supabase-admin", () => ({

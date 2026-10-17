@@ -28,7 +28,13 @@ export function useCorrectAssessment() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({ expected: snapshotAssessment(assessment), changes }),
+          body: JSON.stringify({
+            expected: {
+              ...snapshotAssessment(assessment),
+              correction_version: assessment.correction_version,
+            },
+            changes,
+          }),
         },
       );
       const result = await response.json();

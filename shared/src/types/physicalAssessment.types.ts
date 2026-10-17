@@ -19,6 +19,7 @@ export interface PhysicalAssessment {
   /** `specialist` só se retifica com versão anterior preservada (0095); `self` é corrigida pelo titular (0056). */
   measured_by: MeasurementSource;
   assessed_at: string;
+  correction_version: number;
 
   weight_kg: number | null;
   height_cm: number | null;
@@ -70,11 +71,14 @@ export interface PhysicalAssessment {
 // devolvida a partir do tipo *literal* do select. Quebrada em pedaços com `+`,
 // a constante vira `string` genérica e a consulta perde a tipagem inteira.
 // biome-ignore format: uma quebra de linha aqui reintroduz esse problema
-export const PHYSICAL_ASSESSMENT_COLUMNS = "id, student_id, specialist_id, measured_by, assessed_at, weight_kg, height_cm, body_fat_pct, muscle_mass_kg, skinfold_chest, skinfold_abdomen, skinfold_thigh, skinfold_tricep, skinfold_suprailiac, skinfold_subscapular, skinfold_midaxillary, circ_neck, circ_shoulder, circ_chest, circ_waist, circ_abdomen, circ_hip, circ_right_arm, circ_left_arm, circ_right_forearm, circ_left_forearm, circ_right_thigh, circ_left_thigh, circ_right_calf, circ_left_calf, notes, created_at" as const;
+export const PHYSICAL_ASSESSMENT_COLUMNS = "id, student_id, specialist_id, measured_by, assessed_at, correction_version, weight_kg, height_cm, body_fat_pct, muscle_mass_kg, skinfold_chest, skinfold_abdomen, skinfold_thigh, skinfold_tricep, skinfold_suprailiac, skinfold_subscapular, skinfold_midaxillary, circ_neck, circ_shoulder, circ_chest, circ_waist, circ_abdomen, circ_hip, circ_right_arm, circ_left_arm, circ_right_forearm, circ_left_forearm, circ_right_thigh, circ_left_thigh, circ_right_calf, circ_left_calf, notes, created_at" as const;
 
 /** O que um formulário pode enviar. `student_id` sai sempre do chamador. */
 export type PhysicalAssessmentInput = Partial<
-  Omit<PhysicalAssessment, "id" | "student_id" | "created_at" | "assessed_at">
+  Omit<
+    PhysicalAssessment,
+    "id" | "student_id" | "created_at" | "assessed_at" | "correction_version"
+  >
 >;
 
 /**
