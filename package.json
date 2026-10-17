@@ -41,7 +41,7 @@
     "@commitlint/cli": "^20.4.2",
     "@commitlint/config-conventional": "^21.2.3",
     "@supabase/supabase-js": "^2.103.3",
-    "drizzle-kit": "^0.31.7",
+    "drizzle-kit": "^0.31.11",
     "drizzle-orm": "^0.45.2",
     "husky": "^9.1.7",
     "knip": "^6.35.1",
