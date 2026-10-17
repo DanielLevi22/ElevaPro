@@ -14,6 +14,7 @@ export type Database = {
           title: string;
           type: string;
         };
+        ComputedFields: never;
         Insert: {
           description?: string | null;
           earned_at?: string;
@@ -53,6 +54,7 @@ export type Database = {
           role: string;
           session_id: string;
         };
+        ComputedFields: never;
         Insert: {
           content: string;
           created_at?: string | null;
@@ -91,6 +93,7 @@ export type Database = {
           title: string | null;
           updated_at: string | null;
         };
+        ComputedFields: never;
         Insert: {
           archived_at?: string | null;
           created_at?: string | null;
@@ -178,6 +181,7 @@ export type Database = {
           trunk_rotated: boolean | null;
           weight_kg: number | null;
         };
+        ComputedFields: never;
         Insert: {
           axis_deviation_cm?: number | null;
           bmi?: number | null;
@@ -295,6 +299,7 @@ export type Database = {
           workout_completed: number;
           workout_target: number;
         };
+        ComputedFields: never;
         Insert: {
           completed?: boolean;
           completion_percentage?: number;
@@ -339,6 +344,7 @@ export type Database = {
           quantity: number;
           unit: string;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           diet_meal_id: string;
@@ -389,6 +395,7 @@ export type Database = {
           servings: number | null;
           target_calories: number | null;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           day_of_week?: number | null;
@@ -451,6 +458,7 @@ export type Database = {
           target_protein: number | null;
           version: number;
         };
+        ComputedFields: never;
         Insert: {
           allows_supplements?: boolean | null;
           created_at?: string;
@@ -532,6 +540,7 @@ export type Database = {
           workout_exercise_id: string | null;
           workout_id: string;
         };
+        ComputedFields: never;
         Insert: {
           from_exercise_id?: string | null;
           id?: string;
@@ -603,6 +612,7 @@ export type Database = {
           venue: string;
           video_url: string | null;
         };
+        ComputedFields: never;
         Insert: {
           category?: string;
           created_at?: string;
@@ -655,6 +665,7 @@ export type Database = {
           serving_unit: string;
           source: string | null;
         };
+        ComputedFields: never;
         Insert: {
           calories?: number | null;
           carbs?: number | null;
@@ -713,6 +724,7 @@ export type Database = {
           student_id: string;
           synced_at: string;
         };
+        ComputedFields: never;
         Insert: {
           active_calories?: number;
           created_at?: string;
@@ -758,6 +770,7 @@ export type Database = {
           updated_at: string;
           water_ml: number;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           date: string;
@@ -795,6 +808,7 @@ export type Database = {
           logged_date: string;
           student_id: string;
         };
+        ComputedFields: never;
         Insert: {
           actual_items?: Json | null;
           completed?: boolean;
@@ -848,6 +862,7 @@ export type Database = {
           previous_values: NonNullable<Json>;
           student_id: string;
         };
+        ComputedFields: never;
         Insert: {
           assessment_id: string;
           corrected_at?: string;
@@ -924,6 +939,7 @@ export type Database = {
           student_id: string;
           weight_kg: number;
         };
+        ComputedFields: never;
         Insert: {
           assessed_at?: string;
           body_fat_pct?: number | null;
@@ -1024,6 +1040,7 @@ export type Database = {
           source: string;
           student_id: string;
         };
+        ComputedFields: never;
         Insert: {
           after_value: number;
           approved_at?: string;
@@ -1085,6 +1102,7 @@ export type Database = {
           id: string;
           persona_track: string | null;
         };
+        ComputedFields: never;
         Insert: {
           account_status?: Database["public"]["Enums"]["account_status"];
           account_type: Database["public"]["Enums"]["account_type"];
@@ -1118,6 +1136,7 @@ export type Database = {
           updated_at: string;
           week_start_date: string;
         };
+        ComputedFields: never;
         Insert: {
           points: number;
           student_id: string;
@@ -1149,6 +1168,7 @@ export type Database = {
           starts_on: string;
           student_id: string;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           ended_on?: string | null;
@@ -1183,6 +1203,7 @@ export type Database = {
           id: string;
           specialist_id: string;
         };
+        ComputedFields: never;
         Insert: {
           code: string;
           created_at?: string;
@@ -1216,6 +1237,7 @@ export type Database = {
           student_id: string;
           updated_at: string;
         };
+        ComputedFields: never;
         Insert: {
           body: string;
           created_at?: string;
@@ -1256,6 +1278,7 @@ export type Database = {
           service_type: Database["public"]["Enums"]["service_type"];
           specialist_id: string;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           id?: string;
@@ -1287,6 +1310,7 @@ export type Database = {
           student_id: string;
           updated_at: string;
         };
+        ComputedFields: never;
         Insert: {
           completed_at?: string | null;
           created_at?: string;
@@ -1322,6 +1346,7 @@ export type Database = {
           revoked_at: string | null;
           student_id: string;
         };
+        ComputedFields: never;
         Insert: {
           consent_type: Database["public"]["Enums"]["consent_type"];
           given_at?: string;
@@ -1355,6 +1380,7 @@ export type Database = {
           id: string;
           student_id: string;
         };
+        ComputedFields: never;
         Insert: {
           code: string;
           expires_at: string;
@@ -1388,6 +1414,7 @@ export type Database = {
           status: Database["public"]["Enums"]["link_status"];
           student_id: string;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           ended_at?: string | null;
@@ -1443,6 +1470,7 @@ export type Database = {
           student_id: string;
           updated_at: string;
         };
+        ComputedFields: never;
         Insert: {
           current_streak?: number;
           freeze_available?: number;
@@ -1489,6 +1517,7 @@ export type Database = {
           student_id: string;
           updated_at: string;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           duration_weeks?: number | null;
@@ -1549,6 +1578,7 @@ export type Database = {
           start_date: string;
           status: Database["public"]["Enums"]["training_status"];
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           duration_weeks?: number | null;
@@ -1594,6 +1624,7 @@ export type Database = {
           week_start: string;
           weight_origin: string | null;
         };
+        ComputedFields: never;
         Insert: {
           assessment_id?: string | null;
           created_at?: string;
@@ -1644,6 +1675,7 @@ export type Database = {
           weight: string | null;
           workout_id: string;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           exercise_id: string;
@@ -1695,6 +1727,7 @@ export type Database = {
           session_id: string;
           workout_exercise_id: string | null;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           effort?: string | null;
@@ -1752,6 +1785,7 @@ export type Database = {
           weight_actual: number | null;
           weight_prescribed: number | null;
         };
+        ComputedFields: never;
         Insert: {
           completed?: boolean;
           created_at?: string;
@@ -1801,6 +1835,7 @@ export type Database = {
           zone_4_pct: number | null;
           zone_5_pct: number | null;
         };
+        ComputedFields: never;
         Insert: {
           avg_heart_rate: number;
           created_at?: string;
@@ -1850,6 +1885,7 @@ export type Database = {
           student_id: string;
           workout_id: string | null;
         };
+        ComputedFields: never;
         Insert: {
           active_calories?: number | null;
           activity_name?: string | null;
@@ -1917,6 +1953,7 @@ export type Database = {
           training_plan_id: string | null;
           updated_at: string;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           day_of_week?: Database["public"]["Enums"]["day_of_week"] | null;
