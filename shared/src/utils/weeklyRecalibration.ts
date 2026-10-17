@@ -2,7 +2,7 @@
  * A recalibração da meta no check-in da semana (#376): compara o que o peso fez
  * com o que a meta prometia e propõe um passo. A proposta só vale aprovada
  * (ADR-0020), e o banco recusa passo maior que 200 kcal mesmo se esta conta
- * mudar (`apply_weekly_calorie_adjustment`, 0088).
+ * mudar (`apply_weekly_calorie_adjustment`, 0097).
  *
  * Os valores marcados como provisórios esperam a validação do CRN (ADR-0044).
  * Base: o check-in do Carbon e do MacroFactor (`docs/research/apps-nutricao.md`).

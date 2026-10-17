@@ -103,7 +103,7 @@ export interface ConsentPurpose {
  *   a condição marcada na triagem (ADR-0044), e o que a geração do plano manda
  *   à IA: objetivo, nível, escolhas e a meta, nunca o corpo nem a triagem.
  * - `1.10` (2026-10-13) — acrescenta **o check-in da semana** e diz que **o
- *   peso da semana propõe ajuste da meta**. Issue #376 e migration `0088`: o
+ *   peso da semana propõe ajuste da meta**. Issue #376 e migration `0097`: o
  *   peso declarado passou a servir para inferir o gasto e propor uma meta nova,
  *   finalidade que o texto não cobria, e a resposta "como foi o registro" é
  *   dado novo guardado. O texto diz o freio (até 200 kcal por semana), que

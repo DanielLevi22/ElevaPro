@@ -109,7 +109,7 @@ function ProposalView({
     }
   }
 
-  // O Aluno não aprova: quem muda o plano dele é o especialista (CASL + 0088).
+  // O Aluno não aprova: quem muda o plano dele é o especialista (CASL + 0097).
   const canApprove = useCan('create', 'PlanAdjustment');
   const twoActions = (copy.proposesChange || simpler !== null) && canApprove;
   // A5c: aprovar o plano mais simples ainda não grava; abre o cardápio novo.

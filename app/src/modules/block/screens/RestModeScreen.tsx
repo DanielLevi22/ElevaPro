@@ -15,7 +15,7 @@ import { REST_DURATIONS, type RestDuration, restUntil } from '../services/restCo
 
 /**
  * O motivo só muda o texto da tela, e não é gravado: "doente" e "machucada"
- * são dado de saúde que a pausa não precisa (0092).
+ * são dado de saúde que a pausa não precisa (0101).
  */
 const REASONS = [
   {

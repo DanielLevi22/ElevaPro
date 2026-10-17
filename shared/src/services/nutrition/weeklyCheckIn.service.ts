@@ -26,7 +26,7 @@ export interface WeeklyCheckIn {
   logging: CheckInLogging;
   assessment_id: string | null;
   status: CheckInStatus;
-  /** De onde veio o peso; nulo sem peso (0093, F9). */
+  /** De onde veio o peso; nulo sem peso (0102, F9). */
   weight_origin: WeightOrigin | null;
 }
 
@@ -111,7 +111,7 @@ const WEIGHT_HISTORY = 8;
 /**
  * O check-in da semana (#376): a pessoa diz como foi o registro e o peso, e a
  * meta da dieta é recalibrada por regra, sempre com aprovação. O banco grava
- * tudo pelas funções da 0088; este serviço só conversa com elas e monta a
+ * tudo pelas funções da 0097; este serviço só conversa com elas e monta a
  * proposta com `recalibrateWeeklyTarget`.
  *
  * @example

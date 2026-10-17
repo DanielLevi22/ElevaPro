@@ -6,7 +6,7 @@ const REST_COLUMNS = "id, starts_on, planned_until, ended_on";
 const LOOKBACK = 20;
 
 /**
- * O Modo Descanso (#376, A8): pausar e voltar, sempre pelas funções da 0092,
+ * O Modo Descanso (#376, A8): pausar e voltar, sempre pelas funções da 0101,
  * que pegam o dia no fuso do Brasil. Sem motivo: ele não é gravado.
  *
  * @example const pausas = await createRestService(supabase).recent(user.id);

@@ -8,6 +8,14 @@ fica `measured_by = 'specialist'` e segue imutável.
 
 **Status:** accepted. Issue #312, lote do fluxo de métricas em vidro.
 
+**Revisão pela issue #385 / ADR-0045:** a imutabilidade absoluta da avaliação do
+especialista fica substituída pela retificação rastreável. O autor vinculado pode
+corrigir um erro de registro, sem mudar a medição/data e preservando a versão
+substituída com acesso restrito. A regra abaixo descreve a decisão original;
+Art. 6º, V não obriga imutabilidade e Art. 18, III também alcança dados digitados
+por terceiros. A referência histórica ao ADR-0017 não fundamenta imutabilidade:
+aquele ADR trata da separação de execução entre web e mobile.
+
 ## Opções consideradas
 
 - **Tabela nova para a declaração.** Separaria as regras de escrita sem uma coluna de

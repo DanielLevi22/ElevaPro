@@ -110,7 +110,7 @@ export function summarizeJourney(input: JourneyInput): Journey {
 
 /**
  * O plano trocado por outro não foi um bloco: foi o onboarding refeito. Antes
- * da 0090 não havia motivo, e o sinal é ter acabado antes da data sem ele.
+ * da 0099 não havia motivo, e o sinal é ter acabado antes da data sem ele.
  */
 function wasReplaced(block: JourneyBlock, today: string): boolean {
   if (block.end_reason === "replaced") return true;

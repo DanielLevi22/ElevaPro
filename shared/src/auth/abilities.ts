@@ -36,8 +36,10 @@ export type Subject =
   | "Analytics"
   | "Periodization"
   | "HealthMetric"
+  /** Retificação rastreável de avaliação do especialista; autoria é conferida no banco. */
+  | "PhysicalAssessment"
   | "Hydration"
-  /** A medida corporal declarada pelo próprio aluno (0056); a do especialista não é editável. */
+  /** A medida corporal declarada pelo titular (0056), distinta da retificação profissional (0095). */
   | "DeclaredMeasurement"
   /** A nota que o especialista escreve sobre o progresso do Aluno (0057). */
   | "SpecialistNote"
@@ -47,11 +49,11 @@ export type Subject =
   | "RankingConsent"
   /** A troca de exercício que o aluno registra num treino prescrito (0086). */
   | "ExerciseSwap"
-  /** O check-in da semana (0088): o aluno faz, o especialista vinculado lê. */
+  /** O check-in da semana (0097): o aluno faz, o especialista vinculado lê. */
   | "WeeklyCheckIn"
-  /** O ajuste aprovado no plano (0088): o Praticante aprova e desfaz; ninguém edita. */
+  /** O ajuste aprovado no plano (0097): o Praticante aprova e desfaz; ninguém edita. */
   | "PlanAdjustment"
-  /** A pausa do Modo Descanso (0092): a pessoa pausa e volta; o especialista vê. */
+  /** A pausa do Modo Descanso (0101): a pessoa pausa e volta; o especialista vê. */
   | "RestPeriod"
   | "all";
 
@@ -81,6 +83,7 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
 
   if (context.accountType === "specialist") {
     can("manage", "Client");
+    can(["read", "update"], "PhysicalAssessment");
     // O vinculado lê a medida que o aluno declarou antes do vínculo (0056).
     can("read", "DeclaredMeasurement");
     // A nota é do autor: quem escreveu lê, corrige e apaga. A RLS (0057) é quem
@@ -98,7 +101,7 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
     // A troca é evidência do aluno: o especialista acompanha e não edita (0086).
     can("read", "ExerciseSwap");
     // O check-in, os ajustes e a pausa do aluno são evidência dele: o
-    // vinculado acompanha e não grava (0088, 0092).
+    // vinculado acompanha e não grava (0097, 0101).
     can("read", ["WeeklyCheckIn", "PlanAdjustment", "RestPeriod"]);
 
     if (context.services?.includes("personal_training")) {
@@ -117,6 +120,7 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
   }
 
   if (context.accountType === "student") {
+    can("read", "PhysicalAssessment");
     can("read", "Workout");
     can("read", "Diet");
     can("read", "Exercise");
@@ -154,6 +158,7 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
   // Para o member gerenciar a própria periodização de verdade, primeiro precisa
   // existir política que permita: é migration, não linha de CASL.
   if (context.accountType === "member") {
+    can("read", "PhysicalAssessment");
     can("read", "Profile");
     can("update", "Profile");
     can("manage", [
@@ -169,7 +174,7 @@ export function defineAbilitiesFor(context: UserContext): AppAbility {
     can("read", "Leaderboard");
     can(["create", "read"], "ExerciseSwap");
     // O Praticante aprova e desfaz o ajuste da semana; corrigir ou apagar o
-    // histórico ninguém pode (0088).
+    // histórico ninguém pode (0097).
     can(["create", "read"], ["WeeklyCheckIn", "PlanAdjustment"]);
     can(["create", "read", "update"], "RestPeriod");
   }

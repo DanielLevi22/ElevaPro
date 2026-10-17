@@ -144,7 +144,7 @@ export interface Periodization {
   // insert — que o banco recusa.
   start_date: string;
   end_date: string;
-  /** Por que acabou (0090, 0091); nulo enquanto ativa ou de antes do #376. */
+  /** Por que acabou (0099, 0100); nulo enquanto ativa ou de antes do #376. */
   end_reason?: PlanEndReason | null;
   created_at: string;
   updated_at: string;

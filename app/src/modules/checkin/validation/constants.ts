@@ -1,6 +1,6 @@
 import type { CheckInLogging } from '@elevapro/shared';
 
-/** A mesma faixa que o banco recusa fora (`submit_weekly_check_in`, 0088). */
+/** A mesma faixa que o banco recusa fora (`submit_weekly_check_in`, 0097). */
 export const WEIGHT_RANGE = { min: 30, max: 300 };
 
 /** As quatro respostas do desenho A4, na ordem do kit. */

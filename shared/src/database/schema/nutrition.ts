@@ -52,7 +52,7 @@ export const dietPlans = pgTable("diet_plans", {
   }),
   start_date: date("start_date"),
   end_date: date("end_date"),
-  // Por que a dieta acabou: block_completed ou replaced (0090, #376).
+  // Por que a dieta acabou: block_completed ou replaced (0099, #376).
   end_reason: text("end_reason"),
   target_calories: numeric("target_calories", { precision: 7, scale: 2 }),
   target_protein: numeric("target_protein", { precision: 7, scale: 2 }),
@@ -124,7 +124,7 @@ export const mealLogs = pgTable(
 );
 
 // Check-in da semana (#376): como foi o registro e o peso, que mora em
-// `physical_assessments` como medida declarada. Só as funções da 0088 gravam.
+// `physical_assessments` como medida declarada. Só as funções da 0097 gravam.
 export const checkInLoggingEnum = pgEnum("check_in_logging", [
   "all",
   "partial",

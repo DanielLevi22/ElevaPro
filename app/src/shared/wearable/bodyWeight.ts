@@ -1,4 +1,4 @@
-/** A faixa que o check-in aceita (0088): fora dela é erro de balança ou de unidade. */
+/** A faixa que o check-in aceita (0097): fora dela é erro de balança ou de unidade. */
 const MIN_KG = 30;
 const MAX_KG = 300;
 

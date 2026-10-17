@@ -170,7 +170,7 @@ export interface BlockNaming {
   startDate?: string;
 }
 
-/** Por que o plano anterior acabou (0090, 0091): fim do bloco, trocado, ou mudado antes do fim. */
+/** Por que o plano anterior acabou (0099, 0100): fim do bloco, trocado, ou mudado antes do fim. */
 export type PlanEndReason = "block_completed" | "replaced" | "changed_early";
 
 export async function saveTraining(

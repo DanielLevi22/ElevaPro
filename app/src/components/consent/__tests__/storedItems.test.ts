@@ -46,7 +46,7 @@ describe('storedItems', () => {
   /**
    * A `1.10` existe por esta linha (#376, Art. 8°, §4° e Art. 9°): o check-in
    * guarda como foi a semana e o histórico dos ajustes de meta. Sem ela, o
-   * aceite é genérico para o que a 0088 grava, e autorização genérica é nula.
+   * aceite é genérico para o que a 0097 grava, e autorização genérica é nula.
    */
   it('o aceite não omite o check-in nem os ajustes de meta', () => {
     for (const hasSpecialist of [true, false]) {

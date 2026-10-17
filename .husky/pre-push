@@ -23,7 +23,8 @@ fi
 # Os scripts com efeito colateral (limpeza do MFA local) têm trava própria.
 # Os arquivos, e não a pasta: no Node 24 do Windows, `node --test` com a pasta
 # tenta carregá-la como módulo ("Cannot find module") e o push falha sem
-# nenhum teste ter rodado.
+# nenhum teste ter rodado. E o glob sem aspas: o Node 20 não expande glob em
+# argumento literal, a expansão precisa ser do shell.
 node --test scripts/__tests__/*.test.mjs
 cd app && npx jest --coverage --passWithNoTests --runInBand --forceExit
 cd ../web && npx vitest run --coverage --passWithNoTests

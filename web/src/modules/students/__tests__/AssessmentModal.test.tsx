@@ -78,7 +78,7 @@ describe("AssessmentModal", () => {
     await userEvent.click(screen.getByRole("button", { name: "Salvar Avaliação" }));
     await waitFor(() =>
       expect(mockMutateAsync).toHaveBeenCalledWith(
-        expect.objectContaining({ studentId: "student-1", weight: 75 }),
+        expect.objectContaining({ studentId: "student-1", weight_kg: 75, height_cm: 175 }),
       ),
     );
   });
@@ -91,6 +91,32 @@ describe("AssessmentModal", () => {
     await userEvent.click(screen.getByRole("button", { name: "Salvar Avaliação" }));
     await waitFor(() =>
       expect(screen.getByRole("alert")).toHaveTextContent("Erro ao salvar avaliação"),
+    );
+  });
+
+  it("envia as medidas preenchidas nas três abas com os nomes compartilhados", async () => {
+    render(<AssessmentModal studentId="student-1" onClose={vi.fn()} />, { wrapper });
+    await userEvent.type(screen.getByLabelText(/peso/i), "92");
+    await userEvent.type(screen.getByLabelText(/altura/i), "174");
+    await userEvent.click(screen.getByRole("button", { name: "Circunferências" }));
+    await userEvent.type(screen.getByLabelText("Antebraço D (cm)", { exact: false }), "28");
+    await userEvent.type(screen.getByLabelText("Antebraço E (cm)", { exact: false }), "27");
+    await userEvent.type(screen.getByLabelText("Panturrilha E (cm)", { exact: false }), "38");
+    await userEvent.click(screen.getByRole("button", { name: "Dobras" }));
+    await userEvent.type(screen.getByLabelText("Abdominal (mm)", { exact: false }), "18");
+    await userEvent.type(screen.getByLabelText("Tríceps (mm)", { exact: false }), "12");
+    await userEvent.click(screen.getByRole("button", { name: "Salvar Avaliação" }));
+    expect(mockMutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        studentId: "student-1",
+        weight_kg: 92,
+        height_cm: 174,
+        circ_right_forearm: 28,
+        circ_left_forearm: 27,
+        circ_left_calf: 38,
+        skinfold_abdomen: 18,
+        skinfold_tricep: 12,
+      }),
     );
   });
 

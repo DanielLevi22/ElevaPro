@@ -1,13 +1,10 @@
 "use client";
 
+import type { PhysicalAssessment, PhysicalAssessmentInput } from "@elevapro/shared";
 import { supabase } from "@elevapro/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Assessment } from "@/app/api/students/[id]/assessments/route";
 
-export type AssessmentInput = Omit<
-  Assessment,
-  "id" | "created_at" | "student_id" | "specialist_id"
-> & { studentId: string };
+export type AssessmentInput = PhysicalAssessmentInput & { studentId: string };
 
 export function useCreateAssessment() {
   const queryClient = useQueryClient();
@@ -35,7 +32,7 @@ export function useCreateAssessment() {
         throw new Error(result.error ?? "Não foi possível salvar a avaliação");
       }
 
-      return (result as { assessment: Assessment }).assessment;
+      return (result as { assessment: PhysicalAssessment }).assessment;
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["student-assessments", variables.studentId] });

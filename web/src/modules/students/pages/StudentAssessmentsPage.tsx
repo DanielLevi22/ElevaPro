@@ -1,11 +1,14 @@
 "use client";
 
+import { defineAbilitiesFor } from "@elevapro/shared";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
+import { type AuthProfile, useAuthUser } from "@/shared/hooks/useAuthUser";
 import { useStudents } from "@/shared/hooks/useStudents";
 import { formatDate } from "@/shared/utils/formatDate";
 import { AssessmentModal } from "../components/AssessmentModal";
+import { AssessmentRevisions } from "../components/AssessmentRevisions";
 import type { Assessment } from "../hooks/useStudentAssessments";
 import { useStudentAssessments } from "../hooks/useStudentAssessments";
 
@@ -24,17 +27,21 @@ function AssessmentCard({
   assessment,
   index,
   previous,
+  onCorrect,
+  onHistory,
 }: {
   assessment: Assessment;
   index: number;
   previous: Assessment | null;
+  onCorrect?: () => void;
+  onHistory?: () => void;
 }) {
   const delta = (curr: number | null, prev: number | null) => {
     if (curr === null || prev === null) return null;
     return Number((curr - prev).toFixed(1));
   };
 
-  const weightDelta = delta(assessment.weight, previous?.weight ?? null);
+  const weightDelta = delta(assessment.weight_kg, previous?.weight_kg ?? null);
 
   return (
     <div className="bg-surface border border-white/10 rounded-2xl p-5 space-y-4">
@@ -58,30 +65,33 @@ function AssessmentCard({
             )}
           </div>
         </div>
-        {assessment.weight && assessment.height && (
+        {assessment.weight_kg && assessment.height_cm && (
           <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 text-muted-foreground">
-            IMC {(assessment.weight / (assessment.height / 100) ** 2).toFixed(1)}
+            IMC {(assessment.weight_kg / (assessment.height_cm / 100) ** 2).toFixed(1)}
           </span>
         )}
       </div>
 
       {/* Composição */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-1 border-t border-white/5">
-        <StatCell label="Peso" value={assessment.weight} unit=" kg" />
-        <StatCell label="Altura" value={assessment.height} unit=" cm" />
-        <StatCell label="Cintura" value={assessment.waist} unit=" cm" />
-        <StatCell label="Quadril" value={assessment.hips} unit=" cm" />
+        <StatCell label="Peso" value={assessment.weight_kg} unit=" kg" />
+        <StatCell label="Altura" value={assessment.height_cm} unit=" cm" />
+        <StatCell label="Cintura" value={assessment.circ_waist} unit=" cm" />
+        <StatCell label="Quadril" value={assessment.circ_hip} unit=" cm" />
       </div>
 
       {/* Circunferências — só exibe se tiver algum valor */}
-      {[assessment.waist, assessment.hips, assessment.chest, assessment.arm_right_relaxed].some(
-        (v) => v !== null,
-      ) && (
+      {[
+        assessment.circ_waist,
+        assessment.circ_hip,
+        assessment.circ_chest,
+        assessment.circ_right_arm,
+      ].some((v) => v !== null) && (
         <div className="grid grid-cols-4 gap-4 pt-3 border-t border-white/5">
-          <StatCell label="Cintura" value={assessment.waist} unit=" cm" />
-          <StatCell label="Quadril" value={assessment.hips} unit=" cm" />
-          <StatCell label="Peito" value={assessment.chest} unit=" cm" />
-          <StatCell label="Braço D" value={assessment.arm_right_relaxed} unit=" cm" />
+          <StatCell label="Cintura" value={assessment.circ_waist} unit=" cm" />
+          <StatCell label="Quadril" value={assessment.circ_hip} unit=" cm" />
+          <StatCell label="Peito" value={assessment.circ_chest} unit=" cm" />
+          <StatCell label="Braço D" value={assessment.circ_right_arm} unit=" cm" />
         </div>
       )}
 
@@ -90,19 +100,64 @@ function AssessmentCard({
           {assessment.notes}
         </p>
       )}
+      {(onCorrect || onHistory) && (
+        <div className="flex flex-wrap gap-2">
+          {onCorrect && (
+            <Button variant="ghost" onClick={onCorrect}>
+              Corrigir avaliação
+            </Button>
+          )}
+          {onHistory && (
+            <Button variant="ghost" onClick={onHistory}>
+              Histórico de correções
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
 export default function StudentAssessmentsPage() {
   const params = useParams();
-  const studentId = params.id as string;
+  const { data: currentUser } = useAuthUser();
+  const studentId = (params.id as string | undefined) ?? currentUser?.id ?? "";
+  return (
+    <StudentAssessmentContent
+      key={`${studentId}:${currentUser?.id ?? "pending"}`}
+      studentId={studentId}
+      currentUser={currentUser}
+    />
+  );
+}
+
+function StudentAssessmentContent({
+  studentId,
+  currentUser,
+}: {
+  studentId: string;
+  currentUser: AuthProfile | null | undefined;
+}) {
   const [modalOpen, setModalOpen] = useState(false);
+  const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
+  const [historyAssessmentId, setHistoryAssessmentId] = useState<string | null>(null);
+  const abilities = defineAbilitiesFor({
+    accountType: currentUser?.accountType === "specialist" ? "specialist" : "student",
+  });
+  const canCorrect = abilities.can("update", "PhysicalAssessment");
+  const closeAssessment = () => {
+    setModalOpen(false);
+    setSelectedAssessment(null);
+  };
 
   const { data: students = [] } = useStudents();
   const student = students.find((s) => s.id === studentId);
 
-  const { data: assessments = [], isLoading, isError } = useStudentAssessments(studentId);
+  const { data: recordedAssessments = [], isLoading, isError } = useStudentAssessments(studentId);
+  // ADR-0030: a série profissional nunca compara uma medida declarada pelo aluno.
+  const assessments = recordedAssessments.filter(
+    (assessment) => assessment.measured_by === "specialist",
+  );
 
   return (
     <div className="space-y-6">
@@ -115,7 +170,7 @@ export default function StudentAssessmentsPage() {
           </div>
         </div>
 
-        <Button onClick={() => setModalOpen(true)}>+ Nova Avaliação</Button>
+        {canCorrect && <Button onClick={() => setModalOpen(true)}>+ Nova Avaliação</Button>}
       </div>
 
       {/* Content */}
@@ -156,7 +211,7 @@ export default function StudentAssessmentsPage() {
           <p className="text-sm text-muted-foreground mb-6">
             Registre a primeira avaliação física deste aluno.
           </p>
-          <Button onClick={() => setModalOpen(true)}>Nova Avaliação</Button>
+          {canCorrect && <Button onClick={() => setModalOpen(true)}>Nova Avaliação</Button>}
         </div>
       )}
 
@@ -168,6 +223,21 @@ export default function StudentAssessmentsPage() {
               assessment={a}
               index={i}
               previous={assessments[i + 1] ?? null}
+              onCorrect={
+                canCorrect && a.measured_by === "specialist" && a.specialist_id === currentUser?.id
+                  ? () => {
+                      setSelectedAssessment(a);
+                      setModalOpen(true);
+                    }
+                  : undefined
+              }
+              onHistory={
+                abilities.can("read", "PhysicalAssessment") &&
+                (currentUser?.id === studentId ||
+                  (canCorrect && a.specialist_id === currentUser?.id))
+                  ? () => setHistoryAssessmentId(a.id)
+                  : undefined
+              }
             />
           ))}
         </div>
@@ -175,8 +245,17 @@ export default function StudentAssessmentsPage() {
 
       <AssessmentModal
         studentId={modalOpen ? studentId : null}
-        onClose={() => setModalOpen(false)}
+        assessment={selectedAssessment}
+        onClose={closeAssessment}
       />
+      {historyAssessmentId && (
+        <AssessmentRevisions
+          key={historyAssessmentId}
+          studentId={studentId}
+          assessmentId={historyAssessmentId}
+          onClose={() => setHistoryAssessmentId(null)}
+        />
+      )}
     </div>
   );
 }

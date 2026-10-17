@@ -25,6 +25,7 @@ const SUBJECTS: Subject[] = [
   "Analytics",
   "Periodization",
   "HealthMetric",
+  "PhysicalAssessment",
   "Hydration",
   "DeclaredMeasurement",
   "SpecialistNote",
@@ -125,6 +126,16 @@ const CONTEXTOS: Record<string, UserContext> = {
 };
 
 describe("defineAbilitiesFor — tabela de permissões", () => {
+  // LGPD, arts. 6º, VII e 46: UI não oferece retificação profissional ao titular ou a conta independente.
+  it.each([
+    "student",
+    "member",
+  ] as const)("%s não corrige avaliação profissional", (accountType) => {
+    expect(
+      defineAbilitiesFor({ accountType }).cannot("update", "PhysicalAssessment"),
+      "SAÚDE EDITÁVEL: papel sem autoria recebeu retificação profissional",
+    ).toBe(true);
+  });
   for (const [papel, contexto] of Object.entries(CONTEXTOS)) {
     describe(papel, () => {
       const ability = defineAbilitiesFor(contexto);
@@ -185,7 +196,7 @@ describe("defineAbilitiesFor — tabela de permissões", () => {
   });
 
   // O histórico de check-ins, ajustes e pausas é evidência: ninguém além do
-  // admin corrige ou apaga, e o especialista só lê (0088, 0092).
+  // admin corrige ou apaga, e o especialista só lê (0097, 0101).
   it("check-in, ajuste e pausa não se corrigem nem se apagam", () => {
     for (const papel of ["specialist:personal_training", "student", "member"]) {
       const ability = defineAbilitiesFor(CONTEXTOS[papel]);

@@ -10,7 +10,7 @@ describe("createRestService", () => {
 
     expect(await createRestService(supabase).recent("aluno-1")).toEqual([rest]);
     expect(chamadas[0].tabela).toBe("rest_periods");
-    // A pausa não guarda motivo (0092): a leitura pede só as datas.
+    // A pausa não guarda motivo (0101): a leitura pede só as datas.
     expect(chamadas[0].select).toBe("id, starts_on, planned_until, ended_on");
     expect(chamadas[0].filtros).toEqual({ student_id: "aluno-1" });
   });

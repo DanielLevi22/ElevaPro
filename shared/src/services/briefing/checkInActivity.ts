@@ -32,7 +32,7 @@ export function checkInSentence(loggingLabel: string): string {
  * especialista (#376). Só a resposta do registro: o peso do Aluno nem existe
  * (ADR-0030), e o do Praticante não tem especialista para ler.
  *
- * Roda sob a sessão do especialista: a RLS da 0088 fecha a leitura quando o
+ * Roda sob a sessão do especialista: a RLS da 0097 fecha a leitura quando o
  * aluno revoga o consentimento. Não entra na linha do tempo por aluno do web,
  * que lê pela rota com `service_role` e ignora a revogação (#344).
  *

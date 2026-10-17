@@ -3494,7 +3494,7 @@ END $$;
 
 ROLLBACK;
 
--- ── weekly_check_ins e plan_adjustments: o check-in da semana (0088, #376) ─────
+-- ── weekly_check_ins e plan_adjustments: o check-in da semana (0097, #376) ─────
 -- O Praticante diz como foi a semana e o peso; o ajuste da meta só vale
 -- aprovado, no máximo 200 kcal, e fica registrado; o "Desfazer" do mesmo dia
 -- volta a meta e registra o inverso. O Aluno faz o check-in sem peso e sem
@@ -3573,7 +3573,7 @@ BEGIN
     RAISE EXCEPTION 'PESO PERDIDO: o check-in do Praticante não apontou para a medida declarada';
   END IF;
 
-  -- A origem do peso (0093, F9): digitado por padrão, a média do app Saúde
+  -- A origem do peso (0102, F9): digitado por padrão, a média do app Saúde
   -- quando veio de lá, e nada além dessas duas.
   IF week_check_in.weight_origin IS DISTINCT FROM 'manual' THEN
     RAISE EXCEPTION 'ORIGEM PERDIDA: peso digitado gravou origem %', week_check_in.weight_origin;
@@ -3724,7 +3724,7 @@ END $$;
 
 ROLLBACK;
 
--- ── workout_session_exercises.effort: o esforço do exercício (0089, #376) ──────
+-- ── workout_session_exercises.effort: o esforço do exercício (0098, #376) ──────
 -- "Fácil", "Ok" ou "Difícil" e nada mais: o valor é a entrada de uma regra em
 -- código, e texto livre aqui viraria um campo de anotação sem a base legal das
 -- anotações (Art. 11), que é outra.
@@ -3758,7 +3758,7 @@ END $$;
 
 ROLLBACK;
 
--- ── end_reason: o motivo do fim do plano (0090, #376) ──────────────────────────
+-- ── end_reason: o motivo do fim do plano (0099, #376) ──────────────────────────
 -- O motivo é uma lista fechada, gravada pelo BFF: texto livre aqui viraria lugar
 -- de anotar lesão sem a base legal de dado de saúde (Art. 11), e o Praticante
 -- não reescreve por que o próprio bloco acabou (histórico, Art. 6°, V).
@@ -3800,7 +3800,7 @@ END $$;
 
 ROLLBACK;
 
--- ── rest_periods: o Modo Descanso (0092, #376) ─────────────────────────────────
+-- ── rest_periods: o Modo Descanso (0101, #376) ─────────────────────────────────
 -- A pausa guarda só de quando a quando: o motivo ("doente", "machucada") é dado
 -- de saúde que a pausa não precisa, e não tem onde ser gravado. Só pelas
 -- funções, uma aberta por vez, e o especialista sem vínculo não lê.
@@ -3876,7 +3876,7 @@ END $$;
 
 ROLLBACK;
 
--- ── plan_adjustments: o plano mais simples (0094, #376 A5c) ────────────────────
+-- ── plan_adjustments: o plano mais simples (0103, #376 A5c) ────────────────────
 -- Com aderência baixa, a meta não muda: o plano perde uma refeição. O registro
 -- é da própria pessoa, sobre o próprio check-in pendente e a própria dieta
 -- ativa, uma refeição a menos de cada vez, e só pela função.

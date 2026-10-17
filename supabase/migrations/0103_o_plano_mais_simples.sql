@@ -5,7 +5,7 @@
 -- fim do check-in, pela mesma regra dos outros ajustes: só a função grava.
 --
 -- O ajuste guarda refeições por dia, antes e depois: não é dado de saúde novo,
--- é o estado do plano (o mesmo `plan_adjustments` da 0088, com a mesma RLS e a
+-- é o estado do plano (o mesmo `plan_adjustments` da 0097, com a mesma RLS e a
 -- mesma retenção). O `/lgpd-check` da fatia 1 já previa este tipo.
 
 ALTER TYPE public.plan_adjustment_kind ADD VALUE IF NOT EXISTS 'plan_simplified';

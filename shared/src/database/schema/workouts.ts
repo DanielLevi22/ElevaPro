@@ -71,7 +71,7 @@ export const trainingPeriodizations = pgTable("training_periodizations", {
   // IA e criar ficha de treino ficaram quebrados sem sintoma no compilador.
   start_date: date("start_date").notNull(),
   end_date: date("end_date").notNull(),
-  // Por que o plano acabou: block_completed ou replaced (0090, #376).
+  // Por que o plano acabou: block_completed ou replaced (0099, #376).
   end_reason: text("end_reason"),
   // Vieram na `0004` e nunca entraram neste schema (dívida #40).
   level: text("level"),
@@ -81,7 +81,7 @@ export const trainingPeriodizations = pgTable("training_periodizations", {
 });
 
 // O Modo Descanso (#376, A8): de quando a quando o plano ficou pausado. Sem o
-// motivo, que é dado de saúde; gravado só por start_rest e end_rest (0092).
+// motivo, que é dado de saúde; gravado só por start_rest e end_rest (0101).
 export const restPeriods = pgTable("rest_periods", {
   id: uuid("id").primaryKey().defaultRandom(),
   student_id: uuid("student_id")
@@ -275,7 +275,7 @@ export const workoutSessionExercises = pgTable("workout_session_exercises", {
   // schema, a divergência era invisível para elas também.
   exercise_id: uuid("exercise_id"),
   notes: text("notes"),
-  // "Fácil", "Ok" ou "Difícil" depois da última série (0089, #376): o sinal da
+  // "Fácil", "Ok" ou "Difícil" depois da última série (0098, #376): o sinal da
   // carga sugerida no próximo treino.
   effort: text("effort"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
