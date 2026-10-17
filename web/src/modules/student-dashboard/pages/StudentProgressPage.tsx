@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useWorkoutMetrics } from "@/shared/hooks/useWorkoutMetrics";
 import { useCurrentStudentId } from "../hooks/useStudentDashboardData";
 
@@ -12,6 +13,9 @@ export function StudentProgressPage() {
       <div>
         <h1 className="text-2xl font-black text-foreground uppercase tracking-tight">Progresso</h1>
         <p className="text-sm text-muted-foreground mt-1">Últimos 90 dias de treino</p>
+        <Link href="/dashboard/student/assessments" className="text-sm text-primary underline">
+          Avaliações e histórico de correções
+        </Link>
       </div>
 
       {isLoading ? (
