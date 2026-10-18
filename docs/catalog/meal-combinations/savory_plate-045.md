@@ -3,7 +3,7 @@
 - [ ] `candidate-f74a12651e347e87` — Prato: Inhame cozido + Carne bovina (alcatra) + Abobrinha cozida
 - [ ] `candidate-f75851d1dc6583d7` — Prato: Arroz sete grãos cozido + Camarão cozido + Palmito em conserva
 - [ ] `candidate-f7617ab72badef06` — Prato: Milho verde cozido + Tofu + Beterraba cozida
-- [ ] `candidate-f763106eac32a3d2` — Prato: Macarrão integral cozido + Frango (peito grelhado) + Abobrinha cozida
+- [x] `candidate-f763106eac32a3d2` — Prato: Macarrão integral cozido + Frango (peito grelhado) + Abobrinha cozida
 - [ ] `candidate-f763b03533bdfe00` — Prato: Polenta cozida + Camarão cozido + Pimentão verde
 - [ ] `candidate-f77924c4ee78b682` — Prato: Milho verde cozido + Carne bovina (alcatra) + Pimentão vermelho
 - [ ] `candidate-f78206c6e8f36ea9` — Prato: Quinoa cozida + Bacalhau dessalgado cozido + Alface

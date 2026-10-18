@@ -148,7 +148,7 @@
 - [ ] `candidate-e436c8c86961ad41` — Prato: Cuscuz marroquino cozido + Proteína de soja texturizada + Tomate
 - [ ] `candidate-e43f773243d3c01f` — Prato: Quinoa cozida + Pescada grelhada + Couve refogada
 - [ ] `candidate-e43fc250a943aa3e` — Prato: Mandioca cozida + Carne bovina (alcatra) + Chuchu cozido
-- [ ] `candidate-e44150686d11c27a` — Prato: Inhame cozido + Frango (peito grelhado) + Cenoura crua
+- [x] `candidate-e44150686d11c27a` — Prato: Inhame cozido + Frango (peito grelhado) + Cenoura crua
 - [ ] `candidate-e445b904ce4bae41` — Prato: Arroz branco cozido + Carne bovina (coxão mole) + Couve refogada
 - [ ] `candidate-e4463e9180ef8e58` — Prato: Batata doce roxa cozida + Ovo de codorna cozido + Quiabo cozido
 - [ ] `candidate-e44c7e14e950aa9f` — Prato: Batata baroa cozida + Carne bovina (alcatra) + Alface
