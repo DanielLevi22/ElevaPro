@@ -228,7 +228,7 @@
 - [ ] `candidate-407f697585b00f3c` — Prato com leguminosa: Macarrão cozido + Feijão branco cozido + Rúcula
 - [ ] `candidate-407f7113ec4e0e5f` — Prato com leguminosa: Arroz branco cozido + Feijão azuki cozido + Couve refogada
 - [ ] `candidate-408e9f44ca354985` — Prato com leguminosa: Macarrão cozido + Tremoço em conserva + Pepino
-- [ ] `candidate-40932cc1db681b65` — Prato com leguminosa: Arroz branco cozido + Lentilha cozida + Pimentão vermelho
+- [x] `candidate-40932cc1db681b65` — Prato com leguminosa: Arroz branco cozido + Lentilha cozida + Pimentão vermelho
 - [ ] `candidate-40bd5f50cc30ba16` — Prato com leguminosa: Batata doce roxa cozida + Feijão carioca cozido + Pimentão verde
 - [ ] `candidate-40c87efc54966e8c` — Prato com leguminosa: Batata baroa cozida + Grão de bico cozido + Aspargos cozidos
 - [ ] `candidate-40d0639d15b07c43` — Prato com leguminosa: Batata inglesa cozida + Feijão fradinho cozido + Pimentão vermelho
@@ -241,9 +241,9 @@
 - [ ] `candidate-41a0260fc383828a` — Prato com leguminosa: Batata doce roxa cozida + Lentilha cozida + Alface
 - [ ] `candidate-41b74ab6ee1390b3` — Prato com leguminosa: Macarrão integral cozido + Tremoço em conserva + Palmito em conserva
 - [ ] `candidate-41bfc96316ce0e28` — Prato com leguminosa: Cará cozido + Feijão carioca cozido + Cenoura crua
-- [ ] `candidate-41c26edcfb565503` — Prato com leguminosa: Cuscuz de milho + Ervilha cozida + Couve-flor cozida
+- [x] `candidate-41c26edcfb565503` — Prato com leguminosa: Cuscuz de milho + Ervilha cozida + Couve-flor cozida
 - [ ] `candidate-41c65aab495d45f6` — Prato com leguminosa: Cuscuz marroquino cozido + Edamame + Pimentão vermelho
-- [ ] `candidate-41cc6f147ee99f0b` — Prato com leguminosa: Macarrão cozido + Ervilha cozida + Pepino
+- [x] `candidate-41cc6f147ee99f0b` — Prato com leguminosa: Macarrão cozido + Ervilha cozida + Pepino
 - [ ] `candidate-41de7a593c89cb46` — Prato com leguminosa: Quinoa cozida + Edamame + Agrião
 - [ ] `candidate-41e406e8f5e7b23f` — Prato com leguminosa: Cuscuz marroquino cozido + Grão de bico cozido + Alface
 - [ ] `candidate-41f44f4f932b082e` — Prato com leguminosa: Polenta cozida + Feijão carioca cozido + Brócolis cozido

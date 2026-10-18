@@ -13,10 +13,10 @@
 - [ ] `candidate-4e95ea6c0b2749f6` — Prato: Cuscuz marroquino cozido + Carne bovina (alcatra) + Tomate
 - [ ] `candidate-4e9dee32f31d3d3c` — Prato: Cuscuz de milho + Proteína de soja texturizada + Pepino
 - [ ] `candidate-4e9f906156bce554` — Prato: Batata doce cozida + Clara de ovo + Palmito em conserva
-- [ ] `candidate-4ea01425090231f6` — Prato: Batata doce cozida + Clara de ovo + Pimentão vermelho
+- [x] `candidate-4ea01425090231f6` — Prato: Batata doce cozida + Clara de ovo + Pimentão vermelho
 - [ ] `candidate-4ea28c160e95c63f` — Prato: Quinoa cozida + Salmão grelhado + Cenoura crua
 - [ ] `candidate-4eb52a8d898ed413` — Prato: Biscoito de arroz + Fígado bovino grelhado + Agrião
-- [ ] `candidate-4eb61aacc27c78ed` — Prato: Cuscuz de milho + Carne bovina (coxão mole) + Chuchu cozido
+- [x] `candidate-4eb61aacc27c78ed` — Prato: Cuscuz de milho + Carne bovina (coxão mole) + Chuchu cozido
 - [ ] `candidate-4eb82dc6207c6d6e` — Prato: Macarrão cozido + Seitan + Repolho cru
 - [ ] `candidate-4ec98caaa4f1fc47` — Prato: Batata baroa cozida + Sardinha (lata, drenada) + Couve-flor cozida
 - [ ] `candidate-4ecb314736e33e9e` — Prato: Quinoa cozida + Salmão grelhado + Pepino
