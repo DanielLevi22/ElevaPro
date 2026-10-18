@@ -34,7 +34,7 @@
 - [ ] `candidate-8482574ae48bad43` — Vitamina: Leite desnatado + Mirtilo
 - [ ] `candidate-971c8d8e973ce475` — Vitamina: Bebida de soja sem açúcar + Manga
 - [ ] `candidate-a2a19046ffe992c7` — Vitamina: Leite desnatado + Morango
-- [ ] `candidate-a7724cd61261daf5` — Vitamina: Leite sem lactose desnatado + Banana nanica
+- [x] `candidate-a7724cd61261daf5` — Vitamina: Leite sem lactose desnatado + Banana nanica
 - [ ] `candidate-a8d73ecaae7196d1` — Vitamina: Leite desnatado + Banana prata
 - [ ] `candidate-b67e00d8232e1553` — Vitamina: Leite integral + Mamão
 - [ ] `candidate-bc68ac43cb5f77e2` — Vitamina: Bebida de soja sem açúcar + Banana nanica

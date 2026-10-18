@@ -205,7 +205,7 @@
 - [ ] `candidate-25257abb64cdee2f` — Prato: Polenta cozida + Carne moída (patinho) + Alface
 - [x] `candidate-252cef7aa812ddd5` — Prato: Arroz integral cozido + Frango desfiado cozido + Alface
 - [ ] `candidate-25398fecae6724a9` — Prato: Arroz integral cozido + Carne bovina (músculo cozido) + Abóbora cabotiá cozida
-- [ ] `candidate-2539a8078897051a` — Prato: Mandioca cozida + Salmão grelhado + Agrião
+- [x] `candidate-2539a8078897051a` — Prato: Mandioca cozida + Salmão grelhado + Agrião
 - [ ] `candidate-253d10b81e2424aa` — Prato: Polenta cozida + Ovo de codorna cozido + Abóbora cabotiá cozida
 - [ ] `candidate-253fdba0dbf5baab` — Prato: Biscoito de arroz + Ovo de codorna cozido + Couve refogada
 - [x] `candidate-254dbbcd71bba8fb` — Prato: Cuscuz de milho + Carne bovina (coxão mole) + Tomate
@@ -240,7 +240,7 @@
 - [ ] `candidate-25d3acb14f60dd86` — Prato: Batata baroa cozida + Carne suína (lombo assado) + Pepino
 - [ ] `candidate-25d4730fb43245a6` — Prato: Macarrão cozido + Proteína de soja texturizada + Agrião
 - [ ] `candidate-25d6979bedfc8a73` — Prato: Cará cozido + Frango (peito grelhado) + Quiabo cozido
-- [ ] `candidate-25e29ce0ef75b6a7` — Prato: Arroz branco cozido + Frango (coxa sem pele assada) + Agrião
+- [x] `candidate-25e29ce0ef75b6a7` — Prato: Arroz branco cozido + Frango (coxa sem pele assada) + Agrião
 - [ ] `candidate-25e67e2b95601133` — Prato: Quinoa cozida + Pescada grelhada + Chuchu cozido
 - [ ] `candidate-25f2812eeb385db8` — Prato: Macarrão integral cozido + Merluza grelhada + Alface
 - [ ] `candidate-25f70eb449c8e03b` — Prato: Macarrão cozido + Proteína de soja texturizada + Pepino
