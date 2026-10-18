@@ -27,7 +27,7 @@
 - [ ] `candidate-43acaf66ce3b781d` — Prato com leguminosa: Macarrão integral cozido + Edamame + Pepino
 - [x] `candidate-43bc5a6f13852e82` — Prato com leguminosa: Arroz branco cozido + Feijão carioca cozido + Pimentão verde
 - [ ] `candidate-43bc942593c4f8a1` — Prato com leguminosa: Polenta cozida + Ervilha cozida + Rúcula
-- [ ] `candidate-43ecec0cb9861ff5` — Prato com leguminosa: Arroz parboilizado cozido + Feijão carioca cozido + Pepino
+- [x] `candidate-43ecec0cb9861ff5` — Prato com leguminosa: Arroz parboilizado cozido + Feijão carioca cozido + Pepino
 - [ ] `candidate-43ef69f3358b5c53` — Prato com leguminosa: Quinoa cozida + Feijão branco cozido + Berinjela cozida
 - [ ] `candidate-43f2979fde0ce70a` — Prato com leguminosa: Arroz parboilizado cozido + Feijão branco cozido + Berinjela cozida
 - [ ] `candidate-43f9bdc65fbb88db` — Prato com leguminosa: Batata doce cozida + Feijão branco cozido + Abobrinha cozida
@@ -36,7 +36,7 @@
 - [ ] `candidate-44147f8cff2fbb3f` — Prato com leguminosa: Mandioca cozida + Feijão branco cozido + Couve refogada
 - [ ] `candidate-4414a5611007970f` — Prato com leguminosa: Batata baroa cozida + Edamame + Vagem cozida
 - [ ] `candidate-4419b0435a71215c` — Prato com leguminosa: Batata doce roxa cozida + Feijão preto cozido + Couve refogada
-- [ ] `candidate-441fe0f1d898fe49` — Prato com leguminosa: Macarrão cozido + Ervilha cozida + Chuchu cozido
+- [x] `candidate-441fe0f1d898fe49` — Prato com leguminosa: Macarrão cozido + Ervilha cozida + Chuchu cozido
 - [x] `candidate-443305818daeffc0` — Prato com leguminosa: Batata inglesa cozida + Feijão carioca cozido + Rúcula
 - [ ] `candidate-443a2441310369a9` — Prato com leguminosa: Mandioca cozida + Feijão carioca cozido + Aspargos cozidos
 - [ ] `candidate-443fa35badf5349f` — Prato com leguminosa: Milho verde cozido + Edamame + Beterraba cozida
@@ -58,17 +58,17 @@
 - [ ] `candidate-451b9ed6995bff36` — Prato com leguminosa: Cará cozido + Soja cozida + Rúcula
 - [ ] `candidate-451d9b32e22dc7d1` — Prato com leguminosa: Biscoito de arroz + Feijão azuki cozido + Berinjela cozida
 - [ ] `candidate-45216598f907b028` — Prato com leguminosa: Milho verde cozido + Edamame + Pimentão vermelho
-- [ ] `candidate-452313c24fd549de` — Prato com leguminosa: Inhame cozido + Feijão preto cozido + Abóbora cabotiá cozida
+- [x] `candidate-452313c24fd549de` — Prato com leguminosa: Inhame cozido + Feijão preto cozido + Abóbora cabotiá cozida
 - [ ] `candidate-4527c91d30f08ef6` — Prato com leguminosa: Polenta cozida + Feijão azuki cozido + Couve-flor cozida
 - [ ] `candidate-4534903a7e29e953` — Prato com leguminosa: Inhame cozido + Feijão branco cozido + Espinafre
-- [ ] `candidate-45468acf6b34f996` — Prato com leguminosa: Macarrão cozido + Grão de bico cozido + Rúcula
+- [x] `candidate-45468acf6b34f996` — Prato com leguminosa: Macarrão cozido + Grão de bico cozido + Rúcula
 - [ ] `candidate-454c165b78bf830a` — Prato com leguminosa: Batata doce roxa cozida + Feijão azuki cozido + Pimentão vermelho
 - [ ] `candidate-45610258bd6dcf0a` — Prato com leguminosa: Biscoito de arroz + Feijão azuki cozido + Vagem cozida
 - [x] `candidate-4562d456b60d2d6b` — Prato com leguminosa: Batata doce cozida + Feijão preto cozido + Abóbora cabotiá cozida
 - [ ] `candidate-4564615083fd899b` — Prato com leguminosa: Mandioca cozida + Feijão branco cozido + Tomate
 - [ ] `candidate-45661a8e14cfcae6` — Prato com leguminosa: Milho verde cozido + Grão de bico cozido + Repolho cru
 - [ ] `candidate-4571352290792bc9` — Prato com leguminosa: Batata baroa cozida + Lentilha cozida + Aspargos cozidos
-- [ ] `candidate-458bdab9e035d388` — Prato com leguminosa: Inhame cozido + Lentilha cozida + Beterraba cozida
+- [x] `candidate-458bdab9e035d388` — Prato com leguminosa: Inhame cozido + Lentilha cozida + Beterraba cozida
 - [ ] `candidate-459e70ad422d7641` — Prato com leguminosa: Polenta cozida + Feijão carioca cozido + Quiabo cozido
 - [ ] `candidate-45a3b5417b0d599d` — Prato com leguminosa: Batata inglesa cozida + Feijão preto cozido + Espinafre
 - [ ] `candidate-45d29ba379cdc612` — Prato com leguminosa: Milho verde cozido + Feijão azuki cozido + Cogumelo champignon

@@ -144,8 +144,8 @@
 - [ ] `candidate-3b5a55b0cfbcf091` — Prato: Arroz parboilizado cozido + Bacalhau dessalgado cozido + Pepino
 - [ ] `candidate-3b6d9869932d9088` — Prato: Milho verde cozido + Merluza grelhada + Palmito em conserva
 - [x] `candidate-3b6eca7f7dd8bc20` — Prato: Macarrão cozido + Carne bovina (músculo cozido) + Pepino
-- [ ] `candidate-3b7263007df98d69` — Prato: Arroz parboilizado cozido + Clara de ovo + Cenoura crua
-- [ ] `candidate-3b77fdff8b22a745` — Prato: Macarrão cozido + Pescada grelhada + Quiabo cozido
+- [x] `candidate-3b7263007df98d69` — Prato: Arroz parboilizado cozido + Clara de ovo + Cenoura crua
+- [x] `candidate-3b77fdff8b22a745` — Prato: Macarrão cozido + Pescada grelhada + Quiabo cozido
 - [x] `candidate-3b793802c1af9310` — Prato: Arroz branco cozido + Frango (coxa sem pele assada) + Beterraba cozida
 - [ ] `candidate-3b7d90f8359a196d` — Prato: Arroz integral cozido + Proteína de soja texturizada + Alface
 - [ ] `candidate-3b7f687de93a0702` — Prato: Arroz parboilizado cozido + Merluza grelhada + Beterraba cozida
@@ -156,18 +156,18 @@
 - [ ] `candidate-3b942646ba7bcee9` — Prato: Cará cozido + Ovo de codorna cozido + Alface
 - [ ] `candidate-3b95d2b93967ccc1` — Prato: Quinoa cozida + Clara de ovo + Chuchu cozido
 - [ ] `candidate-3b9cb59a086f1539` — Prato: Batata inglesa cozida + Carne suína (lombo assado) + Espinafre
-- [ ] `candidate-3b9e67631f2bbf03` — Prato: Mandioca cozida + Pescada grelhada + Pimentão verde
+- [x] `candidate-3b9e67631f2bbf03` — Prato: Mandioca cozida + Pescada grelhada + Pimentão verde
 - [ ] `candidate-3b9ec4cb7ab465db` — Prato: Cuscuz marroquino cozido + Salmão grelhado + Agrião
-- [ ] `candidate-3b9ed0ca5c6f9120` — Prato: Mandioca cozida + Sardinha (lata, drenada) + Pimentão verde
+- [x] `candidate-3b9ed0ca5c6f9120` — Prato: Mandioca cozida + Sardinha (lata, drenada) + Pimentão verde
 - [ ] `candidate-3ba286adc62a9db4` — Prato: Cará cozido + Clara de ovo + Berinjela cozida
 - [ ] `candidate-3ba327ded4a37fa6` — Prato: Cuscuz de milho + Clara de ovo + Palmito em conserva
-- [ ] `candidate-3ba32dfe3685b30f` — Prato: Batata inglesa cozida + Carne bovina (alcatra) + Pimentão vermelho
+- [x] `candidate-3ba32dfe3685b30f` — Prato: Batata inglesa cozida + Carne bovina (alcatra) + Pimentão vermelho
 - [ ] `candidate-3ba9bbe313389f1b` — Prato: Cará cozido + Pescada grelhada + Berinjela cozida
 - [ ] `candidate-3bab4073cebe532b` — Prato: Quinoa cozida + Ovo inteiro cozido + Palmito em conserva
 - [x] `candidate-3bbb3188aedf138c` — Prato: Macarrão cozido + Atum em água (lata) + Beterraba cozida
 - [ ] `candidate-3bbe078f3bd637e1` — Prato: Cará cozido + Carne moída (patinho) + Pepino
-- [ ] `candidate-3bc0c9466313af6f` — Prato: Biscoito de arroz + Frango desfiado cozido + Pimentão vermelho
-- [ ] `candidate-3bc34f17473858fe` — Prato: Arroz branco cozido + Sardinha (lata, drenada) + Vagem cozida
+- [x] `candidate-3bc0c9466313af6f` — Prato: Biscoito de arroz + Frango desfiado cozido + Pimentão vermelho
+- [x] `candidate-3bc34f17473858fe` — Prato: Arroz branco cozido + Sardinha (lata, drenada) + Vagem cozida
 - [ ] `candidate-3bc3fe3d609c49ce` — Prato: Batata doce cozida + Atum fresco grelhado + Abobrinha cozida
 - [ ] `candidate-3bc87693500ff769` — Prato: Batata doce cozida + Proteína de soja texturizada + Couve-flor cozida
 - [ ] `candidate-3bcbb07842cae198` — Prato: Batata baroa cozida + Pescada grelhada + Beterraba cozida
@@ -178,10 +178,10 @@
 - [ ] `candidate-3bf12c1627e16fad` — Prato: Batata doce roxa cozida + Atum em água (lata) + Brócolis cozido
 - [ ] `candidate-3bf4ad1c4308465e` — Prato: Batata doce roxa cozida + Carne bovina (músculo cozido) + Pepino
 - [ ] `candidate-3bf70aacf8f6c806` — Prato: Arroz sete grãos cozido + Frango (sobrecoxa assada) + Repolho cru
-- [ ] `candidate-3bf929c4cb217548` — Prato: Arroz integral cozido + Pescada grelhada + Pimentão vermelho
+- [x] `candidate-3bf929c4cb217548` — Prato: Arroz integral cozido + Pescada grelhada + Pimentão vermelho
 - [ ] `candidate-3bfa2c856d4d092e` — Prato: Batata doce roxa cozida + Carne bovina (coxão mole) + Palmito em conserva
 - [ ] `candidate-3c040ad519e8a2d0` — Prato: Batata baroa cozida + Salmão grelhado + Espinafre
-- [ ] `candidate-3c046223c33c930f` — Prato: Arroz integral cozido + Carne suína (lombo assado) + Pimentão vermelho
+- [x] `candidate-3c046223c33c930f` — Prato: Arroz integral cozido + Carne suína (lombo assado) + Pimentão vermelho
 - [ ] `candidate-3c10574bfa53f057` — Prato: Quinoa cozida + Fígado bovino grelhado + Couve refogada
 - [ ] `candidate-3c116f85f7713241` — Prato: Polenta cozida + Sardinha (lata, drenada) + Alface
 - [ ] `candidate-3c11ef542dae42ae` — Prato: Cará cozido + Proteína de soja texturizada + Chuchu cozido
@@ -191,37 +191,37 @@
 - [ ] `candidate-3c33977ae4734d7d` — Prato: Inhame cozido + Carne suína (lombo assado) + Couve refogada
 - [x] `candidate-3c365147e7ee29d5` — Prato: Mandioca cozida + Ovo inteiro cozido + Chuchu cozido
 - [ ] `candidate-3c426b40afe98d3c` — Prato: Cará cozido + Camarão cozido + Palmito em conserva
-- [ ] `candidate-3c492d0f7bf1d864` — Prato: Biscoito de arroz + Atum em água (lata) + Tomate
+- [x] `candidate-3c492d0f7bf1d864` — Prato: Biscoito de arroz + Atum em água (lata) + Tomate
 - [ ] `candidate-3c5121adac1c20e2` — Prato: Cará cozido + Carne moída (patinho) + Rúcula
 - [ ] `candidate-3c54f35956d7b7bb` — Prato: Macarrão integral cozido + Clara de ovo + Aspargos cozidos
 - [x] `candidate-3c5705f27a0c8b53` — Prato: Cuscuz de milho + Frango desfiado cozido + Pimentão verde
 - [ ] `candidate-3c5b950a7e159a99` — Prato: Milho verde cozido + Bacalhau dessalgado cozido + Vagem cozida
 - [x] `candidate-3c65489268c43cc4` — Prato: Batata inglesa cozida + Frango (coxa sem pele assada) + Tomate
-- [ ] `candidate-3c67b556d025df17` — Prato: Macarrão integral cozido + Carne bovina (patinho) + Rúcula
+- [x] `candidate-3c67b556d025df17` — Prato: Macarrão integral cozido + Carne bovina (patinho) + Rúcula
 - [ ] `candidate-3c6f6db388ba7787` — Prato: Macarrão integral cozido + Carne bovina (coxão mole) + Pepino
 - [ ] `candidate-3c7791ee57ab50db` — Prato: Batata baroa cozida + Atum em água (lata) + Cenoura crua
 - [ ] `candidate-3c790267586a4633` — Prato: Cuscuz marroquino cozido + Sardinha (lata, drenada) + Couve refogada
 - [x] `candidate-3c7f12ccba397056` — Prato: Cuscuz de milho + Ovo inteiro cozido + Alface
 - [x] `candidate-3c89b4adf711d5c8` — Prato: Mandioca cozida + Tilápia grelhada + Pepino
-- [ ] `candidate-3c8e983ffd7bd60c` — Prato: Batata inglesa cozida + Frango (sobrecoxa assada) + Pimentão verde
+- [x] `candidate-3c8e983ffd7bd60c` — Prato: Batata inglesa cozida + Frango (sobrecoxa assada) + Pimentão verde
 - [x] `candidate-3c94bbb02ff84bcf` — Prato: Arroz branco cozido + Ovo inteiro cozido + Couve refogada
 - [x] `candidate-3c995e08b482e4a6` — Prato: Macarrão integral cozido + Carne moída (patinho) + Alface
-- [ ] `candidate-3ca8abbd59ffcf60` — Prato: Batata doce cozida + Clara de ovo + Agrião
-- [ ] `candidate-3ca930a3ddbf4cc1` — Prato: Arroz branco cozido + Sardinha (lata, drenada) + Chuchu cozido
+- [x] `candidate-3ca8abbd59ffcf60` — Prato: Batata doce cozida + Clara de ovo + Agrião
+- [x] `candidate-3ca930a3ddbf4cc1` — Prato: Arroz branco cozido + Sardinha (lata, drenada) + Chuchu cozido
 - [x] `candidate-3cae89ca285b6d4f` — Prato: Cuscuz de milho + Tilápia grelhada + Abobrinha cozida
 - [ ] `candidate-3caf3c2712cac043` — Prato: Cará cozido + Frango desfiado cozido + Rúcula
-- [ ] `candidate-3cb15207cffbaf42` — Prato: Inhame cozido + Frango (coxa sem pele assada) + Brócolis cozido
-- [ ] `candidate-3cb1f585bb6b231b` — Prato: Mandioca cozida + Sardinha (lata, drenada) + Chuchu cozido
-- [ ] `candidate-3cbabd0863066a3b` — Prato: Inhame cozido + Carne bovina (coxão mole) + Cenoura crua
+- [x] `candidate-3cb15207cffbaf42` — Prato: Inhame cozido + Frango (coxa sem pele assada) + Brócolis cozido
+- [x] `candidate-3cb1f585bb6b231b` — Prato: Mandioca cozida + Sardinha (lata, drenada) + Chuchu cozido
+- [x] `candidate-3cbabd0863066a3b` — Prato: Inhame cozido + Carne bovina (coxão mole) + Cenoura crua
 - [ ] `candidate-3cc1edd2f4a1dbff` — Prato: Batata baroa cozida + Carne moída (patinho) + Tomate
 - [ ] `candidate-3cc3713001719b33` — Prato: Inhame cozido + Atum fresco grelhado + Cenoura crua
 - [ ] `candidate-3cc721a90f30148f` — Prato: Batata doce cozida + Ovo de codorna cozido + Couve refogada
 - [ ] `candidate-3cca4a9f8bde7fc6` — Prato: Batata doce roxa cozida + Sardinha (lata, drenada) + Abóbora cabotiá cozida
 - [ ] `candidate-3cd235299f637895` — Prato: Biscoito de arroz + Pescada grelhada + Pimentão verde
-- [ ] `candidate-3cdbd54e6440c8a9` — Prato: Cuscuz de milho + Carne bovina (músculo cozido) + Chuchu cozido
-- [ ] `candidate-3cf1e4bc0a03515e` — Prato: Macarrão cozido + Frango (coxa sem pele assada) + Quiabo cozido
+- [x] `candidate-3cdbd54e6440c8a9` — Prato: Cuscuz de milho + Carne bovina (músculo cozido) + Chuchu cozido
+- [x] `candidate-3cf1e4bc0a03515e` — Prato: Macarrão cozido + Frango (coxa sem pele assada) + Quiabo cozido
 - [ ] `candidate-3cf4d6c5437b2a9f` — Prato: Cuscuz marroquino cozido + Fígado bovino grelhado + Aspargos cozidos
-- [ ] `candidate-3cfb47c00435d400` — Prato: Arroz branco cozido + Carne bovina (coxão mole) + Rúcula
+- [x] `candidate-3cfb47c00435d400` — Prato: Arroz branco cozido + Carne bovina (coxão mole) + Rúcula
 - [x] `candidate-3cff267a156f6efe` — Prato: Arroz branco cozido + Clara de ovo + Cenoura crua
 - [x] `candidate-3d032b2c2f3fbf3f` — Prato: Arroz branco cozido + Tilápia grelhada + Pepino
 - [ ] `candidate-3d0489a3d4e5eac4` — Prato: Batata doce cozida + Ovo de codorna cozido + Pepino
@@ -245,8 +245,8 @@
 - [ ] `candidate-3d5cd24b02387d15` — Prato: Arroz sete grãos cozido + Tofu + Abobrinha cozida
 - [ ] `candidate-3d5e4c21118cd263` — Prato: Mandioca cozida + Camarão cozido + Beterraba cozida
 - [ ] `candidate-3d62cb2f41cb91e7` — Prato: Mandioca cozida + Fígado bovino grelhado + Repolho cru
-- [ ] `candidate-3d66c6edb9508a06` — Prato: Batata inglesa cozida + Clara de ovo + Couve refogada
-- [ ] `candidate-3d687d22695be49d` — Prato: Macarrão integral cozido + Clara de ovo + Abobrinha cozida
+- [x] `candidate-3d66c6edb9508a06` — Prato: Batata inglesa cozida + Clara de ovo + Couve refogada
+- [x] `candidate-3d687d22695be49d` — Prato: Macarrão integral cozido + Clara de ovo + Abobrinha cozida
 - [ ] `candidate-3d7ca21659fb32e3` — Prato: Arroz branco cozido + Seitan + Chuchu cozido
 - [ ] `candidate-3d8180397472bd6c` — Prato: Cará cozido + Sardinha (lata, drenada) + Quiabo cozido
 - [ ] `candidate-3d81ef44eeb8c62d` — Prato: Macarrão integral cozido + Atum em água (lata) + Couve-flor cozida

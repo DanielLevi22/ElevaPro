@@ -48,7 +48,7 @@
 - [ ] `candidate-3b1260d8f66f4b28` — Legumes com finalização: Berinjela cozida + Azeitona verde + Óleo de canola
 - [ ] `candidate-3c0489840a2694ac` — Legumes com finalização: Abobrinha cozida + Alho + Manteiga ghee
 - [x] `candidate-3d93bb891f25357c` — Legumes com finalização: Brócolis cozido + Alho + Manteiga
-- [ ] `candidate-3e39e751dba4a290` — Legumes com finalização: Berinjela cozida + Cebola + Azeite de oliva
+- [x] `candidate-3e39e751dba4a290` — Legumes com finalização: Berinjela cozida + Cebola + Azeite de oliva
 - [x] `candidate-419c376a20513b3c` — Legumes com finalização: Abobrinha cozida + Limão + Azeite de oliva
 - [ ] `candidate-43a3d510c55e9722` — Legumes com finalização: Couve refogada + Cebola + Manteiga ghee
 - [ ] `candidate-43f1f6e03d9b06c5` — Legumes com finalização: Chuchu cozido + Cebola + Manteiga ghee
