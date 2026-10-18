@@ -5,7 +5,7 @@
 - [ ] `candidate-f140072af79b5e45` — Prato: Macarrão integral cozido + Carne moída (patinho) + Agrião
 - [ ] `candidate-f1433d1310b7e68e` — Prato: Quinoa cozida + Salmão grelhado + Palmito em conserva
 - [ ] `candidate-f1451bc840a9973c` — Prato: Batata baroa cozida + Atum em água (lata) + Agrião
-- [ ] `candidate-f14c7809fd023d02` — Prato: Cuscuz de milho + Frango (coxa sem pele assada) + Alface
+- [x] `candidate-f14c7809fd023d02` — Prato: Cuscuz de milho + Frango (coxa sem pele assada) + Alface
 - [ ] `candidate-f1503bd57e44e01f` — Prato: Batata doce roxa cozida + Frango desfiado cozido + Espinafre
 - [ ] `candidate-f1567311ca9a0605` — Prato: Cuscuz de milho + Sardinha (lata, drenada) + Rúcula
 - [ ] `candidate-f1581603b99611ed` — Prato: Polenta cozida + Tilápia grelhada + Couve refogada
