@@ -38,7 +38,7 @@
 - [ ] `candidate-27586218f75cdef8` — Prato: Cuscuz de milho + Clara de ovo + Cogumelo champignon
 - [ ] `candidate-276428b7dec4f199` — Prato: Cará cozido + Carne bovina (alcatra) + Couve-flor cozida
 - [ ] `candidate-2768c362693f2189` — Prato: Arroz parboilizado cozido + Carne bovina (músculo cozido) + Vagem cozida
-- [ ] `candidate-2769c6f533f7db7d` — Prato: Arroz branco cozido + Salmão grelhado + Couve refogada
+- [x] `candidate-2769c6f533f7db7d` — Prato: Arroz branco cozido + Salmão grelhado + Couve refogada
 - [x] `candidate-276b98d63f029443` — Prato: Mandioca cozida + Frango desfiado cozido + Rúcula
 - [ ] `candidate-276c41e0ca8a5289` — Prato: Batata inglesa cozida + Fígado bovino grelhado + Abobrinha cozida
 - [ ] `candidate-277ce3f8708f8c96` — Prato: Arroz parboilizado cozido + Tofu + Repolho cru
