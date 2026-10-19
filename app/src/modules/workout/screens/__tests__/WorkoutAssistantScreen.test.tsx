@@ -35,9 +35,9 @@ beforeEach(() => {
 });
 
 it('a periodização aprovada abre na tela dela, como as criadas à mão', async () => {
-  render(<WorkoutAssistantScreen />);
+  await render(<WorkoutAssistantScreen />);
   await screen.findByText('Treino A');
-  fireEvent.press(screen.getByText('Abrir plano de treino'));
+  await fireEvent.press(screen.getByText('Abrir plano de treino'));
 
   await waitFor(() =>
     expect(mockReplace).toHaveBeenCalledWith(ROUTES.WORKOUTS.PERIODIZATION('period'))

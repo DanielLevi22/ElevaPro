@@ -1,6 +1,6 @@
 import type { BulkWorkoutProposal } from '@elevapro/shared';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useRef } from 'react';
+import { type ComponentRef, useRef } from 'react';
 import { KeyboardAvoidingView, Platform, type ScrollView, Text, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
@@ -65,7 +65,7 @@ function WorkoutAssistantConversation({
   const canNutrition = useAuthStore(
     (s) => !!s.abilities?.can('create', 'Diet') && !!s.abilities?.can('update', 'Diet')
   );
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
 
   const chat = useAssistantChat({
     token: token ?? '',

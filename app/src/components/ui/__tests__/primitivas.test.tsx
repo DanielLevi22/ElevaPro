@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react-native';
 import { ActivityIndicator, Text, TextInput } from 'react-native';
 import { coresDoTema } from '@/shared/design';
+import { hostOfType } from '@/testing/hostByType';
 import { Button } from '../Button';
 import { Group } from '../Group';
 import { Input } from '../Input';
@@ -51,14 +52,14 @@ beforeEach(() => {
 });
 
 describe('Button', () => {
-  it('anuncia o próprio rótulo, sem pedir o texto duas vezes ao call site', () => {
-    const { getByRole } = render(<Button label="Entrar" onPress={jest.fn()} />);
+  it('anuncia o próprio rótulo, sem pedir o texto duas vezes ao call site', async () => {
+    const { getByRole } = await render(<Button label="Entrar" onPress={jest.fn()} />);
 
     expect(getByRole('button').props.accessibilityLabel).toBe('Entrar');
   });
 
-  it('troca o rótulo pelo indicador enquanto carrega, e marca `busy`', () => {
-    const { queryByText, getByRole } = render(
+  it('troca o rótulo pelo indicador enquanto carrega, e marca `busy`', async () => {
+    const { queryByText, getByRole } = await render(
       <Button label="Entrar" onPress={jest.fn()} isLoading />
     );
 
@@ -66,9 +67,9 @@ describe('Button', () => {
     expect(getByRole('button').props.accessibilityState).toMatchObject({ busy: true });
   });
 
-  it('bloqueia o toque quando carrega, e não só quando está desabilitado', () => {
+  it('bloqueia o toque quando carrega, e não só quando está desabilitado', async () => {
     const aoTocar = jest.fn();
-    const { getByRole } = render(<Button label="Entrar" onPress={aoTocar} isLoading />);
+    const { getByRole } = await render(<Button label="Entrar" onPress={aoTocar} isLoading />);
 
     expect(getByRole('button').props.accessibilityState).toMatchObject({ disabled: true });
   });
@@ -78,19 +79,17 @@ describe('Button', () => {
     ['secondary', 'secondaryForeground'],
     ['destructive', 'destructiveForeground'],
     ['tinted', 'foreground'],
-  ] as const)('pinta o indicador de %s com a cor de contraste da variante', (variant, token) => {
-    const { UNSAFE_getByType } = render(
-      <Button label="Entrar" onPress={jest.fn()} variant={variant} isLoading />
-    );
-    const indicador = UNSAFE_getByType(ActivityIndicator);
+  ] as const)('pinta o indicador de %s com a cor de contraste da variante', async (variant, token) => {
+    await render(<Button label="Entrar" onPress={jest.fn()} variant={variant} isLoading />);
+    const indicador = hostOfType('ActivityIndicator');
 
     expect(indicador.props.color).toBe(escuro[token]);
   });
 
-  it('acompanha o tema na cor do indicador', () => {
+  it('acompanha o tema na cor do indicador', async () => {
     mockEsquema = 'light';
-    const { UNSAFE_getByType } = render(<Button label="Entrar" onPress={jest.fn()} isLoading />);
-    const indicador = UNSAFE_getByType(ActivityIndicator);
+    await render(<Button label="Entrar" onPress={jest.fn()} isLoading />);
+    const indicador = hostOfType('ActivityIndicator');
 
     expect(indicador.props.color).toBe(claro.primaryForeground);
     expect(indicador.props.color).not.toBe(escuro.primaryForeground);
@@ -106,11 +105,11 @@ describe('Group', () => {
     </Group>
   );
 
-  it('mostra cabeçalho e rodapé só quando recebe cada um', () => {
-    const { queryByText, rerender } = render(<Group>{<Text>linha</Text>}</Group>);
+  it('mostra cabeçalho e rodapé só quando recebe cada um', async () => {
+    const { queryByText, rerender } = await render(<Group>{<Text>linha</Text>}</Group>);
     expect(queryByText('Dados pessoais')).toBeNull();
 
-    rerender(
+    await rerender(
       <Group header="Dados pessoais" footer="Mínimo 8 caracteres.">
         <Text>linha</Text>
       </Group>
@@ -119,8 +118,8 @@ describe('Group', () => {
     expect(queryByText('Mínimo 8 caracteres.')).not.toBeNull();
   });
 
-  it('mantém as linhas na ordem em que chegaram', () => {
-    const { getAllByText } = render(tresLinhas);
+  it('mantém as linhas na ordem em que chegaram', async () => {
+    const { getAllByText } = await render(tresLinhas);
 
     expect(getAllByText(/uma|duas|três/).map((no) => no.props.children)).toEqual([
       'uma',
@@ -131,41 +130,41 @@ describe('Group', () => {
 });
 
 describe('Input', () => {
-  it('usa a cor de placeholder do tema, e não a de texto', () => {
-    const { UNSAFE_getByType } = render(<Input placeholder="seu@email.com" />);
-    const campo = UNSAFE_getByType(TextInput);
+  it('usa a cor de placeholder do tema, e não a de texto', async () => {
+    await render(<Input placeholder="seu@email.com" />);
+    const campo = hostOfType('TextInput');
 
     expect(campo.props.placeholderTextColor).toBe(escuro.placeholder);
     expect(campo.props.placeholderTextColor).not.toBe(escuro.foreground);
   });
 
-  it('acompanha o tema no placeholder', () => {
+  it('acompanha o tema no placeholder', async () => {
     mockEsquema = 'light';
-    const { UNSAFE_getByType } = render(<Input placeholder="seu@email.com" />);
-    const campo = UNSAFE_getByType(TextInput);
+    await render(<Input placeholder="seu@email.com" />);
+    const campo = hostOfType('TextInput');
 
     expect(campo.props.placeholderTextColor).toBe(claro.placeholder);
   });
 
-  it('pinta o ícone com a cor secundária de texto, como no desenho', () => {
-    const { UNSAFE_getByType } = render(<Input icon="mail" placeholder="seu@email.com" />);
-    const icone = UNSAFE_getByType('Ionicons' as never);
+  it('pinta o ícone com a cor secundária de texto, como no desenho', async () => {
+    await render(<Input icon="mail" placeholder="seu@email.com" />);
+    const icone = hostOfType('Ionicons');
 
     expect(icone.props.color).toBe(escuro.mutedForeground);
     expect(icone.props.size).toBe(19);
   });
 
-  it('renderiza a ação à direita que o call site passar', () => {
-    const { queryByText } = render(<Input trailing={<Text>olho</Text>} />);
+  it('renderiza a ação à direita que o call site passar', async () => {
+    const { queryByText } = await render(<Input trailing={<Text>olho</Text>} />);
 
     expect(queryByText('olho')).not.toBeNull();
   });
 
-  it('mostra o erro quando recebe, e nada quando não recebe', () => {
-    const { queryByText, rerender } = render(<Input />);
+  it('mostra o erro quando recebe, e nada quando não recebe', async () => {
+    const { queryByText, rerender } = await render(<Input />);
     expect(queryByText('E-mail inválido')).toBeNull();
 
-    rerender(<Input error="E-mail inválido" />);
+    await rerender(<Input error="E-mail inválido" />);
     expect(queryByText('E-mail inválido')).not.toBeNull();
   });
 });

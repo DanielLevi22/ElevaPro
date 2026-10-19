@@ -39,7 +39,7 @@ describe('useLatestDeclaredMeasure', () => {
       { id: 'do-especialista', measured_by: 'specialist', assessed_at: '2026-10-10T10:00:00Z' },
       { id: 'nova', measured_by: 'self', assessed_at: '2026-10-01T10:00:00Z' },
     ]);
-    const { result } = renderHook(() => useLatestDeclaredMeasure('aluno'), { wrapper: wrap });
+    const { result } = await renderHook(() => useLatestDeclaredMeasure('aluno'), { wrapper: wrap });
     await waitFor(() => expect(result.current.data).toBeDefined());
     expect(result.current.data?.id).toBe('nova');
   });
@@ -48,7 +48,7 @@ describe('useLatestDeclaredMeasure', () => {
 describe('useDeclareMeasure', () => {
   it('grava a medida declarada com o instante de agora', async () => {
     mockDeclare.mockResolvedValue({});
-    const { result } = renderHook(() => useDeclareMeasure('aluno'), { wrapper: wrap });
+    const { result } = await renderHook(() => useDeclareMeasure('aluno'), { wrapper: wrap });
 
     await act(() => result.current.mutateAsync({ weight_kg: 78, circ_waist: 84, height_cm: 178 }));
 
@@ -64,7 +64,7 @@ describe('useNextBlockActions', () => {
   it('montar guarda a proposta para a tela de aprovar', async () => {
     useReviewStore.getState().reset();
     mockRequest.mockResolvedValue({ blockNumber: 3 });
-    const { result } = renderHook(() => useNextBlockActions(), { wrapper: wrap });
+    const { result } = await renderHook(() => useNextBlockActions(), { wrapper: wrap });
 
     await act(() => result.current.build.mutateAsync({ changes: {}, early: false }));
 

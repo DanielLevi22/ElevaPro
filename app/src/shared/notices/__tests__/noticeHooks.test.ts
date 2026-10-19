@@ -48,27 +48,27 @@ describe('checklistOf (E4)', () => {
 describe('useDailyNotices', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('agenda ao abrir, ao voltar para o app e ao mudar as preferências', () => {
+  it('agenda ao abrir, ao voltar para o app e ao mudar as preferências', async () => {
     const listeners: ((state: string) => void)[] = [];
     jest.spyOn(AppState, 'addEventListener').mockImplementation((_, listener) => {
       listeners.push(listener as (state: string) => void);
       return { remove: jest.fn() } as never;
     });
 
-    renderHook(() => useDailyNotices('aluno'));
+    await renderHook(() => useDailyNotices('aluno'));
     expect(mockRefresh).toHaveBeenCalledTimes(1);
 
-    act(() => listeners.at(-1)?.('active'));
+    await act(() => listeners.at(-1)?.('active'));
     expect(mockRefresh).toHaveBeenCalledTimes(2);
 
-    act(() => useNoticePreferencesStore.getState().update({ dailyLimit: 2 }));
+    await act(() => useNoticePreferencesStore.getState().update({ dailyLimit: 2 }));
     expect(mockRefresh).toHaveBeenCalledTimes(3);
   });
 
   // O especialista vendo como o aluno passa nulo: não agenda o almoço de outra
   // pessoa no aparelho dele.
-  it('nulo desliga: quem não é aluno não recebe avisos', () => {
-    renderHook(() => useDailyNotices(null));
+  it('nulo desliga: quem não é aluno não recebe avisos', async () => {
+    await renderHook(() => useDailyNotices(null));
     expect(mockRefresh).not.toHaveBeenCalled();
   });
 });

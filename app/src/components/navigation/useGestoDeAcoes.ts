@@ -1,6 +1,8 @@
 import * as Haptics from 'expo-haptics';
 import type { ViewStyle } from 'react-native';
-import type { GestureType } from 'react-native-gesture-handler';
+// O gesture-handler 3 chama o construtor `Gesture.*` de legado; a troca pelos
+// hooks novos é migração à parte.
+import type { LegacyComposedGesture } from 'react-native-gesture-handler';
 import { Gesture } from 'react-native-gesture-handler';
 import {
   runOnJS,
@@ -15,8 +17,6 @@ export type AcaoRapida = 'treino' | 'menu' | 'dieta' | 'cardio';
 /** Até onde o dedo precisa ir para escolher um atalho. */
 const LIMIAR_VERTICAL = -30;
 const LIMIAR_HORIZONTAL = 40;
-/** Abaixo disto o gesto conta como toque, e abre o menu. */
-const RAIO_DO_TOQUE = 10;
 /** O puxão magnético na direção do atalho escolhido. */
 const IMA: Record<AcaoRapida, { x: number; y: number }> = {
   treino: { x: -12, y: -12 },
@@ -35,7 +35,7 @@ function acaoNoPonto(x: number, y: number, comCardio: boolean): AcaoRapida | nul
 }
 
 interface GestoDeAcoes {
-  gesto: GestureType;
+  gesto: LegacyComposedGesture;
   /** O atalho sob o dedo, para os indicadores acenderem. */
   escolhida: SharedValue<AcaoRapida | null>;
   /** O botão acompanhando o dedo, com o puxão do ímã. */
@@ -66,7 +66,7 @@ export function useGestoDeAcoes({
   const y = useSharedValue(0);
   const escolhida = useSharedValue<AcaoRapida | null>(null);
 
-  const gesto = Gesture.Pan()
+  const arrasto = Gesture.Pan()
     .onStart(() => {
       arrastando.value = 1;
       runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
@@ -82,9 +82,9 @@ export function useGestoDeAcoes({
     })
     .onEnd(() => {
       const acao = escolhida.value;
-      if (acao || Math.hypot(x.value, y.value) < RAIO_DO_TOQUE) {
+      if (acao) {
         runOnJS(Haptics.notificationAsync)(Haptics.NotificationFeedbackType.Success);
-        runOnJS(onAcao)(acao ?? 'menu');
+        runOnJS(onAcao)(acao);
       }
       x.value = withSpring(0, MOLA);
       y.value = withSpring(0, MOLA);
@@ -93,6 +93,14 @@ export function useGestoDeAcoes({
     .onFinalize(() => {
       arrastando.value = 0;
     });
+
+  // O toque é gesto próprio: no gesture-handler 3, o `onEnd` do Pan só roda
+  // depois que ele ativa, e um toque nunca chega a ser arrasto.
+  const toque = Gesture.Tap().onEnd(() => {
+    runOnJS(Haptics.notificationAsync)(Haptics.NotificationFeedbackType.Success);
+    runOnJS(onAcao)('menu');
+  });
+  const gesto = Gesture.Race(arrasto, toque);
 
   return { gesto, escolhida, estiloDoBotao: useEstiloDoBotao(x, y, arrastando) };
 }

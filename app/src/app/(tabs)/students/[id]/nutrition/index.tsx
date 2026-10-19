@@ -14,10 +14,12 @@ import Animated, { FadeInDown, Layout } from 'react-native-reanimated';
 import { useAuthStore } from '@/auth';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { useNutritionStore } from '@/modules/nutrition/store/nutritionStore';
+import { useCores } from '@/shared/design';
 
 export default function StudentDietPlansScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const cores = useCores();
   const { user } = useAuthStore();
   const { dietPlans, isLoading, fetchDietPlans, fetchDietPlan } = useNutritionStore();
 
@@ -102,23 +104,25 @@ export default function StudentDietPlansScreen() {
           {/* Macros Summary */}
           <View className="flex-row gap-3 mb-4">
             <View className="flex-1 bg-zinc-950/50 p-2 rounded-xl items-center">
-              <Text className="text-emerald-400 text-[10px] font-bold mb-0.5">PROT</Text>
+              <Text className="text-emerald-400 text-[0.625rem] font-bold mb-0.5">PROT</Text>
               <Text className="text-white font-semibold text-xs">{item.target_protein}g</Text>
             </View>
             <View className="flex-1 bg-zinc-950/50 p-2 rounded-xl items-center">
-              <Text className="text-purple-400 text-[10px] font-bold mb-0.5">CARB</Text>
+              <Text className="text-purple-400 text-[0.625rem] font-bold mb-0.5">CARB</Text>
               <Text className="text-white font-semibold text-xs">{item.target_carbs}g</Text>
             </View>
             <View className="flex-1 bg-zinc-950/50 p-2 rounded-xl items-center">
-              <Text className="text-amber-400 text-[10px] font-bold mb-0.5">GORD</Text>
+              <Text className="text-amber-400 text-[0.625rem] font-bold mb-0.5">GORD</Text>
               <Text className="text-white font-semibold text-xs">{item.target_fat}g</Text>
             </View>
           </View>
 
           <View className="flex-row justify-between items-center pt-4 border-t border-zinc-800/50">
             <View className="flex-row items-center bg-orange-500/10 px-2 py-1 rounded-lg">
-              <Ionicons name="flame" size={14} color="#FF6B35" style={{ marginRight: 4 }} />
-              <Text className="text-[#FF6B35] font-bold text-xs">{item.target_calories} kcal</Text>
+              <Ionicons name="flame" size={14} color={cores.primary} style={{ marginRight: 4 }} />
+              <Text className="text-primary-text font-bold text-xs">
+                {item.target_calories} kcal
+              </Text>
             </View>
             <View className="flex-row items-center">
               <Text className="text-zinc-500 text-xs mr-1 font-medium">
@@ -150,12 +154,12 @@ export default function StudentDietPlansScreen() {
         <Link href={`/nutrition/create?preselectedStudentId=${studentId}` as never} asChild>
           <TouchableOpacity activeOpacity={0.8}>
             <LinearGradient
-              colors={['#FF6B35', '#FF2E63']}
+              colors={[cores.primary, cores.accent]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               className="h-12 w-12 rounded-full items-center justify-center shadow-lg shadow-orange-500/20"
             >
-              <Ionicons name="add" size={24} color="#FFFFFF" />
+              <Ionicons name="add" size={24} color={cores.primaryForeground} />
             </LinearGradient>
           </TouchableOpacity>
         </Link>
@@ -170,8 +174,10 @@ export default function StudentDietPlansScreen() {
         refreshControl={
           <RefreshControl
             refreshing={isLoading}
-            onRefresh={() => user?.id && fetchDietPlans(user.id)}
-            tintColor="#FF6B35"
+            onRefresh={() => {
+              if (user?.id) fetchDietPlans(user.id);
+            }}
+            tintColor={cores.primary}
           />
         }
         showsVerticalScrollIndicator={false}
@@ -179,7 +185,7 @@ export default function StudentDietPlansScreen() {
           !isLoading ? (
             <View className="flex-1 justify-center items-center py-20">
               <View className="bg-zinc-900 p-8 rounded-full mb-6 border border-zinc-800">
-                <Ionicons name="restaurant-outline" size={64} color="#52525B" />
+                <Ionicons name="restaurant-outline" size={64} color={cores.mutedForeground} />
               </View>
               <Text className="text-white text-xl font-bold mb-2 text-center font-display">
                 Nenhum plano alimentar
@@ -191,7 +197,7 @@ export default function StudentDietPlansScreen() {
               <Link href={`/nutrition/create?preselectedStudentId=${studentId}` as never} asChild>
                 <TouchableOpacity activeOpacity={0.8}>
                   <LinearGradient
-                    colors={['#FF6B35', '#FF2E63']}
+                    colors={[cores.primary, cores.accent]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     className="rounded-2xl py-3 px-6 shadow-lg shadow-orange-500/20"
@@ -203,7 +209,7 @@ export default function StudentDietPlansScreen() {
             </View>
           ) : (
             <View className="py-20">
-              <ActivityIndicator size="large" color="#FF6B35" />
+              <ActivityIndicator size="large" color={cores.primary} />
             </View>
           )
         }

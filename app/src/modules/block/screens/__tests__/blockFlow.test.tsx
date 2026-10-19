@@ -76,17 +76,17 @@ beforeEach(() => {
 });
 
 describe('ReviewScreen (B1)', () => {
-  it('"Começar" abre a medida com a reavaliação limpa', () => {
+  it('"Começar" abre a medida com a reavaliação limpa', async () => {
     useReviewStore.getState().setChanges({ training_days: 2 });
-    render(<ReviewScreen />);
-    fireEvent.press(screen.getByText(/Começar/));
+    await render(<ReviewScreen />);
+    await fireEvent.press(screen.getByText(/Começar/));
     expect(useReviewStore.getState().changes).toEqual({});
     expect(mockPush).toHaveBeenCalledWith('/block/measures');
   });
 
-  it('"Lembrar amanhã" adia o cartão deste bloco até amanhã', () => {
-    render(<ReviewScreen />);
-    fireEvent.press(screen.getByText('Lembrar amanhã'));
+  it('"Lembrar amanhã" adia o cartão deste bloco até amanhã', async () => {
+    await render(<ReviewScreen />);
+    await fireEvent.press(screen.getByText('Lembrar amanhã'));
     expect(useBlockStore.getState().reviewSnoozedUntil['bloco-2']).toBe('2026-10-30');
   });
 });
@@ -94,11 +94,11 @@ describe('ReviewScreen (B1)', () => {
 describe('MeasuresScreen (B1)', () => {
   it('parte da última medida e grava com a altura dela', async () => {
     mockDeclare.mockResolvedValue({});
-    render(<MeasuresScreen />);
+    await render(<MeasuresScreen />);
     await waitFor(() => expect(screen.getByDisplayValue('80')).toBeTruthy());
 
-    fireEvent.changeText(screen.getByDisplayValue('80'), '78,5');
-    fireEvent.press(screen.getByText(/Continuar/i));
+    await fireEvent.changeText(screen.getByDisplayValue('80'), '78,5');
+    await fireEvent.press(screen.getByText(/Continuar/i));
 
     await waitFor(() =>
       expect(mockDeclare).toHaveBeenCalledWith({ weight_kg: 78.5, circ_waist: 84, height_cm: 178 })
@@ -107,53 +107,53 @@ describe('MeasuresScreen (B1)', () => {
   });
 
   it('peso fora da faixa não grava', async () => {
-    render(<MeasuresScreen />);
+    await render(<MeasuresScreen />);
     await waitFor(() => expect(screen.getByDisplayValue('80')).toBeTruthy());
-    fireEvent.changeText(screen.getByDisplayValue('80'), '7');
-    fireEvent.press(screen.getByText(/^continuar$/i));
+    await fireEvent.changeText(screen.getByDisplayValue('80'), '7');
+    await fireEvent.press(screen.getByText(/^continuar$/i));
     expect(mockDeclare).not.toHaveBeenCalled();
   });
 });
 
 describe('ChangesScreen (B2)', () => {
-  it('quem não toca em nada segue igual: o próximo bloco não recebe mudança', () => {
-    render(<ChangesScreen />);
+  it('quem não toca em nada segue igual: o próximo bloco não recebe mudança', async () => {
+    await render(<ChangesScreen />);
     expect(screen.getByText('Hoje: 4 dias')).toBeTruthy();
-    fireEvent.press(screen.getByText(/Montar|Continuar|Próximo/i));
+    await fireEvent.press(screen.getByText(/Montar|Continuar|Próximo/i));
     expect(useReviewStore.getState().changes).toEqual({});
     expect(mockPush).toHaveBeenCalledWith('/block/building');
   });
 
   it('vinda de "Mudar meu plano", a pergunta escolhida abre como Mudou e segue antes do fim', async () => {
     useReviewStore.getState().startEarly('gym_type');
-    render(<ChangesScreen />);
-    fireEvent.press(await screen.findByText('Casa'));
-    fireEvent.press(screen.getByText(/Montar|Continuar|Próximo/i));
+    await render(<ChangesScreen />);
+    await fireEvent.press(await screen.findByText('Casa'));
+    await fireEvent.press(screen.getByText(/Montar|Continuar|Próximo/i));
 
     expect(useReviewStore.getState().changes).toEqual({ gym_type: 'Home gym' });
     expect(mockPush).toHaveBeenCalledWith('/block/early');
   });
 
   // #376: pelo peso parado, a estagnação já é o motivo; nada precisa mudar.
-  it('na reavaliação pela estagnação, segue antes do fim sem mudança', () => {
+  it('na reavaliação pela estagnação, segue antes do fim sem mudança', async () => {
     useReviewStore.getState().startStalledReview();
-    render(<ChangesScreen />);
-    fireEvent.press(screen.getByText(/Continuar/i));
+    await render(<ChangesScreen />);
+    await fireEvent.press(screen.getByText(/Continuar/i));
     expect(mockPush).toHaveBeenCalledWith('/block/early');
   });
 
-  it('subir de nível só aparece para quem pode, e é a pessoa que diz sim', () => {
-    render(<ChangesScreen />);
+  it('subir de nível só aparece para quem pode, e é a pessoa que diz sim', async () => {
+    await render(<ChangesScreen />);
     expect(screen.queryByText('Quer passar para intermediário?')).toBeNull();
   });
 });
 
 describe('BuildingScreen (B3)', () => {
   // Cada pedido é uma geração de IA paga: uma por abertura.
-  it('pede o próximo bloco uma vez, com o que mudou', () => {
+  it('pede o próximo bloco uma vez, com o que mudou', async () => {
     useReviewStore.getState().setChanges({ training_days: 3 });
-    const { rerender } = render(<BuildingScreen />);
-    rerender(<BuildingScreen />);
+    const { rerender } = await render(<BuildingScreen />);
+    await rerender(<BuildingScreen />);
     expect(mockBuild).toHaveBeenCalledTimes(1);
     expect(mockBuild.mock.calls[0][0]).toEqual({ changes: { training_days: 3 }, early: false });
   });
@@ -172,18 +172,18 @@ describe('NextBlockScreen (B5)', () => {
     },
   };
 
-  it('sem proposta esperando, não aprova nada', () => {
-    render(<NextBlockScreen />);
+  it('sem proposta esperando, não aprova nada', async () => {
+    await render(<NextBlockScreen />);
     expect(screen.getByText('Nenhum bloco esperando')).toBeTruthy();
   });
 
   it('antes do fim, o bloco novo começa amanhã; aprovar limpa a reavaliação', async () => {
     useReviewStore.getState().setPending(pending as never);
     mockApprove.mockResolvedValue({});
-    render(<NextBlockScreen />);
+    await render(<NextBlockScreen />);
 
     expect(screen.getByText(/Começa amanhã/)).toBeTruthy();
-    fireEvent.press(screen.getByText(/Aprovar Bloco 3/i));
+    await fireEvent.press(screen.getByText(/Aprovar Bloco 3/i));
 
     await waitFor(() => expect(mockApprove).toHaveBeenCalled());
     expect(useReviewStore.getState().pending).toBeNull();
@@ -192,14 +192,14 @@ describe('NextBlockScreen (B5)', () => {
 });
 
 describe('BlockCard (A7, B1)', () => {
-  it('no fim do bloco, chama para a reavaliação', () => {
-    render(<BlockCard />);
+  it('no fim do bloco, chama para a reavaliação', async () => {
+    await render(<BlockCard />);
     expect(screen.getByText('Hora da reavaliação')).toBeTruthy();
   });
 
-  it('em Modo Descanso, a pausa vem antes do bloco', () => {
+  it('em Modo Descanso, a pausa vem antes do bloco', async () => {
     mockRests = [{ id: 'r', starts_on: '2026-10-27', planned_until: null, ended_on: null }];
-    render(<BlockCard />);
+    await render(<BlockCard />);
     expect(screen.queryByText('Hora da reavaliação')).toBeNull();
     expect(screen.getByText('Sem data para voltar')).toBeTruthy();
   });
@@ -210,24 +210,24 @@ describe('BlockCard (A7, B1)', () => {
       mockStalled = '2026-10-26';
     });
 
-    it('oferece reavaliar agora, sem mudança escolhida', () => {
-      render(<BlockCard />);
-      fireEvent.press(screen.getByText('Reavaliar agora'));
+    it('oferece reavaliar agora, sem mudança escolhida', async () => {
+      await render(<BlockCard />);
+      await fireEvent.press(screen.getByText('Reavaliar agora'));
       expect(useReviewStore.getState()).toMatchObject({ early: true, stalled: true, focus: null });
       expect(mockPush).toHaveBeenCalledWith('/block/changes');
     });
 
     // Nunca cobrar: "Agora não" tira o cartão até um check-in novo mudar o quadro.
-    it('"Agora não" guarda a semana e o cartão some', () => {
-      render(<BlockCard />);
-      fireEvent.press(screen.getByText('Agora não'));
+    it('"Agora não" guarda a semana e o cartão some', async () => {
+      await render(<BlockCard />);
+      await fireEvent.press(screen.getByText('Agora não'));
       expect(useBlockStore.getState().stallSeen).toBe('2026-10-26');
     });
   });
 
-  it('sem bloco próprio (o Aluno), não aparece', () => {
+  it('sem bloco próprio (o Aluno), não aparece', async () => {
     mockBlock = null;
-    render(<BlockCard />);
+    await render(<BlockCard />);
     expect(screen.queryByText('Hora da reavaliação')).toBeNull();
   });
 });

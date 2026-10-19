@@ -59,7 +59,7 @@ beforeEach(() => {
 });
 
 async function abrir() {
-  render(<ScanReadingScreen studentId="aluno-1" scanId="scan-1" />);
+  await render(<ScanReadingScreen studentId="aluno-1" scanId="scan-1" />);
   await screen.findByText('Leitura das fotos');
 }
 
@@ -100,10 +100,10 @@ describe('ScanReadingScreen', () => {
   it('apaga a análise só depois de confirmar', async () => {
     await abrir();
 
-    fireEvent.press(screen.getByLabelText('Apagar esta análise'));
+    await fireEvent.press(screen.getByLabelText('Apagar esta análise'));
     expect(mockDeleteOwn).not.toHaveBeenCalled();
 
-    fireEvent.press(await screen.findByText('Apagar análise'));
+    await fireEvent.press(await screen.findByText('Apagar análise'));
 
     await waitFor(() => expect(mockBack).toHaveBeenCalled());
     expect(mockDeleteOwn).toHaveBeenCalledWith('scan-1');
@@ -111,7 +111,7 @@ describe('ScanReadingScreen', () => {
 
   it('análise que não está na lista não vira tela em branco', async () => {
     mockList.mockResolvedValue([]);
-    render(<ScanReadingScreen studentId="aluno-1" scanId="scan-1" />);
+    await render(<ScanReadingScreen studentId="aluno-1" scanId="scan-1" />);
 
     expect(await screen.findByText('Análise não encontrada')).toBeTruthy();
   });

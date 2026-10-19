@@ -7,9 +7,9 @@ import { FlowFrame, FlowTitle } from '../FlowFrame';
 import { ThemePicker } from '../ThemePicker';
 
 describe('FlowFrame', () => {
-  it('o botão principal age; desligado, ele não age e diz o que falta', () => {
+  it('o botão principal age; desligado, ele não age e diz o que falta', async () => {
     const onPress = jest.fn();
-    const { rerender } = render(
+    const { rerender } = await render(
       <FlowFrame primary={{ label: 'Continuar', onPress }}>
         <FlowTitle eyebrow="Passo 1" sub="Explicação">
           Título
@@ -17,10 +17,10 @@ describe('FlowFrame', () => {
       </FlowFrame>
     );
     expect(screen.getByText('Título')).toBeTruthy();
-    fireEvent.press(screen.getByText(/Continuar/i));
+    await fireEvent.press(screen.getByText(/Continuar/i));
     expect(onPress).toHaveBeenCalledTimes(1);
 
-    rerender(
+    await rerender(
       <FlowFrame
         primary={{ label: 'Continuar', onPress, disabled: true, hint: 'Escolha o motivo' }}
       >
@@ -28,13 +28,13 @@ describe('FlowFrame', () => {
       </FlowFrame>
     );
     expect(screen.getByText('Escolha o motivo')).toBeTruthy();
-    fireEvent.press(screen.getByText(/Continuar/i));
+    await fireEvent.press(screen.getByText(/Continuar/i));
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
-  it('a ação de texto embaixo do botão também age', () => {
+  it('a ação de texto embaixo do botão também age', async () => {
     const later = jest.fn();
-    render(
+    await render(
       <FlowFrame
         primary={{ label: 'Começar', onPress: jest.fn() }}
         secondaryText={{ label: 'Lembrar amanhã', onPress: later }}
@@ -42,29 +42,29 @@ describe('FlowFrame', () => {
         <Text>corpo</Text>
       </FlowFrame>
     );
-    fireEvent.press(screen.getByText('Lembrar amanhã'));
+    await fireEvent.press(screen.getByText('Lembrar amanhã'));
     expect(later).toHaveBeenCalled();
   });
 });
 
 describe('ThemePicker', () => {
-  it('a escolha de tema fica na preferência do aparelho', () => {
-    render(<ThemePicker />);
-    fireEvent.press(screen.getByText('Escuro'));
+  it('a escolha de tema fica na preferência do aparelho', async () => {
+    await render(<ThemePicker />);
+    await fireEvent.press(screen.getByText('Escuro'));
     expect(useTemaStore.getState().preferencia).toBe('escuro');
   });
 });
 
 describe('StartTimes (F2)', () => {
-  it('diz ao leitor de tela o horário de costume', () => {
-    render(<StartTimes starts={[1080, 1100, 1120]} usual={1100} />);
+  it('diz ao leitor de tela o horário de costume', async () => {
+    await render(<StartTimes starts={[1080, 1100, 1120]} usual={1100} />);
     expect(screen.getByLabelText('Seu horário de costume é 18:20')).toBeTruthy();
   });
 });
 
 describe('WeightTrend (A5, A10)', () => {
-  it('descreve a variação do peso e mostra a faixa da meta na legenda', () => {
-    render(
+  it('descreve a variação do peso e mostra a faixa da meta na legenda', async () => {
+    await render(
       <WeightTrend
         weights={[
           { assessedAt: '2026-10-01T10:00:00Z', weightKg: 81 },
@@ -78,8 +78,8 @@ describe('WeightTrend (A5, A10)', () => {
     expect(screen.getByText('Ritmo da meta')).toBeTruthy();
   });
 
-  it('sem meta, não desenha a faixa', () => {
-    render(
+  it('sem meta, não desenha a faixa', async () => {
+    await render(
       <WeightTrend
         weights={[{ assessedAt: '2026-10-14T10:00:00Z', weightKg: 80 }]}
         expectedChangeKg={null}

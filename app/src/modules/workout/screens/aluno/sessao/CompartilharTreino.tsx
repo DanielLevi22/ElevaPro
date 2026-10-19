@@ -6,7 +6,7 @@ import {
   type Workout,
 } from '@elevapro/shared';
 import * as Sharing from 'expo-sharing';
-import { useRef, useState } from 'react';
+import { type ComponentRef, useRef, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 import { showAlert } from '@/components/ui/appAlert';
@@ -69,7 +69,7 @@ export function CompartilharTreino({
   const { fase } = useContextoDoTreino(treino);
   // O nome do personal é dado de outra pessoa: só é buscado se o aluno pedir.
   const personal = useNomeDoEspecialista(inclusoes.personal ? treino.specialist_id : null);
-  const cartao = useRef<View>(null);
+  const cartao = useRef<ComponentRef<typeof View>>(null);
   const compartilhar = useCompartilharImagem(cartao);
   const nomeDoFormato = FORMATOS.find((f) => f.chave === formato)?.nome ?? '';
 
@@ -146,7 +146,9 @@ export function CompartilharTreino({
 }
 
 /** Tira a foto do card e abre o compartilhamento do sistema. */
-function useCompartilharImagem(cartao: React.RefObject<View | null>): () => Promise<void> {
+function useCompartilharImagem(
+  cartao: React.RefObject<ComponentRef<typeof View> | null>
+): () => Promise<void> {
   const [ocupado, setOcupado] = useState(false);
 
   return async () => {

@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react-native';
-import { ScrollView, Text } from 'react-native';
+import { Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { hostOfType } from '@/testing/hostByType';
 import { GlassScreen } from '../GlassScreen';
 import { TelaDeVidroComFoto } from '../TelaDeVidroComFoto';
 
@@ -36,51 +37,54 @@ jest.mock('expo-linear-gradient', () => ({ LinearGradient: mockNativo('gradiente
 const INSET_DOS_TRES_BOTOES = 48;
 const FOTO = { uri: 'https://exemplo.test/foto.jpg' };
 
-function fimDaRolagem(tela: React.ReactElement, insetDoSistema: number): number {
+async function fimDaRolagem(tela: React.ReactElement, insetDoSistema: number): Promise<number> {
   jest.mocked(useSafeAreaInsets).mockReturnValue({
     top: 0,
     right: 0,
     left: 0,
     bottom: insetDoSistema,
   });
-  const { UNSAFE_getByType } = render(tela);
-  return UNSAFE_getByType(ScrollView).props.contentContainerStyle.paddingBottom;
+  await render(tela);
+  return hostOfType('RCTScrollView').props.contentContainerStyle.paddingBottom;
 }
 
-function crescimento(tela: React.ReactElement): number {
-  return fimDaRolagem(tela, INSET_DOS_TRES_BOTOES) - fimDaRolagem(tela, 0);
+async function crescimento(tela: React.ReactElement): Promise<number> {
+  return (await fimDaRolagem(tela, INSET_DOS_TRES_BOTOES)) - (await fimDaRolagem(tela, 0));
 }
 
 describe('fim da rolagem das telas de vidro', () => {
   it.each([
     ['tab', 'tab'],
     ['barra de duas ações', 'actionBar'],
-  ] as const)('a GlassScreen com %s cresce o inset dos três botões', (_, bottomSpace) => {
+  ] as const)('a GlassScreen com %s cresce o inset dos três botões', async (_, bottomSpace) => {
     const tela = (
       <GlassScreen bottomSpace={bottomSpace}>
         <Text>cartão</Text>
       </GlassScreen>
     );
 
-    expect(crescimento(tela)).toBe(INSET_DOS_TRES_BOTOES);
+    expect(await crescimento(tela)).toBe(INSET_DOS_TRES_BOTOES);
   });
 
   it.each([
     ['tab', 'tab'],
     ['botão fixo', 'fixedButton'],
-  ] as const)('a TelaDeVidroComFoto com %s cresce o inset dos três botões', (_, bottomSpace) => {
+  ] as const)('a TelaDeVidroComFoto com %s cresce o inset dos três botões', async (_, bottomSpace) => {
     const tela = (
       <TelaDeVidroComFoto image={FOTO} bottomSpace={bottomSpace}>
         <Text>cartão</Text>
       </TelaDeVidroComFoto>
     );
 
-    expect(crescimento(tela)).toBe(INSET_DOS_TRES_BOTOES);
+    expect(await crescimento(tela)).toBe(INSET_DOS_TRES_BOTOES);
   });
 
-  it('o botão fixo pede mais espaço que a tab bar sozinha', () => {
-    const soAbas = fimDaRolagem(<GlassScreen bottomSpace="tab">{null}</GlassScreen>, 0);
-    const comBarra = fimDaRolagem(<GlassScreen bottomSpace="actionBar">{null}</GlassScreen>, 0);
+  it('o botão fixo pede mais espaço que a tab bar sozinha', async () => {
+    const soAbas = await fimDaRolagem(<GlassScreen bottomSpace="tab">{null}</GlassScreen>, 0);
+    const comBarra = await fimDaRolagem(
+      <GlassScreen bottomSpace="actionBar">{null}</GlassScreen>,
+      0
+    );
 
     expect(comBarra).toBeGreaterThan(soAbas);
   });

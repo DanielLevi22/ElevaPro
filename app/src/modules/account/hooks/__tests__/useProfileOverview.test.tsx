@@ -34,7 +34,7 @@ const wrap = ({ children }: { children: ReactNode }) => (
 describe('useProfileOverview', () => {
   it('para o aluno: treinos de força feitos, conquistas, sequência, plano e especialista', async () => {
     mockGetProfile.mockResolvedValue({ full_name: 'Ana Souza', account_type: 'member' });
-    const { result } = renderHook(() => useProfileOverview('u1'), { wrapper: wrap });
+    const { result } = await renderHook(() => useProfileOverview('u1'), { wrapper: wrap });
 
     await waitFor(() => expect(result.current.data).toBeTruthy());
     expect(result.current.data).toEqual({
@@ -53,7 +53,7 @@ describe('useProfileOverview', () => {
 
   it('o especialista não tem números de aluno', async () => {
     mockGetProfile.mockResolvedValue({ full_name: 'Carla', account_type: 'specialist' });
-    const { result } = renderHook(() => useProfileOverview('u1'), { wrapper: wrap });
+    const { result } = await renderHook(() => useProfileOverview('u1'), { wrapper: wrap });
     await waitFor(() => expect(result.current.data).toBeTruthy());
     expect(result.current.data?.student).toBeNull();
   });

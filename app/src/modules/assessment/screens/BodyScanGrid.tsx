@@ -137,13 +137,14 @@ function useStudentGuard() {
  */
 function useDiscardOnLeave() {
   const navigation = useNavigation();
-  useEffect(
-    () =>
-      navigation.addListener('beforeRemove', () => {
-        void useAssessmentStore.getState().discardCapture();
-      }),
-    [navigation]
-  );
+  useEffect(() => {
+    // `removed` substitui o `beforeRemove` (expo-router 58). O cleanup do efeito
+    // roda antes do evento: tirar a inscrição na hora o perderia.
+    const unsubscribe = navigation.addListener('removed', () => {
+      void useAssessmentStore.getState().discardCapture();
+    });
+    return () => queueMicrotask(unsubscribe);
+  }, [navigation]);
 }
 
 const CHECK_SIZE = 12;

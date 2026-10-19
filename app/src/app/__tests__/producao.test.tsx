@@ -46,12 +46,13 @@ jest.mock('../../../modules/technique-spike', () => ({
  * Release, não desenvolvimento. Nos testes o `__DEV__` do React Native é
  * `true`, e sem desligá-lo estaríamos afirmando o contrário do que interessa.
  */
-function comoEmRelease<T>(fn: () => T): T {
+async function comoEmRelease<T>(fn: () => Promise<T>): Promise<T> {
   const global_ = globalThis as { __DEV__?: boolean };
   const antes = global_.__DEV__;
   global_.__DEV__ = false;
   try {
-    return fn();
+    // Com o render assíncrono (RNTL 14), o `__DEV__` só volta depois do render.
+    return await fn();
   } finally {
     global_.__DEV__ = antes;
   }
@@ -63,8 +64,8 @@ beforeEach(() => {
 });
 
 describe('Análise de Técnica em build de produção', () => {
-  it('não desenha nada', () => {
-    const { toJSON } = comoEmRelease(() => render(<SpikeTecnica />));
+  it('não desenha nada', async () => {
+    const { toJSON } = await comoEmRelease(() => render(<SpikeTecnica />));
 
     expect(toJSON()).toBeNull();
   });
@@ -72,8 +73,8 @@ describe('Análise de Técnica em build de produção', () => {
   // Não basta não desenhar: o portão precisa vir antes dos hooks. Com ele
   // depois, a tela devolvia `null` e mesmo assim já tinha pedido a câmera e
   // ligado o keep-awake — invisível e ativa é o pior dos dois mundos.
-  it('não toca na câmera nem segura a tela acesa', () => {
-    comoEmRelease(() => render(<SpikeTecnica />));
+  it('não toca na câmera nem segura a tela acesa', async () => {
+    await comoEmRelease(() => render(<SpikeTecnica />));
 
     expect(mockPedirCamera).not.toHaveBeenCalled();
     expect(mockKeepAwake).not.toHaveBeenCalled();
@@ -81,8 +82,8 @@ describe('Análise de Técnica em build de produção', () => {
 
   // O contraste que dá sentido aos dois acima: em desenvolvimento a tela
   // monta de verdade. Sem isto, um `return null` incondicional passaria.
-  it('em desenvolvimento, monta e usa a câmera', () => {
-    render(<SpikeTecnica />);
+  it('em desenvolvimento, monta e usa a câmera', async () => {
+    await render(<SpikeTecnica />);
 
     expect(mockPedirCamera).toHaveBeenCalled();
     expect(mockKeepAwake).toHaveBeenCalled();

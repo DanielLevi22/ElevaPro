@@ -27,7 +27,7 @@ describe('useAuthorizations', () => {
   // na hora, e não na próxima vez que o app abrir.
   it('retirar o consentimento reagenda os avisos e o widget na hora', async () => {
     mockRevoke.mockResolvedValue(undefined);
-    const { result } = renderHook(() => useAuthorizations('aluno'), { wrapper });
+    const { result } = await renderHook(() => useAuthorizations('aluno'), { wrapper });
 
     await act(() => result.current.revoke({ type: 'health_data_collection', version: '1.10' }));
 

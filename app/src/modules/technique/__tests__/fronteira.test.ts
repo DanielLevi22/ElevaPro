@@ -34,11 +34,11 @@ beforeEach(() => {
 });
 
 describe('Análise de Técnica — a fronteira do aparelho', () => {
-  it('não escreve nada no banco enquanto analisa a série', () => {
-    const { result } = renderHook(() => useAnaliseDeTecnica(jest.fn()));
+  it('não escreve nada no banco enquanto analisa a série', async () => {
+    const { result } = await renderHook(() => useAnaliseDeTecnica(jest.fn()));
 
     for (const pose of [...repeticao(0.2), ...repeticao(-0.3)]) {
-      act(() => result.current.aoReceberPose(pose));
+      await act(() => result.current.aoReceberPose(pose));
     }
 
     const tabelas = supabaseGlobal.mockSupabase.from.mock.calls.map((c) => c[0]);
@@ -49,11 +49,11 @@ describe('Análise de Técnica — a fronteira do aparelho', () => {
     }
   });
 
-  it('não chama RPC nenhuma com o resultado da repetição', () => {
-    const { result } = renderHook(() => useAnaliseDeTecnica(jest.fn()));
+  it('não chama RPC nenhuma com o resultado da repetição', async () => {
+    const { result } = await renderHook(() => useAnaliseDeTecnica(jest.fn()));
 
     for (const pose of repeticao(0.2)) {
-      act(() => result.current.aoReceberPose(pose));
+      await act(() => result.current.aoReceberPose(pose));
     }
 
     expect(result.current.movimento?.repeticoes).toBe(1);

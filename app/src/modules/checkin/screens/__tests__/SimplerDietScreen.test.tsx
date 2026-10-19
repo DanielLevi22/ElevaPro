@@ -51,30 +51,30 @@ beforeEach(() => {
 
 describe('SimplerDietScreen (A5c)', () => {
   // Cada pedido é uma geração de IA paga: uma vez por abertura.
-  it('monta o cardápio uma vez ao abrir, pelo check-in', () => {
-    const { rerender } = render(<SimplerDietScreen />);
-    rerender(<SimplerDietScreen />);
+  it('monta o cardápio uma vez ao abrir, pelo check-in', async () => {
+    const { rerender } = await render(<SimplerDietScreen />);
+    await rerender(<SimplerDietScreen />);
     expect(mockBuild).toHaveBeenCalledTimes(1);
     expect(mockBuild.mock.calls[0][0]).toBe('c1');
     expect(screen.getByText('Montando seu cardápio')).toBeTruthy();
   });
 
-  it('a falha deixa tentar de novo, sem perder o check-in', () => {
+  it('a falha deixa tentar de novo, sem perder o check-in', async () => {
     mockBuildFailed = true;
-    render(<SimplerDietScreen />);
-    fireEvent.press(screen.getByText('Tentar de novo'));
+    await render(<SimplerDietScreen />);
+    await fireEvent.press(screen.getByText('Tentar de novo'));
     expect(mockBuild).toHaveBeenLastCalledWith('c1');
   });
 
   it('mostra as refeições novas e só "Aprovar cardápio" grava', async () => {
     mockBuilt = DIET;
     mockApprove.mockResolvedValue(undefined);
-    render(<SimplerDietScreen />);
+    await render(<SimplerDietScreen />);
 
     expect(screen.getByText('4 refeições por dia')).toBeTruthy();
     expect(screen.getByText('Café')).toBeTruthy();
     expect(mockApprove).not.toHaveBeenCalled();
-    fireEvent.press(screen.getByText('Aprovar cardápio'));
+    await fireEvent.press(screen.getByText('Aprovar cardápio'));
 
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(tabs)'));
     expect(mockAlert).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
@@ -83,8 +83,8 @@ describe('SimplerDietScreen (A5c)', () => {
   it('aprovar que falha avisa e não sai da tela', async () => {
     mockBuilt = DIET;
     mockApprove.mockRejectedValue(new Error('502'));
-    render(<SimplerDietScreen />);
-    fireEvent.press(screen.getByText('Aprovar cardápio'));
+    await render(<SimplerDietScreen />);
+    await fireEvent.press(screen.getByText('Aprovar cardápio'));
     await waitFor(() =>
       expect(mockAlert).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }))
     );

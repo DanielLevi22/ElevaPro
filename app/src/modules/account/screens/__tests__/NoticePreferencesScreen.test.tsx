@@ -27,18 +27,18 @@ describe('NoticePreferencesScreen (E5, F2, F6)', () => {
     });
   });
 
-  it('mostra o horário aprendido e a hora em que o aviso vem', () => {
-    render(<NoticePreferencesScreen />);
+  it('mostra o horário aprendido e a hora em que o aviso vem', async () => {
+    await render(<NoticePreferencesScreen />);
     expect(screen.getByText('Você costuma começar às 18:20')).toBeTruthy();
     expect(screen.getByText(/O aviso vem às 18:50/)).toBeTruthy();
   });
 
-  it('o horário fixo e o limite do dia ficam nas preferências', () => {
-    render(<NoticePreferencesScreen />);
+  it('o horário fixo e o limite do dia ficam nas preferências', async () => {
+    await render(<NoticePreferencesScreen />);
 
-    fireEvent.press(screen.getByText('Fixo'));
-    fireEvent.press(screen.getByText('07:00'));
-    fireEvent.press(screen.getByText('Até 1'));
+    await fireEvent.press(screen.getByText('Fixo'));
+    await fireEvent.press(screen.getByText('07:00'));
+    await fireEvent.press(screen.getByText('Até 1'));
 
     expect(useNoticePreferencesStore.getState()).toMatchObject({
       workoutMode: 'fixed',
@@ -49,12 +49,12 @@ describe('NoticePreferencesScreen (E5, F2, F6)', () => {
 
   it('sem permissão no aparelho, avisa e oferece permitir', async () => {
     permission.mockResolvedValue({ status: 'denied' });
-    render(<NoticePreferencesScreen />);
+    await render(<NoticePreferencesScreen />);
     await waitFor(() => expect(screen.getByText('Os avisos estão desligados')).toBeTruthy());
   });
 
-  it('a privacidade diz que vale para a tela bloqueada e para o widget', () => {
-    render(<NoticePreferencesScreen />);
+  it('a privacidade diz que vale para a tela bloqueada e para o widget', async () => {
+    await render(<NoticePreferencesScreen />);
     expect(screen.getByText('Esconder detalhes na tela bloqueada e no widget')).toBeTruthy();
   });
 });

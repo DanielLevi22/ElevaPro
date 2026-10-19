@@ -33,7 +33,7 @@ beforeEach(() => {
 
 it('retoma uma dieta enviada sem permitir aprovar alterações', async () => {
   (global.fetch as jest.Mock).mockResolvedValue(response({ ...session, readOnly: true }));
-  const { result } = renderHook(() => useNutritionAssistantChat(options));
+  const { result } = await renderHook(() => useNutritionAssistantChat(options));
   await waitFor(() => expect(result.current.initializing).toBe(false));
   await act(async () => {
     result.current.approveMeals();
@@ -43,12 +43,12 @@ it('retoma uma dieta enviada sem permitir aprovar alterações', async () => {
 });
 
 it('renovar o token não abre outra conversa de nutrição', async () => {
-  const { result, rerender } = renderHook(
+  const { result, rerender } = await renderHook(
     ({ token }: { token: string }) => useNutritionAssistantChat({ ...options, token }),
     { initialProps: { token: 'first' } }
   );
   await waitFor(() => expect(result.current.initializing).toBe(false));
-  rerender({ token: 'refreshed' });
+  await rerender({ token: 'refreshed' });
   expect(global.fetch).toHaveBeenCalledTimes(1);
   (global.fetch as jest.Mock).mockResolvedValue(response({ saved: [{ id: 'meal-1' }] }));
   await act(async () => {
@@ -61,7 +61,7 @@ it('renovar o token não abre outra conversa de nutrição', async () => {
 });
 
 it('abre e aprova no rascunho da rota, usando a sessão resolvida pelo servidor', async () => {
-  const { result } = renderHook(() => useNutritionAssistantChat(options));
+  const { result } = await renderHook(() => useNutritionAssistantChat(options));
   await waitFor(() => expect(result.current.initializing).toBe(false));
   expect(global.fetch).toHaveBeenCalledWith(
     expect.stringContaining('planId=draft-1'),
@@ -82,7 +82,7 @@ it('abre e aprova no rascunho da rota, usando a sessão resolvida pelo servidor'
 
 it('falha ao abrir bloqueia envio e aprovação até tentar novamente', async () => {
   (global.fetch as jest.Mock).mockResolvedValueOnce(response({ error: 'Indisponível' }, 503));
-  const { result } = renderHook(() => useNutritionAssistantChat(options));
+  const { result } = await renderHook(() => useNutritionAssistantChat(options));
   await waitFor(() => expect(result.current.initializing).toBe(false));
   expect(result.current.error).toBeTruthy();
   await act(async () => {
@@ -90,14 +90,14 @@ it('falha ao abrir bloqueia envio e aprovação até tentar novamente', async ()
     result.current.approveMeals();
   });
   expect(global.fetch).toHaveBeenCalledTimes(1);
-  act(() => result.current.retry());
+  await act(() => result.current.retry());
   await waitFor(() => expect(result.current.error).toBeNull());
   await waitFor(() => expect(result.current.initializing).toBe(false));
   expect(result.current.planId).toBe('draft-1');
 });
 
 it('erro ao aprovar mantém a proposta disponível para nova tentativa', async () => {
-  const { result } = renderHook(() => useNutritionAssistantChat(options));
+  const { result } = await renderHook(() => useNutritionAssistantChat(options));
   await waitFor(() => expect(result.current.initializing).toBe(false));
   (global.fetch as jest.Mock).mockResolvedValueOnce(response({ error: 'Indisponível' }, 503));
   await act(async () => {
@@ -114,14 +114,14 @@ it('erro ao aprovar mantém a proposta disponível para nova tentativa', async (
 
 it('exige consentimento sem erro técnico e retoma depois da autorização', async () => {
   (global.fetch as jest.Mock).mockResolvedValueOnce(response({ code: 'consent_required' }, 403));
-  const { result } = renderHook(() => useNutritionAssistantChat(options));
+  const { result } = await renderHook(() => useNutritionAssistantChat(options));
   await waitFor(() => expect(result.current.initializing).toBe(false));
   expect(result.current.consentRequired).toBe(true);
   expect(result.current.error).toBeNull();
   expect(result.current.messages).toEqual([]);
-  act(() => result.current.sendMessage('Montar'));
+  await act(() => result.current.sendMessage('Montar'));
   expect(global.fetch).toHaveBeenCalledTimes(1);
-  act(() => result.current.retry());
+  await act(() => result.current.retry());
   await waitFor(() => expect(result.current.consentRequired).toBe(false));
   expect(result.current.mealsProposal).not.toBeNull();
 });
@@ -130,7 +130,7 @@ it.each([
   'approve',
   'send',
 ])('retira o conteúdo e pede consentimento se revogado durante %s', async (action) => {
-  const { result } = renderHook(() => useNutritionAssistantChat(options));
+  const { result } = await renderHook(() => useNutritionAssistantChat(options));
   await waitFor(() => expect(result.current.initializing).toBe(false));
   (global.fetch as jest.Mock).mockResolvedValueOnce(response({ code: 'consent_required' }, 403));
   await act(async () => {
@@ -141,7 +141,7 @@ it.each([
   expect(result.current.messages).toEqual([]);
   expect(result.current.mealsProposal).toBeNull();
   expect(result.current.error).toBeNull();
-  act(() => {
+  await act(() => {
     result.current.approveMeals();
     result.current.sendMessage('Tentar');
   });
@@ -152,7 +152,7 @@ it.each([
   });
   await waitFor(() => expect(result.current.initializing).toBe(false));
   expect(result.current.consentRequired).toBe(true);
-  act(() => result.current.retry());
+  await act(() => result.current.retry());
   await waitFor(() => expect(result.current.consentRequired).toBe(false));
   expect((global.fetch as jest.Mock).mock.calls[2][0]).toContain('sessionId=draft-chat');
   expect((global.fetch as jest.Mock).mock.calls[3][0]).toContain('sessionId=draft-chat');

@@ -18,10 +18,10 @@ export const datePickerModule = { __esModule: true, default: DatePickerStub };
 /**
  * Abre o campo de data pelo rótulo que o leitor de tela ouve e escolhe `date`.
  *
- * @example pickDate('Término: 01/12/2026', '2026-12-15');
+ * @example await pickDate('Término: 01/12/2026', '2026-12-15');
  */
-export function pickDate(label: string, date: string) {
+export async function pickDate(label: string, date: string) {
   nextDate = date;
-  fireEvent.press(screen.getByLabelText(label));
-  fireEvent.press(screen.getByText('Confirmar data'));
+  await fireEvent.press(screen.getByLabelText(label));
+  await fireEvent.press(screen.getByText('Confirmar data'));
 }

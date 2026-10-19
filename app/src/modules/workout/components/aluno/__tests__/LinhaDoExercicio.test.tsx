@@ -51,23 +51,25 @@ beforeEach(() => {
 });
 
 describe('LinhaDoExercicio', () => {
-  it('oferece a análise no agachamento e leva até ela', () => {
-    render(<LinhaDoExercicio item={exercicio('Agachamento livre')} ordem={1} />);
+  it('oferece a análise no agachamento e leva até ela', async () => {
+    await render(<LinhaDoExercicio item={exercicio('Agachamento livre')} ordem={1} />);
 
-    fireEvent.press(screen.getByRole('button', { name: 'Analisar técnica do Agachamento livre' }));
+    await fireEvent.press(
+      screen.getByRole('button', { name: 'Analisar técnica do Agachamento livre' })
+    );
 
     expect(mockPush).toHaveBeenCalledWith(ROUTES.TECHNIQUE.SQUAT);
   });
 
-  it('não oferece a análise enquanto ela está em desenvolvimento', () => {
+  it('não oferece a análise enquanto ela está em desenvolvimento', async () => {
     mockReleased = false;
-    render(<LinhaDoExercicio item={exercicio('Agachamento livre')} ordem={1} />);
+    await render(<LinhaDoExercicio item={exercicio('Agachamento livre')} ordem={1} />);
 
     expect(screen.queryByText('Analisar técnica')).toBeNull();
   });
 
-  it('não oferece análise no exercício que o app não sabe analisar', () => {
-    render(<LinhaDoExercicio item={exercicio('Supino reto')} ordem={2} />);
+  it('não oferece análise no exercício que o app não sabe analisar', async () => {
+    await render(<LinhaDoExercicio item={exercicio('Supino reto')} ordem={2} />);
 
     expect(screen.queryByText('Analisar técnica')).toBeNull();
   });

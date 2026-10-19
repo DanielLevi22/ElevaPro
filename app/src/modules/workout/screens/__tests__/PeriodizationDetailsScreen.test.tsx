@@ -62,15 +62,15 @@ beforeEach(() => {
 afterEach(resetSupabaseAnswers);
 
 it('sem fases, orienta a criar a primeira e mostra o objetivo pelo rótulo do web', async () => {
-  render(<PeriodizationDetailsScreen />);
+  await render(<PeriodizationDetailsScreen />);
 
   expect(await screen.findByText('Adicione a primeira fase')).toBeTruthy();
   expect(screen.getByText('Força')).toBeTruthy();
 });
 
 it('"Nova fase" grava a Fase 1 com 30 dias e a mostra na lista, sem sair da tela', async () => {
-  render(<PeriodizationDetailsScreen />);
-  fireEvent.press(await screen.findByText('Nova fase'));
+  await render(<PeriodizationDetailsScreen />);
+  await fireEvent.press(await screen.findByText('Nova fase'));
 
   expect(await screen.findByText('Fase 1')).toBeTruthy();
   const today = localDateOf(new Date());
@@ -89,8 +89,8 @@ it('"Nova fase" grava a Fase 1 com 30 dias e a mostra na lista, sem sair da tela
 });
 
 it('"Editar" abre o formulário da periodização', async () => {
-  render(<PeriodizationDetailsScreen />);
-  fireEvent.press(await screen.findByLabelText('Editar'));
+  await render(<PeriodizationDetailsScreen />);
+  await fireEvent.press(await screen.findByLabelText('Editar'));
 
   await waitFor(() =>
     expect(mockPush).toHaveBeenCalledWith(ROUTES.WORKOUTS.PERIODIZATION_EDIT('p1'))
@@ -108,8 +108,8 @@ it('"Ativar" ativa a periodização, conclui a outra ativa do aluno e não toca 
     'training_periodizations:select': { student_id: 'aluno-1' },
     'training_periodizations:update': { ...CYCLE, status: 'active' },
   });
-  render(<PeriodizationDetailsScreen />);
-  fireEvent.press(await screen.findByText('Ativar periodização'));
+  await render(<PeriodizationDetailsScreen />);
+  await fireEvent.press(await screen.findByText('Ativar periodização'));
   mockSupabase.from.mockClear();
 
   const confirmation = useAppAlertStore.getState().current;

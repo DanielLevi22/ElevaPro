@@ -11,15 +11,17 @@ function specialistWrapper({ children }: { children: ReactNode }) {
 }
 
 describe('useProgressNavigation', () => {
-  it('sem provedor, é o aluno olhando o próprio progresso, na aba dele', () => {
-    const { result } = renderHook(() => useProgressNavigation());
+  it('sem provedor, é o aluno olhando o próprio progresso, na aba dele', async () => {
+    const { result } = await renderHook(() => useProgressNavigation());
     expect(result.current.viewer).toBe('self');
     expect(result.current.routes.loads).toBe('/(tabs)/progress/loads');
     expect(result.current.onBack).toBeNull();
   });
 
-  it('com o especialista, navega dentro da pilha de Alunos, para o aluno certo', () => {
-    const { result } = renderHook(() => useProgressNavigation(), { wrapper: specialistWrapper });
+  it('com o especialista, navega dentro da pilha de Alunos, para o aluno certo', async () => {
+    const { result } = await renderHook(() => useProgressNavigation(), {
+      wrapper: specialistWrapper,
+    });
     expect(result.current.viewer).toBe('specialist');
     expect(result.current.routes.loads).toEqual({
       pathname: '/(tabs)/students/[id]/progress/loads',
@@ -32,8 +34,10 @@ describe('useProgressNavigation', () => {
   // alheia não é correção, é falsificação (docs/LGPD_COMPLIANCE.md, §
   // workout_sessions). O especialista abre o mesmo fluxo do aluno, então o
   // caminho para esses formulários precisa não existir do lado dele.
-  it('o especialista não alcança a correção do que o aluno declarou', () => {
-    const { result } = renderHook(() => useProgressNavigation(), { wrapper: specialistWrapper });
+  it('o especialista não alcança a correção do que o aluno declarou', async () => {
+    const { result } = await renderHook(() => useProgressNavigation(), {
+      wrapper: specialistWrapper,
+    });
     const { measurementForm, sessionHistory } = result.current.routes;
 
     if (measurementForm !== null || sessionHistory !== null) {

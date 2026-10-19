@@ -1,4 +1,4 @@
-import type { ReactNode, RefObject } from 'react';
+import type { ComponentRef, ReactNode, RefObject } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { ABOVE_TAB_BAR, useBottomOffset, useCores } from '@/shared/design';
 import { AlvoDoVidro } from './AlvoDoVidro';
@@ -34,7 +34,7 @@ interface GlassScreenProps {
   /** Sem o respiro de cima: a tela abre com imagem colada no topo. */
   flushTop?: boolean;
   /** A conversa do assistente desce sozinha a cada mensagem, e precisa da rolagem. */
-  scrollRef?: RefObject<ScrollView | null>;
+  scrollRef?: RefObject<ComponentRef<typeof ScrollView> | null>;
 }
 
 const BOTTOM_SPACE = { tab: ABOVE_TAB_BAR, actionBar: 184 } as const;

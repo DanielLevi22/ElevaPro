@@ -18,9 +18,9 @@ const PLANO = {
 } as OnboardingPlanPending;
 
 describe('O10 · ajustar o plano', () => {
-  it('cada opção de dias mostra a meta antes e depois, com o Δ kcal', () => {
+  it('cada opção de dias mostra a meta antes e depois, com o Δ kcal', async () => {
     const onAdjust = jest.fn();
-    render(
+    await render(
       <AdjustSheet
         visible
         plan={PLANO}
@@ -32,12 +32,12 @@ describe('O10 · ajustar o plano', () => {
     );
     expect(screen.getByText('+80 kcal')).toBeTruthy();
     expect(screen.getByText('−60 kcal')).toBeTruthy();
-    fireEvent.press(screen.getByText('Treinar 4 dias por semana'));
+    await fireEvent.press(screen.getByText('Treinar 4 dias por semana'));
     expect(onAdjust).toHaveBeenCalledWith({ kind: 'training_days', days: 4 });
   });
 
-  it('não oferece os dias que já estão no plano', () => {
-    render(
+  it('não oferece os dias que já estão no plano', async () => {
+    await render(
       <AdjustSheet
         visible
         plan={PLANO}

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { showConfirm } from '@/components/ui/appAlert';
 import { ShareWorkoutModal } from '@/components/workout/ShareWorkoutModal';
 import { ROUTES } from '@/navigation/types';
+import { useConfirmLeave } from '@/navigation/useConfirmLeave';
 import { type CardioModality, cardioModality } from '../../cardioModalities';
 import { useCardioAnnouncements } from '../../hooks/useCardioAnnouncements';
 import {
@@ -114,30 +115,19 @@ function useReading(
  * medido, e no resumo já está gravado.
  */
 function useLeaveGuard(session: CardioSessionState, stopTracking: () => Promise<void>): void {
-  const navigation = useNavigation();
-  const inProgress = useRef(false);
-  inProgress.current = ['live', 'paused', 'feedback'].includes(session.moment);
-
-  useEffect(
-    () =>
-      navigation.addListener('beforeRemove', (event) => {
-        if (!inProgress.current) return;
-        event.preventDefault();
-        showConfirm({
-          title: 'Sair sem salvar?',
-          message: 'O tempo e o percurso desta sessão não serão gravados.',
-          type: 'danger',
-          confirmText: 'Sair',
-          cancelText: 'Continuar',
-          onConfirm: () => {
-            // Sem liberar antes, o despacho dispararia este mesmo listener de novo.
-            inProgress.current = false;
-            void stopTracking();
-            navigation.dispatch(event.data.action);
-          },
-        });
-      }),
-    [navigation, stopTracking]
+  const inProgress = ['live', 'paused', 'feedback'].includes(session.moment);
+  useConfirmLeave(inProgress, (leave) =>
+    showConfirm({
+      title: 'Sair sem salvar?',
+      message: 'O tempo e o percurso desta sessão não serão gravados.',
+      type: 'danger',
+      confirmText: 'Sair',
+      cancelText: 'Continuar',
+      onConfirm: () => {
+        void stopTracking();
+        leave();
+      },
+    })
   );
 }
 

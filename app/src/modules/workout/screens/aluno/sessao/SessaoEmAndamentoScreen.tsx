@@ -1,7 +1,8 @@
 import { shortSession, type Workout } from '@elevapro/shared';
-import { useNavigation, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef } from 'react';
 import { showConfirm } from '@/components/ui/appAlert';
+import { useConfirmLeave } from '@/navigation/useConfirmLeave';
 import { EstadoDaTela } from '../../../components/aluno/EstadoDaTela';
 import { useDetalheDoTreino } from '../../../hooks/useDetalheDoTreino';
 import { useRestOnLockScreen } from '../../../hooks/useRestOnLockScreen';
@@ -118,35 +119,16 @@ function confirmarFinalizacao(
  * há nada feito, e depois já está gravado.
  */
 function useSaidaSemSalvar(sessao: EstadoDaSessao): (sair: () => void) => void {
-  const navigation = useNavigation();
-  const emAndamento = useRef(false);
-  const liberado = useRef(false);
-  emAndamento.current = sessao.momento !== 'preInicio' && sessao.momento !== 'resumo';
-
-  useEffect(
-    () =>
-      navigation.addListener('beforeRemove', (evento) => {
-        if (!emAndamento.current || liberado.current) return;
-        evento.preventDefault();
-        showConfirm({
-          title: 'Sair sem salvar?',
-          message: 'As séries desta sessão não serão gravadas.',
-          type: 'danger',
-          confirmText: 'Sair',
-          cancelText: 'Continuar treinando',
-          onConfirm: () => {
-            // Sem liberar antes, o despacho dispararia este mesmo listener de novo.
-            liberado.current = true;
-            navigation.dispatch(evento.data.action);
-          },
-        });
-      }),
-    [navigation]
+  const emAndamento = sessao.momento !== 'preInicio' && sessao.momento !== 'resumo';
+  // Quem já confirmou a saída pelo X segue pelo retorno, sem ser perguntado de novo.
+  return useConfirmLeave(emAndamento, (leave) =>
+    showConfirm({
+      title: 'Sair sem salvar?',
+      message: 'As séries desta sessão não serão gravadas.',
+      type: 'danger',
+      confirmText: 'Sair',
+      cancelText: 'Continuar treinando',
+      onConfirm: leave,
+    })
   );
-
-  // Quem já confirmou a saída pelo X não é perguntado de novo pelo listener.
-  return useCallback((sair: () => void) => {
-    liberado.current = true;
-    sair();
-  }, []);
 }

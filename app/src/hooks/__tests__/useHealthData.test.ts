@@ -118,7 +118,7 @@ describe('useHealthData', () => {
     grantAll();
     stubRecords();
 
-    const { result } = renderHook(() => useHealthData());
+    const { result } = await renderHook(() => useHealthData());
 
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.steps).toBe(1500);
@@ -135,7 +135,7 @@ describe('useHealthData', () => {
     grantAll();
     stubRecords();
 
-    const { result } = renderHook(() => useHealthData());
+    const { result } = await renderHook(() => useHealthData());
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     mockInitialize.mockRejectedValueOnce(new Error('SDK unavailable'));
@@ -152,7 +152,7 @@ describe('useHealthData', () => {
     grantAll();
     stubRecords();
 
-    renderHook(() => useHealthData());
+    await renderHook(() => useHealthData());
 
     await waitFor(() => expect(mockGetGranted).toHaveBeenCalled());
     expect(mockInitialize.mock.invocationCallOrder[0]).toBeLessThan(
@@ -164,7 +164,7 @@ describe('useHealthData', () => {
     mockInitialize.mockResolvedValue(true);
     mockGetGranted.mockResolvedValue([]);
 
-    const { result } = renderHook(() => useHealthData());
+    const { result } = await renderHook(() => useHealthData());
 
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.source).toBe('mock');
@@ -186,7 +186,7 @@ describe('leitura vazia não vira zero', () => {
     // aqui gravava zero por cima do agregado bom.
     mockReadRecords.mockResolvedValue({ records: [] });
 
-    renderHook(() => useHealthData());
+    await renderHook(() => useHealthData());
 
     await waitFor(() => expect(mockReadRecords).toHaveBeenCalled());
     expect(mockSync).not.toHaveBeenCalled();
@@ -201,7 +201,7 @@ describe('leitura vazia não vira zero', () => {
         : Promise.resolve({ records: [{ energy: { inKilocalories: 0 } }] })
     );
 
-    renderHook(() => useHealthData());
+    await renderHook(() => useHealthData());
 
     await waitFor(() => expect(mockSync).toHaveBeenCalled());
     expect(mockSync).toHaveBeenCalledWith(

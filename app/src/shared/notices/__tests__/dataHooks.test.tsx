@@ -52,7 +52,7 @@ beforeEach(() => jest.clearAllMocks());
 describe('useLearnedWorkoutTime (F2)', () => {
   it('os inícios e a mediana deles', async () => {
     mockFetchState.mockResolvedValue(STATE);
-    const { result } = renderHook(() => useLearnedWorkoutTime('aluno'), { wrapper });
+    const { result } = await renderHook(() => useLearnedWorkoutTime('aluno'), { wrapper });
     await waitFor(() =>
       expect(result.current.data).toEqual({ starts: [1080, 1100, 1120], usual: 1100 })
     );
@@ -62,7 +62,7 @@ describe('useLearnedWorkoutTime (F2)', () => {
 describe('useTodayChecklist (E4)', () => {
   it('o que falta hoje, com as escolhas da pessoa aplicadas', async () => {
     mockFetchState.mockResolvedValue(STATE);
-    const { result } = renderHook(() => useTodayChecklist('aluno'), { wrapper });
+    const { result } = await renderHook(() => useTodayChecklist('aluno'), { wrapper });
     await waitFor(() =>
       expect(result.current.data).toEqual([
         { kind: 'meal', id: 'almoco', name: 'Almoço', time: '12:00', done: false },
@@ -70,8 +70,8 @@ describe('useTodayChecklist (E4)', () => {
     );
   });
 
-  it('sem pessoa, não busca', () => {
-    renderHook(() => useTodayChecklist(null), { wrapper });
+  it('sem pessoa, não busca', async () => {
+    await renderHook(() => useTodayChecklist(null), { wrapper });
     expect(mockFetchState).not.toHaveBeenCalled();
   });
 });
@@ -80,8 +80,8 @@ describe('useJourney / useWeightTrend (D1, A10)', () => {
   it('pedem pelo dia de hoje no aparelho, e a tendência pela janela escolhida', async () => {
     mockJourney.mockResolvedValue({ since: null });
     mockTrend.mockResolvedValue({ weights: [] });
-    renderHook(() => useJourney('aluno'), { wrapper });
-    renderHook(() => useWeightTrend('aluno', '4w'), { wrapper });
+    await renderHook(() => useJourney('aluno'), { wrapper });
+    await renderHook(() => useWeightTrend('aluno', '4w'), { wrapper });
 
     await waitFor(() => expect(mockJourney).toHaveBeenCalledWith('aluno', '2026-10-14'));
     await waitFor(() => expect(mockTrend).toHaveBeenCalledWith('aluno', '4w', '2026-10-14'));
@@ -90,15 +90,19 @@ describe('useJourney / useWeightTrend (D1, A10)', () => {
 
 describe('useExerciseHistory (A1)', () => {
   // No treino prescrito a carga é do especialista: o histórico nem é lido.
-  it('fora do treino do próprio Praticante, não lê o histórico', () => {
-    const { result } = renderHook(() => useExerciseHistory('treino', 'aluno', false), { wrapper });
+  it('fora do treino do próprio Praticante, não lê o histórico', async () => {
+    const { result } = await renderHook(() => useExerciseHistory('treino', 'aluno', false), {
+      wrapper,
+    });
     expect(result.current).toEqual({});
     expect(mockHistory).not.toHaveBeenCalled();
   });
 
   it('no treino do Praticante, lê a carga e o esforço das últimas sessões', async () => {
     mockHistory.mockResolvedValue({ e1: [{ weight: 40 }] });
-    const { result } = renderHook(() => useExerciseHistory('treino', 'aluno', true), { wrapper });
+    const { result } = await renderHook(() => useExerciseHistory('treino', 'aluno', true), {
+      wrapper,
+    });
     await waitFor(() => expect(result.current).toEqual({ e1: [{ weight: 40 }] }));
   });
 });

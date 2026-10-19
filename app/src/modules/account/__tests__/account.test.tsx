@@ -34,22 +34,22 @@ describe('MenuScreen', () => {
     mockOverview = { fullName: 'Ana Souza', accountType: 'member', student: null };
   });
 
-  it('o aluno chega aos Avisos pelo menu', () => {
+  it('o aluno chega aos Avisos pelo menu', async () => {
     mockAccountType = 'member';
-    render(<MenuScreen />, { wrapper: wrap });
-    fireEvent.press(screen.getByText('Avisos'));
+    await render(<MenuScreen />, { wrapper: wrap });
+    await fireEvent.press(screen.getByText('Avisos'));
     expect(mockPush).toHaveBeenCalledWith('/settings/notices');
   });
 
-  it('o especialista não tem Avisos do dia', () => {
+  it('o especialista não tem Avisos do dia', async () => {
     mockAccountType = 'specialist';
-    render(<MenuScreen />, { wrapper: wrap });
+    await render(<MenuScreen />, { wrapper: wrap });
     expect(screen.queryByText('Avisos')).toBeNull();
   });
 });
 
 describe('ProfileScreen (09)', () => {
-  it('o aluno vê os números, o plano e quem acompanha', () => {
+  it('o aluno vê os números, o plano e quem acompanha', async () => {
     mockOverview = {
       fullName: 'Ana Souza',
       accountType: 'student',
@@ -62,11 +62,11 @@ describe('ProfileScreen (09)', () => {
         specialistName: 'Carla',
       },
     };
-    render(<ProfileScreen />, { wrapper: wrap });
+    await render(<ProfileScreen />, { wrapper: wrap });
 
     expect(screen.getByText('24')).toBeTruthy();
     expect(screen.getByText('Meu especialista')).toBeTruthy();
-    fireEvent.press(screen.getByText('Privacidade e dados'));
+    await fireEvent.press(screen.getByText('Privacidade e dados'));
     expect(mockPush).toHaveBeenCalledWith(ROUTES.HEALTH.AUTHORIZATIONS);
   });
 });

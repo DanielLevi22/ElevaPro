@@ -1,5 +1,5 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
+import type { BottomTabBarProps } from 'expo-router/tabs';
 import { TabBar } from '../TabBar';
 
 jest.mock('expo-blur', () => ({ BlurView: 'BlurView' }));
@@ -36,6 +36,8 @@ jest.mock('react-native-gesture-handler', () => ({
       };
       return chain;
     },
+    Tap: () => ({ onEnd: () => ({}) }),
+    Race: () => ({}),
   },
   // biome-ignore lint/suspicious/noExplicitAny: test mock — passthrough de children
   GestureDetector: ({ children }: any) => children,
@@ -57,7 +59,8 @@ const buildProps = (): BottomTabBarProps => {
   return {
     state: { index: 0, routes },
     descriptors: Object.fromEntries(routes.map((r) => [r.key, { options: {} }])),
-    navigation: { emit: jest.fn(() => ({ defaultPrevented: false })), navigate: jest.fn() },
+    emitter: { emit: jest.fn(() => ({ defaultPrevented: false })) },
+    navigateToTab: jest.fn(),
     insets: { top: 0, right: 0, bottom: 0, left: 0 },
     // biome-ignore lint/suspicious/noExplicitAny: props reais do navigator têm superfície grande demais para o teste
   } as any;
@@ -75,27 +78,27 @@ describe('TabBar', () => {
     jest.requireMock('expo-router').usePathname.mockReturnValue('/workouts');
   });
 
-  it('o aluno tem a aba Saúde, que abre a saúde e o relógio', () => {
+  it('o aluno tem a aba Saúde, que abre a saúde e o relógio', async () => {
     const props = buildProps();
-    const { getByLabelText } = render(<TabBar {...props} />);
+    const { getByLabelText } = await render(<TabBar {...props} />);
 
-    fireEvent.press(getByLabelText('Saúde'));
+    await fireEvent.press(getByLabelText('Saúde'));
 
-    expect(props.navigation.navigate).toHaveBeenCalledWith('saude', undefined);
+    expect(props.navigateToTab).toHaveBeenCalledWith('saude-1');
   });
 
   // As métricas ganharam aba própria (#312): antes só se chegava a elas pela tela inicial.
-  it('o aluno tem a aba Progresso, que abre as métricas', () => {
+  it('o aluno tem a aba Progresso, que abre as métricas', async () => {
     const props = buildProps();
-    const { getByLabelText } = render(<TabBar {...props} />);
+    const { getByLabelText } = await render(<TabBar {...props} />);
 
-    fireEvent.press(getByLabelText('Progresso'));
+    await fireEvent.press(getByLabelText('Progresso'));
 
-    expect(props.navigation.navigate).toHaveBeenCalledWith('progress', undefined);
+    expect(props.navigateToTab).toHaveBeenCalledWith('progress-1');
   });
 
-  it('não captura toque fora da barra visível', () => {
-    const tree = render(<TabBar {...buildProps()} />).toJSON();
+  it('não captura toque fora da barra visível', async () => {
+    const tree = (await render(<TabBar {...buildProps()} />)).toJSON();
 
     expect(tree).not.toBeNull();
     expect(Array.isArray(tree) ? tree[0].props : tree?.props).toMatchObject({
@@ -103,26 +106,26 @@ describe('TabBar', () => {
     });
   });
 
-  it('some nas telas antigas de detalhe, que desenham o próprio rodapé', () => {
+  it('some nas telas antigas de detalhe, que desenham o próprio rodapé', async () => {
     const { usePathname } = jest.requireMock('expo-router');
     usePathname.mockReturnValue('/students/aluno-1/workouts/details/abc-123');
 
-    expect(render(<TabBar {...buildProps()} />).toJSON()).toBeNull();
+    expect((await render(<TabBar {...buildProps()} />)).toJSON()).toBeNull();
   });
 
   // O kit desenha a sessão com a tab bar embaixo e o botão fixo acima dela.
-  it('continua na sessão de treino do aluno, como no kit', () => {
+  it('continua na sessão de treino do aluno, como no kit', async () => {
     const { usePathname } = jest.requireMock('expo-router');
     usePathname.mockReturnValue('/workouts/execute/abc-123');
 
-    expect(render(<TabBar {...buildProps()} />).toJSON()).not.toBeNull();
+    expect((await render(<TabBar {...buildProps()} />)).toJSON()).not.toBeNull();
   });
 
-  it('some quando a rota pede tabBarStyle display none', () => {
+  it('some quando a rota pede tabBarStyle display none', async () => {
     const props = buildProps();
     // biome-ignore lint/suspicious/noExplicitAny: options do navigator
     (props.descriptors['index-1'] as any).options = { tabBarStyle: { display: 'none' } };
 
-    expect(render(<TabBar {...props} />).toJSON()).toBeNull();
+    expect((await render(<TabBar {...props} />)).toJSON()).toBeNull();
   });
 });

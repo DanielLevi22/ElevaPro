@@ -62,13 +62,13 @@ afterEach(resetSupabaseAnswers);
 
 it('"Novo treino" grava a ficha Treino D, com descrição e nível, na fase', async () => {
   answerSupabase({ 'workouts:select': [], 'workouts:insert': workoutTitled('Treino D') });
-  render(<PhaseDetailsScreen />);
+  await render(<PhaseDetailsScreen />);
 
-  fireEvent.press(screen.getByText('Novo treino'));
-  fireEvent.changeText(screen.getByPlaceholderText('Identificador (ex.: D)'), 'd');
-  fireEvent.changeText(screen.getByPlaceholderText('Descrição (opcional)'), 'Pernas');
-  fireEvent.press(screen.getByText('Avançado'));
-  fireEvent.press(screen.getByText('Criar treino'));
+  await fireEvent.press(screen.getByText('Novo treino'));
+  await fireEvent.changeText(screen.getByPlaceholderText('Identificador (ex.: D)'), 'd');
+  await fireEvent.changeText(screen.getByPlaceholderText('Descrição (opcional)'), 'Pernas');
+  await fireEvent.press(screen.getByText('Avançado'));
+  await fireEvent.press(screen.getByText('Criar treino'));
 
   await waitFor(() =>
     expect(mockSupabaseBuilder.insert).toHaveBeenCalledWith(
@@ -85,17 +85,17 @@ it('"Novo treino" grava a ficha Treino D, com descrição e nível, na fase', as
 
 it('mostra a divisão pelas fichas da fase', async () => {
   answerSupabase({ 'workouts:select': [workoutTitled('Treino A'), workoutTitled('Treino B')] });
-  render(<PhaseDetailsScreen />);
+  await render(<PhaseDetailsScreen />);
 
   expect(await screen.findByLabelText('Divisão de treino: AB')).toBeTruthy();
 });
 
 it('trocar a divisão pede confirmação, como no web, sem oferecer a IA', async () => {
   answerSupabase({ 'workouts:select': [] });
-  render(<PhaseDetailsScreen />);
+  await render(<PhaseDetailsScreen />);
 
-  fireEvent.press(screen.getByLabelText('Divisão de treino: nenhuma'));
-  fireEvent.press(screen.getByText('ABC'));
+  await fireEvent.press(screen.getByLabelText('Divisão de treino: nenhuma'));
+  await fireEvent.press(screen.getByText('ABC'));
 
   const confirmation = useAppAlertStore.getState().current;
   expect(confirmation).toMatchObject({ kind: 'confirm', title: 'Alterar divisão de treino?' });
@@ -104,9 +104,9 @@ it('trocar a divisão pede confirmação, como no web, sem oferecer a IA', async
 
 it('a data de término da fase se edita na própria tela', async () => {
   answerSupabase({ 'workouts:select': [], 'training_plans:update': PHASE });
-  render(<PhaseDetailsScreen />);
+  await render(<PhaseDetailsScreen />);
 
-  pickDate('Término: 01/12/2026', '2026-12-15');
+  await pickDate('Término: 01/12/2026', '2026-12-15');
 
   await waitFor(() =>
     expect(mockSupabaseBuilder.update).toHaveBeenCalledWith({ end_date: '2026-12-15' })
@@ -115,11 +115,11 @@ it('a data de término da fase se edita na própria tela', async () => {
 
 it('a fase se renomeia pelo nome no cabeçalho', async () => {
   answerSupabase({ 'workouts:select': [], 'training_plans:update': PHASE });
-  render(<PhaseDetailsScreen />);
+  await render(<PhaseDetailsScreen />);
 
-  fireEvent.press(screen.getByLabelText('Renomear fase Fase 1'));
-  fireEvent.changeText(screen.getByDisplayValue('Fase 1'), 'Semanas 1–4 · Adaptação');
-  fireEvent.press(screen.getByText('Salvar nome'));
+  await fireEvent.press(screen.getByLabelText('Renomear fase Fase 1'));
+  await fireEvent.changeText(screen.getByDisplayValue('Fase 1'), 'Semanas 1–4 · Adaptação');
+  await fireEvent.press(screen.getByText('Salvar nome'));
 
   expect(await screen.findByLabelText('Renomear fase Semanas 1–4 · Adaptação')).toBeTruthy();
 });

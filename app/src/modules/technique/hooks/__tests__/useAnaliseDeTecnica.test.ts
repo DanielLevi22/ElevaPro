@@ -19,18 +19,18 @@ function repeticao(fundo: number, apartirDe = 1): Pose[] {
   }));
 }
 
-function alimentar(hook: { current: { aoReceberPose: (p: Pose) => void } }, poses: Pose[]) {
+async function alimentar(hook: { current: { aoReceberPose: (p: Pose) => void } }, poses: Pose[]) {
   for (const pose of poses) {
-    act(() => hook.current.aoReceberPose(pose));
+    await act(() => hook.current.aoReceberPose(pose));
   }
 }
 
 describe('useAnaliseDeTecnica', () => {
-  it('conta a repetição e fala o veredito uma vez', () => {
+  it('conta a repetição e fala o veredito uma vez', async () => {
     const falar = jest.fn();
-    const { result } = renderHook(() => useAnaliseDeTecnica(falar));
+    const { result } = await renderHook(() => useAnaliseDeTecnica(falar));
 
-    alimentar(result, repeticao(0.2));
+    await alimentar(result, repeticao(0.2));
 
     expect(result.current.movimento?.repeticoes).toBe(1);
     expect(falar).toHaveBeenCalledTimes(1);
@@ -38,64 +38,64 @@ describe('useAnaliseDeTecnica', () => {
     expect(result.current.ultimaFala).toBe('Fundo.');
   });
 
-  it('julga rasa a repetição que não passou da paralela', () => {
+  it('julga rasa a repetição que não passou da paralela', async () => {
     const falar = jest.fn();
-    const { result } = renderHook(() => useAnaliseDeTecnica(falar));
+    const { result } = await renderHook(() => useAnaliseDeTecnica(falar));
 
-    alimentar(result, repeticao(-0.3));
+    await alimentar(result, repeticao(-0.3));
 
     expect(result.current.movimento?.repeticoes).toBe(1);
     expect(falar).toHaveBeenCalledWith('Faltou.');
   });
 
-  it('guarda a memória entre quadros, somando repetições em vez de recomeçar', () => {
+  it('guarda a memória entre quadros, somando repetições em vez de recomeçar', async () => {
     const falar = jest.fn();
-    const { result } = renderHook(() => useAnaliseDeTecnica(falar));
+    const { result } = await renderHook(() => useAnaliseDeTecnica(falar));
 
-    alimentar(result, repeticao(0.2, 1));
-    alimentar(result, repeticao(0.2, 100));
+    await alimentar(result, repeticao(0.2, 1));
+    await alimentar(result, repeticao(0.2, 100));
 
     expect(result.current.movimento?.repeticoes).toBe(2);
   });
 
   // O MediaPipe em LIVE_STREAM não garante ordem de chegada. Sem o descarte, um
   // quadro atrasado reintroduz uma fase já superada e o contador anda para trás.
-  it('descarta quadro que chega fora de ordem', () => {
+  it('descarta quadro que chega fora de ordem', async () => {
     const falar = jest.fn();
-    const { result } = renderHook(() => useAnaliseDeTecnica(falar));
+    const { result } = await renderHook(() => useAnaliseDeTecnica(falar));
     const quadros = repeticao(0.2);
 
-    alimentar(result, quadros);
+    await alimentar(result, quadros);
     const depois = result.current.movimento?.repeticoes;
 
-    alimentar(result, [quadros[2], quadros[3]]);
+    await alimentar(result, [quadros[2], quadros[3]]);
 
     expect(result.current.movimento?.repeticoes).toBe(depois);
   });
 
-  it('cala no meio da repetição, e só abre a boca quando ela fecha', () => {
+  it('cala no meio da repetição, e só abre a boca quando ela fecha', async () => {
     const falar = jest.fn();
-    const { result } = renderHook(() => useAnaliseDeTecnica(falar));
+    const { result } = await renderHook(() => useAnaliseDeTecnica(falar));
 
-    alimentar(result, repeticao(0.2).slice(0, 4));
+    await alimentar(result, repeticao(0.2).slice(0, 4));
 
     expect(falar).not.toHaveBeenCalled();
   });
 
-  it('entrega os landmarks do quadro para o esqueleto', () => {
-    const { result } = renderHook(() => useAnaliseDeTecnica(jest.fn()));
+  it('entrega os landmarks do quadro para o esqueleto', async () => {
+    const { result } = await renderHook(() => useAnaliseDeTecnica(jest.fn()));
 
-    alimentar(result, repeticao(0.2).slice(0, 1));
+    await alimentar(result, repeticao(0.2).slice(0, 1));
 
     expect(result.current.pontos).toHaveLength(33);
   });
 
   // Quadro sem corpo não é quadro com corpo parado: aceitar a lista vazia como
   // medida faria o julgador ler zeros como uma pessoa em pé na origem.
-  it('não conta repetição em quadro sem corpo nenhum', () => {
-    const { result } = renderHook(() => useAnaliseDeTecnica(jest.fn()));
+  it('não conta repetição em quadro sem corpo nenhum', async () => {
+    const { result } = await renderHook(() => useAnaliseDeTecnica(jest.fn()));
 
-    alimentar(result, [{ carimbo: 1, pontos: [] }]);
+    await alimentar(result, [{ carimbo: 1, pontos: [] }]);
 
     expect(result.current.movimento?.repeticoes).toBe(0);
   });
@@ -103,11 +103,11 @@ describe('useAnaliseDeTecnica', () => {
   // Avisa UMA vez e cala. Repetir a cada quadro seria trinta frases por segundo
   // — e calar desde o início deixaria a pessoa agachando com o contador parado
   // sem entender por quê.
-  it('avisa uma vez que não vê o corpo, e depois se cala', () => {
+  it('avisa uma vez que não vê o corpo, e depois se cala', async () => {
     const falar = jest.fn();
-    const { result } = renderHook(() => useAnaliseDeTecnica(falar));
+    const { result } = await renderHook(() => useAnaliseDeTecnica(falar));
 
-    alimentar(
+    await alimentar(
       result,
       Array.from({ length: 20 }, (_, i) => ({ carimbo: i + 1, pontos: [] }))
     );
@@ -116,11 +116,11 @@ describe('useAnaliseDeTecnica', () => {
     expect(falar).toHaveBeenCalledWith('Preciso ver seu quadril, seu joelho e seu tornozelo.');
   });
 
-  it('reiniciar zera a contagem, para a próxima série não herdar a anterior', () => {
-    const { result } = renderHook(() => useAnaliseDeTecnica(jest.fn()));
+  it('reiniciar zera a contagem, para a próxima série não herdar a anterior', async () => {
+    const { result } = await renderHook(() => useAnaliseDeTecnica(jest.fn()));
 
-    alimentar(result, repeticao(0.2));
-    act(() => result.current.reiniciar());
+    await alimentar(result, repeticao(0.2));
+    await act(() => result.current.reiniciar());
 
     expect(result.current.movimento).toBeNull();
     expect(result.current.pontos).toEqual([]);

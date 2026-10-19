@@ -9,6 +9,10 @@ updates:
       time: "09:00"
       timezone: "America/Sao_Paulo"
     open-pull-requests-limit: 3
+    ignore:
+      # Versão do Biome é decisão do projeto (CLAUDE.md), e sobe nos três
+      # package.json juntos; um bump só aqui formataria cada pasta de um jeito
+      - dependency-name: "@biomejs/biome"
 
   # Dependências do app mobile
   - package-ecosystem: "npm"
@@ -35,9 +39,14 @@ updates:
           - "@types/jest"
           - "@testing-library/*"
     ignore:
-      # Major updates precisam de revisão manual
+      # O React do app é o que o SDK do Expo fixa, e tem de bater com o renderer do
+      # React Native: o #405 subiu o `react` sem o `react-dom`. Chega com o SDK
       - dependency-name: "react"
-        update-types: ["version-update:semver-major"]
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "@types/react"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
       # No 0.x o minor é que quebra, e a versão do RN é amarrada ao SDK do Expo
       - dependency-name: "react-native"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
@@ -58,6 +67,18 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "jest-expo"
         update-types: ["version-update:semver-major"]
+      # Jest e RNTL também seguem o SDK: o expo-router 58 pede RNTL 14, e o
+      # expo-doctor do 58 espera Jest 30 (#403)
+      - dependency-name: "jest"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/jest"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@testing-library/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "test-renderer"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      # O Biome sobe junto nos três package.json, por decisão (#404)
+      - dependency-name: "@biomejs/biome"
       # NativeWind 4 só aceita Tailwind 3; o v4 derrubou o Metro (#395)
       - dependency-name: "tailwindcss"
         update-types: ["version-update:semver-major"]
