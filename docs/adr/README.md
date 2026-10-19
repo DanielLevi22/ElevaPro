@@ -26,6 +26,7 @@
 | [ADR-0019](0019-coluna-substituida-sai-na-mesma-migration.md) | Coluna substituída sai na mesma migration, não é deprecada | accepted |
 | [ADR-0041](0041-o-alarme-exato-do-android-vira-modulo-nativo-proprio.md) | O alarme exato do Android vira módulo nativo próprio | accepted |
 | [ADR-0043](0043-o-design-mora-no-repo.md) | O design mora no repo | accepted |
+| [ADR-0046](0046-as-versoes-do-app-seguem-o-sdk-do-expo.md) | As versões do app seguem o SDK do Expo, não o Dependabot | accepted |
 
 ### Arquitetura web
 
