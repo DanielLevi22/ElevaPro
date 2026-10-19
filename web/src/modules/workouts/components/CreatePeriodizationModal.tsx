@@ -1,5 +1,6 @@
 "use client";
 
+import { PERIODIZATION_OBJECTIVES, type PeriodizationObjective } from "@elevapro/shared";
 import { useEffect, useId, useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
 import { DateField } from "@/shared/components/ui/DateField";
@@ -9,17 +10,7 @@ import {
   useCreatePeriodization,
   useUpdatePeriodization,
 } from "@/shared/hooks/usePeriodizationMutations";
-import type { PeriodizationObjective } from "@/shared/hooks/usePeriodizations";
 import { useStudents } from "@/shared/hooks/useStudents";
-
-const OBJECTIVES: { value: PeriodizationObjective; label: string }[] = [
-  { value: "hypertrophy", label: "Hipertrofia" },
-  { value: "strength", label: "Força" },
-  { value: "endurance", label: "Resistência" },
-  { value: "weight_loss", label: "Emagrecimento" },
-  { value: "conditioning", label: "Condicionamento" },
-  { value: "general_fitness", label: "Saúde Geral" },
-];
 
 interface InitialData {
   name: string;
@@ -174,7 +165,7 @@ export function CreatePeriodizationModal({
             Objetivo <span className="text-destructive">*</span>
           </span>
           <fieldset className="grid grid-cols-3 gap-2" aria-labelledby={objetivoId}>
-            {OBJECTIVES.map((obj) => (
+            {PERIODIZATION_OBJECTIVES.map((obj) => (
               <button
                 key={obj.value}
                 type="button"

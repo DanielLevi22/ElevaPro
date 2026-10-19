@@ -4,8 +4,8 @@ import type {
   TrainingPlan,
   UpdatePeriodizationInput,
   UpdateTrainingPlanInput,
-  UpdateWorkoutInput,
   Workout,
+  WorkoutDifficulty,
   WorkoutExercise,
   WorkoutSession,
 } from '@elevapro/shared';
@@ -59,7 +59,6 @@ interface WorkoutState {
   updatePeriodization: (id: string, updates: Partial<Periodization>) => Promise<void>;
   activatePeriodization: (periodizationId: string) => Promise<Periodization>;
   createTrainingPlan: (plan: Omit<TrainingPlan, 'id' | 'created_at'>) => Promise<TrainingPlan>;
-  activateTrainingPlan: (trainingPlanId: string) => Promise<TrainingPlan>;
   updateTrainingPlan: (id: string, updates: Partial<TrainingPlan>) => Promise<void>;
   deleteTrainingPlan: (id: string) => Promise<void>;
   fetchWorkoutsForPhase: (trainingPlanId: string) => Promise<void>;
@@ -81,9 +80,9 @@ interface WorkoutState {
     title: string;
     description?: string;
     muscle_group?: string;
+    difficulty?: WorkoutDifficulty;
     specialist_id: string;
   }) => Promise<void>;
-  updateWorkout: (id: string, updates: UpdateWorkoutInput) => Promise<void>;
   fetchLastWorkoutSession: (
     studentId: string
   ) => Promise<{ workout_id: string | null; completed_at: string | null } | null>;
@@ -273,19 +272,6 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     }
   },
 
-  activateTrainingPlan: async (trainingPlanId) => {
-    const activated = await workoutsService.activateTrainingPlan(trainingPlanId);
-    set((state) => ({
-      currentPeriodizationPhases: state.currentPeriodizationPhases.map((p) => {
-        if (p.id === trainingPlanId) return { ...p, status: 'active' as const };
-        if (p.periodization_id === activated.periodization_id && p.status === 'active')
-          return { ...p, status: 'completed' as const };
-        return p;
-      }),
-    }));
-    return activated;
-  },
-
   updateTrainingPlan: async (id, updates) => {
     try {
       await workoutsService.updateTrainingPlan(id, updates as UpdateTrainingPlanInput);
@@ -375,6 +361,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         title: workout.title,
         description: workout.description ?? null,
         muscle_group: workout.muscle_group ?? null,
+        difficulty: workout.difficulty ?? null,
       });
       await get().fetchWorkoutsForPhase(workout.training_plan_id);
     } catch (error) {
@@ -399,13 +386,6 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       console.error('Error fetching last workout session:', error);
       return null;
     }
-  },
-
-  updateWorkout: async (id, updates) => {
-    const updated = await workoutsService.updateWorkout(id, updates);
-    set((state) => ({
-      workouts: state.workouts.map((w) => (w.id === id ? { ...w, ...updated } : w)),
-    }));
   },
 
   duplicateWorkout: async (workoutId, targetPlanId) => {

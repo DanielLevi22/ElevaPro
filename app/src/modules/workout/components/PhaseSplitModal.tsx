@@ -9,7 +9,8 @@ interface PhaseSplitModalProps {
   isGenerating: boolean;
   customSplit: string;
   onChangeCustomSplit: (value: string) => void;
-  pendingSplit: string;
+  /** A divisão que a fase já tem, destacada na seleção rápida. */
+  currentSplit: string;
   splits: string[];
   onClose: () => void;
   onSelectSplit: (split?: string) => void;
@@ -21,7 +22,7 @@ export function PhaseSplitModal({
   isGenerating,
   customSplit,
   onChangeCustomSplit,
-  pendingSplit,
+  currentSplit,
   splits,
   onClose,
   onSelectSplit,
@@ -105,9 +106,9 @@ export function PhaseSplitModal({
                       key={split}
                       onPress={() => onSelectSplit(split)}
                       accessibilityRole="button"
-                      accessibilityState={{ selected: pendingSplit === split }}
+                      accessibilityState={{ selected: currentSplit === split }}
                     >
-                      <Chip tom={pendingSplit === split ? 'destaque' : 'neutro'}>{split}</Chip>
+                      <Chip tom={currentSplit === split ? 'destaque' : 'neutro'}>{split}</Chip>
                     </TouchableOpacity>
                   ))}
                 </View>

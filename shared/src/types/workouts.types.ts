@@ -17,6 +17,40 @@ export type PeriodizationObjective =
   | "general_fitness";
 
 /**
+ * Os objetivos de uma periodização, na ordem em que o formulário os oferece.
+ *
+ * Lista única porque cada plataforma tinha a sua: o web gravava `hypertrophy`
+ * e o mobile gravava o texto digitado ("Hipertrofia"). Um não lia o que o
+ * outro escrevia.
+ *
+ * @example PERIODIZATION_OBJECTIVES.map(({ value, label }) => <Chip key={value}>{label}</Chip>)
+ */
+export const PERIODIZATION_OBJECTIVES: ReadonlyArray<{
+  readonly value: PeriodizationObjective;
+  readonly label: string;
+}> = [
+  { value: "hypertrophy", label: "Hipertrofia" },
+  { value: "strength", label: "Força" },
+  { value: "endurance", label: "Resistência" },
+  { value: "weight_loss", label: "Emagrecimento" },
+  { value: "conditioning", label: "Condicionamento" },
+  { value: "general_fitness", label: "Saúde Geral" },
+];
+
+/**
+ * O rótulo de um objetivo gravado, ou o próprio texto quando não é da lista.
+ *
+ * Periodização antiga do mobile guarda texto livre; mostrar o que foi digitado
+ * é melhor do que esconder o objetivo atrás de um rótulo genérico.
+ *
+ * @example periodizationObjectiveLabel("strength") // "Força"
+ */
+export function periodizationObjectiveLabel(objective: string | null): string | null {
+  if (!objective) return null;
+  return PERIODIZATION_OBJECTIVES.find((item) => item.value === objective)?.label ?? objective;
+}
+
+/**
  * O vocabulário do catálogo de exercícios, em um lugar só.
  *
  * Estava espalhado: o banco tinha os valores no CHECK, o coach tinha a lista

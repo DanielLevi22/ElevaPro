@@ -1,7 +1,6 @@
-import { type BulkWorkoutProposal, createWorkoutsService } from '@elevapro/shared';
-import { supabase } from '@elevapro/supabase';
+import type { BulkWorkoutProposal } from '@elevapro/shared';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import { KeyboardAvoidingView, Platform, type ScrollView, Text, View } from 'react-native';
 import { useAuthStore } from '@/auth';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
@@ -9,7 +8,6 @@ import { GlassScreen } from '@/components/ui/GlassScreen';
 import { Row } from '@/components/ui/Row';
 import { Vidro } from '@/components/ui/Vidro';
 import { ROUTES } from '@/navigation/types';
-import { mensagemDeErroBff } from '@/shared/bff';
 import { AssistantHistoryButton } from '@/shared/chat/AssistantHistoryButton';
 import {
   AssistantHeader,
@@ -18,14 +16,13 @@ import {
   TypingIndicator,
 } from '@/shared/chat/ChatPieces';
 import { type PeriodizationProposalState, useAssistantChat } from '../hooks/useAssistantChat';
-import { useWorkoutWizardStore } from '../store/workoutWizardStore';
-
-const workoutsService = createWorkoutsService(supabase);
 
 /**
- * O mesmo chat de IA do web (`/api/ai/chat/[studentId]`), na casca do wizard
- * mobile — reaproveita a conversa e os endpoints de aprovação que já gravam
- * de verdade, em vez de uma proposta de um tiro só (issue #335).
+ * O mesmo chat de IA do web (`/api/ai/chat/[studentId]`): reaproveita a
+ * conversa e os endpoints de aprovação que já gravam de verdade (#335).
+ *
+ * Aprovada, a periodização abre na tela dela, como as criadas à mão (#387).
+ * A IA já grava fase e treinos; o que faltar se monta lá.
  */
 export default function WorkoutAssistantScreen() {
   const { studentId, sessionId } = useLocalSearchParams<{
@@ -64,69 +61,27 @@ function WorkoutAssistantConversation({
   sessionId?: string;
 }) {
   const router = useRouter();
-  const wizard = useWorkoutWizardStore();
   const token = useAuthStore((s) => s.session?.access_token ?? null);
   const canNutrition = useAuthStore(
     (s) => !!s.abilities?.can('create', 'Diet') && !!s.abilities?.can('update', 'Diet')
   );
   const scroll = useRef<ScrollView>(null);
-  const mounted = useRef(true);
-  const [opening, setOpening] = useState(false);
-  const [openError, setOpenError] = useState<string | null>(null);
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-    };
-  }, []);
 
   const chat = useAssistantChat({
     token: token ?? '',
     studentId,
     sessionId: sessionId ?? null,
-    onSessionResolved: (id) => {
-      if (useWorkoutWizardStore.getState().studentId === studentId) wizard.setAiSessionId(id);
-    },
   });
   const blocked =
-    opening ||
     chat.initializing ||
     chat.responding ||
     chat.savingPeriodization ||
     chat.savingWorkouts ||
     !!chat.error;
 
-  async function openBuilder() {
+  function openPeriodization() {
     const periodizationId = chat.periodizationProposal?.savedId;
-    if (!periodizationId || blocked) return;
-    setOpening(true);
-    setOpenError(null);
-    try {
-      const periodization = await workoutsService.fetchPeriodizationById(periodizationId);
-      if (!mounted.current) return;
-      if (!periodization) throw new Error('Periodização indisponível para esta conta.');
-      const phases = await workoutsService.fetchTrainingPlans(periodizationId);
-      if (!mounted.current) return;
-      const phase = phases.find((item) => item.periodization_id === periodizationId);
-      if (!phase) throw new Error('Esta periodização não tem uma fase disponível para montagem.');
-      // A IA já cria a periodização ativa; a publicação do mobile ativa a fase.
-      if (periodization.status === 'completed' || phase.status !== 'planned') {
-        router.replace(ROUTES.WORKOUTS.PERIODIZATION(periodizationId));
-        return;
-      }
-      const name = wizard.studentId === studentId ? wizard.studentName : null;
-      wizard.startFor(studentId, name ?? 'Aluno');
-      wizard.setCreatedStructure(periodizationId, phase.id);
-      if (chat.sessionId) wizard.setAiSessionId(chat.sessionId);
-      router.replace({
-        pathname: ROUTES.WORKOUTS.WIZARD_BUILD,
-        params: { studentId, sessionId: chat.sessionId ?? '' },
-      });
-    } catch (failure) {
-      if (mounted.current) setOpenError(mensagemDeErroBff(failure));
-    } finally {
-      if (mounted.current) setOpening(false);
-    }
+    if (periodizationId && !blocked) router.replace(ROUTES.WORKOUTS.PERIODIZATION(periodizationId));
   }
 
   return (
@@ -146,23 +101,19 @@ function WorkoutAssistantConversation({
             <AssistantHistoryButton
               token={token ?? ''}
               studentId={studentId}
-              disabled={
-                chat.responding || chat.savingPeriodization || chat.savingWorkouts || opening
-              }
+              disabled={chat.responding || chat.savingPeriodization || chat.savingWorkouts}
               canWorkout
               canNutrition={canNutrition}
             />
           }
         />
         {chat.initializing && <Text className="mt-4 text-muted-foreground">Abrindo conversa…</Text>}
-        {(chat.error || openError) && (
+        {chat.error && (
           <Vidro className="mt-3 p-4">
             <Text accessibilityRole="alert" className="text-foreground">
-              {chat.error || openError}
+              {chat.error}
             </Text>
-            {chat.error && (
-              <Row icon="refresh-outline" title="Tentar novamente" onPress={chat.retry} />
-            )}
+            <Row icon="refresh-outline" title="Tentar novamente" onPress={chat.retry} />
           </Vidro>
         )}
 
@@ -174,7 +125,7 @@ function WorkoutAssistantConversation({
             saving={blocked}
             onApprove={chat.approvePeriodization}
             onAdjust={() => chat.sendMessage('Quero ajustar algumas coisas na proposta.')}
-            onContinue={openBuilder}
+            onContinue={openPeriodization}
           />
         ) : null}
 

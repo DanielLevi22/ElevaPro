@@ -204,15 +204,20 @@ export const ROUTES = {
     /** "Só tenho 20 min" (#376, F3): a mesma sessão, com os três primeiros exercícios. */
     EXECUTE_SHORT: (id: string) =>
       ({ pathname: '/(tabs)/workouts/execute/[id]', params: { id, short: '1' } }) as const,
-    // Wizard de criação (#335) — substitui a antiga CreatePeriodizationScreen
-    // e a criação inline de fase/treino que ainda mora em
-    // PeriodizationDetailsScreen/PhaseDetailsScreen.
-    WIZARD_STRUCTURE: '/(tabs)/workouts/wizard/structure',
-    WIZARD_BUILD: '/(tabs)/workouts/wizard/build',
-    WIZARD_REVIEW: '/(tabs)/workouts/wizard/review',
-    // Chat de verdade com o assistente (#335) — substitui a proposta de um
-    // tiro só que morava em WIZARD_STRUCTURE/WIZARD_BUILD.
-    WIZARD_ASSISTANT: '/(tabs)/workouts/wizard/assistant',
+    /**
+     * O formulário da periodização, como o modal do web (#387): grava só a
+     * periodização. Fase, ficha e exercício nascem cada um na sua tela.
+     */
+    PERIODIZATION_NEW: (studentId?: string, studentName?: string) =>
+      ({
+        pathname: '/(tabs)/workouts/periodization-form',
+        params: { ...(studentId ? { studentId } : {}), ...(studentName ? { studentName } : {}) },
+      }) as const,
+    PERIODIZATION_EDIT: (periodizationId: string) =>
+      ({ pathname: '/(tabs)/workouts/periodization-form', params: { periodizationId } }) as const,
+    // Chat com o assistente de treino (#335). Mora fora da criação, como o
+    // coach do web: chega-se a ele pelo histórico de conversas.
+    ASSISTANT: '/(tabs)/workouts/assistant',
   },
 
   // Nutrição do aluno, no desenho de vidro (#298). O member segue nas telas antigas.

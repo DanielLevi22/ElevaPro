@@ -10,11 +10,10 @@ import { Row } from '@/components/ui/Row';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { MuscleFilterCarousel } from '@/components/workout/MuscleFilterCarousel';
-import { ROUTES } from '@/navigation/types';
 import { useCores, useEscala } from '@/shared/design';
 import { EstadoDaTela } from '../components/aluno/EstadoDaTela';
+import { type NewWorkoutInput, NewWorkoutModal } from '../components/NewWorkoutModal';
 import { PhaseLibraryModal } from '../components/PhaseLibraryModal';
-import { PhaseSplitConfirmModal } from '../components/PhaseSplitConfirmModal';
 import { PhaseSplitModal } from '../components/PhaseSplitModal';
 import { PhaseStatusModal } from '../components/PhaseStatusModal';
 import { PhaseSummaryCard } from '../components/PhaseSummaryCard';
@@ -23,7 +22,6 @@ import { WorkoutListItem } from '../components/WorkoutListItem';
 import { usePhaseSplitFlow } from '../hooks/usePhaseSplitFlow';
 import { useSuggestedWorkout } from '../hooks/useSuggestedWorkout';
 import { useWorkoutStore } from '../store/workoutStore';
-import { useWorkoutWizardStore } from '../store/workoutWizardStore';
 
 const SPLITS = ['A', 'AB', 'ABC', 'ABCD', 'ABCDE', 'ABCDEF'];
 
@@ -51,7 +49,6 @@ export default function PhaseDetailsScreen() {
 
   const {
     currentPeriodizationPhases,
-    periodizations,
     deleteTrainingPlan,
     createWorkout,
     deleteWorkoutsForPhase,
@@ -62,58 +59,22 @@ export default function PhaseDetailsScreen() {
     fetchLastWorkoutSession,
     fetchWorkouts,
   } = useWorkoutStore();
-  const wizard = useWorkoutWizardStore();
 
   const phase = currentPeriodizationPhases.find((p) => p.id === phaseId);
 
   const [showLibraryModal, setShowLibraryModal] = useState(false);
+  const [showNewWorkout, setShowNewWorkout] = useState(false);
+  const [creatingWorkout, setCreatingWorkout] = useState(false);
   const [librarySearch, setLibrarySearch] = useState('');
   const [selectedLibraryMuscle, setSelectedLibraryMuscle] = useState<string | null>(null);
-
-  /**
-   * O passo de montagem do wizard (#335) — manual e IA moram lá agora, então
-   * "Adicionar treino" e "Usar Co-Pilot" desta tela convergem pro mesmo lugar
-   * em vez de dois caminhos que faziam a mesma coisa de formas diferentes.
-   *
-   * `student_id` não vem por parâmetro de rota aqui — só pela periodização já
-   * carregada no store, de quem visitou a tela de periodização antes de chegar
-   * nesta fase (sempre o caso: não existe link direto pra uma fase).
-   */
-  const goToWizardBuild = useCallback(
-    (split?: string) => {
-      if (!phase) return;
-      const periodizacao = periodizations.find((p) => p.id === phase.periodization_id);
-      if (!periodizacao) {
-        showAlert({
-          title: 'Erro',
-          message:
-            'Não encontrei o aluno desta fase. Abra pela lista de periodizações e tente de novo.',
-          type: 'error',
-        });
-        return;
-      }
-
-      wizard.startFor(periodizacao.student_id, periodizacao.student?.full_name ?? 'Aluno');
-      wizard.setPlanName(phase.name);
-      if (split) wizard.setSplit(split);
-      wizard.setCreatedStructure(periodizacao.id, phase.id);
-      router.push({
-        pathname: ROUTES.WORKOUTS.WIZARD_BUILD,
-        params: { studentId: periodizacao.student_id },
-      });
-    },
-    [phase, periodizations, wizard, router]
-  );
 
   const splitFlow = usePhaseSplitFlow({
     phase,
     userId: user?.id,
-    workoutsCount: workouts.length,
     createWorkout,
     deleteWorkoutsForPhase,
     fetchWorkoutsForPhase,
     updateTrainingPlan,
-    onAiReady: goToWizardBuild,
   });
 
   const { suggestedWorkout, isWorkoutDoneToday, goToWorkout, goToSuggestedWorkout } =
@@ -192,6 +153,34 @@ export default function PhaseDetailsScreen() {
     [phaseId]
   );
 
+  const handleCreateWorkout = useCallback(
+    async (input: NewWorkoutInput) => {
+      if (!phase || !user?.id) return;
+      setCreatingWorkout(true);
+      try {
+        await createWorkout({ training_plan_id: phase.id, specialist_id: user.id, ...input });
+        setShowNewWorkout(false);
+      } catch {
+        showAlert({ title: 'Erro', message: 'Não foi possível criar o treino.', type: 'error' });
+      } finally {
+        setCreatingWorkout(false);
+      }
+    },
+    [phase, user?.id, createWorkout]
+  );
+
+  const handleChangeDate = useCallback(
+    async (field: 'start_date' | 'end_date', value: string) => {
+      if (!phase) return;
+      try {
+        await updateTrainingPlan(phase.id, { [field]: value });
+      } catch {
+        showAlert({ title: 'Erro', message: 'Não foi possível alterar a data.', type: 'error' });
+      }
+    },
+    [phase, updateTrainingPlan]
+  );
+
   if (!phase) return <EstadoDaTela naoEncontrado mensagem="Fase não encontrada." />;
 
   const filteredWorkouts = selectedMuscle
@@ -234,10 +223,10 @@ export default function PhaseDetailsScreen() {
       <View className="mt-4">
         <PhaseSummaryCard
           phase={phase}
+          split={splitOf(workouts)}
           isStudentView={isStudentView}
           onPressSplit={() => splitFlow.setShowSplitModal(true)}
-          onPressStart={() => {}}
-          onPressEnd={() => {}}
+          onChangeDate={handleChangeDate}
         />
       </View>
 
@@ -268,12 +257,7 @@ export default function PhaseDetailsScreen() {
       </TituloDeSecao>
 
       {!isStudentView && (
-        <View className="mb-3 flex-row items-center gap-2">
-          <Row icon="sparkles" title="Co-Pilot" onPress={() => goToWizardBuild()} chevron />
-        </View>
-      )}
-      {!isStudentView && (
-        <View className="mb-3 flex-row gap-2">
+        <View className="mb-3">
           <Row
             icon="library-outline"
             title="Importar da biblioteca"
@@ -299,7 +283,11 @@ export default function PhaseDetailsScreen() {
       ))}
 
       {!isStudentView ? (
-        <Row icon="add-circle-outline" title="Adicionar treino" onPress={() => goToWizardBuild()} />
+        <Row
+          icon="add-circle-outline"
+          title="Novo treino"
+          onPress={() => setShowNewWorkout(true)}
+        />
       ) : null}
 
       <PhaseSplitModal
@@ -307,7 +295,7 @@ export default function PhaseDetailsScreen() {
         isGenerating={splitFlow.isGenerating}
         customSplit={splitFlow.customSplit}
         onChangeCustomSplit={splitFlow.setCustomSplit}
-        pendingSplit={splitFlow.pendingSplit}
+        currentSplit={splitOf(workouts)}
         splits={SPLITS}
         onClose={() => {
           splitFlow.setShowSplitModal(false);
@@ -316,14 +304,14 @@ export default function PhaseDetailsScreen() {
         onSelectSplit={splitFlow.handleSelectSplit}
       />
 
-      <PhaseSplitConfirmModal
-        visible={splitFlow.showWarningModal}
-        pendingSplit={splitFlow.pendingSplit}
-        hasExistingWorkouts={workouts.length > 0}
-        onClose={splitFlow.handleCancelSplitConfirm}
-        onUseAI={splitFlow.handleUseAiFromConfirm}
-        onEmptyWorkouts={splitFlow.handleEmptyWorkoutsFromConfirm}
-      />
+      {showNewWorkout ? (
+        <NewWorkoutModal
+          visible
+          saving={creatingWorkout}
+          onClose={() => setShowNewWorkout(false)}
+          onCreate={handleCreateWorkout}
+        />
+      ) : null}
 
       <PhaseLibraryModal
         visible={showLibraryModal}
@@ -344,6 +332,16 @@ export default function PhaseDetailsScreen() {
       />
     </GlassScreen>
   );
+}
+
+/**
+ * A divisão da fase pelas fichas que ela tem: "Treino A", "Treino B" → "AB".
+ *
+ * Tira o "Treino " antes da letra. O web lê a primeira letra do título e
+ * mostra "TT" para as mesmas duas fichas.
+ */
+function splitOf(workouts: { title: string }[]): string {
+  return workouts.map((w) => w.title.replace(/^treino\s+/i, '').charAt(0)).join('');
 }
 
 function BotaoDeIconePlano({
