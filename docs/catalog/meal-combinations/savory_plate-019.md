@@ -108,7 +108,7 @@
 - [ ] `candidate-670239d9da8b77d4` — Prato: Arroz sete grãos cozido + Camarão cozido + Pimentão verde
 - [ ] `candidate-67034272a7270765` — Prato: Polenta cozida + Salmão grelhado + Chuchu cozido
 - [ ] `candidate-67048d00c2d5d6df` — Prato: Batata doce roxa cozida + Atum fresco grelhado + Brócolis cozido
-- [ ] `candidate-6708e76117ad456e` — Prato: Inhame cozido + Frango desfiado cozido + Pimentão vermelho
+- [x] `candidate-6708e76117ad456e` — Prato: Inhame cozido + Frango desfiado cozido + Pimentão vermelho
 - [ ] `candidate-671277233acdd12a` — Prato: Quinoa cozida + Merluza grelhada + Agrião
 - [ ] `candidate-671a0711e17b13a4` — Prato: Cuscuz marroquino cozido + Sardinha (lata, drenada) + Chuchu cozido
 - [ ] `candidate-672240df9dfddc06` — Prato: Batata inglesa cozida + Pescada grelhada + Cogumelo champignon
