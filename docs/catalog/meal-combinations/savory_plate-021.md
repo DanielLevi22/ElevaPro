@@ -1,14 +1,14 @@
 # Prato — imagens
 
 - [ ] `candidate-6f65506b12c36185` — Prato: Polenta cozida + Carne bovina (alcatra) + Agrião
-- [ ] `candidate-6f694dbf66b29a4d` — Prato: Batata doce cozida + Carne suína (lombo assado) + Vagem cozida
+- [x] `candidate-6f694dbf66b29a4d` — Prato: Batata doce cozida + Carne suína (lombo assado) + Vagem cozida
 - [ ] `candidate-6f795f2c29dc5d75` — Prato: Polenta cozida + Frango (peito grelhado) + Beterraba cozida
 - [ ] `candidate-6f89b0813dc64658` — Prato: Arroz sete grãos cozido + Tofu + Chuchu cozido
 - [ ] `candidate-6f8e7532bbabc006` — Prato: Inhame cozido + Carne bovina (coxão mole) + Espinafre
 - [ ] `candidate-6f9a76587a55b94d` — Prato: Batata doce roxa cozida + Tofu + Cenoura crua
 - [ ] `candidate-6f9eebedcd46df09` — Prato: Quinoa cozida + Frango (peito grelhado) + Aspargos cozidos
 - [ ] `candidate-6fb4c208a2f89785` — Prato: Cuscuz de milho + Camarão cozido + Agrião
-- [ ] `candidate-6fcffe624ea7eac4` — Prato: Mandioca cozida + Frango (coxa sem pele assada) + Quiabo cozido
+- [x] `candidate-6fcffe624ea7eac4` — Prato: Mandioca cozida + Frango (coxa sem pele assada) + Quiabo cozido
 - [ ] `candidate-6fdc0494f6a93666` — Prato: Mandioca cozida + Frango (coxa sem pele assada) + Vagem cozida
 - [ ] `candidate-6fde2dbadc3cffb1` — Prato: Arroz sete grãos cozido + Proteína de soja texturizada + Vagem cozida
 - [ ] `candidate-6fe1477f45c52330` — Prato: Inhame cozido + Ovo inteiro cozido + Pepino

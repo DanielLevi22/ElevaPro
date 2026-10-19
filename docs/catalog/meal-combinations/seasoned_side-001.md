@@ -86,7 +86,7 @@
 - [ ] `candidate-60d61d539508720e` — Legumes com finalização: Couve-flor cozida + Azeitona verde + Azeite de oliva
 - [x] `candidate-63646b88f7243766` — Legumes com finalização: Vagem cozida + Alho + Manteiga
 - [ ] `candidate-63e18fb0e253e709` — Legumes com finalização: Couve refogada + Alho + Óleo de canola
-- [ ] `candidate-662807c87a053f04` — Legumes com finalização: Abóbora cabotiá cozida + Limão + Azeite de oliva
+- [x] `candidate-662807c87a053f04` — Legumes com finalização: Abóbora cabotiá cozida + Limão + Azeite de oliva
 - [x] `candidate-6692ae6940944c57` — Legumes com finalização: Brócolis cozido + Cebola + Manteiga
 - [ ] `candidate-679b1407b7f37db2` — Legumes com finalização: Aspargos cozidos + Limão + Manteiga
 - [ ] `candidate-68b17081ecf37838` — Legumes com finalização: Chuchu cozido + Cebola + Óleo de canola
