@@ -97,7 +97,7 @@ export function AssistantHistoryPanel({
           ListEmptyComponent={
             !history.loading && !history.error && !history.consentRequired ? (
               <Text className="mt-4 text-muted-foreground">Nenhuma conversa ainda.</Text>
-            ) : null
+            ) : undefined
           }
           renderItem={({ item }) => (
             <ConversationRow

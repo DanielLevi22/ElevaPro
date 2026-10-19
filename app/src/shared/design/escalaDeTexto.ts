@@ -1,5 +1,5 @@
 import { rem } from 'nativewind';
-import { Dimensions, useWindowDimensions } from 'react-native';
+import { Dimensions, type ScaledSize, useWindowDimensions } from 'react-native';
 
 /**
  * Ajusta o tamanho do texto à largura do aparelho, mantendo a proporção do
@@ -60,7 +60,7 @@ function aplicar(largura: number): void {
 export function ajustarEscalaDeTexto(): () => void {
   aplicar(Dimensions.get('window').width);
 
-  const inscricao = Dimensions.addEventListener('change', ({ window }) => {
+  const inscricao = Dimensions.addEventListener('change', ({ window }: { window: ScaledSize }) => {
     aplicar(window.width);
   });
 

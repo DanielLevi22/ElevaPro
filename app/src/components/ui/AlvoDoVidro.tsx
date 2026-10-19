@@ -1,5 +1,5 @@
 import { BlurTargetView } from 'expo-blur';
-import { createContext, type ReactNode, useContext, useRef } from 'react';
+import { type ComponentRef, createContext, type ReactNode, useContext, useRef } from 'react';
 import { Platform, View } from 'react-native';
 
 /**
@@ -36,7 +36,7 @@ import { Platform, View } from 'react-native';
  *   <ScrollView>…cartões de vidro…</ScrollView>
  * </AlvoDoVidro>
  */
-const Contexto = createContext<React.RefObject<View | null> | null>(null);
+const Contexto = createContext<React.RefObject<ComponentRef<typeof View> | null> | null>(null);
 
 /** O `RenderEffect` do Android chegou na 31; abaixo dela não há blur barato. */
 const API_DO_RENDER_EFFECT = 31;
@@ -67,7 +67,7 @@ interface AlvoDoVidroProps {
  * `backgroundColor` do componente fica na casca de fora.
  */
 export function AlvoDoVidro({ fundo, children }: AlvoDoVidroProps) {
-  const alvo = useRef<View>(null);
+  const alvo = useRef<ComponentRef<typeof View>>(null);
 
   return (
     <Contexto.Provider value={alvo}>
@@ -86,6 +86,6 @@ export function AlvoDoVidro({ fundo, children }: AlvoDoVidroProps) {
  * `null` não é erro: tela sem fundo para desfocar — um formulário sobre cor
  * chapada — não precisa de alvo, e ali o vidro é só o gradiente e a borda.
  */
-export function useAlvoDoVidro(): React.RefObject<View | null> | null {
+export function useAlvoDoVidro(): React.RefObject<ComponentRef<typeof View> | null> | null {
   return useContext(Contexto);
 }

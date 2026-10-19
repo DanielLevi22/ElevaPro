@@ -37,12 +37,12 @@ describe('TodayChecklistCard (E4)', () => {
       { kind: 'meal', id: 'cafe', name: 'Café', time: '07:00', done: true },
       { kind: 'meal', id: 'almoco', name: 'Almoço', time: '12:00', done: false },
     ];
-    render(<TodayChecklistCard studentId="aluno" />, { wrapper: wrap });
+    await render(<TodayChecklistCard studentId="aluno" />, { wrapper: wrap });
 
     expect(screen.getByText('Falta hoje')).toBeTruthy();
     expect(screen.getByText('Feito hoje: Café')).toBeTruthy();
 
-    fireEvent.press(screen.getByText('Marcar'));
+    await fireEvent.press(screen.getByText('Marcar'));
     await waitFor(() =>
       expect(mockHandle).toHaveBeenCalledWith(
         'aluno',
@@ -51,18 +51,18 @@ describe('TodayChecklistCard (E4)', () => {
       )
     );
 
-    fireEvent.press(screen.getByText('20 min'));
+    await fireEvent.press(screen.getByText('20 min'));
     expect(mockPush).toHaveBeenCalledWith({
       pathname: '/(tabs)/workouts/execute/[id]',
       params: { id: 'b', short: '1' },
     });
-    fireEvent.press(screen.getByText('Começar'));
+    await fireEvent.press(screen.getByText('Começar'));
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/workouts/execute/b');
   });
 
-  it('com tudo feito, o cartão some', () => {
+  it('com tudo feito, o cartão some', async () => {
     mockItems = [{ kind: 'meal', id: 'cafe', name: 'Café', time: '07:00', done: true }];
-    render(<TodayChecklistCard studentId="aluno" />, { wrapper: wrap });
+    await render(<TodayChecklistCard studentId="aluno" />, { wrapper: wrap });
     expect(screen.queryByText('Falta hoje')).toBeNull();
   });
 });
@@ -73,36 +73,36 @@ describe('IgnoredNoticePrompt (E6)', () => {
     useNoticePreferencesStore.getState().update({ workout: true });
   });
 
-  it('não pergunta antes de três avisos ignorados', () => {
+  it('não pergunta antes de três avisos ignorados', async () => {
     useNoticeChoicesStore.setState({ ignored: { 'meal:almoco': { count: 2, label: 'Almoço' } } });
-    render(<IgnoredNoticePrompt />);
+    await render(<IgnoredNoticePrompt />);
     expect(screen.queryByText('Mudar o aviso do almoço?')).toBeNull();
   });
 
-  it('no terceiro, pergunta; "uma hora mais tarde" empurra o aviso da refeição', () => {
+  it('no terceiro, pergunta; "uma hora mais tarde" empurra o aviso da refeição', async () => {
     useNoticeChoicesStore.setState({ ignored: { 'meal:almoco': { count: 3, label: 'Almoço' } } });
-    render(<IgnoredNoticePrompt />);
+    await render(<IgnoredNoticePrompt />);
 
-    fireEvent.press(screen.getByText('Uma hora mais tarde'));
+    await fireEvent.press(screen.getByText('Uma hora mais tarde'));
 
     expect(useNoticeChoicesStore.getState().mealDelays).toEqual({ almoco: 60 });
     expect(screen.queryByText('Mudar o aviso do almoço?')).toBeNull();
   });
 
-  it('parar o aviso de treino desliga o tipo em Avisos', () => {
+  it('parar o aviso de treino desliga o tipo em Avisos', async () => {
     useNoticeChoicesStore.setState({ ignored: { 'workout:b': { count: 3, label: 'treino' } } });
-    render(<IgnoredNoticePrompt />);
+    await render(<IgnoredNoticePrompt />);
 
-    fireEvent.press(screen.getByText('Parar este aviso'));
+    await fireEvent.press(screen.getByText('Parar este aviso'));
 
     expect(useNoticePreferencesStore.getState().workout).toBe(false);
   });
 
-  it('"deixar como está" zera a conta sem mudar nada', () => {
+  it('"deixar como está" zera a conta sem mudar nada', async () => {
     useNoticeChoicesStore.setState({ ignored: { 'meal:jantar': { count: 4, label: 'Jantar' } } });
-    render(<IgnoredNoticePrompt />);
+    await render(<IgnoredNoticePrompt />);
 
-    fireEvent.press(screen.getByText('Deixar como está'));
+    await fireEvent.press(screen.getByText('Deixar como está'));
 
     expect(useNoticeChoicesStore.getState().ignored['meal:jantar']).toBeUndefined();
     expect(useNoticeChoicesStore.getState().mutedMeals).toEqual([]);

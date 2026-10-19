@@ -50,10 +50,10 @@ describe('useCheckInSummary / useCheckInActions', () => {
     mockSummary.mockResolvedValue({ state: 'due' });
     mockSubmit.mockResolvedValue({ id: 'c1' });
     const { wrapper } = setup();
-    const summary = renderHook(() => useCheckInSummary('aluno'), { wrapper });
+    const summary = await renderHook(() => useCheckInSummary('aluno'), { wrapper });
     await waitFor(() => expect(summary.result.current.data).toEqual({ state: 'due' }));
 
-    const actions = renderHook(() => useCheckInActions(), { wrapper });
+    const actions = await renderHook(() => useCheckInActions(), { wrapper });
     await act(() =>
       actions.result.current.submit.mutateAsync({
         logging: 'all',
@@ -65,9 +65,9 @@ describe('useCheckInSummary / useCheckInActions', () => {
     await waitFor(() => expect(mockSummary).toHaveBeenCalledTimes(2));
   });
 
-  it('sem pessoa, não busca', () => {
+  it('sem pessoa, não busca', async () => {
     const { wrapper } = setup();
-    renderHook(() => useCheckInSummary(null), { wrapper });
+    await renderHook(() => useCheckInSummary(null), { wrapper });
     expect(mockSummary).not.toHaveBeenCalled();
   });
 });
@@ -77,7 +77,7 @@ describe('useDailyLogReminder (A5b)', () => {
     useNoticePreferencesStore.getState().update({ dailyLog: false });
     mockSchedule.mockResolvedValue(true);
     const { wrapper } = setup();
-    const { result } = renderHook(() => useDailyLogReminder(), { wrapper });
+    const { result } = await renderHook(() => useDailyLogReminder(), { wrapper });
 
     await act(() => result.current.toggle.mutateAsync());
 
@@ -89,7 +89,7 @@ describe('useDailyLogReminder (A5b)', () => {
     useNoticePreferencesStore.getState().update({ dailyLog: false });
     mockSchedule.mockResolvedValue(false);
     const { wrapper } = setup();
-    const { result } = renderHook(() => useDailyLogReminder(), { wrapper });
+    const { result } = await renderHook(() => useDailyLogReminder(), { wrapper });
 
     await act(() => result.current.toggle.mutateAsync());
 
@@ -101,17 +101,17 @@ describe('useWeeklyReport / useWeekNote', () => {
   it('pede o relatório pelo dia de hoje no aparelho', async () => {
     mockReport.mockResolvedValue({ weekStart: '2026-10-05', weekEnd: '2026-10-11' });
     const { wrapper } = setup();
-    const { result } = renderHook(() => useWeeklyReport('aluno'), { wrapper });
+    const { result } = await renderHook(() => useWeeklyReport('aluno'), { wrapper });
     await waitFor(() => expect(result.current.data).toBeTruthy());
     expect(mockReport).toHaveBeenCalledWith('aluno', '2026-10-13');
     expect(result.current.today).toBe('2026-10-13');
   });
 
   // CASL: o Praticante não tem especialista para escrever nota; a busca nem sai.
-  it('sem permissão de ler nota, a nota não é buscada', () => {
+  it('sem permissão de ler nota, a nota não é buscada', async () => {
     mockCanReadNote = false;
     const { wrapper } = setup();
-    renderHook(
+    await renderHook(
       () => useWeekNote('aluno', { weekStart: '2026-10-05', weekEnd: '2026-10-11' } as never),
       { wrapper }
     );
@@ -122,7 +122,7 @@ describe('useWeeklyReport / useWeekNote', () => {
     mockCanReadNote = true;
     mockNote.mockResolvedValue({ body: 'Boa semana!' });
     const { wrapper } = setup();
-    const { result } = renderHook(
+    const { result } = await renderHook(
       () => useWeekNote('aluno', { weekStart: '2026-10-05', weekEnd: '2026-10-11' } as never),
       { wrapper }
     );

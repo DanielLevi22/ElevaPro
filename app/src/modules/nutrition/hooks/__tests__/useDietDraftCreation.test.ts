@@ -13,7 +13,9 @@ beforeEach(() => {
 
 // Art. 6°, VII: RLS é a última defesa, não substitui a recusa de ação na UI.
 it('sem permissão de criar dieta, não tenta gravar nem devolve destino', async () => {
-  const { result } = renderHook(() => useDietDraftCreation({ userId: 'author', canCreate: false }));
+  const { result } = await renderHook(() =>
+    useDietDraftCreation({ userId: 'author', canCreate: false })
+  );
   let destination: string | null = null;
   await act(async () => {
     destination = await result.current.createDraft();
@@ -24,7 +26,9 @@ it('sem permissão de criar dieta, não tenta gravar nem devolve destino', async
 });
 
 it('dois toques criam um único rascunho', async () => {
-  const { result } = renderHook(() => useDietDraftCreation({ userId: 'author', canCreate: true }));
+  const { result } = await renderHook(() =>
+    useDietDraftCreation({ userId: 'author', canCreate: true })
+  );
   await act(async () => {
     const first = result.current.createDraft();
     expect(await result.current.createDraft()).toBeNull();
@@ -43,7 +47,9 @@ it('uma gravação atrasada não repopula o wizard de outra sessão', async () =
       finish = resolve;
     })
   );
-  const { result } = renderHook(() => useDietDraftCreation({ userId: 'author', canCreate: true }));
+  const { result } = await renderHook(() =>
+    useDietDraftCreation({ userId: 'author', canCreate: true })
+  );
   await act(async () => {
     const pending = result.current.createDraft();
     useDietWizardStore.getState().reset();

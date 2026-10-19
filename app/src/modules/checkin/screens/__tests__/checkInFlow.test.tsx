@@ -74,35 +74,35 @@ beforeEach(() => {
 
 describe('CheckInCard (A6)', () => {
   // A5c: a semana fora do plano não fala de meta; o cartão anuncia o plano mais simples.
-  it('semana fora do plano: o cartão anuncia o plano mais simples', () => {
+  it('semana fora do plano: o cartão anuncia o plano mais simples', async () => {
     mockSummary = { state: 'pending', checkIn: CHECK_IN };
     mockProposal = {
       ...PROPOSAL,
       recalibration: { ...PROPOSAL.recalibration, verdict: 'low_adherence', deltaCalories: 0 },
       simplerPlan: { adherenceDays: 0, mealsPerDay: 6, nextMealsPerDay: 5 },
     };
-    render(<CheckInCard />);
+    await render(<CheckInCard />);
     expect(screen.getByText('Plano mais simples: 5 refeições')).toBeTruthy();
     expect(screen.getByText(/Você seguiu 0 de 7 dias/)).toBeTruthy();
   });
 
-  it('semana pedindo check-in: a próxima ação', () => {
+  it('semana pedindo check-in: a próxima ação', async () => {
     mockSummary = { state: 'due' };
-    render(<CheckInCard />);
-    fireEvent.press(screen.getByText(/Começar/));
+    await render(<CheckInCard />);
+    await fireEvent.press(screen.getByText(/Começar/));
     expect(mockPush).toHaveBeenCalledWith('/checkin');
   });
 
-  it('ajuste esperando decisão: a meta proposta', () => {
+  it('ajuste esperando decisão: a meta proposta', async () => {
     mockSummary = { state: 'pending', checkIn: CHECK_IN };
     mockProposal = PROPOSAL;
-    render(<CheckInCard />);
+    await render(<CheckInCard />);
     expect(screen.getByText(/Meta proposta: 2\.750/)).toBeTruthy();
   });
 
-  it('nada pendente: o cartão não aparece', () => {
+  it('nada pendente: o cartão não aparece', async () => {
     mockSummary = { state: 'none' };
-    render(<CheckInCard />);
+    await render(<CheckInCard />);
     expect(screen.queryByText(/check-in/i)).toBeNull();
   });
 });
@@ -116,9 +116,9 @@ describe('CheckInResultScreen (A5)', () => {
   it('aprovar grava o ajuste proposto e volta ao início', async () => {
     mockProposal = PROPOSAL;
     mockApprove.mockResolvedValue({});
-    render(<CheckInResultScreen />);
+    await render(<CheckInResultScreen />);
 
-    fireEvent.press(screen.getByText(/Aprovar/i));
+    await fireEvent.press(screen.getByText(/Aprovar/i));
 
     await waitFor(() =>
       expect(mockApprove).toHaveBeenCalledWith({
@@ -140,37 +140,37 @@ describe('CheckInResultScreen (A5)', () => {
       },
     };
     mockKeep.mockResolvedValue({});
-    render(<CheckInResultScreen />);
-    fireEvent.press(screen.getByText(/Seguir igual/i));
+    await render(<CheckInResultScreen />);
+    await fireEvent.press(screen.getByText(/Seguir igual/i));
     await waitFor(() => expect(mockKeep).toHaveBeenCalledWith('c1'));
     expect(mockApprove).not.toHaveBeenCalled();
   });
 
   // CASL + ADR-0030: sem a permissão de aprovar ajuste, o botão não existe.
-  it('sem permissão de aprovar, só há o "seguir igual"', () => {
+  it('sem permissão de aprovar, só há o "seguir igual"', async () => {
     mockProposal = PROPOSAL;
     mockCan.mockImplementation(
       (action, subject) => !(action === 'create' && subject === 'PlanAdjustment')
     );
-    render(<CheckInResultScreen />);
+    await render(<CheckInResultScreen />);
     expect(screen.queryByText(/^Aprovar$/i)).toBeNull();
     mockCan.mockImplementation(() => true);
   });
 
   // A5c: semana fora do plano não corta calorias; o plano fica mais simples, e
   // "Aprovar" só abre o cardápio novo, que ainda espera a aprovação dele.
-  it('aderência baixa propõe o plano mais simples, sem gravar ao aprovar', () => {
+  it('aderência baixa propõe o plano mais simples, sem gravar ao aprovar', async () => {
     mockProposal = {
       ...PROPOSAL,
       recalibration: { ...PROPOSAL.recalibration, verdict: 'low_adherence', deltaCalories: 0 },
       simplerPlan: { adherenceDays: 2, mealsPerDay: 5, nextMealsPerDay: 4 },
     };
-    render(<CheckInResultScreen />);
+    await render(<CheckInResultScreen />);
 
     expect(screen.getByText('Plano mais simples')).toBeTruthy();
     expect(screen.getByText(/Você seguiu 2 de 7 dias/)).toBeTruthy();
     expect(screen.getByText('mesma meta')).toBeTruthy();
-    fireEvent.press(screen.getByText(/^Aprovar$/i));
+    await fireEvent.press(screen.getByText(/^Aprovar$/i));
 
     expect(mockPush).toHaveBeenCalledWith({
       pathname: '/checkin/simpler',
@@ -186,14 +186,14 @@ describe('CheckInResultScreen (A5)', () => {
       simplerPlan: { adherenceDays: 1, mealsPerDay: 4, nextMealsPerDay: 3 },
     };
     mockKeep.mockResolvedValue({});
-    render(<CheckInResultScreen />);
-    fireEvent.press(screen.getByText(/Manter mais uma semana/i));
+    await render(<CheckInResultScreen />);
+    await fireEvent.press(screen.getByText(/Manter mais uma semana/i));
     await waitFor(() => expect(mockKeep).toHaveBeenCalledWith('c1'));
   });
 
-  it('o Aluno vê que o especialista revisa, e nada muda sozinho', () => {
+  it('o Aluno vê que o especialista revisa, e nada muda sozinho', async () => {
     mockProposal = { kind: 'specialist', specialistName: 'Carla', lastMeasurement: null };
-    render(<CheckInResultScreen />);
+    await render(<CheckInResultScreen />);
     expect(screen.getAllByText(/Carla/).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Aprovar/i)).toBeNull();
   });
@@ -217,25 +217,25 @@ describe('o relatório da semana (R0, R1)', () => {
     useWeeklyReportStore.setState({ seenWeek: {} });
   });
 
-  it('o cartão aparece na semana que fechou e abre o relatório', () => {
-    render(<WeeklyReportCard />);
-    fireEvent.press(screen.getByText(/Ver relatório/i));
+  it('o cartão aparece na semana que fechou e abre o relatório', async () => {
+    await render(<WeeklyReportCard />);
+    await fireEvent.press(screen.getByText(/Ver relatório/i));
     expect(mockPush).toHaveBeenCalledWith('/checkin/report');
   });
 
-  it('abrir o relatório marca a semana como vista: o cartão sai', () => {
-    render(<WeeklyReportScreen />);
+  it('abrir o relatório marca a semana como vista: o cartão sai', async () => {
+    await render(<WeeklyReportScreen />);
     expect(useWeeklyReportStore.getState().seenWeek.aluno).toBe('2026-10-05');
 
-    render(<WeeklyReportCard />);
+    await render(<WeeklyReportCard />);
     expect(screen.queryByText(/Ver relatório/i)).toBeNull();
   });
 });
 
 describe('DailyLogReminder (A5b)', () => {
-  it('o lembrete das 20h liga pelo botão', () => {
-    render(<DailyLogReminder />);
-    fireEvent.press(screen.getByRole('switch'));
+  it('o lembrete das 20h liga pelo botão', async () => {
+    await render(<DailyLogReminder />);
+    await fireEvent.press(screen.getByRole('switch'));
     expect(mockToggle).toHaveBeenCalled();
   });
 });

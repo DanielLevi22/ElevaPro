@@ -11,7 +11,7 @@ jest.mock('../../hooks/useJourney', () => ({
 }));
 
 describe('JourneyScreen (D1)', () => {
-  it('os números do caminho e a linha do tempo, da mais recente', () => {
+  it('os números do caminho e a linha do tempo, da mais recente', async () => {
     mockJourney = {
       since: '2026-09-15',
       weeks: 4,
@@ -29,7 +29,7 @@ describe('JourneyScreen (D1)', () => {
         { kind: 'start', date: '2026-09-15', title: 'Seu plano nasceu', sub: 'Meu primeiro plano' },
       ],
     };
-    render(<JourneyScreen studentId="aluno" />);
+    await render(<JourneyScreen studentId="aluno" />);
 
     expect(screen.getByText('Desde 15 set · 4 semanas')).toBeTruthy();
     expect(screen.getByText('−1,5')).toBeTruthy();
@@ -37,7 +37,7 @@ describe('JourneyScreen (D1)', () => {
     expect(screen.getByText('Seu plano mudou 2 vezes com você')).toBeTruthy();
   });
 
-  it('sem plano, explica quando a jornada começa', () => {
+  it('sem plano, explica quando a jornada começa', async () => {
     mockJourney = {
       since: null,
       weeks: 0,
@@ -47,13 +47,13 @@ describe('JourneyScreen (D1)', () => {
       changes: 0,
       events: [],
     };
-    render(<JourneyScreen studentId="aluno" />);
+    await render(<JourneyScreen studentId="aluno" />);
     expect(screen.getByText(/A jornada começa no dia em que você aprova/)).toBeTruthy();
   });
 });
 
 describe('WeightTrendScreen (A10)', () => {
-  it('troca a janela e mostra a última pesagem e os ajustes aprovados', () => {
+  it('troca a janela e mostra a última pesagem e os ajustes aprovados', async () => {
     mockTrend.mockReturnValue({
       data: {
         weights: [
@@ -73,22 +73,22 @@ describe('WeightTrendScreen (A10)', () => {
       },
       isLoading: false,
     });
-    render(<WeightTrendScreen studentId="aluno" />);
+    await render(<WeightTrendScreen studentId="aluno" />);
 
     expect(mockTrend).toHaveBeenLastCalledWith('aluno', '3m');
     expect(screen.getByText('80,2 kg')).toBeTruthy();
     expect(screen.getByText('Meta 3.231 → 3.081 kcal')).toBeTruthy();
 
-    fireEvent.press(screen.getByText('4 semanas'));
+    await fireEvent.press(screen.getByText('4 semanas'));
     expect(mockTrend).toHaveBeenLastCalledWith('aluno', '4w');
   });
 
-  it('sem pesagem na janela, pede a do check-in', () => {
+  it('sem pesagem na janela, pede a do check-in', async () => {
     mockTrend.mockReturnValue({
       data: { weights: [], expectedWeeklyKg: null, adjustments: [] },
       isLoading: false,
     });
-    render(<WeightTrendScreen studentId="aluno" />);
+    await render(<WeightTrendScreen studentId="aluno" />);
     expect(screen.getByText(/Nenhuma pesagem neste período/)).toBeTruthy();
   });
 });

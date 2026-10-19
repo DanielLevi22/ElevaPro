@@ -45,9 +45,9 @@ function useSessaoNaTelaBloqueada() {
 }
 
 /** Inicia e conclui a primeira série: o descanso de 90 s começa em T0 + 40 s. */
-function descansando() {
-  const hook = renderHook(useSessaoNaTelaBloqueada);
-  act(() => {
+async function descansando() {
+  const hook = await renderHook(useSessaoNaTelaBloqueada);
+  await act(() => {
     hook.result.current.despachar({ tipo: 'iniciar', agora: T0 });
     hook.result.current.despachar({ tipo: 'abrirSerie' });
     hook.result.current.despachar({ tipo: 'alternarSerie', agora: T0 });
@@ -65,35 +65,35 @@ describe('o descanso na tela bloqueada, ligado à sessão', () => {
   });
   afterEach(() => jest.useRealTimers());
 
-  it('mostra o descanso quando ele começa e tira quando a sessão sai dele', () => {
-    const hook = descansando();
+  it('mostra o descanso quando ele começa e tira quando a sessão sai dele', async () => {
+    const hook = await descansando();
     expect(mockNativo.show).toHaveBeenLastCalledWith(
       expect.objectContaining({ title: 'Descanso · Remada curvada', endsAt: T0 + 130_000 })
     );
     mockNativo.end.mockClear();
-    act(() => hook.result.current.despachar({ tipo: 'terminarDescanso' }));
+    await act(() => hook.result.current.despachar({ tipo: 'terminarDescanso' }));
     expect(mockNativo.end).toHaveBeenCalled();
   });
 
-  it('o +15 s da tela bloqueada soma na sessão, a partir do instante do toque', () => {
-    const hook = descansando();
+  it('o +15 s da tela bloqueada soma na sessão, a partir do instante do toque', async () => {
+    const hook = await descansando();
     mockNativo.pendentes.push({ type: 'add_time', at: T0 + 100_000 });
-    act(() => mockNativo.aviso?.());
+    await act(() => mockNativo.aviso?.());
     // No toque faltavam 30 s; com +15 s, o descanso acaba em T0 + 145 s.
     expect(restanteDoDescanso(hook.result.current.sessao, T0 + 100_000)).toBe(45);
     expect(hook.result.current.sessao.descanso?.terminaEm).toBe(T0 + 145_000);
   });
 
-  it('o Pular da tela bloqueada encerra o descanso na sessão', () => {
-    const hook = descansando();
+  it('o Pular da tela bloqueada encerra o descanso na sessão', async () => {
+    const hook = await descansando();
     mockNativo.pendentes.push({ type: 'skip', at: T0 + 60_000 });
-    act(() => mockNativo.aviso?.());
+    await act(() => mockNativo.aviso?.());
     expect(hook.result.current.sessao.momento).toBe('execucao');
   });
 
-  it('toque que sobrou de outra sessão não age fora do descanso', () => {
+  it('toque que sobrou de outra sessão não age fora do descanso', async () => {
     mockNativo.pendentes.push({ type: 'skip', at: T0 - 600_000 });
-    const hook = renderHook(useSessaoNaTelaBloqueada);
+    const hook = await renderHook(useSessaoNaTelaBloqueada);
     expect(hook.result.current.sessao.momento).toBe('preInicio');
     expect(mockNativo.pendentes).toEqual([]);
   });

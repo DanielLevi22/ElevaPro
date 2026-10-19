@@ -98,6 +98,17 @@ o que a mudança já alcança.
   Import ícone por ícone (`lucide-react-native/icons/house`): o Metro não faz
   tree-shaking, e o import do pacote leva os ~1.800 ícones para o bundle.
 - Rotas: `router.push(ROUTES.X)` — nunca string literal solta.
+- **Toda tela de `(tabs)` é declarada no `_layout`, sem `href`.** No expo-router 58,
+  `href: null` esconde a aba, e aba escondida não aceita foco: navegar até ela volta
+  ao Painel. Quem decide o que aparece na barra é a `TabBar`. Pela barra, troca de
+  aba é `navigateToTab`, que só abre aba visível; para tela fora da barra, `router`.
+- Gesto: no gesture-handler 3, o `onEnd` do `Pan` só roda depois de ativar. Toque é
+  um `Gesture.Tap` próprio. Segurar saída de tela é o `useConfirmLeave` (o
+  `beforeRemove` saiu).
+- **Navegação e gesto se conferem no emulador**, não só no Jest: no SDK 58 os testes
+  passavam e quatro fluxos estavam quebrados no aparelho.
+- Versão de React, RN, Jest e lib nativa sobe com o SDK do Expo, nunca pelo
+  Dependabot (ADR-0046). Build no Windows e lockfile: `app/README.md`.
 
 **Web:**
 - Server Component é o padrão. `'use client'` só com `useState`/`useEffect`/event handlers.

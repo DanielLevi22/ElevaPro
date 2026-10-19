@@ -23,27 +23,27 @@ beforeEach(() => {
   mockRedirect.mockClear();
 });
 
-it('criar dieta sem aluno permanece no fluxo de dieta, nunca abre Meus alunos', () => {
-  render(<LegacyCreateDietRoute />);
+it('criar dieta sem aluno permanece no fluxo de dieta, nunca abre Meus alunos', async () => {
+  await render(<LegacyCreateDietRoute />);
   expect(mockRedirect).toHaveBeenLastCalledWith({
     pathname: '/(tabs)/nutrition/wizard/start',
     params: {},
   });
 });
 
-it('criar pelo perfil preserva o aluno pré-selecionado', () => {
+it('criar pelo perfil preserva o aluno pré-selecionado', async () => {
   mockParams = { preselectedStudentId: 'student-a' };
-  render(<LegacyCreateDietRoute />);
+  await render(<LegacyCreateDietRoute />);
   expect(mockRedirect).toHaveBeenLastCalledWith({
     pathname: '/(tabs)/nutrition/wizard/start',
     params: { studentId: 'student-a' },
   });
 });
 
-it('o Praticante cria para si, mesmo quando o link tem outro aluno', () => {
+it('o Praticante cria para si, mesmo quando o link tem outro aluno', async () => {
   mockAccountType = 'member';
   mockParams = { preselectedStudentId: 'student-a' };
-  render(<LegacyCreateDietRoute />);
+  await render(<LegacyCreateDietRoute />);
   expect(mockRedirect).toHaveBeenLastCalledWith({
     pathname: '/(tabs)/nutrition/wizard/start',
     params: { studentId: 'owner' },

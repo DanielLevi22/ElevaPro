@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useRef } from 'react';
+import { type ComponentRef, useEffect, useRef } from 'react';
 import { Modal, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInUp, SlideOutDown } from 'react-native-reanimated';
 import { useCores } from '@/shared/design';
@@ -20,7 +20,7 @@ export function SearchModal({
   placeholder = 'Buscar...',
 }: SearchModalProps) {
   const cores = useCores();
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
 
   useEffect(() => {
     if (visible) {

@@ -48,7 +48,7 @@ beforeEach(() => {
 
 // Art. 6°, V: ler uma prescrição enviada não autoriza reescrevê-la ao vivo.
 it('plano enviado não aceita edição nem envio pelo editor de rascunho', async () => {
-  const { result } = renderHook(() => useDietPlanEditor('plan-1'));
+  const { result } = await renderHook(() => useDietPlanEditor('plan-1'));
   await waitFor(() => expect(result.current.loading).toBe(false));
   expect(result.current.canEdit).toBe(false);
   await act(async () => {
@@ -76,13 +76,13 @@ it('plano enviado não aceita edição nem envio pelo editor de rascunho', async
 
 it('o autor pode continuar a montagem de um rascunho', async () => {
   mockStatus = 'draft';
-  const { result } = renderHook(() => useDietPlanEditor('plan-1'));
+  const { result } = await renderHook(() => useDietPlanEditor('plan-1'));
   await waitFor(() => expect(result.current.canEdit).toBe(true));
 });
 
 it('não sinaliza alimentos salvos quando a gravação falha e permite tentar novamente', async () => {
   mockStatus = 'draft';
-  const { result } = renderHook(() => useDietPlanEditor('plan-1'));
+  const { result } = await renderHook(() => useDietPlanEditor('plan-1'));
   await waitFor(() => expect(result.current.canEdit).toBe(true));
   mockWriteFailure = true;
   await act(async () => {

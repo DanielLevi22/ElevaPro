@@ -33,8 +33,8 @@ const BRIEFING: Briefing = {
 };
 
 describe('SpecialistDashboard (F8)', () => {
-  it('quem sumiu ganha o botão de mensagem; a anamnese pronta não', () => {
-    render(
+  it('quem sumiu ganha o botão de mensagem; a anamnese pronta não', async () => {
+    await render(
       <SpecialistDashboard
         profile={{ full_name: 'Carla' }}
         students={[]}
@@ -49,7 +49,7 @@ describe('SpecialistDashboard (F8)', () => {
     const buttons = screen.getAllByLabelText('Mensagem');
     expect(buttons).toHaveLength(1);
 
-    fireEvent.press(buttons[0]);
+    await fireEvent.press(buttons[0]);
     expect(screen.getByText('Escrevendo para Ana')).toBeTruthy();
   });
 });

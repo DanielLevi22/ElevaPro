@@ -35,11 +35,11 @@ describe('RestModeScreen (A8)', () => {
   // pausa não precisa. O motivo só muda o texto da tela; ao servidor vai a data.
   it('pausa até a data escolhida, e o motivo não sai do aparelho', async () => {
     mockStart.mockResolvedValue({});
-    render(<RestModeScreen />);
+    await render(<RestModeScreen />);
 
-    fireEvent.press(screen.getByText('Estou doente'));
-    fireEvent.press(screen.getByText('14 dias'));
-    fireEvent.press(screen.getByText(/Pausar plano/i));
+    await fireEvent.press(screen.getByText('Estou doente'));
+    await fireEvent.press(screen.getByText('14 dias'));
+    await fireEvent.press(screen.getByText(/Pausar plano/i));
 
     await waitFor(() => expect(mockStart).toHaveBeenCalledTimes(1));
     const sent = JSON.stringify(mockStart.mock.calls[0]);
@@ -52,16 +52,16 @@ describe('RestModeScreen (A8)', () => {
 
   it('"Não sei" pausa sem data de volta', async () => {
     mockStart.mockResolvedValue({});
-    render(<RestModeScreen />);
-    fireEvent.press(screen.getByText('Viagem ou rotina corrida'));
-    fireEvent.press(screen.getByText('Não sei'));
-    fireEvent.press(screen.getByText(/Pausar plano/i));
+    await render(<RestModeScreen />);
+    await fireEvent.press(screen.getByText('Viagem ou rotina corrida'));
+    await fireEvent.press(screen.getByText('Não sei'));
+    await fireEvent.press(screen.getByText(/Pausar plano/i));
     await waitFor(() => expect(mockStart).toHaveBeenCalledWith(null));
   });
 
-  it('sem o motivo, o botão espera', () => {
-    render(<RestModeScreen />);
-    fireEvent.press(screen.getByText(/Pausar plano/i));
+  it('sem o motivo, o botão espera', async () => {
+    await render(<RestModeScreen />);
+    await fireEvent.press(screen.getByText(/Pausar plano/i));
     expect(mockStart).not.toHaveBeenCalled();
   });
 });
@@ -72,22 +72,24 @@ describe('RestCard', () => {
 
   it('em pausa: diz até quando e volta pelo botão', async () => {
     mockEnd.mockResolvedValue({});
-    render(<RestCard state={{ kind: 'resting', rest }} />);
+    await render(<RestCard state={{ kind: 'resting', rest }} />);
     expect(screen.getByText('Até 21 out')).toBeTruthy();
-    fireEvent.press(screen.getByText('Voltar agora'));
+    await fireEvent.press(screen.getByText('Voltar agora'));
     await waitFor(() => expect(mockEnd).toHaveBeenCalled());
   });
 
-  it('sem permissão de encerrar a pausa, o botão de voltar não aparece', () => {
+  it('sem permissão de encerrar a pausa, o botão de voltar não aparece', async () => {
     mockCan.mockImplementation(() => false);
-    render(<RestCard state={{ kind: 'resting', rest }} />);
+    await render(<RestCard state={{ kind: 'resting', rest }} />);
     expect(screen.queryByText('Voltar agora')).toBeNull();
     mockCan.mockImplementation(() => true);
   });
 
-  it('na semana de retorno: abre as boas-vindas', () => {
-    render(<RestCard state={{ kind: 'return', rest: { ...rest, ended_on: '2026-10-13' } }} />);
-    fireEvent.press(screen.getByText('Ver a semana'));
+  it('na semana de retorno: abre as boas-vindas', async () => {
+    await render(
+      <RestCard state={{ kind: 'return', rest: { ...rest, ended_on: '2026-10-13' } }} />
+    );
+    await fireEvent.press(screen.getByText('Ver a semana'));
     expect(mockPush).toHaveBeenCalledWith('/block/return');
   });
 });
@@ -98,13 +100,13 @@ describe('ChangePlanButton (C1)', () => {
     useReviewStore.getState().reset();
   });
 
-  it('sem bloco próprio, não aparece: o Aluno muda o plano com o especialista', () => {
+  it('sem bloco próprio, não aparece: o Aluno muda o plano com o especialista', async () => {
     mockBlock = null;
-    render(<ChangePlanButton />);
+    await render(<ChangePlanButton />);
     expect(screen.queryByLabelText('Mudar meu plano')).toBeNull();
   });
 
-  it('o motivo escolhido abre a reavaliação antecipada, já na pergunta certa', () => {
+  it('o motivo escolhido abre a reavaliação antecipada, já na pergunta certa', async () => {
     mockBlock = {
       id: 'b',
       name: 'Bloco 2 · Força',
@@ -112,17 +114,17 @@ describe('ChangePlanButton (C1)', () => {
       end_date: '2026-10-28',
       planIds: [],
     };
-    render(<ChangePlanButton />);
+    await render(<ChangePlanButton />);
 
-    fireEvent.press(screen.getByLabelText('Mudar meu plano'));
+    await fireEvent.press(screen.getByLabelText('Mudar meu plano'));
     expect(screen.getByText('Você está na semana 2 de 4 do Bloco 2.')).toBeTruthy();
-    fireEvent.press(screen.getByText('Vou treinar em outro lugar'));
+    await fireEvent.press(screen.getByText('Vou treinar em outro lugar'));
 
     expect(useReviewStore.getState()).toMatchObject({ early: true, focus: 'gym_type' });
     expect(mockPush).toHaveBeenCalledWith('/block/changes');
   });
 
-  it('"Preciso de uma pausa" leva ao Modo Descanso', () => {
+  it('"Preciso de uma pausa" leva ao Modo Descanso', async () => {
     mockBlock = {
       id: 'b',
       name: 'Bloco 2',
@@ -130,9 +132,9 @@ describe('ChangePlanButton (C1)', () => {
       end_date: '2026-10-28',
       planIds: [],
     };
-    render(<ChangePlanButton />);
-    fireEvent.press(screen.getByLabelText('Mudar meu plano'));
-    fireEvent.press(screen.getByText('Preciso de uma pausa'));
+    await render(<ChangePlanButton />);
+    await fireEvent.press(screen.getByLabelText('Mudar meu plano'));
+    await fireEvent.press(screen.getByText('Preciso de uma pausa'));
     expect(mockPush).toHaveBeenCalledWith('/block/rest');
   });
 });

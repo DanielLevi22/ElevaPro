@@ -53,7 +53,7 @@ describe('Análise de Técnica — consentimento antes da câmera', () => {
   it('não abre a câmera de quem não autorizou', async () => {
     mockTemConsentimento.mockResolvedValue(false);
 
-    render(<AnaliseDeTecnicaScreen />);
+    await render(<AnaliseDeTecnicaScreen />);
 
     await waitFor(() => expect(mockTemConsentimento).toHaveBeenCalled());
 
@@ -64,10 +64,10 @@ describe('Análise de Técnica — consentimento antes da câmera', () => {
     }
   });
 
-  it('não abre a câmera enquanto a autorização ainda está sendo consultada', () => {
+  it('não abre a câmera enquanto a autorização ainda está sendo consultada', async () => {
     mockTemConsentimento.mockReturnValue(new Promise(() => {}));
 
-    render(<AnaliseDeTecnicaScreen />);
+    await render(<AnaliseDeTecnicaScreen />);
 
     if (mockCameraAberta.mock.calls.length > 0) {
       throw new Error(
@@ -81,7 +81,7 @@ describe('Análise de Técnica — consentimento antes da câmera', () => {
   it('não abre a câmera quando a consulta de autorização falha', async () => {
     mockTemConsentimento.mockRejectedValue(new Error('rede fora'));
 
-    render(<AnaliseDeTecnicaScreen />);
+    await render(<AnaliseDeTecnicaScreen />);
 
     await waitFor(() => expect(mockTemConsentimento).toHaveBeenCalled());
 
@@ -97,7 +97,7 @@ describe('Análise de Técnica — consentimento antes da câmera', () => {
   it('abre a câmera de quem autorizou', async () => {
     mockTemConsentimento.mockResolvedValue(true);
 
-    render(<AnaliseDeTecnicaScreen />);
+    await render(<AnaliseDeTecnicaScreen />);
 
     await waitFor(() => expect(mockCameraAberta).toHaveBeenCalled());
   });
@@ -105,7 +105,7 @@ describe('Análise de Técnica — consentimento antes da câmera', () => {
   it('consulta a autorização da finalidade da técnica, não a do body scan', async () => {
     mockTemConsentimento.mockResolvedValue(true);
 
-    render(<AnaliseDeTecnicaScreen />);
+    await render(<AnaliseDeTecnicaScreen />);
 
     await waitFor(() => expect(mockTemConsentimento).toHaveBeenCalled());
 

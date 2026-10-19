@@ -1,5 +1,6 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { coresDoTema } from '@/shared/design';
+import { allHostsOfType } from '@/testing/hostByType';
 import { ConfirmModal } from '../ConfirmModal';
 
 let mockEsquema: 'light' | 'dark' = 'dark';
@@ -40,38 +41,38 @@ describe('ConfirmModal', () => {
       />
     );
 
-  it('fecha sozinho depois de confirmar, sem o call site precisar lembrar', () => {
+  it('fecha sozinho depois de confirmar, sem o call site precisar lembrar', async () => {
     const onClose = jest.fn();
     const onConfirm = jest.fn();
-    const { getByText } = abrir({ onClose, onConfirm });
+    const { getByText } = await abrir({ onClose, onConfirm });
 
-    fireEvent.press(getByText('Confirmar'));
+    await fireEvent.press(getByText('Confirmar'));
     expect(onConfirm).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('o secundário só fecha quando não recebe ação própria', () => {
+  it('o secundário só fecha quando não recebe ação própria', async () => {
     const onClose = jest.fn();
-    const { getByText } = abrir({ onClose });
+    const { getByText } = await abrir({ onClose });
 
-    fireEvent.press(getByText('Cancelar'));
+    await fireEvent.press(getByText('Cancelar'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('chama a ação do secundário quando ela existe, e fecha depois', () => {
+  it('chama a ação do secundário quando ela existe, e fecha depois', async () => {
     // O secundário nem sempre é "Cancelar": ao fim do treino ele é "Sair"
     // contra "Compartilhar", e aí a intenção não se infere do fechamento.
     const onCancel = jest.fn();
     const onClose = jest.fn();
-    const { getByText } = abrir({ onCancel, onClose, cancelText: 'Sair' });
+    const { getByText } = await abrir({ onCancel, onClose, cancelText: 'Sair' });
 
-    fireEvent.press(getByText('Sair'));
+    await fireEvent.press(getByText('Sair'));
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('usa a ação destrutiva só quando o tipo é de perigo', () => {
-    const { getByLabelText } = abrir({ type: 'danger', confirmText: 'Apagar' });
+  it('usa a ação destrutiva só quando o tipo é de perigo', async () => {
+    const { getByLabelText } = await abrir({ type: 'danger', confirmText: 'Apagar' });
 
     expect(getByLabelText('Apagar')).toBeTruthy();
   });
@@ -81,9 +82,9 @@ describe('ConfirmModal', () => {
     ['warning', 'warning'],
     ['success', 'success'],
     ['info', 'secondary'],
-  ] as const)('pinta o ícone de %s com a cor de %s', (type, token) => {
-    const { UNSAFE_getAllByType } = abrir({ type });
+  ] as const)('pinta o ícone de %s com a cor de %s', async (type, token) => {
+    await abrir({ type });
 
-    expect(UNSAFE_getAllByType('Ionicons' as never)[0].props.color).toBe(escuro[token]);
+    expect(allHostsOfType('Ionicons')[0].props.color).toBe(escuro[token]);
   });
 });

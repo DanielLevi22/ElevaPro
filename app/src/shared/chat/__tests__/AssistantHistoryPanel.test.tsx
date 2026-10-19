@@ -30,7 +30,7 @@ beforeEach(() => {
 
 it('retoma a conversa escolhida com seu módulo, não a mais recente do aluno', async () => {
   const onSelect = jest.fn();
-  render(
+  await render(
     <AssistantHistoryPanel
       token="token"
       studentId="student"
@@ -40,18 +40,18 @@ it('retoma a conversa escolhida com seu módulo, não a mais recente do aluno', 
       onClose={jest.fn()}
     />
   );
-  fireEvent.press(await screen.findByText('Treino A'));
+  await fireEvent.press(await screen.findByText('Treino A'));
   expect(onSelect).toHaveBeenCalledWith(
     expect.objectContaining({ id: 'workout', module: 'workout' })
   );
-  fireEvent.press(screen.getByText('Dieta A'));
+  await fireEvent.press(screen.getByText('Dieta A'));
   expect(onSelect).toHaveBeenCalledWith(
     expect.objectContaining({ id: 'diet', module: 'nutrition' })
   );
 });
 
 it('renomeia a conversa no histórico e mantém a outra', async () => {
-  render(
+  await render(
     <AssistantHistoryPanel
       token="token"
       studentId="student"
@@ -62,16 +62,16 @@ it('renomeia a conversa no histórico e mantém a outra', async () => {
     />
   );
   await screen.findByText('Dieta A');
-  fireEvent.press(screen.getAllByText('Renomear')[1]);
-  fireEvent.changeText(screen.getByLabelText('Título da conversa'), 'Dieta revisada');
+  await fireEvent.press(screen.getAllByText('Renomear')[1]);
+  await fireEvent.changeText(screen.getByLabelText('Título da conversa'), 'Dieta revisada');
   (global.fetch as jest.Mock).mockResolvedValueOnce(response({ success: true }));
-  fireEvent.press(screen.getByText('Salvar título'));
+  await fireEvent.press(screen.getByText('Salvar título'));
   await waitFor(() => expect(screen.getByText('Dieta revisada')).toBeTruthy());
   expect(screen.getByText('Treino A')).toBeTruthy();
 });
 
 it('não oferece criação nem retomada do módulo sem permissão', async () => {
-  render(
+  await render(
     <AssistantHistoryPanel
       token="token"
       studentId="student"
@@ -96,7 +96,7 @@ it('abre o modal de consentimento sem erro técnico nem aceite pelo especialista
     status: 403,
   });
   const onSelect = jest.fn();
-  render(
+  await render(
     <AssistantHistoryPanel
       token="token"
       studentId="student"
@@ -112,14 +112,14 @@ it('abre o modal de consentimento sem erro técnico nem aceite pelo especialista
     throw new Error('CONSENTIMENTO DE TERCEIRO: especialista recebeu ação de aceite');
   }
   expect(logged).not.toHaveBeenCalled();
-  fireEvent.press(screen.getByText('Agora não'));
+  await fireEvent.press(screen.getByText('Agora não'));
   expect(screen.queryByText('Nenhuma conversa ainda.')).toBeNull();
-  fireEvent.press(screen.getByText('Nova conversa de treino'));
+  await fireEvent.press(screen.getByText('Nova conversa de treino'));
   expect(global.fetch).toHaveBeenCalledTimes(1);
   expect(onSelect).not.toHaveBeenCalled();
-  fireEvent.press(screen.getByText('Ver autorização'));
+  await fireEvent.press(screen.getByText('Ver autorização'));
   (global.fetch as jest.Mock).mockResolvedValue(response({ sessions }));
-  fireEvent.press(screen.getByText('Verificar autorização'));
+  await fireEvent.press(screen.getByText('Verificar autorização'));
   expect(await screen.findByText('Dieta A')).toBeTruthy();
   expect(screen.queryByText('Consentimento do aluno')).toBeNull();
   expect(

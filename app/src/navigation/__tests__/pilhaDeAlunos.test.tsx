@@ -49,13 +49,23 @@ function Painel() {
   );
 }
 
-function abrirPainel() {
-  renderRouter(
+async function abrirPainel() {
+  await renderRouter(
     {
       // A barra é a do app (`TabBar`), fora do que está sob teste.
-      '(tabs)/_layout': () => <Tabs tabBar={() => null} />,
+      // No expo-router 58, aba não declarada no layout não aparece.
+      '(tabs)/_layout': () => (
+        <Tabs tabBar={() => null}>
+          <Tabs.Screen name="index" />
+          <Tabs.Screen name="students" />
+        </Tabs>
+      ),
       '(tabs)/index': Painel,
-      '(tabs)/students/_layout': () => <Stack />,
+      // A mesma âncora do layout real: a lista fica por baixo do aluno.
+      '(tabs)/students/_layout': {
+        default: () => <Stack />,
+        unstable_settings: { anchor: 'index' },
+      },
       '(tabs)/students/index': () => <Text>lista de alunos</Text>,
       '(tabs)/students/[id]/index': () => <Text>página do aluno</Text>,
       '(tabs)/students/create': () => <Text>cadastro de aluno</Text>,
@@ -68,13 +78,13 @@ describe('do Painel para a aba Alunos', () => {
   it.each([
     ['o alerta do dia', 'Ana Souza', 'página do aluno'],
     ['o atalho Novo aluno', 'Novo aluno', 'cadastro de aluno'],
-  ])('por %s, voltar chega à lista e não à tela inicial', (_entrada, toque, destino) => {
-    abrirPainel();
+  ])('por %s, voltar chega à lista e não à tela inicial', async (_entrada, toque, destino) => {
+    await abrirPainel();
 
-    fireEvent.press(screen.getByText(toque));
+    await fireEvent.press(await screen.findByText(toque));
     expect(screen.getByText(destino)).toBeTruthy();
 
-    act(() => router.back());
+    await act(() => router.back());
     expect(screen.getByText('lista de alunos')).toBeTruthy();
   });
 });

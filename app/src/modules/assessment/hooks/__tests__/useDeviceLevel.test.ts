@@ -50,7 +50,7 @@ describe('useDeviceLevel', () => {
   });
 
   it('considera nivelado o aparelho em pé', async () => {
-    const { result } = renderHook(() => useDeviceLevel());
+    const { result } = await renderHook(() => useDeviceLevel());
     await waitFor(() => expect(Accelerometer.addListener).toHaveBeenCalled());
 
     emitir(0, 0);
@@ -61,7 +61,7 @@ describe('useDeviceLevel', () => {
   });
 
   it('recusa inclinação além da tolerância', async () => {
-    const { result } = renderHook(() => useDeviceLevel());
+    const { result } = await renderHook(() => useDeviceLevel());
     await waitFor(() => expect(Accelerometer.addListener).toHaveBeenCalled());
 
     // 20° para trás encurta o corpo na imagem por perspectiva, e a altura em
@@ -75,7 +75,7 @@ describe('useDeviceLevel', () => {
   });
 
   it('recusa torção lateral além da tolerância', async () => {
-    const { result } = renderHook(() => useDeviceLevel());
+    const { result } = await renderHook(() => useDeviceLevel());
     await waitFor(() => expect(Accelerometer.addListener).toHaveBeenCalled());
 
     emitir(15, 0);
@@ -87,7 +87,7 @@ describe('useDeviceLevel', () => {
   it('sem sensor, libera o disparo em vez de prender o aluno', async () => {
     (Accelerometer.isAvailableAsync as jest.Mock).mockResolvedValue(false);
 
-    const { result } = renderHook(() => useDeviceLevel());
+    const { result } = await renderHook(() => useDeviceLevel());
 
     // `nivelado` verdadeiro com `disponivel` falso é a combinação que diz
     // "não dá para verificar" — a tela usa isso para não prometer conferência.
@@ -103,7 +103,7 @@ describe('useDeviceLevel', () => {
   // inerte desde que nasceu. A gravidade vem do acelerômetro, que todo
   // aparelho tem.
   it('lê o nível pelo acelerômetro, sem depender de giroscópio', async () => {
-    const { result } = renderHook(() => useDeviceLevel());
+    const { result } = await renderHook(() => useDeviceLevel());
     await waitFor(() => expect(Accelerometer.addListener).toHaveBeenCalled());
 
     const listener = (Accelerometer.addListener as jest.Mock).mock.calls[0][0];
@@ -117,7 +117,7 @@ describe('useDeviceLevel', () => {
   // de âncora: qualquer conta que devolva 179° para este vetor está errada,
   // por mais que o resto dos casos passe.
   it('lê o aparelho apoiado como quase reto, e não de cabeça para baixo', async () => {
-    const { result } = renderHook(() => useDeviceLevel());
+    const { result } = await renderHook(() => useDeviceLevel());
     await waitFor(() => expect(Accelerometer.addListener).toHaveBeenCalled());
 
     const listener = (Accelerometer.addListener as jest.Mock).mock.calls[0][0];

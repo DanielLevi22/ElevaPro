@@ -13,7 +13,7 @@ const response = (body: unknown, status = 200) => ({
 });
 
 it.each([401, 403])('limpa títulos e bloqueia ações quando perde acesso (%s)', async (status) => {
-  const { result } = renderHook(() => useAssistantHistory('token', 'student'));
+  const { result } = await renderHook(() => useAssistantHistory('token', 'student'));
   await waitFor(() => expect(result.current.loading).toBe(false));
   (global.fetch as jest.Mock).mockResolvedValueOnce(response({}, status));
   await act(async () => {
@@ -29,7 +29,7 @@ it.each([401, 403])('limpa títulos e bloqueia ações quando perde acesso (%s)'
 });
 // Art. 11: revogação impede uso das conversas, inclusive nas ações do histórico.
 it('retira títulos ao exigir consentimento e só libera após confirmação do servidor', async () => {
-  const { result } = renderHook(() => useAssistantHistory('token', 'student'));
+  const { result } = await renderHook(() => useAssistantHistory('token', 'student'));
   await waitFor(() => expect(result.current.loading).toBe(false));
   (global.fetch as jest.Mock).mockResolvedValueOnce(response({ code: 'consent_required' }, 403));
   await act(async () => {
@@ -56,7 +56,7 @@ beforeEach(() => {
 });
 
 it('lista treino e nutrição do aluno e preserva o título quando renomear falha', async () => {
-  const { result } = renderHook(() => useAssistantHistory('token', 'student'));
+  const { result } = await renderHook(() => useAssistantHistory('token', 'student'));
   await waitFor(() => expect(result.current.loading).toBe(false));
   expect(result.current.sessions.map((item) => item.module)).toEqual(['workout', 'nutrition']);
   (global.fetch as jest.Mock).mockResolvedValueOnce(response({}, 503));
@@ -81,11 +81,11 @@ it('descarta a resposta atrasada ao trocar de aluno', async () => {
     })
   );
   (global.fetch as jest.Mock).mockResolvedValueOnce(response({ sessions: [] }));
-  const { result, rerender } = renderHook(
+  const { result, rerender } = await renderHook(
     ({ studentId }: { studentId: string }) => useAssistantHistory('token', studentId),
     { initialProps: { studentId: 'student-a' } }
   );
-  rerender({ studentId: 'student-b' });
+  await rerender({ studentId: 'student-b' });
   await waitFor(() => expect(result.current.loading).toBe(false));
   await act(async () => {
     finish(response({ sessions }));
@@ -98,7 +98,7 @@ it.each([
   'workout',
   'nutrition',
 ] as const)('cria conversa de %s só uma vez em toques repetidos', async (module) => {
-  const { result } = renderHook(() => useAssistantHistory('token', 'student'));
+  const { result } = await renderHook(() => useAssistantHistory('token', 'student'));
   await waitFor(() => expect(result.current.loading).toBe(false));
   (global.fetch as jest.Mock).mockResolvedValueOnce(response({ sessionId: 'new-chat' }));
   await act(async () => {
@@ -111,7 +111,7 @@ it.each([
 });
 
 it('arquiva apenas após confirmação do servidor e mantém a outra conversa', async () => {
-  const { result } = renderHook(() => useAssistantHistory('token', 'student'));
+  const { result } = await renderHook(() => useAssistantHistory('token', 'student'));
   await waitFor(() => expect(result.current.loading).toBe(false));
   (global.fetch as jest.Mock).mockResolvedValueOnce(response({}, 503));
   await act(async () => {

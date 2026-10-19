@@ -19,8 +19,8 @@ jest.mock('../../services/healthWeight', () => ({
   weekWeightIfConsented: (...args: unknown[]) => mockWeekWeight(...args),
 }));
 
-const answer = () => fireEvent.press(screen.getByText('Registrei tudo'));
-const send = () => fireEvent.press(screen.getByText(/Ver meu ajuste/i));
+const answer = async () => fireEvent.press(screen.getByText('Registrei tudo'));
+const send = async () => fireEvent.press(screen.getByText(/Ver meu ajuste/i));
 
 describe('WeeklyCheckInScreen (A4, F9)', () => {
   beforeEach(() => {
@@ -31,10 +31,10 @@ describe('WeeklyCheckInScreen (A4, F9)', () => {
   });
 
   it('o peso digitado vai com a origem "manual"', async () => {
-    render(<WeeklyCheckInScreen />);
-    answer();
-    fireEvent.changeText(screen.getByDisplayValue(''), '77,6');
-    send();
+    await render(<WeeklyCheckInScreen />);
+    await answer();
+    await fireEvent.changeText(screen.getByDisplayValue(''), '77,6');
+    await send();
 
     await waitFor(() =>
       expect(mockSubmit).toHaveBeenCalledWith({
@@ -47,13 +47,13 @@ describe('WeeklyCheckInScreen (A4, F9)', () => {
 
   it('a média do app de saúde entra no campo e vai com a origem dela', async () => {
     mockWeekWeight.mockResolvedValue(77.7);
-    render(<WeeklyCheckInScreen />);
-    answer();
+    await render(<WeeklyCheckInScreen />);
+    await answer();
 
-    fireEvent.press(screen.getByText('Usar o peso do Health Connect'));
+    await fireEvent.press(screen.getByText('Usar o peso do Health Connect'));
     await waitFor(() => expect(screen.getByDisplayValue('77,7')).toBeTruthy());
     expect(screen.getByText('Média da semana no app Saúde')).toBeTruthy();
-    send();
+    await send();
 
     await waitFor(() =>
       expect(mockSubmit).toHaveBeenCalledWith(
@@ -64,13 +64,13 @@ describe('WeeklyCheckInScreen (A4, F9)', () => {
 
   it('mexer no número tira a origem do app: o peso passa a ser da pessoa', async () => {
     mockWeekWeight.mockResolvedValue(77.7);
-    render(<WeeklyCheckInScreen />);
-    answer();
-    fireEvent.press(screen.getByText('Usar o peso do Health Connect'));
+    await render(<WeeklyCheckInScreen />);
+    await answer();
+    await fireEvent.press(screen.getByText('Usar o peso do Health Connect'));
     await waitFor(() => expect(screen.getByDisplayValue('77,7')).toBeTruthy());
 
-    fireEvent.changeText(screen.getByDisplayValue('77,7'), '78');
-    send();
+    await fireEvent.changeText(screen.getByDisplayValue('77,7'), '78');
+    await send();
 
     await waitFor(() =>
       expect(mockSubmit).toHaveBeenCalledWith(
@@ -79,16 +79,16 @@ describe('WeeklyCheckInScreen (A4, F9)', () => {
     );
   });
 
-  it('sem app de saúde no aparelho, o botão não aparece', () => {
+  it('sem app de saúde no aparelho, o botão não aparece', async () => {
     mockPlatform = null;
-    render(<WeeklyCheckInScreen />);
+    await render(<WeeklyCheckInScreen />);
     expect(screen.queryByText(/Usar o peso do/)).toBeNull();
   });
 
   // ADR-0030: com especialista, quem mede é ele.
-  it('o Aluno não informa peso', () => {
+  it('o Aluno não informa peso', async () => {
     mockHasSpecialist = true;
-    render(<WeeklyCheckInScreen />);
+    await render(<WeeklyCheckInScreen />);
     expect(screen.queryByText('Seu peso hoje')).toBeNull();
     expect(screen.queryByText(/Usar o peso do/)).toBeNull();
   });

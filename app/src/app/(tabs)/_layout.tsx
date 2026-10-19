@@ -6,15 +6,12 @@ import { TabBar } from '@/components/navigation/TabBar';
 import { comOpacidade, useBottomOffset, useCores, useEscala } from '@/shared/design';
 
 export default function TabLayout() {
-  const { accountType, abilities, isMasquerading } = useAuthStore();
+  const { accountType, isMasquerading } = useAuthStore();
   const router = useRouter();
   const exitStudentView = () => {
     useAuthStore.getState().exitStudentView();
     router.push('/(tabs)/students');
   };
-
-  // LOG DEBUG
-  // console.log('Tabs Layout Render:', { accountType, isMasquerading, hasAbilities: !!abilities });
 
   // If accountType is null (loading), default to student to avoid flashing restricted tabs.
   // explicitly include isMasquerading to ensure tabs show immediately
@@ -30,82 +27,21 @@ export default function TabLayout() {
           // We handle styling in the custom component
         }}
       >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: 'Home',
-          }}
-        />
-
-        <Tabs.Screen
-          name="workouts"
-          options={{
-            title: 'Treino',
-            href: isStudent || abilities?.can('manage', 'Workout') ? '/workouts' : null,
-          }}
-        />
-
-        {/* Central Button usually, or just 3rd item */}
-        <Tabs.Screen
-          name="nutrition"
-          options={{
-            title: 'Nutrição',
-            href:
-              isStudent || (accountType === 'specialist' && abilities?.can('manage', 'Diet'))
-                ? '/nutrition'
-                : null,
-          }}
-        />
-
-        <Tabs.Screen
-          name="progress"
-          options={{
-            title: 'Progresso',
-            href: isStudent ? '/progress' : null,
-          }}
-        />
-
-        <Tabs.Screen
-          name="profile"
-          options={{
-            title: 'Perfil',
-            href: '/profile', // Always visible
-          }}
-        />
-
-        <Tabs.Screen name="menu" options={{ title: 'Menu', href: null }} />
-        <Tabs.Screen name="security" options={{ title: 'Aparelhos de acesso', href: null }} />
-
-        <Tabs.Screen
-          name="ranking"
-          options={{
-            title: 'Ranking',
-            href: '/ranking',
-          }}
-        />
-
-        <Tabs.Screen
-          name="cardio/index"
-          options={{
-            title: 'Cardio',
-            href: null, // Hide from main tabs, maybe access from Home
-          }}
-        />
-
+        {/* Toda tela declarada e sem `href`: no expo-router 58, `href: null` vira aba
+            escondida, e aba escondida não pode ter foco — navegar até ela volta para a
+            inicial. Quem decide o que aparece na barra, por papel, é a `TabBar`. */}
+        <Tabs.Screen name="index" options={{ title: 'Home' }} />
+        <Tabs.Screen name="workouts" options={{ title: 'Treino' }} />
+        <Tabs.Screen name="nutrition" options={{ title: 'Nutrição' }} />
+        <Tabs.Screen name="progress" options={{ title: 'Progresso' }} />
+        <Tabs.Screen name="profile" options={{ title: 'Perfil' }} />
+        <Tabs.Screen name="menu" options={{ title: 'Menu' }} />
+        <Tabs.Screen name="security" options={{ title: 'Aparelhos de acesso' }} />
+        <Tabs.Screen name="ranking" options={{ title: 'Ranking' }} />
+        <Tabs.Screen name="cardio/index" options={{ title: 'Cardio' }} />
         {/* A saúde abre pela tela inicial e pelo perfil, não por aba própria. */}
-        <Tabs.Screen name="saude" options={{ title: 'Saúde', href: null }} />
-
-        {/* Personal Trainer only */}
-        <Tabs.Screen
-          name="students"
-          options={{
-            title: 'Alunos',
-            href:
-              accountType === 'specialist' && abilities?.can('manage', 'Workout')
-                ? '/students'
-                : null,
-          }}
-        />
+        <Tabs.Screen name="saude" options={{ title: 'Saúde' }} />
+        <Tabs.Screen name="students" options={{ title: 'Alunos' }} />
       </Tabs>
 
       {/* Visão do aluno: o botão flutuante de volta ao painel do especialista. */}

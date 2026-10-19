@@ -35,16 +35,16 @@ it('lista rascunhos e combina status com busca por nome de aluno ou plano', asyn
       error: null,
     })
   );
-  const { result } = setup();
+  const { result } = await setup();
   await waitFor(() => expect(result.current.plans).toHaveLength(3));
-  act(() => {
+  await act(() => {
     result.current.setStatus('draft');
     result.current.setSearch(' jose ');
   });
   expect(result.current.visible.map((plan) => plan.id)).toEqual(['draft']);
-  act(() => result.current.setSearch('anterior'));
+  await act(() => result.current.setSearch('anterior'));
   expect(result.current.visible).toEqual([]);
-  act(() => result.current.setStatus('finished'));
+  await act(() => result.current.setStatus('finished'));
   expect(result.current.visible.map((plan) => plan.id)).toEqual(['finished']);
 });
 
@@ -52,7 +52,7 @@ it('mantém os planos numa falha de atualização e permite tentar novamente', a
   mockSupabaseBuilder.then.mockImplementation((resolve) =>
     resolve({ data: [{ id: 'draft', name: 'Nova dieta', status: 'draft' }], error: null })
   );
-  const { result } = setup();
+  const { result } = await setup();
   await waitFor(() => expect(result.current.plans).toHaveLength(1));
   mockSupabaseBuilder.then.mockImplementation((resolve) =>
     resolve({ data: null, error: { message: 'Offline' } })
@@ -71,9 +71,9 @@ it('mantém os planos numa falha de atualização e permite tentar novamente', a
 });
 
 // Art. 6°, VII: ausência de permissão não pode disparar leitura de prescrição.
-it('não consulta planos quando a conta não tem permissão de leitura', () => {
+it('não consulta planos quando a conta não tem permissão de leitura', async () => {
   mockSupabaseBuilder.select.mockClear();
-  const { result } = setup(false);
+  const { result } = await setup(false);
   if (mockSupabaseBuilder.select.mock.calls.length || result.current.plans) {
     throw new Error('PRESCRIÇÃO SEM PERMISSÃO: a lista acessou dietas sem autorização');
   }

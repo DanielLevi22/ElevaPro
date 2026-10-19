@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { type ComponentRef, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -59,7 +59,7 @@ export function AssistenteDeNutricaoScreen({
   const router = useRouter();
   const registro = useRegistroNoDiario(alunoId, { somenteLeitura });
   const conversa = useConversaDoAssistente(registro.plano, { primeiroNome, obterToken });
-  const rolagem = useRef<ScrollView>(null);
+  const rolagem = useRef<ComponentRef<typeof ScrollView>>(null);
 
   return (
     <KeyboardAvoidingView

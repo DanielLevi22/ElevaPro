@@ -1,7 +1,7 @@
-import { render } from '@testing-library/react-native';
+import { render, screen } from '@testing-library/react-native';
 import { Platform, Text } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
 import { coresDoTema } from '@/shared/design';
+import { hostOfType } from '@/testing/hostByType';
 import { AlvoDoVidro } from '../AlvoDoVidro';
 import { Anel } from '../Anel';
 import {
@@ -51,6 +51,12 @@ jest.mock('expo-blur', () => ({
   BlurTargetView: mockNativo('alvo-do-blur'),
 }));
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: mockNativo('gradiente') }));
+// Só o `Circle`: o nativo dele recebe as props já convertidas (`stroke` vira
+// número, o tracejado vira lista), e o anel é conferido pelo que desenha.
+jest.mock('react-native-svg', () => {
+  const svg = jest.requireActual('react-native-svg');
+  return { ...svg, __esModule: true, default: svg.default, Circle: mockNativo('circulo') };
+});
 
 /** Blur e gradiente ficam atrás do conteúdo, fora da árvore de acessibilidade. */
 const OCULTOS = { includeHiddenElements: true };
@@ -68,8 +74,8 @@ beforeEach(() => {
  * Cada círculo do anel achado pelo papel, e não pela posição: o brilho são
  * camadas empilhadas antes do trilho, e contar índice quebra a cada ajuste nelas.
  */
-function circulos(arvore: ReturnType<typeof render>) {
-  const todos = arvore.UNSAFE_getAllByType(Circle);
+function circulos() {
+  const todos = screen.getAllByTestId('circulo', OCULTOS);
   const trilho = todos.find((c) => c.props.strokeDasharray === undefined);
   const tracejados = todos.filter((c) => c.props.strokeDasharray !== undefined);
   const arco = tracejados.find((c) => c.props.strokeOpacity === undefined);
@@ -78,13 +84,13 @@ function circulos(arvore: ReturnType<typeof render>) {
   return { todos, trilho, arco, brilho };
 }
 
-function traçoPreenchido(arvore: ReturnType<typeof render>): number {
-  const [preenchido] = String(circulos(arvore).arco.props.strokeDasharray).split(' ');
+function traçoPreenchido(): number {
+  const [preenchido] = String(circulos().arco.props.strokeDasharray).split(' ');
   return Number.parseFloat(preenchido);
 }
 
-function perimetro(arvore: ReturnType<typeof render>): number {
-  const [, volta] = String(circulos(arvore).arco.props.strokeDasharray).split(' ');
+function perimetro(): number {
+  const [, volta] = String(circulos().arco.props.strokeDasharray).split(' ');
   return Number.parseFloat(volta);
 }
 
@@ -92,10 +98,10 @@ describe('Anel', () => {
   const anel = (props: Partial<React.ComponentProps<typeof Anel>> = {}) =>
     render(<Anel valor={68} meta={100} rotulo="68%" {...props} />);
 
-  it('anuncia o progresso ao leitor de tela, e não só à vista', () => {
+  it('anuncia o progresso ao leitor de tela, e não só à vista', async () => {
     // O `ProgressCard` tinha o papel sem `accessible` e não era anunciado; o
     // teste só achou porque procurou o papel. Aqui a lição já vem aplicada.
-    const { getByRole } = anel({ sub: 'Meta do dia' });
+    const { getByRole } = await anel({ sub: 'Meta do dia' });
 
     expect(getByRole('progressbar').props.accessibilityValue).toMatchObject({
       min: 0,
@@ -105,52 +111,52 @@ describe('Anel', () => {
     });
   });
 
-  it('preenche o traço na fração do valor', () => {
-    const arvore = anel({ valor: 25, meta: 100 });
+  it('preenche o traço na fração do valor', async () => {
+    await anel({ valor: 25, meta: 100 });
 
-    expect(traçoPreenchido(arvore) / perimetro(arvore)).toBeCloseTo(0.25, 4);
+    expect(traçoPreenchido() / perimetro()).toBeCloseTo(0.25, 4);
   });
 
-  it('trata meta zerada como cumprida, e não como divisão por zero', () => {
-    const arvore = anel({ valor: 0, meta: 0 });
+  it('trata meta zerada como cumprida, e não como divisão por zero', async () => {
+    await anel({ valor: 0, meta: 0 });
 
-    expect(traçoPreenchido(arvore) / perimetro(arvore)).toBeCloseTo(1, 4);
+    expect(traçoPreenchido() / perimetro()).toBeCloseTo(1, 4);
   });
 
-  it('não passa da volta completa quando a pessoa excede a meta', () => {
-    const arvore = anel({ valor: 180, meta: 100 });
+  it('não passa da volta completa quando a pessoa excede a meta', async () => {
+    await anel({ valor: 180, meta: 100 });
 
-    expect(traçoPreenchido(arvore) / perimetro(arvore)).toBeCloseTo(1, 4);
+    expect(traçoPreenchido() / perimetro()).toBeCloseTo(1, 4);
   });
 
-  it('começa no topo, e não às três horas', () => {
+  it('começa no topo, e não às três horas', async () => {
     // Sem o giro de um quarto de volta o progresso nasceria na direita, o que
     // lê como se já houvesse 25% feito.
-    const { UNSAFE_getByType } = anel();
+    await anel();
 
-    expect(JSON.stringify(UNSAFE_getByType(Svg).props.style)).toContain('-90deg');
+    expect(JSON.stringify(hostOfType('RNSVGSvgView').props.style)).toContain('-90deg');
   });
 
-  it('usa o trilho do vidro no arco de fundo, que muda com o tema', () => {
-    const arvore = anel();
-    expect(circulos(arvore).trilho.props.stroke).toBe(escuro.glassStrong);
+  it('usa o trilho do vidro no arco de fundo, que muda com o tema', async () => {
+    await anel();
+    expect(circulos().trilho.props.stroke).toBe(escuro.glassStrong);
 
     mockEsquema = 'light';
-    const noClaro = anel();
-    expect(circulos(noClaro).trilho.props.stroke).toBe(claro.glassStrong);
+    await anel();
+    expect(circulos().trilho.props.stroke).toBe(claro.glassStrong);
   });
 
-  it('aceita cor de métrica no arco, para o anel de calorias não ser lime', () => {
-    const arvore = anel({ cor: escuro.metricaCalorias });
+  it('aceita cor de métrica no arco, para o anel de calorias não ser lime', async () => {
+    await anel({ cor: escuro.metricaCalorias });
 
-    expect(circulos(arvore).arco.props.stroke).toBe(escuro.metricaCalorias);
+    expect(circulos().arco.props.stroke).toBe(escuro.metricaCalorias);
   });
 
-  it('brilha só onde há progresso, na cor do arco e por baixo dele', () => {
+  it('brilha só onde há progresso, na cor do arco e por baixo dele', async () => {
     // O `drop-shadow` do kit é sombra do que está desenhado: o brilho segue o
     // arco, e não a volta inteira. E fica por baixo, ou apagaria o traço.
-    const arvore = anel({ valor: 25, meta: 100, cor: escuro.metricaCalorias });
-    const { todos, arco, brilho } = circulos(arvore);
+    await anel({ valor: 25, meta: 100, cor: escuro.metricaCalorias });
+    const { todos, arco, brilho } = circulos();
 
     expect(brilho.length).toBeGreaterThan(0);
     for (const camada of brilho) {
@@ -160,8 +166,9 @@ describe('Anel', () => {
     }
   });
 
-  it('esmaece o brilho para fora, sem camada mais forte que a de dentro', () => {
-    const { brilho } = circulos(anel());
+  it('esmaece o brilho para fora, sem camada mais forte que a de dentro', async () => {
+    await anel();
+    const { brilho } = circulos();
     const deFora = [...brilho].sort((a, b) => b.props.strokeWidth - a.props.strokeWidth);
     const opacidades = deFora.map((c) => c.props.strokeOpacity);
 
@@ -170,21 +177,21 @@ describe('Anel', () => {
     expect(opacidades.slice(1)).toEqual([...opacidades.slice(1)].sort((a, b) => a - b));
   });
 
-  it('mostra o rótulo que recebeu, e não um derivado do valor', () => {
+  it('mostra o rótulo que recebeu, e não um derivado do valor', async () => {
     // "7h20" de sono não é "7,33"; quem formata é quem sabe a grandeza.
-    const { queryByText } = anel({ valor: 440, meta: 480, rotulo: '7h20' });
+    const { queryByText } = await anel({ valor: 440, meta: 480, rotulo: '7h20' });
 
     expect(queryByText('7h20')).not.toBeNull();
   });
 });
 
 describe('Vidro', () => {
-  it('preenche com um gradiente vertical, para os dois lados ficarem iguais', () => {
+  it('preenche com um gradiente vertical, para os dois lados ficarem iguais', async () => {
     // O kit usa 160°, e as duas tentativas anteriores de reproduzir a
     // inclinação e o brilho de canto deixaram a lateral direita visivelmente
     // diferente da esquerda — numa lista de dez linhas a assimetria vira o
     // defeito que se vê antes do efeito.
-    const { getByTestId } = render(
+    const { getByTestId } = await render(
       <Vidro>
         <Text>conteúdo</Text>
       </Vidro>
@@ -195,8 +202,8 @@ describe('Vidro', () => {
     expect(preenchimento.props.end).toEqual({ x: 0.5, y: 1 });
   });
 
-  it('acompanha o tema no tom do blur', () => {
-    const { getByTestId, rerender } = render(
+  it('acompanha o tema no tom do blur', async () => {
+    const { getByTestId, rerender } = await render(
       <Vidro>
         <Text>conteúdo</Text>
       </Vidro>
@@ -204,7 +211,7 @@ describe('Vidro', () => {
     expect(getByTestId('blur', OCULTOS).props.tint).toBe('dark');
 
     mockEsquema = 'light';
-    rerender(
+    await rerender(
       <Vidro>
         <Text>conteúdo</Text>
       </Vidro>
@@ -212,9 +219,9 @@ describe('Vidro', () => {
     expect(getByTestId('blur', OCULTOS).props.tint).toBe('light');
   });
 
-  it('no modo forte troca o gradiente de três paradas pelo trilho chapado', () => {
+  it('no modo forte troca o gradiente de três paradas pelo trilho chapado', async () => {
     // É o que o kit usa em trilho de progresso e fundo de ícone neutro.
-    const { getByTestId } = render(
+    const { getByTestId } = await render(
       <Vidro forte>
         <Text>conteúdo</Text>
       </Vidro>
@@ -224,8 +231,8 @@ describe('Vidro', () => {
     expect(preenchimento.props.colors).toEqual([escuro.glassStrong, escuro.glassStrong]);
   });
 
-  it('só põe a linha inferior no escuro, onde o desenho a declara', () => {
-    const { rerender, toJSON } = render(
+  it('só põe a linha inferior no escuro, onde o desenho a declara', async () => {
+    const { rerender, toJSON } = await render(
       <Vidro>
         <Text>conteúdo</Text>
       </Vidro>
@@ -233,7 +240,7 @@ describe('Vidro', () => {
     const noEscuro = JSON.stringify(toJSON());
 
     mockEsquema = 'light';
-    rerender(
+    await rerender(
       <Vidro>
         <Text>conteúdo</Text>
       </Vidro>
@@ -242,12 +249,12 @@ describe('Vidro', () => {
     expect(noEscuro.length).toBeGreaterThan(JSON.stringify(toJSON()).length);
   });
 
-  it('entrega o alvo ao vidro que fica fora do fundo, como na tela', () => {
+  it('entrega o alvo ao vidro que fica fora do fundo, como na tela', async () => {
     // Sem alvo o `expo-blur` não desfoca nada no Android. A primeira versão
     // deste teste punha o vidro dentro do alvo e passava; na tela o vidro mora
     // na rolagem, irmã do fundo, e ali o contexto chegava `null` nos vinte
     // cartões. O teste agora monta a forma da tela.
-    const { getByTestId } = render(
+    const { getByTestId } = await render(
       <AlvoDoVidro fundo={<Text>foto</Text>}>
         <Vidro>
           <Text>conteúdo</Text>
@@ -258,9 +265,9 @@ describe('Vidro', () => {
     expect(getByTestId('blur', OCULTOS).props.blurTarget).toBeTruthy();
   });
 
-  it('não põe o vidro dentro do alvo que ele desfoca', () => {
+  it('não põe o vidro dentro do alvo que ele desfoca', async () => {
     // A biblioteca nativa proíbe: o alvo não pode conter o vidro que o usa.
-    const { getByTestId } = render(
+    const { getByTestId } = await render(
       <AlvoDoVidro fundo={<Text>foto</Text>}>
         <Vidro>
           <Text>conteúdo</Text>
@@ -269,15 +276,15 @@ describe('Vidro', () => {
     );
     const alvo = getByTestId('alvo-do-blur', OCULTOS);
 
-    expect(alvo.findAll((no) => no.props.testID === 'blur')).toHaveLength(0);
+    expect(alvo.queryAll((no) => no.props.testID === 'blur')).toHaveLength(0);
   });
 
-  it('não pinta fundo atrás do vidro, para o que está atrás atravessar', () => {
+  it('não pinta fundo atrás do vidro, para o que está atrás atravessar', async () => {
     // Com `elevation` o Android exigia fundo pintado, e o invólucro levava a
     // cor da tela: o miolo de dois blocos saía no mesmo cinza enquanto a luz
     // ambiente só aparecia no vão entre eles. A sombra agora é `boxShadow`,
     // que não depende de fundo.
-    const { toJSON } = render(
+    const { toJSON } = await render(
       <Vidro>
         <Text>conteúdo</Text>
       </Vidro>
@@ -288,9 +295,9 @@ describe('Vidro', () => {
     expect(involucro.props.style.elevation).toBeUndefined();
   });
 
-  it('empilha as duas sombras do kit, larga e de contato', () => {
+  it('empilha as duas sombras do kit, larga e de contato', async () => {
     mockEsquema = 'dark';
-    const { toJSON } = render(
+    const { toJSON } = await render(
       <Vidro>
         <Text>conteúdo</Text>
       </Vidro>
@@ -328,9 +335,9 @@ describe('Vidro', () => {
       Object.defineProperty(Platform, 'OS', { get: () => os, configurable: true });
     afterEach(() => naPlataforma(plataformaOriginal));
 
-    it('assenta o vidro sobre a cor da tela', () => {
+    it('assenta o vidro sobre a cor da tela', async () => {
       naPlataforma('android');
-      const { queryByTestId } = render(
+      const { queryByTestId } = await render(
         <Vidro>
           <Text>conteúdo</Text>
         </Vidro>
@@ -339,9 +346,9 @@ describe('Vidro', () => {
       expect(queryByTestId('base-opaca', OCULTOS)).not.toBeNull();
     });
 
-    it('continua translúcido dentro do alvo, onde o blur existe', () => {
+    it('continua translúcido dentro do alvo, onde o blur existe', async () => {
       naPlataforma('android');
-      const { queryByTestId } = render(
+      const { queryByTestId } = await render(
         <AlvoDoVidro fundo={<Text>foto</Text>}>
           <Vidro>
             <Text>conteúdo</Text>
@@ -352,9 +359,9 @@ describe('Vidro', () => {
       expect(queryByTestId('base-opaca', OCULTOS)).toBeNull();
     });
 
-    it('não muda o iOS, que desfoca sem alvo', () => {
+    it('não muda o iOS, que desfoca sem alvo', async () => {
       naPlataforma('ios');
-      const { queryByTestId } = render(
+      const { queryByTestId } = await render(
         <Vidro>
           <Text>conteúdo</Text>
         </Vidro>
@@ -364,8 +371,8 @@ describe('Vidro', () => {
     });
   });
 
-  it('renderiza o conteúdo por cima das camadas', () => {
-    const { queryByText } = render(
+  it('renderiza o conteúdo por cima das camadas', async () => {
+    const { queryByText } = await render(
       <Vidro>
         <Text>conteúdo</Text>
       </Vidro>
@@ -395,11 +402,11 @@ describe('BrilhoAmbiente', () => {
     expect([...opacidades].sort((a, b) => b - a)).toEqual(opacidades);
   });
 
-  it('se centra junto ao topo dos blocos, e não numa fração da tela', () => {
+  it('se centra junto ao topo dos blocos, e não numa fração da tela', async () => {
     // Por fração da tela, numa tela mais alta que a do kit, a metade de baixo
     // da luz caía no vão escuro antes de "Hoje" e virava mancha. No kit o
     // centro fica 4 abaixo do topo dos blocos (370 contra 366).
-    const { getByTestId } = render(<BrilhoAmbiente topoDosBlocos={366} />);
+    const { getByTestId } = await render(<BrilhoAmbiente topoDosBlocos={366} />);
     const estilo = getByTestId('brilho-ambiente', { includeHiddenElements: true }).props.style;
 
     expect(estilo.top + estilo.height / 2).toBe(370);
@@ -407,23 +414,23 @@ describe('BrilhoAmbiente', () => {
 
   // A nutrição não tem blocos nem foto: a luz do kit fica no topo, com centro a
   // 150 (top −60, altura 420), e não atrás dos blocos como na tela inicial.
-  it('na nutrição, a luz fica no topo da tela, onde o kit a põe', () => {
-    const { getByTestId } = render(<BrilhoAmbiente receita={BRILHO_DA_NUTRICAO} />);
+  it('na nutrição, a luz fica no topo da tela, onde o kit a põe', async () => {
+    const { getByTestId } = await render(<BrilhoAmbiente receita={BRILHO_DA_NUTRICAO} />);
     const estilo = getByTestId('brilho-ambiente', { includeHiddenElements: true }).props.style;
 
     expect(estilo.top + estilo.height / 2).toBe(150);
   });
 
-  it('no cardio, a luz fica no topo, mais baixa que a da nutrição', () => {
+  it('no cardio, a luz fica no topo, mais baixa que a da nutrição', async () => {
     // O kit do cardio põe o brilho a top −40 com altura 460: centro a 190.
-    const { getByTestId } = render(<BrilhoAmbiente receita={CARDIO_GLOW} />);
+    const { getByTestId } = await render(<BrilhoAmbiente receita={CARDIO_GLOW} />);
     const estilo = getByTestId('brilho-ambiente', { includeHiddenElements: true }).props.style;
 
     expect(estilo.top + estilo.height / 2).toBe(190);
   });
 
-  it('não intercepta toque nem leitor de tela', () => {
-    const { getByTestId } = render(<BrilhoAmbiente topoDosBlocos={366} />);
+  it('não intercepta toque nem leitor de tela', async () => {
+    const { getByTestId } = await render(<BrilhoAmbiente topoDosBlocos={366} />);
     // Oculto do leitor de tela de propósito, então a busca precisa incluí-lo.
     const brilho = getByTestId('brilho-ambiente', { includeHiddenElements: true });
 

@@ -56,7 +56,7 @@ describe('rastreio da sessão de cardio por modalidade', () => {
   // encontrou com a permissão de background. A modalidade decide, e sem GPS o app
   // nem pergunta.
   it('a modalidade sem gps não pede localização', async () => {
-    const { result } = renderHook(() => useRastreioDaCorrida(cardioModality('elliptical')));
+    const { result } = await renderHook(() => useRastreioDaCorrida(cardioModality('elliptical')));
 
     await act(async () => {
       await result.current.iniciar();
@@ -70,7 +70,7 @@ describe('rastreio da sessão de cardio por modalidade', () => {
   });
 
   it('a corrida pede localização e conta passos', async () => {
-    const { result } = renderHook(() => useRastreioDaCorrida(cardioModality('run')));
+    const { result } = await renderHook(() => useRastreioDaCorrida(cardioModality('run')));
 
     await act(async () => {
       await result.current.iniciar();
@@ -84,7 +84,7 @@ describe('rastreio da sessão de cardio por modalidade', () => {
   });
 
   it('a bicicleta mede o percurso, mas não conta passos', async () => {
-    const { result } = renderHook(() => useRastreioDaCorrida(cardioModality('bike')));
+    const { result } = await renderHook(() => useRastreioDaCorrida(cardioModality('bike')));
 
     await act(async () => {
       await result.current.iniciar();
@@ -107,7 +107,7 @@ describe('rastreio da sessão de cardio por modalidade', () => {
       onPosition = callback;
       return { remove: jest.fn() };
     });
-    const { result } = renderHook(() => useRastreioDaCorrida(cardioModality('run')));
+    const { result } = await renderHook(() => useRastreioDaCorrida(cardioModality('run')));
 
     await act(async () => {
       await result.current.iniciar();
@@ -131,7 +131,7 @@ describe('rastreio da sessão de cardio por modalidade', () => {
       onPosition = callback;
       return { remove: jest.fn() };
     });
-    const { result } = renderHook(() => useRastreioDaCorrida(cardioModality('run')));
+    const { result } = await renderHook(() => useRastreioDaCorrida(cardioModality('run')));
 
     await act(async () => {
       await result.current.iniciar();
@@ -159,7 +159,7 @@ describe('rastreio da sessão de cardio por modalidade', () => {
       return { remove: jest.fn() };
     });
     const now = Date.now();
-    const { result } = renderHook(() => useRastreioDaCorrida(cardioModality('run')));
+    const { result } = await renderHook(() => useRastreioDaCorrida(cardioModality('run')));
 
     await act(async () => {
       await result.current.iniciar();

@@ -8,8 +8,8 @@ const item = (id: string, name: string) =>
 const ITEMS = [item('e1', 'Supino'), item('e2', 'Remada'), item('e3', 'Rosca')];
 
 describe('TodayLoads (A1)', () => {
-  it('mostra a carga sugerida de quem tem histórico, com o porquê', () => {
-    render(
+  it('mostra a carga sugerida de quem tem histórico, com o porquê', async () => {
+    await render(
       <TodayLoads
         items={ITEMS}
         suggestions={{
@@ -24,15 +24,15 @@ describe('TodayLoads (A1)', () => {
     expect(screen.queryByText('Remada')).toBeNull();
   });
 
-  it('sem nada a dizer, a seção some', () => {
-    render(<TodayLoads items={ITEMS} suggestions={{}} />);
+  it('sem nada a dizer, a seção some', async () => {
+    await render(<TodayLoads items={ITEMS} suggestions={{}} />);
     expect(screen.queryByText('Cargas de hoje')).toBeNull();
   });
 });
 
 describe('NextTimeLoads (A3)', () => {
-  it('só os exercícios feitos hoje', () => {
-    render(
+  it('só os exercícios feitos hoje', async () => {
+    await render(
       <NextTimeLoads
         items={ITEMS}
         suggestions={{ e3: { kind: 'decrease', weightKg: 10, deltaKg: 2, reason: 'hard_twice' } }}
@@ -45,13 +45,13 @@ describe('NextTimeLoads (A3)', () => {
 });
 
 describe('EffortPrompt (A2)', () => {
-  it('a resposta vira o esforço do exercício, e pular manda nulo', () => {
+  it('a resposta vira o esforço do exercício, e pular manda nulo', async () => {
     const onAnswer = jest.fn();
-    render(<EffortPrompt name="Supino" aboveButton={false} onAnswer={onAnswer} />);
+    await render(<EffortPrompt name="Supino" aboveButton={false} onAnswer={onAnswer} />);
 
     expect(screen.getByText('Como foi Supino?')).toBeTruthy();
-    fireEvent.press(screen.getByText('Difícil'));
-    fireEvent.press(screen.getByText('Pular'));
+    await fireEvent.press(screen.getByText('Difícil'));
+    await fireEvent.press(screen.getByText('Pular'));
 
     expect(onAnswer.mock.calls).toEqual([['hard'], [null]]);
   });

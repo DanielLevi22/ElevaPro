@@ -27,20 +27,20 @@ beforeEach(() => {
 describe('useLeaderboard', () => {
   // Regressão da revisão da #320: `refetch` passa por cima de `enabled`, e puxar
   // a tela sem o aceite pedia ao banco o placar global que ele recusa.
-  it('puxar para atualizar sem o aceite não pede o placar', () => {
-    const { result } = renderHook(() => useLeaderboard('global', false), { wrapper });
+  it('puxar para atualizar sem o aceite não pede o placar', async () => {
+    const { result } = await renderHook(() => useLeaderboard('global', false), { wrapper });
 
-    act(() => result.current.refresh());
+    await act(() => result.current.refresh());
 
     expect(mockFetchLeaderboard).not.toHaveBeenCalled();
     expect(result.current.loading).toBe(false);
   });
 
   it('com o aceite, busca o escopo e atualiza de novo ao puxar', async () => {
-    const { result } = renderHook(() => useLeaderboard('global', true), { wrapper });
+    const { result } = await renderHook(() => useLeaderboard('global', true), { wrapper });
     await waitFor(() => expect(mockFetchLeaderboard).toHaveBeenCalledWith('global'));
 
-    act(() => result.current.refresh());
+    await act(() => result.current.refresh());
 
     await waitFor(() => expect(mockFetchLeaderboard).toHaveBeenCalledTimes(2));
   });

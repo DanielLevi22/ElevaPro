@@ -58,15 +58,15 @@ describe('criar periodização', () => {
   });
 
   it('grava só a periodização, com o objetivo do web, e abre a tela dela', async () => {
-    render(<PeriodizationFormScreen />);
-    fireEvent.changeText(
+    await render(<PeriodizationFormScreen />);
+    await fireEvent.changeText(
       screen.getByPlaceholderText('Ex.: Hipertrofia - Ciclo 1'),
       'Força - Ciclo 1'
     );
-    fireEvent.press(screen.getByText('Força'));
-    pickDate('Início: —', '2026-11-02');
-    pickDate('Fim: —', '2026-12-28');
-    fireEvent.press(screen.getByText('Criar periodização'));
+    await fireEvent.press(screen.getByText('Força'));
+    await pickDate('Início: —', '2026-11-02');
+    await pickDate('Fim: —', '2026-12-28');
+    await fireEvent.press(screen.getByText('Criar periodização'));
 
     await waitFor(() =>
       expect(mockReplace).toHaveBeenCalledWith(ROUTES.WORKOUTS.PERIODIZATION('p1'))
@@ -86,9 +86,9 @@ describe('criar periodização', () => {
   });
 
   it('não grava sem as datas', async () => {
-    render(<PeriodizationFormScreen />);
-    fireEvent.changeText(screen.getByPlaceholderText('Ex.: Hipertrofia - Ciclo 1'), 'Ciclo');
-    fireEvent.press(screen.getByText('Criar periodização'));
+    await render(<PeriodizationFormScreen />);
+    await fireEvent.changeText(screen.getByPlaceholderText('Ex.: Hipertrofia - Ciclo 1'), 'Ciclo');
+    await fireEvent.press(screen.getByText('Criar periodização'));
 
     await waitFor(() => expect(mockSupabaseBuilder.insert).not.toHaveBeenCalled());
     expect(mockReplace).not.toHaveBeenCalled();
@@ -104,10 +104,10 @@ describe('editar periodização', () => {
     useWorkoutStore.setState({ periodizations: [CYCLE] });
     answerSupabase({ 'training_periodizations:update': { ...CYCLE, name: 'Ciclo 2' } });
 
-    render(<PeriodizationFormScreen />);
-    fireEvent.changeText(screen.getByDisplayValue('Ciclo 1'), 'Ciclo 2');
-    fireEvent.press(screen.getByText('Emagrecimento'));
-    fireEvent.press(screen.getByText('Salvar'));
+    await render(<PeriodizationFormScreen />);
+    await fireEvent.changeText(screen.getByDisplayValue('Ciclo 1'), 'Ciclo 2');
+    await fireEvent.press(screen.getByText('Emagrecimento'));
+    await fireEvent.press(screen.getByText('Salvar'));
 
     await waitFor(() => expect(mockBack).toHaveBeenCalled());
     expect(mockSupabaseBuilder.update).toHaveBeenCalledWith({
@@ -121,7 +121,7 @@ describe('editar periodização', () => {
   it('aberta sem a lista carregada, busca a periodização e edita em vez de criar outra', async () => {
     answerSupabase({ 'training_periodizations:select': [CYCLE] });
 
-    render(<PeriodizationFormScreen />);
+    await render(<PeriodizationFormScreen />);
 
     expect(await screen.findByDisplayValue('Ciclo 1')).toBeTruthy();
     expect(screen.getByText('Editar periodização')).toBeTruthy();
@@ -131,7 +131,7 @@ describe('editar periodização', () => {
   it('avisa quando a periodização não existe, sem abrir o formulário de criação', async () => {
     answerSupabase({ 'training_periodizations:select': [] });
 
-    render(<PeriodizationFormScreen />);
+    await render(<PeriodizationFormScreen />);
 
     expect(await screen.findByText('Periodização não encontrada.')).toBeTruthy();
     expect(screen.queryByText('Criar periodização')).toBeNull();

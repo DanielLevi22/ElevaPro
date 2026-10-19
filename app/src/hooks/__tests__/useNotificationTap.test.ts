@@ -33,9 +33,9 @@ const notice = { kind: 'daily-notice', noticeKind: 'meal', refId: 'almoco', date
 describe('useNotificationTap', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('o toque no aviso do relatório abre a tela dele', () => {
+  it('o toque no aviso do relatório abre a tela dele', async () => {
     mockResponse = responseOf({ kind: 'weekly-report', url: '/checkin/report' });
-    renderHook(() => useNotificationTap('aluno'));
+    await renderHook(() => useNotificationTap('aluno'));
     expect(mockPush).toHaveBeenCalledWith('/checkin/report');
   });
 
@@ -43,7 +43,7 @@ describe('useNotificationTap', () => {
     mockHandle.mockResolvedValue('/(tabs)/nutrition');
     mockResponse = responseOf({ ...notice, url: '/(tabs)/nutrition' }, 'meal-other');
 
-    renderHook(() => useNotificationTap('aluno'));
+    await renderHook(() => useNotificationTap('aluno'));
 
     expect(mockRespond).toHaveBeenCalledWith('n-1');
     expect(mockHandle).toHaveBeenCalledWith('aluno', 'meal-other', {
@@ -54,15 +54,15 @@ describe('useNotificationTap', () => {
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/(tabs)/nutrition'));
   });
 
-  it('antes da sessão, nada abre: o guarda de login levaria a pessoa embora', () => {
+  it('antes da sessão, nada abre: o guarda de login levaria a pessoa embora', async () => {
     mockResponse = responseOf({ kind: 'weekly-report', url: '/checkin/report' });
-    renderHook(() => useNotificationTap(null));
+    await renderHook(() => useNotificationTap(null));
     expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it('URL de fora não é aberta pelo aviso', () => {
+  it('URL de fora não é aberta pelo aviso', async () => {
     mockResponse = responseOf({ url: 'https://phishing.example' });
-    renderHook(() => useNotificationTap('aluno'));
+    await renderHook(() => useNotificationTap('aluno'));
     expect(mockPush).not.toHaveBeenCalled();
   });
 });
