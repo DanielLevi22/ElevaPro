@@ -44,7 +44,7 @@
     "drizzle-kit": "^0.31.11",
     "drizzle-orm": "^0.45.2",
     "husky": "^9.1.7",
-    "knip": "^6.35.1",
+    "knip": "^6.41.0",
     "supabase": "2.121.0",
     "typescript": "~6.0.3"
   },
