@@ -17,6 +17,79 @@ export type PeriodizationObjective =
   | "general_fitness";
 
 /**
+ * Os objetivos de uma periodização, na ordem em que o formulário os oferece.
+ *
+ * Lista única porque cada plataforma tinha a sua: o web gravava `hypertrophy`
+ * e o mobile gravava o texto digitado ("Hipertrofia"). Um não lia o que o
+ * outro escrevia.
+ *
+ * @example PERIODIZATION_OBJECTIVES.map(({ value, label }) => <Chip key={value}>{label}</Chip>)
+ */
+export const PERIODIZATION_OBJECTIVES: ReadonlyArray<{
+  readonly value: PeriodizationObjective;
+  readonly label: string;
+}> = [
+  { value: "hypertrophy", label: "Hipertrofia" },
+  { value: "strength", label: "Força" },
+  { value: "endurance", label: "Resistência" },
+  { value: "weight_loss", label: "Emagrecimento" },
+  { value: "conditioning", label: "Condicionamento" },
+  { value: "general_fitness", label: "Saúde Geral" },
+];
+
+/**
+ * O rótulo de um objetivo gravado, ou o próprio texto quando não é da lista.
+ *
+ * Periodização antiga do mobile guarda texto livre; mostrar o que foi digitado
+ * é melhor do que esconder o objetivo atrás de um rótulo genérico.
+ *
+ * @example periodizationObjectiveLabel("strength") // "Força"
+ */
+export function periodizationObjectiveLabel(objective: string | null): string | null {
+  if (!objective) return null;
+  return PERIODIZATION_OBJECTIVES.find((item) => item.value === objective)?.label ?? objective;
+}
+
+/**
+ * O objetivo gravado, quando é um dos 6 — `null` para o texto livre antigo.
+ *
+ * O formulário de edição só oferece os 6; sem esta checagem, um cast
+ * deixava "Hipertrofia" digitado passar como se fosse um valor da lista.
+ *
+ * @example knownPeriodizationObjective("strength") // "strength"
+ * @example knownPeriodizationObjective("Hipertrofia") // null
+ */
+export function knownPeriodizationObjective(
+  objective: string | null,
+): PeriodizationObjective | null {
+  return PERIODIZATION_OBJECTIVES.find((item) => item.value === objective)?.value ?? null;
+}
+
+/**
+ * A letra de uma ficha: "Treino B" → "B", "Superior" → "S".
+ *
+ * A divisão cria fichas "Treino A", "Treino B"…; ler só a primeira letra do
+ * título dava "T" para todas, e o web mostrava a divisão "TT".
+ *
+ * @example workoutLetterOf("Treino D") // "D"
+ */
+export function workoutLetterOf(title: string): string {
+  return title
+    .replace(/^treino\s+/i, "")
+    .charAt(0)
+    .toUpperCase();
+}
+
+/**
+ * A divisão da fase pelas fichas que ela tem, na ordem.
+ *
+ * @example workoutSplitOf([{ title: "Treino A" }, { title: "Treino B" }]) // "AB"
+ */
+export function workoutSplitOf(workouts: ReadonlyArray<{ title: string }>): string {
+  return workouts.map((workout) => workoutLetterOf(workout.title)).join("");
+}
+
+/**
  * O vocabulário do catálogo de exercícios, em um lugar só.
  *
  * Estava espalhado: o banco tinha os valores no CHECK, o coach tinha a lista

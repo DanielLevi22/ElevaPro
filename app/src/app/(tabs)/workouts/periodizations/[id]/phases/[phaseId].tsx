@@ -12,7 +12,7 @@ import {
  * A fase, na tela do papel de quem abre.
  *
  * O aluno vê o próximo treino e os treinos da semana; o especialista e o membro
- * que monta o próprio plano seguem na tela de edição, com divisão e Co-Pilot.
+ * que monta o próprio plano seguem na tela de edição, com divisão e fichas.
  */
 export default function FaseRoute() {
   const { id, phaseId, mode } = useLocalSearchParams<{

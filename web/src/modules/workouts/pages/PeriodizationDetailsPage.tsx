@@ -1,6 +1,11 @@
 "use client";
 
-import type { Periodization, TrainingPlan } from "@elevapro/shared";
+import {
+  knownPeriodizationObjective,
+  type Periodization,
+  periodizationObjectiveLabel,
+  type TrainingPlan,
+} from "@elevapro/shared";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -14,15 +19,6 @@ import { Button } from "@/shared/components/ui/Button";
 import { formatDateRange } from "@/shared/utils/formatDate";
 import { CreatePeriodizationModal } from "../components/CreatePeriodizationModal";
 import { WelcomeBanner } from "../components/WelcomeBanner";
-
-const OBJECTIVE_LABELS: Record<string, string> = {
-  hypertrophy: "Hipertrofia",
-  strength: "Força",
-  endurance: "Resistência",
-  weight_loss: "Emagrecimento",
-  conditioning: "Condicionamento",
-  general_fitness: "Saúde Geral",
-};
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   planned: { label: "Planejada", className: "bg-secondary/10 text-secondary" },
@@ -103,7 +99,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
 
   const periodizationId = periodization.id;
   const status = STATUS_CONFIG[periodization.status] ?? STATUS_CONFIG.planned;
-  const objective = OBJECTIVE_LABELS[periodization.objective ?? ""] ?? periodization.objective;
+  const objective = periodizationObjectiveLabel(periodization.objective);
 
   const handleAddPhase = () => {
     startTransition(async () => {
@@ -258,13 +254,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
         periodizationId={periodizationId}
         initialData={{
           name: periodization.name,
-          objective: periodization.objective as
-            | "hypertrophy"
-            | "strength"
-            | "endurance"
-            | "weight_loss"
-            | "conditioning"
-            | "general_fitness",
+          objective: knownPeriodizationObjective(periodization.objective),
           student_id: periodization.student_id,
           start_date: periodization.start_date ?? "",
           end_date: periodization.end_date ?? "",

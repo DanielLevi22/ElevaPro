@@ -13,8 +13,7 @@ interface Options {
   token: string;
   studentId: string;
   sessionId: string | null;
-  onSessionResolved: (sessionId: string) => void;
-  /** A fase já ganhou dono: o passo 2 pode voltar a mostrar o treino direto. */
+  /** A periodização da proposta foi gravada. */
   onPeriodizationApproved?: (periodizationId: string) => void;
   /** Os treinos aprovados já estão na fase — quem chamou decide se refaz a busca. */
   onWorkoutsApproved?: () => void;
@@ -24,13 +23,12 @@ const GREETING = 'Olá! Vou te ajudar a montar o treino deste aluno. Por onde qu
 
 /** Retoma o chat do web e aprova somente as propostas da sessão resolvida.
  * A tela remonta por conta/aluno/sessão: respostas tardias não alcançam a próxima conversa.
- * @example const chat = useAssistantChat({ token, studentId, sessionId, onSessionResolved });
+ * @example const chat = useAssistantChat({ token, studentId, sessionId });
  */
 export function useAssistantChat({
   token,
   studentId,
   sessionId,
-  onSessionResolved,
   onPeriodizationApproved,
   onWorkoutsApproved,
 }: Options) {
@@ -58,7 +56,6 @@ export function useAssistantChat({
       .then((session) => {
         if (cancelled) return;
         resolvedSession.current = session.sessionId;
-        onSessionResolved(session.sessionId);
         chat.load(session.messages);
         setPeriodization(
           session.periodization

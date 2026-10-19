@@ -37,9 +37,21 @@ updates:
       # Major updates precisam de revisão manual
       - dependency-name: "react"
         update-types: ["version-update:semver-major"]
+      # No 0.x o minor é que quebra, e a versão do RN é amarrada ao SDK do Expo
       - dependency-name: "react-native"
-        update-types: ["version-update:semver-major"]
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "expo"
+        update-types: ["version-update:semver-major"]
+      # O major dos expo-* é o número do SDK: subir sem o `expo` mistura SDKs (#391).
+      # Troca de SDK é pelo `npx expo install expo@^N --fix`, não pelo Dependabot
+      - dependency-name: "expo-*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@expo/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "jest-expo"
+        update-types: ["version-update:semver-major"]
+      # NativeWind 4 só aceita Tailwind 3; o v4 derrubou o Metro (#395)
+      - dependency-name: "tailwindcss"
         update-types: ["version-update:semver-major"]
 
   # GitHub Actions

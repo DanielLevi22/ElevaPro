@@ -26,7 +26,7 @@ export function AssistantHistoryButton({ disabled, ...scope }: Props) {
       pathname:
         session.module === 'nutrition'
           ? ROUTES.NUTRITION.WIZARD_ASSISTANT
-          : ROUTES.WORKOUTS.WIZARD_ASSISTANT,
+          : ROUTES.WORKOUTS.ASSISTANT,
       params: { studentId: scope.studentId, sessionId: session.id },
     });
   };

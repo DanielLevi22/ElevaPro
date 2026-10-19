@@ -13,7 +13,6 @@ const options = {
   token: 'token',
   studentId: 'student',
   sessionId: null,
-  onSessionResolved: jest.fn(),
   onPeriodizationApproved: jest.fn(),
 };
 const response = (body: unknown, status = 200) => ({
