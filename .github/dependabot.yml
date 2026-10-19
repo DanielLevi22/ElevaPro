@@ -24,6 +24,7 @@ updates:
         patterns:
           - "expo*"
           - "@expo/*"
+      # Só patches: minor e major das libs nativas ficam ignorados lá embaixo
       react-native-packages:
         patterns:
           - "react-native*"
@@ -39,6 +40,13 @@ updates:
         update-types: ["version-update:semver-major"]
       # No 0.x o minor é que quebra, e a versão do RN é amarrada ao SDK do Expo
       - dependency-name: "react-native"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      # As libs nativas também seguem o SDK: o #400 trouxe reanimated, worklets e
+      # screens do SDK 58 com o app no 57, e majors como o gesture-handler 3.
+      # Minor e major delas chegam com o SDK; aqui passa só patch (#402)
+      - dependency-name: "react-native-*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "@react-native/*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "expo"
         update-types: ["version-update:semver-major"]
