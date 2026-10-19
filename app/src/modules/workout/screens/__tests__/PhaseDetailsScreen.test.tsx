@@ -5,6 +5,7 @@ import { useAuthStore } from '@/auth';
 import { useAppAlertStore } from '@/components/ui/appAlert/store';
 import { mockSupabaseBuilder } from '../../../../../jest.setup';
 import { useWorkoutStore } from '../../store/workoutStore';
+import { pickDate } from '../__fixtures__/datePicker';
 import { answerSupabase, resetSupabaseAnswers } from '../__fixtures__/supabaseAnswers';
 import PhaseDetailsScreen from '../PhaseDetailsScreen';
 
@@ -12,16 +13,12 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn() }),
   useLocalSearchParams: () => ({ phaseId: 'f1' }),
 }));
+jest.mock(
+  '@react-native-community/datetimepicker',
+  () => require('../__fixtures__/datePicker').datePickerModule
+);
 
-let mockNextDate = '';
-jest.mock('@react-native-community/datetimepicker', () => {
-  const { Text } = jest.requireActual('react-native');
-  return ({ onChange }: { onChange: (event: object, date: Date) => void }) => (
-    <Text onPress={() => onChange({}, new Date(`${mockNextDate}T12:00:00`))}>Confirmar data</Text>
-  );
-});
-
-const FASE: TrainingPlan = {
+const PHASE: TrainingPlan = {
   id: 'f1',
   periodization_id: 'p1',
   name: 'Fase 1',
@@ -32,7 +29,7 @@ const FASE: TrainingPlan = {
   created_at: '2026-10-19T10:00:00Z',
 };
 
-function ficha(title: string): Workout {
+function workoutTitled(title: string): Workout {
   return {
     id: title,
     specialist_id: 'esp-1',
@@ -58,13 +55,13 @@ beforeEach(() => {
     user: { id: 'esp-1' } as Session['user'],
     abilities: defineAbilitiesFor({ accountType: 'specialist', services: ['personal_training'] }),
   });
-  useWorkoutStore.setState({ currentPeriodizationPhases: [FASE], workouts: [] });
+  useWorkoutStore.setState({ currentPeriodizationPhases: [PHASE], workouts: [] });
 });
 
 afterEach(resetSupabaseAnswers);
 
 it('"Novo treino" grava a ficha Treino D, com descrição e nível, na fase', async () => {
-  answerSupabase({ 'workouts:select': [], 'workouts:insert': ficha('Treino D') });
+  answerSupabase({ 'workouts:select': [], 'workouts:insert': workoutTitled('Treino D') });
   render(<PhaseDetailsScreen />);
 
   fireEvent.press(screen.getByText('Novo treino'));
@@ -87,7 +84,7 @@ it('"Novo treino" grava a ficha Treino D, com descrição e nível, na fase', as
 });
 
 it('mostra a divisão pelas fichas da fase', async () => {
-  answerSupabase({ 'workouts:select': [ficha('Treino A'), ficha('Treino B')] });
+  answerSupabase({ 'workouts:select': [workoutTitled('Treino A'), workoutTitled('Treino B')] });
   render(<PhaseDetailsScreen />);
 
   expect(await screen.findByLabelText('Divisão de treino: AB')).toBeTruthy();
@@ -100,20 +97,29 @@ it('trocar a divisão pede confirmação, como no web, sem oferecer a IA', async
   fireEvent.press(screen.getByLabelText('Divisão de treino: nenhuma'));
   fireEvent.press(screen.getByText('ABC'));
 
-  const confirmacao = useAppAlertStore.getState().current;
-  expect(confirmacao).toMatchObject({ kind: 'confirm', title: 'Alterar divisão de treino?' });
+  const confirmation = useAppAlertStore.getState().current;
+  expect(confirmation).toMatchObject({ kind: 'confirm', title: 'Alterar divisão de treino?' });
   expect(screen.queryByText('Usar Co-Pilot')).toBeNull();
 });
 
 it('a data de término da fase se edita na própria tela', async () => {
-  answerSupabase({ 'workouts:select': [], 'training_plans:update': FASE });
+  answerSupabase({ 'workouts:select': [], 'training_plans:update': PHASE });
   render(<PhaseDetailsScreen />);
 
-  mockNextDate = '2026-12-15';
-  fireEvent.press(screen.getByLabelText('Término: 01/12/2026'));
-  fireEvent.press(screen.getByText('Confirmar data'));
+  pickDate('Término: 01/12/2026', '2026-12-15');
 
   await waitFor(() =>
     expect(mockSupabaseBuilder.update).toHaveBeenCalledWith({ end_date: '2026-12-15' })
   );
+});
+
+it('a fase se renomeia pelo nome no cabeçalho', async () => {
+  answerSupabase({ 'workouts:select': [], 'training_plans:update': PHASE });
+  render(<PhaseDetailsScreen />);
+
+  fireEvent.press(screen.getByLabelText('Renomear fase Fase 1'));
+  fireEvent.changeText(screen.getByDisplayValue('Fase 1'), 'Semanas 1–4 · Adaptação');
+  fireEvent.press(screen.getByText('Salvar nome'));
+
+  expect(await screen.findByLabelText('Renomear fase Semanas 1–4 · Adaptação')).toBeTruthy();
 });

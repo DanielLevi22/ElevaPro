@@ -4,6 +4,10 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { Vidro } from '@/components/ui/Vidro';
 import { useCores, useEscala } from '@/shared/design';
 import { DatePickerField } from './DatePickerField';
+import { FieldLabel } from './FieldLabel';
+
+/** As duas datas da fase que a tela deixa editar. */
+export type PhaseDateField = keyof Pick<TrainingPlan, 'start_date' | 'end_date'>;
 
 interface PhaseSummaryCardProps {
   phase: TrainingPlan;
@@ -11,10 +15,8 @@ interface PhaseSummaryCardProps {
   split: string;
   isStudentView: boolean;
   onPressSplit: () => void;
-  onChangeDate: (field: 'start_date' | 'end_date', value: string) => void;
+  onChangeDate: (field: PhaseDateField, value: string) => void;
 }
-
-const ROTULO = 'mb-2 text-[0.625rem] font-bold uppercase tracking-widest text-placeholder';
 
 /** O cartão de resumo da fase: a divisão e a janela de datas, as duas editáveis. */
 export function PhaseSummaryCard({
@@ -29,7 +31,7 @@ export function PhaseSummaryCard({
 
   return (
     <Vidro className="p-5">
-      <Text className={ROTULO}>Divisão de treino</Text>
+      <FieldLabel>Divisão de treino</FieldLabel>
       <TouchableOpacity
         disabled={isStudentView}
         onPress={onPressSplit}

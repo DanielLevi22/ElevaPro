@@ -1,4 +1,9 @@
-import { PERIODIZATION_OBJECTIVES, type PeriodizationObjective } from '@elevapro/shared';
+import {
+  knownPeriodizationObjective,
+  PERIODIZATION_OBJECTIVES,
+  type Periodization,
+  type PeriodizationObjective,
+} from '@elevapro/shared';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
@@ -16,6 +21,7 @@ import { Row } from '@/components/ui/Row';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { ROUTES } from '@/navigation/types';
 import { useStudentStore } from '@/students';
+import { EstadoDaTela } from '../components/aluno/EstadoDaTela';
 import { DatePickerField } from '../components/DatePickerField';
 import { useWorkoutStore } from '../store/workoutStore';
 
@@ -26,20 +32,26 @@ interface FormValues {
   endDate: string;
 }
 
-interface Student {
+/** O aluno escolhido no formulário: só o que o seletor e o insert precisam. */
+interface SelectedStudent {
   id: string;
   name: string;
 }
+
+type PeriodizationColumns = Pick<Periodization, 'name' | 'start_date' | 'end_date'> & {
+  objective: PeriodizationObjective;
+};
 
 /**
  * A periodização, criada ou editada — o mesmo formulário do modal do web.
  *
  * Grava só a periodização, `planned`. A fase, a ficha e os exercícios nascem
  * cada um na sua tela, como no web (#387). Sem `periodizationId` cria; com,
- * edita. O aluno vem da rota, ou o especialista escolhe aqui.
+ * edita — e espera a periodização carregar em vez de cair na criação, que
+ * gravaria uma nova no lugar de editar a que o especialista abriu.
  *
- * @example router.push(ROUTES.WORKOUTS.PERIODIZATION_NEW(aluno.id, aluno.full_name))
- * @example router.push(ROUTES.WORKOUTS.PERIODIZATION_EDIT(periodizacao.id))
+ * @example router.push(ROUTES.WORKOUTS.PERIODIZATION_NEW(student.id, student.full_name))
+ * @example router.push(ROUTES.WORKOUTS.PERIODIZATION_EDIT(periodization.id))
  */
 export default function PeriodizationFormScreen() {
   const params = useLocalSearchParams<{
@@ -47,39 +59,64 @@ export default function PeriodizationFormScreen() {
     studentName?: string;
     periodizationId?: string;
   }>();
+  const userId = useAuthStore((s) => s.user?.id ?? null);
+  const { periodizations, fetchPeriodizations } = useWorkoutStore();
+  const editing = periodizations.find((p) => p.id === params.periodizationId) ?? null;
+  const [lookedUp, setLookedUp] = useState(false);
+
+  useEffect(() => {
+    if (!params.periodizationId || editing || !userId) return;
+    fetchPeriodizations(userId).finally(() => setLookedUp(true));
+  }, [params.periodizationId, editing, userId, fetchPeriodizations]);
+
+  if (params.periodizationId && !editing) {
+    return <EstadoDaTela naoEncontrado={lookedUp} mensagem="Periodização não encontrada." />;
+  }
+  return (
+    <PeriodizationForm
+      editing={editing}
+      initialStudent={initialStudent(params.studentId, params.studentName, editing)}
+    />
+  );
+}
+
+function PeriodizationForm({
+  editing,
+  initialStudent: startingStudent,
+}: {
+  editing: Periodization | null;
+  initialStudent: SelectedStudent | null;
+}) {
   const router = useRouter();
   const userId = useAuthStore((s) => s.user?.id ?? null);
-  const { periodizations, createPeriodization, updatePeriodization } = useWorkoutStore();
-  const editing = periodizations.find((p) => p.id === params.periodizationId) ?? null;
-
-  const [student, setStudent] = useState<Student | null>(
-    initialStudent(params.studentId, params.studentName, editing)
-  );
+  const { createPeriodization, updatePeriodization } = useWorkoutStore();
+  const [student, setStudent] = useState(startingStudent);
   const [values, setValues] = useState<FormValues>(() => initialValues(editing));
   const [saving, setSaving] = useState(false);
-  const set = (patch: Partial<FormValues>) => setValues((atual) => ({ ...atual, ...patch }));
+  const set = (patch: Partial<FormValues>) => setValues((current) => ({ ...current, ...patch }));
+
+  async function persist(owner: SelectedStudent, specialistId: string) {
+    if (editing) {
+      await updatePeriodization(editing.id, toColumns(values));
+      router.back();
+      return;
+    }
+    const created = await createPeriodization({
+      specialist_id: specialistId,
+      student_id: owner.id,
+      status: 'planned',
+      ...toColumns(values),
+    });
+    router.replace(ROUTES.WORKOUTS.PERIODIZATION(created.id));
+  }
 
   async function save() {
     const missing = missingField(values, student);
-    if (missing) {
-      showAlert({ title: 'Falta preencher', message: missing, type: 'error' });
-      return;
-    }
+    if (missing) return showAlert({ title: 'Falta preencher', message: missing, type: 'error' });
     if (!student || !userId) return;
     setSaving(true);
     try {
-      if (editing) {
-        await updatePeriodization(editing.id, toColumns(values));
-        router.back();
-      } else {
-        const created = await createPeriodization({
-          specialist_id: userId,
-          student_id: student.id,
-          status: 'planned',
-          ...toColumns(values),
-        });
-        router.replace(ROUTES.WORKOUTS.PERIODIZATION(created.id));
-      }
+      await persist(student, userId);
     } catch {
       showAlert({
         title: 'Erro',
@@ -123,22 +160,35 @@ export default function PeriodizationFormScreen() {
 
       <StudentField student={student} locked={!!editing} onChange={setStudent} />
       <ObjectivePicker value={values.objective} onChange={(objective) => set({ objective })} />
+      <PeriodFields values={values} onChange={set} />
+    </GlassScreen>
+  );
+}
 
+function PeriodFields({
+  values,
+  onChange,
+}: {
+  values: FormValues;
+  onChange: (patch: Partial<FormValues>) => void;
+}) {
+  return (
+    <>
       <TituloDeSecao estilo="rotulo">Período</TituloDeSecao>
       <View className="flex-row gap-3">
         <DatePickerField
           label="Início"
           value={values.startDate || null}
-          onChange={(startDate) => set({ startDate })}
+          onChange={(startDate) => onChange({ startDate })}
         />
         <DatePickerField
           label="Fim"
           value={values.endDate || null}
           minimumDate={values.startDate || null}
-          onChange={(endDate) => set({ endDate })}
+          onChange={(endDate) => onChange({ endDate })}
         />
       </View>
-    </GlassScreen>
+    </>
   );
 }
 
@@ -178,9 +228,9 @@ function StudentField({
   locked,
   onChange,
 }: {
-  student: Student | null;
+  student: SelectedStudent | null;
   locked: boolean;
-  onChange: (student: Student) => void;
+  onChange: (student: SelectedStudent) => void;
 }) {
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const isSpecialist = useAuthStore((s) => s.accountType === 'specialist');
@@ -223,26 +273,24 @@ function StudentField({
 function initialStudent(
   studentId: string | undefined,
   studentName: string | undefined,
-  editing: { student_id: string; student?: { full_name: string | null } } | null
-): Student | null {
+  editing: Periodization | null
+): SelectedStudent | null {
   if (editing) return { id: editing.student_id, name: editing.student?.full_name ?? 'Aluno' };
   return studentId ? { id: studentId, name: studentName ?? 'Aluno' } : null;
 }
 
-function initialValues(
-  editing: { name: string; objective: string | null; start_date: string; end_date: string } | null
-): FormValues {
-  const known = PERIODIZATION_OBJECTIVES.find((o) => o.value === editing?.objective);
+/** Texto livre antigo no objetivo volta ao padrão: o formulário só oferece os 6. */
+function initialValues(editing: Periodization | null): FormValues {
   return {
     name: editing?.name ?? '',
-    objective: known?.value ?? 'hypertrophy',
+    objective: knownPeriodizationObjective(editing?.objective ?? null) ?? 'hypertrophy',
     startDate: editing?.start_date?.slice(0, 10) ?? '',
     endDate: editing?.end_date?.slice(0, 10) ?? '',
   };
 }
 
 /** O que falta, em texto para a pessoa — ou `null` quando dá para salvar. */
-function missingField(values: FormValues, student: Student | null): string | null {
+function missingField(values: FormValues, student: SelectedStudent | null): string | null {
   if (!values.name.trim()) return 'Dê um nome à periodização.';
   if (!student) return 'Escolha o aluno da periodização.';
   if (!values.startDate || !values.endDate) return 'Escolha as datas de início e fim.';
@@ -251,7 +299,7 @@ function missingField(values: FormValues, student: Student | null): string | nul
   return null;
 }
 
-function toColumns(values: FormValues) {
+function toColumns(values: FormValues): PeriodizationColumns {
   return {
     name: values.name.trim(),
     objective: values.objective,

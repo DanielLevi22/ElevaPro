@@ -14,7 +14,8 @@ import { useStudents } from "@/shared/hooks/useStudents";
 
 interface InitialData {
   name: string;
-  objective: PeriodizationObjective;
+  /** `null` quando a periodização antiga guarda texto livre: o formulário volta ao padrão. */
+  objective: PeriodizationObjective | null;
   student_id: string;
   start_date: string;
   end_date: string;

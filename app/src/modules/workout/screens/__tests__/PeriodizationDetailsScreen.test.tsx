@@ -1,10 +1,16 @@
-import { defineAbilitiesFor, type Periodization, type TrainingPlan } from '@elevapro/shared';
+import {
+  addDays,
+  defineAbilitiesFor,
+  localDateOf,
+  type Periodization,
+  type TrainingPlan,
+} from '@elevapro/shared';
 import type { Session } from '@supabase/supabase-js';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { useAuthStore } from '@/auth';
+import { useAppAlertStore } from '@/components/ui/appAlert/store';
 import { ROUTES } from '@/navigation/types';
-import { localDateKey } from '@/services/healthSync';
-import { mockSupabaseBuilder } from '../../../../../jest.setup';
+import { mockSupabase, mockSupabaseBuilder } from '../../../../../jest.setup';
 import { useWorkoutStore } from '../../store/workoutStore';
 import { answerSupabase, resetSupabaseAnswers } from '../__fixtures__/supabaseAnswers';
 import PeriodizationDetailsScreen from '../PeriodizationDetailsScreen';
@@ -15,7 +21,7 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'p1' }),
 }));
 
-const CICLO: Periodization = {
+const CYCLE: Periodization = {
   id: 'p1',
   specialist_id: 'esp-1',
   student_id: 'aluno-1',
@@ -28,7 +34,7 @@ const CICLO: Periodization = {
   updated_at: '2026-10-19T10:00:00Z',
 };
 
-const FASE: TrainingPlan = {
+const PHASE: TrainingPlan = {
   id: 'f1',
   periodization_id: 'p1',
   name: 'Fase 1',
@@ -42,13 +48,15 @@ const FASE: TrainingPlan = {
 beforeEach(() => {
   mockPush.mockClear();
   mockSupabaseBuilder.insert.mockClear();
+  mockSupabaseBuilder.update.mockClear();
+  useAppAlertStore.setState({ current: null, queue: [] });
   useAuthStore.setState({
     accountType: 'specialist',
     user: { id: 'esp-1' } as Session['user'],
     abilities: defineAbilitiesFor({ accountType: 'specialist', services: ['personal_training'] }),
   });
-  useWorkoutStore.setState({ periodizations: [CICLO], currentPeriodizationPhases: [] });
-  answerSupabase({ 'training_plans:select': [], 'training_plans:insert': FASE });
+  useWorkoutStore.setState({ periodizations: [CYCLE], currentPeriodizationPhases: [] });
+  answerSupabase({ 'training_plans:select': [], 'training_plans:insert': PHASE });
 });
 
 afterEach(resetSupabaseAnswers);
@@ -65,12 +73,13 @@ it('"Nova fase" grava a Fase 1 com 30 dias e a mostra na lista, sem sair da tela
   fireEvent.press(await screen.findByText('Nova fase'));
 
   expect(await screen.findByText('Fase 1')).toBeTruthy();
+  const today = localDateOf(new Date());
+  // A tela mostra o nome; datas e ordem só existem no que foi gravado.
   expect(mockSupabaseBuilder.insert).toHaveBeenCalledWith(
     expect.objectContaining({
       periodization_id: 'p1',
-      name: 'Fase 1',
-      start_date: localDateKey(new Date()),
-      end_date: localDateKey(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+      start_date: today,
+      end_date: addDays(today, 30),
       order_index: 0,
       status: 'planned',
     })
@@ -86,4 +95,30 @@ it('"Editar" abre o formulário da periodização', async () => {
   await waitFor(() =>
     expect(mockPush).toHaveBeenCalledWith(ROUTES.WORKOUTS.PERIODIZATION_EDIT('p1'))
   );
+});
+
+it('"Ativar" ativa a periodização, conclui a outra ativa do aluno e não toca nas fases', async () => {
+  const previous: Periodization = { ...CYCLE, id: 'p0', name: 'Ciclo 0', status: 'active' };
+  useWorkoutStore.setState({
+    periodizations: [CYCLE, previous],
+    currentPeriodizationPhases: [PHASE],
+  });
+  answerSupabase({
+    'training_plans:select': [PHASE],
+    'training_periodizations:select': { student_id: 'aluno-1' },
+    'training_periodizations:update': { ...CYCLE, status: 'active' },
+  });
+  render(<PeriodizationDetailsScreen />);
+  fireEvent.press(await screen.findByText('Ativar periodização'));
+  mockSupabase.from.mockClear();
+
+  const confirmation = useAppAlertStore.getState().current;
+  if (confirmation?.kind !== 'confirm') throw new Error(`Esperado confirm, veio ${confirmation}`);
+  await act(async () => confirmation.onConfirm());
+
+  expect(await screen.findByText('Encerrar periodização')).toBeTruthy();
+  // As outras ativas do aluno e as fases não aparecem nesta tela: só o banco diz.
+  expect(mockSupabaseBuilder.update).toHaveBeenCalledWith({ status: 'completed' });
+  expect(mockSupabaseBuilder.update).toHaveBeenCalledWith({ status: 'active' });
+  expect(mockSupabase.from).not.toHaveBeenCalledWith('training_plans');
 });

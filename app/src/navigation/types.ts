@@ -154,6 +154,12 @@ export const ROUTES = {
         pathname: '/(tabs)/students/[id]/workouts/[periodizationId]',
         params: { id: studentId, periodizationId },
       }) as const,
+    /** A fase dessa periodização, ainda na pilha de Alunos. */
+    PHASE: (studentId: string, periodizationId: string, phaseId: string) =>
+      ({
+        pathname: '/(tabs)/students/[id]/workouts/[periodizationId]/phases/[phaseId]',
+        params: { id: studentId, periodizationId, phaseId },
+      }) as const,
     WORKOUT_DETAILS: (
       studentId: string,
       workoutId: string
@@ -200,6 +206,12 @@ export const ROUTES = {
       phaseId: string
     ): `/(tabs)/workouts/periodizations/${string}/phases/${string}` =>
       `/(tabs)/workouts/periodizations/${periodizationId}/phases/${phaseId}`,
+    /** A mesma fase no modo de quem treina, que abre a ficha para executar. */
+    PHASE_EXECUTE: (periodizationId: string, phaseId: string) =>
+      ({
+        pathname: '/(tabs)/workouts/periodizations/[id]/phases/[phaseId]',
+        params: { id: periodizationId, phaseId, mode: 'execute' },
+      }) as const,
     EXECUTE: (id: string): `/(tabs)/workouts/execute/${string}` => `/(tabs)/workouts/execute/${id}`,
     /** "Só tenho 20 min" (#376, F3): a mesma sessão, com os três primeiros exercícios. */
     EXECUTE_SHORT: (id: string) =>

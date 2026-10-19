@@ -5,6 +5,7 @@ import { useAuthStore } from '@/auth';
 import { ROUTES } from '@/navigation/types';
 import { mockSupabase, mockSupabaseBuilder } from '../../../../../jest.setup';
 import { useWorkoutStore } from '../../store/workoutStore';
+import { pickDate } from '../__fixtures__/datePicker';
 import { answerSupabase, resetSupabaseAnswers } from '../__fixtures__/supabaseAnswers';
 import PeriodizationFormScreen from '../PeriodizationFormScreen';
 
@@ -15,17 +16,12 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ replace: mockReplace, back: mockBack, push: jest.fn() }),
   useLocalSearchParams: () => mockParams,
 }));
+jest.mock(
+  '@react-native-community/datetimepicker',
+  () => require('../__fixtures__/datePicker').datePickerModule
+);
 
-// O calendário nativo, trocado por um botão que escolhe a data da vez.
-let mockNextDate = '';
-jest.mock('@react-native-community/datetimepicker', () => {
-  const { Text } = jest.requireActual('react-native');
-  return ({ onChange }: { onChange: (event: object, date: Date) => void }) => (
-    <Text onPress={() => onChange({}, new Date(`${mockNextDate}T12:00:00`))}>Confirmar data</Text>
-  );
-});
-
-const CICLO: Periodization = {
+const CYCLE: Periodization = {
   id: 'p1',
   specialist_id: 'esp-1',
   student_id: 'aluno-1',
@@ -55,16 +51,10 @@ beforeEach(() => {
 
 afterEach(resetSupabaseAnswers);
 
-function pickDate(label: string, date: string) {
-  mockNextDate = date;
-  fireEvent.press(screen.getByLabelText(label));
-  fireEvent.press(screen.getByText('Confirmar data'));
-}
-
 describe('criar periodização', () => {
   beforeEach(() => {
     mockParams = { studentId: 'aluno-1', studentName: 'Ana Souza' };
-    answerSupabase({ 'training_periodizations:insert': { ...CICLO, name: 'Força - Ciclo 1' } });
+    answerSupabase({ 'training_periodizations:insert': { ...CYCLE, name: 'Força - Ciclo 1' } });
   });
 
   it('grava só a periodização, com o objetivo do web, e abre a tela dela', async () => {
@@ -105,22 +95,45 @@ describe('criar periodização', () => {
   });
 });
 
-it('edita nome, objetivo e datas da periodização e volta', async () => {
-  mockParams = { periodizationId: 'p1' };
-  useWorkoutStore.setState({ periodizations: [CICLO] });
-  answerSupabase({ 'training_periodizations:update': { ...CICLO, name: 'Ciclo 2' } });
+describe('editar periodização', () => {
+  beforeEach(() => {
+    mockParams = { periodizationId: 'p1' };
+  });
 
-  render(<PeriodizationFormScreen />);
-  expect(screen.getByDisplayValue('Ciclo 1')).toBeTruthy();
-  fireEvent.changeText(screen.getByDisplayValue('Ciclo 1'), 'Ciclo 2');
-  fireEvent.press(screen.getByText('Emagrecimento'));
-  fireEvent.press(screen.getByText('Salvar'));
+  it('edita nome, objetivo e datas da periodização e volta', async () => {
+    useWorkoutStore.setState({ periodizations: [CYCLE] });
+    answerSupabase({ 'training_periodizations:update': { ...CYCLE, name: 'Ciclo 2' } });
 
-  await waitFor(() => expect(mockBack).toHaveBeenCalled());
-  expect(mockSupabaseBuilder.update).toHaveBeenCalledWith({
-    name: 'Ciclo 2',
-    objective: 'weight_loss',
-    start_date: '2026-11-02',
-    end_date: '2026-12-28',
+    render(<PeriodizationFormScreen />);
+    fireEvent.changeText(screen.getByDisplayValue('Ciclo 1'), 'Ciclo 2');
+    fireEvent.press(screen.getByText('Emagrecimento'));
+    fireEvent.press(screen.getByText('Salvar'));
+
+    await waitFor(() => expect(mockBack).toHaveBeenCalled());
+    expect(mockSupabaseBuilder.update).toHaveBeenCalledWith({
+      name: 'Ciclo 2',
+      objective: 'weight_loss',
+      start_date: '2026-11-02',
+      end_date: '2026-12-28',
+    });
+  });
+
+  it('aberta sem a lista carregada, busca a periodização e edita em vez de criar outra', async () => {
+    answerSupabase({ 'training_periodizations:select': [CYCLE] });
+
+    render(<PeriodizationFormScreen />);
+
+    expect(await screen.findByDisplayValue('Ciclo 1')).toBeTruthy();
+    expect(screen.getByText('Editar periodização')).toBeTruthy();
+    expect(screen.queryByText('Criar periodização')).toBeNull();
+  });
+
+  it('avisa quando a periodização não existe, sem abrir o formulário de criação', async () => {
+    answerSupabase({ 'training_periodizations:select': [] });
+
+    render(<PeriodizationFormScreen />);
+
+    expect(await screen.findByText('Periodização não encontrada.')).toBeTruthy();
+    expect(screen.queryByText('Criar periodização')).toBeNull();
   });
 });

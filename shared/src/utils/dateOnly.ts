@@ -67,6 +67,18 @@ export function localDateOf(instant: Date): string {
 }
 
 /**
+ * A data como instante ao meio-dia local, para calendário e `toLocaleDateString`.
+ *
+ * Meia-noite seria arriscado: `new Date("2026-08-01")` é meia-noite UTC e
+ * mostra 31/07 no Brasil. Ao meio-dia, nenhum fuso do país muda o dia.
+ *
+ * @example localNoonOf("2026-08-01").toLocaleDateString("pt-BR") // "01/08/2026"
+ */
+export function localNoonOf(date: string): Date {
+  return new Date(`${date.slice(0, 10)}T12:00:00`);
+}
+
+/**
  * Os itens dos `length` dias terminando em `end`, inclusive.
  *
  * @example withinDays(days, "2026-09-15", 30) // de 17/08 a 15/09

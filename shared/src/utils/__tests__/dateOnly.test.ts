@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   addDays,
   daysBetween,
+  localNoonOf,
   shortMonthOf,
   weekdayFromMonday,
   weekdayOf,
@@ -31,5 +32,17 @@ describe("dateOnly", () => {
       "2026-09-15",
       "2026-09-13",
     ]);
+  });
+
+  it("lê a data ao meio-dia local, sem voltar um dia em fuso negativo", () => {
+    const noon = localNoonOf("2026-08-01");
+
+    expect([noon.getFullYear(), noon.getMonth(), noon.getDate(), noon.getHours()]).toEqual([
+      2026, 7, 1, 12,
+    ]);
+  });
+
+  it("ignora a hora quando recebe um timestamp", () => {
+    expect(localNoonOf("2026-08-01T03:00:00Z").getDate()).toBe(1);
   });
 });

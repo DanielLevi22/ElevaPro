@@ -1,5 +1,7 @@
+import type { TrainingStatus } from '@elevapro/shared';
 import { useCallback, useState } from 'react';
 import { showAlert, showConfirm } from '@/components/ui/appAlert';
+import { statusLabel } from '@/components/ui/StatusBadge';
 import { useWorkoutStore } from '../store/workoutStore';
 
 type Phase = ReturnType<typeof useWorkoutStore.getState>['currentPeriodizationPhases'][0];
@@ -13,8 +15,6 @@ interface UsePhaseSplitFlowParams {
   fetchWorkoutsForPhase: StoreState['fetchWorkoutsForPhase'];
   updateTrainingPlan: StoreState['updateTrainingPlan'];
 }
-
-const STATUS_LABEL = { planned: 'Planejado', active: 'Ativo', completed: 'Concluído' } as const;
 
 /**
  * Divisão de treino e status da fase — o mesmo comportamento do web.
@@ -86,14 +86,14 @@ export function usePhaseSplitFlow({
   );
 
   const handleUpdateStatus = useCallback(
-    async (newStatus: keyof typeof STATUS_LABEL) => {
+    async (newStatus: TrainingStatus) => {
       if (!phase) return;
       try {
         await updateTrainingPlan(phase.id, { status: newStatus });
         setShowStatusModalMenu(false);
         showAlert({
           title: 'Status alterado',
-          message: `A fase agora está ${STATUS_LABEL[newStatus]}.`,
+          message: `A fase agora está ${statusLabel(newStatus)}.`,
           type: 'success',
         });
       } catch {

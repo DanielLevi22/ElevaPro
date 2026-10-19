@@ -1,4 +1,4 @@
-import { periodizationObjectiveLabel } from '@elevapro/shared';
+import { addDays, localDateOf, localNoonOf, periodizationObjectiveLabel } from '@elevapro/shared';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Text, View } from 'react-native';
@@ -12,19 +12,17 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { ROUTES } from '@/navigation/types';
-import { localDateKey } from '@/services/healthSync';
 import { fotoDoObjetivo } from '@/shared/imagens/fotosDeTreino';
 import { EstadoDaTela } from '../components/aluno/EstadoDaTela';
 import { PhaseTimelineCard } from '../components/PhaseTimelineCard';
 import { useWorkoutStore } from '../store/workoutStore';
 
-function dataCurta(data: string | null): string {
-  if (!data) return '—';
-  // Meio-dia: `new Date('2026-08-01')` é meia-noite UTC e volta um dia no Brasil.
-  return new Date(`${data.slice(0, 10)}T12:00:00`).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-  });
+/** Quanto dura a fase recém-criada, como no web. */
+const NEW_PHASE_DAYS = 30;
+
+function shortDate(date: string | null): string {
+  if (!date) return '—';
+  return localNoonOf(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 }
 
 /**
@@ -69,7 +67,7 @@ export default function PeriodizationDetailsScreen() {
     if (periodizationId) fetchPeriodizationPhases(periodizationId);
   }, [periodizationId, fetchPeriodizationPhases]);
 
-  function ativar() {
+  function activate() {
     if (!periodization) return;
     showConfirm({
       title: 'Ativar periodização',
@@ -90,7 +88,7 @@ export default function PeriodizationDetailsScreen() {
     });
   }
 
-  function encerrar() {
+  function complete() {
     if (!periodization) return;
     showConfirm({
       title: 'Encerrar periodização',
@@ -112,14 +110,15 @@ export default function PeriodizationDetailsScreen() {
   }
 
   /** Como o "Nova Fase" do web: grava na hora e a fase aparece na lista. */
-  async function adicionarFase() {
+  async function addPhase() {
     if (!periodization) return;
+    const today = localDateOf(new Date());
     try {
       await createTrainingPlan({
         periodization_id: periodization.id,
         name: `Fase ${currentPeriodizationPhases.length + 1}`,
-        start_date: hojeMais(0),
-        end_date: hojeMais(30),
+        start_date: today,
+        end_date: addDays(today, NEW_PHASE_DAYS),
         status: 'planned',
         order_index: currentPeriodizationPhases.length,
       });
@@ -128,26 +127,27 @@ export default function PeriodizationDetailsScreen() {
     }
   }
 
-  function abrirFase(faseId: string) {
-    const targetStudentId = params.id || periodization?.student_id;
-    if (params.id && params.periodizationId) {
-      router.push(
-        `/(tabs)/students/${targetStudentId}/workouts/${periodizationId}/phases/${faseId}` as never
-      );
+  function openPhase(phaseId: string) {
+    if (!periodizationId) return;
+    // Pela pilha de Alunos, `id` é o aluno e `periodizationId` vem à parte.
+    const studentId = Array.isArray(params.id) ? params.id[0] : params.id;
+    if (studentId && params.periodizationId) {
+      router.push(ROUTES.STUDENTS.PHASE(studentId, periodizationId, phaseId));
       return;
     }
-    router.push({
-      pathname: `/(tabs)/workouts/periodizations/${periodizationId}/phases/${faseId}` as never,
-      params: mode === 'execute' ? { mode: 'execute' } : {},
-    });
+    router.push(
+      mode === 'execute'
+        ? ROUTES.WORKOUTS.PHASE_EXECUTE(periodizationId, phaseId)
+        : ROUTES.WORKOUTS.PHASE(periodizationId, phaseId)
+    );
   }
 
   if (!periodization) {
     return <EstadoDaTela naoEncontrado={!isLoading} mensagem="Periodização não encontrada." />;
   }
 
-  const fasesVisiveis = currentPeriodizationPhases.filter(
-    (fase) => !isStudentView || fase.status === 'active' || fase.status === 'planned'
+  const visiblePhases = currentPeriodizationPhases.filter(
+    (phase) => !isStudentView || phase.status === 'active' || phase.status === 'planned'
   );
 
   return (
@@ -176,14 +176,14 @@ export default function PeriodizationDetailsScreen() {
             'Transforme seu corpo com este planejamento exclusivo.'}
         </Text>
         <View className="mt-3 flex-row gap-1.5">
-          <Chip icone="calendar-outline">{dataCurta(periodization.start_date)}</Chip>
-          <Chip icone="flag-outline">{dataCurta(periodization.end_date)}</Chip>
+          <Chip icone="calendar-outline">{shortDate(periodization.start_date)}</Chip>
+          <Chip icone="flag-outline">{shortDate(periodization.end_date)}</Chip>
         </View>
       </View>
 
       {!isStudentView && periodization.status === 'planned' ? (
         <View className="mt-4">
-          <BotaoDeDestaque rotulo="Ativar periodização" icone="play" onPress={ativar} />
+          <BotaoDeDestaque rotulo="Ativar periodização" icone="play" onPress={activate} />
         </View>
       ) : null}
       {!isStudentView && periodization.status === 'active' ? (
@@ -192,32 +192,32 @@ export default function PeriodizationDetailsScreen() {
             rotulo="Encerrar periodização"
             icone="stop"
             tom="perigo"
-            onPress={encerrar}
+            onPress={complete}
           />
         </View>
       ) : null}
 
       <TituloDeSecao estilo="rotulo">Fases do treinamento</TituloDeSecao>
-      {fasesVisiveis.map((fase, index) => (
+      {visiblePhases.map((phase, index) => (
         <PhaseTimelineCard
-          key={fase.id}
-          phase={fase}
+          key={phase.id}
+          phase={phase}
           index={index}
-          isLast={index === fasesVisiveis.length - 1}
-          onPress={() => abrirFase(fase.id)}
+          isLast={index === visiblePhases.length - 1}
+          onPress={() => openPhase(phase.id)}
         />
       ))}
 
-      {!isStudentView && fasesVisiveis.length === 0 ? <PrimeiraFase /> : null}
+      {!isStudentView && visiblePhases.length === 0 ? <FirstPhaseHint /> : null}
       {!isStudentView ? (
-        <Row icon="add-circle-outline" title="Nova fase" onPress={adicionarFase} />
+        <Row icon="add-circle-outline" title="Nova fase" onPress={addPhase} />
       ) : null}
     </TelaDeVidroComFoto>
   );
 }
 
 /** O vazio do web: o que é uma fase, antes de criar a primeira. */
-function PrimeiraFase() {
+function FirstPhaseHint() {
   return (
     <View className="mb-3 items-center py-6">
       <Text className="text-[0.95rem] font-bold text-foreground">Adicione a primeira fase</Text>
@@ -229,9 +229,4 @@ function PrimeiraFase() {
       </Text>
     </View>
   );
-}
-
-/** `YYYY-MM-DD` de hoje mais `dias`, no fuso do aparelho. */
-function hojeMais(dias: number): string {
-  return localDateKey(new Date(Date.now() + dias * 24 * 60 * 60 * 1000));
 }

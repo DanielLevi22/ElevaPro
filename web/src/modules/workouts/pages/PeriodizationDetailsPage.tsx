@@ -1,8 +1,8 @@
 "use client";
 
 import {
+  knownPeriodizationObjective,
   type Periodization,
-  type PeriodizationObjective,
   periodizationObjectiveLabel,
   type TrainingPlan,
 } from "@elevapro/shared";
@@ -254,7 +254,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
         periodizationId={periodizationId}
         initialData={{
           name: periodization.name,
-          objective: periodization.objective as PeriodizationObjective,
+          objective: knownPeriodizationObjective(periodization.objective),
           student_id: periodization.student_id,
           start_date: periodization.start_date ?? "",
           end_date: periodization.end_date ?? "",

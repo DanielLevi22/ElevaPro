@@ -1,3 +1,4 @@
+import { workoutSplitOf } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -14,9 +15,10 @@ import { useCores, useEscala } from '@/shared/design';
 import { EstadoDaTela } from '../components/aluno/EstadoDaTela';
 import { type NewWorkoutInput, NewWorkoutModal } from '../components/NewWorkoutModal';
 import { PhaseLibraryModal } from '../components/PhaseLibraryModal';
+import { PhaseNameSheet } from '../components/PhaseNameSheet';
 import { PhaseSplitModal } from '../components/PhaseSplitModal';
 import { PhaseStatusModal } from '../components/PhaseStatusModal';
-import { PhaseSummaryCard } from '../components/PhaseSummaryCard';
+import { type PhaseDateField, PhaseSummaryCard } from '../components/PhaseSummaryCard';
 import { SuggestedWorkoutCard } from '../components/SuggestedWorkoutCard';
 import { WorkoutListItem } from '../components/WorkoutListItem';
 import { usePhaseSplitFlow } from '../hooks/usePhaseSplitFlow';
@@ -67,6 +69,9 @@ export default function PhaseDetailsScreen() {
   const [creatingWorkout, setCreatingWorkout] = useState(false);
   const [librarySearch, setLibrarySearch] = useState('');
   const [selectedLibraryMuscle, setSelectedLibraryMuscle] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState(false);
+  const [savingName, setSavingName] = useState(false);
+  const split = useMemo(() => workoutSplitOf(workouts), [workouts]);
 
   const splitFlow = usePhaseSplitFlow({
     phase,
@@ -170,12 +175,28 @@ export default function PhaseDetailsScreen() {
   );
 
   const handleChangeDate = useCallback(
-    async (field: 'start_date' | 'end_date', value: string) => {
+    async (field: PhaseDateField, value: string) => {
       if (!phase) return;
       try {
         await updateTrainingPlan(phase.id, { [field]: value });
       } catch {
         showAlert({ title: 'Erro', message: 'Não foi possível alterar a data.', type: 'error' });
+      }
+    },
+    [phase, updateTrainingPlan]
+  );
+
+  const handleRename = useCallback(
+    async (name: string) => {
+      if (!phase) return;
+      setSavingName(true);
+      try {
+        await updateTrainingPlan(phase.id, { name });
+        setRenaming(false);
+      } catch {
+        showAlert({ title: 'Erro', message: 'Não foi possível renomear a fase.', type: 'error' });
+      } finally {
+        setSavingName(false);
       }
     },
     [phase, updateTrainingPlan]
@@ -193,7 +214,10 @@ export default function PhaseDetailsScreen() {
         <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={router.back} />
 
         <View className="items-center">
-          <Text className="text-[1.1875rem] font-bold tracking-tight text-hero">{phase.name}</Text>
+          <PhaseTitle
+            name={phase.name}
+            onRename={isStudentView ? undefined : () => setRenaming(true)}
+          />
           <View className="mt-1">
             <StatusBadge status={phase.status} />
           </View>
@@ -223,7 +247,7 @@ export default function PhaseDetailsScreen() {
       <View className="mt-4">
         <PhaseSummaryCard
           phase={phase}
-          split={splitOf(workouts)}
+          split={split}
           isStudentView={isStudentView}
           onPressSplit={() => splitFlow.setShowSplitModal(true)}
           onChangeDate={handleChangeDate}
@@ -295,7 +319,7 @@ export default function PhaseDetailsScreen() {
         isGenerating={splitFlow.isGenerating}
         customSplit={splitFlow.customSplit}
         onChangeCustomSplit={splitFlow.setCustomSplit}
-        currentSplit={splitOf(workouts)}
+        currentSplit={split}
         splits={SPLITS}
         onClose={() => {
           splitFlow.setShowSplitModal(false);
@@ -303,6 +327,15 @@ export default function PhaseDetailsScreen() {
         }}
         onSelectSplit={splitFlow.handleSelectSplit}
       />
+
+      {renaming ? (
+        <PhaseNameSheet
+          currentName={phase.name}
+          saving={savingName}
+          onClose={() => setRenaming(false)}
+          onSave={handleRename}
+        />
+      ) : null}
 
       {showNewWorkout ? (
         <NewWorkoutModal
@@ -334,14 +367,23 @@ export default function PhaseDetailsScreen() {
   );
 }
 
-/**
- * A divisão da fase pelas fichas que ela tem: "Treino A", "Treino B" → "AB".
- *
- * Tira o "Treino " antes da letra. O web lê a primeira letra do título e
- * mostra "TT" para as mesmas duas fichas.
- */
-function splitOf(workouts: { title: string }[]): string {
-  return workouts.map((w) => w.title.replace(/^treino\s+/i, '').charAt(0)).join('');
+/** O nome da fase no cabeçalho; quem gerencia toca nele para renomear. */
+function PhaseTitle({ name, onRename }: { name: string; onRename?: () => void }) {
+  const cores = useCores();
+  const escalar = useEscala();
+  const title = <Text className="text-[1.1875rem] font-bold tracking-tight text-hero">{name}</Text>;
+  if (!onRename) return title;
+  return (
+    <TouchableOpacity
+      onPress={onRename}
+      accessibilityRole="button"
+      accessibilityLabel={`Renomear fase ${name}`}
+      className="flex-row items-center gap-1.5"
+    >
+      {title}
+      <Ionicons name="pencil" size={escalar(13)} color={cores.mutedForeground} />
+    </TouchableOpacity>
+  );
 }
 
 function BotaoDeIconePlano({
