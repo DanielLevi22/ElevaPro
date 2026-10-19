@@ -238,7 +238,7 @@
 - [ ] `candidate-4200c75582335830` — Bowl: Kefir de leite + Uva + Avelã
 - [ ] `candidate-4247a198d4bcdf6b` — Bowl: Iogurte natural desnatado + Banana prata + Gergelim
 - [ ] `candidate-425f10c7e0765f57` — Bowl: Iogurte natural desnatado + Mirtilo + Semente de abóbora
-- [ ] `candidate-426bb937b2448e71` — Bowl: Iogurte natural desnatado + Pera + Linhaça
+- [x] `candidate-426bb937b2448e71` — Bowl: Iogurte natural desnatado + Pera + Linhaça
 - [x] `candidate-42a4b2734c1fc818` — Bowl: Iogurte natural desnatado + Goiaba + Castanha de caju
 - [ ] `candidate-42b182fdc0212f30` — Bowl: Kefir de leite + Banana nanica + Gergelim
 - [ ] `candidate-42eae8374e44ed08` — Bowl: Iogurte natural desnatado + Uva passa + Pasta de amendoim

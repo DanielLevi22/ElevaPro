@@ -160,7 +160,7 @@
 - [ ] `candidate-4bfbd17d416b6677` — Prato: Cuscuz de milho + Bacalhau dessalgado cozido + Tomate
 - [ ] `candidate-4c0bd4f0e0ec5122` — Prato: Cuscuz de milho + Seitan + Agrião
 - [ ] `candidate-4c14696390f4022c` — Prato: Cará cozido + Bacalhau dessalgado cozido + Pimentão verde
-- [ ] `candidate-4c14f920a598fc53` — Prato: Arroz branco cozido + Carne suína (lombo assado) + Pimentão verde
+- [x] `candidate-4c14f920a598fc53` — Prato: Arroz branco cozido + Carne suína (lombo assado) + Pimentão verde
 - [ ] `candidate-4c1fe34394654a26` — Prato: Batata inglesa cozida + Proteína de soja texturizada + Brócolis cozido
 - [ ] `candidate-4c222cb70357e38b` — Prato: Batata inglesa cozida + Ovo de codorna cozido + Brócolis cozido
 - [ ] `candidate-4c296f5ace71058f` — Prato: Arroz sete grãos cozido + Sardinha (lata, drenada) + Quiabo cozido
@@ -181,7 +181,7 @@
 - [ ] `candidate-4c6fa9ce9222ed67` — Prato: Macarrão cozido + Pescada grelhada + Cogumelo champignon
 - [ ] `candidate-4c7069e5babae97e` — Prato: Cuscuz marroquino cozido + Fígado bovino grelhado + Espinafre
 - [ ] `candidate-4c7700e7135c0378` — Prato: Macarrão cozido + Bacalhau dessalgado cozido + Palmito em conserva
-- [ ] `candidate-4c7892630daae3cf` — Prato: Arroz branco cozido + Frango (sobrecoxa assada) + Rúcula
+- [x] `candidate-4c7892630daae3cf` — Prato: Arroz branco cozido + Frango (sobrecoxa assada) + Rúcula
 - [ ] `candidate-4c7a146433222430` — Prato: Arroz integral cozido + Fígado bovino grelhado + Brócolis cozido
 - [ ] `candidate-4c7b1dd8b9e1e19b` — Prato: Batata inglesa cozida + Bacalhau dessalgado cozido + Repolho cru
 - [ ] `candidate-4c855e07c938fa90` — Prato: Biscoito de arroz + Bacalhau dessalgado cozido + Couve-flor cozida

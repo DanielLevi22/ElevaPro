@@ -200,7 +200,7 @@
 - [x] `candidate-4255567bf8fbf979` — Prato: Arroz parboilizado cozido + Carne bovina (patinho) + Abóbora cabotiá cozida
 - [ ] `candidate-425a46c14a653fe4` — Prato: Cuscuz de milho + Tofu + Berinjela cozida
 - [ ] `candidate-425a5709e55dea07` — Prato: Arroz sete grãos cozido + Salmão grelhado + Tomate
-- [ ] `candidate-4260d7fbcae78c06` — Prato: Macarrão integral cozido + Frango desfiado cozido + Abóbora cabotiá cozida
+- [x] `candidate-4260d7fbcae78c06` — Prato: Macarrão integral cozido + Frango desfiado cozido + Abóbora cabotiá cozida
 - [ ] `candidate-4261a8df6799ee92` — Prato: Cuscuz marroquino cozido + Clara de ovo + Couve refogada
 - [ ] `candidate-4268f76ebe9ffdae` — Prato: Biscoito de arroz + Clara de ovo + Berinjela cozida
 - [ ] `candidate-426bf5dc82e2263e` — Prato: Batata doce cozida + Atum fresco grelhado + Pimentão vermelho
