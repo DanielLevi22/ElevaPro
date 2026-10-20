@@ -1,6 +1,6 @@
 import { createTotpProtocol, type TotpPort } from '@elevapro/shared';
-import { hmac } from '@noble/hashes/hmac';
-import { sha1 } from '@noble/hashes/legacy';
+import { hmac } from '@noble/hashes/hmac.js';
+import { sha1 } from '@noble/hashes/legacy.js';
 
 /**
  * O autenticador confirmado sozinho no ambiente local (#355).

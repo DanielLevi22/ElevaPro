@@ -15,9 +15,11 @@ renderer do React Native.
 
 | Pacote | Ignora | Por quê |
 |---|---|---|
-| `react-native`, `react-native-*`, `@react-native/*` | minor e major | No 0.x o minor quebra, e a linha da lib é a do SDK |
+| `react-native` | tudo | O SDK fixa a versão exata |
+| `react-native-*`, `@react-native/*` | minor e major | No 0.x o minor quebra, e a linha da lib é a do SDK |
 | `expo`, `expo-*`, `@expo/*`, `jest-expo` | major | O major é o número do SDK |
-| `react`, `react-dom`, `@types/react` | minor e major | Tem de bater com o renderer do React Native |
+| `react`, `react-dom` | tudo | Versão exata do SDK, e os dois iguais entre si e ao renderer do RN (o #412 subiu só o `react-dom`) |
+| `@types/react` | minor e major | Acompanha o `react` |
 | `jest`, `@types/jest`, `@testing-library/*`, `test-renderer` | major (`test-renderer`: minor também) | O SDK escolhe: o 58 pede Jest 30 e RNTL 14 |
 | `tailwindcss` | major | NativeWind 4 só roda com Tailwind 3 |
 | `@biomejs/biome` (raiz e app) | tudo | Versão do linter é decisão do projeto e sobe nos três `package.json` juntos |

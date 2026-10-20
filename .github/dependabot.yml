@@ -39,17 +39,15 @@ updates:
           - "@types/jest"
           - "@testing-library/*"
     ignore:
-      # O React do app é o que o SDK do Expo fixa, e tem de bater com o renderer do
-      # React Native: o #405 subiu o `react` sem o `react-dom`. Chega com o SDK
+      # O React do app é o que o SDK do Expo fixa, em versão exata, e tem de bater
+      # com o renderer do React Native: o #405 subiu o `react` sem o `react-dom`, e
+      # o #412 o `react-dom` sem o `react`. Chega com o SDK, até no patch
       - dependency-name: "react"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "react-dom"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "@types/react"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
-      # No 0.x o minor é que quebra, e a versão do RN é amarrada ao SDK do Expo
+      # O SDK do Expo fixa o RN em versão exata (0.88.0 no 58)
       - dependency-name: "react-native"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
       # As libs nativas também seguem o SDK: o #400 trouxe reanimated, worklets e
       # screens do SDK 58 com o app no 57, e majors como o gesture-handler 3.
       # Minor e major delas chegam com o SDK; aqui passa só patch (#402)
