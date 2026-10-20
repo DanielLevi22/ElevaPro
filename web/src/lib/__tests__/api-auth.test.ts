@@ -133,43 +133,67 @@ describe("authorizeSpecialist", () => {
   });
 });
 
-describe("authorizeMfaSpecialist", () => {
-  // Art. 46: senha válida não basta para uma conta que acessa dados de alunos.
-  it("recusa especialista em aal1", async () => {
+describe("authorizeMfaPrivilegedUser — especialista", () => {
+  // ADR-0047: o especialista entra por senha. O que limita o alcance dele é o
+  // vínculo ativo, conferido em `authorizeLinkedSpecialist` e na RLS.
+  it("aceita especialista em aal1 por senha", async () => {
+    authGetClaims.mockResolvedValue({
+      data: { claims: { sub: "user-1", aal: "aal1", amr: [{ method: "password" }] } },
+      error: null,
+    });
+
+    const auth = await authorizeMfaSpecialist(requestWith(VALID));
+
+    expect(auth.ok, "ESPECIALISTA BARRADO: segundo fator voltou a ser exigido no BFF").toBe(true);
+  });
+
+  it("aceita especialista sem consultar fator quando a consulta falharia", async () => {
+    authGetClaims.mockResolvedValue({
+      data: { claims: { sub: "user-1", aal: "aal1", amr: [{ method: "passkey" }] } },
+      error: null,
+    });
+    listMfaFactors.mockResolvedValue({ data: null, error: new Error("indisponível") });
+
+    const auth = await authorizeSpecialist(requestWith(VALID));
+
+    expect(auth.ok).toBe(true);
+  });
+});
+
+describe("authorizeMfaPrivilegedUser — admin", () => {
+  beforeEach(() => {
+    profileRow = { account_type: "admin" };
+  });
+
+  // Art. 46: o admin alcança todas as contas; senha válida não basta (ADR-0047).
+  it("recusa admin em aal1", async () => {
     authGetClaims.mockResolvedValue({
       data: { claims: { sub: "user-1", aal: "aal1" } },
       error: null,
     });
 
-    const auth = await authorizeMfaSpecialist(requestWith(VALID));
+    const auth = await authorizeMfaPrivilegedUser(requestWith(VALID));
 
-    expect(auth.ok).toBe(false);
+    expect(auth.ok, "ADMIN SEM SEGUNDO FATOR: senha sozinha abriu acesso privilegiado").toBe(false);
     if (!auth.ok) expect(await auth.response.json()).toEqual({ error: "mfa_required" });
   });
 
-  it("aceita especialista em aal2", async () => {
-    authGetClaims.mockResolvedValue({
-      data: { claims: { sub: "user-1", aal: "aal2" } },
-      error: null,
-    });
-
-    const auth = await authorizeMfaSpecialist(requestWith(VALID));
+  it("aceita admin em aal2", async () => {
+    const auth = await authorizeMfaPrivilegedUser(requestWith(VALID));
 
     expect(auth.ok).toBe(true);
   });
 
   // Art. 46: só a prova emitida pelo Auth pode substituir o código TOTP.
-  it("aceita especialista autenticado por Passkey no JWT verificado", async () => {
+  it("aceita admin autenticado por Passkey no JWT verificado", async () => {
     authGetClaims.mockResolvedValue({
       data: { claims: { sub: "user-1", aal: "aal1", amr: [{ method: "passkey" }] } },
       error: null,
     });
 
-    const auth = await authorizeMfaSpecialist(requestWith(VALID));
+    const auth = await authorizeMfaPrivilegedUser(requestWith(VALID));
 
-    expect(auth.ok, "PASSKEY VÁLIDA BLOQUEADA: especialista perde acesso aos próprios alunos").toBe(
-      true,
-    );
+    expect(auth.ok, "PASSKEY VÁLIDA BLOQUEADA: admin perde o acesso").toBe(true);
   });
 
   it("nega Passkey cadastrada sem fator TOTP verificado", async () => {
@@ -178,7 +202,7 @@ describe("authorizeMfaSpecialist", () => {
       error: null,
     });
     listMfaFactors.mockResolvedValue({ data: { factors: [] }, error: null });
-    const auth = await authorizeMfaSpecialist(requestWith(VALID));
+    const auth = await authorizeMfaPrivilegedUser(requestWith(VALID));
     expect(auth.ok).toBe(false);
     if (!auth.ok) expect(auth.response.status).toBe(403);
   });
@@ -189,7 +213,7 @@ describe("authorizeMfaSpecialist", () => {
       error: null,
     });
     listMfaFactors.mockResolvedValue({ data: null, error: new Error("indisponível") });
-    const auth = await authorizeMfaSpecialist(requestWith(VALID));
+    const auth = await authorizeMfaPrivilegedUser(requestWith(VALID));
     expect(auth.ok).toBe(false);
     if (!auth.ok) expect(auth.response.status).toBe(503);
   });
@@ -201,42 +225,17 @@ describe("authorizeMfaSpecialist", () => {
     [{ method: "password" }],
     [{ method: "Passkey" }],
     ["passkey"],
-  ])("nega especialista em aal1 sem prova Passkey válida: %j", async (amr) => {
+  ])("nega admin em aal1 sem prova Passkey válida: %j", async (amr) => {
     authGetClaims.mockResolvedValue({
       data: { claims: { sub: "user-1", aal: "aal1", amr } },
       error: null,
     });
 
-    const auth = await authorizeMfaSpecialist(requestWith(VALID));
-
-    expect(auth.ok, "ACESSO SENSÍVEL LIBERADO: senha/claim inválido passou pelo BFF").toBe(false);
-  });
-});
-
-describe("authorizeMfaPrivilegedUser", () => {
-  it("recusa admin em aal1", async () => {
-    profileRow = { account_type: "admin" };
-    authGetClaims.mockResolvedValue({
-      data: { claims: { sub: "user-1", aal: "aal1" } },
-      error: null,
-    });
-
     const auth = await authorizeMfaPrivilegedUser(requestWith(VALID));
 
-    expect(auth.ok).toBe(false);
-    if (!auth.ok) expect(await auth.response.json()).toEqual({ error: "mfa_required" });
-  });
-
-  it("faz a guarda de especialista exigir aal2", async () => {
-    authGetClaims.mockResolvedValue({
-      data: { claims: { sub: "user-1", aal: "aal1" } },
-      error: null,
-    });
-
-    const auth = await authorizeSpecialist(requestWith(VALID));
-
-    expect(auth.ok).toBe(false);
-    if (!auth.ok) expect(await auth.response.json()).toEqual({ error: "mfa_required" });
+    expect(auth.ok, "ACESSO PRIVILEGIADO LIBERADO: senha/claim inválido passou pelo BFF").toBe(
+      false,
+    );
   });
 });
 

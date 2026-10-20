@@ -1,4 +1,9 @@
-import { type AccountType, createHealthService, hasPrivilegedSessionProof } from "@elevapro/shared";
+import {
+  type AccountType,
+  createHealthService,
+  hasPrivilegedSessionProof,
+  isStrongAuthRequired,
+} from "@elevapro/shared";
 import { createClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "./supabase-admin";
@@ -94,11 +99,7 @@ export async function authorizeUser(request: NextRequest): Promise<AuthResult> {
 
   const accountType = profile.account_type as AccountType;
   let hasPrivilegedProof = hasPrivilegedSessionProof(claims ?? null);
-  if (
-    hasPrivilegedProof &&
-    claims?.aal !== "aal2" &&
-    (accountType === "specialist" || accountType === "admin")
-  ) {
+  if (hasPrivilegedProof && claims?.aal !== "aal2" && isStrongAuthRequired(accountType)) {
     const { data, error } = await supabaseAdmin.auth.admin.mfa.listFactors({ userId });
     if (error || !data) return deny(503, "Verificação de segurança indisponível.");
     hasPrivilegedProof = data.factors.some(
@@ -116,14 +117,19 @@ export async function authorizeUser(request: NextRequest): Promise<AuthResult> {
   };
 }
 
-/** Conta privilegiada com MFA legado ou Passkey provada no JWT assinado. */
+/**
+ * Conta privilegiada; o admin ainda prova MFA ou Passkey no JWT assinado.
+ * O especialista entra por senha (ADR-0047), e o vínculo limita o alcance dele.
+ */
 export async function authorizeMfaPrivilegedUser(request: NextRequest): Promise<AuthResult> {
   const auth = await authorizeUser(request);
   if (!auth.ok) return auth;
   if (auth.caller.accountType !== "specialist" && auth.caller.accountType !== "admin") {
     return deny(403, "Apenas contas privilegiadas.");
   }
-  if (!auth.caller.hasPrivilegedProof) return deny(403, "mfa_required");
+  if (isStrongAuthRequired(auth.caller.accountType) && !auth.caller.hasPrivilegedProof) {
+    return deny(403, "mfa_required");
+  }
   return auth;
 }
 

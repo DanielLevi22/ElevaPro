@@ -1,5 +1,6 @@
 "use client";
 
+import { isStrongAuthRequired } from "@elevapro/shared";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
@@ -42,7 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       return;
     }
 
-    if (accountType === "specialist" || accountType === "admin") {
+    if (isStrongAuthRequired(accountType)) {
       let cancelled = false;
       void hasCurrentPrivilegedProof()
         .then((hasMfa) => {
@@ -62,9 +63,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       };
     }
 
-    if (accountType === "student" || accountType === "member") {
-      setVerifiedAccess({ accessToken, userId, accountType });
-    }
+    if (accountType) setVerifiedAccess({ accessToken, userId, accountType });
   }, [userId, accessToken, isLoading, router, accountType]);
 
   useEffect(() => {

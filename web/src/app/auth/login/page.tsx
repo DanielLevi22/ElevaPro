@@ -1,5 +1,6 @@
 "use client";
 
+import { isStrongAuthRequired, userFacingAuthError } from "@elevapro/shared";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -27,10 +28,7 @@ export default function LoginPage() {
     let current = true;
 
     const redirectRestoredSession = async () => {
-      if (
-        (accountType === "admin" || accountType === "specialist") &&
-        !(await hasCurrentPrivilegedProof())
-      ) {
+      if (isStrongAuthRequired(accountType) && !(await hasCurrentPrivilegedProof())) {
         if (current) router.replace("/auth/mfa");
         return;
       }
@@ -61,11 +59,11 @@ export default function LoginPage() {
       const result = await useAuthStore.getState().signIn(email, password);
 
       if (!result.success) {
-        if (result.error === "account_suspended") {
+        if (result.error === "account_inactive" || result.error === "account_suspended") {
           setError("Sua conta foi suspensa ou rejeitada. Entre em contato com o suporte.");
           return;
         }
-        setError(result.error || "Erro ao fazer login");
+        setError(userFacingAuthError(result.error));
         return;
       }
 
@@ -88,10 +86,7 @@ export default function LoginPage() {
         return;
       }
 
-      if (
-        (accountType === "admin" || accountType === "specialist") &&
-        !(await hasCurrentPrivilegedProof())
-      ) {
+      if (isStrongAuthRequired(accountType) && !(await hasCurrentPrivilegedProof())) {
         router.replace("/auth/mfa");
         return;
       }

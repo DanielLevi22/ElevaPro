@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  isStrongAuthRequired,
   PASSWORD_MIN_LENGTH,
   PASSWORD_REQUIREMENTS_HINT,
   type RegistrationCredentials,
@@ -100,7 +101,7 @@ function RegisterForm() {
         });
       });
 
-      if (role === "specialist" && !(await hasCurrentPrivilegedProof())) {
+      if (isStrongAuthRequired(role) && !(await hasCurrentPrivilegedProof())) {
         router.replace("/auth/mfa");
         return;
       }

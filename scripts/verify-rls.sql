@@ -572,9 +572,9 @@ DECLARE
   aluno_a  uuid := gen_random_uuid();
   aluno_b  uuid := gen_random_uuid();
   espec    uuid := gen_random_uuid();
-  espec_sem_fator uuid := gen_random_uuid();
+  adm      uuid := gen_random_uuid();
+  adm_sem_fator uuid := gen_random_uuid();
   visiveis int;
-  afetadas int;
   eventos_auditados int;
   vinculo_id uuid;
 BEGIN
@@ -586,17 +586,22 @@ BEGIN
      'verify-b@elevapro.local', '{"full_name":"B","account_type":"student"}'::jsonb),
     (espec,   '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
      'verify-e@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb),
-    (espec_sem_fator, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
-     'verify-f@elevapro.local', '{"full_name":"F","account_type":"specialist"}'::jsonb);
+    (adm, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-g@elevapro.local', '{"full_name":"G","account_type":"specialist"}'::jsonb),
+    (adm_sem_fator, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-h@elevapro.local', '{"full_name":"H","account_type":"specialist"}'::jsonb);
 
   -- Art. 46: conta Auth sem perfil não chega ao MFA nem ao CASL. O trigger é
   -- a fronteira que cria identidade de domínio, então esta prova usa o banco real.
   SELECT count(*) INTO visiveis
   FROM public.profiles
-  WHERE id IN (aluno_a, aluno_b, espec, espec_sem_fator);
-  IF visiveis <> 4 THEN
-    RAISE EXCEPTION 'CADASTRO INCOMPLETO: trigger criou % perfis para 4 contas Auth', visiveis;
+  WHERE id IN (aluno_a, aluno_b, espec, adm, adm_sem_fator);
+  IF visiveis <> 5 THEN
+    RAISE EXCEPTION 'CADASTRO INCOMPLETO: trigger criou % perfis para 5 contas Auth', visiveis;
   END IF;
+
+  -- O trigger da 0040 não cria admin pelo signup; a promoção é explícita.
+  UPDATE public.profiles SET account_type = 'admin' WHERE id IN (adm, adm_sem_fator);
 
   -- Dado de saúde para os DOIS alunos: assim "zero linhas" significa bloqueio e
   -- não tabela vazia.
@@ -608,16 +613,13 @@ BEGIN
   VALUES (aluno_a, espec, 'personal_training', 'active')
   RETURNING id INTO vinculo_id;
 
-  INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
-  VALUES (aluno_a, espec_sem_fator, 'personal_training', 'active');
-
   INSERT INTO public.specialist_services (specialist_id, service_type)
   VALUES (espec, 'nutrition_consulting');
 
-  -- Uma Passkey só libera dados se a conta também tiver TOTP verificado.
+  -- Uma Passkey de admin só vale se a conta também tiver TOTP verificado.
   INSERT INTO auth.mfa_factors
     (id, user_id, factor_type, status, created_at, updated_at)
-  VALUES (gen_random_uuid(), espec, 'totp', 'verified', now(), now());
+  VALUES (gen_random_uuid(), adm, 'totp', 'verified', now(), now());
 
   -- A criação do vínculo que libera acesso produz uma única evidência, com
   -- especialista como ator no caminho interno de provisionamento.
@@ -636,66 +638,57 @@ BEGIN
   -- A partir daqui a sessão é um usuário comum, não o dono do banco.
   SET LOCAL ROLE authenticated;
 
-  -- Art. 6º, VII e 46: o especialista autenticado, mas sem segundo fator,
-  -- não pode ler dado sensível por acesso direto ao PostgREST.
-  PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal1')::text, true);
-  SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_a;
-  IF visiveis <> 0 THEN
-    RAISE EXCEPTION 'MFA CONTORNADO: especialista AAL1 leu % anamnese(s)', visiveis;
-  END IF;
-
-  SELECT count(*) INTO visiveis FROM public.profiles WHERE id = espec;
-  IF visiveis <> 1 THEN
-    RAISE EXCEPTION 'PORTA MFA FECHADA: especialista AAL1 não leu a própria identidade';
-  END IF;
-
-  -- Art. 46: o serviço próprio é só o contexto mínimo para abrir o TOTP. AAL1
-  -- não recebe dieta e tampouco pode mudar a autorização que acabou de consultar.
-  SELECT count(*) INTO visiveis
-  FROM public.specialist_services
-  WHERE specialist_id = espec;
-  IF visiveis <> 1 THEN
-    RAISE EXCEPTION 'CONTEXTO MFA AUSENTE: especialista AAL1 não leu o próprio serviço';
-  END IF;
-
-  UPDATE public.specialist_services
-  SET service_type = 'personal_training'
-  WHERE specialist_id = espec;
-  GET DIAGNOSTICS afetadas = ROW_COUNT;
-  IF afetadas <> 0 THEN
-    RAISE EXCEPTION 'MFA CONTORNADO: especialista AAL1 alterou % serviço(s) próprio(s)', afetadas;
-  END IF;
-
-  -- Art. 46: AMR de senha nunca abre a anamnese, mesmo quando o claim existe.
+  -- ADR-0047: o especialista entra por senha, sem segundo fator. O que limita
+  -- o alcance dele é o vínculo ativo: lê o aluno vinculado e não o outro.
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal1',
       'amr', json_build_array(json_build_object('method', 'password')))::text, true);
   SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_a;
-  IF visiveis <> 0 THEN
-    RAISE EXCEPTION 'ACESSO SENSÍVEL LIBERADO: login por senha leu % anamnese(s)', visiveis;
-  END IF;
-
-  -- Art. 46: uma Passkey confirmada no JWT libera só o aluno vinculado.
-  PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec_sem_fator, 'role', 'authenticated', 'aal', 'aal1',
-      'amr', json_build_array(json_build_object('method', 'passkey')))::text, true);
-  SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_a;
-  IF visiveis <> 0 THEN
-    RAISE EXCEPTION 'PASSKEY SEM TOTP: conta sem fator verificado leu % anamnese(s)', visiveis;
-  END IF;
-
-  PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal1',
-      'amr', json_build_array(json_build_object('method', 'passkey')))::text, true);
-  SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_a;
   IF visiveis <> 1 THEN
-    RAISE EXCEPTION 'PASSKEY BLOQUEADA: especialista vinculado viu % anamnese(s)', visiveis;
+    RAISE EXCEPTION 'ESPECIALISTA BARRADO: login por senha viu % anamnese(s) do aluno vinculado', visiveis;
   END IF;
   SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_b;
   IF visiveis <> 0 THEN
-    RAISE EXCEPTION 'VAZAMENTO: especialista com Passkey leu aluno sem vínculo';
+    RAISE EXCEPTION 'VAZAMENTO: especialista por senha leu % anamnese(s) de aluno sem vínculo', visiveis;
   END IF;
+
+  -- Art. 46: o admin alcança todas as contas, e senha sozinha não basta. A
+  -- trava é a função que toda política restritiva chama; `authenticated` não
+  -- tem USAGE em `private`, então ela é conferida com o papel resetado, sobre
+  -- as mesmas claims.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', adm, 'role', 'authenticated', 'aal', 'aal1',
+      'amr', json_build_array(json_build_object('method', 'password')))::text, true);
+  SELECT count(*) INTO visiveis FROM public.profiles WHERE id = adm;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'PORTA MFA FECHADA: admin AAL1 não leu a própria identidade';
+  END IF;
+
+  RESET ROLE;
+  IF private.current_session_meets_mfa_requirement() THEN
+    RAISE EXCEPTION 'ADMIN SEM SEGUNDO FATOR: login por senha passou na trava MFA';
+  END IF;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', adm_sem_fator, 'role', 'authenticated', 'aal', 'aal1',
+      'amr', json_build_array(json_build_object('method', 'passkey')))::text, true);
+  IF private.current_session_meets_mfa_requirement() THEN
+    RAISE EXCEPTION 'PASSKEY SEM TOTP: admin sem fator verificado passou na trava MFA';
+  END IF;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', adm, 'role', 'authenticated', 'aal', 'aal1',
+      'amr', json_build_array(json_build_object('method', 'passkey')))::text, true);
+  IF NOT private.current_session_meets_mfa_requirement() THEN
+    RAISE EXCEPTION 'PASSKEY BLOQUEADA: admin com Passkey e TOTP foi barrado';
+  END IF;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', adm_sem_fator, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  IF NOT private.current_session_meets_mfa_requirement() THEN
+    RAISE EXCEPTION 'ADMIN BLOQUEADO: sessão aal2 foi barrada';
+  END IF;
+  SET LOCAL ROLE authenticated;
 
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', aluno_a, 'role', 'authenticated')::text, true);
@@ -2876,19 +2869,11 @@ BEGIN
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
 
-  -- 5. Sem o segundo fator, o autor não envia: a função escapa da RLS e da
-  -- trava restritiva da 0067, e precisa conferir o MFA por conta própria.
+  -- 5. Enviar ativa o rascunho e finaliza o plano do outro autor. A função
+  -- escapa da RLS e confere a trava MFA por conta própria; o especialista
+  -- envia por senha (ADR-0047).
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', autor, 'role', 'authenticated', 'aal', 'aal1')::text, true);
-  BEGIN
-    PERFORM public.activate_diet_plan(rascunho);
-    RAISE EXCEPTION 'ENVIO SEM MFA: especialista em aal1 ativou plano';
-  EXCEPTION WHEN insufficient_privilege THEN NULL;
-  END;
-
-  -- 5. Com MFA, enviar ativa o rascunho e finaliza o plano do outro autor.
-  PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', autor, 'role', 'authenticated', 'aal', 'aal2')::text, true);
   PERFORM public.activate_diet_plan(rascunho);
 
   BEGIN

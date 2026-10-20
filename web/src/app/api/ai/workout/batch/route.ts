@@ -36,7 +36,7 @@ async function handlePost(request: NextRequest) {
   // `const { data } = await client.auth.getUser(token)` — descartando o erro — e
   // devolvia só "existe um usuário". Nunca dizia qual papel ele tem, e o
   // `check-api-auth.js` não pegava porque a rota não toca `supabaseAdmin`.
-  // Gerar treinos em lote é ação privilegiada, protegida no BFF por AAL2.
+  // Gerar treinos em lote é ação de conta privilegiada; o admin ainda prova AAL2.
   const auth = await authorizeMfaPrivilegedUser(request);
   if (!auth.ok) return auth.response;
 

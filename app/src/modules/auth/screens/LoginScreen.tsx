@@ -1,3 +1,4 @@
+import { userFacingAuthError } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -41,7 +42,7 @@ export function LoginScreen() {
     if (!result.success) {
       showAlert({
         title: 'Erro no Login',
-        message: result.error || 'Erro desconhecido',
+        message: userFacingAuthError(result.error),
         type: 'error',
       });
     } else {

@@ -119,14 +119,9 @@ BEGIN
     RAISE EXCEPTION 'VAZAMENTO: outro especialista copiou prescrição alheia';
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
-  PERFORM set_config('request.jwt.claims', json_build_object('sub', specialist, 'role', 'authenticated', 'aal', 'aal1')::text, true);
-  BEGIN
-    PERFORM public.create_diet_plan_version(original.id);
-    RAISE EXCEPTION 'MFA IGNORADO: especialista sem AAL2 abriu ajuste';
-  EXCEPTION WHEN insufficient_privilege THEN NULL;
-  END;
 
-  PERFORM set_config('request.jwt.claims', json_build_object('sub', specialist, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  -- ADR-0047: o especialista envia por senha, sem segundo fator.
+  PERFORM set_config('request.jwt.claims', json_build_object('sub', specialist, 'role', 'authenticated', 'aal', 'aal1')::text, true);
   PERFORM public.activate_diet_plan(draft.id);
   IF (SELECT status FROM public.diet_plans WHERE id = original.id) <> 'finished' THEN
     RAISE EXCEPTION 'ENVIO INCOMPLETO: versão anterior continuou ativa';
@@ -145,7 +140,7 @@ BEGIN
   IF EXISTS (SELECT 1 FROM public.diet_plans WHERE student_id = student AND specialist_id IS NOT NULL) THEN
     RAISE EXCEPTION 'ELIMINAÇÃO BLOQUEADA: conta apagada deixou autoria vinculada';
   END IF;
-  RAISE NOTICE 'ok versões: rascunho completo, retomada, atual preservada, envio, autoria, MFA e consentimento';
+  RAISE NOTICE 'ok versões: rascunho completo, retomada, atual preservada, envio por senha, autoria e consentimento';
 END;
 $$;
 ROLLBACK;
