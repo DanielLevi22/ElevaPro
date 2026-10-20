@@ -25,6 +25,26 @@ renderer do React Native.
 | `lightningcss-linux-x64-gnu` | tudo | Binário da `lightningcss` que o NativeWind carrega: fica na versão dela (1.27.0) |
 | `@biomejs/biome` (raiz e app) | tudo | Versão do linter é decisão do projeto e sobe nos três `package.json` juntos |
 
+## Exceção: o TypeScript
+
+O TypeScript do app segue a versão do TypeScript, não a do SDK, por decisão
+(2026-10-20, #424). O SDK 58 pede o `~6.0.3`, e o app usa o **7**. O `tsc` do
+7 passou sem erro, assim como os testes e o bundle, e o TypeScript não entra
+no binário do app: só tipa. Ele está em `expo.install.exclude` no
+`app/package.json`, para o `expo-doctor` e o `expo install --fix` não o
+puxarem de volta.
+
+O web subiu junto, e isso exigiu o **Next 16.4**. O TypeScript 7 tirou a API
+clássica em JavaScript (`require('typescript')` devolve só a versão), e o
+`next build` 16.2 usava essa API para checar tipos: falhava com "do not have
+the required package(s) installed". A raiz do monorepo continua no
+TypeScript 6, porque só as ferramentas dela o usam.
+
+Ao subir o TypeScript, refazer o lock com o npm 10. O `@expo/require-utils`
+continua pedindo uma cópia própria do TypeScript 5, e o lock gerado pelo
+Dependabot não a traz (`Missing: typescript@5.9.3 from lock file` no
+`npm ci`). Foi isso que derrubou a pipeline no #423.
+
 ## Consequências
 
 - **Troca de SDK é issue própria**, com rebuild nativo e teste no aparelho.
