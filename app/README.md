@@ -74,6 +74,37 @@ No SDK 58, as rotas carregam em bundles separados, sob demanda. Uma mudança em
 npx expo start --dev-client --clear
 ```
 
+## Build de release e o R8
+
+Desde o SDK 58, o template do Expo liga o **R8** no release
+(`android.enableMinifyInReleaseBuilds=true` no `gradle.properties` gerado). O
+R8 remove e renomeia classes que ninguém chama diretamente. O debug não
+minifica, e por isso um release pode fechar ao abrir enquanto o debug
+funciona.
+
+**Já aconteceu (#426).** O APK de release fechava antes do JavaScript:
+
+```
+Unable to get provider androidx.startup.InitializationProvider
+Caused by: Failed to create an instance of class androidx.work.impl.WorkDatabase.canonicalName
+```
+
+O WorkManager 2.8.1 vem pelo `react-native-android-widget`, com o Room 2.5,
+que acha por reflexão a classe gerada do banco (`WorkDatabase_Impl`). O R8 a
+apagava. As regras de keep do Room resolveram.
+
+**Regra do R8 vai no `extraProguardRules` do `expo-build-properties`**, no
+`app.json`, nunca no `android/app/proguard-rules.pro`: o `android/` é gerado,
+e o `prebuild` apagaria a regra.
+
+Para ver o crash de um release:
+
+```bash
+adb install -r android/app/build/outputs/apk/release/app-release.apk
+adb logcat -c && adb shell monkey -p com.elevapro.app -c android.intent.category.LAUNCHER 1
+adb logcat -d -s AndroidRuntime:E
+```
+
 ## Lockfile e a pipeline
 
 A pipeline instala com `npm ci` no Node 22, ou seja, npm 10. O npm 11 local

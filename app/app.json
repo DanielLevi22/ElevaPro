@@ -82,7 +82,8 @@
         "expo-build-properties",
         {
           "android": {
-            "minSdkVersion": 26
+            "minSdkVersion": 26,
+            "extraProguardRules": "# O R8 do release (ligado no SDK 58) apagava o banco do WorkManager, que vem pelo react-native-android-widget: o Room 2.5 acha a classe gerada por reflexão (#426).\n-keep class * extends androidx.room.RoomDatabase { <init>(); }\n-keep class androidx.work.impl.WorkDatabase_Impl { *; }"
           }
         }
       ],
