@@ -109,6 +109,8 @@ o que a mudança já alcança.
   passavam e quatro fluxos estavam quebrados no aparelho.
 - Versão de React, RN, Jest e lib nativa sobe com o SDK do Expo, nunca pelo
   Dependabot (ADR-0046). Build no Windows e lockfile: `app/README.md`.
+- Lib nativa nova ou atualizada se confere no APK de release, não só no
+  `run:android`: só o release passa pelo R8 (`app/README.md`).
 
 **Web:**
 - Server Component é o padrão. `'use client'` só com `useState`/`useEffect`/event handlers.
