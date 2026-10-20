@@ -1,6 +1,8 @@
 # Passkeys no login com TOTP para cadastrar aparelhos
 
 **Status:** accepted, implantação condicionada à prova no preview. Issue #349.
+A exigência de autenticação forte para o `specialist` foi substituída pela
+ADR-0047: só o `admin` continua obrigado a provar `aal2` ou Passkey.
 
 O código TOTP de um aplicativo externo em cada novo login inviabiliza a
 experiência desejada de Face ID/PIN do aparelho. MFA WebAuthn como segundo fator

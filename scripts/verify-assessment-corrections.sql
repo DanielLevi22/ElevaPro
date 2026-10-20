@@ -117,9 +117,13 @@ BEGIN
   PERFORM set_config('request.jwt.claims',json_build_object('sub',student_a,'role','authenticated')::text,true);
   SELECT count(*) INTO visible_count FROM public.physical_assessment_revisions;
   IF visible_count <> 3 THEN RAISE EXCEPTION 'ACESSO DO TITULAR QUEBRADO: aluno não lê só suas versões'; END IF;
+  -- ADR-0047: o autor entra por senha e lê o mesmo acervo, só dos próprios alunos.
   PERFORM set_config('request.jwt.claims',json_build_object('sub',author_a,'role','authenticated','aal','aal1')::text,true);
-  SELECT count(*) INTO visible_count FROM public.physical_assessment_revisions;
-  IF visible_count <> 0 THEN RAISE EXCEPTION 'MFA CONTORNADO: sessão sem prova leu saúde'; END IF;
+  SELECT count(*) INTO visible_count FROM public.physical_assessment_revisions
+    WHERE assessment_id=assessment_a AND (previous_values->>'weight_kg')::numeric=92;
+  IF visible_count <> 2 THEN RAISE EXCEPTION 'AUTOR BARRADO: login por senha não leu a versão anterior'; END IF;
+  SELECT count(*) INTO visible_count FROM public.physical_assessment_revisions WHERE assessment_id=assessment_b;
+  IF visible_count <> 0 THEN RAISE EXCEPTION 'SAÚDE EXPOSTA: autor por senha leu versão de outro aluno'; END IF;
 
   RESET ROLE;
   UPDATE public.student_consents SET revoked_at=now() WHERE student_id=student_a;
@@ -146,7 +150,7 @@ BEGIN
   DELETE FROM public.physical_assessments WHERE id=assessment_a;
   SELECT count(*) INTO visible_count FROM public.physical_assessment_revisions WHERE assessment_id=assessment_a;
   IF visible_count <> 0 THEN RAISE EXCEPTION 'RETENÇÃO EXCESSIVA: versão sobreviveu à eliminação da avaliação'; END IF;
-  RAISE NOTICE 'ok correções: versão vigente, concorrência, autoria, consentimento, MFA, RLS e eliminação';
+  RAISE NOTICE 'ok correções: versão vigente, concorrência, autoria, consentimento, acesso por senha, RLS e eliminação';
 END;
 $$;
 ROLLBACK;

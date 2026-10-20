@@ -85,7 +85,8 @@ describe('fluxo de login', () => {
     expect(supabaseMock.auth.signOut).not.toHaveBeenCalled();
   });
 
-  it('mostra a mensagem do servidor quando a credencial não serve', async () => {
+  // #428: a mensagem do Supabase chegava em inglês para quem errou a senha.
+  it('mostra credenciais inválidas em português quando a credencial não serve', async () => {
     supabaseMock.auth.signInWithPassword.mockResolvedValue({
       data: { user: null },
       error: new Error('Invalid login credentials'),
@@ -96,7 +97,7 @@ describe('fluxo de login', () => {
 
     await waitFor(() =>
       expect(avisar).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'Invalid login credentials', type: 'error' })
+        expect.objectContaining({ message: 'E-mail ou senha inválidos.', type: 'error' })
       )
     );
   });

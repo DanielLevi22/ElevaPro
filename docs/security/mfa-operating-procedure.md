@@ -2,18 +2,25 @@
 
 ## Garantia de acesso
 
-`admin` e `specialist` só acessam dados de domínio quando o JWT assinado pelo
-Supabase contém `aal2` ou uma entrada `amr` com `method: "passkey"` e a conta
-possui um fator TOTP verificado. A
+Só o `admin` precisa de segundo fator (ADR-0047, #428). Ele acessa dados de
+domínio quando o JWT assinado pelo Supabase contém `aal2` ou uma entrada `amr`
+com `method: "passkey"` e a conta possui um fator TOTP verificado. A
 Passkey é um login sem senha, validado por assinatura WebAuthn no Supabase; Face
 ID, biometria e PIN permanecem no aparelho. Uma sessão `aal1` de senha, OTP ou
-outro método não recebe acesso. BFF e RLS conferem a prova de modo independente;
+outro método não dá acesso ao admin. BFF e RLS conferem a prova de modo independente;
 CASL e redirecionamento de tela não são fronteiras de segurança.
 
-O Student, inclusive `member` legado, mantém o fluxo atual. Para a conta
-privilegiada em `aal1`, só a própria linha em `profiles` e os próprios
-`specialist_services` são legíveis para montar a tela de autenticação. Essa
-exceção não permite alterar serviços, ler dados de alunos nem acessar Storage.
+O `specialist` entra por senha em `aal1`, como o Student (inclusive `member`
+legado). O alcance dele continua limitado pelo vínculo ativo e pelo
+consentimento, conferidos no BFF e na RLS. TOTP e Passkey seguem opcionais na
+tela de Segurança. A regra mora em `isStrongAuthRequired`
+(`shared/src/auth/session-proof.ts`) e em
+`private.current_session_meets_mfa_requirement()` (migration 0104); voltar a
+exigir do especialista é incluí-lo nos dois.
+
+Para o admin em `aal1`, só a própria linha em `profiles` é legível para montar
+a tela de autenticação. Essa exceção não permite ler dados de alunos nem
+acessar Storage.
 
 ## Ambiente local
 

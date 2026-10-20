@@ -26,7 +26,7 @@ import { useAuthStore } from "@/modules/auth";
 import DashboardLayout from "./layout";
 import DashboardLoading from "./loading";
 
-function createSession(userId = "specialist-1", accessToken = "test-session"): Session {
+function createSession(userId = "admin-1", accessToken = "test-session"): Session {
   return {
     access_token: accessToken,
     refresh_token: "test-refresh",
@@ -38,7 +38,7 @@ function createSession(userId = "specialist-1", accessToken = "test-session"): S
 
 function showSession(
   session: Session | null,
-  accountType: "specialist" | "admin" | "student" = "specialist",
+  accountType: "specialist" | "admin" | "student" = "admin",
 ) {
   useAuthStore.setState({
     session,
@@ -126,7 +126,7 @@ describe("continuidade do dashboard", () => {
     renderDashboard();
     expect(screen.queryByText("Conteúdo protegido")).not.toBeInTheDocument();
 
-    act(() => showSession(createSession("specialist-2", "second-session")));
+    act(() => showSession(createSession("admin-2", "second-session")));
     await screen.findByText("Conteúdo protegido");
     await act(async () => previousCheck.resolve(createClaimsReply("aal1")));
 
@@ -240,7 +240,20 @@ describe("continuidade do dashboard", () => {
     }
   });
 
-  // Art. 46: senha simples ou falha no provedor não autorizam dados protegidos.
+  // ADR-0047: o especialista entra por senha, sem passar pela tela do QR code.
+  it("libera o especialista em aal1 sem pedir segundo fator", async () => {
+    auth.getClaims.mockResolvedValue(createClaimsReply("aal1"));
+    showSession(createSession("specialist-1"), "specialist");
+    renderDashboard();
+
+    await screen.findByText("Conteúdo protegido");
+    expect(
+      router.replace,
+      "QR CODE NO LOGIN: especialista mandado ao MFA",
+    ).not.toHaveBeenCalledWith("/auth/mfa");
+  });
+
+  // Art. 46: no admin, senha simples ou falha no provedor não autorizam dados protegidos.
   it.each(["sem prova", "erro do provedor"])("não libera conteúdo com %s", async (scenario) => {
     if (scenario === "sem prova") auth.getClaims.mockResolvedValue(createClaimsReply("aal1"));
     else auth.getClaims.mockRejectedValue(new Error("provedor indisponível"));
@@ -269,6 +282,7 @@ describe("continuidade do dashboard", () => {
 
   // Art. 46: trocar o papel exige a prova aplicável à nova autorização.
   it("não herda a aprovação quando o papel muda", async () => {
+    showSession(createSession("specialist-1"), "specialist");
     renderDashboard();
     await screen.findByText("Conteúdo protegido");
     auth.getClaims.mockReturnValue(new Promise(() => {}));

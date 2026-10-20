@@ -18,6 +18,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import '../global.css';
 
+import { isStrongAuthRequired } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { confirmLocalMfa, hasCurrentPrivilegedProof, useAuthStore } from '@/auth';
 import { HealthDataConsentGate } from '@/components/consent/HealthDataConsentGate';
@@ -195,7 +196,8 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
     if (!session && !inAuthGroup) {
       // Redirect to login if not authenticated
       router.replace('/(auth)/login');
-    } else if (session && (accountType === 'admin' || accountType === 'specialist')) {
+    } else if (session && isStrongAuthRequired(accountType)) {
+      // Só o admin passa pela tela do segundo fator (ADR-0047).
       void redirectPrivilegedSession();
     } else if (session && inAuthGroup) {
       // Todo papel entra pelo mesmo lugar. Os três ramos anteriores mandavam
