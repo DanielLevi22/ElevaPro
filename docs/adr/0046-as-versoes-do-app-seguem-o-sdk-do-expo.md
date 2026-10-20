@@ -34,6 +34,12 @@ no binário do app: só tipa. Ele está em `expo.install.exclude` no
 `app/package.json`, para o `expo-doctor` e o `expo install --fix` não o
 puxarem de volta.
 
+O web subiu junto, e isso exigiu o **Next 16.4**. O TypeScript 7 tirou a API
+clássica em JavaScript (`require('typescript')` devolve só a versão), e o
+`next build` 16.2 usava essa API para checar tipos: falhava com "do not have
+the required package(s) installed". A raiz do monorepo continua no
+TypeScript 6, porque só as ferramentas dela o usam.
+
 Ao subir o TypeScript, refazer o lock com o npm 10. O `@expo/require-utils`
 continua pedindo uma cópia própria do TypeScript 5, e o lock gerado pelo
 Dependabot não a traz (`Missing: typescript@5.9.3 from lock file` no
