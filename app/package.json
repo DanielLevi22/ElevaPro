@@ -61,7 +61,7 @@
     "expo-task-manager": "~58.0.12",
     "expo-web-browser": "~58.0.6",
     "lucide-react-native": "1.58.0",
-    "metro": "^0.84.6",
+    "metro": "^0.87.1",
     "metro-config": "^0.80.12",
     "nativewind": "^4.2.7",
     "react": "19.3.0",
