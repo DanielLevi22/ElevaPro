@@ -103,7 +103,7 @@
 - [ ] `candidate-79c912d33569b8ee` — Legumes com finalização: Beterraba cozida + Azeitona verde + Óleo de coco
 - [ ] `candidate-79f6c2a106e82c7f` — Legumes com finalização: Chuchu cozido + Alho + Manteiga ghee
 - [ ] `candidate-7c15051f43eea99f` — Legumes com finalização: Couve-flor cozida + Limão + Manteiga ghee
-- [ ] `candidate-7cd6bd3aed2f753f` — Legumes com finalização: Chuchu cozido + Cebola + Manteiga
+- [x] `candidate-7cd6bd3aed2f753f` — Legumes com finalização: Chuchu cozido + Cebola + Manteiga
 - [ ] `candidate-7eb2102d852186aa` — Legumes com finalização: Abóbora cabotiá cozida + Alho + Manteiga
 - [ ] `candidate-8081a23e3b684080` — Legumes com finalização: Couve-flor cozida + Cebola + Óleo de coco
 - [ ] `candidate-81038158dbc03146` — Legumes com finalização: Brócolis cozido + Azeitona verde + Óleo de canola

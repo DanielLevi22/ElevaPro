@@ -86,7 +86,7 @@
 - [ ] `candidate-8251ef53408d2fa6` — Prato: Batata baroa cozida + Frango desfiado cozido + Chuchu cozido
 - [ ] `candidate-825a7a1340edb8fe` — Prato: Batata doce roxa cozida + Frango (coxa sem pele assada) + Cenoura crua
 - [ ] `candidate-826bb7ff54b1a7cb` — Prato: Arroz branco cozido + Ovo de codorna cozido + Pimentão verde
-- [ ] `candidate-8276bab673c1588e` — Prato: Batata doce cozida + Carne bovina (coxão mole) + Vagem cozida
+- [x] `candidate-8276bab673c1588e` — Prato: Batata doce cozida + Carne bovina (coxão mole) + Vagem cozida
 - [ ] `candidate-8283405e54f22c17` — Prato: Macarrão integral cozido + Carne bovina (músculo cozido) + Agrião
 - [ ] `candidate-829abf1240b295e1` — Prato: Milho verde cozido + Carne bovina (patinho) + Quiabo cozido
 - [ ] `candidate-829ad11c3a9838c5` — Prato: Batata inglesa cozida + Tofu + Abobrinha cozida
