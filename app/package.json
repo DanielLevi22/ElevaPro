@@ -102,7 +102,7 @@
     "typescript": "~6.0.3"
   },
   "optionalDependencies": {
-    "lightningcss-linux-x64-gnu": "1.27.0"
+    "lightningcss-linux-x64-gnu": "1.33.0"
   },
   "private": true
 }
