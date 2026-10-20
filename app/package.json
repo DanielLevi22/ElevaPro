@@ -23,7 +23,7 @@
     "@expo-google-fonts/outfit": "^0.4.3",
     "@expo/vector-icons": "^15.0.3",
     "@hookform/resolvers": "^5.9.1",
-    "@kingstinct/react-native-healthkit": "^14.0.2",
+    "@kingstinct/react-native-healthkit": "^16.2.0",
     "@noble/hashes": "^2.4.0",
     "@react-native-community/datetimepicker": "9.2.1",
     "@supabase/supabase-js": "^2.109.0",
