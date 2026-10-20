@@ -51,8 +51,14 @@ const ESQUELETO = path.join(ROOT, "web/src/modules/ai/services/rotaDeAprovacao.t
 /**
  * Rotas públicas por decisão de produto — cadastro acontece antes de existir
  * conta para autorizar. Entrada aqui é decisão consciente, não conveniência.
+ * `version` devolve só o commit curto do deploy, e a tela de login também
+ * precisa dele para sair da versão antiga (#428).
  */
-const PUBLIC_ROUTES = new Set(["auth/register/route.ts", "auth/register/student/route.ts"]);
+const PUBLIC_ROUTES = new Set([
+  "auth/register/route.ts",
+  "auth/register/student/route.ts",
+  "version/route.ts",
+]);
 
 function findRoutes(dir) {
   const found = [];
