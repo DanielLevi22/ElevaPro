@@ -80,6 +80,10 @@ updates:
       # NativeWind 4 só aceita Tailwind 3; o v4 derrubou o Metro (#395)
       - dependency-name: "tailwindcss"
         update-types: ["version-update:semver-major"]
+      # O binário Linux da lightningcss que o react-native-css-interop carrega:
+      # fixo na versão dela (1.27.0), senão o NativeWind não acha o .node na
+      # pipeline. Sobe junto com o NativeWind, nunca sozinho (#418)
+      - dependency-name: "lightningcss-linux-x64-gnu"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
