@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/modules/auth";
 import { Button } from "@/shared/components/ui/Button";
+import { PasswordInput } from "@/shared/components/ui/PasswordInput";
 
 /**
  * Destino do link de convite/recuperação (ADR-0035), para quem abre o e-mail
@@ -86,10 +87,10 @@ export default function ResetPasswordPage() {
                 <label htmlFor="password" className="block text-sm font-medium text-foreground">
                   Nova senha
                 </label>
-                <input
+                <PasswordInput
                   id="password"
                   name="password"
-                  type="password"
+                  autoComplete="new-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -105,10 +106,10 @@ export default function ResetPasswordPage() {
                 >
                   Confirme a nova senha
                 </label>
-                <input
+                <PasswordInput
                   id="confirmPassword"
                   name="confirmPassword"
-                  type="password"
+                  autoComplete="new-password"
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
