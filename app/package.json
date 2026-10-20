@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@bacons/apple-targets": "^5.0.0",
-    "@casl/ability": "^6.7.1",
+    "@casl/ability": "^7.0.2",
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@expo-google-fonts/outfit": "^0.4.3",
     "@expo/vector-icons": "^15.0.3",
