@@ -22,6 +22,7 @@ renderer do React Native.
 | `@types/react` | minor e major | Acompanha o `react` |
 | `jest`, `@types/jest`, `@testing-library/*`, `test-renderer` | major (`test-renderer`: minor também) | O SDK escolhe: o 58 pede Jest 30 e RNTL 14 |
 | `tailwindcss` | major | NativeWind 4 só roda com Tailwind 3 |
+| `lightningcss-linux-x64-gnu` | tudo | Binário da `lightningcss` que o NativeWind carrega: fica na versão dela (1.27.0) |
 | `@biomejs/biome` (raiz e app) | tudo | Versão do linter é decisão do projeto e sobe nos três `package.json` juntos |
 
 ## Consequências

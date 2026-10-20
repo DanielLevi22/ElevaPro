@@ -17,7 +17,9 @@
       "@elevapro/shared": ["../shared/src"],
       "@elevapro/shared/*": ["../shared/src/*"],
       "@supabase/supabase-js": ["./node_modules/@supabase/supabase-js"],
-      "@casl/ability": ["./node_modules/@casl/ability"],
+      // O CASL 7 publica os tipos só pelo `exports`, que um `paths` para a pasta
+      // ignora: aponta para o arquivo de tipos dele.
+      "@casl/ability": ["./node_modules/@casl/ability/dist/types/index.d.ts"],
       "zustand": ["./node_modules/zustand"],
       "zustand/*": ["./node_modules/zustand/*"]
     },
