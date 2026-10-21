@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { Text, View } from 'react-native';
+import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { CabecalhoSobreFoto } from '@/components/ui/CabecalhoSobreFoto';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
@@ -8,6 +9,7 @@ import { fotoDoObjetivo } from '@/shared/imagens/fotosDeTreino';
 import { CartaoDaFase } from '../../components/aluno/CartaoDaFase';
 import { CartaoDaPeriodizacao } from '../../components/aluno/CartaoDaPeriodizacao';
 import { EstadoDaTela } from '../../components/aluno/EstadoDaTela';
+import { useExportarPlano } from '../../hooks/useExportarPlano';
 import { useFasesDaPeriodizacao } from '../../hooks/useFasesDaPeriodizacao';
 import { comModo, type ModoDaRota } from '../../routes/visaoDoAluno';
 
@@ -15,7 +17,7 @@ import { comModo, type ModoDaRota } from '../../routes/visaoDoAluno';
  * As fases da periodização, na visão do aluno — tela 1 do fluxo de treino do kit.
  *
  * A do especialista continua em `PeriodizationDetailsScreen`, com ativar,
- * encerrar e criar fase. As duas liam o papel com `isStudentView` em cada
+ * encerrar e criar fase. O botão do canto exporta o plano completo em PDF (#431). As duas liam o papel com `isStudentView` em cada
  * botão; separadas, cada uma tem só o que o papel dela faz.
  *
  * @example
@@ -38,6 +40,8 @@ export function FasesDaPeriodizacaoScreen({
     alunoId
   );
 
+  const { exportar, gerando } = useExportarPlano(periodizacaoId, especialista);
+
   if (!periodizacao) {
     return <EstadoDaTela naoEncontrado={naoEncontrado} mensagem="Periodização não encontrada." />;
   }
@@ -48,6 +52,15 @@ export function FasesDaPeriodizacaoScreen({
         sobrelinha="Periodização"
         titulo={periodizacao.name}
         onVoltar={router.back}
+        direita={
+          fases.length > 0 ? (
+            <BotaoRedondo
+              icone="download"
+              rotulo={gerando ? 'Gerando o PDF do plano' : 'Exportar o plano completo em PDF'}
+              onPress={exportar}
+            />
+          ) : null
+        }
       />
       <CartaoDaPeriodizacao
         periodizacao={periodizacao}

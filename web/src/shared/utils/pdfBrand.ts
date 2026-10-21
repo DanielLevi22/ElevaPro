@@ -15,67 +15,90 @@ export const PDF_COLORS = {
   line: [230, 230, 230],
 } as const;
 
-const HEADER_HEIGHT = 35;
-const CROSS = 0.8;
-const MARGIN = 5;
+const HEADER_HEIGHT = 32;
+const SIDE = 15;
+/** Largura máxima de um valor à direita: nome longo é cortado com "…". */
+const MAX_VALUE_WIDTH = 85;
+const ROW_Y = [11, 18, 25] as const;
 
 interface BrandHeader {
+  /** O tipo do documento, sob a marca: "PROTOCOLO DE TREINO". */
+  documentLabel: string;
   studentName: string;
-  professionalName: string;
-  /** A linha neon sob o nome do aluno, ex.: "VALOR DE VIGÊNCIA: 01 ago 2026 - 29 ago 2026". */
-  caption: string | null;
+  /** Nulo no plano próprio do Praticante: a linha do profissional não aparece. */
+  professionalName: string | null;
+  /** "20 out 2026 – 19 nov 2026", ou nulo sem período. */
+  validity: string | null;
 }
 
 /**
- * Desenha o cabeçalho e devolve o Y onde o conteúdo começa.
+ * Desenha o cabeçalho e devolve o Y onde o conteúdo começa: a marca e o tipo do
+ * documento à esquerda; aluno, profissional e vigência à direita, cada um com o
+ * seu rótulo; a linha neon embaixo.
  *
- * @example const y = drawBrandHeader(doc, { studentName, professionalName, caption });
+ * @example const y = drawBrandHeader(doc, { documentLabel: "PROTOCOLO DE TREINO", studentName, professionalName, validity });
  */
 export function drawBrandHeader(doc: jsPDF, header: BrandHeader): number {
   const pageWidth = doc.internal.pageSize.getWidth();
   const [r, g, b] = PDF_COLORS.primary;
 
-  doc.setFillColor(15, 15, 15);
+  doc.setFillColor(14, 14, 14);
   doc.rect(0, 0, pageWidth, HEADER_HEIGHT, "F");
-  doc.setFillColor(28, 28, 28);
-  doc.rect(0, 0, pageWidth, HEADER_HEIGHT * 0.45, "F");
 
-  doc.setDrawColor(r, g, b);
-  doc.setLineWidth(0.1);
-  doc.line(MARGIN, MARGIN - CROSS, MARGIN, MARGIN + CROSS);
-  doc.line(MARGIN - CROSS, MARGIN, MARGIN + CROSS, MARGIN);
-  doc.line(pageWidth - MARGIN, MARGIN - CROSS, pageWidth - MARGIN, MARGIN + CROSS);
-  doc.line(pageWidth - MARGIN - CROSS, MARGIN, pageWidth - MARGIN + 1, MARGIN);
-
-  doc.setFontSize(26);
-  doc.setTextColor(r, g, b);
   doc.setFont("helvetica", "bold");
-  doc.text("ELEVA", 15, 18);
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "normal");
   doc.setFontSize(22);
-  doc.text("PRO", 15 + doc.getTextWidth("ELEVA") + 2, 18, { charSpace: 1.5 });
-
-  doc.setFontSize(8.5);
-  doc.setTextColor(180, 180, 180);
-  doc.setFont("helvetica", "bold");
-  doc.text(`DESENVOLVIDO POR // ${header.professionalName.toUpperCase()}`, 15, 26);
-
-  doc.setFontSize(14);
+  doc.setTextColor(r, g, b);
+  doc.text("ELEVA", SIDE, 16);
+  doc.setFont("helvetica", "normal");
   doc.setTextColor(255, 255, 255);
-  doc.text(`[ ${header.studentName.toUpperCase()} ]`, pageWidth - 15, 18, {
-    align: "right",
-    charSpace: 0.5,
-  });
-  if (header.caption) {
-    doc.setFontSize(8);
-    doc.setTextColor(r, g, b);
-    doc.text(header.caption, pageWidth - 15, 26, { align: "right" });
+  doc.text("PRO", SIDE + doc.getTextWidth("ELEVA") + 1.5, 16);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(150, 150, 150);
+  doc.text(header.documentLabel.toUpperCase(), SIDE, 24);
+
+  const rows: { label: string; value: string; accent?: boolean }[] = [
+    { label: "ALUNO", value: header.studentName },
+    ...(header.professionalName ? [{ label: "PROFISSIONAL", value: header.professionalName }] : []),
+    ...(header.validity ? [{ label: "VIGÊNCIA", value: header.validity, accent: true }] : []),
+  ];
+  for (const [index, row] of rows.entries()) {
+    drawInfoRow(doc, row, pageWidth - SIDE, ROW_Y[index] ?? 25);
   }
 
   doc.setFillColor(r, g, b);
-  doc.rect(0, HEADER_HEIGHT, pageWidth, 1.2, "F");
+  doc.rect(0, HEADER_HEIGHT, pageWidth, 1, "F");
   return HEADER_HEIGHT + 15;
+}
+
+/** "ALUNO  Ana Souza", alinhado à direita em `right`, sem passar da margem. */
+function drawInfoRow(
+  doc: jsPDF,
+  row: { label: string; value: string; accent?: boolean },
+  right: number,
+  y: number,
+): void {
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  const value = fitText(doc, row.value, MAX_VALUE_WIDTH);
+  const valueWidth = doc.getTextWidth(value);
+  if (row.accent) doc.setTextColor(...PDF_COLORS.primary);
+  else doc.setTextColor(255, 255, 255);
+  doc.text(value, right, y, { align: "right" });
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6.5);
+  doc.setTextColor(140, 140, 140);
+  doc.text(row.label, right - valueWidth - 3, y, { align: "right" });
+}
+
+/** Corta com "…" o texto que não cabe na largura, na fonte atual. */
+function fitText(doc: jsPDF, text: string, maxWidth: number): string {
+  if (doc.getTextWidth(text) <= maxWidth) return text;
+  let cut = text;
+  while (cut.length > 1 && doc.getTextWidth(`${cut}…`) > maxWidth) cut = cut.slice(0, -1);
+  return `${cut.trimEnd()}…`;
 }
 
 /**
@@ -101,10 +124,10 @@ export function drawProtocolFooter(doc: jsPDF): void {
   }
 }
 
-/** "VALOR DE VIGÊNCIA: 01 ago 2026 - 29 ago 2026", ou nulo sem as duas datas. */
-export function validityCaption(start: string | null, end: string | null): string | null {
+/** "20 out 2026 – 19 nov 2026", ou nulo sem as duas datas. */
+export function validityRange(start: string | null, end: string | null): string | null {
   if (!start || !end) return null;
-  return `VALOR DE VIGÊNCIA: ${formatDate(start, "medium")}  -  ${formatDate(end, "medium")}`;
+  return `${formatDate(start, "medium")} – ${formatDate(end, "medium")}`;
 }
 
 /** Nome de arquivo sem acento nem espaço: "Protocolo_Treino_A.pdf". */

@@ -1,5 +1,5 @@
-import { buildWorkoutSheet, type SetPrescription } from '@elevapro/shared';
-import { htmlDoTreino } from '../treinoPdf';
+import { buildPeriodizationSheet, buildWorkoutSheet, type SetPrescription } from '@elevapro/shared';
+import { htmlDoPlano, htmlDoTreino } from '../treinoPdf';
 
 const serie = (campos: Partial<SetPrescription>): SetPrescription => ({
   methods: ['working'],
@@ -11,26 +11,30 @@ const serie = (campos: Partial<SetPrescription>): SetPrescription => ({
   ...campos,
 });
 
-const folha = buildWorkoutSheet({
-  title: 'Treino A',
-  exercises: [
-    {
-      order_index: 0,
-      notes: 'Joelho <alinhado>',
-      set_plan: [
-        serie({ methods: ['warmup'], reps: { mode: 'count', value: 15 }, weight_kg: 40 }),
-        serie({
-          methods: ['rest_pause'],
-          reps: { mode: 'failure' },
-          segments: [{ reps: { mode: 'count', value: 4 }, weight_kg: 80, pause_seconds: 15 }],
-        }),
-      ],
-      exercise: { name: 'Agachamento', muscle_group: 'Pernas' },
-    },
-  ],
-});
+const folhaDeOrigem = [
+  {
+    order_index: 0,
+    notes: 'Joelho <alinhado>',
+    set_plan: [
+      serie({ methods: ['warmup'], reps: { mode: 'count', value: 15 }, weight_kg: 40 }),
+      serie({
+        methods: ['rest_pause'],
+        reps: { mode: 'failure' },
+        segments: [{ reps: { mode: 'count', value: 4 }, weight_kg: 80, pause_seconds: 15 }],
+      }),
+    ],
+    exercise: { name: 'Agachamento', muscle_group: 'Pernas' },
+  },
+];
 
-const CABECALHO = { aluno: 'Ana Souza', especialista: 'Daniel L.', vigencia: null };
+const folha = buildWorkoutSheet({ title: 'Treino A', exercises: folhaDeOrigem });
+
+const CABECALHO = {
+  documento: 'Protocolo de treino',
+  aluno: 'Ana Souza',
+  especialista: 'Daniel L.',
+  vigencia: null,
+};
 
 describe('htmlDoTreino — o treino no papel do protocolo', () => {
   const html = htmlDoTreino(folha, CABECALHO, '21 out 2026, 10:31');
@@ -45,14 +49,16 @@ describe('htmlDoTreino — o treino no papel do protocolo', () => {
     expect(html).toContain('90 s');
   });
 
-  it('traz o aluno e quem prescreveu, no cabeçalho do protocolo', () => {
-    expect(html).toContain('[ ANA SOUZA ]');
-    expect(html).toContain('DESENVOLVIDO POR // DANIEL L.');
+  it('traz o aluno e o profissional, cada um com o seu rótulo', () => {
+    expect(html).toContain('PROTOCOLO DE TREINO');
+    expect(html).toMatch(/ALUNO<\/span>Ana Souza/);
+    expect(html).toMatch(/PROFISSIONAL<\/span>Daniel L\./);
+    expect(html).not.toContain('DESENVOLVIDO POR');
   });
 
-  it('no plano próprio do Praticante, diz que o plano é dele', () => {
+  it('no plano próprio do Praticante, a linha do profissional não aparece', () => {
     const proprio = htmlDoTreino(folha, { ...CABECALHO, especialista: null }, 'agora');
-    expect(proprio).toContain('DESENVOLVIDO POR // PLANO PRÓPRIO');
+    expect(proprio).not.toContain('PROFISSIONAL');
   });
 
   // LGPD Art. 6°, III e VII. O arquivo sai do aparelho e pode chegar a qualquer
@@ -70,5 +76,46 @@ describe('htmlDoTreino — o treino no papel do protocolo', () => {
 
   it('avisa, no próprio arquivo, que quem receber poderá lê-lo', () => {
     expect(html).toContain('Quem receber este arquivo poderá lê-lo');
+  });
+});
+
+describe('htmlDoPlano — o plano completo no papel do protocolo', () => {
+  const plano = buildPeriodizationSheet({
+    periodization: {
+      name: 'Hipertrofia',
+      objective: 'Ganho de massa',
+      start_date: '2026-10-01',
+      end_date: '2026-11-30',
+    },
+    phases: [
+      {
+        plan: {
+          name: 'Adaptação',
+          order_index: 0,
+          start_date: '2026-10-01',
+          end_date: '2026-10-31',
+        },
+        workouts: [{ title: 'Treino A', exercises: folhaDeOrigem }],
+      },
+      {
+        plan: { name: 'Choque', order_index: 1, start_date: '2026-11-01', end_date: '2026-11-30' },
+        workouts: [],
+      },
+    ],
+  });
+  const html = htmlDoPlano(plano, { ...CABECALHO, documento: 'Plano de treino completo' }, 'agora');
+
+  it('leva a periodização, cada fase com as datas e os treinos dela', () => {
+    expect(html).toContain('HIPERTROFIA');
+    expect(html).toContain('Objetivo: Ganho de massa');
+    expect(html).toContain('FASE 1 // ADAPTAÇÃO');
+    expect(html).toContain('1 a 31 out 2026');
+    expect(html).toContain('TREINO A');
+    expect(html).toContain('Pausa 15 s → 4 reps · 80 kg');
+  });
+
+  it('fase sem treino aparece vazia, sem sumir', () => {
+    expect(html).toContain('FASE 2 // CHOQUE');
+    expect(html).toContain('Sem treinos nesta fase');
   });
 });

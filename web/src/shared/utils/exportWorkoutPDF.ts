@@ -1,6 +1,7 @@
 import {
   buildWorkoutSheet,
   type SetPlan,
+  type WorkoutSheet,
   type WorkoutSheetExercise,
   type WorkoutSheetSet,
 } from "@elevapro/shared";
@@ -11,7 +12,7 @@ import {
   drawProtocolFooter,
   PDF_COLORS,
   protocolFileName,
-  validityCaption,
+  validityRange,
 } from "./pdfBrand";
 
 interface WorkoutForPdf {
@@ -27,7 +28,8 @@ interface WorkoutForPdf {
 interface WorkoutPdfInput {
   workout: WorkoutForPdf;
   studentName: string;
-  professionalName: string;
+  /** Nulo quando quem exporta é o próprio aluno: a linha não aparece. */
+  professionalName: string | null;
   /** A fase do treino, quando ele pertence a uma. */
   validity: { start: string | null; end: string | null } | null;
 }
@@ -49,18 +51,32 @@ export function exportWorkoutToPDF({
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
   const top = drawBrandHeader(doc, {
+    documentLabel: "PROTOCOLO DE TREINO",
     studentName,
     professionalName,
-    caption: validity ? validityCaption(validity.start, validity.end) : null,
+    validity: validity ? validityRange(validity.start, validity.end) : null,
   });
 
+  drawWorkoutSection(doc, sheet, top - 3);
+
+  drawProtocolFooter(doc);
+  doc.save(protocolFileName(sheet.title, "Treino"));
+}
+
+/**
+ * O título do treino e a tabela das séries a partir de `y`. Devolve o Y logo
+ * abaixo da tabela, para o PDF do plano empilhar um treino depois do outro.
+ *
+ * @example const y = drawWorkoutSection(doc, buildWorkoutSheet(treino), 50);
+ */
+export function drawWorkoutSection(doc: jsPDF, sheet: WorkoutSheet, y: number): number {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
   doc.setTextColor(...PDF_COLORS.text);
-  doc.text(sheet.title.toUpperCase(), 15, top - 3);
+  doc.text(sheet.title.toUpperCase(), 15, y);
 
   autoTable(doc, {
-    startY: top + 2,
+    startY: y + 5,
     head: [["ORDEM / EXERCÍCIO", "SÉRIE", "PRESCRIÇÃO", "DESCANSO"]],
     body: sheet.exercises.flatMap(exerciseRows),
     theme: "grid",
@@ -81,9 +97,7 @@ export function exportWorkoutToPDF({
     },
     margin: { left: 15, right: 15 },
   });
-
-  drawProtocolFooter(doc);
-  doc.save(protocolFileName(sheet.title, "Treino"));
+  return doc.lastAutoTable.finalY;
 }
 
 /** O exercício ocupa as linhas das suas séries; a observação fecha o bloco. */

@@ -1,4 +1,10 @@
-import type { WorkoutSheet, WorkoutSheetExercise, WorkoutSheetSet } from '@elevapro/shared';
+import {
+  type PeriodizationSheet,
+  shortDateRange,
+  type WorkoutSheet,
+  type WorkoutSheetExercise,
+  type WorkoutSheetSet,
+} from '@elevapro/shared';
 import { compartilharPdf } from '@/shared/pdf/compartilharPdf';
 import {
   type CabecalhoDoProtocolo,
@@ -27,18 +33,71 @@ export function htmlDoTreino(
   cabecalho: CabecalhoDoProtocolo,
   geradoEm: string
 ): string {
+  return documento(
+    cabecalho,
+    `<h1>${escaparHtml(folha.title.toUpperCase())}</h1>${tabelaDoTreino(folha)}`,
+    geradoEm
+  );
+}
+
+/**
+ * O HTML do plano completo: a periodização, e para cada fase uma faixa com nome
+ * e datas seguida dos treinos dela, na tabela do treino avulso.
+ *
+ * @example htmlDoPlano(buildPeriodizationSheet(plano), cabecalho, agora)
+ */
+export function htmlDoPlano(
+  plano: PeriodizationSheet,
+  cabecalho: CabecalhoDoProtocolo,
+  geradoEm: string
+): string {
+  const objetivo = plano.objective
+    ? `<div class="objetivo">Objetivo: ${escaparHtml(plano.objective)}</div>`
+    : '';
+  const fases = plano.phases
+    .map((fase) => {
+      const treinos =
+        fase.workouts.length > 0
+          ? fase.workouts
+              .map((t) => `<h2>${escaparHtml(t.title.toUpperCase())}</h2>${tabelaDoTreino(t)}`)
+              .join('')
+          : '<div class="vazio">Sem treinos nesta fase</div>';
+      return `<div class="fase"><span>FASE ${fase.order} // ${escaparHtml(fase.name.toUpperCase())}</span><span class="datas">${escaparHtml(
+        faixaDoPeriodo(fase.startDate, fase.endDate)
+      )}</span></div>${treinos}`;
+    })
+    .join('');
+  return documento(
+    cabecalho,
+    `<h1>${escaparHtml(plano.name.toUpperCase())}</h1>${objetivo}${fases}`,
+    geradoEm
+  );
+}
+
+/**
+ * Um período no papel: "28 set a 4 out 2026". Lido da string, sem `Date`, que
+ * leria "2026-10-01" em UTC e voltaria um dia no Brasil.
+ *
+ * @example faixaDoPeriodo("2026-09-28", "2026-10-04") // "28 set a 4 out 2026"
+ */
+export function faixaDoPeriodo(inicio: string, fim: string): string {
+  return `${shortDateRange(inicio, fim)} ${fim.slice(0, 4)}`;
+}
+
+function documento(cabecalho: CabecalhoDoProtocolo, corpo: string, geradoEm: string): string {
   return `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8" /><style>${CSS_DO_PROTOCOLO}</style></head><body>
   ${cabecalhoDoProtocolo(cabecalho)}
-  <main>
-    <h1>${escaparHtml(folha.title.toUpperCase())}</h1>
-    <table>
-      <thead><tr><th>ORDEM / EXERCÍCIO</th><th>SÉRIE</th><th>PRESCRIÇÃO</th><th>DESCANSO</th></tr></thead>
-      <tbody>${folha.exercises.map(linhasDoExercicio).join('')}</tbody>
-    </table>
-  </main>
+  <main>${corpo}</main>
   ${rodapeDoProtocolo(geradoEm)}
 </body></html>`;
+}
+
+function tabelaDoTreino(folha: WorkoutSheet): string {
+  return `<table>
+      <thead><tr><th>ORDEM / EXERCÍCIO</th><th>SÉRIE</th><th>PRESCRIÇÃO</th><th>DESCANSO</th></tr></thead>
+      <tbody>${folha.exercises.map(linhasDoExercicio).join('')}</tbody>
+    </table>`;
 }
 
 /** O exercício ocupa as linhas das suas séries; a observação fecha o bloco. */
@@ -82,5 +141,24 @@ export function compartilharTreino(
     tituloDaFolha: folha.title,
     eventoDeFalha: 'workout.share_pdf',
     eventoDeDescarte: 'workout.discard_pdf',
+  });
+}
+
+/**
+ * Gera o PDF do plano completo e abre a folha de compartilhar do sistema.
+ *
+ * @example await compartilharPlano(plano, cabecalho, agora)
+ */
+export function compartilharPlano(
+  plano: PeriodizationSheet,
+  cabecalho: CabecalhoDoProtocolo,
+  geradoEm: string
+): Promise<boolean> {
+  return compartilharPdf({
+    html: htmlDoPlano(plano, cabecalho, geradoEm),
+    nomeDoArquivo: 'plano-de-treino.pdf',
+    tituloDaFolha: plano.name,
+    eventoDeFalha: 'workout.share_plan_pdf',
+    eventoDeDescarte: 'workout.discard_plan_pdf',
   });
 }

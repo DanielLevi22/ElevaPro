@@ -1,4 +1,9 @@
 export { MAX_SEGMENTS, MAX_SETS } from "./constants";
+export {
+  buildPeriodizationSheet,
+  type PeriodizationSheet,
+  type PeriodizationSheetPhase,
+} from "./periodizationSheet";
 export { applyQuickAdjust, type QuickAdjust, quickAdjustOf, repsToText } from "./quickAdjust";
 export { setPlanFromFlatColumns, simplePrescriptionToSetPlan } from "./simplePrescription";
 export { type SetPlanSummary, summarizeSetPlan } from "./summary";

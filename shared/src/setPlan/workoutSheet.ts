@@ -33,7 +33,8 @@ export interface WorkoutSheet {
 
 interface SheetSource {
   title: string;
-  exercises: {
+  /** Opcional como no `Workout`: sem a lista, a folha sai sem exercícios. */
+  exercises?: {
     order_index: number;
     notes: string | null;
     set_plan: SetPlan;
@@ -63,7 +64,7 @@ export function describeRepsTarget(reps: RepsTarget): string {
  * @example buildWorkoutSheet(treino).exercises[0].sets[0].reps // "8–12 reps"
  */
 export function buildWorkoutSheet(source: SheetSource): WorkoutSheet {
-  const ordered = [...source.exercises].sort((a, b) => a.order_index - b.order_index);
+  const ordered = [...(source.exercises ?? [])].sort((a, b) => a.order_index - b.order_index);
   return {
     title: source.title,
     exercises: ordered.map((item, index) => ({

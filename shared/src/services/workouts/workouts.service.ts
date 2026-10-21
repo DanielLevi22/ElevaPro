@@ -95,21 +95,8 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
     return (data || []) as Workout[];
   },
 
-  fetchWorkoutsByPlan: async (trainingPlanId: string): Promise<Workout[]> => {
-    const { data, error } = await supabase
-      .from("workouts")
-      .select(`
-        *,
-        exercises:workout_exercises(
-          *,
-          exercise:exercises(*)
-        )
-      `)
-      .eq("training_plan_id", trainingPlanId)
-      .order("created_at", { ascending: true });
-    if (error) throw error;
-    return (data || []) as Workout[];
-  },
+  fetchWorkoutsByPlan: (trainingPlanId: string): Promise<Workout[]> =>
+    fetchWorkoutsOfPlan(supabase, trainingPlanId),
 
   fetchWorkoutById: async (id: string): Promise<Workout | null> => {
     const { data, error } = await supabase
@@ -126,6 +113,29 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
       .single();
     if (error) throw error;
     return data as Workout;
+  },
+
+  /**
+   * O plano completo para exportar: a periodização, as fases na ordem e os
+   * treinos de cada fase com os exercícios. As fases buscam os treinos em
+   * paralelo. Nulo quando a periodização não existe ou a RLS não a mostra.
+   *
+   * @example buildPeriodizationSheet(await service.fetchFullPeriodization(id))
+   */
+  fetchFullPeriodization: async (periodizationId: string) => {
+    const periodizacoes = criarServicoDePeriodizacoes(supabase);
+    const [periodization, plans] = await Promise.all([
+      periodizacoes.fetchPeriodizationById(periodizationId),
+      periodizacoes.fetchTrainingPlans(periodizationId),
+    ]);
+    if (!periodization) return null;
+    const workoutsByPlan = await Promise.all(
+      plans.map((plan) => fetchWorkoutsOfPlan(supabase, plan.id)),
+    );
+    return {
+      periodization,
+      phases: plans.map((plan, index) => ({ plan, workouts: workoutsByPlan[index] ?? [] })),
+    };
   },
 
   createWorkout: async (input: CreateWorkoutInput): Promise<Workout> => {
@@ -228,3 +238,23 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
 });
 
 export type WorkoutsService = ReturnType<typeof createWorkoutsService>;
+
+/** Os treinos de uma fase, com os exercícios do catálogo, na ordem de criação. */
+async function fetchWorkoutsOfPlan(
+  supabase: SupabaseClient,
+  trainingPlanId: string,
+): Promise<Workout[]> {
+  const { data, error } = await supabase
+    .from("workouts")
+    .select(`
+        *,
+        exercises:workout_exercises(
+          *,
+          exercise:exercises(*)
+        )
+      `)
+    .eq("training_plan_id", trainingPlanId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data || []) as Workout[];
+}

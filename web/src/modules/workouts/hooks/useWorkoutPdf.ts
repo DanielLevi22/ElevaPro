@@ -26,7 +26,8 @@ export function useWorkoutPdf(workout: Workout | null | undefined): () => void {
     exportWorkoutToPDF({
       workout: { title: workout.title, exercises: workout.exercises ?? [] },
       studentName: students.find((s) => s.id === studentId)?.full_name ?? "Aluno",
-      professionalName: currentUser?.fullName ?? "Profissional",
+      // O próprio aluno exportando (Praticante) não é o profissional dele.
+      professionalName: studentId === currentUser?.id ? null : (currentUser?.fullName ?? null),
       validity: phase ? { start: phase.start_date, end: phase.end_date } : null,
     });
   };

@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable, { type CellInput, type RowInput } from "jspdf-autotable";
-import { drawBrandHeader, drawProtocolFooter, protocolFileName, validityCaption } from "./pdfBrand";
+import { drawBrandHeader, drawProtocolFooter, protocolFileName, validityRange } from "./pdfBrand";
 
 // Extend jsPDF type
 declare module "jspdf" {
@@ -75,9 +75,10 @@ export async function exportDietToPDF(
   });
 
   const yPosition = drawBrandHeader(doc, {
+    documentLabel: "PROTOCOLO NUTRICIONAL",
     studentName,
     professionalName,
-    caption: validityCaption(dietPlan.start_date, dietPlan.end_date),
+    validity: validityRange(dietPlan.start_date, dietPlan.end_date),
   });
 
   // --- DATA PROCESSING (CLEANED & SEQUENCED) ---

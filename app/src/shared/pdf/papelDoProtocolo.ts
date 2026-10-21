@@ -13,14 +13,21 @@ const NEON = '#ccff00';
 export const CSS_DO_PROTOCOLO = `
   @page { margin: 0; }
   body { font-family: Helvetica, Arial, sans-serif; color: #282828; margin: 0; }
-  .topo { background: #0f0f0f; color: #fff; padding: 22px 40px 18px; display: flex; justify-content: space-between; }
-  .marca { font-size: 30px; font-weight: 700; letter-spacing: 1px; }
+  .topo { background: #0e0e0e; color: #fff; padding: 22px 40px; display: flex; justify-content: space-between; align-items: center; }
+  .marca { font-size: 28px; font-weight: 700; }
   .marca .eleva { color: ${NEON}; }
-  .marca .pro { font-weight: 400; letter-spacing: 4px; margin-left: 4px; }
-  .autor { font-size: 9px; font-weight: 700; color: #b4b4b4; margin-top: 6px; letter-spacing: 0.5px; }
-  .aluno { text-align: right; font-size: 15px; font-weight: 700; letter-spacing: 0.5px; }
-  .vigencia { font-size: 9px; color: ${NEON}; margin-top: 8px; }
-  .linha-neon { height: 4px; background: ${NEON}; }
+  .marca .pro { font-weight: 400; margin-left: 4px; }
+  .documento { font-size: 9px; font-weight: 700; color: #969696; margin-top: 4px; letter-spacing: 1px; }
+  .dados { text-align: right; max-width: 55%; }
+  .dado { font-size: 12px; font-weight: 700; margin: 2px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dado .rotulo { font-size: 8.5px; font-weight: 400; color: #8c8c8c; letter-spacing: 1px; margin-right: 6px; }
+  .dado.vigencia { color: ${NEON}; }
+  .linha-neon { height: 3px; background: ${NEON}; }
+  .fase { background: #141414; color: ${NEON}; font-weight: 700; font-size: 12px; padding: 9px 12px; margin: 26px 0 14px; display: flex; justify-content: space-between; }
+  .fase .datas { color: #c8c8c8; font-weight: 400; font-size: 10px; }
+  .objetivo { font-size: 11px; color: #787878; margin: -8px 0 6px; }
+  h2 { font-size: 13px; margin: 18px 0 8px; }
+  .vazio { font-style: italic; color: #969696; font-size: 11px; }
   main { padding: 26px 40px 40px; }
   h1 { font-size: 16px; margin: 0 0 14px; letter-spacing: 0.5px; }
   table { width: 100%; border-collapse: collapse; font-size: 10px; }
@@ -52,29 +59,34 @@ export const escaparHtml = (texto: string): string =>
   texto.replace(/[&<>"']/g, (char) => NOMEADOS[char] ?? char);
 
 export interface CabecalhoDoProtocolo {
+  /** O tipo do documento, sob a marca: "Protocolo de treino". */
+  documento: string;
   /** O nome que o app já mostra; nunca e-mail nem id. */
   aluno: string;
-  /** "Daniel L.", ou nulo no plano próprio do Praticante. */
+  /** "Daniel L.", ou nulo no plano próprio do Praticante: a linha não aparece. */
   especialista: string | null;
-  /** "VALOR DE VIGÊNCIA: 01 ago 2026 - 29 ago 2026", ou nulo sem fase. */
+  /** "1 out 2026 – 24 dez 2026", ou nulo sem período. */
   vigencia: string | null;
 }
 
 /**
- * O topo do protocolo: marca, autor, aluno e vigência, com a linha neon.
+ * O topo do protocolo: a marca e o tipo do documento à esquerda; aluno,
+ * profissional e vigência à direita, cada um com o seu rótulo; a linha neon.
  *
- * @example cabecalhoDoProtocolo({ aluno: 'Ana', especialista: 'Daniel L.', vigencia: null })
+ * @example cabecalhoDoProtocolo({ documento: 'Protocolo de treino', aluno: 'Ana', especialista: null, vigencia: null })
  */
 export function cabecalhoDoProtocolo(cabecalho: CabecalhoDoProtocolo): string {
-  const autor = cabecalho.especialista ? cabecalho.especialista.toUpperCase() : 'PLANO PRÓPRIO';
+  const dado = (rotulo: string, valor: string, classe = '') =>
+    `<div class="dado ${classe}"><span class="rotulo">${rotulo}</span>${escaparHtml(valor)}</div>`;
   return `<div class="topo">
     <div>
       <div class="marca"><span class="eleva">ELEVA</span><span class="pro">PRO</span></div>
-      <div class="autor">DESENVOLVIDO POR // ${escaparHtml(autor)}</div>
+      <div class="documento">${escaparHtml(cabecalho.documento.toUpperCase())}</div>
     </div>
-    <div>
-      <div class="aluno">[ ${escaparHtml(cabecalho.aluno.toUpperCase())} ]</div>
-      ${cabecalho.vigencia ? `<div class="vigencia">${escaparHtml(cabecalho.vigencia)}</div>` : ''}
+    <div class="dados">
+      ${dado('ALUNO', cabecalho.aluno)}
+      ${cabecalho.especialista ? dado('PROFISSIONAL', cabecalho.especialista) : ''}
+      ${cabecalho.vigencia ? dado('VIGÊNCIA', cabecalho.vigencia, 'vigencia') : ''}
     </div>
   </div>
   <div class="linha-neon"></div>`;

@@ -27,7 +27,7 @@ export function useExportarTreino(treino: Workout) {
     const folha = buildWorkoutSheet({ title: treino.title, exercises: treino.exercises ?? [] });
     const compartilhou = await compartilharTreino(
       folha,
-      { aluno: aluno ?? 'Aluno', especialista, vigencia: null },
+      { documento: 'Protocolo de treino', aluno: aluno ?? 'Aluno', especialista, vigencia: null },
       new Date().toLocaleString('pt-BR')
     );
     setGerando(false);
