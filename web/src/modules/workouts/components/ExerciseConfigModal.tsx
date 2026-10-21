@@ -62,7 +62,7 @@ export function ExerciseConfigModal({
       onClose={onClose}
       title="Personalizando Séries"
       description={exercise.name}
-      maxWidth="4xl"
+      maxWidth="2xl"
       scrollable
     >
       <div className="space-y-4">

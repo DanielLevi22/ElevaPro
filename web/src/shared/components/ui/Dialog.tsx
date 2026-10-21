@@ -10,7 +10,7 @@ export interface DialogProps {
   description?: string;
   children: React.ReactNode;
   className?: string;
-  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "4xl";
+  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl";
   /**
    * Limita a altura e rola o corpo. Para listas longas — sem isto o painel
    * cresce alem da janela e o rodape sai da tela.
@@ -24,8 +24,6 @@ const maxWidthMap = {
   lg: "max-w-lg",
   xl: "max-w-xl",
   "2xl": "max-w-2xl",
-  // Editor em tabela (Personalizando Séries): uma série por linha, com os campos lado a lado.
-  "4xl": "max-w-4xl",
 };
 
 export function Dialog({

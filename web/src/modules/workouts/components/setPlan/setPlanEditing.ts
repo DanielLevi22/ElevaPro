@@ -4,7 +4,6 @@ import {
   type SetPlan,
   type SetPrescription,
   type SetSegment,
-  TRAINING_METHODS,
 } from "@elevapro/shared";
 
 /** A série de um exercício novo: Normal, 12 repetições, 60 s — o padrão de antes do plano. */
@@ -75,26 +74,6 @@ export function asWeight(value: number | null): number | null {
 /** Segundos de descanso ou pausa: inteiro e nunca negativo, como o schema exige. */
 export function asSeconds(value: number | null): number | null {
   return value === null ? null : Math.max(0, Math.round(value));
-}
-
-const STRUCTURE = new Set(TRAINING_METHODS.filter((m) => m.group === "structure").map((m) => m.id));
-
-/** Os tipos de série do seletor da linha: as técnicas de estrutura do catálogo. */
-export const SET_TYPES = TRAINING_METHODS.filter((m) => m.group === "structure");
-
-/** O tipo da série: a técnica de estrutura marcada, ou Normal sem nenhuma. */
-export function primaryTypeOf(set: SetPrescription): string {
-  return set.methods.find((id) => STRUCTURE.has(id)) ?? "working";
-}
-
-/** Troca o tipo da série, mantendo as técnicas extras na ordem. */
-export function withPrimaryType(set: SetPrescription, type: string): SetPrescription {
-  return { ...set, methods: [type, ...extraMethodsOf(set)] };
-}
-
-/** As técnicas fora da estrutura: forma de executar, ligação, esquema e tempo. */
-export function extraMethodsOf(set: SetPrescription): string[] {
-  return set.methods.filter((id) => !STRUCTURE.has(id));
 }
 
 /** O mesmo descanso em todas as séries, sem mexer no resto. */

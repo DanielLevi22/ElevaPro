@@ -6,8 +6,7 @@ import { useState } from "react";
 import { METHOD_GROUP_LABEL, METHOD_GROUP_TONE } from "@/shared/components/ui/methodTone";
 import { cn } from "@/shared/utils/cn";
 
-// O tipo da série (estrutura) tem o seletor próprio na linha; aqui ficam as extras.
-const GROUPS: TrainingMethodGroup[] = ["execution", "pairing", "scheme", "timed"];
+const GROUPS = Object.keys(METHOD_GROUP_LABEL) as TrainingMethodGroup[];
 const BY_GROUP = new Map(GROUPS.map((g) => [g, TRAINING_METHODS.filter((m) => m.group === g)]));
 
 const normalize = (text: string) =>
@@ -16,31 +15,31 @@ const normalize = (text: string) =>
     .replace(/\p{Diacritic}/gu, "")
     .toLowerCase();
 
-interface ExtraMethodsProps {
+interface MethodSearchProps {
   selected: string[];
   onToggle: (id: string) => void;
 }
 
 /**
- * As técnicas extras da série por grupo, com busca: forma de executar, ligação
- * com outro exercício, esquema e por tempo.
+ * O catálogo de técnicas por grupo, com busca: marca e desmarca quantas a série
+ * precisar — rest-pause com isometria, aquecimento com cadência.
  *
- * @example <ExtraMethods selected={extraMethodsOf(set)} onToggle={(id) => onChange(toggleMethod(set, id))} />
+ * @example <MethodSearch selected={set.methods} onToggle={(id) => onChange(toggleMethod(set, id))} />
  */
-export function ExtraMethods({ selected, onToggle }: ExtraMethodsProps) {
+export function MethodSearch({ selected, onToggle }: MethodSearchProps) {
   const [query, setQuery] = useState("");
   const needle = normalize(query.trim());
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5 rounded-lg border border-overlay-10 bg-background/40 p-3">
       <div className="relative">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar técnica (ex.: isometria, bi-set)"
-          aria-label="Buscar técnica extra"
+          placeholder="Buscar técnica (ex.: rest-pause, isometria)"
+          aria-label="Buscar técnica"
           className="w-full rounded-md border border-border bg-background py-1.5 pl-8 pr-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
