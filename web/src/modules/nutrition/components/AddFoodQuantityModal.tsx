@@ -4,6 +4,8 @@ import type { Food } from "@elevapro/shared";
 import { useEffect, useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
 import { Dialog } from "@/shared/components/ui/Dialog";
+import { macrosForQuantity, quantityToClose } from "../utils/macroTotals";
+import { DayBalance, type DaySnapshot } from "./DayBalance";
 
 interface AddFoodQuantityModalProps {
   isOpen: boolean;
@@ -11,6 +13,8 @@ interface AddFoodQuantityModalProps {
   onConfirm: (quantity: number) => void;
   food: Food | null;
   suggestedQuantity?: number;
+  /** Saldo do dia: sem ele o modal some com o que falta da tela. */
+  daySnapshot?: DaySnapshot;
 }
 
 const MACROS = [
@@ -20,12 +24,52 @@ const MACROS = [
   { label: "Gord", key: "fat", tone: "text-warning", suffix: "g" },
 ] as const;
 
+const CLOSABLE_MACROS = [
+  { key: "protein", label: "proteína" },
+  { key: "carbs", label: "carbo" },
+  { key: "fat", label: "gordura" },
+] as const;
+
+interface CloseGapShortcutsProps {
+  food: Food;
+  daySnapshot: DaySnapshot;
+  onPick: (quantity: number) => void;
+}
+
+// Atalho para a pergunta que o especialista faz no modal: "quanto disto fecha o que falta?".
+function CloseGapShortcuts({ food, daySnapshot, onPick }: CloseGapShortcutsProps) {
+  const shortcuts = CLOSABLE_MACROS.flatMap(({ key, label }) => {
+    const remaining = daySnapshot.targets[key] - daySnapshot.consumed[key];
+    const quantity = quantityToClose(food, key, remaining);
+    return quantity ? [{ key, label, quantity }] : [];
+  });
+  if (shortcuts.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-xs text-muted-foreground">Completar o dia:</span>
+      {shortcuts.map((shortcut) => (
+        <button
+          key={shortcut.key}
+          type="button"
+          onClick={() => onPick(shortcut.quantity)}
+          className="text-xs font-semibold px-2.5 py-1 rounded-full border border-white/10 bg-white/5 text-foreground hover:border-primary/40 hover:text-primary transition-colors"
+        >
+          {shortcut.label} · {shortcut.quantity}
+          {food.serving_unit}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function AddFoodQuantityModal({
   isOpen,
   onClose,
   onConfirm,
   food,
   suggestedQuantity,
+  daySnapshot,
 }: AddFoodQuantityModalProps) {
   const [quantity, setQuantity] = useState("");
 
@@ -49,7 +93,8 @@ export function AddFoodQuantityModal({
   // Sem alimento nao ha o que quantificar — o corpo depende dele inteiro.
   if (!food) return null;
 
-  const ratio = parseFloat(quantity || "0") / food.serving_size;
+  const parsedQuantity = parseFloat(quantity || "0") || 0;
+  const ratio = parsedQuantity / food.serving_size;
 
   return (
     <Dialog open={isOpen} onClose={onClose} title="Confirmar Quantidade">
@@ -82,7 +127,7 @@ export function AddFoodQuantityModal({
           </div>
         </label>
 
-        {parseFloat(quantity || "0") > 0 && (
+        {parsedQuantity > 0 && (
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
             <p className="text-xs text-muted-foreground mb-2">Valores nutricionais:</p>
             <div className="grid grid-cols-4 gap-2 text-center">
@@ -97,6 +142,17 @@ export function AddFoodQuantityModal({
               ))}
             </div>
           </div>
+        )}
+
+        {daySnapshot && (
+          <>
+            <CloseGapShortcuts
+              food={food}
+              daySnapshot={daySnapshot}
+              onPick={(picked) => setQuantity(picked.toString())}
+            />
+            <DayBalance {...daySnapshot} preview={macrosForQuantity(food, parsedQuantity)} />
+          </>
         )}
 
         <div className="flex justify-end gap-3">

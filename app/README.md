@@ -55,8 +55,8 @@ sdk.dir=C:/Users/<você>/AppData/Local/Android/Sdk
 cmake.dir=C:/Users/<você>/AppData/Local/Android/Sdk/cmake/3.31.6
 ```
 
-**O `npx expo prebuild --clean` apaga esse arquivo**: recrie a linha depois de
-cada prebuild. No Linux (pipeline e EAS) nada disso é preciso.
+**O `npx expo prebuild` apaga esse arquivo, mesmo sem `--clean`**: recrie as
+linhas depois de cada prebuild. No Linux (pipeline e EAS) nada disso é preciso.
 
 ### O dev client pede "dispositivos próximos"
 
@@ -92,6 +92,31 @@ Caused by: Failed to create an instance of class androidx.work.impl.WorkDatabase
 O WorkManager 2.8.1 vem pelo `react-native-android-widget`, com o Room 2.5,
 que acha por reflexão a classe gerada do banco (`WorkDatabase_Impl`). O R8 a
 apagava. As regras de keep do Room resolveram.
+
+**Aconteceu de novo com o MediaPipe.** A análise de foto falhava na tela, sem
+fechar o app:
+
+```
+Field platform_ for kz3 not found. Known fields are [...]
+```
+
+O `tasks-vision` não traz regra de keep no AAR. As mensagens dele são
+protobuf-lite, que acha os campos pelo nome por reflexão, e o código nativo
+chama classes Java por JNI. O keep do pacote `com.google.mediapipe` inteiro
+cobre os dois.
+
+Corrigido isso, o app passou a fechar ao abrir a câmera:
+
+```
+Caused by: java.lang.IllegalStateException: no caller found on the stack for: q82
+  at com.google.mediapipe.framework.Graph.<clinit>
+```
+
+`q82` era o `FluentLogger` do Flogger, que vem com o MediaPipe e acha quem o
+chamou procurando o próprio nome na pilha. Precisa do keep de
+`com.google.common.flogger`. Erro com nome ofuscado (`kz3`, `q82`) só aparece
+no release: é sinal de R8. Para traduzir o nome, procure `-> q82:` em
+`android/app/build/outputs/mapping/release/mapping.txt`.
 
 **Regra do R8 vai no `extraProguardRules` do `expo-build-properties`**, no
 `app.json`, nunca no `android/app/proguard-rules.pro`: o `android/` é gerado,

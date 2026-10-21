@@ -7,6 +7,7 @@ import {
   textoDaDificuldade,
   textoDasPorcoes,
 } from "@elevapro/shared";
+import { sumItemMacros } from "../utils/macroTotals";
 
 interface MealCardProps {
   meal: DietMeal & { meal_foods?: (DietMealItem & { food: Food })[] };
@@ -25,17 +26,7 @@ export function MealCard({
   onRemoveItem,
   onDeleteMeal,
 }: MealCardProps) {
-  const mealTotals = (meal.meal_foods || []).reduce(
-    (acc, item) => {
-      const ratio = item.quantity / item.food.serving_size;
-      acc.calories += (item.food.calories ?? 0) * ratio;
-      acc.protein += (item.food.protein ?? 0) * ratio;
-      acc.carbs += (item.food.carbs ?? 0) * ratio;
-      acc.fat += (item.food.fat ?? 0) * ratio;
-      return acc;
-    },
-    { calories: 0, protein: 0, carbs: 0, fat: 0 },
-  );
+  const mealTotals = sumItemMacros(meal.meal_foods);
 
   return (
     <div className="bg-surface border border-white/10 rounded-xl overflow-hidden shadow-sm">
