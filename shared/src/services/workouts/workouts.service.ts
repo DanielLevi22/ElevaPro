@@ -112,7 +112,7 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
       .order("order_index", { foreignTable: "workout_exercises", ascending: true })
       .single();
     if (error) throw error;
-    return data as Workout;
+    return withPlans(data as Workout);
   },
 
   /**
@@ -256,5 +256,18 @@ async function fetchWorkoutsOfPlan(
     .eq("training_plan_id", trainingPlanId)
     .order("created_at", { ascending: true });
   if (error) throw error;
-  return (data || []) as Workout[];
+  return ((data || []) as Workout[]).map(withPlans);
+}
+
+/**
+ * Plano nulo do banco lido como plano vazio. Até a 0106, app antigo ainda cria
+ * item sem `set_plan`; nulo quebrava toda tela que resume o treino, vazio mostra
+ * zero séries até o backfill rodar de novo.
+ */
+function withPlans(workout: Workout): Workout {
+  if (!workout?.exercises) return workout;
+  return {
+    ...workout,
+    exercises: workout.exercises.map((item) => ({ ...item, set_plan: item.set_plan ?? [] })),
+  };
 }

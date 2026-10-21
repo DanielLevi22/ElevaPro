@@ -56,3 +56,34 @@ describe("workoutsService — plano de séries do exercício", () => {
     expect(chamadas).toHaveLength(0);
   });
 });
+
+describe("workoutsService — item sem plano vindo do banco", () => {
+  // Até a 0106, app antigo ainda cria item sem set_plan. Lido como nulo, ele
+  // quebrava toda tela que resume o treino; vazio, a tela mostra zero séries
+  // até o backfill rodar de novo.
+  it("lê plano nulo como plano vazio", async () => {
+    const { supabase } = criarSupabaseFake({
+      data: {
+        id: "t1",
+        title: "Treino A",
+        exercises: [{ id: "we1", order_index: 0, set_plan: null }],
+      },
+    });
+
+    const treino = await createWorkoutsService(supabase).fetchWorkoutById("t1");
+
+    expect(treino?.exercises?.[0]?.set_plan).toEqual([]);
+  });
+
+  it("nos treinos da fase, também", async () => {
+    const { supabase } = criarSupabaseFake({
+      data: [
+        { id: "t1", title: "Treino A", exercises: [{ id: "we1", order_index: 0, set_plan: null }] },
+      ],
+    });
+
+    const treinos = await createWorkoutsService(supabase).fetchWorkoutsByPlan("fase-1");
+
+    expect(treinos[0]?.exercises?.[0]?.set_plan).toEqual([]);
+  });
+});
