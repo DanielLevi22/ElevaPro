@@ -8,15 +8,16 @@
  * "8 a 12", "10 min" ou "corporal" em duas linguagens divergiria. O que não
  * couber no plano vai para a observação do item.
  *
- * Usa a chave `service_role`, porque precisa ler e gravar itens de todos os
- * especialistas. Ela vem do ambiente, nunca do código. Rodar de novo é seguro:
- * só os itens com plano nulo são lidos.
+ * Conecta direto no Postgres pelo `SUPABASE_DB_URL`, o mesmo secret com que o
+ * `db push` aplica as migrations (#434): o backfill roda no workflow manual
+ * `backfill-set-plan.yml` sem mais uma credencial, e no local contra o Docker.
+ * Rodar de novo é seguro: só os itens com plano nulo são lidos.
  *
  * Uso:
- *   SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npm run db:backfill-set-plan
+ *   SUPABASE_DB_URL=postgresql://postgres:postgres@127.0.0.1:47322/postgres npm run db:backfill-set-plan
  */
 
-import { createClient } from "@supabase/supabase-js";
+import postgres from "postgres";
 import { setPlanFromFlatColumns } from "../shared/src/setPlan/simplePrescription";
 
 const PAGE_SIZE = 500;
@@ -30,47 +31,56 @@ interface FlatItem {
   notes: string | null;
 }
 
-function requiredEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Variável ${name} ausente. Esperado: a URL e a chave service_role do projeto.`);
+type Sql = postgres.Sql;
+
+function databaseUrl(): string {
+  const url = process.env.SUPABASE_DB_URL;
+  if (!url) {
+    throw new Error(
+      "Variável SUPABASE_DB_URL ausente. Esperado: postgresql://usuario:senha@host:porta/banco " +
+        "(no local, postgresql://postgres:postgres@127.0.0.1:47322/postgres).",
+    );
   }
-  return value;
+  return url;
+}
+
+/** O pooler do Supabase fala TLS; o Postgres do Docker local, não. */
+function sslFor(url: string): false | "require" {
+  return /@(127\.0\.0\.1|localhost)[:/]/.test(url) ? false : "require";
+}
+
+/** Converte uma página de itens sem plano e diz quantos eram. */
+async function convertPage(sql: Sql): Promise<number> {
+  const items = await sql<FlatItem[]>`
+    SELECT id, sets, reps, weight, rest_seconds, notes
+    FROM public.workout_exercises
+    WHERE set_plan IS NULL
+    LIMIT ${PAGE_SIZE}`;
+  for (const item of items) {
+    const { set_plan, notes } = setPlanFromFlatColumns(item);
+    // `::text` antes do `::jsonb`: sem ele o driver vê o parâmetro como jsonb e
+    // codifica a string de novo, e o plano vira um texto JSON em vez de lista.
+    await sql`
+      UPDATE public.workout_exercises
+      SET set_plan = ${JSON.stringify(set_plan)}::text::jsonb, notes = ${notes}
+      WHERE id = ${item.id}`;
+  }
+  return items.length;
 }
 
 async function main(): Promise<void> {
-  const supabase = createClient(
-    requiredEnv("SUPABASE_URL"),
-    requiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
-    {
-      auth: { persistSession: false },
-    },
-  );
+  const url = databaseUrl();
+  const sql = postgres(url, { ssl: sslFor(url), max: 1 });
   let converted = 0;
-
-  // Sempre a primeira página: cada lote gravado sai do filtro `set_plan is null`.
-  for (;;) {
-    const { data, error } = await supabase
-      .from("workout_exercises")
-      .select("id, sets, reps, weight, rest_seconds, notes")
-      .is("set_plan", null)
-      .limit(PAGE_SIZE);
-    if (error) throw new Error(`Leitura dos itens falhou: ${error.message}`);
-    const items = (data ?? []) as FlatItem[];
-    if (items.length === 0) break;
-
-    for (const item of items) {
-      const { error: updateError } = await supabase
-        .from("workout_exercises")
-        .update(setPlanFromFlatColumns(item))
-        .eq("id", item.id);
-      if (updateError)
-        throw new Error(`Item ${item.id} não foi convertido: ${updateError.message}`);
+  try {
+    // Sempre a primeira página: cada item gravado sai do filtro `set_plan IS NULL`.
+    for (let page = await convertPage(sql); page > 0; page = await convertPage(sql)) {
+      converted += page;
+      console.log(`${converted} itens convertidos até agora`);
     }
-    converted += items.length;
-    console.log(`${converted} itens convertidos até agora`);
+  } finally {
+    await sql.end();
   }
-
   console.log(`Pronto: ${converted} itens ganharam plano de séries. A 0106 já pode ser aplicada.`);
 }
 

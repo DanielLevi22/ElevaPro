@@ -1,0 +1,41 @@
+name: Backfill set_plan
+
+# ──────────────────────────────────────────────────────
+# Preenche o plano de séries dos itens de treino que ainda só têm sets/reps/
+# weight/rest_seconds (#431, #434). A 0106 recusa rodar enquanto houver item
+# sem plano, e o `db push` do preview roda sozinho a cada merge na development:
+# sem este workflow, destravar o ambiente dependia de alguém com a chave
+# service_role rodar o script da própria máquina.
+#
+# Manual de propósito: escreve em todos os itens sem plano. Rodar de novo é
+# seguro, só os itens com plano nulo são lidos. Depois dele, reexecute o
+# "Supabase Migrations" para aplicar a 0106.
+# ──────────────────────────────────────────────────────
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: backfill-set-plan
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    name: 🧮 Converter itens sem plano
+    runs-on: ubuntu-latest
+    # O mesmo secret com que o `db push` aplica as migrations no preview.
+    environment: preview
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Converter
+        run: npm run db:backfill-set-plan
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
