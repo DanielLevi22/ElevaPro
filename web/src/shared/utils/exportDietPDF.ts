@@ -62,7 +62,8 @@ export async function exportDietToPDF(
   dietPlan: DietPlan,
   meals: DietMeal[],
   studentName: string,
-  professionalName: string,
+  /** Nulo quando quem exporta é o próprio aluno: a linha não aparece. */
+  professionalName: string | null,
 ) {
   // --- DATA CLEANING (GHOST MEAL PREVENTER) ---
   const activeMeals = meals.filter((m) => m.meal_foods && m.meal_foods.length > 0);
