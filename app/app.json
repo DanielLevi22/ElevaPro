@@ -83,7 +83,7 @@
         {
           "android": {
             "minSdkVersion": 26,
-            "extraProguardRules": "# O R8 do release (ligado no SDK 58) apagava o banco do WorkManager, que vem pelo react-native-android-widget: o Room 2.5 acha a classe gerada por reflexão (#426).\n-keep class * extends androidx.room.RoomDatabase { <init>(); }\n-keep class androidx.work.impl.WorkDatabase_Impl { *; }"
+            "extraProguardRules": "# O R8 do release (ligado no SDK 58) apagava o banco do WorkManager, que vem pelo react-native-android-widget: o Room 2.5 acha a classe gerada por reflexão (#426).\n-keep class * extends androidx.room.RoomDatabase { <init>(); }\n-keep class androidx.work.impl.WorkDatabase_Impl { *; }\n\n# O MediaPipe (tasks-vision 0.10.35) não traz regra de keep no AAR. As mensagens dele são protobuf-lite, que lê os campos por reflexão pelo nome (`platform_`), e o nativo chama classes Java por JNI: com o R8, a análise falhava em 'Field platform_ for kz3 not found'.\n-keep class com.google.mediapipe.** { *; }\n# O Flogger, que vem com o MediaPipe, acha quem o chamou procurando o próprio nome na pilha: renomeado, o Graph quebrava ao iniciar com 'no caller found on the stack'.\n-keep class com.google.common.flogger.** { *; }\n-dontwarn com.google.common.flogger.**\n-keepclassmembers class * extends com.google.protobuf.GeneratedMessageLite { <fields>; }\n-dontwarn com.google.mediapipe.**"
           }
         }
       ],

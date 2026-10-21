@@ -138,6 +138,15 @@ type TokensLiterais = {
   veuDaImagemTopo: CorLiteral;
   veuDaImagemBase: CorLiteral;
   /**
+   * O quadro da câmera do body scan: longe, quase e pronto. **Iguais nos dois
+   * temas e saturadas de propósito**: a câmera é sempre escura, e o aluno lê o
+   * quadro a três metros, onde tom pastel some. O redesenho da #316 trocou por
+   * tokens do tema a 18% e o quadro deixou de ser visto de longe.
+   */
+  enquadramentoLonge: CorLiteral;
+  enquadramentoQuase: CorLiteral;
+  enquadramentoPronto: CorLiteral;
+  /**
    * O fundo da tab bar (`--tab-bg` do kit): quase opaco, porque o blur de 24
    * sozinho não segura ícone e rótulo legíveis sobre a foto que passa por baixo.
    */
@@ -289,6 +298,9 @@ const escuro: Paleta = {
     sobreImagemSecundario: 'rgba(255, 255, 255, 0.85)',
     veuDaImagemTopo: 'rgba(0, 0, 0, 0.1)',
     veuDaImagemBase: 'rgba(0, 0, 0, 0.82)',
+    enquadramentoLonge: '#ff1744',
+    enquadramentoQuase: '#ffd600',
+    enquadramentoPronto: '#00e676',
     barraDeAbas: 'rgba(18, 19, 22, 0.72)',
     textoProteina: '#34d399',
     textoCarboidrato: '#a3e635',
@@ -354,6 +366,9 @@ const claro: Paleta = {
     sobreImagemSecundario: 'rgba(255, 255, 255, 0.85)',
     veuDaImagemTopo: 'rgba(0, 0, 0, 0.1)',
     veuDaImagemBase: 'rgba(0, 0, 0, 0.82)',
+    enquadramentoLonge: '#ff1744',
+    enquadramentoQuase: '#ffd600',
+    enquadramentoPronto: '#00e676',
     barraDeAbas: 'rgba(255, 255, 255, 0.9)',
     textoProteina: '#0b7a52',
     textoCarboidrato: '#4e7a0b',
