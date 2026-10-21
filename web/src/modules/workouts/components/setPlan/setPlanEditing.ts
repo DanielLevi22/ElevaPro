@@ -65,3 +65,13 @@ export function parseOptionalNumber(raw: string): number | null {
   const value = Number(raw.replace(",", "."));
   return Number.isFinite(value) ? value : null;
 }
+
+/** Peso zero ou negativo não é carga: vazio é "o aluno escolhe", e o schema recusa zero. */
+export function asWeight(value: number | null): number | null {
+  return value !== null && value > 0 ? value : null;
+}
+
+/** Segundos de descanso ou pausa: inteiro e nunca negativo, como o schema exige. */
+export function asSeconds(value: number | null): number | null {
+  return value === null ? null : Math.max(0, Math.round(value));
+}

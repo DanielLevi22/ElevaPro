@@ -4,7 +4,7 @@ import { MAX_SEGMENTS, type SetPrescription, type SetSegment } from "@elevapro/s
 import { Plus, Trash2 } from "lucide-react";
 import { NumberField } from "./NumberField";
 import { RepsField } from "./RepsField";
-import { appendSegment } from "./setPlanEditing";
+import { appendSegment, asSeconds, asWeight } from "./setPlanEditing";
 
 interface SegmentListProps {
   set: SetPrescription;
@@ -39,7 +39,7 @@ export function SegmentList({ set, onChange }: SegmentListProps) {
           <NumberField
             label="Pausa antes (s)"
             value={segment.pause_seconds}
-            onChange={(v) => replace(index, { ...segment, pause_seconds: v ?? 0 })}
+            onChange={(v) => replace(index, { ...segment, pause_seconds: asSeconds(v) ?? 0 })}
           />
           <RepsField
             value={segment.reps}
@@ -50,7 +50,7 @@ export function SegmentList({ set, onChange }: SegmentListProps) {
             value={segment.weight_kg}
             step={0.5}
             placeholder="Livre"
-            onChange={(v) => replace(index, { ...segment, weight_kg: v })}
+            onChange={(v) => replace(index, { ...segment, weight_kg: asWeight(v) })}
           />
           <button
             type="button"

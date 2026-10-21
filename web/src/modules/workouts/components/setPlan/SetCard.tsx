@@ -8,7 +8,7 @@ import { MethodPicker } from "./MethodPicker";
 import { NumberField } from "./NumberField";
 import { RepsField } from "./RepsField";
 import { SegmentList } from "./SegmentList";
-import { toggleMethod } from "./setPlanEditing";
+import { asSeconds, asWeight, toggleMethod } from "./setPlanEditing";
 
 interface SetCardProps {
   set: SetPrescription;
@@ -80,14 +80,16 @@ export function SetCard({ set, number, isOpen, onToggleOpen, onChange, onRemove 
               value={set.weight_kg}
               step={0.5}
               placeholder="Livre"
-              onChange={(weight_kg) => onChange({ ...set, weight_kg })}
+              onChange={(weight_kg) => onChange({ ...set, weight_kg: asWeight(weight_kg) })}
             />
             <NumberField
               label="Descanso (s)"
               value={set.rest_seconds}
               step={15}
               placeholder="Padrão"
-              onChange={(rest_seconds) => onChange({ ...set, rest_seconds })}
+              onChange={(rest_seconds) =>
+                onChange({ ...set, rest_seconds: asSeconds(rest_seconds) })
+              }
             />
           </div>
           <details className="group">

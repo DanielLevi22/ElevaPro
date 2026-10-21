@@ -21,7 +21,7 @@ const MODE_DEFAULT: Record<Mode, RepsTarget> = {
 };
 
 const NUMBER_CLASS =
-  "w-16 rounded-md border border-overlay-10 bg-white/5 px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary";
+  "w-16 rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary";
 
 interface RepsFieldProps {
   value: RepsTarget;
@@ -44,10 +44,12 @@ export function RepsField({ value, onChange, label = "Repetições" }: RepsField
           id={modeId}
           value={value.mode}
           onChange={(e) => onChange(MODE_DEFAULT[e.target.value as Mode])}
-          className="rounded-md border border-overlay-10 bg-white/5 px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          className="rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
         >
           {(Object.keys(MODE_LABEL) as Mode[]).map((mode) => (
-            <option key={mode} value={mode}>
+            // A lista nativa do select não herda o tema: sem fundo e cor próprios,
+            // o texto claro do tema escuro some sobre o branco do sistema.
+            <option key={mode} value={mode} className="bg-surface text-foreground">
               {MODE_LABEL[mode]}
             </option>
           ))}

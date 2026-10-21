@@ -39,7 +39,7 @@ export function NumberField({
         value={value ?? ""}
         placeholder={placeholder}
         onChange={(e) => onChange(parseOptionalNumber(e.target.value))}
-        className="w-24 rounded-md border border-overlay-10 bg-white/5 px-2 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+        className="w-24 rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
       />
     </div>
   );
