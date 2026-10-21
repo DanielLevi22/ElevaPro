@@ -16,6 +16,11 @@ export interface DialogProps {
    * cresce alem da janela e o rodape sai da tela.
    */
   scrollable?: boolean;
+  /**
+   * Ações fixas no pé do painel, fora da área que rola: o conteúdo para na
+   * borda de cima dele, em vez de passar por baixo como num `sticky` interno.
+   */
+  footer?: React.ReactNode;
 }
 
 const maxWidthMap = {
@@ -35,6 +40,7 @@ export function Dialog({
   className,
   maxWidth = "md",
   scrollable = false,
+  footer,
 }: DialogProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -106,6 +112,10 @@ export function Dialog({
         <div className={cn("p-6", scrollable && "flex-1 overflow-y-auto custom-scrollbar")}>
           {children}
         </div>
+
+        {footer ? (
+          <div className="shrink-0 border-t border-overlay-10 px-6 py-4">{footer}</div>
+        ) : null}
       </div>
     </div>
   );

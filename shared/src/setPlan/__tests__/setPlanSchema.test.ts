@@ -17,8 +17,8 @@ describe("validateSetPlan — o formato do plano de séries", () => {
       methods: ["rest_pause", "isometric"],
       target_rir: 0,
       segments: [
-        { reps: { mode: "failure" }, weight_kg: 80, pause_seconds: 0 },
-        { reps: { mode: "count", value: 4 }, weight_kg: 80, pause_seconds: 15 },
+        { reps: { mode: "failure" }, weight_kg: 80, pause_seconds: 0, methods: [] },
+        { reps: { mode: "count", value: 4 }, weight_kg: 80, pause_seconds: 15, methods: [] },
       ],
     };
     expect(validateSetPlan([normalSet, restPause])).toEqual([normalSet, restPause]);
@@ -58,5 +58,34 @@ describe("validateSetPlan — o formato do plano de séries", () => {
     expect(() => validateSetPlan([{ ...normalSet, target_rir: rir }])).toThrow(
       new RegExp(`RIR alvo ${rir} fora da faixa`),
     );
+  });
+
+  it("o bloco aceita técnicas próprias do catálogo", () => {
+    const segment = {
+      reps: { mode: "count", value: 4 },
+      weight_kg: 60,
+      pause_seconds: 0,
+      methods: ["partial"],
+    };
+    expect(
+      validateSetPlan([{ ...normalSet, segments: [segment] }])[0]?.segments[0]?.methods,
+    ).toEqual(["partial"]);
+  });
+
+  it("bloco gravado antes das técnicas por bloco é lido com a lista vazia", () => {
+    const antigo = { reps: { mode: "count", value: 4 }, weight_kg: null, pause_seconds: 15 };
+    expect(
+      validateSetPlan([{ ...normalSet, segments: [antigo] }])[0]?.segments[0]?.methods,
+    ).toEqual([]);
+  });
+
+  it("recusa técnica fora do catálogo no bloco, dizendo qual era", () => {
+    const segment = {
+      reps: { mode: "failure" },
+      weight_kg: null,
+      pause_seconds: 0,
+      methods: ["bfr"],
+    };
+    expect(() => validateSetPlan([{ ...normalSet, segments: [segment] }])).toThrow(/bfr/);
   });
 });

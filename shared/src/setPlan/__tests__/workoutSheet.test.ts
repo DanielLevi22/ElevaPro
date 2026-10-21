@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildWorkoutSheet, describeRepsTarget, type SetPrescription } from "..";
+import { buildWorkoutSheet, describeRepsTarget, describeSegment, type SetPrescription } from "..";
 
 const serie = (campos: Partial<SetPrescription>): SetPrescription => ({
   methods: ["working"],
@@ -63,7 +63,14 @@ describe("buildWorkoutSheet — o treino na folha do PDF", () => {
               methods: ["rest_pause", "working"],
               reps: { mode: "failure" },
               target_rir: 0,
-              segments: [{ reps: { mode: "count", value: 4 }, weight_kg: 80, pause_seconds: 15 }],
+              segments: [
+                {
+                  reps: { mode: "count", value: 4 },
+                  weight_kg: 80,
+                  pause_seconds: 15,
+                  methods: [],
+                },
+              ],
             }),
           ],
           "Joelho alinhado",
@@ -117,5 +124,16 @@ describe("buildWorkoutSheet — o treino na folha do PDF", () => {
       exercises: [item("Rosca", 0, [serie({ weight_kg: 12.5 })])],
     });
     expect(sheet.exercises[0]?.sets[0]?.weight).toBe("12,5 kg");
+  });
+
+  it("o bloco leva as técnicas dele no roteiro", () => {
+    expect(
+      describeSegment({
+        reps: { mode: "failure" },
+        weight_kg: 60,
+        pause_seconds: 0,
+        methods: ["partial", "negative"],
+      }),
+    ).toBe("→ até a falha · 60 kg · Parcial, Negativa");
   });
 });

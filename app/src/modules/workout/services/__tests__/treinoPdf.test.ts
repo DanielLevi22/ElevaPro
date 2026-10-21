@@ -20,7 +20,9 @@ const folhaDeOrigem = [
       serie({
         methods: ['rest_pause'],
         reps: { mode: 'failure' },
-        segments: [{ reps: { mode: 'count', value: 4 }, weight_kg: 80, pause_seconds: 15 }],
+        segments: [
+          { reps: { mode: 'count', value: 4 }, weight_kg: 80, pause_seconds: 15, methods: [] },
+        ],
       }),
     ],
     exercise: { name: 'Agachamento', muscle_group: 'Pernas' },

@@ -64,18 +64,8 @@ export function ExerciseConfigModal({
       description={exercise.name}
       maxWidth="2xl"
       scrollable
-    >
-      <div className="space-y-4">
-        {exercise.muscle_group ? (
-          <span className="inline-block rounded-lg bg-secondary/10 px-3 py-1 text-sm text-secondary">
-            {muscleGroupLabel(exercise.muscle_group)}
-          </span>
-        ) : null}
-
-        <SetPlanEditor plan={plan} onChange={setPlan} />
-
-        {/* Fixo no pé do painel: com várias séries abertas, o Salvar não some. */}
-        <div className="sticky bottom-0 -mx-6 -mb-6 flex flex-wrap items-center justify-between gap-3 border-t border-overlay-10 bg-surface px-6 py-4">
+      footer={
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="text-xs text-muted-foreground">{summaryText(plan)}</span>
           <div className="flex items-center gap-2">
             <Button variant="secondary" onClick={onClose}>
@@ -86,6 +76,16 @@ export function ExerciseConfigModal({
             </Button>
           </div>
         </div>
+      }
+    >
+      <div className="space-y-4">
+        {exercise.muscle_group ? (
+          <span className="inline-block rounded-lg bg-secondary/10 px-3 py-1 text-sm text-secondary">
+            {muscleGroupLabel(exercise.muscle_group)}
+          </span>
+        ) : null}
+
+        <SetPlanEditor plan={plan} onChange={setPlan} />
       </div>
     </Dialog>
   );

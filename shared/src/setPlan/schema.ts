@@ -28,14 +28,16 @@ const repsTargetSchema = z.discriminatedUnion("mode", [
 
 const weightSchema = z.number().positive().nullable();
 
+const methodSchema = z.string().refine((id) => TRAINING_METHOD_IDS.includes(id), {
+  error: (issue) => UNKNOWN_METHOD(issue.input),
+});
+
 const setSegmentSchema = strictObject({
   reps: repsTargetSchema,
   weight_kg: weightSchema,
   pause_seconds: nonNegativeInt,
-});
-
-const methodSchema = z.string().refine((id) => TRAINING_METHOD_IDS.includes(id), {
-  error: (issue) => UNKNOWN_METHOD(issue.input),
+  // Bloco gravado antes das técnicas por bloco chega sem a chave: lista vazia.
+  methods: z.array(methodSchema).default([]),
 });
 
 const setPrescriptionSchema = strictObject({

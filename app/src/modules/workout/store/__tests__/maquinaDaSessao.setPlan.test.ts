@@ -30,8 +30,8 @@ const restPause = serie({
   methods: ['rest_pause'],
   rest_seconds: 120,
   segments: [
-    { reps: { mode: 'count', value: 4 }, weight_kg: 80, pause_seconds: 15 },
-    { reps: { mode: 'count', value: 2 }, weight_kg: 80, pause_seconds: 15 },
+    { reps: { mode: 'count', value: 4 }, weight_kg: 80, pause_seconds: 15, methods: [] },
+    { reps: { mode: 'count', value: 2 }, weight_kg: 80, pause_seconds: 15, methods: [] },
   ],
 });
 

@@ -11,6 +11,8 @@ export interface SetSegment {
   /** `null`: o aluno escolhe a carga. */
   weight_kg: number | null;
   pause_seconds: number;
+  /** Técnicas só deste bloco: o último drop em parcial, um bloco com isometria. */
+  methods: string[];
 }
 
 /** Uma série prescrita de um WorkoutItem. */

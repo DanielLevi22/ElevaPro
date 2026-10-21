@@ -70,4 +70,19 @@ describe("summarizeSetPlan — o resumo do exercício na lista", () => {
       methods: [],
     });
   });
+
+  it("lista também as técnicas dos blocos", () => {
+    const comBloco = {
+      ...set({ mode: "failure" }, 80, ["drop_set"]),
+      segments: [
+        {
+          reps: { mode: "failure" as const },
+          weight_kg: 60,
+          pause_seconds: 0,
+          methods: ["partial"],
+        },
+      ],
+    };
+    expect(summarizeSetPlan([comBloco]).methods).toEqual(["Drop-set", "Parcial"]);
+  });
 });

@@ -20,6 +20,7 @@ const DEFAULT_SEGMENT: SetSegment = {
   reps: { mode: "count", value: 4 },
   weight_kg: null,
   pause_seconds: 15,
+  methods: [],
 };
 
 /** Exercício novo nasce com três séries Normal. */
@@ -42,11 +43,18 @@ export function removeSet(plan: SetPlan, index: number): SetPlan {
   return plan.filter((_, i) => i !== index);
 }
 
+/** Marca ou desmarca um id na lista, mantendo a ordem dos que ficam. */
+export function toggleId(ids: string[], id: string): string[] {
+  return ids.includes(id) ? ids.filter((m) => m !== id) : [...ids, id];
+}
+
 export function toggleMethod(set: SetPrescription, id: string): SetPrescription {
-  const methods = set.methods.includes(id)
-    ? set.methods.filter((m) => m !== id)
-    : [...set.methods, id];
-  return { ...set, methods };
+  return { ...set, methods: toggleId(set.methods, id) };
+}
+
+/** Marca ou desmarca uma técnica só do bloco. */
+export function toggleSegmentMethod(segment: SetSegment, id: string): SetSegment {
+  return { ...segment, methods: toggleId(segment.methods, id) };
 }
 
 /** O segmento novo herda a carga da série: o drop e o rest-pause partem dela. */

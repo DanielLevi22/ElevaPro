@@ -9,7 +9,9 @@ describe("workoutsService — plano de séries do exercício", () => {
     weight_kg: 80,
     rest_seconds: 120,
     target_rir: 0,
-    segments: [{ reps: { mode: "count" as const, value: 4 }, weight_kg: 80, pause_seconds: 15 }],
+    segments: [
+      { reps: { mode: "count" as const, value: 4 }, weight_kg: 80, pause_seconds: 15, methods: [] },
+    ],
   };
 
   it("grava o plano de séries que veio com o exercício", async () => {

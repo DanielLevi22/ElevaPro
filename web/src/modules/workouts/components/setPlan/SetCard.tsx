@@ -1,12 +1,11 @@
 "use client";
 
 import { type SetPrescription, summarizeSetPlan, TRAINING_METHODS } from "@elevapro/shared";
-import { ChevronDown, Plus, Trash2, X } from "lucide-react";
-import { useState } from "react";
+import { ChevronDown, Trash2 } from "lucide-react";
 import { MethodBadge } from "@/shared/components/ui/MethodBadge";
 import { cn } from "@/shared/utils/cn";
+import { MethodChips } from "./MethodChips";
 import { MethodInfo } from "./MethodInfo";
-import { MethodSearch } from "./MethodSearch";
 import { NumberField } from "./NumberField";
 import { RepsField } from "./RepsField";
 import { SegmentList } from "./SegmentList";
@@ -93,41 +92,20 @@ function SetBody({
   set: SetPrescription;
   onChange: (set: SetPrescription) => void;
 }) {
-  const [isSearching, setIsSearching] = useState(false);
   const shown = set.methods.filter((id) => id !== "working");
-  const explained = shown.flatMap((id) => BY_ID.get(id) ?? []);
+  // As técnicas da série e as dos blocos, cada uma explicada uma vez.
+  const explainedIds = new Set([...shown, ...set.segments.flatMap((segment) => segment.methods)]);
+  const explained = [...explainedIds].flatMap((id) => BY_ID.get(id) ?? []);
 
   return (
     <div className="space-y-4 border-t border-overlay-10 px-3 py-3">
       <section className="space-y-2">
         <h4 className="text-[11px] font-semibold text-foreground">Técnicas</h4>
-        <div className="flex flex-wrap items-center gap-1.5">
-          {shown.map((id) => (
-            <span key={id} className="inline-flex items-center gap-0.5">
-              <MethodBadge method={id} />
-              <button
-                type="button"
-                onClick={() => onChange(toggleMethod(set, id))}
-                aria-label={`Tirar ${BY_ID.get(id)?.label ?? id} da série`}
-                className="rounded p-0.5 text-muted-foreground hover:text-destructive"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          ))}
-          <button
-            type="button"
-            onClick={() => setIsSearching((open) => !open)}
-            aria-expanded={isSearching}
-            className="inline-flex items-center gap-1 rounded-md border border-dashed border-overlay-10 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground"
-          >
-            <Plus className="h-3 w-3" />
-            {isSearching ? "Fechar lista" : "Adicionar técnica"}
-          </button>
-        </div>
-        {isSearching ? (
-          <MethodSearch selected={set.methods} onToggle={(id) => onChange(toggleMethod(set, id))} />
-        ) : null}
+        <MethodChips
+          selected={set.methods}
+          onToggle={(id) => onChange(toggleMethod(set, id))}
+          owner="da série"
+        />
       </section>
 
       <div className="flex flex-wrap items-end gap-4">

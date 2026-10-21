@@ -96,8 +96,14 @@ function describeSet(set: SetPrescription, index: number): WorkoutSheetSet {
  */
 export function describeSegment(segment: SetSegment): string {
   const pause = segment.pause_seconds > 0 ? `Pausa ${segment.pause_seconds} s → ` : "→ ";
-  const weight = describeWeight(segment.weight_kg);
-  return `${pause}${describeRepsTarget(segment.reps)}${weight ? ` · ${weight}` : ""}`;
+  const parts = [
+    describeRepsTarget(segment.reps),
+    describeWeight(segment.weight_kg),
+    segment.methods.length > 0
+      ? segment.methods.map((id) => LABELS.get(id) ?? id).join(", ")
+      : null,
+  ].filter(Boolean);
+  return `${pause}${parts.join(" · ")}`;
 }
 
 /** Vírgula decimal, como a tela escreve. */

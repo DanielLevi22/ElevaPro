@@ -51,7 +51,11 @@ function summarizeWeight(plan: SetPlan): string | null {
 }
 
 function summarizeMethods(plan: SetPlan): string[] {
-  const ids = new Set(plan.flatMap((s) => s.methods).filter((id) => id !== "working"));
+  const ids = new Set(
+    plan
+      .flatMap((s) => [...s.methods, ...s.segments.flatMap((segment) => segment.methods)])
+      .filter((id) => id !== "working"),
+  );
   return [...ids].map((id) => LABELS.get(id) ?? id);
 }
 
