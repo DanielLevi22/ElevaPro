@@ -1,7 +1,7 @@
 # Prato com leguminosa — imagens
 
 - [ ] `candidate-922cd3277ce61cdc` — Prato com leguminosa: Cará cozido + Feijão branco cozido + Pepino
-- [ ] `candidate-9236564f48cc1782` — Prato com leguminosa: Batata inglesa cozida + Lentilha cozida + Berinjela cozida
+- [x] `candidate-9236564f48cc1782` — Prato com leguminosa: Batata inglesa cozida + Lentilha cozida + Berinjela cozida
 - [ ] `candidate-923804b84df4bf33` — Prato com leguminosa: Batata doce roxa cozida + Feijão carioca cozido + Pepino
 - [ ] `candidate-924c656208c2847f` — Prato com leguminosa: Batata inglesa cozida + Feijão azuki cozido + Repolho cru
 - [ ] `candidate-9256f18c85398e57` — Prato com leguminosa: Cará cozido + Feijão preto cozido + Quiabo cozido
@@ -29,8 +29,8 @@
 - [ ] `candidate-93685f76eb3b207f` — Prato com leguminosa: Cará cozido + Feijão fradinho cozido + Couve-flor cozida
 - [x] `candidate-937ca3f4f5a279d1` — Prato com leguminosa: Macarrão cozido + Grão de bico cozido + Brócolis cozido
 - [ ] `candidate-937f1da3103c7698` — Prato com leguminosa: Arroz integral cozido + Feijão preto cozido + Cogumelo champignon
-- [ ] `candidate-93859c28782d2cac` — Prato com leguminosa: Arroz branco cozido + Lentilha cozida + Pepino
-- [ ] `candidate-93940d8367008f80` — Prato com leguminosa: Inhame cozido + Lentilha cozida + Abobrinha cozida
+- [x] `candidate-93859c28782d2cac` — Prato com leguminosa: Arroz branco cozido + Lentilha cozida + Pepino
+- [x] `candidate-93940d8367008f80` — Prato com leguminosa: Inhame cozido + Lentilha cozida + Abobrinha cozida
 - [x] `candidate-9397bd23d926eaa0` — Prato com leguminosa: Cuscuz de milho + Lentilha cozida + Abobrinha cozida
 - [ ] `candidate-9399173bad01c58b` — Prato com leguminosa: Macarrão cozido + Feijão branco cozido + Pepino
 - [ ] `candidate-93a5a5460f6268a0` — Prato com leguminosa: Cará cozido + Feijão carioca cozido + Chuchu cozido
