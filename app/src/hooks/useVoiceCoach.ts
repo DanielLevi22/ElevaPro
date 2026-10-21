@@ -76,7 +76,9 @@ export const useVoiceCoach = () => {
     if (!isMuted) {
       Speech.stop();
     } else {
-      Speech.speak('Voz ativada.');
+      // Sem `language`, o expo-speech usa o idioma do aparelho: num telefone em
+      // inglês, só esta frase saía com voz inglesa.
+      Speech.speak('Voz ativada.', { language: 'pt-BR' });
     }
     setIsMuted(!isMuted);
   };
