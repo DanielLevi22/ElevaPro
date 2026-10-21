@@ -27,6 +27,7 @@ interface SetRow {
   reps_actual: number | null;
   weight_actual: number | null;
   completed: boolean;
+  counts_toward_volume: boolean;
 }
 
 // ── Public types ────────────────────────────────────────────────────────────
@@ -132,7 +133,7 @@ async function fetchWorkoutMetrics(studentId: string, since: Date): Promise<Work
   const { data: sets } = sessionExerciseIds.length
     ? await supabase
         .from("workout_session_sets")
-        .select("session_exercise_id, reps_actual, weight_actual, completed")
+        .select("session_exercise_id, reps_actual, weight_actual, completed, counts_toward_volume")
         .in("session_exercise_id", sessionExerciseIds)
     : { data: [] as SetRow[] };
 
@@ -173,7 +174,9 @@ async function fetchWorkoutMetrics(studentId: string, since: Date): Promise<Work
       const muscle = exerciseMap.get(ex.exercise_id)?.muscle_group ?? "Outros";
 
       for (const s of setsByExercise.get(ex.id) ?? []) {
-        if (!s.completed) continue;
+        // Aquecimento e preparação (#431) ficam fora do volume e da faixa de reps:
+        // 15 repetições leves de aquecimento não são série de resistência.
+        if (!s.completed || !s.counts_toward_volume) continue;
         const reps = s.reps_actual ?? 0;
         const weight = s.weight_actual ?? 0;
         const vol = reps * weight;

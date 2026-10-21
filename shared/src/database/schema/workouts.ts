@@ -303,5 +303,7 @@ export const workoutSessionSets = pgTable("workout_session_sets", {
   rest_actual: integer("rest_actual"),
   completed: boolean("completed").notNull().default(false),
   skipped: boolean("skipped").notNull().default(false),
+  // Aquecimento e preparação não somam volume (0107, #431).
+  counts_toward_volume: boolean("counts_toward_volume").notNull().default(true),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

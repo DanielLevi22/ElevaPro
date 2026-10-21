@@ -308,6 +308,8 @@ export interface WorkoutSessionSet {
   rest_actual: number | null;
   completed: boolean;
   skipped: boolean;
+  /** `false` em aquecimento e preparação: não soma volume (0107, #431). */
+  counts_toward_volume: boolean;
   created_at: string;
 }
 
@@ -351,7 +353,8 @@ export interface SessaoComSeries {
   completed_at: string | null;
   exercises: {
     workout_exercise_id: string | null;
-    sets: Pick<WorkoutSessionSet, "set_index" | "reps_actual" | "weight_actual" | "completed">[];
+    sets: (Pick<WorkoutSessionSet, "set_index" | "reps_actual" | "weight_actual" | "completed"> &
+      Partial<Pick<WorkoutSessionSet, "counts_toward_volume">>)[];
   }[];
 }
 
@@ -469,6 +472,8 @@ export interface SaveSessionSetInput {
   rest_actual?: number | null;
   completed?: boolean;
   skipped?: boolean;
+  /** `false` em aquecimento e preparação: a série existe, mas não soma volume (#431). */
+  counts_toward_volume?: boolean;
 }
 
 export interface SaveSessionExerciseInput {

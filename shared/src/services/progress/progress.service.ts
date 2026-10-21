@@ -16,12 +16,13 @@ import { readAllPages } from "../readAllPages";
  */
 
 const SESSION_COLUMNS =
-  "id, completed_at, exercises:workout_session_exercises(exercise_id, exercise:exercises(name, muscle_group), sets:workout_session_sets(reps_actual, weight_actual, completed))";
+  "id, completed_at, exercises:workout_session_exercises(exercise_id, exercise:exercises(name, muscle_group), sets:workout_session_sets(reps_actual, weight_actual, completed, counts_toward_volume))";
 
 interface SetRow {
   reps_actual: number | null;
   weight_actual: number | null;
   completed: boolean;
+  counts_toward_volume: boolean;
 }
 
 interface CatalogExercise {
@@ -235,6 +236,7 @@ function flattenSession(session: SessionRow): CompletedSet[] {
         muscleGroup: exercise.muscle_group,
         reps: item.reps_actual,
         weight: item.weight_actual,
+        countsTowardVolume: item.counts_toward_volume,
       }));
   });
 }

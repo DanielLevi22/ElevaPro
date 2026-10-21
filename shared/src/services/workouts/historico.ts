@@ -93,7 +93,7 @@ export const criarServicoDeHistorico = (supabase: SupabaseClient) => ({
     const { data, error } = await supabase
       .from("workout_sessions")
       .select(
-        "id, completed_at, exercises:workout_session_exercises(workout_exercise_id, sets:workout_session_sets(set_index, reps_actual, weight_actual, completed))",
+        "id, completed_at, exercises:workout_session_exercises(workout_exercise_id, sets:workout_session_sets(set_index, reps_actual, weight_actual, completed, counts_toward_volume))",
       )
       .eq("workout_id", workoutId)
       .eq("student_id", studentId)

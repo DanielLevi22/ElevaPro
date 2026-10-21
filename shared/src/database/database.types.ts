@@ -1764,6 +1764,7 @@ export type Database = {
       workout_session_sets: {
         Row: {
           completed: boolean;
+          counts_toward_volume: boolean;
           created_at: string;
           id: string;
           reps_actual: number | null;
@@ -1779,6 +1780,7 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           completed?: boolean;
+          counts_toward_volume?: boolean;
           created_at?: string;
           id?: string;
           reps_actual?: number | null;
@@ -1793,6 +1795,7 @@ export type Database = {
         };
         Update: {
           completed?: boolean;
+          counts_toward_volume?: boolean;
           created_at?: string;
           id?: string;
           reps_actual?: number | null;

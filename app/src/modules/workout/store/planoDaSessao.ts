@@ -36,10 +36,15 @@ export function descansoDaSerie(prescricao: SetPrescription | null): number {
 export function registroDaSerie(prescricao: SetPrescription | null): SerieFeita {
   if (!prescricao) return { reps: null, carga: null };
   const partes = [prescricao.reps, ...prescricao.segments.map((s) => s.reps)].map(repsContaveis);
-  const contadas = partes.filter((r): r is number => r !== null);
+  // Uma parte sem número (até a falha, tempo) deixa o total desconhecido:
+  // somar só as outras gravaria menos do que o aluno fez.
+  const reps = partes.every((r): r is number => r !== null)
+    ? partes.reduce((soma, r) => soma + r, 0)
+    : null;
   return {
-    reps: contadas.length > 0 ? contadas.reduce((soma, r) => soma + r, 0) : null,
+    reps,
     carga: prescricao.weight_kg,
+    ...(countsTowardVolume(prescricao) ? {} : { contaVolume: false }),
   };
 }
 

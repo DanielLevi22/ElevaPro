@@ -82,7 +82,7 @@ describe('a sessão conduzida pelo plano de séries (#431)', () => {
       concluir(120)
     );
     expect(depois.feitas.agachamento).toEqual([
-      { reps: 15, carga: 40 },
+      { reps: 15, carga: 40, contaVolume: false },
       { reps: 10, carga: 80 },
       { reps: 16, carga: 80 },
     ]);
@@ -129,7 +129,7 @@ describe('a sessão conduzida pelo plano de séries (#431)', () => {
       concluir(60)
     );
     expect(depois.feitas.agachamento).toEqual([
-      { reps: 15, carga: 40 },
+      { reps: 15, carga: 40, contaVolume: false },
       { reps: 6, carga: 100 },
     ]);
     expect(depois.descanso?.total).toBe(45);
@@ -146,7 +146,7 @@ describe('a sessão conduzida pelo plano de séries (#431)', () => {
       concluir(60)
     );
     expect(sugerida.feitas.agachamento).toEqual([
-      { reps: 15, carga: 40 },
+      { reps: 15, carga: 40, contaVolume: false },
       { reps: 10, carga: 85 },
     ]);
   });
@@ -159,5 +159,24 @@ describe('a sessão conduzida pelo plano de séries (#431)', () => {
     const [supino] = descarga.itens;
     expect(supino?.set_plan).toHaveLength(2);
     expect(supino?.set_plan?.[0]).toEqual(aquecimento);
+  });
+
+  // Somar só as partes com número gravaria menos do que o aluno fez.
+  it('série com parte até a falha grava as repetições como desconhecidas', () => {
+    const dropAteAFalha = serie({
+      methods: ['drop_set'],
+      reps: { mode: 'failure' },
+      segments: [
+        { reps: { mode: 'count', value: 4 }, weight_kg: 60, pause_seconds: 0, methods: [] },
+      ],
+    });
+    const depois = aplicar(
+      aplicar(estadoInicial([itemComPlano('rosca', [dropAteAFalha])]), {
+        tipo: 'iniciar',
+        agora: T0,
+      }),
+      concluir(10)
+    );
+    expect(depois.feitas.rosca).toEqual([{ reps: null, carga: 80 }]);
   });
 });

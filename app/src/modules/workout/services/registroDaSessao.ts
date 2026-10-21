@@ -117,6 +117,8 @@ function seriesParaGravar(
       weight_actual: serie.carga,
       rest_prescribed: daVez?.rest_seconds ?? null,
       completed: true,
+      // Aquecimento e preparação: gravados, fora do volume (#431). O padrão do banco conta.
+      ...(serie.contaVolume === false ? { counts_toward_volume: false } : {}),
     };
   });
 }
