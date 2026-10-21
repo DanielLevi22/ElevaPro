@@ -1,6 +1,6 @@
 "use client";
 
-import type { SetPlan } from "@elevapro/shared";
+import { MUSCLE_GROUP_LABELS, type SetPlan, summarizeSetPlan } from "@elevapro/shared";
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
 import { Dialog } from "@/shared/components/ui/Dialog";
@@ -62,27 +62,42 @@ export function ExerciseConfigModal({
       onClose={onClose}
       title="Personalizando Séries"
       description={exercise.name}
-      maxWidth="2xl"
+      maxWidth="4xl"
       scrollable
     >
       <div className="space-y-4">
         {exercise.muscle_group ? (
           <span className="inline-block rounded-lg bg-secondary/10 px-3 py-1 text-sm text-secondary">
-            {exercise.muscle_group}
+            {muscleGroupLabel(exercise.muscle_group)}
           </span>
         ) : null}
 
         <SetPlanEditor plan={plan} onChange={setPlan} />
 
-        <div className="flex items-center gap-3 pt-2">
-          <Button fullWidth variant="secondary" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button fullWidth onClick={handleSave} disabled={plan.length === 0}>
-            Salvar
-          </Button>
+        {/* Fixo no pé do painel: com várias séries abertas, o Salvar não some. */}
+        <div className="sticky bottom-0 -mx-6 -mb-6 flex flex-wrap items-center justify-between gap-3 border-t border-overlay-10 bg-surface px-6 py-4">
+          <span className="text-xs text-muted-foreground">{summaryText(plan)}</span>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSave} disabled={plan.length === 0}>
+              Salvar
+            </Button>
+          </div>
         </div>
       </div>
     </Dialog>
   );
+}
+
+/** "3 séries · 8–15 reps · 20–40 kg": o exercício inteiro de relance. */
+function summaryText(plan: SetPlan): string {
+  const summary = summarizeSetPlan(plan);
+  return [summary.sets, summary.reps, summary.weight].filter(Boolean).join(" · ");
+}
+
+/** O rótulo do grupo ("Glúteos"), e não o código gravado ("gluteos"). */
+function muscleGroupLabel(group: string): string {
+  return (MUSCLE_GROUP_LABELS as Record<string, string>)[group] ?? group;
 }

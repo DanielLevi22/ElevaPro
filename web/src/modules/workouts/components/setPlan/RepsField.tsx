@@ -21,22 +21,32 @@ const MODE_DEFAULT: Record<Mode, RepsTarget> = {
 };
 
 const NUMBER_CLASS =
-  "w-16 rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary";
+  "w-14 rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary";
 
 interface RepsFieldProps {
   value: RepsTarget;
   onChange: (value: RepsTarget) => void;
   label?: string;
+  /** Na tabela, o cabeçalho da coluna já diz o que é. */
+  hideLabel?: boolean;
 }
 
 /** O seletor "Repetições ▾" e os números de cada modo. */
-export function RepsField({ value, onChange, label = "Repetições" }: RepsFieldProps) {
+export function RepsField({
+  value,
+  onChange,
+  label = "Repetições",
+  hideLabel = false,
+}: RepsFieldProps) {
   const modeId = useId();
   const positive = (raw: string) => Math.max(1, Number.parseInt(raw, 10) || 1);
 
   return (
     <div className="space-y-1">
-      <label htmlFor={modeId} className="block text-[11px] text-muted-foreground">
+      <label
+        htmlFor={modeId}
+        className={hideLabel ? "sr-only" : "block text-[11px] text-muted-foreground"}
+      >
         {label}
       </label>
       <div className="flex items-center gap-1.5">
