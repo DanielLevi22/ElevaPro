@@ -2,6 +2,7 @@ import {
   boolean,
   date,
   integer,
+  jsonb,
   numeric,
   pgEnum,
   pgTable,
@@ -10,6 +11,7 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+import type { SetPlan } from "../../setPlan";
 import { profiles } from "./auth";
 
 export const trainingStatusEnum = pgEnum("training_status", ["planned", "active", "completed"]);
@@ -141,12 +143,10 @@ export const workoutExercises = pgTable("workout_exercises", {
   exercise_id: uuid("exercise_id")
     .notNull()
     .references(() => exercises.id, { onDelete: "restrict" }),
-  sets: integer("sets"),
-  reps: text("reps"),
-  weight: text("weight"),
-  rest_seconds: integer("rest_seconds"),
   order_index: integer("order_index").notNull().default(0),
   notes: text("notes"),
+  // As séries uma a uma (0105, #431). Desde a 0106, a prescrição inteira do item.
+  set_plan: jsonb("set_plan").$type<SetPlan>().notNull(),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -303,5 +303,7 @@ export const workoutSessionSets = pgTable("workout_session_sets", {
   rest_actual: integer("rest_actual"),
   completed: boolean("completed").notNull().default(false),
   skipped: boolean("skipped").notNull().default(false),
+  // Aquecimento e preparação não somam volume (0107, #431).
+  counts_toward_volume: boolean("counts_toward_volume").notNull().default(true),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

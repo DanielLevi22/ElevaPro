@@ -34,6 +34,7 @@
     "app:check-dead": "cd app && npx knip --no-progress",
     "app:check-medidas": "node scripts/check-medidas-fixas.js",
     "local:reset-mfa": "node scripts/local-reset-mfa.mjs",
+    "db:backfill-set-plan": "tsx scripts/backfill-set-plan.ts",
     "scripts:test": "node --test scripts/__tests__/*.test.mjs"
   },
   "devDependencies": {

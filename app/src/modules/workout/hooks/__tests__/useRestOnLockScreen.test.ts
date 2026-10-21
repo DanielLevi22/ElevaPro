@@ -1,4 +1,5 @@
 import type { WorkoutExercise } from '@elevapro/shared';
+import { simplePrescriptionToSetPlan } from '@elevapro/shared';
 import { act, renderHook } from '@testing-library/react-native';
 import type { RestAction } from '../../../../../modules/rest-timer-activity';
 import { restanteDoDescanso } from '../../store/maquinaDaSessao';
@@ -28,10 +29,8 @@ const REMADA = {
   id: 'remada',
   workout_id: 'w1',
   exercise_id: 'ex-remada',
-  sets: 4,
-  reps: '10',
-  weight: '45',
-  rest_seconds: 90,
+  set_plan: simplePrescriptionToSetPlan({ sets: 4, reps: '10', weight: '45', rest_seconds: 90 })
+    .plan,
   order_index: 0,
   notes: null,
   created_at: '2026-09-01T00:00:00Z',

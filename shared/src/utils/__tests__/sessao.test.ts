@@ -36,6 +36,49 @@ describe("resumo da sessão", () => {
     ).toBe(0);
   });
 
+  // #431: aquecimento e preparação não contam no volume do histórico nem dos gráficos.
+  it("não soma série marcada fora do volume (aquecimento, preparação)", () => {
+    expect(
+      volumeDasSeries([
+        { reps: 15, carga: 20, contaVolume: false },
+        { reps: 10, carga: 40 },
+      ]),
+    ).toBe(400);
+  });
+
+  it("série anterior ao campo conta, como sempre contou", () => {
+    expect(
+      seriesDaSessaoAnterior({
+        id: "s1",
+        completed_at: "2026-10-20",
+        exercises: [
+          {
+            workout_exercise_id: "we1",
+            sets: [
+              {
+                set_index: 0,
+                reps_actual: 15,
+                weight_actual: 20,
+                completed: true,
+                counts_toward_volume: false,
+              },
+              {
+                set_index: 1,
+                reps_actual: 10,
+                weight_actual: 40,
+                completed: true,
+                counts_toward_volume: true,
+              },
+            ],
+          },
+        ],
+      }).we1,
+    ).toEqual([
+      { reps: 15, carga: 20, contaVolume: false },
+      { reps: 10, carga: 40 },
+    ]);
+  });
+
   it("monta duração, volume, séries e gasto a partir dos instantes", () => {
     const feitas = {
       a: [

@@ -1,11 +1,13 @@
 import {
+  describeRepsTarget,
   formatarCarga,
   MS_POR_SEGUNDO,
-  numeroDaPrescricao,
+  repsToText,
   type WorkoutExercise,
 } from '@elevapro/shared';
 import type { RestOnLockScreen } from '../../../../modules/rest-timer-activity';
 import { type EstadoDaSessao, proximaSerie } from '../store/maquinaDaSessao';
+import { prescriptionSummary } from '../store/sessionPlan';
 
 /**
  * O descanso da sessão como a tela bloqueada mostra (desenho 6c), ou `null`
@@ -37,8 +39,11 @@ export function restOnLockScreen(sessao: EstadoDaSessao, now: number): RestOnLoc
 
 /** "10 × 45 kg"; sem carga, "10 reps"; tempo, "10 min" sozinho. */
 function setTarget(item: WorkoutExercise): string {
-  const reps = item.reps ?? '—';
-  const load = numeroDaPrescricao(item.weight);
-  if (load !== null) return `${reps} × ${formatarCarga(load)}`;
-  return numeroDaPrescricao(item.reps) === null ? reps : `${reps} reps`;
+  const { target: meta, load: carga } = prescriptionSummary(item);
+  if (!meta) return '—';
+  // Tempo e falha não têm número de repetições para multiplicar pela carga.
+  if (meta.mode === 'time' || meta.mode === 'failure') return describeRepsTarget(meta);
+  return carga === null
+    ? describeRepsTarget(meta)
+    : `${repsToText(meta)} × ${formatarCarga(carga)}`;
 }

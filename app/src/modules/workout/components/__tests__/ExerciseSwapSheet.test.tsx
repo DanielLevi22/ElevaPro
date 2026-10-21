@@ -1,4 +1,5 @@
 import type { Exercise, WorkoutExercise } from '@elevapro/shared';
+import { simplePrescriptionToSetPlan } from '@elevapro/shared';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { useTodaySwapsStore } from '../../store/todaySwapsStore';
 import { ExerciseSwapSheet } from '../ExerciseSwapSheet';
@@ -40,10 +41,8 @@ const ITEM = {
   id: 'item-1',
   workout_id: 'treino-1',
   exercise_id: 'remada',
-  sets: 4,
-  reps: '8-10',
-  weight: '45',
-  rest_seconds: 90,
+  set_plan: simplePrescriptionToSetPlan({ sets: 4, reps: '8-10', weight: '45', rest_seconds: 90 })
+    .plan,
   order_index: 0,
   notes: null,
   created_at: '2026-09-01T00:00:00Z',

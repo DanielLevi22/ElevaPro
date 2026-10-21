@@ -1,12 +1,10 @@
 import {
-  deloadSets,
   type ExerciseEffort,
   MS_POR_SEGUNDO,
-  numeroDaPrescricao,
   type SerieFeita,
+  type SetPrescription,
   type WorkoutExercise,
 } from '@elevapro/shared';
-import { DEFAULT_REST_TIME } from '../constants';
 import {
   type Cronometro,
   cronometroParado,
@@ -14,6 +12,13 @@ import {
   segundosDoCronometro,
   soltarCronometro,
 } from './cronometro';
+import {
+  deloadPlan,
+  restAfterSet,
+  setPrescriptionAt,
+  setRecord,
+  withSuggestedLoad,
+} from './sessionPlan';
 
 /**
  * A sessão de treino como uma sequência de estados:
@@ -184,9 +189,7 @@ const TRANSICOES: {
 /** Como a carga sugerida: só antes de começar, e a prescrição fica intacta no treino. */
 function applyDeload(estado: EstadoDaSessao): EstadoDaSessao {
   if (estado.momento !== 'preInicio') return estado;
-  const itens = estado.itens.map((item) =>
-    item.sets ? { ...item, sets: deloadSets(item.sets) } : item
-  );
+  const itens = estado.itens.map(deloadPlan);
   return { ...estado, itens };
 }
 
@@ -211,18 +214,15 @@ function applySuggestedLoads(
   weights: Record<string, string>
 ): EstadoDaSessao {
   if (estado.momento !== 'preInicio') return estado;
-  const itens = estado.itens.map((item) =>
-    weights[item.id] ? { ...item, weight: weights[item.id] } : item
-  );
+  const itens = estado.itens.map((item) => {
+    const carga = weights[item.id];
+    return carga ? withSuggestedLoad(item, carga) : item;
+  });
   return { ...estado, itens };
 }
 
 function paraExecucao(estado: EstadoDaSessao): EstadoDaSessao {
   return { ...estado, momento: 'execucao', serie: null, descanso: null };
-}
-
-function seriesDo(item: WorkoutExercise): number {
-  return item.sets ?? 0;
 }
 
 function feitasDo(estado: EstadoDaSessao, itemId: string): number {
@@ -280,12 +280,10 @@ function concluirSerie(estado: EstadoDaSessao, agora: number): EstadoDaSessao {
   const item = itemAtual(estado);
   if (!item || exercicioConcluido(estado, item)) return estado;
 
-  const serie: SerieFeita = {
-    reps: numeroDaPrescricao(item.reps),
-    carga: numeroDaPrescricao(item.weight),
-  };
+  const prescricao = setPrescriptionAt(item, feitasDo(estado, item.id));
+  const serie: SerieFeita = setRecord(prescricao);
   const feitas = { ...estado.feitas, [item.id]: [...(estado.feitas[item.id] ?? []), serie] };
-  const terminou = (feitas[item.id]?.length ?? 0) >= seriesDo(item);
+  const terminou = (feitas[item.id]?.length ?? 0) >= item.set_plan.length;
   const depois: EstadoDaSessao = {
     ...estado,
     feitas,
@@ -299,7 +297,7 @@ function concluirSerie(estado: EstadoDaSessao, agora: number): EstadoDaSessao {
   if (depois.atualId === null) {
     return { ...depois, momento: 'feedback', concluidaEm: agora, descanso: null };
   }
-  const descanso = item.rest_seconds ?? DEFAULT_REST_TIME;
+  const descanso = restAfterSet(prescricao);
   if (descanso <= 0) return paraExecucao(depois);
   return {
     ...depois,
@@ -393,16 +391,21 @@ export function progressoDaSessao(estado: EstadoDaSessao): ProgressoDaSessao {
     exercicio: indice === -1 ? estado.itens.length : indice + 1,
     exercicios: estado.itens.length,
     seriesFeitas: Object.values(estado.feitas).reduce((soma, s) => soma + s.length, 0),
-    seriesTotais: estado.itens.reduce((soma, i) => soma + seriesDo(i), 0),
+    seriesTotais: estado.itens.reduce((soma, i) => soma + i.set_plan.length, 0),
   };
 }
 
 /** A série que vem agora — o "A seguir" do descanso e o título do cronômetro. */
-export function proximaSerie(
-  estado: EstadoDaSessao
-): { item: WorkoutExercise; numero: number } | null {
+export function proximaSerie(estado: EstadoDaSessao): {
+  item: WorkoutExercise;
+  numero: number;
+  /** A prescrição da série da vez: técnicas, repetições e blocos (#431). */
+  prescricao: SetPrescription | null;
+} | null {
   const item = itemAtual(estado);
-  return item ? { item, numero: feitasDo(estado, item.id) + 1 } : null;
+  if (!item) return null;
+  const feitas = feitasDo(estado, item.id);
+  return { item, numero: feitas + 1, prescricao: setPrescriptionAt(item, feitas) };
 }
 
 /**
@@ -412,5 +415,5 @@ export function proximaSerie(
  * @example exercicioConcluido(sessao, item) // true depois da última série
  */
 export function exercicioConcluido(estado: EstadoDaSessao, item: WorkoutExercise): boolean {
-  return feitasDo(estado, item.id) >= seriesDo(item);
+  return feitasDo(estado, item.id) >= item.set_plan.length;
 }

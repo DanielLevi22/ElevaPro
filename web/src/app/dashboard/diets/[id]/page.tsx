@@ -104,7 +104,8 @@ export default function DietDetailsPage() {
       const studentName = isMember
         ? (currentUser?.fullName ?? "Membro")
         : (students.find((s) => s.id === dietPlan.student_id)?.full_name ?? "Aluno");
-      const professionalName = currentUser?.fullName || "Profissional";
+      // O próprio aluno exportando (Praticante) não é o profissional dele.
+      const professionalName = isMember ? null : (currentUser?.fullName ?? null);
       await exportDietToPDF(dietPlan, meals, studentName, professionalName);
     } catch (error) {
       console.error("Error exporting PDF:", error);

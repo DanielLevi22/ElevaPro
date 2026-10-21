@@ -2,11 +2,11 @@ import {
   type ExerciseEffort,
   type ExerciseHistoryEntry,
   type LoadSuggestion,
-  numeroDaPrescricao,
   type SerieFeita,
   suggestLoad,
   type WorkoutExercise,
 } from '@elevapro/shared';
+import { prescriptionSummary } from '../store/sessionPlan';
 import { suggestedWeightText } from './loadSuggestionCopy';
 
 export type ExerciseHistory = Record<string, ExerciseHistoryEntry[]>;
@@ -26,8 +26,8 @@ function suggestionFor(
   week: WeekKind = NORMAL_WEEK
 ): LoadSuggestion {
   return suggestLoad({
-    prescribedWeight: numeroDaPrescricao(item.weight),
-    prescribedReps: item.reps ?? null,
+    prescribedWeight: prescriptionSummary(item).load,
+    prescribedReps: prescriptionSummary(item).reps,
     history,
     ...week,
   });
@@ -90,7 +90,7 @@ export function weightsToApply(
   for (const item of items) {
     const suggestion = suggestions[item.id];
     const weight = suggestion ? suggestedWeightText(suggestion) : null;
-    if (weight && weight !== item.weight) weights[item.id] = weight;
+    if (weight && weight !== String(prescriptionSummary(item).load)) weights[item.id] = weight;
   }
   return weights;
 }

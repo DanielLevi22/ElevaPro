@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { SetPlanSummaryLine } from "@/shared/components/ui/SetPlanSummaryLine";
 import { useWorkout } from "@/shared/hooks/useWorkouts";
 
 interface Props {
@@ -82,15 +83,8 @@ export function StudentWorkoutDetailPage({ workoutId }: Props) {
                   </p>
                 )}
               </div>
-              <div className="text-right shrink-0">
-                <p className="text-sm font-black text-muted-foreground">
-                  {ex.sets} × {ex.reps}
-                </p>
-                {ex.rest_seconds && (
-                  <p className="text-[10px] text-muted-foreground font-bold">
-                    {ex.rest_seconds}s descanso
-                  </p>
-                )}
+              <div className="shrink-0 max-w-[50%]">
+                <SetPlanSummaryLine plan={ex.set_plan} />
               </div>
             </div>
           ))}

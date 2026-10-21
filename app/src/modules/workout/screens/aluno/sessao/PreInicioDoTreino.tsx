@@ -63,10 +63,10 @@ export function PreInicioDoTreino({
   onVoltar,
 }: PreInicioDoTreinoProps) {
   const exercicios = treino.exercises ?? [];
-  const series = exercicios.reduce(
-    (soma, item) => soma + (deload && item.sets ? deloadSets(item.sets) : (item.sets ?? 0)),
-    0
-  );
+  const series = exercicios.reduce((soma, item) => {
+    const total = item.set_plan.length;
+    return soma + (deload && total > 0 ? deloadSets(total) : total);
+  }, 0);
   const { letra, fase, objetivo } = useContextoDoTreino(treino);
   const chips = [curta ? 'Versão curta' : null, letra, fase, objetivo].filter(
     (chip): chip is string => chip !== null

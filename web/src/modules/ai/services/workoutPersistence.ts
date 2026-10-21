@@ -1,3 +1,4 @@
+import { createWorkoutsService, simplePrescriptionToSetPlan } from "@elevapro/shared";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { BulkWorkoutExercise, BulkWorkoutItem } from "../types";
 
@@ -84,30 +85,32 @@ async function saveExercises(
     }
   }
 
-  const rows = exercises
-    .map((e: BulkWorkoutExercise, idx: number) => {
-      const exerciseId = exerciseMap.get(e.exercise_name.toLowerCase());
-      if (!exerciseId) return null;
-      return {
-        workout_id: workoutId,
-        exercise_id: exerciseId,
-        sets: e.sets,
-        reps: e.reps,
-        rest_seconds: e.rest_seconds,
-        weight: loads?.get(exerciseId) ?? null,
-        notes: e.notes ?? null,
-        order_index: idx,
-      };
-    })
-    .filter(Boolean);
+  const rows = exercises.flatMap((e: BulkWorkoutExercise, idx: number) => {
+    const exerciseId = exerciseMap.get(e.exercise_name.toLowerCase());
+    if (!exerciseId) return [];
+    // A IA propõe no formato achatado ("3 × 8-12, 60 s"); o plano sai daqui, e
+    // o que não couber nele segue na observação.
+    const { plan, leftoverNote } = simplePrescriptionToSetPlan({
+      sets: e.sets,
+      reps: e.reps,
+      weight: loads?.get(exerciseId) ?? null,
+      rest_seconds: e.rest_seconds,
+    });
+    const notes = [e.notes, leftoverNote].filter(Boolean).join(" · ") || undefined;
+    return [{ exercise_id: exerciseId, order_index: idx, notes, set_plan: plan }];
+  });
 
   if (rows.length === 0) return;
-  const { error: insertError } = await supabaseAdmin
-    .from("workout_exercises" as never)
-    .insert(rows as never[]);
-  // Lançar aciona o desfazer da aprovação: sem isto, o treino ficava sem exercícios.
-  if (insertError) {
-    throw new Error(`exercícios do treino ${workoutId} não foram gravados: ${insertError.message}`);
+  // Pelo serviço, que confere o plano de séries (#431).
+  try {
+    await createWorkoutsService(supabaseAdmin).addExercisesToWorkout(workoutId, rows);
+  } catch (insertError) {
+    // Lançar aciona o desfazer da aprovação: sem isto, o treino ficava sem exercícios.
+    const motivo =
+      insertError instanceof Error
+        ? insertError.message
+        : String((insertError as { message?: unknown })?.message ?? insertError);
+    throw new Error(`exercícios do treino ${workoutId} não foram gravados: ${motivo}`);
   }
 }
 

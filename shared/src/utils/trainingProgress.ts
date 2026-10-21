@@ -19,6 +19,8 @@ export interface CompletedSet {
   muscleGroup: string | null;
   reps: number | null;
   weight: number | null;
+  /** `false` em aquecimento e preparação, que não somam volume (#431). Ausente conta. */
+  countsTowardVolume?: boolean;
 }
 
 export interface WeeklyLoad {
@@ -133,7 +135,13 @@ export function percentChange(from: number, to: number): number | null {
 }
 
 function volumeOf(sets: readonly CompletedSet[]): number {
-  return volumeDasSeries(sets.map((item) => ({ reps: item.reps, carga: item.weight })));
+  return volumeDasSeries(
+    sets.map((item) => ({
+      reps: item.reps,
+      carga: item.weight,
+      contaVolume: item.countsTowardVolume,
+    })),
+  );
 }
 
 export interface ExerciseProgress {

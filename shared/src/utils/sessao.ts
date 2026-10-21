@@ -14,6 +14,8 @@ import { DIAS_DA_SEMANA, doisDigitos, MESES_POR_EXTENSO, MS_POR_SEGUNDO } from "
 export interface SerieFeita {
   reps: number | null;
   carga: number | null;
+  /** `false` em aquecimento e preparação, que não contam no volume (#431). Ausente conta. */
+  contaVolume?: boolean;
 }
 
 /**
@@ -54,7 +56,7 @@ export const MET_DO_TREINO_DE_FORCA = 3.5;
  */
 export function volumeDasSeries(series: readonly SerieFeita[]): number {
   return series.reduce((total, serie) => {
-    if (serie.reps === null || serie.carga === null) return total;
+    if (serie.reps === null || serie.carga === null || serie.contaVolume === false) return total;
     return total + serie.reps * serie.carga;
   }, 0);
 }
@@ -156,7 +158,11 @@ export function seriesDaSessaoAnterior(
     porExercicio[exercicio.workout_exercise_id] = [...exercicio.sets]
       .filter((serie) => serie.completed)
       .sort((a, b) => a.set_index - b.set_index)
-      .map((serie) => ({ reps: serie.reps_actual, carga: serie.weight_actual }));
+      .map((serie) => ({
+        reps: serie.reps_actual,
+        carga: serie.weight_actual,
+        ...(serie.counts_toward_volume === false ? { contaVolume: false } : {}),
+      }));
   }
   return porExercicio;
 }

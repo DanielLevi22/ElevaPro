@@ -3241,14 +3241,43 @@ BEGIN
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
 
-  -- A função não abre a tabela: séries, carga e ordem seguem sem escrita direta.
-  UPDATE public.workout_exercises SET sets = 99 WHERE id = item_proprio;
+  -- A função não abre a tabela: ordem e observação seguem sem escrita direta.
+  UPDATE public.workout_exercises SET order_index = 99 WHERE id = item_proprio;
   GET DIAGNOSTICS afetadas = ROW_COUNT;
   IF afetadas <> 0 THEN
     RAISE EXCEPTION 'PRESCRIÇÃO EDITADA POR FORA: UPDATE direto em workout_exercises foi aceito para o aluno';
   END IF;
 
+  -- O aluno não reescreve o plano de séries da prescrição (0105, #431).
+  -- LGPD Art. 6°, VII: o plano herda a RLS da linha, sem política própria. Se
+  -- alguém abrir escrita para o aluno em `workout_exercises`, ele passaria a
+  -- trocar técnica, carga e descanso que o especialista prescreveu.
+  UPDATE public.workout_exercises SET set_plan = '[]'::jsonb WHERE id = item_proprio;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 0 THEN
+    RAISE EXCEPTION 'PRESCRIÇÃO EDITADA POR FORA: UPDATE de set_plan foi aceito para o aluno';
+  END IF;
+
   RESET ROLE;
+
+  -- O banco recusa plano fora do formato mínimo, mesmo vindo de quem escreve
+  -- sem passar pelo schema do shared (função, script, service_role).
+  BEGIN
+    UPDATE public.workout_exercises
+      SET set_plan = (SELECT jsonb_agg('{}'::jsonb) FROM generate_series(1, 21))
+      WHERE id = item_proprio;
+    RAISE EXCEPTION 'PLANO SEM LIMITE: o banco aceitou set_plan com 21 séries';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
+  -- Objeto no lugar da lista: o serviço leria `set_plan.length` indefinido e a
+  -- sessão do aluno mostraria zero séries sem erro nenhum.
+  BEGIN
+    UPDATE public.workout_exercises SET set_plan = '{"sets": 3}'::jsonb WHERE id = item_proprio;
+    RAISE EXCEPTION 'PLANO SEM FORMATO: o banco aceitou set_plan que não é lista';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
   SELECT exercise_id INTO atual FROM public.workout_exercises WHERE id = item_outro;
   IF atual IS DISTINCT FROM oficial THEN
     RAISE EXCEPTION 'TREINO ALHEIO ALTERADO: o item de outra pessoa mudou de exercício';

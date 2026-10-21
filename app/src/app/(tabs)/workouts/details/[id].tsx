@@ -22,7 +22,12 @@ export default function DetalheDoTreinoRoute() {
 
   if (user?.id && ehVisaoDoAluno(accountType, modo)) {
     return (
-      <DetalheDoTreinoScreen treinoId={primeiroValor(id) ?? ''} alunoId={user.id} modo={modo} />
+      <DetalheDoTreinoScreen
+        treinoId={primeiroValor(id) ?? ''}
+        alunoId={user.id}
+        studentName={user.user_metadata?.full_name ?? null}
+        modo={modo}
+      />
     );
   }
   return <WorkoutDetailsScreen />;

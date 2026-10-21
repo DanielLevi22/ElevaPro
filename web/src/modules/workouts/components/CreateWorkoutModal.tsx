@@ -1,5 +1,6 @@
 "use client";
 
+import { createWorkoutsService } from "@elevapro/shared";
 import { supabase } from "@elevapro/supabase";
 import { useEffect, useId, useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
@@ -9,6 +10,8 @@ import { useWorkout } from "@/shared/hooks/useWorkouts";
 import { ExerciseConfigModal, type SelectedExercise } from "./ExerciseConfigModal";
 import { ExerciseListItem } from "./ExerciseListItem";
 import { SelectExercisesModal } from "./SelectExercisesModal";
+
+const workoutsService = createWorkoutsService(supabase);
 
 interface CreateWorkoutModalProps {
   isOpen: boolean;
@@ -123,23 +126,15 @@ export function CreateWorkoutModal({
             await supabase.from("workout_exercises").delete().eq("workout_id", newWorkoutId);
           }
 
-          const items = selectedExercises.map((ex, index) => ({
-            workout_id: newWorkoutId,
-            exercise_id: ex.id,
-            order_index: index,
-            sets: ex.sets,
-            // `workout_exercises.reps` é text no banco — guarda coisas como
-            // "8-12" e "AMRAP", não só número. O modal edita um número, então a
-            // conversão acontece aqui, na fronteira com o banco.
-            reps: String(ex.reps),
-            rest_seconds: ex.rest_seconds,
-            weight: ex.weight || null,
-            notes: null,
-          }));
-
-          const { error: itemsError } = await supabase.from("workout_exercises").insert(items);
-
-          if (itemsError) throw itemsError;
+          // Pelo serviço, que confere o plano de séries (#431).
+          await workoutsService.addExercisesToWorkout(
+            newWorkoutId,
+            selectedExercises.map((ex, index) => ({
+              exercise_id: ex.id,
+              order_index: index,
+              set_plan: ex.set_plan,
+            })),
+          );
         }
       }
 

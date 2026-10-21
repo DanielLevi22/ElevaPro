@@ -1,3 +1,4 @@
+import type { SetPlan } from "../setPlan";
 export type WorkoutDifficulty = "beginner" | "intermediate" | "advanced";
 export type TrainingStatus = "planned" | "active" | "completed";
 export type DayOfWeek =
@@ -164,12 +165,10 @@ export interface WorkoutExercise {
   id: string;
   workout_id: string;
   exercise_id: string;
-  sets: number | null;
-  reps: string | null;
-  weight: string | null;
-  rest_seconds: number | null;
   order_index: number;
   notes: string | null;
+  /** As séries prescritas uma a uma (#431): a prescrição inteira do item. */
+  set_plan: SetPlan;
   created_at: string;
   exercise?: Exercise;
 }
@@ -188,6 +187,15 @@ export interface Workout {
   updated_at: string;
   exercises?: WorkoutExercise[];
   exercises_count?: number;
+}
+
+/**
+ * O plano completo para exportar: a periodização, e cada fase com os treinos
+ * dela e os exercícios de cada treino.
+ */
+export interface FullPeriodization {
+  periodization: Periodization;
+  phases: { plan: TrainingPlan; workouts: Workout[] }[];
 }
 
 export interface TrainingPlan {
@@ -309,6 +317,8 @@ export interface WorkoutSessionSet {
   rest_actual: number | null;
   completed: boolean;
   skipped: boolean;
+  /** `false` em aquecimento e preparação: não soma volume (0107, #431). */
+  counts_toward_volume: boolean;
   created_at: string;
 }
 
@@ -352,7 +362,8 @@ export interface SessaoComSeries {
   completed_at: string | null;
   exercises: {
     workout_exercise_id: string | null;
-    sets: Pick<WorkoutSessionSet, "set_index" | "reps_actual" | "weight_actual" | "completed">[];
+    sets: (Pick<WorkoutSessionSet, "set_index" | "reps_actual" | "weight_actual" | "completed"> &
+      Partial<Pick<WorkoutSessionSet, "counts_toward_volume">>)[];
   }[];
 }
 
@@ -383,16 +394,6 @@ export interface UpdateWorkoutInput {
   difficulty?: WorkoutDifficulty | null;
   day_of_week?: DayOfWeek | null;
   training_plan_id?: string | null;
-}
-
-export interface AddWorkoutExerciseInput {
-  exercise_id: string;
-  sets?: number;
-  reps?: string;
-  weight?: string;
-  rest_seconds?: number;
-  order_index?: number;
-  notes?: string;
 }
 
 export interface CreatePeriodizationInput {
@@ -480,6 +481,8 @@ export interface SaveSessionSetInput {
   rest_actual?: number | null;
   completed?: boolean;
   skipped?: boolean;
+  /** `false` em aquecimento e preparação: a série existe, mas não soma volume (#431). */
+  counts_toward_volume?: boolean;
 }
 
 export interface SaveSessionExerciseInput {

@@ -6,7 +6,7 @@ import {
   periodizationObjectiveLabel,
   type TrainingPlan,
 } from "@elevapro/shared";
-import { Plus } from "lucide-react";
+import { FileDown, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -19,6 +19,7 @@ import { Button } from "@/shared/components/ui/Button";
 import { formatDateRange } from "@/shared/utils/formatDate";
 import { CreatePeriodizationModal } from "../components/CreatePeriodizationModal";
 import { WelcomeBanner } from "../components/WelcomeBanner";
+import { usePeriodizationPdf } from "../hooks/usePeriodizationPdf";
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   planned: { label: "Planejada", className: "bg-secondary/10 text-secondary" },
@@ -98,6 +99,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
   const [editingPeriodization, setEditingPeriodization] = useState(false);
 
   const periodizationId = periodization.id;
+  const { exportPdf, isExporting } = usePeriodizationPdf(periodizationId);
   const status = STATUS_CONFIG[periodization.status] ?? STATUS_CONFIG.planned;
   const objective = periodizationObjectiveLabel(periodization.objective);
 
@@ -165,6 +167,15 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
 
           {/* Status actions */}
           <div className="flex gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={exportPdf}
+              disabled={isExporting || plans.length === 0}
+              className="flex items-center gap-2 px-4 py-2 bg-overlay-05 border border-overlay-10 text-muted-foreground rounded-lg text-sm font-medium hover:bg-overlay-10 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <FileDown className="h-4 w-4" aria-hidden="true" />
+              {isExporting ? "Gerando…" : "Exportar plano completo"}
+            </button>
             <button
               type="button"
               onClick={() => setEditingPeriodization(true)}
