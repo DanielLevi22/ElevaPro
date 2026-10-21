@@ -3,11 +3,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity, View } from 'react-native';
 import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
 import { useCores, useEscala } from '@/shared/design';
-import { resumoDaPrescricao } from '../store/planoDaSessao';
+import { prescriptionSummary } from '../store/sessionPlan';
 
 /** "4 séries · 8-12 reps · 90s descanso", pela série de trabalho do plano. */
 function resumoDoExercicio(item: WorkoutExercise): string {
-  const { series, reps, descanso } = resumoDaPrescricao(item);
+  const { sets: series, reps, rest: descanso } = prescriptionSummary(item);
   const partes = [
     series > 0 ? `${series} séries` : null,
     series > 0 ? `${reps} reps` : null,

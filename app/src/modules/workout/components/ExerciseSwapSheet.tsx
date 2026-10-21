@@ -8,7 +8,7 @@ import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { cn } from '@/lib/utils';
 import { useCores, useEscala } from '@/shared/design';
 import { useExerciseSwap } from '../hooks/useExerciseSwap';
-import { resumoDaPrescricao } from '../store/planoDaSessao';
+import { prescriptionSummary } from '../store/sessionPlan';
 import { useTodaySwapsStore } from '../store/todaySwapsStore';
 
 interface ModeOption {
@@ -120,7 +120,7 @@ export function ExerciseSwapSheet(props: ExerciseSwapSheetProps) {
 /** "Remada curvada · 4 × 8–10"; o Aluno lê também que a troca é só de hoje. */
 function subtitleOf(item: WorkoutExercise, selfGuided: boolean): string {
   const name = item.exercise?.name ?? 'Exercício';
-  const { series, reps } = resumoDaPrescricao(item);
+  const { sets: series, reps } = prescriptionSummary(item);
   const prescription = series > 0 ? ` · ${series} × ${reps}` : '';
   return selfGuided ? `${name}${prescription}` : `${name}${prescription} · só no treino de hoje`;
 }

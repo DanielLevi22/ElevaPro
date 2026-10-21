@@ -1,4 +1,5 @@
 import type { LoadRecord, PeriodPanel } from '@elevapro/shared';
+import { escapeHtml } from '@/shared/pdf/protocolPaper';
 
 /**
  * O relatório do período em PDF, gerado no aparelho (issue #312 §5).
@@ -28,18 +29,6 @@ export interface ReportSheet {
    */
   formatDate: (date: string) => string;
 }
-
-const escapeHtml = (text: string): string =>
-  text.replace(/[&<>"']/g, (char) => {
-    const named: Record<string, string> = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;',
-    };
-    return named[char] ?? char;
-  });
 
 /** Vírgula decimal, como a tela escreve — o papel não muda de idioma. */
 const decimal = (value: number): string => value.toString().replace('.', ',');

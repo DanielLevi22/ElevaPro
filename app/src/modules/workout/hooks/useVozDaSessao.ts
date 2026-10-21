@@ -9,7 +9,7 @@ import {
   emAndamento,
   proximaSerie,
 } from '../store/maquinaDaSessao';
-import { resumoDaPrescricao, seriesDoPlano } from '../store/planoDaSessao';
+import { prescriptionSummary } from '../store/sessionPlan';
 
 interface VozDaSessao {
   mudo: boolean;
@@ -71,9 +71,9 @@ function useAnuncios(sessao: EstadoDaSessao, coachRef: CoachRef): void {
       const { item } = proxima;
       coach.announceExercise(
         item.exercise?.name ?? 'exercício',
-        seriesDoPlano(item),
-        resumoDaPrescricao(item).reps,
-        resumoDaPrescricao(item).carga ?? undefined
+        item.set_plan.length,
+        prescriptionSummary(item).reps,
+        prescriptionSummary(item).load ?? undefined
       );
     } else if (sessao.momento === 'execucao' && deOnde === 'descanso' && proxima) {
       coach.announceSetStart(

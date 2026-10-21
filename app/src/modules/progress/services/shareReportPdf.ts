@@ -1,4 +1,4 @@
-import { compartilharPdf } from '@/shared/pdf/compartilharPdf';
+import { sharePdf } from '@/shared/pdf/sharePdf';
 import { type ReportSheet, reportHtml } from './reportPdf';
 
 /**
@@ -11,11 +11,11 @@ import { type ReportSheet, reportHtml } from './reportPdf';
  * @example await sharePeriodReport(folhaDoRelatorio);
  */
 export function sharePeriodReport(sheet: ReportSheet): Promise<boolean> {
-  return compartilharPdf({
+  return sharePdf({
     html: reportHtml(sheet),
-    nomeDoArquivo: 'relatorio-do-periodo.pdf',
-    tituloDaFolha: 'Relatório do período',
-    eventoDeFalha: 'progress.share_report',
-    eventoDeDescarte: 'progress.discard_report_file',
+    fileName: 'relatorio-do-periodo.pdf',
+    sheetTitle: 'Relatório do período',
+    failureEvent: 'progress.share_report',
+    discardEvent: 'progress.discard_report_file',
   });
 }

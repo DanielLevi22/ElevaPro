@@ -12,6 +12,7 @@ export {
   type TrainingMethod,
   type TrainingMethodGroup,
   type TrainingMethodReference,
+  visibleMethodIds,
 } from "./trainingMethods";
 export type {
   RepsTarget,

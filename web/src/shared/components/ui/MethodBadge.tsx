@@ -3,10 +3,9 @@ import { cn } from "@/shared/utils/cn";
 import { METHOD_GROUP_TONE } from "./methodTone";
 
 const BY_ID = new Map(TRAINING_METHODS.map((m) => [m.id, m]));
-const BY_LABEL = new Map(TRAINING_METHODS.map((m) => [m.label, m]));
 
 interface MethodBadgeProps {
-  /** Identificador do catálogo, ou o rótulo que o resumo do plano devolve. */
+  /** Identificador do catálogo (`rest_pause`). */
   method: string;
   className?: string;
 }
@@ -17,7 +16,7 @@ interface MethodBadgeProps {
  * @example <MethodBadge method="rest_pause" />
  */
 export function MethodBadge({ method, className }: MethodBadgeProps) {
-  const found = BY_ID.get(method) ?? BY_LABEL.get(method);
+  const found = BY_ID.get(method);
   if (!found) return null;
   return (
     <span

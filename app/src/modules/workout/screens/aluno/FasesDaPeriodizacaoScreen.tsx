@@ -9,7 +9,7 @@ import { fotoDoObjetivo } from '@/shared/imagens/fotosDeTreino';
 import { CartaoDaFase } from '../../components/aluno/CartaoDaFase';
 import { CartaoDaPeriodizacao } from '../../components/aluno/CartaoDaPeriodizacao';
 import { EstadoDaTela } from '../../components/aluno/EstadoDaTela';
-import { useExportarPlano } from '../../hooks/useExportarPlano';
+import { useExportPlan } from '../../hooks/useExportPlan';
 import { useFasesDaPeriodizacao } from '../../hooks/useFasesDaPeriodizacao';
 import { comModo, type ModoDaRota } from '../../routes/visaoDoAluno';
 
@@ -21,17 +21,20 @@ import { comModo, type ModoDaRota } from '../../routes/visaoDoAluno';
  * botão; separadas, cada uma tem só o que o papel dela faz.
  *
  * @example
- * <FasesDaPeriodizacaoScreen periodizacaoId={id} alunoId={user.id} modo={modo} />
+ * <FasesDaPeriodizacaoScreen periodizacaoId={id} alunoId={user.id} studentName={nome} modo={modo} />
  */
 interface FasesDaPeriodizacaoScreenProps {
   periodizacaoId: string;
   alunoId: string;
+  /** O nome que vai ao PDF; nulo sem nome preenchido. */
+  studentName: string | null;
   modo: ModoDaRota;
 }
 
 export function FasesDaPeriodizacaoScreen({
   periodizacaoId,
   alunoId,
+  studentName,
   modo,
 }: FasesDaPeriodizacaoScreenProps) {
   const router = useRouter();
@@ -40,7 +43,10 @@ export function FasesDaPeriodizacaoScreen({
     alunoId
   );
 
-  const { exportar, gerando } = useExportarPlano(periodizacaoId, especialista);
+  const { exportPdf, generating } = useExportPlan(periodizacaoId, {
+    student: studentName,
+    specialist: especialista,
+  });
 
   if (!periodizacao) {
     return <EstadoDaTela naoEncontrado={naoEncontrado} mensagem="Periodização não encontrada." />;
@@ -56,8 +62,8 @@ export function FasesDaPeriodizacaoScreen({
           fases.length > 0 ? (
             <BotaoRedondo
               icone="download"
-              rotulo={gerando ? 'Gerando o PDF do plano' : 'Exportar o plano completo em PDF'}
-              onPress={exportar}
+              rotulo={generating ? 'Gerando o PDF do plano' : 'Exportar o plano completo em PDF'}
+              onPress={exportPdf}
             />
           ) : null
         }

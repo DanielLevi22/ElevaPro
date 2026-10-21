@@ -1,5 +1,5 @@
 import { buildPeriodizationSheet, buildWorkoutSheet, type SetPrescription } from '@elevapro/shared';
-import { htmlDoPlano, htmlDoTreino } from '../treinoPdf';
+import { planHtml, workoutHtml } from '../workoutPdf';
 
 const serie = (campos: Partial<SetPrescription>): SetPrescription => ({
   methods: ['working'],
@@ -32,14 +32,14 @@ const folhaDeOrigem = [
 const folha = buildWorkoutSheet({ title: 'Treino A', exercises: folhaDeOrigem });
 
 const CABECALHO = {
-  documento: 'Protocolo de treino',
-  aluno: 'Ana Souza',
-  especialista: 'Daniel L.',
-  vigencia: null,
+  document: 'Protocolo de treino',
+  student: 'Ana Souza',
+  specialist: 'Daniel L.',
+  validity: null,
 };
 
-describe('htmlDoTreino — o treino no papel do protocolo', () => {
-  const html = htmlDoTreino(folha, CABECALHO, '21 out 2026, 10:31');
+describe('workoutHtml — o treino no papel do protocolo', () => {
+  const html = workoutHtml(folha, CABECALHO, '21 out 2026, 10:31');
 
   it('leva o treino série a série, com técnicas e blocos', () => {
     expect(html).toContain('TREINO A');
@@ -59,8 +59,13 @@ describe('htmlDoTreino — o treino no papel do protocolo', () => {
   });
 
   it('no plano próprio do Praticante, a linha do profissional não aparece', () => {
-    const proprio = htmlDoTreino(folha, { ...CABECALHO, especialista: null }, 'agora');
+    const proprio = workoutHtml(folha, { ...CABECALHO, specialist: null }, 'agora');
     expect(proprio).not.toContain('PROFISSIONAL');
+  });
+
+  it('sem nome preenchido, a linha do aluno não aparece', () => {
+    const semNome = workoutHtml(folha, { ...CABECALHO, student: null }, 'agora');
+    expect(semNome).not.toContain('ALUNO');
   });
 
   // LGPD Art. 6°, III e VII. O arquivo sai do aparelho e pode chegar a qualquer
@@ -81,7 +86,7 @@ describe('htmlDoTreino — o treino no papel do protocolo', () => {
   });
 });
 
-describe('htmlDoPlano — o plano completo no papel do protocolo', () => {
+describe('planHtml — o plano completo no papel do protocolo', () => {
   const plano = buildPeriodizationSheet({
     periodization: {
       name: 'Hipertrofia',
@@ -105,7 +110,7 @@ describe('htmlDoPlano — o plano completo no papel do protocolo', () => {
       },
     ],
   });
-  const html = htmlDoPlano(plano, { ...CABECALHO, documento: 'Plano de treino completo' }, 'agora');
+  const html = planHtml(plano, { ...CABECALHO, document: 'Plano de treino completo' }, 'agora');
 
   it('leva a periodização, cada fase com as datas e os treinos dela', () => {
     expect(html).toContain('HIPERTROFIA');

@@ -14,7 +14,7 @@ import {
   progressoDaSessao,
   tempoDaSessao,
 } from '../../../store/maquinaDaSessao';
-import { resumoDaPrescricao } from '../../../store/planoDaSessao';
+import { prescriptionSummary } from '../../../store/sessionPlan';
 
 /**
  * A execução do kit (tela 5): o que já foi feito, o exercício em execução e o
@@ -74,7 +74,7 @@ export function ExecucaoDoTreino({
         <CartaoEmExecucao
           item={atual}
           feitas={sessao.feitas[atual.id] ?? []}
-          ganho={ganhoDeCarga(resumoDaPrescricao(atual).carga, anteriores[atual.id])}
+          ganho={ganhoDeCarga(prescriptionSummary(atual).load, anteriores[atual.id])}
           onIniciar={() => despachar({ tipo: 'abrirSerie' })}
           onAjustar={() => onAjustar(atual.id)}
           onTrocar={() => onTrocar(atual.id)}

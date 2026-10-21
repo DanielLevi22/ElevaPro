@@ -57,7 +57,7 @@ const ALLOWLIST = new Set([
   "app/src/modules/progress/services/reportPdf.ts",
   // O papel do protocolo (#431): o PDF do treino no desenho do da dieta. Mesmo
   // motivo do relatório — é papel, sem tema para acompanhar.
-  "app/src/shared/pdf/papelDoProtocolo.ts",
+  "app/src/shared/pdf/protocolPaper.ts",
 ]);
 
 /** `#rgb`, `#rrggbb` ou `#rrggbbaa`, com fronteira para não pegar `#1` de rota. */

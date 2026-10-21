@@ -11,7 +11,7 @@ import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
-import { resumoDaPrescricao, seriesDoPlano } from '../../store/planoDaSessao';
+import { prescriptionSummary } from '../../store/sessionPlan';
 
 /**
  * O exercício em execução — o único cartão com borda e brilho da primária na
@@ -46,7 +46,7 @@ export function CartaoEmExecucao({
   onAjustar,
   onTrocar,
 }: CartaoEmExecucaoProps) {
-  const total = seriesDoPlano(item);
+  const total = item.set_plan.length;
   const proxima = Math.min(feitas.length + 1, total);
 
   return (
@@ -150,13 +150,13 @@ const TAMANHO_DA_SETA = 12;
 function FaixaDaPrescricao({ item, ganho }: { item: WorkoutExercise; ganho: number | null }) {
   const cores = useCores();
   const escalar = useEscala();
-  const resumo = resumoDaPrescricao(item);
-  const carga = resumo.carga !== null ? formatarCarga(resumo.carga) : '—';
-  const descanso = resumo.descanso ? `${resumo.descanso} s` : '—';
+  const resumo = prescriptionSummary(item);
+  const carga = resumo.load !== null ? formatarCarga(resumo.load) : '—';
+  const descanso = resumo.rest ? `${resumo.rest} s` : '—';
 
   return (
     <View className="mt-3.5 flex-row overflow-hidden rounded-[0.875rem] bg-glass-strong">
-      <CelulaDaFaixa valor={`${resumo.series} × ${resumo.reps}`} rotulo="Séries" />
+      <CelulaDaFaixa valor={`${resumo.sets} × ${resumo.reps}`} rotulo="Séries" />
       <CelulaDaFaixa valor={carga} rotulo="Carga" />
       <CelulaDaFaixa valor={descanso} rotulo="Descanso" />
       <View

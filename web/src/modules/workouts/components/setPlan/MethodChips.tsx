@@ -1,6 +1,6 @@
 "use client";
 
-import { TRAINING_METHODS } from "@elevapro/shared";
+import { TRAINING_METHODS, visibleMethodIds } from "@elevapro/shared";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
 import { MethodBadge } from "@/shared/components/ui/MethodBadge";
@@ -23,7 +23,7 @@ interface MethodChipsProps {
  */
 export function MethodChips({ selected, onToggle, owner }: MethodChipsProps) {
   const [isSearching, setIsSearching] = useState(false);
-  const shown = selected.filter((id) => id !== "working");
+  const shown = visibleMethodIds(selected);
 
   return (
     <div className="space-y-2">

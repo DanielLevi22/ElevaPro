@@ -14,7 +14,6 @@ import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
-import { seriesDoPlano } from '../../store/planoDaSessao';
 
 /**
  * As peças do cronômetro em tela cheia — o da série e o do descanso: o anel
@@ -184,7 +183,7 @@ export function CartaoDaSerie({ item, numero, prescricao }: CartaoDaSerieProps) 
       />
       <View className="min-w-0 flex-1">
         <Text className="text-[0.6875rem] font-bold uppercase tracking-wide text-primary-text">
-          Série {numero} de {seriesDoPlano(item)}
+          Série {numero} de {item.set_plan.length}
         </Text>
         <Text
           numberOfLines={1}

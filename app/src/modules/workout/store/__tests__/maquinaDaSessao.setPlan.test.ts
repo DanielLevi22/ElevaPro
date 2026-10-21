@@ -151,14 +151,31 @@ describe('a sessão conduzida pelo plano de séries (#431)', () => {
     ]);
   });
 
-  it('na semana de descarga o plano perde séries do fim', () => {
+  it('na semana de descarga o plano perde metade das séries de trabalho, do fim', () => {
+    const ultima = serie({ weight_kg: 90 });
     const inicial = estadoInicial([
-      itemComPlano('supino', [aquecimento, serie({}), serie({}), serie({})]),
+      itemComPlano('supino', [aquecimento, serie({}), serie({}), ultima]),
     ]);
     const descarga = aplicar(inicial, { tipo: 'applyDeload' });
     const [supino] = descarga.itens;
-    expect(supino?.set_plan).toHaveLength(2);
-    expect(supino?.set_plan?.[0]).toEqual(aquecimento);
+    expect(supino?.set_plan).toEqual([aquecimento, serie({}), serie({})]);
+  });
+
+  // Regressão: cortar metade do total, do fim, levava as duas de trabalho e
+  // deixava o aluno só com o aquecimento.
+  it('na descarga o aquecimento e a preparação ficam, e sobra série de trabalho', () => {
+    const preparacao = serie({ methods: ['feeder'], weight_kg: 60 });
+    const inicial = estadoInicial([
+      itemComPlano('supino', [aquecimento, preparacao, serie({}), serie({})]),
+    ]);
+    const [supino] = aplicar(inicial, { tipo: 'applyDeload' }).itens;
+    expect(supino?.set_plan).toEqual([aquecimento, preparacao, serie({})]);
+  });
+
+  it('na descarga, exercício só de aquecimento fica como está', () => {
+    const inicial = estadoInicial([itemComPlano('mobilidade', [aquecimento, aquecimento])]);
+    const [mobilidade] = aplicar(inicial, { tipo: 'applyDeload' }).itens;
+    expect(mobilidade?.set_plan).toEqual([aquecimento, aquecimento]);
   });
 
   // Somar só as partes com número gravaria menos do que o aluno fez.

@@ -6,14 +6,14 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { registrarFalha } from '@/lib/registro';
 
-interface PdfParaCompartilhar {
+export interface PdfToShare {
   html: string;
   /** O nome que quem recebe vê, sem identificador: "relatorio-do-periodo.pdf". */
-  nomeDoArquivo: string;
-  tituloDaFolha: string;
+  fileName: string;
+  sheetTitle: string;
   /** Os eventos registrados se falhar — só o nome, nunca o conteúdo. */
-  eventoDeFalha: string;
-  eventoDeDescarte: string;
+  failureEvent: string;
+  discardEvent: string;
 }
 
 /**
@@ -21,45 +21,45 @@ interface PdfParaCompartilhar {
  * arquivo assim que ela fecha — compartilhado ou cancelado. Nada passa pelo
  * servidor, e o arquivo não fica no cache esperando a próxima limpeza.
  *
- * @example await compartilharPdf({ html, nomeDoArquivo: 'treino.pdf', tituloDaFolha: 'Treino', eventoDeFalha: 'workout.share_pdf', eventoDeDescarte: 'workout.discard_pdf' })
+ * @example await sharePdf({ html, fileName: 'treino.pdf', sheetTitle: 'Treino', failureEvent: 'workout.share_pdf', discardEvent: 'workout.discard_pdf' })
  */
-export async function compartilharPdf(pdf: PdfParaCompartilhar): Promise<boolean> {
+export async function sharePdf(pdf: PdfToShare): Promise<boolean> {
   let uri: string | null = null;
   try {
-    const arquivo = await Print.printToFileAsync({ html: pdf.html });
+    const file = await Print.printToFileAsync({ html: pdf.html });
     // O `expo-print` nomeia o arquivo com um uuid. Quem recebe lê o nome antes de
     // abrir, e o nome também não carrega identificador nenhum.
-    uri = await comNomeLegivel(arquivo.uri, pdf.nomeDoArquivo);
+    uri = await withReadableName(file.uri, pdf.fileName);
     if (!(await Sharing.isAvailableAsync())) return false;
     await Sharing.shareAsync(uri, {
       mimeType: 'application/pdf',
-      dialogTitle: pdf.tituloDaFolha,
+      dialogTitle: pdf.sheetTitle,
       UTI: 'com.adobe.pdf',
     });
     return true;
   } catch {
     // Sem o erro no log: ele pode trazer o caminho do arquivo e o conteúdo que
     // falhou ao ser escrito (Art. 6°, VII).
-    registrarFalha(pdf.eventoDeFalha);
+    registrarFalha(pdf.failureEvent);
     return false;
   } finally {
-    if (uri) await descartar(uri, pdf.eventoDeDescarte);
+    if (uri) await discard(uri, pdf.discardEvent);
   }
 }
 
-async function comNomeLegivel(uri: string, nome: string): Promise<string> {
-  const destino = `${FileSystem.cacheDirectory}${nome}`;
+async function withReadableName(uri: string, name: string): Promise<string> {
+  const target = `${FileSystem.cacheDirectory}${name}`;
   // O de ontem pode ter sobrado se o sistema matou o app no meio da folha.
-  await FileSystem.deleteAsync(destino, { idempotent: true });
-  await FileSystem.moveAsync({ from: uri, to: destino });
-  return destino;
+  await FileSystem.deleteAsync(target, { idempotent: true });
+  await FileSystem.moveAsync({ from: uri, to: target });
+  return target;
 }
 
 /** A limpeza nunca derruba o compartilhamento: o arquivo pode já ter sumido. */
-async function descartar(uri: string, evento: string): Promise<void> {
+async function discard(uri: string, event: string): Promise<void> {
   try {
     await FileSystem.deleteAsync(uri, { idempotent: true });
   } catch {
-    registrarFalha(evento);
+    registrarFalha(event);
   }
 }

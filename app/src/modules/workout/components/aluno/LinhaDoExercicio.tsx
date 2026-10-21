@@ -9,7 +9,7 @@ import { useCores, useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { techniqueRouteFor } from '@/shared/technique/analyzableExercises';
 import { TECHNIQUE_RELEASED } from '@/shared/technique/release';
-import { resumoDaPrescricao } from '../../store/planoDaSessao';
+import { prescriptionSummary } from '../../store/sessionPlan';
 
 /**
  * Um exercício do treino: foto do grupo, nome, séries, carga, descanso e ordem.
@@ -32,7 +32,7 @@ interface LinhaDoExercicioProps {
 }
 
 export function LinhaDoExercicio({ item, ordem, onMais }: LinhaDoExercicioProps) {
-  const resumo = resumoDaPrescricao(item);
+  const resumo = prescriptionSummary(item);
   return (
     <Vidro classeExterna="mb-[0.5625rem]" className="flex-row items-center gap-3 p-[0.6875rem]">
       <Image
@@ -48,15 +48,13 @@ export function LinhaDoExercicio({ item, ordem, onMais }: LinhaDoExercicioProps)
           {item.exercise?.name ?? 'Exercício'}
         </Text>
         <View className="mt-[0.1875rem] flex-row flex-wrap gap-x-2.5">
-          {resumo.series > 0 ? (
-            <DadoComIcone icone="repeat" texto={`${resumo.series} × ${resumo.reps}`} />
+          {resumo.sets > 0 ? (
+            <DadoComIcone icone="repeat" texto={`${resumo.sets} × ${resumo.reps}`} />
           ) : null}
-          {resumo.carga !== null ? (
-            <DadoComIcone icone="barbell-outline" texto={formatarCarga(resumo.carga)} />
+          {resumo.load !== null ? (
+            <DadoComIcone icone="barbell-outline" texto={formatarCarga(resumo.load)} />
           ) : null}
-          {resumo.descanso ? (
-            <DadoComIcone icone="time-outline" texto={`${resumo.descanso} s`} />
-          ) : null}
+          {resumo.rest ? <DadoComIcone icone="time-outline" texto={`${resumo.rest} s`} /> : null}
         </View>
         <AnalyzeTechnique exerciseName={item.exercise?.name} />
       </View>

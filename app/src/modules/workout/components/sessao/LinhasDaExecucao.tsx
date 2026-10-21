@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Vidro } from '@/components/ui/Vidro';
 import { useCores, useEscala } from '@/shared/design';
-import { resumoDaPrescricao, seriesDoPlano } from '../../store/planoDaSessao';
+import { prescriptionSummary } from '../../store/sessionPlan';
 
 /**
  * As duas linhas que cercam o cartão em execução: o exercício já feito,
@@ -17,7 +17,7 @@ import { resumoDaPrescricao, seriesDoPlano } from '../../store/planoDaSessao';
 
 /** "4 × 8-10 · 45 kg", como a prescrição (ou o ajuste) diz. */
 export function prescricao(item: WorkoutExercise): string {
-  const { series, reps, carga } = resumoDaPrescricao(item);
+  const { sets: series, reps, load: carga } = prescriptionSummary(item);
   const texto = `${series} × ${reps}`;
   return carga === null ? texto : `${texto} · ${formatarCarga(carga)}`;
 }
@@ -65,7 +65,7 @@ export function ExercicioFeito({ item, feitas }: ExercicioFeitoProps) {
             {item.exercise?.name ?? 'Exercício'}
           </Text>
           <Text className="mt-px text-micro text-muted-foreground">
-            {feitas.length}/{seriesDoPlano(item)} séries
+            {feitas.length}/{item.set_plan.length} séries
             {carga > 0 ? ` · ${formatarCarga(carga)}` : ''}
           </Text>
         </View>

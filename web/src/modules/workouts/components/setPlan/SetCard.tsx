@@ -6,6 +6,7 @@ import {
   type SetPrescription,
   summarizeSetPlan,
   TRAINING_METHODS,
+  visibleMethodIds,
 } from "@elevapro/shared";
 import { ChevronDown, Trash2 } from "lucide-react";
 import { MethodBadge } from "@/shared/components/ui/MethodBadge";
@@ -44,7 +45,7 @@ export function SetCard({ set, number, isOpen, onToggleOpen, onChange, onRemove 
   ]
     .filter(Boolean)
     .join(" · ");
-  const shown = set.methods.filter((id) => id !== "working");
+  const shown = visibleMethodIds(set.methods);
 
   return (
     <div
@@ -98,7 +99,7 @@ function SetBody({
   set: SetPrescription;
   onChange: (set: SetPrescription) => void;
 }) {
-  const shown = set.methods.filter((id) => id !== "working");
+  const shown = visibleMethodIds(set.methods);
   // As técnicas da série e as dos blocos, cada uma explicada uma vez.
   const explainedIds = new Set([...shown, ...set.segments.flatMap((segment) => segment.methods)]);
   const explained = [...explainedIds].flatMap((id) => BY_ID.get(id) ?? []);

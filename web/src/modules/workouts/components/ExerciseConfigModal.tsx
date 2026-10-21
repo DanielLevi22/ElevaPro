@@ -66,7 +66,7 @@ export function ExerciseConfigModal({
       scrollable
       footer={
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="text-xs text-muted-foreground">{summaryText(plan)}</span>
+          <span className="text-xs text-muted-foreground">{summarizeSetPlan(plan).line}</span>
           <div className="flex items-center gap-2">
             <Button variant="secondary" onClick={onClose}>
               Cancelar
@@ -89,12 +89,6 @@ export function ExerciseConfigModal({
       </div>
     </Dialog>
   );
-}
-
-/** "3 séries · 8–15 reps · 20–40 kg": o exercício inteiro de relance. */
-function summaryText(plan: SetPlan): string {
-  const summary = summarizeSetPlan(plan);
-  return [summary.sets, summary.reps, summary.weight].filter(Boolean).join(" · ");
 }
 
 /** O rótulo do grupo ("Glúteos"), e não o código gravado ("gluteos"). */

@@ -13,13 +13,12 @@ import {
   soltarCronometro,
 } from './cronometro';
 import {
-  comCargaSugerida,
-  descansoDaSerie,
-  planoEmDescarga,
-  prescricaoDaSerie,
-  registroDaSerie,
-  seriesDoPlano,
-} from './planoDaSessao';
+  deloadPlan,
+  restAfterSet,
+  setPrescriptionAt,
+  setRecord,
+  withSuggestedLoad,
+} from './sessionPlan';
 
 /**
  * A sessão de treino como uma sequência de estados:
@@ -190,7 +189,7 @@ const TRANSICOES: {
 /** Como a carga sugerida: só antes de começar, e a prescrição fica intacta no treino. */
 function applyDeload(estado: EstadoDaSessao): EstadoDaSessao {
   if (estado.momento !== 'preInicio') return estado;
-  const itens = estado.itens.map(planoEmDescarga);
+  const itens = estado.itens.map(deloadPlan);
   return { ...estado, itens };
 }
 
@@ -217,17 +216,13 @@ function applySuggestedLoads(
   if (estado.momento !== 'preInicio') return estado;
   const itens = estado.itens.map((item) => {
     const carga = weights[item.id];
-    return carga ? comCargaSugerida(item, carga) : item;
+    return carga ? withSuggestedLoad(item, carga) : item;
   });
   return { ...estado, itens };
 }
 
 function paraExecucao(estado: EstadoDaSessao): EstadoDaSessao {
   return { ...estado, momento: 'execucao', serie: null, descanso: null };
-}
-
-function seriesDo(item: WorkoutExercise): number {
-  return seriesDoPlano(item);
 }
 
 function feitasDo(estado: EstadoDaSessao, itemId: string): number {
@@ -285,10 +280,10 @@ function concluirSerie(estado: EstadoDaSessao, agora: number): EstadoDaSessao {
   const item = itemAtual(estado);
   if (!item || exercicioConcluido(estado, item)) return estado;
 
-  const prescricao = prescricaoDaSerie(item, feitasDo(estado, item.id));
-  const serie: SerieFeita = registroDaSerie(prescricao);
+  const prescricao = setPrescriptionAt(item, feitasDo(estado, item.id));
+  const serie: SerieFeita = setRecord(prescricao);
   const feitas = { ...estado.feitas, [item.id]: [...(estado.feitas[item.id] ?? []), serie] };
-  const terminou = (feitas[item.id]?.length ?? 0) >= seriesDo(item);
+  const terminou = (feitas[item.id]?.length ?? 0) >= item.set_plan.length;
   const depois: EstadoDaSessao = {
     ...estado,
     feitas,
@@ -302,7 +297,7 @@ function concluirSerie(estado: EstadoDaSessao, agora: number): EstadoDaSessao {
   if (depois.atualId === null) {
     return { ...depois, momento: 'feedback', concluidaEm: agora, descanso: null };
   }
-  const descanso = descansoDaSerie(prescricao);
+  const descanso = restAfterSet(prescricao);
   if (descanso <= 0) return paraExecucao(depois);
   return {
     ...depois,
@@ -396,7 +391,7 @@ export function progressoDaSessao(estado: EstadoDaSessao): ProgressoDaSessao {
     exercicio: indice === -1 ? estado.itens.length : indice + 1,
     exercicios: estado.itens.length,
     seriesFeitas: Object.values(estado.feitas).reduce((soma, s) => soma + s.length, 0),
-    seriesTotais: estado.itens.reduce((soma, i) => soma + seriesDo(i), 0),
+    seriesTotais: estado.itens.reduce((soma, i) => soma + i.set_plan.length, 0),
   };
 }
 
@@ -410,7 +405,7 @@ export function proximaSerie(estado: EstadoDaSessao): {
   const item = itemAtual(estado);
   if (!item) return null;
   const feitas = feitasDo(estado, item.id);
-  return { item, numero: feitas + 1, prescricao: prescricaoDaSerie(item, feitas) };
+  return { item, numero: feitas + 1, prescricao: setPrescriptionAt(item, feitas) };
 }
 
 /**
@@ -420,5 +415,5 @@ export function proximaSerie(estado: EstadoDaSessao): {
  * @example exercicioConcluido(sessao, item) // true depois da última série
  */
 export function exercicioConcluido(estado: EstadoDaSessao, item: WorkoutExercise): boolean {
-  return feitasDo(estado, item.id) >= seriesDo(item);
+  return feitasDo(estado, item.id) >= item.set_plan.length;
 }

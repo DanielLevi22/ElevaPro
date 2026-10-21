@@ -325,3 +325,13 @@ export const TRAINING_METHODS: readonly TrainingMethod[] = [
 ];
 
 export const TRAINING_METHOD_IDS = TRAINING_METHODS.map((m) => m.id);
+
+/**
+ * As técnicas que valem etiqueta: sem "Normal", que é o padrão de toda série e
+ * repetido em todo lugar só faria ruído.
+ *
+ * @example visibleMethodIds(["working", "rest_pause"]) // ["rest_pause"]
+ */
+export function visibleMethodIds(ids: readonly string[]): string[] {
+  return ids.filter((id) => id !== "working");
+}

@@ -26,7 +26,8 @@ describe("summarizeSetPlan — o resumo do exercício na lista", () => {
       sets: "3 séries",
       reps: "10–15 reps",
       weight: "60–140 kg",
-      methods: ["Aquecimento", "Rest-pause"],
+      line: "3 séries · 10–15 reps · 60–140 kg",
+      methods: ["warmup", "rest_pause"],
     });
   });
 
@@ -35,6 +36,7 @@ describe("summarizeSetPlan — o resumo do exercício na lista", () => {
       sets: "1 série",
       reps: "12 reps",
       weight: "20 kg",
+      line: "1 série · 12 reps · 20 kg",
       methods: [],
     });
   });
@@ -45,7 +47,7 @@ describe("summarizeSetPlan — o resumo do exercício na lista", () => {
       set({ mode: "count", value: 8 }, null, ["drop_set"]),
       set({ mode: "count", value: 8 }, null, ["drop_set", "working"]),
     ];
-    expect(summarizeSetPlan(plan).methods).toEqual(["Drop-set"]);
+    expect(summarizeSetPlan(plan).methods).toEqual(["drop_set"]);
   });
 
   it("sem carga prescrita, não inventa peso", () => {
@@ -67,6 +69,7 @@ describe("summarizeSetPlan — o resumo do exercício na lista", () => {
       sets: "0 séries",
       reps: null,
       weight: null,
+      line: "0 séries",
       methods: [],
     });
   });
@@ -83,6 +86,6 @@ describe("summarizeSetPlan — o resumo do exercício na lista", () => {
         },
       ],
     };
-    expect(summarizeSetPlan([comBloco]).methods).toEqual(["Drop-set", "Parcial"]);
+    expect(summarizeSetPlan([comBloco]).methods).toEqual(["drop_set", "partial"]);
   });
 });

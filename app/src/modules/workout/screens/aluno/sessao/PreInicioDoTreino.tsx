@@ -21,7 +21,6 @@ import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { TodayLoads } from '../../../components/sessao/LoadSuggestionList';
 import { useContextoDoTreino } from '../../../hooks/useContextoDoTreino';
 import type { LoadSuggestions } from '../../../services/sessionLoadSuggestions';
-import { seriesDoPlano } from '../../../store/planoDaSessao';
 
 /**
  * O pré-início do kit (tela 4): o treino em letra grande, quantas séries tem e
@@ -65,7 +64,7 @@ export function PreInicioDoTreino({
 }: PreInicioDoTreinoProps) {
   const exercicios = treino.exercises ?? [];
   const series = exercicios.reduce((soma, item) => {
-    const total = seriesDoPlano(item);
+    const total = item.set_plan.length;
     return soma + (deload && total > 0 ? deloadSets(total) : total);
   }, 0);
   const { letra, fase, objetivo } = useContextoDoTreino(treino);

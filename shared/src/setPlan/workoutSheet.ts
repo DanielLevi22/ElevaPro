@@ -1,4 +1,4 @@
-import { TRAINING_METHODS } from "./trainingMethods";
+import { TRAINING_METHODS, visibleMethodIds } from "./trainingMethods";
 import type { RepsTarget, SetPlan, SetPrescription, SetSegment } from "./types";
 
 const LABELS = new Map(TRAINING_METHODS.map((m) => [m.id, m.label]));
@@ -80,7 +80,7 @@ export function buildWorkoutSheet(source: SheetSource): WorkoutSheet {
 function describeSet(set: SetPrescription, index: number): WorkoutSheetSet {
   return {
     label: `Série ${index + 1}`,
-    methods: set.methods.filter((id) => id !== "working").map((id) => LABELS.get(id) ?? id),
+    methods: visibleMethodIds(set.methods).map((id) => LABELS.get(id) ?? id),
     reps: describeRepsTarget(set.reps),
     weight: describeWeight(set.weight_kg),
     rest: set.rest_seconds === null ? null : `${set.rest_seconds} s`,

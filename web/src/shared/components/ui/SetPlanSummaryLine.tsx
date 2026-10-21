@@ -9,13 +9,12 @@ import { MethodBadge } from "./MethodBadge";
  */
 export function SetPlanSummaryLine({ plan }: { plan: SetPlan }) {
   const summary = summarizeSetPlan(plan);
-  const text = [summary.sets, summary.reps, summary.weight].filter(Boolean).join(" · ");
 
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-      <span className="text-xs font-medium text-foreground">{text}</span>
-      {summary.methods.map((label) => (
-        <MethodBadge key={label} method={label} />
+      <span className="text-xs font-medium text-foreground">{summary.line}</span>
+      {summary.methods.map((id) => (
+        <MethodBadge key={id} method={id} />
       ))}
     </div>
   );

@@ -9,7 +9,7 @@ import {
   ResumoDaSerie,
 } from '../../../components/sessao/PecasDoCronometro';
 import { SeriesDoExercicio } from '../../../components/sessao/ProgressoDaSessao';
-import { RoteiroDaSerie } from '../../../components/sessao/RoteiroDaSerie';
+import { SetScript } from '../../../components/sessao/SetScript';
 import { TopoDaSessao } from '../../../components/sessao/TopoDaSessao';
 import {
   type EstadoDaSessao,
@@ -19,7 +19,6 @@ import {
   tempoDaSerie,
   tempoDaSessao,
 } from '../../../store/maquinaDaSessao';
-import { seriesDoPlano } from '../../../store/planoDaSessao';
 import type { PropsDoMomento } from './ExecucaoDoTreino';
 
 /**
@@ -52,7 +51,7 @@ export function CronometroDoTreino(props: PropsDoMomento) {
           exercicios={progresso.exercicios}
           nome={proxima.item.exercise?.name ?? 'Exercício'}
           feitas={proxima.numero - 1}
-          total={seriesDoPlano(proxima.item)}
+          total={proxima.item.set_plan.length}
         />
       ) : null}
       {sessao.momento === 'serie' ? (
@@ -80,7 +79,7 @@ function MomentoDaSerie({ sessao, agora, despachar }: PropsDoMomento) {
         segundos={segundos}
         valor={volta}
         meta={VOLTA_DO_EXERCICIO}
-        legenda={proxima ? `Série ${proxima.numero} de ${seriesDoPlano(proxima.item)}` : ''}
+        legenda={proxima ? `Série ${proxima.numero} de ${proxima.item.set_plan.length}` : ''}
       />
       {proxima ? (
         <>
@@ -95,7 +94,7 @@ function MomentoDaSerie({ sessao, agora, despachar }: PropsDoMomento) {
             numero={proxima.numero}
             prescricao={proxima.prescricao}
           />
-          <RoteiroDaSerie prescricao={proxima.prescricao} />
+          <SetScript prescription={proxima.prescricao} />
         </>
       ) : null}
       <ControlesDoCronometro
@@ -149,7 +148,7 @@ function MomentoDoDescanso({ sessao, agora, despachar }: PropsDoMomento) {
             numero={proxima.numero}
             prescricao={proxima.prescricao}
           />
-          <RoteiroDaSerie prescricao={proxima.prescricao} />
+          <SetScript prescription={proxima.prescricao} />
         </>
       ) : null}
       <ControlesDoCronometro
