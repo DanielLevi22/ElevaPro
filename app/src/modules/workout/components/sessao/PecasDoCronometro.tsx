@@ -2,6 +2,7 @@ import {
   formatarCarga,
   formatarDuracao,
   type SerieFeita,
+  type SetPrescription,
   type WorkoutExercise,
 } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,7 +13,9 @@ import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
+import { seriesDoPlano } from '../../store/planoDaSessao';
 import { textoDasRepeticoes } from './LinhasDaExecucao';
+import { textoDaMeta } from './RoteiroDaSerie';
 
 /**
  * As peças do cronômetro em tela cheia — o da série e o do descanso: o anel
@@ -164,10 +167,16 @@ function CelulaDoResumo({ icone, rotulo, valor, unidade, status, ultima }: Celul
 interface CartaoDaSerieProps {
   item: WorkoutExercise;
   numero: number;
+  /** A prescrição da série da vez (#431); sem ela, o formato achatado. */
+  prescricao: SetPrescription | null;
 }
 
-/** "Série 2 de 4 · Remada Curvada", com a foto do grupo e a prescrição. */
-export function CartaoDaSerie({ item, numero }: CartaoDaSerieProps) {
+/** "Série 2 de 4 · Remada Curvada", com a foto do grupo e a prescrição da série. */
+export function CartaoDaSerie({ item, numero, prescricao }: CartaoDaSerieProps) {
+  const repeticoes = prescricao
+    ? textoDaMeta(prescricao.reps)
+    : textoDasRepeticoes(item.reps, 'reps');
+  const descanso = prescricao ? prescricao.rest_seconds : item.rest_seconds;
   return (
     <Vidro className="flex-row items-center gap-[0.8125rem] p-3">
       <Image
@@ -178,7 +187,7 @@ export function CartaoDaSerie({ item, numero }: CartaoDaSerieProps) {
       />
       <View className="min-w-0 flex-1">
         <Text className="text-[0.6875rem] font-bold uppercase tracking-wide text-primary-text">
-          Série {numero} de {item.sets ?? 0}
+          Série {numero} de {seriesDoPlano(item)}
         </Text>
         <Text
           numberOfLines={1}
@@ -187,10 +196,8 @@ export function CartaoDaSerie({ item, numero }: CartaoDaSerieProps) {
           {item.exercise?.name ?? 'Exercício'}
         </Text>
         <View className="mt-[0.1875rem] flex-row gap-3">
-          <DadoComIcone icone="repeat" texto={textoDasRepeticoes(item.reps, 'reps')} />
-          {item.rest_seconds ? (
-            <DadoComIcone icone="time-outline" texto={`${item.rest_seconds} s descanso`} />
-          ) : null}
+          <DadoComIcone icone="repeat" texto={repeticoes} />
+          {descanso ? <DadoComIcone icone="time-outline" texto={`${descanso} s descanso`} /> : null}
         </View>
       </View>
     </Vidro>

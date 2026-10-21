@@ -10,6 +10,7 @@ import {
   ResumoDaSerie,
 } from '../../../components/sessao/PecasDoCronometro';
 import { SeriesDoExercicio } from '../../../components/sessao/ProgressoDaSessao';
+import { RoteiroDaSerie, textoDaMeta } from '../../../components/sessao/RoteiroDaSerie';
 import { TopoDaSessao } from '../../../components/sessao/TopoDaSessao';
 import {
   type EstadoDaSessao,
@@ -19,6 +20,7 @@ import {
   tempoDaSerie,
   tempoDaSessao,
 } from '../../../store/maquinaDaSessao';
+import { seriesDoPlano } from '../../../store/planoDaSessao';
 import type { PropsDoMomento } from './ExecucaoDoTreino';
 
 /**
@@ -51,7 +53,7 @@ export function CronometroDoTreino(props: PropsDoMomento) {
           exercicios={progresso.exercicios}
           nome={proxima.item.exercise?.name ?? 'Exercício'}
           feitas={proxima.numero - 1}
-          total={proxima.item.sets ?? 0}
+          total={seriesDoPlano(proxima.item)}
         />
       ) : null}
       {sessao.momento === 'serie' ? (
@@ -79,14 +81,26 @@ function MomentoDaSerie({ sessao, agora, despachar }: PropsDoMomento) {
         segundos={segundos}
         valor={volta}
         meta={VOLTA_DO_EXERCICIO}
-        legenda={proxima ? `Série ${proxima.numero} de ${proxima.item.sets ?? 0}` : ''}
+        legenda={proxima ? `Série ${proxima.numero} de ${seriesDoPlano(proxima.item)}` : ''}
       />
       {proxima ? (
         <>
-          <TituloDeSecao estilo="rotulo" acao={textoDasRepeticoes(proxima.item.reps, 'repetições')}>
+          <TituloDeSecao
+            estilo="rotulo"
+            acao={
+              proxima.prescricao
+                ? textoDaMeta(proxima.prescricao.reps)
+                : textoDasRepeticoes(proxima.item.reps, 'repetições')
+            }
+          >
             Agora
           </TituloDeSecao>
-          <CartaoDaSerie item={proxima.item} numero={proxima.numero} />
+          <CartaoDaSerie
+            item={proxima.item}
+            numero={proxima.numero}
+            prescricao={proxima.prescricao}
+          />
+          <RoteiroDaSerie prescricao={proxima.prescricao} />
         </>
       ) : null}
       <ControlesDoCronometro
@@ -135,7 +149,12 @@ function MomentoDoDescanso({ sessao, agora, despachar }: PropsDoMomento) {
           <TituloDeSecao estilo="rotulo" acao="Prepare-se para a próxima série">
             A seguir
           </TituloDeSecao>
-          <CartaoDaSerie item={proxima.item} numero={proxima.numero} />
+          <CartaoDaSerie
+            item={proxima.item}
+            numero={proxima.numero}
+            prescricao={proxima.prescricao}
+          />
+          <RoteiroDaSerie prescricao={proxima.prescricao} />
         </>
       ) : null}
       <ControlesDoCronometro
