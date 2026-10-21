@@ -128,7 +128,7 @@
 - [ ] `candidate-7e13deec3fd66546` — Prato com leguminosa: Cuscuz marroquino cozido + Edamame + Alface
 - [ ] `candidate-7e3aff273955cc37` — Prato com leguminosa: Batata doce cozida + Tremoço em conserva + Brócolis cozido
 - [ ] `candidate-7e3e84c1cab6611a` — Prato com leguminosa: Mandioca cozida + Feijão preto cozido + Espinafre
-- [ ] `candidate-7e5bbebe0e2746d0` — Prato com leguminosa: Mandioca cozida + Ervilha cozida + Pimentão vermelho
+- [x] `candidate-7e5bbebe0e2746d0` — Prato com leguminosa: Mandioca cozida + Ervilha cozida + Pimentão vermelho
 - [ ] `candidate-7e61f581ed4a6f65` — Prato com leguminosa: Batata baroa cozida + Lentilha cozida + Couve-flor cozida
 - [ ] `candidate-7e62f39576d62690` — Prato com leguminosa: Quinoa cozida + Feijão carioca cozido + Abóbora cabotiá cozida
 - [ ] `candidate-7e881e6b76f09531` — Prato com leguminosa: Arroz branco cozido + Feijão azuki cozido + Cenoura crua
@@ -137,7 +137,7 @@
 - [ ] `candidate-7eadfe80d0df34ae` — Prato com leguminosa: Macarrão cozido + Feijão azuki cozido + Berinjela cozida
 - [ ] `candidate-7ebddeb134d039e1` — Prato com leguminosa: Mandioca cozida + Tremoço em conserva + Brócolis cozido
 - [ ] `candidate-7ed128c3fb69d4da` — Prato com leguminosa: Quinoa cozida + Feijão azuki cozido + Couve-flor cozida
-- [ ] `candidate-7ed1c53983e20bb7` — Prato com leguminosa: Biscoito de arroz + Lentilha cozida + Cenoura crua
+- [x] `candidate-7ed1c53983e20bb7` — Prato com leguminosa: Biscoito de arroz + Lentilha cozida + Cenoura crua
 - [ ] `candidate-7edbc2091fd601e7` — Prato com leguminosa: Quinoa cozida + Feijão preto cozido + Agrião
 - [ ] `candidate-7ee090f2cd513019` — Prato com leguminosa: Mandioca cozida + Edamame + Couve refogada
 - [x] `candidate-7ef5cba09ebe959b` — Prato com leguminosa: Milho verde cozido + Feijão preto cozido + Brócolis cozido
@@ -171,9 +171,9 @@
 - [ ] `candidate-80c1384ec92cb1b6` — Prato com leguminosa: Arroz integral cozido + Edamame + Rúcula
 - [ ] `candidate-80cb1c2ddbba6596` — Prato com leguminosa: Quinoa cozida + Tremoço em conserva + Alface
 - [ ] `candidate-80e0a392b9f81359` — Prato com leguminosa: Arroz branco cozido + Feijão fradinho cozido + Pimentão vermelho
-- [ ] `candidate-80e5f8c11f18b41d` — Prato com leguminosa: Arroz integral cozido + Lentilha cozida + Repolho cru
+- [x] `candidate-80e5f8c11f18b41d` — Prato com leguminosa: Arroz integral cozido + Lentilha cozida + Repolho cru
 - [ ] `candidate-80ff8144243fe4bb` — Prato com leguminosa: Batata baroa cozida + Ervilha cozida + Quiabo cozido
-- [ ] `candidate-8100cac7cdc64017` — Prato com leguminosa: Macarrão cozido + Ervilha cozida + Vagem cozida
+- [x] `candidate-8100cac7cdc64017` — Prato com leguminosa: Macarrão cozido + Ervilha cozida + Vagem cozida
 - [ ] `candidate-8111990572643299` — Prato com leguminosa: Polenta cozida + Lentilha cozida + Vagem cozida
 - [ ] `candidate-812cf8ab8d1d6fc4` — Prato com leguminosa: Polenta cozida + Ervilha cozida + Brócolis cozido
 - [ ] `candidate-8138035fde9a7d43` — Prato com leguminosa: Macarrão cozido + Ervilha cozida + Aspargos cozidos
@@ -223,7 +223,7 @@
 - [ ] `candidate-83ca5bda22c25314` — Prato com leguminosa: Batata doce cozida + Edamame + Cogumelo champignon
 - [ ] `candidate-83e4c686ef8a3df8` — Prato com leguminosa: Cuscuz marroquino cozido + Grão de bico cozido + Beterraba cozida
 - [ ] `candidate-83e784dd7c6f9ca5` — Prato com leguminosa: Polenta cozida + Lentilha cozida + Aspargos cozidos
-- [ ] `candidate-83e80f52b9ebc5c2` — Prato com leguminosa: Milho verde cozido + Ervilha cozida + Beterraba cozida
+- [x] `candidate-83e80f52b9ebc5c2` — Prato com leguminosa: Milho verde cozido + Ervilha cozida + Beterraba cozida
 - [ ] `candidate-840583365188d40a` — Prato com leguminosa: Inhame cozido + Soja cozida + Aspargos cozidos
 - [ ] `candidate-8417abe8235c9a8c` — Prato com leguminosa: Arroz parboilizado cozido + Feijão preto cozido + Pimentão verde
 - [x] `candidate-8425baccefd020ea` — Prato com leguminosa: Batata inglesa cozida + Feijão preto cozido + Berinjela cozida
@@ -235,14 +235,14 @@
 - [ ] `candidate-8449bf92cfb5c98b` — Prato com leguminosa: Arroz integral cozido + Feijão branco cozido + Tomate
 - [ ] `candidate-8460260193f685a8` — Prato com leguminosa: Batata baroa cozida + Feijão branco cozido + Cenoura crua
 - [ ] `candidate-8463309d2adb256f` — Prato com leguminosa: Cará cozido + Soja cozida + Cenoura crua
-- [ ] `candidate-8474e190fb64fd3f` — Prato com leguminosa: Inhame cozido + Feijão carioca cozido + Rúcula
+- [x] `candidate-8474e190fb64fd3f` — Prato com leguminosa: Inhame cozido + Feijão carioca cozido + Rúcula
 - [ ] `candidate-847eaf826de66f5f` — Prato com leguminosa: Mandioca cozida + Edamame + Vagem cozida
 - [ ] `candidate-8494247b44408b06` — Prato com leguminosa: Quinoa cozida + Edamame + Aspargos cozidos
 - [ ] `candidate-849525dd8fbf91ae` — Prato com leguminosa: Batata baroa cozida + Edamame + Abobrinha cozida
 - [ ] `candidate-84ab3ea22280902d` — Prato com leguminosa: Batata doce roxa cozida + Feijão azuki cozido + Tomate
 - [x] `candidate-84c9ebd9f4f8150f` — Prato com leguminosa: Macarrão cozido + Ervilha cozida + Abobrinha cozida
 - [ ] `candidate-84cc8cbd577fd919` — Prato com leguminosa: Biscoito de arroz + Lentilha cozida + Berinjela cozida
-- [ ] `candidate-8509686c5d362858` — Prato com leguminosa: Inhame cozido + Feijão carioca cozido + Couve refogada
+- [x] `candidate-8509686c5d362858` — Prato com leguminosa: Inhame cozido + Feijão carioca cozido + Couve refogada
 - [ ] `candidate-850dbe3a81128804` — Prato com leguminosa: Quinoa cozida + Tremoço em conserva + Cenoura crua
 - [ ] `candidate-8515ae88f1dfe1b7` — Prato com leguminosa: Batata inglesa cozida + Feijão branco cozido + Abóbora cabotiá cozida
 - [ ] `candidate-8528a1c9442f82e2` — Prato com leguminosa: Cuscuz de milho + Soja cozida + Berinjela cozida
