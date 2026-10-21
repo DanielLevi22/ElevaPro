@@ -1669,7 +1669,7 @@ export type Database = {
           id: string;
           notes: string | null;
           order_index: number;
-          set_plan: Json;
+          set_plan: NonNullable<Json>;
           workout_id: string;
         };
         ComputedFields: never;
@@ -1679,7 +1679,7 @@ export type Database = {
           id?: string;
           notes?: string | null;
           order_index?: number;
-          set_plan?: Json;
+          set_plan?: NonNullable<Json>;
           workout_id: string;
         };
         Update: {
@@ -1688,7 +1688,7 @@ export type Database = {
           id?: string;
           notes?: string | null;
           order_index?: number;
-          set_plan?: Json;
+          set_plan?: NonNullable<Json>;
           workout_id?: string;
         };
         Relationships: [
