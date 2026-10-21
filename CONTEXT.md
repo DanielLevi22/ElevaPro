@@ -120,6 +120,21 @@ _Avoid_: ficha, rotina
 **WorkoutItem**:
 Um exercício dentro de um Workout, com séries, repetições e carga prescritas.
 
+**SetPrescription**:
+Uma série prescrita de um WorkoutItem: técnicas, repetições, peso, descanso, RIR alvo e
+SetSegments. O conjunto delas é o plano de séries do item (#431).
+_Avoid_: série de trabalho (é só um dos tipos)
+
+**SetSegment**:
+Trecho de uma SetPrescription, com reps, peso e pausa antes. É com ele que se monta
+rest-pause, drop-set e cluster. A tela diz "bloco de repetição".
+_Avoid_: bloco (é sinônimo evitado de Phase)
+
+**TrainingMethod**:
+Técnica de treino do catálogo fixo marcada numa SetPrescription: aquecimento,
+rest-pause, drop-set, bi-set... A tela diz "Técnicas".
+_Avoid_: técnica sozinha (já nomeia a análise de técnica por câmera)
+
 **Exercise**:
 Item do banco de exercícios, com nome, grupo muscular e instrução de execução.
 
