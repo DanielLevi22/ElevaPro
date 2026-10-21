@@ -1,3 +1,4 @@
+import type { SetPlan } from "../setPlan";
 export type WorkoutDifficulty = "beginner" | "intermediate" | "advanced";
 export type TrainingStatus = "planned" | "active" | "completed";
 export type DayOfWeek =
@@ -170,6 +171,11 @@ export interface WorkoutExercise {
   rest_seconds: number | null;
   order_index: number;
   notes: string | null;
+  /**
+   * As séries prescritas uma a uma (#431). `null` enquanto o item só tem o
+   * formato achatado: quem lê usa `resolveSetPlan`.
+   */
+  set_plan: SetPlan | null;
   created_at: string;
   exercise?: Exercise;
 }
@@ -383,16 +389,6 @@ export interface UpdateWorkoutInput {
   difficulty?: WorkoutDifficulty | null;
   day_of_week?: DayOfWeek | null;
   training_plan_id?: string | null;
-}
-
-export interface AddWorkoutExerciseInput {
-  exercise_id: string;
-  sets?: number;
-  reps?: string;
-  weight?: string;
-  rest_seconds?: number;
-  order_index?: number;
-  notes?: string;
 }
 
 export interface CreatePeriodizationInput {

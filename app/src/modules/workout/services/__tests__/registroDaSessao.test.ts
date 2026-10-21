@@ -391,6 +391,7 @@ describe('montarSessaoDeForca', () => {
       rest_seconds: 90,
       order_index: 0,
       notes: null,
+      set_plan: null,
       created_at: '2026-09-01T00:00:00Z',
       ...campos,
     };

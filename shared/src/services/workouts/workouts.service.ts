@@ -1,6 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { resolveSetPlan, validateSetPlan } from "../../setPlan";
 import type {
   AddWorkoutExerciseInput,
+  UpdateWorkoutExerciseInput,
+} from "../../types/workoutItemInput.types";
+import type {
   CreateExerciseInput,
   CreateWorkoutInput,
   Exercise,
@@ -172,16 +176,23 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
     workoutId: string,
     items: AddWorkoutExerciseInput[],
   ): Promise<void> => {
-    const rows = items.map((item, i) => ({
-      workout_id: workoutId,
-      exercise_id: item.exercise_id,
-      sets: item.sets ?? null,
-      reps: item.reps ?? null,
-      weight: item.weight ?? null,
-      rest_seconds: item.rest_seconds ?? null,
-      order_index: item.order_index ?? i,
-      notes: item.notes ?? null,
-    }));
+    const rows = items.map((item, i) => {
+      const legacy = {
+        sets: item.sets ?? null,
+        reps: item.reps ?? null,
+        weight: item.weight ?? null,
+        rest_seconds: item.rest_seconds ?? null,
+      };
+      return {
+        workout_id: workoutId,
+        exercise_id: item.exercise_id,
+        ...legacy,
+        order_index: item.order_index ?? i,
+        notes: item.notes ?? null,
+        // Sempre cheio: o plano veio pronto ou sai do formato achatado.
+        set_plan: validateSetPlan(resolveSetPlan({ ...legacy, set_plan: item.set_plan })),
+      };
+    });
     const { error } = await supabase.from("workout_exercises").insert(rows);
     if (error) throw error;
   },
@@ -191,14 +202,24 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
     if (error) throw error;
   },
 
-  /** Ajusta séries/repetições/carga/descanso de um exercício já no treino — não o catálogo. */
+  /**
+   * Ajusta a prescrição de um exercício já no treino — não o catálogo. Com
+   * `set_plan`, grava o plano conferido; só com o formato achatado, descarta o
+   * plano antigo para ele voltar a ser derivado (`resolveSetPlan`).
+   *
+   * @example updateWorkoutExercise(id, { set_plan: plano })
+   */
   updateWorkoutExercise: async (
     workoutExerciseId: string,
-    input: { sets?: number; reps?: string; weight?: string; rest_seconds?: number },
+    input: UpdateWorkoutExerciseInput,
   ): Promise<void> => {
+    const { set_plan, ...legacy } = input;
+    const payload = set_plan
+      ? { ...legacy, set_plan: validateSetPlan(set_plan) }
+      : { ...legacy, set_plan: null };
     const { error } = await supabase
       .from("workout_exercises")
-      .update(input)
+      .update(payload)
       .eq("id", workoutExerciseId);
     if (error) throw error;
   },

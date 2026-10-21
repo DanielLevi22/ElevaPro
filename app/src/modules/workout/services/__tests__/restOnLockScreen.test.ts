@@ -21,6 +21,7 @@ function item(peso: string | null, reps = '10'): WorkoutExercise {
     rest_seconds: 90,
     order_index: 0,
     notes: null,
+    set_plan: null,
     created_at: '2026-09-01T00:00:00Z',
     exercise: {
       id: 'ex-remada',

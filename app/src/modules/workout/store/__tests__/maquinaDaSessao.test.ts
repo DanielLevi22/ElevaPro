@@ -27,6 +27,7 @@ function item(id: string, series: number, descanso = 90): WorkoutExercise {
     rest_seconds: descanso,
     order_index: 0,
     notes: null,
+    set_plan: null,
     created_at: '2026-09-01T00:00:00Z',
     exercise: { id: `ex-${id}`, name: id, muscle_group: 'Costas' } as WorkoutExercise['exercise'],
   };

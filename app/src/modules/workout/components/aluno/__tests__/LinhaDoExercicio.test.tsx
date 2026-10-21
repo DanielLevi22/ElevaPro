@@ -29,6 +29,7 @@ function exercicio(name: string): WorkoutExercise {
     rest_seconds: 60,
     order_index: 0,
     notes: null,
+    set_plan: null,
     created_at: '2026-10-01T00:00:00Z',
     exercise: {
       id: `ex-${name}`,

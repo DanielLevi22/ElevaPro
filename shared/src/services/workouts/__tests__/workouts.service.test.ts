@@ -121,7 +121,13 @@ describe("workoutsService — ajustar exercício do treino", () => {
     });
 
     expect(chamadas[0].tabela).toBe("workout_exercises");
-    expect(chamadas[0].payload).toEqual({ sets: 4, reps: "10", weight: "20", rest_seconds: 90 });
+    expect(chamadas[0].payload).toEqual({
+      sets: 4,
+      reps: "10",
+      weight: "20",
+      rest_seconds: 90,
+      set_plan: null,
+    });
     expect(chamadas[0].filtros).toEqual({ id: "we-1" });
   });
 

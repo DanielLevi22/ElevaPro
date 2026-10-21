@@ -2,6 +2,7 @@ import {
   boolean,
   date,
   integer,
+  jsonb,
   numeric,
   pgEnum,
   pgTable,
@@ -10,6 +11,7 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+import type { SetPlan } from "../../setPlan";
 import { profiles } from "./auth";
 
 export const trainingStatusEnum = pgEnum("training_status", ["planned", "active", "completed"]);
@@ -147,6 +149,8 @@ export const workoutExercises = pgTable("workout_exercises", {
   rest_seconds: integer("rest_seconds"),
   order_index: integer("order_index").notNull().default(0),
   notes: text("notes"),
+  // As séries uma a uma (0105, #431). Nulo: derive do formato achatado acima.
+  set_plan: jsonb("set_plan").$type<SetPlan>(),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

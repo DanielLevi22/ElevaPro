@@ -97,6 +97,7 @@ describe('workoutStore', () => {
         rest_seconds: 60,
         order_index: 0,
         notes: null,
+        set_plan: null,
         created_at: '',
       },
     ]);
@@ -129,6 +130,7 @@ describe('workoutStore', () => {
         rest_seconds: 0,
         order_index: 0,
         notes: null,
+        set_plan: null,
         created_at: '',
       },
     ]);
