@@ -1,11 +1,14 @@
 import type { Food } from "@elevapro/shared";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFoods } from "@/shared/hooks/useNutrition";
+import { DayBalance, type DaySnapshot } from "./DayBalance";
 
 const CALC_ONBOARDING_KEY = "nutrition_calc_onboarding_seen";
 
 interface FoodSelectorProps {
   onSelect: (food: Food, quantity?: number) => void;
+  /** Saldo do dia: o especialista escolhe o alimento sem esquecer o que falta. */
+  daySnapshot?: DaySnapshot;
 }
 
 type MacroType = "protein" | "carbs" | "fat" | "calories";
@@ -17,7 +20,7 @@ interface MacroTargets {
   calories?: string;
 }
 
-export function FoodSelector({ onSelect }: FoodSelectorProps) {
+export function FoodSelector({ onSelect, daySnapshot }: FoodSelectorProps) {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -55,6 +58,21 @@ export function FoodSelector({ onSelect }: FoodSelectorProps) {
         return [...prev, macro];
       }
     });
+  };
+
+  // Preenche a calculadora com o que falta no dia — a pergunta mais comum ao fechar a dieta.
+  const fillWithDayRemaining = () => {
+    if (!daySnapshot) return;
+    const remaining: MacroTargets = {};
+    const macros: MacroType[] = [];
+    for (const macro of ["protein", "carbs", "fat"] as const) {
+      const gap = Math.round(daySnapshot.targets[macro] - daySnapshot.consumed[macro]);
+      if (gap <= 0) continue;
+      remaining[macro] = gap.toString();
+      macros.push(macro);
+    }
+    setTargets(remaining);
+    setActiveMacros(macros);
   };
 
   const updateTarget = (macro: MacroType, value: string) => {
@@ -146,12 +164,23 @@ export function FoodSelector({ onSelect }: FoodSelectorProps) {
         </svg>
       </div>
 
+      {daySnapshot && <DayBalance {...daySnapshot} />}
+
       {/* Reverse Calculator */}
       <div className="bg-background/50 border border-white/10 rounded-lg p-4 space-y-3">
         <div className="flex items-center justify-between">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Calculadora Reversa (Multimeta)
           </p>
+          {daySnapshot && (
+            <button
+              type="button"
+              onClick={fillWithDayRemaining}
+              className="text-[10px] font-bold text-primary hover:underline ml-auto mr-3"
+            >
+              Usar o que falta no dia
+            </button>
+          )}
           {!showCalcOnboarding && (
             <button
               type="button"

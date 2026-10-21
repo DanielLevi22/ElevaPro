@@ -21,7 +21,8 @@ export function MacroRing({
   icon,
   size = "md",
 }: MacroRingProps) {
-  const percentage = Math.min((value / max) * 100, 100);
+  // Plano sem meta chega com max 0: sem a guarda, o anel vira NaN e some.
+  const percentage = max > 0 ? Math.min((value / max) * 100, 100) : 0;
 
   const sizes = {
     sm: { container: "w-16 h-16", radius: 28, stroke: "4", font: "text-xs", label: "text-[6px]" },
@@ -32,6 +33,9 @@ export function MacroRing({
   const { container, radius, stroke, font, label: labelSize } = sizes[size];
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (percentage / 100) * circumference;
+  const overflowPercentage = max > 0 && value > max ? Math.min((value - max) / max, 1) : 0;
+  const overflowOffset =
+    overflowPercentage > 0 ? circumference - overflowPercentage * circumference : null;
   const svgSize = size === "sm" ? 64 : size === "md" ? 96 : 128;
   const center = svgSize / 2;
 
@@ -60,6 +64,22 @@ export function MacroRing({
             strokeDasharray={circumference}
             strokeLinecap="round"
           />
+          {/* O anel cheio não distingue "bateu" de "passou muito": o excedente
+              corre por cima, em âmbar, na proporção da meta. */}
+          {overflowOffset !== null && (
+            <motion.circle
+              initial={{ strokeDashoffset: circumference }}
+              animate={{ strokeDashoffset: overflowOffset }}
+              transition={{ duration: 1, delay: 0.6, ease: "easeOut" }}
+              cx={center}
+              cy={center}
+              r={radius}
+              className="fill-none stroke-amber-400"
+              strokeWidth={stroke}
+              strokeDasharray={circumference}
+              strokeLinecap="round"
+            />
+          )}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           {icon && (
@@ -73,7 +93,7 @@ export function MacroRing({
           <div
             className={`${font} font-black text-foreground italic tracking-tighter leading-none`}
           >
-            {value}
+            {Math.round(value)}
             <span className="text-[10px] ml-0.5 opacity-50 not-italic font-medium">{unit}</span>
           </div>
           <div
