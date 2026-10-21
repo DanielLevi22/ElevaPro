@@ -1,3 +1,4 @@
+import { createWorkoutsService } from "@elevapro/shared";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { BulkWorkoutExercise, BulkWorkoutItem } from "../types";
 
@@ -84,30 +85,34 @@ async function saveExercises(
     }
   }
 
-  const rows = exercises
-    .map((e: BulkWorkoutExercise, idx: number) => {
-      const exerciseId = exerciseMap.get(e.exercise_name.toLowerCase());
-      if (!exerciseId) return null;
-      return {
-        workout_id: workoutId,
+  const rows = exercises.flatMap((e: BulkWorkoutExercise, idx: number) => {
+    const exerciseId = exerciseMap.get(e.exercise_name.toLowerCase());
+    if (!exerciseId) return [];
+    return [
+      {
         exercise_id: exerciseId,
         sets: e.sets,
         reps: e.reps,
         rest_seconds: e.rest_seconds,
-        weight: loads?.get(exerciseId) ?? null,
-        notes: e.notes ?? null,
+        weight: loads?.get(exerciseId) ?? undefined,
+        notes: e.notes,
         order_index: idx,
-      };
-    })
-    .filter(Boolean);
+      },
+    ];
+  });
 
   if (rows.length === 0) return;
-  const { error: insertError } = await supabaseAdmin
-    .from("workout_exercises" as never)
-    .insert(rows as never[]);
-  // Lançar aciona o desfazer da aprovação: sem isto, o treino ficava sem exercícios.
-  if (insertError) {
-    throw new Error(`exercícios do treino ${workoutId} não foram gravados: ${insertError.message}`);
+  // Pelo serviço: o treino da IA já nasce com o plano de séries (#431), tirado
+  // do formato achatado que ela propõe.
+  try {
+    await createWorkoutsService(supabaseAdmin).addExercisesToWorkout(workoutId, rows);
+  } catch (insertError) {
+    // Lançar aciona o desfazer da aprovação: sem isto, o treino ficava sem exercícios.
+    const motivo =
+      insertError instanceof Error
+        ? insertError.message
+        : String((insertError as { message?: unknown })?.message ?? insertError);
+    throw new Error(`exercícios do treino ${workoutId} não foram gravados: ${motivo}`);
   }
 }
 

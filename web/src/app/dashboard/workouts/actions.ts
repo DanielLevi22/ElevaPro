@@ -1,6 +1,6 @@
 "use server";
 
-import { createWorkoutsService, type SetPlan } from "@elevapro/shared";
+import { createWorkoutsService, type SetPlan, type WorkoutExercise } from "@elevapro/shared";
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -104,17 +104,19 @@ export async function importWorkoutAction(sourceWorkoutId: string, phaseId: stri
     .order("order_index", { ascending: true });
 
   if (sourceItems && (sourceItems as unknown[]).length > 0) {
-    const newItems = (sourceItems as Record<string, unknown>[]).map((item) => ({
-      workout_id: newWorkout.id,
+    // Pelo serviço e com o plano junto: a cópia por colunas listadas à mão
+    // perdia as séries, e o treino importado virava séries Normal (#431).
+    const newItems = (sourceItems as WorkoutExercise[]).map((item) => ({
       exercise_id: item.exercise_id,
       order_index: item.order_index,
-      sets: item.sets,
-      reps: item.reps,
-      weight: item.weight,
-      rest_seconds: item.rest_seconds,
-      notes: item.notes,
+      sets: item.sets ?? undefined,
+      reps: item.reps ?? undefined,
+      weight: item.weight ?? undefined,
+      rest_seconds: item.rest_seconds ?? undefined,
+      notes: item.notes ?? undefined,
+      set_plan: item.set_plan ?? undefined,
     }));
-    await supabase.from("workout_exercises" as never).insert(newItems as never[]);
+    await createWorkoutsService(supabase).addExercisesToWorkout(newWorkout.id as string, newItems);
   }
 
   revalidatePath(`/dashboard/workouts/periodizations`);
