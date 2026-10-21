@@ -1,10 +1,4 @@
-import {
-  formatarDuracao,
-  ganhoDeCarga,
-  numeroDaPrescricao,
-  type SerieFeita,
-  type Workout,
-} from '@elevapro/shared';
+import { formatarDuracao, ganhoDeCarga, type SerieFeita, type Workout } from '@elevapro/shared';
 import { View } from 'react-native';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
@@ -20,6 +14,7 @@ import {
   progressoDaSessao,
   tempoDaSessao,
 } from '../../../store/maquinaDaSessao';
+import { resumoDaPrescricao } from '../../../store/planoDaSessao';
 
 /**
  * A execução do kit (tela 5): o que já foi feito, o exercício em execução e o
@@ -79,7 +74,7 @@ export function ExecucaoDoTreino({
         <CartaoEmExecucao
           item={atual}
           feitas={sessao.feitas[atual.id] ?? []}
-          ganho={ganhoDeCarga(numeroDaPrescricao(atual.weight), anteriores[atual.id])}
+          ganho={ganhoDeCarga(resumoDaPrescricao(atual).carga, anteriores[atual.id])}
           onIniciar={() => despachar({ tipo: 'abrirSerie' })}
           onAjustar={() => onAjustar(atual.id)}
           onTrocar={() => onTrocar(atual.id)}

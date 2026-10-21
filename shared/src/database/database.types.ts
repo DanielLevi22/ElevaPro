@@ -1669,10 +1669,7 @@ export type Database = {
           id: string;
           notes: string | null;
           order_index: number;
-          reps: string | null;
-          rest_seconds: number | null;
-          sets: number | null;
-          weight: string | null;
+          set_plan: Json;
           workout_id: string;
         };
         ComputedFields: never;
@@ -1682,10 +1679,7 @@ export type Database = {
           id?: string;
           notes?: string | null;
           order_index?: number;
-          reps?: string | null;
-          rest_seconds?: number | null;
-          sets?: number | null;
-          weight?: string | null;
+          set_plan?: Json;
           workout_id: string;
         };
         Update: {
@@ -1694,10 +1688,7 @@ export type Database = {
           id?: string;
           notes?: string | null;
           order_index?: number;
-          reps?: string | null;
-          rest_seconds?: number | null;
-          sets?: number | null;
-          weight?: string | null;
+          set_plan?: Json;
           workout_id?: string;
         };
         Relationships: [

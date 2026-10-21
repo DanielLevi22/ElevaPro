@@ -1,6 +1,5 @@
 "use client";
 
-import { resolveSetPlan } from "@elevapro/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
@@ -12,12 +11,12 @@ import {
   updateExerciseAction,
 } from "@/app/dashboard/workouts/actions";
 import { Button } from "@/shared/components/ui/Button";
+import { SetPlanSummaryLine } from "@/shared/components/ui/SetPlanSummaryLine";
 import { useWorkout, useWorkoutItems, type WorkoutItem } from "@/shared/hooks/useWorkouts";
 import { CreateWorkoutModal } from "../components/CreateWorkoutModal";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import { ExerciseConfigModal, type SelectedExercise } from "../components/ExerciseConfigModal";
 import { SelectExercisesModal } from "../components/SelectExercisesModal";
-import { SetPlanSummaryLine } from "../components/setPlan/SetPlanSummaryLine";
 import { WelcomeBanner } from "../components/WelcomeBanner";
 
 const DIFFICULTY_LABELS: Record<string, string> = {
@@ -252,7 +251,7 @@ export default function WorkoutDetailsPage() {
 
                 {/* Séries: o resumo do plano, com as técnicas */}
                 <div className="shrink-0 max-w-[45%]">
-                  <SetPlanSummaryLine plan={resolveSetPlan(item)} />
+                  <SetPlanSummaryLine plan={item.set_plan} />
                 </div>
 
                 {/* Actions */}
@@ -343,7 +342,7 @@ export default function WorkoutDetailsPage() {
             id: editingItem.exercise.id,
             name: editingItem.exercise.name,
             muscle_group: editingItem.exercise.muscle_group ?? "",
-            set_plan: resolveSetPlan(editingItem),
+            set_plan: editingItem.set_plan,
           }}
           onSave={handleUpdateExercise}
         />

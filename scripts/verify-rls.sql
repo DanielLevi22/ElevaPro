@@ -3241,8 +3241,8 @@ BEGIN
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
 
-  -- A função não abre a tabela: séries, carga e ordem seguem sem escrita direta.
-  UPDATE public.workout_exercises SET sets = 99 WHERE id = item_proprio;
+  -- A função não abre a tabela: ordem e observação seguem sem escrita direta.
+  UPDATE public.workout_exercises SET order_index = 99 WHERE id = item_proprio;
   GET DIAGNOSTICS afetadas = ROW_COUNT;
   IF afetadas <> 0 THEN
     RAISE EXCEPTION 'PRESCRIÇÃO EDITADA POR FORA: UPDATE direto em workout_exercises foi aceito para o aluno';

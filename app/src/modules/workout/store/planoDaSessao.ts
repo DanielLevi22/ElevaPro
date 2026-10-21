@@ -1,33 +1,27 @@
 import {
+  countsTowardVolume,
   deloadSets,
   type RepsTarget,
-  resolveSetPlan,
+  repsToText,
   type SerieFeita,
   type SetPrescription,
-  TRAINING_METHODS,
   type WorkoutExercise,
 } from '@elevapro/shared';
 import { DEFAULT_REST_TIME } from '../constants';
 
-const FORA_DO_VOLUME = new Set(
-  TRAINING_METHODS.filter((m) => !m.countsTowardVolume).map((m) => m.id)
-);
-const foraDoVolume = (id: string) => FORA_DO_VOLUME.has(id);
-
 /**
  * O plano de séries visto pela sessão (#431): quantas séries o exercício tem,
- * o descanso de cada uma e o que cada uma grava. Item sem plano cai no
- * formato achatado pelo `resolveSetPlan` — o comportamento de antes.
+ * o descanso de cada uma e o que cada uma grava.
  */
 
 /** Quantas séries o exercício prescreve. */
 export function seriesDoPlano(item: WorkoutExercise): number {
-  return resolveSetPlan(item).length;
+  return item.set_plan.length;
 }
 
 /** A prescrição da série de posição `indice` (a partir de 0), ou nula fora do plano. */
 export function prescricaoDaSerie(item: WorkoutExercise, indice: number): SetPrescription | null {
-  return resolveSetPlan(item)[indice] ?? null;
+  return item.set_plan[indice] ?? null;
 }
 
 /** O descanso depois da série; sem valor prescrito, o padrão de um minuto. */
@@ -56,27 +50,12 @@ function repsContaveis(reps: RepsTarget): number | null {
   return null;
 }
 
-const CAMPOS_DO_LAPIS = ['sets', 'reps', 'weight', 'rest_seconds'] as const;
-
-/**
- * O lápis edita o formato achatado. Se ele mudou algum desses campos, o plano
- * sai e o achatado ajustado passa a valer — a mesma regra do serviço ao gravar
- * só o achatado.
- */
-export function semPlanoSeAjustado(
-  antes: WorkoutExercise,
-  depois: WorkoutExercise
-): WorkoutExercise {
-  const mudou = CAMPOS_DO_LAPIS.some((campo) => antes[campo] !== depois[campo]);
-  return mudou ? { ...depois, set_plan: null } : depois;
-}
-
 /** A carga sugerida vai para as séries que contam volume; o aquecimento fica. */
 export function comCargaSugerida(item: WorkoutExercise, carga: string): WorkoutExercise {
   const quilos = Number.parseFloat(carga.replace(',', '.'));
-  if (!item.set_plan || !Number.isFinite(quilos)) return item;
+  if (!Number.isFinite(quilos)) return item;
   const set_plan = item.set_plan.map((serie) =>
-    serie.methods.some(foraDoVolume) ? serie : { ...serie, weight_kg: quilos }
+    countsTowardVolume(serie) ? { ...serie, weight_kg: quilos } : serie
   );
   return { ...item, set_plan };
 }
@@ -85,8 +64,48 @@ export function comCargaSugerida(item: WorkoutExercise, carga: string): WorkoutE
 export function planoEmDescarga(item: WorkoutExercise): WorkoutExercise {
   const total = seriesDoPlano(item);
   if (total === 0) return item;
-  const sets = deloadSets(total);
-  return item.set_plan
-    ? { ...item, sets, set_plan: item.set_plan.slice(0, sets) }
-    : { ...item, sets };
+  return { ...item, set_plan: item.set_plan.slice(0, deloadSets(total)) };
+}
+
+export interface ResumoDaPrescricao {
+  series: number;
+  /** "12", "8-12", "falha" ou "30s" — da série de trabalho. */
+  reps: string;
+  carga: number | null;
+  descanso: number | null;
+  /** A meta de repetições da série de trabalho, ou nula sem séries. */
+  meta: RepsTarget | null;
+}
+
+/**
+ * O exercício numa linha só ("4 × 8-12 · 80 kg · 90 s"): o total de séries e a
+ * série de trabalho, que é a que representa o exercício — não o aquecimento.
+ *
+ * @example resumoDaPrescricao(item) // { series: 4, reps: "8-12", carga: 80, descanso: 90 }
+ */
+export function resumoDaPrescricao(item: WorkoutExercise): ResumoDaPrescricao {
+  const serie = item.set_plan.find(countsTowardVolume) ?? item.set_plan[0];
+  return {
+    series: item.set_plan.length,
+    reps: serie ? repsToText(serie.reps) : '—',
+    carga: serie?.weight_kg ?? null,
+    descanso: serie?.rest_seconds ?? null,
+    meta: serie?.reps ?? null,
+  };
+}
+
+const SEGUNDOS_POR_MINUTO = 60;
+
+/**
+ * A meta de repetições em texto: "12 reps", "8–12 reps", "até a falha", "30 s",
+ * "10 min".
+ *
+ * @example textoDaMeta({ mode: 'range', min: 8, max: 12 }) // "8–12 reps"
+ */
+export function textoDaMeta(reps: RepsTarget): string {
+  if (reps.mode === 'count') return `${reps.value} reps`;
+  if (reps.mode === 'range') return `${reps.min}–${reps.max} reps`;
+  if (reps.mode === 'failure') return 'até a falha';
+  const emMinutos = reps.seconds >= SEGUNDOS_POR_MINUTO && reps.seconds % SEGUNDOS_POR_MINUTO === 0;
+  return emMinutos ? `${reps.seconds / SEGUNDOS_POR_MINUTO} min` : `${reps.seconds} s`;
 }

@@ -1,4 +1,5 @@
 import type { WorkoutExercise } from '@elevapro/shared';
+import { simplePrescriptionToSetPlan } from '@elevapro/shared';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { ROUTES } from '@/navigation/types';
 import { LinhaDoExercicio } from '../LinhaDoExercicio';
@@ -23,13 +24,10 @@ function exercicio(name: string): WorkoutExercise {
     id: `we-${name}`,
     workout_id: 'w1',
     exercise_id: `ex-${name}`,
-    sets: 4,
-    reps: '10',
-    weight: null,
-    rest_seconds: 60,
+    set_plan: simplePrescriptionToSetPlan({ sets: 4, reps: '10', weight: null, rest_seconds: 60 })
+      .plan,
     order_index: 0,
     notes: null,
-    set_plan: null,
     created_at: '2026-10-01T00:00:00Z',
     exercise: {
       id: `ex-${name}`,

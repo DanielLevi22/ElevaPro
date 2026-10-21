@@ -165,17 +165,10 @@ export interface WorkoutExercise {
   id: string;
   workout_id: string;
   exercise_id: string;
-  sets: number | null;
-  reps: string | null;
-  weight: string | null;
-  rest_seconds: number | null;
   order_index: number;
   notes: string | null;
-  /**
-   * As séries prescritas uma a uma (#431). `null` enquanto o item só tem o
-   * formato achatado: quem lê usa `resolveSetPlan`.
-   */
-  set_plan: SetPlan | null;
+  /** As séries prescritas uma a uma (#431): a prescrição inteira do item. */
+  set_plan: SetPlan;
   created_at: string;
   exercise?: Exercise;
 }

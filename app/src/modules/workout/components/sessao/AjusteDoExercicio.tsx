@@ -1,4 +1,9 @@
-import { createWorkoutsService, type WorkoutExercise } from '@elevapro/shared';
+import {
+  applyQuickAdjust,
+  createWorkoutsService,
+  quickAdjustOf,
+  type WorkoutExercise,
+} from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { useEffect, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
@@ -14,7 +19,8 @@ const servicoDeTreinos = createWorkoutsService(supabase);
  * sessão — e o vídeo do exercício, para quem pode editar o catálogo.
  *
  * Os quatro números mudam só a sessão: o que o aluno fez hoje não reescreve a
- * prescrição do especialista. O vídeo é o contrário — é do catálogo e vale para
+ * prescrição do especialista. Eles abrem com a série de trabalho e valem nas
+ * séries que contam volume — o aquecimento e os blocos ficam como estão (#431). O vídeo é o contrário — é do catálogo e vale para
  * todo mundo, por isso só aparece com a permissão `update Exercise` e é gravado
  * na hora.
  *
@@ -37,11 +43,12 @@ interface Campos {
 }
 
 function camposDo(item: WorkoutExercise): Campos {
+  const atual = quickAdjustOf(item.set_plan);
   return {
-    series: String(item.sets ?? ''),
-    reps: item.reps ?? '',
-    carga: item.weight ?? '',
-    descanso: String(item.rest_seconds ?? ''),
+    series: String(atual.sets),
+    reps: atual.reps,
+    carga: atual.weight,
+    descanso: atual.rest_seconds === null ? '' : String(atual.rest_seconds),
     video: item.exercise?.video_url ?? '',
   };
 }
@@ -120,10 +127,12 @@ export function AjusteDoExercicio({
 function ajustado(item: WorkoutExercise, campos: Campos): WorkoutExercise {
   return {
     ...item,
-    sets: Number.parseInt(campos.series, 10),
-    reps: campos.reps.trim(),
-    weight: campos.carga.trim() || null,
-    rest_seconds: Number.parseInt(campos.descanso || '0', 10),
+    set_plan: applyQuickAdjust(item.set_plan, {
+      sets: Number.parseInt(campos.series, 10),
+      reps: campos.reps.trim(),
+      weight: campos.carga.trim(),
+      rest_seconds: Number.parseInt(campos.descanso || '0', 10),
+    }),
     exercise: item.exercise
       ? { ...item.exercise, video_url: campos.video.trim() || null }
       : undefined,

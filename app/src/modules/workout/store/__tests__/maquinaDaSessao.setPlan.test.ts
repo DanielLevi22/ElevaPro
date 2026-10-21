@@ -1,4 +1,4 @@
-import type { SetPrescription, WorkoutExercise } from '@elevapro/shared';
+import { applyQuickAdjust, type SetPrescription, type WorkoutExercise } from '@elevapro/shared';
 import {
   type AcaoDaSessao,
   type EstadoDaSessao,
@@ -35,16 +35,11 @@ const restPause = serie({
   ],
 });
 
-/** O achatado de propósito diferente do plano: quem manda é o plano. */
 function itemComPlano(id: string, plano: SetPrescription[]): WorkoutExercise {
   return {
     id,
     workout_id: 'w1',
     exercise_id: `ex-${id}`,
-    sets: 9,
-    reps: '99',
-    weight: '1',
-    rest_seconds: 999,
     order_index: 0,
     notes: null,
     set_plan: plano,
@@ -113,14 +108,30 @@ describe('a sessão conduzida pelo plano de séries (#431)', () => {
     expect(proximaSerie(naTerceira)).toMatchObject({ numero: 3, prescricao: restPause });
   });
 
-  // O lápis do aluno edita o formato achatado (séries, reps, carga, descanso).
-  // Ajustar por ali troca o plano pelo que ele digitou, como o serviço faz ao
-  // gravar só o achatado.
-  it('o ajuste do lápis vale sobre o plano dali em diante', () => {
-    // O lápis devolve o item inteiro, com o plano antigo junto.
-    const ajustado = { ...agachamento, sets: 2, reps: '6', weight: '100', rest_seconds: 45 };
-    const depois = aplicar(correndo, { tipo: 'ajustarExercicio', item: ajustado }, concluir(10));
-    expect(depois.feitas.agachamento).toEqual([{ reps: 6, carga: 100 }]);
+  // O lápis do aluno ajusta reps, carga e descanso das séries de trabalho; o
+  // aquecimento continua sendo a primeira série.
+  it('o ajuste do lápis vale nas séries de trabalho dali em diante', () => {
+    // O lápis devolve o plano ajustado (applyQuickAdjust), como o AjusteDoExercicio.
+    const ajustado = {
+      ...agachamento,
+      set_plan: applyQuickAdjust(agachamento.set_plan, {
+        sets: 3,
+        reps: '6',
+        weight: '100',
+        rest_seconds: 45,
+      }),
+    };
+    const depois = aplicar(
+      correndo,
+      { tipo: 'ajustarExercicio', item: ajustado },
+      concluir(10),
+      { tipo: 'terminarDescanso' },
+      concluir(60)
+    );
+    expect(depois.feitas.agachamento).toEqual([
+      { reps: 15, carga: 40 },
+      { reps: 6, carga: 100 },
+    ]);
     expect(depois.descanso?.total).toBe(45);
   });
 

@@ -18,7 +18,6 @@ import {
   planoEmDescarga,
   prescricaoDaSerie,
   registroDaSerie,
-  semPlanoSeAjustado,
   seriesDoPlano,
 } from './planoDaSessao';
 
@@ -165,7 +164,7 @@ const TRANSICOES: {
   escolher: (estado, { itemId }) => escolher(estado, itemId),
   ajustarExercicio: (estado, { item }) => ({
     ...estado,
-    itens: estado.itens.map((i) => (i.id === item.id ? semPlanoSeAjustado(i, item) : i)),
+    itens: estado.itens.map((i) => (i.id === item.id ? item : i)),
   }),
   ajustarDescanso: (estado, { segundos, agora }) => ajustarDescanso(estado, segundos, agora),
   alternarDescanso: (estado, { agora }) =>
@@ -218,7 +217,7 @@ function applySuggestedLoads(
   if (estado.momento !== 'preInicio') return estado;
   const itens = estado.itens.map((item) => {
     const carga = weights[item.id];
-    return carga ? comCargaSugerida({ ...item, weight: carga }, carga) : item;
+    return carga ? comCargaSugerida(item, carga) : item;
   });
   return { ...estado, itens };
 }

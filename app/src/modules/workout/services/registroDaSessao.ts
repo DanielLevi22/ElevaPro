@@ -1,7 +1,7 @@
 import {
   createWorkoutsService,
   type ExerciseEffort,
-  numeroDaPrescricao,
+  repsToText,
   type SaveSessionSetInput,
   type SerieFeita,
   type SessionVitals,
@@ -107,14 +107,18 @@ function seriesParaGravar(
   prescrito: WorkoutExercise | undefined,
   feitas: readonly SerieFeita[]
 ): SaveSessionSetInput[] {
-  return feitas.map((serie) => ({
-    reps_prescribed: prescrito?.reps ?? null,
-    reps_actual: serie.reps,
-    weight_prescribed: numeroDaPrescricao(prescrito?.weight),
-    weight_actual: serie.carga,
-    rest_prescribed: prescrito?.rest_seconds ?? null,
-    completed: true,
-  }));
+  // O prescrito de cada série é o da série naquela posição do plano (#431).
+  return feitas.map((serie, indice) => {
+    const daVez = prescrito?.set_plan[indice];
+    return {
+      reps_prescribed: daVez ? repsToText(daVez.reps) : null,
+      reps_actual: serie.reps,
+      weight_prescribed: daVez?.weight_kg ?? null,
+      weight_actual: serie.carga,
+      rest_prescribed: daVez?.rest_seconds ?? null,
+      completed: true,
+    };
+  });
 }
 
 /**

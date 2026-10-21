@@ -3,16 +3,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity, View } from 'react-native';
 import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
 import { useCores, useEscala } from '@/shared/design';
+import { resumoDaPrescricao } from '../store/planoDaSessao';
 
-function resumoDoExercicio(item: {
-  sets?: number | null;
-  reps?: string | null;
-  rest_seconds?: number | null;
-}): string {
+/** "4 séries · 8-12 reps · 90s descanso", pela série de trabalho do plano. */
+function resumoDoExercicio(item: WorkoutExercise): string {
+  const { series, reps, descanso } = resumoDaPrescricao(item);
   const partes = [
-    item.sets ? `${item.sets} séries` : null,
-    item.reps ? `${item.reps} reps` : null,
-    item.rest_seconds ? `${item.rest_seconds}s descanso` : null,
+    series > 0 ? `${series} séries` : null,
+    series > 0 ? `${reps} reps` : null,
+    descanso ? `${descanso}s descanso` : null,
   ].filter(Boolean);
   return partes.length > 0 ? partes.join(' · ') : 'Sem configuração';
 }

@@ -109,12 +109,8 @@ export async function importWorkoutAction(sourceWorkoutId: string, phaseId: stri
     const newItems = (sourceItems as WorkoutExercise[]).map((item) => ({
       exercise_id: item.exercise_id,
       order_index: item.order_index,
-      sets: item.sets ?? undefined,
-      reps: item.reps ?? undefined,
-      weight: item.weight ?? undefined,
-      rest_seconds: item.rest_seconds ?? undefined,
       notes: item.notes ?? undefined,
-      set_plan: item.set_plan ?? undefined,
+      set_plan: item.set_plan,
     }));
     await createWorkoutsService(supabase).addExercisesToWorkout(newWorkout.id as string, newItems);
   }

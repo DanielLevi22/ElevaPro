@@ -1,4 +1,10 @@
-import { contagem, gruposDoTreino } from '@elevapro/shared';
+import {
+  applyQuickAdjust,
+  contagem,
+  gruposDoTreino,
+  quickAdjustOf,
+  type SetPlan,
+} from '@elevapro/shared';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
@@ -67,11 +73,15 @@ export default function WorkoutDetailsScreen() {
         await updateWorkoutExercise(
           workout.id,
           editingItem.id,
+          // O editor simples ajusta o plano como o lápis da sessão: aquecimento
+          // e técnicas que o item tiver ficam (#431).
           {
-            sets: dados.sets,
-            reps: String(dados.reps),
-            weight: dados.weight,
-            rest_seconds: dados.rest_seconds,
+            set_plan: applyQuickAdjust(editingItem.set_plan, {
+              sets: dados.sets,
+              reps: String(dados.reps),
+              weight: dados.weight,
+              rest_seconds: dados.rest_seconds,
+            }),
           },
           videoMudou
             ? { exerciseId: editingItem.exercise.id, value: dados.video_url ?? null }
@@ -207,10 +217,7 @@ export default function WorkoutDetailsScreen() {
             id: editingItem.exercise.id,
             name: editingItem.exercise.name,
             muscle_group: editingItem.exercise.muscle_group ?? '',
-            sets: editingItem.sets ?? 3,
-            reps: Number(editingItem.reps) || 12,
-            weight: editingItem.weight ?? '',
-            rest_seconds: editingItem.rest_seconds ?? 60,
+            ...camposDoEditor(editingItem.set_plan),
             video_url: editingItem.exercise.video_url ?? undefined,
           }}
           onSave={handleSaveExercise}
@@ -256,4 +263,15 @@ function CabecalhoDoTreino({
       </View>
     </>
   );
+}
+
+/** O plano nos campos do editor simples, a partir da série de trabalho. */
+function camposDoEditor(plano: SetPlan) {
+  const atual = quickAdjustOf(plano);
+  return {
+    sets: atual.sets || 3,
+    reps: Number.parseInt(atual.reps, 10) || 12,
+    weight: atual.weight,
+    rest_seconds: atual.rest_seconds ?? 60,
+  };
 }

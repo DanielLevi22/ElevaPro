@@ -1,5 +1,4 @@
 import {
-  type RepsTarget,
   type SetPrescription,
   TRAINING_METHODS,
   type TrainingMethod,
@@ -9,6 +8,7 @@ import { useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
 import { Badge } from '@/components/ui/Badge';
 import { BottomSheet } from '@/components/ui/BottomSheet';
+import { textoDaMeta } from '../../store/planoDaSessao';
 
 const POR_ID = new Map(TRAINING_METHODS.map((m) => [m.id, m]));
 
@@ -20,18 +20,6 @@ const TOM_DO_GRUPO: Record<TrainingMethodGroup, 'primary' | 'secondary' | 'warni
   scheme: 'warning',
   timed: 'neutral',
 };
-
-/**
- * A meta de repetições em texto: "12 reps", "8–12 reps", "até a falha", "30 s".
- *
- * @example textoDaMeta({ mode: 'range', min: 8, max: 12 }) // "8–12 reps"
- */
-export function textoDaMeta(reps: RepsTarget): string {
-  if (reps.mode === 'count') return `${reps.value} reps`;
-  if (reps.mode === 'range') return `${reps.min}–${reps.max} reps`;
-  if (reps.mode === 'time') return `${reps.seconds} s`;
-  return 'até a falha';
-}
 
 /**
  * O que a série da vez pede além de reps e carga (#431): as técnicas, o RIR

@@ -3,9 +3,9 @@
 import { TRAINING_METHODS, type TrainingMethod, type TrainingMethodGroup } from "@elevapro/shared";
 import { ChevronDown, Info } from "lucide-react";
 import { useState } from "react";
+import { MethodBadge } from "@/shared/components/ui/MethodBadge";
+import { METHOD_GROUP_LABEL, METHOD_GROUP_TONE } from "@/shared/components/ui/methodTone";
 import { cn } from "@/shared/utils/cn";
-import { MethodBadge } from "./MethodBadge";
-import { METHOD_GROUP_LABEL, METHOD_GROUP_TONE } from "./methodTone";
 
 const GROUPS = Object.keys(METHOD_GROUP_LABEL) as TrainingMethodGroup[];
 const BY_GROUP = new Map(GROUPS.map((g) => [g, TRAINING_METHODS.filter((m) => m.group === g)]));

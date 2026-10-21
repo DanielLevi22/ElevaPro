@@ -1,8 +1,13 @@
-import type { WorkoutExercise } from '@elevapro/shared';
+import { simplePrescriptionToSetPlan, type WorkoutExercise } from '@elevapro/shared';
 import { nextTimeSuggestions, todaySuggestions, weightsToApply } from '../sessionLoadSuggestions';
 
-const supino = { id: 'item-1', weight: '10', reps: '10-12', sets: 3 } as WorkoutExercise;
-const prancha = { id: 'item-2', weight: null, reps: '40 s', sets: 3 } as WorkoutExercise;
+const comPlano = (id: string, weight: string | null, reps: string) =>
+  ({
+    id,
+    set_plan: simplePrescriptionToSetPlan({ sets: 3, reps, weight, rest_seconds: 60 }).plan,
+  }) as WorkoutExercise;
+const supino = comPlano('item-1', '10', '10-12');
+const prancha = comPlano('item-2', null, '40 s');
 
 describe('as cargas da sessão', () => {
   it('hoje: sobe a carga de quem achou fácil, e sem histórico mantém a prescrição', () => {

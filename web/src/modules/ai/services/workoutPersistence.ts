@@ -1,4 +1,4 @@
-import { createWorkoutsService } from "@elevapro/shared";
+import { createWorkoutsService, simplePrescriptionToSetPlan } from "@elevapro/shared";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { BulkWorkoutExercise, BulkWorkoutItem } from "../types";
 
@@ -88,22 +88,20 @@ async function saveExercises(
   const rows = exercises.flatMap((e: BulkWorkoutExercise, idx: number) => {
     const exerciseId = exerciseMap.get(e.exercise_name.toLowerCase());
     if (!exerciseId) return [];
-    return [
-      {
-        exercise_id: exerciseId,
-        sets: e.sets,
-        reps: e.reps,
-        rest_seconds: e.rest_seconds,
-        weight: loads?.get(exerciseId) ?? undefined,
-        notes: e.notes,
-        order_index: idx,
-      },
-    ];
+    // A IA propõe no formato achatado ("3 × 8-12, 60 s"); o plano sai daqui, e
+    // o que não couber nele segue na observação.
+    const { plan, leftoverNote } = simplePrescriptionToSetPlan({
+      sets: e.sets,
+      reps: e.reps,
+      weight: loads?.get(exerciseId) ?? null,
+      rest_seconds: e.rest_seconds,
+    });
+    const notes = [e.notes, leftoverNote].filter(Boolean).join(" · ") || undefined;
+    return [{ exercise_id: exerciseId, order_index: idx, notes, set_plan: plan }];
   });
 
   if (rows.length === 0) return;
-  // Pelo serviço: o treino da IA já nasce com o plano de séries (#431), tirado
-  // do formato achatado que ela propõe.
+  // Pelo serviço, que confere o plano de séries (#431).
   try {
     await createWorkoutsService(supabaseAdmin).addExercisesToWorkout(workoutId, rows);
   } catch (insertError) {

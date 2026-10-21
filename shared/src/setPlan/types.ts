@@ -26,8 +26,11 @@ export interface SetPrescription {
 
 export type SetPlan = SetPrescription[];
 
-/** Os campos achatados que o WorkoutItem guardava antes do plano. */
-export interface LegacyPrescription {
+/**
+ * A prescrição simples, "3 × 8-12, 20 kg, 60 s": como a IA propõe e como o
+ * editor simples do Praticante pede. Vira plano de séries Normal.
+ */
+export interface SimplePrescription {
   sets: number | null;
   reps: string | null;
   weight: string | null;

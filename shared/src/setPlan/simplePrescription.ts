@@ -1,13 +1,7 @@
 import { MAX_SETS } from "./constants";
-import { TRAINING_METHODS } from "./trainingMethods";
-import type { LegacyPrescription, RepsTarget, SetPlan, SetPrescription } from "./types";
+import type { RepsTarget, SetPlan, SetPrescription, SimplePrescription } from "./types";
 
-const OUTSIDE_VOLUME = new Set(
-  TRAINING_METHODS.filter((m) => !m.countsTowardVolume).map((m) => m.id),
-);
-const isOutsideVolume = (id: string) => OUTSIDE_VOLUME.has(id);
-
-interface LegacyConversion {
+interface SimplePrescriptionConversion {
   plan: SetPlan;
   /** O que não coube no plano e precisa ir para a observação, ou `null`. */
   leftoverNote: string | null;
@@ -22,7 +16,8 @@ interface ParsedReps {
 // "8-12", "8 a 12" e "8 – 12": as três grafias que o campo livre acumulou.
 const RANGE = /^(\d+)\s*(?:-|–|a)\s*(\d+)$/;
 const COUNT = /^\d+$/;
-const TIME = /^(\d+)\s*(?:s|seg)$/i;
+const TIME = /^(\d+)\s*(s|seg|min)$/i;
+const SECONDS_PER_MINUTE = 60;
 const FAILURE = /^(?:até\s+(?:a\s+)?)?falha$/i;
 const LEADING_NUMBER = /^(\d+)/;
 // Zero era campo não preenchido, não meta: "0" e "0s" viram "até a falha".
@@ -36,21 +31,24 @@ interface ParsedWeight {
 
 /**
  * Converte a prescrição achatada (`3 × 12, 20 kg, 60 s`) em séries Normal iguais.
+ * Serve à migração dos itens antigos (0106) e à IA, que ainda propõe nesse formato.
  *
- * @example legacyToSetPlan({ sets: 3, reps: "12", weight: "20", rest_seconds: 60 }).plan.length // 3
+ * @example simplePrescriptionToSetPlan({ sets: 3, reps: "12", weight: "20", rest_seconds: 60 }).plan.length // 3
  */
-export function legacyToSetPlan(legacy: LegacyPrescription): LegacyConversion {
-  const { reps, leftover: repsLeftover } = parseReps(legacy.reps);
-  const { weight_kg, leftover: weightLeftover } = parseWeight(legacy.weight);
+export function simplePrescriptionToSetPlan(
+  simple: SimplePrescription,
+): SimplePrescriptionConversion {
+  const { reps, leftover: repsLeftover } = parseReps(simple.reps);
+  const { weight_kg, leftover: weightLeftover } = parseWeight(simple.weight);
   const set: SetPrescription = {
     methods: ["working"],
     reps,
     weight_kg,
-    rest_seconds: legacy.rest_seconds,
+    rest_seconds: simple.rest_seconds,
     target_rir: null,
     segments: [],
   };
-  const sets = legacy.sets ?? 0;
+  const sets = simple.sets ?? 0;
   // O limite do plano e o CHECK do banco param em MAX_SETS; o número original
   // segue na observação.
   const setsLeftover = sets > MAX_SETS ? String(sets) : null;
@@ -71,7 +69,7 @@ function joinLeftovers(entries: [string, string | null][]): string | null {
 }
 
 // "0" era o padrão do formulário para carga não preenchida, não zero quilo.
-function parseWeight(raw: string | null): ParsedWeight {
+export function parseWeight(raw: string | null): ParsedWeight {
   const text = (raw ?? "").trim();
   const kilos = KILOS.exec(text);
   if (!kilos) return { weight_kg: null, leftover: text || null };
@@ -79,7 +77,7 @@ function parseWeight(raw: string | null): ParsedWeight {
   return { weight_kg: value > 0 ? value : null, leftover: null };
 }
 
-function parseReps(raw: string | null): ParsedReps {
+export function parseReps(raw: string | null): ParsedReps {
   const text = (raw ?? "").trim();
   if (!text || ZERO.test(text)) return { reps: { mode: "failure" }, leftover: null };
   if (COUNT.test(text)) return { reps: { mode: "count", value: Number(text) }, leftover: null };
@@ -92,7 +90,10 @@ function parseReps(raw: string | null): ParsedReps {
     };
   }
   const time = TIME.exec(text);
-  if (time) return { reps: { mode: "time", seconds: Number(time[1]) }, leftover: null };
+  if (time) {
+    const factor = time[2]?.toLowerCase() === "min" ? SECONDS_PER_MINUTE : 1;
+    return { reps: { mode: "time", seconds: Number(time[1]) * factor }, leftover: null };
+  }
   return parseFreeText(text);
 }
 
@@ -105,26 +106,21 @@ function parseFreeText(text: string): ParsedReps {
   return { reps, leftover: text || null };
 }
 
-/**
- * O caminho inverso, enquanto alguém ainda lê o formato achatado: o total de
- * séries e os valores da primeira série que conta volume (a de trabalho, não o
- * aquecimento).
- *
- * @example setPlanToLegacy(plan) // { sets: 4, reps: "8-12", weight: "80", rest_seconds: 90 }
- */
-export function setPlanToLegacy(plan: SetPlan): LegacyPrescription {
-  const representative = plan.find((set) => !set.methods.some(isOutsideVolume)) ?? plan[0];
-  return {
-    sets: plan.length,
-    reps: representative ? repsToText(representative.reps) : null,
-    weight: representative?.weight_kg != null ? String(representative.weight_kg) : null,
-    rest_seconds: representative?.rest_seconds ?? null,
-  };
+interface FlatColumnsRow extends SimplePrescription {
+  notes: string | null;
 }
 
-function repsToText(reps: RepsTarget): string {
-  if (reps.mode === "count") return String(reps.value);
-  if (reps.mode === "range") return `${reps.min}-${reps.max}`;
-  if (reps.mode === "time") return `${reps.seconds}s`;
-  return "falha";
+/**
+ * Um item antigo pronto para a 0106: o plano convertido e a observação com a
+ * sobra (o texto que não coube em nenhum modo) somada ao que já havia.
+ *
+ * @example setPlanFromFlatColumns(linha) // { set_plan: [...], notes: "Joelho alinhado · Carga: corporal" }
+ */
+export function setPlanFromFlatColumns(row: FlatColumnsRow): {
+  set_plan: SetPlan;
+  notes: string | null;
+} {
+  const { plan, leftoverNote } = simplePrescriptionToSetPlan(row);
+  const notes = [row.notes, leftoverNote].filter(Boolean).join(" · ");
+  return { set_plan: plan, notes: notes || null };
 }

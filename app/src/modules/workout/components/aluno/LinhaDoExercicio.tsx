@@ -1,4 +1,5 @@
 import type { WorkoutExercise } from '@elevapro/shared';
+import { formatarCarga } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
@@ -8,6 +9,7 @@ import { useCores, useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { techniqueRouteFor } from '@/shared/technique/analyzableExercises';
 import { TECHNIQUE_RELEASED } from '@/shared/technique/release';
+import { resumoDaPrescricao } from '../../store/planoDaSessao';
 
 /**
  * Um exercício do treino: foto do grupo, nome, séries, carga, descanso e ordem.
@@ -30,6 +32,7 @@ interface LinhaDoExercicioProps {
 }
 
 export function LinhaDoExercicio({ item, ordem, onMais }: LinhaDoExercicioProps) {
+  const resumo = resumoDaPrescricao(item);
   return (
     <Vidro classeExterna="mb-[0.5625rem]" className="flex-row items-center gap-3 p-[0.6875rem]">
       <Image
@@ -45,14 +48,14 @@ export function LinhaDoExercicio({ item, ordem, onMais }: LinhaDoExercicioProps)
           {item.exercise?.name ?? 'Exercício'}
         </Text>
         <View className="mt-[0.1875rem] flex-row flex-wrap gap-x-2.5">
-          {item.sets ? (
-            <DadoComIcone icone="repeat" texto={`${item.sets} × ${item.reps ?? '—'}`} />
+          {resumo.series > 0 ? (
+            <DadoComIcone icone="repeat" texto={`${resumo.series} × ${resumo.reps}`} />
           ) : null}
-          {item.weight ? (
-            <DadoComIcone icone="barbell-outline" texto={`${item.weight} kg`} />
+          {resumo.carga !== null ? (
+            <DadoComIcone icone="barbell-outline" texto={formatarCarga(resumo.carga)} />
           ) : null}
-          {item.rest_seconds ? (
-            <DadoComIcone icone="time-outline" texto={`${item.rest_seconds} s`} />
+          {resumo.descanso ? (
+            <DadoComIcone icone="time-outline" texto={`${resumo.descanso} s`} />
           ) : null}
         </View>
         <AnalyzeTechnique exerciseName={item.exercise?.name} />

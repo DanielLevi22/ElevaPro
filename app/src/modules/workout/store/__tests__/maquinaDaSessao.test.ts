@@ -1,4 +1,8 @@
-import type { WorkoutExercise } from '@elevapro/shared';
+import {
+  applyQuickAdjust,
+  simplePrescriptionToSetPlan,
+  type WorkoutExercise,
+} from '@elevapro/shared';
 import {
   type AcaoDaSessao,
   type EstadoDaSessao,
@@ -21,13 +25,14 @@ function item(id: string, series: number, descanso = 90): WorkoutExercise {
     id,
     workout_id: 'w1',
     exercise_id: `ex-${id}`,
-    sets: series,
-    reps: '10',
-    weight: '40',
-    rest_seconds: descanso,
+    set_plan: simplePrescriptionToSetPlan({
+      sets: series,
+      reps: '10',
+      weight: '40',
+      rest_seconds: descanso,
+    }).plan,
     order_index: 0,
     notes: null,
-    set_plan: null,
     created_at: '2026-09-01T00:00:00Z',
     exercise: { id: `ex-${id}`, name: id, muscle_group: 'Costas' } as WorkoutExercise['exercise'],
   };
@@ -243,7 +248,17 @@ describe('máquina da sessão de treino', () => {
   });
 
   it('usa os valores ajustados na série seguinte', () => {
-    const ajustado = { ...item('puxada', 2), weight: '47.5', reps: '8' };
+    // O lápis devolve o plano ajustado (applyQuickAdjust), como o AjusteDoExercicio.
+    const puxada = item('puxada', 2);
+    const ajustado = {
+      ...puxada,
+      set_plan: applyQuickAdjust(puxada.set_plan, {
+        sets: 2,
+        reps: '8',
+        weight: '47.5',
+        rest_seconds: 90,
+      }),
+    };
     const estado = aplicar(
       emExecucao,
       { tipo: 'ajustarExercicio', item: ajustado },
@@ -351,9 +366,8 @@ describe('o esforço do exercício e a carga sugerida (#376)', () => {
 
   it('na semana de descarga cada exercício perde metade das séries, antes de começar', () => {
     const descarga = transicionar(inicial, { tipo: 'applyDeload' });
-    expect(descarga.itens.map((item) => item.sets)).toEqual(
-      inicial.itens.map((item) => (item.sets ? Math.max(1, Math.ceil(item.sets / 2)) : item.sets))
-    );
+    // `inicial` tem 2 e 1 séries: metade, arredondada para cima e nunca zero.
+    expect(descarga.itens.map((item) => item.set_plan.length)).toEqual([1, 1]);
     const correndo = aplicar(inicial, { tipo: 'iniciar', agora: T0 });
     expect(transicionar(correndo, { tipo: 'applyDeload' })).toBe(correndo);
   });

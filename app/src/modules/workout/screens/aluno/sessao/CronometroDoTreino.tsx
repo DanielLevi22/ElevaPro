@@ -2,7 +2,6 @@ import { formatarDuracao } from '@elevapro/shared';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
-import { textoDasRepeticoes } from '../../../components/sessao/LinhasDaExecucao';
 import {
   AnelDoCronometro,
   CartaoDaSerie,
@@ -10,7 +9,7 @@ import {
   ResumoDaSerie,
 } from '../../../components/sessao/PecasDoCronometro';
 import { SeriesDoExercicio } from '../../../components/sessao/ProgressoDaSessao';
-import { RoteiroDaSerie, textoDaMeta } from '../../../components/sessao/RoteiroDaSerie';
+import { RoteiroDaSerie } from '../../../components/sessao/RoteiroDaSerie';
 import { TopoDaSessao } from '../../../components/sessao/TopoDaSessao';
 import {
   type EstadoDaSessao,
@@ -20,7 +19,7 @@ import {
   tempoDaSerie,
   tempoDaSessao,
 } from '../../../store/maquinaDaSessao';
-import { seriesDoPlano } from '../../../store/planoDaSessao';
+import { seriesDoPlano, textoDaMeta } from '../../../store/planoDaSessao';
 import type { PropsDoMomento } from './ExecucaoDoTreino';
 
 /**
@@ -87,11 +86,7 @@ function MomentoDaSerie({ sessao, agora, despachar }: PropsDoMomento) {
         <>
           <TituloDeSecao
             estilo="rotulo"
-            acao={
-              proxima.prescricao
-                ? textoDaMeta(proxima.prescricao.reps)
-                : textoDasRepeticoes(proxima.item.reps, 'repetições')
-            }
+            acao={proxima.prescricao ? textoDaMeta(proxima.prescricao.reps) : ''}
           >
             Agora
           </TituloDeSecao>

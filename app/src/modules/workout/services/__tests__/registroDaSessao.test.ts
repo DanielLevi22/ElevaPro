@@ -1,4 +1,9 @@
-import { POLICY_VERSION, type Workout, type WorkoutExercise } from '@elevapro/shared';
+import {
+  POLICY_VERSION,
+  simplePrescriptionToSetPlan,
+  type Workout,
+  type WorkoutExercise,
+} from '@elevapro/shared';
 import { cardioModality } from '../../cardioModalities';
 import { initialCardioSession } from '../../store/cardioSessionMachine';
 import type { CardioReading } from '../cardioMetrics';
@@ -385,13 +390,14 @@ describe('montarSessaoDeForca', () => {
       id,
       workout_id: 'w1',
       exercise_id: `ex-${id}`,
-      sets: 3,
-      reps: '10-12',
-      weight: '40 kg',
-      rest_seconds: 90,
+      set_plan: simplePrescriptionToSetPlan({
+        sets: 3,
+        reps: '10-12',
+        weight: '40 kg',
+        rest_seconds: 90,
+      }).plan,
       order_index: 0,
       notes: null,
-      set_plan: null,
       created_at: '2026-09-01T00:00:00Z',
       ...campos,
     };
@@ -415,7 +421,14 @@ describe('montarSessaoDeForca', () => {
   // O aluno subiu a carga da remada para 45 no meio do treino: o executado
   // muda, o prescrito continua o que o especialista escreveu.
   it('grava o prescrito do treino ao lado do executado com os ajustes', () => {
-    const ajustada = prescricao('remada', { weight: '45' });
+    const ajustada = prescricao('remada', {
+      set_plan: simplePrescriptionToSetPlan({
+        sets: 3,
+        reps: '10-12',
+        weight: '45',
+        rest_seconds: 90,
+      }).plan,
+    });
     const gravar = montarSessaoDeForca(
       treino,
       {

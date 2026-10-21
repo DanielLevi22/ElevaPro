@@ -1,5 +1,5 @@
 import { TRAINING_METHODS } from "./trainingMethods";
-import type { SetPlan } from "./types";
+import type { SetPlan, SetPrescription } from "./types";
 
 const OUTSIDE_VOLUME = new Set(
   TRAINING_METHODS.filter((m) => !m.countsTowardVolume).map((m) => m.id),
@@ -12,5 +12,10 @@ const OUTSIDE_VOLUME = new Set(
  * @example workingSetCount(item.set_plan) // 3
  */
 export function workingSetCount(plan: SetPlan): number {
-  return plan.filter((set) => !set.methods.some((id) => OUTSIDE_VOLUME.has(id))).length;
+  return plan.filter(countsTowardVolume).length;
+}
+
+/** Se a série conta no volume: nenhuma técnica dela fica fora (aquecimento, preparação). */
+export function countsTowardVolume(set: SetPrescription): boolean {
+  return !set.methods.some((id) => OUTSIDE_VOLUME.has(id));
 }

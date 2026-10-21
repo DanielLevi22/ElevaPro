@@ -2,8 +2,8 @@
 
 import { type SetPrescription, summarizeSetPlan } from "@elevapro/shared";
 import { ChevronDown, Trash2 } from "lucide-react";
+import { MethodBadge } from "@/shared/components/ui/MethodBadge";
 import { cn } from "@/shared/utils/cn";
-import { MethodBadge } from "./MethodBadge";
 import { MethodPicker } from "./MethodPicker";
 import { NumberField } from "./NumberField";
 import { RepsField } from "./RepsField";

@@ -1,6 +1,6 @@
 export { MAX_SEGMENTS, MAX_SETS } from "./constants";
-export { legacyToSetPlan, setPlanToLegacy } from "./legacyConversion";
-export { resolveSetPlan } from "./resolveSetPlan";
+export { applyQuickAdjust, type QuickAdjust, quickAdjustOf, repsToText } from "./quickAdjust";
+export { setPlanFromFlatColumns, simplePrescriptionToSetPlan } from "./simplePrescription";
 export { type SetPlanSummary, summarizeSetPlan } from "./summary";
 export {
   TRAINING_METHODS,
@@ -9,11 +9,11 @@ export {
   type TrainingMethodReference,
 } from "./trainingMethods";
 export type {
-  LegacyPrescription,
   RepsTarget,
   SetPlan,
   SetPrescription,
   SetSegment,
+  SimplePrescription,
 } from "./types";
 export { validateSetPlan } from "./validation";
-export { workingSetCount } from "./volume";
+export { countsTowardVolume, workingSetCount } from "./volume";

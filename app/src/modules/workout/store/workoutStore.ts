@@ -1,6 +1,7 @@
 import type {
   Exercise,
   Periodization,
+  SetPlan,
   TrainingPlan,
   UpdatePeriodizationInput,
   UpdateTrainingPlanInput,
@@ -71,7 +72,7 @@ interface WorkoutState {
   updateWorkoutExercise: (
     workoutId: string,
     workoutExerciseId: string,
-    updates: { sets?: number; reps?: string; weight?: string; rest_seconds?: number },
+    updates: { set_plan: SetPlan },
     videoUrl?: { exerciseId: string; value: string | null }
   ) => Promise<void>;
   removeWorkoutItem: (workoutId: string, workoutExerciseId: string) => Promise<void>;
@@ -320,10 +321,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         workoutId,
         items.map((item) => ({
           exercise_id: item.exercise_id,
-          sets: item.sets ?? undefined,
-          reps: item.reps ?? undefined,
-          weight: item.weight ?? undefined,
-          rest_seconds: item.rest_seconds ?? undefined,
+          set_plan: item.set_plan,
           order_index: item.order_index,
           notes: item.notes ?? undefined,
         }))
@@ -409,10 +407,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
           newWorkout.id,
           sourceWorkout.exercises.map((item) => ({
             exercise_id: item.exercise_id,
-            sets: item.sets ?? undefined,
-            reps: item.reps ?? undefined,
-            weight: item.weight ?? undefined,
-            rest_seconds: item.rest_seconds ?? undefined,
+            set_plan: item.set_plan,
             order_index: item.order_index,
             notes: item.notes ?? undefined,
           }))

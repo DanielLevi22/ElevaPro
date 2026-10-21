@@ -1,7 +1,7 @@
 "use client";
 
+import { SetPlanSummaryLine } from "@/shared/components/ui/SetPlanSummaryLine";
 import type { SelectedExercise } from "./ExerciseConfigModal";
-import { SetPlanSummaryLine } from "./setPlan/SetPlanSummaryLine";
 
 interface ExerciseListItemProps {
   exercise: SelectedExercise;

@@ -5,7 +5,7 @@ import { MethodBadge } from "./MethodBadge";
  * O resumo do exercício na lista: `4 séries · 10–12 reps · 60–140 kg` e as
  * técnicas usadas.
  *
- * @example <SetPlanSummaryLine plan={resolveSetPlan(item)} />
+ * @example <SetPlanSummaryLine plan={item.set_plan} />
  */
 export function SetPlanSummaryLine({ plan }: { plan: SetPlan }) {
   const summary = summarizeSetPlan(plan);

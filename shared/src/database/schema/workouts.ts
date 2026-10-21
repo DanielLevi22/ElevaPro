@@ -143,14 +143,10 @@ export const workoutExercises = pgTable("workout_exercises", {
   exercise_id: uuid("exercise_id")
     .notNull()
     .references(() => exercises.id, { onDelete: "restrict" }),
-  sets: integer("sets"),
-  reps: text("reps"),
-  weight: text("weight"),
-  rest_seconds: integer("rest_seconds"),
   order_index: integer("order_index").notNull().default(0),
   notes: text("notes"),
-  // As séries uma a uma (0105, #431). Nulo: derive do formato achatado acima.
-  set_plan: jsonb("set_plan").$type<SetPlan>(),
+  // As séries uma a uma (0105, #431). Desde a 0106, a prescrição inteira do item.
+  set_plan: jsonb("set_plan").$type<SetPlan>().notNull(),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

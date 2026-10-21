@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { resolveSetPlan, type SetPlan, setPlanToLegacy, validateSetPlan } from "../../setPlan";
+import { validateSetPlan } from "../../setPlan";
 import type {
   AddWorkoutExerciseInput,
   UpdateWorkoutExerciseInput,
@@ -172,29 +172,22 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
     if (error) throw error;
   },
 
+  /**
+   * Põe exercícios no Workout, cada um com o plano de séries conferido.
+   *
+   * @example addExercisesToWorkout(treinoId, [{ exercise_id, set_plan: plano }])
+   */
   addExercisesToWorkout: async (
     workoutId: string,
     items: AddWorkoutExerciseInput[],
   ): Promise<void> => {
-    const rows = items.map((item, i) => {
-      const legacy = {
-        sets: item.sets ?? null,
-        reps: item.reps ?? null,
-        weight: item.weight ?? null,
-        rest_seconds: item.rest_seconds ?? null,
-      };
-      // Sempre cheio: o plano veio pronto ou sai do formato achatado.
-      const setPlan = validateSetPlan(resolveSetPlan({ ...legacy, set_plan: item.set_plan }));
-      return {
-        workout_id: workoutId,
-        exercise_id: item.exercise_id,
-        // Com plano, o achatado sai dele: o app ainda o lê (#431, fatia 3).
-        ...(item.set_plan ? setPlanToLegacy(setPlan) : legacy),
-        order_index: item.order_index ?? i,
-        notes: item.notes ?? null,
-        set_plan: setPlan,
-      };
-    });
+    const rows = items.map((item, i) => ({
+      workout_id: workoutId,
+      exercise_id: item.exercise_id,
+      order_index: item.order_index ?? i,
+      notes: item.notes ?? null,
+      set_plan: validateSetPlan(item.set_plan),
+    }));
     const { error } = await supabase.from("workout_exercises").insert(rows);
     if (error) throw error;
   },
@@ -205,9 +198,7 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
   },
 
   /**
-   * Ajusta a prescrição de um exercício já no treino — não o catálogo. Com
-   * `set_plan`, grava o plano conferido; só com o formato achatado, descarta o
-   * plano antigo para ele voltar a ser derivado (`resolveSetPlan`).
+   * Troca o plano de séries de um exercício já no treino — não o catálogo.
    *
    * @example updateWorkoutExercise(id, { set_plan: plano })
    */
@@ -215,13 +206,11 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
     workoutExerciseId: string,
     input: UpdateWorkoutExerciseInput,
   ): Promise<void> => {
-    const { set_plan, ...legacy } = input;
-    const payload = set_plan
-      ? withLegacyFrom(validateSetPlan(set_plan))
-      : { ...legacy, set_plan: null };
+    // Confere antes de tocar no banco: plano inválido não abre consulta.
+    const setPlan = validateSetPlan(input.set_plan);
     const { error } = await supabase
       .from("workout_exercises")
-      .update(payload)
+      .update({ set_plan: setPlan })
       .eq("id", workoutExerciseId);
     if (error) throw error;
   },
@@ -239,8 +228,3 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
 });
 
 export type WorkoutsService = ReturnType<typeof createWorkoutsService>;
-
-/** O plano gravado junto com o achatado derivado dele, que o app ainda lê. */
-function withLegacyFrom(setPlan: SetPlan) {
-  return { ...setPlanToLegacy(setPlan), set_plan: setPlan };
-}

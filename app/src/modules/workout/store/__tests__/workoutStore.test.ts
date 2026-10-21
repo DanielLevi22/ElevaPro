@@ -1,3 +1,4 @@
+import { simplePrescriptionToSetPlan } from '@elevapro/shared';
 import { useWorkoutStore } from '../workoutStore';
 
 // Use global mocks defined in jest.setup.ts
@@ -91,13 +92,14 @@ describe('workoutStore', () => {
         id: 'wi1',
         workout_id: 'w1',
         exercise_id: 'ex1',
-        sets: 3,
-        reps: '10',
-        weight: '10',
-        rest_seconds: 60,
+        set_plan: simplePrescriptionToSetPlan({
+          sets: 3,
+          reps: '10',
+          weight: '10',
+          rest_seconds: 60,
+        }).plan,
         order_index: 0,
         notes: null,
-        set_plan: null,
         created_at: '',
       },
     ]);
@@ -124,13 +126,9 @@ describe('workoutStore', () => {
         id: 'wi2',
         workout_id: 'w1',
         exercise_id: 'ex1',
-        sets: 0, // Edge case: 0 sets
-        reps: '0', // Edge case: 0 reps
-        weight: '0',
-        rest_seconds: 0,
+        set_plan: [], // Caso de borda: exercício sem séries
         order_index: 0,
         notes: null,
-        set_plan: null,
         created_at: '',
       },
     ]);
@@ -228,7 +226,18 @@ describe('workoutStore', () => {
       id: 'orig-id',
       title: 'Original',
       specialist_id: 'sp1',
-      exercises: [{ exercise_id: 'ex1', sets: 3, reps: '10', order_index: 0 }],
+      exercises: [
+        {
+          exercise_id: 'ex1',
+          order_index: 0,
+          set_plan: simplePrescriptionToSetPlan({
+            sets: 3,
+            reps: '10',
+            weight: null,
+            rest_seconds: 60,
+          }).plan,
+        },
+      ],
     };
     const newWorkout = { id: 'new-id', title: 'Original (Cópia)' };
 
