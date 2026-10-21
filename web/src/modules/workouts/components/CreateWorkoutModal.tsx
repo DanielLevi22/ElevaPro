@@ -126,8 +126,7 @@ export function CreateWorkoutModal({
             await supabase.from("workout_exercises").delete().eq("workout_id", newWorkoutId);
           }
 
-          // Pelo serviço: ele confere o plano e mantém o formato achatado,
-          // que o app ainda lê, em dia com ele (#431).
+          // Pelo serviço, que confere o plano de séries (#431).
           await workoutsService.addExercisesToWorkout(
             newWorkoutId,
             selectedExercises.map((ex, index) => ({

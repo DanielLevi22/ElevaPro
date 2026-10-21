@@ -166,7 +166,7 @@ function CelulaDoResumo({ icone, rotulo, valor, unidade, status, ultima }: Celul
 interface CartaoDaSerieProps {
   item: WorkoutExercise;
   numero: number;
-  /** A prescrição da série da vez (#431); sem ela, o formato achatado. */
+  /** A prescrição da série da vez (#431); nula fora do plano. */
   prescricao: SetPrescription | null;
 }
 

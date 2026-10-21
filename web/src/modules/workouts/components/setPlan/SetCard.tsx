@@ -1,6 +1,12 @@
 "use client";
 
-import { type SetPrescription, summarizeSetPlan, TRAINING_METHODS } from "@elevapro/shared";
+import {
+  MAX_TARGET_RIR,
+  MIN_TARGET_RIR,
+  type SetPrescription,
+  summarizeSetPlan,
+  TRAINING_METHODS,
+} from "@elevapro/shared";
 import { ChevronDown, Trash2 } from "lucide-react";
 import { MethodBadge } from "@/shared/components/ui/MethodBadge";
 import { cn } from "@/shared/utils/cn";
@@ -9,7 +15,7 @@ import { MethodInfo } from "./MethodInfo";
 import { NumberField } from "./NumberField";
 import { RepsField } from "./RepsField";
 import { SegmentList } from "./SegmentList";
-import { asSeconds, asWeight, toggleMethod } from "./setPlanEditing";
+import { asSeconds, asTargetRir, asWeight, toggleMethod } from "./setPlanEditing";
 
 const BY_ID = new Map(TRAINING_METHODS.map((m) => [m.id, m]));
 
@@ -127,16 +133,10 @@ function SetBody({
         <NumberField
           label="RIR alvo (0 a 5)"
           value={set.target_rir}
-          min={0}
-          max={5}
+          min={MIN_TARGET_RIR}
+          max={MAX_TARGET_RIR}
           placeholder="—"
-          onChange={(target_rir) =>
-            onChange({
-              ...set,
-              target_rir:
-                target_rir === null ? null : Math.min(5, Math.max(0, Math.round(target_rir))),
-            })
-          }
+          onChange={(target_rir) => onChange({ ...set, target_rir: asTargetRir(target_rir) })}
         />
       </div>
 

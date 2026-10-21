@@ -189,6 +189,15 @@ export interface Workout {
   exercises_count?: number;
 }
 
+/**
+ * O plano completo para exportar: a periodização, e cada fase com os treinos
+ * dela e os exercícios de cada treino.
+ */
+export interface FullPeriodization {
+  periodization: Periodization;
+  phases: { plan: TrainingPlan; workouts: Workout[] }[];
+}
+
 export interface TrainingPlan {
   id: string;
   periodization_id: string;

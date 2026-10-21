@@ -1,6 +1,8 @@
 import {
   MAX_SEGMENTS,
   MAX_SETS,
+  MAX_TARGET_RIR,
+  MIN_TARGET_RIR,
   type SetPlan,
   type SetPrescription,
   type SetSegment,
@@ -87,4 +89,10 @@ export function asSeconds(value: number | null): number | null {
 /** O mesmo descanso em todas as séries, sem mexer no resto. */
 export function applyRestToAll(plan: SetPlan, rest: number | null): SetPlan {
   return plan.map((set) => ({ ...set, rest_seconds: rest }));
+}
+
+/** RIR alvo inteiro, dentro da faixa que o schema aceita; vazio fica vazio. */
+export function asTargetRir(value: number | null): number | null {
+  if (value === null) return null;
+  return Math.min(MAX_TARGET_RIR, Math.max(MIN_TARGET_RIR, Math.round(value)));
 }

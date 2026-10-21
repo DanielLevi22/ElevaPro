@@ -1,6 +1,6 @@
 "use server";
 
-import { createWorkoutsService, type SetPlan, type WorkoutExercise } from "@elevapro/shared";
+import { createWorkoutsService, type SetPlan } from "@elevapro/shared";
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -24,8 +24,8 @@ export async function addExerciseAction(
   await getAuthUserId();
   const supabase = await createServerSupabaseClient();
 
-  // Pelo serviço: ele confere o plano e mantém o formato achatado, que o app
-  // ainda lê, em dia com ele (#431). O insert direto deixava o plano vazio.
+  // Pelo serviço, que confere o plano de séries (#431). O insert direto deixava
+  // o plano vazio.
   await createWorkoutsService(supabase).addExercisesToWorkout(workoutId, [input]);
 
   revalidatePath(`/dashboard/workouts/${workoutId}`);
@@ -65,28 +65,22 @@ export async function importWorkoutAction(sourceWorkoutId: string, phaseId: stri
   const userId = await getAuthUserId();
   const supabase = await createServerSupabaseClient();
 
-  // Fetch source workout
-  const { data: source, error: srcErr } = await supabase
-    .from("workouts" as never)
-    .select("*")
-    .eq("id", sourceWorkoutId)
-    .maybeSingle();
-
-  if (srcErr) throw new Error(srcErr.message);
-  if (!source) throw new Error("Treino não encontrado na biblioteca");
-
-  const src = source as Record<string, unknown>;
+  // Pelo serviço: o treino de origem já chega com os itens e o plano de cada um
+  // (nulo lido como vazio), em vez de uma segunda consulta com cast.
+  const workoutsService = createWorkoutsService(supabase);
+  const source = await workoutsService.fetchWorkoutById(sourceWorkoutId);
+  if (!source) throw new Error(`Treino ${sourceWorkoutId} não encontrado na biblioteca`);
 
   // Duplicate workout linked to this phase
   const { data: created, error: wErr } = await supabase
     .from("workouts" as never)
     .insert({
       training_plan_id: phaseId,
-      title: src.title,
-      description: src.description,
+      title: source.title,
+      description: source.description,
       specialist_id: userId,
-      muscle_group: src.muscle_group,
-      difficulty: src.difficulty,
+      muscle_group: source.muscle_group,
+      difficulty: source.difficulty,
     } as never)
     .select()
     .maybeSingle();
@@ -96,23 +90,19 @@ export async function importWorkoutAction(sourceWorkoutId: string, phaseId: stri
 
   const newWorkout = created as Record<string, unknown>;
 
-  // Fetch and duplicate exercises
-  const { data: sourceItems } = await supabase
-    .from("workout_exercises" as never)
-    .select("*")
-    .eq("workout_id", sourceWorkoutId)
-    .order("order_index", { ascending: true });
-
-  if (sourceItems && (sourceItems as unknown[]).length > 0) {
-    // Pelo serviço e com o plano junto: a cópia por colunas listadas à mão
-    // perdia as séries, e o treino importado virava séries Normal (#431).
-    const newItems = (sourceItems as WorkoutExercise[]).map((item) => ({
-      exercise_id: item.exercise_id,
-      order_index: item.order_index,
-      notes: item.notes ?? undefined,
-      set_plan: item.set_plan,
-    }));
-    await createWorkoutsService(supabase).addExercisesToWorkout(newWorkout.id as string, newItems);
+  const items = source.exercises ?? [];
+  if (items.length > 0) {
+    // Com o plano junto: a cópia por colunas listadas à mão perdia as séries,
+    // e o treino importado virava séries Normal (#431).
+    await workoutsService.addExercisesToWorkout(
+      newWorkout.id as string,
+      items.map((item) => ({
+        exercise_id: item.exercise_id,
+        order_index: item.order_index,
+        notes: item.notes ?? undefined,
+        set_plan: item.set_plan,
+      })),
+    );
   }
 
   revalidatePath(`/dashboard/workouts/periodizations`);

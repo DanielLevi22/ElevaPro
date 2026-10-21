@@ -8,6 +8,7 @@ import type {
   CreateExerciseInput,
   CreateWorkoutInput,
   Exercise,
+  FullPeriodization,
   UpdateWorkoutInput,
   Workout,
 } from "../../types/workouts.types";
@@ -122,11 +123,11 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
    *
    * @example buildPeriodizationSheet(await service.fetchFullPeriodization(id))
    */
-  fetchFullPeriodization: async (periodizationId: string) => {
-    const periodizacoes = criarServicoDePeriodizacoes(supabase);
+  fetchFullPeriodization: async (periodizationId: string): Promise<FullPeriodization | null> => {
+    const periodizations = criarServicoDePeriodizacoes(supabase);
     const [periodization, plans] = await Promise.all([
-      periodizacoes.fetchPeriodizationById(periodizationId),
-      periodizacoes.fetchTrainingPlans(periodizationId),
+      periodizations.fetchPeriodizationById(periodizationId),
+      periodizations.fetchTrainingPlans(periodizationId),
     ]);
     if (!periodization) return null;
     const workoutsByPlan = await Promise.all(

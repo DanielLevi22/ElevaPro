@@ -28,29 +28,20 @@ const insercaoDosItens = (chamadas: ChamadaRegistrada[]) =>
   );
 
 describe("importWorkoutAction — treino da biblioteca para a fase", () => {
+  const origem = (setPlan: unknown) => ({
+    data: {
+      id: "origem",
+      title: "Treino A",
+      exercises: [{ exercise_id: "agachamento", order_index: 0, notes: null, set_plan: setPlan }],
+    },
+  });
+  const comOrigem = (setPlan: unknown) =>
+    criarSupabaseFake([origem(setPlan), { data: { id: "copia" } }, {}], {
+      auth: { getUser: async () => ({ data: { user: { id: "especialista" } } }) },
+    });
+
   beforeEach(() => {
-    fake = criarSupabaseFake(
-      [
-        { data: { id: "origem", title: "Treino A" } },
-        { data: { id: "copia" } },
-        {
-          data: [
-            {
-              exercise_id: "agachamento",
-              order_index: 0,
-              sets: 1,
-              reps: "falha",
-              weight: "80",
-              rest_seconds: 120,
-              notes: null,
-              set_plan: [restPause],
-            },
-          ],
-        },
-        {},
-      ],
-      { auth: { getUser: async () => ({ data: { user: { id: "especialista" } } }) } },
-    );
+    fake = comOrigem([restPause]);
   });
 
   // Regressão (#431): a cópia listava as colunas à mão e deixava o plano de
@@ -60,5 +51,14 @@ describe("importWorkoutAction — treino da biblioteca para a fase", () => {
 
     const linhas = insercaoDosItens(fake.chamadas)?.payload as Record<string, unknown>[];
     expect(linhas?.[0]).toMatchObject({ workout_id: "copia", set_plan: [restPause] });
+  });
+
+  // Item criado por app antigo, sem plano: lido como vazio, a cópia não quebra.
+  it("item de origem sem plano é copiado com plano vazio", async () => {
+    fake = comOrigem(null);
+    await importWorkoutAction("origem", "fase-1");
+
+    const linhas = insercaoDosItens(fake.chamadas)?.payload as Record<string, unknown>[];
+    expect(linhas?.[0]).toMatchObject({ workout_id: "copia", set_plan: [] });
   });
 });

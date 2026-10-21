@@ -1,4 +1,4 @@
-export { MAX_SEGMENTS, MAX_SETS } from "./constants";
+export { MAX_SEGMENTS, MAX_SETS, MAX_TARGET_RIR, MIN_TARGET_RIR } from "./constants";
 export {
   buildPeriodizationSheet,
   type PeriodizationSheet,
