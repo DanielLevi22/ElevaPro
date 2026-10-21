@@ -1,29 +1,13 @@
 import {
   describeSegment,
   type SetPrescription,
-  TRAINING_METHODS,
   type TrainingMethod,
-  type TrainingMethodGroup,
   visibleMethodIds,
 } from '@elevapro/shared';
 import { useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
-import { Badge } from '@/components/ui/Badge';
 import { BottomSheet } from '@/components/ui/BottomSheet';
-
-const BY_ID = new Map(TRAINING_METHODS.map((m) => [m.id, m]));
-
-/**
- * Tom do Badge por grupo de técnica — o mesmo agrupamento do web, que pinta com
- * classes próprias (`METHOD_GROUP_TONE`): o Badge do app só aceita estes tons.
- */
-const GROUP_TONE: Record<TrainingMethodGroup, 'primary' | 'secondary' | 'warning' | 'neutral'> = {
-  structure: 'primary',
-  execution: 'secondary',
-  pairing: 'neutral',
-  scheme: 'warning',
-  timed: 'neutral',
-};
+import { MethodTag, methodsByIds } from '../MethodTag';
 
 /**
  * O que a série da vez pede além de reps e carga (#431): as técnicas, o RIR
@@ -36,7 +20,7 @@ export function SetScript({ prescription }: { prescription: SetPrescription | nu
   const [open, setOpen] = useState<TrainingMethod | null>(null);
   if (!prescription) return null;
 
-  const methods = visibleMethodIds(prescription.methods).flatMap((id) => BY_ID.get(id) ?? []);
+  const methods = methodsByIds(visibleMethodIds(prescription.methods));
   if (
     methods.length === 0 &&
     prescription.segments.length === 0 &&
@@ -56,9 +40,7 @@ export function SetScript({ prescription }: { prescription: SetPrescription | nu
               accessibilityRole="button"
               accessibilityLabel={`${method.label}: ver como funciona`}
             >
-              <Badge tone={GROUP_TONE[method.group]} dot={false}>
-                {method.label}
-              </Badge>
+              <MethodTag method={method} />
             </Pressable>
           ))}
         </View>

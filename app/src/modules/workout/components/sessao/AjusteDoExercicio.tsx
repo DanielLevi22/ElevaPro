@@ -10,7 +10,7 @@ import { Pressable, Text, TextInput, View } from 'react-native';
 import { showAlert } from '@/components/ui/appAlert';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
 import { BottomSheet } from '@/components/ui/BottomSheet';
-import { useCores, useEscala } from '@/shared/design';
+import { useCores } from '@/shared/design';
 
 const servicoDeTreinos = createWorkoutsService(supabase);
 

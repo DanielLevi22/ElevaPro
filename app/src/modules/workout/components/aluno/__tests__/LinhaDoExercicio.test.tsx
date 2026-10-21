@@ -72,4 +72,40 @@ describe('LinhaDoExercicio', () => {
 
     expect(screen.queryByText('Analisar técnica')).toBeNull();
   });
+
+  // O aluno precisa saber antes de começar que a série tem rest-pause (#431).
+  it('mostra as técnicas do plano, das séries e dos blocos, sem "Normal"', async () => {
+    const base = exercicio('Supino reto');
+    const [primeira, ...resto] = base.set_plan;
+    if (!primeira) throw new Error('o exercício de teste precisa de série');
+    const comTecnicas = {
+      ...base,
+      set_plan: [
+        { ...primeira, methods: ['rest_pause'] },
+        {
+          ...primeira,
+          segments: [
+            {
+              reps: { mode: 'failure' as const },
+              weight_kg: null,
+              pause_seconds: 0,
+              methods: ['partial'],
+            },
+          ],
+        },
+        ...resto,
+      ],
+    };
+    await render(<LinhaDoExercicio item={comTecnicas} ordem={1} />);
+
+    expect(screen.getByText('Rest-pause')).toBeTruthy();
+    expect(screen.getByText('Parcial')).toBeTruthy();
+    expect(screen.queryByText('Normal')).toBeNull();
+  });
+
+  it('exercício só de séries Normal não ganha etiqueta', async () => {
+    await render(<LinhaDoExercicio item={exercicio('Supino reto')} ordem={1} />);
+
+    expect(screen.queryByText('Normal')).toBeNull();
+  });
 });

@@ -14,3 +14,8 @@ export const TARGET_RIR_OUT_OF_RANGE = (received: unknown) =>
 
 export const UNKNOWN_FIELD = (keys: string[]) =>
   `Campo "${keys.join(", ")}" fora do formato do plano de séries. Campo novo passa pelo /lgpd-check antes de entrar.`;
+
+export const INVERTED_REPS_RANGE = (received: unknown) => {
+  const range = received as { min?: unknown; max?: unknown };
+  return `Faixa de ${String(range.min)} a ${String(range.max)} repetições está invertida; o mínimo vem antes do máximo (8 a 12).`;
+};

@@ -24,6 +24,18 @@ describe("validateSetPlan — o formato do plano de séries", () => {
     expect(validateSetPlan([normalSet, restPause])).toEqual([normalSet, restPause]);
   });
 
+  it("aceita repetições em faixa e por tempo", () => {
+    const range = { ...normalSet, reps: { mode: "range", min: 8, max: 12 } };
+    const timed = { ...normalSet, methods: ["isometric"], reps: { mode: "time", seconds: 30 } };
+    expect(validateSetPlan([range, timed])).toEqual([range, timed]);
+  });
+
+  it("recusa faixa invertida e tempo zerado", () => {
+    const inverted = { ...normalSet, reps: { mode: "range", min: 12, max: 8 } };
+    expect(() => validateSetPlan([inverted])).toThrow();
+    expect(() => validateSetPlan([{ ...normalSet, reps: { mode: "time", seconds: 0 } }])).toThrow();
+  });
+
   it("recusa técnica fora do catálogo dizendo qual era", () => {
     expect(() => validateSetPlan([{ ...normalSet, methods: ["bfr"] }])).toThrow(/bfr/);
   });

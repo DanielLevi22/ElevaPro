@@ -84,10 +84,9 @@ export function parseReps(raw: string | null): ParsedReps {
   if (FAILURE.test(text)) return { reps: { mode: "failure" }, leftover: null };
   const range = RANGE.exec(text);
   if (range && Number(range[1]) > 0) {
-    return {
-      reps: { mode: "range", min: Number(range[1]), max: Number(range[2]) },
-      leftover: null,
-    };
+    // "12-8" é a mesma faixa escrita ao contrário, e o schema recusa invertida.
+    const [min, max] = [Number(range[1]), Number(range[2])].sort((a, b) => a - b);
+    return { reps: { mode: "range", min, max }, leftover: null };
   }
   const time = TIME.exec(text);
   if (time) {

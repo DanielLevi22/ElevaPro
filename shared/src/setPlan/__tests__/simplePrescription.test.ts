@@ -22,7 +22,7 @@ describe("simplePrescriptionToSetPlan — do formato achatado para o plano de s�
     expect(leftoverNote).toBeNull();
   });
 
-  it.each(["8-12", "8 a 12", "8 – 12"])("lê %s como faixa de 8 a 12", (reps) => {
+  it.each(["8-12", "8 a 12", "8 – 12", "12-8"])("lê %s como faixa de 8 a 12", (reps) => {
     const { plan } = simplePrescriptionToSetPlan({
       sets: 1,
       reps,

@@ -37,16 +37,6 @@ interface SetCardProps {
  * @example <SetCard set={set} number={1} isOpen onToggleOpen={...} onChange={...} onRemove={...} />
  */
 export function SetCard({ set, number, isOpen, onToggleOpen, onChange, onRemove }: SetCardProps) {
-  const summary = summarizeSetPlan([set]);
-  const details = [
-    summary.reps,
-    summary.weight,
-    set.rest_seconds !== null ? `${set.rest_seconds}s` : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-  const shown = visibleMethodIds(set.methods);
-
   return (
     <div
       className={cn(
@@ -55,28 +45,7 @@ export function SetCard({ set, number, isOpen, onToggleOpen, onChange, onRemove 
       )}
     >
       <div className="flex items-center gap-2 px-3 py-2.5">
-        <button
-          type="button"
-          onClick={onToggleOpen}
-          aria-expanded={isOpen}
-          className="flex min-w-0 flex-1 items-center gap-2 text-left"
-        >
-          <span className="shrink-0 text-sm font-semibold text-foreground">Série {number}</span>
-          <span className="flex min-w-0 flex-wrap gap-1">
-            {shown.length > 0 ? (
-              shown.map((id) => <MethodBadge key={id} method={id} />)
-            ) : (
-              <span className="text-[11px] text-muted-foreground">Normal</span>
-            )}
-          </span>
-          <span className="ml-auto shrink-0 text-xs text-muted-foreground">{details}</span>
-          <ChevronDown
-            className={cn(
-              "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
-              isOpen && "rotate-180",
-            )}
-          />
-        </button>
+        <SetHeader set={set} number={number} isOpen={isOpen} onToggleOpen={onToggleOpen} />
         <button
           type="button"
           onClick={onRemove}
@@ -89,6 +58,44 @@ export function SetCard({ set, number, isOpen, onToggleOpen, onChange, onRemove 
 
       {isOpen ? <SetBody set={set} onChange={onChange} /> : null}
     </div>
+  );
+}
+
+/** A série fechada de relance: número, técnicas, repetições, carga e descanso. */
+function SetHeader({
+  set,
+  number,
+  isOpen,
+  onToggleOpen,
+}: Pick<SetCardProps, "set" | "number" | "isOpen" | "onToggleOpen">) {
+  const summary = summarizeSetPlan([set]);
+  const rest = set.rest_seconds !== null ? `${set.rest_seconds}s` : null;
+  const details = [summary.reps, summary.weight, rest].filter(Boolean).join(" · ");
+  const shown = visibleMethodIds(set.methods);
+
+  return (
+    <button
+      type="button"
+      onClick={onToggleOpen}
+      aria-expanded={isOpen}
+      className="flex min-w-0 flex-1 items-center gap-2 text-left"
+    >
+      <span className="shrink-0 text-sm font-semibold text-foreground">Série {number}</span>
+      <span className="flex min-w-0 flex-wrap gap-1">
+        {shown.length > 0 ? (
+          shown.map((id) => <MethodBadge key={id} method={id} />)
+        ) : (
+          <span className="text-[11px] text-muted-foreground">Normal</span>
+        )}
+      </span>
+      <span className="ml-auto shrink-0 text-xs text-muted-foreground">{details}</span>
+      <ChevronDown
+        className={cn(
+          "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+          isOpen && "rotate-180",
+        )}
+      />
+    </button>
   );
 }
 

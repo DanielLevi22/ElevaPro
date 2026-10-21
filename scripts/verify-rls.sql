@@ -3270,6 +3270,14 @@ BEGIN
   EXCEPTION WHEN check_violation THEN NULL;
   END;
 
+  -- Objeto no lugar da lista: o serviço leria `set_plan.length` indefinido e a
+  -- sessão do aluno mostraria zero séries sem erro nenhum.
+  BEGIN
+    UPDATE public.workout_exercises SET set_plan = '{"sets": 3}'::jsonb WHERE id = item_proprio;
+    RAISE EXCEPTION 'PLANO SEM FORMATO: o banco aceitou set_plan que não é lista';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
   SELECT exercise_id INTO atual FROM public.workout_exercises WHERE id = item_outro;
   IF atual IS DISTINCT FROM oficial THEN
     RAISE EXCEPTION 'TREINO ALHEIO ALTERADO: o item de outra pessoa mudou de exercício';

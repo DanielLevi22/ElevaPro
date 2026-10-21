@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { MAX_SEGMENTS, MAX_SETS, MAX_TARGET_RIR, MIN_TARGET_RIR } from "./constants";
 import {
+  INVERTED_REPS_RANGE,
   TARGET_RIR_OUT_OF_RANGE,
   TOO_MANY_SEGMENTS,
   TOO_MANY_SETS,
@@ -21,7 +22,10 @@ const strictObject = <Shape extends z.ZodRawShape>(shape: Shape) =>
 
 const repsTargetSchema = z.discriminatedUnion("mode", [
   strictObject({ mode: z.literal("count"), value: positiveInt }),
-  strictObject({ mode: z.literal("range"), min: positiveInt, max: positiveInt }),
+  strictObject({ mode: z.literal("range"), min: positiveInt, max: positiveInt }).refine(
+    (range) => range.min <= range.max,
+    { error: (issue) => INVERTED_REPS_RANGE(issue.input) },
+  ),
   strictObject({ mode: z.literal("failure") }),
   strictObject({ mode: z.literal("time"), seconds: positiveInt }),
 ]);
