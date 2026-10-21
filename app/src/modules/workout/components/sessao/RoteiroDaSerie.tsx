@@ -1,4 +1,5 @@
 import {
+  describeSegment,
   type SetPrescription,
   TRAINING_METHODS,
   type TrainingMethod,
@@ -8,7 +9,6 @@ import { useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
 import { Badge } from '@/components/ui/Badge';
 import { BottomSheet } from '@/components/ui/BottomSheet';
-import { textoDaMeta } from '../../store/planoDaSessao';
 
 const POR_ID = new Map(TRAINING_METHODS.map((m) => [m.id, m]));
 
@@ -70,9 +70,7 @@ export function RoteiroDaSerie({ prescricao }: { prescricao: SetPrescription | n
           key={indice}
           className="text-[0.75rem] text-foreground"
         >
-          {bloco.pause_seconds > 0 ? `Pausa ${bloco.pause_seconds} s → ` : '→ '}
-          {textoDaMeta(bloco.reps)}
-          {bloco.weight_kg !== null ? ` · ${bloco.weight_kg} kg` : ''}
+          {describeSegment(bloco)}
         </Text>
       ))}
 

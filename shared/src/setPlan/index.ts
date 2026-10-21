@@ -17,3 +17,11 @@ export type {
 } from "./types";
 export { validateSetPlan } from "./validation";
 export { countsTowardVolume, workingSetCount } from "./volume";
+export {
+  buildWorkoutSheet,
+  describeRepsTarget,
+  describeSegment,
+  type WorkoutSheet,
+  type WorkoutSheetExercise,
+  type WorkoutSheetSet,
+} from "./workoutSheet";

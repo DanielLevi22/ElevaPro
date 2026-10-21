@@ -15,6 +15,7 @@ import { LinhaDoExercicio } from '../../components/aluno/LinhaDoExercicio';
 import { ExerciseSwapSheet } from '../../components/ExerciseSwapSheet';
 import { useDetalheDoTreino } from '../../hooks/useDetalheDoTreino';
 import { isSelfGuidedWorkout } from '../../hooks/useExerciseSwap';
+import { useExportarTreino } from '../../hooks/useExportarTreino';
 import { useSessoesDoAluno } from '../../hooks/useSessoesDoAluno';
 import { comModo, type ModoDaRota } from '../../routes/visaoDoAluno';
 import { useTodayExercises } from '../../store/todaySwapsStore';
@@ -23,9 +24,8 @@ import { useTodayExercises } from '../../store/todaySwapsStore';
  * O treino antes de começar, na visão do aluno — tela 3 do fluxo do kit.
  *
  * A do especialista continua em `WorkoutDetailsScreen`, com a edição de cada
- * exercício. O botão de compartilhar do kit não entrou: não existe o que
- * compartilhar de um treino ainda não feito, e botão sem ação é pior que
- * botão ausente.
+ * exercício. O botão do canto exporta o treino em PDF, no papel do protocolo
+ * (#431): era o que faltava para o compartilhar do kit ter o que levar.
  *
  * @example
  * <DetalheDoTreinoScreen treinoId={id} alunoId={user.id} modo={modo} />
@@ -88,10 +88,20 @@ function DetalheCarregado({ treino, alunoId, modo }: IniciarTreinoProps) {
 
 function CabecalhoDoTreino({ treino }: { treino: Workout }) {
   const router = useRouter();
+  const { exportar, gerando } = useExportarTreino(treino);
 
   return (
     <>
-      <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={router.back} />
+      <View className="flex-row items-center justify-between">
+        <BotaoRedondo icone="chevron-left" rotulo="Voltar" onPress={router.back} />
+        {(treino.exercises ?? []).length > 0 ? (
+          <BotaoRedondo
+            icone="download"
+            rotulo={gerando ? 'Gerando o PDF do treino' : 'Exportar o treino em PDF'}
+            onPress={exportar}
+          />
+        ) : null}
+      </View>
       <View className="mt-[3.625rem]">
         <View className="mb-2.5 flex-row flex-wrap gap-1.5">
           {gruposDoTreino(treino).map((grupo) => (

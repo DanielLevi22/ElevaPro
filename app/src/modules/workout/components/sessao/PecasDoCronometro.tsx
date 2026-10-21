@@ -1,4 +1,5 @@
 import {
+  describeRepsTarget,
   formatarCarga,
   formatarDuracao,
   type SerieFeita,
@@ -13,7 +14,7 @@ import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
-import { seriesDoPlano, textoDaMeta } from '../../store/planoDaSessao';
+import { seriesDoPlano } from '../../store/planoDaSessao';
 
 /**
  * As peças do cronômetro em tela cheia — o da série e o do descanso: o anel
@@ -171,7 +172,7 @@ interface CartaoDaSerieProps {
 
 /** "Série 2 de 4 · Remada Curvada", com a foto do grupo e a prescrição da série. */
 export function CartaoDaSerie({ item, numero, prescricao }: CartaoDaSerieProps) {
-  const repeticoes = prescricao ? textoDaMeta(prescricao.reps) : '—';
+  const repeticoes = prescricao ? describeRepsTarget(prescricao.reps) : '—';
   const descanso = prescricao?.rest_seconds ?? null;
   return (
     <Vidro className="flex-row items-center gap-[0.8125rem] p-3">

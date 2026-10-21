@@ -1,7 +1,13 @@
-import { formatarCarga, MS_POR_SEGUNDO, repsToText, type WorkoutExercise } from '@elevapro/shared';
+import {
+  describeRepsTarget,
+  formatarCarga,
+  MS_POR_SEGUNDO,
+  repsToText,
+  type WorkoutExercise,
+} from '@elevapro/shared';
 import type { RestOnLockScreen } from '../../../../modules/rest-timer-activity';
 import { type EstadoDaSessao, proximaSerie } from '../store/maquinaDaSessao';
-import { resumoDaPrescricao, textoDaMeta } from '../store/planoDaSessao';
+import { resumoDaPrescricao } from '../store/planoDaSessao';
 
 /**
  * O descanso da sessão como a tela bloqueada mostra (desenho 6c), ou `null`
@@ -36,6 +42,8 @@ function setTarget(item: WorkoutExercise): string {
   const { meta, carga } = resumoDaPrescricao(item);
   if (!meta) return '—';
   // Tempo e falha não têm número de repetições para multiplicar pela carga.
-  if (meta.mode === 'time' || meta.mode === 'failure') return textoDaMeta(meta);
-  return carga === null ? textoDaMeta(meta) : `${repsToText(meta)} × ${formatarCarga(carga)}`;
+  if (meta.mode === 'time' || meta.mode === 'failure') return describeRepsTarget(meta);
+  return carga === null
+    ? describeRepsTarget(meta)
+    : `${repsToText(meta)} × ${formatarCarga(carga)}`;
 }

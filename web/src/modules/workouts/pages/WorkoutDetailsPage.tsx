@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { FileDown, Plus } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import { ExerciseConfigModal, type SelectedExercise } from "../components/ExerciseConfigModal";
 import { SelectExercisesModal } from "../components/SelectExercisesModal";
 import { WelcomeBanner } from "../components/WelcomeBanner";
+import { useWorkoutPdf } from "../hooks/useWorkoutPdf";
 
 const DIFFICULTY_LABELS: Record<string, string> = {
   beginner: "Iniciante",
@@ -47,6 +48,7 @@ export default function WorkoutDetailsPage() {
 
   const { data: workout, isLoading: loadingWorkout } = useWorkout(workoutId);
   const { data: items = [], isLoading: loadingItems } = useWorkoutItems(workoutId);
+  const exportPdf = useWorkoutPdf(workout ? { ...workout, exercises: items } : null);
 
   const isLoading = loadingWorkout || loadingItems;
 
@@ -183,13 +185,24 @@ export default function WorkoutDetailsPage() {
               )}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setEditWorkoutOpen(true)}
-            className="px-4 py-2 bg-overlay-05 border border-overlay-10 text-muted-foreground rounded-lg text-sm hover:bg-overlay-10 transition-colors self-start shrink-0"
-          >
-            Editar Treino
-          </button>
+          <div className="flex items-center gap-2 self-start shrink-0">
+            <button
+              type="button"
+              onClick={exportPdf}
+              disabled={items.length === 0}
+              className="flex items-center gap-2 px-4 py-2 bg-overlay-05 border border-overlay-10 text-muted-foreground rounded-lg text-sm hover:bg-overlay-10 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <FileDown className="h-4 w-4" aria-hidden="true" />
+              Exportar PDF
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditWorkoutOpen(true)}
+              className="px-4 py-2 bg-overlay-05 border border-overlay-10 text-muted-foreground rounded-lg text-sm hover:bg-overlay-10 transition-colors"
+            >
+              Editar Treino
+            </button>
+          </div>
         </div>
       </div>
 

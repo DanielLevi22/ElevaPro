@@ -93,19 +93,3 @@ export function resumoDaPrescricao(item: WorkoutExercise): ResumoDaPrescricao {
     meta: serie?.reps ?? null,
   };
 }
-
-const SEGUNDOS_POR_MINUTO = 60;
-
-/**
- * A meta de repetições em texto: "12 reps", "8–12 reps", "até a falha", "30 s",
- * "10 min".
- *
- * @example textoDaMeta({ mode: 'range', min: 8, max: 12 }) // "8–12 reps"
- */
-export function textoDaMeta(reps: RepsTarget): string {
-  if (reps.mode === 'count') return `${reps.value} reps`;
-  if (reps.mode === 'range') return `${reps.min}–${reps.max} reps`;
-  if (reps.mode === 'failure') return 'até a falha';
-  const emMinutos = reps.seconds >= SEGUNDOS_POR_MINUTO && reps.seconds % SEGUNDOS_POR_MINUTO === 0;
-  return emMinutos ? `${reps.seconds / SEGUNDOS_POR_MINUTO} min` : `${reps.seconds} s`;
-}

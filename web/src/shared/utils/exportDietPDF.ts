@@ -1,7 +1,6 @@
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import jsPDF from "jspdf";
 import autoTable, { type CellInput, type RowInput } from "jspdf-autotable";
+import { drawBrandHeader, drawProtocolFooter, protocolFileName, validityCaption } from "./pdfBrand";
 
 // Extend jsPDF type
 declare module "jspdf" {
@@ -49,18 +48,6 @@ interface DietMealItem {
 
 const _DAYS_OF_WEEK = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
-// Colors
-const COLORS = {
-  primary: [204, 255, 0], // Neon Primary
-  dark: [20, 20, 20], // Deep Black
-  protein: [16, 185, 129], // Emerald
-  carbs: [59, 130, 246], // Blue
-  fat: [234, 179, 8], // Gold
-  text: [40, 40, 40],
-  gray: [150, 150, 150],
-  bgShade: [252, 252, 252],
-};
-
 const TRANSLATED_MEALS: Record<string, string> = {
   breakfast: "Café da Manhã",
   lunch: "Almoço",
@@ -87,66 +74,11 @@ export async function exportDietToPDF(
     format: "a4",
   });
 
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-
-  // --- PREMIUM ARCHITECTURAL HEADER (DASHBOARD ELITE) ---
-
-  const hH = 35; // Header Height
-
-  // 1. Triple-Layer Depth Background
-  doc.setFillColor(15, 15, 15);
-  doc.rect(0, 0, pageWidth, hH, "F");
-  doc.setFillColor(28, 28, 28);
-  doc.rect(0, 0, pageWidth, hH * 0.45, "F"); // Top panel
-
-  // 2. High-Tech Structural Accents
-  doc.setDrawColor(COLORS.primary[0], COLORS.primary[1], COLORS.primary[2]);
-  doc.setLineWidth(0.1);
-  const m = 5; // Tactical margin
-  // Tiny crosshair markers in corners
-  const cross = 0.8;
-  doc.line(m, m - cross, m, m + cross);
-  doc.line(m - cross, m, m + cross, m);
-  doc.line(pageWidth - m, m - cross, pageWidth - m, m + cross);
-  doc.line(pageWidth - m - cross, m, pageWidth - m + 1, m);
-
-  // 3. Branding Section
-  doc.setFontSize(26);
-  doc.setTextColor(COLORS.primary[0], COLORS.primary[1], COLORS.primary[2]);
-  doc.setFont("helvetica", "bold");
-  doc.text("ELEVA", 15, 18);
-
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(22);
-  const brandX = 15 + doc.getTextWidth("ELEVA") + 2;
-  doc.text("PRO", brandX, 18, { charSpace: 1.5 });
-
-  doc.setFontSize(8.5);
-  doc.setTextColor(180, 180, 180);
-  doc.setFont("helvetica", "bold");
-  doc.text(`DESENVOLVIDO POR // ${professionalName.toUpperCase()}`, 15, 26);
-
-  // 4. Student Identification Badge (High-Fidelity)
-  doc.setFontSize(14);
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.text(`[ ${studentName.toUpperCase()} ]`, pageWidth - 15, 18, {
-    align: "right",
-    charSpace: 0.5,
+  const yPosition = drawBrandHeader(doc, {
+    studentName,
+    professionalName,
+    caption: validityCaption(dietPlan.start_date, dietPlan.end_date),
   });
-
-  doc.setFontSize(8);
-  doc.setTextColor(COLORS.primary[0], COLORS.primary[1], COLORS.primary[2]);
-  const vigRange = `${format(new Date(dietPlan.start_date ?? ""), "dd/MM/yyyy")}  -  ${format(new Date(dietPlan.end_date ?? ""), "dd/MM/yyyy")}`;
-  doc.text(`VALOR DE VIGÊNCIA: ${vigRange}`, pageWidth - 15, 26, { align: "right" });
-
-  // Neon Base Line
-  doc.setFillColor(COLORS.primary[0], COLORS.primary[1], COLORS.primary[2]);
-  doc.rect(0, hH, pageWidth, 1.2, "F");
-
-  const yPosition = hH + 15;
 
   // --- DATA PROCESSING (CLEANED & SEQUENCED) ---
   const mealsByDay = activeMeals.reduce(
@@ -309,16 +241,6 @@ export async function exportDietToPDF(
     });
   }
 
-  // --- FOOTER TRANSLATED ---
-  const pageCount = doc.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(6);
-    doc.setTextColor(150, 150, 150);
-    const footerText = `PROTOCOLO OFICIAL // AUTENTICADO POR ELEVA PRO // ${format(new Date(), "PPpp", { locale: ptBR })} // PÁGINA ${i} DE ${pageCount}`;
-    doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: "center" });
-  }
-
-  const fileName = `Protocolo_${(dietPlan.name ?? "Plano").replace(/[^a-z0-9]/gi, "_")}.pdf`;
-  doc.save(fileName);
+  drawProtocolFooter(doc);
+  doc.save(protocolFileName(dietPlan.name, "Plano"));
 }

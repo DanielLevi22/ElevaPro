@@ -1,4 +1,4 @@
-import { formatarDuracao } from '@elevapro/shared';
+import { describeRepsTarget, formatarDuracao } from '@elevapro/shared';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
@@ -19,7 +19,7 @@ import {
   tempoDaSerie,
   tempoDaSessao,
 } from '../../../store/maquinaDaSessao';
-import { seriesDoPlano, textoDaMeta } from '../../../store/planoDaSessao';
+import { seriesDoPlano } from '../../../store/planoDaSessao';
 import type { PropsDoMomento } from './ExecucaoDoTreino';
 
 /**
@@ -86,7 +86,7 @@ function MomentoDaSerie({ sessao, agora, despachar }: PropsDoMomento) {
         <>
           <TituloDeSecao
             estilo="rotulo"
-            acao={proxima.prescricao ? textoDaMeta(proxima.prescricao.reps) : ''}
+            acao={proxima.prescricao ? describeRepsTarget(proxima.prescricao.reps) : ''}
           >
             Agora
           </TituloDeSecao>
