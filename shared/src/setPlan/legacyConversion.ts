@@ -1,5 +1,11 @@
 import { MAX_SETS } from "./constants";
+import { TRAINING_METHODS } from "./trainingMethods";
 import type { LegacyPrescription, RepsTarget, SetPlan, SetPrescription } from "./types";
+
+const OUTSIDE_VOLUME = new Set(
+  TRAINING_METHODS.filter((m) => !m.countsTowardVolume).map((m) => m.id),
+);
+const isOutsideVolume = (id: string) => OUTSIDE_VOLUME.has(id);
 
 interface LegacyConversion {
   plan: SetPlan;
@@ -97,4 +103,28 @@ function parseFreeText(text: string): ParsedReps {
   const value = Number(leading?.[1] ?? 0);
   const reps: RepsTarget = value > 0 ? { mode: "count", value } : { mode: "failure" };
   return { reps, leftover: text || null };
+}
+
+/**
+ * O caminho inverso, enquanto alguém ainda lê o formato achatado: o total de
+ * séries e os valores da primeira série que conta volume (a de trabalho, não o
+ * aquecimento).
+ *
+ * @example setPlanToLegacy(plan) // { sets: 4, reps: "8-12", weight: "80", rest_seconds: 90 }
+ */
+export function setPlanToLegacy(plan: SetPlan): LegacyPrescription {
+  const representative = plan.find((set) => !set.methods.some(isOutsideVolume)) ?? plan[0];
+  return {
+    sets: plan.length,
+    reps: representative ? repsToText(representative.reps) : null,
+    weight: representative?.weight_kg != null ? String(representative.weight_kg) : null,
+    rest_seconds: representative?.rest_seconds ?? null,
+  };
+}
+
+function repsToText(reps: RepsTarget): string {
+  if (reps.mode === "count") return String(reps.value);
+  if (reps.mode === "range") return `${reps.min}-${reps.max}`;
+  if (reps.mode === "time") return `${reps.seconds}s`;
+  return "falha";
 }

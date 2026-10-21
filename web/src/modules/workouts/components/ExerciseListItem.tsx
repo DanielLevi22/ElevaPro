@@ -1,6 +1,7 @@
 "use client";
 
 import type { SelectedExercise } from "./ExerciseConfigModal";
+import { SetPlanSummaryLine } from "./setPlan/SetPlanSummaryLine";
 
 interface ExerciseListItemProps {
   exercise: SelectedExercise;
@@ -52,27 +53,7 @@ export function ExerciseListItem({ exercise, index, onEdit, onRemove }: Exercise
         </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-2">
-        <div className="bg-background/50 rounded-lg p-2">
-          <p className="text-xs text-muted-foreground mb-0.5">Séries</p>
-          <p className="text-sm font-bold text-foreground">{exercise.sets}</p>
-        </div>
-        <div className="bg-background/50 rounded-lg p-2">
-          <p className="text-xs text-muted-foreground mb-0.5">Reps</p>
-          <p className="text-sm font-bold text-foreground">{exercise.reps}</p>
-        </div>
-        <div className="bg-background/50 rounded-lg p-2">
-          <p className="text-xs text-muted-foreground mb-0.5">Descanso</p>
-          <p className="text-sm font-bold text-foreground">{exercise.rest_seconds}s</p>
-        </div>
-        {exercise.weight && (
-          <div className="bg-background/50 rounded-lg p-2">
-            <p className="text-xs text-muted-foreground mb-0.5">Carga</p>
-            <p className="text-sm font-bold text-foreground">{exercise.weight}kg</p>
-          </div>
-        )}
-      </div>
+      <SetPlanSummaryLine plan={exercise.set_plan} />
     </div>
   );
 }

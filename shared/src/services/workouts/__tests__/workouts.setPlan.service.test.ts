@@ -72,7 +72,7 @@ describe("workoutsService — plano de séries do exercício", () => {
 
     await createWorkoutsService(supabase).updateWorkoutExercise("we1", { set_plan: [restPause] });
 
-    expect(chamadas[0].payload).toEqual({ set_plan: [restPause] });
+    expect(chamadas[0].payload).toMatchObject({ set_plan: [restPause] });
   });
 
   it("editar com plano inválido não chega ao banco", async () => {
@@ -84,5 +84,48 @@ describe("workoutsService — plano de séries do exercício", () => {
       }),
     ).rejects.toThrow(/21 séries/);
     expect(chamadas).toHaveLength(0);
+  });
+
+  // O app lê o formato achatado até a fatia 3 da #431. Gravar só o plano
+  // deixaria o aluno vendo a prescrição antiga.
+  it("gravar com plano mantém o formato achatado em dia para quem ainda o lê", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({});
+    const aquecimento = {
+      ...restPause,
+      methods: ["warmup"],
+      reps: { mode: "count" as const, value: 15 },
+      weight_kg: 40,
+      rest_seconds: 45,
+      segments: [],
+    };
+    const trabalho = {
+      ...restPause,
+      methods: ["working"],
+      reps: { mode: "range" as const, min: 8, max: 12 },
+      weight_kg: 80,
+      rest_seconds: 90,
+      segments: [],
+    };
+
+    await createWorkoutsService(supabase).addExercisesToWorkout("t1", [
+      { exercise_id: "e1", set_plan: [aquecimento, trabalho, trabalho] },
+    ]);
+
+    const linha = (chamadas[0].payload as Record<string, unknown>[])[0];
+    expect(linha).toMatchObject({ sets: 3, reps: "8-12", weight: "80", rest_seconds: 90 });
+  });
+
+  it("editar com plano também atualiza o formato achatado", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({});
+
+    await createWorkoutsService(supabase).updateWorkoutExercise("we1", { set_plan: [restPause] });
+
+    expect(chamadas[0].payload).toEqual({
+      sets: 1,
+      reps: "falha",
+      weight: "80",
+      rest_seconds: 120,
+      set_plan: [restPause],
+    });
   });
 });

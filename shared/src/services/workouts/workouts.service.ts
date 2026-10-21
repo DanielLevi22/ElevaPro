@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { resolveSetPlan, validateSetPlan } from "../../setPlan";
+import { resolveSetPlan, type SetPlan, setPlanToLegacy, validateSetPlan } from "../../setPlan";
 import type {
   AddWorkoutExerciseInput,
   UpdateWorkoutExerciseInput,
@@ -183,14 +183,16 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
         weight: item.weight ?? null,
         rest_seconds: item.rest_seconds ?? null,
       };
+      // Sempre cheio: o plano veio pronto ou sai do formato achatado.
+      const setPlan = validateSetPlan(resolveSetPlan({ ...legacy, set_plan: item.set_plan }));
       return {
         workout_id: workoutId,
         exercise_id: item.exercise_id,
-        ...legacy,
+        // Com plano, o achatado sai dele: o app ainda o lê (#431, fatia 3).
+        ...(item.set_plan ? setPlanToLegacy(setPlan) : legacy),
         order_index: item.order_index ?? i,
         notes: item.notes ?? null,
-        // Sempre cheio: o plano veio pronto ou sai do formato achatado.
-        set_plan: validateSetPlan(resolveSetPlan({ ...legacy, set_plan: item.set_plan })),
+        set_plan: setPlan,
       };
     });
     const { error } = await supabase.from("workout_exercises").insert(rows);
@@ -215,7 +217,7 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
   ): Promise<void> => {
     const { set_plan, ...legacy } = input;
     const payload = set_plan
-      ? { ...legacy, set_plan: validateSetPlan(set_plan) }
+      ? withLegacyFrom(validateSetPlan(set_plan))
       : { ...legacy, set_plan: null };
     const { error } = await supabase
       .from("workout_exercises")
@@ -237,3 +239,8 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
 });
 
 export type WorkoutsService = ReturnType<typeof createWorkoutsService>;
+
+/** O plano gravado junto com o achatado derivado dele, que o app ainda lê. */
+function withLegacyFrom(setPlan: SetPlan) {
+  return { ...setPlanToLegacy(setPlan), set_plan: setPlan };
+}

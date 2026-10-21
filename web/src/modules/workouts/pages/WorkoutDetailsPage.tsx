@@ -1,5 +1,6 @@
 "use client";
 
+import { resolveSetPlan } from "@elevapro/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
@@ -16,6 +17,7 @@ import { CreateWorkoutModal } from "../components/CreateWorkoutModal";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import { ExerciseConfigModal, type SelectedExercise } from "../components/ExerciseConfigModal";
 import { SelectExercisesModal } from "../components/SelectExercisesModal";
+import { SetPlanSummaryLine } from "../components/setPlan/SetPlanSummaryLine";
 import { WelcomeBanner } from "../components/WelcomeBanner";
 
 const DIFFICULTY_LABELS: Record<string, string> = {
@@ -65,14 +67,7 @@ export default function WorkoutDetailsPage() {
         workoutId,
         periodizationId ?? workout?.training_plan_id ?? "",
         phaseId ?? workout?.training_plan_id ?? "",
-        {
-          exercise_id: ex.id,
-          order_index: items.length,
-          sets: ex.sets,
-          reps: String(ex.reps),
-          rest_seconds: ex.rest_seconds,
-          weight: ex.weight || null,
-        },
+        { exercise_id: ex.id, order_index: items.length, set_plan: ex.set_plan },
       );
       queryClient.invalidateQueries({ queryKey: ["workout-items", workoutId] });
       queryClient.invalidateQueries({ queryKey: ["workouts-by-plan"] });
@@ -87,12 +82,7 @@ export default function WorkoutDetailsPage() {
   const handleUpdateExercise = async (ex: SelectedExercise) => {
     if (!editingItem) return;
     try {
-      await updateExerciseAction(editingItem.id, workoutId, {
-        sets: ex.sets,
-        reps: String(ex.reps),
-        rest_seconds: ex.rest_seconds,
-        weight: ex.weight || null,
-      });
+      await updateExerciseAction(editingItem.id, workoutId, { set_plan: ex.set_plan });
       queryClient.invalidateQueries({ queryKey: ["workout-items", workoutId] });
       router.refresh();
       setEditingItem(null);
@@ -260,26 +250,9 @@ export default function WorkoutDetailsPage() {
                   )}
                 </div>
 
-                {/* Config */}
-                <div className="flex items-center gap-4 text-xs text-muted-foreground shrink-0">
-                  <div className="text-center">
-                    <p className="text-foreground font-semibold">{item.sets}</p>
-                    <p>séries</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-foreground font-semibold">{item.reps}</p>
-                    <p>reps</p>
-                  </div>
-                  {item.weight && (
-                    <div className="text-center">
-                      <p className="text-foreground font-semibold">{item.weight}</p>
-                      <p>carga</p>
-                    </div>
-                  )}
-                  <div className="text-center">
-                    <p className="text-foreground font-semibold">{item.rest_seconds}s</p>
-                    <p>descanso</p>
-                  </div>
+                {/* Séries: o resumo do plano, com as técnicas */}
+                <div className="shrink-0 max-w-[45%]">
+                  <SetPlanSummaryLine plan={resolveSetPlan(item)} />
                 </div>
 
                 {/* Actions */}
@@ -370,10 +343,7 @@ export default function WorkoutDetailsPage() {
             id: editingItem.exercise.id,
             name: editingItem.exercise.name,
             muscle_group: editingItem.exercise.muscle_group ?? "",
-            sets: editingItem.sets ?? 0,
-            reps: parseInt(editingItem.reps ?? "0", 10) || 0,
-            weight: editingItem.weight ?? "",
-            rest_seconds: editingItem.rest_seconds ?? 0,
+            set_plan: resolveSetPlan(editingItem),
           }}
           onSave={handleUpdateExercise}
         />

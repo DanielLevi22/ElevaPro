@@ -1,5 +1,6 @@
 "use server";
 
+import { createWorkoutsService, type SetPlan } from "@elevapro/shared";
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -18,24 +19,14 @@ export async function addExerciseAction(
   workoutId: string,
   periodizationId: string,
   phaseId: string,
-  input: {
-    exercise_id: string;
-    order_index: number;
-    sets: number;
-    reps: string;
-    rest_seconds: number;
-    weight: string | null;
-  },
+  input: { exercise_id: string; order_index: number; set_plan: SetPlan },
 ) {
   await getAuthUserId();
   const supabase = await createServerSupabaseClient();
 
-  const { error } = await supabase.from("workout_exercises" as never).insert({
-    workout_id: workoutId,
-    ...input,
-  } as never);
-
-  if (error) throw new Error(error.message);
+  // Pelo serviço: ele confere o plano e mantém o formato achatado, que o app
+  // ainda lê, em dia com ele (#431). O insert direto deixava o plano vazio.
+  await createWorkoutsService(supabase).addExercisesToWorkout(workoutId, [input]);
 
   revalidatePath(`/dashboard/workouts/${workoutId}`);
   revalidatePath(`/dashboard/workouts/periodizations/${periodizationId}/phases/${phaseId}`);
@@ -44,22 +35,12 @@ export async function addExerciseAction(
 export async function updateExerciseAction(
   itemId: string,
   workoutId: string,
-  input: {
-    sets: number;
-    reps: string;
-    rest_seconds: number;
-    weight: string | null;
-  },
+  input: { set_plan: SetPlan },
 ) {
   await getAuthUserId();
   const supabase = await createServerSupabaseClient();
 
-  const { error } = await supabase
-    .from("workout_exercises" as never)
-    .update(input as never)
-    .eq("id", itemId);
-
-  if (error) throw new Error(error.message);
+  await createWorkoutsService(supabase).updateWorkoutExercise(itemId, input);
 
   revalidatePath(`/dashboard/workouts/${workoutId}`);
 }

@@ -17,6 +17,28 @@ describe("TRAINING_METHODS — o catálogo de técnicas", () => {
     expect(bfr, "DADO DE SAÚDE NA PRESCRIÇÃO: a BFR entrou no catálogo de técnicas").toEqual([]);
   });
 
+  it("toda técnica tem explicação curta", () => {
+    for (const m of TRAINING_METHODS) {
+      expect(m.explanation.length, `SEM EXPLICAÇÃO: ${m.id}`).toBeGreaterThan(40);
+      expect(m.explanation.length, `EXPLICAÇÃO LONGA DEMAIS: ${m.id}`).toBeLessThan(260);
+    }
+  });
+
+  // A referência sustenta o que a explicação afirma, e o especialista precisa
+  // poder conferir na fonte. Só artigo científico indexado: nunca outro app,
+  // blog ou site de academia (decidido na #431).
+  it("toda referência aponta para PubMed, PMC ou DOI", () => {
+    const allowed =
+      /^https:\/\/(pubmed\.ncbi\.nlm\.nih\.gov|pmc\.ncbi\.nlm\.nih\.gov|doi\.org)\/.+/;
+    for (const m of TRAINING_METHODS) {
+      if (!m.reference) continue;
+      expect(m.reference.url, `FONTE NÃO CIENTÍFICA em ${m.id}: ${m.reference.url}`).toMatch(
+        allowed,
+      );
+      expect(m.reference.label, `REFERÊNCIA SEM LEGENDA em ${m.id}`).toMatch(/\d{4}$/);
+    }
+  });
+
   it("toda técnica do catálogo é aceita no plano", () => {
     const set = {
       methods: TRAINING_METHODS.map((m) => m.id),
