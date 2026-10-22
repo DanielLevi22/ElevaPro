@@ -18,7 +18,7 @@
 - [x] `candidate-adf38ee462fedb37` — Prato: Macarrão cozido + Ovo inteiro cozido + Vagem cozida
 - [ ] `candidate-adf4ad080fbb876f` — Prato: Macarrão cozido + Frango (sobrecoxa assada) + Vagem cozida
 - [ ] `candidate-ae01cc60affe2dd6` — Prato: Batata baroa cozida + Pescada grelhada + Brócolis cozido
-- [ ] `candidate-ae02ae136cdb64ff` — Prato: Arroz branco cozido + Frango (coxa sem pele assada) + Abóbora cabotiá cozida
+- [x] `candidate-ae02ae136cdb64ff` — Prato: Arroz branco cozido + Frango (coxa sem pele assada) + Abóbora cabotiá cozida
 - [x] `candidate-ae0861d966b71a63` — Prato: Batata inglesa cozida + Sardinha (lata, drenada) + Beterraba cozida
 - [ ] `candidate-ae09fc5d9994a589` — Prato: Arroz sete grãos cozido + Salmão grelhado + Abobrinha cozida
 - [ ] `candidate-ae0a5f9e8200b427` — Prato: Milho verde cozido + Carne suína (lombo assado) + Pimentão verde

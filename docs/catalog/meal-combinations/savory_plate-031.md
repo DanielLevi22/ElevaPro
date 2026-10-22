@@ -1,9 +1,9 @@
 # Prato — imagens
 
 - [x] `candidate-a7ee832144ff4fde` — Prato: Arroz parboilizado cozido + Frango (peito grelhado) + Beterraba cozida
-- [ ] `candidate-a7f0478b7b208ec3` — Prato: Arroz parboilizado cozido + Frango (sobrecoxa assada) + Brócolis cozido
+- [x] `candidate-a7f0478b7b208ec3` — Prato: Arroz parboilizado cozido + Frango (sobrecoxa assada) + Brócolis cozido
 - [x] `candidate-a7f350e58cf7e99d` — Prato: Batata inglesa cozida + Frango (peito grelhado) + Agrião
-- [ ] `candidate-a7faa824cf3de5a6` — Prato: Macarrão integral cozido + Clara de ovo + Beterraba cozida
+- [x] `candidate-a7faa824cf3de5a6` — Prato: Macarrão integral cozido + Clara de ovo + Beterraba cozida
 - [ ] `candidate-a7febc3f3312c9ac` — Prato: Quinoa cozida + Clara de ovo + Tomate
 - [ ] `candidate-a8042b59e338c0ad` — Prato: Macarrão integral cozido + Frango (peito grelhado) + Abóbora cabotiá cozida
 - [ ] `candidate-a80543a706825bdb` — Prato: Polenta cozida + Carne bovina (coxão mole) + Cenoura crua

@@ -132,11 +132,11 @@
 - [ ] `candidate-92cd06d2555b5754` — Legumes com finalização: Quiabo cozido + Alho + Manteiga ghee
 - [ ] `candidate-9518bfca1f431c52` — Legumes com finalização: Brócolis cozido + Alho + Manteiga ghee
 - [ ] `candidate-9bb70c6586ba5a8e` — Legumes com finalização: Couve-flor cozida + Azeitona verde + Manteiga
-- [ ] `candidate-9e7556d601df91de` — Legumes com finalização: Couve-flor cozida + Limão + Manteiga
+- [x] `candidate-9e7556d601df91de` — Legumes com finalização: Couve-flor cozida + Limão + Manteiga
 - [ ] `candidate-9e80b7538a8b1d0d` — Legumes com finalização: Couve refogada + Limão + Óleo de canola
 - [ ] `candidate-a0e934b8c4ccd34b` — Legumes com finalização: Brócolis cozido + Cebola + Óleo de coco
 - [ ] `candidate-a1b99e0404c3517a` — Legumes com finalização: Berinjela cozida + Azeitona verde + Manteiga ghee
-- [ ] `candidate-a229c7f19ff03efc` — Legumes com finalização: Quiabo cozido + Limão + Manteiga
+- [x] `candidate-a229c7f19ff03efc` — Legumes com finalização: Quiabo cozido + Limão + Manteiga
 - [ ] `candidate-a40c1bacbcc00a37` — Legumes com finalização: Aspargos cozidos + Alho + Manteiga
 - [x] `candidate-a683909326fa42ea` — Legumes com finalização: Beterraba cozida + Alho + Manteiga
 - [ ] `candidate-a7d4106f538e32c6` — Legumes com finalização: Brócolis cozido + Limão + Manteiga ghee

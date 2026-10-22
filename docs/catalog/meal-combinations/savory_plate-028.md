@@ -175,10 +175,10 @@
 - [x] `candidate-9b2954889c967f16` — Prato: Batata inglesa cozida + Frango (peito grelhado) + Berinjela cozida
 - [ ] `candidate-9b2e32fa172d50c6` — Prato: Batata doce cozida + Bacalhau dessalgado cozido + Agrião
 - [x] `candidate-9b2eff80f29609c3` — Prato: Cuscuz de milho + Frango desfiado cozido + Abobrinha cozida
-- [ ] `candidate-9b30b88974e67ba9` — Prato: Batata inglesa cozida + Salmão grelhado + Espinafre
+- [x] `candidate-9b30b88974e67ba9` — Prato: Batata inglesa cozida + Salmão grelhado + Espinafre
 - [ ] `candidate-9b35d724710b48ef` — Prato: Arroz sete grãos cozido + Carne bovina (patinho) + Palmito em conserva
 - [ ] `candidate-9b38cd27599831c8` — Prato: Batata inglesa cozida + Seitan + Pimentão vermelho
-- [ ] `candidate-9b3c56c14c976b1b` — Prato: Inhame cozido + Frango (peito grelhado) + Abóbora cabotiá cozida
+- [x] `candidate-9b3c56c14c976b1b` — Prato: Inhame cozido + Frango (peito grelhado) + Abóbora cabotiá cozida
 - [ ] `candidate-9b5772846d81434c` — Prato: Milho verde cozido + Fígado bovino grelhado + Tomate
 - [ ] `candidate-9b5b5d1cf0117ac0` — Prato: Macarrão cozido + Bacalhau dessalgado cozido + Abobrinha cozida
 - [ ] `candidate-9b612de0d8c8b8b8` — Prato: Quinoa cozida + Proteína de soja texturizada + Repolho cru
@@ -190,7 +190,7 @@
 - [x] `candidate-9b78c86bdca68c27` — Prato: Batata inglesa cozida + Frango (peito grelhado) + Pepino
 - [ ] `candidate-9b7e210e09d9b2b1` — Prato: Arroz sete grãos cozido + Carne bovina (patinho) + Vagem cozida
 - [ ] `candidate-9b80810045797476` — Prato: Batata baroa cozida + Frango desfiado cozido + Alface
-- [ ] `candidate-9b82e3da1c275beb` — Prato: Mandioca cozida + Carne suína (lombo assado) + Pimentão vermelho
+- [x] `candidate-9b82e3da1c275beb` — Prato: Mandioca cozida + Carne suína (lombo assado) + Pimentão vermelho
 - [x] `candidate-9b8bed431e07faa2` — Prato: Batata inglesa cozida + Atum em água (lata) + Abóbora cabotiá cozida
 - [ ] `candidate-9baa30b8f67fe2e7` — Prato: Batata inglesa cozida + Tilápia grelhada + Espinafre
 - [ ] `candidate-9bac1ffb34fcbb8a` — Prato: Cuscuz de milho + Pescada grelhada + Espinafre
