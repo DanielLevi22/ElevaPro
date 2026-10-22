@@ -111,8 +111,14 @@ export default function PeriodizationsScreen({
   // Quem treina sozinho cria para si; o especialista escolhe o aluno no
   // formulário, a não ser que já esteja na lista de um aluno só.
   const openCreation = useCallback(() => {
-    const ownerId = studentId ?? (isSpecialist ? undefined : user?.id);
-    router.push(ROUTES.WORKOUTS.PERIODIZATION_NEW(ownerId, studentName ?? undefined));
+    // Na lista de um aluno, a folha abre na pilha de Alunos: a da aba Treinos
+    // fecharia no treino de outro aluno (#437).
+    if (studentId) {
+      router.push(ROUTES.STUDENTS.PERIODIZATION_NEW(studentId, studentName ?? undefined));
+      return;
+    }
+    const ownerId = isSpecialist ? undefined : user?.id;
+    router.push(ROUTES.WORKOUTS.PERIODIZATION_NEW(ownerId));
   }, [studentId, studentName, isSpecialist, user?.id, router]);
 
   const onRefresh = useCallback(() => {
