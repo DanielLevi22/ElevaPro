@@ -26,7 +26,7 @@
 - [ ] `candidate-caf892f80dbd475a` — Prato: Milho verde cozido + Sardinha (lata, drenada) + Berinjela cozida
 - [ ] `candidate-cb0ede45fef0f30f` — Prato: Cuscuz marroquino cozido + Frango desfiado cozido + Rúcula
 - [ ] `candidate-cb1cad081e9168a0` — Prato: Arroz sete grãos cozido + Tilápia grelhada + Vagem cozida
-- [ ] `candidate-cb2119b783c93438` — Prato: Arroz branco cozido + Sardinha (lata, drenada) + Pimentão vermelho
+- [x] `candidate-cb2119b783c93438` — Prato: Arroz branco cozido + Sardinha (lata, drenada) + Pimentão vermelho
 - [ ] `candidate-cb22cfbfc16ae645` — Prato: Cuscuz marroquino cozido + Sardinha (lata, drenada) + Cenoura crua
 - [ ] `candidate-cb2501e32c9fe54e` — Prato: Arroz sete grãos cozido + Carne bovina (alcatra) + Berinjela cozida
 - [ ] `candidate-cb28b9aa01de4bec` — Prato: Quinoa cozida + Bacalhau dessalgado cozido + Couve refogada

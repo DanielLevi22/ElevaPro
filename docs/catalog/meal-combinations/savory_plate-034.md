@@ -233,19 +233,19 @@
 - [x] `candidate-be3113f5fa819cc4` — Prato: Biscoito de arroz + Carne bovina (patinho) + Quiabo cozido
 - [ ] `candidate-be464bd15bf80e2a` — Prato: Polenta cozida + Camarão cozido + Pimentão vermelho
 - [ ] `candidate-be619bca5c043fe5` — Prato: Polenta cozida + Salmão grelhado + Abobrinha cozida
-- [ ] `candidate-be654fa2c5448be9` — Prato: Batata inglesa cozida + Atum em água (lata) + Pimentão vermelho
-- [ ] `candidate-be6dc333ba64d34a` — Prato: Biscoito de arroz + Pescada grelhada + Brócolis cozido
-- [ ] `candidate-be790c843f442c5c` — Prato: Macarrão cozido + Frango (sobrecoxa assada) + Couve refogada
+- [x] `candidate-be654fa2c5448be9` — Prato: Batata inglesa cozida + Atum em água (lata) + Pimentão vermelho
+- [x] `candidate-be6dc333ba64d34a` — Prato: Biscoito de arroz + Pescada grelhada + Brócolis cozido
+- [x] `candidate-be790c843f442c5c` — Prato: Macarrão cozido + Frango (sobrecoxa assada) + Couve refogada
 - [ ] `candidate-be7ccf12ca935a6f` — Prato: Batata inglesa cozida + Clara de ovo + Cogumelo champignon
 - [ ] `candidate-be80af86d0725bc7` — Prato: Cuscuz marroquino cozido + Carne bovina (patinho) + Aspargos cozidos
-- [ ] `candidate-be81ffa23601c8bc` — Prato: Milho verde cozido + Ovo inteiro cozido + Couve-flor cozida
+- [x] `candidate-be81ffa23601c8bc` — Prato: Milho verde cozido + Ovo inteiro cozido + Couve-flor cozida
 - [ ] `candidate-be89dcde43979758` — Prato: Batata baroa cozida + Frango (sobrecoxa assada) + Agrião
 - [ ] `candidate-be98fb1f2dfbb5fb` — Prato: Quinoa cozida + Tofu + Couve refogada
 - [x] `candidate-be9e927e0a466813` — Prato: Cuscuz de milho + Atum em água (lata) + Alface
 - [ ] `candidate-bea131e0107144d0` — Prato: Cará cozido + Proteína de soja texturizada + Couve-flor cozida
 - [ ] `candidate-bea15d6f56961540` — Prato: Batata doce roxa cozida + Ovo inteiro cozido + Chuchu cozido
-- [ ] `candidate-bea40e9b101abd0d` — Prato: Batata inglesa cozida + Carne bovina (músculo cozido) + Quiabo cozido
-- [ ] `candidate-beaa7fb1f6cb3dc2` — Prato: Biscoito de arroz + Frango (sobrecoxa assada) + Brócolis cozido
+- [x] `candidate-bea40e9b101abd0d` — Prato: Batata inglesa cozida + Carne bovina (músculo cozido) + Quiabo cozido
+- [x] `candidate-beaa7fb1f6cb3dc2` — Prato: Biscoito de arroz + Frango (sobrecoxa assada) + Brócolis cozido
 - [ ] `candidate-bead68ca8320c0bb` — Prato: Cuscuz de milho + Carne bovina (coxão mole) + Aspargos cozidos
 - [ ] `candidate-bebd64a73a1bb0e0` — Prato: Batata inglesa cozida + Tofu + Espinafre
 - [ ] `candidate-bebde547e5b3ceac` — Prato: Batata inglesa cozida + Carne bovina (patinho) + Espinafre
