@@ -1,7 +1,7 @@
 # Produção de imagens do cardápio — #366
 
 Inventário: **174 alimentos públicos**, consultados no Supabase local em 04/10/2026.
-Universo das regras atuais: **18806 candidatos**. Imagens novas concluídas: **6232**.
+Universo das regras atuais: **18806 candidatos**. Imagens novas concluídas: **6334**.
 
 Este é um checklist de produção, não uma prescrição. As combinações são candidatas e precisam de revisão culinária; não garantem adequação nutricional, alergênica ou ao plano. Estados cru/cozido e preparo devem ser confirmados antes de ativar uma receita no app. Não enumera todas as receitas possíveis do mundo ou todas as quantidades.
 

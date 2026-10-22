@@ -167,16 +167,16 @@
 - [ ] `candidate-c17ce48ccf880cfb` — Legumes com finalização: Brócolis cozido + Cebola + Óleo de canola
 - [ ] `candidate-c1b4c86a72662d25` — Legumes com finalização: Aspargos cozidos + Limão + Óleo de canola
 - [ ] `candidate-c4fc3683cc064925` — Legumes com finalização: Abóbora cabotiá cozida + Cebola + Óleo de coco
-- [ ] `candidate-c6611568e3142f63` — Legumes com finalização: Couve refogada + Alho + Manteiga
+- [x] `candidate-c6611568e3142f63` — Legumes com finalização: Couve refogada + Alho + Manteiga
 - [ ] `candidate-c6c6f41389209b0c` — Legumes com finalização: Abóbora cabotiá cozida + Cebola + Óleo de canola
 - [ ] `candidate-c7bab6552074e19f` — Legumes com finalização: Abóbora cabotiá cozida + Azeitona verde + Manteiga
 - [ ] `candidate-caa54597d8720480` — Legumes com finalização: Abobrinha cozida + Azeitona verde + Azeite de oliva
 - [ ] `candidate-cbb333859c218823` — Legumes com finalização: Beterraba cozida + Cebola + Óleo de coco
 - [ ] `candidate-cd35f1d0daf85e05` — Legumes com finalização: Vagem cozida + Alho + Óleo de coco
 - [ ] `candidate-ce7dc74e8052553b` — Legumes com finalização: Couve-flor cozida + Azeitona verde + Manteiga ghee
-- [ ] `candidate-d0c2c983188528a5` — Legumes com finalização: Quiabo cozido + Cebola + Manteiga
-- [ ] `candidate-d0c67b0b4bc987be` — Legumes com finalização: Berinjela cozida + Alho + Azeite de oliva
-- [ ] `candidate-d11990b054b99a80` — Legumes com finalização: Berinjela cozida + Cebola + Manteiga
+- [x] `candidate-d0c2c983188528a5` — Legumes com finalização: Quiabo cozido + Cebola + Manteiga
+- [x] `candidate-d0c67b0b4bc987be` — Legumes com finalização: Berinjela cozida + Alho + Azeite de oliva
+- [x] `candidate-d11990b054b99a80` — Legumes com finalização: Berinjela cozida + Cebola + Manteiga
 - [ ] `candidate-d27581f2d6c67004` — Legumes com finalização: Couve refogada + Azeitona verde + Óleo de canola
 - [ ] `candidate-d42f3c60d9ed097d` — Legumes com finalização: Abobrinha cozida + Limão + Manteiga ghee
 - [ ] `candidate-d51d186e307baf94` — Legumes com finalização: Couve-flor cozida + Alho + Óleo de coco
