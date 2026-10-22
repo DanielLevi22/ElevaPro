@@ -188,7 +188,7 @@
 - [ ] `candidate-dafe7d840c12b067` — Legumes com finalização: Abóbora cabotiá cozida + Azeitona verde + Óleo de coco
 - [ ] `candidate-db041e94a38a835b` — Legumes com finalização: Beterraba cozida + Azeitona verde + Óleo de canola
 - [ ] `candidate-dd8ad7b6e143b8e6` — Legumes com finalização: Vagem cozida + Cebola + Óleo de canola
-- [ ] `candidate-df4778e4ec404874` — Legumes com finalização: Vagem cozida + Alho + Azeite de oliva
+- [x] `candidate-df4778e4ec404874` — Legumes com finalização: Vagem cozida + Alho + Azeite de oliva
 - [ ] `candidate-df55da553b980c03` — Legumes com finalização: Abóbora cabotiá cozida + Azeitona verde + Azeite de oliva
 - [x] `candidate-e0c46471f733bea1` — Legumes com finalização: Brócolis cozido + Limão + Manteiga
 - [ ] `candidate-e34ce2fe0c4c56fe` — Legumes com finalização: Quiabo cozido + Azeitona verde + Manteiga ghee

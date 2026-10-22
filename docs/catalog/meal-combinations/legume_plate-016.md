@@ -218,11 +218,11 @@
 - [ ] `candidate-d240c8e95f7b430a` — Prato com leguminosa: Cuscuz marroquino cozido + Feijão branco cozido + Abobrinha cozida
 - [ ] `candidate-d27996c091aee2a6` — Prato com leguminosa: Cuscuz de milho + Edamame + Chuchu cozido
 - [ ] `candidate-d27dcf753a5b4acf` — Prato com leguminosa: Arroz integral cozido + Soja cozida + Rúcula
-- [ ] `candidate-d27f8a4c6983a8d9` — Prato com leguminosa: Biscoito de arroz + Ervilha cozida + Brócolis cozido
+- [x] `candidate-d27f8a4c6983a8d9` — Prato com leguminosa: Biscoito de arroz + Ervilha cozida + Brócolis cozido
 - [ ] `candidate-d2816e4e63b9ad74` — Prato com leguminosa: Cará cozido + Feijão azuki cozido + Quiabo cozido
 - [ ] `candidate-d2844fc179e2d74e` — Prato com leguminosa: Arroz parboilizado cozido + Edamame + Tomate
 - [ ] `candidate-d28664ceaeaaf8db` — Prato com leguminosa: Macarrão cozido + Feijão fradinho cozido + Abobrinha cozida
-- [ ] `candidate-d2885129247f95f8` — Prato com leguminosa: Batata doce cozida + Ervilha cozida + Agrião
+- [x] `candidate-d2885129247f95f8` — Prato com leguminosa: Batata doce cozida + Ervilha cozida + Agrião
 - [ ] `candidate-d2996cc4b783c3e6` — Prato com leguminosa: Milho verde cozido + Soja cozida + Palmito em conserva
 - [ ] `candidate-d29ccfbe10f73f68` — Prato com leguminosa: Inhame cozido + Ervilha cozida + Berinjela cozida
 - [ ] `candidate-d2c0b07f05d1af5b` — Prato com leguminosa: Batata doce cozida + Feijão azuki cozido + Brócolis cozido
