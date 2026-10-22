@@ -164,7 +164,7 @@ function InviteSent({
         tom="marca"
         titulo="Montar treino"
         sub="Periodização e divisão"
-        onPress={() => router.replace(ROUTES.WORKOUTS.PERIODIZATION_NEW(studentId, name.trim()))}
+        onPress={() => router.replace(ROUTES.STUDENTS.PERIODIZATION_NEW(studentId, name.trim()))}
       />
       <LinhaDeVidro
         icon="nutrition-outline"

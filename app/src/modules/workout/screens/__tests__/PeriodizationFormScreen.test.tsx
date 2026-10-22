@@ -85,6 +85,22 @@ describe('criar periodização', () => {
     expect(mockSupabase.from).not.toHaveBeenCalledWith('training_plans');
   });
 
+  it('aberta pela pilha de Alunos, abre a periodização criada sem sair dela (#437)', async () => {
+    mockParams = { studentName: 'Ana Souza' };
+    await render(<PeriodizationFormScreen studentId="aluno-1" />);
+    await fireEvent.changeText(screen.getByPlaceholderText('Ex.: Hipertrofia - Ciclo 1'), 'Ciclo');
+    await pickDate('Início: —', '2026-11-02');
+    await pickDate('Fim: —', '2026-12-28');
+    await fireEvent.press(screen.getByText('Criar periodização'));
+
+    await waitFor(() =>
+      expect(mockReplace).toHaveBeenCalledWith(ROUTES.STUDENTS.PERIODIZATION('aluno-1', 'p1'))
+    );
+    expect(mockSupabaseBuilder.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ student_id: 'aluno-1' })
+    );
+  });
+
   it('não grava sem as datas', async () => {
     await render(<PeriodizationFormScreen />);
     await fireEvent.changeText(screen.getByPlaceholderText('Ex.: Hipertrofia - Ciclo 1'), 'Ciclo');

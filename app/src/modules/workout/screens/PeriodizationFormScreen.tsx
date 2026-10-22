@@ -50,10 +50,15 @@ type PeriodizationColumns = Pick<Periodization, 'name' | 'start_date' | 'end_dat
  * edita — e espera a periodização carregar em vez de cair na criação, que
  * gravaria uma nova no lugar de editar a que o especialista abriu.
  *
+ * Com `studentId`, a folha está na pilha de Alunos e abre a periodização criada
+ * ali mesmo: a rota da aba Treinos deixaria o Voltar no que aquela aba guardava,
+ * o treino de outro aluno (#437).
+ *
  * @example router.push(ROUTES.WORKOUTS.PERIODIZATION_NEW(student.id, student.full_name))
+ * @example router.push(ROUTES.STUDENTS.PERIODIZATION_NEW(student.id, student.full_name))
  * @example router.push(ROUTES.WORKOUTS.PERIODIZATION_EDIT(periodization.id))
  */
-export default function PeriodizationFormScreen() {
+export default function PeriodizationFormScreen({ studentId }: { studentId?: string } = {}) {
   const params = useLocalSearchParams<{
     studentId?: string;
     studentName?: string;
@@ -75,7 +80,8 @@ export default function PeriodizationFormScreen() {
   return (
     <PeriodizationForm
       editing={editing}
-      initialStudent={initialStudent(params.studentId, params.studentName, editing)}
+      initialStudent={initialStudent(studentId ?? params.studentId, params.studentName, editing)}
+      inStudentStack={Boolean(studentId)}
     />
   );
 }
@@ -83,9 +89,11 @@ export default function PeriodizationFormScreen() {
 function PeriodizationForm({
   editing,
   initialStudent: startingStudent,
+  inStudentStack,
 }: {
   editing: Periodization | null;
   initialStudent: SelectedStudent | null;
+  inStudentStack: boolean;
 }) {
   const router = useRouter();
   const userId = useAuthStore((s) => s.user?.id ?? null);
@@ -107,7 +115,11 @@ function PeriodizationForm({
       status: 'planned',
       ...toColumns(values),
     });
-    router.replace(ROUTES.WORKOUTS.PERIODIZATION(created.id));
+    router.replace(
+      inStudentStack
+        ? ROUTES.STUDENTS.PERIODIZATION(owner.id, created.id)
+        : ROUTES.WORKOUTS.PERIODIZATION(created.id)
+    );
   }
 
   async function save() {

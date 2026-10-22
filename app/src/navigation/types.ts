@@ -154,6 +154,16 @@ export const ROUTES = {
         pathname: '/(tabs)/students/[id]/workouts/[periodizationId]',
         params: { id: studentId, periodizationId },
       }) as const,
+    /**
+     * A Nova periodização de um aluno, na pilha de Alunos. A da aba Treinos subia
+     * por cima do que aquela aba guardava, e o Voltar caía no treino de outro
+     * aluno (#437).
+     */
+    PERIODIZATION_NEW: (studentId: string, studentName?: string) =>
+      ({
+        pathname: '/(tabs)/students/[id]/workouts/new',
+        params: { id: studentId, ...(studentName ? { studentName } : {}) },
+      }) as const,
     /** A fase dessa periodização, ainda na pilha de Alunos. */
     PHASE: (studentId: string, periodizationId: string, phaseId: string) =>
       ({

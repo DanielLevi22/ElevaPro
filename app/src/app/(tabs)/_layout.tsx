@@ -24,7 +24,11 @@ export default function TabLayout() {
         tabBar={(props) => <TabBar {...props} />}
         screenOptions={{
           headerShown: false,
-          // We handle styling in the custom component
+          // O especialista volta a uma aba pela lista: cada aba guardava a pilha, e
+          // ele reabria no detalhe do aluno, na fase ou no plano de outro (#437).
+          // O aluno não: a sessão de treino mora na pilha de Treinos e segura a
+          // saída, e trocar de aba no meio dela não pode derrubá-la.
+          popToTopOnBlur: !isStudent,
         }}
       >
         {/* Toda tela declarada e sem `href`: no expo-router 58, `href: null` vira aba
