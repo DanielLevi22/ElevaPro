@@ -372,3 +372,45 @@ describe('o esforço do exercício e a carga sugerida (#376)', () => {
     expect(transicionar(correndo, { tipo: 'applyDeload' })).toBe(correndo);
   });
 });
+
+describe('concluir todas as séries do exercício (#441)', () => {
+  const inicial = estadoInicial([item('puxada', 3), item('remada', 2)]);
+  const emExecucao = aplicar(inicial, { tipo: 'iniciar', agora: T0 });
+
+  it('registra as séries que faltam como prescritas e passa ao próximo exercício', () => {
+    const umaFeita = aplicar(emExecucao, ...fazerSerie(10, 40), { tipo: 'terminarDescanso' });
+
+    const estado = aplicar(umaFeita, { tipo: 'concluirTodas', agora: segundos(60) });
+
+    expect(estado.feitas.puxada).toHaveLength(3);
+    expect(estado.feitas.puxada?.[2]).toMatchObject({ reps: 10, carga: 40 });
+    expect(estado.atualId).toBe('remada');
+    expect(estado.pendingEffortId).toBe('puxada');
+    expect(estado.momento).toBe('descanso');
+  });
+
+  it('no último exercício, leva ao feedback', () => {
+    const naRemada = aplicar(emExecucao, { tipo: 'escolher', itemId: 'remada' });
+    const semPuxada = aplicar(naRemada, { tipo: 'concluirTodas', agora: segundos(10) });
+
+    const estado = aplicar(
+      semPuxada,
+      { tipo: 'terminarDescanso' },
+      {
+        tipo: 'concluirTodas',
+        agora: segundos(20),
+      }
+    );
+
+    expect(estado.momento).toBe('feedback');
+    expect(estado.concluidaEm).toBe(segundos(20));
+  });
+
+  it('só vale na execução: no pré-início e no descanso não muda nada', () => {
+    expect(transicionar(inicial, { tipo: 'concluirTodas', agora: T0 })).toBe(inicial);
+    const descansando = aplicar(emExecucao, ...fazerSerie(10, 40));
+    expect(transicionar(descansando, { tipo: 'concluirTodas', agora: segundos(50) })).toBe(
+      descansando
+    );
+  });
+});
