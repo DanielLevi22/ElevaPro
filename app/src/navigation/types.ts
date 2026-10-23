@@ -118,12 +118,10 @@ export const ROUTES = {
     DETAILS: (id: string): `/(tabs)/students/${string}` => `/(tabs)/students/${id}`,
     WORKOUTS: (id: string): `/(tabs)/students/${string}/workouts` =>
       `/(tabs)/students/${id}/workouts`,
-    NUTRITION: (id: string): `/(tabs)/students/${string}/nutrition` =>
-      `/(tabs)/students/${id}/nutrition`,
+    // A dieta do aluno abre a aba Nutrição, e a avaliação por foto é do próprio
+    // aluno: as telas legadas de `[id]/nutrition` e `[id]/assessment` saíram (#436).
     // A linha do tempo que morava em `/history` foi para o Acompanhamento (#334).
     ANAMNESIS: '/students/anamnesis',
-    ASSESSMENT: (id: string): `/(tabs)/students/${string}/assessment` =>
-      `/(tabs)/students/${id}/assessment`,
     /**
      * O fluxo de Progresso do aluno visto pelo especialista — o "Evolução geral"
      * do Acompanhamento (#334). As mesmas telas da aba do aluno, dentro da pilha de

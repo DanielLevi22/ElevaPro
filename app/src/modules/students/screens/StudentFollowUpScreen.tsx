@@ -132,15 +132,10 @@ function Management({ studentId }: { studentId: string }) {
         tom="ritmo"
         titulo="Dieta"
         sub="Plano alimentar"
-        onPress={() => router.navigate(ROUTES.STUDENTS.NUTRITION(studentId))}
+        onPress={() => router.navigate(ROUTES.TABS.NUTRITION)}
       />
-      <LinhaDeVidro
-        icon="body-outline"
-        tom="gordura"
-        titulo="Avaliação"
-        sub="Medidas e fotos"
-        onPress={() => router.navigate(ROUTES.STUDENTS.ASSESSMENT(studentId))}
-      />
+      {/* Sem "Avaliação": a análise por foto é do próprio aluno, e as medidas dele
+          o especialista vê pelo "Evolução geral" (#436). */}
       <LinhaDeVidro
         icon="document-text-outline"
         tom="cadencia"
