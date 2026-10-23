@@ -40,7 +40,6 @@ jest.mock('@/modules/auth/store/authStore', () => ({
   useAuthStore: {
     getState: () => ({
       accountType: 'specialist',
-      isMasquerading: false,
     }),
   },
 }));

@@ -24,13 +24,10 @@ export interface BuscaDeAlimento {
  * na porção de referência do catálogo.
  *
  * @example
- * const busca = useBuscaDeAlimento(user.id, { somenteLeitura: isMasquerading });
+ * const busca = useBuscaDeAlimento(user.id);
  */
-export function useBuscaDeAlimento(
-  alunoId: string,
-  { somenteLeitura }: { somenteLeitura: boolean }
-): BuscaDeAlimento {
-  const registro = useRegistroNoDiario(alunoId, { somenteLeitura });
+export function useBuscaDeAlimento(alunoId: string): BuscaDeAlimento {
+  const registro = useRegistroNoDiario(alunoId);
   const [consulta, setConsulta] = useState('');
   const [categoria, setCategoria] = useState<string | null>('proteina');
   const [maisProteina, setMaisProteina] = useState(false);

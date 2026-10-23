@@ -14,7 +14,7 @@ import { litros } from '../../services/aguaDoDia';
  * própria cor. Tocar num copo enche até ele; tocar no último cheio o esvazia.
  *
  * @example
- * <HidratacaoDeHoje agua={useAguaDoDia(alunoId, { somenteLeitura })} />
+ * <HidratacaoDeHoje agua={useAguaDoDia(alunoId)} />
  */
 export function HidratacaoDeHoje({ agua }: { agua: AguaDoDiaDoAluno }) {
   const { copos, metaMl } = agua;

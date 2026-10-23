@@ -43,7 +43,7 @@ jest.mock('react-native-gesture-handler', () => ({
   GestureDetector: ({ children }: any) => children,
 }));
 jest.mock('../../../modules/auth/store/authStore', () => ({
-  useAuthStore: () => ({ accountType: 'student', isMasquerading: false }),
+  useAuthStore: () => ({ accountType: 'student' }),
 }));
 
 const buildProps = (): BottomTabBarProps => {

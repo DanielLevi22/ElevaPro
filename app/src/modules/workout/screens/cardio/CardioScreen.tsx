@@ -37,8 +37,6 @@ import { SummaryView } from './SummaryView';
 
 export interface CardioScreenProps {
   studentId: string;
-  /** O especialista vendo o app como o aluno: a sessão não é gravada. */
-  masquerading: boolean;
   /** Aluno com especialista: o feedback diz que o personal o lê. */
   hasSpecialist: boolean;
   /** Depois de gravar: a ofensiva do dia, que mora em outro módulo. */
@@ -52,7 +50,7 @@ export interface CardioScreenProps {
  * Esta tela liga a máquina (`cardioSessionMachine`) ao que mede — relógio, GPS,
  * passos, acelerômetro — e ao que grava; cada momento desenha a sua tela.
  *
- * @example <CardioScreen studentId={user.id} masquerading={false} hasSpecialist onCardioSaved={…} />
+ * @example <CardioScreen studentId={user.id} hasSpecialist onCardioSaved={…} />
  */
 export function CardioScreen(props: CardioScreenProps) {
   const { session, now, dispatch } = useCardioSession();

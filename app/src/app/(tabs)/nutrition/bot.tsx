@@ -4,7 +4,7 @@ import { AssistenteDeNutricaoScreen } from '@/modules/nutrition/routes/index';
 
 /** O assistente de nutrição do Aluno e do Praticante, no desenho do kit. */
 export default function NutriBotRoute() {
-  const { user, isMasquerading } = useAuthStore();
+  const { user } = useAuthStore();
   // A aba só abre com sessão; sem ela, não há de quem ser o assistente.
   if (!user?.id) return null;
 
@@ -12,7 +12,6 @@ export default function NutriBotRoute() {
     <AssistenteDeNutricaoScreen
       alunoId={user.id}
       primeiroNome={primeiroNome(user.user_metadata?.full_name) ?? 'Aluno'}
-      somenteLeitura={isMasquerading}
       obterToken={tokenDaSessao}
     />
   );

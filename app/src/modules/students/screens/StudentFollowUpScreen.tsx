@@ -2,7 +2,6 @@ import { shortMonthOf } from '@elevapro/shared';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
-import { useAuthStore } from '@/auth';
 import { showAlert } from '@/components/ui/appAlert';
 import { CabecalhoSobreFoto } from '@/components/ui/CabecalhoSobreFoto';
 import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
@@ -85,16 +84,6 @@ function StatusRow({ student }: { student: Student }) {
 function Shortcuts({ student }: { student: Student }) {
   const router = useRouter();
 
-  const enterStudentView = async () => {
-    await useAuthStore.getState().enterStudentView({
-      id: student.id,
-      email: student.email,
-      full_name: student.full_name ?? '',
-    });
-    // O estado do modo aluno precisa propagar antes da troca de pilha.
-    setTimeout(() => router.replace(ROUTES.TABS.ROOT), 100);
-  };
-
   return (
     <>
       <TituloDeSecao estilo="rotulo">Atalhos</TituloDeSecao>
@@ -104,7 +93,6 @@ function Shortcuts({ student }: { student: Student }) {
           label="Baixar treino"
           onPress={() => showComingSoon('Geração de PDF da ficha completa')}
         />
-        <ActionPill icon="eye-outline" label="Visão do aluno" onPress={enterStudentView} />
         <ActionPill
           icon="stats-chart-outline"
           label="Evolução geral"

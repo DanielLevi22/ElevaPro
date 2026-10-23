@@ -1,5 +1,4 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useAuthStore } from '@/auth';
 import { SubstituirAlimentoScreen } from '@/modules/nutrition/routes/index';
 import { getLocalDateISOString } from '@/utils/dateUtils';
 
@@ -10,7 +9,6 @@ export default function SubstituirRoute() {
     itemId: string;
     data?: string;
   }>();
-  const { isMasquerading } = useAuthStore();
   if (!refeicaoId || !itemId) return null;
 
   return (
@@ -18,7 +16,6 @@ export default function SubstituirRoute() {
       refeicaoId={refeicaoId}
       itemId={itemId}
       data={data ?? getLocalDateISOString()}
-      somenteLeitura={isMasquerading}
     />
   );
 }

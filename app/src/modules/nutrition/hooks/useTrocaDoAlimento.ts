@@ -10,7 +10,6 @@ import {
   ordenarEquivalentes,
 } from '../services/equivalenciaDaTroca';
 import { useNutritionStore } from '../store/nutritionStore';
-import { AVISO_DE_MODO_LEITURA } from './usePlanoDoDia';
 
 const nutricao = createNutritionService(supabase);
 
@@ -34,7 +33,6 @@ interface EntradaDaTroca {
   refeicaoId: string;
   itemId: string;
   data: string;
-  somenteLeitura: boolean;
 }
 
 /**
@@ -45,14 +43,9 @@ interface EntradaDaTroca {
  * descarta o que não serve.
  *
  * @example
- * const troca = useTrocaDoAlimento({ refeicaoId, itemId, data, somenteLeitura });
+ * const troca = useTrocaDoAlimento({ refeicaoId, itemId, data });
  */
-export function useTrocaDoAlimento({
-  refeicaoId,
-  itemId,
-  data,
-  somenteLeitura,
-}: EntradaDaTroca): TrocaDoAlimento {
+export function useTrocaDoAlimento({ refeicaoId, itemId, data }: EntradaDaTroca): TrocaDoAlimento {
   const refeicao = useNutritionStore((s) => s.meals.find((r) => r.id === refeicaoId) ?? null);
   const registro = useNutritionStore((s) => s.dailyLogs[refeicaoId]);
   const doPlano = useNutritionStore((s) => s.mealItems[refeicaoId]);
@@ -76,10 +69,6 @@ export function useTrocaDoAlimento({
 
   const confirmar = async () => {
     if (!original || !escolhido) return false;
-    if (somenteLeitura) {
-      showAlert(AVISO_DE_MODO_LEITURA);
-      return false;
-    }
     return gravarTroca({ refeicaoId, data, original, escolhido });
   };
 

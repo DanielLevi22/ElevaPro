@@ -211,9 +211,8 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
   useNotificationTap(isLoading ? null : (session?.user?.id ?? null));
 
   // Os avisos do dia (#376) são do aluno, e nunca do especialista vendo como ele.
-  const isMasquerading = useAuthStore((state) => state.isMasquerading);
   const isStudent = accountType === 'student' || accountType === 'member';
-  useDailyNotices(!isLoading && isStudent && !isMasquerading ? (session?.user?.id ?? null) : null);
+  useDailyNotices(!isLoading && isStudent ? (session?.user?.id ?? null) : null);
 
   const inOnboarding = segments[0] === 'onboarding';
   // O scan opcional depois de O4 sai do grupo do onboarding: o guarda não pode
@@ -259,7 +258,7 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
             isStudent={accountType === 'student' || accountType === 'member'}
             hasSpecialist={accountType === 'student'}
           />
-          {isStudent && !inOnboarding && !isMasquerading ? <IgnoredNoticePrompt /> : null}
+          {isStudent && !inOnboarding ? <IgnoredNoticePrompt /> : null}
         </ThemeProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

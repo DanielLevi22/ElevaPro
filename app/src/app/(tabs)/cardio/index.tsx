@@ -9,7 +9,7 @@ import { CardioScreen } from '@/workout';
  * e a ofensiva do dia —, e a tela recebe só o que precisa.
  */
 export default function CardioRoute() {
-  const { user, isMasquerading, accountType } = useAuthStore();
+  const { user, accountType } = useAuthStore();
   const incrementWorkoutProgress = useGamificationStore((s) => s.incrementWorkoutProgress);
   const onCardioSaved = useCallback(
     () => incrementWorkoutProgress(getLocalDateISOString()),
@@ -20,7 +20,6 @@ export default function CardioRoute() {
   return (
     <CardioScreen
       studentId={user.id}
-      masquerading={isMasquerading}
       hasSpecialist={accountType !== 'member'}
       onCardioSaved={onCardioSaved}
     />

@@ -15,7 +15,7 @@ import { TodayChecklistCard } from '@/shared/notices';
  * compartilham nada além do arquivo em que moravam.
  */
 export default function HomeTab() {
-  const { accountType, isMasquerading, aluno, especialista } = useDadosDaHome();
+  const { accountType, aluno, especialista } = useDadosDaHome();
 
   if (aluno.carregando && !aluno.perfil && !accountType) {
     return (
@@ -25,7 +25,7 @@ export default function HomeTab() {
     );
   }
 
-  if (accountType === 'specialist' && !isMasquerading) {
+  if (accountType === 'specialist') {
     return (
       <SpecialistDashboard
         isLoading={especialista.carregando}
@@ -46,7 +46,7 @@ export default function HomeTab() {
       aviso={
         <>
           <CheckInCard />
-          <TodayChecklistCard studentId={isMasquerading ? null : (aluno.perfil?.id ?? null)} />
+          <TodayChecklistCard studentId={aluno.perfil?.id ?? null} />
           <WeeklyReportCard />
           <BlockCard />
           <CompleteProfileCard />

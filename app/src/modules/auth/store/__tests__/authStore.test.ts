@@ -63,7 +63,6 @@ describe('authStore', () => {
       user: null,
       accountType: null,
       isLoading: false,
-      isMasquerading: false,
     });
     jest.clearAllMocks();
   });
@@ -118,46 +117,6 @@ describe('authStore', () => {
     if (readCapabilityReport() !== null) {
       throw new Error('RELÓGIO DO STUDENT ANTERIOR: o cache de capacidades sobreviveu ao logout');
     }
-  });
-
-  it('should manage student view (masquerade)', async () => {
-    const mockStudent = { id: 's1', full_name: 'John Doe', email: 'john@doe.com' };
-    // biome-ignore lint/suspicious/noExplicitAny: Mocking user shape
-    const mockState = { user: { id: 'p1' } as any, accountType: 'specialist' as const };
-    useAuthStore.setState(mockState);
-
-    (getUserContextJWT as jest.Mock).mockResolvedValueOnce({
-      accountType: 'student',
-      accountStatus: 'active',
-    });
-
-    await useAuthStore.getState().enterStudentView(mockStudent);
-
-    const state = useAuthStore.getState();
-    expect(state.isMasquerading).toBe(true);
-    expect(state.user?.id).toBe('s1');
-    expect(state.originalUser?.id).toBe('p1');
-
-    // Verify resets on entering student view
-    expect(useNutritionStore.getState().reset).toHaveBeenCalled();
-    expect(useWorkoutStore.getState().reset).toHaveBeenCalled();
-
-    // Exit student view
-    await useAuthStore.getState().exitStudentView();
-
-    const exitState = useAuthStore.getState();
-    expect(exitState.isMasquerading).toBe(false);
-    expect(exitState.user?.id).toBe('p1');
-  });
-
-  it('should skip session init during masquerade', async () => {
-    useAuthStore.setState({ isMasquerading: true });
-
-    // biome-ignore lint/suspicious/noExplicitAny: Empty session mock
-    await useAuthStore.getState().initializeSession({} as any);
-
-    // Should not set isLoading if skipping
-    expect(useAuthStore.getState().isLoading).toBe(false);
   });
 
   // Tela de destino do link de convite/recuperação (`elevapro://reset-password`),

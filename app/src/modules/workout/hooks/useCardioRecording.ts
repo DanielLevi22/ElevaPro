@@ -10,7 +10,6 @@ import type { CardioAction, CardioSessionState } from '../store/cardioSessionMac
 
 interface RecordingInput {
   studentId: string;
-  masquerading: boolean;
   modality: CardioModality | null;
   session: CardioSessionState;
   reading: CardioReading;
@@ -49,22 +48,18 @@ export function useCardioRecording(input: RecordingInput): CardioRecording {
     const { startedAt, finishedAt } = session;
     setSaving(true);
     try {
-      // Mascarado, o aparelho é o do especialista: o relógio lido seria o dele, e
-      // não o do aluno. Nada é gravado nesse modo, e nada é lido também.
-      const read = input.masquerading
-        ? null
-        : await vitalsIfConsented(studentId, () =>
-            readSessionVitals(
-              new Date(startedAt),
-              new Date(finishedAt),
-              input.profile?.maxHeartRate ?? null
-            )
-          );
+      const read = await vitalsIfConsented(studentId, () =>
+        readSessionVitals(
+          new Date(startedAt),
+          new Date(finishedAt),
+          input.profile?.maxHeartRate ?? null
+        )
+      );
       const feedback = { studentId, perceivedExertion, notes };
       const toSave = buildCardioSession(modality, session, input.reading, feedback, read);
-      await saveCardioSession(toSave, { mascarado: input.masquerading });
+      await saveCardioSession(toSave);
       await input.stopTracking();
-      if (!input.masquerading) input.onCardioSaved();
+      input.onCardioSaved();
       setVitals(read);
       input.dispatch({ type: 'saved' });
     } catch {

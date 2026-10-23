@@ -35,12 +35,11 @@ import { numeroDoBanco } from '../../services/consumoDoDia';
  * caloria — o único filtro que o catálogo sustenta sem dado novo.
  *
  * @example
- * <BuscarAlimentoScreen alunoId={user.id} primeiroNome="Daniel" somenteLeitura={false} obterToken={() => token} />
+ * <BuscarAlimentoScreen alunoId={user.id} primeiroNome="Daniel" obterToken={() => token} />
  */
 interface BuscarAlimentoScreenProps {
   alunoId: string;
   primeiroNome: string;
-  somenteLeitura: boolean;
   /** O token da sessão na hora do pedido das sugestões: a rota o lê do login. */
   obterToken: () => string;
 }
@@ -48,13 +47,11 @@ interface BuscarAlimentoScreenProps {
 export function BuscarAlimentoScreen({
   alunoId,
   primeiroNome,
-  somenteLeitura,
   obterToken,
 }: BuscarAlimentoScreenProps) {
   const router = useRouter();
-  const busca = useBuscaDeAlimento(alunoId, { somenteLeitura });
+  const busca = useBuscaDeAlimento(alunoId);
   const sugestoes = useSugestoesDoDia(alunoId, busca.registro.plano, {
-    somenteLeitura,
     obterToken,
   });
   const [todas, setTodas] = useState(false);
