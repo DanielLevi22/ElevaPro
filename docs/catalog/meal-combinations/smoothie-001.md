@@ -18,7 +18,7 @@
 - [ ] `candidate-323da3ab72622301` — Vitamina: Kefir de leite + Mirtilo
 - [ ] `candidate-3742303d618ffb3e` — Vitamina: Bebida de amêndoas sem açúcar + Banana prata
 - [ ] `candidate-42f74dc77e6b863f` — Vitamina: Kefir de leite + Banana nanica
-- [ ] `candidate-4363b27d4aee2ffd` — Vitamina: Leite sem lactose desnatado + Manga
+- [x] `candidate-4363b27d4aee2ffd` — Vitamina: Leite sem lactose desnatado + Manga
 - [ ] `candidate-44e1d195066e07d4` — Vitamina: Leite desnatado + Mamão
 - [x] `candidate-4680a8348f7d702f` — Vitamina: Leite integral + Manga
 - [ ] `candidate-4923a7c5f4db6be6` — Vitamina: Bebida de amêndoas sem açúcar + Banana nanica

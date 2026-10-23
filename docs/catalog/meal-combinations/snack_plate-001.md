@@ -41,14 +41,14 @@
 - [ ] `candidate-36a48ad0a26ec7da` — Lanche: Barra de proteína + Laranja
 - [x] `candidate-3875db6e68889a56` — Lanche: Panqueca de aveia + Mamão
 - [x] `candidate-3f5e9e0937b423c5` — Lanche: Panqueca de aveia + Ameixa
-- [ ] `candidate-4190962ba3db5397` — Lanche: Biscoito de arroz + Abacate
-- [ ] `candidate-42612cb5a844629f` — Lanche: Biscoito de arroz + Melão
-- [ ] `candidate-42fa3102ed4f4a77` — Lanche: Barra de proteína + Abacaxi
-- [ ] `candidate-47dbad763e499ef2` — Lanche: Panqueca de aveia + Kiwi
+- [x] `candidate-4190962ba3db5397` — Lanche: Biscoito de arroz + Abacate
+- [x] `candidate-42612cb5a844629f` — Lanche: Biscoito de arroz + Melão
+- [x] `candidate-42fa3102ed4f4a77` — Lanche: Barra de proteína + Abacaxi
+- [x] `candidate-47dbad763e499ef2` — Lanche: Panqueca de aveia + Kiwi
 - [ ] `candidate-4cd44b1d464d6949` — Lanche: Barra de proteína + Açaí (polpa sem açúcar)
 - [ ] `candidate-4cd5b44a48a55d21` — Lanche: Biscoito de arroz + Framboesa
-- [ ] `candidate-5038d8ab76bd740b` — Lanche: Panqueca de aveia + Uva
-- [ ] `candidate-5192f2d258d912a4` — Lanche: Pão de queijo + Manga
+- [x] `candidate-5038d8ab76bd740b` — Lanche: Panqueca de aveia + Uva
+- [x] `candidate-5192f2d258d912a4` — Lanche: Pão de queijo + Manga
 - [ ] `candidate-5b3096f03089ae30` — Lanche: Pão de queijo + Goiaba
 - [ ] `candidate-5b675641e8d1053a` — Lanche: Biscoito de arroz + Abacaxi
 - [ ] `candidate-5d36679902eb3fe8` — Lanche: Barra de proteína + Melão
