@@ -5,7 +5,6 @@ import { useCallback, useState } from 'react';
 import { showAlert } from '@/components/ui/appAlert';
 import { getLocalDateISOString } from '@/utils/dateUtils';
 import { type CoposDoDia, coposDoDia, metaDeAgua, totalAoTocarNoCopo } from '../services/aguaDoDia';
-import { AVISO_DE_MODO_LEITURA } from './usePlanoDoDia';
 
 const agua = createHidratacao(supabase);
 const alunos = createStudentsService(supabase);
@@ -28,12 +27,9 @@ export interface AguaDoDiaDoAluno {
  * sabe por quê.
  *
  * @example
- * const agua = useAguaDoDia(user.id, { somenteLeitura: isMasquerading });
+ * const agua = useAguaDoDia(user.id);
  */
-export function useAguaDoDia(
-  alunoId: string,
-  { somenteLeitura }: { somenteLeitura: boolean }
-): AguaDoDiaDoAluno {
+export function useAguaDoDia(alunoId: string): AguaDoDiaDoAluno {
   const hoje = getLocalDateISOString();
   // `null` é "não li": com leitura falha, o toque não pode gravar um total
   // baixo por cima do que o aluno já registrou hoje.
@@ -56,7 +52,6 @@ export function useAguaDoDia(
   );
 
   const tocar = (indice: number) => {
-    if (somenteLeitura) return showAlert(AVISO_DE_MODO_LEITURA);
     if (totalLido === null) {
       return showAlert({
         title: 'Água de hoje indisponível',

@@ -18,7 +18,7 @@ ao repositório antes de declarar cobertura.
 | --- | --- | --- | --- | --- |
 | IDN-01 | Cadastro, convite, login, recuperação, sessão e autenticação forte (só `admin` exige segundo fator, ADR-0047) | validação de Passkeys pendente | `docs/security/mfa-operating-procedure.md`, `web/src/lib/__tests__/api-auth.test.ts` e `scripts/verify-rls.sql` (especialista por senha lê só o vinculado; admin em `aal1` barrado); provar JWT real de preview antes do corte | por release e trimestral |
 | IDN-02 | Papéis `admin`, `specialist`, `student`/legado `member` | não verificado | fonte da verdade, CASL, RLS e teste de escalada | por mudança |
-| IDN-03 | Vínculo `student_specialists` e masquerade | não verificado | RLS + BFF + teste vinculado/não vinculado | por mudança |
+| IDN-03 | Vínculo `student_specialists` | não verificado | RLS + BFF + teste vinculado/não vinculado | por mudança |
 | WEB-01 | Web pública, layout, proxy e cookies | não verificado | `web/src/proxy.ts`, headers/CSP/CORS e teste de sessão | por release |
 | WEB-02 | Páginas autenticadas e Server Components | não verificado | `page-auth`, serviços e teste de acesso direto | por mudança |
 | API-01 | As 29 rotas `web/src/app/api/**` | não verificado | inventário de rota, schema, autorização, rate limit e teste | por rota/mudança |

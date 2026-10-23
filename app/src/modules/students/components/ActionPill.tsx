@@ -5,7 +5,7 @@ import { useCores, useEscala } from '@/shared/design';
 
 /**
  * A pílula de vidro das ações do kit: ícone na primária e rótulo curto —
- * "Novo treino", "Avaliação", "Visão do aluno".
+ * "Baixar treino", "Evolução geral".
  *
  * @example
  * <ActionPill icon="download-outline" label="Baixar treino" onPress={baixar} />

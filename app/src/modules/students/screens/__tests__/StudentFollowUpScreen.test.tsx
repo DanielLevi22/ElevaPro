@@ -50,3 +50,12 @@ describe('gerenciamento no Acompanhamento do aluno (#436)', () => {
     expect(mockNavigate).toHaveBeenCalledWith(ROUTES.TABS.NUTRITION);
   });
 });
+
+describe('atalhos do Acompanhamento do aluno (#444)', () => {
+  it('não oferece a visão do aluno: o especialista não entra como o aluno', async () => {
+    await render(<StudentFollowUpScreen />);
+
+    expect(screen.getByText('Evolução geral')).toBeTruthy();
+    expect(screen.queryByText('Visão do aluno')).toBeNull();
+  });
+});

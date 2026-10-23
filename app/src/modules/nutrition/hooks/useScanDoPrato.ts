@@ -28,7 +28,6 @@ export interface ScanDoPrato {
 }
 
 interface OpcoesDoScan {
-  somenteLeitura: boolean;
   /** O token da sessão na hora do envio: a rota o lê do login, e o módulo não importa o de auth. */
   obterToken: () => string;
 }
@@ -42,13 +41,10 @@ interface OpcoesDoScan {
  * gravado com origem `scan` para o especialista saber que é estimativa.
  *
  * @example
- * const scan = useScanDoPrato(user.id, { somenteLeitura, obterToken: () => token });
+ * const scan = useScanDoPrato(user.id, { obterToken: () => token });
  */
-export function useScanDoPrato(
-  alunoId: string,
-  { somenteLeitura, obterToken }: OpcoesDoScan
-): ScanDoPrato {
-  const registro = useRegistroNoDiario(alunoId, { somenteLeitura });
+export function useScanDoPrato(alunoId: string, { obterToken }: OpcoesDoScan): ScanDoPrato {
+  const registro = useRegistroNoDiario(alunoId);
   const [imagem, setImagem] = useState<string | null>(null);
   const [analisando, setAnalisando] = useState(false);
   const [resultado, setResultado] = useState<AnaliseDoPrato | null>(null);

@@ -72,13 +72,13 @@ export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTab
   const router = useRouter();
   const pathname = usePathname();
   const { mode } = useGlobalSearchParams<{ mode?: string }>();
-  const { accountType, isMasquerading } = useAuthStore();
+  const { accountType } = useAuthStore();
   const arrastando = useSharedValue(0);
   const estiloDasAbas = useAnimatedStyle(() => ({
     opacity: withSpring(arrastando.value ? 0.3 : 1, { damping: 20 }),
   }));
 
-  const ehAluno = !accountType || accountType !== 'specialist' || isMasquerading;
+  const ehAluno = !accountType || accountType !== 'specialist';
   const abas = ehAluno ? DO_ALUNO : DO_ESPECIALISTA;
   const rotas = Object.keys(abas)
     .map((nome) => state.routes.find((r: Route) => r.name === nome))
@@ -89,8 +89,8 @@ export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTab
   const opcoes = descriptors[state.routes[state.index].key].options as {
     tabBarStyle?: { display?: string };
   };
-  // Sem o especialista mascarado: a rota do detalhe também não o trata como
-  // aluno, e ele vê a tela antiga, que precisa da barra escondida.
+  // O especialista não é tratado como aluno na rota do detalhe: ele vê a tela
+  // antiga, que precisa da barra escondida.
   const visaoDoAluno = ehVisaoDoAluno(accountType, modoDaRota(mode));
   if (opcoes.tabBarStyle?.display === 'none' || isImmersiveRoute(pathname, visaoDoAluno)) {
     return null;

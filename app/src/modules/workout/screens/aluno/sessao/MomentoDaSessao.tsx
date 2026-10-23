@@ -59,7 +59,7 @@ export function MomentoDaSessao(props: MomentoDaSessaoProps) {
   const gravacao = useGravacaoDaSessao(props);
   // A carga sugerida é só do treino do próprio Praticante (#376): no
   // prescrito, quem decide a carga é o especialista.
-  const selfGuided = !props.mascarado && isSelfGuidedWorkout(treino, alunoId);
+  const selfGuided = isSelfGuidedWorkout(treino, alunoId);
   const history = useExerciseHistory(treino.id, alunoId, selfGuided);
   const deload = useDeloadWeek(treino, selfGuided ? alunoId : null);
   const rests = useRestPeriods(selfGuided ? alunoId : null);
@@ -167,7 +167,7 @@ function WithEffortPrompt({
  * troca entra na sessão na hora; se for de vez, o plano também muda.
  */
 function ExecucaoComAjuste(props: MomentoDaSessaoProps & { anteriores: SeriesAnteriores }) {
-  const { treino, sessao, despachar, podeEditarVideo, alunoId, mascarado } = props;
+  const { treino, sessao, despachar, podeEditarVideo, alunoId } = props;
   const [ajustando, setAjustando] = useState<string | null>(null);
   const [trocando, setTrocando] = useState<string | null>(null);
 
@@ -178,8 +178,7 @@ function ExecucaoComAjuste(props: MomentoDaSessaoProps & { anteriores: SeriesAnt
         item={sessao.itens.find((item) => item.id === trocando) ?? null}
         workoutId={treino.id}
         studentId={alunoId}
-        // Vendo como o aluno, o especialista não muda o plano de ninguém.
-        selfGuided={!mascarado && isSelfGuidedWorkout(treino, alunoId)}
+        selfGuided={isSelfGuidedWorkout(treino, alunoId)}
         onSwapped={(item, exercise) =>
           despachar({
             tipo: 'ajustarExercicio',
@@ -209,7 +208,6 @@ function useGravacaoDaSessao({
   sessao,
   despachar,
   alunoId,
-  mascarado,
   onTreinoRegistrado,
 }: MomentoDaSessaoProps): GravacaoDaSessao {
   const [salvando, setSalvando] = useState(false);
@@ -218,8 +216,8 @@ function useGravacaoDaSessao({
     setSalvando(true);
     try {
       const paraGravar = montarSessaoDeForca(treino, sessao, { alunoId, pse, notas }, Date.now());
-      await gravarSessaoDeForca(paraGravar, { mascarado });
-      if (!mascarado) onTreinoRegistrado();
+      await gravarSessaoDeForca(paraGravar);
+      onTreinoRegistrado();
       despachar({ tipo: 'salva' });
     } catch {
       showAlert({
@@ -246,7 +244,6 @@ function Resumo({
   treino,
   sessao,
   alunoId,
-  mascarado,
   anteriores,
   history,
   selfGuided,
@@ -257,7 +254,7 @@ function Resumo({
     compartilhando ? () => setCompartilhando(false) : undefined
   );
   const { resumo, evolucoes, concluidaEm } = useResumoDaSessao(sessao, alunoId, anteriores);
-  useVictoryOnce(mascarado ? null : alunoId, evolucoes[0] ?? null);
+  useVictoryOnce(alunoId, evolucoes[0] ?? null);
   const nextTime = useMemo<LoadSuggestions>(
     () =>
       selfGuided ? nextTimeSuggestions(sessao.itens, sessao.feitas, sessao.efforts, history) : {},
@@ -290,10 +287,10 @@ function Resumo({
 }
 
 /** F1 · O aviso de vitória, uma vez por resumo: cada re-render o mandaria de novo. */
-function useVictoryOnce(studentId: string | null, record: { nome: string; texto: string } | null) {
+function useVictoryOnce(studentId: string, record: { nome: string; texto: string } | null) {
   const sent = useRef(false);
   useEffect(() => {
-    if (!studentId || sent.current) return;
+    if (sent.current) return;
     sent.current = true;
     void celebrateSession(studentId, record);
   }, [studentId, record]);

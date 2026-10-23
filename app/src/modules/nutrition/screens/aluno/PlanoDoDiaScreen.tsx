@@ -22,12 +22,10 @@ import { type PlanoDoDia, usePlanoDoDia } from '../../hooks/usePlanoDoDia';
  * pela troca no detalhe da refeição — e a lista precisava de uma porta.
  *
  * @example
- * <PlanoDoDiaScreen alunoId={user.id} somenteLeitura={isMasquerading} />
+ * <PlanoDoDiaScreen alunoId={user.id} />
  */
 interface PlanoDoDiaScreenProps {
   alunoId: string;
-  /** O especialista vendo como o aluno: lê, e não marca. */
-  somenteLeitura: boolean;
   /**
    * O Praticante, sem especialista: o estado vazio fala com ele, e não do
    * especialista, e leva a montar o plano pelo onboarding.
@@ -35,13 +33,9 @@ interface PlanoDoDiaScreenProps {
   praticante?: boolean;
 }
 
-export function PlanoDoDiaScreen({
-  alunoId,
-  somenteLeitura,
-  praticante = false,
-}: PlanoDoDiaScreenProps) {
+export function PlanoDoDiaScreen({ alunoId, praticante = false }: PlanoDoDiaScreenProps) {
   const router = useRouter();
-  const plano = usePlanoDoDia(alunoId, { somenteLeitura });
+  const plano = usePlanoDoDia(alunoId);
 
   return (
     <GlassScreen

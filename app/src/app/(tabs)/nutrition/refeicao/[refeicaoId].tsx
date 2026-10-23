@@ -6,7 +6,7 @@ import { getLocalDateISOString } from '@/utils/dateUtils';
 /** O detalhe de uma refeição do plano do aluno, na data aberta no plano do dia. */
 export default function RefeicaoRoute() {
   const { refeicaoId, data } = useLocalSearchParams<{ refeicaoId: string; data?: string }>();
-  const { user, isMasquerading } = useAuthStore();
+  const { user } = useAuthStore();
   if (!user?.id || !refeicaoId) return null;
 
   return (
@@ -14,7 +14,6 @@ export default function RefeicaoRoute() {
       alunoId={user.id}
       refeicaoId={refeicaoId}
       data={data ?? getLocalDateISOString()}
-      somenteLeitura={isMasquerading}
     />
   );
 }

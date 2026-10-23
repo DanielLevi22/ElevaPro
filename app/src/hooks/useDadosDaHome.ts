@@ -52,7 +52,6 @@ import { getLocalDateISOString } from '@/utils/dateUtils';
  */
 export interface DadosDaHome {
   accountType: AccountType | null;
-  isMasquerading: boolean;
   aluno: DadosDaHomeDoAluno;
   especialista: DadosDoPainelDoEspecialista;
 }
@@ -64,7 +63,7 @@ const workoutsService = createWorkoutsService(supabase);
 const nutritionService = createNutritionService(supabase);
 
 export function useDadosDaHome(): DadosDaHome {
-  const { user, accountType, isMasquerading } = useAuthStore();
+  const { user, accountType } = useAuthStore();
   const ehEspecialista = accountType === 'specialist';
   const fontes = useFontesDaHome(ehEspecialista ? undefined : user?.id);
   const { perfil, briefing, averageAdherence, recarregar } = useCarregamentoDaHome(
@@ -80,7 +79,6 @@ export function useDadosDaHome(): DadosDaHome {
 
   return {
     accountType,
-    isMasquerading,
     aluno: montarAluno(fontes, perfil, treinoSugerido, recarregar),
     especialista: {
       perfil,

@@ -34,13 +34,12 @@ export interface RefeicaoAberta {
  * carrega plano, refeições e registros da data antes.
  *
  * @example
- * const aberta = useRefeicaoDoDia(user.id, refeicaoId, data, { somenteLeitura });
+ * const aberta = useRefeicaoDoDia(user.id, refeicaoId, data);
  */
 export function useRefeicaoDoDia(
   alunoId: string,
   refeicaoId: string,
-  data: string,
-  { somenteLeitura }: { somenteLeitura: boolean }
+  data: string
 ): RefeicaoAberta {
   const plano = useNutritionStore((s) => s.currentDietPlan);
   const refeicoes = useNutritionStore((s) => s.meals);
@@ -59,7 +58,7 @@ export function useRefeicaoDoDia(
   const feita = registros[refeicaoId]?.completed ?? false;
 
   const marcar = () => {
-    const aviso = motivoParaNaoMarcar(somenteLeitura, data, getLocalDateISOString());
+    const aviso = motivoParaNaoMarcar(data, getLocalDateISOString());
     if (aviso) return showAlert(aviso);
     useNutritionStore.getState().toggleMealCompletion(refeicaoId, data, !feita);
   };

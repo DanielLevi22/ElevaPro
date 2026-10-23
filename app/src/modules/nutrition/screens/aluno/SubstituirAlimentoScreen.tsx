@@ -21,13 +21,12 @@ import type { Equivalente } from '../../services/equivalenciaDaTroca';
  * reescreve o que o aluno comeu, e o especialista lê.
  *
  * @example
- * <SubstituirAlimentoScreen refeicaoId={id} itemId={item} data="2026-08-12" somenteLeitura={false} />
+ * <SubstituirAlimentoScreen refeicaoId={id} itemId={item} data="2026-08-12" />
  */
 interface SubstituirAlimentoScreenProps {
   refeicaoId: string;
   itemId: string;
   data: string;
-  somenteLeitura: boolean;
 }
 
 export function SubstituirAlimentoScreen(props: SubstituirAlimentoScreenProps) {

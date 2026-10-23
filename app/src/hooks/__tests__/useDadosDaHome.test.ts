@@ -69,7 +69,6 @@ jest.mock('@/auth', () => ({
   useAuthStore: () => ({
     user: { id: 'u1' },
     accountType: mockPapel.atual,
-    isMasquerading: false,
   }),
 }));
 

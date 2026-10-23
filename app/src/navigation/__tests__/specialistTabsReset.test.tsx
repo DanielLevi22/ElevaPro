@@ -57,7 +57,6 @@ function stackWithAnchor() {
 async function openAs(accountType: 'specialist' | 'member') {
   useAuthStore.setState({
     accountType,
-    isMasquerading: false,
     user: { id: 'u1' } as Session['user'],
   });
   await renderRouter(

@@ -39,12 +39,11 @@ import type { ChatMessage } from '../../services/NutriBotService';
  *   uma coisa que não significa nada.
  *
  * @example
- * <AssistenteDeNutricaoScreen alunoId={user.id} primeiroNome="Daniel" somenteLeitura={false} obterToken={() => token} />
+ * <AssistenteDeNutricaoScreen alunoId={user.id} primeiroNome="Daniel" obterToken={() => token} />
  */
 interface AssistenteDeNutricaoScreenProps {
   alunoId: string;
   primeiroNome: string;
-  somenteLeitura: boolean;
   obterToken: () => string;
 }
 
@@ -53,11 +52,10 @@ const PERGUNTAS_RAPIDAS = ['Trocar o lanche', 'Receita rápida', 'Quanto de águ
 export function AssistenteDeNutricaoScreen({
   alunoId,
   primeiroNome,
-  somenteLeitura,
   obterToken,
 }: AssistenteDeNutricaoScreenProps) {
   const router = useRouter();
-  const registro = useRegistroNoDiario(alunoId, { somenteLeitura });
+  const registro = useRegistroNoDiario(alunoId);
   const conversa = useConversaDoAssistente(registro.plano, { primeiroNome, obterToken });
   const rolagem = useRef<ComponentRef<typeof ScrollView>>(null);
 

@@ -105,8 +105,6 @@ export const useNutritionStore = create<NutritionStore>((set, get) => ({
       },
     }));
 
-    if (useAuthStore.getState().isMasquerading) return;
-
     try {
       const saved = await nutritionService.toggleMealLog({
         student_id: currentDietPlan.student_id,

@@ -23,18 +23,12 @@ import { litros, mediaDeAguaDaSemana } from '../../services/aguaDoDia';
  * outra para escolher.
  *
  * @example
- * <AderenciaDaSemanaScreen alunoId={user.id} somenteLeitura={false} />
+ * <AderenciaDaSemanaScreen alunoId={user.id} />
  */
-export function AderenciaDaSemanaScreen({
-  alunoId,
-  somenteLeitura,
-}: {
-  alunoId: string;
-  somenteLeitura: boolean;
-}) {
+export function AderenciaDaSemanaScreen({ alunoId }: { alunoId: string }) {
   const router = useRouter();
   const semana = useAderenciaDoAluno(alunoId);
-  const agua = useAguaDoDia(alunoId, { somenteLeitura });
+  const agua = useAguaDoDia(alunoId);
 
   return (
     <GlassScreen>

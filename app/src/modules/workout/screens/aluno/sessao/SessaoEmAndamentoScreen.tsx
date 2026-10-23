@@ -1,6 +1,6 @@
 import { shortSession, type Workout } from '@elevapro/shared';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 import { showConfirm } from '@/components/ui/appAlert';
 import { useConfirmLeave } from '@/navigation/useConfirmLeave';
 import { EstadoDaTela } from '../../../components/aluno/EstadoDaTela';
@@ -16,8 +16,6 @@ import { MomentoDaSessao } from './MomentoDaSessao';
 export interface SessaoEmAndamentoScreenProps {
   treinoId: string;
   alunoId: string;
-  /** O especialista está vendo o app como o aluno: a sessão não é gravada. */
-  mascarado: boolean;
   /** Quem pode editar o catálogo ajusta também o vídeo do exercício. */
   podeEditarVideo: boolean;
   /** Depois de gravar: a ofensiva e a meta do dia, que moram em outro módulo. */
@@ -33,7 +31,7 @@ export interface SessaoEmAndamentoScreenProps {
  * (`maquinaDaSessao`) desenha a sua tela em `MomentoDaSessao`.
  *
  * @example
- * <SessaoEmAndamentoScreen treinoId={id} alunoId={user.id} mascarado={false} … />
+ * <SessaoEmAndamentoScreen treinoId={id} alunoId={user.id} … />
  */
 export function SessaoEmAndamentoScreen(props: SessaoEmAndamentoScreenProps) {
   const { treino, naoEncontrado } = useDetalheDoTreino(props.treinoId);

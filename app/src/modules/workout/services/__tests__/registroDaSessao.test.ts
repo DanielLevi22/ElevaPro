@@ -9,8 +9,6 @@ const { mockSupabase } = global as unknown as {
   mockSupabase: jest.Mock & { from: jest.Mock };
 };
 
-const DO_ALUNO = { mascarado: false };
-
 const ZONES = { zone1: 5, zone2: 15, zone3: 40, zone4: 30, zone5: 10 };
 
 /**
@@ -87,7 +85,7 @@ describe('gravarSessaoDeForca', () => {
   it('grava a PSE pelo nome da coluna', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await gravarSessaoDeForca(sessao, DO_ALUNO);
+    await gravarSessaoDeForca(sessao);
 
     expect(gravadoEm('workout_sessions')).toMatchObject({
       perceived_exertion: 7,
@@ -100,7 +98,7 @@ describe('gravarSessaoDeForca', () => {
   it('grava uma linha por série executada, com carga e repetição', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await gravarSessaoDeForca(sessao, DO_ALUNO);
+    await gravarSessaoDeForca(sessao);
 
     const series = gravadoEm('workout_session_sets') as Record<string, unknown>[];
     expect(series).toHaveLength(2);
@@ -113,26 +111,17 @@ describe('gravarSessaoDeForca', () => {
   it('grava o exercício do catálogo junto do da prescrição', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await gravarSessaoDeForca(sessao, DO_ALUNO);
+    await gravarSessaoDeForca(sessao);
 
     expect(gravadoEm('workout_session_exercises')).toEqual([
       expect.objectContaining({ workout_exercise_id: 'we-1', exercise_id: 'ex-remada' }),
     ]);
   });
 
-  it('não grava nada quando o especialista está na visão do aluno', async () => {
-    supabaseQueRegistra({ consentiu: true });
-
-    const id = await gravarSessaoDeForca(sessao, { mascarado: true });
-
-    expect(id).toBeNull();
-    expect(mockSupabase.from).not.toHaveBeenCalled();
-  });
-
   it('descarta as observações sem consentimento e grava o resto', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: false });
 
-    await gravarSessaoDeForca({ ...sessao, notes: 'senti o ombro' }, DO_ALUNO);
+    await gravarSessaoDeForca({ ...sessao, notes: 'senti o ombro' });
 
     expect(gravadoEm('workout_sessions')).toMatchObject({ notes: null, perceived_exertion: 7 });
   });
@@ -144,7 +133,7 @@ describe('gravarSessaoDeForca', () => {
       single: jest.fn().mockResolvedValue({ data: null, error: new Error('Database error') }),
     }));
 
-    await expect(gravarSessaoDeForca(sessao, DO_ALUNO)).rejects.toThrow();
+    await expect(gravarSessaoDeForca(sessao)).rejects.toThrow();
   });
 });
 
@@ -163,7 +152,7 @@ describe('saveCardioSession', () => {
   it('grava cardio sem tocar em `workouts` e sem prescrição', async () => {
     const { tabelas, gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await saveCardioSession(corrida, DO_ALUNO);
+    await saveCardioSession(corrida);
 
     expect(tabelas).not.toContain('workouts');
     expect(gravadoEm('workout_sessions')).toMatchObject({
@@ -179,7 +168,7 @@ describe('saveCardioSession', () => {
   it('guarda em `notes` só o que o aluno digitou, nunca o resumo gerado', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await saveCardioSession({ ...corrida, notes: 'senti dor no joelho' }, DO_ALUNO);
+    await saveCardioSession({ ...corrida, notes: 'senti dor no joelho' });
 
     expect(gravadoEm('workout_sessions')).toMatchObject({
       notes: 'senti dor no joelho',
@@ -190,10 +179,12 @@ describe('saveCardioSession', () => {
   it('grava distância, ritmo e cadência da corrida na própria sessão', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await saveCardioSession(
-      { ...corrida, distanceMeters: 9620, avgPaceSecondsPerKm: 374, avgCadenceSpm: 179 },
-      DO_ALUNO
-    );
+    await saveCardioSession({
+      ...corrida,
+      distanceMeters: 9620,
+      avgPaceSecondsPerKm: 374,
+      avgCadenceSpm: 179,
+    });
 
     expect(gravadoEm('workout_sessions')).toMatchObject({
       distance_meters: 9620,
@@ -206,7 +197,7 @@ describe('saveCardioSession', () => {
   it('grava a corrida sem as medidas quando não houve leitura de GPS', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await saveCardioSession(corrida, DO_ALUNO);
+    await saveCardioSession(corrida);
 
     expect(gravadoEm('workout_sessions')).toMatchObject({
       distance_meters: null,
@@ -220,7 +211,7 @@ describe('saveCardioSession', () => {
   it('grava a frequência cardíaca em tabela própria, não na sessão', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await saveCardioSession({ ...corrida, avgHeartRate: 164, heartRateZones: ZONES }, DO_ALUNO);
+    await saveCardioSession({ ...corrida, avgHeartRate: 164, heartRateZones: ZONES });
 
     expect(gravadoEm('workout_session_vitals')).toEqual({
       session_id: 'sessao-1',
@@ -244,9 +235,7 @@ describe('saveCardioSession', () => {
         : registrar(tabela)
     );
 
-    await expect(
-      saveCardioSession({ ...corrida, avgHeartRate: 164 }, DO_ALUNO)
-    ).resolves.toBeUndefined();
+    await expect(saveCardioSession({ ...corrida, avgHeartRate: 164 })).resolves.toBeUndefined();
     expect(tabelas).toContain('workout_sessions');
   });
 
@@ -256,7 +245,7 @@ describe('saveCardioSession', () => {
   it('sem consentimento vigente, nem a média nem as zonas são gravadas', async () => {
     const { tabelas, gravadoEm } = supabaseQueRegistra({ consentiu: false });
 
-    await saveCardioSession({ ...corrida, avgHeartRate: 164, heartRateZones: ZONES }, DO_ALUNO);
+    await saveCardioSession({ ...corrida, avgHeartRate: 164, heartRateZones: ZONES });
 
     if (tabelas.includes('workout_session_vitals')) {
       throw new Error(
@@ -269,7 +258,7 @@ describe('saveCardioSession', () => {
   it('não grava linha de batimento quando o relógio não mediu', async () => {
     const { tabelas } = supabaseQueRegistra({ consentiu: true });
 
-    await saveCardioSession({ ...corrida, avgHeartRate: null }, DO_ALUNO);
+    await saveCardioSession({ ...corrida, avgHeartRate: null });
 
     expect(tabelas).not.toContain('workout_session_vitals');
   });
@@ -279,7 +268,7 @@ describe('saveCardioSession', () => {
   it('descarta as observações quando não há consentimento vigente', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: false });
 
-    await saveCardioSession({ ...corrida, notes: 'voltei da cirurgia' }, DO_ALUNO);
+    await saveCardioSession({ ...corrida, notes: 'voltei da cirurgia' });
 
     expect(gravadoEm('workout_sessions')).toMatchObject({
       notes: null,
