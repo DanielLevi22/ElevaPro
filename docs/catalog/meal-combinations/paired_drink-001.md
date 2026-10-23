@@ -6,7 +6,7 @@
 - [x] `candidate-093d284a18b991db` — Lanche com bebida: Crepioca + Suco de uva integral
 - [x] `candidate-0be373b5635200c9` — Lanche com bebida: Torrada integral + Café sem açúcar
 - [x] `candidate-23bffba12d186839` — Lanche com bebida: Panqueca de aveia + Suco de laranja natural
-- [ ] `candidate-26c6bf620c21e9c9` — Lanche com bebida: Panqueca de aveia + Água de coco
+- [x] `candidate-26c6bf620c21e9c9` — Lanche com bebida: Panqueca de aveia + Água de coco
 - [ ] `candidate-27093a47bebedb26` — Lanche com bebida: Biscoito de arroz + Isotônico
 - [ ] `candidate-334a9cb37c4f41fc` — Lanche com bebida: Crepioca + Café sem açúcar
 - [ ] `candidate-384223313f0341f7` — Lanche com bebida: Panqueca de aveia + Chá verde sem açúcar

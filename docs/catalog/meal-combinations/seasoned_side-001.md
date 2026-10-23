@@ -217,6 +217,6 @@
 - [ ] `candidate-fbeef710701bc202` — Legumes com finalização: Couve refogada + Azeitona verde + Manteiga
 - [ ] `candidate-fc8291393c02f97a` — Legumes com finalização: Beterraba cozida + Cebola + Manteiga ghee
 - [ ] `candidate-fcd336974090b220` — Legumes com finalização: Brócolis cozido + Azeitona verde + Azeite de oliva
-- [ ] `candidate-fcf275582a928e96` — Legumes com finalização: Abóbora cabotiá cozida + Cebola + Manteiga
+- [x] `candidate-fcf275582a928e96` — Legumes com finalização: Abóbora cabotiá cozida + Cebola + Manteiga
 - [ ] `candidate-fe375185eedcc62d` — Legumes com finalização: Abóbora cabotiá cozida + Azeitona verde + Óleo de canola
 - [ ] `candidate-fec78a2607579571` — Legumes com finalização: Beterraba cozida + Alho + Óleo de canola

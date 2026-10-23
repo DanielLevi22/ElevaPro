@@ -66,10 +66,10 @@
 - [ ] `candidate-37319f926e7411d6` — Prato com leguminosa: Batata doce roxa cozida + Edamame + Brócolis cozido
 - [ ] `candidate-37424b877a955ab8` — Prato com leguminosa: Batata baroa cozida + Lentilha cozida + Cenoura crua
 - [ ] `candidate-374298fe95b53c8a` — Prato com leguminosa: Inhame cozido + Feijão preto cozido + Aspargos cozidos
-- [ ] `candidate-3744eec7ed36bc1b` — Prato com leguminosa: Inhame cozido + Ervilha cozida + Abóbora cabotiá cozida
+- [x] `candidate-3744eec7ed36bc1b` — Prato com leguminosa: Inhame cozido + Ervilha cozida + Abóbora cabotiá cozida
 - [ ] `candidate-3751f5c90f585cf2` — Prato com leguminosa: Cuscuz marroquino cozido + Grão de bico cozido + Pimentão vermelho
 - [ ] `candidate-375821bf5187bf2e` — Prato com leguminosa: Inhame cozido + Feijão branco cozido + Couve refogada
-- [ ] `candidate-37617ad17b29b734` — Prato com leguminosa: Biscoito de arroz + Ervilha cozida + Quiabo cozido
+- [x] `candidate-37617ad17b29b734` — Prato com leguminosa: Biscoito de arroz + Ervilha cozida + Quiabo cozido
 - [ ] `candidate-376a691544b864b2` — Prato com leguminosa: Quinoa cozida + Feijão branco cozido + Vagem cozida
 - [x] `candidate-377546f9dc6fd3c3` — Prato com leguminosa: Arroz branco cozido + Lentilha cozida + Rúcula
 - [ ] `candidate-37824bcf224e5627` — Prato com leguminosa: Batata baroa cozida + Grão de bico cozido + Chuchu cozido

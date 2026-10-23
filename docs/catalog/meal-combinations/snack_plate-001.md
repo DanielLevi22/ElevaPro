@@ -26,21 +26,21 @@
 - [x] `candidate-1ebb044d441e4800` — Lanche: Biscoito de arroz + Tâmara
 - [x] `candidate-209f199841a58aac` — Lanche: Crepioca + Tangerina
 - [x] `candidate-21c2bb6ff120792d` — Lanche: Barra de proteína + Framboesa
-- [ ] `candidate-264abfae7837bfa2` — Lanche: Barra de proteína + Pera
-- [ ] `candidate-297571048886f6aa` — Lanche: Torrada integral + Goiaba
+- [x] `candidate-264abfae7837bfa2` — Lanche: Barra de proteína + Pera
+- [x] `candidate-297571048886f6aa` — Lanche: Torrada integral + Goiaba
 - [ ] `candidate-2be238995cb3edb7` — Lanche: Crepioca + Framboesa
 - [ ] `candidate-2c8d9b13b5f71e4f` — Lanche: Barra de proteína + Uva passa
-- [ ] `candidate-2dfecd9f6464172b` — Lanche: Panqueca de aveia + Tangerina
+- [x] `candidate-2dfecd9f6464172b` — Lanche: Panqueca de aveia + Tangerina
 - [x] `candidate-2f8cb036268d7267` — Lanche: Panqueca de aveia + Maçã
 - [ ] `candidate-318cb35f09356a38` — Lanche: Crepioca + Tâmara
-- [ ] `candidate-32fcd12eaa53af06` — Lanche: Torrada integral + Manga
+- [x] `candidate-32fcd12eaa53af06` — Lanche: Torrada integral + Manga
 - [ ] `candidate-33dd03c3dc158125` — Lanche: Biscoito de arroz + Banana passa
 - [ ] `candidate-3437cf8707448a8f` — Lanche: Barra de proteína + Mirtilo
 - [x] `candidate-3563ff9439064250` — Lanche: Biscoito de arroz + Melancia
 - [x] `candidate-364204c7099fd91f` — Lanche: Panqueca de aveia + Pera
 - [ ] `candidate-36a48ad0a26ec7da` — Lanche: Barra de proteína + Laranja
 - [x] `candidate-3875db6e68889a56` — Lanche: Panqueca de aveia + Mamão
-- [ ] `candidate-3f5e9e0937b423c5` — Lanche: Panqueca de aveia + Ameixa
+- [x] `candidate-3f5e9e0937b423c5` — Lanche: Panqueca de aveia + Ameixa
 - [ ] `candidate-4190962ba3db5397` — Lanche: Biscoito de arroz + Abacate
 - [ ] `candidate-42612cb5a844629f` — Lanche: Biscoito de arroz + Melão
 - [ ] `candidate-42fa3102ed4f4a77` — Lanche: Barra de proteína + Abacaxi

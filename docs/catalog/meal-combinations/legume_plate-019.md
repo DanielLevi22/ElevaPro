@@ -234,12 +234,12 @@
 - [ ] `candidate-fc59cebd1b16c693` — Prato com leguminosa: Polenta cozida + Soja cozida + Palmito em conserva
 - [ ] `candidate-fc6143c1f8d88ce6` — Prato com leguminosa: Quinoa cozida + Lentilha cozida + Couve refogada
 - [ ] `candidate-fc629bf33f77b8cc` — Prato com leguminosa: Macarrão cozido + Edamame + Chuchu cozido
-- [ ] `candidate-fc7943e23a5e9f81` — Prato com leguminosa: Inhame cozido + Grão de bico cozido + Brócolis cozido
+- [x] `candidate-fc7943e23a5e9f81` — Prato com leguminosa: Inhame cozido + Grão de bico cozido + Brócolis cozido
 - [ ] `candidate-fc8b390faeefc2b7` — Prato com leguminosa: Batata baroa cozida + Edamame + Tomate
 - [ ] `candidate-fc98a2fbedf70c4a` — Prato com leguminosa: Polenta cozida + Feijão carioca cozido + Repolho cru
 - [ ] `candidate-fcae6d34606937a5` — Prato com leguminosa: Milho verde cozido + Tremoço em conserva + Brócolis cozido
 - [ ] `candidate-fcb3a7589668a635` — Prato com leguminosa: Cará cozido + Feijão branco cozido + Abóbora cabotiá cozida
-- [ ] `candidate-fcbb184167919c8c` — Prato com leguminosa: Milho verde cozido + Lentilha cozida + Alface
+- [x] `candidate-fcbb184167919c8c` — Prato com leguminosa: Milho verde cozido + Lentilha cozida + Alface
 - [ ] `candidate-fcbce06ec1472e26` — Prato com leguminosa: Macarrão cozido + Feijão azuki cozido + Palmito em conserva
 - [ ] `candidate-fcbd11f204a7b296` — Prato com leguminosa: Milho verde cozido + Tremoço em conserva + Vagem cozida
 - [ ] `candidate-fcc02ea58decde51` — Prato com leguminosa: Milho verde cozido + Ervilha cozida + Agrião
