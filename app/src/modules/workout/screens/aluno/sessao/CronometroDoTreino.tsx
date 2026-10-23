@@ -33,7 +33,10 @@ import type { PropsDoMomento } from './ExecucaoDoTreino';
  * <CronometroDoTreino treino={treino} sessao={sessao} agora={agora} … />
  */
 export function CronometroDoTreino(props: PropsDoMomento) {
-  const { treino, sessao, agora, voz, onFechar } = props;
+  const { treino, sessao, agora, voz, despachar } = props;
+  // Voltar é à lista: da série sem registrar, do descanso encerrando ele (#441).
+  const voltar = () =>
+    despachar(sessao.momento === 'serie' ? { tipo: 'fecharSerie' } : { tipo: 'terminarDescanso' });
   const proxima = proximaSerie(sessao);
   const progresso = progressoDaSessao(sessao);
 
@@ -43,7 +46,7 @@ export function CronometroDoTreino(props: PropsDoMomento) {
         titulo={treino.title}
         tempo={formatarDuracao(tempoDaSessao(sessao, agora))}
         voz={voz}
-        onFechar={onFechar}
+        onVoltar={voltar}
       />
       {proxima ? (
         <SeriesDoExercicio

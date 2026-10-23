@@ -55,7 +55,7 @@ export function CartaoEmExecucao({
   const proxima = Math.min(feitas.length + 1, total);
 
   return (
-    <Vidro destaque classeExterna="mt-3">
+    <Vidro destaque>
       <View className="bg-primary/10 px-[0.9375rem] pb-[0.9375rem] pt-3.5">
         <View className="absolute bottom-0 left-0 top-0 w-[0.1875rem] bg-primary" />
         <Identificacao item={item} onAjustar={onAjustar} onTrocar={onTrocar} />

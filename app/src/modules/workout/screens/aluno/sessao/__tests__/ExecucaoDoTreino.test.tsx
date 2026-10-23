@@ -38,6 +38,9 @@ function sessaoCom(...acoes: AcaoDaSessao[]): EstadoDaSessao {
   return [{ tipo: 'iniciar', agora: T0 } as AcaoDaSessao, ...acoes].reduce(transicionar, inicial);
 }
 
+const onConcluir = jest.fn();
+const onSair = jest.fn();
+
 async function renderExecucao(sessao: EstadoDaSessao, despachar = jest.fn()) {
   await render(
     <ExecucaoDoTreino
@@ -46,7 +49,8 @@ async function renderExecucao(sessao: EstadoDaSessao, despachar = jest.fn()) {
       agora={T0}
       despachar={despachar}
       voz={VOZ}
-      onFechar={jest.fn()}
+      onConcluir={onConcluir}
+      onSair={onSair}
       anteriores={{}}
       onAjustar={jest.fn()}
       onTrocar={jest.fn()}
@@ -88,5 +92,24 @@ describe('concluir todas as séries (#441)', () => {
     await act(async () => confirmacao.onConfirm());
 
     expect(despachar).toHaveBeenCalledWith({ tipo: 'concluirTodas', agora: expect.any(Number) });
+  });
+});
+
+describe('saídas da lista (#441)', () => {
+  it('Concluir treino fica no rodapé da lista', async () => {
+    await renderExecucao(sessaoCom());
+
+    await fireEvent.press(screen.getByText('Concluir treino'));
+
+    expect(onConcluir).toHaveBeenCalled();
+  });
+
+  it('o topo tem voltar, e não um X que encerrava o treino', async () => {
+    await renderExecucao(sessaoCom());
+
+    await fireEvent.press(screen.getByLabelText('Voltar'));
+
+    expect(onSair).toHaveBeenCalled();
+    expect(screen.queryByLabelText('Encerrar o treino')).toBeNull();
   });
 });

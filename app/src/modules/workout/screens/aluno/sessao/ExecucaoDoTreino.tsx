@@ -6,6 +6,7 @@ import {
   type WorkoutExercise,
 } from '@elevapro/shared';
 import { View } from 'react-native';
+import { BotaoFixoNoRodape } from '@/components/ui/BotaoFixoNoRodape';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { CartaoEmExecucao } from '../../../components/sessao/CartaoEmExecucao';
@@ -34,7 +35,10 @@ export interface PropsDoMomento {
   agora: number;
   despachar: (acao: AcaoDaSessao) => void;
   voz: Parameters<typeof TopoDaSessao>[0]['voz'];
-  onFechar: () => void;
+  /** O "Concluir treino": pergunta o que falta e leva ao feedback. */
+  onConcluir: () => void;
+  /** Sai da sessão; o meio do treino pergunta antes de perder as séries. */
+  onSair: () => void;
 }
 
 interface ExecucaoDoTreinoProps extends PropsDoMomento {
@@ -49,25 +53,32 @@ export function ExecucaoDoTreino({
   agora,
   despachar,
   voz,
-  onFechar,
+  onConcluir,
+  onSair,
   anteriores,
   onAjustar,
   onTrocar,
 }: ExecucaoDoTreinoProps) {
   return (
-    <TelaDeVidroComFoto image={fotoDoGrupo(treino.muscle_group)}>
+    <TelaDeVidroComFoto
+      image={fotoDoGrupo(treino.muscle_group)}
+      bottomSpace="fixedButton"
+      overlay={
+        <BotaoFixoNoRodape rotulo="Concluir treino" icone="checkmark" onPress={onConcluir} />
+      }
+    >
       <TopoDaSessao
         titulo={treino.title}
         tempo={formatarDuracao(tempoDaSessao(sessao, agora))}
         voz={voz}
-        onFechar={onFechar}
+        onVoltar={onSair}
       />
       <ProgressoDaSessao progresso={progressoDaSessao(sessao)} />
 
       {/* Na ordem do treino, cada exercício no lugar dele: escolher outro abre o
           cartão ali, e nada troca de posição. Feitos em cima e "A seguir" embaixo
           faziam o cartão ficar parado trocando os dados, sem o aluno perceber (#441). */}
-      <View className="mt-0.5">
+      <View className="mt-3 gap-[0.5625rem]">
         {sessao.itens.map((item) => (
           <LinhaDaExecucao
             key={item.id}
