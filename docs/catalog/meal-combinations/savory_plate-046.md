@@ -57,7 +57,7 @@
 - [x] `candidate-fe7f433a7e748fba` — Prato: Mandioca cozida + Pescada grelhada + Brócolis cozido
 - [ ] `candidate-fe82f1ccea92113d` — Prato: Cuscuz marroquino cozido + Carne bovina (alcatra) + Pimentão verde
 - [ ] `candidate-fe83423226642a0b` — Prato: Batata doce cozida + Fígado bovino grelhado + Chuchu cozido
-- [ ] `candidate-fe8f3fc0cf3653e6` — Prato: Arroz integral cozido + Frango (sobrecoxa assada) + Pepino
+- [x] `candidate-fe8f3fc0cf3653e6` — Prato: Arroz integral cozido + Frango (sobrecoxa assada) + Pepino
 - [ ] `candidate-fea2c55c29f139d5` — Prato: Cará cozido + Camarão cozido + Brócolis cozido
 - [ ] `candidate-fea3c9b26e71bca4` — Prato: Arroz branco cozido + Merluza grelhada + Pimentão verde
 - [x] `candidate-fea4a482b949e4a8` — Prato: Biscoito de arroz + Carne bovina (patinho) + Cenoura crua
