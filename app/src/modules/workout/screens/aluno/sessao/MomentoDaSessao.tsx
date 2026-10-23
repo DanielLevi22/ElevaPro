@@ -22,6 +22,7 @@ import { TelaDeFeedback } from '../../../components/sessao/TelaDeFeedback';
 import { useExerciseHistory } from '../../../hooks/useExerciseHistory';
 import { isSelfGuidedWorkout } from '../../../hooks/useExerciseSwap';
 import { usePesoDoAluno } from '../../../hooks/usePesoDoAluno';
+import { useSessionSummaryExit } from '../../../hooks/useSessionSummaryExit';
 import { useUltimaSessaoDoTreino } from '../../../hooks/useUltimaSessaoDoTreino';
 import { gravarSessaoDeForca, montarSessaoDeForca } from '../../../services/registroDaSessao';
 import {
@@ -249,9 +250,12 @@ function Resumo({
   anteriores,
   history,
   selfGuided,
-  onSair,
 }: MomentoDaSessaoProps & ResumoExtras) {
   const [compartilhando, setCompartilhando] = useState(false);
+  // Concluir leva ao início de Treinos, e não ao que estava antes da sessão (#440).
+  const concluir = useSessionSummaryExit(
+    compartilhando ? () => setCompartilhando(false) : undefined
+  );
   const { resumo, evolucoes, concluidaEm } = useResumoDaSessao(sessao, alunoId, anteriores);
   useVictoryOnce(mascarado ? null : alunoId, evolucoes[0] ?? null);
   const nextTime = useMemo<LoadSuggestions>(
@@ -279,7 +283,7 @@ function Resumo({
       itens={sessao.itens}
       nextTime={nextTime}
       concluidaEm={concluidaEm}
-      onSair={onSair}
+      onConcluir={concluir}
       onCompartilhar={() => setCompartilhando(true)}
     />
   );

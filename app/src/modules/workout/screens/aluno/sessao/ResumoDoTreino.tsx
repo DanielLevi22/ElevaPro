@@ -39,7 +39,8 @@ interface ResumoDoTreinoProps {
   /** A carga do próximo treino (#376, A3); vazio fora do treino do Praticante. */
   nextTime: LoadSuggestions;
   concluidaEm: number;
-  onSair: () => void;
+  /** Fecha a sessão no início de Treinos (#440). */
+  onConcluir: () => void;
   onCompartilhar: () => void;
 }
 
@@ -50,7 +51,7 @@ export function ResumoDoTreino({
   itens,
   nextTime,
   concluidaEm,
-  onSair,
+  onConcluir,
   onCompartilhar,
 }: ResumoDoTreinoProps) {
   const { fase } = useContextoDoTreino(treino);
@@ -60,12 +61,10 @@ export function ResumoDoTreino({
     <TelaDeVidroComFoto
       image={fotoDoGrupo(treino.muscle_group)}
       bottomSpace="fixedButton"
-      overlay={
-        <BotaoFixoNoRodape rotulo="Compartilhar" icone="share-outline" onPress={onCompartilhar} />
-      }
+      overlay={<BotaoFixoNoRodape rotulo="Concluir" icone="checkmark" onPress={onConcluir} />}
     >
       <View className="flex-row justify-between">
-        <BotaoRedondo icone="chevron-left" rotulo="Sair do resumo" onPress={onSair} />
+        <BotaoRedondo icone="chevron-left" rotulo="Concluir" onPress={onConcluir} />
         <BotaoRedondo icone="share" rotulo="Compartilhar" onPress={onCompartilhar} />
       </View>
 
