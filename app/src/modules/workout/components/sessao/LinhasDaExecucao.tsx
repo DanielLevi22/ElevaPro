@@ -48,7 +48,7 @@ export function ExercicioFeito({ item, feitas }: ExercicioFeitoProps) {
   const carga = feitas.reduce((maior, serie) => Math.max(maior, serie.carga ?? 0), 0);
 
   return (
-    <View className="mt-3 opacity-60">
+    <View className="opacity-60">
       <Vidro className="flex-row items-center gap-3 p-[0.8125rem]">
         <View className="h-[2.125rem] w-[2.125rem] shrink-0 items-center justify-center rounded-full bg-metrica-passos">
           <Ionicons
@@ -90,7 +90,6 @@ export function ExercicioASeguir({ item, onEscolher }: ExercicioASeguirProps) {
       activeOpacity={0.8}
       accessibilityRole="button"
       accessibilityLabel={`Fazer agora: ${item.exercise?.name ?? 'exercício'}`}
-      className="mb-[0.5625rem]"
     >
       <Vidro className="flex-row items-center gap-3 p-3">
         <View className="h-[1.875rem] w-[1.875rem] shrink-0 rounded-full border-[0.09375rem] border-placeholder" />

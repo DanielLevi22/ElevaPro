@@ -6,7 +6,9 @@ import {
 } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { showConfirm } from '@/components/ui/appAlert';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
+import { Button } from '@/components/ui/Button';
 import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
@@ -33,6 +35,8 @@ interface CartaoEmExecucaoProps {
   ganho: number | null;
   /** Abre o cronômetro da série. Nada é registrado até o aluno concluir lá. */
   onIniciar: () => void;
+  /** Registra as séries que faltam como prescritas, depois de confirmar (#441). */
+  onConcluirTodas: () => void;
   onAjustar: () => void;
   /** O "…" que abre "Trocar exercício" (desenho 6a). */
   onTrocar: () => void;
@@ -43,6 +47,7 @@ export function CartaoEmExecucao({
   feitas,
   ganho,
   onIniciar,
+  onConcluirTodas,
   onAjustar,
   onTrocar,
 }: CartaoEmExecucaoProps) {
@@ -50,7 +55,7 @@ export function CartaoEmExecucao({
   const proxima = Math.min(feitas.length + 1, total);
 
   return (
-    <Vidro destaque classeExterna="mt-3">
+    <Vidro destaque>
       <View className="bg-primary/10 px-[0.9375rem] pb-[0.9375rem] pt-3.5">
         <View className="absolute bottom-0 left-0 top-0 w-[0.1875rem] bg-primary" />
         <Identificacao item={item} onAjustar={onAjustar} onTrocar={onTrocar} />
@@ -74,10 +79,31 @@ export function CartaoEmExecucao({
             tamanho="cartao"
             onPress={onIniciar}
           />
+          <Button
+            label="Concluir todas as séries"
+            variant="ghost"
+            size="sm"
+            onPress={() => confirmarConcluirTodas(total - feitas.length, onConcluirTodas)}
+          />
         </View>
       </View>
     </Vidro>
   );
+}
+
+/**
+ * Um toque registra várias séries: pergunta antes, com quantas. A série segue
+ * registrada no cronômetro (#295); este é o atalho de quem já fez (#441).
+ */
+function confirmarConcluirTodas(restantes: number, concluir: () => void): void {
+  const series = restantes === 1 ? '1 série restante' : `${restantes} séries restantes`;
+  showConfirm({
+    title: 'Concluir todas as séries?',
+    message: `Registrar ${series} como prescritas.`,
+    confirmText: 'Concluir',
+    cancelText: 'Voltar',
+    onConfirm: concluir,
+  });
 }
 
 const TAMANHO_DO_LAPIS = 15;

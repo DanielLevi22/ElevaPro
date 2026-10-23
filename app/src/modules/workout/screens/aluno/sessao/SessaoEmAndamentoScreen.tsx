@@ -8,8 +8,9 @@ import { useDetalheDoTreino } from '../../../hooks/useDetalheDoTreino';
 import { useRestOnLockScreen } from '../../../hooks/useRestOnLockScreen';
 import { useSessaoEmAndamento } from '../../../hooks/useSessaoEmAndamento';
 import { useVozDaSessao } from '../../../hooks/useVozDaSessao';
-import { type EstadoDaSessao, progressoDaSessao } from '../../../store/maquinaDaSessao';
+import type { EstadoDaSessao } from '../../../store/maquinaDaSessao';
 import { useTodayExercises } from '../../../store/todaySwapsStore';
+import { confirmarConclusao } from './confirmarConclusao';
 import { MomentoDaSessao } from './MomentoDaSessao';
 
 export interface SessaoEmAndamentoScreenProps {
@@ -57,11 +58,10 @@ function SessaoDoTreino({ treino, ...props }: SessaoEmAndamentoScreenProps & { t
   const sairSemPerguntar = useSaidaSemSalvar(sessao);
   const pedirParaFinalizar = useCallback(
     () =>
-      confirmarFinalizacao(
-        sessao,
-        () => despachar({ tipo: 'finalizar', agora: Date.now() }),
-        () => sairSemPerguntar(router.back)
-      ),
+      confirmarConclusao(sessao, {
+        finalizar: () => despachar({ tipo: 'finalizar', agora: Date.now() }),
+        sair: () => sairSemPerguntar(router.back),
+      }),
     [sessao, despachar, sairSemPerguntar, router]
   );
   const voz = useVozDaSessao(sessao, despachar, pedirParaFinalizar);
@@ -74,43 +74,11 @@ function SessaoDoTreino({ treino, ...props }: SessaoEmAndamentoScreenProps & { t
       agora={agora}
       despachar={despachar}
       voz={voz}
-      onFechar={pedirParaFinalizar}
+      onConcluir={pedirParaFinalizar}
       onSair={router.back}
       {...props}
     />
   );
-}
-
-/**
- * O X da execução encerra o treino, e não o abandona: o que foi feito vai para
- * o feedback e é gravado. Sem nenhuma série feita não há o que gravar, e aí o
- * X é só sair.
- */
-function confirmarFinalizacao(
-  sessao: EstadoDaSessao,
-  finalizar: () => void,
-  sair: () => void
-): void {
-  const { seriesFeitas, seriesTotais } = progressoDaSessao(sessao);
-  if (seriesFeitas === 0) {
-    showConfirm({
-      title: 'Sair do treino?',
-      message: 'Nenhuma série foi registrada ainda.',
-      type: 'warning',
-      confirmText: 'Sair',
-      cancelText: 'Continuar',
-      onConfirm: sair,
-    });
-    return;
-  }
-  showConfirm({
-    title: 'Encerrar o treino?',
-    message: `Você fez ${seriesFeitas} de ${seriesTotais} séries. O que foi feito será salvo.`,
-    type: 'warning',
-    confirmText: 'Finalizar',
-    cancelText: 'Continuar',
-    onConfirm: finalizar,
-  });
 }
 
 /**

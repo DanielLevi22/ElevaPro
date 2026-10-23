@@ -77,6 +77,8 @@ interface DadosDasAcoes {
   alternarSerie: { agora: number };
   zerarSerie: SemDados;
   concluirSerie: { agora: number };
+  /** Todas as séries que faltam no exercício atual, como prescritas (#441). */
+  concluirTodas: { agora: number };
   fecharSerie: SemDados;
   escolher: { itemId: string };
   ajustarExercicio: { item: WorkoutExercise };
@@ -160,6 +162,7 @@ const TRANSICOES: {
   zerarSerie: (estado) => noCronometroDaSerie(estado, cronometroParado),
   fecharSerie: (estado) => (estado.momento === 'serie' ? paraExecucao(estado) : estado),
   concluirSerie: (estado, { agora }) => concluirSerie(estado, agora),
+  concluirTodas: (estado, { agora }) => concluirTodas(estado, agora),
   escolher: (estado, { itemId }) => escolher(estado, itemId),
   ajustarExercicio: (estado, { item }) => ({
     ...estado,
@@ -304,6 +307,28 @@ function concluirSerie(estado: EstadoDaSessao, agora: number): EstadoDaSessao {
     momento: 'descanso',
     descanso: { total: descanso, terminaEm: agora + descanso * MS_POR_SEGUNDO, pausadoCom: null },
   };
+}
+
+/**
+ * Registra de uma vez as séries que faltam no exercício atual, como prescritas
+ * e sem duração, como o "feito" da voz. Depois, o esforço e o próximo
+ * exercício, ou o feedback se era o último — sem descanso: quem conclui tudo de
+ * uma vez já fez o exercício, e o descanso dele já passou. Só na lista: no meio
+ * da série ou do descanso, o aluno conclui por lá (#441).
+ */
+function concluirTodas(estado: EstadoDaSessao, agora: number): EstadoDaSessao {
+  const item = itemAtual(estado);
+  if (estado.momento !== 'execucao' || !item || exercicioConcluido(estado, item)) return estado;
+  const restantes = item.set_plan.length - feitasDo(estado, item.id);
+  return Array.from({ length: restantes }).reduce<EstadoDaSessao>(
+    (atual) => semDescanso(concluirSerie(atual, agora)),
+    estado
+  );
+}
+
+/** Volta à lista depois da série, a não ser que o treino tenha acabado nela. */
+function semDescanso(estado: EstadoDaSessao): EstadoDaSessao {
+  return estado.momento === 'feedback' ? estado : paraExecucao(estado);
 }
 
 /**
