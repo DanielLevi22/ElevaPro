@@ -68,7 +68,7 @@ describe('a lista da execução (#441)', () => {
   });
 
   it('o exercício concluído continua no lugar dele', async () => {
-    const sessao = sessaoCom({ tipo: 'concluirTodas', agora: T0 }, { tipo: 'terminarDescanso' });
+    const sessao = sessaoCom({ tipo: 'concluirTodas', agora: T0 });
     await renderExecucao(sessao);
 
     expect(ordemNaTela()).toEqual(['Abdominal', 'Em execução', 'Abdução', 'Agachamento']);

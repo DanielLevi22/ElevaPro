@@ -377,7 +377,7 @@ describe('concluir todas as séries do exercício (#441)', () => {
   const inicial = estadoInicial([item('puxada', 3), item('remada', 2)]);
   const emExecucao = aplicar(inicial, { tipo: 'iniciar', agora: T0 });
 
-  it('registra as séries que faltam como prescritas e passa ao próximo exercício', () => {
+  it('registra as séries que faltam como prescritas e volta à lista no próximo exercício, sem descanso', () => {
     const umaFeita = aplicar(emExecucao, ...fazerSerie(10, 40), { tipo: 'terminarDescanso' });
 
     const estado = aplicar(umaFeita, { tipo: 'concluirTodas', agora: segundos(60) });
@@ -386,21 +386,16 @@ describe('concluir todas as séries do exercício (#441)', () => {
     expect(estado.feitas.puxada?.[2]).toMatchObject({ reps: 10, carga: 40 });
     expect(estado.atualId).toBe('remada');
     expect(estado.pendingEffortId).toBe('puxada');
-    expect(estado.momento).toBe('descanso');
+    // Quem conclui tudo de uma vez já fez o exercício: o descanso dele já passou.
+    expect(estado.momento).toBe('execucao');
+    expect(estado.descanso).toBeNull();
   });
 
   it('no último exercício, leva ao feedback', () => {
     const naRemada = aplicar(emExecucao, { tipo: 'escolher', itemId: 'remada' });
     const semPuxada = aplicar(naRemada, { tipo: 'concluirTodas', agora: segundos(10) });
 
-    const estado = aplicar(
-      semPuxada,
-      { tipo: 'terminarDescanso' },
-      {
-        tipo: 'concluirTodas',
-        agora: segundos(20),
-      }
-    );
+    const estado = aplicar(semPuxada, { tipo: 'concluirTodas', agora: segundos(20) });
 
     expect(estado.momento).toBe('feedback');
     expect(estado.concluidaEm).toBe(segundos(20));
