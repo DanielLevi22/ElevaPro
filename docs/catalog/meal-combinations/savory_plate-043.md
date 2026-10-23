@@ -2,7 +2,7 @@
 
 - [ ] `candidate-ec62940da03b968e` — Prato: Arroz sete grãos cozido + Tilápia grelhada + Pimentão verde
 - [ ] `candidate-ec6fea85d12e9482` — Prato: Arroz sete grãos cozido + Seitan + Espinafre
-- [ ] `candidate-ec74b73d68710d57` — Prato: Arroz integral cozido + Salmão grelhado + Vagem cozida
+- [x] `candidate-ec74b73d68710d57` — Prato: Arroz integral cozido + Salmão grelhado + Vagem cozida
 - [ ] `candidate-ec770510796a0148` — Prato: Batata baroa cozida + Carne moída (patinho) + Pimentão verde
 - [ ] `candidate-ec8641ee84987cbd` — Prato: Arroz sete grãos cozido + Salmão grelhado + Couve refogada
 - [ ] `candidate-ec8ee89ad34d3431` — Prato: Batata baroa cozida + Pescada grelhada + Alface

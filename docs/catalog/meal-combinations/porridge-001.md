@@ -91,7 +91,7 @@
 - [ ] `candidate-dca543fef0e99867` — Mingau: Leite desnatado + Panqueca de aveia + Tâmara
 - [ ] `candidate-e0461424daef62a5` — Mingau: Leite integral + Aveia em flocos + Uva passa
 - [ ] `candidate-e144ba3b40394157` — Mingau: Leite sem lactose desnatado + Panqueca de aveia + Uva passa
-- [ ] `candidate-e3f9c0c63c4f4eff` — Mingau: Leite sem lactose desnatado + Panqueca de aveia + Banana nanica
+- [x] `candidate-e3f9c0c63c4f4eff` — Mingau: Leite sem lactose desnatado + Panqueca de aveia + Banana nanica
 - [ ] `candidate-e73809b165d2d1e7` — Mingau: Bebida de soja sem açúcar + Aveia em flocos + Maçã
 - [ ] `candidate-e90883e85143a240` — Mingau: Leite integral + Aveia em flocos + Tâmara
 - [ ] `candidate-e9c054c7dbff78f6` — Mingau: Bebida de amêndoas sem açúcar + Panqueca de aveia + Maçã
