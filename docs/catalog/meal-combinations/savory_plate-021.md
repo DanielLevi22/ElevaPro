@@ -230,7 +230,7 @@
 - [ ] `candidate-74881248cb9394d7` — Prato: Polenta cozida + Ovo de codorna cozido + Vagem cozida
 - [ ] `candidate-749e4d3d4a78717f` — Prato: Batata baroa cozida + Carne bovina (músculo cozido) + Tomate
 - [x] `candidate-74a7235f248cf1c0` — Prato: Arroz parboilizado cozido + Frango (peito grelhado) + Pepino
-- [ ] `candidate-74a75ddbe88d9ebb` — Prato: Arroz parboilizado cozido + Frango (coxa sem pele assada) + Repolho cru
+- [x] `candidate-74a75ddbe88d9ebb` — Prato: Arroz parboilizado cozido + Frango (coxa sem pele assada) + Repolho cru
 - [ ] `candidate-74a840867757b81a` — Prato: Cará cozido + Sardinha (lata, drenada) + Brócolis cozido
 - [ ] `candidate-74ad5e8fd42c0b22` — Prato: Milho verde cozido + Proteína de soja texturizada + Aspargos cozidos
 - [ ] `candidate-74b39340d9ba9323` — Prato: Macarrão integral cozido + Proteína de soja texturizada + Tomate
