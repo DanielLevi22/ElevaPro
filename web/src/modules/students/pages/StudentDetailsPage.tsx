@@ -19,11 +19,11 @@ const LINK_LABEL: Record<string, string> = {
 
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-surface border border-border rounded-2xl p-4">
+    <div className="min-w-0 bg-surface border border-border rounded-2xl p-4">
       <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
         {label}
       </p>
-      <p className="mt-1 text-[15px] font-bold text-foreground">{value}</p>
+      <p className="mt-1 text-[15px] font-bold text-foreground wrap-anywhere">{value}</p>
     </div>
   );
 }

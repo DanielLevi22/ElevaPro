@@ -165,7 +165,7 @@ export function CreatePeriodizationModal({
           <span id={objetivoId} className="block text-sm font-medium text-muted-foreground mb-2">
             Objetivo <span className="text-destructive">*</span>
           </span>
-          <fieldset className="grid grid-cols-3 gap-2" aria-labelledby={objetivoId}>
+          <fieldset className="grid grid-cols-2 sm:grid-cols-3 gap-2" aria-labelledby={objetivoId}>
             {PERIODIZATION_OBJECTIVES.map((obj) => (
               <button
                 key={obj.value}

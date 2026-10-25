@@ -82,7 +82,7 @@ export function EditMealDetailsModal({ isOpen, onClose, onSave, meal }: EditMeal
           <CustomTimePicker value={time} onChange={setTime} />
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <FormField label="Preparo (min)" htmlFor="preparo-minutos" optional>
             <Input
               id="preparo-minutos"

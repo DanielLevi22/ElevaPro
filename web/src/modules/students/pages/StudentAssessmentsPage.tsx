@@ -89,7 +89,7 @@ function AssessmentCard({
         assessment.circ_chest,
         assessment.circ_right_arm,
       ].some((v) => v !== null) && (
-        <div className="grid grid-cols-4 gap-4 pt-3 border-t border-white/5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-3 border-t border-white/5">
           <StatCell label="Cintura" value={assessment.circ_waist} unit=" cm" />
           <StatCell label="Quadril" value={assessment.circ_hip} unit=" cm" />
           <StatCell label="Peito" value={assessment.circ_chest} unit=" cm" />

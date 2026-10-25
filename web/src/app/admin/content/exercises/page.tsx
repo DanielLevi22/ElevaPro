@@ -134,7 +134,7 @@ export default function ExercisesPage() {
       </div>
 
       {/* List */}
-      <div className="bg-surface border border-border rounded-xl overflow-hidden">
+      <div className="bg-surface border border-border rounded-xl overflow-x-auto">
         <table className="w-full">
           <thead className="bg-muted border-b border-border">
             <tr>

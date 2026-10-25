@@ -57,10 +57,12 @@ export function Dialog({
   if (!open) return null;
 
   return (
+    // `m-auto` no painel centraliza sem cortar: com `items-center`, um diálogo
+    // mais alto que a tela do celular perdia o topo, fora do alcance da rolagem.
     // biome-ignore lint/a11y/noStaticElementInteractions: o fundo não é o controle — quem fecha pelo teclado é o listener de Escape declarado acima
     // biome-ignore lint/a11y/useKeyWithClickEvents: idem; o clique no fundo é conveniência de mouse, e o Escape já cobre o teclado
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/70 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex overflow-y-auto bg-background/70 backdrop-blur-sm p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -71,7 +73,7 @@ export function Dialog({
         aria-modal="true"
         aria-labelledby="dialog-title"
         className={cn(
-          "w-full bg-surface border border-border rounded-2xl shadow-2xl",
+          "m-auto w-full bg-surface border border-border rounded-2xl shadow-2xl",
           maxWidthMap[maxWidth],
           scrollable && "max-h-[85vh] flex flex-col",
           className,

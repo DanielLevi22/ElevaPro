@@ -207,7 +207,7 @@ export function AiCoachWorkspace() {
         </div>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-col gap-4 md:flex-row">
         <ConversationSidebar
           sessions={sessions}
           activeId={conversa?.id ?? null}

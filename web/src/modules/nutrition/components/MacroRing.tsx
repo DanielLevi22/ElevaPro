@@ -26,7 +26,13 @@ export function MacroRing({
 
   const sizes = {
     sm: { container: "w-16 h-16", radius: 28, stroke: "4", font: "text-xs", label: "text-[6px]" },
-    md: { container: "w-24 h-24", radius: 40, stroke: "6", font: "text-lg", label: "text-[7px]" },
+    md: {
+      container: "w-20 h-20 sm:w-24 sm:h-24",
+      radius: 40,
+      stroke: "6",
+      font: "text-lg",
+      label: "text-[7px]",
+    },
     lg: { container: "w-32 h-32", radius: 52, stroke: "8", font: "text-2xl", label: "text-[9px]" },
   };
 
@@ -43,7 +49,13 @@ export function MacroRing({
     <div className="flex flex-col items-center gap-2 group">
       <div className={`relative ${container} flex items-center justify-center`}>
         {/* Track */}
-        <svg aria-hidden="true" className="w-full h-full -rotate-90">
+        {/* `viewBox` deixa o anel encolher com o contêiner: sem ele o desenho
+            ficava no tamanho nativo e cortava no celular. */}
+        <svg
+          aria-hidden="true"
+          viewBox={`0 0 ${svgSize} ${svgSize}`}
+          className="w-full h-full -rotate-90"
+        >
           <circle
             cx={center}
             cy={center}

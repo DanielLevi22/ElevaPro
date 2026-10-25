@@ -57,7 +57,7 @@ export function AnaliseDeArquivo() {
           exercicio entrar -- que e tambem quando havera o que escolher.
         */}
         <select
-          className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="max-w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
           defaultValue="agachamento"
           disabled={analise.analisando}
         >
@@ -83,7 +83,7 @@ export function AnaliseDeArquivo() {
         </label>
 
         <select
-          className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="max-w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
           disabled={analise.analisando}
           onChange={(e) => analise.definirRotulo(e.target.value as RotuloDaSerie)}
           value={analise.rotulo}

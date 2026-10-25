@@ -68,7 +68,7 @@ export function PlanProposalCard({ data, loading, onApprove, onReject }: Props) 
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             Nutrição
           </p>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
               { label: "Calorias", value: `${nutrition.daily_calories}`, unit: "kcal" },
               { label: "Proteína", value: `${nutrition.protein_g}`, unit: "g" },

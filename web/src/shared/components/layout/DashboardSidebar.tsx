@@ -18,6 +18,8 @@ interface DashboardSidebarProps {
   navItems: SidebarNavItem[];
   contextChips: React.ReactNode;
   userEmail: string;
+  /** Linha abaixo do nome do usuário; o admin não tem plano. */
+  accountLabel?: string;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   onLogout: () => void;
@@ -115,7 +117,7 @@ function NavBadge({ label, isCollapsed }: { label: string; isCollapsed: boolean 
 }
 
 /**
- * Menu lateral do dashboard. No desktop fica fixo e pode ser recolhido; abaixo de
+ * Menu lateral do dashboard e do admin. No desktop fica fixo e pode ser recolhido; abaixo de
  * `lg` vira gaveta aberta pela barra do topo, porque fixo ele cobria o conteúdo.
  *
  * @example <DashboardSidebar navItems={items} isCollapsed={false} ... />
@@ -124,6 +126,7 @@ export function DashboardSidebar({
   navItems,
   contextChips,
   userEmail,
+  accountLabel = "Plano Pro ativo",
   isCollapsed: isCollapsedOnDesktop,
   onToggleCollapse,
   onLogout,
@@ -270,7 +273,7 @@ export function DashboardSidebar({
                   <p className="text-xs font-extrabold uppercase text-foreground truncate">
                     {userEmail.split("@")[0]}
                   </p>
-                  <p className="text-[9px] font-bold text-muted-foreground">Plano Pro ativo</p>
+                  <p className="text-[9px] font-bold text-muted-foreground">{accountLabel}</p>
                 </div>
               )}
               <ThemeToggle />

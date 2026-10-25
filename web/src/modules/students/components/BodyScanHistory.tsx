@@ -157,7 +157,7 @@ export function BodyScanHistory({ scans, deltas }: BodyScanHistoryProps) {
           Análise de {formatDate(latest.scanned_at)}. Indicativo — o diagnóstico é seu.
         </p>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
           {[
             { label: "Simetria", value: latest.posture_symmetry_score },
             { label: "Muscular", value: latest.posture_muscle_score },
@@ -165,9 +165,9 @@ export function BodyScanHistory({ scans, deltas }: BodyScanHistoryProps) {
           ].map((score) => (
             <div
               key={score.label}
-              className="rounded-2xl border border-border bg-surface p-5 text-center"
+              className="rounded-2xl border border-border bg-surface p-3 sm:p-5 text-center"
             >
-              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+              <p className="text-[10px] uppercase tracking-widest sm:tracking-[0.2em] text-muted-foreground">
                 {score.label}
               </p>
               <p className="text-3xl font-black text-foreground mt-2">{score.value ?? "—"}</p>
@@ -179,7 +179,7 @@ export function BodyScanHistory({ scans, deltas }: BodyScanHistoryProps) {
             estimativas do modelo. A origem fica escrita para o especialista não
             misturar as duas coisas (ADR-0010), e desde a 0056 ela diz também se a
             Escala foi a fita dele ou o que o aluno declarou (ADR-0030). */}
-        <div className="grid grid-cols-4 gap-4 mt-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
           {[
             { label: "Peso", value: latest.weight_kg, unidade: "kg", origem: escala },
             { label: "Altura", value: latest.height_cm, unidade: "cm", origem: escala },

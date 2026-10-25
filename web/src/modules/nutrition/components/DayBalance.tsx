@@ -113,7 +113,9 @@ export function DayBalance({ targets, consumed, preview, dayLabel }: DayBalanceP
         )}
       </div>
 
-      <div className="grid grid-cols-[2.5rem_1fr_auto_auto] items-center gap-x-3 gap-y-2.5">
+      {/* No celular o selo desce para baixo da barra: na mesma linha, ele e os
+          números tomavam a largura toda e a barra virava um ponto. */}
+      <div className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-x-3 gap-y-1.5 sm:grid-cols-[2.5rem_1fr_auto_auto] sm:gap-y-2.5">
         {MACRO_ROWS.map((row) => {
           const added = preview?.[row.key] ?? 0;
           const after = consumed[row.key] + added;
@@ -132,7 +134,9 @@ export function DayBalance({ targets, consumed, preview, dayLabel }: DayBalanceP
               <span className="text-[11px] text-muted-foreground tabular-nums text-right">
                 {Math.round(after)}/{Math.round(target)}
               </span>
-              <RemainingChip text={remaining.text} tone={remaining.tone} />
+              <div className="col-span-2 col-start-2 mb-1 sm:col-span-1 sm:col-start-auto sm:mb-0">
+                <RemainingChip text={remaining.text} tone={remaining.tone} />
+              </div>
             </div>
           );
         })}
