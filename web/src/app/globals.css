@@ -274,3 +274,12 @@ body {
   @apply bg-background text-foreground;
   font-family: var(--font-sans);
 }
+
+/* O preflight do Tailwind 4 deixou o botão com o cursor padrão, e ícone clicável
+   sem a mão parece decoração: o reenviar convite passou despercebido assim. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+}

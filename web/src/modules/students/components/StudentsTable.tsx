@@ -2,6 +2,8 @@
 
 import type { Student } from "@elevapro/shared";
 import { ChevronRight, Send } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/shared/components/ui/Button";
 import { DataTable, type DataTableColumn } from "@/shared/components/ui/DataTable";
 import { StatusBadge, type StatusTone } from "@/shared/components/ui/StatusBadge";
 import { useResendInvite } from "../hooks/useResendInvite";
@@ -51,8 +53,6 @@ const COLUMNS: DataTableColumn<Student>[] = [
 ];
 
 export function StudentsTable({ students }: StudentsTableProps) {
-  const resendInvite = useResendInvite();
-
   return (
     <DataTable
       columns={COLUMNS}
@@ -60,26 +60,45 @@ export function StudentsTable({ students }: StudentsTableProps) {
       rowKey={(student) => student.id}
       rowHref={(student) => `/dashboard/students/${student.id}`}
       rowLabel={(student) => `Abrir ${studentName(student)}`}
+      actionWidth="button"
       rowAction={(student) =>
         student.account_status === "invited" ? (
-          <button
-            type="button"
-            title="Reenviar convite"
-            aria-label={`Reenviar convite para ${studentName(student)}`}
-            disabled={resendInvite.isPending}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              resendInvite.mutate(student.id);
-            }}
-            className="p-1.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-overlay-08 disabled:opacity-50"
-          >
-            <Send className="w-4 h-4" />
-          </button>
+          <ResendInviteButton student={student} />
         ) : (
           <ChevronRight className="w-4 h-4 text-muted-foreground" />
         )
       }
     />
+  );
+}
+
+/**
+ * O caminho de quem enviou o convite e o aluno não recebeu: rótulo escrito, e não
+ * só ícone, e a resposta em toast — sem ela o especialista não sabia se o envio
+ * tinha saído e clicava de novo.
+ */
+function ResendInviteButton({ student }: { student: Student }) {
+  const resendInvite = useResendInvite();
+  const sending = resendInvite.isPending;
+
+  return (
+    <Button
+      variant="secondary"
+      size="sm"
+      title="O aluno não recebeu o e-mail? Envie o convite de novo."
+      aria-label={`Reenviar convite para ${studentName(student)}`}
+      disabled={sending}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        resendInvite.mutate(student.id, {
+          onSuccess: () => toast.success(`Convite reenviado para ${student.email}.`),
+          onError: (error) => toast.error(error.message),
+        });
+      }}
+    >
+      <Send className="w-3.5 h-3.5" aria-hidden />
+      {sending ? "Enviando..." : "Reenviar convite"}
+    </Button>
   );
 }
