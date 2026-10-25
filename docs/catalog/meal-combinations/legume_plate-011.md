@@ -90,7 +90,7 @@
 - [ ] `candidate-89b5d81708abb7ca` — Prato com leguminosa: Batata doce roxa cozida + Tremoço em conserva + Palmito em conserva
 - [ ] `candidate-89b83f8e6088db44` — Prato com leguminosa: Cará cozido + Edamame + Cenoura crua
 - [x] `candidate-89cc2e442cf01c53` — Prato com leguminosa: Batata inglesa cozida + Grão de bico cozido + Agrião
-- [ ] `candidate-89d6409e92d9216c` — Prato com leguminosa: Inhame cozido + Grão de bico cozido + Couve-flor cozida
+- [x] `candidate-89d6409e92d9216c` — Prato com leguminosa: Inhame cozido + Grão de bico cozido + Couve-flor cozida
 - [ ] `candidate-89ec163cd5f529a9` — Prato com leguminosa: Batata doce cozida + Feijão branco cozido + Aspargos cozidos
 - [ ] `candidate-89fe4671437719aa` — Prato com leguminosa: Batata doce cozida + Feijão fradinho cozido + Rúcula
 - [ ] `candidate-8a0dee2cb1f26d36` — Prato com leguminosa: Arroz integral cozido + Tremoço em conserva + Couve refogada
