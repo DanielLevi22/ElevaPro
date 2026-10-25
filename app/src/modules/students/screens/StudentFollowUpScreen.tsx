@@ -116,8 +116,15 @@ function Management({ studentId }: { studentId: string }) {
         sub="Plano alimentar"
         onPress={() => router.navigate(ROUTES.TABS.NUTRITION)}
       />
-      {/* Sem "Avaliação": a análise por foto é do próprio aluno, e as medidas dele
-          o especialista vê pelo "Evolução geral" (#436). */}
+      {/* A análise por foto continua do próprio aluno (#436); aqui é a avaliação
+          física que o especialista mede, a mesma do web. */}
+      <LinhaDeVidro
+        icon="clipboard-outline"
+        tom="proteina"
+        titulo="Avaliações"
+        sub="Avaliação física"
+        onPress={() => router.navigate(ROUTES.STUDENTS.ASSESSMENTS.LIST(studentId))}
+      />
       <LinhaDeVidro
         icon="document-text-outline"
         tom="cadencia"

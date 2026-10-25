@@ -1,6 +1,12 @@
 "use client";
 
-import { defineAbilitiesFor } from "@elevapro/shared";
+import {
+  assessmentActions,
+  bodyMassIndex,
+  defineAbilitiesFor,
+  professionalSeries,
+  weightDeltaKg,
+} from "@elevapro/shared";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
@@ -36,12 +42,8 @@ function AssessmentCard({
   onCorrect?: () => void;
   onHistory?: () => void;
 }) {
-  const delta = (curr: number | null, prev: number | null) => {
-    if (curr === null || prev === null) return null;
-    return Number((curr - prev).toFixed(1));
-  };
-
-  const weightDelta = delta(assessment.weight_kg, previous?.weight_kg ?? null);
+  const weightDelta = weightDeltaKg(assessment, previous);
+  const bmi = bodyMassIndex(assessment);
 
   return (
     <div className="bg-surface border border-white/10 rounded-2xl p-5 space-y-4">
@@ -65,9 +67,9 @@ function AssessmentCard({
             )}
           </div>
         </div>
-        {assessment.weight_kg && assessment.height_cm && (
+        {bmi !== null && (
           <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 text-muted-foreground">
-            IMC {(assessment.weight_kg / (assessment.height_cm / 100) ** 2).toFixed(1)}
+            IMC {bmi.toFixed(1)}
           </span>
         )}
       </div>
@@ -145,6 +147,11 @@ function StudentAssessmentContent({
     accountType: currentUser?.accountType === "specialist" ? "specialist" : "student",
   });
   const canCorrect = abilities.can("update", "PhysicalAssessment");
+  const viewer = {
+    id: currentUser?.id ?? "",
+    canUpdate: canCorrect,
+    canRead: abilities.can("read", "PhysicalAssessment"),
+  };
   const closeAssessment = () => {
     setModalOpen(false);
     setSelectedAssessment(null);
@@ -154,10 +161,7 @@ function StudentAssessmentContent({
   const student = students.find((s) => s.id === studentId);
 
   const { data: recordedAssessments = [], isLoading, isError } = useStudentAssessments(studentId);
-  // ADR-0030: a série profissional nunca compara uma medida declarada pelo aluno.
-  const assessments = recordedAssessments.filter(
-    (assessment) => assessment.measured_by === "specialist",
-  );
+  const assessments = professionalSeries(recordedAssessments);
 
   return (
     <div className="space-y-6">
@@ -217,29 +221,26 @@ function StudentAssessmentContent({
 
       {!isLoading && assessments.length > 0 && (
         <div className="flex flex-col gap-4">
-          {assessments.map((a, i) => (
-            <AssessmentCard
-              key={a.id}
-              assessment={a}
-              index={i}
-              previous={assessments[i + 1] ?? null}
-              onCorrect={
-                canCorrect && a.measured_by === "specialist" && a.specialist_id === currentUser?.id
-                  ? () => {
-                      setSelectedAssessment(a);
-                      setModalOpen(true);
-                    }
-                  : undefined
-              }
-              onHistory={
-                abilities.can("read", "PhysicalAssessment") &&
-                (currentUser?.id === studentId ||
-                  (canCorrect && a.specialist_id === currentUser?.id))
-                  ? () => setHistoryAssessmentId(a.id)
-                  : undefined
-              }
-            />
-          ))}
+          {assessments.map((a, i) => {
+            const actions = assessmentActions(a, viewer, studentId);
+            return (
+              <AssessmentCard
+                key={a.id}
+                assessment={a}
+                index={i}
+                previous={assessments[i + 1] ?? null}
+                onCorrect={
+                  actions.canCorrect
+                    ? () => {
+                        setSelectedAssessment(a);
+                        setModalOpen(true);
+                      }
+                    : undefined
+                }
+                onHistory={actions.canSeeHistory ? () => setHistoryAssessmentId(a.id) : undefined}
+              />
+            );
+          })}
         </div>
       )}
 

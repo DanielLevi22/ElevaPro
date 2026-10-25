@@ -32,10 +32,12 @@ jest.mock('../../hooks/useLinkedStudent', () => ({
 beforeEach(() => mockNavigate.mockClear());
 
 describe('gerenciamento no Acompanhamento do aluno (#436)', () => {
-  it('não oferece avaliação: a análise por foto é do próprio aluno', async () => {
+  it('Avaliações abre a avaliação física, não a análise por foto do aluno', async () => {
     await render(<StudentFollowUpScreen />);
 
-    expect(screen.getByText('Anamnese')).toBeTruthy();
+    await fireEvent.press(screen.getByText('Avaliações'));
+
+    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.STUDENTS.ASSESSMENTS.LIST('aluno-1'));
     expect(screen.queryByText('Avaliação')).toBeNull();
   });
 

@@ -1,21 +1,11 @@
 "use client";
 
-import { CIRCUMFERENCE_FIELDS, SKINFOLD_FIELDS } from "@elevapro/shared";
+import { ASSESSMENT_FIELD_LABELS, type AssessmentRevision } from "@elevapro/shared";
 import { useEffect, useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
 import { Dialog } from "@/shared/components/ui/Dialog";
 import { formatDate } from "@/shared/utils/formatDate";
-import type { AssessmentRevision } from "../assessment-correction";
-import { fetchAssessmentRevisions } from "../services/AssessmentClientService";
-
-const revisionFields = [
-  { key: "weight_kg", label: "Peso", unit: "kg" },
-  { key: "height_cm", label: "Altura", unit: "cm" },
-  { key: "body_fat_pct", label: "Gordura corporal", unit: "%" },
-  { key: "muscle_mass_kg", label: "Massa muscular", unit: "kg" },
-  ...CIRCUMFERENCE_FIELDS.map((field) => ({ ...field, unit: "cm" })),
-  ...SKINFOLD_FIELDS.map((field) => ({ ...field, unit: "mm" })),
-] as const;
+import { assessmentClient } from "../services/AssessmentClientService";
 
 /** Mostra o acervo retificado somente enquanto aberto. Ex.: <AssessmentRevisions studentId={studentId} assessmentId={id} onClose={close} />. */
 export function AssessmentRevisions({
@@ -35,7 +25,8 @@ export function AssessmentRevisions({
     const controller = new AbortController();
     setRevisions(null);
     setError(null);
-    fetchAssessmentRevisions(studentId, assessmentId, controller.signal)
+    assessmentClient
+      .revisions(studentId, assessmentId, controller.signal)
       .then((versions) => {
         if (!controller.signal.aborted) setRevisions(versions);
       })
@@ -69,7 +60,7 @@ export function AssessmentRevisions({
               Versão retificada em {formatDate(revision.corrected_at, "dateTime")}
             </h3>
             <dl className="grid grid-cols-2 gap-3 text-sm">
-              {revisionFields.map(
+              {ASSESSMENT_FIELD_LABELS.map(
                 ({ key, label, unit }) =>
                   revision.previous_values[key] !== null && (
                     <div key={key}>
