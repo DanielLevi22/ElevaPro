@@ -45,21 +45,21 @@
 - [x] `candidate-42612cb5a844629f` — Lanche: Biscoito de arroz + Melão
 - [x] `candidate-42fa3102ed4f4a77` — Lanche: Barra de proteína + Abacaxi
 - [x] `candidate-47dbad763e499ef2` — Lanche: Panqueca de aveia + Kiwi
-- [ ] `candidate-4cd44b1d464d6949` — Lanche: Barra de proteína + Açaí (polpa sem açúcar)
+- [x] `candidate-4cd44b1d464d6949` — Lanche: Barra de proteína + Açaí (polpa sem açúcar)
 - [ ] `candidate-4cd5b44a48a55d21` — Lanche: Biscoito de arroz + Framboesa
 - [x] `candidate-5038d8ab76bd740b` — Lanche: Panqueca de aveia + Uva
 - [x] `candidate-5192f2d258d912a4` — Lanche: Pão de queijo + Manga
-- [ ] `candidate-5b3096f03089ae30` — Lanche: Pão de queijo + Goiaba
-- [ ] `candidate-5b675641e8d1053a` — Lanche: Biscoito de arroz + Abacaxi
+- [x] `candidate-5b3096f03089ae30` — Lanche: Pão de queijo + Goiaba
+- [x] `candidate-5b675641e8d1053a` — Lanche: Biscoito de arroz + Abacaxi
 - [ ] `candidate-5d36679902eb3fe8` — Lanche: Barra de proteína + Melão
 - [ ] `candidate-5d4e4d81537f72cb` — Lanche: Pão de queijo + Melão
-- [ ] `candidate-5dde519d81729fa7` — Lanche: Barra de proteína + Abacate
-- [ ] `candidate-5eb07cabb86ff10f` — Lanche: Biscoito de arroz + Goiaba
+- [x] `candidate-5dde519d81729fa7` — Lanche: Barra de proteína + Abacate
+- [x] `candidate-5eb07cabb86ff10f` — Lanche: Biscoito de arroz + Goiaba
 - [ ] `candidate-5fea6984607065f0` — Lanche: Pão de queijo + Caqui
-- [ ] `candidate-600a82cb03e62a89` — Lanche: Torrada integral + Abacaxi
-- [ ] `candidate-64dc216266afadb7` — Lanche: Torrada integral + Abacate
-- [ ] `candidate-6523a658f82fd28a` — Lanche: Biscoito de arroz + Tangerina
-- [ ] `candidate-65a487b35362b1af` — Lanche: Biscoito de arroz + Maracujá
+- [x] `candidate-600a82cb03e62a89` — Lanche: Torrada integral + Abacaxi
+- [x] `candidate-64dc216266afadb7` — Lanche: Torrada integral + Abacate
+- [x] `candidate-6523a658f82fd28a` — Lanche: Biscoito de arroz + Tangerina
+- [x] `candidate-65a487b35362b1af` — Lanche: Biscoito de arroz + Maracujá
 - [x] `candidate-6811b16f6c9c0297` — Lanche: Panqueca de aveia + Morango
 - [ ] `candidate-68aa2f9205f32287` — Lanche: Pão de queijo + Açaí (polpa sem açúcar)
 - [ ] `candidate-68c975fc1f32479d` — Lanche: Biscoito de arroz + Kiwi

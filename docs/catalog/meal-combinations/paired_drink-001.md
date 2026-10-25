@@ -12,7 +12,7 @@
 - [ ] `candidate-384223313f0341f7` — Lanche com bebida: Panqueca de aveia + Chá verde sem açúcar
 - [ ] `candidate-3b5f28e49368fbcd` — Lanche com bebida: Pão de queijo + Chá verde sem açúcar
 - [ ] `candidate-4ba58213582574c4` — Lanche com bebida: Torrada integral + Chá verde sem açúcar
-- [ ] `candidate-4eaef80032bba770` — Lanche com bebida: Torrada integral + Água de coco
+- [x] `candidate-4eaef80032bba770` — Lanche com bebida: Torrada integral + Água de coco
 - [ ] `candidate-5222cf7527c78015` — Lanche com bebida: Crepioca + Chá verde sem açúcar
 - [ ] `candidate-6cf51eaf0bccd03d` — Lanche com bebida: Torrada integral + Suco de uva integral
 - [x] `candidate-844bb99bec62cb4f` — Lanche com bebida: Pão de queijo + Café sem açúcar

@@ -239,7 +239,7 @@
 - [ ] `candidate-488c79f9effb870b` — Prato: Arroz parboilizado cozido + Fígado bovino grelhado + Rúcula
 - [ ] `candidate-489723a4e907d228` — Prato: Arroz integral cozido + Camarão cozido + Tomate
 - [ ] `candidate-489ff03668ed3804` — Prato: Arroz integral cozido + Atum fresco grelhado + Pimentão verde
-- [ ] `candidate-489ff185c742b8b4` — Prato: Inhame cozido + Clara de ovo + Pepino
+- [x] `candidate-489ff185c742b8b4` — Prato: Inhame cozido + Clara de ovo + Pepino
 - [ ] `candidate-48a5be6a2d4ab2cb` — Prato: Batata doce cozida + Salmão grelhado + Cogumelo champignon
 - [ ] `candidate-48aaac4fc0549cdb` — Prato: Arroz branco cozido + Frango (coxa sem pele assada) + Cogumelo champignon
 - [ ] `candidate-48ae72cbe1a84225` — Prato: Cará cozido + Bacalhau dessalgado cozido + Espinafre

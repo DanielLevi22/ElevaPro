@@ -21,7 +21,7 @@
 - [ ] `candidate-44d0f58525d33ec4` — Sanduíche ou torrada: Pão sírio integral + Presunto magro
 - [x] `candidate-4cd4e38b01ba598a` — Sanduíche ou torrada: Pão francês + Requeijão light
 - [x] `candidate-4df181f0f6c5d102` — Sanduíche ou torrada: Pão francês + Ovo inteiro cozido
-- [ ] `candidate-534405fe0671f066` — Sanduíche ou torrada: Torrada integral + Ricota
+- [x] `candidate-534405fe0671f066` — Sanduíche ou torrada: Torrada integral + Ricota
 - [x] `candidate-5ebb800a770cfab9` — Sanduíche ou torrada: Pão francês + Queijo muçarela
 - [ ] `candidate-67b6348c28e9fd9a` — Sanduíche ou torrada: Tapioca (goma) + Ovo de codorna cozido
 - [x] `candidate-70101d7f01a5a02f` — Sanduíche ou torrada: Biscoito de arroz + Ovo inteiro cozido
