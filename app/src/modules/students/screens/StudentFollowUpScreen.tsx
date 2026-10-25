@@ -1,6 +1,5 @@
 import { shortMonthOf } from '@elevapro/shared';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { showAlert } from '@/components/ui/appAlert';
 import { CabecalhoSobreFoto } from '@/components/ui/CabecalhoSobreFoto';
@@ -12,19 +11,15 @@ import { ROUTES } from '@/navigation/types';
 import { useCores } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { ActionPill } from '../components/ActionPill';
-import { FilterChips } from '../components/FilterChips';
-import { TimelineCard } from '../components/TimelineCard';
 import { useLinkedStudent } from '../hooks/useLinkedStudent';
-import { useStudentActivities } from '../hooks/useStudentActivities';
-import { localToday, type TimelineFilter, timelineEntries } from '../services/followUp';
 import type { Student } from '../store/studentStore';
 
 /**
  * Acompanhamento do aluno — a tela 7 do fluxo do especialista (#334).
  *
- * É o antigo "Gerenciamento" no kit de vidro: status, atalhos, os cadastros do
- * aluno e, agora, a linha do tempo do que ele fez. A lista de alunos abre aqui;
- * o Desempenho (tela 6) abre pelo atalho "Evolução geral".
+ * É o antigo "Gerenciamento" no kit de vidro: status, atalhos e os cadastros do
+ * aluno. A linha do tempo do que ele fez abre pelas "Atividades". A lista de
+ * alunos abre aqui; o Desempenho (tela 6) abre pelo atalho "Evolução geral".
  */
 export default function StudentFollowUpScreen() {
   const router = useRouter();
@@ -43,7 +38,6 @@ export default function StudentFollowUpScreen() {
       <StatusRow student={student} />
       <Shortcuts student={student} />
       <Management studentId={studentId} />
-      <Timeline studentId={studentId} />
       <View className="mt-5 flex-row">
         <ActionPill
           icon="archive-outline"
@@ -133,61 +127,15 @@ function Management({ studentId }: { studentId: string }) {
           router.navigate({ pathname: ROUTES.STUDENTS.ANAMNESIS, params: { studentId } })
         }
       />
+      <LinhaDeVidro
+        icon="time-outline"
+        tom="passos"
+        titulo="Atividades"
+        sub="Histórico do aluno"
+        onPress={() => router.navigate(ROUTES.STUDENTS.ACTIVITIES(studentId))}
+      />
     </>
   );
-}
-
-const FILTERS: readonly { value: TimelineFilter; label: string }[] = [
-  { value: 'all', label: 'Histórico' },
-  { value: 'training', label: 'Treinos' },
-  { value: 'nutrition', label: 'Nutrição' },
-  { value: 'measures', label: 'Medidas' },
-];
-
-function Timeline({ studentId }: { studentId: string }) {
-  const [filter, setFilter] = useState<TimelineFilter>('all');
-  const { days, loading, failed } = useStudentActivities(studentId);
-  const today = localToday();
-  const entries = timelineEntries(days, filter, today);
-
-  return (
-    <>
-      <FilterChips options={FILTERS} value={filter} onChange={setFilter} className="mt-5" />
-      <TituloDeSecao estilo="rotulo" acao={monthLabel(today)}>
-        Linha do tempo
-      </TituloDeSecao>
-      <TimelineBody loading={loading} failed={failed} empty={entries.length === 0} />
-      {entries.map((entry) => (
-        <TimelineCard key={entry.id} entry={entry} />
-      ))}
-    </>
-  );
-}
-
-/** "Set 2026", o mês corrente no canto do título, como no kit. */
-function monthLabel(today: string): string {
-  const month = shortMonthOf(today);
-  return `${month[0].toUpperCase()}${month.slice(1)} ${today.slice(0, 4)}`;
-}
-
-function TimelineBody({
-  loading,
-  failed,
-  empty,
-}: {
-  loading: boolean;
-  failed: boolean;
-  empty: boolean;
-}) {
-  const cores = useCores();
-  if (loading) return <ActivityIndicator color={cores.primary} className="py-6" />;
-  if (failed) return <EmptyText>Não foi possível carregar o acompanhamento.</EmptyText>;
-  if (empty) return <EmptyText>Nenhum registro por aqui ainda.</EmptyText>;
-  return null;
-}
-
-function EmptyText({ children }: { children: string }) {
-  return <Text className="py-6 text-center text-legenda text-muted-foreground">{children}</Text>;
 }
 
 function CenteredState() {

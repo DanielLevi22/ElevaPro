@@ -120,7 +120,10 @@ export const ROUTES = {
       `/(tabs)/students/${id}/workouts`,
     // A dieta do aluno abre a aba Nutrição, e a avaliação por foto é do próprio
     // aluno: as telas legadas de `[id]/nutrition` e `[id]/assessment` saíram (#436).
-    // A linha do tempo que morava em `/history` foi para o Acompanhamento (#334).
+    // A linha do tempo que morava em `/history` foi para o Acompanhamento (#334),
+    // e de lá para as Atividades, que o Gerenciamento abre.
+    ACTIVITIES: (id: string): `/(tabs)/students/${string}/activities` =>
+      `/(tabs)/students/${id}/activities`,
     ANAMNESIS: '/students/anamnesis',
     /**
      * O fluxo de Progresso do aluno visto pelo especialista — o "Evolução geral"

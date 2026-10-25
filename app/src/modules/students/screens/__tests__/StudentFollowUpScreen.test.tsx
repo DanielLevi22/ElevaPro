@@ -14,7 +14,7 @@ jest.mock('expo-router', () => ({
   }),
 }));
 
-// Os dois hooks são a fronteira com o banco: o aluno vinculado e a linha do tempo.
+// O hook é a fronteira com o banco: o aluno vinculado.
 jest.mock('../../hooks/useLinkedStudent', () => ({
   useLinkedStudent: () => ({
     studentId: 'aluno-1',
@@ -27,9 +27,6 @@ jest.mock('../../hooks/useLinkedStudent', () => ({
     loading: false,
     retry: jest.fn(),
   }),
-}));
-jest.mock('../../hooks/useStudentActivities', () => ({
-  useStudentActivities: () => ({ days: [], loading: false, failed: false, reload: jest.fn() }),
 }));
 
 beforeEach(() => mockNavigate.mockClear());
@@ -57,5 +54,16 @@ describe('atalhos do Acompanhamento do aluno (#444)', () => {
 
     expect(screen.getByText('Evolução geral')).toBeTruthy();
     expect(screen.queryByText('Visão do aluno')).toBeNull();
+  });
+});
+
+describe('atividades do aluno', () => {
+  it('a linha do tempo sai do Acompanhamento e abre pelas Atividades', async () => {
+    await render(<StudentFollowUpScreen />);
+
+    expect(screen.queryByText('Linha do tempo')).toBeNull();
+    await fireEvent.press(screen.getByText('Atividades'));
+
+    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.STUDENTS.ACTIVITIES('aluno-1'));
   });
 });
