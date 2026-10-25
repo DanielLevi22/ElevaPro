@@ -101,16 +101,16 @@
 - [x] `candidate-a6a9c207d70a2d25` — Lanche: Panqueca de aveia + Maracujá
 - [x] `candidate-a82125b2ae329098` — Lanche: Crepioca + Banana nanica
 - [ ] `candidate-a9d0ae034091627e` — Lanche: Torrada integral + Mirtilo
-- [ ] `candidate-aa47424800d196be` — Lanche: Barra de proteína + Maracujá
+- [x] `candidate-aa47424800d196be` — Lanche: Barra de proteína + Maracujá
 - [ ] `candidate-acdb85ff90126839` — Lanche: Barra de proteína + Melancia
-- [ ] `candidate-adc7a5a82624da72` — Lanche: Biscoito de arroz + Açaí (polpa sem açúcar)
-- [ ] `candidate-ae6fd8fd754bbb18` — Lanche: Torrada integral + Melão
+- [x] `candidate-adc7a5a82624da72` — Lanche: Biscoito de arroz + Açaí (polpa sem açúcar)
+- [x] `candidate-ae6fd8fd754bbb18` — Lanche: Torrada integral + Melão
 - [x] `candidate-aed0fceae97a9a39` — Lanche: Crepioca + Pera
-- [ ] `candidate-b075e9e43c83d155` — Lanche: Pão de queijo + Pera
-- [ ] `candidate-b0c1f907e1f61d6a` — Lanche: Torrada integral + Açaí (polpa sem açúcar)
+- [x] `candidate-b075e9e43c83d155` — Lanche: Pão de queijo + Pera
+- [x] `candidate-b0c1f907e1f61d6a` — Lanche: Torrada integral + Açaí (polpa sem açúcar)
 - [ ] `candidate-b2772400dd823c82` — Lanche: Pão de queijo + Banana passa
 - [x] `candidate-b5b3ec9351188f0c` — Lanche: Barra de proteína + Banana nanica
-- [ ] `candidate-b7114a108dd97de3` — Lanche: Biscoito de arroz + Manga
+- [x] `candidate-b7114a108dd97de3` — Lanche: Biscoito de arroz + Manga
 - [x] `candidate-ba34d6f3ae6077c0` — Lanche: Torrada integral + Morango
 - [ ] `candidate-be46b655cc55610a` — Lanche: Torrada integral + Damasco seco
 - [ ] `candidate-be6cf68da84b3322` — Lanche: Barra de proteína + Uva

@@ -228,7 +228,7 @@
 - [ ] `candidate-a10c59af6075c749` — Bowl: Kefir de leite + Abacate + Granola sem açúcar
 - [ ] `candidate-a134aec794ad7ea9` — Bowl: Iogurte natural integral + Abacaxi + Coco fresco
 - [ ] `candidate-a13b368f2e569cba` — Bowl: Iogurte grego natural + Tangerina + Gergelim
-- [ ] `candidate-a16a5e233b8dd385` — Bowl: Iogurte natural integral + Melão + Linhaça
+- [x] `candidate-a16a5e233b8dd385` — Bowl: Iogurte natural integral + Melão + Linhaça
 - [x] `candidate-a174477b2811397c` — Bowl: Iogurte natural integral + Abacate + Castanha do Pará
 - [x] `candidate-a197f5982fc3562c` — Bowl: Iogurte grego zero + Uva + Castanha de caju
 - [ ] `candidate-a1a76eaf942f3f95` — Bowl: Kefir de leite + Banana passa + Amêndoas

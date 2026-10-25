@@ -46,7 +46,7 @@
 - [ ] `candidate-a8cf0a9df41c4891` — Sanduíche ou torrada: Pão sírio integral + Requeijão light
 - [x] `candidate-aaf0a2aa21736769` — Sanduíche ou torrada: Tapioca (goma) + Requeijão light
 - [ ] `candidate-ad939a933134a9a6` — Sanduíche ou torrada: Pão de forma integral + Homus
-- [ ] `candidate-b067660198df4eb5` — Sanduíche ou torrada: Pão integral + Queijo cottage
+- [x] `candidate-b067660198df4eb5` — Sanduíche ou torrada: Pão integral + Queijo cottage
 - [x] `candidate-b27b6096a86224d1` — Sanduíche ou torrada: Pão de forma integral + Ricota
 - [x] `candidate-b3bc7f79d9098a20` — Sanduíche ou torrada: Pão integral + Queijo minas frescal
 - [ ] `candidate-b68145d87829a589` — Sanduíche ou torrada: Pão sírio integral + Homus

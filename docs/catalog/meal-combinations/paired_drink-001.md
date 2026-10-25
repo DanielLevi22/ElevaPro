@@ -22,7 +22,7 @@
 - [x] `candidate-90bd9300c39b75f6` — Lanche com bebida: Crepioca + Água de coco
 - [ ] `candidate-98f9de2809844af2` — Lanche com bebida: Crepioca + Isotônico
 - [ ] `candidate-a53fe7ee4bb4a88b` — Lanche com bebida: Crepioca + Suco de laranja natural
-- [ ] `candidate-ab47523fc114dac7` — Lanche com bebida: Pão de queijo + Água de coco
+- [x] `candidate-ab47523fc114dac7` — Lanche com bebida: Pão de queijo + Água de coco
 - [ ] `candidate-ae5354b46ba963d8` — Lanche com bebida: Panqueca de aveia + Isotônico
 - [ ] `candidate-b2316488508b6817` — Lanche com bebida: Barra de proteína + Suco de laranja natural
 - [ ] `candidate-bb0de6557ad8f9f5` — Lanche com bebida: Biscoito de arroz + Chá verde sem açúcar
