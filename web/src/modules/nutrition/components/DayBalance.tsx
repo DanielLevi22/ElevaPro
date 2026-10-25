@@ -29,15 +29,15 @@ const MACRO_ROWS: MacroRow[] = [
     key: "calories",
     label: "Kcal",
     unit: " kcal",
-    labelClass: "text-zinc-200",
-    barClass: "bg-zinc-200",
-    pastClass: "bg-zinc-200/35",
+    labelClass: "text-foreground",
+    barClass: "bg-foreground",
+    pastClass: "bg-foreground/35",
   },
   {
     key: "protein",
     label: "Prot",
     unit: "g",
-    labelClass: "text-emerald-400",
+    labelClass: "text-emerald-600 dark:text-emerald-400",
     barClass: "bg-emerald-500",
     pastClass: "bg-emerald-500/35",
   },
@@ -45,7 +45,7 @@ const MACRO_ROWS: MacroRow[] = [
     key: "carbs",
     label: "Carb",
     unit: "g",
-    labelClass: "text-blue-400",
+    labelClass: "text-blue-600 dark:text-blue-400",
     barClass: "bg-blue-500",
     pastClass: "bg-blue-500/35",
   },
@@ -53,7 +53,7 @@ const MACRO_ROWS: MacroRow[] = [
     key: "fat",
     label: "Gord",
     unit: "g",
-    labelClass: "text-yellow-400",
+    labelClass: "text-yellow-700 dark:text-yellow-400",
     barClass: "bg-yellow-500",
     pastClass: "bg-yellow-500/35",
   },
@@ -75,7 +75,7 @@ function BalanceBar({ row, consumed, added, target, isOver }: BalanceBarProps) {
   const pastWidth = toPercentage(consumed, target);
   const addedWidth = toPercentage(consumed + added, target) - pastWidth;
   return (
-    <div className="flex h-2 w-full rounded-full bg-white/10 overflow-hidden">
+    <div className="flex h-2 w-full rounded-full bg-overlay-10 overflow-hidden">
       <div className={row.pastClass} style={{ width: `${pastWidth}%` }} />
       <div
         className={`transition-[width] duration-300 ${isOver ? "bg-amber-400" : row.barClass}`}
@@ -95,19 +95,19 @@ export function DayBalance({ targets, consumed, preview, dayLabel }: DayBalanceP
   return (
     <section
       aria-label="Saldo do dia"
-      className="bg-background/50 border border-white/10 rounded-lg p-4 space-y-3"
+      className="bg-background/50 border border-border rounded-lg p-4 space-y-3"
     >
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           {dayLabel ? `Saldo do dia · ${dayLabel}` : "Saldo do dia"}
         </p>
         {preview && (
-          <div className="flex items-center gap-3 text-[10px] text-zinc-500">
+          <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-sm bg-zinc-200/35" /> já no dia
+              <span className="w-2 h-2 rounded-sm bg-foreground/35" /> já no dia
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-sm bg-zinc-200" /> este alimento
+              <span className="w-2 h-2 rounded-sm bg-foreground" /> este alimento
             </span>
           </div>
         )}
@@ -129,7 +129,7 @@ export function DayBalance({ targets, consumed, preview, dayLabel }: DayBalanceP
                 target={target}
                 isOver={remaining.tone === "over"}
               />
-              <span className="text-[11px] text-zinc-500 tabular-nums text-right">
+              <span className="text-[11px] text-muted-foreground tabular-nums text-right">
                 {Math.round(after)}/{Math.round(target)}
               </span>
               <RemainingChip text={remaining.text} tone={remaining.tone} />
