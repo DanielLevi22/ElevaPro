@@ -131,7 +131,7 @@ export function ConversationSidebar({
   }
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col border-border border-r pr-3">
+    <aside className="flex w-full shrink-0 flex-col border-border border-b pb-3 md:w-64 md:border-r md:border-b-0 md:pr-3 md:pb-0">
       <div className="flex items-center justify-between pb-2">
         <span className="font-medium text-muted-foreground text-xs uppercase tracking-widest">
           Conversas
@@ -177,7 +177,7 @@ export function ConversationSidebar({
         Recentes
       </p>
 
-      <div className="-mr-1 flex-1 space-y-0.5 overflow-y-auto pr-1">
+      <div className="-mr-1 max-h-48 flex-1 space-y-0.5 overflow-y-auto pr-1 md:max-h-none">
         {sessions.length === 0 ? (
           <p className="px-3 py-2 text-muted-foreground text-xs">
             Nenhuma conversa ainda. Escolha um coach acima para começar.
@@ -229,7 +229,7 @@ export function ConversationSidebar({
                 onClick={() => setEditando({ id: sessao.id, texto: rotulo(sessao) })}
                 disabled={busy}
                 aria-label={`Renomear ${rotulo(sessao)}`}
-                className="shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
+                className="shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100"
               >
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <title>Renomear</title>
@@ -246,7 +246,7 @@ export function ConversationSidebar({
                 onClick={() => onArchive(sessao.id)}
                 disabled={busy}
                 aria-label={`Arquivar ${rotulo(sessao)}`}
-                className="shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
+                className="shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100"
               >
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <title>Arquivar</title>

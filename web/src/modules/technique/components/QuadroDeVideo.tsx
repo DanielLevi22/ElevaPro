@@ -54,7 +54,7 @@ export function QuadroDeVideo({ videoRef, canvasRef, controles = false }: Quadro
 
       <button
         aria-label="Alternar tela cheia"
-        className="absolute right-3 top-3 rounded-lg bg-black/60 px-3 py-1.5 text-xs font-medium text-white opacity-0 transition-opacity focus:opacity-100 group-hover:opacity-100"
+        className="absolute right-3 top-3 rounded-lg bg-black/60 px-3 py-1.5 text-xs font-medium text-white opacity-0 transition-opacity focus:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100"
         onClick={telaCheia}
         type="button"
       >

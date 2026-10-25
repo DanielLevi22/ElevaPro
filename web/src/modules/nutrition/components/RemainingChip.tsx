@@ -14,10 +14,20 @@ const TONE_CHIP_CLASS: Record<RemainingTone, string> = {
  *
  * @example <RemainingChip {...describeRemaining(36, 180, "g")} />
  */
-export function RemainingChip({ text, tone }: { text: string; tone: RemainingTone }) {
+export function RemainingChip({
+  text,
+  tone,
+  canWrap = false,
+}: {
+  text: string;
+  tone: RemainingTone;
+  /** Em coluna estreita, quebrar a linha é melhor que vazar do cartão. */
+  canWrap?: boolean;
+}) {
+  const wrapClass = canWrap ? "text-center leading-tight" : "whitespace-nowrap";
   return (
     <span
-      className={`text-[11px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap ${TONE_CHIP_CLASS[tone]}`}
+      className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${wrapClass} ${TONE_CHIP_CLASS[tone]}`}
     >
       {text}
     </span>

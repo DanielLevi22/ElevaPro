@@ -145,7 +145,7 @@ export function MealCard({
                       G: {Math.round((item.food.fat ?? 0) * ratio)}g
                     </span>
                   </div>
-                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100 transition-opacity">
                     <button
                       type="button"
                       onClick={() => onEditItem(item)}

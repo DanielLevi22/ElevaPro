@@ -74,10 +74,10 @@ interface MacroGoalProps {
 function MacroGoal({ label, consumed, target, color, icon }: MacroGoalProps) {
   const remaining = describeRemaining(consumed, target, "g");
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="flex min-w-0 flex-col items-center gap-1">
       <MacroRing label={label} value={consumed} max={target} color={color} size="md" icon={icon} />
       <span className="text-[11px] text-muted-foreground">de {Math.round(target)}g</span>
-      <RemainingChip text={remaining.text} tone={remaining.tone} />
+      <RemainingChip text={remaining.text} tone={remaining.tone} canWrap />
     </div>
   );
 }
@@ -92,8 +92,8 @@ export function DayMacroProgress({ dietPlan, consumed, dayLabel }: DayMacroProgr
   const remainingCalories = describeRemaining(consumed.calories, targetCalories, " kcal");
 
   return (
-    <div className="flex flex-row items-center gap-8 mt-8 bg-surface border border-border p-6 rounded-4xl w-fit">
-      <div className="flex flex-col items-center px-6 border-r border-border min-w-48">
+    <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8 mt-8 bg-surface border border-border p-4 md:p-6 rounded-4xl w-full md:w-fit">
+      <div className="flex flex-col items-center w-full md:w-auto pb-6 md:pb-0 md:px-6 border-b md:border-b-0 md:border-r border-border md:min-w-48">
         <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.3em] mb-1">
           {dayLabel ? `Total · ${dayLabel}` : "Total Calórico"}
         </span>
@@ -116,7 +116,7 @@ export function DayMacroProgress({ dietPlan, consumed, dayLabel }: DayMacroProgr
         <RemainingChip text={remainingCalories.text} tone={remainingCalories.tone} />
       </div>
 
-      <div className="flex flex-row gap-6">
+      <div className="grid w-full grid-cols-3 gap-2 md:flex md:w-auto md:gap-6">
         <MacroGoal
           label="Proteína"
           consumed={consumed.protein}

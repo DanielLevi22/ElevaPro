@@ -96,6 +96,17 @@ describe("DashboardSidebar", () => {
     expect(screen.getByText("Dashboard").className).not.toContain("italic");
   });
 
+  it("mostra o plano por padrão", () => {
+    renderSidebar();
+    expect(screen.getByText("Plano Pro ativo")).toBeInTheDocument();
+  });
+
+  it("o admin troca o plano pelo próprio rótulo", () => {
+    renderSidebar({ accountLabel: "Admin" });
+    expect(screen.getByText("Admin")).toBeInTheDocument();
+    expect(screen.queryByText("Plano Pro ativo")).not.toBeInTheDocument();
+  });
+
   it("o logout dispara o callback", async () => {
     const { onLogout } = renderSidebar();
     await userEvent.click(screen.getByRole("button", { name: "Sair" }));

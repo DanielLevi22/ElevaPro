@@ -78,7 +78,7 @@ export default function CreateExercisePage() {
             onChange={(campo, valor) => setFormData({ ...formData, [campo]: valor })}
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="video_url" className="block text-sm font-medium text-foreground mb-1">
                 Vídeo (URL)
