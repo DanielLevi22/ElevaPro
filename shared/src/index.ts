@@ -20,6 +20,7 @@ export * from "./services/assessment/adaptiveAnamnesis.service";
 export * from "./services/assessment/bodyScan.service";
 export * from "./services/assessment/bodyScanDescricao";
 export * from "./services/assessment/fluxoDoBodyScan";
+export * from "./services/assessment/physicalAssessment";
 export * from "./services/auth/auth.service";
 export * from "./services/briefing/activity.service";
 export * from "./services/briefing/briefing.service";

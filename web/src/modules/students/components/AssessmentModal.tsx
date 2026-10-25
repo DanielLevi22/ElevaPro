@@ -1,6 +1,15 @@
 "use client";
 
-import { CIRCUMFERENCE_FIELDS, type PhysicalAssessment, SKINFOLD_FIELDS } from "@elevapro/shared";
+import {
+  type AssessmentDraft,
+  type AssessmentNumberField,
+  assessmentDraft,
+  bodyMassIndex,
+  CIRCUMFERENCE_FIELDS,
+  type PhysicalAssessment,
+  parseAssessmentDraft,
+  SKINFOLD_FIELDS,
+} from "@elevapro/shared";
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
 import { Dialog } from "@/shared/components/ui/Dialog";
@@ -24,9 +33,9 @@ type Tab = "composition" | "circumferences" | "skinfolds";
 function numericField(
   // `readonly` porque as listas vêm de `as const` no shared — o que impede
   // qualquer tela de reordenar ou mutar a ficha por acidente.
-  fields: ReadonlyArray<{ readonly key: string; readonly label: string }>,
-  values: Record<string, string>,
-  onChange: (key: string, val: string) => void,
+  fields: ReadonlyArray<{ readonly key: AssessmentNumberField; readonly label: string }>,
+  values: AssessmentDraft,
+  onChange: (key: AssessmentNumberField, val: string) => void,
   unit = "cm",
 ) {
   return fields.map(({ key, label }) => (
@@ -53,22 +62,13 @@ function AssessmentForm({ studentId, onClose, assessment }: AssessmentModalProps
   const [tab, setTab] = useState<Tab>("composition");
   const [error, setError] = useState<string | null>(null);
 
-  // Composição corporal
-  const [weight, setWeight] = useState(assessment?.weight_kg?.toString() ?? "");
-  const [height, setHeight] = useState(assessment?.height_cm?.toString() ?? "");
-  const [notes, setNotes] = useState(assessment?.notes ?? "");
-
-  // Circunferências e dobras como objetos
-  const [circumferences, setCircumferences] = useState<Record<string, string>>(() =>
-    Object.fromEntries(
-      CIRCUMFERENCE_FIELDS.map(({ key }) => [key, assessment?.[key]?.toString() ?? ""]),
-    ),
-  );
-  const [skinfolds, setSkinfolds] = useState<Record<string, string>>(() =>
-    Object.fromEntries(
-      SKINFOLD_FIELDS.map(({ key }) => [key, assessment?.[key]?.toString() ?? ""]),
-    ),
-  );
+  const [draft, setDraft] = useState(() => assessmentDraft(assessment ?? null));
+  const setField = (key: keyof AssessmentDraft, value: string) =>
+    setDraft((prev) => ({ ...prev, [key]: value }));
+  const bmi = bodyMassIndex({
+    weight_kg: Number(draft.weight_kg) || null,
+    height_cm: Number(draft.height_cm) || null,
+  });
 
   const createAssessment = useCreateAssessment();
   const correctAssessment = useCorrectAssessment();
@@ -86,30 +86,18 @@ function AssessmentForm({ studentId, onClose, assessment }: AssessmentModalProps
     if (!studentId || isPending) return;
     setError(null);
 
-    const toNum = (v: string) => (v !== "" ? Number(v) : null);
-
-    // Altura e peso não são medidas entre outras: são a Escala que calibra o
-    // body scan do aluno. Avaliação sem os dois não serve de fonte, e a rota
-    // recusa com 422 desde a `0037` — barrar aqui é dizer isso enquanto o
-    // especialista ainda está com a ficha aberta, em vez de depois de salvar.
-    if (toNum(weight) === null || toNum(height) === null) {
-      setError("Peso e altura são obrigatórios: são eles que dão escala à análise do aluno.");
+    // A Escala (peso e altura) é exigida pelo `parseAssessmentDraft`: barrar
+    // aqui diz o motivo enquanto a ficha ainda está aberta, em vez do 422 da rota.
+    const parsed = parseAssessmentDraft(draft);
+    if (!parsed.ok) {
+      setError(parsed.message);
       setTab("composition");
       return;
     }
 
     try {
-      const changes = {
-        weight_kg: toNum(weight),
-        height_cm: toNum(height),
-        notes: notes || null,
-        ...Object.fromEntries(
-          CIRCUMFERENCE_FIELDS.map(({ key }) => [key, toNum(circumferences[key] ?? "")]),
-        ),
-        ...Object.fromEntries(SKINFOLD_FIELDS.map(({ key }) => [key, toNum(skinfolds[key] ?? "")])),
-      };
-      if (assessment) await correctAssessment.mutateAsync({ assessment, changes });
-      else await createAssessment.mutateAsync({ studentId, ...changes });
+      if (assessment) await correctAssessment.mutateAsync({ assessment, changes: parsed.values });
+      else await createAssessment.mutateAsync({ studentId, ...parsed.values });
       handleClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar avaliação");
@@ -164,8 +152,8 @@ function AssessmentForm({ studentId, onClose, assessment }: AssessmentModalProps
                   type="number"
                   step="0.1"
                   placeholder="75.0"
-                  value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
+                  value={draft.weight_kg}
+                  onChange={(e) => setField("weight_kg", e.target.value)}
                 />
               </FormField>
               <FormField label="Altura (cm)" htmlFor="assess-height">
@@ -173,18 +161,16 @@ function AssessmentForm({ studentId, onClose, assessment }: AssessmentModalProps
                   id="assess-height"
                   type="number"
                   placeholder="175"
-                  value={height}
-                  onChange={(e) => setHeight(e.target.value)}
+                  value={draft.height_cm}
+                  onChange={(e) => setField("height_cm", e.target.value)}
                 />
               </FormField>
             </div>
 
-            {weight && height && (
+            {bmi !== null && (
               <div className="bg-primary/5 border border-primary/20 rounded-lg px-4 py-3 text-sm text-muted-foreground">
                 IMC calculado automaticamente:{" "}
-                <span className="font-semibold text-foreground">
-                  {(Number(weight) / (Number(height) / 100) ** 2).toFixed(1)}
-                </span>
+                <span className="font-semibold text-foreground">{bmi.toFixed(1)}</span>
               </div>
             )}
 
@@ -192,8 +178,8 @@ function AssessmentForm({ studentId, onClose, assessment }: AssessmentModalProps
               <textarea
                 id="assess-notes"
                 placeholder="Observações, contexto da avaliação..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                value={draft.notes}
+                onChange={(e) => setField("notes", e.target.value)}
                 rows={3}
                 className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
               />
@@ -204,21 +190,14 @@ function AssessmentForm({ studentId, onClose, assessment }: AssessmentModalProps
         {/* Tab: Circunferências */}
         {tab === "circumferences" && (
           <div className="grid grid-cols-2 gap-3">
-            {numericField(CIRCUMFERENCE_FIELDS, circumferences, (key, val) =>
-              setCircumferences((prev) => ({ ...prev, [key]: val })),
-            )}
+            {numericField(CIRCUMFERENCE_FIELDS, draft, setField)}
           </div>
         )}
 
         {/* Tab: Dobras Cutâneas */}
         {tab === "skinfolds" && (
           <div className="grid grid-cols-2 gap-3">
-            {numericField(
-              SKINFOLD_FIELDS,
-              skinfolds,
-              (key, val) => setSkinfolds((prev) => ({ ...prev, [key]: val })),
-              "mm",
-            )}
+            {numericField(SKINFOLD_FIELDS, draft, setField, "mm")}
             <p className="col-span-2 text-xs text-muted-foreground mt-1">
               Valores em milímetros (mm)
             </p>

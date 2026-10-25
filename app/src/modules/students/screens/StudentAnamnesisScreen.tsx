@@ -1,110 +1,86 @@
 import { GENERAL_ANAMNESIS } from '@elevapro/shared/data/anamnesisQuestions';
-import { achatarRespostas } from '@elevapro/shared/utils/anamnese';
-import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { ScreenLayout } from '@/components/ui/ScreenLayout';
-import { colors } from '@/constants/colors';
+import { ActivityIndicator, Text, View } from 'react-native';
+import { CabecalhoSobreFoto } from '@/components/ui/CabecalhoSobreFoto';
+import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
+import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
+import { Vidro } from '@/components/ui/Vidro';
+import { cn } from '@/lib/utils';
+import { useCores } from '@/shared/design';
+import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
+import { type StudentAnamnesisStatus, useStudentAnamnesis } from '../hooks/useStudentAnamnesis';
+import { type AnsweredQuestion, answeredSections } from '../services/anamnesisAnswers';
+import { useStudentStore } from '../store/studentStore';
 
-import { AnamnesisService } from '@/modules/assessment/services/anamnesisService';
-import { AnamnesisResponseValue } from '@/modules/assessment/types/assessment';
-
+/**
+ * A anamnese do aluno, só leitura — o "Anamnese" do Gerenciamento no Acompanhamento.
+ *
+ * Mesma foto e cabeçalho do Acompanhamento: é a tela seguinte da mesma pilha, e
+ * trocar de cenário faria parecer outro fluxo.
+ */
 export default function StudentAnamnesisScreen() {
   const router = useRouter();
-  const { studentId } = useLocalSearchParams();
-
-  // Local state to store the fetched responses for this specific student
-  // This avoids overwriting the logged-in user's own anamnesis in the global store
-  const [responses, setResponses] = useState<Record<string, AnamnesisResponseValue>>({});
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadAnamnesis = async () => {
-      if (!studentId) return;
-
-      try {
-        setLoading(true);
-        const data = await AnamnesisService.getAnamnesis(studentId as string);
-        if (data?.responses) {
-          // Achatado na carga: a coluna guarda duas formas, e ler `?.value`
-          // de um valor plano mostraria "Não respondido" em todo campo — para
-          // o especialista, aluno sem anamnese e anamnese em forma nova ficam
-          // idênticos.
-          setResponses(achatarRespostas(data.responses) as Record<string, AnamnesisResponseValue>);
-        }
-      } catch (error) {
-        console.error('Failed to load anamnesis:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadAnamnesis();
-  }, [studentId]);
-
-  if (loading) {
-    return (
-      <ScreenLayout>
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color={colors.primary.solid} />
-        </View>
-      </ScreenLayout>
-    );
-  }
+  const { studentId: param } = useLocalSearchParams();
+  const studentId = (Array.isArray(param) ? param[0] : param) ?? '';
+  const student = useStudentStore((state) => state.students.find((s) => s.id === studentId));
+  const { responses, status } = useStudentAnamnesis(studentId);
 
   return (
-    <ScreenLayout>
-      <View className="px-6 py-4 border-b border-white/5 flex-row items-center">
-        <TouchableOpacity onPress={() => router.back()} className="mr-4">
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-        <Text className="text-xl font-bold text-white font-display">Anamnese do Aluno</Text>
-      </View>
-
-      <ScrollView className="flex-1 px-6 pt-6" showsVerticalScrollIndicator={false}>
-        {GENERAL_ANAMNESIS.map((section) => (
-          <View
-            key={section.id}
-            className="mb-8 bg-zinc-900/50 p-4 rounded-2xl border border-white/5"
-          >
-            <Text className="text-lg font-bold text-orange-500 mb-4 font-display">
-              {section.title}
-            </Text>
-
-            {section.questions.map((question) => {
-              // Check visibility condition (same as wizard)
-              if (question.condition) {
-                const dependentAnswer = responses[question.condition.questionId];
-                if (dependentAnswer !== question.condition.expectedValue) return null;
-              }
-
-              const response = responses[question.id];
-              let displayValue = 'Não respondido';
-
-              if (response !== undefined && response !== '') {
-                if (typeof response === 'boolean') {
-                  displayValue = response ? 'Sim' : 'Não';
-                } else if (Array.isArray(response)) {
-                  displayValue = response.join(', ');
-                } else {
-                  displayValue = String(response);
-                }
-              }
-
-              return (
-                <View key={question.id} className="mb-4 last:mb-0">
-                  <Text className="text-zinc-400 text-sm mb-1 font-medium">{question.text}</Text>
-                  <Text className="text-white text-base bg-black/40 p-3 rounded-lg border border-white/5">
-                    {displayValue}
-                  </Text>
-                </View>
-              );
-            })}
+    <TelaDeVidroComFoto image={fotoDoGrupo('arms')}>
+      <CabecalhoSobreFoto
+        sobrelinha={student?.full_name ?? student?.email ?? 'Aluno'}
+        titulo="Anamnese"
+        onVoltar={router.back}
+      />
+      {status === 'ready' ? (
+        answeredSections(GENERAL_ANAMNESIS, responses).map((section) => (
+          <View key={section.id}>
+            <TituloDeSecao estilo="rotulo">{section.title}</TituloDeSecao>
+            <Vidro>
+              {section.questions.map((question, i) => (
+                <AnswerRow
+                  key={question.id}
+                  item={question}
+                  last={i === section.questions.length - 1}
+                />
+              ))}
+            </Vidro>
           </View>
-        ))}
-        <View className="h-20" />
-      </ScrollView>
-    </ScreenLayout>
+        ))
+      ) : (
+        <StatusBody status={status} />
+      )}
+    </TelaDeVidroComFoto>
+  );
+}
+
+function AnswerRow({ item, last }: { item: AnsweredQuestion; last: boolean }) {
+  return (
+    <View className={cn('px-3.5 py-3', !last && 'border-b-[0.5px] border-glass-border')}>
+      <Text className="text-legenda text-muted-foreground">{item.question}</Text>
+      <Text
+        className={cn(
+          'mt-0.5 text-rotulo font-semibold tracking-tight',
+          item.answer ? 'text-foreground' : 'text-placeholder'
+        )}
+      >
+        {item.answer ?? 'Não respondido'}
+      </Text>
+    </View>
+  );
+}
+
+const STATUS_MESSAGE: Record<Exclude<StudentAnamnesisStatus, 'loading' | 'ready'>, string> = {
+  failed: 'Não foi possível carregar a anamnese.',
+  empty: 'O aluno ainda não respondeu a anamnese.',
+};
+
+function StatusBody({ status }: { status: Exclude<StudentAnamnesisStatus, 'ready'> }) {
+  const cores = useCores();
+  if (status === 'loading') return <ActivityIndicator color={cores.primary} className="py-10" />;
+  return (
+    <Text className="py-10 text-center text-legenda text-muted-foreground">
+      {STATUS_MESSAGE[status]}
+    </Text>
   );
 }

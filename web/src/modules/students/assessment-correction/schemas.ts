@@ -1,5 +1,5 @@
+import { ASSESSMENT_NUMBER_FIELDS } from "@elevapro/shared";
 import { z } from "zod";
-import { ASSESSMENT_NUMBER_FIELDS } from "./constants";
 
 const measurementShape = Object.fromEntries(
   ASSESSMENT_NUMBER_FIELDS.map((field) => [

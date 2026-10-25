@@ -29,12 +29,17 @@ interface DataTableProps<T> {
   rowLabel?: (row: T) => string;
   /** Acao a direita, fora da area navegavel — botao dentro de link e invalido. */
   rowAction?: (row: T) => React.ReactNode;
+  /** `button` quando a acao tem rotulo ("Reenviar convite"), e nao so icone. */
+  actionWidth?: "icon" | "button";
   isLoading?: boolean;
   skeletonRows?: number;
   emptyState?: React.ReactNode;
   /** Ponto em que as linhas deixam de ser cartoes empilhados e viram tabela. */
   breakpoint?: "md" | "lg";
 }
+
+/** Mesma largura no cabecalho e em toda linha, para a coluna de status nao danca. */
+const ACTION_WIDTH = { icon: "w-8", button: "w-40" } as const;
 
 /** Literais, nao interpolacao: o Tailwind precisa ver cada classe no fonte. */
 const BREAKPOINT = {
@@ -103,6 +108,7 @@ export function DataTable<T>({
   onRowClick,
   rowLabel,
   rowAction,
+  actionWidth = "icon",
   isLoading,
   skeletonRows = 6,
   emptyState,
@@ -129,7 +135,7 @@ export function DataTable<T>({
             {column.header}
           </span>
         ))}
-        {rowAction && <span className="w-8" />}
+        {rowAction && <span className={ACTION_WIDTH[actionWidth]} />}
       </div>
 
       <ul>
@@ -167,7 +173,11 @@ export function DataTable<T>({
                   <div className={navigable}>{cells}</div>
                 )}
 
-                {rowAction && <span className="shrink-0">{rowAction(row)}</span>}
+                {rowAction && (
+                  <span className={`${ACTION_WIDTH[actionWidth]} flex shrink-0 justify-end`}>
+                    {rowAction(row)}
+                  </span>
+                )}
               </div>
             </li>
           );
