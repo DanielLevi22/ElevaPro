@@ -1,11 +1,12 @@
 import type { RemainingTone } from "../utils/macroTotals";
 
 // Classe literal por tom: o Tailwind não enxerga classe montada em runtime.
+// Tokens de tema, não `white`/`zinc` cravados: o claro deixava o chip branco no branco.
 const TONE_CHIP_CLASS: Record<RemainingTone, string> = {
-  below: "bg-white/5 border-white/10 text-zinc-300",
-  met: "bg-primary/10 border-primary/30 text-primary",
-  over: "bg-amber-400/10 border-amber-400/30 text-amber-400",
-  none: "bg-transparent border-white/5 text-zinc-600",
+  below: "bg-overlay-05 border-overlay-10 text-muted-foreground",
+  met: "bg-primary/10 border-primary/30 text-primary-text",
+  over: "bg-amber-400/10 border-amber-400/30 text-amber-700 dark:text-amber-400",
+  none: "bg-transparent border-overlay-05 text-muted-foreground",
 };
 
 /**

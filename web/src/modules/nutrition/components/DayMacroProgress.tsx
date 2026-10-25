@@ -14,10 +14,10 @@ interface DayMacroProgressProps {
 }
 
 const TONE_BAR_CLASS: Record<RemainingTone, string> = {
-  below: "bg-zinc-300",
+  below: "bg-muted-foreground",
   met: "bg-primary",
   over: "bg-amber-400",
-  none: "bg-zinc-600",
+  none: "bg-overlay-15",
 };
 
 interface CalorieBarProps {
@@ -35,7 +35,7 @@ function CalorieBar({ consumed, target, tone }: CalorieBarProps) {
       aria-valuenow={Math.round(consumed)}
       aria-valuemin={0}
       aria-valuemax={target}
-      className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden my-2"
+      className="w-full h-1.5 rounded-full bg-overlay-10 overflow-hidden my-2"
     >
       <div
         className={`h-full rounded-full transition-[width] duration-500 ${TONE_BAR_CLASS[tone]}`}
@@ -76,7 +76,7 @@ function MacroGoal({ label, consumed, target, color, icon }: MacroGoalProps) {
   return (
     <div className="flex flex-col items-center gap-1">
       <MacroRing label={label} value={consumed} max={target} color={color} size="md" icon={icon} />
-      <span className="text-[11px] text-zinc-500">de {Math.round(target)}g</span>
+      <span className="text-[11px] text-muted-foreground">de {Math.round(target)}g</span>
       <RemainingChip text={remaining.text} tone={remaining.tone} />
     </div>
   );
@@ -92,19 +92,21 @@ export function DayMacroProgress({ dietPlan, consumed, dayLabel }: DayMacroProgr
   const remainingCalories = describeRemaining(consumed.calories, targetCalories, " kcal");
 
   return (
-    <div className="flex flex-row items-center gap-8 mt-8 bg-zinc-950/20 border border-white/5 p-6 rounded-4xl w-fit">
-      <div className="flex flex-col items-center px-6 border-r border-white/5 min-w-48">
-        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.3em] mb-1">
+    <div className="flex flex-row items-center gap-8 mt-8 bg-surface border border-border p-6 rounded-4xl w-fit">
+      <div className="flex flex-col items-center px-6 border-r border-border min-w-48">
+        <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.3em] mb-1">
           {dayLabel ? `Total · ${dayLabel}` : "Total Calórico"}
         </span>
         <div className="flex items-baseline gap-1">
-          <span className="text-3xl font-black text-white italic tracking-tighter">
+          <span className="text-3xl font-black text-foreground italic tracking-tighter">
             {Math.round(consumed.calories)}
           </span>
-          <span className="text-sm font-bold text-zinc-500 tracking-tighter">
+          <span className="text-sm font-bold text-muted-foreground tracking-tighter">
             / {targetCalories}
           </span>
-          <span className="text-xs font-bold text-zinc-600 uppercase tracking-tighter">kcal</span>
+          <span className="text-xs font-bold text-muted-foreground uppercase tracking-tighter">
+            kcal
+          </span>
         </div>
         <CalorieBar
           consumed={consumed.calories}
