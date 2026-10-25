@@ -101,4 +101,28 @@ describe("DashboardSidebar", () => {
     await userEvent.click(screen.getByRole("button", { name: "Sair" }));
     expect(onLogout).toHaveBeenCalledOnce();
   });
+
+  // No celular a sidebar fixa cobria o conteúdo; lá ela é gaveta.
+  describe("gaveta do celular", () => {
+    it("abre expandida mesmo com o desktop recolhido", async () => {
+      renderSidebar({ isCollapsed: true });
+      await userEvent.click(screen.getByRole("button", { name: "Abrir menu" }));
+      expect(screen.getByText("Alunos")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Fechar menu" })).toBeInTheDocument();
+    });
+
+    it("fecha ao escolher um item", async () => {
+      renderSidebar({ isCollapsed: true });
+      await userEvent.click(screen.getByRole("button", { name: "Abrir menu" }));
+      await userEvent.click(screen.getByText("Alunos"));
+      expect(screen.queryByRole("button", { name: "Fechar menu" })).not.toBeInTheDocument();
+    });
+
+    it("fecha com Esc", async () => {
+      renderSidebar();
+      await userEvent.click(screen.getByRole("button", { name: "Abrir menu" }));
+      await userEvent.keyboard("{Escape}");
+      expect(screen.queryByRole("button", { name: "Fechar menu" })).not.toBeInTheDocument();
+    });
+  });
 });
