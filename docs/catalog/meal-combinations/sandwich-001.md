@@ -27,7 +27,7 @@
 - [x] `candidate-70101d7f01a5a02f` — Sanduíche ou torrada: Biscoito de arroz + Ovo inteiro cozido
 - [ ] `candidate-73b2c62da8f5164c` — Sanduíche ou torrada: Biscoito de arroz + Ovo de codorna cozido
 - [x] `candidate-74cb45191448dd18` — Sanduíche ou torrada: Biscoito de arroz + Requeijão light
-- [ ] `candidate-74e2b45058fdceaf` — Sanduíche ou torrada: Pão integral + Peito de peru defumado
+- [x] `candidate-74e2b45058fdceaf` — Sanduíche ou torrada: Pão integral + Peito de peru defumado
 - [ ] `candidate-7c63b3696448c800` — Sanduíche ou torrada: Pão francês + Ovo de codorna cozido
 - [x] `candidate-7dd8e389d4d12c9a` — Sanduíche ou torrada: Pão de forma integral + Queijo muçarela
 - [ ] `candidate-812c0d873fc2ff3c` — Sanduíche ou torrada: Pão integral + Homus

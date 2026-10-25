@@ -17,7 +17,7 @@
 - [ ] `candidate-5aa148c268c301c5` — Bebida com suplemento: Bebida de soja sem açúcar + Albumina (pó)
 - [ ] `candidate-6defed8f497b3cd9` — Bebida com suplemento: Bebida de soja sem açúcar + Colágeno hidrolisado (pó)
 - [ ] `candidate-6df491852e9d6791` — Bebida com suplemento: Leite integral + Proteína vegetal (pó)
-- [ ] `candidate-794c8eddcecd9710` — Bebida com suplemento: Leite sem lactose desnatado + Whey isolado (pó)
+- [x] `candidate-794c8eddcecd9710` — Bebida com suplemento: Leite sem lactose desnatado + Whey isolado (pó)
 - [ ] `candidate-7951446543c8cc13` — Bebida com suplemento: Leite desnatado + Whey protein (pó)
 - [ ] `candidate-7bf7d831b97a77f6` — Bebida com suplemento: Leite desnatado + Caseína (pó)
 - [ ] `candidate-8812cf0ea1f975a0` — Bebida com suplemento: Bebida de amêndoas sem açúcar + Whey isolado (pó)
