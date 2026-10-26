@@ -73,7 +73,7 @@
     "react-native-mmkv": "4.3.2",
     "react-native-nitro-modules": "0.35.10",
     "react-native-passkeys": "^0.4.2",
-    "react-native-qrcode-svg": "^6.3.24",
+    "react-native-qrcode-svg": "^6.3.27",
     "react-native-reanimated": "4.7.1",
     "react-native-safe-area-context": "~5.10.1",
     "react-native-screens": "~4.30.0",
