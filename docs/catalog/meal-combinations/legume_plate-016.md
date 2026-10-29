@@ -72,7 +72,7 @@
 - [x] `candidate-cab57e60593a5258` — Prato com leguminosa: Biscoito de arroz + Feijão carioca cozido + Couve refogada
 - [x] `candidate-cabed9f95f634e76` — Prato com leguminosa: Biscoito de arroz + Grão de bico cozido + Brócolis cozido
 - [x] `candidate-cacf22d0bf0e6cfa` — Prato com leguminosa: Macarrão cozido + Ervilha cozida + Pimentão vermelho
-- [ ] `candidate-cacf361160c3ed09` — Prato com leguminosa: Biscoito de arroz + Lentilha cozida + Couve-flor cozida
+- [x] `candidate-cacf361160c3ed09` — Prato com leguminosa: Biscoito de arroz + Lentilha cozida + Couve-flor cozida
 - [ ] `candidate-cad861ac5d22ce50` — Prato com leguminosa: Arroz parboilizado cozido + Feijão fradinho cozido + Espinafre
 - [x] `candidate-caea2a945fc0e44d` — Prato com leguminosa: Inhame cozido + Lentilha cozida + Cenoura crua
 - [ ] `candidate-cb0a07a68301f342` — Prato com leguminosa: Arroz sete grãos cozido + Feijão carioca cozido + Pimentão vermelho
