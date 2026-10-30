@@ -13,7 +13,7 @@ export function WorkoutCard({ workout }: Props) {
   return (
     <Link
       href={`/dashboard/student/workouts/${workout.id}`}
-      className="group block bg-surface/40 border border-overlay-08 rounded-2xl p-5 hover:border-primary/20 hover:bg-surface/60 transition-all"
+      className="glass group block rounded-2xl p-5 hover:border-primary/20 hover:bg-surface/60 transition-all"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">

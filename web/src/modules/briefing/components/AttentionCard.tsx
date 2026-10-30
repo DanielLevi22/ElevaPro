@@ -35,7 +35,7 @@ export function AttentionCard({ signal, emphasis = false }: AttentionCardProps) 
 
   return (
     <div
-      className={`group relative overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-primary/40 ${
+      className={`group relative overflow-hidden glass rounded-xl transition-colors hover:border-primary/40 ${
         emphasis ? "flex-[2_1_20rem] p-7" : "flex-[1_1_14rem] p-5"
       }`}
     >

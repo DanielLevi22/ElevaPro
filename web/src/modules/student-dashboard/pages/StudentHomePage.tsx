@@ -35,7 +35,7 @@ function AnamnesisProgressBanner({ studentId }: { studentId: string | null }) {
   return (
     <Link
       href="/dashboard/student/anamnesis"
-      className="flex items-center gap-4 p-4 rounded-2xl border border-overlay-08 bg-surface/50 hover:bg-surface-highlight/60 transition-all group"
+      className="glass flex items-center gap-4 p-4 rounded-2xl hover:bg-surface-highlight/60 transition-all group"
     >
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-2">

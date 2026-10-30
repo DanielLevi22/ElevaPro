@@ -12,7 +12,7 @@ interface ExerciseListItemProps {
 
 export function ExerciseListItem({ exercise, index, onEdit, onRemove }: ExerciseListItemProps) {
   return (
-    <div className="bg-overlay-05 border border-overlay-10 rounded-lg p-4">
+    <div className="glass rounded-lg p-4">
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
         <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">

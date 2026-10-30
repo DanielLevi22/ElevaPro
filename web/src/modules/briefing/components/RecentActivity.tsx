@@ -62,7 +62,7 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
       </h2>
 
       {items.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border bg-card/50 p-8 text-center">
+        <div className="glass rounded-xl border-dashed p-8 text-center">
           <p className="text-sm text-muted-foreground">
             Nenhum aluno registrou atividade ainda. Assim que treinarem ou marcarem uma refeição,
             aparece aqui.

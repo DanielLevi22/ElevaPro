@@ -13,9 +13,7 @@ export function StudentProfilePage() {
   const isMember = accountType === "member";
 
   if (isLoading || !authProfile) {
-    return (
-      <div className="h-40 bg-surface/40 border border-overlay-08 rounded-2xl animate-pulse" />
-    );
+    return <div className="glass h-40 rounded-2xl animate-pulse" />;
   }
 
   return (
@@ -25,7 +23,7 @@ export function StudentProfilePage() {
         <p className="text-sm text-muted-foreground mt-1">Suas informações de conta</p>
       </div>
 
-      <div className="bg-surface/40 border border-overlay-08 rounded-2xl p-6 flex flex-col gap-5 max-w-lg">
+      <div className="glass rounded-2xl p-6 flex flex-col gap-5 max-w-lg">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl bg-surface-highlight border border-overlay-08 flex items-center justify-center font-black text-xl text-muted-foreground">
             {(authProfile?.fullName ?? user?.email ?? "?").charAt(0).toUpperCase()}

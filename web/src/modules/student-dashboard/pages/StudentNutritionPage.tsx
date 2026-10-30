@@ -21,7 +21,7 @@ export function StudentNutritionPage() {
     return (
       <div className="flex flex-col gap-8">
         <div className="h-10 w-48 bg-surface/40 rounded-xl animate-pulse" />
-        <div className="h-64 bg-surface/40 border border-overlay-08 rounded-2xl animate-pulse" />
+        <div className="glass h-64 rounded-2xl animate-pulse" />
       </div>
     );
   }
@@ -64,7 +64,7 @@ function ActiveDietPlanView({ plan, isMember }: { plan: DietPlan; isMember: bool
   return (
     <div className="flex flex-col gap-4">
       {/* Plan card */}
-      <div className="bg-surface/40 border border-overlay-08 rounded-2xl p-6 flex flex-col gap-5">
+      <div className="glass rounded-2xl p-6 flex flex-col gap-5">
         {/* Header row */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1">

@@ -25,7 +25,7 @@ function autoriaDe(bruto: string | null): ActivityAuthorFilter {
 
 function EstadoVazio({ author }: { author: ActivityAuthorFilter }) {
   return (
-    <div className="rounded-xl border border-dashed border-border bg-surface/50 p-8 text-center">
+    <div className="glass rounded-xl border-dashed p-8 text-center">
       <p className="text-sm text-muted-foreground">
         {author === "specialist"
           ? "Você ainda não registrou nada para este aluno."

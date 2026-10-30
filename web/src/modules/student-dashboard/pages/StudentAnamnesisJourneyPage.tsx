@@ -1,6 +1,6 @@
 "use client";
 
-import type { AdaptiveQuestion, PersonaTrack, UnlockCard } from "@elevapro/shared";
+import type { PersonaTrack, UnlockCard } from "@elevapro/shared";
 import {
   achatarRespostas,
   getPrecisionScore,
@@ -28,6 +28,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { AnamnesisResponseValue } from "@/modules/students/hooks/useStudentAnamnesis";
 import { useStudentAnamnesis } from "@/modules/students/hooks/useStudentAnamnesis";
+import { QuestionField } from "../components/AnamnesisQuestionField";
 import { useAnamnesisForm, useSavePersonaTrack } from "../hooks/useAnamnesisForm";
 import { useCurrentStudentId, useStudentPersonaTrack } from "../hooks/useStudentDashboardData";
 
@@ -54,131 +55,6 @@ const UNLOCK_ICONS: Record<string, LucideIcon> = {
   commitment: Zap,
 };
 
-// ─── Question Field ─────────────────────────────────────────────────────────────
-
-function QuestionField({
-  question,
-  value,
-  onChange,
-}: {
-  question: AdaptiveQuestion;
-  value: AnamnesisResponseValue | undefined;
-  onChange: (v: AnamnesisResponseValue) => void;
-}) {
-  const base =
-    "bg-surface-highlight/60 border border-overlay-10 rounded-xl text-foreground text-sm px-4 py-3 w-full focus:outline-none focus:border-overlay-15 placeholder:text-muted-foreground";
-
-  if (question.type === "text") {
-    return (
-      <textarea
-        className={`${base} resize-none min-h-20`}
-        value={(value as string) ?? ""}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={question.placeholder ?? "Sua resposta..."}
-      />
-    );
-  }
-
-  if (question.type === "number") {
-    return (
-      <div className="relative">
-        <input
-          type="number"
-          className={`${base} pr-16`}
-          value={(value as number) ?? ""}
-          onChange={(e) => onChange(Number(e.target.value))}
-          placeholder={question.placeholder ?? "0"}
-        />
-        {question.unit && (
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium pointer-events-none">
-            {question.unit}
-          </span>
-        )}
-      </div>
-    );
-  }
-
-  if (question.type === "boolean") {
-    return (
-      <div className="flex gap-3">
-        {([true, false] as const).map((opt) => (
-          <button
-            key={String(opt)}
-            type="button"
-            onClick={() => onChange(opt)}
-            className={`flex-1 py-3 rounded-xl text-sm font-bold border transition-all ${
-              value === opt
-                ? "bg-foreground text-background border-foreground scale-[1.02]"
-                : "bg-surface text-muted-foreground border-overlay-10 hover:border-overlay-15"
-            }`}
-          >
-            {opt ? "Sim" : "Não"}
-          </button>
-        ))}
-      </div>
-    );
-  }
-
-  if (question.type === "single_choice" && question.options) {
-    return (
-      <div className="flex flex-col gap-2">
-        {question.options.map((opt) => (
-          <button
-            key={opt}
-            type="button"
-            onClick={() => onChange(opt)}
-            className={`w-full px-5 py-3 rounded-xl text-sm font-medium border text-left transition-all ${
-              value === opt
-                ? "bg-foreground text-background border-foreground"
-                : "bg-surface text-muted-foreground border-overlay-10 hover:border-overlay-15 hover:bg-surface-highlight"
-            }`}
-          >
-            {opt}
-          </button>
-        ))}
-      </div>
-    );
-  }
-
-  if (question.type === "multiple_choice" && question.options) {
-    const selected = (value as string[]) ?? [];
-    const toggle = (opt: string) =>
-      onChange(selected.includes(opt) ? selected.filter((s) => s !== opt) : [...selected, opt]);
-    return (
-      <div className="flex flex-col gap-2">
-        {question.options.map((opt) => {
-          const isSelected = selected.includes(opt);
-          return (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => toggle(opt)}
-              className={`w-full px-5 py-3 rounded-xl text-sm font-medium border text-left transition-all ${
-                isSelected
-                  ? "bg-foreground text-background border-foreground"
-                  : "bg-surface text-muted-foreground border-overlay-10 hover:border-overlay-15 hover:bg-surface-highlight"
-              }`}
-            >
-              <span className="flex items-center gap-2.5">
-                <span
-                  className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
-                    isSelected ? "bg-background border-border" : "border-border"
-                  }`}
-                >
-                  {isSelected && <CheckCircle2 className="w-3 h-3 text-foreground" />}
-                </span>
-                {opt}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
-
-  return null;
-}
-
 // ─── Persona Selection ──────────────────────────────────────────────────────────
 
 function PersonaScreen({ onSelect }: { onSelect: (t: PersonaTrack) => void }) {
@@ -204,7 +80,7 @@ function PersonaScreen({ onSelect }: { onSelect: (t: PersonaTrack) => void }) {
               key={opt.track}
               type="button"
               onClick={() => onSelect(opt.track)}
-              className="w-full flex items-center gap-4 p-4 rounded-2xl border border-overlay-08 bg-surface/50 hover:bg-surface-highlight/60 hover:border-overlay-15 transition-all text-left group"
+              className="glass w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-surface-highlight/60 hover:border-overlay-15 transition-all text-left group"
             >
               <div className="w-10 h-10 rounded-xl bg-surface-highlight flex items-center justify-center shrink-0 group-hover:bg-surface-highlight transition-colors">
                 <Icon className={`w-5 h-5 ${iconColor}`} />
@@ -478,7 +354,7 @@ export function StudentAnamnesisJourneyPage() {
       </div>
 
       {/* Question card */}
-      <div className="bg-surface/40 border border-overlay-08 rounded-2xl p-6 flex flex-col gap-5">
+      <div className="glass rounded-2xl p-6 flex flex-col gap-5">
         <div>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-2">
             Pergunta {step + 1}
@@ -508,7 +384,7 @@ export function StudentAnamnesisJourneyPage() {
       </div>
 
       {/* Precision meter */}
-      <div className="bg-surface/40 border border-overlay-08 rounded-xl p-4 relative overflow-hidden">
+      <div className="glass rounded-xl p-4 relative overflow-hidden">
         <div className="flex justify-between items-center mb-2">
           <span className="text-xs text-muted-foreground font-medium">Precisão do plano</span>
           <span className="text-sm font-black text-foreground">{precision}%</span>

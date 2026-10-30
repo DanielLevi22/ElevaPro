@@ -58,7 +58,7 @@ export default async function CalibracaoDaTecnica() {
         title="Análise de Técnica"
       />
 
-      <div className="flex flex-col gap-3 rounded-xl bg-neutral-100 p-5 dark:bg-neutral-900">
+      <div className="glass flex flex-col gap-3 rounded-xl p-5">
         <h2 className="font-semibold text-neutral-900 dark:text-neutral-100">
           Para que serve esta página
         </h2>
