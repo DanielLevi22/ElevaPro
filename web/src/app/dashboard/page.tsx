@@ -84,11 +84,11 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="space-y-5">
+    // Piloto do material de vidro do app (issue #459): a margem negativa faz o
+    // escopo cobrir a área de conteúdo inteira, e não só a caixa dos cartões.
+    <div className="material-glass -m-6 lg:-m-8 p-6 lg:p-8 min-h-screen space-y-5">
       <div>
-        <h1 className="font-display text-3xl font-extrabold bg-linear-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-          Dashboard
-        </h1>
+        <h1 className="font-display text-3xl font-extrabold text-foreground">Dashboard</h1>
         <p className="mt-2 text-[13px] text-muted-foreground">
           Bem-vindo de volta,{" "}
           <span className="font-semibold text-foreground">{authUser?.fullName ?? "..."}</span>!{" "}

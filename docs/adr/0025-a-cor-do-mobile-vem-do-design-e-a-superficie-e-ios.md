@@ -90,3 +90,12 @@ com o rótulo e mude a cor de marca das duas plataformas sem perceber.
 - Cor hexadecimal escrita à mão passa a falhar no pre-commit, no arquivo que o
   commit tocar. A regra já existia no `CLAUDE.md` e tinha sido ignorada 685
   vezes.
+
+## Nota — a paleta passou a morar no `shared` (issue #459)
+
+Os valores saíram de `app/src/shared/design/tokens.ts` para
+`shared/src/design/palette.ts`, e o web gera dela o trecho `material-glass`
+do `globals.css`, com teste de paridade como o do app. A divisão acima continua
+valendo: a superfície iOS só entra no web dentro da classe `material-glass`,
+hoje um piloto no dashboard do especialista. Se o piloto for expandido, a
+coluna "é de cada plataforma" desta decisão precisa de um ADR novo.
