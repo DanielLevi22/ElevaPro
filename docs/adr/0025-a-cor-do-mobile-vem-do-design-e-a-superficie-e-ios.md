@@ -6,7 +6,7 @@ direção, e a segunda decisão foi deliberada e tinha teste guardando — por i
 este registro existe. Junto vai uma divergência de propósito: mobile e web
 compartilham a marca, mas **não** a escala de superfície.
 
-**Status:** accepted
+**Status:** accepted. A divisão de superfície foi revogada pelo ADR-0048.
 
 ## Por que a reversão da reversão
 
@@ -95,7 +95,6 @@ com o rótulo e mude a cor de marca das duas plataformas sem perceber.
 
 Os valores saíram de `app/src/shared/design/tokens.ts` para
 `shared/src/design/palette.ts`, e o web gera dela o trecho `material-glass`
-do `globals.css`, com teste de paridade como o do app. A divisão acima continua
-valendo: a superfície iOS só entra no web dentro da classe `material-glass`,
-hoje um piloto no dashboard do especialista. Se o piloto for expandido, a
-coluna "é de cada plataforma" desta decisão precisa de um ADR novo.
+do `globals.css`, com teste de paridade como o do app. A superfície iOS entra
+no web pela classe `material-glass`, hoje na raiz dos layouts do dashboard e
+do admin (ADR-0048).

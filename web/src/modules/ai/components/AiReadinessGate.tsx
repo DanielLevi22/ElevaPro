@@ -25,7 +25,7 @@ export function AiReadinessGate({ readiness, onProceed, onCompleteProfile }: Pro
   return (
     <div className="mx-auto max-w-md space-y-5 p-5">
       {/* Score */}
-      <div className="bg-surface border border-white/10 rounded-2xl p-5 space-y-3">
+      <div className="glass rounded-2xl p-5 space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-foreground">Perfil para o Assistente</h3>
           <span className={`text-2xl font-bold ${scoreColor}`}>{score}%</span>

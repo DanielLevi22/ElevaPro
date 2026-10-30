@@ -47,6 +47,16 @@ describe("material de vidro", () => {
     expect(dark.get("specular-bottom")).toBe(palette.dark.literais.specularBottom);
   });
 
+  it("veste a sidebar com o vidro da barra de abas do app", () => {
+    const light = declarationsOf(css, ".material-glass");
+    const dark = declarationsOf(css, ".dark .material-glass");
+
+    expect(dark.get("panel-glass")).toBe(palette.dark.literais.barraDeAbas);
+    expect(light.get("panel-glass")).toBe(palette.light.literais.barraDeAbas);
+    expect(dark.get("panel-glass-border")).toBe(palette.dark.literais.glassBorder);
+    expect(dark.get("panel-bg")).toBe(palette.dark.literais.glassStrong);
+  });
+
   it("entrega borda e muted como triplete, porque o Tailwind do web os embrulha em hsl()", () => {
     const dark = declarationsOf(css, ".dark .material-glass");
     expect(dark.get("border")).toBe("240 2.3% 33.7% / 0.65");

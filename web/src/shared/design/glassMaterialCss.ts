@@ -6,7 +6,7 @@ import { type LiteralTokens, palette, type ThemeName } from "@elevapro/shared";
  *
  * Existe para que o trecho gerado do `globals.css` e a paleta sejam a mesma
  * coisa por construção — o teste compara o arquivo em disco com o que esta
- * função devolve. Fora do escopo, o dashboard continua zinc (ADR-0025).
+ * função devolve. Onde o escopo vale, e o que fica sólido, está no ADR-0048.
  *
  * @example
  * // Falhou o teste? Cole a saída entre os marcadores do globals.css.
@@ -65,9 +65,27 @@ function themeBlock(theme: ThemeName): string {
   const { hsl, literais } = palette[theme];
   const surface = SURFACE_LITERALS.map((name) => [name, rgbaToHslTriplet(literais[name])]);
   const glass = GLASS_LITERALS.map((name) => [name, literais[name]]);
-  // O cartão de número usa `bg-surface`; dentro do escopo ele é o grupo iOS.
-  const declarations = { ...hsl, surface: hsl.card, ...Object.fromEntries([...surface, ...glass]) };
+  // `bg-surface` é o cartão sólido do web; dentro do escopo ele é o grupo iOS.
+  const declarations = {
+    ...hsl,
+    surface: hsl.card,
+    ...Object.fromEntries([...surface, ...glass]),
+    ...sidebarOf(literais),
+  };
   return block(SCOPE_BY_THEME[theme], declarations);
+}
+
+/**
+ * A sidebar e o cabeçalho do celular leem `--panel-*`. No escopo eles vestem a
+ * barra de abas do app: quase opaca, porque o blur sozinho não segura a
+ * navegação legível sobre o que passa por baixo.
+ */
+function sidebarOf(literais: LiteralTokens): Record<string, string> {
+  return {
+    panelGlass: literais.barraDeAbas,
+    panelGlassBorder: literais.glassBorder,
+    panelBg: literais.glassStrong,
+  };
 }
 
 function block(selector: string, declarations: Record<string, string>): string {

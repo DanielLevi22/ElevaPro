@@ -14,7 +14,7 @@ interface PhaseWorkoutCardProps {
 export function PhaseWorkoutCard({ workout, onDelete }: PhaseWorkoutCardProps) {
   const exerciseCount = workout.exercises?.length ?? 0;
   return (
-    <div className="group bg-surface border border-overlay-10 rounded-xl hover:border-primary/40 transition-all flex items-center">
+    <div className="glass group rounded-xl hover:border-primary/40 transition-all flex items-center">
       <Link
         href={`/dashboard/workouts/${workout.id}`}
         className="flex items-center gap-4 flex-1 min-w-0 p-4"

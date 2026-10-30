@@ -33,7 +33,7 @@ export function SerieDoPeriodo({
   const maximo = Math.max(...valores.filter((v): v is number => v != null), 1);
 
   return (
-    <section className="bg-surface border border-white/10 rounded-2xl p-5">
+    <section className="glass rounded-2xl p-5">
       <h2 className="text-sm font-semibold text-foreground text-pretty mb-4">{rotulo}</h2>
 
       {/*

@@ -163,6 +163,9 @@
   --specular: rgba(255, 255, 255, 1);
   --specular-bottom: rgba(0, 0, 0, 0.04);
   --sombra: rgb(16, 18, 24);
+  --panel-glass: rgba(255, 255, 255, 0.9);
+  --panel-glass-border: rgba(60, 60, 67, 0.14);
+  --panel-bg: rgba(118, 118, 128, 0.16);
 }
 
 .dark .material-glass {
@@ -195,6 +198,9 @@
   --specular: rgba(255, 255, 255, 0.22);
   --specular-bottom: rgba(0, 0, 0, 0.18);
   --sombra: rgb(0, 0, 0);
+  --panel-glass: rgba(18, 19, 22, 0.72);
+  --panel-glass-border: rgba(255, 255, 255, 0.13);
+  --panel-bg: rgba(255, 255, 255, 0.11);
 }
 /* material-glass:end */
 

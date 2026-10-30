@@ -92,7 +92,7 @@ export function DayMacroProgress({ dietPlan, consumed, dayLabel }: DayMacroProgr
   const remainingCalories = describeRemaining(consumed.calories, targetCalories, " kcal");
 
   return (
-    <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8 mt-8 bg-surface border border-border p-4 md:p-6 rounded-4xl w-full md:w-fit">
+    <div className="glass flex flex-col md:flex-row items-center gap-6 md:gap-8 mt-8 p-4 md:p-6 rounded-4xl w-full md:w-fit">
       <div className="flex flex-col items-center w-full md:w-auto pb-6 md:pb-0 md:px-6 border-b md:border-b-0 md:border-r border-border md:min-w-48">
         <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.3em] mb-1">
           {dayLabel ? `Total · ${dayLabel}` : "Total Calórico"}

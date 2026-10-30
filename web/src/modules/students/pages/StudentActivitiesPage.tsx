@@ -95,10 +95,7 @@ export default function StudentActivitiesPage() {
       {isLoading && (
         <div className="flex flex-col gap-3">
           {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-24 animate-pulse rounded-xl border border-border bg-surface"
-            />
+            <div key={i} className="glass h-24 animate-pulse rounded-xl" />
           ))}
         </div>
       )}

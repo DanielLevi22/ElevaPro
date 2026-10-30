@@ -46,7 +46,7 @@ function daysAgo(n: number): Date {
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="bg-surface border border-white/10 rounded-xl p-5">
+    <div className="glass rounded-xl p-5">
       <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
       <p className="text-3xl font-bold text-foreground">{value}</p>
       {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
@@ -56,7 +56,7 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-surface border border-white/10 rounded-xl p-6">
+    <div className="glass rounded-xl p-6">
       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-5">
         {title}
       </h3>
@@ -129,7 +129,7 @@ function LoadEvolutionChart({ studentId }: { studentId: string }) {
   const delta = latest && first ? latest.weight - first.weight : 0;
 
   return (
-    <div className="bg-surface border border-white/10 rounded-xl p-6">
+    <div className="glass rounded-xl p-6">
       {/* Interactive header */}
       <div className="flex items-start justify-between mb-6">
         <div>

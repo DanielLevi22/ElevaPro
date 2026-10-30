@@ -59,7 +59,7 @@ export default function AnalyticsPage() {
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-foreground mb-4">Métricas de Usuários</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-surface border border-border rounded-xl p-6">
+          <div className="glass rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
                 <span className="text-2xl">👥</span>
@@ -71,7 +71,7 @@ export default function AnalyticsPage() {
             <p className="text-sm text-muted-foreground">Total de Usuários</p>
           </div>
 
-          <div className="bg-surface border border-border rounded-xl p-6">
+          <div className="glass rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center">
                 <span className="text-2xl">📈</span>
@@ -91,7 +91,7 @@ export default function AnalyticsPage() {
             </p>
           </div>
 
-          <div className="bg-surface border border-border rounded-xl p-6">
+          <div className="glass rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center">
                 <span className="text-2xl">✅</span>
@@ -110,7 +110,7 @@ export default function AnalyticsPage() {
             </p>
           </div>
 
-          <div className="bg-surface border border-border rounded-xl p-6">
+          <div className="glass rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center">
                 <span className="text-2xl">🔥</span>
@@ -135,7 +135,7 @@ export default function AnalyticsPage() {
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-foreground mb-4">Distribuição de Usuários</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-surface border border-purple-500/50 rounded-xl p-6">
+          <div className="glass border-purple-500/50 rounded-xl p-6">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
                 <span className="text-xl">👑</span>
@@ -154,7 +154,7 @@ export default function AnalyticsPage() {
             </p>
           </div>
 
-          <div className="bg-surface border border-orange-500/50 rounded-xl p-6">
+          <div className="glass border-orange-500/50 rounded-xl p-6">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center">
                 <span className="text-xl">💼</span>
@@ -173,7 +173,7 @@ export default function AnalyticsPage() {
             </p>
           </div>
 
-          <div className="bg-surface border border-blue-500/50 rounded-xl p-6">
+          <div className="glass border-blue-500/50 rounded-xl p-6">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
                 <span className="text-xl">🎓</span>
@@ -192,7 +192,7 @@ export default function AnalyticsPage() {
             </p>
           </div>
 
-          <div className="bg-surface border border-green-500/50 rounded-xl p-6">
+          <div className="glass border-green-500/50 rounded-xl p-6">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
                 <span className="text-xl">🚀</span>
@@ -217,7 +217,7 @@ export default function AnalyticsPage() {
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-foreground mb-4">Métricas de Engajamento</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-surface border border-border rounded-xl p-6">
+          <div className="glass rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 rounded-lg bg-orange-500/20 flex items-center justify-center">
                 <span className="text-2xl">💪</span>
@@ -229,7 +229,7 @@ export default function AnalyticsPage() {
             <p className="text-sm text-muted-foreground">Total de Treinos</p>
           </div>
 
-          <div className="bg-surface border border-border rounded-xl p-6">
+          <div className="glass rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center">
                 <span className="text-2xl">🥗</span>
@@ -241,7 +241,7 @@ export default function AnalyticsPage() {
             <p className="text-sm text-muted-foreground">Total de Dietas</p>
           </div>
 
-          <div className="bg-surface border border-border rounded-xl p-6">
+          <div className="glass rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center">
                 <span className="text-2xl">📊</span>
@@ -253,7 +253,7 @@ export default function AnalyticsPage() {
             <p className="text-sm text-muted-foreground">Média Treinos/Prof</p>
           </div>
 
-          <div className="bg-surface border border-border rounded-xl p-6">
+          <div className="glass rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center">
                 <span className="text-2xl">👨‍🎓</span>
@@ -268,7 +268,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Platform Health */}
-      <div className="bg-surface border border-border rounded-xl p-6">
+      <div className="glass rounded-xl p-6">
         <h2 className="text-2xl font-bold text-foreground mb-4">Saúde da Plataforma</h2>
         <div className="space-y-4">
           <div>

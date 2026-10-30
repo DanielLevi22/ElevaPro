@@ -29,7 +29,7 @@ export function MealCard({
   const mealTotals = sumItemMacros(meal.meal_foods);
 
   return (
-    <div className="bg-surface border border-white/10 rounded-xl overflow-hidden shadow-sm">
+    <div className="glass rounded-xl overflow-hidden">
       <div className="p-4 bg-white/5">
         <div className="flex justify-between items-start mb-3">
           <div className="flex-1">

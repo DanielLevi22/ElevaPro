@@ -104,7 +104,7 @@ export default function StudentNutritionPage() {
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-surface border border-white/10 rounded-xl p-4">
+          <div className="glass rounded-xl p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-emerald-500/10">
                 <svg
@@ -131,7 +131,7 @@ export default function StudentNutritionPage() {
             </div>
           </div>
 
-          <div className="bg-surface border border-white/10 rounded-xl p-4">
+          <div className="glass rounded-xl p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-blue-500/10">
                 <svg
@@ -156,7 +156,7 @@ export default function StudentNutritionPage() {
             </div>
           </div>
 
-          <div className="bg-surface border border-white/10 rounded-xl p-4">
+          <div className="glass rounded-xl p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10">
                 <svg
@@ -181,7 +181,7 @@ export default function StudentNutritionPage() {
             </div>
           </div>
 
-          <div className="bg-surface border border-white/10 rounded-xl p-4">
+          <div className="glass rounded-xl p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-yellow-500/10">
                 <svg

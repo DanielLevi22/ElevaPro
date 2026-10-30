@@ -164,7 +164,7 @@ interface PasskeyRowProps {
 function PasskeyRow({ passkey, busy, canRemove, onRename, onRemove }: PasskeyRowProps) {
   const [name, setName] = useState(passkey.friendly_name ?? "");
   return (
-    <li className="rounded-xl border border-border bg-surface p-4 space-y-3">
+    <li className="glass rounded-xl p-4 space-y-3">
       <label className="block text-sm text-foreground" htmlFor={`passkey-${passkey.id}`}>
         Nome do aparelho
       </label>

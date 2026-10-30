@@ -207,8 +207,8 @@ export type ThemePalette = { hsl: HslTokens; literais: LiteralTokens };
  * O design do app foi encomendado com linguagem visual Apple — lista
  * grouped-inset, separador hairline, fundo preto puro em vez do `zinc-950` do
  * dashboard. Mobile e web compartilham marca, tipografia, raio e motion, e o
- * web só usa esta superfície dentro do material de vidro (issue #459): fora
- * dele, o dashboard segue zinc, como decidido no ADR-0025.
+ * web usa esta superfície dentro da classe `material-glass`, na raiz do
+ * dashboard e do admin (ADR-0048).
  *
  * `card` é o grupo da lista (`#1C1C1E`) e `background` é o preto atrás dela.
  */

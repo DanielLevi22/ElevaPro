@@ -26,7 +26,7 @@ const MuscleMapViewer = dynamic(
 
 function CanvasSkeleton() {
   return (
-    <div className="bg-surface border border-white/10 rounded-xl h-150 flex items-center justify-center">
+    <div className="glass rounded-xl h-150 flex items-center justify-center">
       <div className="flex flex-col items-center gap-3 text-muted-foreground">
         <div className="w-12 h-12 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
         <span className="text-sm">Carregando modelo 3D…</span>
@@ -401,9 +401,7 @@ export default function MuscleMapPage() {
       <>
         {cena}
         <div className="mt-4 space-y-4 md:hidden">
-          <div className="grid grid-cols-3 gap-4 rounded-2xl border border-border bg-surface px-4 py-3">
-            {resumoNumerico}
-          </div>
+          <div className="glass grid grid-cols-3 gap-4 rounded-2xl px-4 py-3">{resumoNumerico}</div>
           {painelMuscular}
         </div>
       </>

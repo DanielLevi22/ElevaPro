@@ -69,7 +69,7 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
           </p>
         </div>
       ) : (
-        <ul className="divide-y divide-border rounded-xl border border-border bg-surface">
+        <ul className="glass divide-y divide-border rounded-xl">
           {items.map((item) => {
             const Icone = ICONE[item.kind];
             return (

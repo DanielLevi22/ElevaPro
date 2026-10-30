@@ -131,7 +131,7 @@ export function MealEditor({ dietPlanId, dayOfWeek }: MealEditorProps) {
 
       <div className="space-y-4">
         {meals.length === 0 ? (
-          <div className="bg-surface border border-white/10 rounded-2xl p-8 space-y-6">
+          <div className="glass rounded-2xl p-8 space-y-6">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
                 <svg

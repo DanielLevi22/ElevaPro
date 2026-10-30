@@ -270,7 +270,7 @@ export default function UserDetailsPage() {
           )}
 
           {/* Basic Information */}
-          <div className="bg-surface border border-border rounded-xl p-6">
+          <div className="glass rounded-xl p-6">
             <h2 className="text-xl font-bold text-foreground mb-4">Informações Básicas</h2>
             {/* `<dl>` e não `<label>`: isto exibe pares rótulo-valor, não
                 formulário. `<label>` sem controle associado faz o leitor de
@@ -302,7 +302,7 @@ export default function UserDetailsPage() {
           </div>
 
           {/* Activity */}
-          <div className="bg-surface border border-border rounded-xl p-6">
+          <div className="glass rounded-xl p-6">
             <h2 className="text-xl font-bold text-foreground mb-4">Atividade</h2>
             <dl className="space-y-4">
               <div>
@@ -315,7 +315,7 @@ export default function UserDetailsPage() {
           </div>
 
           {/* Admin Notes */}
-          <div className="bg-surface border border-border rounded-xl p-6">
+          <div className="glass rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-foreground">Notas do Admin</h2>
               {!isEditing && (
@@ -365,7 +365,7 @@ export default function UserDetailsPage() {
         {/* Actions Sidebar */}
         <div className="space-y-6">
           {/* Account Status Actions */}
-          <div className="bg-surface border border-border rounded-xl p-6">
+          <div className="glass rounded-xl p-6">
             <h3 className="text-lg font-bold text-foreground mb-4">Gerenciar Status</h3>
             <div className="space-y-2">
               {user.account_status !== "active" && (
@@ -393,7 +393,7 @@ export default function UserDetailsPage() {
           </div>
 
           {/* Change Account Type */}
-          <div className="bg-surface border border-border rounded-xl p-6">
+          <div className="glass rounded-xl p-6">
             <h3 className="text-lg font-bold text-foreground mb-4">Mudar Tipo de Conta</h3>
             <div className="space-y-2">
               {(["admin", "specialist", "student", "member"] as const).map((type) => (

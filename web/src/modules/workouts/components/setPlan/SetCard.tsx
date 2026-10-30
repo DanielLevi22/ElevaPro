@@ -38,12 +38,7 @@ interface SetCardProps {
  */
 export function SetCard({ set, number, isOpen, onToggleOpen, onChange, onRemove }: SetCardProps) {
   return (
-    <div
-      className={cn(
-        "rounded-xl border bg-surface",
-        isOpen ? "border-primary/30" : "border-overlay-10",
-      )}
-    >
+    <div className={cn("glass rounded-xl", isOpen ? "border-primary/30" : "border-overlay-10")}>
       <div className="flex items-center gap-2 px-3 py-2.5">
         <SetHeader set={set} number={number} isOpen={isOpen} onToggleOpen={onToggleOpen} />
         <button
