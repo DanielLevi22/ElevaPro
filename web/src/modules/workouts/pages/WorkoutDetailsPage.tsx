@@ -11,6 +11,7 @@ import {
   updateExerciseAction,
 } from "@/app/dashboard/workouts/actions";
 import { Button } from "@/shared/components/ui/Button";
+import { ExerciseDemonstration } from "@/shared/components/ui/ExerciseDemonstration";
 import { SetPlanSummaryLine } from "@/shared/components/ui/SetPlanSummaryLine";
 import { useWorkout, useWorkoutItems, type WorkoutItem } from "@/shared/hooks/useWorkouts";
 import { CreateWorkoutModal } from "../components/CreateWorkoutModal";
@@ -254,6 +255,10 @@ export default function WorkoutDetailsPage() {
                   <p className="font-medium text-foreground truncate">
                     {item.exercise?.name ?? "Exercício desconhecido"}
                   </p>
+                  <ExerciseDemonstration
+                    videoUrl={item.exercise?.video_url}
+                    name={item.exercise?.name}
+                  />
                   {item.exercise?.muscle_group && (
                     <p className="text-xs text-muted-foreground">{item.exercise.muscle_group}</p>
                   )}

@@ -1,79 +1,86 @@
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
-import YoutubePlayer from 'react-native-youtube-iframe';
+import { exerciseVideoSource } from '@elevapro/shared';
+import { Image } from 'expo-image';
+import { useVideoPlayer, VideoView } from 'expo-video';
+import { cssInterop } from 'nativewind';
+import { useEffect, useState } from 'react';
+import { AppState, Text, View } from 'react-native';
+
+cssInterop(VideoView, { className: 'style' });
 
 interface VideoPlayerProps {
-  videoUrl: string;
-  height?: number;
+  videoUrl?: string | null;
   autoPlay?: boolean;
 }
 
-export function VideoPlayer({ videoUrl, height = 220, autoPlay = false }: VideoPlayerProps) {
-  const [isPlaying, setIsPlaying] = useState(autoPlay);
-  const [loading, setLoading] = useState(true);
-
-  const getVideoId = (url: string) => {
-    try {
-      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-      const match = url.match(regExp);
-      return match && match[2].length === 11 ? match[2] : null;
-    } catch (_error) {
-      return null;
-    }
-  };
-
-  const videoId = getVideoId(videoUrl);
-
-  const onStateChange = useCallback((state: string) => {
-    if (state === 'ended') {
-      setIsPlaying(false);
-    }
-  }, []);
-
-  if (!videoId) {
-    return (
-      <View
-        style={{
-          height,
-          backgroundColor: '#000',
-          justifyContent: 'center',
-          alignItems: 'center',
-          borderRadius: 12,
-        }}
-      >
-        <Text style={{ color: '#FFF' }}>Vídeo indisponível</Text>
-      </View>
-    );
+/** Demonstração em loop, preservando links de especialistas. @example <VideoPlayer videoUrl={exercise.video_url} /> */
+export function VideoPlayer({ videoUrl, autoPlay }: VideoPlayerProps) {
+  const source = exerciseVideoSource(videoUrl);
+  if (!source) return null;
+  if (source.kind === 'youtube') {
+    // O WebView só precisa inicializar quando existe um link do especialista.
+    const { YoutubeVideo } = require('./YoutubeVideo') as typeof import('./YoutubeVideo');
+    return <YoutubeVideo key={source.id} videoId={source.id} autoPlay={autoPlay ?? false} />;
   }
-
   return (
-    <View style={{ height, borderRadius: 12, overflow: 'hidden', backgroundColor: '#000' }}>
-      {loading && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1,
-          }}
-        >
-          <ActivityIndicator size="large" color="#FF6B35" />
-        </View>
-      )}
-      <YoutubePlayer
-        height={height}
-        play={isPlaying}
-        videoId={videoId}
-        onChangeState={onStateChange}
-        onReady={() => setLoading(false)}
-        webViewProps={{
-          androidLayerType: 'hardware', // Helps with performance on Android
-        }}
+    <FileVideo
+      key={source.uri}
+      uri={source.uri}
+      poster={source.poster}
+      autoPlay={autoPlay ?? true}
+    />
+  );
+}
+
+function FileVideo({ uri, poster, autoPlay }: { uri: string; poster?: string; autoPlay: boolean }) {
+  const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const player = useVideoPlayer({ uri, useCaching: false }, (instance) => {
+    instance.loop = true;
+    instance.muted = true;
+    if (autoPlay) instance.play();
+  });
+
+  useEffect(() => {
+    const status = player.addListener('statusChange', ({ status }) =>
+      setFailed(status === 'error')
+    );
+    const background = AppState.addEventListener('change', (state) => {
+      if (state === 'active' && autoPlay) player.play();
+      else player.pause();
+    });
+    return () => {
+      status.remove();
+      background.remove();
+    };
+  }, [player, autoPlay]);
+
+  if (failed)
+    return (
+      <Text accessibilityRole="alert" className="text-sm text-muted-foreground">
+        Demonstração indisponível. Tente abrir novamente.
+      </Text>
+    );
+  return (
+    <View className="aspect-video w-full overflow-hidden rounded-lg bg-muted">
+      <VideoView
+        testID="exercise-video"
+        accessibilityLabel="Demonstração do exercício"
+        player={player}
+        className="h-full w-full"
+        nativeControls
+        contentFit="contain"
+        onFirstFrameRender={() => setReady(true)}
       />
+      {!ready && poster ? (
+        <Image
+          accessibilityLabel="Capa da demonstração"
+          source={{ uri: poster }}
+          cachePolicy="none"
+          contentFit="contain"
+          pointerEvents="none"
+          className="absolute inset-0 h-full w-full"
+        />
+      ) : null}
     </View>
   );
 }

@@ -1,6 +1,7 @@
 import type { WorkoutExercise } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity, View } from 'react-native';
+import { ExerciseDemonstration } from '@/components/ExerciseDemonstration';
 import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
 import { useCores, useEscala } from '@/shared/design';
 import { prescriptionSummary } from '../store/sessionPlan';
@@ -49,23 +50,26 @@ export function ExercicioDoTreinoCard({
   onRemover,
 }: ExercicioDoTreinoCardProps) {
   return (
-    <LinhaDeVidro
-      icon="barbell"
-      tom="marca"
-      titulo={item.exercise?.name ?? 'Exercício'}
-      sub={resumoDoExercicio(item)}
-      onPress={onEditar}
-      direita={
-        <SetasDeOrdem
-          podeSubir={podeSubir}
-          podeDescer={podeDescer}
-          onSubir={onSubir}
-          onDescer={onDescer}
-          onRemover={onRemover}
-          nomeDoExercicio={item.exercise?.name}
-        />
-      }
-    />
+    <View>
+      <LinhaDeVidro
+        icon="barbell"
+        tom="marca"
+        titulo={item.exercise?.name ?? 'Exercício'}
+        sub={resumoDoExercicio(item)}
+        onPress={onEditar}
+        direita={
+          <SetasDeOrdem
+            podeSubir={podeSubir}
+            podeDescer={podeDescer}
+            onSubir={onSubir}
+            onDescer={onDescer}
+            onRemover={onRemover}
+            nomeDoExercicio={item.exercise?.name}
+          />
+        }
+      />
+      <ExerciseDemonstration videoUrl={item.exercise?.video_url} name={item.exercise?.name} />
+    </View>
   );
 }
 

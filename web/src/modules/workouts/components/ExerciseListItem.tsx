@@ -1,5 +1,6 @@
 "use client";
 
+import { ExerciseDemonstration } from "@/shared/components/ui/ExerciseDemonstration";
 import { SetPlanSummaryLine } from "@/shared/components/ui/SetPlanSummaryLine";
 import type { SelectedExercise } from "./ExerciseConfigModal";
 
@@ -54,6 +55,7 @@ export function ExerciseListItem({ exercise, index, onEdit, onRemove }: Exercise
       </div>
 
       <SetPlanSummaryLine plan={exercise.set_plan} />
+      <ExerciseDemonstration videoUrl={exercise.video_url} name={exercise.name} />
     </div>
   );
 }

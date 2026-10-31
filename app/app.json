@@ -52,6 +52,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-video",
       [
         "@kingstinct/react-native-healthkit",
         {

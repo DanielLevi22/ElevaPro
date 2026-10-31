@@ -6,7 +6,6 @@ import { GlassSheet } from '@/components/ui/GlassSheet';
 import { Group } from '@/components/ui/Group';
 import { Input } from '@/components/ui/Input';
 import { VideoPlayer } from '@/components/VideoPlayer';
-import { useEscala } from '@/shared/design';
 import type { Exercise, SelectedExercise } from '../store/workoutStore';
 
 interface ExerciseConfigModalProps {
@@ -34,7 +33,6 @@ export function ExerciseConfigModal({
   initialData,
   onSave,
 }: ExerciseConfigModalProps) {
-  const escalar = useEscala();
   const [sets, setSets] = useState(SETS_PADRAO);
   const [reps, setReps] = useState(REPS_PADRAO);
   const [weight, setWeight] = useState('');
@@ -139,7 +137,7 @@ export function ExerciseConfigModal({
 
       {videoUrl.trim() ? (
         <View className="mb-2 overflow-hidden rounded-lg border border-border">
-          <VideoPlayer videoUrl={videoUrl.trim()} height={escalar(180)} />
+          <VideoPlayer videoUrl={videoUrl.trim()} />
         </View>
       ) : null}
     </GlassSheet>

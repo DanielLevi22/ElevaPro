@@ -6,6 +6,7 @@ import {
 } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { ExerciseDemonstration } from '@/components/ExerciseDemonstration';
 import { showConfirm } from '@/components/ui/appAlert';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
 import { Button } from '@/components/ui/Button';
@@ -60,6 +61,7 @@ export function CartaoEmExecucao({
         <View className="absolute bottom-0 left-0 top-0 w-[0.1875rem] bg-primary" />
         <Identificacao item={item} onAjustar={onAjustar} onTrocar={onTrocar} />
         <FaixaDaPrescricao item={item} ganho={ganho} />
+        <ExerciseDemonstration videoUrl={item.exercise?.video_url} name={item.exercise?.name} />
       </View>
 
       <View className="px-[0.9375rem] pb-[0.9375rem] pt-[0.8125rem]">

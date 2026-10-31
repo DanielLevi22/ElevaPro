@@ -4,6 +4,7 @@ import { MUSCLE_GROUP_LABELS, type SetPlan, summarizeSetPlan } from "@elevapro/s
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
 import { Dialog } from "@/shared/components/ui/Dialog";
+import { ExerciseVideo } from "@/shared/components/ui/ExerciseVideo";
 import { SetPlanEditor } from "./setPlan/SetPlanEditor";
 import { defaultSetPlan } from "./setPlan/setPlanEditing";
 
@@ -86,6 +87,7 @@ export function ExerciseConfigModal({
         ) : null}
 
         <SetPlanEditor plan={plan} onChange={setPlan} />
+        {isOpen ? <ExerciseVideo videoUrl={exercise.video_url} name={exercise.name} /> : null}
       </div>
     </Dialog>
   );

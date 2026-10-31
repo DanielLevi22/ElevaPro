@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "manifest": "pilot.json",
+  "clips": [
+    {
+      "name": "Agachamento livre sem peso",
+      "source": "agachamento-livre-sem-peso.mp4",
+      "start": 2,
+      "duration": 6,
+      "version": 1
+    }
+  ]
+}

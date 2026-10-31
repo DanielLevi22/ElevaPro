@@ -73,3 +73,11 @@ supabase/.env
 /docs/catalog/meal-combinations/first-batch.json
 /docs/catalog/meal-combinations/second-batch.json
 /docs/catalog/meal-combinations/third-batch.json
+
+# Imagem de pessoas e referências de autorização ficam fora do histórico público.
+/docs/catalog/exercises/videos/raw/*
+!/docs/catalog/exercises/videos/raw/.gitkeep
+/docs/catalog/exercises/videos/processed/*
+!/docs/catalog/exercises/videos/processed/.gitkeep
+/docs/catalog/exercises/release.json
+/tmp/exercise-videos/

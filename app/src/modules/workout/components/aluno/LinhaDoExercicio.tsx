@@ -3,6 +3,7 @@ import { formatarCarga, summarizeSetPlan } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { ExerciseDemonstration } from '@/components/ExerciseDemonstration';
 import { DadoComIcone } from '@/components/ui/DadoComIcone';
 import { Vidro } from '@/components/ui/Vidro';
 import { useCores, useEscala } from '@/shared/design';
@@ -59,6 +60,7 @@ export function LinhaDoExercicio({ item, ordem, onMais }: LinhaDoExercicioProps)
           {resumo.rest ? <DadoComIcone icone="time-outline" texto={`${resumo.rest} s`} /> : null}
         </View>
         <PlanMethods item={item} />
+        <ExerciseDemonstration videoUrl={item.exercise?.video_url} name={item.exercise?.name} />
         <AnalyzeTechnique exerciseName={item.exercise?.name} />
       </View>
       {onMais ? (

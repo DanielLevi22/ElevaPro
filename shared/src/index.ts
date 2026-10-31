@@ -87,6 +87,7 @@ export * from "./utils/dietaryRestrictions";
 export * from "./utils/dietGoalSuggestion";
 export * from "./utils/dietStrategies";
 export * from "./utils/energyTargets";
+export * from "./utils/exerciseVideo";
 export * from "./utils/heartRateZones";
 export * from "./utils/journey";
 export * from "./utils/mealsOfDay";

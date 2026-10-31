@@ -42,6 +42,37 @@ Os usuários do sistema são os titulares dos dados. Têm os seguintes direitos 
 
 ## 2. Mapa de dados — o que coletamos e por quê
 
+### Demonstrações do catálogo de exercícios — #463 (31/10/2026, publicação pendente)
+
+`exercises.video_url` continua sendo o campo existente do catálogo genérico, sem
+migration. O novo acervo contém imagem identificável do demonstrador: não usar
+o tratamento das fotos genéricas de refeição como autorização para esse envio.
+Finalidade proposta: demonstrar movimentos no app/web. Destinatário proposto:
+ImageKit/CDN com entrega pública; titular é a pessoa filmada, não o aluno do treino.
+Não há filmagem, termo assinado ou publicação neste momento.
+
+A implementação local mantém brutos/clipes fora do Git, retira áudio/metadados na
+conversão e exige revisão técnica e referências ao termo assinado, revisão de
+privacidade e conferência de cota antes do upload. Referências não substituem
+documentos: controlador/encarregado deve validar base legal, escopo da cessão,
+operador/transferência, canal de retirada e retenção dos brutos, termos e evidências.
+**Revisão LGPD não aprovada para publicação** enquanto essas decisões estiverem pendentes.
+O prazo não foi presumido pela implementação. Termos ficam em repositório restrito.
+
+Escrita operacional usa credencial de servidor na CLI e limita a alteração a
+oficiais verificados, sem criador e ainda sem vídeo. Nenhuma credencial entra nos
+players; a leitura continua pela autorização existente de exercícios. Reprodução
+dos MP4 não ativa cache persistente de mídia no app. Runbook inicial de retirada,
+exclusão e purge está em `docs/catalog/exercises/README.md`; responsável é o
+controlador da seção 1. Logs da CLI não incluem o termo nem identidade do demonstrador.
+O histórico restrito de publicação no provedor ainda precisa ter retenção validada.
+
+Trava: `scripts/__tests__/exercise-videos.test.mjs`, "imagem de pessoa não é
+publicada sem referência ao termo assinado". Prova negativa em módulo descartável
+em memória: retirar a exigência de `imageReleaseRef` fez a trava falhar com
+`IMAGEM SEM AUTORIZAÇÃO`; o código real permaneceu restrito. Isso comprova a trava
+técnica, não a existência/validade de autorização ou conformidade jurídica.
+
 ### Catálogo de pratos e escolhas de refeição — #366 (08/10/2026)
 
 `meal_dishes`, `meal_dish_ingredients`, `meal_dish_preparations` e `media_assets`
