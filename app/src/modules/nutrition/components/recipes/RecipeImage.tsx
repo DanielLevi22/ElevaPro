@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Image, Text, View } from 'react-native';
 
 /** Foto remota de cat?logo; falha n?o bloqueia o preparo. @example <RecipeImage image={image} title={title} /> */
-export function RecipeImage({ image, title }: { image?: MealImage; title: string }) {
+export function RecipeImage({ image, title }: { image?: Pick<MealImage, 'url'>; title: string }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   if (!image || failedUrl === image.url)
     return (

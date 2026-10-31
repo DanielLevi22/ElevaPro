@@ -52,19 +52,24 @@ zero pratos/ingredientes/imagens já existentes. O artefato não muda status ou
 texto de um prato existente. Foto adicionada depois pode completar um rascunho
 sem imagem; um prato revisado não é reescrito pelo pipeline.
 
-## Revisão e consulta
+## Publicação e consulta
 
-Todos os candidatos nascem `draft`, inclusive os que têm foto. Não há passos ou
-tempos inventados. Publicação exige imagem verificada, ingredientes e ao menos um
-preparo válido; o admin com MFA faz a revisão. A consulta
-`match_meal_dishes(food_ids, limit, offset)` retorna somente publicados, ordena
-opções exatas primeiro e explicita alimentos restantes. Ela corresponde a
-composição, sem prometer proporções culinárias nem alterar gramagens.
+Todo candidato nasce `draft`. Na mesma transação, a importação publica o prato
+que ela criou ou completou com foto verificada, desde que tenha ingredientes
+(ADR-0049). Sem foto, segue rascunho. Não há passos ou tempos inventados: o
+preparo de um prato importado é o guia genérico que o aparelho monta com as
+porções da refeição. Um prato que o admin devolveu a rascunho ou arquivou não é
+republicado por uma nova execução.
+
+O app recebe os publicados por `/api/nutrition/recipes`, ao lado dos 16 pratos
+fixos, e casa no aparelho os alimentos da refeição com os de cada prato: o
+servidor não recebe o que o aluno come. A consulta
+`match_meal_dishes(food_ids, limit, offset)` continua disponível no banco e
+retorna somente publicados. Nenhuma das duas altera gramagens.
 
 Mudanças nos ingredientes da refeição removem escolhas incompatíveis. O aluno
 não altera o catálogo ou a prescrição do especialista. Seleção não registra
-consumo e não inicia preparo automaticamente. A integração das novas consultas
-ao editor e a tela de revisão ainda são etapas da issue #366.
+consumo e não inicia preparo automaticamente.
 
 ## Procedência e portabilidade
 

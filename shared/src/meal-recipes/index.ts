@@ -1,4 +1,5 @@
 export type {
+  CatalogDish,
   FoodFamily,
   FoodState,
   MealCookingStep,

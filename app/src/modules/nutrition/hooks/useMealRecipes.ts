@@ -4,7 +4,12 @@ import { useCallback, useState } from 'react';
 import { useAuthStore } from '@/auth';
 import { loadMealRecipeCatalog } from '../services/MealCatalogService';
 import { loadMealRecipeContext, type MealRecipeContext } from '../services/mealRecipeContext';
-import { getMealPreparation, getMealRecipeOptions } from '../services/mealRecipes';
+import {
+  dishPreparation,
+  getMealPreparation,
+  getMealRecipeOptions,
+  matchCatalogDishes,
+} from '../services/mealRecipes';
 
 type ContextState = MealRecipeContext | { status: 'loading' | 'error' };
 
@@ -43,7 +48,8 @@ export function useMealRecipes(mealId: string, date: string, requireCatalog = tr
     queryKey: ['meal-recipe-catalog', 1],
     queryFn: () => loadMealRecipeCatalog(token),
     enabled: requireCatalog && mealContext.status === 'ready' && !!token,
-    staleTime: 60_000,
+    // ~7 mil pratos: o catálogo muda no deploy, não a cada abertura da tela.
+    staleTime: 30 * 60_000,
     retry: 1,
   });
   const context: ContextState =
@@ -54,13 +60,16 @@ export function useMealRecipes(mealId: string, date: string, requireCatalog = tr
   const definitions = catalog.data?.recipes ?? [];
   const images = catalog.data?.images ?? [];
   const match = getMealRecipeOptions(items, definitions);
+  const dishes = matchCatalogDishes(items, catalog.data?.dishes ?? []);
+  const selectedId = selection?.scope === scope ? selection.id : null;
   const selected =
-    selection?.scope === scope
-      ? (match.options.find((option) => option.id === selection.id) ?? null)
-      : null;
+    match.options.find((option) => option.id === selectedId) ??
+    dishes.find((dish) => dish.id === selectedId) ??
+    null;
   return {
     context,
     match,
+    dishes,
     selected,
     images,
     choose: (id: string) => setSelection({ scope, id }),
@@ -69,6 +78,8 @@ export function useMealRecipes(mealId: string, date: string, requireCatalog = tr
       if (requireCatalog) void catalog.refetch();
     },
     prepare: (recipeId?: string) => {
+      const dish = dishes.find((option) => option.id === recipeId);
+      if (dish) return dishPreparation(items, dish);
       const preparation = getMealPreparation(items, recipeId, definitions);
       if (!preparation) return null;
       const definition = definitions.find((recipe) => recipe.id === recipeId);

@@ -1,8 +1,8 @@
 import { Text, View } from 'react-native';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
-import type { RecipeIngredient } from '../../services/mealRecipes';
+import type { ListedIngredient } from '../../services/mealRecipes';
 
-export function RecipeIngredients({ ingredients }: { ingredients: readonly RecipeIngredient[] }) {
+export function RecipeIngredients({ ingredients }: { ingredients: readonly ListedIngredient[] }) {
   return (
     <View className="mt-4">
       <TituloDeSecao estilo="rotulo">Suas porções</TituloDeSecao>

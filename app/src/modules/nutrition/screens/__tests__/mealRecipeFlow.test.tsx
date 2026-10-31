@@ -144,6 +144,46 @@ it('troca de conta limpa pratos e seleção imediatamente', async () => {
   await screen.findByText('Essa refeição não está no seu plano ativo ou na data aberta.');
 });
 
+it('mostra o prato importado do catálogo e abre o preparo dele com a foto', async () => {
+  const QUINOA = '11111111-1111-4111-8111-111111111111';
+  mockMeals.mockResolvedValue([
+    {
+      id: 'meal-a',
+      diet_plan_id: 'plan-student-a',
+      day_of_week: null,
+      name: 'Almoço',
+      diet_meal_items: [
+        { id: 'quinoa', quantity: 120, unit: 'g', food: { id: QUINOA, name: 'Quinoa cozida' } },
+      ],
+    },
+  ]);
+  mockCatalogFetch.mockResolvedValue({
+    version: 1,
+    recipes: [],
+    images: [],
+    dishes: [
+      {
+        id: 'candidate-0000000000000001',
+        title: 'Prato: Quinoa cozida',
+        imageUrl: 'https://cdn.test/quinoa.jpg',
+        foodIds: [QUINOA],
+      },
+    ],
+  });
+  await render(<MealRecipeScreen mealId="meal-a" date="2026-10-04" />);
+  await fireEvent.press(await screen.findByLabelText('Escolher Prato: Quinoa cozida'));
+  expect(screen.getByText('Leva todos os alimentos da sua refeição.')).toBeTruthy();
+  await fireEvent.press(screen.getByLabelText('Ver preparo'));
+  const recipeId = 'candidate-0000000000000001';
+  expect(mockPush).toHaveBeenCalledWith({
+    pathname: '/(tabs)/nutrition/cooking',
+    params: { mealId: 'meal-a', date: '2026-10-04', recipeId },
+  });
+  await render(<CookingScreen mealId="meal-a" date="2026-10-04" recipeId={recipeId} />);
+  expect(await screen.findByLabelText('Imagem ilustrativa de Prato: Quinoa cozida')).toBeTruthy();
+  expect(mockWrite).not.toHaveBeenCalled();
+});
+
 function render(element: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retryDelay: 0 } } });
   testClients.push(client);

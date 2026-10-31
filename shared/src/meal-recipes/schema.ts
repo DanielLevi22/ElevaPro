@@ -3,6 +3,10 @@ import { FOOD_FAMILIES, FOOD_STATES } from "./constants";
 
 const identifier = z.string().regex(/^[a-z0-9][a-z0-9-]{0,99}$/);
 const families = z.array(z.enum(FOOD_FAMILIES)).max(16);
+const imageUrl = z
+  .string()
+  .max(500)
+  .refine((value) => value.startsWith("/meal-images/") || /^https:\/\//.test(value));
 const image = z.object({
   id: identifier,
   version: z.number().int().positive(),
@@ -10,7 +14,7 @@ const image = z.object({
   bytes: z.number().int().positive().max(3_000_000),
   sha256: z.string().regex(/^[a-f0-9]{64}$/),
   contentType: z.enum(["image/jpeg", "image/png", "image/webp"]),
-  url: z.string().refine((value) => value.startsWith("/meal-images/") || /^https:\/\//.test(value)),
+  url: imageUrl,
 });
 const recipe = z.object({
   id: identifier,
@@ -33,8 +37,17 @@ const recipe = z.object({
     .min(1)
     .max(50),
 });
+const dish = z.object({
+  id: identifier,
+  title: z.string().min(1).max(240),
+  imageUrl,
+  foodIds: z.array(z.guid()).min(1).max(16),
+});
 export const mealRecipeCatalogSchema = z.object({
   version: z.literal(1),
   recipes: z.array(recipe).max(500),
   images: z.array(image).max(500),
+  // Opcional no contrato: aparelho antigo descarta a chave, e servidor antigo
+  // ainda responde sem ela.
+  dishes: z.array(dish).max(25_000).default([]),
 });

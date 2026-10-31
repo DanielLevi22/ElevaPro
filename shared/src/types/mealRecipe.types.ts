@@ -54,8 +54,20 @@ export interface RecipeDefinition {
   steps: readonly MealCookingStep[];
 }
 
+/**
+ * Prato do catálogo importado: só composição e foto, sem passo a passo próprio.
+ * O preparo é o guia genérico que o aparelho monta com as porções da refeição.
+ */
+export interface CatalogDish {
+  id: string;
+  title: string;
+  imageUrl: string;
+  foodIds: string[];
+}
+
 export interface MealRecipeCatalog {
   version: 1;
   recipes: RecipeDefinition[];
   images: MealImage[];
+  dishes: CatalogDish[];
 }

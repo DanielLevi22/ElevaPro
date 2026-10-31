@@ -18,6 +18,7 @@ DECLARE
   v_meal uuid;
   v_dish text := 'candidate-ffffffffffffff01';
   v_draft text := 'candidate-ffffffffffffff02';
+  v_photo text := 'candidate-ffffffffffffff03';
   v_catalog jsonb;
   v_result jsonb;
   v_match record;
@@ -35,16 +36,31 @@ BEGIN
   INSERT INTO public.foods(name, category) VALUES ('Catalog test side', 'hortalica') RETURNING id INTO v_other_food;
   v_catalog := jsonb_build_object('dishes', jsonb_build_array(
     jsonb_build_object('id', v_dish, 'title', 'Prato de teste', 'template', 'savory_plate', 'status', 'draft', 'ingredients', jsonb_build_array('Catalog test rice')),
-    jsonb_build_object('id', v_draft, 'title', 'Rascunho de teste', 'template', 'savory_plate', 'status', 'draft', 'ingredients', jsonb_build_array('Catalog test side'))
-  ), 'assets', '[]'::jsonb);
+    jsonb_build_object('id', v_draft, 'title', 'Rascunho de teste', 'template', 'savory_plate', 'status', 'draft', 'ingredients', jsonb_build_array('Catalog test side')),
+    jsonb_build_object('id', v_photo, 'title', 'Prato com foto', 'template', 'savory_plate', 'status', 'draft', 'image_id', 'photo-' || v_photo,
+      'ingredients', jsonb_build_array('Catalog test rice', 'Catalog test side'))
+  ), 'assets', jsonb_build_array(jsonb_build_object('id', 'photo-' || v_photo, 'version', 1, 'storage_path', 'meal-images/test-catalog-03.jpg',
+    'delivery_base_url', 'https://example.com', 'content_type', 'image/jpeg', 'bytes', 10, 'sha256', repeat('b', 64), 'verified_at', now())));
   v_result := public.import_meal_catalog(v_catalog, false);
   IF EXISTS (SELECT 1 FROM public.meal_dishes WHERE id = v_dish) THEN RAISE EXCEPTION 'DRY-RUN ESCREVEU: simulação alterou catálogo'; END IF;
   v_result := public.import_meal_catalog(v_catalog, true);
-  IF (v_result->>'insertedDishes')::integer <> 2 THEN RAISE EXCEPTION 'IMPORTAÇÃO INCOMPLETA: não cadastrou os dois pratos'; END IF;
+  IF (v_result->>'insertedDishes')::integer <> 3 THEN RAISE EXCEPTION 'IMPORTAÇÃO INCOMPLETA: não cadastrou os três pratos'; END IF;
+  -- ADR-0049: foto verificada publica; sem foto o prato segue rascunho.
+  IF NOT EXISTS (SELECT 1 FROM public.meal_dishes WHERE id = v_photo AND status = 'published') THEN
+    RAISE EXCEPTION 'FOTO SEM PUBLICAÇÃO: prato com imagem verificada continuou rascunho';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.meal_dishes WHERE id IN (v_dish, v_draft) AND status <> 'draft') THEN
+    RAISE EXCEPTION 'PUBLICAÇÃO SEM FOTO: prato sem imagem saiu de rascunho';
+  END IF;
+  UPDATE public.meal_dishes SET status = 'draft' WHERE id = v_photo;
   v_result := public.import_meal_catalog(v_catalog, true);
   IF (v_result->>'insertedDishes')::integer <> 0 OR (v_result->>'insertedIngredients')::integer <> 0 THEN
     RAISE EXCEPTION 'CATÁLOGO DUPLICADO: reexecução inseriu pratos ou ingredientes';
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.meal_dishes WHERE id = v_photo AND status = 'draft') THEN
+    RAISE EXCEPTION 'DECISÃO DO ADMIN DESFEITA: reexecução republicou prato devolvido a rascunho';
+  END IF;
+  UPDATE public.meal_dishes SET status = 'archived' WHERE id = v_photo;
   BEGIN
     PERFORM public.import_meal_catalog(jsonb_set(v_catalog, '{dishes,1,ingredients}', '["Catalog nonexistent food"]'), true);
     RAISE EXCEPTION 'ALIMENTO INVENTADO: importação aceitou nome inexistente';
@@ -54,7 +70,7 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.meal_dishes WHERE id = v_draft) THEN RAISE EXCEPTION 'ROLLBACK INCOMPLETO: importação inválida alterou prato existente'; END IF;
   BEGIN
     UPDATE public.meal_dishes SET status = 'published' WHERE id = v_dish;
-    RAISE EXCEPTION 'RECEITA SEM PREPARO: prato incompleto foi publicado';
+    RAISE EXCEPTION 'PRATO SEM FOTO: prato incompleto foi publicado';
   EXCEPTION WHEN check_violation THEN NULL;
   END;
   INSERT INTO public.media_assets(id, version, storage_path, delivery_base_url, content_type, bytes, sha256, verified_at)

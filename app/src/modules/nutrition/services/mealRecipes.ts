@@ -8,7 +8,10 @@ import type {
   RecipeMatchResult,
 } from './recipes/types';
 
+export { dishPreparation, matchCatalogDishes } from './recipes/dishes';
 export type {
+  DishOption,
+  ListedIngredient,
   MealCookingStep,
   MealPreparation,
   MealRecipeOption,

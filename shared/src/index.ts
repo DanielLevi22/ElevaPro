@@ -38,6 +38,7 @@ export * from "./services/progress/journey.service";
 export * from "./services/progress/measurement.service";
 export * from "./services/progress/progress.service";
 export * from "./services/progress/weeklyReport.service";
+export { readAllPages } from "./services/readAllPages";
 export * from "./services/students/linkCode.service";
 export * from "./services/students/specialistNote.service";
 export * from "./services/students/students.service";

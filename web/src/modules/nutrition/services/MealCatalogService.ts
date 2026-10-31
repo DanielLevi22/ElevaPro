@@ -1,9 +1,12 @@
-import { type MealRecipeCatalog, parseMealRecipeCatalog } from "@elevapro/shared";
+import { type CatalogDish, type MealRecipeCatalog, parseMealRecipeCatalog } from "@elevapro/shared";
 import recipes from "./recipes/catalog.json";
 import manifest from "./recipes/mediaManifest.json";
 
-/** Resolve fotos por ID próprio sem expor configuração privada. @example getMealRecipeCatalog(base) */
-export function getMealRecipeCatalog(base = "/"): MealRecipeCatalog {
+/** Resolve fotos por ID próprio sem expor configuração privada. @example getMealRecipeCatalog(base, dishes) */
+export function getMealRecipeCatalog(
+  base = "/",
+  dishes: readonly CatalogDish[] = [],
+): MealRecipeCatalog {
   if (base !== "/") {
     const endpoint = new URL(base);
     if (
@@ -22,5 +25,6 @@ export function getMealRecipeCatalog(base = "/"): MealRecipeCatalog {
     version: 1,
     recipes,
     images: manifest.assets.map((asset) => ({ ...asset, url: `${normalized}${asset.path}` })),
+    dishes,
   });
 }

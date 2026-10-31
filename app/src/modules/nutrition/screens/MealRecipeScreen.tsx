@@ -11,7 +11,7 @@ import { RecipeHeader } from '../components/recipes/RecipeHeader';
 import { RecipeImage } from '../components/recipes/RecipeImage';
 import { RecipeIngredients } from '../components/recipes/RecipeIngredients';
 import { useMealRecipes } from '../hooks/useMealRecipes';
-import type { MealRecipeOption } from '../services/mealRecipes';
+import type { DishOption } from '../services/mealRecipes';
 
 /** Escolher não cozinha nem registra consumo. @example <MealRecipeScreen mealId={id} date={date} /> */
 export function MealRecipeScreen({ mealId, date }: { mealId: string; date: string }) {
@@ -61,17 +61,28 @@ export function MealRecipeScreen({ mealId, date }: { mealId: string; date: strin
             Receitas ainda em teste culinário. Imagens geradas por IA são ilustrativas; siga sua
             lista de ingredientes.
           </Text>
-          {recipes.match.options.length ? (
-            recipes.match.options.map((option) => (
-              <RecipeCard
-                key={option.id}
-                option={option}
-                image={recipes.images.find((image) => image.id === option.imageId)}
-                selected={selected?.id === option.id}
-                onChoose={() => recipes.choose(option.id)}
-              />
-            ))
-          ) : (
+          {recipes.match.options.map((option) => (
+            <RecipeCard
+              key={option.id}
+              title={option.title}
+              details={option.description}
+              meta={`${option.minutes} min · ${option.equipment}`}
+              image={recipes.images.find((image) => image.id === option.imageId)}
+              selected={selected?.id === option.id}
+              onChoose={() => recipes.choose(option.id)}
+            />
+          ))}
+          {recipes.dishes.map((dish) => (
+            <RecipeCard
+              key={dish.id}
+              title={dish.title}
+              details={dishDetails(dish)}
+              image={{ url: dish.imageUrl }}
+              selected={selected?.id === dish.id}
+              onChoose={() => recipes.choose(dish.id)}
+            />
+          ))}
+          {recipes.match.options.length || recipes.dishes.length ? null : (
             <RecipeFeedback status="empty" message={recipes.match.unavailableReason ?? undefined} />
           )}
           {selected ? <RecipeIngredients ingredients={selected.ingredients} /> : null}
@@ -81,14 +92,23 @@ export function MealRecipeScreen({ mealId, date }: { mealId: string; date: strin
   );
 }
 
+function dishDetails(dish: DishOption): string {
+  if (!dish.sides.length) return 'Leva todos os alimentos da sua refeição.';
+  return `À parte: ${dish.sides.map((side) => side.name).join(', ')}.`;
+}
+
 function RecipeCard({
-  option,
+  title,
+  details,
+  meta,
   image,
   selected,
   onChoose,
 }: {
-  option: MealRecipeOption;
-  image?: MealImage;
+  title: string;
+  details: string;
+  meta?: string;
+  image?: Pick<MealImage, 'url'>;
   selected: boolean;
   onChoose: () => void;
 }) {
@@ -96,19 +116,19 @@ function RecipeCard({
     <View className="mb-4">
       <TouchableOpacity
         accessibilityRole="button"
-        accessibilityLabel={`Escolher ${option.title}`}
+        accessibilityLabel={`Escolher ${title}`}
         accessibilityState={{ selected }}
         onPress={onChoose}
         activeOpacity={0.85}
       >
         <Vidro destaque={selected}>
-          <RecipeImage image={image} title={option.title} />
+          <RecipeImage image={image} title={title} />
           <View className="p-4">
-            <Text className="text-[1.125rem] font-bold text-foreground">{option.title}</Text>
-            <Text className="mt-1 text-legenda text-muted-foreground">{option.description}</Text>
-            <Text className="mt-3 text-legenda font-semibold text-foreground">
-              {option.minutes} min · {option.equipment}
-            </Text>
+            <Text className="text-[1.125rem] font-bold text-foreground">{title}</Text>
+            <Text className="mt-1 text-legenda text-muted-foreground">{details}</Text>
+            {meta ? (
+              <Text className="mt-3 text-legenda font-semibold text-foreground">{meta}</Text>
+            ) : null}
             <Text className="mt-3 text-legenda font-bold text-primary">
               {selected ? 'Selecionado · veja suas porções abaixo' : 'Escolher este prato'}
             </Text>

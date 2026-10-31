@@ -5,7 +5,7 @@ Universo das regras atuais: **18806 candidatos**. Imagens novas concluídas: **7
 
 Este é um checklist de produção, não uma prescrição. As combinações são candidatas e precisam de revisão culinária; não garantem adequação nutricional, alergênica ou ao plano. Estados cru/cozido e preparo devem ser confirmados antes de ativar uma receita no app. Não enumera todas as receitas possíveis do mundo ou todas as quantidades.
 
-Uma caixa só é marcada após gerar, revisar visualmente, enviar e conferir tamanho/SHA-256 no storage. Ter uma foto não aprova ou ativa a receita. Originais ficam no ImageKit; a fila guarda só metadados e prompts. As 16 fotos do catálogo anterior permanecem no manifesto ativo e não são contadas como novas.
+Uma caixa só é marcada após gerar, revisar visualmente, enviar e conferir tamanho/SHA-256 no storage. Foto verificada publica o prato no cardápio do aluno na importação seguinte (ADR-0049); a revisão culinária segue pendente e o admin pode arquivá-lo. Originais ficam no ImageKit; a fila guarda só metadados e prompts. As 16 fotos do catálogo anterior permanecem no manifesto ativo e não são contadas como novas.
 
 Reprodução: `node scripts/meal-catalog.mjs checklist`. Ledger: [production.json](./production.json). Regras: [candidates.mjs](../../../scripts/meal-catalog/candidates.mjs).
 
