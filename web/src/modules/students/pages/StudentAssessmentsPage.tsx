@@ -46,7 +46,7 @@ function AssessmentCard({
   const bmi = bodyMassIndex(assessment);
 
   return (
-    <div className="bg-surface border border-white/10 rounded-2xl p-5 space-y-4">
+    <div className="glass rounded-2xl p-5 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -181,10 +181,7 @@ function StudentAssessmentContent({
       {isLoading && (
         <div className="flex flex-col gap-4">
           {[1, 2].map((i) => (
-            <div
-              key={i}
-              className="bg-surface border border-white/10 rounded-2xl p-5 animate-pulse h-36"
-            />
+            <div key={i} className="glass rounded-2xl p-5 animate-pulse h-36" />
           ))}
         </div>
       )}
@@ -194,7 +191,7 @@ function StudentAssessmentContent({
       )}
 
       {!isLoading && !isError && assessments.length === 0 && (
-        <div className="text-center py-16 bg-surface border border-white/10 rounded-2xl">
+        <div className="glass text-center py-16 rounded-2xl">
           <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg
               aria-hidden="true"

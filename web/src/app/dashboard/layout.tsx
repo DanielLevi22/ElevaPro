@@ -87,7 +87,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (isLoading || !hasVerifiedAccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="material-glass min-h-screen flex items-center justify-center">
         <div className="relative">
           <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
           <div className="absolute inset-0 blur-xl bg-primary/20 animate-pulse rounded-full" />
@@ -369,7 +369,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       ];
 
   return (
-    <div className="min-h-screen bg-background text-muted-foreground font-sans selection:bg-primary/30 selection:text-foreground">
+    <div className="material-glass min-h-screen font-sans selection:bg-primary/30 selection:text-foreground">
       {/* Visual background accents */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -ml-64 -mt-64" />

@@ -39,7 +39,7 @@ function PlanCard({ plan, periodizationId }: { plan: TrainingPlan; periodization
   return (
     <Link
       href={`/dashboard/workouts/periodizations/${periodizationId}/phases/${plan.id}`}
-      className="group bg-surface border border-overlay-10 rounded-xl p-4 hover:border-primary/40 transition-all flex items-center justify-between gap-4"
+      className="glass group rounded-xl p-4 hover:border-primary/40 transition-all flex items-center justify-between gap-4"
     >
       <div className="flex items-center gap-4 flex-1 min-w-0">
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
@@ -142,7 +142,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
       </div>
 
       {/* Header card */}
-      <div className="bg-surface border border-overlay-10 rounded-2xl p-6">
+      <div className="glass rounded-2xl p-6">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-1">
@@ -218,7 +218,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
         </div>
 
         {plans.length === 0 ? (
-          <div className="bg-surface border border-overlay-10 rounded-2xl p-8 text-center">
+          <div className="glass rounded-2xl p-8 text-center">
             <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
               <svg
                 aria-hidden="true"

@@ -26,7 +26,7 @@ export function DietDetailsSkeleton() {
       </div>
 
       {/* Content Skeleton */}
-      <div className="bg-surface border border-white/10 rounded-xl p-8 space-y-6">
+      <div className="glass rounded-xl p-8 space-y-6">
         <Skeleton className="h-12 w-1/3" />
         <div className="space-y-4">
           <Skeleton className="h-24 w-full" />

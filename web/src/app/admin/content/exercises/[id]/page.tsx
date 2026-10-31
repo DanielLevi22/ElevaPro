@@ -129,7 +129,7 @@ export default function EditExercisePage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-surface border border-border rounded-xl p-6 space-y-4">
+        <div className="glass rounded-xl p-6 space-y-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1">
               Nome

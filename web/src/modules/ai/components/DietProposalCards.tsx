@@ -32,7 +32,7 @@ export function DietPlanProposalCard({ data, saved, loading, onApprove, onAdjust
 
   return (
     <div className="mx-auto max-w-lg">
-      <div className="space-y-4 rounded-2xl border border-primary/30 bg-surface p-5">
+      <div className="glass space-y-4 rounded-2xl border-primary/30 p-5">
         <div className="flex items-center justify-between">
           <h4 className="font-semibold text-foreground">Proposta de Plano Alimentar</h4>
           <span
@@ -125,7 +125,7 @@ interface MealsProps {
 export function DietMealsProposalCard({ data, saved, loading, onApprove, onAdjust }: MealsProps) {
   return (
     <div className="mx-auto max-w-lg">
-      <div className="space-y-4 rounded-2xl border border-primary/30 bg-surface p-5">
+      <div className="glass space-y-4 rounded-2xl border-primary/30 p-5">
         <div className="flex items-center justify-between">
           <h4 className="font-semibold text-foreground">Proposta de Refeições</h4>
           <span

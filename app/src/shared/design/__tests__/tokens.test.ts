@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { comOpacidade, coresDoTema, mixColors } from '../cores';
 import { fatorDaTela, REM_BASE } from '../escalaDeTexto';
 import { gerarGlobalCss } from '../globalCss';
-import { escala, hslParaHex, marca, metrica, paleta } from '../tokens';
+import { brand, escala, hslParaHex, metric, paletteByTheme } from '../tokens';
 
 /**
  * Este arquivo substitui `src/constants/__tests__/colors.test.ts`, que travava
@@ -41,37 +41,37 @@ describe('hslParaHex', () => {
    * rótulo e mude a cor de marca das duas plataformas sem perceber.
    */
   it('segue o triplete de marca, e não o rótulo hexadecimal ao lado dele', () => {
-    expect(hslParaHex(marca.lime)).toBe('#99ff00');
-    expect(hslParaHex(marca.cyberBlue)).toBe('#00eeff');
-    expect(hslParaHex(marca.hotPink)).toBe('#ff0099');
+    expect(hslParaHex(brand.lime)).toBe('#99ff00');
+    expect(hslParaHex(brand.cyberBlue)).toBe('#00eeff');
+    expect(hslParaHex(brand.hotPink)).toBe('#ff0099');
   });
 
   it('reproduz as cores de métrica do kit de vidro', () => {
     // Os tripletes foram calculados à mão a partir dos hexadecimais do
     // `home-glass.html`; é este teste que verifica a conta.
-    expect(hslParaHex(metrica.passos)).toBe('#34d399');
-    expect(hslParaHex(metrica.calorias)).toBe('#fb923c');
-    expect(hslParaHex(metrica.sono)).toBe('#818cf8');
-    expect(hslParaHex(metrica.carboidrato)).toBe('#a3e635');
-    expect(hslParaHex(metrica.gordura)).toBe('#fbbf24');
+    expect(hslParaHex(metric.passos)).toBe('#34d399');
+    expect(hslParaHex(metric.calorias)).toBe('#fb923c');
+    expect(hslParaHex(metric.sono)).toBe('#818cf8');
+    expect(hslParaHex(metric.carboidrato)).toBe('#a3e635');
+    expect(hslParaHex(metric.gordura)).toBe('#fbbf24');
   });
 
   it('reproduz as cores de batimento, ritmo e cadência do kit de cardio', () => {
     // Do `cardio-flow-glass.html`: --hr, --pace e --cad.
-    expect(hslParaHex(metrica.batimento)).toBe('#f87171');
-    expect(hslParaHex(metrica.ritmo)).toBe('#38bdf8');
-    expect(hslParaHex(metrica.cadencia)).toBe('#c084fc');
+    expect(hslParaHex(metric.batimento)).toBe('#f87171');
+    expect(hslParaHex(metric.ritmo)).toBe('#38bdf8');
+    expect(hslParaHex(metric.cadencia)).toBe('#c084fc');
   });
 
   it('reproduz o fundo do kit de vidro, que não é preto puro', () => {
     // O fluxo chapado usa #000 e o de vidro usa #07080a; o app é vidro.
-    expect(hslParaHex(paleta.escuro.hsl.background)).toBe('#07080a');
-    expect(hslParaHex(paleta.claro.hsl.background)).toBe('#efeff4');
+    expect(hslParaHex(paletteByTheme.escuro.hsl.background)).toBe('#07080a');
+    expect(hslParaHex(paletteByTheme.claro.hsl.background)).toBe('#efeff4');
   });
 
   it('reproduz as superfícies iOS sem deriva de arredondamento', () => {
-    expect(hslParaHex(paleta.escuro.hsl.card)).toBe('#1c1c1e');
-    expect(hslParaHex(paleta.claro.hsl.card)).toBe('#ffffff');
+    expect(hslParaHex(paletteByTheme.escuro.hsl.card)).toBe('#1c1c1e');
+    expect(hslParaHex(paletteByTheme.claro.hsl.card)).toBe('#ffffff');
   });
 
   it('recusa triplete malformado dizendo o valor e o formato esperado', () => {

@@ -69,7 +69,7 @@ export function SpecialistNotes({ studentId, studentName }: SpecialistNotesProps
       </p>
 
       {canWrite ? (
-        <div className="rounded-2xl border border-border bg-surface p-4">
+        <div className="glass rounded-2xl p-4">
           <Textarea
             value={draft}
             onChange={(event) => setDraft(event.target.value.slice(0, NOTE_MAX_LENGTH))}
@@ -158,7 +158,7 @@ function NoteCard({
   // a correção feita na mesma tarde também mudou o que a nota diz.
   const corrected = note.updated_at !== note.created_at;
   return (
-    <li className="rounded-2xl border border-border bg-surface p-4">
+    <li className="glass rounded-2xl p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold text-foreground">

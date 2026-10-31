@@ -58,7 +58,7 @@ export function ProgressCharts({ studentId, startDate, endDate }: ProgressCharts
     return (
       <div className="space-y-6">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-surface border border-white/10 rounded-xl p-6 animate-pulse">
+          <div key={i} className="glass rounded-xl p-6 animate-pulse">
             <div className="h-6 bg-white/10 rounded w-1/4 mb-4" />
             <div className="h-64 bg-white/10 rounded" />
           </div>
@@ -127,7 +127,7 @@ export function ProgressCharts({ studentId, startDate, endDate }: ProgressCharts
     <div className="space-y-6">
       {/* Weight Evolution Chart */}
       {weightData.length > 0 && (
-        <div className="bg-surface border border-white/10 rounded-xl p-6">
+        <div className="glass rounded-xl p-6">
           <h3 className="text-lg font-bold text-foreground mb-4">Evolução de Peso</h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={weightData}>
@@ -163,7 +163,7 @@ export function ProgressCharts({ studentId, startDate, endDate }: ProgressCharts
 
       {/* Macro Consumption Chart */}
       {macroData.length > 0 && (
-        <div className="bg-surface border border-white/10 rounded-xl p-6">
+        <div className="glass rounded-xl p-6">
           <h3 className="text-lg font-bold text-foreground mb-4">Consumo de Macros</h3>
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={macroData}>
@@ -214,7 +214,7 @@ export function ProgressCharts({ studentId, startDate, endDate }: ProgressCharts
 
       {/* Adherence Chart */}
       {adherencePercentageData.length > 0 && (
-        <div className="bg-surface border border-white/10 rounded-xl p-6">
+        <div className="glass rounded-xl p-6">
           <h3 className="text-lg font-bold text-foreground mb-4">Aderência à Dieta</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={adherencePercentageData}>
@@ -245,7 +245,7 @@ export function ProgressCharts({ studentId, startDate, endDate }: ProgressCharts
       {weightData.length === 0 &&
         macroData.length === 0 &&
         adherencePercentageData.length === 0 && (
-          <div className="bg-surface border border-white/10 rounded-xl p-12 text-center">
+          <div className="glass rounded-xl p-12 text-center">
             <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
                 aria-hidden="true"

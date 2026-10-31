@@ -62,14 +62,14 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
       </h2>
 
       {items.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border bg-card/50 p-8 text-center">
+        <div className="glass rounded-xl border-dashed p-8 text-center">
           <p className="text-sm text-muted-foreground">
             Nenhum aluno registrou atividade ainda. Assim que treinarem ou marcarem uma refeição,
             aparece aqui.
           </p>
         </div>
       ) : (
-        <ul className="divide-y divide-border rounded-xl border border-border bg-surface">
+        <ul className="glass divide-y divide-border rounded-xl">
           {items.map((item) => {
             const Icone = ICONE[item.kind];
             return (

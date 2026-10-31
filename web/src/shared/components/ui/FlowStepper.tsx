@@ -43,7 +43,7 @@ function stepLabelClass(done: boolean, active: boolean): string {
  */
 export function FlowStepper({ steps, currentStep }: FlowStepperProps) {
   return (
-    <div className="bg-surface border border-overlay-10 rounded-2xl px-6 py-4">
+    <div className="glass rounded-2xl px-6 py-4">
       <div className="flex flex-col md:flex-row md:items-start md:gap-2">
         {steps.map((step, i) => {
           const done = step.n < currentStep;

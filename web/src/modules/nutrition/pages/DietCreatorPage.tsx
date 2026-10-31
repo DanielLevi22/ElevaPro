@@ -317,7 +317,7 @@ export function DietCreatorPage() {
             {strategyDetails.weeklySchedule.map((day) => (
               <li
                 key={day.dayOfWeek}
-                className="flex justify-between items-center gap-3 p-3 rounded-xl bg-surface border border-border"
+                className="glass flex justify-between items-center gap-3 p-3 rounded-xl"
               >
                 <span className="flex items-center gap-3 min-w-0">
                   <span className="w-7 h-7 shrink-0 rounded-lg bg-primary/10 text-primary-text flex items-center justify-center text-[9px] font-extrabold">

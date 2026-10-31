@@ -231,7 +231,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
       </div>
 
       {/* Config card */}
-      <div className="bg-surface border border-overlay-10 rounded-2xl p-6 space-y-5">
+      <div className="glass rounded-2xl p-6 space-y-5">
         {/* Split picker (creates workouts per letter) */}
         <PhaseSplitPicker
           split={workoutSplitOf(workouts)}
@@ -361,7 +361,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
 
         {/* Empty state */}
         {!changingSplit && filteredWorkouts.length === 0 && (
-          <div className="bg-surface border border-overlay-10 rounded-2xl p-8 text-center">
+          <div className="glass rounded-2xl p-8 text-center">
             {selectedMuscle ? (
               <p className="text-sm text-muted-foreground">
                 Nenhum treino com foco em <span className="text-foreground">{selectedMuscle}</span>.

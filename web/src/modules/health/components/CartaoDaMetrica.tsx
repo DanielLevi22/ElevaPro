@@ -32,7 +32,7 @@ export function CartaoDaMetrica({
         : "text-emerald-400";
 
   return (
-    <div className="bg-surface border border-white/10 rounded-2xl p-5">
+    <div className="glass rounded-2xl p-5">
       <p className="text-xs text-muted-foreground mb-1">{rotulo}</p>
 
       <p className="font-display text-2xl font-bold text-foreground tabular-nums">

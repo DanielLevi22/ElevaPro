@@ -17,7 +17,7 @@ export function ContextoDisponivel({ blocos }: Props) {
   if (blocos.length === 0) return null;
 
   return (
-    <div className="rounded-xl border border-white/10 bg-surface/60 px-4 py-3">
+    <div className="glass rounded-xl px-4 py-3">
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
         O que o assistente sabe deste aluno
       </p>

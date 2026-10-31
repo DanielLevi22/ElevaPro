@@ -25,7 +25,7 @@ function autoriaDe(bruto: string | null): ActivityAuthorFilter {
 
 function EstadoVazio({ author }: { author: ActivityAuthorFilter }) {
   return (
-    <div className="rounded-xl border border-dashed border-border bg-surface/50 p-8 text-center">
+    <div className="glass rounded-xl border-dashed p-8 text-center">
       <p className="text-sm text-muted-foreground">
         {author === "specialist"
           ? "Você ainda não registrou nada para este aluno."
@@ -95,10 +95,7 @@ export default function StudentActivitiesPage() {
       {isLoading && (
         <div className="flex flex-col gap-3">
           {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-24 animate-pulse rounded-xl border border-border bg-surface"
-            />
+            <div key={i} className="glass h-24 animate-pulse rounded-xl" />
           ))}
         </div>
       )}

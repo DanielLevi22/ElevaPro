@@ -31,7 +31,7 @@ export function ProfileConfirmationCard({
 
   return (
     <div className="mx-auto max-w-lg space-y-4">
-      <div className="bg-surface border border-primary/30 rounded-2xl p-5 space-y-4">
+      <div className="glass border-primary/30 rounded-2xl p-5 space-y-4">
         <div className="flex items-center justify-between">
           <h4 className="font-semibold text-foreground">Seu perfil carregado</h4>
           <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">

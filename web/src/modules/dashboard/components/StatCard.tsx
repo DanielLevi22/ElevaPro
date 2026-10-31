@@ -21,7 +21,7 @@ export function StatCard({ title, value, icon, color, loading }: StatCardProps) 
 
   if (loading) {
     return (
-      <div className="bg-surface border border-border rounded-[22px] p-5" aria-hidden="true">
+      <div className="glass rounded-[22px] p-5" aria-hidden="true">
         <div className="h-3 w-1/2 rounded bg-overlay-10 animate-pulse" />
         <div className="mt-3.5 h-8 w-2/5 rounded bg-overlay-10 animate-pulse" />
       </div>
@@ -29,7 +29,7 @@ export function StatCard({ title, value, icon, color, loading }: StatCardProps) 
   }
 
   return (
-    <div className="bg-surface border border-border rounded-[22px] p-5 transition-colors hover:border-overlay-15">
+    <div className="glass rounded-[22px] p-5 transition-colors hover:border-overlay-15">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold text-muted-foreground">{title}</p>

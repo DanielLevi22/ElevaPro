@@ -91,7 +91,7 @@ interface BodyScanHistoryProps {
 export function BodyScanHistory({ scans, deltas }: BodyScanHistoryProps) {
   if (scans.length === 0) {
     return (
-      <div className="rounded-2xl border border-border bg-surface p-8 text-center">
+      <div className="glass rounded-2xl p-8 text-center">
         <p className="text-foreground font-bold">Nenhuma análise corporal ainda</p>
         <p className="text-muted-foreground text-sm mt-2 max-w-md mx-auto">
           O aluno faz a análise pelo aplicativo, com três fotos. O resultado aparece aqui
@@ -117,7 +117,7 @@ export function BodyScanHistory({ scans, deltas }: BodyScanHistoryProps) {
         </p>
 
         {deltas.length > 0 && (
-          <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+          <div className="glass rounded-2xl overflow-hidden">
             {deltas.map((delta, index) => (
               <div
                 key={delta.field}
@@ -163,10 +163,7 @@ export function BodyScanHistory({ scans, deltas }: BodyScanHistoryProps) {
             { label: "Muscular", value: latest.posture_muscle_score },
             { label: "Postura", value: latest.posture_overall_score },
           ].map((score) => (
-            <div
-              key={score.label}
-              className="rounded-2xl border border-border bg-surface p-3 sm:p-5 text-center"
-            >
+            <div key={score.label} className="glass rounded-2xl p-3 sm:p-5 text-center">
               <p className="text-[10px] uppercase tracking-widest sm:tracking-[0.2em] text-muted-foreground">
                 {score.label}
               </p>
@@ -186,7 +183,7 @@ export function BodyScanHistory({ scans, deltas }: BodyScanHistoryProps) {
             { label: "Gordura", value: latest.body_fat_pct, unidade: "%", origem: "estimado" },
             { label: "IMC", value: latest.bmi, unidade: "", origem: "calculado" },
           ].map((m) => (
-            <div key={m.label} className="rounded-2xl border border-border bg-surface p-4">
+            <div key={m.label} className="glass rounded-2xl p-4">
               <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                 {m.label}
               </p>
@@ -200,7 +197,7 @@ export function BodyScanHistory({ scans, deltas }: BodyScanHistoryProps) {
         </div>
 
         {latest.recommendations && (
-          <div className="mt-4 rounded-2xl border border-border bg-surface p-5">
+          <div className="glass mt-4 rounded-2xl p-5">
             <p className="text-sm text-muted-foreground leading-relaxed">
               {latest.recommendations}
             </p>
@@ -231,7 +228,7 @@ export function BodyScanHistory({ scans, deltas }: BodyScanHistoryProps) {
                   <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-2">
                     {rotulo}
                   </p>
-                  <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+                  <div className="glass rounded-2xl overflow-hidden">
                     {achados.map((achado, index) => (
                       <div
                         key={`${chave}-${achado.title}`}

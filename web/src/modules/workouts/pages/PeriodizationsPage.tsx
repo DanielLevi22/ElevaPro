@@ -80,7 +80,7 @@ export default function PeriodizationsPage({ periodizations, isMember, memberStu
 
       {/* Empty */}
       {filtered.length === 0 && (
-        <div className="bg-surface border border-overlay-10 rounded-2xl p-8 md:p-12">
+        <div className="glass rounded-2xl p-8 md:p-12">
           {search || filterStatus !== "all" ? (
             <p className="text-center text-sm text-muted-foreground">
               Nenhuma periodização encontrada. Tente outros filtros.

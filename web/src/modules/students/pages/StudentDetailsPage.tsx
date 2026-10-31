@@ -19,7 +19,7 @@ const LINK_LABEL: Record<string, string> = {
 
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 bg-surface border border-border rounded-2xl p-4">
+    <div className="glass min-w-0 rounded-2xl p-4">
       <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
         {label}
       </p>

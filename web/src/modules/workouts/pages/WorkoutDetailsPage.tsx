@@ -165,7 +165,7 @@ export default function WorkoutDetailsPage() {
       </nav>
 
       {/* Header card */}
-      <div className="bg-surface border border-overlay-10 rounded-2xl p-6">
+      <div className="glass rounded-2xl p-6">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="flex items-start gap-4">
             <div>
@@ -217,7 +217,7 @@ export default function WorkoutDetailsPage() {
         </div>
 
         {items.length === 0 ? (
-          <div className="bg-surface border border-overlay-10 rounded-2xl p-8 text-center">
+          <div className="glass rounded-2xl p-8 text-center">
             <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
               <svg
                 aria-hidden="true"
@@ -243,10 +243,7 @@ export default function WorkoutDetailsPage() {
         ) : (
           <div className="flex flex-col gap-2">
             {items.map((item, index) => (
-              <div
-                key={item.id}
-                className="bg-surface border border-overlay-10 rounded-xl p-4 flex items-center gap-4"
-              >
+              <div key={item.id} className="glass rounded-xl p-4 flex items-center gap-4">
                 {/* Order */}
                 <div className="w-7 h-7 rounded-lg bg-overlay-05 flex items-center justify-center shrink-0">
                   <span className="text-xs text-muted-foreground font-medium">{index + 1}</span>

@@ -41,9 +41,7 @@ export function SpecialistLinkSection({ studentId, isMember }: Props) {
   }
 
   if (isLoading) {
-    return (
-      <div className="h-24 bg-surface/40 border border-overlay-08 rounded-2xl animate-pulse" />
-    );
+    return <div className="glass h-24 rounded-2xl animate-pulse" />;
   }
 
   return (
@@ -59,7 +57,7 @@ export function SpecialistLinkSection({ studentId, isMember }: Props) {
           {links.map((link) => (
             <div
               key={link.id}
-              className="flex items-center justify-between bg-surface/60 border border-overlay-08 rounded-xl px-4 py-3"
+              className="glass flex items-center justify-between rounded-xl px-4 py-3"
             >
               <div>
                 <p className="text-sm font-bold text-foreground">
