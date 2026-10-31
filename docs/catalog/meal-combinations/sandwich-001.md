@@ -60,10 +60,10 @@
 - [x] `candidate-c8a2114d4bcbe518` — Sanduíche ou torrada: Pão francês + Queijo minas frescal
 - [x] `candidate-ca3ab247fb3d1303` — Sanduíche ou torrada: Tapioca (goma) + Ricota
 - [ ] `candidate-d329c77f5d03e5a0` — Sanduíche ou torrada: Pão de forma integral + Ovo de codorna cozido
-- [ ] `candidate-d57a3495a7dbe9b2` — Sanduíche ou torrada: Torrada integral + Presunto magro
+- [x] `candidate-d57a3495a7dbe9b2` — Sanduíche ou torrada: Torrada integral + Presunto magro
 - [ ] `candidate-d629ce1ca036c8bf` — Sanduíche ou torrada: Pão sírio integral + Queijo parmesão
-- [ ] `candidate-d86032eab08cc4a6` — Sanduíche ou torrada: Torrada integral + Peito de peru defumado
-- [ ] `candidate-da5d3c1cc9b3670f` — Sanduíche ou torrada: Torrada integral + Queijo cottage
+- [x] `candidate-d86032eab08cc4a6` — Sanduíche ou torrada: Torrada integral + Peito de peru defumado
+- [x] `candidate-da5d3c1cc9b3670f` — Sanduíche ou torrada: Torrada integral + Queijo cottage
 - [x] `candidate-db09ec3417daa5ac` — Sanduíche ou torrada: Torrada integral + Requeijão light
 - [ ] `candidate-ddb278897a5ca787` — Sanduíche ou torrada: Pão de forma integral + Queijo minas frescal
 - [x] `candidate-e108f83dfdc9dbd6` — Sanduíche ou torrada: Pão de forma integral + Queijo parmesão

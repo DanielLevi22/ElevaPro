@@ -17,7 +17,7 @@
 - [ ] `candidate-dc1c4e4f38421b96` — Prato: Quinoa cozida + Carne suína (lombo assado) + Berinjela cozida
 - [ ] `candidate-dc213d8318eb4e03` — Prato: Batata doce roxa cozida + Carne bovina (coxão mole) + Pimentão vermelho
 - [x] `candidate-dc2b28219cde7d3a` — Prato: Batata inglesa cozida + Carne moída (patinho) + Cenoura crua
-- [ ] `candidate-dc2d1fd0bbbfcd39` — Prato: Biscoito de arroz + Salmão grelhado + Pimentão verde
+- [x] `candidate-dc2d1fd0bbbfcd39` — Prato: Biscoito de arroz + Salmão grelhado + Pimentão verde
 - [x] `candidate-dc300d86ce2010e7` — Prato: Biscoito de arroz + Carne bovina (patinho) + Abóbora cabotiá cozida
 - [ ] `candidate-dc3e27e34e2adc1e` — Prato: Polenta cozida + Camarão cozido + Pepino
 - [ ] `candidate-dc415855ed9f1dff` — Prato: Macarrão cozido + Proteína de soja texturizada + Abóbora cabotiá cozida
@@ -69,7 +69,7 @@
 - [x] `candidate-dd23e89853766ade` — Prato: Arroz integral cozido + Frango (coxa sem pele assada) + Cenoura crua
 - [x] `candidate-dd2654bbdaed4c3c` — Prato: Batata inglesa cozida + Atum em água (lata) + Quiabo cozido
 - [x] `candidate-dd2862fcc05bc470` — Prato: Inhame cozido + Tilápia grelhada + Quiabo cozido
-- [ ] `candidate-dd2a45110747d137` — Prato: Macarrão integral cozido + Carne bovina (coxão mole) + Repolho cru
+- [x] `candidate-dd2a45110747d137` — Prato: Macarrão integral cozido + Carne bovina (coxão mole) + Repolho cru
 - [x] `candidate-dd3050c2fb66f3e9` — Prato: Inhame cozido + Carne bovina (alcatra) + Alface
 - [ ] `candidate-dd3287877ba12d5f` — Prato: Cuscuz de milho + Merluza grelhada + Abóbora cabotiá cozida
 - [ ] `candidate-dd38663da39976ee` — Prato: Macarrão cozido + Merluza grelhada + Quiabo cozido
@@ -105,7 +105,7 @@
 - [ ] `candidate-ddbf88e2d9b977f4` — Prato: Quinoa cozida + Carne moída (patinho) + Rúcula
 - [ ] `candidate-ddc23f31755f2dbc` — Prato: Cará cozido + Camarão cozido + Couve-flor cozida
 - [ ] `candidate-ddc42a914babd7d3` — Prato: Arroz integral cozido + Seitan + Chuchu cozido
-- [ ] `candidate-ddc9d78171d45d40` — Prato: Biscoito de arroz + Frango (coxa sem pele assada) + Pimentão vermelho
+- [x] `candidate-ddc9d78171d45d40` — Prato: Biscoito de arroz + Frango (coxa sem pele assada) + Pimentão vermelho
 - [x] `candidate-ddcecc4fbdf2d19f` — Prato: Batata doce cozida + Clara de ovo + Couve-flor cozida
 - [x] `candidate-ddd15e2d3c7c766b` — Prato: Arroz integral cozido + Carne bovina (músculo cozido) + Brócolis cozido
 - [x] `candidate-dde27f396794334d` — Prato: Batata inglesa cozida + Clara de ovo + Vagem cozida
@@ -183,13 +183,13 @@
 - [ ] `candidate-df96f8a8052b5dab` — Prato: Arroz integral cozido + Ovo de codorna cozido + Chuchu cozido
 - [ ] `candidate-df9d1b995b20a3fa` — Prato: Biscoito de arroz + Carne bovina (alcatra) + Abóbora cabotiá cozida
 - [ ] `candidate-df9e889fd02f17c6` — Prato: Arroz sete grãos cozido + Carne moída (patinho) + Vagem cozida
-- [ ] `candidate-dfa1fa45c07c4623` — Prato: Biscoito de arroz + Sardinha (lata, drenada) + Pepino
+- [x] `candidate-dfa1fa45c07c4623` — Prato: Biscoito de arroz + Sardinha (lata, drenada) + Pepino
 - [ ] `candidate-dfa32f1cf611ee31` — Prato: Batata baroa cozida + Sardinha (lata, drenada) + Tomate
 - [ ] `candidate-dfaaeb1eba79d804` — Prato: Cuscuz marroquino cozido + Carne bovina (músculo cozido) + Agrião
 - [x] `candidate-dfb1727930562100` — Prato: Inhame cozido + Carne bovina (patinho) + Agrião
 - [ ] `candidate-dfb9b08afd49f87c` — Prato: Batata inglesa cozida + Merluza grelhada + Agrião
 - [ ] `candidate-dfbc71e71c0b3918` — Prato: Macarrão integral cozido + Frango (sobrecoxa assada) + Espinafre
-- [ ] `candidate-dfc1b41455991b92` — Prato: Arroz parboilizado cozido + Carne suína (lombo assado) + Vagem cozida
+- [x] `candidate-dfc1b41455991b92` — Prato: Arroz parboilizado cozido + Carne suína (lombo assado) + Vagem cozida
 - [x] `candidate-dfd48c3c54c17217` — Prato: Batata doce cozida + Ovo inteiro cozido + Alface
 - [ ] `candidate-dfdab7bb196b44b0` — Prato: Batata baroa cozida + Atum fresco grelhado + Espinafre
 - [ ] `candidate-dfdc3965448c5ae8` — Prato: Cará cozido + Ovo de codorna cozido + Vagem cozida

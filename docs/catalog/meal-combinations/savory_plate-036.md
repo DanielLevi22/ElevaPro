@@ -121,7 +121,7 @@
 - [ ] `candidate-c74086197fde9788` — Prato: Mandioca cozida + Pescada grelhada + Cogumelo champignon
 - [ ] `candidate-c742d23269e6110d` — Prato: Macarrão cozido + Seitan + Tomate
 - [ ] `candidate-c74654c7694007a7` — Prato: Arroz sete grãos cozido + Sardinha (lata, drenada) + Berinjela cozida
-- [ ] `candidate-c759645cd7246572` — Prato: Milho verde cozido + Carne bovina (coxão mole) + Quiabo cozido
+- [x] `candidate-c759645cd7246572` — Prato: Milho verde cozido + Carne bovina (coxão mole) + Quiabo cozido
 - [ ] `candidate-c75a79966cd3306f` — Prato: Arroz sete grãos cozido + Carne suína (lombo assado) + Agrião
 - [ ] `candidate-c7647a02856bf99b` — Prato: Arroz parboilizado cozido + Atum fresco grelhado + Repolho cru
 - [ ] `candidate-c769a83cbe28d847` — Prato: Polenta cozida + Frango (peito grelhado) + Vagem cozida
@@ -129,7 +129,7 @@
 - [ ] `candidate-c76eb1d195f5cc0b` — Prato: Mandioca cozida + Seitan + Quiabo cozido
 - [ ] `candidate-c77e15afb33a2bb2` — Prato: Batata doce roxa cozida + Tofu + Pimentão verde
 - [ ] `candidate-c77f81a66d0d20b2` — Prato: Cuscuz marroquino cozido + Tilápia grelhada + Agrião
-- [ ] `candidate-c792032e2b604446` — Prato: Arroz parboilizado cozido + Carne bovina (alcatra) + Abóbora cabotiá cozida
+- [x] `candidate-c792032e2b604446` — Prato: Arroz parboilizado cozido + Carne bovina (alcatra) + Abóbora cabotiá cozida
 - [ ] `candidate-c7979cb7b4a0be37` — Prato: Polenta cozida + Tofu + Rúcula
 - [x] `candidate-c79e80b9b2103c63` — Prato: Batata doce cozida + Tilápia grelhada + Abóbora cabotiá cozida
 - [ ] `candidate-c7a237c14f55a892` — Prato: Batata inglesa cozida + Salmão grelhado + Pimentão verde
@@ -141,7 +141,7 @@
 - [ ] `candidate-c7bf792942393988` — Prato: Batata doce roxa cozida + Carne bovina (alcatra) + Abóbora cabotiá cozida
 - [ ] `candidate-c7c5191b631fd31c` — Prato: Quinoa cozida + Camarão cozido + Couve-flor cozida
 - [x] `candidate-c7c7ebd9fce9d287` — Prato: Milho verde cozido + Frango (coxa sem pele assada) + Cenoura crua
-- [ ] `candidate-c7d1a10e9eb08cb8` — Prato: Biscoito de arroz + Salmão grelhado + Abóbora cabotiá cozida
+- [x] `candidate-c7d1a10e9eb08cb8` — Prato: Biscoito de arroz + Salmão grelhado + Abóbora cabotiá cozida
 - [ ] `candidate-c7d984c2d5cb9feb` — Prato: Arroz parboilizado cozido + Seitan + Espinafre
 - [x] `candidate-c7d9e63a625d0e23` — Prato: Batata inglesa cozida + Clara de ovo + Berinjela cozida
 - [ ] `candidate-c7dbb89414ca96eb` — Prato: Arroz sete grãos cozido + Atum em água (lata) + Agrião
@@ -158,7 +158,7 @@
 - [ ] `candidate-c8021e4a3b06eb39` — Prato: Quinoa cozida + Camarão cozido + Chuchu cozido
 - [ ] `candidate-c806231f4057caee` — Prato: Inhame cozido + Proteína de soja texturizada + Chuchu cozido
 - [x] `candidate-c8088aa8f7f3cff5` — Prato: Cuscuz de milho + Carne bovina (patinho) + Beterraba cozida
-- [ ] `candidate-c80c8f8c8d4b02bd` — Prato: Inhame cozido + Carne suína (lombo assado) + Repolho cru
+- [x] `candidate-c80c8f8c8d4b02bd` — Prato: Inhame cozido + Carne suína (lombo assado) + Repolho cru
 - [ ] `candidate-c80dd8070df5cc52` — Prato: Milho verde cozido + Atum fresco grelhado + Alface
 - [ ] `candidate-c80e9524cec2558e` — Prato: Arroz sete grãos cozido + Carne bovina (coxão mole) + Aspargos cozidos
 - [ ] `candidate-c80f561f55c6e07d` — Prato: Batata doce roxa cozida + Pescada grelhada + Abóbora cabotiá cozida
@@ -169,7 +169,7 @@
 - [x] `candidate-c82446cb1e89909f` — Prato: Batata inglesa cozida + Frango desfiado cozido + Chuchu cozido
 - [ ] `candidate-c82dc4f0b1b1615f` — Prato: Cuscuz de milho + Ovo de codorna cozido + Espinafre
 - [ ] `candidate-c82ebdb0fb0eb581` — Prato: Batata baroa cozida + Seitan + Palmito em conserva
-- [ ] `candidate-c834edc2c646279a` — Prato: Milho verde cozido + Atum em água (lata) + Abóbora cabotiá cozida
+- [x] `candidate-c834edc2c646279a` — Prato: Milho verde cozido + Atum em água (lata) + Abóbora cabotiá cozida
 - [ ] `candidate-c83605689aa8e711` — Prato: Macarrão integral cozido + Salmão grelhado + Cogumelo champignon
 - [x] `candidate-c83faaf5a3a5d9be` — Prato: Milho verde cozido + Salmão grelhado + Repolho cru
 - [x] `candidate-c8414fe705c17498` — Prato: Macarrão cozido + Atum em água (lata) + Abobrinha cozida

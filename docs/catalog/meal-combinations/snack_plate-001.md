@@ -126,14 +126,14 @@
 - [ ] `candidate-c938b393f5338128` — Lanche: Barra de proteína + Caqui
 - [ ] `candidate-cadc490d62c75a90` — Lanche: Panqueca de aveia + Uva passa
 - [x] `candidate-cd43d6cf6c067980` — Lanche: Crepioca + Maracujá
-- [ ] `candidate-cd982b2406596cb4` — Lanche: Panqueca de aveia + Manga
+- [x] `candidate-cd982b2406596cb4` — Lanche: Panqueca de aveia + Manga
 - [ ] `candidate-cdd3ae5bf11da8e2` — Lanche: Pão de queijo + Tâmara
 - [x] `candidate-d60eed24a4667841` — Lanche: Crepioca + Abacate
-- [ ] `candidate-d62e6909dc9cc0a7` — Lanche: Pão de queijo + Abacaxi
+- [x] `candidate-d62e6909dc9cc0a7` — Lanche: Pão de queijo + Abacaxi
 - [x] `candidate-d62ed8cd0a25276f` — Lanche: Biscoito de arroz + Banana nanica
 - [x] `candidate-d7a3a2b6eedc82bd` — Lanche: Crepioca + Abacaxi
 - [x] `candidate-d937a4c4497dfd33` — Lanche: Pão de queijo + Maçã
-- [ ] `candidate-d9508308956e292d` — Lanche: Panqueca de aveia + Abacaxi
+- [x] `candidate-d9508308956e292d` — Lanche: Panqueca de aveia + Abacaxi
 - [x] `candidate-da2139a8ae2c346b` — Lanche: Crepioca + Laranja
 - [ ] `candidate-dad82ae910abdec8` — Lanche: Pão de queijo + Laranja
 - [ ] `candidate-db8f9d997dd37177` — Lanche: Crepioca + Mamão

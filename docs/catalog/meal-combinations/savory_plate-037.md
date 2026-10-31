@@ -81,10 +81,10 @@
 - [ ] `candidate-cc5c85bcc4d0c680` — Prato: Cará cozido + Carne bovina (coxão mole) + Alface
 - [x] `candidate-cc5d3321eba705f1` — Prato: Mandioca cozida + Carne bovina (coxão mole) + Couve refogada
 - [x] `candidate-cc5dbe70b3037884` — Prato: Biscoito de arroz + Frango (sobrecoxa assada) + Abóbora cabotiá cozida
-- [ ] `candidate-cc5f689012f20a52` — Prato: Macarrão integral cozido + Clara de ovo + Repolho cru
+- [x] `candidate-cc5f689012f20a52` — Prato: Macarrão integral cozido + Clara de ovo + Repolho cru
 - [ ] `candidate-cc675f23eba9b0dd` — Prato: Cuscuz de milho + Ovo de codorna cozido + Pimentão verde
 - [x] `candidate-cc799c7c3f5f15dc` — Prato: Batata inglesa cozida + Frango (peito grelhado) + Abobrinha cozida
-- [ ] `candidate-cc7a23389b2609f1` — Prato: Milho verde cozido + Carne bovina (coxão mole) + Repolho cru
+- [x] `candidate-cc7a23389b2609f1` — Prato: Milho verde cozido + Carne bovina (coxão mole) + Repolho cru
 - [x] `candidate-cc7e1131f6a88ea8` — Prato: Inhame cozido + Frango desfiado cozido + Abobrinha cozida
 - [ ] `candidate-cc81388850567c43` — Prato: Mandioca cozida + Bacalhau dessalgado cozido + Rúcula
 - [ ] `candidate-cc816bb123ab8b38` — Prato: Arroz integral cozido + Frango (peito grelhado) + Aspargos cozidos
@@ -92,9 +92,9 @@
 - [x] `candidate-cc90eab90fdbd9eb` — Prato: Inhame cozido + Carne suína (lombo assado) + Tomate
 - [ ] `candidate-cc90f0314b24215e` — Prato: Cará cozido + Fígado bovino grelhado + Repolho cru
 - [ ] `candidate-cc96c5309bf47892` — Prato: Macarrão cozido + Merluza grelhada + Repolho cru
-- [ ] `candidate-cc9de0290ed976f0` — Prato: Milho verde cozido + Carne bovina (alcatra) + Quiabo cozido
+- [x] `candidate-cc9de0290ed976f0` — Prato: Milho verde cozido + Carne bovina (alcatra) + Quiabo cozido
 - [ ] `candidate-cca4cf9cecee656b` — Prato: Batata doce roxa cozida + Camarão cozido + Agrião
-- [ ] `candidate-cca79cd04c95016e` — Prato: Milho verde cozido + Pescada grelhada + Repolho cru
+- [x] `candidate-cca79cd04c95016e` — Prato: Milho verde cozido + Pescada grelhada + Repolho cru
 - [ ] `candidate-ccb45ebb59fa12c7` — Prato: Polenta cozida + Carne bovina (coxão mole) + Abobrinha cozida
 - [ ] `candidate-ccbc3faae7942991` — Prato: Arroz sete grãos cozido + Camarão cozido + Abobrinha cozida
 - [x] `candidate-ccc368fe014f88ae` — Prato: Mandioca cozida + Carne moída (patinho) + Pepino
@@ -113,7 +113,7 @@
 - [ ] `candidate-cd18849505fff53a` — Prato: Batata baroa cozida + Sardinha (lata, drenada) + Cogumelo champignon
 - [ ] `candidate-cd1967527ca010c1` — Prato: Macarrão integral cozido + Ovo inteiro cozido + Cogumelo champignon
 - [ ] `candidate-cd198dad7ec6abfa` — Prato: Macarrão integral cozido + Proteína de soja texturizada + Couve-flor cozida
-- [ ] `candidate-cd1f614bc75c1531` — Prato: Inhame cozido + Frango (sobrecoxa assada) + Chuchu cozido
+- [x] `candidate-cd1f614bc75c1531` — Prato: Inhame cozido + Frango (sobrecoxa assada) + Chuchu cozido
 - [ ] `candidate-cd227c0eab90f242` — Prato: Biscoito de arroz + Camarão cozido + Espinafre
 - [x] `candidate-cd26eb2a32b5499d` — Prato: Batata doce cozida + Carne moída (patinho) + Beterraba cozida
 - [ ] `candidate-cd2fc2a82b8ad475` — Prato: Milho verde cozido + Bacalhau dessalgado cozido + Alface
@@ -125,12 +125,12 @@
 - [ ] `candidate-cd3c3a5972332f57` — Prato: Cará cozido + Pescada grelhada + Aspargos cozidos
 - [ ] `candidate-cd442d56dc36e8ff` — Prato: Quinoa cozida + Pescada grelhada + Quiabo cozido
 - [ ] `candidate-cd451ff026212041` — Prato: Cará cozido + Seitan + Berinjela cozida
-- [ ] `candidate-cd45c1635534c5c9` — Prato: Biscoito de arroz + Carne suína (lombo assado) + Berinjela cozida
+- [x] `candidate-cd45c1635534c5c9` — Prato: Biscoito de arroz + Carne suína (lombo assado) + Berinjela cozida
 - [ ] `candidate-cd512eb3d68d0464` — Prato: Batata inglesa cozida + Ovo de codorna cozido + Chuchu cozido
 - [ ] `candidate-cd5f76835ac18004` — Prato: Milho verde cozido + Tofu + Pepino
 - [ ] `candidate-cd6e9581c72c395e` — Prato: Milho verde cozido + Clara de ovo + Espinafre
 - [x] `candidate-cd6f281ce350a05b` — Prato: Arroz integral cozido + Frango desfiado cozido + Abobrinha cozida
-- [ ] `candidate-cd704d2087b162be` — Prato: Inhame cozido + Carne bovina (coxão mole) + Pimentão verde
+- [x] `candidate-cd704d2087b162be` — Prato: Inhame cozido + Carne bovina (coxão mole) + Pimentão verde
 - [x] `candidate-cd709e10f4d22537` — Prato: Macarrão cozido + Frango desfiado cozido + Berinjela cozida
 - [ ] `candidate-cd73b855fc30645e` — Prato: Macarrão integral cozido + Atum fresco grelhado + Alface
 - [x] `candidate-cd73dbabe2888db4` — Prato: Batata inglesa cozida + Carne bovina (músculo cozido) + Vagem cozida
@@ -157,7 +157,7 @@
 - [ ] `candidate-cdef8eb6a3fc5622` — Prato: Arroz parboilizado cozido + Atum fresco grelhado + Tomate
 - [ ] `candidate-cdefa91fd1e9e221` — Prato: Cará cozido + Tilápia grelhada + Couve refogada
 - [ ] `candidate-cdf20f0385200c13` — Prato: Batata inglesa cozida + Frango (peito grelhado) + Pimentão verde
-- [ ] `candidate-cdfaaee43bbe424e` — Prato: Biscoito de arroz + Frango (sobrecoxa assada) + Rúcula
+- [x] `candidate-cdfaaee43bbe424e` — Prato: Biscoito de arroz + Frango (sobrecoxa assada) + Rúcula
 - [ ] `candidate-cdfb768fadaa91ac` — Prato: Cuscuz marroquino cozido + Frango desfiado cozido + Chuchu cozido
 - [ ] `candidate-ce032ffbc0e6766d` — Prato: Milho verde cozido + Camarão cozido + Berinjela cozida
 - [ ] `candidate-ce15f42d97fc9410` — Prato: Batata baroa cozida + Pescada grelhada + Abobrinha cozida
@@ -165,18 +165,18 @@
 - [x] `candidate-ce24c4c88fc2bdba` — Prato: Batata doce cozida + Frango (peito grelhado) + Pepino
 - [ ] `candidate-ce2abb082f62d319` — Prato: Polenta cozida + Carne bovina (coxão mole) + Cogumelo champignon
 - [ ] `candidate-ce2ecc6895b9add6` — Prato: Quinoa cozida + Clara de ovo + Pimentão vermelho
-- [ ] `candidate-ce3166fe8ae23917` — Prato: Arroz parboilizado cozido + Carne bovina (alcatra) + Pimentão verde
+- [x] `candidate-ce3166fe8ae23917` — Prato: Arroz parboilizado cozido + Carne bovina (alcatra) + Pimentão verde
 - [ ] `candidate-ce3ddac4c532a69f` — Prato: Batata doce roxa cozida + Atum fresco grelhado + Quiabo cozido
 - [ ] `candidate-ce3eb1acb22f00d5` — Prato: Cará cozido + Salmão grelhado + Abóbora cabotiá cozida
 - [ ] `candidate-ce3eb705490019ea` — Prato: Arroz integral cozido + Carne bovina (patinho) + Pimentão verde
 - [ ] `candidate-ce4a6b2838e3ae92` — Prato: Arroz sete grãos cozido + Bacalhau dessalgado cozido + Repolho cru
-- [ ] `candidate-ce5520ff6de8c9ef` — Prato: Arroz parboilizado cozido + Carne suína (lombo assado) + Couve refogada
+- [x] `candidate-ce5520ff6de8c9ef` — Prato: Arroz parboilizado cozido + Carne suína (lombo assado) + Couve refogada
 - [x] `candidate-ce57c1117ea513bc` — Prato: Biscoito de arroz + Carne moída (patinho) + Agrião
 - [ ] `candidate-ce5f834ad4f52b28` — Prato: Arroz parboilizado cozido + Bacalhau dessalgado cozido + Berinjela cozida
 - [ ] `candidate-ce6352d5bc80f928` — Prato: Inhame cozido + Sardinha (lata, drenada) + Aspargos cozidos
 - [ ] `candidate-ce71eb3d0a34bce7` — Prato: Cuscuz de milho + Camarão cozido + Pimentão verde
 - [x] `candidate-ce7acff7045471d3` — Prato: Arroz branco cozido + Tilápia grelhada + Vagem cozida
-- [ ] `candidate-ce7add91a1700e58` — Prato: Macarrão integral cozido + Carne bovina (coxão mole) + Abóbora cabotiá cozida
+- [x] `candidate-ce7add91a1700e58` — Prato: Macarrão integral cozido + Carne bovina (coxão mole) + Abóbora cabotiá cozida
 - [ ] `candidate-ce7cfafee88427a6` — Prato: Macarrão cozido + Atum fresco grelhado + Agrião
 - [ ] `candidate-ce94311c1baa6611` — Prato: Arroz integral cozido + Merluza grelhada + Agrião
 - [x] `candidate-ce97c63ac703cff3` — Prato: Batata inglesa cozida + Carne bovina (alcatra) + Repolho cru
@@ -199,7 +199,7 @@
 - [x] `candidate-cf11f9c9bbaae8cf` — Prato: Milho verde cozido + Frango desfiado cozido + Cenoura crua
 - [ ] `candidate-cf27932f006a2cf1` — Prato: Arroz sete grãos cozido + Ovo inteiro cozido + Beterraba cozida
 - [ ] `candidate-cf27f8d965184294` — Prato: Inhame cozido + Ovo inteiro cozido + Palmito em conserva
-- [ ] `candidate-cf2f9a7300265ba6` — Prato: Macarrão integral cozido + Carne suína (lombo assado) + Pimentão vermelho
+- [x] `candidate-cf2f9a7300265ba6` — Prato: Macarrão integral cozido + Carne suína (lombo assado) + Pimentão vermelho
 - [ ] `candidate-cf37174d863032a4` — Prato: Macarrão integral cozido + Fígado bovino grelhado + Espinafre
 - [ ] `candidate-cf3a9bd1aeacf757` — Prato: Arroz parboilizado cozido + Tofu + Berinjela cozida
 - [x] `candidate-cf4d28edf02477be` — Prato: Inhame cozido + Frango desfiado cozido + Beterraba cozida
@@ -227,7 +227,7 @@
 - [ ] `candidate-cfb1130f90c4805a` — Prato: Inhame cozido + Carne suína (lombo assado) + Aspargos cozidos
 - [ ] `candidate-cfb6b23feaee73c4` — Prato: Batata baroa cozida + Ovo de codorna cozido + Quiabo cozido
 - [x] `candidate-cfc40ebc1bf006a3` — Prato: Cuscuz de milho + Frango (sobrecoxa assada) + Cenoura crua
-- [ ] `candidate-cfd6092b5058cdf9` — Prato: Inhame cozido + Carne bovina (alcatra) + Berinjela cozida
+- [x] `candidate-cfd6092b5058cdf9` — Prato: Inhame cozido + Carne bovina (alcatra) + Berinjela cozida
 - [ ] `candidate-cfd62fda6da37a16` — Prato: Cuscuz marroquino cozido + Carne bovina (músculo cozido) + Abóbora cabotiá cozida
 - [ ] `candidate-cfd7c687935e0247` — Prato: Inhame cozido + Camarão cozido + Cenoura crua
 - [x] `candidate-cfdd206537c749e3` — Prato: Arroz branco cozido + Clara de ovo + Alface
