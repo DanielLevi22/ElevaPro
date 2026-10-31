@@ -23,6 +23,10 @@ on:
       - "supabase/seed.sql"
       - "scripts/verify-rls.sql"
       - "scripts/verify-diet-plan-versions.sql"
+      - "scripts/verify-meal-catalog.sql"
+      - "scripts/meal-catalog-import.mjs"
+      - "scripts/meal-catalog/**"
+      - "docs/catalog/meal-combinations/production.json"
       - "scripts/verify-assessment-corrections.sql"
   workflow_call:
   # Permite reverificar um ambiente sem push. `db push` é forward-only e a
@@ -95,6 +99,24 @@ jobs:
       # exists`), então re-executar a cada deploy não duplica.
       - name: Aplicar seed
         run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -q -f supabase/seed.sql
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      # Artefato é derivado do commit: nenhum upload manual nem UUID local.
+      - name: Preparar catálogo de pratos do commit
+        run: node scripts/meal-catalog-import.mjs export-sql "$RUNNER_TEMP/meal-catalog.sql"
+
+      - name: Verificar importação e isolamento do catálogo
+        run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/verify-meal-catalog.sql
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
+      - name: Importar catálogo como rascunho
+        run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -q -f "$RUNNER_TEMP/meal-catalog.sql"
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
 

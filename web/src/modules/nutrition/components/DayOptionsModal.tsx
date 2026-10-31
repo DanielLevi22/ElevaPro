@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
 import { ConfirmModal } from "@/shared/components/ui/ConfirmModal";

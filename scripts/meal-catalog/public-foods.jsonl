@@ -1,0 +1,174 @@
+{"id":"d00411a2-a3ec-4481-b418-59ee25f91e9f","name":"Abacate","category":"fruta"}
+{"id":"d0707e71-968c-4b30-acb2-113264fa4f97","name":"Abacaxi","category":"fruta"}
+{"id":"15c8cc94-121c-4d19-a5d3-972d754aa87a","name":"Abóbora cabotiá cozida","category":"hortalica"}
+{"id":"08873485-872a-499d-b844-e5df4ec01b4b","name":"Abobrinha cozida","category":"hortalica"}
+{"id":"e06e4d43-6e7b-45d5-b93c-e11117b8d350","name":"Açaí (polpa sem açúcar)","category":"fruta"}
+{"id":"2413c565-c12f-4bfe-8298-9243b5675c57","name":"Agrião","category":"hortalica"}
+{"id":"6c918215-5322-412f-a993-d7ef07e01e8b","name":"Água de coco","category":"bebida"}
+{"id":"b7473237-8e08-4a67-99b8-d74075e76a9f","name":"Albumina (pó)","category":"suplemento"}
+{"id":"e3960aa6-7c30-4406-bda2-d3299c41f920","name":"Alface","category":"hortalica"}
+{"id":"0dce3649-285e-46f2-bc9c-46a2231020c5","name":"Alho","category":"hortalica"}
+{"id":"8ffb21fe-1235-4705-962c-dbacbd669bcf","name":"Ameixa","category":"fruta"}
+{"id":"e11c86c5-5b4e-4334-b993-51e8d4851835","name":"Amêndoas","category":"gordura"}
+{"id":"e1ec8db7-4666-4699-958a-8e27e1937808","name":"Amendoim","category":"gordura"}
+{"id":"50d5e419-2fce-4395-92e1-7cdabcb109de","name":"Arroz branco cozido","category":"carboidrato"}
+{"id":"c8f73704-fab5-40fb-95f4-6d4708ba6d95","name":"Arroz integral cozido","category":"carboidrato"}
+{"id":"45bfc936-77a8-4e2b-8d7e-929772f04202","name":"Arroz parboilizado cozido","category":"carboidrato"}
+{"id":"2f42fd14-33d8-465d-94d3-24f59455ef9c","name":"Arroz sete grãos cozido","category":"carboidrato"}
+{"id":"2464a5a6-4207-4087-95bb-826be40901bb","name":"Aspargos cozidos","category":"hortalica"}
+{"id":"a5854cdb-2e47-416f-ad5d-1ab31060a838","name":"Atum em água (lata)","category":"proteina"}
+{"id":"e5434a6e-b9c9-4f7d-849b-1a8cc2ed114b","name":"Atum fresco grelhado","category":"proteina"}
+{"id":"b89fb56f-41f4-4ed8-96bc-be80d35ae9d3","name":"Aveia em flocos","category":"carboidrato"}
+{"id":"c439c6ac-a6cf-4cb1-9e2a-91133bed232c","name":"Avelã","category":"gordura"}
+{"id":"e28b67e3-5e16-47b0-a7ec-3830625238b5","name":"Azeite de oliva","category":"gordura"}
+{"id":"e8626e33-4fce-4a2a-ae7b-176bf18aec5f","name":"Azeitona verde","category":"gordura"}
+{"id":"9c864eac-ead8-4ed6-a2f5-0824c5fd650e","name":"Bacalhau dessalgado cozido","category":"proteina"}
+{"id":"43c5a808-cc6d-4aee-ac94-9dcf47c5aa6b","name":"Banana nanica","category":"fruta"}
+{"id":"68476dcf-1607-4b8b-bd7e-5a91114636c5","name":"Banana passa","category":"fruta"}
+{"id":"dff0c4f0-70ff-45e1-befb-d147a42cfbd3","name":"Banana prata","category":"fruta"}
+{"id":"b7c7d2f5-5d51-4543-a1d1-7ae8f25d0617","name":"Barra de proteína","category":"suplemento"}
+{"id":"31b4434f-cd7b-4882-8431-76f05679eaca","name":"Batata baroa cozida","category":"carboidrato"}
+{"id":"307d6dc2-480e-41a9-84f9-576367b92383","name":"Batata doce cozida","category":"carboidrato"}
+{"id":"50cedaa3-0588-44c2-bce6-a3a583e4e7b9","name":"Batata doce roxa cozida","category":"carboidrato"}
+{"id":"bb7ca2f6-31f5-438e-9158-9faae84bb996","name":"Batata inglesa cozida","category":"carboidrato"}
+{"id":"ed21a5d4-01a2-46b1-8f66-2e7f4ff38702","name":"Bebida de amêndoas sem açúcar","category":"laticinio"}
+{"id":"d413a14e-0fcd-49fc-8ad9-28838cf1349b","name":"Bebida de soja sem açúcar","category":"laticinio"}
+{"id":"ee61f704-a853-4ebf-a94d-21ad44ffcd7b","name":"Berinjela cozida","category":"hortalica"}
+{"id":"3918c002-1fe1-433f-a4e4-7dd465d71955","name":"Beterraba cozida","category":"hortalica"}
+{"id":"77c520b3-d125-4da6-90f7-3f7d31979e48","name":"Biscoito de arroz","category":"carboidrato"}
+{"id":"2bf17079-5a8b-4852-8ef6-b4903892c575","name":"Brócolis cozido","category":"hortalica"}
+{"id":"29b26f2c-0451-4197-8fc8-20f08139e1e8","name":"Café sem açúcar","category":"bebida"}
+{"id":"cfd78e35-085d-421e-b42d-bb62c79cf3a7","name":"Camarão cozido","category":"proteina"}
+{"id":"7605cfc5-c3fe-4c06-9f91-40bf216cbbf1","name":"Caqui","category":"fruta"}
+{"id":"eee9fc67-e5b7-4e01-a6a7-1013bc45399e","name":"Cará cozido","category":"carboidrato"}
+{"id":"af4ea0f8-5762-43f4-abe6-65b93ad91f7d","name":"Carne bovina (alcatra)","category":"proteina"}
+{"id":"8913e03a-fbfa-4f56-9fc3-df447da71ab4","name":"Carne bovina (coxão mole)","category":"proteina"}
+{"id":"609b33db-5b80-44ab-99b3-4ee3783062d3","name":"Carne bovina (músculo cozido)","category":"proteina"}
+{"id":"f57304e6-00b2-4c52-a93d-9c52663152d6","name":"Carne bovina (patinho)","category":"proteina"}
+{"id":"a0bae109-8c5f-47a5-a0e9-a247f47e410d","name":"Carne moída (patinho)","category":"proteina"}
+{"id":"aa1e14f1-9118-4e64-96e7-1be6a9c02cfa","name":"Carne suína (lombo assado)","category":"proteina"}
+{"id":"53278123-57c0-4c1e-bd79-a7ef5128bbb1","name":"Caseína (pó)","category":"suplemento"}
+{"id":"dcebcf69-0342-4e05-a992-b244e98ad99b","name":"Castanha de caju","category":"gordura"}
+{"id":"d3c21dd5-9331-497d-b188-f7fae0ef2ec8","name":"Castanha do Pará","category":"gordura"}
+{"id":"4de08458-64b5-421e-9df4-83e0740f3275","name":"Cebola","category":"hortalica"}
+{"id":"028bf0ce-6c45-41ff-babd-fd4196aff4f6","name":"Cenoura crua","category":"hortalica"}
+{"id":"58fd0f8e-f40c-4b3e-935b-e4ca77077096","name":"Chá verde sem açúcar","category":"bebida"}
+{"id":"d31511ec-6d46-4338-b218-d3a85db1e06b","name":"Chia","category":"gordura"}
+{"id":"04f72754-4160-4e38-a05c-f0fdfec31992","name":"Chuchu cozido","category":"hortalica"}
+{"id":"a91e3eda-14e3-45ac-ac70-112b23c28fbb","name":"Clara de ovo","category":"proteina"}
+{"id":"7fdefde7-f146-45d2-b5ee-ec71b982ce26","name":"Coco fresco","category":"gordura"}
+{"id":"549fb15a-0e13-4c1b-9a0f-11116ebc743b","name":"Cogumelo champignon","category":"hortalica"}
+{"id":"d21e18d7-d7b8-4a6e-b568-326432591845","name":"Colágeno hidrolisado (pó)","category":"suplemento"}
+{"id":"2772ee34-9107-4776-9736-1fecf0a0aa28","name":"Couve refogada","category":"hortalica"}
+{"id":"777a49a0-af94-4371-bb62-392c91cd7e97","name":"Couve-flor cozida","category":"hortalica"}
+{"id":"76529cc7-cf37-4fad-b56b-0ca1522d0e9d","name":"Creatina monoidratada","category":"suplemento"}
+{"id":"65257bef-a63e-43d0-b753-3e0a09b651e5","name":"Crepioca","category":"carboidrato"}
+{"id":"9c1b8190-8b19-4587-aba2-e72af4a75911","name":"Cuscuz de milho","category":"carboidrato"}
+{"id":"e5fc0137-3356-4719-9064-7d25748d8388","name":"Cuscuz marroquino cozido","category":"carboidrato"}
+{"id":"75ec5ac8-afef-4d52-8ea8-946c1dcf92ec","name":"Damasco seco","category":"fruta"}
+{"id":"27d267f3-d14c-4114-8157-44877a2d4acd","name":"Dextrose","category":"suplemento"}
+{"id":"410890da-4a28-47e7-816a-14e7d508b3fe","name":"Edamame","category":"leguminosa"}
+{"id":"e859ee04-cf7d-42d4-aec6-50a166d532b3","name":"Ervilha cozida","category":"leguminosa"}
+{"id":"cc29cf0b-8f25-42ee-b4e9-6f61e9731d4d","name":"Espinafre","category":"hortalica"}
+{"id":"625e3a54-40cf-45e0-91da-52f62f363d83","name":"Farinha de aveia","category":"carboidrato"}
+{"id":"75be7583-22a2-4565-ad2c-d283d6241573","name":"Feijão azuki cozido","category":"leguminosa"}
+{"id":"9fc6fed8-79ae-4d49-9eff-dabec39806c1","name":"Feijão branco cozido","category":"leguminosa"}
+{"id":"8002ff60-7e1e-4850-8eee-45c311a240de","name":"Feijão carioca cozido","category":"leguminosa"}
+{"id":"f40f419e-0655-49f7-a893-4a2607cd9f71","name":"Feijão fradinho cozido","category":"leguminosa"}
+{"id":"41927918-9008-4537-bcd8-20212373228a","name":"Feijão preto cozido","category":"leguminosa"}
+{"id":"a5756903-d299-40b4-99de-3b69aa9b89f1","name":"Fígado bovino grelhado","category":"proteina"}
+{"id":"3c57efc4-1c6a-422d-b20d-601d2f5a2a65","name":"Framboesa","category":"fruta"}
+{"id":"8888c2e3-94df-4717-af7c-3bf3a53e4061","name":"Frango (coxa sem pele assada)","category":"proteina"}
+{"id":"f2608b91-482d-45fc-a814-4218de80410a","name":"Frango (peito grelhado)","category":"proteina"}
+{"id":"592d1bdf-c4dc-4613-b4b1-fb6180de5fa8","name":"Frango (sobrecoxa assada)","category":"proteina"}
+{"id":"594336bf-299e-4de2-844c-dfc271279540","name":"Frango desfiado cozido","category":"proteina"}
+{"id":"4f822312-d99b-430a-84fd-bd0a838c4883","name":"Gergelim","category":"gordura"}
+{"id":"c3d026ed-db5b-4b50-b71c-dbee76621937","name":"Goiaba","category":"fruta"}
+{"id":"782d7a69-d773-466e-a675-c739ec6d5ce6","name":"Granola sem açúcar","category":"carboidrato"}
+{"id":"4b2360bd-d369-4e9a-96ff-95b031b5e375","name":"Grão de bico cozido","category":"leguminosa"}
+{"id":"45bfe16d-3aee-4932-9675-96ee64772cfe","name":"Homus","category":"leguminosa"}
+{"id":"f27e6a8d-9324-4f9a-91d0-3ab760e1fd77","name":"Inhame cozido","category":"carboidrato"}
+{"id":"64b24eab-8c47-45e1-b55a-1a1b647df12f","name":"Iogurte grego natural","category":"laticinio"}
+{"id":"5ce7d406-ddb9-445b-9147-fe6e9b94a739","name":"Iogurte grego zero","category":"laticinio"}
+{"id":"58944373-ffcf-4259-ab32-e2db4c9775e5","name":"Iogurte natural desnatado","category":"laticinio"}
+{"id":"043bc5e0-c3a1-4ce8-a573-d4a1ca6284af","name":"Iogurte natural integral","category":"laticinio"}
+{"id":"35168786-8927-4d10-989a-8a8345645855","name":"Isotônico","category":"bebida"}
+{"id":"c6efe722-aa1c-4824-9c27-7cae736c97ef","name":"Kefir de leite","category":"laticinio"}
+{"id":"20820b3f-48e8-4be4-908c-ae3f492ba70b","name":"Kiwi","category":"fruta"}
+{"id":"ad75e7ad-02a6-40ff-869f-e41c8577878b","name":"Laranja","category":"fruta"}
+{"id":"c0e5291e-9d82-49ad-bc9f-fc6e0f5ad445","name":"Leite desnatado","category":"laticinio"}
+{"id":"7d68b244-329a-4e02-b02a-855523e04ce5","name":"Leite integral","category":"laticinio"}
+{"id":"ef553a35-e444-4cd4-ae8a-c158f09b5cc4","name":"Leite sem lactose desnatado","category":"laticinio"}
+{"id":"cf227776-7578-47e1-8c4c-114e7a0f98a7","name":"Lentilha cozida","category":"leguminosa"}
+{"id":"9eabb698-ed33-424a-acdd-585af5edd6fe","name":"Limão","category":"fruta"}
+{"id":"087073d4-a8c4-4ebb-8cd8-268815acf06d","name":"Linhaça","category":"gordura"}
+{"id":"ad8db6d4-7984-4259-b240-93bbf9e27dc1","name":"Maçã","category":"fruta"}
+{"id":"323c8397-d673-46bf-ba22-574614f27c9e","name":"Macarrão cozido","category":"carboidrato"}
+{"id":"0eb021ea-d160-46f1-8ae7-bcb918ef4101","name":"Macarrão integral cozido","category":"carboidrato"}
+{"id":"f76e3bae-c073-46aa-b7cd-d572b76c04cc","name":"Maltodextrina","category":"suplemento"}
+{"id":"67e7a2e1-f535-485d-a028-ea5c971af4c0","name":"Mamão","category":"fruta"}
+{"id":"4d1fc787-0d40-43af-a983-d885d08c338c","name":"Mandioca cozida","category":"carboidrato"}
+{"id":"5d90b488-9364-4d72-a3a5-bda53291c6d3","name":"Manga","category":"fruta"}
+{"id":"4ecdb28a-6a84-48b1-a3f0-fa9af4641326","name":"Manteiga","category":"gordura"}
+{"id":"7d322c2e-b9aa-4edb-b641-0af75ab577f5","name":"Manteiga ghee","category":"gordura"}
+{"id":"31c893ef-2154-4957-95f2-10217be46030","name":"Maracujá","category":"fruta"}
+{"id":"44e02bc7-0c2f-454e-b0fc-2f34903c95e7","name":"Melancia","category":"fruta"}
+{"id":"43bf2aaa-770c-4b87-9b91-a3f724ca3e4f","name":"Melão","category":"fruta"}
+{"id":"82b931a6-8718-448d-988a-b9bbeac914da","name":"Merluza grelhada","category":"proteina"}
+{"id":"e4b34063-a16e-4b56-8375-006c100b992e","name":"Milho verde cozido","category":"carboidrato"}
+{"id":"8ea472c5-b281-4545-8c2f-0e1e81ba1400","name":"Mirtilo","category":"fruta"}
+{"id":"9bdfc7a1-d884-42e5-a068-0a5c1e53bb5b","name":"Morango","category":"fruta"}
+{"id":"8f4a6939-e778-4fda-a30f-9c0c2b948be0","name":"Nozes","category":"gordura"}
+{"id":"885fd7dd-f7d5-4d74-9f6b-faed31492c54","name":"Óleo de canola","category":"gordura"}
+{"id":"66a0da4c-503b-409d-a1e9-4f75a0dfb9c7","name":"Óleo de coco","category":"gordura"}
+{"id":"84678e7a-26db-406c-9105-7beefb74614d","name":"Ovo de codorna cozido","category":"proteina"}
+{"id":"e77812a6-ac15-4b78-b3e8-2f4b4c4241a2","name":"Ovo inteiro cozido","category":"proteina"}
+{"id":"1fbec989-6aa0-4650-b064-717d590b1a99","name":"Palmito em conserva","category":"hortalica"}
+{"id":"c8aff893-0df0-49ec-8baa-ee30c019e323","name":"Panqueca de aveia","category":"carboidrato"}
+{"id":"b0f70efe-f588-4c9e-96e2-32e8b20a6aa4","name":"Pão de forma integral","category":"carboidrato"}
+{"id":"00e87320-ffb5-4051-9374-5606f5caf94c","name":"Pão de queijo","category":"carboidrato"}
+{"id":"d0180246-5499-4427-9431-8e1e28e30396","name":"Pão francês","category":"carboidrato"}
+{"id":"cf27a395-eca8-4de5-a0fe-7f9b1b02d1d6","name":"Pão integral","category":"carboidrato"}
+{"id":"42cd7058-e7ea-4d1b-a8b3-62844817823e","name":"Pão sírio integral","category":"carboidrato"}
+{"id":"0ab0528f-4d3f-40b3-b0f2-1854484e0bb3","name":"Pasta de amendoim","category":"gordura"}
+{"id":"28da9233-f7bd-403d-a929-5cad962cac40","name":"Peito de peru defumado","category":"proteina"}
+{"id":"36ac0f49-bb5f-4d19-80dd-0d2f13c952b7","name":"Pepino","category":"hortalica"}
+{"id":"3302821f-033a-4394-8570-0496c0c311c8","name":"Pera","category":"fruta"}
+{"id":"b43eab4d-be14-4224-994b-416e744775df","name":"Pescada grelhada","category":"proteina"}
+{"id":"a3e36de0-6a4b-44a0-ae31-fca88b2b48a7","name":"Pimentão verde","category":"hortalica"}
+{"id":"c344a004-3a32-4330-88a5-144dd6c4170a","name":"Pimentão vermelho","category":"hortalica"}
+{"id":"4cd69f02-afd3-4a31-9adc-5d8102ad03b2","name":"Polenta cozida","category":"carboidrato"}
+{"id":"3f6473a9-df4a-4578-b8e7-54e88fecd371","name":"Presunto magro","category":"proteina"}
+{"id":"f751c760-f7cb-4c3a-90e5-2ce61497f99c","name":"Proteína de soja texturizada","category":"proteina"}
+{"id":"faeffea6-d5bb-4ed8-a53c-fc034522d883","name":"Proteína vegetal (pó)","category":"suplemento"}
+{"id":"bfcd4cfa-188c-4ec4-817d-90aec6bf658c","name":"Queijo cottage","category":"laticinio"}
+{"id":"10ece275-96ed-467e-a99a-d81207747f51","name":"Queijo minas frescal","category":"laticinio"}
+{"id":"5ce8006b-8b3e-4e78-a8d1-30e79b967e8a","name":"Queijo muçarela","category":"laticinio"}
+{"id":"e86108e8-134a-4e62-a2dc-549fc9d87b7a","name":"Queijo parmesão","category":"laticinio"}
+{"id":"be094b9a-61de-4e90-a0fd-6b8a84a2397e","name":"Quiabo cozido","category":"hortalica"}
+{"id":"85780f8d-8349-4dac-beb4-6e201efe0f15","name":"Quinoa cozida","category":"carboidrato"}
+{"id":"1ffff5f5-d29a-44c7-a14c-13cfb5403f41","name":"Repolho cru","category":"hortalica"}
+{"id":"9a19a4a9-18b3-456b-9ee8-c5031dd8d2a3","name":"Requeijão light","category":"laticinio"}
+{"id":"9bac2af6-3a1c-4b1b-a7f0-9d5831f37e4f","name":"Ricota","category":"laticinio"}
+{"id":"43a86ddf-ba3b-4f3a-a661-f74956892bb3","name":"Rúcula","category":"hortalica"}
+{"id":"4564aab0-0a3f-410a-8492-d6f94e590474","name":"Salmão grelhado","category":"proteina"}
+{"id":"cf4a5fe8-fb23-46a2-9357-06a9edf030ca","name":"Sardinha (lata, drenada)","category":"proteina"}
+{"id":"cc23cfa6-18ca-42f5-81be-18cf9f3654b2","name":"Seitan","category":"proteina"}
+{"id":"e3130d9f-4dd0-4b0f-97fa-1f8b309a0b61","name":"Semente de abóbora","category":"gordura"}
+{"id":"0f7d337c-6349-4170-8781-0af3d8f5561d","name":"Semente de girassol","category":"gordura"}
+{"id":"f401cd7d-89ed-4b7f-8845-1d8167c3584c","name":"Soja cozida","category":"leguminosa"}
+{"id":"f79b384e-cd14-4770-880f-08cf52a49c4a","name":"Suco de laranja natural","category":"bebida"}
+{"id":"6d1f8ccb-a161-4e30-8599-54678e213d5c","name":"Suco de uva integral","category":"bebida"}
+{"id":"11d2a682-36aa-4289-81b1-aad93c9db8f2","name":"Tâmara","category":"fruta"}
+{"id":"d9cd3053-3bb5-49f8-9b63-16cbc124bdf2","name":"Tangerina","category":"fruta"}
+{"id":"86cce04b-e9e0-4830-8422-d778bd2b802c","name":"Tapioca (goma)","category":"carboidrato"}
+{"id":"cb5cc9dc-dda0-4036-b713-0ee9730fcd9b","name":"Tilápia grelhada","category":"proteina"}
+{"id":"97fa73d1-94b0-46a0-928a-8c180b575d8c","name":"Tofu","category":"proteina"}
+{"id":"7230dff6-e013-4e1d-a750-1b2ced1a557b","name":"Tomate","category":"hortalica"}
+{"id":"f37a1dec-6aa8-4446-9c0b-2b320a8eb82a","name":"Torrada integral","category":"carboidrato"}
+{"id":"a001f99e-9463-483d-a28f-48eb851f99c0","name":"Tremoço em conserva","category":"leguminosa"}
+{"id":"bf3e017d-25d4-46ae-a2a2-57984b717311","name":"Uva","category":"fruta"}
+{"id":"daa06e64-a8a0-4a8c-9168-7f87309d4e97","name":"Uva passa","category":"fruta"}
+{"id":"91fab117-6344-4ebe-ade7-53e6eeb5b0ca","name":"Vagem cozida","category":"hortalica"}
+{"id":"ae70affb-7cfa-44e9-a1bb-be1195e5e1f1","name":"Whey isolado (pó)","category":"suplemento"}
+{"id":"61df19f9-b9f7-49da-8f65-35aadd09d17a","name":"Whey protein (pó)","category":"suplemento"}

@@ -2,7 +2,7 @@ import { type DietMeal, textoDaDificuldade, textoDasPorcoes } from '@elevapro/sh
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { Anel } from '@/components/ui/Anel';
 import { BarraDeDuasAcoes } from '@/components/ui/BarraDeDuasAcoes';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
@@ -16,6 +16,7 @@ import { useCores, useEscala } from '@/shared/design';
 import { TresMacros } from '../../components/aluno/AnelDeMacro';
 import { iconeDaRefeicao } from '../../components/aluno/IconeDaRefeicao';
 import { LinhaDoAlimento } from '../../components/aluno/LinhaDoAlimento';
+import { MealRecipeActions } from '../../components/recipes/MealRecipeActions';
 import { type RefeicaoAberta, useRefeicaoDoDia } from '../../hooks/useRefeicaoDoDia';
 import {
   type ItemDoPrato,
@@ -35,8 +36,8 @@ import { useFavoritosStore } from '../../store/favoritosStore';
  *
  * O coração guarda o favorito só no aparelho (LGPD, #298). A linha de tempo,
  * dificuldade e porções mostra o que o especialista informou, e some o que ele
- * não informou; o modo de preparo, que a tela antiga abria pelo cartão, fecha a
- * linha.
+ * não informou. Cardápio e modo de preparo têm ações separadas: escolher um
+ * prato não implica começar a cozinhar nem registrar o consumo.
  *
  * @example
  * <DetalheDaRefeicaoScreen alunoId={user.id} refeicaoId={id} data="2026-08-12" />
@@ -88,7 +89,8 @@ export function DetalheDaRefeicaoScreen({
         onVoltar={router.back}
       />
       <View className="-mt-7 rounded-t-[1.75rem] bg-background px-[1.125rem] pt-5">
-        <CabecalhoDoPrato refeicao={aberta.refeicao} itens={aberta.itens} macros={aberta.macros} />
+        <MealHeader meal={aberta.refeicao} ingredients={aberta.itens} macros={aberta.macros} />
+        <MealRecipeActions mealId={refeicaoId} date={data} />
         <TotalDoPrato aberta={aberta} />
         <TresMacros valores={aberta.macros} metas={aberta.metaDiaria} />
         <AlimentosDoPrato
@@ -150,46 +152,31 @@ function TopoDaRefeicao({ alunoId, refeicaoId, nome, onVoltar }: TopoDaRefeicaoP
   );
 }
 
-interface CabecalhoDoPratoProps {
-  refeicao: DietMeal;
-  itens: ItemDoPrato[];
+interface MealHeaderProps {
+  meal: DietMeal;
+  ingredients: ItemDoPrato[];
   macros: Macros;
 }
 
-function CabecalhoDoPrato({ refeicao, itens, macros }: CabecalhoDoPratoProps) {
-  const router = useRouter();
-  const horario = refeicao.meal_time?.slice(0, 5);
-  const altaProteina =
+function MealHeader({ meal, ingredients, macros }: MealHeaderProps) {
+  const time = meal.meal_time?.slice(0, 5);
+  const highProtein =
     macros.calorias > 0 &&
     (macros.proteina * KCAL_POR_GRAMA_DE_PROTEINA) / macros.calorias >= FRACAO_DE_ALTA_PROTEINA;
-  const abrirPreparo = () =>
-    router.push({
-      pathname: ROUTES.NUTRITION.COOKING,
-      params: {
-        mealName: refeicao.name,
-        mealId: refeicao.id,
-        ingredients: JSON.stringify(itens.map((item) => item.food?.name ?? 'Item sem nome')),
-      },
-    });
 
   return (
     <>
       <View className="mb-2.5 flex-row gap-1.5">
-        {altaProteina ? <Chip tom="destaque">Alta proteína</Chip> : null}
-        <Chip>{horario ? `${refeicao.name} · ${horario}` : refeicao.name}</Chip>
+        {highProtein ? <Chip tom="destaque">Alta proteína</Chip> : null}
+        <Chip>{time ? `${meal.name} · ${time}` : meal.name}</Chip>
       </View>
       <Text className="text-[1.5rem] font-bold tracking-tight text-foreground">
-        {tituloDoPrato(itens) || refeicao.name}
+        {tituloDoPrato(ingredients) || meal.name}
       </Text>
       <View className="mt-[0.4375rem] flex-row flex-wrap items-center gap-3.5">
-        {dadosDoPreparo(refeicao).map(({ icone, texto }) => (
+        {dadosDoPreparo(meal).map(({ icone, texto }) => (
           <DadoComIcone key={icone} icone={icone} texto={texto} />
         ))}
-        {itens.length > 0 ? (
-          <TouchableOpacity onPress={abrirPreparo} accessibilityRole="button">
-            <DadoComIcone icone="book-outline" texto="Modo de preparo" />
-          </TouchableOpacity>
-        ) : null}
       </View>
     </>
   );

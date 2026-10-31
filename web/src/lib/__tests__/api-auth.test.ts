@@ -43,6 +43,7 @@ vi.mock("@/lib/supabase-admin", () => ({
 }));
 
 const {
+  authorizeAdmin,
   authorizeLinkedSpecialist,
   authorizeMfaPrivilegedUser,
   authorizeMfaSpecialist,
@@ -50,6 +51,34 @@ const {
   authorizeStudent,
   authorizeUser,
 } = await import("../api-auth");
+
+describe("authorizeAdmin", () => {
+  // Art. 6º, VII: um especialista com MFA também não pode administrar o catálogo.
+  it.each([
+    "specialist",
+    "student",
+    "member",
+  ])("%s não administra imagens do cardápio", async (accountType) => {
+    profileRow = { account_type: accountType };
+    const auth = await authorizeAdmin(requestWith(VALID));
+    expect(auth.ok, "CATÁLOGO ADMINISTRADO POR OUTRO PAPEL: autorização indevida").toBe(false);
+  });
+  it("admin com prova privilegiada consegue acessar", async () => {
+    profileRow = { account_type: "admin" };
+    expect((await authorizeAdmin(requestWith(VALID))).ok).toBe(true);
+  });
+  // Art. 46: a importação é uma operação administrativa e exige a prova vigente.
+  it("admin sem prova privilegiada não administra imagens", async () => {
+    profileRow = { account_type: "admin" };
+    authGetClaims.mockResolvedValue({
+      data: { claims: { sub: "admin", aal: "aal1" } },
+      error: null,
+    });
+    expect((await authorizeAdmin(requestWith(VALID))).ok, "ADMIN SEM SEGUNDO FATOR LIBERADO").toBe(
+      false,
+    );
+  });
+});
 
 /** Uma requisição com o header que o helper lê — nada mais é usado. */
 function requestWith(authorization?: string): NextRequest {

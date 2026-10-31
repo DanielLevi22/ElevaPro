@@ -1,0 +1,38 @@
+# Lanche com bebida — imagens
+
+- [x] `candidate-0053e5b96c65becd` — Lanche com bebida: Pão de queijo + Isotônico
+- [x] `candidate-0623aed74bba0fa5` — Lanche com bebida: Panqueca de aveia + Suco de uva integral
+- [x] `candidate-0875714a846541b2` — Lanche com bebida: Barra de proteína + Suco de uva integral
+- [x] `candidate-093d284a18b991db` — Lanche com bebida: Crepioca + Suco de uva integral
+- [x] `candidate-0be373b5635200c9` — Lanche com bebida: Torrada integral + Café sem açúcar
+- [x] `candidate-23bffba12d186839` — Lanche com bebida: Panqueca de aveia + Suco de laranja natural
+- [x] `candidate-26c6bf620c21e9c9` — Lanche com bebida: Panqueca de aveia + Água de coco
+- [ ] `candidate-27093a47bebedb26` — Lanche com bebida: Biscoito de arroz + Isotônico
+- [ ] `candidate-334a9cb37c4f41fc` — Lanche com bebida: Crepioca + Café sem açúcar
+- [ ] `candidate-384223313f0341f7` — Lanche com bebida: Panqueca de aveia + Chá verde sem açúcar
+- [ ] `candidate-3b5f28e49368fbcd` — Lanche com bebida: Pão de queijo + Chá verde sem açúcar
+- [ ] `candidate-4ba58213582574c4` — Lanche com bebida: Torrada integral + Chá verde sem açúcar
+- [x] `candidate-4eaef80032bba770` — Lanche com bebida: Torrada integral + Água de coco
+- [ ] `candidate-5222cf7527c78015` — Lanche com bebida: Crepioca + Chá verde sem açúcar
+- [x] `candidate-6cf51eaf0bccd03d` — Lanche com bebida: Torrada integral + Suco de uva integral
+- [x] `candidate-844bb99bec62cb4f` — Lanche com bebida: Pão de queijo + Café sem açúcar
+- [x] `candidate-86a2538f81d27657` — Lanche com bebida: Biscoito de arroz + Café sem açúcar
+- [ ] `candidate-8b38757448fdce7c` — Lanche com bebida: Barra de proteína + Café sem açúcar
+- [ ] `candidate-8c1be03e19472c52` — Lanche com bebida: Torrada integral + Isotônico
+- [x] `candidate-90bd9300c39b75f6` — Lanche com bebida: Crepioca + Água de coco
+- [ ] `candidate-98f9de2809844af2` — Lanche com bebida: Crepioca + Isotônico
+- [ ] `candidate-a53fe7ee4bb4a88b` — Lanche com bebida: Crepioca + Suco de laranja natural
+- [x] `candidate-ab47523fc114dac7` — Lanche com bebida: Pão de queijo + Água de coco
+- [ ] `candidate-ae5354b46ba963d8` — Lanche com bebida: Panqueca de aveia + Isotônico
+- [ ] `candidate-b2316488508b6817` — Lanche com bebida: Barra de proteína + Suco de laranja natural
+- [ ] `candidate-bb0de6557ad8f9f5` — Lanche com bebida: Biscoito de arroz + Chá verde sem açúcar
+- [ ] `candidate-c25d667f2f3b2d02` — Lanche com bebida: Barra de proteína + Chá verde sem açúcar
+- [ ] `candidate-c28da3b3331c980b` — Lanche com bebida: Torrada integral + Suco de laranja natural
+- [x] `candidate-c66a0efb578a9a33` — Lanche com bebida: Barra de proteína + Água de coco
+- [ ] `candidate-cdcb41281271d4c7` — Lanche com bebida: Pão de queijo + Suco de laranja natural
+- [ ] `candidate-d2072bcb2dde4a7c` — Lanche com bebida: Biscoito de arroz + Suco de laranja natural
+- [x] `candidate-e6260289b21609af` — Lanche com bebida: Biscoito de arroz + Água de coco
+- [ ] `candidate-f553be7923f3d14a` — Lanche com bebida: Pão de queijo + Suco de uva integral
+- [x] `candidate-f612503bbbebde78` — Lanche com bebida: Panqueca de aveia + Café sem açúcar
+- [ ] `candidate-f9fa610ad3014b5e` — Lanche com bebida: Biscoito de arroz + Suco de uva integral
+- [ ] `candidate-ff01f5beff5195f7` — Lanche com bebida: Barra de proteína + Isotônico

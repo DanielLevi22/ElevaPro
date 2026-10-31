@@ -1,3 +1,5 @@
+"use client";
+
 import type { Food } from "@elevapro/shared";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFoods } from "@/shared/hooks/useNutrition";

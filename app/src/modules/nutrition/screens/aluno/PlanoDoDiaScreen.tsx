@@ -11,6 +11,7 @@ import { TresMacros } from '../../components/aluno/AnelDeMacro';
 import { BotaoDoAssistente } from '../../components/aluno/BotaoDoAssistente';
 import { FaixaDaSemana } from '../../components/aluno/FaixaDaSemana';
 import { LinhaDaRefeicao } from '../../components/aluno/LinhaDaRefeicao';
+import { SelfGuidedPlanActions } from '../../components/recipes/SelfGuidedPlanActions';
 import { type PlanoDoDia, usePlanoDoDia } from '../../hooks/usePlanoDoDia';
 
 /**
@@ -30,10 +31,10 @@ interface PlanoDoDiaScreenProps {
    * O Praticante, sem especialista: o estado vazio fala com ele, e não do
    * especialista, e leva a montar o plano pelo onboarding.
    */
-  praticante?: boolean;
+  selfGuided?: boolean;
 }
 
-export function PlanoDoDiaScreen({ alunoId, praticante = false }: PlanoDoDiaScreenProps) {
+export function PlanoDoDiaScreen({ alunoId, selfGuided = false }: PlanoDoDiaScreenProps) {
   const router = useRouter();
   const plano = usePlanoDoDia(alunoId);
 
@@ -64,17 +65,18 @@ export function PlanoDoDiaScreen({ alunoId, praticante = false }: PlanoDoDiaScre
           />
         </View>
       </View>
-      <ConteudoDoPlano plano={plano} praticante={praticante} />
+      {selfGuided ? <SelfGuidedPlanActions /> : null}
+      <PlanContent plan={plano} selfGuided={selfGuided} />
     </GlassScreen>
   );
 }
 
-function ConteudoDoPlano({ plano, praticante }: { plano: PlanoDoDia; praticante: boolean }) {
-  const cores = useCores();
+function PlanContent({ plan, selfGuided }: { plan: PlanoDoDia; selfGuided: boolean }) {
+  const colors = useCores();
   const router = useRouter();
-  if (!plano.temPlano) {
-    if (plano.carregando) return <ActivityIndicator className="mt-16" color={cores.primary} />;
-    if (!praticante) {
+  if (!plan.temPlano) {
+    if (plan.carregando) return <ActivityIndicator className="mt-16" color={colors.primary} />;
+    if (!selfGuided) {
       return (
         <Text className="px-6 py-16 text-center text-legenda text-muted-foreground">
           Seu especialista ainda não montou um plano alimentar para você.
@@ -97,10 +99,10 @@ function ConteudoDoPlano({ plano, praticante }: { plano: PlanoDoDia; praticante:
 
   return (
     <>
-      <FaixaDaSemana hoje={plano.hoje} escolhida={plano.data} onEscolher={plano.escolherData} />
-      <AnelDoDia consumidas={plano.consumo.calorias} meta={plano.meta.calorias} />
-      <TresMacros valores={plano.consumo} metas={plano.meta} />
-      <RefeicoesDoDia plano={plano} />
+      <FaixaDaSemana hoje={plan.hoje} escolhida={plan.data} onEscolher={plan.escolherData} />
+      <AnelDoDia consumidas={plan.consumo.calorias} meta={plan.meta.calorias} />
+      <TresMacros valores={plan.consumo} metas={plan.meta} />
+      <RefeicoesDoDia plano={plan} />
     </>
   );
 }

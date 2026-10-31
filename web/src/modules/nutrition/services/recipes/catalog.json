@@ -1,0 +1,392 @@
+[
+  {
+    "id": "chicken-strips-rice",
+    "title": "Frango em tiras com arroz e feijão",
+    "description": "Frango em tiras e vegetais ao lado, finalizados com o azeite da refeição.",
+    "minutes": 10,
+    "equipment": "Faca e panela",
+    "required": ["chicken", "rice", "beans", "vegetable", "olive_oil"],
+    "states": {
+      "chicken": "cooked",
+      "rice": "cooked",
+      "beans": "cooked",
+      "vegetable": "cooked",
+      "olive_oil": "ready"
+    },
+    "steps": [
+      {
+        "instruction": "Separe todas as porções da lista, pesando os alimentos no estado já preparado. Corte o peito de frango já grelhado em tiras."
+      },
+      {
+        "instruction": "Aqueça o arroz, o feijão, o frango e os vegetais por inteiro, com um pouco de água se necessário. Não adicione óleo ao aquecer.",
+        "timerSeconds": 180
+      },
+      {
+        "instruction": "Monte os alimentos separados no prato. Meça todo o azeite da lista uma única vez e distribua sobre o frango e os vegetais. Não acrescente molhos ou óleo extra."
+      }
+    ],
+    "imageId": "photo-chicken-strips-rice"
+  },
+  {
+    "id": "shredded-chicken-rice",
+    "title": "Arroz de panela com frango desfiado",
+    "description": "Arroz, frango e vegetais juntos; feijão servido à parte.",
+    "minutes": 10,
+    "equipment": "Panela e garfos",
+    "required": ["chicken", "rice", "beans", "vegetable", "olive_oil"],
+    "states": {
+      "chicken": "cooked",
+      "rice": "cooked",
+      "beans": "cooked",
+      "vegetable": "cooked",
+      "olive_oil": "ready"
+    },
+    "steps": [
+      {
+        "instruction": "Separe as quantidades já cozidas da lista. Desfie o frango já grelhado com dois garfos e pique os vegetais cozidos."
+      },
+      {
+        "instruction": "Misture o arroz, o frango e os vegetais em uma panela. Aqueça por inteiro com um pouco de água; aqueça o feijão separadamente.",
+        "timerSeconds": 180
+      },
+      {
+        "instruction": "Fora do fogo, misture toda a porção de azeite da lista ao arroz com frango. Sirva com todo o feijão ao lado. Não adicione alho, cebola, queijo ou óleo extra."
+      }
+    ],
+    "imageId": "photo-shredded-chicken-rice"
+  },
+  {
+    "id": "bean-cream-chicken",
+    "title": "Creme de feijão com frango e arroz",
+    "description": "O mesmo feijão vira um creme, com frango por cima e acompanhamentos ao lado.",
+    "minutes": 15,
+    "equipment": "Panela e garfo",
+    "required": ["chicken", "rice", "beans", "vegetable", "olive_oil"],
+    "states": {
+      "chicken": "cooked",
+      "rice": "cooked",
+      "beans": "cooked",
+      "vegetable": "cooked",
+      "olive_oil": "ready"
+    },
+    "steps": [
+      {
+        "instruction": "Separe todas as porções já cozidas da lista. Amasse toda a porção de feijão com um garfo, acrescentando água aos poucos até obter um creme. Não use leite, manteiga ou creme de leite."
+      },
+      {
+        "instruction": "Aqueça o creme de feijão, mexendo até ficar uniforme. Aqueça por inteiro o frango já grelhado, o arroz e os vegetais, sem óleo adicional.",
+        "timerSeconds": 180
+      },
+      {
+        "instruction": "Sirva o frango em tiras sobre o creme de feijão e acomode todo o arroz e os vegetais ao lado. Distribua toda a porção de azeite da lista sobre o prato, uma única vez."
+      }
+    ],
+    "imageId": "photo-bean-cream-chicken"
+  },
+  {
+    "id": "boiled-egg-sandwich",
+    "title": "Sanduíche de ovos cozidos",
+    "description": "Pão integral com ovos fatiados, banana e café ao lado.",
+    "minutes": 5,
+    "equipment": "Faca e prato",
+    "required": ["egg", "bread", "banana", "coffee"],
+    "states": {
+      "egg": "cooked"
+    },
+    "separate": ["banana", "coffee"],
+    "steps": [
+      {
+        "instruction": "Separe as porções da lista. Fatie os ovos já cozidos; não substitua por ovos crus."
+      },
+      {
+        "instruction": "Recheie o pão integral com os ovos, sem molhos adicionais. Sirva ao lado qualquer parte da porção que não couber."
+      }
+    ],
+    "imageId": "photo-boiled-egg-sandwich"
+  },
+  {
+    "id": "beef-rice",
+    "title": "Carne em tiras com arroz e vegetais",
+    "description": "Um prato simples com a carne magra já preparada.",
+    "minutes": 10,
+    "equipment": "Panela",
+    "required": ["beef", "rice", "vegetable"],
+    "states": {
+      "beef": "cooked",
+      "rice": "cooked",
+      "vegetable": "cooked"
+    },
+    "steps": [
+      {
+        "instruction": "Separe a carne, o arroz e os vegetais já preparados nas porções da lista. Corte a carne em tiras."
+      },
+      {
+        "instruction": "Aqueça por inteiro com um pouco de água, sem óleo adicional. Sirva os alimentos separados no prato.",
+        "timerSeconds": 180
+      }
+    ],
+    "imageId": "photo-beef-rice"
+  },
+  {
+    "id": "fish-rice",
+    "title": "Peixe com arroz e vegetais",
+    "description": "O peixe já preparado com acompanhamentos simples.",
+    "minutes": 10,
+    "equipment": "Panela",
+    "required": ["fish", "rice", "vegetable"],
+    "states": {
+      "fish": "cooked",
+      "rice": "cooked",
+      "vegetable": "cooked"
+    },
+    "steps": [
+      {
+        "instruction": "Separe o peixe, o arroz e os vegetais já preparados nas quantidades da lista. Preserve os pedaços do peixe."
+      },
+      {
+        "instruction": "Aqueça por inteiro em panela tampada, com um pouco de água para não ressecar. Sirva sem molhos adicionais.",
+        "timerSeconds": 180
+      }
+    ],
+    "imageId": "photo-fish-rice"
+  },
+  {
+    "id": "yogurt-bowl",
+    "title": "Bowl de iogurte, aveia e banana",
+    "description": "Um lanche fresco, com a aveia por cima para dar textura.",
+    "minutes": 5,
+    "equipment": "Tigela",
+    "required": ["yogurt", "oats", "banana"],
+    "steps": [
+      {
+        "instruction": "Separe o iogurte, a aveia e a banana nas quantidades da lista. Use o sabor de iogurte previsto na refeição."
+      },
+      {
+        "instruction": "Coloque o iogurte na tigela, distribua a banana fatiada e finalize com a aveia. Não acrescente mel, granola ou açúcar."
+      }
+    ],
+    "imageId": "photo-yogurt-bowl"
+  },
+  {
+    "id": "overnight-oats",
+    "title": "Aveia de geladeira com banana",
+    "description": "A aveia hidrata no iogurte e vira um lanche cremoso para deixar pronto.",
+    "minutes": 5,
+    "equipment": "Pote e geladeira",
+    "required": ["yogurt", "oats", "banana"],
+    "steps": [
+      {
+        "instruction": "Misture as porções de aveia e iogurte da lista em um pote limpo. Se necessário, use um pouco de água para umedecer a aveia."
+      },
+      {
+        "instruction": "Tampe e leve à geladeira por pelo menos 4 horas. O tempo de preparo informado não inclui essa espera."
+      },
+      {
+        "instruction": "Na hora de consumir, acrescente a porção de banana. Não adicione leite, mel ou outros ingredientes."
+      }
+    ],
+    "imageId": "photo-overnight-oats"
+  },
+  {
+    "id": "chicken-rice",
+    "title": "Prato brasileiro com frango",
+    "description": "Arroz, feijão, frango e vegetais servidos separados.",
+    "minutes": 10,
+    "equipment": "Panela",
+    "required": ["chicken", "rice", "beans", "vegetable"],
+    "excluded": ["olive_oil"],
+    "states": {
+      "chicken": "cooked",
+      "rice": "cooked",
+      "beans": "cooked",
+      "vegetable": "cooked"
+    },
+    "steps": [
+      {
+        "instruction": "Separe todos os alimentos já cozidos nas quantidades da lista. Desfie a porção de frango."
+      },
+      {
+        "instruction": "Aqueça os alimentos em panela tampada, com água se necessário. Confira o aquecimento por inteiro; o timer é um lembrete.",
+        "timerSeconds": 180
+      },
+      {
+        "instruction": "Monte o prato com arroz, feijão, frango e os vegetais em áreas separadas. Não acrescente molhos ou óleo fora da lista."
+      }
+    ],
+    "imageId": "photo-chicken-rice"
+  },
+  {
+    "id": "chicken-rice-bowl",
+    "title": "Bowl de arroz com frango e vegetais",
+    "description": "Arroz misturado ao frango e aos vegetais, com o feijão à parte.",
+    "minutes": 10,
+    "equipment": "Panela",
+    "required": ["chicken", "rice", "beans", "vegetable"],
+    "excluded": ["olive_oil"],
+    "states": {
+      "chicken": "cooked",
+      "rice": "cooked",
+      "beans": "cooked",
+      "vegetable": "cooked"
+    },
+    "steps": [
+      {
+        "instruction": "Separe as porções já cozidas da lista. Desfie o frango e corte os vegetais em pedaços menores."
+      },
+      {
+        "instruction": "Aqueça o arroz, o frango e os vegetais juntos, com um pouco de água e sem adicionar óleo. Aqueça o feijão separadamente.",
+        "timerSeconds": 180
+      },
+      {
+        "instruction": "Sirva a mistura em uma tigela e o feijão à parte, mantendo todas as quantidades previstas."
+      }
+    ],
+    "imageId": "photo-chicken-rice-bowl"
+  },
+  {
+    "id": "egg-yogurt",
+    "title": "Ovos cozidos com iogurte",
+    "description": "Uma ceia simples, com os alimentos servidos separadamente.",
+    "minutes": 5,
+    "equipment": "Prato e tigela",
+    "required": ["egg", "yogurt"],
+    "states": {
+      "egg": "cooked"
+    },
+    "steps": [
+      {
+        "instruction": "Separe a porção de ovos já cozidos e o iogurte da lista. Descasque os ovos se necessário."
+      },
+      {
+        "instruction": "Sirva os ovos no prato e o iogurte em uma tigela separada. Não use iogurte saborizado como molho para os ovos."
+      }
+    ],
+    "imageId": "photo-egg-yogurt"
+  },
+  {
+    "id": "banana-oat-porridge",
+    "title": "Mingau de aveia com banana",
+    "description": "Mingau feito com água; os ovos cozidos são servidos à parte.",
+    "minutes": 10,
+    "equipment": "Panela",
+    "required": ["oats", "banana", "egg"],
+    "states": {
+      "egg": "cooked"
+    },
+    "steps": [
+      {
+        "instruction": "Separe a aveia, a banana e os ovos já cozidos nas porções da lista. Não troque ovo cozido por cru."
+      },
+      {
+        "instruction": "Coloque a aveia em uma panela, cubra com água e cozinhe mexendo até engrossar. Adicione mais água se necessário.",
+        "timerSeconds": 300
+      },
+      {
+        "instruction": "Distribua a banana sobre o mingau e sirva toda a porção de ovos cozidos separadamente. Não adicione leite ou açúcar."
+      }
+    ],
+    "imageId": "photo-banana-oat-porridge"
+  },
+  {
+    "id": "egg-sandwich",
+    "title": "Sanduíche de omelete",
+    "description": "Ovos dentro do pão integral, banana e café ao lado.",
+    "minutes": 10,
+    "equipment": "Frigideira antiaderente",
+    "required": ["egg", "bread", "banana", "coffee"],
+    "states": {
+      "egg": "raw"
+    },
+    "separate": ["banana", "coffee"],
+    "steps": [
+      {
+        "instruction": "Separe os ovos crus e o pão nas quantidades da lista. Bata os ovos com um garfo."
+      },
+      {
+        "instruction": "Cozinhe os ovos em frigideira antiaderente, em fogo baixo, virando até ficarem firmes por inteiro. O timer é apenas um lembrete.",
+        "timerSeconds": 180
+      },
+      {
+        "instruction": "Distribua a omelete no pão. Se a porção não couber, sirva o restante ao lado. Não acrescente óleo, queijo ou molhos."
+      }
+    ],
+    "imageId": "photo-egg-sandwich"
+  },
+  {
+    "id": "scrambled-toast",
+    "title": "Torradas com ovos mexidos",
+    "description": "Pão crocante com os ovos por cima, banana e café à parte.",
+    "minutes": 10,
+    "equipment": "Frigideira antiaderente",
+    "required": ["egg", "bread", "banana", "coffee"],
+    "states": {
+      "egg": "raw"
+    },
+    "separate": ["banana", "coffee"],
+    "steps": [
+      {
+        "instruction": "Toste o pão da lista em frigideira seca e reserve. Bata a porção de ovos crus."
+      },
+      {
+        "instruction": "Mexa os ovos em frigideira antiaderente, em fogo baixo, até estarem firmes por inteiro. Não use óleo ou manteiga.",
+        "timerSeconds": 180
+      },
+      {
+        "instruction": "Distribua os ovos sobre as torradas. Sirva qualquer parte da porção que não couber como acompanhamento."
+      }
+    ],
+    "imageId": "photo-scrambled-toast"
+  },
+  {
+    "id": "sweet-potato-chicken",
+    "title": "Batata-doce recheada com frango",
+    "description": "A batata vira a base para o recheio, com a fruta à parte.",
+    "minutes": 10,
+    "equipment": "Panela",
+    "required": ["chicken", "sweet_potato", "apple"],
+    "states": {
+      "chicken": "cooked",
+      "sweet_potato": "cooked"
+    },
+    "separate": ["apple"],
+    "steps": [
+      {
+        "instruction": "Separe as porções prontas de frango e batata-doce indicadas na lista. Desfie o frango."
+      },
+      {
+        "instruction": "Aqueça as porções em panela tampada, com um pouco de água para não ressecar. Confira o aquecimento por inteiro.",
+        "timerSeconds": 180
+      },
+      {
+        "instruction": "Abra a batata pronta ou acomode sua polpa num recipiente, criando espaço no centro. Distribua o frango nesse espaço."
+      }
+    ],
+    "imageId": "photo-sweet-potato-chicken"
+  },
+  {
+    "id": "sweet-potato-mash",
+    "title": "Purê de batata-doce com frango",
+    "description": "Uma base cremosa feita com a própria batata e água, sem leite ou manteiga.",
+    "minutes": 10,
+    "equipment": "Panela e garfo",
+    "required": ["chicken", "sweet_potato", "apple"],
+    "states": {
+      "chicken": "cooked",
+      "sweet_potato": "cooked"
+    },
+    "separate": ["apple"],
+    "steps": [
+      {
+        "instruction": "Separe as porções prontas da lista. Amasse a batata-doce com um garfo e desfie o frango."
+      },
+      {
+        "instruction": "Aqueça a batata com pequenas adições de água até chegar à textura de purê. Não acrescente leite, manteiga ou óleo.",
+        "timerSeconds": 180
+      },
+      {
+        "instruction": "Aqueça o frango por inteiro e sirva sobre o purê. Mantenha os acompanhamentos separados."
+      }
+    ],
+    "imageId": "photo-sweet-potato-mash"
+  }
+]

@@ -82,6 +82,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     },
     { href: "/admin/content/foods", label: "Alimentos", icon: <span aria-hidden="true">🍎</span> },
     {
+      href: "/admin/content/meal-media",
+      label: "Imagens do cardápio",
+      icon: <span aria-hidden="true">🖼️</span>,
+    },
+    {
       href: "/admin/tecnica",
       label: "Análise de Técnica",
       icon: <span aria-hidden="true">🏋️</span>,

@@ -42,6 +42,47 @@ Os usuários do sistema são os titulares dos dados. Têm os seguintes direitos 
 
 ## 2. Mapa de dados — o que coletamos e por quê
 
+### Catálogo de pratos e escolhas de refeição — #366 (08/10/2026)
+
+`meal_dishes`, `meal_dish_ingredients`, `meal_dish_preparations` e `media_assets`
+guardam conteúdo genérico de alimentos públicos e imagens ilustrativas. Não há
+titular, porção individual, diagnóstico ou foto pessoal nessas tabelas. ImageKit
+recebe apenas imagens genéricas; prompts de geração não usam refeições de alunos.
+O catálogo é retido enquanto mantido como conteúdo do produto. Importação de
+candidatos não significa revisão/aprovação culinária: todos nascem rascunho.
+
+`diet_meal_dishes` é dado alimentar individual: liga a opção escolhida à refeição
+já prescrita, sem duplicar alimentos ou gramagens. Finalidade: mostrar as opções
+acordadas no plano e permitir consultar preparo separadamente. Tratamento fica
+no Supabase, sob a finalidade nutricional já documentada, sem novo destinatário
+externo. Escrita exige consentimento de saúde presente; o autor especialista
+precisa de vínculo ativo e MFA, e perde leitura após revogação. O aluno lê seu
+plano enviado; não altera a prescrição do especialista. Eliminar a refeição/plano
+elimina escolhas em cascata; rascunhos herdam a retenção de 90 dias do plano.
+Exportação futura/fluxo de direitos deve incluir esses vínculos junto à refeição,
+sem exportar catálogo genérico como se fosse dado pessoal do titular.
+
+Eventos `health.meal_dish.selected` e `health.meal_dish.removed` registram ator,
+titular e refeição pseudonimizados no banco, sem nome, prato, alimentos ou valores.
+Retenção de 365 dias e leitura restrita seguem a trilha existente. O pipeline de
+catálogo registra só contagens; secrets não entram no artefato SQL. Responsável
+operacional: controlador já identificado na seção 1; incidentes seguem seção 8.
+
+Travas: `scripts/verify-meal-catalog.sql` verifica rascunhos invisíveis, cliente
+sem importação/escrita de catálogo, MFA, autoria, revogação e eliminação em cascata.
+Prova negativa executada em instância descartável: policy que liberava rascunhos
+fez a trava falhar com `RASCUNHO EXPOSTO`. Revisão técnica, sem nova alegação de
+conformidade jurídica ou aprovação de receitas.
+
+A biblioteca administrativa web consulta somente `media_assets` e títulos de
+`meal_dishes`, com dez imagens por página. A rota exige admin com prova
+privilegiada e usa o JWT do chamador para preservar RLS; não usa service role
+para ler rascunhos. Não consulta refeições individuais nem envia identidade
+ou token ao ImageKit. A finalidade e a retenção do catálogo permanecem as mesmas.
+`web/src/app/api/admin/meal-media/route.test.ts` impede consulta de conta recusada
+e exposição de chave privada; prova negativa em cópia descartável com mock de
+autorização invertido retornou 200 em vez de 403 e fez a trava falhar.
+
 > **Última revisão completa:** módulos Auth e Students revisados via `/lgpd-check`. Ver seção 10 para status detalhado por módulo.
 
 ### 2.1 Dados pessoais comuns (Art. 5°, I)
@@ -1036,6 +1077,62 @@ modelo. Fechado pelo PRD
 ---
 
 ### Módulo Nutrition ✅ Revisado
+
+> **Revisão técnica de 2026-10-04 — #366 (catálogo experimental e preparo mobile).**
+> A/B: reutiliza alimentos, quantidades, estado cru/cozido e trocas da refeição do
+> titular para apresentar montagens e instruções. Não coleta novos campos; consulta
+> o consentimento vigente com `hasCollectionConsent` antes de ler o plano.
+> C/F: CASL `read Diet`, identidade da sessão e RLS das consultas existentes;
+> confere dono e estado ativo do plano, refeição e dia. Uma URL recebe só ids opacos
+> e data. Testes não substituem a auditoria das políticas existentes do banco.
+> D/E: a escolha fica apenas na tela; troca de conta oculta os dados anteriores e
+> ignora resposta tardia. Não grava receita, consumo ou conteúdo em logs; não envia
+> refeições a IA. Imagens ilustrativas são assets públicos gerados com descrições
+> genéricas, sem dados do titular. A retenção da dieta e direitos seguem o fluxo
+> existente; esta escolha não tem retenção própria, backup ou evento de alto impacto.
+> Sem nova tabela, inferência nutricional ou decisão automática. A entrega das
+> imagens passou ao servidor na continuação abaixo; a refeição permanece no app.
+> Travas: `mealRecipeContext.test.ts` recusa leitura sem consentimento/CASL e plano
+> de terceiro/dia incompatível; `mealRecipeFlow.test.tsx` recusa vazamento de escolha
+> entre contas e gravação de consumo ao concluir preparo. Prova negativa local:
+> guarda removida numa cópia descartável do serviço, fora das fontes do app;
+> a trava falhou com `REFEIÇÃO EXPOSTA`. O controle original permaneceu íntegro
+> e a suíte completa passou em seguida.
+> Atenção: catálogo e imagens são experimentais; revisão profissional do conteúdo
+> permanece pendente para ampliar o catálogo e disponibilizar em produção.
+>
+> **Continuação — catálogo remoto e biblioteca administrativa portátil (#366).**
+> A/B: a API entrega apenas receitas editoriais genéricas e fotos ilustrativas;
+> não recebe alimentos, quantidade, identidade ou plano do titular. A comparação
+> com a refeição segue no app, sob os controles acima. Um CDN externo recebe as
+> requisições das fotos e os metadados de rede inerentes; os termos operacionais
+> do provedor devem ser considerados antes da ativação em produção.
+> C/F: administração exige papel `admin` e prova privilegiada vigente, antes de
+> ler o backup. Chaves ficam no servidor. Manifesto limita caminhos, tamanhos,
+> versões e hashes; toda imagem é conferida antes de iniciar a restauração e
+> novamente no destino. Nenhuma tabela nova; a auditoria existente registra só
+> ação, resultado e recurso editorial, sem conteúdo do plano, arquivos ou segredos.
+> D/E: o backup contém somente catálogo editorial, preserva originais e versões;
+> copiar não apaga a origem nem muda a entrega. Mudança de URL é configuração
+> posterior à verificação. Retenção e direitos do titular permanecem iguais.
+> Travas: `MealMediaAdmin.test.ts`,
+> `meal-media.test.mjs`, testes da rota administrativa e `api-auth.test.ts`.
+> Prova negativa da autorização: remover só a guarda do papel numa transformação
+> descartável fez falhar com `CATÁLOGO ADMINISTRADO POR OUTRO PAPEL: autorização
+> indevida`. Fonte original íntegra; suíte web completa aprovada em seguida.
+>
+> **Produção editorial — 04/10/2026.** Inventário limitado aos 174 alimentos
+> públicos (`is_custom = false`, `created_by IS NULL`), sem planos ou usuários.
+> Checklist paginado enumera candidatos por regras culinárias; foto concluída
+> não aprova receita ou equivalência nutricional. O gerador recebe apenas nomes
+> genéricos de ingredientes e instruções de fotografia, nunca IDs de pessoas,
+> quantidades do plano ou contexto de saúde. O ledger guarda prompt, versão,
+> caminho, hash e instante de conferência. `meal-catalog.test.mjs` recusa conclusão
+> quando o destino devolve bytes diferentes e preserva revisão da receita pendente.
+> Originais ativos no ImageKit, em arquivos diretos de `meal-images/`; imagens do
+> repositório removidas por pedido do usuário depois de conferir as cópias.
+> Backups são exportáveis por CLI/painel; pastas temporárias de produção não entram
+> no Git e são limpas depois de verificar os originais remotos.
 
 | Decisão tomada | Princípio atendido |
 |---------------|-------------------|

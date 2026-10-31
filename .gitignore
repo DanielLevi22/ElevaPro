@@ -63,3 +63,13 @@ supabase/.env
 # Stub que o eas-cli deixa na raiz quando roda fora de app/. O projeto Expo de
 # verdade e app/app.json; este aqui e vazio, confunde o Biome e o proprio eas.
 /app.json
+
+# Fotos temporárias de produção; originais finais ficam no storage.
+/tmp/meal-catalog/
+/tmp/meal-catalog-*
+
+# Lotes de geração são operacionais; o ledger production.json alimenta a importação.
+/docs/catalog/meal-combinations/batch-*.json
+/docs/catalog/meal-combinations/first-batch.json
+/docs/catalog/meal-combinations/second-batch.json
+/docs/catalog/meal-combinations/third-batch.json

@@ -11,3 +11,4 @@ export { ImportDietModal } from "./components/ImportDietModal";
 export { MealEditor } from "./components/MealEditor";
 export { NutritionFlowBanner } from "./components/NutritionFlowBanner";
 export { ProgressCharts } from "./components/ProgressCharts";
+export { MealMediaAdminPage } from "./pages/MealMediaAdminPage";

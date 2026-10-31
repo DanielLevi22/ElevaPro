@@ -6,6 +6,15 @@ const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin
   : "";
 const supabaseSocketOrigin = supabaseOrigin.replace(/^https:/, "wss:");
+const mealMediaEndpoint = process.env.MEAL_MEDIA_BASE_URL
+  ? new URL(process.env.MEAL_MEDIA_BASE_URL)
+  : null;
+const mealMediaOrigin =
+  mealMediaEndpoint?.protocol === "https:" &&
+  !mealMediaEndpoint.username &&
+  !mealMediaEndpoint.password
+    ? mealMediaEndpoint.origin
+    : "";
 const developmentScript = process.env.NODE_ENV === "production" ? "" : "'unsafe-eval'";
 const developmentSocket = process.env.NODE_ENV === "production" ? "" : "ws:";
 const contentSecurityPolicy = [
@@ -13,7 +22,7 @@ const contentSecurityPolicy = [
   `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net ${developmentScript}`,
   "style-src 'self' 'unsafe-inline'",
   `connect-src 'self' ${supabaseOrigin} ${supabaseSocketOrigin} https://cdn.jsdelivr.net https://storage.googleapis.com ${developmentSocket}`,
-  `img-src 'self' data: blob: https://avatar.vercel.sh ${supabaseOrigin}`,
+  `img-src 'self' data: blob: https://avatar.vercel.sh ${supabaseOrigin} ${mealMediaOrigin}`,
   "font-src 'self' data:",
   "media-src 'self' blob: data:",
   "worker-src 'self' blob:",

@@ -3,8 +3,7 @@ import { NutritionScreen, PlanoDoDiaScreen } from '@/modules/nutrition/routes/in
 
 /**
  * A aba Nutrição, na tela do papel de quem abre: o aluno vê o plano do dia no
- * desenho do kit; o member, que monta o próprio plano, e o especialista seguem
- * nas telas de edição.
+ * desenho do kit, assim como o Praticante. O especialista segue na gestão.
  */
 export default function NutritionRoute() {
   const { user, accountType } = useAuthStore();
@@ -13,5 +12,5 @@ export default function NutritionRoute() {
   if (!user?.id) return null;
   // O Praticante vê o mesmo plano do dia do Aluno; o plano dele nasce no
   // onboarding (#365), e o vazio leva até lá.
-  return <PlanoDoDiaScreen alunoId={user.id} praticante={accountType === 'member'} />;
+  return <PlanoDoDiaScreen alunoId={user.id} selfGuided={accountType === 'member'} />;
 }
