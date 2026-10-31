@@ -1,7 +1,7 @@
 # Prato — imagens
 
 - [ ] `candidate-f12bd67ac049fb84` — Prato: Arroz integral cozido + Camarão cozido + Alface
-- [ ] `candidate-f133f99336790183` — Prato: Milho verde cozido + Frango (sobrecoxa assada) + Pimentão vermelho
+- [x] `candidate-f133f99336790183` — Prato: Milho verde cozido + Frango (sobrecoxa assada) + Pimentão vermelho
 - [x] `candidate-f140072af79b5e45` — Prato: Macarrão integral cozido + Carne moída (patinho) + Agrião
 - [ ] `candidate-f1433d1310b7e68e` — Prato: Quinoa cozida + Salmão grelhado + Palmito em conserva
 - [ ] `candidate-f1451bc840a9973c` — Prato: Batata baroa cozida + Atum em água (lata) + Agrião
@@ -109,7 +109,7 @@
 - [ ] `candidate-f38f53b4d645a337` — Prato: Batata baroa cozida + Frango desfiado cozido + Brócolis cozido
 - [ ] `candidate-f39107386bc7309f` — Prato: Batata doce roxa cozida + Atum fresco grelhado + Espinafre
 - [ ] `candidate-f39f05cd47abd75d` — Prato: Batata doce cozida + Merluza grelhada + Abóbora cabotiá cozida
-- [ ] `candidate-f39f087d3b2e4747` — Prato: Macarrão integral cozido + Carne suína (lombo assado) + Rúcula
+- [x] `candidate-f39f087d3b2e4747` — Prato: Macarrão integral cozido + Carne suína (lombo assado) + Rúcula
 - [x] `candidate-f3a2db74e0e497bf` — Prato: Mandioca cozida + Carne bovina (patinho) + Abóbora cabotiá cozida
 - [ ] `candidate-f3a593cd970e55ab` — Prato: Macarrão integral cozido + Proteína de soja texturizada + Chuchu cozido
 - [x] `candidate-f3ada3c79846be55` — Prato: Biscoito de arroz + Carne bovina (alcatra) + Alface

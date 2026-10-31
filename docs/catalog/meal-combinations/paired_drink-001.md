@@ -31,7 +31,7 @@
 - [x] `candidate-c66a0efb578a9a33` — Lanche com bebida: Barra de proteína + Água de coco
 - [ ] `candidate-cdcb41281271d4c7` — Lanche com bebida: Pão de queijo + Suco de laranja natural
 - [ ] `candidate-d2072bcb2dde4a7c` — Lanche com bebida: Biscoito de arroz + Suco de laranja natural
-- [ ] `candidate-e6260289b21609af` — Lanche com bebida: Biscoito de arroz + Água de coco
+- [x] `candidate-e6260289b21609af` — Lanche com bebida: Biscoito de arroz + Água de coco
 - [ ] `candidate-f553be7923f3d14a` — Lanche com bebida: Pão de queijo + Suco de uva integral
 - [x] `candidate-f612503bbbebde78` — Lanche com bebida: Panqueca de aveia + Café sem açúcar
 - [ ] `candidate-f9fa610ad3014b5e` — Lanche com bebida: Biscoito de arroz + Suco de uva integral

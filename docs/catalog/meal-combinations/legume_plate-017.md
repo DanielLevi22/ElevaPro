@@ -175,11 +175,11 @@
 - [ ] `candidate-de202f5c656323c7` — Prato com leguminosa: Arroz branco cozido + Soja cozida + Palmito em conserva
 - [ ] `candidate-de3301a4125ad287` — Prato com leguminosa: Inhame cozido + Feijão fradinho cozido + Berinjela cozida
 - [ ] `candidate-de5756b16cad29c0` — Prato com leguminosa: Arroz branco cozido + Feijão fradinho cozido + Aspargos cozidos
-- [ ] `candidate-de5bc8a1bbb0ead6` — Prato com leguminosa: Milho verde cozido + Ervilha cozida + Abóbora cabotiá cozida
+- [x] `candidate-de5bc8a1bbb0ead6` — Prato com leguminosa: Milho verde cozido + Ervilha cozida + Abóbora cabotiá cozida
 - [ ] `candidate-de78e8bb0d45c289` — Prato com leguminosa: Arroz sete grãos cozido + Edamame + Pepino
 - [ ] `candidate-de7b48298dd116b3` — Prato com leguminosa: Arroz sete grãos cozido + Soja cozida + Couve-flor cozida
 - [x] `candidate-de7e87f13f98d5a8` — Prato com leguminosa: Macarrão integral cozido + Ervilha cozida + Beterraba cozida
-- [ ] `candidate-de966d3f95135a86` — Prato com leguminosa: Inhame cozido + Lentilha cozida + Abóbora cabotiá cozida
+- [x] `candidate-de966d3f95135a86` — Prato com leguminosa: Inhame cozido + Lentilha cozida + Abóbora cabotiá cozida
 - [ ] `candidate-dea86861d24f30d3` — Prato com leguminosa: Polenta cozida + Feijão fradinho cozido + Pimentão vermelho
 - [ ] `candidate-deab8a3a166a7d50` — Prato com leguminosa: Batata inglesa cozida + Feijão azuki cozido + Espinafre
 - [ ] `candidate-deba27b407780044` — Prato com leguminosa: Cuscuz marroquino cozido + Feijão branco cozido + Agrião

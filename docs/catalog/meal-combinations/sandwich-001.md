@@ -68,11 +68,11 @@
 - [ ] `candidate-ddb278897a5ca787` — Sanduíche ou torrada: Pão de forma integral + Queijo minas frescal
 - [x] `candidate-e108f83dfdc9dbd6` — Sanduíche ou torrada: Pão de forma integral + Queijo parmesão
 - [x] `candidate-e29353612b5c8047` — Sanduíche ou torrada: Pão de forma integral + Queijo cottage
-- [ ] `candidate-e2d10e3c76fff430` — Sanduíche ou torrada: Pão integral + Presunto magro
+- [x] `candidate-e2d10e3c76fff430` — Sanduíche ou torrada: Pão integral + Presunto magro
 - [x] `candidate-e3c224e02b726165` — Sanduíche ou torrada: Tapioca (goma) + Queijo parmesão
 - [x] `candidate-e4752452b95d039d` — Sanduíche ou torrada: Pão integral + Requeijão light
 - [ ] `candidate-e73e40a4b6ebe81a` — Sanduíche ou torrada: Torrada integral + Ovo de codorna cozido
-- [ ] `candidate-e8a4cbb220decdbd` — Sanduíche ou torrada: Biscoito de arroz + Queijo cottage
+- [x] `candidate-e8a4cbb220decdbd` — Sanduíche ou torrada: Biscoito de arroz + Queijo cottage
 - [ ] `candidate-eced793c2704fc3d` — Sanduíche ou torrada: Pão sírio integral + Queijo cottage
 - [ ] `candidate-f58fb4cd3499848d` — Sanduíche ou torrada: Torrada integral + Homus
 - [ ] `candidate-fc4bf35275ab261a` — Sanduíche ou torrada: Pão sírio integral + Peito de peru defumado
