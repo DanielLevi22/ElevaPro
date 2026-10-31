@@ -5,6 +5,7 @@ import {
   formatarVolume,
   type ResumoDaSessao,
   type Workout,
+  type WorkoutExercise,
 } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
@@ -16,7 +17,9 @@ import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import { useCores, useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
+import { NextTimeLoads } from '../../../components/sessao/LoadSuggestionList';
 import { useContextoDoTreino } from '../../../hooks/useContextoDoTreino';
+import type { LoadSuggestions } from '../../../services/sessionLoadSuggestions';
 
 /**
  * O resumo do kit (tela 8): duração, volume, séries, gasto e os recordes da
@@ -32,8 +35,12 @@ interface ResumoDoTreinoProps {
   treino: Workout;
   resumo: ResumoDaSessao;
   evolucoes: Evolucao[];
+  itens: readonly WorkoutExercise[];
+  /** A carga do próximo treino (#376, A3); vazio fora do treino do Praticante. */
+  nextTime: LoadSuggestions;
   concluidaEm: number;
-  onSair: () => void;
+  /** Fecha a sessão no início de Treinos (#440). */
+  onConcluir: () => void;
   onCompartilhar: () => void;
 }
 
@@ -41,8 +48,10 @@ export function ResumoDoTreino({
   treino,
   resumo,
   evolucoes,
+  itens,
+  nextTime,
   concluidaEm,
-  onSair,
+  onConcluir,
   onCompartilhar,
 }: ResumoDoTreinoProps) {
   const { fase } = useContextoDoTreino(treino);
@@ -52,12 +61,10 @@ export function ResumoDoTreino({
     <TelaDeVidroComFoto
       image={fotoDoGrupo(treino.muscle_group)}
       bottomSpace="fixedButton"
-      overlay={
-        <BotaoFixoNoRodape rotulo="Compartilhar" icone="share-outline" onPress={onCompartilhar} />
-      }
+      overlay={<BotaoFixoNoRodape rotulo="Concluir" icone="checkmark" onPress={onConcluir} />}
     >
       <View className="flex-row justify-between">
-        <BotaoRedondo icone="chevron-left" rotulo="Sair do resumo" onPress={onSair} />
+        <BotaoRedondo icone="chevron-left" rotulo="Concluir" onPress={onConcluir} />
         <BotaoRedondo icone="share" rotulo="Compartilhar" onPress={onCompartilhar} />
       </View>
 
@@ -79,6 +86,8 @@ export function ResumoDoTreino({
       {evolucoes.map((evolucao) => (
         <LinhaDeEvolucao key={evolucao.itemId} evolucao={evolucao} />
       ))}
+
+      <NextTimeLoads items={itens} suggestions={nextTime} />
     </TelaDeVidroComFoto>
   );
 }

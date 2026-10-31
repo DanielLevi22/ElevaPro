@@ -34,24 +34,27 @@
     "app:check-dead": "cd app && npx knip --no-progress",
     "app:check-medidas": "node scripts/check-medidas-fixas.js",
     "local:reset-mfa": "node scripts/local-reset-mfa.mjs",
-    "scripts:test": "node --test \"scripts/__tests__/*.test.mjs\""
+    "db:backfill-set-plan": "tsx scripts/backfill-set-plan.ts",
+    "scripts:test": "node --test scripts/__tests__/*.test.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",
-    "@commitlint/cli": "^20.4.2",
-    "@commitlint/config-conventional": "^20.4.2",
-    "@supabase/supabase-js": "^2.103.3",
-    "drizzle-kit": "^0.31.7",
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.4",
+    "@supabase/supabase-js": "^2.118.0",
+    "drizzle-kit": "^0.31.11",
     "drizzle-orm": "^0.45.2",
     "husky": "^9.1.7",
-    "knip": "^6.35.1",
-    "supabase": "2.118.0",
+    "knip": "^6.44.1",
+    "postgres": "^3.4.9",
+    "supabase": "2.122.0",
+    "tsx": "^4.23.4",
     "typescript": "~6.0.3"
   },
   "engines": {
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   }
 }

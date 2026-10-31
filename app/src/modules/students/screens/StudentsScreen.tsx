@@ -80,7 +80,6 @@ export default function StudentsScreen() {
       <StudentActionsSheet
         student={actionsFor}
         onClose={() => setActionsFor(null)}
-        onAssess={(student) => router.push(ROUTES.STUDENTS.ASSESSMENT(student.id))}
         onResendInvite={handlers.resendInvite}
         onRemove={handlers.remove}
       />

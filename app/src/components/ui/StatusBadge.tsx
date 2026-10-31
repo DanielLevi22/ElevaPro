@@ -25,6 +25,15 @@ const ESTADO: Record<StatusType, { label: string; tone: BadgeProps['tone'] }> = 
   canceled: { label: 'Cancelado', tone: 'danger' },
 };
 
+/**
+ * O status em texto, o mesmo do selo — para aviso e frase que citam o status.
+ *
+ * @example statusLabel('completed') // "Concluído"
+ */
+export function statusLabel(status: StatusType | string): string {
+  return ESTADO[status as StatusType]?.label ?? status;
+}
+
 export function StatusBadge({ status, showDot = true }: StatusBadgeProps) {
   // Estado desconhecido aparece cru em vez de sumir: dado de produção com valor
   // fora da lista é informação, não motivo para tela em branco.

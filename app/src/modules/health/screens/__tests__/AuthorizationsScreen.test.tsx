@@ -40,12 +40,12 @@ const GRANTED: ConsentStatus = {
   policyVersion: '1.7',
 };
 
-function renderScreen() {
+async function renderScreen() {
   // `gcTime` infinito: o coletor agenda um timer por consulta, e o Jest não sai.
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: Number.POSITIVE_INFINITY } },
   });
-  return render(
+  return await render(
     <QueryClientProvider client={client}>
       <AuthorizationsScreen studentId="aluno-1" hasSpecialist />
     </QueryClientProvider>
@@ -59,7 +59,7 @@ beforeEach(() => {
 
 describe('Minhas autorizações', () => {
   it('oferece um caminho de retirada para cada finalidade autorizada', async () => {
-    renderScreen();
+    await renderScreen();
 
     const links = await screen.findAllByLabelText(
       /^Retirar (Dados de saúde|Análise de Técnica|Ranking)$/
@@ -72,10 +72,10 @@ describe('Minhas autorizações', () => {
   });
 
   it('retira só a finalidade escolhida, sem derrubar a outra', async () => {
-    renderScreen();
+    await renderScreen();
 
-    fireEvent.press(await screen.findByLabelText('Retirar Análise de Técnica'));
-    fireEvent.press(screen.getByLabelText('Confirmar retirada'));
+    await fireEvent.press(await screen.findByLabelText('Retirar Análise de Técnica'));
+    await fireEvent.press(screen.getByLabelText('Confirmar retirada'));
 
     await waitFor(() => expect(mockRevoke).toHaveBeenCalled());
     const purpose = mockRevoke.mock.calls[0][1];
@@ -88,16 +88,16 @@ describe('Minhas autorizações', () => {
   });
 
   it('não retira nada antes de o Student confirmar na folha', async () => {
-    renderScreen();
+    await renderScreen();
 
-    fireEvent.press(await screen.findByLabelText('Retirar Dados de saúde'));
+    await fireEvent.press(await screen.findByLabelText('Retirar Dados de saúde'));
 
     expect(screen.getByText('O que muda agora')).toBeTruthy();
     expect(mockRevoke).not.toHaveBeenCalled();
   });
 
   it('consulta as três finalidades separadamente', async () => {
-    renderScreen();
+    await renderScreen();
 
     await waitFor(() => expect(mockStatus).toHaveBeenCalledTimes(3));
     const types = mockStatus.mock.calls.map((call) => (call[1] as { type: string })?.type);

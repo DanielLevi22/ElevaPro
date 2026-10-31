@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { showAlert } from '@/components/ui/appAlert';
 import type { PedidoDeRegistro } from '../services/itensEstimados';
 import { useNutritionStore } from '../store/nutritionStore';
-import { AVISO_DE_MODO_LEITURA, type PlanoDoDia, usePlanoDoDia } from './usePlanoDoDia';
+import { type PlanoDoDia, usePlanoDoDia } from './usePlanoDoDia';
 
 const diario = createDiarioAlimentar(supabase);
 
@@ -29,20 +29,16 @@ export interface RegistroNoDiario {
  * na refeição.
  *
  * @example
- * const registro = useRegistroNoDiario(user.id, { somenteLeitura });
+ * const registro = useRegistroNoDiario(user.id);
  * registro.pedir({ descricao: '100 g de Banana', extras: [extra] });
  */
-export function useRegistroNoDiario(
-  alunoId: string,
-  { somenteLeitura }: { somenteLeitura: boolean }
-): RegistroNoDiario {
-  const plano = usePlanoDoDia(alunoId, { somenteLeitura });
+export function useRegistroNoDiario(alunoId: string): RegistroNoDiario {
+  const plano = usePlanoDoDia(alunoId);
   const refeicoes = plano.refeicoes.map((r) => r.refeicao);
   const [pedido, setPedido] = useState<PedidoDeRegistro | null>(null);
   const [refeicaoEscolhida, setRefeicaoEscolhida] = useState<string | null>(null);
 
   const pedir = (novo: PedidoDeRegistro, refeicaoCitada?: string) => {
-    if (somenteLeitura) return showAlert(AVISO_DE_MODO_LEITURA);
     if (refeicoes.length === 0) {
       return showAlert({
         title: 'Sem refeição hoje',

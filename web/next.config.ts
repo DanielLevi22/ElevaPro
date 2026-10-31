@@ -1,5 +1,6 @@
 import "dotenv/config";
 import type { NextConfig } from "next";
+import { appVersionFrom } from "./src/lib/app-version";
 
 const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin
@@ -33,6 +34,15 @@ const contentSecurityPolicy = [
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  // O cliente compara esta versão com `/api/version` para sair do deploy
+  // anterior sem Ctrl+R (#428).
+  env: { NEXT_PUBLIC_APP_VERSION: appVersionFrom(process.env.VERCEL_GIT_COMMIT_SHA) },
+  // O `paths` do tsconfig aponta `@casl/ability` para o `.d.ts`, que é só tipo.
+  // Sem este desvio o Turbopack empacota esse arquivo, o `AbilityBuilder` chega
+  // `undefined` no browser e todo login cai em `auth.profile_load_failed`.
+  turbopack: {
+    resolveAlias: { "@casl/ability": "./node_modules/@casl/ability" },
+  },
   // Import de barril custa 200-800ms de cold start porque carrega a biblioteca
   // inteira. Isto reescreve `import { X } from "lucide-react"` para o import
   // direto no build, sem obrigar cada arquivo a conhecer o caminho interno.

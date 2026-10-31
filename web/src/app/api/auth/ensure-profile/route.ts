@@ -15,7 +15,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
  * ausente virava a conta que o chamador escolhesse.
  *
  * Perfil que não existe é estado de erro, não algo para remendar com dado que o
- * chamador controla: a guarda AAL2 devolve 403 e o problema aparece.
+ * chamador controla: a guarda de conta privilegiada devolve 403 e o problema aparece.
  */
 export async function POST(request: NextRequest) {
   try {

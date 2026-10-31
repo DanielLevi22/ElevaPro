@@ -96,7 +96,7 @@ function AdaptiveSectionCard({
   if (entries.length === 0) return null;
 
   return (
-    <div className="bg-surface border border-white/10 rounded-2xl overflow-hidden">
+    <div className="glass rounded-2xl overflow-hidden">
       <div className="px-5 py-3 border-b border-white/10 bg-white/[0.02]">
         <h3 className="font-semibold text-foreground text-sm">{title}</h3>
       </div>
@@ -142,7 +142,7 @@ function GeneralSectionCard({
   });
   if (visible.length === 0) return null;
   return (
-    <div className="bg-surface border border-white/10 rounded-2xl overflow-hidden">
+    <div className="glass rounded-2xl overflow-hidden">
       <div className="px-5 py-3 border-b border-white/10 bg-white/[0.02]">
         <h3 className="font-semibold text-foreground text-sm">{section.title}</h3>
       </div>
@@ -213,7 +213,7 @@ export default function StudentAnamnesisPage() {
 
       {/* Precision score (adaptive only) */}
       {!isLoading && !isError && anamnesis && adaptive && (
-        <div className="bg-surface border border-white/10 rounded-2xl p-5">
+        <div className="glass rounded-2xl p-5">
           <div className="flex justify-between items-center mb-2">
             <div>
               <p className="text-sm font-semibold text-foreground">Precisão do perfil</p>
@@ -237,10 +237,7 @@ export default function StudentAnamnesisPage() {
       {isLoading && (
         <div className="flex flex-col gap-4">
           {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="bg-surface border border-white/10 rounded-2xl animate-pulse h-40"
-            />
+            <div key={i} className="glass rounded-2xl animate-pulse h-40" />
           ))}
         </div>
       )}
@@ -252,7 +249,7 @@ export default function StudentAnamnesisPage() {
 
       {/* Empty */}
       {!isLoading && !isError && !anamnesis && (
-        <div className="text-center py-16 bg-surface border border-white/10 rounded-2xl">
+        <div className="glass text-center py-16 rounded-2xl">
           <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg
               aria-hidden="true"

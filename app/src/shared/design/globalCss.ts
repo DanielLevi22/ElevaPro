@@ -1,4 +1,4 @@
-import { metrica, paleta, type Tema } from './tokens';
+import { metric, paletteByTheme, type Tema } from './tokens';
 
 /**
  * Monta o conteúdo de `src/global.css` a partir dos tokens.
@@ -45,14 +45,14 @@ export function gerarGlobalCss(): string {
  * escuro — repetir valor igual nos dois temas é convidar os dois a divergirem.
  */
 function blocoDeMetrica(): string {
-  const declaracoes = Object.entries(metrica).map(([nome, valor]) =>
+  const declaracoes = Object.entries(metric).map(([nome, valor]) =>
     declaracao(`metrica-${nome}`, valor)
   );
   return `  :root {\n${declaracoes.join('\n')}\n  }`;
 }
 
 function blocoDoTema(tema: Tema): string {
-  const { hsl, literais } = paleta[tema];
+  const { hsl, literais } = paletteByTheme[tema];
   const declaracoes = [
     ...Object.entries(hsl).map(([nome, valor]) => declaracao(nome, valor)),
     ...Object.entries(literais).map(([nome, valor]) => declaracao(nome, valor)),

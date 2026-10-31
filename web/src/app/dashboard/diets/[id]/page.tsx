@@ -9,6 +9,7 @@ import { DaySelector } from "@/modules/nutrition/components/DaySelector";
 import { DietDetailsHeader } from "@/modules/nutrition/components/DietDetailsHeader";
 import { DietDetailsSkeleton } from "@/modules/nutrition/components/DietDetailsSkeleton";
 import { NutritionFlowBanner } from "@/modules/nutrition/components/NutritionFlowBanner";
+import { sumMealsMacros } from "@/modules/nutrition/utils/macroTotals";
 import { DayOptionsModal, MealEditor } from "@/nutrition";
 import { useAuthUser } from "@/shared/hooks/useAuthUser";
 import {
@@ -103,7 +104,8 @@ export default function DietDetailsPage() {
       const studentName = isMember
         ? (currentUser?.fullName ?? "Membro")
         : (students.find((s) => s.id === dietPlan.student_id)?.full_name ?? "Aluno");
-      const professionalName = currentUser?.fullName || "Profissional";
+      // O próprio aluno exportando (Praticante) não é o profissional dele.
+      const professionalName = isMember ? null : (currentUser?.fullName ?? null);
       await exportDietToPDF(dietPlan, meals, studentName, professionalName);
     } catch (error) {
       console.error("Error exporting PDF:", error);
@@ -132,6 +134,8 @@ export default function DietDetailsPage() {
   const isCyclic = dietPlan.plan_type === "cyclic";
   const currentDayName = DAYS_OF_WEEK.find((d) => d.id === selectedDay)?.label || "";
   const dayMeals = meals.filter((m) => m.day_of_week === selectedDay);
+  // A meta do plano é diária: o progresso compara com o dia aberto, não com a semana.
+  const dayTotals = sumMealsMacros(dayMeals);
   // O envio só fica pendente enquanto o plano é rascunho (#337).
   const nutritionStep = dietPlan.status !== "draft" ? 4 : dayMeals.length === 0 ? 2 : 3;
 
@@ -145,6 +149,8 @@ export default function DietDetailsPage() {
         onExportPDF={handleExportPDF}
         onDayOptions={() => setIsDayOptionsOpen(true)}
         isCyclic={isCyclic}
+        dayTotals={dayTotals}
+        dayLabel={isCyclic ? currentDayName : ""}
       />
 
       <NutritionFlowBanner currentStep={nutritionStep} />

@@ -12,7 +12,6 @@ import { useSugestoesStore } from '../store/sugestoesStore';
 import type { PlanoDoDia } from './usePlanoDoDia';
 
 interface OpcoesDasSugestoes {
-  somenteLeitura: boolean;
   obterToken: () => string;
 }
 
@@ -26,19 +25,19 @@ const NENHUMA: SugestaoDeRefeicao[] = [];
  * seção some — a busca não depende dela.
  *
  * @example
- * const sugestoes = useSugestoesDoDia(user.id, busca.registro.plano, { somenteLeitura, obterToken });
+ * const sugestoes = useSugestoesDoDia(user.id, busca.registro.plano, { obterToken });
  */
 export function useSugestoesDoDia(
   alunoId: string,
   plano: PlanoDoDia,
-  { somenteLeitura, obterToken }: OpcoesDasSugestoes
+  { obterToken }: OpcoesDasSugestoes
 ): SugestaoDeRefeicao[] {
   const guardadas = useSugestoesStore((s) => sugestoesGuardadas(s.porAluno[alunoId], plano.hoje));
   const refeicoes = useNutritionStore((s) => s.meals);
   const favoritas = useFavoritosStore((s) => s.porAluno[alunoId]);
   // Um pedido por aluno e dia, mesmo com o plano recarregando no meio.
   const pedido = useRef<string | null>(null);
-  const podePedir = plano.temPlano && !plano.carregando && !somenteLeitura && !guardadas;
+  const podePedir = plano.temPlano && !plano.carregando && !guardadas;
 
   useEffect(() => {
     const chave = `${alunoId}:${plano.hoje}`;

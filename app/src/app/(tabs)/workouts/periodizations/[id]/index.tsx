@@ -24,6 +24,7 @@ export default function PeriodizacaoRoute() {
       <FasesDaPeriodizacaoScreen
         periodizacaoId={primeiroValor(id) ?? ''}
         alunoId={user.id}
+        studentName={user.user_metadata?.full_name ?? null}
         modo={modo}
       />
     );

@@ -40,13 +40,12 @@ import { useFavoritosStore } from '../../store/favoritosStore';
  * prato não implica começar a cozinhar nem registrar o consumo.
  *
  * @example
- * <DetalheDaRefeicaoScreen alunoId={user.id} refeicaoId={id} data="2026-08-12" somenteLeitura={false} />
+ * <DetalheDaRefeicaoScreen alunoId={user.id} refeicaoId={id} data="2026-08-12" />
  */
 interface DetalheDaRefeicaoScreenProps {
   alunoId: string;
   refeicaoId: string;
   data: string;
-  somenteLeitura: boolean;
 }
 
 /** Proteína a partir de 30% das calorias do prato: o chip "Alta proteína" do kit. */
@@ -57,10 +56,9 @@ export function DetalheDaRefeicaoScreen({
   alunoId,
   refeicaoId,
   data,
-  somenteLeitura,
 }: DetalheDaRefeicaoScreenProps) {
   const router = useRouter();
-  const aberta = useRefeicaoDoDia(alunoId, refeicaoId, data, { somenteLeitura });
+  const aberta = useRefeicaoDoDia(alunoId, refeicaoId, data);
   const [trocando, setTrocando] = useState(false);
 
   if (!aberta.refeicao) return <SemRefeicao naoEncontrada={aberta.naoEncontrada} />;

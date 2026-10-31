@@ -11,12 +11,15 @@ import {
   useAddMeal,
   useDeleteMeal,
   useDietMeals,
+  useDietPlan,
   useRemoveMealItem,
   useUpdateMeal,
   useUpdateMealItem,
 } from "@/shared/hooks/useNutrition";
+import { dailyTargets, sumMealsMacros } from "../utils/macroTotals";
 import { AddFoodQuantityModal } from "./AddFoodQuantityModal";
 import { AddMealModal } from "./AddMealModal";
+import type { DaySnapshot } from "./DayBalance";
 import { EditFoodModal } from "./EditFoodModal";
 import { EditMealDetailsModal } from "./EditMealDetailsModal";
 import { FoodSelector } from "./FoodSelector";
@@ -59,6 +62,11 @@ export function MealEditor({ dietPlanId, dayOfWeek }: MealEditorProps) {
   const [mealToDeleteId, setMealToDeleteId] = useState<string | null>(null);
 
   const meals = allMeals.filter((m) => m.day_of_week === dayOfWeek);
+  // O plano já está em cache pela página; aqui só lê a meta para o saldo dos modais.
+  const { data: dietPlan } = useDietPlan(dietPlanId);
+  const daySnapshot: DaySnapshot | undefined = dietPlan
+    ? { targets: dailyTargets(dietPlan), consumed: sumMealsMacros(meals) }
+    : undefined;
 
   const handleDeleteMeal = async (id: string) => {
     try {
@@ -123,7 +131,7 @@ export function MealEditor({ dietPlanId, dayOfWeek }: MealEditorProps) {
 
       <div className="space-y-4">
         {meals.length === 0 ? (
-          <div className="bg-surface border border-white/10 rounded-2xl p-8 space-y-6">
+          <div className="glass rounded-2xl p-8 space-y-6">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
                 <svg
@@ -253,6 +261,7 @@ export function MealEditor({ dietPlanId, dayOfWeek }: MealEditorProps) {
         scrollable
       >
         <FoodSelector
+          daySnapshot={daySnapshot}
           onSelect={(food, q) => {
             if (q) handleConfirmQuantity(q, food);
             else {
@@ -294,6 +303,7 @@ export function MealEditor({ dietPlanId, dayOfWeek }: MealEditorProps) {
         onConfirm={handleConfirmQuantity}
         food={pendingFood?.food || null}
         suggestedQuantity={pendingFood?.calculatedQuantity}
+        daySnapshot={daySnapshot}
       />
 
       <AddMealModal

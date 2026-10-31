@@ -1,10 +1,10 @@
 import {
+  type ExerciseEffort,
   MS_POR_SEGUNDO,
-  numeroDaPrescricao,
   type SerieFeita,
+  type SetPrescription,
   type WorkoutExercise,
 } from '@elevapro/shared';
-import { DEFAULT_REST_TIME } from '../constants';
 import {
   type Cronometro,
   cronometroParado,
@@ -12,6 +12,13 @@ import {
   segundosDoCronometro,
   soltarCronometro,
 } from './cronometro';
+import {
+  deloadPlan,
+  restAfterSet,
+  setPrescriptionAt,
+  setRecord,
+  withSuggestedLoad,
+} from './sessionPlan';
 
 /**
  * A sessão de treino como uma sequência de estados:
@@ -55,6 +62,10 @@ export interface EstadoDaSessao {
   ultima: SerieFeita | null;
   /** Quanto a última série levou, em segundos. Mostrado, não gravado. */
   duracaoDaUltima: number | null;
+  /** "Fácil", "Ok" ou "Difícil" por exercício, depois da última série (#376, A2). */
+  efforts: Record<string, ExerciseEffort>;
+  /** O exercício que acabou de terminar e espera a pergunta do esforço. */
+  pendingEffortId: string | null;
 }
 
 type SemDados = Record<never, never>;
@@ -66,6 +77,8 @@ interface DadosDasAcoes {
   alternarSerie: { agora: number };
   zerarSerie: SemDados;
   concluirSerie: { agora: number };
+  /** Todas as séries que faltam no exercício atual, como prescritas (#441). */
+  concluirTodas: { agora: number };
   fecharSerie: SemDados;
   escolher: { itemId: string };
   ajustarExercicio: { item: WorkoutExercise };
@@ -78,6 +91,12 @@ interface DadosDasAcoes {
   finalizar: { agora: number };
   voltarAoTreino: SemDados;
   salva: SemDados;
+  /** Responder a pergunta do esforço; `null` é "Pular". */
+  rateEffort: { itemId: string; effort: ExerciseEffort | null };
+  /** A carga sugerida de cada exercício, antes de começar (#376, A1). */
+  applySuggestedLoads: { weights: Record<string, string> };
+  /** A semana de descarga do bloco: metade das séries, a mesma carga (#376, A7). */
+  applyDeload: SemDados;
 }
 
 type TipoDaAcao = keyof DadosDasAcoes;
@@ -101,6 +120,8 @@ export function estadoInicial(itens: WorkoutExercise[]): EstadoDaSessao {
     descanso: null,
     ultima: null,
     duracaoDaUltima: null,
+    efforts: {},
+    pendingEffortId: null,
   };
 }
 
@@ -141,6 +162,7 @@ const TRANSICOES: {
   zerarSerie: (estado) => noCronometroDaSerie(estado, cronometroParado),
   fecharSerie: (estado) => (estado.momento === 'serie' ? paraExecucao(estado) : estado),
   concluirSerie: (estado, { agora }) => concluirSerie(estado, agora),
+  concluirTodas: (estado, { agora }) => concluirTodas(estado, agora),
   escolher: (estado, { itemId }) => escolher(estado, itemId),
   ajustarExercicio: (estado, { item }) => ({
     ...estado,
@@ -162,14 +184,48 @@ const TRANSICOES: {
   voltarAoTreino: (estado) =>
     estado.momento === 'feedback' ? { ...estado, momento: 'execucao', concluidaEm: null } : estado,
   salva: (estado) => (estado.momento === 'feedback' ? { ...estado, momento: 'resumo' } : estado),
+  rateEffort: (estado, { itemId, effort }) => rateEffort(estado, itemId, effort),
+  applySuggestedLoads: (estado, { weights }) => applySuggestedLoads(estado, weights),
+  applyDeload: (estado) => applyDeload(estado),
 };
+
+/** Como a carga sugerida: só antes de começar, e a prescrição fica intacta no treino. */
+function applyDeload(estado: EstadoDaSessao): EstadoDaSessao {
+  if (estado.momento !== 'preInicio') return estado;
+  const itens = estado.itens.map(deloadPlan);
+  return { ...estado, itens };
+}
+
+/** Só o exercício que espera a pergunta: o resto não tem o que responder. */
+function rateEffort(
+  estado: EstadoDaSessao,
+  itemId: string,
+  effort: ExerciseEffort | null
+): EstadoDaSessao {
+  if (estado.pendingEffortId !== itemId) return estado;
+  const efforts = effort ? { ...estado.efforts, [itemId]: effort } : estado.efforts;
+  return { ...estado, efforts, pendingEffortId: null };
+}
+
+/**
+ * A carga sugerida vira a carga da sessão, e é ela que a série grava; a
+ * prescrição fica intacta no treino. Só antes de começar: no meio do treino,
+ * quem muda a carga é o lápis.
+ */
+function applySuggestedLoads(
+  estado: EstadoDaSessao,
+  weights: Record<string, string>
+): EstadoDaSessao {
+  if (estado.momento !== 'preInicio') return estado;
+  const itens = estado.itens.map((item) => {
+    const carga = weights[item.id];
+    return carga ? withSuggestedLoad(item, carga) : item;
+  });
+  return { ...estado, itens };
+}
 
 function paraExecucao(estado: EstadoDaSessao): EstadoDaSessao {
   return { ...estado, momento: 'execucao', serie: null, descanso: null };
-}
-
-function seriesDo(item: WorkoutExercise): number {
-  return item.sets ?? 0;
 }
 
 function feitasDo(estado: EstadoDaSessao, itemId: string): number {
@@ -227,14 +283,14 @@ function concluirSerie(estado: EstadoDaSessao, agora: number): EstadoDaSessao {
   const item = itemAtual(estado);
   if (!item || exercicioConcluido(estado, item)) return estado;
 
-  const serie: SerieFeita = {
-    reps: numeroDaPrescricao(item.reps),
-    carga: numeroDaPrescricao(item.weight),
-  };
+  const prescricao = setPrescriptionAt(item, feitasDo(estado, item.id));
+  const serie: SerieFeita = setRecord(prescricao);
   const feitas = { ...estado.feitas, [item.id]: [...(estado.feitas[item.id] ?? []), serie] };
+  const terminou = (feitas[item.id]?.length ?? 0) >= item.set_plan.length;
   const depois: EstadoDaSessao = {
     ...estado,
     feitas,
+    pendingEffortId: terminou ? item.id : estado.pendingEffortId,
     ultima: serie,
     duracaoDaUltima: estado.serie ? segundosDoCronometro(estado.serie, agora) : null,
     serie: null,
@@ -244,13 +300,35 @@ function concluirSerie(estado: EstadoDaSessao, agora: number): EstadoDaSessao {
   if (depois.atualId === null) {
     return { ...depois, momento: 'feedback', concluidaEm: agora, descanso: null };
   }
-  const descanso = item.rest_seconds ?? DEFAULT_REST_TIME;
+  const descanso = restAfterSet(prescricao);
   if (descanso <= 0) return paraExecucao(depois);
   return {
     ...depois,
     momento: 'descanso',
     descanso: { total: descanso, terminaEm: agora + descanso * MS_POR_SEGUNDO, pausadoCom: null },
   };
+}
+
+/**
+ * Registra de uma vez as séries que faltam no exercício atual, como prescritas
+ * e sem duração, como o "feito" da voz. Depois, o esforço e o próximo
+ * exercício, ou o feedback se era o último — sem descanso: quem conclui tudo de
+ * uma vez já fez o exercício, e o descanso dele já passou. Só na lista: no meio
+ * da série ou do descanso, o aluno conclui por lá (#441).
+ */
+function concluirTodas(estado: EstadoDaSessao, agora: number): EstadoDaSessao {
+  const item = itemAtual(estado);
+  if (estado.momento !== 'execucao' || !item || exercicioConcluido(estado, item)) return estado;
+  const restantes = item.set_plan.length - feitasDo(estado, item.id);
+  return Array.from({ length: restantes }).reduce<EstadoDaSessao>(
+    (atual) => semDescanso(concluirSerie(atual, agora)),
+    estado
+  );
+}
+
+/** Volta à lista depois da série, a não ser que o treino tenha acabado nela. */
+function semDescanso(estado: EstadoDaSessao): EstadoDaSessao {
+  return estado.momento === 'feedback' ? estado : paraExecucao(estado);
 }
 
 /**
@@ -338,16 +416,21 @@ export function progressoDaSessao(estado: EstadoDaSessao): ProgressoDaSessao {
     exercicio: indice === -1 ? estado.itens.length : indice + 1,
     exercicios: estado.itens.length,
     seriesFeitas: Object.values(estado.feitas).reduce((soma, s) => soma + s.length, 0),
-    seriesTotais: estado.itens.reduce((soma, i) => soma + seriesDo(i), 0),
+    seriesTotais: estado.itens.reduce((soma, i) => soma + i.set_plan.length, 0),
   };
 }
 
 /** A série que vem agora — o "A seguir" do descanso e o título do cronômetro. */
-export function proximaSerie(
-  estado: EstadoDaSessao
-): { item: WorkoutExercise; numero: number } | null {
+export function proximaSerie(estado: EstadoDaSessao): {
+  item: WorkoutExercise;
+  numero: number;
+  /** A prescrição da série da vez: técnicas, repetições e blocos (#431). */
+  prescricao: SetPrescription | null;
+} | null {
   const item = itemAtual(estado);
-  return item ? { item, numero: feitasDo(estado, item.id) + 1 } : null;
+  if (!item) return null;
+  const feitas = feitasDo(estado, item.id);
+  return { item, numero: feitas + 1, prescricao: setPrescriptionAt(item, feitas) };
 }
 
 /**
@@ -357,5 +440,5 @@ export function proximaSerie(
  * @example exercicioConcluido(sessao, item) // true depois da última série
  */
 export function exercicioConcluido(estado: EstadoDaSessao, item: WorkoutExercise): boolean {
-  return feitasDo(estado, item.id) >= seriesDo(item);
+  return feitasDo(estado, item.id) >= item.set_plan.length;
 }

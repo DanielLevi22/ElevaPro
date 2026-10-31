@@ -13,7 +13,7 @@ export function GamificationBar({ streak, achievements }: Props) {
   const recentBadges = achievements.slice(0, 3);
 
   return (
-    <div className="flex items-center gap-6 bg-surface/40 border border-overlay-08 rounded-2xl px-6 py-4">
+    <div className="glass flex items-center gap-6 rounded-2xl px-6 py-4">
       <div className="flex items-center gap-2">
         <span className="text-2xl">🔥</span>
         <div>

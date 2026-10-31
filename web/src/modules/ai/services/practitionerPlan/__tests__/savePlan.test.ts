@@ -33,6 +33,11 @@ vi.mock("@/lib/supabase-admin", () => ({
             finished.push({ tabela, linha, filtros });
             return { error: null };
           },
+          // biome-ignore lint/suspicious/noThenProperty: o builder do PostgREST é thenable
+          then: (resolve: (value: unknown) => unknown) => {
+            finished.push({ tabela, linha, filtros });
+            return resolve({ error: null });
+          },
         };
         return cadeia;
       },
@@ -47,6 +52,10 @@ vi.mock("@/lib/supabase-admin", () => ({
           in: async (_coluna: string, nomes: string[]) => ({
             data: nomes.map((name) => ({ id: `id-${name}`, name, serving_unit: "g" })),
             error: null,
+          }),
+          // A dieta ativa antes da nova: é a que a ativação encerra.
+          eq: () => ({
+            is: () => ({ maybeSingle: async () => ({ data: { id: "dieta-0" }, error: null }) }),
           }),
         }),
       }),
@@ -203,10 +212,10 @@ describe("aprovar o plano do onboarding", () => {
 
   it("encerra só o treino ativo anterior do próprio Praticante, e não o novo", async () => {
     const { periodizationId } = await savePractitionerPlan(context(), PENDING);
-    expect(finished).toEqual([
+    expect(finished.filter((item) => item.tabela === "training_periodizations")).toEqual([
       {
         tabela: "training_periodizations",
-        linha: { status: "completed" },
+        linha: { status: "completed", end_reason: "replaced" },
         filtros: {
           student_id: "aluno-1",
           status: "active",
@@ -228,6 +237,17 @@ describe("aprovar o plano do onboarding", () => {
     expect(periodizationId).toBeNull();
     expect(dietPlanId).toBe("dieta-1");
     expect(inserted.filter((i) => i.tabela === "training_periodizations")).toEqual([]);
-    expect(finished).toEqual([]);
+    expect(finished.filter((item) => item.tabela === "training_periodizations")).toEqual([]);
+  });
+
+  // Encerrar, nunca apagar (#376): a dieta anterior fica `finished` pela
+  // ativação, e aqui ganha o motivo — só a encerrada hoje, nunca a nova.
+  it("a dieta anterior ganha o motivo de ter sido trocada", async () => {
+    const { dietPlanId } = await savePractitionerPlan(context(), PENDING);
+    expect(dietPlanId).toBe("dieta-1");
+    expect(finished.find((item) => item.tabela === "diet_plans")).toMatchObject({
+      linha: { end_reason: "replaced" },
+      filtros: { status: "finished", id: "dieta-0" },
+    });
   });
 });

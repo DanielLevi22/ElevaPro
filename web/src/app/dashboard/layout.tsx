@@ -1,57 +1,77 @@
 "use client";
 
+import { isStrongAuthRequired } from "@elevapro/shared";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { hasCurrentPrivilegedProof, isPasskeyEnabled, useAuth, useAuthStore } from "@/modules/auth";
+import {
+  type AuthState,
+  hasCurrentPrivilegedProof,
+  isPasskeyEnabled,
+  useAuth,
+  useAuthStore,
+} from "@/modules/auth";
 import { DashboardSidebar } from "@/shared/components/layout/DashboardSidebar";
 import { useSidebarCollapsed } from "@/shared/hooks/useSidebarCollapsed";
+
+interface VerifiedAccess {
+  accessToken: string;
+  userId: string;
+  accountType: AuthState["accountType"];
+}
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, abilities, services, isLoading } = useAuth();
+  const { session, user, abilities, services, isLoading } = useAuth();
   const accountType = useAuthStore((s) => s.accountType);
   const { isCollapsed, toggle: toggleCollapse } = useSidebarCollapsed();
-  const [isMfaCheckPending, setIsMfaCheckPending] = useState(true);
+  const [verifiedAccess, setVerifiedAccess] = useState<VerifiedAccess | null>(null);
+  const accessToken = session?.access_token;
+  const userId = user?.id;
+  const isStudentOrMember = accountType === "student" || accountType === "member";
+  const isMemberRouteAllowed = [
+    "/dashboard/student",
+    "/dashboard/workouts",
+    "/dashboard/diets",
+  ].some((root) => pathname === root || pathname.startsWith(`${root}/`));
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    setVerifiedAccess(null);
+    if (isLoading) return;
+    if (!userId || !accessToken) {
       router.push("/auth/login");
       return;
     }
 
-    if (isLoading || !user) return;
-
-    if (accountType === "specialist" || accountType === "admin") {
-      setIsMfaCheckPending(true);
+    if (isStrongAuthRequired(accountType)) {
+      let cancelled = false;
       void hasCurrentPrivilegedProof()
         .then((hasMfa) => {
+          if (cancelled) return;
           if (!hasMfa) {
             router.replace("/auth/mfa");
             return;
           }
-          setIsMfaCheckPending(false);
+          setVerifiedAccess({ accessToken, userId, accountType });
         })
-        .catch(() => router.replace("/auth/mfa"));
-      return;
+        .catch(() => {
+          if (!cancelled) router.replace("/auth/mfa");
+        });
+      // Uma resposta da sessão anterior não pode autorizar nem redirecionar a atual.
+      return () => {
+        cancelled = true;
+      };
     }
 
-    setIsMfaCheckPending(false);
+    if (accountType) setVerifiedAccess({ accessToken, userId, accountType });
+  }, [userId, accessToken, isLoading, router, accountType]);
 
-    // Students/members: only /dashboard/student/*, /dashboard/workouts/*, /dashboard/diets/* allowed
-    const memberAllowed =
-      pathname.startsWith("/dashboard/student") ||
-      pathname.startsWith("/dashboard/workouts") ||
-      pathname.startsWith("/dashboard/diets");
-    if (
-      !isLoading &&
-      user &&
-      (accountType === "student" || accountType === "member") &&
-      !memberAllowed
-    ) {
+  useEffect(() => {
+    // A navegação muda a restrição de rota, não a prova da sessão já validada.
+    if (!isLoading && user && isStudentOrMember && !isMemberRouteAllowed) {
       router.replace("/dashboard/student");
     }
-  }, [user, isLoading, router, accountType, pathname]);
+  }, [user, isLoading, router, isStudentOrMember, isMemberRouteAllowed]);
 
   const handleLogout = async () => {
     const { signOut } = useAuthStore.getState();
@@ -59,9 +79,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push("/auth/login");
   };
 
-  if (isLoading || isMfaCheckPending) {
+  // A prova vale apenas para a sessão e o papel que a produziram, nunca entre contas.
+  const hasVerifiedAccess =
+    verifiedAccess?.accessToken === accessToken &&
+    verifiedAccess?.userId === userId &&
+    verifiedAccess?.accountType === accountType;
+
+  if (isLoading || !hasVerifiedAccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="material-glass min-h-screen flex items-center justify-center">
         <div className="relative">
           <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
           <div className="absolute inset-0 blur-xl bg-primary/20 animate-pulse rounded-full" />
@@ -70,9 +96,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  if (!user) return null;
+  if (!user || (isStudentOrMember && !isMemberRouteAllowed)) return null;
 
-  const isStudentOrMember = accountType === "student" || accountType === "member";
   const canManageWorkouts = !isStudentOrMember && abilities?.can("manage", "Workout");
   const canManageDiet = !isStudentOrMember && abilities?.can("manage", "Diet");
 
@@ -344,7 +369,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       ];
 
   return (
-    <div className="min-h-screen bg-background text-muted-foreground font-sans selection:bg-primary/30 selection:text-foreground">
+    <div className="material-glass min-h-screen font-sans selection:bg-primary/30 selection:text-foreground">
       {/* Visual background accents */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -ml-64 -mt-64" />

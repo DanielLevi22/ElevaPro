@@ -45,12 +45,9 @@ export interface PlanoDoDia {
  * meta, e o check de feita.
  *
  * @example
- * const plano = usePlanoDoDia(user.id, { somenteLeitura: isMasquerading });
+ * const plano = usePlanoDoDia(user.id);
  */
-export function usePlanoDoDia(
-  alunoId: string,
-  { somenteLeitura }: { somenteLeitura: boolean }
-): PlanoDoDia {
+export function usePlanoDoDia(alunoId: string): PlanoDoDia {
   const plano = useNutritionStore((s) => s.currentDietPlan);
   const refeicoes = useNutritionStore((s) => s.meals);
   const itens = useNutritionStore((s) => s.mealItems);
@@ -83,7 +80,7 @@ export function usePlanoDoDia(
   };
 
   const marcar = (refeicaoId: string) => {
-    const aviso = motivoParaNaoMarcar(somenteLeitura, data, hoje);
+    const aviso = motivoParaNaoMarcar(data, hoje);
     if (aviso) return showAlert(aviso);
     const feita = registros[refeicaoId]?.completed ?? false;
     useNutritionStore.getState().toggleMealCompletion(refeicaoId, data, !feita);
@@ -126,17 +123,10 @@ function linhaDaRefeicao(
 /**
  * Por que o check não vale agora, ou `null` quando vale.
  *
- * O especialista vendo como aluno só lê. E dia que ainda não chegou não se
- * marca: o registro é do que o aluno comeu, não do que pretende comer.
+ * Dia que ainda não chegou não se marca: o registro é do que o aluno comeu,
+ * não do que pretende comer.
  */
-/** O especialista vendo como o aluno só lê: o aviso é o mesmo em toda escrita. */
-export const AVISO_DE_MODO_LEITURA = {
-  title: 'Modo leitura',
-  message: 'Você está vendo como o aluno. Não dá para registrar por ele.',
-};
-
-export function motivoParaNaoMarcar(somenteLeitura: boolean, data: string, hoje: string) {
-  if (somenteLeitura) return AVISO_DE_MODO_LEITURA;
+export function motivoParaNaoMarcar(data: string, hoje: string) {
   if (data > hoje) {
     return {
       title: 'Ainda não',

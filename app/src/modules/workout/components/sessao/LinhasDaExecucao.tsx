@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Vidro } from '@/components/ui/Vidro';
 import { useCores, useEscala } from '@/shared/design';
+import { prescriptionSummary } from '../../store/sessionPlan';
 
 /**
  * As duas linhas que cercam o cartão em execução: o exercício já feito,
@@ -16,9 +17,9 @@ import { useCores, useEscala } from '@/shared/design';
 
 /** "4 × 8-10 · 45 kg", como a prescrição (ou o ajuste) diz. */
 export function prescricao(item: WorkoutExercise): string {
-  const carga = numeroDaPrescricao(item.weight);
-  const series = `${item.sets ?? 0} × ${item.reps ?? '—'}`;
-  return carga === null ? series : `${series} · ${formatarCarga(carga)}`;
+  const { sets: series, reps, load: carga } = prescriptionSummary(item);
+  const texto = `${series} × ${reps}`;
+  return carga === null ? texto : `${texto} · ${formatarCarga(carga)}`;
 }
 
 /**
@@ -47,7 +48,7 @@ export function ExercicioFeito({ item, feitas }: ExercicioFeitoProps) {
   const carga = feitas.reduce((maior, serie) => Math.max(maior, serie.carga ?? 0), 0);
 
   return (
-    <View className="mt-3 opacity-60">
+    <View className="opacity-60">
       <Vidro className="flex-row items-center gap-3 p-[0.8125rem]">
         <View className="h-[2.125rem] w-[2.125rem] shrink-0 items-center justify-center rounded-full bg-metrica-passos">
           <Ionicons
@@ -64,7 +65,8 @@ export function ExercicioFeito({ item, feitas }: ExercicioFeitoProps) {
             {item.exercise?.name ?? 'Exercício'}
           </Text>
           <Text className="mt-px text-micro text-muted-foreground">
-            {feitas.length}/{item.sets ?? 0} séries{carga > 0 ? ` · ${formatarCarga(carga)}` : ''}
+            {feitas.length}/{item.set_plan.length} séries
+            {carga > 0 ? ` · ${formatarCarga(carga)}` : ''}
           </Text>
         </View>
       </Vidro>
@@ -88,7 +90,6 @@ export function ExercicioASeguir({ item, onEscolher }: ExercicioASeguirProps) {
       activeOpacity={0.8}
       accessibilityRole="button"
       accessibilityLabel={`Fazer agora: ${item.exercise?.name ?? 'exercício'}`}
-      className="mb-[0.5625rem]"
     >
       <Vidro className="flex-row items-center gap-3 p-3">
         <View className="h-[1.875rem] w-[1.875rem] shrink-0 rounded-full border-[0.09375rem] border-placeholder" />

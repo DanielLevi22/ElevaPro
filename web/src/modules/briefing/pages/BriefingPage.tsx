@@ -11,7 +11,7 @@ interface BriefingPageProps extends Briefing {
 
 function NothingToDo({ hasStudents }: { hasStudents: boolean }) {
   return (
-    <div className="rounded-xl border border-dashed border-border bg-card/50 p-8 text-center">
+    <div className="glass rounded-xl border-dashed p-8 text-center">
       <p className="text-sm text-muted-foreground">
         {hasStudents
           ? "Ninguém precisa de ação agora. Os alunos estão treinando e não há convite parado."

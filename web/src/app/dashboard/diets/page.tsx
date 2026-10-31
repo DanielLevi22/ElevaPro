@@ -90,7 +90,7 @@ export default function DietsPage() {
 
       {/* Content */}
       {dietsError ? (
-        <div className="bg-surface border border-destructive/30 rounded-2xl p-6">
+        <div className="glass border-destructive/30 rounded-2xl p-6">
           <p className="text-sm font-bold text-destructive">Não foi possível carregar as dietas</p>
           <p className="mt-1.5 text-[13px] text-muted-foreground">{dietsError.message}</p>
         </div>

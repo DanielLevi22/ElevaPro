@@ -1,14 +1,4 @@
-import { TRAINING_PLACES as PLACE } from '@elevapro/shared';
-import type { Ionicons } from '@expo/vector-icons';
-
-type IconName = keyof typeof Ionicons.glyphMap;
-
-/**
- * As opções de O6 e O7 com o texto do desenho. Os valores gravados são os que o
- * contexto do coach já lê: dias e minutos como número ("4x/semana", "45 min") e
- * o local nos valores do catálogo da anamnese.
- */
-export const TRAINING_DAYS = [2, 3, 4, 5, 6] as const;
+export { TRAINING_DAYS, TRAINING_PLACES } from '@/shared/onboarding/choices';
 
 export const SESSION_MINUTES = [
   { value: '30', label: '30 min' },
@@ -16,13 +6,6 @@ export const SESSION_MINUTES = [
   { value: '60', label: '60 min' },
   { value: '90', label: '90 min' },
 ] as const;
-
-/** O valor é o que a anamnese grava, e mora no `shared`: a regra compara com ele. */
-export const TRAINING_PLACES = [
-  { value: PLACE.fullGym, label: 'Academia', icon: 'business-outline' },
-  { value: PLACE.home, label: 'Casa', icon: 'home-outline' },
-  { value: PLACE.outdoor, label: 'Ao ar livre', icon: 'leaf-outline' },
-] as const satisfies readonly { value: string; label: string; icon: IconName }[];
 
 export const HOME_EQUIPMENT = [
   'Halteres',

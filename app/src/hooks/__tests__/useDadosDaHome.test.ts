@@ -69,7 +69,6 @@ jest.mock('@/auth', () => ({
   useAuthStore: () => ({
     user: { id: 'u1' },
     accountType: mockPapel.atual,
-    isMasquerading: false,
   }),
 }));
 
@@ -129,7 +128,7 @@ beforeEach(() => {
 
 describe('useDadosDaHome', () => {
   it('no aluno busca meta do dia na data local, treinos e saúde — e não alunos', async () => {
-    const { result } = renderHook(() => useDadosDaHome());
+    const { result } = await renderHook(() => useDadosDaHome());
 
     await waitFor(() => expect(result.current.aluno.perfil?.full_name).toBe('Ana Souza'));
     expect(mockBuscarDoDia).toHaveBeenCalledWith('2026-09-12');
@@ -144,7 +143,7 @@ describe('useDadosDaHome', () => {
 
   // A sequência sai da activity calculada, e não de `student_streaks`, que ninguém grava (#312).
   it('no aluno, a sequência é a da activity dele', async () => {
-    const { result } = renderHook(() => useDadosDaHome());
+    const { result } = await renderHook(() => useDadosDaHome());
 
     await waitFor(() => expect(result.current.aluno.perfil).not.toBeNull());
     expect(mockActivityOf).toHaveBeenCalledWith('u1');
@@ -153,7 +152,7 @@ describe('useDadosDaHome', () => {
 
   it('no especialista busca alunos e treinos — e não a meta do dia de aluno', async () => {
     mockPapel.atual = 'specialist';
-    const { result } = renderHook(() => useDadosDaHome());
+    const { result } = await renderHook(() => useDadosDaHome());
 
     await waitFor(() => expect(result.current.especialista.perfil).not.toBeNull());
     expect(mockBuscarAlunos).toHaveBeenCalledWith('u1');
@@ -165,14 +164,14 @@ describe('useDadosDaHome', () => {
   });
 
   it('pede o perfil ao serviço compartilhado, que traz só nome e avatar', async () => {
-    const { result } = renderHook(() => useDadosDaHome());
+    const { result } = await renderHook(() => useDadosDaHome());
 
     await waitFor(() => expect(result.current.aluno.perfil).not.toBeNull());
     expect(mockResumoDoPerfil).toHaveBeenCalledWith('u1');
   });
 
   it('conta respostas da anamnese sem expor o conteúdo delas', async () => {
-    const { result } = renderHook(() => useDadosDaHome());
+    const { result } = await renderHook(() => useDadosDaHome());
 
     await waitFor(() => expect(result.current.aluno.perfil).not.toBeNull());
     expect(result.current.aluno.anamnese).toEqual({ enviada: false, respostas: 2 });
@@ -182,7 +181,7 @@ describe('useDadosDaHome', () => {
   it('no especialista busca briefing e aderência do dia, com a data local', async () => {
     mockPapel.atual = 'specialist';
     mockFetchAdherence.mockResolvedValueOnce(82);
-    const { result } = renderHook(() => useDadosDaHome());
+    const { result } = await renderHook(() => useDadosDaHome());
 
     await waitFor(() => expect(result.current.especialista.perfil).not.toBeNull());
     expect(mockFetchBriefing).toHaveBeenCalledWith('u1');
@@ -193,7 +192,7 @@ describe('useDadosDaHome', () => {
   it('não sugere treino ao especialista, mesmo com treinos carregados', async () => {
     mockPapel.atual = 'specialist';
     mockTreinos.atual = [{ id: 't1', title: 'Costas', exercises_count: 6 }];
-    const { result } = renderHook(() => useDadosDaHome());
+    const { result } = await renderHook(() => useDadosDaHome());
 
     await waitFor(() => expect(result.current.especialista.perfil).not.toBeNull());
     expect(result.current.aluno.treinoSugerido).toBeNull();
@@ -244,16 +243,16 @@ describe('sugerirTreino', () => {
     });
     mockShowPushBanner.mockClear();
 
-    const primeira = renderHook(() => useDadosDaHome());
+    const primeira = await renderHook(() => useDadosDaHome());
     await waitFor(() => expect(mockFetchActiveDietSignal).toHaveBeenCalledWith('u1'));
     await waitFor(() =>
       expect(mockShowPushBanner).toHaveBeenCalledWith(
         expect.objectContaining({ title: 'Nova dieta disponível', body: 'Cutting' })
       )
     );
-    primeira.unmount();
+    await primeira.unmount();
 
-    renderHook(() => useDadosDaHome());
+    await renderHook(() => useDadosDaHome());
     await waitFor(() => expect(mockFetchActiveDietSignal).toHaveBeenCalledTimes(2));
     const avisosDeDieta = mockShowPushBanner.mock.calls.filter(
       ([request]) => (request as { title: string }).title === 'Nova dieta disponível'

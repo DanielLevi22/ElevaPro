@@ -23,7 +23,7 @@ function formatarSono(minutos: number): string {
  */
 function SemDados() {
   return (
-    <div className="rounded-xl border border-dashed border-border bg-surface/50 p-8 text-center">
+    <div className="glass rounded-xl border-dashed p-8 text-center">
       <p className="text-sm text-muted-foreground">
         Nenhum dado de relógio nos últimos {DIAS_DA_JANELA} dias.
       </p>

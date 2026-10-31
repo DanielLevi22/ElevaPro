@@ -41,7 +41,7 @@ export function BulkWorkoutProposalCard({
   const someSaved = savedTitles.length > 0;
 
   return (
-    <div className="bg-surface border border-primary/30 rounded-2xl p-5 space-y-4">
+    <div className="glass border-primary/30 rounded-2xl p-5 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h4 className="font-semibold text-foreground">Proposta de Treinos</h4>

@@ -12,12 +12,12 @@ export { ajustarEscalaDeTexto, fatorDaTela, REM_BASE, useEscala } from './escala
 export { gerarGlobalCss } from './globalCss';
 export { type PreferenciaDeTema, useTemaStore } from './temaStore';
 export {
+  brand,
   escala,
   hslParaHex,
   illustration,
-  marca,
   type NomeDeCor,
-  paleta,
+  paletteByTheme,
   type Tema,
 } from './tokens';
 export { ABOVE_TAB_BAR, useBottomOffset } from './useBottomOffset';

@@ -86,9 +86,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-display text-3xl font-extrabold bg-linear-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-          Dashboard
-        </h1>
+        <h1 className="font-display text-3xl font-extrabold text-foreground">Dashboard</h1>
         <p className="mt-2 text-[13px] text-muted-foreground">
           Bem-vindo de volta,{" "}
           <span className="font-semibold text-foreground">{authUser?.fullName ?? "..."}</span>!{" "}

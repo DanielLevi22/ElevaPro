@@ -14,10 +14,7 @@ export function DayOverviewCard({ todayWorkout, activeDietPlan, isLoading }: Pro
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[0, 1].map((i) => (
-          <div
-            key={i}
-            className="h-32 bg-surface/40 border border-overlay-08 rounded-2xl animate-pulse"
-          />
+          <div key={i} className="glass h-32 rounded-2xl animate-pulse" />
         ))}
       </div>
     );
@@ -66,7 +63,7 @@ function OverviewTile({ icon, label, title, subtitle, href, isEmpty }: TileProps
   return (
     <Link
       href={href}
-      className="group block bg-surface/40 border border-overlay-08 rounded-2xl p-6 hover:border-primary/20 transition-all"
+      className="glass group block rounded-2xl p-6 hover:border-primary/20 transition-all"
     >
       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">
         {label}

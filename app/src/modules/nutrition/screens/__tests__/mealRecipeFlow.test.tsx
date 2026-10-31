@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, fireEvent, render as renderView, screen } from '@testing-library/react-native';
+import { fireEvent, render as renderView, screen } from '@testing-library/react-native';
 import type { PropsWithChildren, ReactElement } from 'react';
 import { useEffect as mockUseEffect } from 'react';
 import { SelfGuidedPlanActions } from '../../components/recipes/SelfGuidedPlanActions';
@@ -93,11 +93,11 @@ beforeEach(() => {
 });
 
 it('escolher um prato não navega; só Ver preparo abre a receita, sem alimentos na URL', async () => {
-  render(<MealRecipeScreen mealId="meal-a" date="2026-10-04" />);
-  fireEvent.press(await screen.findByLabelText('Escolher Bowl de iogurte, aveia e banana'));
+  await render(<MealRecipeScreen mealId="meal-a" date="2026-10-04" />);
+  await fireEvent.press(await screen.findByLabelText('Escolher Bowl de iogurte, aveia e banana'));
   expect(mockPush).not.toHaveBeenCalled();
   expect(screen.getByText('170 g de Iogurte natural')).toBeTruthy();
-  fireEvent.press(screen.getByLabelText('Ver preparo'));
+  await fireEvent.press(screen.getByLabelText('Ver preparo'));
   expect(mockPush).toHaveBeenCalledWith({
     pathname: '/(tabs)/nutrition/cooking',
     params: { mealId: 'meal-a', date: '2026-10-04', recipeId: 'yogurt-bowl' },
@@ -106,27 +106,27 @@ it('escolher um prato não navega; só Ver preparo abre a receita, sem alimentos
 });
 
 it('concluir preparo não marca consumo e o guia atual funciona sem selecionar prato', async () => {
-  render(<CookingScreen mealId="meal-a" date="2026-10-04" />);
+  await render(<CookingScreen mealId="meal-a" date="2026-10-04" />);
   await screen.findByText('Preparo da refeição');
-  for (let step = 0; step < 4; step++) fireEvent.press(screen.getByLabelText('Próximo'));
-  fireEvent.press(screen.getByLabelText('Concluir preparo'));
+  for (let step = 0; step < 4; step++) await fireEvent.press(screen.getByLabelText('Próximo'));
+  await fireEvent.press(screen.getByLabelText('Concluir preparo'));
   expect(screen.getByText('Preparo concluído')).toBeTruthy();
   expect(mockWrite).not.toHaveBeenCalled();
 });
 
 it('permite recuperar o cardápio na mesma tela depois de revisar o consentimento', async () => {
   mockConsent.mockResolvedValue(false);
-  render(<MealRecipeScreen mealId="meal-a" date="2026-10-04" />);
+  await render(<MealRecipeScreen mealId="meal-a" date="2026-10-04" />);
   await screen.findByText('Revisar consentimento');
   expect(mockMeals).not.toHaveBeenCalled();
   mockConsent.mockResolvedValue(true);
-  fireEvent.press(screen.getByText('Já revisei, tentar novamente'));
+  await fireEvent.press(screen.getByText('Já revisei, tentar novamente'));
   await screen.findByLabelText('Escolher Bowl de iogurte, aveia e banana');
 });
 
-it('preserva o acesso do Praticante à criação de plano para a própria conta', () => {
-  render(<SelfGuidedPlanActions />);
-  fireEvent.press(screen.getByText('Criar plano'));
+it('preserva o acesso do Praticante à criação de plano para a própria conta', async () => {
+  await render(<SelfGuidedPlanActions />);
+  await fireEvent.press(screen.getByText('Criar plano'));
   expect(mockPush).toHaveBeenCalledWith({
     pathname: '/(tabs)/nutrition/wizard/start',
     params: { studentId: 'student-a' },
@@ -135,10 +135,10 @@ it('preserva o acesso do Praticante à criação de plano para a própria conta'
 
 // Art. 6º, VII: resposta atrasada da conta anterior não pode reaparecer na tela.
 it('troca de conta limpa pratos e seleção imediatamente', async () => {
-  const view = render(<MealRecipeScreen mealId="meal-a" date="2026-10-04" />);
-  fireEvent.press(await screen.findByLabelText('Escolher Bowl de iogurte, aveia e banana'));
+  const view = await render(<MealRecipeScreen mealId="meal-a" date="2026-10-04" />);
+  await fireEvent.press(await screen.findByLabelText('Escolher Bowl de iogurte, aveia e banana'));
   mockStudentId = 'student-b';
-  act(() => view.rerender(<MealRecipeScreen mealId="meal-a" date="2026-10-04" />));
+  await view.rerender(<MealRecipeScreen mealId="meal-a" date="2026-10-04" />);
   expect(screen.queryByText('170 g de Iogurte natural')).toBeNull();
   expect(screen.queryByLabelText('Ver preparo')).toBeNull();
   await screen.findByText('Essa refeição não está no seu plano ativo ou na data aberta.');

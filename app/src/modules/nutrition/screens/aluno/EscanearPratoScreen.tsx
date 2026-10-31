@@ -25,24 +25,19 @@ import { percentualDaMeta } from '../../services/consumoDoDia';
  * separou o prato; as porções ajustadas mudam o total e o que vai ao diário.
  *
  * @example
- * <EscanearPratoScreen alunoId={user.id} somenteLeitura={false} obterToken={() => token} />
+ * <EscanearPratoScreen alunoId={user.id} obterToken={() => token} />
  */
 interface EscanearPratoScreenProps {
   alunoId: string;
-  somenteLeitura: boolean;
   obterToken: () => string;
 }
 
 /** A ordem do kit no scan: proteína, gordura, carbos. */
 const ORDEM_DO_SCAN = ['proteina', 'gordura', 'carboidrato'] as const;
 
-export function EscanearPratoScreen({
-  alunoId,
-  somenteLeitura,
-  obterToken,
-}: EscanearPratoScreenProps) {
+export function EscanearPratoScreen({ alunoId, obterToken }: EscanearPratoScreenProps) {
   const router = useRouter();
-  const scan = useScanDoPrato(alunoId, { somenteLeitura, obterToken });
+  const scan = useScanDoPrato(alunoId, { obterToken });
 
   return (
     <GlassScreen flushTop bottomSpace="actionBar" overlay={<AcoesDoScan scan={scan} />}>

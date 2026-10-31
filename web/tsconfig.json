@@ -35,7 +35,10 @@
       "@/training-plans": ["./src/modules/training-plans"],
       "@elevapro/supabase": ["./src/packages/supabase"],
       "@elevapro/shared": ["../shared/src"],
-      "@casl/ability": ["./node_modules/@casl/ability"],
+      // O CASL 7 publica os tipos só pelo `exports`, que um `paths` para a pasta
+      // ignora: aponta para o arquivo de tipos dele. O Turbopack também lê este
+      // `paths`; o `resolveAlias` do `next.config.ts` o desvia para o código.
+      "@casl/ability": ["./node_modules/@casl/ability/dist/types/index.d.ts"],
       "@supabase/supabase-js": ["./node_modules/@supabase/supabase-js"],
       "zustand": ["./node_modules/zustand"],
       "zustand/*": ["./node_modules/zustand/*"]

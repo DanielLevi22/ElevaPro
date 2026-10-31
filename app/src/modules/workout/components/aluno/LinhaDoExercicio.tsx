@@ -1,4 +1,5 @@
 import type { WorkoutExercise } from '@elevapro/shared';
+import { formatarCarga, summarizeSetPlan } from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
@@ -8,9 +9,12 @@ import { useCores, useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
 import { techniqueRouteFor } from '@/shared/technique/analyzableExercises';
 import { TECHNIQUE_RELEASED } from '@/shared/technique/release';
+import { prescriptionSummary } from '../../store/sessionPlan';
+import { MethodTag, methodsByIds } from '../MethodTag';
 
 /**
- * Um exercício do treino: foto do grupo, nome, séries, carga, descanso e ordem.
+ * Um exercício do treino: foto do grupo, nome, séries, carga, descanso, as
+ * técnicas do plano e a ordem.
  * O que o app sabe analisar ganha "Analisar técnica" (#361): é no treino que o
  * aluno está fazendo o movimento.
  *
@@ -30,6 +34,7 @@ interface LinhaDoExercicioProps {
 }
 
 export function LinhaDoExercicio({ item, ordem, onMais }: LinhaDoExercicioProps) {
+  const resumo = prescriptionSummary(item);
   return (
     <Vidro classeExterna="mb-[0.5625rem]" className="flex-row items-center gap-3 p-[0.6875rem]">
       <Image
@@ -45,16 +50,15 @@ export function LinhaDoExercicio({ item, ordem, onMais }: LinhaDoExercicioProps)
           {item.exercise?.name ?? 'Exercício'}
         </Text>
         <View className="mt-[0.1875rem] flex-row flex-wrap gap-x-2.5">
-          {item.sets ? (
-            <DadoComIcone icone="repeat" texto={`${item.sets} × ${item.reps ?? '—'}`} />
+          {resumo.sets > 0 ? (
+            <DadoComIcone icone="repeat" texto={`${resumo.sets} × ${resumo.reps}`} />
           ) : null}
-          {item.weight ? (
-            <DadoComIcone icone="barbell-outline" texto={`${item.weight} kg`} />
+          {resumo.load !== null ? (
+            <DadoComIcone icone="barbell-outline" texto={formatarCarga(resumo.load)} />
           ) : null}
-          {item.rest_seconds ? (
-            <DadoComIcone icone="time-outline" texto={`${item.rest_seconds} s`} />
-          ) : null}
+          {resumo.rest ? <DadoComIcone icone="time-outline" texto={`${resumo.rest} s`} /> : null}
         </View>
+        <PlanMethods item={item} />
         <AnalyzeTechnique exerciseName={item.exercise?.name} />
       </View>
       {onMais ? (
@@ -65,6 +69,22 @@ export function LinhaDoExercicio({ item, ordem, onMais }: LinhaDoExercicioProps)
         </Text>
       )}
     </Vidro>
+  );
+}
+
+/**
+ * As técnicas do plano, das séries e dos blocos (#431): o aluno vê antes de
+ * começar que hoje tem rest-pause, e não descobre no meio da série.
+ */
+function PlanMethods({ item }: { item: WorkoutExercise }) {
+  const methods = methodsByIds(summarizeSetPlan(item.set_plan).methods);
+  if (methods.length === 0) return null;
+  return (
+    <View className="mt-1.5 flex-row flex-wrap gap-1">
+      {methods.map((method) => (
+        <MethodTag key={method.id} method={method} />
+      ))}
+    </View>
   );
 }
 

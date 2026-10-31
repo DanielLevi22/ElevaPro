@@ -40,10 +40,10 @@ const builderMock = (global as any).mockSupabaseBuilder;
 
 const avisar = showAlert as jest.Mock;
 
-function preencherEEntrar(tela: ReturnType<typeof render>) {
-  fireEvent.changeText(tela.getByPlaceholderText('seu@email.com'), 'ana@exemplo.com');
-  fireEvent.changeText(tela.getByPlaceholderText('••••••••'), 'senha-boa-12');
-  fireEvent.press(tela.getByLabelText('Entrar'));
+async function preencherEEntrar(tela: Awaited<ReturnType<typeof render>>) {
+  await fireEvent.changeText(tela.getByPlaceholderText('seu@email.com'), 'ana@exemplo.com');
+  await fireEvent.changeText(tela.getByPlaceholderText('••••••••'), 'senha-boa-12');
+  await fireEvent.press(tela.getByLabelText('Entrar'));
 }
 
 /** Conta ativa é o caminho comum: nada barra e nada avisa. */
@@ -63,9 +63,9 @@ beforeEach(() => {
 
 describe('fluxo de login', () => {
   it('entrega e-mail e senha ao Supabase, na caixa em que foram digitados', async () => {
-    const tela = render(<LoginScreen />);
+    const tela = await render(<LoginScreen />);
 
-    preencherEEntrar(tela);
+    await preencherEEntrar(tela);
 
     await waitFor(() =>
       expect(supabaseMock.auth.signInWithPassword).toHaveBeenCalledWith({
@@ -76,27 +76,28 @@ describe('fluxo de login', () => {
   });
 
   it('não avisa nada quando a conta está ativa', async () => {
-    const tela = render(<LoginScreen />);
+    const tela = await render(<LoginScreen />);
 
-    preencherEEntrar(tela);
+    await preencherEEntrar(tela);
 
     await waitFor(() => expect(supabaseMock.auth.signInWithPassword).toHaveBeenCalled());
     expect(avisar).not.toHaveBeenCalled();
     expect(supabaseMock.auth.signOut).not.toHaveBeenCalled();
   });
 
-  it('mostra a mensagem do servidor quando a credencial não serve', async () => {
+  // #428: a mensagem do Supabase chegava em inglês para quem errou a senha.
+  it('mostra credenciais inválidas em português quando a credencial não serve', async () => {
     supabaseMock.auth.signInWithPassword.mockResolvedValue({
       data: { user: null },
       error: new Error('Invalid login credentials'),
     });
-    const tela = render(<LoginScreen />);
+    const tela = await render(<LoginScreen />);
 
-    preencherEEntrar(tela);
+    await preencherEEntrar(tela);
 
     await waitFor(() =>
       expect(avisar).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'Invalid login credentials', type: 'error' })
+        expect.objectContaining({ message: 'E-mail ou senha inválidos.', type: 'error' })
       )
     );
   });
@@ -106,9 +107,9 @@ describe('fluxo de login', () => {
     // e 'suspended', que nunca existiram: o ramo jamais executava e conta
     // desativada entrava normalmente.
     comPerfil('inactive');
-    const tela = render(<LoginScreen />);
+    const tela = await render(<LoginScreen />);
 
-    preencherEEntrar(tela);
+    await preencherEEntrar(tela);
 
     await waitFor(() => expect(supabaseMock.auth.signOut).toHaveBeenCalled());
     expect(avisar).toHaveBeenCalledWith(
@@ -121,9 +122,9 @@ describe('fluxo de login', () => {
     // e era mandado para a fila de aprovação na primeira tentativa de entrar,
     // sem nunca conseguir acessar o app (removido na 0050).
     comPerfil('invited');
-    const tela = render(<LoginScreen />);
+    const tela = await render(<LoginScreen />);
 
-    preencherEEntrar(tela);
+    await preencherEEntrar(tela);
 
     await waitFor(() => expect(supabaseMock.auth.signInWithPassword).toHaveBeenCalled());
     expect(supabaseMock.auth.signOut).not.toHaveBeenCalled();
@@ -135,9 +136,9 @@ describe('fluxo de login', () => {
       data: { user: null },
       error: new Error('Network request failed'),
     });
-    const tela = render(<LoginScreen />);
+    const tela = await render(<LoginScreen />);
 
-    preencherEEntrar(tela);
+    await preencherEEntrar(tela);
     await waitFor(() => expect(avisar).toHaveBeenCalled());
 
     // Travado em "carregando" o rótulo desaparece e o toque não passa: quem
@@ -148,16 +149,16 @@ describe('fluxo de login', () => {
     });
   });
 
-  it('revela e esconde a senha pelo olho', () => {
-    const tela = render(<LoginScreen />);
+  it('revela e esconde a senha pelo olho', async () => {
+    const tela = await render(<LoginScreen />);
     const campo = tela.getByPlaceholderText('••••••••');
 
     expect(campo.props.secureTextEntry).toBe(true);
 
-    fireEvent.press(tela.getByLabelText('Mostrar senha'));
+    await fireEvent.press(tela.getByLabelText('Mostrar senha'));
     expect(tela.getByPlaceholderText('••••••••').props.secureTextEntry).toBe(false);
 
-    fireEvent.press(tela.getByLabelText('Ocultar senha'));
+    await fireEvent.press(tela.getByLabelText('Ocultar senha'));
     expect(tela.getByPlaceholderText('••••••••').props.secureTextEntry).toBe(true);
   });
 });

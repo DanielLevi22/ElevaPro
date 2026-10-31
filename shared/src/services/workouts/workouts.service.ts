@@ -1,9 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { validateSetPlan } from "../../setPlan";
 import type {
   AddWorkoutExerciseInput,
+  UpdateWorkoutExerciseInput,
+} from "../../types/workoutItemInput.types";
+import type {
   CreateExerciseInput,
   CreateWorkoutInput,
   Exercise,
+  FullPeriodization,
   UpdateWorkoutInput,
   Workout,
 } from "../../types/workouts.types";
@@ -91,21 +96,8 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
     return (data || []) as Workout[];
   },
 
-  fetchWorkoutsByPlan: async (trainingPlanId: string): Promise<Workout[]> => {
-    const { data, error } = await supabase
-      .from("workouts")
-      .select(`
-        *,
-        exercises:workout_exercises(
-          *,
-          exercise:exercises(*)
-        )
-      `)
-      .eq("training_plan_id", trainingPlanId)
-      .order("created_at", { ascending: true });
-    if (error) throw error;
-    return (data || []) as Workout[];
-  },
+  fetchWorkoutsByPlan: (trainingPlanId: string): Promise<Workout[]> =>
+    fetchWorkoutsOfPlan(supabase, trainingPlanId),
 
   fetchWorkoutById: async (id: string): Promise<Workout | null> => {
     const { data, error } = await supabase
@@ -121,7 +113,30 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
       .order("order_index", { foreignTable: "workout_exercises", ascending: true })
       .single();
     if (error) throw error;
-    return data as Workout;
+    return withPlans(data as Workout);
+  },
+
+  /**
+   * O plano completo para exportar: a periodização, as fases na ordem e os
+   * treinos de cada fase com os exercícios. As fases buscam os treinos em
+   * paralelo. Nulo quando a periodização não existe ou a RLS não a mostra.
+   *
+   * @example buildPeriodizationSheet(await service.fetchFullPeriodization(id))
+   */
+  fetchFullPeriodization: async (periodizationId: string): Promise<FullPeriodization | null> => {
+    const periodizations = criarServicoDePeriodizacoes(supabase);
+    const [periodization, plans] = await Promise.all([
+      periodizations.fetchPeriodizationById(periodizationId),
+      periodizations.fetchTrainingPlans(periodizationId),
+    ]);
+    if (!periodization) return null;
+    const workoutsByPlan = await Promise.all(
+      plans.map((plan) => fetchWorkoutsOfPlan(supabase, plan.id)),
+    );
+    return {
+      periodization,
+      phases: plans.map((plan, index) => ({ plan, workouts: workoutsByPlan[index] ?? [] })),
+    };
   },
 
   createWorkout: async (input: CreateWorkoutInput): Promise<Workout> => {
@@ -168,6 +183,11 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
     if (error) throw error;
   },
 
+  /**
+   * Põe exercícios no Workout, cada um com o plano de séries conferido.
+   *
+   * @example addExercisesToWorkout(treinoId, [{ exercise_id, set_plan: plano }])
+   */
   addExercisesToWorkout: async (
     workoutId: string,
     items: AddWorkoutExerciseInput[],
@@ -175,12 +195,9 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
     const rows = items.map((item, i) => ({
       workout_id: workoutId,
       exercise_id: item.exercise_id,
-      sets: item.sets ?? null,
-      reps: item.reps ?? null,
-      weight: item.weight ?? null,
-      rest_seconds: item.rest_seconds ?? null,
       order_index: item.order_index ?? i,
       notes: item.notes ?? null,
+      set_plan: validateSetPlan(item.set_plan),
     }));
     const { error } = await supabase.from("workout_exercises").insert(rows);
     if (error) throw error;
@@ -191,14 +208,20 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
     if (error) throw error;
   },
 
-  /** Ajusta séries/repetições/carga/descanso de um exercício já no treino — não o catálogo. */
+  /**
+   * Troca o plano de séries de um exercício já no treino — não o catálogo.
+   *
+   * @example updateWorkoutExercise(id, { set_plan: plano })
+   */
   updateWorkoutExercise: async (
     workoutExerciseId: string,
-    input: { sets?: number; reps?: string; weight?: string; rest_seconds?: number },
+    input: UpdateWorkoutExerciseInput,
   ): Promise<void> => {
+    // Confere antes de tocar no banco: plano inválido não abre consulta.
+    const setPlan = validateSetPlan(input.set_plan);
     const { error } = await supabase
       .from("workout_exercises")
-      .update(input)
+      .update({ set_plan: setPlan })
       .eq("id", workoutExerciseId);
     if (error) throw error;
   },
@@ -216,3 +239,36 @@ export const createWorkoutsService = (supabase: SupabaseClient) => ({
 });
 
 export type WorkoutsService = ReturnType<typeof createWorkoutsService>;
+
+/** Os treinos de uma fase, com os exercícios do catálogo, na ordem de criação. */
+async function fetchWorkoutsOfPlan(
+  supabase: SupabaseClient,
+  trainingPlanId: string,
+): Promise<Workout[]> {
+  const { data, error } = await supabase
+    .from("workouts")
+    .select(`
+        *,
+        exercises:workout_exercises(
+          *,
+          exercise:exercises(*)
+        )
+      `)
+    .eq("training_plan_id", trainingPlanId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return ((data || []) as Workout[]).map(withPlans);
+}
+
+/**
+ * Plano nulo do banco lido como plano vazio. Até a 0106, app antigo ainda cria
+ * item sem `set_plan`; nulo quebrava toda tela que resume o treino, vazio mostra
+ * zero séries até o backfill rodar de novo.
+ */
+function withPlans(workout: Workout): Workout {
+  if (!workout?.exercises) return workout;
+  return {
+    ...workout,
+    exercises: workout.exercises.map((item) => ({ ...item, set_plan: item.set_plan ?? [] })),
+  };
+}

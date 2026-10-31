@@ -52,8 +52,20 @@ describe("loadRecords", () => {
     const sets = [set("2026-05-01", 60), set("2026-07-01", 70), set("2026-08-01", 65)];
 
     expect(loadRecords(sets, FROM, TO)).toEqual([
-      { exerciseId: "supino", name: "Supino", weight: 70, date: "2026-07-01" },
+      {
+        exerciseId: "supino",
+        name: "Supino",
+        weight: 70,
+        previousWeight: 60,
+        date: "2026-07-01",
+      },
     ]);
+  });
+
+  it("duas subidas no período são um ganho só, contado do que havia antes dele", () => {
+    const sets = [set("2026-05-01", 60), set("2026-07-01", 65), set("2026-08-01", 70)];
+
+    expect(loadRecords(sets, FROM, TO)[0]).toMatchObject({ weight: 70, previousWeight: 60 });
   });
 
   it("carga do período abaixo do que já foi levantado antes não é recorde", () => {

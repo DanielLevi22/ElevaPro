@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/auth';
 import { loadOnboardingAnswers } from '../services/onboardingAnswers';
 import { isOnboardingEnabled } from '../services/onboardingGate';
+import { isScanCardSnoozed } from '../services/scanCardSnooze';
 import { hasAnyScan } from '../services/scanStatus';
 import { useOnboardingStore } from '../store/onboardingStore';
 
@@ -10,9 +11,6 @@ import { useOnboardingStore } from '../store/onboardingStore';
  * triagem) ou conhecer o escaneamento corporal, que pode ser dispensado.
  */
 export type ProfileGap = 'consent_declined' | 'screening_undisclosed' | 'scan_never_done';
-
-/** Dispensado, o cartão do escaneamento volta depois disto: lembrar não é cobrar. */
-const SCAN_CARD_SNOOZE_MS = 30 * 86_400_000;
 
 /**
  * O que falta para o plano do Praticante ficar completo, para o cartão da tela
@@ -29,9 +27,7 @@ export function useProfileCompletion(): ProfileGap | null {
   );
   const [undisclosed, setUndisclosed] = useState(false);
   const [noScan, setNoScan] = useState(false);
-  const dismissedAt = useOnboardingStore((state) =>
-    state.ownerId === studentId ? state.scanCardDismissedAt : null
-  );
+  const dismissal = useOnboardingStore((state) => state.scanCardDismissal);
   const relevant = isOnboardingEnabled() && accountType === 'member' && studentId !== null;
 
   useEffect(() => {
@@ -48,6 +44,5 @@ export function useProfileCompletion(): ProfileGap | null {
   if (!relevant) return null;
   if (declined) return 'consent_declined';
   if (undisclosed) return 'screening_undisclosed';
-  const snoozed = dismissedAt !== null && Date.now() - dismissedAt < SCAN_CARD_SNOOZE_MS;
-  return noScan && !snoozed ? 'scan_never_done' : null;
+  return noScan && !isScanCardSnoozed(dismissal, studentId) ? 'scan_never_done' : null;
 }

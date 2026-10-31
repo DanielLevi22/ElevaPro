@@ -96,9 +96,44 @@ describe("DashboardSidebar", () => {
     expect(screen.getByText("Dashboard").className).not.toContain("italic");
   });
 
+  it("mostra o plano por padrão", () => {
+    renderSidebar();
+    expect(screen.getByText("Plano Pro ativo")).toBeInTheDocument();
+  });
+
+  it("o admin troca o plano pelo próprio rótulo", () => {
+    renderSidebar({ accountLabel: "Admin" });
+    expect(screen.getByText("Admin")).toBeInTheDocument();
+    expect(screen.queryByText("Plano Pro ativo")).not.toBeInTheDocument();
+  });
+
   it("o logout dispara o callback", async () => {
     const { onLogout } = renderSidebar();
     await userEvent.click(screen.getByRole("button", { name: "Sair" }));
     expect(onLogout).toHaveBeenCalledOnce();
+  });
+
+  // No celular a sidebar fixa cobria o conteúdo; lá ela é gaveta.
+  describe("gaveta do celular", () => {
+    it("abre expandida mesmo com o desktop recolhido", async () => {
+      renderSidebar({ isCollapsed: true });
+      await userEvent.click(screen.getByRole("button", { name: "Abrir menu" }));
+      expect(screen.getByText("Alunos")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Fechar menu" })).toBeInTheDocument();
+    });
+
+    it("fecha ao escolher um item", async () => {
+      renderSidebar({ isCollapsed: true });
+      await userEvent.click(screen.getByRole("button", { name: "Abrir menu" }));
+      await userEvent.click(screen.getByText("Alunos"));
+      expect(screen.queryByRole("button", { name: "Fechar menu" })).not.toBeInTheDocument();
+    });
+
+    it("fecha com Esc", async () => {
+      renderSidebar();
+      await userEvent.click(screen.getByRole("button", { name: "Abrir menu" }));
+      await userEvent.keyboard("{Escape}");
+      expect(screen.queryByRole("button", { name: "Fechar menu" })).not.toBeInTheDocument();
+    });
   });
 });

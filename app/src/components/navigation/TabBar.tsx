@@ -1,8 +1,6 @@
 import { BlurView } from 'expo-blur';
-import { useGlobalSearchParams, usePathname } from 'expo-router';
-// O expo-router publica o compat como `expo-router/react-navigation`, mas sem
-// shim para os subpacotes — o de bottom-tabs só resolve pelo caminho de build.
-import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
+import { type Href, useGlobalSearchParams, usePathname, useRouter } from 'expo-router';
+import type { BottomTabBarProps } from 'expo-router/tabs';
 import type { LucideIcon } from 'lucide-react-native';
 import Apple from 'lucide-react-native/icons/apple';
 import ChartNoAxesColumn from 'lucide-react-native/icons/chart-no-axes-column';
@@ -17,6 +15,7 @@ import { useColorScheme } from 'nativewind';
 import { Platform, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ROUTES } from '@/navigation/types';
 import { useAuthStore } from '../../modules/auth/store/authStore';
 import { ehVisaoDoAluno, modoDaRota } from '../../modules/workout/routes/visaoDoAluno';
 import { PREENCHE } from '../ui/Vidro';
@@ -68,17 +67,18 @@ const DO_ESPECIALISTA: Record<string, Aba> = {
 /** O kit desfoca o que passa por baixo com `blur(24px)`. */
 const INTENSIDADE_DO_BLUR = 24;
 
-export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const pathname = usePathname();
   const { mode } = useGlobalSearchParams<{ mode?: string }>();
-  const { accountType, isMasquerading } = useAuthStore();
+  const { accountType } = useAuthStore();
   const arrastando = useSharedValue(0);
   const estiloDasAbas = useAnimatedStyle(() => ({
     opacity: withSpring(arrastando.value ? 0.3 : 1, { damping: 20 }),
   }));
 
-  const ehAluno = !accountType || accountType !== 'specialist' || isMasquerading;
+  const ehAluno = !accountType || accountType !== 'specialist';
   const abas = ehAluno ? DO_ALUNO : DO_ESPECIALISTA;
   const rotas = Object.keys(abas)
     .map((nome) => state.routes.find((r: Route) => r.name === nome))
@@ -89,8 +89,8 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const opcoes = descriptors[state.routes[state.index].key].options as {
     tabBarStyle?: { display?: string };
   };
-  // Sem o especialista mascarado: a rota do detalhe também não o trata como
-  // aluno, e ele vê a tela antiga, que precisa da barra escondida.
+  // O especialista não é tratado como aluno na rota do detalhe: ele vê a tela
+  // antiga, que precisa da barra escondida.
   const visaoDoAluno = ehVisaoDoAluno(accountType, modoDaRota(mode));
   if (opcoes.tabBarStyle?.display === 'none' || isImmersiveRoute(pathname, visaoDoAluno)) {
     return null;
@@ -102,8 +102,10 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       rotulo={abas[rota.name].rotulo}
       Icone={abas[rota.name].Icone}
       ativo={state.routes[state.index].key === rota.key}
-      onPress={() => abrir(navigation, rota, state.routes[state.index].key === rota.key)}
-      onLongPress={() => navigation.emit({ type: 'tabLongPress', target: rota.key })}
+      onPress={() =>
+        openTab(emitter, navigateToTab, rota, state.routes[state.index].key === rota.key)
+      }
+      onLongPress={() => emitter.emit({ type: 'tabLongPress', target: rota.key })}
     />
   );
 
@@ -124,7 +126,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         <BotaoDeAcoes
           comCardio={ehAluno}
           arrastando={arrastando}
-          onAcao={(acao) => executar(navigation, acao)}
+          onAcao={(acao) => router.navigate(DESTINO[acao])}
         />
         <View pointerEvents="box-none" className="flex-1 flex-row items-start">
           {rotas.slice(metade).map(aba)}
@@ -134,21 +136,26 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   );
 }
 
-function abrir(navigation: BottomTabBarProps['navigation'], rota: Route, ativa: boolean) {
-  const evento = navigation.emit({ type: 'tabPress', target: rota.key, canPreventDefault: true });
-  if (!ativa && !evento.defaultPrevented) navigation.navigate(rota.name, rota.params);
+// O react-navigation do expo-router 58 tirou o `navigation` da barra: o evento
+// sai pelo `emitter` e a troca de aba pelo `navigateToTab`, pela chave da rota.
+function openTab(
+  emitter: BottomTabBarProps['emitter'],
+  navigateToTab: BottomTabBarProps['navigateToTab'],
+  route: Route,
+  active: boolean
+) {
+  const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+  if (!active && !event.defaultPrevented) navigateToTab(route.key);
 }
 
-const DESTINO: Record<AcaoRapida, string> = {
-  treino: 'workouts',
-  menu: 'menu',
-  dieta: 'nutrition',
-  cardio: 'cardio/index',
+// Pela rota, e não pelo `navigateToTab`: no react-navigation 8 ele só abre aba
+// visível, e o menu e o cardio são abas escondidas (`href: null`).
+const DESTINO: Record<AcaoRapida, Href> = {
+  treino: ROUTES.TABS.WORKOUTS,
+  menu: ROUTES.TABS.MENU,
+  dieta: ROUTES.TABS.NUTRITION,
+  cardio: ROUTES.TABS.CARDIO,
 };
-
-function executar(navigation: BottomTabBarProps['navigation'], acao: AcaoRapida) {
-  navigation.navigate(DESTINO[acao]);
-}
 
 /**
  * O fundo: `--tab-bg` do kit, fio de cima e, no iOS, o blur.

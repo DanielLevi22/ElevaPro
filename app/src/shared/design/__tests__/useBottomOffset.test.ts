@@ -21,27 +21,27 @@ function comInset(bottom: number) {
 }
 
 describe('useBottomOffset', () => {
-  it('troca os 34 do indicador do kit pelo inset dos três botões', () => {
+  it('troca os 34 do indicador do kit pelo inset dos três botões', async () => {
     comInset(48);
 
-    const { result } = renderHook(() => useBottomOffset(122));
+    const { result } = await renderHook(() => useBottomOffset(122));
 
     expect(result.current).toBe(48 + 122 - 34);
   });
 
-  it('não reserva faixa do sistema em aparelho sem inset', () => {
+  it('não reserva faixa do sistema em aparelho sem inset', async () => {
     comInset(0);
 
-    const { result } = renderHook(() => useBottomOffset(122));
+    const { result } = await renderHook(() => useBottomOffset(122));
 
     expect(result.current).toBe(122 - 34);
   });
 
-  it('cresce exatamente o que o inset cresce, sem ramo por modo de navegação', () => {
+  it('cresce exatamente o que o inset cresce, sem ramo por modo de navegação', async () => {
     comInset(16);
-    const gestos = renderHook(() => useBottomOffset(184)).result.current;
+    const gestos = (await renderHook(() => useBottomOffset(184))).result.current;
     comInset(48);
-    const botoes = renderHook(() => useBottomOffset(184)).result.current;
+    const botoes = (await renderHook(() => useBottomOffset(184))).result.current;
 
     expect(botoes - gestos).toBe(32);
   });

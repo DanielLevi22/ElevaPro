@@ -1,4 +1,8 @@
-import { EXERCISE_MUSCLE_GROUPS, MUSCLE_GROUP_LABELS } from '@elevapro/shared';
+import {
+  EXERCISE_MUSCLE_GROUPS,
+  MUSCLE_GROUP_LABELS,
+  simplePrescriptionToSetPlan,
+} from '@elevapro/shared';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -126,10 +130,13 @@ export default function SelectExercisesScreen() {
         id: `temp-${ex.id}-${index}`,
         workout_id: workoutId,
         exercise_id: ex.id,
-        sets: ex.sets || 3,
-        reps: ex.reps?.toString() || '10',
-        weight: ex.weight || '0',
-        rest_seconds: ex.rest_seconds || 60,
+        // O editor simples prescreve séries Normal iguais (#431).
+        set_plan: simplePrescriptionToSetPlan({
+          sets: ex.sets || 3,
+          reps: ex.reps?.toString() || '10',
+          weight: ex.weight || null,
+          rest_seconds: ex.rest_seconds || 60,
+        }).plan,
         order_index: index,
         notes: null,
         created_at: new Date().toISOString(),

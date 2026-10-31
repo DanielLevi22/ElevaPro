@@ -572,9 +572,9 @@ DECLARE
   aluno_a  uuid := gen_random_uuid();
   aluno_b  uuid := gen_random_uuid();
   espec    uuid := gen_random_uuid();
-  espec_sem_fator uuid := gen_random_uuid();
+  adm      uuid := gen_random_uuid();
+  adm_sem_fator uuid := gen_random_uuid();
   visiveis int;
-  afetadas int;
   eventos_auditados int;
   vinculo_id uuid;
 BEGIN
@@ -586,17 +586,22 @@ BEGIN
      'verify-b@elevapro.local', '{"full_name":"B","account_type":"student"}'::jsonb),
     (espec,   '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
      'verify-e@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb),
-    (espec_sem_fator, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
-     'verify-f@elevapro.local', '{"full_name":"F","account_type":"specialist"}'::jsonb);
+    (adm, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-g@elevapro.local', '{"full_name":"G","account_type":"specialist"}'::jsonb),
+    (adm_sem_fator, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-h@elevapro.local', '{"full_name":"H","account_type":"specialist"}'::jsonb);
 
   -- Art. 46: conta Auth sem perfil não chega ao MFA nem ao CASL. O trigger é
   -- a fronteira que cria identidade de domínio, então esta prova usa o banco real.
   SELECT count(*) INTO visiveis
   FROM public.profiles
-  WHERE id IN (aluno_a, aluno_b, espec, espec_sem_fator);
-  IF visiveis <> 4 THEN
-    RAISE EXCEPTION 'CADASTRO INCOMPLETO: trigger criou % perfis para 4 contas Auth', visiveis;
+  WHERE id IN (aluno_a, aluno_b, espec, adm, adm_sem_fator);
+  IF visiveis <> 5 THEN
+    RAISE EXCEPTION 'CADASTRO INCOMPLETO: trigger criou % perfis para 5 contas Auth', visiveis;
   END IF;
+
+  -- O trigger da 0040 não cria admin pelo signup; a promoção é explícita.
+  UPDATE public.profiles SET account_type = 'admin' WHERE id IN (adm, adm_sem_fator);
 
   -- Dado de saúde para os DOIS alunos: assim "zero linhas" significa bloqueio e
   -- não tabela vazia.
@@ -608,16 +613,13 @@ BEGIN
   VALUES (aluno_a, espec, 'personal_training', 'active')
   RETURNING id INTO vinculo_id;
 
-  INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
-  VALUES (aluno_a, espec_sem_fator, 'personal_training', 'active');
-
   INSERT INTO public.specialist_services (specialist_id, service_type)
   VALUES (espec, 'nutrition_consulting');
 
-  -- Uma Passkey só libera dados se a conta também tiver TOTP verificado.
+  -- Uma Passkey de admin só vale se a conta também tiver TOTP verificado.
   INSERT INTO auth.mfa_factors
     (id, user_id, factor_type, status, created_at, updated_at)
-  VALUES (gen_random_uuid(), espec, 'totp', 'verified', now(), now());
+  VALUES (gen_random_uuid(), adm, 'totp', 'verified', now(), now());
 
   -- A criação do vínculo que libera acesso produz uma única evidência, com
   -- especialista como ator no caminho interno de provisionamento.
@@ -636,66 +638,57 @@ BEGIN
   -- A partir daqui a sessão é um usuário comum, não o dono do banco.
   SET LOCAL ROLE authenticated;
 
-  -- Art. 6º, VII e 46: o especialista autenticado, mas sem segundo fator,
-  -- não pode ler dado sensível por acesso direto ao PostgREST.
-  PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal1')::text, true);
-  SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_a;
-  IF visiveis <> 0 THEN
-    RAISE EXCEPTION 'MFA CONTORNADO: especialista AAL1 leu % anamnese(s)', visiveis;
-  END IF;
-
-  SELECT count(*) INTO visiveis FROM public.profiles WHERE id = espec;
-  IF visiveis <> 1 THEN
-    RAISE EXCEPTION 'PORTA MFA FECHADA: especialista AAL1 não leu a própria identidade';
-  END IF;
-
-  -- Art. 46: o serviço próprio é só o contexto mínimo para abrir o TOTP. AAL1
-  -- não recebe dieta e tampouco pode mudar a autorização que acabou de consultar.
-  SELECT count(*) INTO visiveis
-  FROM public.specialist_services
-  WHERE specialist_id = espec;
-  IF visiveis <> 1 THEN
-    RAISE EXCEPTION 'CONTEXTO MFA AUSENTE: especialista AAL1 não leu o próprio serviço';
-  END IF;
-
-  UPDATE public.specialist_services
-  SET service_type = 'personal_training'
-  WHERE specialist_id = espec;
-  GET DIAGNOSTICS afetadas = ROW_COUNT;
-  IF afetadas <> 0 THEN
-    RAISE EXCEPTION 'MFA CONTORNADO: especialista AAL1 alterou % serviço(s) próprio(s)', afetadas;
-  END IF;
-
-  -- Art. 46: AMR de senha nunca abre a anamnese, mesmo quando o claim existe.
+  -- ADR-0047: o especialista entra por senha, sem segundo fator. O que limita
+  -- o alcance dele é o vínculo ativo: lê o aluno vinculado e não o outro.
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal1',
       'amr', json_build_array(json_build_object('method', 'password')))::text, true);
   SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_a;
-  IF visiveis <> 0 THEN
-    RAISE EXCEPTION 'ACESSO SENSÍVEL LIBERADO: login por senha leu % anamnese(s)', visiveis;
-  END IF;
-
-  -- Art. 46: uma Passkey confirmada no JWT libera só o aluno vinculado.
-  PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec_sem_fator, 'role', 'authenticated', 'aal', 'aal1',
-      'amr', json_build_array(json_build_object('method', 'passkey')))::text, true);
-  SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_a;
-  IF visiveis <> 0 THEN
-    RAISE EXCEPTION 'PASSKEY SEM TOTP: conta sem fator verificado leu % anamnese(s)', visiveis;
-  END IF;
-
-  PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', espec, 'role', 'authenticated', 'aal', 'aal1',
-      'amr', json_build_array(json_build_object('method', 'passkey')))::text, true);
-  SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_a;
   IF visiveis <> 1 THEN
-    RAISE EXCEPTION 'PASSKEY BLOQUEADA: especialista vinculado viu % anamnese(s)', visiveis;
+    RAISE EXCEPTION 'ESPECIALISTA BARRADO: login por senha viu % anamnese(s) do aluno vinculado', visiveis;
   END IF;
   SELECT count(*) INTO visiveis FROM public.student_anamnesis WHERE student_id = aluno_b;
   IF visiveis <> 0 THEN
-    RAISE EXCEPTION 'VAZAMENTO: especialista com Passkey leu aluno sem vínculo';
+    RAISE EXCEPTION 'VAZAMENTO: especialista por senha leu % anamnese(s) de aluno sem vínculo', visiveis;
   END IF;
+
+  -- Art. 46: o admin alcança todas as contas, e senha sozinha não basta. A
+  -- trava é a função que toda política restritiva chama; `authenticated` não
+  -- tem USAGE em `private`, então ela é conferida com o papel resetado, sobre
+  -- as mesmas claims.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', adm, 'role', 'authenticated', 'aal', 'aal1',
+      'amr', json_build_array(json_build_object('method', 'password')))::text, true);
+  SELECT count(*) INTO visiveis FROM public.profiles WHERE id = adm;
+  IF visiveis <> 1 THEN
+    RAISE EXCEPTION 'PORTA MFA FECHADA: admin AAL1 não leu a própria identidade';
+  END IF;
+
+  RESET ROLE;
+  IF private.current_session_meets_mfa_requirement() THEN
+    RAISE EXCEPTION 'ADMIN SEM SEGUNDO FATOR: login por senha passou na trava MFA';
+  END IF;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', adm_sem_fator, 'role', 'authenticated', 'aal', 'aal1',
+      'amr', json_build_array(json_build_object('method', 'passkey')))::text, true);
+  IF private.current_session_meets_mfa_requirement() THEN
+    RAISE EXCEPTION 'PASSKEY SEM TOTP: admin sem fator verificado passou na trava MFA';
+  END IF;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', adm, 'role', 'authenticated', 'aal', 'aal1',
+      'amr', json_build_array(json_build_object('method', 'passkey')))::text, true);
+  IF NOT private.current_session_meets_mfa_requirement() THEN
+    RAISE EXCEPTION 'PASSKEY BLOQUEADA: admin com Passkey e TOTP foi barrado';
+  END IF;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', adm_sem_fator, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  IF NOT private.current_session_meets_mfa_requirement() THEN
+    RAISE EXCEPTION 'ADMIN BLOQUEADO: sessão aal2 foi barrada';
+  END IF;
+  SET LOCAL ROLE authenticated;
 
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', aluno_a, 'role', 'authenticated')::text, true);
@@ -818,7 +811,8 @@ DECLARE
   saude       text[] := ARRAY['health_daily_metrics','meal_logs','physical_assessments',
                               'student_anamnesis','body_scans','workout_session_vitals',
                               'hydration_daily','specialist_notes',
-                              'diet_plans','diet_meals','diet_meal_items'];
+                              'diet_plans','diet_meals','diet_meal_items',
+                              'weekly_check_ins','plan_adjustments'];
   contrato    text[] := ARRAY['profiles','specialist_services','workout_sessions',
                               'workout_session_sets','workout_session_exercises',
                               'achievements','daily_goals','student_streaks',
@@ -856,7 +850,7 @@ BEGIN
       array_to_string(sobrando, ', ');
   END IF;
 
-  RAISE NOTICE 'ok  Art. 11 confere consentimento em 11 tabelas; Art. 7° não confere em 9';
+  RAISE NOTICE 'ok  Art. 11 confere consentimento em 13 tabelas; Art. 7° não confere em 9';
 END $$;
 
 -- ── Nenhuma coordenada, em tabela nenhuma (0049) ─────────────────────────────
@@ -2875,19 +2869,11 @@ BEGIN
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
 
-  -- 5. Sem o segundo fator, o autor não envia: a função escapa da RLS e da
-  -- trava restritiva da 0067, e precisa conferir o MFA por conta própria.
+  -- 5. Enviar ativa o rascunho e finaliza o plano do outro autor. A função
+  -- escapa da RLS e confere a trava MFA por conta própria; o especialista
+  -- envia por senha (ADR-0047).
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', autor, 'role', 'authenticated', 'aal', 'aal1')::text, true);
-  BEGIN
-    PERFORM public.activate_diet_plan(rascunho);
-    RAISE EXCEPTION 'ENVIO SEM MFA: especialista em aal1 ativou plano';
-  EXCEPTION WHEN insufficient_privilege THEN NULL;
-  END;
-
-  -- 5. Com MFA, enviar ativa o rascunho e finaliza o plano do outro autor.
-  PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', autor, 'role', 'authenticated', 'aal', 'aal2')::text, true);
   PERFORM public.activate_diet_plan(rascunho);
 
   BEGIN
@@ -3255,14 +3241,43 @@ BEGIN
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
 
-  -- A função não abre a tabela: séries, carga e ordem seguem sem escrita direta.
-  UPDATE public.workout_exercises SET sets = 99 WHERE id = item_proprio;
+  -- A função não abre a tabela: ordem e observação seguem sem escrita direta.
+  UPDATE public.workout_exercises SET order_index = 99 WHERE id = item_proprio;
   GET DIAGNOSTICS afetadas = ROW_COUNT;
   IF afetadas <> 0 THEN
     RAISE EXCEPTION 'PRESCRIÇÃO EDITADA POR FORA: UPDATE direto em workout_exercises foi aceito para o aluno';
   END IF;
 
+  -- O aluno não reescreve o plano de séries da prescrição (0105, #431).
+  -- LGPD Art. 6°, VII: o plano herda a RLS da linha, sem política própria. Se
+  -- alguém abrir escrita para o aluno em `workout_exercises`, ele passaria a
+  -- trocar técnica, carga e descanso que o especialista prescreveu.
+  UPDATE public.workout_exercises SET set_plan = '[]'::jsonb WHERE id = item_proprio;
+  GET DIAGNOSTICS afetadas = ROW_COUNT;
+  IF afetadas <> 0 THEN
+    RAISE EXCEPTION 'PRESCRIÇÃO EDITADA POR FORA: UPDATE de set_plan foi aceito para o aluno';
+  END IF;
+
   RESET ROLE;
+
+  -- O banco recusa plano fora do formato mínimo, mesmo vindo de quem escreve
+  -- sem passar pelo schema do shared (função, script, service_role).
+  BEGIN
+    UPDATE public.workout_exercises
+      SET set_plan = (SELECT jsonb_agg('{}'::jsonb) FROM generate_series(1, 21))
+      WHERE id = item_proprio;
+    RAISE EXCEPTION 'PLANO SEM LIMITE: o banco aceitou set_plan com 21 séries';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
+  -- Objeto no lugar da lista: o serviço leria `set_plan.length` indefinido e a
+  -- sessão do aluno mostraria zero séries sem erro nenhum.
+  BEGIN
+    UPDATE public.workout_exercises SET set_plan = '{"sets": 3}'::jsonb WHERE id = item_proprio;
+    RAISE EXCEPTION 'PLANO SEM FORMATO: o banco aceitou set_plan que não é lista';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
   SELECT exercise_id INTO atual FROM public.workout_exercises WHERE id = item_outro;
   IF atual IS DISTINCT FROM oficial THEN
     RAISE EXCEPTION 'TREINO ALHEIO ALTERADO: o item de outra pessoa mudou de exercício';
@@ -3489,6 +3504,477 @@ BEGIN
   END IF;
 
   RAISE NOTICE 'ok  código do especialista: só ele gera e lê, só aluno resgata, uma vez, antes de vencer';
+END $$;
+
+ROLLBACK;
+
+-- ── weekly_check_ins e plan_adjustments: o check-in da semana (0097, #376) ─────
+-- O Praticante diz como foi a semana e o peso; o ajuste da meta só vale
+-- aprovado, no máximo 200 kcal, e fica registrado; o "Desfazer" do mesmo dia
+-- volta a meta e registra o inverso. O Aluno faz o check-in sem peso e sem
+-- ajuste: com especialista, quem mede e muda o plano é ele (ADR-0030). As duas
+-- tabelas são de Art. 11: o especialista vinculado lê com consentimento, e
+-- ninguém grava, corrige nem apaga direto.
+
+BEGIN;
+
+DO $$
+DECLARE
+  practitioner      uuid := gen_random_uuid();
+  student           uuid := gen_random_uuid();
+  no_consent        uuid := gen_random_uuid();
+  specialist        uuid := gen_random_uuid();
+  other_specialist  uuid := gen_random_uuid();
+  rice              uuid;
+  diet              uuid;
+  meal              uuid;
+  week_check_in     public.weekly_check_ins;
+  student_check_in  public.weekly_check_ins;
+  active_plan       public.diet_plans;
+  visible           int;
+  affected          int;
+  grams             numeric;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (practitioner, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-ca@elevapro.local', '{"full_name":"P","account_type":"member"}'::jsonb),
+    (student, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-cb@elevapro.local', '{"full_name":"A","account_type":"student"}'::jsonb),
+    (no_consent, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-cc@elevapro.local', '{"full_name":"S","account_type":"member"}'::jsonb),
+    (specialist, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-ce@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb),
+    (other_specialist, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-cf@elevapro.local', '{"full_name":"F","account_type":"specialist"}'::jsonb);
+
+  INSERT INTO auth.mfa_factors (id, user_id, factor_type, status, created_at, updated_at)
+  VALUES (gen_random_uuid(), specialist, 'totp', 'verified', now(), now()),
+         (gen_random_uuid(), other_specialist, 'totp', 'verified', now(), now());
+
+  INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
+  VALUES (student, specialist, 'nutrition_consulting', 'active');
+  INSERT INTO public.student_consents (student_id, consent_type, given_at, policy_version)
+  VALUES (practitioner, 'health_data_collection', now(), '1.10'),
+         (student, 'health_data_collection', now(), '1.10');
+  -- Todos com altura e o Aluno com dieta própria: cada recusa abaixo tem de
+  -- vir da regra que ela testa, não de um dado que faltou.
+  INSERT INTO public.student_anamnesis (student_id, responses)
+  VALUES (practitioner, '{"height":"172"}'::jsonb),
+         (student, '{"height":"180"}'::jsonb),
+         (no_consent, '{"height":"165"}'::jsonb);
+
+  -- A dieta do próprio Praticante, como o onboarding grava.
+  INSERT INTO public.foods (name) VALUES ('verify-c-arroz') RETURNING id INTO rice;
+  INSERT INTO public.diet_plans (student_id, specialist_id, name, plan_type, status, version,
+                                 start_date, end_date, target_calories, target_carbs)
+  VALUES (practitioner, NULL, 'verify-c', 'unique', 'active', 1, current_date, current_date + 28, 2150, 250)
+  RETURNING id INTO diet;
+  INSERT INTO public.diet_plans (student_id, specialist_id, name, plan_type, status, version,
+                                 start_date, end_date, target_calories, target_carbs)
+  VALUES (student, NULL, 'verify-c-aluno', 'unique', 'active', 1, current_date, current_date + 28, 2000, 230);
+  INSERT INTO public.diet_meals (diet_plan_id, name) VALUES (diet, 'Almoço') RETURNING id INTO meal;
+  INSERT INTO public.diet_meal_items (diet_meal_id, food_id, quantity, unit)
+  VALUES (meal, rice, 200, 'g');
+
+  SET LOCAL ROLE authenticated;
+
+  -- O Praticante faz o check-in; o peso vira medida declarada.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', practitioner, 'role', 'authenticated')::text, true);
+  week_check_in := public.submit_weekly_check_in('all', 77.6);
+  IF week_check_in.assessment_id IS NULL THEN
+    RAISE EXCEPTION 'PESO PERDIDO: o check-in do Praticante não apontou para a medida declarada';
+  END IF;
+
+  -- A origem do peso (0102, F9): digitado por padrão, a média do app Saúde
+  -- quando veio de lá, e nada além dessas duas.
+  IF week_check_in.weight_origin IS DISTINCT FROM 'manual' THEN
+    RAISE EXCEPTION 'ORIGEM PERDIDA: peso digitado gravou origem %', week_check_in.weight_origin;
+  END IF;
+  week_check_in := public.submit_weekly_check_in('all', 77.6, 'health_app');
+  IF week_check_in.weight_origin IS DISTINCT FROM 'health_app' THEN
+    RAISE EXCEPTION 'ORIGEM TROCADA: o peso do app Saúde foi gravado como %', week_check_in.weight_origin;
+  END IF;
+  BEGIN
+    PERFORM public.submit_weekly_check_in('all', 77.6, 'balanca-do-vizinho');
+    RAISE EXCEPTION 'ORIGEM INVENTADA: o check-in aceitou uma origem fora de manual e health_app';
+  EXCEPTION WHEN invalid_parameter_value THEN NULL;
+  END;
+
+  BEGIN
+    INSERT INTO public.weekly_check_ins (student_id, week_start, logging)
+    VALUES (practitioner, current_date - 7, 'all');
+    RAISE EXCEPTION 'EVIDÊNCIA FORJADA: o aluno gravou check-in direto, sem passar pela função';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- Passo maior que 200 kcal, ou motivo que contradiz o número: recusados.
+  BEGIN
+    PERFORM public.apply_weekly_calorie_adjustment(week_check_in.id, 1850, 'weight_above_pace');
+    RAISE EXCEPTION 'META SEM FREIO: ajuste de 300 kcal numa semana foi aceito';
+  EXCEPTION WHEN invalid_parameter_value THEN NULL;
+  END;
+  BEGIN
+    PERFORM public.apply_weekly_calorie_adjustment(week_check_in.id, 2300, 'weight_above_pace');
+    RAISE EXCEPTION 'MOTIVO TROCADO: peso acima do ritmo subiu a meta';
+  EXCEPTION WHEN invalid_parameter_value THEN NULL;
+  END;
+
+  -- Outra pessoa não decide o check-in do Praticante.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', no_consent, 'role', 'authenticated')::text, true);
+  BEGIN
+    PERFORM public.keep_weekly_target(week_check_in.id);
+    RAISE EXCEPTION 'DECISÃO EM NOME DE OUTRO: alguém manteve a meta do check-in alheio';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  -- Sem o aceite de saúde, não há check-in (Art. 11, I).
+  BEGIN
+    PERFORM public.submit_weekly_check_in('all', 70);
+    RAISE EXCEPTION 'CHECK-IN SEM CONSENTIMENTO: dado de saúde gravado sem o aceite vigente';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- O Praticante aprova: dieta nova, porções refeitas, ajuste registrado.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', practitioner, 'role', 'authenticated')::text, true);
+  active_plan := public.apply_weekly_calorie_adjustment(week_check_in.id, 2000, 'weight_above_pace');
+  IF active_plan.id = diet OR active_plan.target_calories <> 2000 OR active_plan.status <> 'active' THEN
+    RAISE EXCEPTION 'AJUSTE SEM VERSÃO: a meta aprovada não virou a versão ativa da dieta';
+  END IF;
+  SELECT i.quantity INTO grams FROM public.diet_meal_items i
+    JOIN public.diet_meals m ON m.id = i.diet_meal_id WHERE m.diet_plan_id = active_plan.id;
+  IF grams <> 185 THEN
+    RAISE EXCEPTION 'CARDÁPIO NA META ANTIGA: 200 g × 2000/2150 deveria virar 185 g, virou %', grams;
+  END IF;
+  SELECT count(*) INTO visible FROM public.plan_adjustments
+    WHERE student_id = practitioner AND before_value = 2150 AND after_value = 2000;
+  IF visible <> 1 THEN
+    RAISE EXCEPTION 'AJUSTE SEM REGISTRO: a mudança da meta não ficou no histórico';
+  END IF;
+
+  BEGIN
+    UPDATE public.plan_adjustments SET after_value = 2500 WHERE student_id = practitioner;
+    GET DIAGNOSTICS affected = ROW_COUNT;
+    IF affected <> 0 THEN
+      RAISE EXCEPTION 'HISTÓRICO REESCRITO: o aluno alterou um ajuste já aprovado';
+    END IF;
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- Outra pessoa não desfaz o ajuste do Praticante.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', no_consent, 'role', 'authenticated')::text, true);
+  BEGIN
+    PERFORM public.undo_weekly_calorie_adjustment(week_check_in.id);
+    RAISE EXCEPTION 'DESFEITO EM NOME DE OUTRO: alguém desfez o ajuste alheio';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- O Praticante desfaz no mesmo dia: a meta volta, e o histórico guarda os dois.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', practitioner, 'role', 'authenticated')::text, true);
+  active_plan := public.undo_weekly_calorie_adjustment(week_check_in.id);
+  IF active_plan.target_calories <> 2150 THEN
+    RAISE EXCEPTION 'DESFAZER SEM EFEITO: a meta ficou em % em vez de voltar a 2150', active_plan.target_calories;
+  END IF;
+  SELECT count(*) INTO visible FROM public.plan_adjustments WHERE student_id = practitioner;
+  IF visible <> 2 THEN
+    RAISE EXCEPTION 'HISTÓRICO APAGADO: desfazer deixou % ajuste(s), esperado o original e o inverso', visible;
+  END IF;
+  BEGIN
+    PERFORM public.undo_weekly_calorie_adjustment(week_check_in.id);
+    RAISE EXCEPTION 'DESFEITO DUAS VEZES: o mesmo ajuste foi desfeito de novo';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- O Aluno faz o check-in sem peso; peso e ajuste são do especialista.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', student, 'role', 'authenticated')::text, true);
+  BEGIN
+    PERFORM public.submit_weekly_check_in('all', 80);
+    RAISE EXCEPTION 'PESO AO LADO DA FITA: aluno com especialista declarou peso no check-in (ADR-0030)';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  student_check_in := public.submit_weekly_check_in('partial', NULL);
+  BEGIN
+    PERFORM public.apply_weekly_calorie_adjustment(student_check_in.id, 1900, 'weight_above_pace');
+    RAISE EXCEPTION 'AJUSTE SEM O ESPECIALISTA: aluno acompanhado mudou a própria meta';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- O especialista vinculado vê o check-in; o de fora, não; revogado, ninguém.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', specialist, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  SELECT count(*) INTO visible FROM public.weekly_check_ins WHERE student_id = student;
+  IF visible <> 1 THEN
+    RAISE EXCEPTION 'CHECK-IN ESCONDIDO: o especialista vinculado vê % check-in(s) do aluno, esperado 1', visible;
+  END IF;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', other_specialist, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  SELECT count(*) INTO visible FROM public.weekly_check_ins WHERE student_id IN (student, practitioner);
+  IF visible <> 0 THEN
+    RAISE EXCEPTION 'CHECK-IN VAZADO: especialista sem vínculo leu o check-in de outro aluno';
+  END IF;
+  SELECT count(*) INTO visible FROM public.plan_adjustments WHERE student_id = practitioner;
+  IF visible <> 0 THEN
+    RAISE EXCEPTION 'AJUSTE VAZADO: especialista sem vínculo leu a meta de outro aluno';
+  END IF;
+
+  RESET ROLE;
+  UPDATE public.student_consents SET revoked_at = now() WHERE student_id = student;
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', specialist, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  SELECT count(*) INTO visible FROM public.weekly_check_ins WHERE student_id = student;
+  IF visible <> 0 THEN
+    RAISE EXCEPTION 'REVOGAÇÃO SEM EFEITO: o especialista segue lendo o check-in de quem revogou';
+  END IF;
+
+  RAISE NOTICE 'ok  check-in da semana: só pelas funções, ajuste com freio, registro e desfazer, Aluno sem peso nem ajuste';
+END $$;
+
+ROLLBACK;
+
+-- ── workout_session_exercises.effort: o esforço do exercício (0098, #376) ──────
+-- "Fácil", "Ok" ou "Difícil" e nada mais: o valor é a entrada de uma regra em
+-- código, e texto livre aqui viraria um campo de anotação sem a base legal das
+-- anotações (Art. 11), que é outra.
+
+BEGIN;
+
+DO $$
+DECLARE
+  student uuid := gen_random_uuid();
+  session uuid;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES (student, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+          'verify-ea@elevapro.local', '{"full_name":"P","account_type":"member"}'::jsonb);
+  INSERT INTO public.workout_sessions (student_id, started_at) VALUES (student, now())
+    RETURNING id INTO session;
+
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', student, 'role', 'authenticated')::text, true);
+
+  INSERT INTO public.workout_session_exercises (session_id, effort) VALUES (session, 'hard');
+  BEGIN
+    INSERT INTO public.workout_session_exercises (session_id, effort) VALUES (session, 'cansei, joelho doeu');
+    RAISE EXCEPTION 'ESFORÇO VIROU ANOTAÇÃO: o banco aceitou texto livre no esforço do exercício';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
+  RAISE NOTICE 'ok  esforço do exercício: só easy, ok ou hard';
+END $$;
+
+ROLLBACK;
+
+-- ── end_reason: o motivo do fim do plano (0099, #376) ──────────────────────────
+-- O motivo é uma lista fechada, gravada pelo BFF: texto livre aqui viraria lugar
+-- de anotar lesão sem a base legal de dado de saúde (Art. 11), e o Praticante
+-- não reescreve por que o próprio bloco acabou (histórico, Art. 6°, V).
+
+BEGIN;
+
+DO $$
+DECLARE
+  student uuid := gen_random_uuid();
+  block uuid;
+  changed int;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES (student, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+          'verify-er@elevapro.local', '{"full_name":"P","account_type":"member"}'::jsonb);
+  INSERT INTO public.training_periodizations
+    (student_id, specialist_id, name, status, start_date, end_date, end_reason)
+  VALUES (student, NULL, 'Bloco 1', 'completed', CURRENT_DATE - 28, CURRENT_DATE, 'block_completed')
+  RETURNING id INTO block;
+
+  BEGIN
+    UPDATE public.training_periodizations SET end_reason = 'machuquei o joelho' WHERE id = block;
+    RAISE EXCEPTION 'MOTIVO VIROU ANOTAÇÃO: o banco aceitou texto livre no motivo do fim do plano';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', student, 'role', 'authenticated')::text, true);
+
+  UPDATE public.training_periodizations SET end_reason = 'replaced' WHERE id = block;
+  GET DIAGNOSTICS changed = ROW_COUNT;
+  IF changed <> 0 THEN
+    RAISE EXCEPTION 'HISTÓRICO REESCRITO: o aluno mudou o motivo do fim do próprio bloco';
+  END IF;
+
+  RAISE NOTICE 'ok  motivo do fim do plano: lista fechada, e o aluno não reescreve';
+END $$;
+
+ROLLBACK;
+
+-- ── rest_periods: o Modo Descanso (0101, #376) ─────────────────────────────────
+-- A pausa guarda só de quando a quando: o motivo ("doente", "machucada") é dado
+-- de saúde que a pausa não precisa, e não tem onde ser gravado. Só pelas
+-- funções, uma aberta por vez, e o especialista sem vínculo não lê.
+
+BEGIN;
+
+DO $$
+DECLARE
+  student           uuid := gen_random_uuid();
+  specialist        uuid := gen_random_uuid();
+  other_specialist  uuid := gen_random_uuid();
+  rest              public.rest_periods;
+  visible           int;
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = 'public' AND table_name = 'rest_periods'
+               AND column_name NOT IN ('id', 'student_id', 'starts_on', 'planned_until', 'ended_on', 'created_at')) THEN
+    RAISE EXCEPTION 'PAUSA COM MOTIVO: rest_periods ganhou coluna além das datas — o motivo é dado de saúde';
+  END IF;
+
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (student, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-da@elevapro.local', '{"full_name":"A","account_type":"student"}'::jsonb),
+    (specialist, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-de@elevapro.local', '{"full_name":"E","account_type":"specialist"}'::jsonb),
+    (other_specialist, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-df@elevapro.local', '{"full_name":"F","account_type":"specialist"}'::jsonb);
+  INSERT INTO auth.mfa_factors (id, user_id, factor_type, status, created_at, updated_at)
+  VALUES (gen_random_uuid(), specialist, 'totp', 'verified', now(), now()),
+         (gen_random_uuid(), other_specialist, 'totp', 'verified', now(), now());
+  INSERT INTO public.student_specialists (student_id, specialist_id, service_type, status)
+  VALUES (student, specialist, 'personal_training', 'active');
+
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', student, 'role', 'authenticated')::text, true);
+
+  rest := public.start_rest(current_date + 7);
+  BEGIN
+    PERFORM public.start_rest(NULL);
+    RAISE EXCEPTION 'PAUSA DUPLICADA: duas pausas abertas ao mesmo tempo';
+  EXCEPTION WHEN unique_violation THEN NULL;
+  END;
+  BEGIN
+    INSERT INTO public.rest_periods (student_id, starts_on) VALUES (student, current_date);
+    RAISE EXCEPTION 'GRAVAÇÃO DIRETA: o cliente inseriu pausa sem passar pela função';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', specialist, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  SELECT count(*) INTO visible FROM public.rest_periods WHERE student_id = student;
+  IF visible <> 1 THEN
+    RAISE EXCEPTION 'ESPECIALISTA CEGO: o vinculado não vê que o aluno está pausado';
+  END IF;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', other_specialist, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  SELECT count(*) INTO visible FROM public.rest_periods WHERE student_id = student;
+  IF visible <> 0 THEN
+    RAISE EXCEPTION 'PAUSA VAZADA: especialista sem vínculo leu a pausa de outro aluno';
+  END IF;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', student, 'role', 'authenticated')::text, true);
+  rest := public.end_rest();
+  IF rest.ended_on IS NULL THEN
+    RAISE EXCEPTION 'VOLTA PERDIDA: encerrar a pausa não gravou o dia da volta';
+  END IF;
+
+  RAISE NOTICE 'ok  Modo Descanso: só as datas, só pelas funções, uma aberta, sem vazamento';
+END $$;
+
+ROLLBACK;
+
+-- ── plan_adjustments: o plano mais simples (0103, #376 A5c) ────────────────────
+-- Com aderência baixa, a meta não muda: o plano perde uma refeição. O registro
+-- é da própria pessoa, sobre o próprio check-in pendente e a própria dieta
+-- ativa, uma refeição a menos de cada vez, e só pela função.
+
+BEGIN;
+
+DO $$
+DECLARE
+  practitioner  uuid := gen_random_uuid();
+  intruder      uuid := gen_random_uuid();
+  diet          uuid;
+  other_diet    uuid;
+  check_in      public.weekly_check_ins;
+  adjustment    public.plan_adjustments;
+BEGIN
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+  VALUES
+    (practitioner, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-sa@elevapro.local', '{"full_name":"P","account_type":"member"}'::jsonb),
+    (intruder, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'verify-sb@elevapro.local', '{"full_name":"I","account_type":"member"}'::jsonb);
+  INSERT INTO public.student_consents (student_id, consent_type, given_at, policy_version)
+  VALUES (practitioner, 'health_data_collection', now(), '1.10'),
+         (intruder, 'health_data_collection', now(), '1.10');
+  INSERT INTO public.student_anamnesis (student_id, responses)
+  VALUES (practitioner, '{"height":"172"}'::jsonb);
+  INSERT INTO public.diet_plans (student_id, specialist_id, name, plan_type, status, version,
+                                 start_date, end_date, target_calories)
+  VALUES (practitioner, NULL, 'verify-s', 'unique', 'active', 1, current_date - 14, current_date + 14, 2150)
+  RETURNING id INTO diet;
+  INSERT INTO public.diet_plans (student_id, specialist_id, name, plan_type, status, version,
+                                 start_date, end_date, target_calories)
+  VALUES (intruder, NULL, 'verify-s-outro', 'unique', 'active', 1, current_date, current_date + 28, 2000)
+  RETURNING id INTO other_diet;
+
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', practitioner, 'role', 'authenticated')::text, true);
+  check_in := public.submit_weekly_check_in('all', NULL);
+
+  -- Outra pessoa não simplifica o plano de ninguém.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', intruder, 'role', 'authenticated')::text, true);
+  BEGIN
+    PERFORM public.record_plan_simplification(check_in.id, diet, 5, 4);
+    RAISE EXCEPTION 'SIMPLIFICAÇÃO ALHEIA: alguém registrou o ajuste do check-in de outra pessoa';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', practitioner, 'role', 'authenticated')::text, true);
+  -- Uma refeição a menos de cada vez, e nunca abaixo de três.
+  BEGIN
+    PERFORM public.record_plan_simplification(check_in.id, diet, 5, 3);
+    RAISE EXCEPTION 'PLANO CORTADO DEMAIS: a simplificação tirou duas refeições de uma vez';
+  EXCEPTION WHEN invalid_parameter_value THEN NULL;
+  END;
+  BEGIN
+    PERFORM public.record_plan_simplification(check_in.id, diet, 3, 2);
+    RAISE EXCEPTION 'PLANO SEM REFEIÇÃO: a simplificação foi abaixo de três refeições';
+  EXCEPTION WHEN invalid_parameter_value THEN NULL;
+  END;
+  -- A dieta é a própria: a de outra pessoa não vira a "nova" de ninguém.
+  BEGIN
+    PERFORM public.record_plan_simplification(check_in.id, other_diet, 5, 4);
+    RAISE EXCEPTION 'DIETA ALHEIA: o ajuste apontou para a dieta de outra pessoa';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  BEGIN
+    INSERT INTO public.plan_adjustments (student_id, kind, before_value, after_value, reason, source)
+    VALUES (practitioner, 'plan_simplified', 5, 4, 'low_adherence', 'student');
+    RAISE EXCEPTION 'EVIDÊNCIA FORJADA: o aluno gravou ajuste direto, sem passar pela função';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  adjustment := public.record_plan_simplification(check_in.id, diet, 5, 4);
+  IF adjustment.kind <> 'plan_simplified' OR adjustment.reason <> 'low_adherence' THEN
+    RAISE EXCEPTION 'AJUSTE TROCADO: a simplificação foi gravada como % (%)', adjustment.kind, adjustment.reason;
+  END IF;
+  IF (SELECT status FROM public.weekly_check_ins WHERE id = check_in.id) <> 'approved' THEN
+    RAISE EXCEPTION 'CHECK-IN ABERTO: a simplificação aprovada não fechou o check-in';
+  END IF;
+
+  RAISE NOTICE 'ok  plano mais simples: só pela função, da própria pessoa, uma refeição a menos';
 END $$;
 
 ROLLBACK;

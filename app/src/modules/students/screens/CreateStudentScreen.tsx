@@ -164,27 +164,17 @@ function InviteSent({
         tom="marca"
         titulo="Montar treino"
         sub="Periodização e divisão"
-        onPress={() =>
-          router.replace({
-            pathname: ROUTES.WORKOUTS.WIZARD_STRUCTURE,
-            params: { studentId, studentName: name.trim() },
-          })
-        }
+        onPress={() => router.replace(ROUTES.STUDENTS.PERIODIZATION_NEW(studentId, name.trim()))}
       />
       <LinhaDeVidro
         icon="nutrition-outline"
         tom="ritmo"
         titulo="Montar dieta"
         sub="Macros e refeições"
-        onPress={() => router.replace(ROUTES.STUDENTS.NUTRITION(studentId))}
+        onPress={() => router.navigate(ROUTES.TABS.NUTRITION)}
       />
-      <LinhaDeVidro
-        icon="body-outline"
-        tom="cadencia"
-        titulo="Fazer avaliação física"
-        sub="Medidas e fotos"
-        onPress={() => router.replace(ROUTES.STUDENTS.ASSESSMENT(studentId))}
-      />
+      {/* Sem avaliação aqui: a análise por foto é do próprio aluno, e a tela do
+          especialista que fazia isso era legado sem uso (#436). */}
       <View className="mt-3 flex-row">
         <ActionPill
           icon="people-outline"

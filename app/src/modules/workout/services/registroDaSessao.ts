@@ -1,6 +1,7 @@
 import {
   createWorkoutsService,
-  numeroDaPrescricao,
+  type ExerciseEffort,
+  repsToText,
   type SaveSessionSetInput,
   type SerieFeita,
   type SessionVitals,
@@ -10,6 +11,7 @@ import {
 } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { registrarAviso, registrarFalha } from '@/lib/registro';
+import { refreshDailyNotices } from '@/shared/notices';
 import type { CardioModality } from '../cardioModalities';
 import type { CardioSessionState } from '../store/cardioSessionMachine';
 import type { EstadoDaSessao } from '../store/maquinaDaSessao';
@@ -23,25 +25,22 @@ const servicoDeTreinos = createWorkoutsService(supabase);
  *
  * Saiu da `workoutStore` porque não é estado: nada aqui é lido depois por tela
  * nenhuma. O que ela decide antes de chamar o serviço é o que importa, e mora
- * num lugar só para as duas sessões decidirem igual:
- *
- * - **visão do aluno** (`mascarado`): o especialista que navega como o aluno
- *   não grava sessão em nome dele;
- * - **consentimento**: as observações e a FC média são Art. 11 e só entram com
- *   consentimento vigente. Séries, cargas, datas e PSE são execução de
- *   contrato e entram sempre.
+ * num lugar só para as duas sessões decidirem igual: as observações e a FC
+ * média são Art. 11 e só entram com consentimento vigente. Séries, cargas,
+ * datas e PSE são execução de contrato e entram sempre.
  */
-interface Opcoes {
-  /** O especialista está vendo o app como o aluno. */
-  mascarado: boolean;
-}
 
 export interface SessaoDeForcaParaGravar {
   workoutId: string;
   studentId: string;
   startedAt: string;
   completedAt: string;
-  items: { workoutExerciseId: string; exerciseId: string; sets: SaveSessionSetInput[] }[];
+  items: {
+    workoutExerciseId: string;
+    exerciseId: string;
+    effort: ExerciseEffort | null;
+    sets: SaveSessionSetInput[];
+  }[];
   /** PSE de 1 a 10, como o aluno respondeu no feedback. */
   perceivedExertion: number;
   notes?: string;
@@ -54,7 +53,10 @@ export interface FeedbackDaSessao {
   notas: string;
 }
 
-type SessaoExecutada = Pick<EstadoDaSessao, 'itens' | 'feitas' | 'iniciadaEm' | 'concluidaEm'>;
+type SessaoExecutada = Pick<
+  EstadoDaSessao,
+  'itens' | 'feitas' | 'iniciadaEm' | 'concluidaEm' | 'efforts'
+>;
 
 /**
  * A sessão executada no formato da gravação: só os exercícios com série feita,
@@ -87,6 +89,7 @@ export function montarSessaoDeForca(
       .map((item) => ({
         workoutExerciseId: item.id,
         exerciseId: item.exercise_id,
+        effort: sessao.efforts[item.id] ?? null,
         sets: seriesParaGravar(prescritos.get(item.id), sessao.feitas[item.id] ?? []),
       })),
   };
@@ -96,14 +99,20 @@ function seriesParaGravar(
   prescrito: WorkoutExercise | undefined,
   feitas: readonly SerieFeita[]
 ): SaveSessionSetInput[] {
-  return feitas.map((serie) => ({
-    reps_prescribed: prescrito?.reps ?? null,
-    reps_actual: serie.reps,
-    weight_prescribed: numeroDaPrescricao(prescrito?.weight),
-    weight_actual: serie.carga,
-    rest_prescribed: prescrito?.rest_seconds ?? null,
-    completed: true,
-  }));
+  // O prescrito de cada série é o da série naquela posição do plano (#431).
+  return feitas.map((serie, indice) => {
+    const daVez = prescrito?.set_plan[indice];
+    return {
+      reps_prescribed: daVez ? repsToText(daVez.reps) : null,
+      reps_actual: serie.reps,
+      weight_prescribed: daVez?.weight_kg ?? null,
+      weight_actual: serie.carga,
+      rest_prescribed: daVez?.rest_seconds ?? null,
+      completed: true,
+      // Aquecimento e preparação: gravados, fora do volume (#431). O padrão do banco conta.
+      ...(serie.contaVolume === false ? { counts_toward_volume: false } : {}),
+    };
+  });
 }
 
 /**
@@ -114,14 +123,9 @@ function seriesParaGravar(
  * só o da prescrição — o gráfico ficava vazio com o aluno treinando.
  *
  * @example
- * const id = await gravarSessaoDeForca(sessao, { mascarado: isMasquerading });
+ * const id = await gravarSessaoDeForca(sessao);
  */
-export async function gravarSessaoDeForca(
-  sessao: SessaoDeForcaParaGravar,
-  { mascarado }: Opcoes
-): Promise<string | null> {
-  if (mascarado) return null;
-
+export async function gravarSessaoDeForca(sessao: SessaoDeForcaParaGravar): Promise<string> {
   try {
     const gravada = await servicoDeTreinos.createWorkoutSession({
       workout_id: sessao.workoutId,
@@ -138,9 +142,12 @@ export async function gravarSessaoDeForca(
       sessao.items.map((item) => ({
         workout_exercise_id: item.workoutExerciseId,
         exercise_id: item.exerciseId,
+        effort: item.effort,
         sets: item.sets,
       }))
     );
+    // O treino de hoje está feito: o aviso dele não toca mais.
+    void refreshDailyNotices(sessao.studentId);
     return gravada.id;
   } catch (erro) {
     // Sem o objeto de erro: o do PostgREST pode carregar o payload da linha, e
@@ -229,14 +236,9 @@ export function buildCardioSession(
  * `specialist_id` recebendo o id do **aluno**.
  *
  * @example
- * await saveCardioSession(buildCardioSession(…), { mascarado: isMasquerading });
+ * await saveCardioSession(buildCardioSession(…));
  */
-export async function saveCardioSession(
-  sessao: CardioSessionToSave,
-  { mascarado }: Opcoes
-): Promise<void> {
-  if (mascarado) return;
-
+export async function saveCardioSession(sessao: CardioSessionToSave): Promise<void> {
   try {
     const gravada = await servicoDeTreinos.createWorkoutSession({
       workout_id: null,

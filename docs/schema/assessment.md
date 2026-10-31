@@ -48,7 +48,7 @@ As perguntas da anamnese são qualitativas e semi-estruturadas — histórico de
 
 ## Tabela `physical_assessments`
 
-Cada avaliação é um snapshot imutável — não atualizamos registros existentes, criamos novos. Isso permite visualizar a evolução do aluno ao longo do tempo em gráficos e resumos.
+Cada avaliação representa uma medição numa data. Erro de registro se retifica sem criar nova medição: desde a `0095`, a versão vigente fica na avaliação e a anterior em `physical_assessment_revisions`, em operação atômica (ADR-0045). Gráficos e comparações continuam lendo uma avaliação por medição.
 
 A avaliação pertence ao aluno, não ao especialista. Qualquer especialista vinculado ao aluno pode registrar uma avaliação — personal trainer e nutricionista podem ambos fazer bioimpedância ou dobras cutâneas. O `specialist_id` registra quem coletou, mas não restringe quem pode coletar.
 
@@ -59,7 +59,9 @@ Para gerar gráficos de evolução (peso ao longo do tempo, gordura corporal mê
 
 **`assessed_at` vs `created_at`**: `assessed_at` é quando a avaliação foi feita na prática (pode ser retroativa). `created_at` é quando o registro entrou no banco.
 
-**Imutabilidade**: avaliações não são atualizadas. Uma avaliação corrigida cria um novo registro. O histórico é a fonte de verdade.
+**Retificação**: o autor especialista ainda vinculado pode corrigir somente os valores e a nota, pelo BFF autenticado com prova privilegiada e RPC reservada ao servidor. Aluno, autoria, origem e datas não mudam; UPDATE direto continua vedado ao especialista. A medida declarada continua corrigível pelo próprio titular como antes (`0056`).
+
+**Versões anteriores**: `physical_assessment_revisions` guarda os campos corrigíveis anteriores em `previous_values`, mais avaliação, titular, autor da correção e instante do servidor. JSONB aqui é acervo de retificação, sem uso em cálculos nem consultas analíticas. RLS deixa o titular ler o próprio acervo e o autor ler enquanto vinculado e sem consentimento revogado; a sessão do profissional exige MFA/Passkey. Escrita só pela RPC. O acervo é eliminado por cascata com a avaliação/conta, sem exceção de conservação permanente. A trilha técnica guarda somente metadados pseudonimizados, com a retenção própria.
 
 ---
 

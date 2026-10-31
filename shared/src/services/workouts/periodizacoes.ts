@@ -21,10 +21,11 @@ export interface TrainingSignal {
  * O aluno lê o próprio ciclo e as fases por estas consultas. Com `*`, qualquer
  * coluna que a tabela ganhe depois chegaria ao aparelho sem ninguém decidir —
  * a minimização da LGPD (Art. 6°, III) é pedir o que a tela usa. `level`,
- * `focus` e `duration_weeks` existem na tabela e nenhuma tela as lê.
+ * `focus` e `duration_weeks` existem na tabela e nenhuma tela as lê;
+ * `end_reason` é o "encerrada antes" do histórico de blocos (#376, C3).
  */
 const COLUNAS_DO_CICLO =
-  "id, specialist_id, student_id, name, objective, status, start_date, end_date, created_at, updated_at";
+  "id, specialist_id, student_id, name, objective, status, start_date, end_date, end_reason, created_at, updated_at";
 const COLUNAS_DA_FASE =
   "id, periodization_id, name, status, start_date, end_date, order_index, created_at";
 

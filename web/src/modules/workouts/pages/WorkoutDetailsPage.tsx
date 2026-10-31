@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { FileDown, Plus } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -11,12 +11,14 @@ import {
   updateExerciseAction,
 } from "@/app/dashboard/workouts/actions";
 import { Button } from "@/shared/components/ui/Button";
+import { SetPlanSummaryLine } from "@/shared/components/ui/SetPlanSummaryLine";
 import { useWorkout, useWorkoutItems, type WorkoutItem } from "@/shared/hooks/useWorkouts";
 import { CreateWorkoutModal } from "../components/CreateWorkoutModal";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import { ExerciseConfigModal, type SelectedExercise } from "../components/ExerciseConfigModal";
 import { SelectExercisesModal } from "../components/SelectExercisesModal";
 import { WelcomeBanner } from "../components/WelcomeBanner";
+import { useWorkoutPdf } from "../hooks/useWorkoutPdf";
 
 const DIFFICULTY_LABELS: Record<string, string> = {
   beginner: "Iniciante",
@@ -46,6 +48,7 @@ export default function WorkoutDetailsPage() {
 
   const { data: workout, isLoading: loadingWorkout } = useWorkout(workoutId);
   const { data: items = [], isLoading: loadingItems } = useWorkoutItems(workoutId);
+  const exportPdf = useWorkoutPdf(workout ? { ...workout, exercises: items } : null);
 
   const isLoading = loadingWorkout || loadingItems;
 
@@ -65,14 +68,7 @@ export default function WorkoutDetailsPage() {
         workoutId,
         periodizationId ?? workout?.training_plan_id ?? "",
         phaseId ?? workout?.training_plan_id ?? "",
-        {
-          exercise_id: ex.id,
-          order_index: items.length,
-          sets: ex.sets,
-          reps: String(ex.reps),
-          rest_seconds: ex.rest_seconds,
-          weight: ex.weight || null,
-        },
+        { exercise_id: ex.id, order_index: items.length, set_plan: ex.set_plan },
       );
       queryClient.invalidateQueries({ queryKey: ["workout-items", workoutId] });
       queryClient.invalidateQueries({ queryKey: ["workouts-by-plan"] });
@@ -87,12 +83,7 @@ export default function WorkoutDetailsPage() {
   const handleUpdateExercise = async (ex: SelectedExercise) => {
     if (!editingItem) return;
     try {
-      await updateExerciseAction(editingItem.id, workoutId, {
-        sets: ex.sets,
-        reps: String(ex.reps),
-        rest_seconds: ex.rest_seconds,
-        weight: ex.weight || null,
-      });
+      await updateExerciseAction(editingItem.id, workoutId, { set_plan: ex.set_plan });
       queryClient.invalidateQueries({ queryKey: ["workout-items", workoutId] });
       router.refresh();
       setEditingItem(null);
@@ -174,7 +165,7 @@ export default function WorkoutDetailsPage() {
       </nav>
 
       {/* Header card */}
-      <div className="bg-surface border border-overlay-10 rounded-2xl p-6">
+      <div className="glass rounded-2xl p-6">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="flex items-start gap-4">
             <div>
@@ -194,13 +185,24 @@ export default function WorkoutDetailsPage() {
               )}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setEditWorkoutOpen(true)}
-            className="px-4 py-2 bg-overlay-05 border border-overlay-10 text-muted-foreground rounded-lg text-sm hover:bg-overlay-10 transition-colors self-start shrink-0"
-          >
-            Editar Treino
-          </button>
+          <div className="flex items-center gap-2 self-start shrink-0">
+            <button
+              type="button"
+              onClick={exportPdf}
+              disabled={items.length === 0}
+              className="flex items-center gap-2 px-4 py-2 bg-overlay-05 border border-overlay-10 text-muted-foreground rounded-lg text-sm hover:bg-overlay-10 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <FileDown className="h-4 w-4" aria-hidden="true" />
+              Exportar PDF
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditWorkoutOpen(true)}
+              className="px-4 py-2 bg-overlay-05 border border-overlay-10 text-muted-foreground rounded-lg text-sm hover:bg-overlay-10 transition-colors"
+            >
+              Editar Treino
+            </button>
+          </div>
         </div>
       </div>
 
@@ -215,7 +217,7 @@ export default function WorkoutDetailsPage() {
         </div>
 
         {items.length === 0 ? (
-          <div className="bg-surface border border-overlay-10 rounded-2xl p-8 text-center">
+          <div className="glass rounded-2xl p-8 text-center">
             <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
               <svg
                 aria-hidden="true"
@@ -241,10 +243,7 @@ export default function WorkoutDetailsPage() {
         ) : (
           <div className="flex flex-col gap-2">
             {items.map((item, index) => (
-              <div
-                key={item.id}
-                className="bg-surface border border-overlay-10 rounded-xl p-4 flex items-center gap-4"
-              >
+              <div key={item.id} className="glass rounded-xl p-4 flex items-center gap-4">
                 {/* Order */}
                 <div className="w-7 h-7 rounded-lg bg-overlay-05 flex items-center justify-center shrink-0">
                   <span className="text-xs text-muted-foreground font-medium">{index + 1}</span>
@@ -260,26 +259,9 @@ export default function WorkoutDetailsPage() {
                   )}
                 </div>
 
-                {/* Config */}
-                <div className="flex items-center gap-4 text-xs text-muted-foreground shrink-0">
-                  <div className="text-center">
-                    <p className="text-foreground font-semibold">{item.sets}</p>
-                    <p>séries</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-foreground font-semibold">{item.reps}</p>
-                    <p>reps</p>
-                  </div>
-                  {item.weight && (
-                    <div className="text-center">
-                      <p className="text-foreground font-semibold">{item.weight}</p>
-                      <p>carga</p>
-                    </div>
-                  )}
-                  <div className="text-center">
-                    <p className="text-foreground font-semibold">{item.rest_seconds}s</p>
-                    <p>descanso</p>
-                  </div>
+                {/* Séries: o resumo do plano, com as técnicas */}
+                <div className="shrink-0 max-w-[45%]">
+                  <SetPlanSummaryLine plan={item.set_plan} />
                 </div>
 
                 {/* Actions */}
@@ -370,10 +352,7 @@ export default function WorkoutDetailsPage() {
             id: editingItem.exercise.id,
             name: editingItem.exercise.name,
             muscle_group: editingItem.exercise.muscle_group ?? "",
-            sets: editingItem.sets ?? 0,
-            reps: parseInt(editingItem.reps ?? "0", 10) || 0,
-            weight: editingItem.weight ?? "",
-            rest_seconds: editingItem.rest_seconds ?? 0,
+            set_plan: editingItem.set_plan,
           }}
           onSave={handleUpdateExercise}
         />

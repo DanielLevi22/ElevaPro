@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { SetPlanSummaryLine } from "@/shared/components/ui/SetPlanSummaryLine";
 import { useWorkout } from "@/shared/hooks/useWorkouts";
 
 interface Props {
@@ -11,9 +12,7 @@ export function StudentWorkoutDetailPage({ workoutId }: Props) {
   const { data: workout, isLoading } = useWorkout(workoutId);
 
   if (isLoading) {
-    return (
-      <div className="h-64 bg-surface/40 border border-overlay-08 rounded-2xl animate-pulse" />
-    );
+    return <div className="glass h-64 rounded-2xl animate-pulse" />;
   }
 
   if (!workout) {
@@ -62,7 +61,7 @@ export function StudentWorkoutDetailPage({ workoutId }: Props) {
         </div>
       </div>
 
-      <div className="bg-surface/40 border border-overlay-08 rounded-2xl px-4 py-2">
+      <div className="glass rounded-2xl px-4 py-2">
         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-2 py-3">
           {workout.exercises?.length ?? 0} exercícios — execução no app mobile
         </p>
@@ -82,15 +81,8 @@ export function StudentWorkoutDetailPage({ workoutId }: Props) {
                   </p>
                 )}
               </div>
-              <div className="text-right shrink-0">
-                <p className="text-sm font-black text-muted-foreground">
-                  {ex.sets} × {ex.reps}
-                </p>
-                {ex.rest_seconds && (
-                  <p className="text-[10px] text-muted-foreground font-bold">
-                    {ex.rest_seconds}s descanso
-                  </p>
-                )}
+              <div className="shrink-0 max-w-[50%]">
+                <SetPlanSummaryLine plan={ex.set_plan} />
               </div>
             </div>
           ))}

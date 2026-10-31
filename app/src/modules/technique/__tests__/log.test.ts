@@ -24,7 +24,7 @@ function repeticao(fundo: number): Pose[] {
 }
 
 /** Tudo que a análise imprimiu, junto, para procurar corpo dentro. */
-function capturarSaida(rodar: () => void): string {
+async function capturarSaida(rodar: () => Promise<void>): Promise<string> {
   const canais = ['log', 'info', 'warn', 'error', 'debug'] as const;
   const escrito: string[] = [];
   const espioes = canais.map((canal) =>
@@ -34,7 +34,7 @@ function capturarSaida(rodar: () => void): string {
   );
 
   try {
-    rodar();
+    await rodar();
   } finally {
     for (const espiao of espioes) espiao.mockRestore();
   }
@@ -43,13 +43,13 @@ function capturarSaida(rodar: () => void): string {
 }
 
 describe('Análise de Técnica — o que chega ao log', () => {
-  it('não imprime as coordenadas do corpo', () => {
+  it('não imprime as coordenadas do corpo', async () => {
     const poses = repeticao(0.2);
 
-    const saida = capturarSaida(() => {
-      const { result } = renderHook(() => useAnaliseDeTecnica(jest.fn()));
+    const saida = await capturarSaida(async () => {
+      const { result } = await renderHook(() => useAnaliseDeTecnica(jest.fn()));
       for (const pose of poses) {
-        act(() => result.current.aoReceberPose(pose));
+        await act(() => result.current.aoReceberPose(pose));
       }
     });
 
@@ -63,11 +63,11 @@ describe('Análise de Técnica — o que chega ao log', () => {
     }
   });
 
-  it('não imprime o veredito da repetição', () => {
-    const saida = capturarSaida(() => {
-      const { result } = renderHook(() => useAnaliseDeTecnica(jest.fn()));
+  it('não imprime o veredito da repetição', async () => {
+    const saida = await capturarSaida(async () => {
+      const { result } = await renderHook(() => useAnaliseDeTecnica(jest.fn()));
       for (const pose of repeticao(0.2)) {
-        act(() => result.current.aoReceberPose(pose));
+        await act(() => result.current.aoReceberPose(pose));
       }
     });
 

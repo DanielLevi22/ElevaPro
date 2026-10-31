@@ -1,11 +1,20 @@
 "use client";
 
+import {
+  assessmentActions,
+  bodyMassIndex,
+  defineAbilitiesFor,
+  professionalSeries,
+  weightDeltaKg,
+} from "@elevapro/shared";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/Button";
+import { type AuthProfile, useAuthUser } from "@/shared/hooks/useAuthUser";
 import { useStudents } from "@/shared/hooks/useStudents";
 import { formatDate } from "@/shared/utils/formatDate";
 import { AssessmentModal } from "../components/AssessmentModal";
+import { AssessmentRevisions } from "../components/AssessmentRevisions";
 import type { Assessment } from "../hooks/useStudentAssessments";
 import { useStudentAssessments } from "../hooks/useStudentAssessments";
 
@@ -24,20 +33,20 @@ function AssessmentCard({
   assessment,
   index,
   previous,
+  onCorrect,
+  onHistory,
 }: {
   assessment: Assessment;
   index: number;
   previous: Assessment | null;
+  onCorrect?: () => void;
+  onHistory?: () => void;
 }) {
-  const delta = (curr: number | null, prev: number | null) => {
-    if (curr === null || prev === null) return null;
-    return Number((curr - prev).toFixed(1));
-  };
-
-  const weightDelta = delta(assessment.weight, previous?.weight ?? null);
+  const weightDelta = weightDeltaKg(assessment, previous);
+  const bmi = bodyMassIndex(assessment);
 
   return (
-    <div className="bg-surface border border-white/10 rounded-2xl p-5 space-y-4">
+    <div className="glass rounded-2xl p-5 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -58,30 +67,33 @@ function AssessmentCard({
             )}
           </div>
         </div>
-        {assessment.weight && assessment.height && (
+        {bmi !== null && (
           <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 text-muted-foreground">
-            IMC {(assessment.weight / (assessment.height / 100) ** 2).toFixed(1)}
+            IMC {bmi.toFixed(1)}
           </span>
         )}
       </div>
 
       {/* Composição */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-1 border-t border-white/5">
-        <StatCell label="Peso" value={assessment.weight} unit=" kg" />
-        <StatCell label="Altura" value={assessment.height} unit=" cm" />
-        <StatCell label="Cintura" value={assessment.waist} unit=" cm" />
-        <StatCell label="Quadril" value={assessment.hips} unit=" cm" />
+        <StatCell label="Peso" value={assessment.weight_kg} unit=" kg" />
+        <StatCell label="Altura" value={assessment.height_cm} unit=" cm" />
+        <StatCell label="Cintura" value={assessment.circ_waist} unit=" cm" />
+        <StatCell label="Quadril" value={assessment.circ_hip} unit=" cm" />
       </div>
 
       {/* Circunferências — só exibe se tiver algum valor */}
-      {[assessment.waist, assessment.hips, assessment.chest, assessment.arm_right_relaxed].some(
-        (v) => v !== null,
-      ) && (
-        <div className="grid grid-cols-4 gap-4 pt-3 border-t border-white/5">
-          <StatCell label="Cintura" value={assessment.waist} unit=" cm" />
-          <StatCell label="Quadril" value={assessment.hips} unit=" cm" />
-          <StatCell label="Peito" value={assessment.chest} unit=" cm" />
-          <StatCell label="Braço D" value={assessment.arm_right_relaxed} unit=" cm" />
+      {[
+        assessment.circ_waist,
+        assessment.circ_hip,
+        assessment.circ_chest,
+        assessment.circ_right_arm,
+      ].some((v) => v !== null) && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-3 border-t border-white/5">
+          <StatCell label="Cintura" value={assessment.circ_waist} unit=" cm" />
+          <StatCell label="Quadril" value={assessment.circ_hip} unit=" cm" />
+          <StatCell label="Peito" value={assessment.circ_chest} unit=" cm" />
+          <StatCell label="Braço D" value={assessment.circ_right_arm} unit=" cm" />
         </div>
       )}
 
@@ -90,19 +102,66 @@ function AssessmentCard({
           {assessment.notes}
         </p>
       )}
+      {(onCorrect || onHistory) && (
+        <div className="flex flex-wrap gap-2">
+          {onCorrect && (
+            <Button variant="ghost" onClick={onCorrect}>
+              Corrigir avaliação
+            </Button>
+          )}
+          {onHistory && (
+            <Button variant="ghost" onClick={onHistory}>
+              Histórico de correções
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
 export default function StudentAssessmentsPage() {
   const params = useParams();
-  const studentId = params.id as string;
+  const { data: currentUser } = useAuthUser();
+  const studentId = (params.id as string | undefined) ?? currentUser?.id ?? "";
+  return (
+    <StudentAssessmentContent
+      key={`${studentId}:${currentUser?.id ?? "pending"}`}
+      studentId={studentId}
+      currentUser={currentUser}
+    />
+  );
+}
+
+function StudentAssessmentContent({
+  studentId,
+  currentUser,
+}: {
+  studentId: string;
+  currentUser: AuthProfile | null | undefined;
+}) {
   const [modalOpen, setModalOpen] = useState(false);
+  const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
+  const [historyAssessmentId, setHistoryAssessmentId] = useState<string | null>(null);
+  const abilities = defineAbilitiesFor({
+    accountType: currentUser?.accountType === "specialist" ? "specialist" : "student",
+  });
+  const canCorrect = abilities.can("update", "PhysicalAssessment");
+  const viewer = {
+    id: currentUser?.id ?? "",
+    canUpdate: canCorrect,
+    canRead: abilities.can("read", "PhysicalAssessment"),
+  };
+  const closeAssessment = () => {
+    setModalOpen(false);
+    setSelectedAssessment(null);
+  };
 
   const { data: students = [] } = useStudents();
   const student = students.find((s) => s.id === studentId);
 
-  const { data: assessments = [], isLoading, isError } = useStudentAssessments(studentId);
+  const { data: recordedAssessments = [], isLoading, isError } = useStudentAssessments(studentId);
+  const assessments = professionalSeries(recordedAssessments);
 
   return (
     <div className="space-y-6">
@@ -115,17 +174,14 @@ export default function StudentAssessmentsPage() {
           </div>
         </div>
 
-        <Button onClick={() => setModalOpen(true)}>+ Nova Avaliação</Button>
+        {canCorrect && <Button onClick={() => setModalOpen(true)}>+ Nova Avaliação</Button>}
       </div>
 
       {/* Content */}
       {isLoading && (
         <div className="flex flex-col gap-4">
           {[1, 2].map((i) => (
-            <div
-              key={i}
-              className="bg-surface border border-white/10 rounded-2xl p-5 animate-pulse h-36"
-            />
+            <div key={i} className="glass rounded-2xl p-5 animate-pulse h-36" />
           ))}
         </div>
       )}
@@ -135,7 +191,7 @@ export default function StudentAssessmentsPage() {
       )}
 
       {!isLoading && !isError && assessments.length === 0 && (
-        <div className="text-center py-16 bg-surface border border-white/10 rounded-2xl">
+        <div className="glass text-center py-16 rounded-2xl">
           <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg
               aria-hidden="true"
@@ -156,27 +212,48 @@ export default function StudentAssessmentsPage() {
           <p className="text-sm text-muted-foreground mb-6">
             Registre a primeira avaliação física deste aluno.
           </p>
-          <Button onClick={() => setModalOpen(true)}>Nova Avaliação</Button>
+          {canCorrect && <Button onClick={() => setModalOpen(true)}>Nova Avaliação</Button>}
         </div>
       )}
 
       {!isLoading && assessments.length > 0 && (
         <div className="flex flex-col gap-4">
-          {assessments.map((a, i) => (
-            <AssessmentCard
-              key={a.id}
-              assessment={a}
-              index={i}
-              previous={assessments[i + 1] ?? null}
-            />
-          ))}
+          {assessments.map((a, i) => {
+            const actions = assessmentActions(a, viewer, studentId);
+            return (
+              <AssessmentCard
+                key={a.id}
+                assessment={a}
+                index={i}
+                previous={assessments[i + 1] ?? null}
+                onCorrect={
+                  actions.canCorrect
+                    ? () => {
+                        setSelectedAssessment(a);
+                        setModalOpen(true);
+                      }
+                    : undefined
+                }
+                onHistory={actions.canSeeHistory ? () => setHistoryAssessmentId(a.id) : undefined}
+              />
+            );
+          })}
         </div>
       )}
 
       <AssessmentModal
         studentId={modalOpen ? studentId : null}
-        onClose={() => setModalOpen(false)}
+        assessment={selectedAssessment}
+        onClose={closeAssessment}
       />
+      {historyAssessmentId && (
+        <AssessmentRevisions
+          key={historyAssessmentId}
+          studentId={studentId}
+          assessmentId={historyAssessmentId}
+          onClose={() => setHistoryAssessmentId(null)}
+        />
+      )}
     </div>
   );
 }

@@ -108,19 +108,19 @@ export default function AdminDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-surface border border-border p-6 rounded-xl">
+        <div className="glass p-6 rounded-xl">
           <h3 className="text-sm font-medium text-muted-foreground mb-2">Total de Usuários</h3>
           <p className="text-3xl font-bold text-foreground">{stats?.totalUsers || 0}</p>
         </div>
-        <div className="bg-surface border border-border p-6 rounded-xl">
+        <div className="glass p-6 rounded-xl">
           <h3 className="text-sm font-medium text-muted-foreground mb-2">Usuários Ativos (7d)</h3>
           <p className="text-3xl font-bold text-green-400">{stats?.activeUsers || 0}</p>
         </div>
-        <div className="bg-surface border border-border p-6 rounded-xl">
+        <div className="glass p-6 rounded-xl">
           <h3 className="text-sm font-medium text-muted-foreground mb-2">Personal Trainers</h3>
           <p className="text-3xl font-bold text-orange-400">{stats?.totalSpecialists || 0}</p>
         </div>
-        <div className="bg-surface border border-border p-6 rounded-xl">
+        <div className="glass p-6 rounded-xl">
           <h3 className="text-sm font-medium text-muted-foreground mb-2">Alunos</h3>
           <p className="text-3xl font-bold text-blue-400">{stats?.totalStudents || 0}</p>
         </div>

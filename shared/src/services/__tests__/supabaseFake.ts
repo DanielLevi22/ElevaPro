@@ -45,7 +45,19 @@ export interface ChamadaRegistrada {
 }
 
 const ESCRITAS = new Set(["insert", "update", "upsert", "delete"]);
-const FILTROS = new Set(["eq", "neq", "gt", "gte", "lt", "lte", "like", "ilike", "in", "contains"]);
+const FILTROS = new Set([
+  "eq",
+  "neq",
+  "gt",
+  "gte",
+  "lt",
+  "lte",
+  "like",
+  "ilike",
+  "in",
+  "contains",
+  "is",
+]);
 
 export interface SupabaseFake {
   supabase: SupabaseClient;

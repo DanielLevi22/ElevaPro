@@ -1,7 +1,6 @@
 "use client";
 
-import type { TrainingPlan, Workout } from "@elevapro/shared";
-import Link from "next/link";
+import { type TrainingPlan, type Workout, workoutSplitOf } from "@elevapro/shared";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -18,9 +17,9 @@ import { DateField } from "@/shared/components/ui/DateField";
 import { CreateWorkoutModal } from "../components/CreateWorkoutModal";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import { ImportWorkoutModal } from "../components/ImportWorkoutModal";
+import { PhaseSplitPicker } from "../components/PhaseSplitPicker";
+import { PhaseWorkoutCard } from "../components/PhaseWorkoutCard";
 import { WelcomeBanner } from "../components/WelcomeBanner";
-
-const SPLITS = ["A", "AB", "ABC", "ABCD", "ABCDE", "ABCDEF"];
 
 const PLAN_STATUS_CONFIG = {
   planned: {
@@ -36,60 +35,6 @@ const PLAN_STATUS_CONFIG = {
     className: "bg-overlay-05 text-muted-foreground border border-overlay-10",
   },
 } as const;
-
-function WorkoutCard({ workout, onDelete }: { workout: Workout; onDelete: (w: Workout) => void }) {
-  return (
-    <div className="group bg-surface border border-overlay-10 rounded-xl hover:border-primary/40 transition-all flex items-center">
-      <Link
-        href={`/dashboard/workouts/${workout.id}`}
-        className="flex items-center gap-4 flex-1 min-w-0 p-4"
-      >
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-          <span className="text-primary font-bold text-sm">{workout.title.charAt(0)}</span>
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-foreground truncate group-hover:text-primary transition-colors">
-            {workout.title}
-          </p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {workout.exercises?.length ?? 0} exercício
-            {(workout.exercises?.length ?? 0) !== 1 ? "s" : ""}
-          </p>
-        </div>
-        <svg
-          aria-hidden="true"
-          className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </Link>
-      <button
-        type="button"
-        onClick={() => onDelete(workout)}
-        className="p-3 mr-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors shrink-0"
-        title="Remover treino"
-      >
-        <svg
-          aria-hidden="true"
-          className="w-4 h-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-          />
-        </svg>
-      </button>
-    </div>
-  );
-}
 
 interface Props {
   plan: TrainingPlan;
@@ -109,7 +54,6 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
   const [changingSplit, setChangingSplit] = useState(false);
   const [selectedMuscle, setSelectedMuscle] = useState<string | null>(null);
   const [pendingSplit, setPendingSplit] = useState<string | null>(null);
-  const [customSplitInput, setCustomSplitInput] = useState("");
   const [deletingWorkout, setDeletingWorkout] = useState<Workout | null>(null);
 
   const muscleGroups = Array.from(
@@ -287,88 +231,15 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
       </div>
 
       {/* Config card */}
-      <div className="bg-surface border border-overlay-10 rounded-2xl p-6 space-y-5">
+      <div className="glass rounded-2xl p-6 space-y-5">
         {/* Split picker (creates workouts per letter) */}
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
-            Divisão de Treino
-          </p>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowSplitPicker((v) => !v)}
-              disabled={changingSplit}
-              className="flex items-center gap-2 bg-overlay-05 border border-overlay-10 px-4 py-2.5 rounded-xl hover:bg-overlay-10 transition-colors disabled:opacity-50"
-            >
-              <span className="text-foreground font-bold text-lg uppercase">
-                {workouts.map((w) => w.title.charAt(0)).join("") || "--"}
-              </span>
-              <svg
-                aria-hidden="true"
-                className="w-4 h-4 text-primary"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </button>
-
-            {showSplitPicker && (
-              <div className="absolute left-0 top-full mt-1 bg-surface border border-overlay-10 rounded-xl shadow-xl z-20 p-2 flex flex-col gap-1 min-w-40">
-                {SPLITS.map((s) => (
-                  <button
-                    type="button"
-                    key={s}
-                    onClick={() => {
-                      setShowSplitPicker(false);
-                      setPendingSplit(s);
-                    }}
-                    className="px-4 py-2 rounded-lg text-left text-sm font-bold hover:bg-primary/10 hover:text-primary transition-colors text-foreground"
-                  >
-                    {s}
-                    <span className="text-xs font-normal text-muted-foreground ml-2">
-                      ({s.length} ficha{s.length !== 1 ? "s" : ""})
-                    </span>
-                  </button>
-                ))}
-                {/* Custom split input */}
-                <div className="border-t border-overlay-10 mt-1 pt-2 px-1">
-                  <p className="text-xs text-muted-foreground mb-1.5 px-1">Personalizado</p>
-                  <div className="flex gap-1">
-                    <input
-                      type="text"
-                      value={customSplitInput}
-                      onChange={(e) =>
-                        setCustomSplitInput(e.target.value.toUpperCase().replace(/[^A-Z]/g, ""))
-                      }
-                      placeholder="Ex: ABCBAC"
-                      maxLength={12}
-                      className="flex-1 min-w-0 bg-overlay-05 border border-overlay-10 rounded-lg px-2 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 font-mono uppercase"
-                    />
-                    <button
-                      type="button"
-                      disabled={customSplitInput.length === 0}
-                      onClick={() => {
-                        setShowSplitPicker(false);
-                        setPendingSplit(customSplitInput);
-                        setCustomSplitInput("");
-                      }}
-                      className="px-2 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium disabled:opacity-40 hover:bg-primary-hover transition-colors"
-                    >
-                      OK
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        <PhaseSplitPicker
+          split={workoutSplitOf(workouts)}
+          open={showSplitPicker}
+          onOpenChange={setShowSplitPicker}
+          disabled={changingSplit}
+          onPick={setPendingSplit}
+        />
 
         <div className="border-t border-overlay-08" />
 
@@ -490,7 +361,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
 
         {/* Empty state */}
         {!changingSplit && filteredWorkouts.length === 0 && (
-          <div className="bg-surface border border-overlay-10 rounded-2xl p-8 text-center">
+          <div className="glass rounded-2xl p-8 text-center">
             {selectedMuscle ? (
               <p className="text-sm text-muted-foreground">
                 Nenhum treino com foco em <span className="text-foreground">{selectedMuscle}</span>.
@@ -533,7 +404,7 @@ export default function PhaseDetailsPage({ plan, workouts, periodizationId, phas
         {!changingSplit && filteredWorkouts.length > 0 && (
           <div className="flex flex-col gap-3">
             {filteredWorkouts.map((workout) => (
-              <WorkoutCard key={workout.id} workout={workout} onDelete={setDeletingWorkout} />
+              <PhaseWorkoutCard key={workout.id} workout={workout} onDelete={setDeletingWorkout} />
             ))}
           </div>
         )}

@@ -1,8 +1,11 @@
-import { practitionerDietTargetFromAnswers } from '@elevapro/shared';
+import {
+  practitionerDietTargetFromAnswers,
+  projectWeight,
+  type WeightProjection,
+} from '@elevapro/shared';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/auth';
 import { loadOnboardingAnswers } from '../services/onboardingAnswers';
-import { projectWeight, type WeightProjection } from '../services/projection';
 
 /**
  * A projeção de O8, calculada no aparelho com as respostas da própria pessoa

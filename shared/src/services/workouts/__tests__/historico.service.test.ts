@@ -103,3 +103,45 @@ describe("workoutsService — peso para o gasto calórico", () => {
     });
   });
 });
+
+describe("workoutsService — histórico da carga sugerida (#376)", () => {
+  it("junta carga máxima e esforço por item, da sessão mais recente para a mais antiga", async () => {
+    const { supabase, chamadas } = criarSupabaseFake({
+      data: [
+        {
+          exercises: [
+            {
+              workout_exercise_id: "item-supino",
+              effort: "easy",
+              sets: [
+                { weight_actual: 12.5, completed: true },
+                { weight_actual: 15, completed: false },
+              ],
+            },
+          ],
+        },
+        {
+          exercises: [
+            {
+              workout_exercise_id: "item-supino",
+              effort: "hard",
+              sets: [{ weight_actual: 10, completed: true }],
+            },
+          ],
+        },
+      ],
+    });
+
+    const historico = await createWorkoutsService(supabase).fetchExerciseHistory(
+      "treino-1",
+      "aluno-1",
+    );
+
+    expect(historico["item-supino"]).toEqual([
+      { maxWeightKg: 12.5, effort: "easy" },
+      { maxWeightKg: 10, effort: "hard" },
+    ]);
+    expect(chamadas[0].select).not.toMatch(/notes|perceived_exertion/);
+    expect(chamadas[0].metodos).toContainEqual({ nome: "limit", args: [2] });
+  });
+});

@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -23,8 +24,9 @@ import { useAssessmentStore } from '../store/assessmentStore';
  * Tela 3 do kit de body scan: as três poses, o que já foi feito e o que a
  * captura conferiu sozinha (#316).
  *
- * O quadro mostra o corpo de referência, e não a foto: a foto só existe para a
- * análise, e a tela não precisa exibi-la para dizer que a pose está feita.
+ * O quadro feito mostra a foto tirada, para o aluno conferir a pose antes de
+ * gastar a análise. A foto continua só no cache até a análise ou a saída da
+ * grade, que a apagam.
  *
  * @example <BodyScanGrid />
  */
@@ -94,7 +96,7 @@ export default function BodyScanGrid() {
           <PoseCard
             key={pose.id}
             pose={pose}
-            done={Boolean(capturedImages[pose.id])}
+            photoUri={capturedImages[pose.id]}
             onPress={() =>
               router.push({ pathname: ROUTES.ASSESSMENT.CAMERA, params: { target: pose.id } })
             }
@@ -137,20 +139,28 @@ function useStudentGuard() {
  */
 function useDiscardOnLeave() {
   const navigation = useNavigation();
-  useEffect(
-    () =>
-      navigation.addListener('beforeRemove', () => {
-        void useAssessmentStore.getState().discardCapture();
-      }),
-    [navigation]
-  );
+  useEffect(() => {
+    // `removed` substitui o `beforeRemove` (expo-router 58). O cleanup do efeito
+    // roda antes do evento: tirar a inscrição na hora o perderia.
+    const unsubscribe = navigation.addListener('removed', () => {
+      void useAssessmentStore.getState().discardCapture();
+    });
+    return () => queueMicrotask(unsubscribe);
+  }, [navigation]);
 }
 
 const CHECK_SIZE = 12;
 
-function PoseCard({ pose, done, onPress }: { pose: Pose; done: boolean; onPress: () => void }) {
+interface PoseCardProps {
+  pose: Pose;
+  photoUri?: string;
+  onPress: () => void;
+}
+
+function PoseCard({ pose, photoUri, onPress }: PoseCardProps) {
   const cores = useCores();
   const escalar = useEscala();
+  const done = Boolean(photoUri);
   return (
     <TouchableOpacity
       className="flex-1"
@@ -166,13 +176,19 @@ function PoseCard({ pose, done, onPress }: { pose: Pose; done: boolean; onPress:
             done ? 'bg-glass-strong' : 'border border-dashed border-glass-border'
           )}
         >
-          <ReferenceBody
-            pose={pose.id}
-            height={148}
-            tone={done ? 'brand' : 'muted'}
-            glow={done}
-            opacity={done ? 1 : 0.5}
-          />
+          {photoUri ? (
+            <Image
+              source={{ uri: photoUri }}
+              // Só memória: o cache de disco do expo-image guardaria uma cópia
+              // que o descarte da foto não alcança.
+              cachePolicy="memory"
+              contentFit="cover"
+              accessibilityIgnoresInvertColors
+              className="h-full w-full"
+            />
+          ) : (
+            <ReferenceBody pose={pose.id} height={148} tone="muted" opacity={0.5} />
+          )}
           {done ? (
             <View className="absolute right-[0.4375rem] top-[0.4375rem] h-5 w-5 items-center justify-center rounded-full bg-primary">
               <Ionicons

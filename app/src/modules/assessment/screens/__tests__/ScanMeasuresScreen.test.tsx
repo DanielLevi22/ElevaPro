@@ -43,9 +43,9 @@ describe('ScanMeasuresScreen', () => {
   // LGPD, Art. 18, II: a geometria gravada sÃ³ cumpre livre acesso se a tela
   // que o aluno alcanÃ§a a renderiza. TirÃ¡-la daqui escondia o dado tratado.
   it('nÃ£o esconde a geometria medida na tela que o aluno abre', async () => {
-    render(<ScanMeasuresScreen studentId="student-1" scanId="scan-geometry" />);
+    await render(<ScanMeasuresScreen studentId="student-1" scanId="scan-geometry" />);
 
-    fireEvent.press(await screen.findByText('Medido no seu aparelho'));
+    await fireEvent.press(await screen.findByText('Medido no seu aparelho'));
 
     const shoulder = screen.queryByText(/Desn.vel dos ombros/);
     if (!shoulder) {

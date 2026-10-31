@@ -71,8 +71,8 @@ describe('StudentsScreen', () => {
     jest.clearAllMocks();
   });
 
-  it('should render student list', () => {
-    render(<StudentsScreen />);
+  it('should render student list', async () => {
+    await render(<StudentsScreen />);
     screen.debug();
 
     expect(screen.getByTestId('students-header-title')).toBeTruthy();
@@ -80,8 +80,8 @@ describe('StudentsScreen', () => {
     expect(screen.getByText('Invited Student')).toBeTruthy();
   });
 
-  it('should fetch students on mount', () => {
-    render(<StudentsScreen />);
+  it('should fetch students on mount', async () => {
+    await render(<StudentsScreen />);
     expect(mockFetchStudents).toHaveBeenCalledWith('personal-123', {
       append: false,
       page: 1,
@@ -91,16 +91,16 @@ describe('StudentsScreen', () => {
     });
   });
 
-  it('should handle navigation to details', () => {
-    render(<StudentsScreen />);
+  it('should handle navigation to details', async () => {
+    await render(<StudentsScreen />);
 
-    fireEvent.press(screen.getByText('Student One'));
+    await fireEvent.press(screen.getByText('Student One'));
 
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/students/1');
   });
 
   it('should handle student removal', async () => {
-    render(<StudentsScreen />);
+    await render(<StudentsScreen />);
 
     // Find the trash icon for the active student (first one)
     // Since we can't easily query by icon, we'll assume the order or add testID.

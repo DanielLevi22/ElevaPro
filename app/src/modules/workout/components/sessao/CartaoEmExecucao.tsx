@@ -1,11 +1,19 @@
-import { formatarDecimal, type SerieFeita, type WorkoutExercise } from '@elevapro/shared';
+import {
+  formatarCarga,
+  formatarDecimal,
+  type SerieFeita,
+  type WorkoutExercise,
+} from '@elevapro/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { showConfirm } from '@/components/ui/appAlert';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
+import { Button } from '@/components/ui/Button';
 import { Vidro } from '@/components/ui/Vidro';
 import { cn } from '@/lib/utils';
 import { useBrilho, useCores, useEscala } from '@/shared/design';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
+import { prescriptionSummary } from '../../store/sessionPlan';
 
 /**
  * O exercício em execução — o único cartão com borda e brilho da primária na
@@ -27,6 +35,8 @@ interface CartaoEmExecucaoProps {
   ganho: number | null;
   /** Abre o cronômetro da série. Nada é registrado até o aluno concluir lá. */
   onIniciar: () => void;
+  /** Registra as séries que faltam como prescritas, depois de confirmar (#441). */
+  onConcluirTodas: () => void;
   onAjustar: () => void;
   /** O "…" que abre "Trocar exercício" (desenho 6a). */
   onTrocar: () => void;
@@ -37,14 +47,15 @@ export function CartaoEmExecucao({
   feitas,
   ganho,
   onIniciar,
+  onConcluirTodas,
   onAjustar,
   onTrocar,
 }: CartaoEmExecucaoProps) {
-  const total = item.sets ?? 0;
+  const total = item.set_plan.length;
   const proxima = Math.min(feitas.length + 1, total);
 
   return (
-    <Vidro destaque classeExterna="mt-3">
+    <Vidro destaque>
       <View className="bg-primary/10 px-[0.9375rem] pb-[0.9375rem] pt-3.5">
         <View className="absolute bottom-0 left-0 top-0 w-[0.1875rem] bg-primary" />
         <Identificacao item={item} onAjustar={onAjustar} onTrocar={onTrocar} />
@@ -68,10 +79,31 @@ export function CartaoEmExecucao({
             tamanho="cartao"
             onPress={onIniciar}
           />
+          <Button
+            label="Concluir todas as séries"
+            variant="ghost"
+            size="sm"
+            onPress={() => confirmarConcluirTodas(total - feitas.length, onConcluirTodas)}
+          />
         </View>
       </View>
     </Vidro>
   );
+}
+
+/**
+ * Um toque registra várias séries: pergunta antes, com quantas. A série segue
+ * registrada no cronômetro (#295); este é o atalho de quem já fez (#441).
+ */
+function confirmarConcluirTodas(restantes: number, concluir: () => void): void {
+  const series = restantes === 1 ? '1 série restante' : `${restantes} séries restantes`;
+  showConfirm({
+    title: 'Concluir todas as séries?',
+    message: `Registrar ${series} como prescritas.`,
+    confirmText: 'Concluir',
+    cancelText: 'Voltar',
+    onConfirm: concluir,
+  });
 }
 
 const TAMANHO_DO_LAPIS = 15;
@@ -144,12 +176,13 @@ const TAMANHO_DA_SETA = 12;
 function FaixaDaPrescricao({ item, ganho }: { item: WorkoutExercise; ganho: number | null }) {
   const cores = useCores();
   const escalar = useEscala();
-  const carga = item.weight ? `${String(item.weight).replace('.', ',')} kg` : '—';
-  const descanso = item.rest_seconds ? `${item.rest_seconds} s` : '—';
+  const resumo = prescriptionSummary(item);
+  const carga = resumo.load !== null ? formatarCarga(resumo.load) : '—';
+  const descanso = resumo.rest ? `${resumo.rest} s` : '—';
 
   return (
     <View className="mt-3.5 flex-row overflow-hidden rounded-[0.875rem] bg-glass-strong">
-      <CelulaDaFaixa valor={`${item.sets ?? 0} × ${item.reps ?? '—'}`} rotulo="Séries" />
+      <CelulaDaFaixa valor={`${resumo.sets} × ${resumo.reps}`} rotulo="Séries" />
       <CelulaDaFaixa valor={carga} rotulo="Carga" />
       <CelulaDaFaixa valor={descanso} rotulo="Descanso" />
       <View

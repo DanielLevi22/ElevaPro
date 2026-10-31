@@ -1,8 +1,7 @@
-import { formatarDuracao } from '@elevapro/shared';
+import { describeRepsTarget, formatarDuracao } from '@elevapro/shared';
 import { TelaDeVidroComFoto } from '@/components/ui/TelaDeVidroComFoto';
 import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
-import { textoDasRepeticoes } from '../../../components/sessao/LinhasDaExecucao';
 import {
   AnelDoCronometro,
   CartaoDaSerie,
@@ -10,6 +9,7 @@ import {
   ResumoDaSerie,
 } from '../../../components/sessao/PecasDoCronometro';
 import { SeriesDoExercicio } from '../../../components/sessao/ProgressoDaSessao';
+import { SetScript } from '../../../components/sessao/SetScript';
 import { TopoDaSessao } from '../../../components/sessao/TopoDaSessao';
 import {
   type EstadoDaSessao,
@@ -33,7 +33,10 @@ import type { PropsDoMomento } from './ExecucaoDoTreino';
  * <CronometroDoTreino treino={treino} sessao={sessao} agora={agora} … />
  */
 export function CronometroDoTreino(props: PropsDoMomento) {
-  const { treino, sessao, agora, voz, onFechar } = props;
+  const { treino, sessao, agora, voz, despachar } = props;
+  // Voltar é à lista: da série sem registrar, do descanso encerrando ele (#441).
+  const voltar = () =>
+    despachar(sessao.momento === 'serie' ? { tipo: 'fecharSerie' } : { tipo: 'terminarDescanso' });
   const proxima = proximaSerie(sessao);
   const progresso = progressoDaSessao(sessao);
 
@@ -43,7 +46,7 @@ export function CronometroDoTreino(props: PropsDoMomento) {
         titulo={treino.title}
         tempo={formatarDuracao(tempoDaSessao(sessao, agora))}
         voz={voz}
-        onFechar={onFechar}
+        onVoltar={voltar}
       />
       {proxima ? (
         <SeriesDoExercicio
@@ -51,7 +54,7 @@ export function CronometroDoTreino(props: PropsDoMomento) {
           exercicios={progresso.exercicios}
           nome={proxima.item.exercise?.name ?? 'Exercício'}
           feitas={proxima.numero - 1}
-          total={proxima.item.sets ?? 0}
+          total={proxima.item.set_plan.length}
         />
       ) : null}
       {sessao.momento === 'serie' ? (
@@ -79,14 +82,22 @@ function MomentoDaSerie({ sessao, agora, despachar }: PropsDoMomento) {
         segundos={segundos}
         valor={volta}
         meta={VOLTA_DO_EXERCICIO}
-        legenda={proxima ? `Série ${proxima.numero} de ${proxima.item.sets ?? 0}` : ''}
+        legenda={proxima ? `Série ${proxima.numero} de ${proxima.item.set_plan.length}` : ''}
       />
       {proxima ? (
         <>
-          <TituloDeSecao estilo="rotulo" acao={textoDasRepeticoes(proxima.item.reps, 'repetições')}>
+          <TituloDeSecao
+            estilo="rotulo"
+            acao={proxima.prescricao ? describeRepsTarget(proxima.prescricao.reps) : ''}
+          >
             Agora
           </TituloDeSecao>
-          <CartaoDaSerie item={proxima.item} numero={proxima.numero} />
+          <CartaoDaSerie
+            item={proxima.item}
+            numero={proxima.numero}
+            prescricao={proxima.prescricao}
+          />
+          <SetScript prescription={proxima.prescricao} />
         </>
       ) : null}
       <ControlesDoCronometro
@@ -135,7 +146,12 @@ function MomentoDoDescanso({ sessao, agora, despachar }: PropsDoMomento) {
           <TituloDeSecao estilo="rotulo" acao="Prepare-se para a próxima série">
             A seguir
           </TituloDeSecao>
-          <CartaoDaSerie item={proxima.item} numero={proxima.numero} />
+          <CartaoDaSerie
+            item={proxima.item}
+            numero={proxima.numero}
+            prescricao={proxima.prescricao}
+          />
+          <SetScript prescription={proxima.prescricao} />
         </>
       ) : null}
       <ControlesDoCronometro

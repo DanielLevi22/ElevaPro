@@ -1,42 +1,17 @@
 "use client";
 
-import { supabase } from "@elevapro/supabase";
+import type { PhysicalAssessmentInput } from "@elevapro/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Assessment } from "@/app/api/students/[id]/assessments/route";
+import { assessmentClient } from "../services/AssessmentClientService";
 
-export type AssessmentInput = Omit<
-  Assessment,
-  "id" | "created_at" | "student_id" | "specialist_id"
-> & { studentId: string };
+export type AssessmentInput = PhysicalAssessmentInput & { studentId: string };
 
 export function useCreateAssessment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: AssessmentInput) => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) throw new Error("Usuário não autenticado");
-
-      const { studentId, ...body } = input;
-
-      const response = await fetch(`/api/students/${studentId}/assessments`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(body),
-      });
-
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error ?? "Não foi possível salvar a avaliação");
-      }
-
-      return (result as { assessment: Assessment }).assessment;
-    },
+    mutationFn: ({ studentId, ...values }: AssessmentInput) =>
+      assessmentClient.create(studentId, values),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["student-assessments", variables.studentId] });
       queryClient.invalidateQueries({ queryKey: ["student-history", variables.studentId] });

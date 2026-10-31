@@ -9,6 +9,10 @@ updates:
       time: "09:00"
       timezone: "America/Sao_Paulo"
     open-pull-requests-limit: 3
+    ignore:
+      # Versão do Biome é decisão do projeto (CLAUDE.md), e sobe nos três
+      # package.json juntos; um bump só aqui formataria cada pasta de um jeito
+      - dependency-name: "@biomejs/biome"
 
   # Dependências do app mobile
   - package-ecosystem: "npm"
@@ -24,6 +28,7 @@ updates:
         patterns:
           - "expo*"
           - "@expo/*"
+      # Só patches: minor e major das libs nativas ficam ignorados lá embaixo
       react-native-packages:
         patterns:
           - "react-native*"
@@ -34,13 +39,51 @@ updates:
           - "@types/jest"
           - "@testing-library/*"
     ignore:
-      # Major updates precisam de revisão manual
+      # O React do app é o que o SDK do Expo fixa, em versão exata, e tem de bater
+      # com o renderer do React Native: o #405 subiu o `react` sem o `react-dom`, e
+      # o #412 o `react-dom` sem o `react`. Chega com o SDK, até no patch
       - dependency-name: "react"
-        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+      - dependency-name: "@types/react"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      # O SDK do Expo fixa o RN em versão exata (0.88.0 no 58)
       - dependency-name: "react-native"
-        update-types: ["version-update:semver-major"]
+      # As libs nativas também seguem o SDK: o #400 trouxe reanimated, worklets e
+      # screens do SDK 58 com o app no 57, e majors como o gesture-handler 3.
+      # Minor e major delas chegam com o SDK; aqui passa só patch (#402)
+      - dependency-name: "react-native-*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "@react-native/*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "expo"
         update-types: ["version-update:semver-major"]
+      # O major dos expo-* é o número do SDK: subir sem o `expo` mistura SDKs (#391).
+      # Troca de SDK é pelo `npx expo install expo@^N --fix`, não pelo Dependabot
+      - dependency-name: "expo-*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@expo/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "jest-expo"
+        update-types: ["version-update:semver-major"]
+      # Jest e RNTL também seguem o SDK: o expo-router 58 pede RNTL 14, e o
+      # expo-doctor do 58 espera Jest 30 (#403)
+      - dependency-name: "jest"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/jest"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@testing-library/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "test-renderer"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      # O Biome sobe junto nos três package.json, por decisão (#404)
+      - dependency-name: "@biomejs/biome"
+      # NativeWind 4 só aceita Tailwind 3; o v4 derrubou o Metro (#395)
+      - dependency-name: "tailwindcss"
+        update-types: ["version-update:semver-major"]
+      # O binário Linux da lightningcss que o react-native-css-interop carrega:
+      # fixo na versão dela (1.27.0), senão o NativeWind não acha o .node na
+      # pipeline. Sobe junto com o NativeWind, nunca sozinho (#418)
+      - dependency-name: "lightningcss-linux-x64-gnu"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"

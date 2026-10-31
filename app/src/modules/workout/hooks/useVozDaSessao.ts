@@ -1,3 +1,4 @@
+import { repsToText } from '@elevapro/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useVoiceCoach } from '@/hooks/useVoiceCoach';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
@@ -8,6 +9,7 @@ import {
   emAndamento,
   proximaSerie,
 } from '../store/maquinaDaSessao';
+import { prescriptionSummary } from '../store/sessionPlan';
 
 interface VozDaSessao {
   mudo: boolean;
@@ -69,15 +71,15 @@ function useAnuncios(sessao: EstadoDaSessao, coachRef: CoachRef): void {
       const { item } = proxima;
       coach.announceExercise(
         item.exercise?.name ?? 'exercício',
-        item.sets ?? 0,
-        item.reps ?? '',
-        item.weight ?? undefined
+        item.set_plan.length,
+        prescriptionSummary(item).reps,
+        prescriptionSummary(item).load ?? undefined
       );
     } else if (sessao.momento === 'execucao' && deOnde === 'descanso' && proxima) {
       coach.announceSetStart(
         proxima.numero,
-        proxima.item.reps ?? '',
-        proxima.item.weight ?? undefined
+        proxima.prescricao ? repsToText(proxima.prescricao.reps) : '',
+        proxima.prescricao?.weight_kg ?? undefined
       );
     } else if (sessao.momento === 'resumo' && deOnde !== 'resumo') {
       coach.announceFinish();

@@ -15,7 +15,7 @@ export function PlanProposalCard({ data, loading, onApprove, onReject }: Props) 
 
   return (
     <div className="mx-auto max-w-lg space-y-3">
-      <div className="bg-surface border border-primary/30 rounded-2xl p-5 space-y-5">
+      <div className="glass border-primary/30 rounded-2xl p-5 space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h4 className="font-semibold text-foreground">Proposta de Plano</h4>
@@ -68,7 +68,7 @@ export function PlanProposalCard({ data, loading, onApprove, onReject }: Props) 
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             Nutrição
           </p>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
               { label: "Calorias", value: `${nutrition.daily_calories}`, unit: "kcal" },
               { label: "Proteína", value: `${nutrition.protein_g}`, unit: "g" },

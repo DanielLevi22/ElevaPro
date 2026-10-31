@@ -7,7 +7,6 @@ import { useAuthUser } from "./useAuthUser";
 
 export type {
   Periodization,
-  PeriodizationObjective,
   TrainingStatus as PeriodizationStatus,
 } from "@elevapro/shared";
 

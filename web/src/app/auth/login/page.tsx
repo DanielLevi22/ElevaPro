@@ -1,5 +1,6 @@
 "use client";
 
+import { isStrongAuthRequired, userFacingAuthError } from "@elevapro/shared";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -27,10 +28,7 @@ export default function LoginPage() {
     let current = true;
 
     const redirectRestoredSession = async () => {
-      if (
-        (accountType === "admin" || accountType === "specialist") &&
-        !(await hasCurrentPrivilegedProof())
-      ) {
+      if (isStrongAuthRequired(accountType) && !(await hasCurrentPrivilegedProof())) {
         if (current) router.replace("/auth/mfa");
         return;
       }
@@ -61,11 +59,11 @@ export default function LoginPage() {
       const result = await useAuthStore.getState().signIn(email, password);
 
       if (!result.success) {
-        if (result.error === "account_suspended") {
+        if (result.error === "account_inactive" || result.error === "account_suspended") {
           setError("Sua conta foi suspensa ou rejeitada. Entre em contato com o suporte.");
           return;
         }
-        setError(result.error || "Erro ao fazer login");
+        setError(userFacingAuthError(result.error));
         return;
       }
 
@@ -88,10 +86,7 @@ export default function LoginPage() {
         return;
       }
 
-      if (
-        (accountType === "admin" || accountType === "specialist") &&
-        !(await hasCurrentPrivilegedProof())
-      ) {
+      if (isStrongAuthRequired(accountType) && !(await hasCurrentPrivilegedProof())) {
         router.replace("/auth/mfa");
         return;
       }
@@ -141,7 +136,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center py-8 bg-background relative overflow-hidden">
       {/* Animated Background Grid */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
 
@@ -155,7 +150,7 @@ export default function LoginPage() {
       {/* Login Card */}
       <div className="relative max-w-md w-full mx-4">
         {/* Glassmorphism Card */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 space-y-8">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-6 sm:p-8 space-y-8">
           {/* Header */}
           <div className="text-center space-y-2">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent tracking-tight">

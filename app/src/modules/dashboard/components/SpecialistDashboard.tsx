@@ -1,8 +1,10 @@
 import type { Briefing, BriefingSignal, BriefingSignalKind } from '@elevapro/shared';
 import type { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { AvatarDoCabecalho } from '@/components/ui/AvatarDoCabecalho';
+import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import { CaixaDeIcone, type TomDeMetrica } from '@/components/ui/CaixaDeIcone';
 import { LinhaDeVidro } from '@/components/ui/LinhaDeVidro';
 import { StatTile } from '@/components/ui/StatTile';
@@ -11,6 +13,7 @@ import { TituloDeSecao } from '@/components/ui/TituloDeSecao';
 import { Vidro } from '@/components/ui/Vidro';
 import { ROUTES } from '@/navigation/types';
 import { fotoDoGrupo } from '@/shared/imagens/fotosDeTreino';
+import { NoteSheet } from './NoteSheet';
 
 /**
  * Vindo da aba Início, a pilha da aba Alunos nasce com a lista por baixo:
@@ -23,7 +26,17 @@ const SIGNAL_ICON: Record<BriefingSignalKind, keyof typeof Ionicons.glyphMap> = 
   pending_invite: 'mail-unread-outline',
   anamnesis_ready: 'sparkles-outline',
   exercise_swap: 'swap-horizontal-outline',
+  weekly_check_in: 'clipboard-outline',
+  meals_unlogged: 'restaurant-outline',
+  check_in_skipped: 'calendar-clear-outline',
 };
+
+/** Os sinais de quem sumiu: o cartão ganha o botão de mensagem (#376, F8). */
+const NEEDS_MESSAGE: readonly BriefingSignalKind[] = [
+  'inactive',
+  'meals_unlogged',
+  'check_in_skipped',
+];
 
 /** O vermelho do kit para risco, a marca para boa notícia, o âmbar para o resto. */
 const SIGNAL_TONE: Record<BriefingSignal['tone'], TomDeMetrica> = {
@@ -60,6 +73,7 @@ export function SpecialistDashboard({
   onRefresh,
 }: SpecialistDashboardProps) {
   const router = useRouter();
+  const [messaging, setMessaging] = useState<{ id: string; name: string } | null>(null);
   const signals = briefing?.signals ?? [];
   const atRiskCount = signals.filter((signal) => signal.tone === 'danger').length;
   const firstName = profile?.full_name?.trim().split(/\s+/)[0];
@@ -110,10 +124,12 @@ export function SpecialistDashboard({
               key={`${signal.studentId}-${signal.kind}`}
               signal={signal}
               onPress={() => router.push(ROUTES.STUDENTS.DETAILS(signal.studentId), ENTRE_ABAS)}
+              onMessage={() => setMessaging({ id: signal.studentId, name: signal.studentName })}
             />
           ))}
         </>
       ) : null}
+      <NoteSheet student={messaging} onClose={() => setMessaging(null)} />
 
       <TituloDeSecao estilo="rotulo">Atalhos</TituloDeSecao>
       <LinhaDeVidro
@@ -144,7 +160,15 @@ function todayLabel(): string {
   return `${label[0].toUpperCase()}${label.slice(1)}`;
 }
 
-function SignalCard({ signal, onPress }: { signal: BriefingSignal; onPress: () => void }) {
+function SignalCard({
+  signal,
+  onPress,
+  onMessage,
+}: {
+  signal: BriefingSignal;
+  onPress: () => void;
+  onMessage: () => void;
+}) {
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} accessibilityRole="button">
       <Vidro classeExterna="mb-[0.5625rem]" className="flex-row items-center gap-3 p-[0.8125rem]">
@@ -157,6 +181,9 @@ function SignalCard({ signal, onPress }: { signal: BriefingSignal; onPress: () =
             {signal.message}
           </Text>
         </View>
+        {NEEDS_MESSAGE.includes(signal.kind) ? (
+          <BotaoRedondo icone="message-circle" rotulo="Mensagem" onPress={onMessage} />
+        ) : null}
       </Vidro>
     </TouchableOpacity>
   );

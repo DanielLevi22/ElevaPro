@@ -23,6 +23,8 @@ export const ROUTES = {
     INDEX: '/(tabs)/index',
     RANKING: '/(tabs)/ranking',
     CARDIO: '/(tabs)/cardio',
+    /** O menu: aberto pelo "Menu" do + e pela engrenagem do perfil. */
+    MENU: '/(tabs)/menu',
   },
 
   // Assessment Flows
@@ -54,6 +56,17 @@ export const ROUTES = {
     SQUAT: '/tecnica/agachamento',
   },
 
+  // Ajuda
+  SETTINGS: {
+    /** As preferências dos avisos do dia (#376, E5). */
+    NOTICES: '/settings/notices',
+  },
+
+  HELP: {
+    /** Os comandos de voz da execução do treino. */
+    VOICE_COMMANDS: '/help/voice-commands',
+  },
+
   // Onboarding
   ONBOARDING: {
     /** O1 a O3 do onboarding do Praticante (#365). */
@@ -73,6 +86,31 @@ export const ROUTES = {
     HEALTH_CONNECT: '/onboarding/health-connect',
   },
 
+  // Check-in da semana (#376). A entrada mora em `checkin.tsx`, e não em
+  // `checkin/index.tsx`, pelo mesmo motivo da técnica: o typegen erra a segunda.
+  BLOCK: {
+    DELOAD: '/block/deload',
+    REVIEW: '/block/review',
+    MEASURES: '/block/measures',
+    CHANGES: '/block/changes',
+    EARLY: '/block/early',
+    BUILDING: '/block/building',
+    REPORT: '/block/report',
+    REST: '/block/rest',
+    RETURN: '/block/return',
+    HISTORY: (id: string) => ({ pathname: '/block/history/[id]', params: { id } }) as const,
+    NEXT: '/block/next',
+    /** "Semana corrida?" (#376, F5): o aviso do 7º dia sem treino abre aqui. */
+    BUSY_WEEK: '/block/busy-week',
+  },
+
+  CHECKIN: {
+    ROOT: '/checkin',
+    RESULT: '/checkin/result',
+    SIMPLER: '/checkin/simpler',
+    REPORT: '/checkin/report',
+  },
+
   // Student Flows
   STUDENTS: {
     ROOT: '/(tabs)/students',
@@ -80,12 +118,29 @@ export const ROUTES = {
     DETAILS: (id: string): `/(tabs)/students/${string}` => `/(tabs)/students/${id}`,
     WORKOUTS: (id: string): `/(tabs)/students/${string}/workouts` =>
       `/(tabs)/students/${id}/workouts`,
-    NUTRITION: (id: string): `/(tabs)/students/${string}/nutrition` =>
-      `/(tabs)/students/${id}/nutrition`,
-    // A linha do tempo que morava em `/history` foi para o Acompanhamento (#334).
+    // A dieta do aluno abre a aba Nutrição, e a avaliação por foto é do próprio
+    // aluno: as telas legadas de `[id]/nutrition` e `[id]/assessment` saíram (#436).
+    // A linha do tempo que morava em `/history` foi para o Acompanhamento (#334),
+    // e de lá para as Atividades, que o Gerenciamento abre.
+    ACTIVITIES: (id: string): `/(tabs)/students/${string}/activities` =>
+      `/(tabs)/students/${id}/activities`,
     ANAMNESIS: '/students/anamnesis',
-    ASSESSMENT: (id: string): `/(tabs)/students/${string}/assessment` =>
-      `/(tabs)/students/${id}/assessment`,
+    /** As avaliações físicas do aluno, o mesmo fluxo do web: lista, ficha e correções. */
+    ASSESSMENTS: {
+      LIST: (id: string): `/(tabs)/students/${string}/assessments` =>
+        `/(tabs)/students/${id}/assessments`,
+      /** Sem `assessmentId`, ficha nova; com, a correção daquela avaliação. */
+      FORM: (id: string, assessmentId?: string) =>
+        ({
+          pathname: '/(tabs)/students/[id]/assessments/form',
+          params: assessmentId ? { id, assessmentId } : { id },
+        }) as const,
+      REVISIONS: (id: string, assessmentId: string) =>
+        ({
+          pathname: '/(tabs)/students/[id]/assessments/revisions',
+          params: { id, assessmentId },
+        }) as const,
+    },
     /**
      * O fluxo de Progresso do aluno visto pelo especialista — o "Evolução geral"
      * do Acompanhamento (#334). As mesmas telas da aba do aluno, dentro da pilha de
@@ -115,6 +170,22 @@ export const ROUTES = {
       ({
         pathname: '/(tabs)/students/[id]/workouts/[periodizationId]',
         params: { id: studentId, periodizationId },
+      }) as const,
+    /**
+     * A Nova periodização de um aluno, na pilha de Alunos. A da aba Treinos subia
+     * por cima do que aquela aba guardava, e o Voltar caía no treino de outro
+     * aluno (#437).
+     */
+    PERIODIZATION_NEW: (studentId: string, studentName?: string) =>
+      ({
+        pathname: '/(tabs)/students/[id]/workouts/new',
+        params: { id: studentId, ...(studentName ? { studentName } : {}) },
+      }) as const,
+    /** A fase dessa periodização, ainda na pilha de Alunos. */
+    PHASE: (studentId: string, periodizationId: string, phaseId: string) =>
+      ({
+        pathname: '/(tabs)/students/[id]/workouts/[periodizationId]/phases/[phaseId]',
+        params: { id: studentId, periodizationId, phaseId },
       }) as const,
     WORKOUT_DETAILS: (
       studentId: string,
@@ -162,16 +233,30 @@ export const ROUTES = {
       phaseId: string
     ): `/(tabs)/workouts/periodizations/${string}/phases/${string}` =>
       `/(tabs)/workouts/periodizations/${periodizationId}/phases/${phaseId}`,
+    /** A mesma fase no modo de quem treina, que abre a ficha para executar. */
+    PHASE_EXECUTE: (periodizationId: string, phaseId: string) =>
+      ({
+        pathname: '/(tabs)/workouts/periodizations/[id]/phases/[phaseId]',
+        params: { id: periodizationId, phaseId, mode: 'execute' },
+      }) as const,
     EXECUTE: (id: string): `/(tabs)/workouts/execute/${string}` => `/(tabs)/workouts/execute/${id}`,
-    // Wizard de criação (#335) — substitui a antiga CreatePeriodizationScreen
-    // e a criação inline de fase/treino que ainda mora em
-    // PeriodizationDetailsScreen/PhaseDetailsScreen.
-    WIZARD_STRUCTURE: '/(tabs)/workouts/wizard/structure',
-    WIZARD_BUILD: '/(tabs)/workouts/wizard/build',
-    WIZARD_REVIEW: '/(tabs)/workouts/wizard/review',
-    // Chat de verdade com o assistente (#335) — substitui a proposta de um
-    // tiro só que morava em WIZARD_STRUCTURE/WIZARD_BUILD.
-    WIZARD_ASSISTANT: '/(tabs)/workouts/wizard/assistant',
+    /** "Só tenho 20 min" (#376, F3): a mesma sessão, com os três primeiros exercícios. */
+    EXECUTE_SHORT: (id: string) =>
+      ({ pathname: '/(tabs)/workouts/execute/[id]', params: { id, short: '1' } }) as const,
+    /**
+     * O formulário da periodização, como o modal do web (#387): grava só a
+     * periodização. Fase, ficha e exercício nascem cada um na sua tela.
+     */
+    PERIODIZATION_NEW: (studentId?: string, studentName?: string) =>
+      ({
+        pathname: '/(tabs)/workouts/periodization-form',
+        params: { ...(studentId ? { studentId } : {}), ...(studentName ? { studentName } : {}) },
+      }) as const,
+    PERIODIZATION_EDIT: (periodizationId: string) =>
+      ({ pathname: '/(tabs)/workouts/periodization-form', params: { periodizationId } }) as const,
+    // Chat com o assistente de treino (#335). Mora fora da criação, como o
+    // coach do web: chega-se a ele pelo histórico de conversas.
+    ASSISTANT: '/(tabs)/workouts/assistant',
   },
 
   // Nutrição de Aluno e Praticante no mesmo fluxo de vidro.
@@ -241,6 +326,10 @@ export const ROUTES = {
     MEASUREMENTS: '/(tabs)/progress/measurements',
     /** O relatório dos últimos 90 dias, com a exportação em PDF. */
     REPORT: '/(tabs)/progress/report',
+    /** A tendência de peso, com a faixa do ritmo e os ajustes (#376, A10). */
+    WEIGHT_TREND: '/(tabs)/progress/weight',
+    /** Sua jornada: a linha do tempo desde o primeiro plano (#376, D1). */
+    JOURNEY: '/(tabs)/progress/journey',
     /**
      * O histórico de body scans (#316). Arquivo simples com a pasta `scans/`
      * irmã: `scans/index` sai tipado como `/scans/index`, que o roteador não serve.

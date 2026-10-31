@@ -8,11 +8,13 @@ import { ChoiceOptions, YesNoOptions } from '../AnswerOptions';
  */
 
 describe('ChoiceOptions', () => {
-  it('na escolha única, marca a opção tocada', () => {
+  it('na escolha única, marca a opção tocada', async () => {
     const onToggle = jest.fn();
-    render(<ChoiceOptions options={['Manhã', 'Noite']} selected={['Noite']} onToggle={onToggle} />);
+    await render(
+      <ChoiceOptions options={['Manhã', 'Noite']} selected={['Noite']} onToggle={onToggle} />
+    );
 
-    fireEvent.press(screen.getByRole('radio', { name: 'Manhã' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Manhã' }));
 
     expect(onToggle).toHaveBeenCalledWith('Manhã');
     expect(screen.getByRole('radio', { name: 'Noite' }).props.accessibilityState).toMatchObject({
@@ -20,9 +22,9 @@ describe('ChoiceOptions', () => {
     });
   });
 
-  it('na escolha múltipla, cada opção é uma caixa independente', () => {
+  it('na escolha múltipla, cada opção é uma caixa independente', async () => {
     const onToggle = jest.fn();
-    render(
+    await render(
       <ChoiceOptions
         multiple
         options={['Joelho', 'Ombro', 'Lombar']}
@@ -31,7 +33,7 @@ describe('ChoiceOptions', () => {
       />
     );
 
-    fireEvent.press(screen.getByRole('checkbox', { name: 'Ombro' }));
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Ombro' }));
 
     expect(onToggle).toHaveBeenCalledWith('Ombro');
     const marcadas = screen
@@ -42,11 +44,11 @@ describe('ChoiceOptions', () => {
 });
 
 describe('YesNoOptions', () => {
-  it('responde sim ou não, e mostra qual foi escolhido', () => {
+  it('responde sim ou não, e mostra qual foi escolhido', async () => {
     const onChange = jest.fn();
-    render(<YesNoOptions value={false} onChange={onChange} />);
+    await render(<YesNoOptions value={false} onChange={onChange} />);
 
-    fireEvent.press(screen.getByRole('radio', { name: 'Sim' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Sim' }));
 
     expect(onChange).toHaveBeenCalledWith(true);
     expect(screen.getByRole('radio', { name: 'Não' }).props.accessibilityState).toMatchObject({

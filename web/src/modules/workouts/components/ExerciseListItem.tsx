@@ -1,5 +1,6 @@
 "use client";
 
+import { SetPlanSummaryLine } from "@/shared/components/ui/SetPlanSummaryLine";
 import type { SelectedExercise } from "./ExerciseConfigModal";
 
 interface ExerciseListItemProps {
@@ -11,7 +12,7 @@ interface ExerciseListItemProps {
 
 export function ExerciseListItem({ exercise, index, onEdit, onRemove }: ExerciseListItemProps) {
   return (
-    <div className="bg-overlay-05 border border-overlay-10 rounded-lg p-4">
+    <div className="glass rounded-lg p-4">
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
         <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
@@ -52,27 +53,7 @@ export function ExerciseListItem({ exercise, index, onEdit, onRemove }: Exercise
         </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-2">
-        <div className="bg-background/50 rounded-lg p-2">
-          <p className="text-xs text-muted-foreground mb-0.5">Séries</p>
-          <p className="text-sm font-bold text-foreground">{exercise.sets}</p>
-        </div>
-        <div className="bg-background/50 rounded-lg p-2">
-          <p className="text-xs text-muted-foreground mb-0.5">Reps</p>
-          <p className="text-sm font-bold text-foreground">{exercise.reps}</p>
-        </div>
-        <div className="bg-background/50 rounded-lg p-2">
-          <p className="text-xs text-muted-foreground mb-0.5">Descanso</p>
-          <p className="text-sm font-bold text-foreground">{exercise.rest_seconds}s</p>
-        </div>
-        {exercise.weight && (
-          <div className="bg-background/50 rounded-lg p-2">
-            <p className="text-xs text-muted-foreground mb-0.5">Carga</p>
-            <p className="text-sm font-bold text-foreground">{exercise.weight}kg</p>
-          </div>
-        )}
-      </div>
+      <SetPlanSummaryLine plan={exercise.set_plan} />
     </div>
   );
 }

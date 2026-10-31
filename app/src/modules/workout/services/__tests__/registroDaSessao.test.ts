@@ -1,20 +1,13 @@
-import { POLICY_VERSION, type Workout, type WorkoutExercise } from '@elevapro/shared';
+import { POLICY_VERSION } from '@elevapro/shared';
 import { cardioModality } from '../../cardioModalities';
 import { initialCardioSession } from '../../store/cardioSessionMachine';
 import type { CardioReading } from '../cardioMetrics';
-import {
-  buildCardioSession,
-  gravarSessaoDeForca,
-  montarSessaoDeForca,
-  saveCardioSession,
-} from '../registroDaSessao';
+import { buildCardioSession, gravarSessaoDeForca, saveCardioSession } from '../registroDaSessao';
 
 // Mock global de jest.setup.ts: o serviço do `shared` recebe este cliente.
 const { mockSupabase } = global as unknown as {
   mockSupabase: jest.Mock & { from: jest.Mock };
 };
-
-const DO_ALUNO = { mascarado: false };
 
 const ZONES = { zone1: 5, zone2: 15, zone3: 40, zone4: 30, zone5: 10 };
 
@@ -80,6 +73,7 @@ describe('gravarSessaoDeForca', () => {
       {
         workoutExerciseId: 'we-1',
         exerciseId: 'ex-remada',
+        effort: 'hard' as const,
         sets: [
           { reps_actual: 10, weight_actual: 40, completed: true },
           { reps_actual: 8, weight_actual: 42.5, completed: true },
@@ -91,7 +85,7 @@ describe('gravarSessaoDeForca', () => {
   it('grava a PSE pelo nome da coluna', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await gravarSessaoDeForca(sessao, DO_ALUNO);
+    await gravarSessaoDeForca(sessao);
 
     expect(gravadoEm('workout_sessions')).toMatchObject({
       perceived_exertion: 7,
@@ -104,7 +98,7 @@ describe('gravarSessaoDeForca', () => {
   it('grava uma linha por série executada, com carga e repetição', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await gravarSessaoDeForca(sessao, DO_ALUNO);
+    await gravarSessaoDeForca(sessao);
 
     const series = gravadoEm('workout_session_sets') as Record<string, unknown>[];
     expect(series).toHaveLength(2);
@@ -117,26 +111,17 @@ describe('gravarSessaoDeForca', () => {
   it('grava o exercício do catálogo junto do da prescrição', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await gravarSessaoDeForca(sessao, DO_ALUNO);
+    await gravarSessaoDeForca(sessao);
 
     expect(gravadoEm('workout_session_exercises')).toEqual([
       expect.objectContaining({ workout_exercise_id: 'we-1', exercise_id: 'ex-remada' }),
     ]);
   });
 
-  it('não grava nada quando o especialista está na visão do aluno', async () => {
-    supabaseQueRegistra({ consentiu: true });
-
-    const id = await gravarSessaoDeForca(sessao, { mascarado: true });
-
-    expect(id).toBeNull();
-    expect(mockSupabase.from).not.toHaveBeenCalled();
-  });
-
   it('descarta as observações sem consentimento e grava o resto', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: false });
 
-    await gravarSessaoDeForca({ ...sessao, notes: 'senti o ombro' }, DO_ALUNO);
+    await gravarSessaoDeForca({ ...sessao, notes: 'senti o ombro' });
 
     expect(gravadoEm('workout_sessions')).toMatchObject({ notes: null, perceived_exertion: 7 });
   });
@@ -148,7 +133,7 @@ describe('gravarSessaoDeForca', () => {
       single: jest.fn().mockResolvedValue({ data: null, error: new Error('Database error') }),
     }));
 
-    await expect(gravarSessaoDeForca(sessao, DO_ALUNO)).rejects.toThrow();
+    await expect(gravarSessaoDeForca(sessao)).rejects.toThrow();
   });
 });
 
@@ -167,7 +152,7 @@ describe('saveCardioSession', () => {
   it('grava cardio sem tocar em `workouts` e sem prescrição', async () => {
     const { tabelas, gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await saveCardioSession(corrida, DO_ALUNO);
+    await saveCardioSession(corrida);
 
     expect(tabelas).not.toContain('workouts');
     expect(gravadoEm('workout_sessions')).toMatchObject({
@@ -183,7 +168,7 @@ describe('saveCardioSession', () => {
   it('guarda em `notes` só o que o aluno digitou, nunca o resumo gerado', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await saveCardioSession({ ...corrida, notes: 'senti dor no joelho' }, DO_ALUNO);
+    await saveCardioSession({ ...corrida, notes: 'senti dor no joelho' });
 
     expect(gravadoEm('workout_sessions')).toMatchObject({
       notes: 'senti dor no joelho',
@@ -194,10 +179,12 @@ describe('saveCardioSession', () => {
   it('grava distância, ritmo e cadência da corrida na própria sessão', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await saveCardioSession(
-      { ...corrida, distanceMeters: 9620, avgPaceSecondsPerKm: 374, avgCadenceSpm: 179 },
-      DO_ALUNO
-    );
+    await saveCardioSession({
+      ...corrida,
+      distanceMeters: 9620,
+      avgPaceSecondsPerKm: 374,
+      avgCadenceSpm: 179,
+    });
 
     expect(gravadoEm('workout_sessions')).toMatchObject({
       distance_meters: 9620,
@@ -210,7 +197,7 @@ describe('saveCardioSession', () => {
   it('grava a corrida sem as medidas quando não houve leitura de GPS', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await saveCardioSession(corrida, DO_ALUNO);
+    await saveCardioSession(corrida);
 
     expect(gravadoEm('workout_sessions')).toMatchObject({
       distance_meters: null,
@@ -224,7 +211,7 @@ describe('saveCardioSession', () => {
   it('grava a frequência cardíaca em tabela própria, não na sessão', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: true });
 
-    await saveCardioSession({ ...corrida, avgHeartRate: 164, heartRateZones: ZONES }, DO_ALUNO);
+    await saveCardioSession({ ...corrida, avgHeartRate: 164, heartRateZones: ZONES });
 
     expect(gravadoEm('workout_session_vitals')).toEqual({
       session_id: 'sessao-1',
@@ -248,9 +235,7 @@ describe('saveCardioSession', () => {
         : registrar(tabela)
     );
 
-    await expect(
-      saveCardioSession({ ...corrida, avgHeartRate: 164 }, DO_ALUNO)
-    ).resolves.toBeUndefined();
+    await expect(saveCardioSession({ ...corrida, avgHeartRate: 164 })).resolves.toBeUndefined();
     expect(tabelas).toContain('workout_sessions');
   });
 
@@ -260,7 +245,7 @@ describe('saveCardioSession', () => {
   it('sem consentimento vigente, nem a média nem as zonas são gravadas', async () => {
     const { tabelas, gravadoEm } = supabaseQueRegistra({ consentiu: false });
 
-    await saveCardioSession({ ...corrida, avgHeartRate: 164, heartRateZones: ZONES }, DO_ALUNO);
+    await saveCardioSession({ ...corrida, avgHeartRate: 164, heartRateZones: ZONES });
 
     if (tabelas.includes('workout_session_vitals')) {
       throw new Error(
@@ -273,7 +258,7 @@ describe('saveCardioSession', () => {
   it('não grava linha de batimento quando o relógio não mediu', async () => {
     const { tabelas } = supabaseQueRegistra({ consentiu: true });
 
-    await saveCardioSession({ ...corrida, avgHeartRate: null }, DO_ALUNO);
+    await saveCardioSession({ ...corrida, avgHeartRate: null });
 
     expect(tabelas).not.toContain('workout_session_vitals');
   });
@@ -283,7 +268,7 @@ describe('saveCardioSession', () => {
   it('descarta as observações quando não há consentimento vigente', async () => {
     const { gravadoEm } = supabaseQueRegistra({ consentiu: false });
 
-    await saveCardioSession({ ...corrida, notes: 'voltei da cirurgia' }, DO_ALUNO);
+    await saveCardioSession({ ...corrida, notes: 'voltei da cirurgia' });
 
     expect(gravadoEm('workout_sessions')).toMatchObject({
       notes: null,
@@ -371,105 +356,5 @@ describe('buildCardioSession', () => {
     expect(() =>
       buildCardioSession(cardioModality('run'), initialCardioSession(), reading, feedback, null)
     ).toThrow('startedAt');
-  });
-});
-
-describe('montarSessaoDeForca', () => {
-  const INICIO = Date.UTC(2026, 8, 13, 10, 0, 0);
-  const FIM = Date.UTC(2026, 8, 13, 11, 0, 0);
-  const FEEDBACK = { alunoId: 's1', pse: 8, notas: 'pesado' };
-
-  function prescricao(id: string, campos: Partial<WorkoutExercise> = {}): WorkoutExercise {
-    return {
-      id,
-      workout_id: 'w1',
-      exercise_id: `ex-${id}`,
-      sets: 3,
-      reps: '10-12',
-      weight: '40 kg',
-      rest_seconds: 90,
-      order_index: 0,
-      notes: null,
-      created_at: '2026-09-01T00:00:00Z',
-      ...campos,
-    };
-  }
-
-  const treino: Workout = {
-    id: 'w1',
-    specialist_id: 'p1',
-    student_id: 's1',
-    training_plan_id: 'tp1',
-    title: 'Treino A',
-    description: null,
-    muscle_group: 'Costas',
-    difficulty: null,
-    day_of_week: null,
-    created_at: '2026-09-01T00:00:00Z',
-    updated_at: '2026-09-01T00:00:00Z',
-    exercises: [prescricao('remada'), prescricao('puxada')],
-  };
-
-  // O aluno subiu a carga da remada para 45 no meio do treino: o executado
-  // muda, o prescrito continua o que o especialista escreveu.
-  it('grava o prescrito do treino ao lado do executado com os ajustes', () => {
-    const ajustada = prescricao('remada', { weight: '45' });
-    const gravar = montarSessaoDeForca(
-      treino,
-      {
-        itens: [ajustada, prescricao('puxada')],
-        feitas: { remada: [{ reps: 10, carga: 45 }] },
-        iniciadaEm: INICIO,
-        concluidaEm: FIM,
-      },
-      FEEDBACK,
-      FIM
-    );
-
-    expect(gravar.items).toEqual([
-      {
-        workoutExerciseId: 'remada',
-        exerciseId: 'ex-remada',
-        sets: [
-          {
-            reps_prescribed: '10-12',
-            reps_actual: 10,
-            weight_prescribed: 40,
-            weight_actual: 45,
-            rest_prescribed: 90,
-            completed: true,
-          },
-        ],
-      },
-    ]);
-  });
-
-  it('leva os instantes da sessão e o feedback', () => {
-    const gravar = montarSessaoDeForca(
-      treino,
-      { itens: treino.exercises ?? [], feitas: {}, iniciadaEm: INICIO, concluidaEm: FIM },
-      FEEDBACK,
-      FIM + 5000
-    );
-
-    expect(gravar).toMatchObject({
-      workoutId: 'w1',
-      studentId: 's1',
-      startedAt: '2026-09-13T10:00:00.000Z',
-      completedAt: '2026-09-13T11:00:00.000Z',
-      perceivedExertion: 8,
-      notes: 'pesado',
-      items: [],
-    });
-  });
-
-  it('usa o instante da gravação quando a sessão não tem conclusão', () => {
-    const gravar = montarSessaoDeForca(
-      treino,
-      { itens: [], feitas: {}, iniciadaEm: INICIO, concluidaEm: null },
-      FEEDBACK,
-      FIM
-    );
-    expect(gravar.completedAt).toBe('2026-09-13T11:00:00.000Z');
   });
 });

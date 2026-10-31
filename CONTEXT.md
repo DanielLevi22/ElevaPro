@@ -135,6 +135,21 @@ _Avoid_: ficha, rotina
 **WorkoutItem**:
 Um exercício dentro de um Workout, com séries, repetições e carga prescritas.
 
+**SetPrescription**:
+Uma série prescrita de um WorkoutItem: técnicas, repetições, peso, descanso, RIR alvo e
+SetSegments. O conjunto delas é o plano de séries do item (#431).
+_Avoid_: série de trabalho (é só um dos tipos)
+
+**SetSegment**:
+Trecho de uma SetPrescription, com reps, peso e pausa antes. É com ele que se monta
+rest-pause, drop-set e cluster. A tela diz "bloco de repetição".
+_Avoid_: bloco (é sinônimo evitado de Phase)
+
+**TrainingMethod**:
+Técnica de treino do catálogo fixo marcada numa SetPrescription: aquecimento,
+rest-pause, drop-set, bi-set... A tela diz "Técnicas".
+_Avoid_: técnica sozinha (já nomeia a análise de técnica por câmera)
+
 **Exercise**:
 Item do banco de exercícios, com nome, grupo muscular e instrução de execução.
 
@@ -166,7 +181,8 @@ _Avoid_ (na UI): XP, score, pontuação
 **Assessment**:
 Avaliação física de um aluno numa data: peso, medidas e composição corporal.
 Tem duas origens, e uma série nunca mistura as duas (ADR-0030):
-- **do especialista** — medida com fita; imutável, o remédio para erro é medir de novo.
+- **do especialista** — medida com fita; erro de registro se retifica preservando a
+  versão anterior, sem trocar a data nem criar nova medição (ADR-0045).
 - **declarada** — digitada pelo próprio Praticante, que corrige e apaga. Só quem não
   tem especialista ativo declara: com especialista, quem mede é ele.
 _Avoid_: medição

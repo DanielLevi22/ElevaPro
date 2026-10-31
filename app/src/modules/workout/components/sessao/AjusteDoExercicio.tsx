@@ -1,31 +1,26 @@
-import { createWorkoutsService, type WorkoutExercise } from '@elevapro/shared';
+import {
+  applyQuickAdjust,
+  createWorkoutsService,
+  quickAdjustOf,
+  type WorkoutExercise,
+} from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { useEffect, useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, Text, TextInput, View } from 'react-native';
 import { showAlert } from '@/components/ui/appAlert';
 import { BotaoDeDestaque } from '@/components/ui/BotaoDeDestaque';
-import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
-import { useCores, useEscala } from '@/shared/design';
+import { BottomSheet } from '@/components/ui/BottomSheet';
+import { useCores } from '@/shared/design';
 
 const servicoDeTreinos = createWorkoutsService(supabase);
-
-const MARGEM_DO_FUNDO = 16;
 
 /**
  * O lápis do cartão em execução: séries, repetições, carga e descanso desta
  * sessão — e o vídeo do exercício, para quem pode editar o catálogo.
  *
  * Os quatro números mudam só a sessão: o que o aluno fez hoje não reescreve a
- * prescrição do especialista. O vídeo é o contrário — é do catálogo e vale para
+ * prescrição do especialista. Eles abrem com a série de trabalho e valem nas
+ * séries que contam volume — o aquecimento e os blocos ficam como estão (#431). O vídeo é o contrário — é do catálogo e vale para
  * todo mundo, por isso só aparece com a permissão `update Exercise` e é gravado
  * na hora.
  *
@@ -48,11 +43,12 @@ interface Campos {
 }
 
 function camposDo(item: WorkoutExercise): Campos {
+  const atual = quickAdjustOf(item.set_plan);
   return {
-    series: String(item.sets ?? ''),
-    reps: item.reps ?? '',
-    carga: item.weight ?? '',
-    descanso: String(item.rest_seconds ?? ''),
+    series: String(atual.sets),
+    reps: atual.reps,
+    carga: atual.weight,
+    descanso: atual.rest_seconds === null ? '' : String(atual.rest_seconds),
     video: item.exercise?.video_url ?? '',
   };
 }
@@ -75,8 +71,6 @@ export function AjusteDoExercicio({
   onFechar,
   onSalvar,
 }: AjusteDoExercicioProps) {
-  const insets = useSafeAreaInsets();
-  const escalar = useEscala();
   const [campos, setCampos] = useState<Campos | null>(null);
   const [salvando, setSalvando] = useState(false);
 
@@ -100,63 +94,45 @@ export function AjusteDoExercicio({
   };
 
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={onFechar}>
-      <KeyboardAvoidingView
-        className="flex-1 justify-end bg-black/60"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View
-          className="rounded-t-3xl border-t border-glass-border bg-background px-4 pt-4"
-          style={{ paddingBottom: insets.bottom + escalar(MARGEM_DO_FUNDO) }}
-        >
-          <View className="mb-4 flex-row items-center justify-between">
-            <Text numberOfLines={1} className="flex-1 text-h2 font-bold text-foreground">
-              {item.exercise?.name ?? 'Exercício'}
-            </Text>
-            <BotaoRedondo icone="x" rotulo="Fechar sem ajustar" onPress={onFechar} />
-          </View>
-          <View className="flex-row gap-2.5">
-            <Campo rotulo="Séries" valor={campos.series} onMudar={mudar('series')} numerico />
-            <Campo rotulo="Repetições" valor={campos.reps} onMudar={mudar('reps')} />
-          </View>
-          <View className="mt-2.5 flex-row gap-2.5">
-            <Campo rotulo="Carga (kg)" valor={campos.carga} onMudar={mudar('carga')} numerico />
-            <Campo
-              rotulo="Descanso (s)"
-              valor={campos.descanso}
-              onMudar={mudar('descanso')}
-              numerico
-            />
-          </View>
-          {podeEditarVideo ? (
-            <View className="mt-2.5 flex-row">
-              <Campo
-                rotulo="Vídeo do exercício (URL)"
-                valor={campos.video}
-                onMudar={mudar('video')}
-              />
-            </View>
-          ) : null}
-          <View className="mt-5">
-            <BotaoDeDestaque
-              rotulo={salvando ? 'Salvando…' : 'Ajustar'}
-              icone="checkmark"
-              onPress={salvar}
-            />
-          </View>
+    <BottomSheet
+      visible
+      onClose={onFechar}
+      title={item.exercise?.name ?? 'Exercício'}
+      closeLabel="Fechar sem ajustar"
+    >
+      <View className="flex-row gap-2.5">
+        <Campo rotulo="Séries" valor={campos.series} onMudar={mudar('series')} numerico />
+        <Campo rotulo="Repetições" valor={campos.reps} onMudar={mudar('reps')} />
+      </View>
+      <View className="mt-2.5 flex-row gap-2.5">
+        <Campo rotulo="Carga (kg)" valor={campos.carga} onMudar={mudar('carga')} numerico />
+        <Campo rotulo="Descanso (s)" valor={campos.descanso} onMudar={mudar('descanso')} numerico />
+      </View>
+      {podeEditarVideo ? (
+        <View className="mt-2.5 flex-row">
+          <Campo rotulo="Vídeo do exercício (URL)" valor={campos.video} onMudar={mudar('video')} />
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      ) : null}
+      <View className="mt-5">
+        <BotaoDeDestaque
+          rotulo={salvando ? 'Salvando…' : 'Ajustar'}
+          icone="checkmark"
+          onPress={salvar}
+        />
+      </View>
+    </BottomSheet>
   );
 }
 
 function ajustado(item: WorkoutExercise, campos: Campos): WorkoutExercise {
   return {
     ...item,
-    sets: Number.parseInt(campos.series, 10),
-    reps: campos.reps.trim(),
-    weight: campos.carga.trim() || null,
-    rest_seconds: Number.parseInt(campos.descanso || '0', 10),
+    set_plan: applyQuickAdjust(item.set_plan, {
+      sets: Number.parseInt(campos.series, 10),
+      reps: campos.reps.trim(),
+      weight: campos.carga.trim(),
+      rest_seconds: Number.parseInt(campos.descanso || '0', 10),
+    }),
     exercise: item.exercise
       ? { ...item.exercise, video_url: campos.video.trim() || null }
       : undefined,

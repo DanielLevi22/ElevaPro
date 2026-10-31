@@ -26,7 +26,7 @@ const MuscleMapViewer = dynamic(
 
 function CanvasSkeleton() {
   return (
-    <div className="bg-surface border border-white/10 rounded-xl h-150 flex items-center justify-center">
+    <div className="glass rounded-xl h-150 flex items-center justify-center">
       <div className="flex flex-col items-center gap-3 text-muted-foreground">
         <div className="w-12 h-12 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
         <span className="text-sm">Carregando modelo 3D…</span>
@@ -259,6 +259,30 @@ export default function MuscleMapPage() {
   // as 26 malhas a cada mudança de estado — inclusive ao abrir o acordeão.
   const porMalha = useMemo(() => volumePorMalha(volumeByMuscle), [volumeByMuscle]);
 
+  const resumoNumerico = [
+    { rotulo: "Grupos treinados", valor: isLoading ? "—" : String(volumeByMuscle.length) },
+    {
+      rotulo: "Volume total",
+      valor: isLoading ? "—" : `${(metrics?.totalVolume ?? 0).toLocaleString("pt-BR")} kg·rep`,
+    },
+    { rotulo: "Músculo + treinado", valor: isLoading ? "—" : (metrics?.topMuscle ?? "—") },
+  ].map((n) => (
+    <div key={n.rotulo} className="min-w-0">
+      <p className="mb-1 font-bold text-[10px] text-muted-foreground uppercase tracking-widest">
+        {n.rotulo}
+      </p>
+      <p className="truncate font-bold text-foreground text-lg">{n.valor}</p>
+    </div>
+  ));
+
+  const painelMuscular = (
+    <MuscleGroupPanel
+      onSelect={setSelectedMuscle}
+      selectedMuscle={selectedMuscle}
+      volumeByMuscle={porMalha}
+    />
+  );
+
   const cena = (
     /*
      * A tela inteira é o ambiente, não um cartão dentro de uma página.
@@ -276,7 +300,7 @@ export default function MuscleMapPage() {
       className={
         telaCheia
           ? "fixed inset-0 z-50 overflow-hidden bg-background"
-          : "relative h-[calc(100vh-13rem)] overflow-hidden rounded-2xl border border-border bg-background"
+          : "relative h-[65vh] md:h-[calc(100vh-13rem)] overflow-hidden rounded-2xl border border-border bg-background"
       }
     >
       {/* Brilho ambiente atrás do corpo. Dá um "lugar" ao vazio: sem ele o
@@ -298,7 +322,7 @@ export default function MuscleMapPage() {
       </div>
 
       {/* ── Cabeçalho flutuante ─────────────────────────────────────────── */}
-      <div className="pointer-events-none absolute top-0 right-0 left-0 flex items-start justify-between gap-4 p-6">
+      <div className="pointer-events-none absolute top-0 right-0 left-0 flex items-start justify-between gap-4 p-4 md:p-6">
         {/* Sem cabeçalho: o nome do aluno e o botão de voltar já estão nas abas
             logo acima, e repeti-los aqui só empurrava a cena para baixo. O
             espaçador mantém os controles à direita no `justify-between`. */}
@@ -352,36 +376,16 @@ export default function MuscleMapPage() {
       </div>
 
       {/* ── Números, embaixo à esquerda ─────────────────────────────────── */}
-      <div className="pointer-events-none absolute bottom-6 left-6 flex gap-6 rounded-2xl border border-border bg-surface/70 px-6 py-4 backdrop-blur-md">
-        {[
-          { rotulo: "Grupos treinados", valor: isLoading ? "—" : String(volumeByMuscle.length) },
-          {
-            rotulo: "Volume total",
-            valor: isLoading
-              ? "—"
-              : `${(metrics?.totalVolume ?? 0).toLocaleString("pt-BR")} kg·rep`,
-          },
-          { rotulo: "Músculo + treinado", valor: isLoading ? "—" : (metrics?.topMuscle ?? "—") },
-        ].map((n) => (
-          <div key={n.rotulo}>
-            <p className="mb-1 font-bold text-[10px] text-muted-foreground uppercase tracking-widest">
-              {n.rotulo}
-            </p>
-            <p className="font-bold text-foreground text-lg">{n.valor}</p>
-          </div>
-        ))}
+      <div className="pointer-events-none absolute bottom-6 left-6 hidden gap-6 rounded-2xl border border-border bg-surface/70 px-6 py-4 backdrop-blur-md md:flex">
+        {resumoNumerico}
       </div>
 
       {/* ── Lista muscular, à direita ───────────────────────────────────── */}
-      <div className="absolute top-24 right-6 bottom-6 w-[268px] overflow-y-auto">
-        <MuscleGroupPanel
-          onSelect={setSelectedMuscle}
-          selectedMuscle={selectedMuscle}
-          volumeByMuscle={porMalha}
-        />
+      <div className="absolute top-24 right-6 bottom-6 hidden w-[268px] overflow-y-auto md:block">
+        {painelMuscular}
       </div>
 
-      <p className="pointer-events-none absolute right-6 bottom-2 text-[10px] text-muted-foreground/60">
+      <p className="pointer-events-none absolute right-6 bottom-2 hidden text-[10px] text-muted-foreground/60 md:block">
         {telaCheia
           ? "arraste para girar · scroll para aproximar · Esc para sair"
           : "arraste para girar · scroll para aproximar"}
@@ -391,6 +395,17 @@ export default function MuscleMapPage() {
 
   // Em tela cheia a cena sai para o `body`; no modo normal ela fica no fluxo da
   // página, com a navegação do dashboard visível em volta.
-  if (!telaCheia) return cena;
+  // No celular números e lista flutuantes cobriam o corpo: lá eles vêm abaixo da cena.
+  if (!telaCheia) {
+    return (
+      <>
+        {cena}
+        <div className="mt-4 space-y-4 md:hidden">
+          <div className="glass grid grid-cols-3 gap-4 rounded-2xl px-4 py-3">{resumoNumerico}</div>
+          {painelMuscular}
+        </div>
+      </>
+    );
+  }
   return montado ? createPortal(cena, document.body) : null;
 }

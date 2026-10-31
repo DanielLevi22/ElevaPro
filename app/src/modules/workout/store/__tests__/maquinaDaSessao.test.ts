@@ -1,4 +1,8 @@
-import type { WorkoutExercise } from '@elevapro/shared';
+import {
+  applyQuickAdjust,
+  simplePrescriptionToSetPlan,
+  type WorkoutExercise,
+} from '@elevapro/shared';
 import {
   type AcaoDaSessao,
   type EstadoDaSessao,
@@ -21,10 +25,12 @@ function item(id: string, series: number, descanso = 90): WorkoutExercise {
     id,
     workout_id: 'w1',
     exercise_id: `ex-${id}`,
-    sets: series,
-    reps: '10',
-    weight: '40',
-    rest_seconds: descanso,
+    set_plan: simplePrescriptionToSetPlan({
+      sets: series,
+      reps: '10',
+      weight: '40',
+      rest_seconds: descanso,
+    }).plan,
     order_index: 0,
     notes: null,
     created_at: '2026-09-01T00:00:00Z',
@@ -242,7 +248,17 @@ describe('máquina da sessão de treino', () => {
   });
 
   it('usa os valores ajustados na série seguinte', () => {
-    const ajustado = { ...item('puxada', 2), weight: '47.5', reps: '8' };
+    // O lápis devolve o plano ajustado (applyQuickAdjust), como o AjusteDoExercicio.
+    const puxada = item('puxada', 2);
+    const ajustado = {
+      ...puxada,
+      set_plan: applyQuickAdjust(puxada.set_plan, {
+        sets: 2,
+        reps: '8',
+        weight: '47.5',
+        rest_seconds: 90,
+      }),
+    };
     const estado = aplicar(
       emExecucao,
       { tipo: 'ajustarExercicio', item: ajustado },
@@ -299,5 +315,97 @@ describe('máquina da sessão de treino', () => {
   it('conta o tempo do treino desde o início, e zero antes dele', () => {
     expect(tempoDaSessao(inicial, segundos(10))).toBe(0);
     expect(tempoDaSessao(emExecucao, segundos(90))).toBe(90);
+  });
+});
+
+describe('o esforço do exercício e a carga sugerida (#376)', () => {
+  const inicial = estadoInicial([item('puxada', 1), item('remada', 1)]);
+
+  it('ao fechar a última série de um exercício, ele espera a pergunta do esforço', () => {
+    const depois = aplicar(inicial, { tipo: 'iniciar', agora: T0 }, ...fazerSerie(1, 30));
+    expect(depois.pendingEffortId).toBe('puxada');
+  });
+
+  it('responder grava o esforço e fecha a pergunta; pular fecha sem gravar', () => {
+    const feita = aplicar(inicial, { tipo: 'iniciar', agora: T0 }, ...fazerSerie(1, 30));
+    const respondida = transicionar(feita, {
+      tipo: 'rateEffort',
+      itemId: 'puxada',
+      effort: 'easy',
+    });
+    expect(respondida.efforts).toEqual({ puxada: 'easy' });
+    expect(respondida.pendingEffortId).toBeNull();
+
+    const pulada = transicionar(feita, { tipo: 'rateEffort', itemId: 'puxada', effort: null });
+    expect(pulada.efforts).toEqual({});
+    expect(pulada.pendingEffortId).toBeNull();
+  });
+
+  it('não responde por um exercício que não está esperando a pergunta', () => {
+    const feita = aplicar(inicial, { tipo: 'iniciar', agora: T0 }, ...fazerSerie(1, 30));
+    expect(transicionar(feita, { tipo: 'rateEffort', itemId: 'remada', effort: 'hard' })).toBe(
+      feita
+    );
+  });
+
+  it('a carga sugerida entra antes de começar, e é ela que a série grava', () => {
+    const sugerida = transicionar(inicial, {
+      tipo: 'applySuggestedLoads',
+      weights: { puxada: '42,5' },
+    });
+    const feita = aplicar(sugerida, { tipo: 'iniciar', agora: T0 }, ...fazerSerie(1, 30));
+    expect(feita.feitas.puxada).toEqual([{ reps: 10, carga: 42.5 }]);
+  });
+
+  it('com o treino correndo, a carga sugerida não muda mais nada', () => {
+    const correndo = aplicar(inicial, { tipo: 'iniciar', agora: T0 });
+    expect(transicionar(correndo, { tipo: 'applySuggestedLoads', weights: { puxada: '99' } })).toBe(
+      correndo
+    );
+  });
+
+  it('na semana de descarga cada exercício perde metade das séries, antes de começar', () => {
+    const descarga = transicionar(inicial, { tipo: 'applyDeload' });
+    // `inicial` tem 2 e 1 séries: metade, arredondada para cima e nunca zero.
+    expect(descarga.itens.map((item) => item.set_plan.length)).toEqual([1, 1]);
+    const correndo = aplicar(inicial, { tipo: 'iniciar', agora: T0 });
+    expect(transicionar(correndo, { tipo: 'applyDeload' })).toBe(correndo);
+  });
+});
+
+describe('concluir todas as séries do exercício (#441)', () => {
+  const inicial = estadoInicial([item('puxada', 3), item('remada', 2)]);
+  const emExecucao = aplicar(inicial, { tipo: 'iniciar', agora: T0 });
+
+  it('registra as séries que faltam como prescritas e volta à lista no próximo exercício, sem descanso', () => {
+    const umaFeita = aplicar(emExecucao, ...fazerSerie(10, 40), { tipo: 'terminarDescanso' });
+
+    const estado = aplicar(umaFeita, { tipo: 'concluirTodas', agora: segundos(60) });
+
+    expect(estado.feitas.puxada).toHaveLength(3);
+    expect(estado.feitas.puxada?.[2]).toMatchObject({ reps: 10, carga: 40 });
+    expect(estado.atualId).toBe('remada');
+    expect(estado.pendingEffortId).toBe('puxada');
+    // Quem conclui tudo de uma vez já fez o exercício: o descanso dele já passou.
+    expect(estado.momento).toBe('execucao');
+    expect(estado.descanso).toBeNull();
+  });
+
+  it('no último exercício, leva ao feedback', () => {
+    const naRemada = aplicar(emExecucao, { tipo: 'escolher', itemId: 'remada' });
+    const semPuxada = aplicar(naRemada, { tipo: 'concluirTodas', agora: segundos(10) });
+
+    const estado = aplicar(semPuxada, { tipo: 'concluirTodas', agora: segundos(20) });
+
+    expect(estado.momento).toBe('feedback');
+    expect(estado.concluidaEm).toBe(segundos(20));
+  });
+
+  it('só vale na execução: no pré-início e no descanso não muda nada', () => {
+    expect(transicionar(inicial, { tipo: 'concluirTodas', agora: T0 })).toBe(inicial);
+    const descansando = aplicar(emExecucao, ...fazerSerie(10, 40));
+    expect(transicionar(descansando, { tipo: 'concluirTodas', agora: segundos(50) })).toBe(
+      descansando
+    );
   });
 });

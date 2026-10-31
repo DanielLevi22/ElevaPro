@@ -4,14 +4,14 @@ import { useChatConversation } from '../useChatConversation';
 const GREETING = 'Olá! Por onde começamos?';
 
 describe('useChatConversation', () => {
-  it('começa com a saudação', () => {
-    const { result } = renderHook(() => useChatConversation(GREETING));
+  it('começa com a saudação', async () => {
+    const { result } = await renderHook(() => useChatConversation(GREETING));
 
     expect(result.current.messages.map((m) => m.content)).toEqual([GREETING]);
   });
 
   it('mostra a pergunta e vai montando a resposta conforme o texto chega', async () => {
-    const { result } = renderHook(() => useChatConversation(GREETING));
+    const { result } = await renderHook(() => useChatConversation(GREETING));
 
     await act(() =>
       result.current.reply('Monta uma dieta', async ({ text }) => {
@@ -27,7 +27,7 @@ describe('useChatConversation', () => {
   });
 
   it('o erro do stream vira a resposta, com a mensagem', async () => {
-    const { result } = renderHook(() => useChatConversation(GREETING));
+    const { result } = await renderHook(() => useChatConversation(GREETING));
 
     await act(() => result.current.reply('Oi', async ({ error }) => error('sem crédito')));
 
@@ -35,7 +35,7 @@ describe('useChatConversation', () => {
   });
 
   it('falha de rede não deixa a resposta vazia', async () => {
-    const { result } = renderHook(() => useChatConversation(GREETING));
+    const { result } = await renderHook(() => useChatConversation(GREETING));
 
     await act(() =>
       result.current.reply('Oi', async () => {
@@ -49,7 +49,7 @@ describe('useChatConversation', () => {
   });
 
   it('pergunta vazia não vai', async () => {
-    const { result } = renderHook(() => useChatConversation(GREETING));
+    const { result } = await renderHook(() => useChatConversation(GREETING));
     const stream = jest.fn();
 
     await act(() => result.current.reply('   ', stream));
@@ -58,22 +58,22 @@ describe('useChatConversation', () => {
     expect(result.current.messages).toHaveLength(1);
   });
 
-  it('carregar a conversa salva troca a saudação; conversa vazia mantém', () => {
-    const { result } = renderHook(() => useChatConversation(GREETING));
+  it('carregar a conversa salva troca a saudação; conversa vazia mantém', async () => {
+    const { result } = await renderHook(() => useChatConversation(GREETING));
 
-    act(() => result.current.load([]));
+    await act(() => result.current.load([]));
     expect(result.current.messages[0].content).toBe(GREETING);
 
-    act(() =>
+    await act(() =>
       result.current.load([{ id: '1', role: 'user', content: 'antiga', createdAt: '2026-10-01' }])
     );
     expect(result.current.messages.map((m) => m.content)).toEqual(['antiga']);
   });
 
-  it('say acrescenta uma fala do assistente', () => {
-    const { result } = renderHook(() => useChatConversation(GREETING));
+  it('say acrescenta uma fala do assistente', async () => {
+    const { result } = await renderHook(() => useChatConversation(GREETING));
 
-    act(() => result.current.say('Plano salvo.'));
+    await act(() => result.current.say('Plano salvo.'));
 
     expect(result.current.messages.at(-1)).toMatchObject({
       role: 'assistant',

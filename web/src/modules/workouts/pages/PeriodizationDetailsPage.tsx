@@ -1,7 +1,12 @@
 "use client";
 
-import type { Periodization, TrainingPlan } from "@elevapro/shared";
-import { Plus } from "lucide-react";
+import {
+  knownPeriodizationObjective,
+  type Periodization,
+  periodizationObjectiveLabel,
+  type TrainingPlan,
+} from "@elevapro/shared";
+import { FileDown, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -14,15 +19,7 @@ import { Button } from "@/shared/components/ui/Button";
 import { formatDateRange } from "@/shared/utils/formatDate";
 import { CreatePeriodizationModal } from "../components/CreatePeriodizationModal";
 import { WelcomeBanner } from "../components/WelcomeBanner";
-
-const OBJECTIVE_LABELS: Record<string, string> = {
-  hypertrophy: "Hipertrofia",
-  strength: "Força",
-  endurance: "Resistência",
-  weight_loss: "Emagrecimento",
-  conditioning: "Condicionamento",
-  general_fitness: "Saúde Geral",
-};
+import { usePeriodizationPdf } from "../hooks/usePeriodizationPdf";
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   planned: { label: "Planejada", className: "bg-secondary/10 text-secondary" },
@@ -42,7 +39,7 @@ function PlanCard({ plan, periodizationId }: { plan: TrainingPlan; periodization
   return (
     <Link
       href={`/dashboard/workouts/periodizations/${periodizationId}/phases/${plan.id}`}
-      className="group bg-surface border border-overlay-10 rounded-xl p-4 hover:border-primary/40 transition-all flex items-center justify-between gap-4"
+      className="glass group rounded-xl p-4 hover:border-primary/40 transition-all flex items-center justify-between gap-4"
     >
       <div className="flex items-center gap-4 flex-1 min-w-0">
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
@@ -102,8 +99,9 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
   const [editingPeriodization, setEditingPeriodization] = useState(false);
 
   const periodizationId = periodization.id;
+  const { exportPdf, isExporting } = usePeriodizationPdf(periodizationId);
   const status = STATUS_CONFIG[periodization.status] ?? STATUS_CONFIG.planned;
-  const objective = OBJECTIVE_LABELS[periodization.objective ?? ""] ?? periodization.objective;
+  const objective = periodizationObjectiveLabel(periodization.objective);
 
   const handleAddPhase = () => {
     startTransition(async () => {
@@ -144,7 +142,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
       </div>
 
       {/* Header card */}
-      <div className="bg-surface border border-overlay-10 rounded-2xl p-6">
+      <div className="glass rounded-2xl p-6">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-1">
@@ -168,7 +166,16 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
           </div>
 
           {/* Status actions */}
-          <div className="flex gap-2 shrink-0">
+          <div className="flex flex-wrap gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={exportPdf}
+              disabled={isExporting || plans.length === 0}
+              className="flex items-center gap-2 whitespace-nowrap px-4 py-2 bg-overlay-05 border border-overlay-10 text-muted-foreground rounded-lg text-sm font-medium hover:bg-overlay-10 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <FileDown className="h-4 w-4" aria-hidden="true" />
+              {isExporting ? "Gerando…" : "Exportar plano completo"}
+            </button>
             <button
               type="button"
               onClick={() => setEditingPeriodization(true)}
@@ -211,7 +218,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
         </div>
 
         {plans.length === 0 ? (
-          <div className="bg-surface border border-overlay-10 rounded-2xl p-8 text-center">
+          <div className="glass rounded-2xl p-8 text-center">
             <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
               <svg
                 aria-hidden="true"
@@ -258,13 +265,7 @@ export default function PeriodizationDetailsPage({ periodization, plans }: Props
         periodizationId={periodizationId}
         initialData={{
           name: periodization.name,
-          objective: periodization.objective as
-            | "hypertrophy"
-            | "strength"
-            | "endurance"
-            | "weight_loss"
-            | "conditioning"
-            | "general_fitness",
+          objective: knownPeriodizationObjective(periodization.objective),
           student_id: periodization.student_id,
           start_date: periodization.start_date ?? "",
           end_date: periodization.end_date ?? "",

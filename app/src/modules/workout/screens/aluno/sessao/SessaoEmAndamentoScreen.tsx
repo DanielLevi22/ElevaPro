@@ -1,25 +1,27 @@
-import type { Workout } from '@elevapro/shared';
-import { useNavigation, useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef } from 'react';
+import { shortSession, type Workout } from '@elevapro/shared';
+import { useRouter } from 'expo-router';
+import { useCallback } from 'react';
 import { showConfirm } from '@/components/ui/appAlert';
+import { useConfirmLeave } from '@/navigation/useConfirmLeave';
 import { EstadoDaTela } from '../../../components/aluno/EstadoDaTela';
 import { useDetalheDoTreino } from '../../../hooks/useDetalheDoTreino';
 import { useRestOnLockScreen } from '../../../hooks/useRestOnLockScreen';
 import { useSessaoEmAndamento } from '../../../hooks/useSessaoEmAndamento';
 import { useVozDaSessao } from '../../../hooks/useVozDaSessao';
-import { type EstadoDaSessao, progressoDaSessao } from '../../../store/maquinaDaSessao';
+import type { EstadoDaSessao } from '../../../store/maquinaDaSessao';
 import { useTodayExercises } from '../../../store/todaySwapsStore';
+import { confirmarConclusao } from './confirmarConclusao';
 import { MomentoDaSessao } from './MomentoDaSessao';
 
 export interface SessaoEmAndamentoScreenProps {
   treinoId: string;
   alunoId: string;
-  /** O especialista está vendo o app como o aluno: a sessão não é gravada. */
-  mascarado: boolean;
   /** Quem pode editar o catálogo ajusta também o vídeo do exercício. */
   podeEditarVideo: boolean;
   /** Depois de gravar: a ofensiva e a meta do dia, que moram em outro módulo. */
   onTreinoRegistrado: () => void;
+  /** "Só tenho 20 min" (#376, F3): os três primeiros exercícios, e conta como treino. */
+  curta?: boolean;
 }
 
 /**
@@ -29,15 +31,20 @@ export interface SessaoEmAndamentoScreenProps {
  * (`maquinaDaSessao`) desenha a sua tela em `MomentoDaSessao`.
  *
  * @example
- * <SessaoEmAndamentoScreen treinoId={id} alunoId={user.id} mascarado={false} … />
+ * <SessaoEmAndamentoScreen treinoId={id} alunoId={user.id} … />
  */
 export function SessaoEmAndamentoScreen(props: SessaoEmAndamentoScreenProps) {
   const { treino, naoEncontrado } = useDetalheDoTreino(props.treinoId);
   if (!treino) {
     return <EstadoDaTela naoEncontrado={naoEncontrado} mensagem="Treino não encontrado." />;
   }
+  // A versão curta é o mesmo treino com menos exercícios: o pré-início, a
+  // sessão e o resumo contam só os três.
+  const daSessao = props.curta
+    ? { ...treino, exercises: shortSession(treino.exercises ?? []) }
+    : treino;
   // A chave recria a sessão se o treino mudar: os exercícios são o estado inicial.
-  return <SessaoDoTreino key={treino.id} treino={treino} {...props} />;
+  return <SessaoDoTreino key={treino.id} treino={daSessao} {...props} />;
 }
 
 /** A sessão montada, com o treino já carregado: liga a máquina, a voz e as saídas. */
@@ -49,11 +56,10 @@ function SessaoDoTreino({ treino, ...props }: SessaoEmAndamentoScreenProps & { t
   const sairSemPerguntar = useSaidaSemSalvar(sessao);
   const pedirParaFinalizar = useCallback(
     () =>
-      confirmarFinalizacao(
-        sessao,
-        () => despachar({ tipo: 'finalizar', agora: Date.now() }),
-        () => sairSemPerguntar(router.back)
-      ),
+      confirmarConclusao(sessao, {
+        finalizar: () => despachar({ tipo: 'finalizar', agora: Date.now() }),
+        sair: () => sairSemPerguntar(router.back),
+      }),
     [sessao, despachar, sairSemPerguntar, router]
   );
   const voz = useVozDaSessao(sessao, despachar, pedirParaFinalizar);
@@ -66,43 +72,11 @@ function SessaoDoTreino({ treino, ...props }: SessaoEmAndamentoScreenProps & { t
       agora={agora}
       despachar={despachar}
       voz={voz}
-      onFechar={pedirParaFinalizar}
+      onConcluir={pedirParaFinalizar}
       onSair={router.back}
       {...props}
     />
   );
-}
-
-/**
- * O X da execução encerra o treino, e não o abandona: o que foi feito vai para
- * o feedback e é gravado. Sem nenhuma série feita não há o que gravar, e aí o
- * X é só sair.
- */
-function confirmarFinalizacao(
-  sessao: EstadoDaSessao,
-  finalizar: () => void,
-  sair: () => void
-): void {
-  const { seriesFeitas, seriesTotais } = progressoDaSessao(sessao);
-  if (seriesFeitas === 0) {
-    showConfirm({
-      title: 'Sair do treino?',
-      message: 'Nenhuma série foi registrada ainda.',
-      type: 'warning',
-      confirmText: 'Sair',
-      cancelText: 'Continuar',
-      onConfirm: sair,
-    });
-    return;
-  }
-  showConfirm({
-    title: 'Encerrar o treino?',
-    message: `Você fez ${seriesFeitas} de ${seriesTotais} séries. O que foi feito será salvo.`,
-    type: 'warning',
-    confirmText: 'Finalizar',
-    cancelText: 'Continuar',
-    onConfirm: finalizar,
-  });
 }
 
 /**
@@ -111,35 +85,16 @@ function confirmarFinalizacao(
  * há nada feito, e depois já está gravado.
  */
 function useSaidaSemSalvar(sessao: EstadoDaSessao): (sair: () => void) => void {
-  const navigation = useNavigation();
-  const emAndamento = useRef(false);
-  const liberado = useRef(false);
-  emAndamento.current = sessao.momento !== 'preInicio' && sessao.momento !== 'resumo';
-
-  useEffect(
-    () =>
-      navigation.addListener('beforeRemove', (evento) => {
-        if (!emAndamento.current || liberado.current) return;
-        evento.preventDefault();
-        showConfirm({
-          title: 'Sair sem salvar?',
-          message: 'As séries desta sessão não serão gravadas.',
-          type: 'danger',
-          confirmText: 'Sair',
-          cancelText: 'Continuar treinando',
-          onConfirm: () => {
-            // Sem liberar antes, o despacho dispararia este mesmo listener de novo.
-            liberado.current = true;
-            navigation.dispatch(evento.data.action);
-          },
-        });
-      }),
-    [navigation]
+  const emAndamento = sessao.momento !== 'preInicio' && sessao.momento !== 'resumo';
+  // Quem já confirmou a saída pelo X segue pelo retorno, sem ser perguntado de novo.
+  return useConfirmLeave(emAndamento, (leave) =>
+    showConfirm({
+      title: 'Sair sem salvar?',
+      message: 'As séries desta sessão não serão gravadas.',
+      type: 'danger',
+      confirmText: 'Sair',
+      cancelText: 'Continuar treinando',
+      onConfirm: leave,
+    })
   );
-
-  // Quem já confirmou a saída pelo X não é perguntado de novo pelo listener.
-  return useCallback((sair: () => void) => {
-    liberado.current = true;
-    sair();
-  }, []);
 }

@@ -3,6 +3,7 @@ import { formatPse } from "@elevapro/shared";
 import {
   Apple,
   ArrowLeftRight,
+  ClipboardCheck,
   ClipboardList,
   Dumbbell,
   Footprints,
@@ -20,6 +21,7 @@ const ICONE: Record<ActivityKind, typeof Dumbbell> = {
   body_scan: HeartPulse,
   anamnesis: ClipboardList,
   exercise_swap: ArrowLeftRight,
+  weekly_check_in: ClipboardCheck,
 };
 
 /**
@@ -96,7 +98,7 @@ export function ActivityDayCard({ day }: { day: ActivityDay }) {
   const vazio = day.events.length === 0;
 
   return (
-    <section className="rounded-xl border border-border bg-surface p-4">
+    <section className="glass rounded-xl p-4">
       <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border pb-2.5">
         <h3 className="font-semibold text-foreground">
           {formatDate(day.date, "medium")}

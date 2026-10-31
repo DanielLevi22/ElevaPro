@@ -52,6 +52,13 @@ describe("summarizeTrainingLoad — carga total", () => {
     expect(summarizeTrainingLoad(sets, TODAY, 4).total).toBe(0);
   });
 
+  // #431: o aquecimento não infla o volume do aluno nos gráficos.
+  it("série fora do volume (aquecimento) não soma", () => {
+    const sets = [set("2026-09-15", { countsTowardVolume: false }), set("2026-09-15")];
+    const sozinha = summarizeTrainingLoad([set("2026-09-15")], TODAY, 4).total;
+    expect(summarizeTrainingLoad(sets, TODAY, 4).total).toBe(sozinha);
+  });
+
   it("sem carga no período anterior, o delta é nulo e não infinito", () => {
     expect(summarizeTrainingLoad([set("2026-09-15")], TODAY, 4).deltaPercent).toBeNull();
   });

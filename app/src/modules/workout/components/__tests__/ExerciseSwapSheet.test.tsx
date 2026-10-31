@@ -1,4 +1,5 @@
 import type { Exercise, WorkoutExercise } from '@elevapro/shared';
+import { simplePrescriptionToSetPlan } from '@elevapro/shared';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { useTodaySwapsStore } from '../../store/todaySwapsStore';
 import { ExerciseSwapSheet } from '../ExerciseSwapSheet';
@@ -40,19 +41,17 @@ const ITEM = {
   id: 'item-1',
   workout_id: 'treino-1',
   exercise_id: 'remada',
-  sets: 4,
-  reps: '8-10',
-  weight: '45',
-  rest_seconds: 90,
+  set_plan: simplePrescriptionToSetPlan({ sets: 4, reps: '8-10', weight: '45', rest_seconds: 90 })
+    .plan,
   order_index: 0,
   notes: null,
   created_at: '2026-09-01T00:00:00Z',
   exercise: REMADA,
 } as WorkoutExercise;
 
-function abrir(selfGuided: boolean) {
+async function abrir(selfGuided: boolean) {
   const onSwapped = jest.fn();
-  render(
+  await render(
     <ExerciseSwapSheet
       item={ITEM}
       workoutId="treino-1"
@@ -79,12 +78,12 @@ describe('a folha Trocar exercício', () => {
    * o que o banco vai negar, nem guarda preferência de quem tem especialista.
    */
   it('o Aluno com especialista só troca no treino de hoje', async () => {
-    abrir(false);
+    await abrir(false);
     expect(await screen.findByText('Remada com halteres')).toBeTruthy();
     if (screen.queryByText('Trocar sempre') || screen.queryByText('Recomendar menos')) {
       throw new Error('PRESCRIÇÃO EXPOSTA: o Aluno viu a troca de vez do plano do especialista');
     }
-    fireEvent.press(screen.getByLabelText('Trocar por Remada com halteres'));
+    await fireEvent.press(screen.getByLabelText('Trocar por Remada com halteres'));
     await waitFor(() => expect(useTodaySwapsStore.getState().swaps['treino-1']).toBeDefined());
     expect(mockSwapForever).not.toHaveBeenCalled();
     expect(mockAvoid).not.toHaveBeenCalled();
@@ -96,16 +95,16 @@ describe('a folha Trocar exercício', () => {
    * responsável saber: sem gravar, a troca não acontece.
    */
   it('a troca do Aluno fica registrada para o especialista, e sem registro não vale', async () => {
-    const onSwapped = abrir(false);
-    fireEvent.press(await screen.findByLabelText('Trocar por Remada com halteres'));
+    const onSwapped = await abrir(false);
+    await fireEvent.press(await screen.findByLabelText('Trocar por Remada com halteres'));
     await waitFor(() => expect(mockRecordSwap).toHaveBeenCalledWith('item-1', 'halteres', 'today'));
     await waitFor(() => expect(onSwapped).toHaveBeenCalled());
 
     mockRecordSwap.mockRejectedValueOnce(new Error('sem conexão'));
     useTodaySwapsStore.setState({ swaps: {} });
-    const semRegistro = abrir(false);
+    const semRegistro = await abrir(false);
     const botoes = await screen.findAllByLabelText('Trocar por Remada com halteres');
-    fireEvent.press(botoes[botoes.length - 1]);
+    await fireEvent.press(botoes[botoes.length - 1]);
     await waitFor(() => expect(mockRecordSwap).toHaveBeenCalledTimes(2));
     if (semRegistro.mock.calls.length > 0 || useTodaySwapsStore.getState().swaps['treino-1']) {
       throw new Error('TROCA ÀS ESCONDIDAS: o exercício mudou sem o especialista ficar sabendo');
@@ -113,25 +112,25 @@ describe('a folha Trocar exercício', () => {
   });
 
   it('"só hoje" do Praticante troca a sessão e não grava nada', async () => {
-    const onSwapped = abrir(true);
-    fireEvent.press(await screen.findByLabelText('Trocar por Remada com halteres'));
+    const onSwapped = await abrir(true);
+    await fireEvent.press(await screen.findByLabelText('Trocar por Remada com halteres'));
     await waitFor(() => expect(onSwapped).toHaveBeenCalledWith(ITEM, mockHalteres));
     expect(mockSwapForever).not.toHaveBeenCalled();
     expect(mockRecordSwap).not.toHaveBeenCalled();
   });
 
   it('"sempre" troca no plano do Praticante', async () => {
-    abrir(true);
-    fireEvent.press(screen.getByText('Trocar sempre'));
-    fireEvent.press(await screen.findByLabelText('Trocar por Remada com halteres'));
+    await abrir(true);
+    await fireEvent.press(screen.getByText('Trocar sempre'));
+    await fireEvent.press(await screen.findByLabelText('Trocar por Remada com halteres'));
     await waitFor(() => expect(mockSwapForever).toHaveBeenCalledWith('item-1', 'halteres'));
     expect(mockAvoid).not.toHaveBeenCalled();
   });
 
   it('"recomendar menos" troca no plano e guarda o exercício para a IA evitar', async () => {
-    abrir(true);
-    fireEvent.press(screen.getByText('Recomendar menos'));
-    fireEvent.press(await screen.findByLabelText('Trocar por Remada com halteres'));
+    await abrir(true);
+    await fireEvent.press(screen.getByText('Recomendar menos'));
+    await fireEvent.press(await screen.findByLabelText('Trocar por Remada com halteres'));
     await waitFor(() => expect(mockAvoid).toHaveBeenCalledWith('aluno-1', 'remada'));
     expect(mockSwapForever).toHaveBeenCalledWith('item-1', 'halteres');
   });

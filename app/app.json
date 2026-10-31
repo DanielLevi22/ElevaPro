@@ -10,7 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSHealthShareUsageDescription": "Lemos do seu relógio passos, calorias, duração do sono, frequência cardíaca de repouso e a frequência cardíaca das suas corridas, guardando só a média e o tempo em cada zona, para acompanhar sua atividade entre os treinos. Você escolhe o que compartilhar e pode desligar quando quiser.",
+        "NSHealthShareUsageDescription": "Lemos do seu relógio passos, calorias, duração do sono, frequência cardíaca de repouso e a frequência cardíaca das suas corridas, guardando só a média e o tempo em cada zona, para acompanhar sua atividade entre os treinos. No check-in da semana, se você pedir, lemos as pesagens da semana e guardamos só a média. Você escolhe o que compartilhar e pode desligar quando quiser.",
         "NSLocationWhenInUseUsageDescription": "Usamos o GPS durante a corrida para medir distância e ritmo. O caminho percorrido é desenhado na tela e descartado ao fim da sessão — ele não é salvo nem enviado para ninguém.",
         "NSMotionUsageDescription": "Usamos o contador de passos do aparelho durante a corrida para calcular sua cadência.",
         "LSApplicationQueriesSchemes": ["music", "spotify"],
@@ -38,6 +38,7 @@
         "android.permission.health.READ_SLEEP",
         "android.permission.health.READ_HEART_RATE",
         "android.permission.health.READ_RESTING_HEART_RATE",
+        "android.permission.health.READ_WEIGHT",
         "android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND",
         "RECORD_AUDIO",
         "INTERNET"
@@ -54,7 +55,25 @@
       [
         "@kingstinct/react-native-healthkit",
         {
-          "NSHealthShareUsageDescription": "Lemos do seu relógio passos, calorias, duração do sono, frequência cardíaca de repouso e a frequência cardíaca das suas corridas, guardando só a média e o tempo em cada zona, para acompanhar sua atividade entre os treinos. Você escolhe o que compartilhar e pode desligar quando quiser."
+          "NSHealthShareUsageDescription": "Lemos do seu relógio passos, calorias, duração do sono, frequência cardíaca de repouso e a frequência cardíaca das suas corridas, guardando só a média e o tempo em cada zona, para acompanhar sua atividade entre os treinos. No check-in da semana, se você pedir, lemos as pesagens da semana e guardamos só a média. Você escolhe o que compartilhar e pode desligar quando quiser."
+        }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "Today",
+              "label": "Eleva Pro · Hoje",
+              "description": "Treino, próxima refeição e água do dia",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            }
+          ]
         }
       ],
       "react-native-health-connect",
@@ -63,7 +82,8 @@
         "expo-build-properties",
         {
           "android": {
-            "minSdkVersion": 26
+            "minSdkVersion": 26,
+            "extraProguardRules": "# O R8 do release (ligado no SDK 58) apagava o banco do WorkManager, que vem pelo react-native-android-widget: o Room 2.5 acha a classe gerada por reflexão (#426).\n-keep class * extends androidx.room.RoomDatabase { <init>(); }\n-keep class androidx.work.impl.WorkDatabase_Impl { *; }\n\n# O MediaPipe (tasks-vision 0.10.35) não traz regra de keep no AAR. As mensagens dele são protobuf-lite, que lê os campos por reflexão pelo nome (`platform_`), e o nativo chama classes Java por JNI: com o R8, a análise falhava em 'Field platform_ for kz3 not found'.\n-keep class com.google.mediapipe.** { *; }\n# O Flogger, que vem com o MediaPipe, acha quem o chamou procurando o próprio nome na pilha: renomeado, o Graph quebrava ao iniciar com 'no caller found on the stack'.\n-keep class com.google.common.flogger.** { *; }\n-dontwarn com.google.common.flogger.**\n-keepclassmembers class * extends com.google.protobuf.GeneratedMessageLite { <fields>; }\n-dontwarn com.google.mediapipe.**"
           }
         }
       ],

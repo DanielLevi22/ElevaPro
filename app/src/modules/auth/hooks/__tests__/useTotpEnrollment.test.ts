@@ -20,9 +20,10 @@ describe('useTotpEnrollment', () => {
   it('prepara o desafio ao montar', async () => {
     mockBeginTotpChallenge.mockResolvedValue({ factorId: 'factor-1', uri: 'otpauth://totp/x' });
 
-    const { result } = renderHook(() => useTotpEnrollment());
+    const { result } = await renderHook(() => useTotpEnrollment());
 
-    expect(result.current.loading).toBe(true);
+    // O render assíncrono do RNTL 14 já assenta os efeitos: o `loading`
+    // passageiro não é mais observável aqui, só o desafio que chegou.
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current.challenge).toEqual({ factorId: 'factor-1', uri: 'otpauth://totp/x' });
@@ -32,7 +33,7 @@ describe('useTotpEnrollment', () => {
   it('expõe erro quando a preparação falha, sem travar o loading', async () => {
     mockBeginTotpChallenge.mockRejectedValue(new Error('falhou'));
 
-    const { result } = renderHook(() => useTotpEnrollment());
+    const { result } = await renderHook(() => useTotpEnrollment());
 
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.error).toMatch(/não foi possível preparar/i);
@@ -44,7 +45,7 @@ describe('useTotpEnrollment', () => {
       .mockRejectedValueOnce(new Error('falhou'))
       .mockResolvedValueOnce({ factorId: 'factor-1', uri: 'otpauth://totp/x' });
 
-    const { result } = renderHook(() => useTotpEnrollment());
+    const { result } = await renderHook(() => useTotpEnrollment());
     await waitFor(() => expect(result.current.error).not.toBe(''));
 
     await act(() => result.current.prepareChallenge());
@@ -57,10 +58,10 @@ describe('useTotpEnrollment', () => {
   it('recusa confirmar sem um código de 6 dígitos', async () => {
     mockBeginTotpChallenge.mockResolvedValue({ factorId: 'factor-1', uri: 'otpauth://totp/x' });
 
-    const { result } = renderHook(() => useTotpEnrollment());
+    const { result } = await renderHook(() => useTotpEnrollment());
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    act(() => result.current.setCode('123'));
+    await act(() => result.current.setCode('123'));
     await act(() => result.current.confirmCode());
 
     expect(result.current.error).toMatch(/código de 6 dígitos/i);
@@ -72,10 +73,10 @@ describe('useTotpEnrollment', () => {
     mockVerifyTotp.mockResolvedValue(undefined);
     const onVerified = jest.fn();
 
-    const { result } = renderHook(() => useTotpEnrollment({ onVerified }));
+    const { result } = await renderHook(() => useTotpEnrollment({ onVerified }));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    act(() => result.current.setCode('123456'));
+    await act(() => result.current.setCode('123456'));
     await act(() => result.current.confirmCode());
 
     expect(mockVerifyTotp).toHaveBeenCalledWith('factor-1', '123456');
@@ -88,10 +89,10 @@ describe('useTotpEnrollment', () => {
     mockVerifyTotp.mockRejectedValue(new Error('invalid'));
     const onVerified = jest.fn();
 
-    const { result } = renderHook(() => useTotpEnrollment({ onVerified }));
+    const { result } = await renderHook(() => useTotpEnrollment({ onVerified }));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    act(() => result.current.setCode('123456'));
+    await act(() => result.current.setCode('123456'));
     await act(() => result.current.confirmCode());
 
     expect(result.current.error).toMatch(/código inválido ou expirado/i);
@@ -101,21 +102,21 @@ describe('useTotpEnrollment', () => {
   it('só aceita dígitos no código', async () => {
     mockBeginTotpChallenge.mockResolvedValue({ factorId: 'factor-1', uri: 'otpauth://totp/x' });
 
-    const { result } = renderHook(() => useTotpEnrollment());
+    const { result } = await renderHook(() => useTotpEnrollment());
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    act(() => result.current.setCode('12a3b4'));
+    await act(() => result.current.setCode('12a3b4'));
     expect(result.current.code).toBe('1234');
   });
 
   it('alterna a visibilidade da chave manual', async () => {
     mockBeginTotpChallenge.mockResolvedValue({ factorId: 'factor-1', secret: 'ABCD' });
 
-    const { result } = renderHook(() => useTotpEnrollment());
+    const { result } = await renderHook(() => useTotpEnrollment());
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current.showManualKey).toBe(false);
-    act(() => result.current.toggleManualKey());
+    await act(() => result.current.toggleManualKey());
     expect(result.current.showManualKey).toBe(true);
   });
 });

@@ -1,3 +1,4 @@
+import type { SetPlan } from "../setPlan";
 export type WorkoutDifficulty = "beginner" | "intermediate" | "advanced";
 export type TrainingStatus = "planned" | "active" | "completed";
 export type DayOfWeek =
@@ -15,6 +16,79 @@ export type PeriodizationObjective =
   | "weight_loss"
   | "conditioning"
   | "general_fitness";
+
+/**
+ * Os objetivos de uma periodização, na ordem em que o formulário os oferece.
+ *
+ * Lista única porque cada plataforma tinha a sua: o web gravava `hypertrophy`
+ * e o mobile gravava o texto digitado ("Hipertrofia"). Um não lia o que o
+ * outro escrevia.
+ *
+ * @example PERIODIZATION_OBJECTIVES.map(({ value, label }) => <Chip key={value}>{label}</Chip>)
+ */
+export const PERIODIZATION_OBJECTIVES: ReadonlyArray<{
+  readonly value: PeriodizationObjective;
+  readonly label: string;
+}> = [
+  { value: "hypertrophy", label: "Hipertrofia" },
+  { value: "strength", label: "Força" },
+  { value: "endurance", label: "Resistência" },
+  { value: "weight_loss", label: "Emagrecimento" },
+  { value: "conditioning", label: "Condicionamento" },
+  { value: "general_fitness", label: "Saúde Geral" },
+];
+
+/**
+ * O rótulo de um objetivo gravado, ou o próprio texto quando não é da lista.
+ *
+ * Periodização antiga do mobile guarda texto livre; mostrar o que foi digitado
+ * é melhor do que esconder o objetivo atrás de um rótulo genérico.
+ *
+ * @example periodizationObjectiveLabel("strength") // "Força"
+ */
+export function periodizationObjectiveLabel(objective: string | null): string | null {
+  if (!objective) return null;
+  return PERIODIZATION_OBJECTIVES.find((item) => item.value === objective)?.label ?? objective;
+}
+
+/**
+ * O objetivo gravado, quando é um dos 6 — `null` para o texto livre antigo.
+ *
+ * O formulário de edição só oferece os 6; sem esta checagem, um cast
+ * deixava "Hipertrofia" digitado passar como se fosse um valor da lista.
+ *
+ * @example knownPeriodizationObjective("strength") // "strength"
+ * @example knownPeriodizationObjective("Hipertrofia") // null
+ */
+export function knownPeriodizationObjective(
+  objective: string | null,
+): PeriodizationObjective | null {
+  return PERIODIZATION_OBJECTIVES.find((item) => item.value === objective)?.value ?? null;
+}
+
+/**
+ * A letra de uma ficha: "Treino B" → "B", "Superior" → "S".
+ *
+ * A divisão cria fichas "Treino A", "Treino B"…; ler só a primeira letra do
+ * título dava "T" para todas, e o web mostrava a divisão "TT".
+ *
+ * @example workoutLetterOf("Treino D") // "D"
+ */
+export function workoutLetterOf(title: string): string {
+  return title
+    .replace(/^treino\s+/i, "")
+    .charAt(0)
+    .toUpperCase();
+}
+
+/**
+ * A divisão da fase pelas fichas que ela tem, na ordem.
+ *
+ * @example workoutSplitOf([{ title: "Treino A" }, { title: "Treino B" }]) // "AB"
+ */
+export function workoutSplitOf(workouts: ReadonlyArray<{ title: string }>): string {
+  return workouts.map((workout) => workoutLetterOf(workout.title)).join("");
+}
 
 /**
  * O vocabulário do catálogo de exercícios, em um lugar só.
@@ -91,12 +165,10 @@ export interface WorkoutExercise {
   id: string;
   workout_id: string;
   exercise_id: string;
-  sets: number | null;
-  reps: string | null;
-  weight: string | null;
-  rest_seconds: number | null;
   order_index: number;
   notes: string | null;
+  /** As séries prescritas uma a uma (#431): a prescrição inteira do item. */
+  set_plan: SetPlan;
   created_at: string;
   exercise?: Exercise;
 }
@@ -115,6 +187,15 @@ export interface Workout {
   updated_at: string;
   exercises?: WorkoutExercise[];
   exercises_count?: number;
+}
+
+/**
+ * O plano completo para exportar: a periodização, e cada fase com os treinos
+ * dela e os exercícios de cada treino.
+ */
+export interface FullPeriodization {
+  periodization: Periodization;
+  phases: { plan: TrainingPlan; workouts: Workout[] }[];
 }
 
 export interface TrainingPlan {
@@ -144,11 +225,16 @@ export interface Periodization {
   // insert — que o banco recusa.
   start_date: string;
   end_date: string;
+  /** Por que acabou (0099, 0100); nulo enquanto ativa ou de antes do #376. */
+  end_reason?: PlanEndReason | null;
   created_at: string;
   updated_at: string;
   student?: { id: string; full_name: string | null; email: string };
   training_plans_count?: number;
 }
+
+/** Por que o plano acabou: fim do bloco, trocado por outro, ou mudado antes do fim. */
+export type PlanEndReason = "block_completed" | "replaced" | "changed_early";
 
 export interface WorkoutSession {
   id: string;
@@ -231,6 +317,8 @@ export interface WorkoutSessionSet {
   rest_actual: number | null;
   completed: boolean;
   skipped: boolean;
+  /** `false` em aquecimento e preparação: não soma volume (0107, #431). */
+  counts_toward_volume: boolean;
   created_at: string;
 }
 
@@ -274,7 +362,8 @@ export interface SessaoComSeries {
   completed_at: string | null;
   exercises: {
     workout_exercise_id: string | null;
-    sets: Pick<WorkoutSessionSet, "set_index" | "reps_actual" | "weight_actual" | "completed">[];
+    sets: (Pick<WorkoutSessionSet, "set_index" | "reps_actual" | "weight_actual" | "completed"> &
+      Partial<Pick<WorkoutSessionSet, "counts_toward_volume">>)[];
   }[];
 }
 
@@ -305,16 +394,6 @@ export interface UpdateWorkoutInput {
   difficulty?: WorkoutDifficulty | null;
   day_of_week?: DayOfWeek | null;
   training_plan_id?: string | null;
-}
-
-export interface AddWorkoutExerciseInput {
-  exercise_id: string;
-  sets?: number;
-  reps?: string;
-  weight?: string;
-  rest_seconds?: number;
-  order_index?: number;
-  notes?: string;
 }
 
 export interface CreatePeriodizationInput {
@@ -402,11 +481,15 @@ export interface SaveSessionSetInput {
   rest_actual?: number | null;
   completed?: boolean;
   skipped?: boolean;
+  /** `false` em aquecimento e preparação: a série existe, mas não soma volume (#431). */
+  counts_toward_volume?: boolean;
 }
 
 export interface SaveSessionExerciseInput {
   workout_exercise_id?: string | null;
   /** Exercício efetivamente feito, quando difere do prescrito. */
   exercise_id?: string | null;
+  /** "Fácil", "Ok" ou "Difícil" depois da última série; nulo quando pulou (#376). */
+  effort?: "easy" | "ok" | "hard" | null;
   sets: SaveSessionSetInput[];
 }

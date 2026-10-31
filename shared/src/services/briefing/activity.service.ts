@@ -7,6 +7,7 @@ import type {
   RecentActivityItem,
   WorkoutSessionRow,
 } from "../../types/activity.types";
+import { checkInSentence, fetchCheckInActivity } from "./checkInActivity";
 import { fetchSwapActivity } from "./exerciseSwapActivity";
 
 /**
@@ -177,8 +178,8 @@ export const createActivityService = (supabase: SupabaseClient) => ({
     if (studentIds.length === 0) return [];
 
     // Independentes: em série, a tela espera três idas ao banco antes de pintar
-    // a primeira linha. O bloco anterior fazia exatamente isso.
-    const [sessoes, refeicoes, perfis, trocas] = await Promise.all([
+    // a primeira row. O bloco anterior fazia exatamente isso.
+    const [sessions, meals, profiles, swaps, checkIns] = await Promise.all([
       supabase
         .from("workout_sessions")
         .select(
@@ -200,67 +201,81 @@ export const createActivityService = (supabase: SupabaseClient) => ({
       supabase.from("profiles").select("id, full_name").in("id", studentIds),
 
       fetchSwapActivity(supabase, studentIds, RECENT_LIMIT),
+
+      fetchCheckInActivity(supabase, studentIds, RECENT_LIMIT),
     ]);
 
-    if (sessoes.error) throw sessoes.error;
-    if (refeicoes.error) throw refeicoes.error;
-    if (perfis.error) throw perfis.error;
+    if (sessions.error) throw sessions.error;
+    if (meals.error) throw meals.error;
+    if (profiles.error) throw profiles.error;
 
-    const nomes = new Map(
-      (perfis.data ?? []).map((p) => {
-        const perfil = p as { id: string; full_name: string | null };
-        return [perfil.id, perfil.full_name ?? "Aluno"];
+    const names = new Map(
+      (profiles.data ?? []).map((p) => {
+        const profile = p as { id: string; full_name: string | null };
+        return [profile.id, profile.full_name ?? "Aluno"];
       }),
     );
 
-    const itens: RecentActivityItem[] = [];
+    const items: RecentActivityItem[] = [];
 
-    for (const linha of (sessoes.data ?? []) as WorkoutSessionRow[]) {
-      itens.push({
-        id: `session-${linha.id}`,
-        studentId: linha.student_id,
-        studentName: nomes.get(linha.student_id) ?? "Aluno",
-        kind: linha.session_type === "cardio" ? "cardio" : "workout",
+    for (const row of (sessions.data ?? []) as WorkoutSessionRow[]) {
+      items.push({
+        id: `session-${row.id}`,
+        studentId: row.student_id,
+        studentName: names.get(row.student_id) ?? "Aluno",
+        kind: row.session_type === "cardio" ? "cardio" : "workout",
         // Sem `notes`: o que atravessa a fronteira é o item resumido. O bloco
         // vive no briefing, que é Server Component justamente para o dado de
         // saúde cru não chegar ao HTML da página.
-        title: tituloSessao(linha, null),
-        pse: linha.perceived_exertion,
-        at: linha.completed_at ?? linha.started_at,
+        title: tituloSessao(row, null),
+        pse: row.perceived_exertion,
+        at: row.completed_at ?? row.started_at,
       });
     }
 
-    for (const linha of (refeicoes.data ?? []) as {
+    for (const row of (meals.data ?? []) as {
       id: string;
       student_id: string;
       logged_date: string;
     }[]) {
-      itens.push({
-        id: `meal-${linha.id}`,
-        studentId: linha.student_id,
-        studentName: nomes.get(linha.student_id) ?? "Aluno",
+      items.push({
+        id: `meal-${row.id}`,
+        studentId: row.student_id,
+        studentName: names.get(row.student_id) ?? "Aluno",
         kind: "meal",
         title: "Registrou uma refeição",
         pse: null,
-        at: linha.logged_date,
+        at: row.logged_date,
       });
     }
 
-    for (const troca of trocas) {
-      itens.push({
-        id: `swap-${troca.id}`,
-        studentId: troca.studentId,
-        studentName: nomes.get(troca.studentId) ?? "Aluno",
+    for (const swap of swaps) {
+      items.push({
+        id: `swap-${swap.id}`,
+        studentId: swap.studentId,
+        studentName: names.get(swap.studentId) ?? "Aluno",
         kind: "exercise_swap",
-        title: `Trocou ${troca.summary}`,
+        title: `Trocou ${swap.summary}`,
         pse: null,
-        at: troca.at,
+        at: swap.at,
+      });
+    }
+
+    for (const checkIn of checkIns) {
+      items.push({
+        id: `check-in-${checkIn.id}`,
+        studentId: checkIn.studentId,
+        studentName: names.get(checkIn.studentId) ?? "Aluno",
+        kind: "weekly_check_in",
+        title: checkInSentence(checkIn.loggingLabel),
+        pse: null,
+        at: checkIn.at,
       });
     }
 
     // Ordena o conjunto inteiro e corta uma vez só.
-    itens.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
-    return itens.slice(0, RECENT_LIMIT);
+    items.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+    return items.slice(0, RECENT_LIMIT);
   },
 
   /**

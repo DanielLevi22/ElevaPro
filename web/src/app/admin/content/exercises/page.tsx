@@ -99,7 +99,7 @@ export default function ExercisesPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-surface border border-border rounded-xl p-6 mb-6">
+      <div className="glass rounded-xl p-6 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <label htmlFor="search-exercises" className="sr-only">
@@ -134,7 +134,7 @@ export default function ExercisesPage() {
       </div>
 
       {/* List */}
-      <div className="bg-surface border border-border rounded-xl overflow-hidden">
+      <div className="bg-surface border border-border rounded-xl overflow-x-auto">
         <table className="w-full">
           <thead className="bg-muted border-b border-border">
             <tr>

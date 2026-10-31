@@ -29,9 +29,9 @@ describe('Análise de Técnica em desenvolvimento', () => {
   it.each([
     ['a lista', Tecnica, 'lista de exercícios'],
     ['a câmera', AnaliseTecnica, 'câmera da análise'],
-  ])('bloqueia %s e mostra o aviso', (_tela, Rota, conteudo) => {
+  ])('bloqueia %s e mostra o aviso', async (_tela, Rota, conteudo) => {
     mockReleased = false;
-    render(<Rota />);
+    await render(<Rota />);
 
     expect(screen.getByText('em desenvolvimento')).toBeTruthy();
     expect(screen.queryByText(conteudo)).toBeNull();
@@ -40,9 +40,9 @@ describe('Análise de Técnica em desenvolvimento', () => {
   it.each([
     ['a lista', Tecnica, 'lista de exercícios'],
     ['a câmera', AnaliseTecnica, 'câmera da análise'],
-  ])('libera %s quando a análise sai do desenvolvimento', (_tela, Rota, conteudo) => {
+  ])('libera %s quando a análise sai do desenvolvimento', async (_tela, Rota, conteudo) => {
     mockReleased = true;
-    render(<Rota />);
+    await render(<Rota />);
 
     expect(screen.getByText(conteudo)).toBeTruthy();
   });

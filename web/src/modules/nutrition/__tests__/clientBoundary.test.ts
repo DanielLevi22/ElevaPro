@@ -1,40 +1,29 @@
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import ts from "typescript";
 import { expect, it } from "vitest";
 
 const moduleRoot = resolve(process.cwd(), "src/modules/nutrition");
 
-function parseSource(filename: string): ts.SourceFile {
-  return ts.createSourceFile(
-    filename,
-    readFileSync(filename, "utf8"),
-    ts.ScriptTarget.Latest,
-    true,
-  );
-}
+// Regex, e não o parser: o TypeScript 7 é nativo e não expõe mais a API de
+// compilador em JS. Basta reconhecer a diretiva e os re-exports do barrel.
+const LEADING_COMMENTS = /^(?:\s|\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)*/;
+const CLIENT_DIRECTIVE = /^["']use client["']/;
+const RELATIVE_EXPORT = /^export\b[^;]*?\bfrom\s+["'](\.[^"']+)["']/gm;
 
-function declaresClientBoundary(source: ts.SourceFile): boolean {
-  const statement = source.statements[0];
-  return (
-    ts.isExpressionStatement(statement) &&
-    ts.isStringLiteral(statement.expression) &&
-    statement.expression.text === "use client"
-  );
+function declaresClientBoundary(text: string): boolean {
+  return CLIENT_DIRECTIVE.test(text.replace(LEADING_COMMENTS, ""));
 }
 
 it("exports públicos que usam hooks declaram a fronteira cliente para páginas servidor", () => {
   const entrypoint = resolve(moduleRoot, "index.ts");
-  const exportedModules = parseSource(entrypoint).statements.filter(ts.isExportDeclaration);
-  for (const exportedModule of exportedModules) {
-    const specifier = exportedModule.moduleSpecifier;
-    if (!specifier || !ts.isStringLiteral(specifier)) continue;
-    const filename = resolve(dirname(entrypoint), `${specifier.text}.tsx`);
-    const source = parseSource(filename);
-    if (!/\buse[A-Z]\w*\s*\(/.test(source.text)) continue;
+  const specifiers = [...readFileSync(entrypoint, "utf8").matchAll(RELATIVE_EXPORT)].map(
+    (match) => match[1],
+  );
+  expect(specifiers.length).toBeGreaterThan(0);
+  for (const specifier of specifiers) {
+    const text = readFileSync(resolve(dirname(entrypoint), `${specifier}.tsx`), "utf8");
+    if (!/\buse[A-Z]\w*\s*\(/.test(text)) continue;
     // O barrel é importado por páginas servidor; hooks públicos precisam de uma fronteira própria.
-    expect(declaresClientBoundary(source), `FRONTEIRA CLIENTE AUSENTE: ${specifier.text}`).toBe(
-      true,
-    );
+    expect(declaresClientBoundary(text), `FRONTEIRA CLIENTE AUSENTE: ${specifier}`).toBe(true);
   }
 });

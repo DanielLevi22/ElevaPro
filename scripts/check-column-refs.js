@@ -43,6 +43,7 @@ const FONTES = [
  */
 const TABELAS_SENSIVEIS = new Set([
   "physical_assessments",
+  "physical_assessment_revisions",
   "student_anamnesis",
   "workout_sessions",
   "diet_logs",

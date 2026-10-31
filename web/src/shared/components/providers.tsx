@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/modules/auth";
+import { AppVersionWatcher } from "./AppVersionWatcher";
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
   const initialize = useAuthStore((state) => state.initialize);
@@ -43,6 +44,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     >
       <QueryClientProvider client={queryClient}>
         <AuthProvider>{children}</AuthProvider>
+        <AppVersionWatcher />
       </QueryClientProvider>
     </NextThemesProvider>
   );

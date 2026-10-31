@@ -16,7 +16,7 @@ interface DaySelectorProps {
 export function DaySelector({ days, selectedDay, onSelectDay, isCyclic }: DaySelectorProps) {
   if (!isCyclic) {
     return (
-      <div className="bg-surface border border-white/10 rounded-lg p-4 text-center text-muted-foreground">
+      <div className="glass rounded-lg p-4 text-center text-muted-foreground">
         Este é um plano de dieta única (todos os dias seguem o mesmo cardápio).
       </div>
     );

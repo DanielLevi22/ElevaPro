@@ -18,12 +18,14 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import '../global.css';
 
+import { isStrongAuthRequired } from '@elevapro/shared';
 import { supabase } from '@elevapro/supabase';
 import { confirmLocalMfa, hasCurrentPrivilegedProof, useAuthStore } from '@/auth';
 import { HealthDataConsentGate } from '@/components/consent/HealthDataConsentGate';
 import { AppAlertHost, showAlert } from '@/components/ui/appAlert';
 import { PushBannerHost } from '@/components/ui/pushBanner';
 import { useColorScheme } from '@/components/useColorScheme';
+import { useNotificationTap } from '@/hooks/useNotificationTap';
 import { queryClient } from '@/lib/query-client';
 import { useOnboardingGate } from '@/modules/onboarding';
 import { ROUTES } from '@/navigation/types';
@@ -35,6 +37,7 @@ import {
 } from '@/services/notificationService';
 import { assertBffConfigured } from '@/shared/bff';
 import { ajustarEscalaDeTexto } from '@/shared/design';
+import { IgnoredNoticePrompt, useDailyNotices } from '@/shared/notices';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -42,7 +45,7 @@ export {
 } from 'expo-router';
 
 export const unstable_settings = {
-  initialRouteName: '(tabs)',
+  anchor: '(tabs)',
 };
 
 SplashScreen.preventAutoHideAsync();
@@ -193,7 +196,8 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
     if (!session && !inAuthGroup) {
       // Redirect to login if not authenticated
       router.replace('/(auth)/login');
-    } else if (session && (accountType === 'admin' || accountType === 'specialist')) {
+    } else if (session && isStrongAuthRequired(accountType)) {
+      // Só o admin passa pela tela do segundo fator (ADR-0047).
       void redirectPrivilegedSession();
     } else if (session && inAuthGroup) {
       // Todo papel entra pelo mesmo lugar. Os três ramos anteriores mandavam
@@ -202,6 +206,13 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
       router.replace('/(tabs)');
     }
   }, [session, segments, isLoading, accountType, router, redirectPrivilegedSession]);
+
+  // O toque no aviso (o relatório de domingo, #376) abre a tela dele.
+  useNotificationTap(isLoading ? null : (session?.user?.id ?? null));
+
+  // Os avisos do dia (#376) são do aluno, e nunca do especialista vendo como ele.
+  const isStudent = accountType === 'student' || accountType === 'member';
+  useDailyNotices(!isLoading && isStudent ? (session?.user?.id ?? null) : null);
 
   const inOnboarding = segments[0] === 'onboarding';
   // O scan opcional depois de O4 sai do grupo do onboarding: o guarda não pode
@@ -247,6 +258,7 @@ function RootLayoutNav({ loaded }: { loaded: boolean }) {
             isStudent={accountType === 'student' || accountType === 'member'}
             hasSpecialist={accountType === 'student'}
           />
+          {isStudent && !inOnboarding ? <IgnoredNoticePrompt /> : null}
         </ThemeProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

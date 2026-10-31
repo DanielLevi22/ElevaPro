@@ -6,7 +6,7 @@ direção, e a segunda decisão foi deliberada e tinha teste guardando — por i
 este registro existe. Junto vai uma divergência de propósito: mobile e web
 compartilham a marca, mas **não** a escala de superfície.
 
-**Status:** accepted
+**Status:** accepted. A divisão de superfície foi revogada pelo ADR-0048.
 
 ## Por que a reversão da reversão
 
@@ -90,3 +90,11 @@ com o rótulo e mude a cor de marca das duas plataformas sem perceber.
 - Cor hexadecimal escrita à mão passa a falhar no pre-commit, no arquivo que o
   commit tocar. A regra já existia no `CLAUDE.md` e tinha sido ignorada 685
   vezes.
+
+## Nota — a paleta passou a morar no `shared` (issue #459)
+
+Os valores saíram de `app/src/shared/design/tokens.ts` para
+`shared/src/design/palette.ts`, e o web gera dela o trecho `material-glass`
+do `globals.css`, com teste de paridade como o do app. A superfície iOS entra
+no web pela classe `material-glass`, hoje na raiz dos layouts do dashboard e
+do admin (ADR-0048).

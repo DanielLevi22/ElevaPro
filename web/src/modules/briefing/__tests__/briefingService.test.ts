@@ -35,6 +35,8 @@ function makeClient() {
       builder.in = vi.fn(chain);
       builder.not = vi.fn(chain);
       builder.gte = vi.fn(chain);
+      builder.is = vi.fn(chain);
+      builder.range = vi.fn(chain);
 
       // `count` chega por `head: true`; as demais consultas resolvem em `data`.
       const counting: Record<string, unknown> = {};

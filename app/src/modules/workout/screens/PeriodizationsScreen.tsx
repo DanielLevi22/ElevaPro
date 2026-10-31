@@ -2,7 +2,6 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '@/auth';
-import { StudentPickerModal } from '@/components/StudentPickerModal';
 import { BotaoRedondo } from '@/components/ui/BotaoRedondo';
 import {
   CabecalhoSobreFoto,
@@ -40,8 +39,17 @@ const STATUS_DO_FILTRO: Record<Exclude<Filtro, 'todas'>, Periodization['status']
  * @example
  * <PeriodizationsScreen />
  * <PeriodizationsScreen studentId={aluno.id} />
+ *
+ * `acaoDoBloco` é o "…" do Praticante: mudar o plano antes do fim do bloco
+ * (#376, C1). Vem de fora porque mora no módulo do bloco.
  */
-export default function PeriodizationsScreen({ studentId }: { studentId?: string } = {}) {
+export default function PeriodizationsScreen({
+  studentId,
+  acaoDoBloco,
+}: {
+  studentId?: string;
+  acaoDoBloco?: React.ReactNode;
+} = {}) {
   const router = useRouter();
   const { user, accountType } = useAuthStore();
   const isSpecialist = accountType === 'specialist';
@@ -50,25 +58,12 @@ export default function PeriodizationsScreen({ studentId }: { studentId?: string
   const { students, fetchStudents } = useStudentStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
-  const [showStudentPicker, setShowStudentPicker] = useState(false);
   const [filtro, setFiltro] = useState<Filtro>('todas');
 
   useEffect(() => {
     if (user?.id && accountType) fetchPeriodizations(user.id);
     if (user?.id && isSpecialist) fetchStudents(user.id);
   }, [user?.id, accountType, isSpecialist, fetchPeriodizations, fetchStudents]);
-
-  // O `StudentPickerModal` é anterior ao módulo de alunos ganhar `avatar_url`
-  // nulável — aqui é o único ponto de contato entre os dois formatos.
-  const studentsParaPicker = useMemo(
-    () =>
-      students.map((s) => ({
-        id: s.id,
-        full_name: s.full_name,
-        avatar_url: s.avatar_url ?? undefined,
-      })),
-    [students]
-  );
 
   const scoped = useMemo(
     () => (studentId ? periodizations.filter((p) => p.student_id === studentId) : periodizations),
@@ -113,23 +108,17 @@ export default function PeriodizationsScreen({ studentId }: { studentId?: string
     [router, studentId]
   );
 
-  // O `member` cria para si mesmo, sem escolher aluno; o `specialist` escolhe
-  // antes de entrar no wizard, que não tem seletor embutido.
-  const abrirCriacao = useCallback(() => {
+  // Quem treina sozinho cria para si; o especialista escolhe o aluno no
+  // formulário, a não ser que já esteja na lista de um aluno só.
+  const openCreation = useCallback(() => {
+    // Na lista de um aluno, a folha abre na pilha de Alunos: a da aba Treinos
+    // fecharia no treino de outro aluno (#437).
     if (studentId) {
-      router.push({
-        pathname: ROUTES.WORKOUTS.WIZARD_STRUCTURE,
-        params: { studentId, studentName: studentName ?? undefined },
-      });
+      router.push(ROUTES.STUDENTS.PERIODIZATION_NEW(studentId, studentName ?? undefined));
       return;
     }
-    if (isSpecialist) {
-      setShowStudentPicker(true);
-      return;
-    }
-    if (user?.id) {
-      router.push({ pathname: ROUTES.WORKOUTS.WIZARD_STRUCTURE, params: { studentId: user.id } });
-    }
+    const ownerId = isSpecialist ? undefined : user?.id;
+    router.push(ROUTES.WORKOUTS.PERIODIZATION_NEW(ownerId));
   }, [studentId, studentName, isSpecialist, user?.id, router]);
 
   const onRefresh = useCallback(() => {
@@ -146,12 +135,13 @@ export default function PeriodizationsScreen({ studentId }: { studentId?: string
         onVoltar={studentId ? router.back : undefined}
         direita={
           <View className="flex-row items-center gap-2">
+            {acaoDoBloco}
             <BotaoRedondo
               icone="search"
               rotulo="Buscar periodização"
               onPress={() => setIsSearchModalVisible(true)}
             />
-            <BotaoRedondo icone="plus" rotulo="Nova periodização" onPress={abrirCriacao} />
+            <BotaoRedondo icone="plus" rotulo="Nova periodização" onPress={openCreation} />
           </View>
         }
       />
@@ -162,21 +152,6 @@ export default function PeriodizationsScreen({ studentId }: { studentId?: string
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
-
-      {isSpecialist ? (
-        <StudentPickerModal
-          visible={showStudentPicker}
-          onClose={() => setShowStudentPicker(false)}
-          students={studentsParaPicker}
-          onSelect={(student) => {
-            setShowStudentPicker(false);
-            router.push({
-              pathname: ROUTES.WORKOUTS.WIZARD_STRUCTURE,
-              params: { studentId: student.id, studentName: student.full_name ?? undefined },
-            });
-          }}
-        />
-      ) : null}
 
       <ConteudoDaLista
         carregando={isLoading}
@@ -201,7 +176,12 @@ export default function PeriodizationsScreen({ studentId }: { studentId?: string
           <PeriodizationHistoryRow
             key={periodizacao.id}
             periodizacao={periodizacao}
-            onPress={() => abrir(periodizacao)}
+            onPress={() =>
+              // O bloco do Praticante que acabou abre o relatório dele (#376, C3).
+              isMember && periodizacao.status === 'completed' && !periodizacao.specialist_id
+                ? router.push(ROUTES.BLOCK.HISTORY(periodizacao.id))
+                : abrir(periodizacao)
+            }
           />
         ))}
         {historico.length === 0 ? (

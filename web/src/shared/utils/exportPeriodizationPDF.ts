@@ -1,251 +1,112 @@
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import type { PeriodizationSheet, PeriodizationSheetPhase } from "@elevapro/shared";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import { drawWorkoutSection } from "./exportWorkoutPDF";
+import { formatDate } from "./formatDate";
+import {
+  drawBrandHeader,
+  drawProtocolFooter,
+  PDF_COLORS,
+  protocolFileName,
+  validityRange,
+} from "./pdfBrand";
 
-// Extend jsPDF type to include autoTable and internal properties
-declare module "jspdf" {
-  interface jsPDF {
-    lastAutoTable: {
-      finalY: number;
-    };
-  }
+interface PeriodizationPdfInput {
+  sheet: PeriodizationSheet;
+  studentName: string;
+  /** Nulo quando quem exporta é o próprio aluno: a linha não aparece. */
+  professionalName: string | null;
 }
 
-interface Periodization {
-  id: string;
-  name: string;
-  objective: string;
-  duration_weeks: number;
-  start_date?: string;
-  end_date?: string;
-}
+const LEFT = 15;
+const BOTTOM_MARGIN = 22;
+const PAGE_TOP = 20;
+const PHASE_BAND_HEIGHT = 10;
 
-interface Phase {
-  id: string;
-  name: string;
-  start_week: number;
-  end_week: number;
-  description?: string;
-  workouts: Workout[];
-}
+/**
+ * O plano completo em PDF, no desenho do protocolo da dieta: a periodização, e
+ * para cada fase uma faixa com nome e datas seguida dos treinos dela, cada um
+ * com a tabela das séries do PDF do treino avulso.
+ *
+ * @example exportPeriodizationToPDF({ sheet: buildPeriodizationSheet(plano), studentName, professionalName })
+ */
+export function exportPeriodizationToPDF({
+  sheet,
+  studentName,
+  professionalName,
+}: PeriodizationPdfInput): void {
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  let y = drawBrandHeader(doc, {
+    documentLabel: "PLANO DE TREINO COMPLETO",
+    studentName,
+    professionalName,
+    validity: validityRange(sheet.startDate, sheet.endDate),
+  });
 
-interface Workout {
-  id: string;
-  name: string;
-  description?: string;
-  exercises: Exercise[];
-}
-
-interface Exercise {
-  id: string;
-  name: string;
-  sets: number;
-  reps: string;
-  rest_seconds: number;
-  notes?: string;
-  order_index: number;
-}
-
-export async function exportPeriodizationToPDF(
-  periodization: Periodization,
-  phases: Phase[],
-  studentName: string,
-) {
-  const doc = new jsPDF();
-  let yPosition = 20;
-
-  // Header
-  doc.setFontSize(24);
-  doc.setTextColor(0, 255, 136); // Primary color
-  doc.text("Eleva Pro", 105, yPosition, { align: "center" });
-
-  yPosition += 10;
-  doc.setFontSize(18);
-  doc.setTextColor(0, 0, 0);
-  doc.text("PERIODIZAÇÃO DE TREINO", 105, yPosition, { align: "center" });
-
-  yPosition += 15;
-
-  // Periodization Info
-  doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.text("Periodização:", 20, yPosition);
-  doc.setFont("helvetica", "normal");
-  doc.text(periodization.name, 55, yPosition);
-
-  yPosition += 7;
-  doc.setFont("helvetica", "bold");
-  doc.text("Aluno:", 20, yPosition);
-  doc.setFont("helvetica", "normal");
-  doc.text(studentName, 55, yPosition);
-
-  yPosition += 7;
-  doc.setFont("helvetica", "bold");
-  doc.text("Objetivo:", 20, yPosition);
-  doc.setFont("helvetica", "normal");
-  doc.text(periodization.objective, 55, yPosition);
-
-  yPosition += 7;
-  doc.setFont("helvetica", "bold");
-  doc.text("Duração:", 20, yPosition);
-  doc.setFont("helvetica", "normal");
-  doc.text(`${periodization.duration_weeks} semanas`, 55, yPosition);
-
-  if (periodization.start_date && periodization.end_date) {
-    yPosition += 7;
-    doc.setFont("helvetica", "bold");
-    doc.text("Período:", 20, yPosition);
+  doc.setFontSize(16);
+  doc.setTextColor(...PDF_COLORS.text);
+  doc.text(sheet.name.toUpperCase(), LEFT, y - 3);
+  if (sheet.objective) {
     doc.setFont("helvetica", "normal");
-    const startDate = format(new Date(periodization.start_date), "dd/MM/yyyy", { locale: ptBR });
-    const endDate = format(new Date(periodization.end_date), "dd/MM/yyyy", { locale: ptBR });
-    doc.text(`${startDate} - ${endDate}`, 55, yPosition);
+    doc.setFontSize(9);
+    doc.setTextColor(120, 120, 120);
+    doc.text(`OBJETIVO: ${sheet.objective}`, LEFT, y + 3);
+    y += 6;
+  }
+  y += 6;
+
+  for (const phase of sheet.phases) {
+    y = drawPhase(doc, phase, y);
   }
 
-  yPosition += 15;
+  drawProtocolFooter(doc);
+  doc.save(protocolFileName(sheet.name, "Plano"));
+}
 
-  // Sort phases by start_week
-  const sortedPhases = [...phases].sort((a, b) => a.start_week - b.start_week);
+/** A faixa da fase e os treinos dela. Devolve o Y abaixo do último treino. */
+function drawPhase(doc: jsPDF, phase: PeriodizationSheetPhase, start: number): number {
+  let y = ensureSpace(doc, start, PHASE_BAND_HEIGHT + 30);
+  drawPhaseBand(doc, phase, y);
+  y += PHASE_BAND_HEIGHT + 8;
 
-  // Render each phase
-  for (let phaseIndex = 0; phaseIndex < sortedPhases.length; phaseIndex++) {
-    const phase = sortedPhases[phaseIndex];
-
-    // Check if we need a new page
-    if (yPosition > 250) {
-      doc.addPage();
-      yPosition = 20;
-    }
-
-    // Phase header
-    doc.setFillColor(0, 255, 136);
-    doc.rect(20, yPosition - 5, 170, 12, "F");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.setTextColor(0, 0, 0);
-    const phaseTitle = `FASE ${phaseIndex + 1}: ${phase.name.toUpperCase()}`;
-    doc.text(phaseTitle, 105, yPosition + 2, { align: "center" });
-
-    yPosition += 10;
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Semanas ${phase.start_week} - ${phase.end_week}`, 105, yPosition, {
-      align: "center",
-    });
-    yPosition += 10;
-
-    // Phase description
-    if (phase.description) {
-      doc.setFont("helvetica", "italic");
-      doc.setFontSize(10);
-      doc.setTextColor(80, 80, 80);
-      const descLines = doc.splitTextToSize(phase.description, 170);
-      doc.text(descLines, 20, yPosition);
-      yPosition += descLines.length * 5 + 5;
-    }
-
-    // Render workouts
-    const sortedWorkouts = [...phase.workouts].sort((a, b) => a.name.localeCompare(b.name));
-
-    for (const workout of sortedWorkouts) {
-      // Check if we need a new page
-      if (yPosition > 240) {
-        doc.addPage();
-        yPosition = 20;
-      }
-
-      // Workout header
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.setTextColor(0, 0, 0);
-      doc.text(workout.name, 20, yPosition);
-      yPosition += 7;
-
-      // Workout description
-      if (workout.description) {
-        doc.setFont("helvetica", "italic");
-        doc.setFontSize(9);
-        doc.setTextColor(100, 100, 100);
-        const descLines = doc.splitTextToSize(workout.description, 170);
-        doc.text(descLines, 20, yPosition);
-        yPosition += descLines.length * 4 + 3;
-      }
-
-      // Exercises table
-      if (workout.exercises && workout.exercises.length > 0) {
-        const sortedExercises = [...workout.exercises].sort(
-          (a, b) => a.order_index - b.order_index,
-        );
-
-        const tableData = sortedExercises.map((exercise, index) => {
-          const restMinutes = Math.floor(exercise.rest_seconds / 60);
-          const restSeconds = exercise.rest_seconds % 60;
-          const restTime =
-            restMinutes > 0
-              ? `${restMinutes}min${restSeconds > 0 ? ` ${restSeconds}s` : ""}`
-              : `${restSeconds}s`;
-
-          return [
-            (index + 1).toString(),
-            exercise.name,
-            `${exercise.sets}x${exercise.reps}`,
-            restTime,
-            exercise.notes || "-",
-          ];
-        });
-
-        autoTable(doc, {
-          startY: yPosition,
-          head: [["#", "Exercício", "Séries x Reps", "Descanso", "Observações"]],
-          body: tableData,
-          theme: "grid",
-          headStyles: {
-            fillColor: [50, 50, 50],
-            textColor: [255, 255, 255],
-            fontSize: 9,
-            fontStyle: "bold",
-          },
-          bodyStyles: {
-            fontSize: 9,
-          },
-          columnStyles: {
-            0: { cellWidth: 10, halign: "center" },
-            1: { cellWidth: 70 },
-            2: { cellWidth: 30, halign: "center" },
-            3: { cellWidth: 25, halign: "center" },
-            4: { cellWidth: 55 },
-          },
-          margin: { left: 20, right: 20 },
-        });
-
-        yPosition = doc.lastAutoTable.finalY + 10;
-      } else {
-        doc.setFont("helvetica", "italic");
-        doc.setFontSize(10);
-        doc.setTextColor(100, 100, 100);
-        doc.text("Nenhum exercício cadastrado", 20, yPosition);
-        yPosition += 10;
-      }
-    }
-
-    yPosition += 5;
-  }
-
-  // Footer
-  const pageCount = doc.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
+  if (phase.workouts.length === 0) {
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9);
     doc.setTextColor(150, 150, 150);
-    doc.text(
-      `Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })} - Página ${i} de ${pageCount}`,
-      105,
-      290,
-      { align: "center" },
-    );
+    doc.text("Sem treinos nesta fase", LEFT, y);
+    return y + 10;
   }
+  for (const workout of phase.workouts) {
+    y = ensureSpace(doc, y, 30);
+    y = drawWorkoutSection(doc, workout, y) + 12;
+  }
+  return y;
+}
 
-  // Save PDF
-  const fileName = `Periodizacao_${periodization.name.replace(/[^a-z0-9]/gi, "_")}_${format(new Date(), "yyyyMMdd")}.pdf`;
-  doc.save(fileName);
+function drawPhaseBand(doc: jsPDF, phase: PeriodizationSheetPhase, y: number): void {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const [r, g, b] = PDF_COLORS.primary;
+  doc.setFillColor(20, 20, 20);
+  doc.rect(LEFT, y, pageWidth - LEFT * 2, PHASE_BAND_HEIGHT, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(r, g, b);
+  doc.text(`FASE ${phase.order} // ${phase.name.toUpperCase()}`, LEFT + 4, y + 6.5);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(200, 200, 200);
+  doc.text(
+    `${formatDate(phase.startDate, "medium")}  -  ${formatDate(phase.endDate, "medium")}`,
+    pageWidth - LEFT - 4,
+    y + 6.5,
+    { align: "right" },
+  );
+}
+
+/** Abre página nova quando o que vem não cabe antes do rodapé. */
+function ensureSpace(doc: jsPDF, y: number, needed: number): number {
+  const pageHeight = doc.internal.pageSize.getHeight();
+  if (y + needed <= pageHeight - BOTTOM_MARGIN) return y;
+  doc.addPage();
+  return PAGE_TOP;
 }

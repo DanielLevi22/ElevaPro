@@ -2,6 +2,7 @@ import {
   boolean,
   date,
   integer,
+  jsonb,
   numeric,
   pgEnum,
   pgTable,
@@ -10,6 +11,7 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+import type { SetPlan } from "../../setPlan";
 import { profiles } from "./auth";
 
 export const trainingStatusEnum = pgEnum("training_status", ["planned", "active", "completed"]);
@@ -71,11 +73,28 @@ export const trainingPeriodizations = pgTable("training_periodizations", {
   // IA e criar ficha de treino ficaram quebrados sem sintoma no compilador.
   start_date: date("start_date").notNull(),
   end_date: date("end_date").notNull(),
+  // Por que o plano acabou: block_completed ou replaced (0099, #376).
+  end_reason: text("end_reason"),
   // Vieram na `0004` e nunca entraram neste schema (dívida #40).
   level: text("level"),
   duration_weeks: integer("duration_weeks"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// O Modo Descanso (#376, A8): de quando a quando o plano ficou pausado. Sem o
+// motivo, que é dado de saúde; gravado só por start_rest e end_rest (0101).
+export const restPeriods = pgTable("rest_periods", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  student_id: uuid("student_id")
+    .notNull()
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  starts_on: date("starts_on").notNull(),
+  // O fim previsto; nulo é "não sei".
+  planned_until: date("planned_until"),
+  // O dia da volta; nulo enquanto descansa.
+  ended_on: date("ended_on"),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 // Fase/mesociclo dentro de uma periodização (ex: "Fase de Adaptação")
@@ -124,12 +143,10 @@ export const workoutExercises = pgTable("workout_exercises", {
   exercise_id: uuid("exercise_id")
     .notNull()
     .references(() => exercises.id, { onDelete: "restrict" }),
-  sets: integer("sets"),
-  reps: text("reps"),
-  weight: text("weight"),
-  rest_seconds: integer("rest_seconds"),
   order_index: integer("order_index").notNull().default(0),
   notes: text("notes"),
+  // As séries uma a uma (0105, #431). Desde a 0106, a prescrição inteira do item.
+  set_plan: jsonb("set_plan").$type<SetPlan>().notNull(),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -258,6 +275,9 @@ export const workoutSessionExercises = pgTable("workout_session_exercises", {
   // schema, a divergência era invisível para elas também.
   exercise_id: uuid("exercise_id"),
   notes: text("notes"),
+  // "Fácil", "Ok" ou "Difícil" depois da última série (0098, #376): o sinal da
+  // carga sugerida no próximo treino.
+  effort: text("effort"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -283,5 +303,7 @@ export const workoutSessionSets = pgTable("workout_session_sets", {
   rest_actual: integer("rest_actual"),
   completed: boolean("completed").notNull().default(false),
   skipped: boolean("skipped").notNull().default(false),
+  // Aquecimento e preparação não somam volume (0107, #431).
+  counts_toward_volume: boolean("counts_toward_volume").notNull().default(true),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

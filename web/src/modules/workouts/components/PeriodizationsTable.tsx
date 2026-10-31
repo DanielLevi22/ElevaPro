@@ -1,6 +1,6 @@
 "use client";
 
-import type { Periodization } from "@elevapro/shared";
+import { type Periodization, periodizationObjectiveLabel } from "@elevapro/shared";
 import { DataTable, type DataTableColumn } from "@/shared/components/ui/DataTable";
 import { StatusBadge, type StatusTone } from "@/shared/components/ui/StatusBadge";
 import { formatDateRange } from "@/shared/utils/formatDate";
@@ -10,15 +10,6 @@ interface PeriodizationsTableProps {
   /** O aluno ve os proprios ciclos, entao repetir o nome dele em toda linha e ruido. */
   isMember: boolean;
 }
-
-const OBJECTIVE_LABEL: Record<string, string> = {
-  hypertrophy: "Hipertrofia",
-  strength: "Força",
-  endurance: "Resistência",
-  weight_loss: "Emagrecimento",
-  conditioning: "Condicionamento",
-  general_fitness: "Saúde Geral",
-};
 
 const STATUS: Record<string, { label: string; tone: StatusTone }> = {
   planned: { label: "Planejada", tone: "info" },
@@ -51,7 +42,7 @@ function buildColumns(isMember: boolean): DataTableColumn<Periodization>[] {
       key: "objective",
       header: "Objetivo",
       width: "lg:w-28",
-      render: (p) => OBJECTIVE_LABEL[p.objective ?? ""] ?? p.objective ?? "—",
+      render: (p) => periodizationObjectiveLabel(p.objective) ?? "—",
     },
     {
       key: "period",

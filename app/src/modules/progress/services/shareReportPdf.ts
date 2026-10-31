@@ -1,10 +1,4 @@
-// `expo-file-system/legacy`, como o resto do app: o módulo novo exporta `File` e
-// `Directory`, e não as funções de caminho. Importado sem `/legacy`, o
-// `deleteAsync` chega `undefined` e o PDF fica no cache do aparelho.
-import * as FileSystem from 'expo-file-system/legacy';
-import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
-import { registrarFalha } from '@/lib/registro';
+import { sharePdf } from '@/shared/pdf/sharePdf';
 import { type ReportSheet, reportHtml } from './reportPdf';
 
 /**
@@ -16,45 +10,12 @@ import { type ReportSheet, reportHtml } from './reportPdf';
  *
  * @example await sharePeriodReport(folhaDoRelatorio);
  */
-export async function sharePeriodReport(sheet: ReportSheet): Promise<boolean> {
-  let uri: string | null = null;
-  try {
-    const file = await Print.printToFileAsync({ html: reportHtml(sheet) });
-    // O `expo-print` nomeia o arquivo com um uuid. Quem recebe lê o nome antes de
-    // abrir, e o nome também não carrega identificador nenhum.
-    uri = await withReadableName(file.uri);
-    if (!(await Sharing.isAvailableAsync())) return false;
-    await Sharing.shareAsync(uri, {
-      mimeType: 'application/pdf',
-      dialogTitle: 'Relatório do período',
-      UTI: 'com.adobe.pdf',
-    });
-    return true;
-  } catch {
-    // Sem o erro no log: ele pode trazer o caminho do arquivo e o conteúdo que
-    // falhou ao ser escrito (Art. 6°, VII).
-    registrarFalha('progress.share_report');
-    return false;
-  } finally {
-    if (uri) await discard(uri);
-  }
-}
-
-const FILE_NAME = 'relatorio-do-periodo.pdf';
-
-async function withReadableName(uri: string): Promise<string> {
-  const target = `${FileSystem.cacheDirectory}${FILE_NAME}`;
-  // O de ontem pode ter sobrado se o sistema matou o app no meio da folha.
-  await FileSystem.deleteAsync(target, { idempotent: true });
-  await FileSystem.moveAsync({ from: uri, to: target });
-  return target;
-}
-
-/** A limpeza nunca derruba o compartilhamento: o arquivo pode já ter sumido. */
-async function discard(uri: string): Promise<void> {
-  try {
-    await FileSystem.deleteAsync(uri, { idempotent: true });
-  } catch {
-    registrarFalha('progress.discard_report_file');
-  }
+export function sharePeriodReport(sheet: ReportSheet): Promise<boolean> {
+  return sharePdf({
+    html: reportHtml(sheet),
+    fileName: 'relatorio-do-periodo.pdf',
+    sheetTitle: 'Relatório do período',
+    failureEvent: 'progress.share_report',
+    discardEvent: 'progress.discard_report_file',
+  });
 }

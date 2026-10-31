@@ -16,6 +16,11 @@ export interface DialogProps {
    * cresce alem da janela e o rodape sai da tela.
    */
   scrollable?: boolean;
+  /**
+   * Ações fixas no pé do painel, fora da área que rola: o conteúdo para na
+   * borda de cima dele, em vez de passar por baixo como num `sticky` interno.
+   */
+  footer?: React.ReactNode;
 }
 
 const maxWidthMap = {
@@ -35,6 +40,7 @@ export function Dialog({
   className,
   maxWidth = "md",
   scrollable = false,
+  footer,
 }: DialogProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -51,10 +57,12 @@ export function Dialog({
   if (!open) return null;
 
   return (
+    // `m-auto` no painel centraliza sem cortar: com `items-center`, um diálogo
+    // mais alto que a tela do celular perdia o topo, fora do alcance da rolagem.
     // biome-ignore lint/a11y/noStaticElementInteractions: o fundo não é o controle — quem fecha pelo teclado é o listener de Escape declarado acima
     // biome-ignore lint/a11y/useKeyWithClickEvents: idem; o clique no fundo é conveniência de mouse, e o Escape já cobre o teclado
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/70 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex overflow-y-auto bg-background/70 backdrop-blur-sm p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -65,7 +73,7 @@ export function Dialog({
         aria-modal="true"
         aria-labelledby="dialog-title"
         className={cn(
-          "w-full bg-surface border border-border rounded-2xl shadow-2xl",
+          "m-auto w-full bg-surface border border-border rounded-2xl shadow-2xl",
           maxWidthMap[maxWidth],
           scrollable && "max-h-[85vh] flex flex-col",
           className,
@@ -106,6 +114,10 @@ export function Dialog({
         <div className={cn("p-6", scrollable && "flex-1 overflow-y-auto custom-scrollbar")}>
           {children}
         </div>
+
+        {footer ? (
+          <div className="shrink-0 border-t border-overlay-10 px-6 py-4">{footer}</div>
+        ) : null}
       </div>
     </div>
   );

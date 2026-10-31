@@ -37,9 +37,9 @@ describe("workoutsService — exercícios do treino", () => {
     const { supabase, chamadas } = criarSupabaseFake({});
 
     await createWorkoutsService(supabase).addExercisesToWorkout("t1", [
-      { exercise_id: "e1", sets: 3, reps: "10" },
-      { exercise_id: "e2", sets: 4, reps: "8" },
-      { exercise_id: "e3", sets: 3, reps: "12", order_index: 9 },
+      { exercise_id: "e1", set_plan: [] },
+      { exercise_id: "e2", set_plan: [] },
+      { exercise_id: "e3", set_plan: [], order_index: 9 },
     ]);
 
     const linhas = chamadas[0].payload as Record<string, unknown>[];
@@ -49,15 +49,14 @@ describe("workoutsService — exercícios do treino", () => {
 
   // Campo ausente vira `null`, não `undefined`: o PostgREST omite chave
   // `undefined` do corpo, e a coluna ficaria com o default em vez de vazia.
-  it("normaliza campo ausente para null", async () => {
+  it("normaliza observação ausente para null", async () => {
     const { supabase, chamadas } = criarSupabaseFake({});
 
-    await createWorkoutsService(supabase).addExercisesToWorkout("t1", [{ exercise_id: "e1" }]);
+    await createWorkoutsService(supabase).addExercisesToWorkout("t1", [
+      { exercise_id: "e1", set_plan: [] },
+    ]);
 
     const linha = (chamadas[0].payload as Record<string, unknown>[])[0];
-    expect(linha.sets).toBeNull();
-    expect(linha.reps).toBeNull();
-    expect(linha.weight).toBeNull();
     expect(linha.notes).toBeNull();
   });
 });
@@ -110,25 +109,20 @@ describe("workoutsService — reordenar exercícios do treino", () => {
 });
 
 describe("workoutsService — ajustar exercício do treino", () => {
-  it("grava só os campos de execução, na linha do treino, não no catálogo", async () => {
+  it("grava só o plano de séries, na linha do treino, não no catálogo", async () => {
     const { supabase, chamadas } = criarSupabaseFake({});
 
-    await createWorkoutsService(supabase).updateWorkoutExercise("we-1", {
-      sets: 4,
-      reps: "10",
-      weight: "20",
-      rest_seconds: 90,
-    });
+    await createWorkoutsService(supabase).updateWorkoutExercise("we-1", { set_plan: [] });
 
     expect(chamadas[0].tabela).toBe("workout_exercises");
-    expect(chamadas[0].payload).toEqual({ sets: 4, reps: "10", weight: "20", rest_seconds: 90 });
+    expect(chamadas[0].payload).toEqual({ set_plan: [] });
     expect(chamadas[0].filtros).toEqual({ id: "we-1" });
   });
 
   it("propaga o erro em vez de seguir como se tivesse ajustado", async () => {
     const { supabase } = criarSupabaseFake({ error: { message: "42501" } });
     await expect(
-      createWorkoutsService(supabase).updateWorkoutExercise("we-1", { sets: 4 }),
+      createWorkoutsService(supabase).updateWorkoutExercise("we-1", { set_plan: [] }),
     ).rejects.toEqual({ message: "42501" });
   });
 });
@@ -370,8 +364,10 @@ describe("workoutsService — colunas das leituras do aluno", () => {
 
     await createWorkoutsService(supabase).fetchStudentPeriodizations("aluno-1");
 
+    // `end_reason` entrou com o histórico de blocos (#376, C3), que mostra como
+    // cada plano acabou.
     expect(chamadas[0].select).toBe(
-      "id, specialist_id, student_id, name, objective, status, start_date, end_date, created_at, updated_at",
+      "id, specialist_id, student_id, name, objective, status, start_date, end_date, end_reason, created_at, updated_at",
     );
     expect(chamadas[0].filtros).toEqual({ student_id: "aluno-1" });
   });

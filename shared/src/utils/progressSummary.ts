@@ -121,12 +121,18 @@ export interface StreakStanding {
  *
  * @example activityStreak(days, "2026-09-15") // { current: 12, best: 18, toTie: 6 }
  */
-export function activityStreak(days: readonly DailyActivity[], today: string): StreakStanding {
+export function activityStreak(
+  days: readonly DailyActivity[],
+  today: string,
+  paused: ReadonlySet<string> = new Set(),
+): StreakStanding {
   const active = new Set(days.filter(isActive).map((day) => day.date));
   let cursor = active.has(today) ? today : addDays(today, -1);
   let current = 0;
-  while (active.has(cursor)) {
-    current++;
+  // O dia pausado no Modo Descanso (#376, A8) não quebra nem conta: a
+  // sequência atravessa a pausa.
+  while (active.has(cursor) || paused.has(cursor)) {
+    if (active.has(cursor)) current++;
     cursor = addDays(cursor, -1);
   }
   const best = Math.max(longestRun(active), current);
