@@ -340,6 +340,7 @@ export type Database = {
           diet_meal_id: string;
           dish_id: string;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           diet_meal_id: string;
@@ -836,6 +837,7 @@ export type Database = {
           food_id: string;
           order_index: number;
         };
+        ComputedFields: never;
         Insert: {
           dish_id: string;
           food_id: string;
@@ -872,6 +874,7 @@ export type Database = {
           steps: NonNullable<Json>;
           title: string;
         };
+        ComputedFields: never;
         Insert: {
           dish_id: string;
           equipment: string;
@@ -908,6 +911,7 @@ export type Database = {
           template: string;
           title: string;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           description?: string | null;
